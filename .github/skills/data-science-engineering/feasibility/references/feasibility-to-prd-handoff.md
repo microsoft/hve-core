@@ -53,6 +53,8 @@ The handoff carries the `study_revision_id` it was generated from. A reader comp
 
 Each candidate carries `candidate_id`, `study_item_id`, `statement`, `evidence_refs`, and an advisory `concern_hint`.
 
+Functional candidate IDs match `FC-[0-9]{2,}`; NFR candidate IDs match `NC-[0-9]{2,}`. Each prefix is valid only in its corresponding array.
+
 Each constraint carries a `category` and a `statement`. The `category` value comes from the PRD's own set and no other: `regulatory`, `contractual`, `technical`, `financial`, `schedule`, `organizational`, or `operational`. Describe the specific limit in `statement`, not by inventing a narrower category name.
 
 ## Evidence reference types

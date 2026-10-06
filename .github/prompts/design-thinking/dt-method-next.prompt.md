@@ -21,7 +21,7 @@ argument-hint: "[project-slug=...]"
 * Derive project-slug from input, open files, or conversation context
 * Look for coaching state at `.copilot-tracking/dt/{project-slug}/coaching-state.md`
 * If not found and multiple projects exist, list available projects with last session dates and ask user to select
-* **Edge case — No project found:** If no DT project exists, respond: "No Design Thinking project found. Start a new project by running `/dt-start-project project-slug='...'` with your project slug."
+* **Edge case — No project found:** If no DT project exists, respond: "No Design Thinking project found. Start a new project by running `/dt-start-project` and describing what you would like to work on."
 
 ### 2. Read and Assess Current State
 
@@ -36,7 +36,7 @@ argument-hint: "[project-slug=...]"
   * `session_log`: recent session summaries
   * `artifacts`: list of generated artifacts with paths
 * Scan the project directory for artifact subdirectories matching `method-{NN}-*/` patterns
-* Assess method completeness by comparing artifacts against exit signals from `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md`
+* Load `dt-coaching-foundation` and assess method completeness by comparing artifacts against exit signals from its `references/method-sequencing.md`
 
 ### 3. Determine Next Method Recommendation
 
@@ -49,7 +49,7 @@ Apply progression logic:
   * At space boundaries (3→4, 6→7): verify readiness signals before suggesting transition
 
 * **Backward iteration (secondary path):**
-  * Before recommending a backward transition, use `read_file` on `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md` and quote the matching return-path rule in the recommendation.
+  * Before recommending a backward transition, read the loaded `dt-coaching-foundation` skill's `references/method-sequencing.md` and quote the matching return-path rule in the recommendation.
   * If current method reveals gaps in prior work → suggest returning to earlier method with rationale
   * Common patterns: prototype issues → Method 2/3, brainstorming failure → Method 3, concept misalignment → Method 1
   * Always name the source method, target method, and the sequencing rule that authorizes the transition.

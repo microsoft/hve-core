@@ -24,7 +24,9 @@ Posture: exploratory by default. Lean into open-ended clarifying questions befor
 
 ### Session Start Display
 
-On the first turn of any Security Planner session, display the canonical Security Planning disclaimer block defined in [.github/instructions/shared/disclaimer-language.instructions.md](../shared/disclaimer-language.instructions.md) verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO 8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
+The Security Planner adopts the shared Disclaimer Cadence; this is the Security-specific application of that contract, not a load-order override. When creating a project state record, or when recovered state has `state.disclaimerShownAt` set to `null`, display the canonical Security Planning disclaimer block defined in [.github/instructions/shared/disclaimer-language.instructions.md](../shared/disclaimer-language.instructions.md) verbatim. Record the display by setting `state.disclaimerShownAt` to the current ISO 8601 timestamp and appending a `state.noticeLog` entry with `noticeType: "session-start-disclaimer"`. Persist the state before advancing to phase work.
+
+When `state.disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `state.disclaimerShownAt` to the current timestamp, and append a `session-start-disclaimer` notice with `details.reason: "user-requested-redisplay"`.
 
 ### Exit Point Reminder
 
@@ -108,7 +110,7 @@ After the standard scoping questionnaire, assess for AI/ML components:
 When `raiEnabled` is `true` and `raiRecommendationShown` is `false`:
 
 * Include an RAI assessment recommendation in the handoff summary.
-* Provide the RAI Planner agent path: `.github/agents/rai-planning/rai-planner.agent.md`
+* Name the `RAI Planner` as the target agent.
 * Suggest entry mode: `from-security-plan`, and set `securityPlanRef` to the Security Planner `state.json` path. The RAI `from-security-plan` flow reads `state.json` fields such as `aiComponents` from `securityPlanRef`, so it must point at the state file rather than the markdown plan stored in `securityPlanFile`.
 * Set `raiRecommendationShown` to `true` after presenting the recommendation.
 * Set `raiPlannerDispatched` to `true` only once the user actually starts the RAI Planner handoff. Presenting the recommendation alone does not mark RAI as dispatched, so a later resume still surfaces the RAI handoff for an AI-enabled system the user has not yet acted on.
@@ -183,7 +185,7 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 * `entryMode` set based on the invoking prompt (capture or from-prd)
 * All arrays empty, booleans `false`
 * `raiScope` and `raiTier` set to `"none"`
-* `noticeLog` initialised to an empty array and appended when the planner displays a professional-review reminder or cross-planner handoff notice
+* `noticeLog` initialised to an empty array and appended when the planner displays a disclaimer, professional-review reminder, or cross-planner handoff notice
 
 ### State Transitions
 
@@ -213,7 +215,7 @@ During Phase 1 scoping, offer the user a diagram-style choice between Mermaid an
 
 The planner inherits the Resume Sequence and Post-Summarization Recovery in `shared/planner-identity-base.instructions.md`. Security-specific notes on inherited steps:
 
-* Resume Sequence step 2 (disclaimer redisplay) applies; the Security Planning CAUTION block in `shared/disclaimer-language.instructions.md` is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
+* Resume Sequence step 2 (conditional disclaimer display) applies; the Security Planning CAUTION block in `shared/disclaimer-language.instructions.md` is the text source, `state.disclaimerShownAt` is the automatic-display gate, and `state.noticeLog` records each actual display. A non-null timestamp suppresses automatic redisplay during normal resume.
 * Resume Sequence step 4 checks for partially written bucket analyses, standards mapping tables, STRIDE threat tables, and backlog work item drafts in addition to the generic per-phase outputs.
 * Post-Summarization Recovery step 3 reconstructs context from the security plan markdown referenced in `securityPlanFile` and from existing bucket analyses, standards mappings, and threat tables rather than from prior chat history.
 
@@ -234,7 +236,7 @@ The planner inherits the 3-5 per turn cadence, emoji checklist, and seven rules 
 
 Activate `rpi-research` only for bounded standards, framework, CVE, verification, or threat-intelligence questions not covered by a loaded security skill. Supply the topic and security-decision purpose; security authors, reviewers, control owners, and downstream consumers as the audience and intended use; explicit questions and evidence criteria; technology, cloud, framework, jurisdiction, version, date, and source scope plus non-goals; risk, licensing, privacy, deadline, phase-gate, and write-boundary constraints; supplied state, component, bucket, data-flow, standards, threat, and user evidence; requested outputs; and output mode (`analysis`, `audit`, or `comparison`).
 
-Explicitly identify `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root and require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill owns the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and synthesis.
+Explicitly identify `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root.
 
 The Security Planner reads the completed primary research artifact and synthesizes applicable findings into standards mappings, threat tables, plan state, and phase outputs. Preserve all gates. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop evidence-dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain standards or threat claims from training data.
 

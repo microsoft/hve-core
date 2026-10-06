@@ -13,21 +13,21 @@ tags:
   - reference
   - phases
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-09-10
 ms.topic: reference
 estimated_reading_time: 8
 ---
 
 ## Phase Summary
 
-| Phase | Name                        | NIST AI RMF      | Key output (all in `rai-plan.md`)                                                 | State fields updated                                    |
-|-------|-----------------------------|------------------|-----------------------------------------------------------------------------------|---------------------------------------------------------|
-| 1     | AI System Scoping           | Govern + Map     | `## System Definition` and `## Stakeholder Impact` sections                       | `currentPhase`, `entryMode`, `securityPlanRef`          |
-| 2     | Risk Classification         | Govern           | `### Risk Classification Screening` subsection under `## System Definition`       | `riskClassification`                                    |
-| 3     | RAI Standards Mapping       | Govern + Measure | `## Standards Mapping` section                                                    | `standardsMapped`                                       |
-| 4     | RAI Security Model Analysis | Measure          | `## Threat Addendum` section                                                      | `securityModelAnalysisStarted`, `raiThreatCount`        |
-| 5     | RAI Impact Assessment       | Manage           | `## Control Surface Catalog`, `## Evidence Register`, and `## Tradeoffs` sections | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
-| 6     | Review and Handoff          | Manage           | `## Review Summary` section, backlog items                                        | `handoffGenerated`                                      |
+| Phase | Name                        | NIST AI RMF      | Key output (all in `rai-plan.md`)                                                 | State fields updated                                        |
+|-------|-----------------------------|------------------|-----------------------------------------------------------------------------------|-------------------------------------------------------------|
+| 1     | AI System Scoping           | Govern + Map     | `## System Definition` and `## Stakeholder Impact` sections                       | `currentPhase`, `entryMode`, `securityPlanRef`, `preflight` |
+| 2     | Risk Classification         | Govern           | `### Risk Classification Screening` subsection under `## System Definition`       | `riskClassification`                                        |
+| 3     | RAI Standards Mapping       | Govern + Measure | `## Standards Mapping` section                                                    | `standardsMapped`                                           |
+| 4     | RAI Security Model Analysis | Measure          | `## Threat Addendum` section                                                      | `securityModelAnalysisStarted`, `raiThreatCount`            |
+| 5     | RAI Impact Assessment       | Manage           | `## Control Surface Catalog`, `## Evidence Register`, and `## Tradeoffs` sections | `impactAssessmentGenerated`, `evidenceRegisterComplete`     |
+| 6     | Review and Handoff          | Manage           | `## Review Summary` section, backlog items                                        | `handoffGenerated`                                          |
 
 ## Phase 1: AI System Scoping
 
@@ -42,10 +42,18 @@ Establish the AI system's boundaries, identify all AI and ML components, and map
 * User answers to scoping questions (capture mode)
 * PRD or BRD artifacts (from-prd mode)
 * Security plan `state.json` and `aiComponents` array (from-security-plan mode)
+* Optional document or Mural templates
 
 ### Process
 
-The agent asks up to 7 questions per turn covering:
+Before beginning the scoping interview, the agent resolves the project slug and output preferences, then runs the Phase 1 preflight sequence:
+
+1. Discover optional document and Mural templates. Validate and persist references by kind without URLs, credentials, or signed query data.
+2. When templates exist, create assessment-content.md for their structure, output requirements, stable IDs, and recovery mappings. Persist a non-empty stableIdMap within every document or Mural template object. Treat placeholders as layout rather than content capacity.
+3. Discover project materials and evidence. Inspect PRD or security-plan content here, and inspect recent communications only when WorkIQ is available and the user grants permission.
+4. When templates exist, populate assessment-content.md, record evidence gaps, and expand it as needed while keeping rai-plan.md authoritative. Stable-ID and evidence-gap handling are applied during this step.
+
+After preflight, the agent asks up to 7 questions per turn covering:
 
 * AI system purpose and intended outcomes
 * Technology stack, model types, and frameworks
@@ -60,14 +68,16 @@ In `from-security-plan` mode, AI components from the security plan are pre-popul
 
 * `rai-plan.md` `## System Definition` section: AI system inventory, component catalog, and deployment context (with an `### AI Component Inventory` subsection)
 * `rai-plan.md` `## Stakeholder Impact` section: Stakeholder roles, power dynamics, and impact pathways
+* `assessment-content.md` (when templates are supplied)
 
 ### State Transitions
 
-| Field             | Before          | After                        |
-|-------------------|-----------------|------------------------------|
-| `currentPhase`    | 1               | 2                            |
-| `entryMode`       | set during init | unchanged                    |
-| `securityPlanRef` | null            | path (if from-security-plan) |
+| Field             | Before          | After                                                |
+|-------------------|-----------------|------------------------------------------------------|
+| `currentPhase`    | 1               | 2                                                    |
+| `entryMode`       | set during init | unchanged                                            |
+| `securityPlanRef` | null            | path (if from-security-plan)                         |
+| `preflight`       | null            | `{ templates: [...], assessmentContentFile: "..." }` |
 
 ## Phase 2: Risk Classification
 

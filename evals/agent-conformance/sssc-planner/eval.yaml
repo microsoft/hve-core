@@ -38,7 +38,7 @@ stimuli:
     name: judge-build-provenance-gap
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: build-provenance-gap-completion-budget
     turn: 1
     config:
       max: 120s
@@ -64,7 +64,7 @@ stimuli:
     name: judge-dependency-maintenance-pinning-gap
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: dependency-maintenance-pinning-gap-completion-budget
     turn: 1
     config:
       max: 120s
@@ -89,7 +89,7 @@ stimuli:
     name: judge-workflow-token-permissions-overbroad
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: workflow-token-permissions-overbroad-completion-budget
     turn: 1
     config:
       max: 120s
@@ -114,7 +114,7 @@ stimuli:
     name: judge-artifact-signing-and-sbom-gap
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: artifact-signing-and-sbom-gap-completion-budget
     turn: 1
     config:
       max: 120s
@@ -140,7 +140,7 @@ stimuli:
     name: judge-missing-evidence-handling-unverified-claim
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: missing-evidence-handling-unverified-claim-completion-budget
     turn: 1
     config:
       max: 120s
@@ -166,7 +166,7 @@ stimuli:
     name: judge-phase5-prioritized-backlog-handoff
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase5-prioritized-backlog-handoff-completion-budget
     turn: 1
     config:
       max: 120s
@@ -195,7 +195,7 @@ stimuli:
     config:
       substring: CAUTION
   - type: wall-time
-    name: completion-budget
+    name: startup-disclaimer-and-standards-attribution-comple-8958e448
     turn: 1
     config:
       max: 120s
@@ -221,7 +221,7 @@ stimuli:
     name: judge-phase1-curiosity-first-invitation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase1-curiosity-first-invitation-completion-budget
     turn: 1
     config:
       max: 120s
@@ -246,7 +246,7 @@ stimuli:
     name: judge-links-existing-security-plan-context
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: links-existing-security-plan-context-completion-budget
     turn: 1
     config:
       max: 120s
@@ -269,7 +269,7 @@ stimuli:
     name: judge-phase1-hard-gate-requires-confirmation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase1-hard-gate-requires-confirmation-completion-budget
     turn: 1
     config:
       max: 120s

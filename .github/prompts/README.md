@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-08-01
+ms.date: 2026-10-03
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -39,14 +39,14 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you ne
 
 ### Source Control & Commit Quality
 
-* **[Git Commit (Stage + Commit)](./hve-core/git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
+* **[Git Commit (Select + Commit)](./hve-core/git-commit.prompt.md)** - Stages selected whole paths and confirms the exact staged set before creating a Conventional Commit
 * **[Git Commit Message Generator](./hve-core/git-commit-message.prompt.md)** - Generates a compliant commit message for currently staged changes
 * **[Git Merge](./hve-core/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
 * **[Git Setup](./hve-core/git-setup.prompt.md)** - Verification-first Git configuration assistant
 
 ### Pull Requests & Code Review
 
-* **[Pull Request](./hve-core/pull-request.prompt.md)** - Generate pull request descriptions from branch diffs
+* **[Pull Request](../skills/hve-core/pull-request/SKILL.md)** - Prepare, create, or update a concise pull request with targeted preflight checks
 * **[PR Review](./hve-core/pr-review.prompt.md)** - Review a pull request or local change set via the consolidated Code Review agent
 
 ### Prompt Engineering & Evaluation
@@ -54,7 +54,7 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you ne
 * **[Vally Test Write](./hve-core/vally-test-write.prompt.md)** - Author Vally conformance test stimuli for an existing prompt, instructions, agent, or skill
 * **[Evals Import](./hve-core/evals-import.prompt.md)** - Import a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe
 
-Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to `hve-builder`; they are not prompt files or independent lifecycle owners. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
+Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
 
 ### Backlog & Work Item Management
 
@@ -124,7 +124,6 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 * **[PowerPoint](./pptx.prompt.md)** - Create, update, or manage PowerPoint slide decks
 * **[cspell Config](./experimental/cspell-config.prompt.md)** - Create or update the project cspell configuration with project words and ignores
-* **[Graph Research](./experimental/graph-research.prompt.md)** - Research a codebase using an existing graphify knowledge graph with audit-tagged evidence
 
 ## Prompts vs Instructions vs Custom Agents
 
@@ -144,7 +143,7 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)
 9. **Checking build status?** Use [ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)
 10. **Creating or updating tracker items?** Use the [Backlog Execute](../skills/project-planning/backlog-execute/SKILL.md) skill
-11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
+11. **Working on PRs?** Use the [Pull Request](../skills/hve-core/pull-request/SKILL.md) skill
 12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
 13. **Discovering or triaging a backlog?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `discover` or `triage` mode
 14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/project-planning/gitlab/SKILL.md) for setup and command guidance

@@ -28,10 +28,8 @@ Runs the Jira skill CLI in one confirmed project. Applies a dispatched Jira oper
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Backlog Manager dispatches this worker to execute confirmed Jira operations or obtain Jira reads unavailable to the parent. It uses the Jira skill CLI for the specified project and does not reselect the platform or destination. Its terminal usage is restricted by its operating policy, not a general-purpose shell workflow.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a confirmed project key, sanitized issue-update operations, autonomy and approval evidence, and logging references. The worker invokes the supported Jira CLI operations and returns structured issue results. It stops for missing configuration or unsupported actions rather than running another CLI, exposing credentials, or extending the operation set.

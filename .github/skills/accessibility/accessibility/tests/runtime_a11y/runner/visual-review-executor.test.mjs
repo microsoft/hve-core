@@ -10,11 +10,52 @@ import { test } from 'node:test';
 
 import {
   buildVisualReviewPlan,
+  buildVisualReviewArtifactSegment,
   buildDeterministicMeasurementEnvelope,
   captureVisualReviewEvidence,
   resolveBrowserVersion,
   resolveRouteUrl,
 } from '../../../scripts/runtime_a11y/runner/visual-review-executor.mjs';
+
+test('buildVisualReviewArtifactSegment uses validated route, surface, and state IDs', () => {
+  assert.equal(
+    buildVisualReviewArtifactSegment({ path: '/search', surfaceId: 'search-results' }, 'zoom-200').join('/'),
+    'search/search-results/zoom-200',
+  );
+  assert.throws(
+    () => buildVisualReviewArtifactSegment({ surfaceId: 'search/results' }, 'zoom-200'),
+    /Surface ID/,
+  );
+  assert.throws(
+    () => buildVisualReviewArtifactSegment({ surfaceId: 'search-results' }, 'zoom 200'),
+    /State ID/,
+  );
+  assert.notDeepEqual(
+    buildVisualReviewArtifactSegment({ surfaceId: 'home-search' }, 'default'),
+    buildVisualReviewArtifactSegment({ surfaceId: 'home' }, 'search-default'),
+  );
+});
+
+test('buildVisualReviewArtifactSegment keeps distinct routes apart when surface and state match', () => {
+  const first = buildVisualReviewArtifactSegment({ path: '/checkout/step-1', surfaceId: 'checkout' }, 'desktop');
+  const second = buildVisualReviewArtifactSegment({ path: '/checkout/step-2', surfaceId: 'checkout' }, 'desktop');
+  assert.notDeepEqual(first, second);
+  assert.notEqual(first.join(':'), second.join(':'));
+
+  // Routes that omit surfaceId all fall back to 'surface', so the route segment is the only separator.
+  const anonymousFirst = buildVisualReviewArtifactSegment({ path: '/alpha' }, 'desktop');
+  const anonymousSecond = buildVisualReviewArtifactSegment({ path: '/beta' }, 'desktop');
+  assert.notDeepEqual(anonymousFirst, anonymousSecond);
+
+  assert.deepEqual(
+    buildVisualReviewArtifactSegment({ routeId: 'explicit-id', path: '/ignored', surfaceId: 'home' }, 'desktop'),
+    ['explicit-id', 'home', 'desktop'],
+  );
+  assert.deepEqual(
+    buildVisualReviewArtifactSegment({ path: '/' }, 'desktop'),
+    ['root', 'surface', 'desktop'],
+  );
+});
 
 test('resolveBrowserVersion uses the configured value or synchronous browser API', () => {
   const browser = {
@@ -103,7 +144,7 @@ test('captureVisualReviewEvidence writes a Playwright trace zip artifact and des
       `visual review capture did not succeed: ${outcome?.detail ?? 'no detail recorded'}`,
     );
 
-    const artifactDir = path.join(runRoot, 'artifacts', `${run.route.replace(/^\//, '').replace(/[^a-zA-Z0-9._-]+/g, '-')}-desktop`);
+    const artifactDir = path.join(runRoot, 'artifacts', 'root', 'home', 'desktop');
     const tracePath = path.join(artifactDir, 'trace.zip');
     const measurementPath = path.join(artifactDir, 'measurements.json');
 

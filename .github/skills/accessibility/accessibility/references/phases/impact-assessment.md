@@ -85,7 +85,7 @@ methodAdequacy: decides          # decides | informs (per the skill's method-ade
 
 ### Cross-Planner Shared Fields
 
-The following fields share names, semantics, and value spaces with the Security Planner evidence register (see `.github/skills/project-planning/security-planning/references/stride-model.md`):
+The following fields share names, semantics, and value spaces with the Security Planner evidence register (see the `security-planning` skill's `references/stride-model.md`):
 
 | Field              | Purpose                                                               |
 |--------------------|-----------------------------------------------------------------------|
@@ -185,7 +185,7 @@ autonomyTier: supervised         # manual | supervised | autonomous
 
 ### Autonomy Tier Semantics
 
-The `autonomyTier` value controls how the Phase 6 handoff treats the seed. Semantics are inherited from `.github/skills/shared/backlog-templates/SKILL.md`:
+The `autonomyTier` value controls how the Phase 6 handoff treats the seed. Semantics are inherited from the `backlog-templates` skill:
 
 * `manual` — write the seed to a handoff file only; do not create a work item via MCP tools
 * `supervised` — present the seed to the user in a review batch before MCP creation; this is the default for new sessions

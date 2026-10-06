@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "requirements": [
+    {
+      "requirementId": "req-keyboard",
+      "framework": "wcag-22",
+      "journeyIds": ["journey-read"],
+      "freshnessRule": "Invalidate on interaction changes",
+      "methods": [
+        {
+          "method": "playwright",
+          "probe": "project-playwright",
+          "disposition": "decides",
+          "proposition": "The task completes by keyboard"
+        },
+        {
+          "method": "screen-reader",
+          "probe": "qualified-human",
+          "disposition": "decides",
+          "proposition": "The task is understandable with a screen reader",
+          "human": true
+        }
+      ]
+    }
+  ]
+}

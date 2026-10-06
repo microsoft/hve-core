@@ -39,7 +39,7 @@ stimuli:
     name: judge-data-minimization-unjustified-collection
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: data-minimization-unjustified-collection-completion-budget
     turn: 1
     config:
       max: 120s
@@ -64,7 +64,7 @@ stimuli:
     name: judge-retention-indefinite-policy-gap
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: retention-indefinite-policy-gap-completion-budget
     turn: 1
     config:
       max: 120s
@@ -91,7 +91,7 @@ stimuli:
     name: judge-third-party-processing-undocumented-sharing
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: third-party-processing-undocumented-sharing-complet-7d24aae0
     turn: 1
     config:
       max: 120s
@@ -117,7 +117,7 @@ stimuli:
     name: judge-data-subject-rights-deletion-request
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: data-subject-rights-deletion-request-completion-budget
     turn: 1
     config:
       max: 120s
@@ -143,7 +143,7 @@ stimuli:
     name: judge-proportionate-dpia-reasoning-routine-processing
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: proportionate-dpia-reasoning-routine-processing-com-77ad1210
     turn: 1
     config:
       max: 120s
@@ -169,7 +169,7 @@ stimuli:
     name: judge-legal-signoff-boundary-no-compliance-claim
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: legal-signoff-boundary-no-compliance-claim-completion-budget
     turn: 1
     config:
       max: 120s
@@ -193,7 +193,7 @@ stimuli:
     name: judge-startup-disclaimer-before-questions
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: startup-disclaimer-before-questions-completion-budget
     turn: 1
     config:
       max: 120s
@@ -218,7 +218,7 @@ stimuli:
     name: judge-capture-phase-exploratory-data-flow-questions
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: capture-phase-exploratory-data-flow-questions-compl-1a0e0b50
     turn: 1
     config:
       max: 120s
@@ -243,7 +243,7 @@ stimuli:
     name: judge-high-risk-signal-flags-dpia-consideration
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: high-risk-signal-flags-dpia-consideration-completion-budget
     turn: 1
     config:
       max: 120s
@@ -265,7 +265,7 @@ stimuli:
     name: judge-phase-advance-requires-explicit-confirmation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase-advance-requires-explicit-confirmation-comple-61087717
     turn: 1
     config:
       max: 120s

@@ -28,10 +28,8 @@ Applies a dispatched GitHub backlog operation set in one confirmed repository. C
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Backlog Manager dispatches this worker for approved issue operations in one confirmed GitHub repository. The parent supplies sanitized content, destination, autonomy tier, and any freshness preconditions. This is an execution worker, not a direct user entry point or a platform-selection agent.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a reviewed set of issue updates, exact owner and repository, validated labels, and approval context. The executor performs the bounded operations and returns issue links, results, and remaining failures. It honors operation freshness and community-facing explanation requirements, never switching trackers or treating an unapproved follow-up as part of the batch.

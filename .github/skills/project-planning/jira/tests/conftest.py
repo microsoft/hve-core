@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import io
+import pathlib
 import urllib.error
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -73,7 +74,10 @@ HttpErrorFactory = Callable[[str, int, str], urllib.error.HTTPError]
 
 
 @pytest.fixture(autouse=True)
-def reset_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+def reset_environment(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
     """Seed a stable environment for Jira tests."""
     monkeypatch.setenv("JIRA_BASE_URL", TEST_BASE_URL)
     monkeypatch.delenv("JIRA_PAT", raising=False)
@@ -81,6 +85,7 @@ def reset_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("JIRA_API_TOKEN", raising=False)
     monkeypatch.delenv("JIRA_CLOUD_TOKEN_MODE", raising=False)
     monkeypatch.delenv("JIRA_CLOUD_ID", raising=False)
+    monkeypatch.setattr(jira, "_default_env_file", lambda: tmp_path / ".jira.env")
 
 
 @pytest.fixture

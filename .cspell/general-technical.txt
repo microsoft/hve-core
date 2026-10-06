@@ -77,6 +77,7 @@ backlink
 backlinks
 backticked
 bargauge
+basehead
 beforeall
 blockchain
 chatbot
@@ -827,6 +828,7 @@ purescale
 pyodbc
 pypackages
 pydantic
+pyjwt
 pypi
 pytest
 Pythonic
@@ -852,6 +854,7 @@ rbsc
 rcnn
 rdbms
 rdma
+readback
 readonly
 rearchitect
 rearchitected

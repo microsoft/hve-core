@@ -61,8 +61,8 @@ Each retained RPI phase consumes DT context at a different point. Provide artifa
 |-----------------|-----------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
 | `rpi-research`  | All DT exit artifacts: problem statements, tested concepts, hi-fi specs, stakeholder maps, constraint inventories, user testing results | Research-ready topic referencing DT artifacts by path |
 | `rpi-plan`      | Receives DT context through the `rpi-research` output                                                                                   | Research artifact path                                |
-| `rpi-implement` | Receives DT context through the approved `rpi-plan` output                                                                              | Plan and phase-details paths                          |
-| `rpi-review`    | Evaluates implementation evidence against inherited DT context and constraints                                                          | Plan, phase details, changes, and validation evidence |
+| `rpi-implement` | Receives DT context through the approved `rpi-plan` output                                                                              | Task-centered plan path                               |
+| `rpi-review`    | Evaluates implementation evidence against inherited DT context and constraints                                                          | Plan, changes, and validation evidence                |
 
 Frame the DT outputs as the research topic and reference artifact paths so `rpi-research` can read DT evidence directly rather than relying only on summarized context. The resulting context flows through `rpi-plan`, `rpi-implement`, and `rpi-review`.
 

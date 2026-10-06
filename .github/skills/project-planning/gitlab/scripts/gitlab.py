@@ -35,7 +35,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Callable, NoReturn, cast
+from typing import Any, Callable, cast
 
 sys.dont_write_bytecode = True
 
@@ -196,12 +196,16 @@ class AuthContext:
 class GitLabError(Exception):
     """Base CLI failure carrying an exit code and a redacted string form.
 
-    Library-level helpers raise this instead of calling :func:`die`. A helper
-    that promises a return value must end every path in an explicit ``return``
-    or ``raise``; relying on ``die`` never returning makes the contract
-    unverifiable by static analysis and turns a future change to ``die`` into a
-    silent ``None`` return. :func:`die` stays for the argument-parsing and
-    command-dispatch layer, where no value is promised.
+    This is the only failure mechanism in the module. Every error path raises
+    this class or a subclass; nothing calls ``sys.exit`` or raises
+    ``SystemExit`` outside the ``__main__`` guard. A single mechanism keeps the
+    contract verifiable by static analysis, guarantees that a helper promising
+    a return value cannot fall through to a silent ``None``, and gives
+    :func:`main` one place to emit and translate a failure.
+
+    ``main`` catches this class, emits the redacted message once through
+    :func:`_emit`, and returns :attr:`exit_code` as the process status. Raising
+    sites therefore do not emit; the message travels on the exception.
     """
 
     def __init__(self, message: str = "", exit_code: int = EXIT_FAILURE) -> None:
@@ -307,21 +311,6 @@ def _response_request_id(response: Any) -> str:
     return ""
 
 
-def die(message: str, exit_code: int = EXIT_FAILURE) -> NoReturn:
-    """Emit a redacted error and raise SystemExit.
-
-    Args:
-        message: Error text. Routed through ``_emit`` so it is redacted and
-            mirrored to the module logger before reaching stderr.
-        exit_code: Process exit code.
-
-    Returns:
-        Never returns. The annotation is kept simple for CLI usage.
-    """
-    _emit(f"error: {message}")
-    raise SystemExit(exit_code)
-
-
 def _redact(text: str) -> str:
     """Remove common secret-looking values from any text bound for output."""
     if not text:
@@ -424,13 +413,13 @@ def _sanitize_remote_url(remote_url: str) -> str:
 def _validate_project_path(path: str) -> None:
     """Reject project paths that contain traversal or separator escapes."""
     if not path:
-        die("invalid project path", EXIT_USAGE)
+        raise GitLabError("invalid project path", EXIT_USAGE)
     if any(char in path for char in {"%", "\\"}):
-        die("invalid project path", EXIT_USAGE)
+        raise GitLabError("invalid project path", EXIT_USAGE)
 
     for segment in path.split("/"):
         if segment in {"", ".", ".."}:
-            die("invalid project path", EXIT_USAGE)
+            raise GitLabError("invalid project path", EXIT_USAGE)
 
 
 def _summarize_error_body(raw_error: str) -> str:
@@ -492,7 +481,9 @@ def _audit_attempt(actor: str, method: str, resource: str) -> None:
     try:
         _audit_write(_audit_event(actor, method, resource, "attempt"))
     except OSError as exc:
-        die(f"audit log write failed; refusing to proceed: {exc}", EXIT_FAILURE)
+        raise GitLabError(
+            f"audit log write failed; refusing to proceed: {exc}", EXIT_FAILURE
+        ) from exc
 
 
 def _audit_outcome(
@@ -535,8 +526,10 @@ def _oauth_audit_attempt(operation: str) -> None:
     """Write an OAuth attempt before egress, failing closed when configured."""
     try:
         _audit_write(_oauth_audit_event(operation, "attempt"))
-    except OSError:
-        die("audit log write failed; refusing OAuth request", EXIT_FAILURE)
+    except OSError as exc:
+        raise GitLabError(
+            "audit log write failed; refusing OAuth request", EXIT_FAILURE
+        ) from exc
 
 
 def _oauth_audit_outcome(
@@ -567,16 +560,16 @@ def require_base_environment() -> None:
 
     gitlab_url = os.environ.get("GITLAB_URL", "")
     if not gitlab_url:
-        die("GITLAB_URL is not set", EXIT_USAGE)
+        raise GitLabError("GITLAB_URL is not set", EXIT_USAGE)
     try:
         gitlab_url = _normalize_base_url(gitlab_url)
     except ValueError as error:
-        die(str(error), EXIT_USAGE)
+        raise GitLabError(str(error), EXIT_USAGE) from error
     parsed_url = urllib.parse.urlsplit(gitlab_url)
     if parsed_url.scheme == "http":
         allow_insecure = os.environ.get("GITLAB_ALLOW_INSECURE", "").strip() == "1"
         if not _is_loopback(parsed_url.hostname) or not allow_insecure:
-            die(
+            raise GitLabError(
                 "GITLAB_URL must use https:// for non-loopback hosts; "
                 "plaintext http is allowed only for loopback hosts when "
                 "GITLAB_ALLOW_INSECURE=1",
@@ -598,18 +591,20 @@ def require_environment() -> None:
     if not mode:
         mode = "oauth"
     if mode not in {"oauth", "legacy-token"}:
-        die("GITLAB_AUTH_MODE must be oauth or legacy-token", EXIT_USAGE)
+        raise GitLabError("GITLAB_AUTH_MODE must be oauth or legacy-token", EXIT_USAGE)
     configured_token = os.environ.get("GITLAB_TOKEN", "")
     if mode == "legacy-token":
         if not configured_token:
-            die("GITLAB_TOKEN is not set for legacy-token mode", EXIT_USAGE)
+            raise GitLabError(
+                "GITLAB_TOKEN is not set for legacy-token mode", EXIT_USAGE
+            )
         auth_context = AuthContext(mode=mode, issuer=gitlab_url, token=configured_token)
     else:
         if configured_token:
-            die("GITLAB_TOKEN must not be set in oauth mode", EXIT_USAGE)
+            raise GitLabError("GITLAB_TOKEN must not be set in oauth mode", EXIT_USAGE)
         client_id = os.environ.get("GITLAB_OAUTH_CLIENT_ID", "").strip()
         if not client_id:
-            die(
+            raise GitLabError(
                 "GITLAB_OAUTH_CLIENT_ID is not set. Configure OAuth and run "
                 "auth login, or explicitly set GITLAB_AUTH_MODE=legacy-token "
                 "with GITLAB_TOKEN",
@@ -621,14 +616,16 @@ def require_environment() -> None:
             store = credentials.load_store(store_path)
             profile = credentials.get_profile(store, profile_name)
         except credentials.CredentialError as exc:
-            die(str(exc), EXIT_USAGE)
+            raise GitLabError(str(exc), EXIT_USAGE) from exc
         if profile["issuer"] != gitlab_url or profile["client_id"] != client_id:
-            die(
+            raise GitLabError(
                 "GitLab OAuth profile does not match this instance and client ID",
                 EXIT_USAGE,
             )
         if not profile["usable"]:
-            die("GitLab OAuth profile is unusable; run auth login", EXIT_USAGE)
+            raise GitLabError(
+                "GitLab OAuth profile is unusable; run auth login", EXIT_USAGE
+            )
         auth_context = AuthContext(
             mode=mode,
             issuer=gitlab_url,
@@ -706,7 +703,7 @@ def _oauth_profile(context: AuthContext) -> credentials.Profile:
 def _auth_headers() -> dict[str, str]:
     """Return the header for the resolved authentication mode."""
     if auth_context is None:
-        die("GitLab authentication is not configured", EXIT_FAILURE)
+        raise GitLabError("GitLab authentication is not configured", EXIT_FAILURE)
     if auth_context.mode == "legacy-token":
         return {"PRIVATE-TOKEN": str(auth_context.token)}
     profile = _oauth_profile(auth_context)
@@ -716,7 +713,7 @@ def _auth_headers() -> dict[str, str]:
 def _required_oauth_client_id(context: AuthContext) -> str:
     """Return the trusted OAuth client ID or fail on an incomplete context."""
     if not context.client_id:
-        die("GitLab OAuth context is missing a client ID", EXIT_FAILURE)
+        raise GitLabError("GitLab OAuth context is missing a client ID", EXIT_FAILURE)
     return context.client_id
 
 
@@ -818,10 +815,14 @@ def project() -> str:
             text=True,
             timeout=REQUEST_TIMEOUT,
         ).strip()
-    except subprocess.TimeoutExpired:
-        die("timed out resolving git remote for project", EXIT_FAILURE)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        die("GITLAB_PROJECT not set and no git remote found", EXIT_USAGE)
+    except subprocess.TimeoutExpired as exc:
+        raise GitLabError(
+            "timed out resolving git remote for project", EXIT_FAILURE
+        ) from exc
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        raise GitLabError(
+            "GITLAB_PROJECT not set and no git remote found", EXIT_USAGE
+        ) from exc
 
     sanitized_remote_url = _sanitize_remote_url(remote_url)
     if remote_url.startswith("git@"):
@@ -830,11 +831,13 @@ def project() -> str:
         parsed_remote = urllib.parse.urlsplit(remote_url)
         path = parsed_remote.path.lstrip("/")
     else:
-        die(f"cannot parse git remote URL: {sanitized_remote_url}", EXIT_USAGE)
+        raise GitLabError(
+            f"cannot parse git remote URL: {sanitized_remote_url}", EXIT_USAGE
+        )
 
     path = strip_git_suffix(path)
     if not path:
-        die(
+        raise GitLabError(
             f"cannot extract project path from remote: {sanitized_remote_url}",
             EXIT_USAGE,
         )
@@ -845,10 +848,10 @@ def project() -> str:
 def validate_numeric_id(value: str) -> None:
     """Validate that a CLI argument is a numeric identifier."""
     if not re.fullmatch(r"\d+", value):
-        die(f"expected numeric ID, got: {value}", EXIT_USAGE)
+        raise GitLabError(f"expected numeric ID, got: {value}", EXIT_USAGE)
     numeric_value = int(value)
     if numeric_value <= 0 or numeric_value > MAX_NUMERIC_ID:
-        die(
+        raise GitLabError(
             f"expected numeric ID between 1 and {MAX_NUMERIC_ID}, got: {value}",
             EXIT_USAGE,
         )
@@ -861,10 +864,12 @@ def validate_positive_int(
 ) -> None:
     """Validate that a CLI argument is a positive integer string."""
     if not re.fullmatch(r"\d+", value):
-        die(f"{label} must be a positive integer, got: {value}", EXIT_USAGE)
+        raise GitLabError(
+            f"{label} must be a positive integer, got: {value}", EXIT_USAGE
+        )
     numeric_value = int(value)
     if numeric_value <= 0 or numeric_value > upper_bound:
-        die(
+        raise GitLabError(
             f"{label} must be a positive integer between 1 and "
             f"{upper_bound}, got: {value}",
             EXIT_USAGE,
@@ -874,13 +879,13 @@ def validate_positive_int(
 def validate_state(value: str) -> None:
     """Validate that a merge request state is allowed."""
     if value not in VALID_MR_STATES:
-        die(f"invalid merge request state: {value}", EXIT_USAGE)
+        raise GitLabError(f"invalid merge request state: {value}", EXIT_USAGE)
 
 
 def validate_ref(value: str) -> None:
     """Validate that a pipeline ref matches the supported pattern."""
     if not REF_PATTERN.fullmatch(value):
-        die(f"invalid ref: {value}", EXIT_USAGE)
+        raise GitLabError(f"invalid ref: {value}", EXIT_USAGE)
 
 
 def _read_capped(response: Any, limit: int, *, fail_on_limit: bool = True) -> bytes:
@@ -889,7 +894,7 @@ def _read_capped(response: Any, limit: int, *, fail_on_limit: bool = True) -> by
     if chunk is None:
         return b""
     if len(chunk) > limit and fail_on_limit:
-        die("response body exceeds size limit", EXIT_FAILURE)
+        raise GitLabError("response body exceeds size limit", EXIT_FAILURE)
     return chunk[:limit]
 
 
@@ -921,16 +926,34 @@ def _request_bytes(
                 content_type = ""
                 if hasattr(response, "headers"):
                     content_type = str(response.headers.get("Content-Type", "") or "")
-                result = _read_capped(
-                    response,
-                    MAX_BODY_BYTES,
-                    fail_on_limit=require_json,
-                )
+                try:
+                    result = _read_capped(
+                        response,
+                        MAX_BODY_BYTES,
+                        fail_on_limit=require_json,
+                    )
+                except GitLabError as error:
+                    raise GitLabAPIError(
+                        method=method,
+                        resource=_scrub_url(url),
+                        message=str(error),
+                        request_id=_response_request_id(response),
+                    ) from error
                 if require_json and result.strip():
                     if not content_type:
-                        die("unexpected Content-Type: <missing>", EXIT_FAILURE)
+                        raise GitLabAPIError(
+                            method=method,
+                            resource=_scrub_url(url),
+                            message="unexpected Content-Type: <missing>",
+                            request_id=_response_request_id(response),
+                        )
                     if not content_type.lower().startswith("application/json"):
-                        die(f"unexpected Content-Type: {content_type}", EXIT_FAILURE)
+                        raise GitLabAPIError(
+                            method=method,
+                            resource=_scrub_url(url),
+                            message=f"unexpected Content-Type: {content_type}",
+                            request_id=_response_request_id(response),
+                        )
                 _audit_outcome(audit_actor, method, url, "success")
                 return result
         except urllib.error.HTTPError as error:
@@ -1035,7 +1058,9 @@ def parse_fields(arguments: list[str]) -> list[str]:
         current = arguments[index]
         if current == "--fields":
             if index + 1 >= len(arguments):
-                die("usage: --fields requires a comma-separated value list", EXIT_USAGE)
+                raise GitLabError(
+                    "usage: --fields requires a comma-separated value list", EXIT_USAGE
+                )
             selected_fields = arguments[index + 1].split(",")
             index += 2
             continue
@@ -1110,7 +1135,7 @@ def cmd_mr_list(args: list[str]) -> None:
 def cmd_mr_get(args: list[str]) -> None:
     """Get one merge request."""
     if not args:
-        die("usage: gitlab mr-get <mr-iid>", EXIT_USAGE)
+        raise GitLabError("usage: gitlab mr-get <mr-iid>", EXIT_USAGE)
     merge_request_iid = args[0]
     validate_numeric_id(merge_request_iid)
     data = request(
@@ -1126,11 +1151,11 @@ def cmd_mr_create(args: list[str]) -> None:
     """Create a merge request from JSON input."""
     raw_payload = args[0] if args else sys.stdin.read(MAX_BODY_BYTES + 1)
     if not args and len(raw_payload) > MAX_BODY_BYTES:
-        die("request body exceeds size limit", EXIT_FAILURE)
+        raise GitLabError("request body exceeds size limit", EXIT_FAILURE)
     raw_payload = raw_payload.strip()
     usage = "usage: gitlab mr-create <json> or pipe JSON to stdin"
     if not raw_payload:
-        die(usage, EXIT_USAGE)
+        raise GitLabError(usage, EXIT_USAGE)
     request(
         "POST",
         f"{api_url}/projects/{project()}/merge_requests",
@@ -1141,16 +1166,16 @@ def cmd_mr_create(args: list[str]) -> None:
 def cmd_mr_update(args: list[str]) -> None:
     """Update a merge request from JSON input."""
     if not args:
-        die("usage: gitlab mr-update <mr-iid> <json>", EXIT_USAGE)
+        raise GitLabError("usage: gitlab mr-update <mr-iid> <json>", EXIT_USAGE)
     merge_request_iid = args[0]
     validate_numeric_id(merge_request_iid)
     raw_payload = args[1] if len(args) > 1 else sys.stdin.read(MAX_BODY_BYTES + 1)
     if len(args) <= 1 and len(raw_payload) > MAX_BODY_BYTES:
-        die("request body exceeds size limit", EXIT_FAILURE)
+        raise GitLabError("request body exceeds size limit", EXIT_FAILURE)
     raw_payload = raw_payload.strip()
     usage = "usage: gitlab mr-update <mr-iid> <json> or pipe JSON to stdin"
     if not raw_payload:
-        die(usage, EXIT_USAGE)
+        raise GitLabError(usage, EXIT_USAGE)
     request(
         "PUT",
         f"{api_url}/projects/{project()}/merge_requests/{merge_request_iid}",
@@ -1161,15 +1186,15 @@ def cmd_mr_update(args: list[str]) -> None:
 def cmd_mr_comment(args: list[str]) -> None:
     """Create a merge request note."""
     if not args:
-        die("usage: gitlab mr-comment <mr-iid> <body>", EXIT_USAGE)
+        raise GitLabError("usage: gitlab mr-comment <mr-iid> <body>", EXIT_USAGE)
     merge_request_iid = args[0]
     validate_numeric_id(merge_request_iid)
     body = args[1] if len(args) > 1 else sys.stdin.read(MAX_BODY_BYTES + 1)
     if len(args) <= 1 and len(body) > MAX_BODY_BYTES:
-        die("request body exceeds size limit", EXIT_FAILURE)
+        raise GitLabError("request body exceeds size limit", EXIT_FAILURE)
     body = body.strip()
     if not body:
-        die(
+        raise GitLabError(
             "usage: gitlab mr-comment <mr-iid> <body> or pipe body to stdin",
             EXIT_USAGE,
         )
@@ -1183,7 +1208,7 @@ def cmd_mr_comment(args: list[str]) -> None:
 def cmd_mr_notes(args: list[str]) -> None:
     """List merge request notes."""
     if not args:
-        die("usage: gitlab mr-notes <mr-iid> [max]", EXIT_USAGE)
+        raise GitLabError("usage: gitlab mr-notes <mr-iid> [max]", EXIT_USAGE)
     merge_request_iid = args[0]
     validate_numeric_id(merge_request_iid)
     max_results = args[1] if len(args) > 1 else "100"
@@ -1206,7 +1231,7 @@ def cmd_mr_notes(args: list[str]) -> None:
 def cmd_pipeline_get(args: list[str]) -> None:
     """Get one pipeline."""
     if not args:
-        die("usage: gitlab pipeline-get <pipeline-id>", EXIT_USAGE)
+        raise GitLabError("usage: gitlab pipeline-get <pipeline-id>", EXIT_USAGE)
     pipeline_id = args[0]
     validate_numeric_id(pipeline_id)
     data = request(
@@ -1221,7 +1246,7 @@ def cmd_pipeline_get(args: list[str]) -> None:
 def cmd_pipeline_run(args: list[str]) -> None:
     """Trigger a pipeline for a branch or tag."""
     if not args:
-        die("usage: gitlab pipeline-run <branch-or-tag>", EXIT_USAGE)
+        raise GitLabError("usage: gitlab pipeline-run <branch-or-tag>", EXIT_USAGE)
     validate_ref(args[0])
     request("POST", f"{api_url}/projects/{project()}/pipelines", {"ref": args[0]})
 
@@ -1229,7 +1254,7 @@ def cmd_pipeline_run(args: list[str]) -> None:
 def cmd_pipeline_jobs(args: list[str]) -> None:
     """List pipeline jobs."""
     if not args:
-        die("usage: gitlab pipeline-jobs <pipeline-id>", EXIT_USAGE)
+        raise GitLabError("usage: gitlab pipeline-jobs <pipeline-id>", EXIT_USAGE)
     pipeline_id = args[0]
     validate_numeric_id(pipeline_id)
     data = request(
@@ -1244,7 +1269,7 @@ def cmd_pipeline_jobs(args: list[str]) -> None:
 def cmd_job_log(args: list[str]) -> None:
     """Print raw job trace output."""
     if not args:
-        die("usage: gitlab job-log <job-id>", EXIT_USAGE)
+        raise GitLabError("usage: gitlab job-log <job-id>", EXIT_USAGE)
     job_id = args[0]
     validate_numeric_id(job_id)
     url = f"{api_url}/projects/{project()}/jobs/{job_id}/trace"
@@ -1279,19 +1304,21 @@ def _auth_configuration() -> tuple[str, pathlib.Path, str]:
     """Resolve OAuth settings after rejecting mixed or legacy configuration."""
     configured_mode = os.environ.get("GITLAB_AUTH_MODE", "oauth").strip() or "oauth"
     if configured_mode != "oauth":
-        die("auth commands require GITLAB_AUTH_MODE=oauth", EXIT_USAGE)
+        raise GitLabError("auth commands require GITLAB_AUTH_MODE=oauth", EXIT_USAGE)
     if os.environ.get("GITLAB_TOKEN", ""):
-        die("GITLAB_TOKEN must not be set for OAuth auth commands", EXIT_USAGE)
+        raise GitLabError(
+            "GITLAB_TOKEN must not be set for OAuth auth commands", EXIT_USAGE
+        )
     global audit_actor
     require_base_environment()
     client_id = os.environ.get("GITLAB_OAUTH_CLIENT_ID", "").strip()
     if not client_id:
-        die("GITLAB_OAUTH_CLIENT_ID is not set", EXIT_USAGE)
+        raise GitLabError("GITLAB_OAUTH_CLIENT_ID is not set", EXIT_USAGE)
     try:
         profile_name = credentials.resolve_profile_name(None, os.environ)
         store_path = credentials.resolve_store_path(os.environ)
     except credentials.CredentialError as exc:
-        die(str(exc), EXIT_USAGE)
+        raise GitLabError(str(exc), EXIT_USAGE) from exc
     audit_actor = os.environ.get("GITLAB_AUDIT_ACTOR", "").strip() or "oauth"
     return profile_name, store_path, client_id
 
@@ -1308,13 +1335,13 @@ def _save_auth_profile(
             credentials.set_profile(store, profile_name, profile)
             credentials.save_store(store_path, store)
     except credentials.CredentialError as exc:
-        die(str(exc), EXIT_FAILURE)
+        raise GitLabError(str(exc), EXIT_FAILURE) from exc
 
 
 def cmd_auth_login(args: list[str]) -> None:
     """Authenticate interactively through public-client PKCE."""
     if args:
-        die("usage: gitlab auth login", EXIT_USAGE)
+        raise GitLabError("usage: gitlab auth login", EXIT_USAGE)
     profile_name, store_path, client_id = _auth_configuration()
     try:
         profile = oauth.authorization_code_login(
@@ -1329,7 +1356,7 @@ def cmd_auth_login(args: list[str]) -> None:
             audit_outcome=_oauth_audit_outcome,
         )
     except oauth.OAuthError as exc:
-        die(str(exc), EXIT_FAILURE)
+        raise GitLabError(_redact(str(exc)), EXIT_FAILURE) from None
     _save_auth_profile(profile_name, store_path, profile)
     _emit_stdout(f"authenticated GitLab OAuth profile {profile_name}")
 
@@ -1337,7 +1364,7 @@ def cmd_auth_login(args: list[str]) -> None:
 def cmd_auth_device_login(args: list[str]) -> None:
     """Authenticate through human-assisted Device Authorization Grant."""
     if args:
-        die("usage: gitlab auth device-login", EXIT_USAGE)
+        raise GitLabError("usage: gitlab auth device-login", EXIT_USAGE)
     profile_name, store_path, client_id = _auth_configuration()
 
     def emit(uri: str, code: str) -> None:
@@ -1354,7 +1381,7 @@ def cmd_auth_device_login(args: list[str]) -> None:
             audit_outcome=_oauth_audit_outcome,
         )
     except oauth.OAuthError as exc:
-        die(str(exc), EXIT_FAILURE)
+        raise GitLabError(_redact(str(exc)), EXIT_FAILURE) from None
     _save_auth_profile(profile_name, store_path, profile)
     _emit_stdout(f"authenticated GitLab OAuth profile {profile_name}")
 
@@ -1362,13 +1389,13 @@ def cmd_auth_device_login(args: list[str]) -> None:
 def cmd_auth_status(args: list[str]) -> None:
     """Print secret-free OAuth profile status."""
     if args:
-        die("usage: gitlab auth status", EXIT_USAGE)
+        raise GitLabError("usage: gitlab auth status", EXIT_USAGE)
     profile_name, store_path, client_id = _auth_configuration()
     try:
         store = credentials.load_store(store_path)
         profile = credentials.get_profile(store, profile_name)
     except credentials.CredentialError as exc:
-        die(str(exc), EXIT_FAILURE)
+        raise GitLabError(str(exc), EXIT_FAILURE) from exc
     _emit_stdout(
         json.dumps(
             {
@@ -1387,7 +1414,7 @@ def cmd_auth_status(args: list[str]) -> None:
 def cmd_auth_logout(args: list[str]) -> None:
     """Delete one local OAuth profile without claiming server revocation."""
     if args:
-        die("usage: gitlab auth logout", EXIT_USAGE)
+        raise GitLabError("usage: gitlab auth logout", EXIT_USAGE)
     profile_name, store_path, _client_id = _auth_configuration()
     try:
         with credentials.store_lock(store_path):
@@ -1395,7 +1422,7 @@ def cmd_auth_logout(args: list[str]) -> None:
             removed = credentials.delete_profile(store, profile_name)
             credentials.save_store(store_path, store)
     except credentials.CredentialError as exc:
-        die(str(exc), EXIT_FAILURE)
+        raise GitLabError(str(exc), EXIT_FAILURE) from exc
     _emit_stdout(
         f"local profile {profile_name} {'removed' if removed else 'was absent'}; "
         "server authorization was not revoked"
@@ -1417,10 +1444,14 @@ def main() -> int:
 
         if arguments and arguments[0] == "auth":
             if selected_fields:
-                die("--fields is not valid with auth commands", EXIT_USAGE)
+                raise GitLabError(
+                    "--fields is not valid with auth commands", EXIT_USAGE
+                )
             handler = AUTH_COMMANDS.get(arguments[1]) if len(arguments) >= 2 else None
             if handler is None:
-                die("usage: gitlab auth {login|device-login|status|logout}", EXIT_USAGE)
+                raise GitLabError(
+                    "usage: gitlab auth {login|device-login|status|logout}", EXIT_USAGE
+                )
             global _AUDIT_OP
             _AUDIT_OP = f"auth-{arguments[1]}"
             handler(arguments[2:])
@@ -1429,7 +1460,7 @@ def main() -> int:
         require_environment()
 
         if not arguments or arguments[0] not in COMMANDS:
-            die(
+            raise GitLabError(
                 "usage: gitlab {mr-list|mr-get|mr-create|mr-update|mr-comment|"
                 "auth|mr-notes|pipeline-get|pipeline-run|pipeline-jobs|job-log} "
                 "[args...]",

@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-09-10
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -72,30 +72,33 @@ All assessment state persists under `.copilot-tracking/rai-plans/{project-slug}/
 
 ### State Fields
 
-| Field                          | Type           | Purpose                                                                         |
-|--------------------------------|----------------|---------------------------------------------------------------------------------|
-| `projectSlug`                  | string         | Kebab-case project identifier                                                   |
-| `raiPlanFile`                  | string         | Path to the RAI plan markdown file                                              |
-| `currentPhase`                 | number         | Current phase (1-6)                                                             |
-| `entryMode`                    | string         | `capture`, `from-prd`, or `from-security-plan`                                  |
-| `disclaimerShownAt`            | string or null | ISO 8601 timestamp when the disclaimer was displayed                            |
-| `securityPlanRef`              | string or null | Path to security plan state when using `from-security-plan`                     |
-| `assessmentDepth`              | string         | Assessment tier (`Basic`, `Standard`, or `Comprehensive`)                       |
-| `riskClassification`           | object         | Phase 2 risk classification results including `suggestedDepthTier`              |
-| `standardsMapped`              | boolean        | Whether Phase 3 mapping is complete                                             |
-| `securityModelAnalysisStarted` | boolean        | Whether Phase 4 analysis has begun                                              |
-| `raiThreatCount`               | number         | Running count of identified RAI threats                                         |
-| `impactAssessmentGenerated`    | boolean        | Whether Phase 5 assessment is complete                                          |
-| `evidenceRegisterComplete`     | boolean        | Whether evidence register is finalized                                          |
-| `handoffGenerated`             | object         | Dual-format handoff status (`{ "ado": false, "github": false }`)                |
-| `gateResults`                  | object         | Gate outcomes for threat coverage                                               |
-| `runningObservations`          | array          | Cross-phase observation log with phase number, observation text, and flag level |
-| `principleTracker`             | object         | Per-principle coverage status, threat counts, and open observations             |
-| `referencesProcessed`          | array          | Files that have been read and incorporated                                      |
-| `nextActions`                  | array          | Pending action items for the current phase                                      |
-| `signingRequested`             | boolean        | Whether artifact signing was requested                                          |
-| `signingManifestPath`          | string or null | Path to the signing manifest file                                               |
-| `userPreferences`              | object         | User-specified preferences for interaction and output                           |
+| Field                          | Type           | Purpose                                                                            |
+|--------------------------------|----------------|------------------------------------------------------------------------------------|
+| `projectSlug`                  | string         | Kebab-case project identifier                                                      |
+| `raiPlanFile`                  | string         | Path to the RAI plan markdown file                                                 |
+| `currentPhase`                 | number         | Current phase (1-6)                                                                |
+| `entryMode`                    | string         | `capture`, `from-prd`, or `from-security-plan`                                     |
+| `preflight`                    | object         | Phase 1 preflight data: `templates` array and `assessmentContentFile` string       |
+| `disclaimerShownAt`            | string or null | ISO 8601 timestamp when the disclaimer was displayed                               |
+| `noticeLog`                    | array          | Log of disclaimers, attribution notices, and exit reminders                        |
+| `phaseGates`                   | object         | Per-phase gate type (`hard` vs `summary-and-advance`) and `confirmedAt` timestamps |
+| `securityPlanRef`              | string or null | Path to security plan state when using `from-security-plan`                        |
+| `assessmentDepth`              | string         | Assessment tier (`Basic`, `Standard`, or `Comprehensive`)                          |
+| `riskClassification`           | object         | Phase 2 risk classification results including `suggestedDepthTier`                 |
+| `standardsMapped`              | boolean        | Whether Phase 3 mapping is complete                                                |
+| `securityModelAnalysisStarted` | boolean        | Whether Phase 4 analysis has begun                                                 |
+| `raiThreatCount`               | number         | Running count of identified RAI threats                                            |
+| `impactAssessmentGenerated`    | boolean        | Whether Phase 5 assessment is complete                                             |
+| `evidenceRegisterComplete`     | boolean        | Whether evidence register is finalized                                             |
+| `handoffGenerated`             | object         | Dual-format handoff status (`{ "ado": false, "github": false }`)                   |
+| `gateResults`                  | object         | Gate outcomes for threat coverage                                                  |
+| `runningObservations`          | array          | Cross-phase observation log with phase number, observation text, and flag level    |
+| `principleTracker`             | object         | Per-principle coverage status, threat counts, and open observations                |
+| `referencesProcessed`          | array          | Files that have been read and incorporated                                         |
+| `nextActions`                  | array          | Pending action items for the current phase                                         |
+| `signingRequested`             | boolean        | Whether artifact signing was requested                                             |
+| `signingManifestPath`          | string or null | Path to the signing manifest file                                                  |
+| `userPreferences`              | object         | User-specified preferences for interaction and output                              |
 
 ### Six-Step State Protocol
 
@@ -132,19 +135,24 @@ When returning to an existing RAI assessment, the agent follows a five-step resu
 1. Read `state.json` from the project slug directory
 2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and record the timestamp
 3. Display current phase progress and checklist status
-4. Summarize what was completed and what remains
+4. Read persisted preflight state and perform validation:
+Revalidate every template by kind before dereferencing it. For documents, normalize the stored workspace-relative path, resolve it against the workspace root, and reject it when the result escapes the workspace. For Mural, accept only the stored opaque ID and keep authentication in the tool boundary.
+When templates is non-empty, verify the required assessmentContentFile; if it is missing or unusable, pause phase work and recreate it from every validated template, the authoritative rai-plan.md, and each template's local stableIdMap.
+Require every local map to be non-empty, one-to-one, and consistent with reconstructed content. If a local map is absent, empty, not one-to-one, or conflicting, obtain confirmation before issuing replacement IDs.
+Stop and ask the user if validation or recreation fails. When templates is empty, require a null content file. Summarize what was completed and what remains.
 5. Continue from the last incomplete action
 
 ### Post-Summarization Recovery
 
-When conversation context is compacted, a six-step recovery process reconstructs state:
+When conversation context is compacted, a seven-step recovery process reconstructs state:
 
 1. Read `state.json` for project slug and current phase
 2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and record the timestamp
-3. Read the RAI plan markdown file referenced in `raiPlanFile`
-4. Reconstruct context from existing artifacts (system definition pack, standards mapping, security model addendum, and control surface catalog)
-5. Identify the next incomplete task within the current phase
-6. Resume with a brief summary of recovered state and the next action
+3. Run the complete Session Resume step 4 preflight validation and recovery contract, including the empty-template/null-content requirement, before reconstructing context or resuming the next task
+4. Read the RAI plan markdown file referenced in `raiPlanFile`
+5. Reconstruct context from existing artifacts (system definition pack, standards mapping, security model addendum, and control surface catalog)
+6. Identify the next incomplete task within the current phase
+7. Resume with a brief summary of recovered state and the next action
 
 > [!NOTE]
 > The disclaimer and attribution notices described above are conversational, displayed in the chat interface during session starts, resumes, and exit points. Generated artifacts in Phases 5 and 6 carry separate persisted footers (AI-content transparency notes, human review checkboxes, and full disclaimers on handoff deliverables) written directly into the markdown files. See [Handoff Pipeline](handoff-pipeline#artifact-attribution-and-review) for details on persisted artifact footers.

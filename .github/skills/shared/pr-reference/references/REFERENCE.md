@@ -2,7 +2,7 @@
 title: PR Reference Skill Reference
 description: XML output format, usage scenarios, output path variations, and semantic invocation patterns
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-09-21
 ms.topic: reference
 keywords:
   - pr-reference
@@ -141,11 +141,11 @@ Exclude documentation changes from the diff when generating PR descriptions, red
 Exclude file extensions or path prefixes from the diff, for branches that carry generated or vendored changes alongside source edits:
 
 ```bash
-./scripts/generate.sh --exclude-ext yml,yaml,json --exclude-path docs/,.github/
+./scripts/generate.sh --exclude-ext yml,yaml,json --exclude-path docs/,generated/
 ```
 
 ```powershell
-./scripts/generate.ps1 -ExcludeExt yml,yaml,json -ExcludePath docs/,.github/
+./scripts/generate.ps1 -ExcludeExt yml,yaml,json -ExcludePath docs/,generated/
 ```
 
 Both flags take comma-separated values. A leading dot on an extension and a trailing slash on a path are stripped automatically.

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
 from runtime_a11y._config import assert_target_allowed
 from runtime_a11y._errors import ScriptError
 from runtime_a11y.matrix._ingest_assessor import ingest_assessor_findings

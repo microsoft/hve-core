@@ -3,7 +3,7 @@ title: Rai Plan From Prd
 description: Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Pl
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a confirmed PRD or BRD should seed Responsible AI assessment planning. Use capture mode when requirements evidence cannot be found or does not describe the AI system adequately.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug`. The RAI Planner discovers the requirements artifact, extracts relevant evidence, asks only for missing AI-risk context, and preserves qualified-review ownership of the assessment.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/rai-plan-from-prd project-slug=customer-support-assistant
+```
+
+The prompt initializes a draft RAI plan from the available requirements or falls back to focused capture questions.

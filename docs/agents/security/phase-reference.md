@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-09-21
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -216,7 +216,7 @@ The agent validates:
 
 When `raiEnabled` is `true`, the agent:
 
-1. Presents the RAI Planner agent path (`.github/agents/rai-planning/rai-planner.agent.md`).
+1. Names the RAI Planner as the target agent.
 2. Suggests the `from-security-plan` entry mode and sets `securityPlanRef` to the Security Planner `state.json`.
 3. Sets `raiRecommendationShown` to `true` after presenting the recommendation.
 4. Sets `raiPlannerDispatched` to `true` only once the user actually starts the RAI Planner handoff.

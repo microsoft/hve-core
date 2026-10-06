@@ -23,7 +23,7 @@ tools:
 
 # ADR Creator
 
-Phase-gated creator that produces standards-aligned Architecture Decision Records under `.copilot-tracking/adr-plans/{slug}/`. Identity, lifecycle definitions, autonomy tier semantics, `state.json` schema, and the six-step per-turn protocol are defined in #file:../../instructions/project-planning/adr-identity.instructions.md and are not duplicated here. This agent body is a thin orchestrator: every phase delegates to that identity file, plus on-demand reads of the embedded standards (`.github/instructions/project-planning/adr-standards.instructions.md`), the BYO template contract (`.github/instructions/project-planning/adr-byo-template.instructions.md`), the handoff protocol (`.github/instructions/project-planning/adr-handoff.instructions.md`), and the per-phase authoring conventions (`.github/skills/project-planning/adr-author/SKILL.md`) per the Lifecycle Dispatch tables below. Each on-demand artifact is loaded via `read_file` only when its phase or mode is entered.
+Phase-gated creator that produces standards-aligned Architecture Decision Records under `.copilot-tracking/adr-plans/{slug}/`. Identity, lifecycle definitions, autonomy tier semantics, `state.json` schema, and the six-step per-turn protocol are defined in #file:../../instructions/project-planning/adr-identity.instructions.md and are not duplicated here. This agent body is a thin orchestrator: every phase delegates to that identity file, plus on-demand reads of the auto-applied `adr-standards.instructions.md`, `adr-byo-template.instructions.md`, and `adr-handoff.instructions.md`, and the `adr-author` skill per the Lifecycle Dispatch tables below. Each on-demand artifact is loaded via `read_file` only when its phase or mode is entered.
 
 ## Entry Modes
 
@@ -47,21 +47,21 @@ Every phase entry begins with a mandatory `read_file` of the indicated SKILL.md 
 
 ### Table A: `capture` and `from-planner-handoff` modes
 
-| Phase  | Required SKILL.md anchor                                                 | Required instruction file                                                         |
-|--------|--------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-| Frame  | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#frame`  | `read_file` `.github/instructions/project-planning/adr-standards.instructions.md` |
-| Decide | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#decide` | `read_file` `.github/instructions/project-planning/adr-standards.instructions.md` |
-| Govern | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#govern` | `read_file` `.github/instructions/project-planning/adr-handoff.instructions.md`   |
+| Phase  | Required SKILL.md anchor                       | Required instruction file                             |
+|--------|------------------------------------------------|-------------------------------------------------------|
+| Frame  | Load the `adr-author` skill and read `#frame`  | Read the auto-applied `adr-standards.instructions.md` |
+| Decide | Load the `adr-author` skill and read `#decide` | Read the auto-applied `adr-standards.instructions.md` |
+| Govern | Load the `adr-author` skill and read `#govern` | Read the auto-applied `adr-handoff.instructions.md`   |
 
 ### Table B: `adopt-template` mode
 
-| Phase            | Required SKILL.md anchor                                                 | Required instruction file and script                                                                                                                                      |
-|------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Ingest           | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#frame`  | `read_file` `.github/instructions/project-planning/adr-byo-template.instructions.md`                                                                                      |
-| Normalize        | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#frame`  | `read_file` `.github/instructions/project-planning/adr-byo-template.instructions.md` plus `.github/skills/project-planning/adr-author/scripts/normalize_template.py`      |
-| Derive Questions | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#frame`  | `read_file` `.github/instructions/project-planning/adr-byo-template.instructions.md`                                                                                      |
-| Fill             | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#decide` | `read_file` `.github/instructions/project-planning/adr-byo-template.instructions.md`                                                                                      |
-| Govern           | `read_file` `.github/skills/project-planning/adr-author/SKILL.md#govern` | `read_file` `.github/instructions/project-planning/adr-handoff.instructions.md` plus `read_file` `.github/instructions/project-planning/adr-byo-template.instructions.md` |
+| Phase            | Required SKILL.md anchor                       | Required instruction file and script                                                                      |
+|------------------|------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Ingest           | Load the `adr-author` skill and read `#frame`  | Read the auto-applied `adr-byo-template.instructions.md`                                                  |
+| Normalize        | Load the `adr-author` skill and read `#frame`  | Read the auto-applied `adr-byo-template.instructions.md` plus the skill's `scripts/normalize_template.py` |
+| Derive Questions | Load the `adr-author` skill and read `#frame`  | Read the auto-applied `adr-byo-template.instructions.md`                                                  |
+| Fill             | Load the `adr-author` skill and read `#decide` | Read the auto-applied `adr-byo-template.instructions.md`                                                  |
+| Govern           | Load the `adr-author` skill and read `#govern` | Read the auto-applied `adr-handoff.instructions.md` plus `adr-byo-template.instructions.md`               |
 
 ## Six-Step Per-Turn Protocol
 
@@ -74,7 +74,7 @@ Every phase entry begins with a mandatory `read_file` of the indicated SKILL.md 
 
 ## Diagram Format Selection
 
-During Frame, prompt the user to choose `ascii` or `mermaid` and persist the answer to `state.userPreferences.diagramFormat`. The Frame phase cannot exit without this value. Subsequent template renders compose `.github/skills/project-planning/adr-author/templates/madr-v4.md` with the matching diagram fragment from `.github/skills/project-planning/adr-author/templates/diagram-{ascii|mermaid}.md`. Once recorded, the value is read-only for the remainder of the session.
+During Frame, prompt the user to choose `ascii` or `mermaid` and persist the answer to `state.userPreferences.diagramFormat`. The Frame phase cannot exit without this value. Subsequent template renders compose the `adr-author` skill's `templates/madr-v4.md` with the matching `templates/diagram-{ascii|mermaid}.md` fragment. Once recorded, the value is read-only for the remainder of the session.
 
 When an ADR needs an architecture or network diagram derived from infrastructure source files, use the `architecture-diagrams` skill: load its `SKILL.md` and follow its authoring contract, requesting the same `ascii` or `mermaid` format recorded in `state.userPreferences.diagramFormat`. That skill is the authoritative source for its own conventions and output format.
 
@@ -98,7 +98,7 @@ Record the status in the phase summary. Apply supported findings from the comple
 
 ## Handoff Routing
 
-Handoff content (compact summary template, peer routing heuristics, dual-format ADO and GitHub work item templates) lives in `.github/instructions/project-planning/adr-handoff.instructions.md`. Govern-phase routing is instruction-driven rather than encoded in frontmatter. Do not restate handoff payloads here; load the instruction file at Govern-phase entry per Table A or Table B above.
+Handoff content (compact summary template, peer routing heuristics, dual-format ADO and GitHub work item templates) lives in the auto-applied `adr-handoff.instructions.md`. Govern-phase routing is instruction-driven rather than encoded in frontmatter. Do not restate handoff payloads here; load the instruction file at Govern-phase entry per Table A or Table B above.
 
 ## Session Recovery
 

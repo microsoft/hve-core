@@ -294,13 +294,41 @@ Create directories safely and handle paths properly:
 
 ```bash
 mkdir -p "$(dirname "$OUTPUT_FILE")"
-
-if [[ -f "${config_file}" ]]; then
-  source "${config_file}"
-fi
 ```
 
+Before sourcing repository-managed CI configuration, apply the authority
+contract in [Repository-Managed CI Configuration](#repository-managed-ci-configuration).
+File existence and path quoting do not establish authorization.
+
 ## Security Practices
+
+### Repository-Managed CI Configuration
+
+Treat sourced configuration as executable code. For repository-managed CI
+configuration, authority comes from the reviewed repository revision and the
+resulting checkout. Only reviewed changes present at the expected path in that
+checkout are authorized. Path or symbolic-link substitution and post-checkout
+modification invalidate that authority.
+
+Fail closed when the authorized configuration is absent. Do not source a
+substitute or continue with an implicit default.
+
+```bash
+# authorized-ci-configuration
+readonly ci_config="${REPOSITORY_ROOT}/.ci/config.sh"
+
+if [[ ! -f "${ci_config}" ]]; then
+  echo "ERROR: Authorized CI configuration is absent" >&2
+  exit 1
+fi
+
+# Source only after establishing authority from the reviewed checkout.
+source "${ci_config}"
+```
+
+Operator-managed, user-selected, and externally acquired configuration need
+separate owner decisions. Do not apply this CI authority contract to those
+classes without an established policy.
 
 ### Variable Quoting
 

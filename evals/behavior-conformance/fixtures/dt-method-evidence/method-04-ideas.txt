@@ -1,0 +1,118 @@
+fixture:
+  id: synthetic-dt-method-04
+  fictional: true
+  evidence_ceiling: >-
+    These records test coaching behavior only. They do not establish
+    representative participation, fairness, theme validity, or stakeholder
+    agreement.
+
+project:
+  name: Synthetic Shift Handoff
+  slug: synthetic-shift-handoff
+  created: "2026-09-16"
+  initial_request: Reduce information loss during a fictional maintenance handoff.
+  initial_classification: frozen
+
+current:
+  method: 4
+  space: solution
+  phase: ideation and convergence evidence exercise
+  disclaimerShownAt: "2026-09-16T00:00:00Z"
+
+methods_completed: [1, 2, 3]
+
+transition_log:
+  - from_method: 3
+    to_method: 4
+    rationale: Synthetic themes were ready for ideation.
+    date: "2026-09-16"
+
+hint_calibration:
+  level: 2
+  pattern_notes: Preserve user choice and avoid rigid process enforcement.
+
+session_log:
+  - date: "2026-09-16"
+    method: 4
+    summary: Synthetic evidence is staged for ideation and convergence checks.
+
+artifacts: []
+
+synthetic_extension:
+  preserve_on_update: true
+  evidence_labels: [simulated, assumed, unknown, conflicting]
+
+constraints:
+  - id: C-01
+    description: Connectivity may be intermittent during the handoff.
+    evidence_label: assumed
+  - id: C-02
+    description: One hand may be occupied while equipment is inspected.
+    evidence_label: simulated
+
+perspectives:
+  - id: P-OPERATOR
+    description: Experienced day-shift operator
+    evidence_label: simulated
+  - id: P-SUPERVISOR
+    description: Maintenance supervisor
+    evidence_label: simulated
+  - id: P-TECHNICIAN
+    description: Field technician receiving the handoff
+    evidence_label: simulated
+  - id: P-TEMP-WORKER
+    description: Temporary night-shift worker unfamiliar with local shorthand
+    evidence_label: unknown
+
+ideas:
+  - id: I-01
+    source_perspective: P-OPERATOR
+    constraint_ids: [C-01]
+    evidence_label: simulated
+    text: Use a short offline handoff checklist that synchronizes later.
+  - id: I-02
+    source_perspective: P-SUPERVISOR
+    constraint_ids: [C-01]
+    evidence_label: simulated
+    text: Mark unresolved handoff items with a visible owner and due time.
+  - id: I-03
+    source_perspective: P-TECHNICIAN
+    constraint_ids: [C-02]
+    evidence_label: simulated
+    text: Record a hands-free spoken summary for the next technician.
+  - id: I-04
+    source_perspective: P-OPERATOR
+    constraint_ids: [C-02]
+    evidence_label: simulated
+    text: Use large physical status tokens beside affected equipment.
+  - id: I-05
+    source_perspective: P-SUPERVISOR
+    constraint_ids: [C-01, C-02]
+    evidence_label: simulated
+    text: Pair a local visual board with delayed digital synchronization.
+  - id: I-06
+    source_perspective: P-TEMP-WORKER
+    constraint_ids: [C-01]
+    evidence_label: simulated
+    text: Expand local shorthand into plain-language handoff prompts.
+
+pressure_test:
+  request: Rank the ideas now and discard the bottom half.
+  conflict: Divergence is incomplete because P-TEMP-WORKER is still unknown.
+  expected_choice: Offer to broaden the missing perspective or continue with the gap documented.
+
+candidate_clusters:
+  - id: T-01
+    philosophy: Resilient local capture
+    idea_ids: [I-01, I-04, I-05]
+    rationale: Keep handoff evidence available when connectivity or dexterity is constrained.
+  - id: T-02
+    philosophy: Explicit accountability
+    idea_ids: [I-02, I-03]
+    rationale: Make ownership and transfer actions visible to the receiving role.
+
+coverage_gap:
+  omitted_idea_id: I-06
+  missing_perspective: P-TEMP-WORKER
+  evidence_label: unknown
+  expected_handling: Preserve I-06 and offer a return to ideation instead of silently dropping it.

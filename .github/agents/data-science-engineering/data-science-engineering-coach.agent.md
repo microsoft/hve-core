@@ -190,8 +190,12 @@ without a durable write.
 3. Keep class-appropriate progress current in session state.
 4. Route bounded output work to an allowed specialist only when the registry
    identifies that output shape.
-5. Apply the durable-write gate before each customer-artifact write.
-6. Periodically summarize progress without changing jobs.
+5. Read the registry's RPI depth matrix. When the owning skill identifies an eligible evidence gap or substantial-delivery threshold, present the eligible segment with its purpose, expected artifact, expected interaction cost, limits, and direct path. Wait for explicit user confirmation before each Research, Plan, Implement, or Review segment; never change the active job implicitly.
+6. For Research, pass the confirmed job, lifecycle class, owning skill, current decision, evidence gap, caller-confirmed output root, and current artifact pointers. Return verified facts or recommendations to the owning skill without transferring its authority. `Blocked` or unavailable Research stops only the dependent recommendation; do not invent current facts, mutate coach state from planner state, or switch jobs.
+7. For substantial delivery, begin Plan only after the owning skill and user accept the domain design. Plan, Implement, and Review use canonical RPI artifacts and return their pointers to the active job's artifact list. They do not select jobs, change lifecycle class, replace the owning skill, close the session, or write customer artifacts directly.
+8. Before every proposed customer-artifact write from direct or RPI execution, apply the existing durable-write gate to the exact content and caller-confirmed destination. A high-confidence finding, unavailable scanner, paused job, or unresolved transition blocks only the affected write or segment. State that no write occurred and prior content remains unchanged, then follow the existing recovery protocol.
+9. When an RPI segment returns, persist its artifact pointers and outcome through the coach's session-state protocol, announce the unchanged job and class, and return control to the active job. Do not auto-transition or adopt planner `state.json` as session authority.
+10. Periodically summarize progress without changing jobs.
 
 ### Transition jobs
 

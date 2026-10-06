@@ -45,7 +45,13 @@ Six sequential phases structure the RAI assessment. Each phase declares entry cr
 ### Phase 1: AI System Scoping (NIST Govern + Map)
 
 * **Entry criteria**: New session started or `from-prd`/`from-security-plan` entry mode activated.
-* **Activities**: Scan `.copilot-tracking/rai-plans/references/` for existing reference content and `.copilot-tracking/rai-plans/{project-slug}/state.json` for existing `referencesProcessed` entries. If existing references are found, present them for confirmation. Otherwise, conduct reference content discovery: ask about evaluation standards, output format requirements, and code-of-conduct documents per the User-Supplied Reference Content Protocol and Code-of-Conduct Discovery sections. Capture output preferences (outputDetailLevel, targetSystem, audienceProfile, includeOptionalArtifacts). Then proceed with the AI system scoping interview: discover AI system purpose, technology stack, model types, deployment model, stakeholder roles, data inputs, outputs, representativeness, and demographic coverage, intended use contexts, out-of-scope and prohibited use contexts, and autonomous decision boundaries. Classify AI components (model type, training approach, inference pipeline). Establish assessment boundaries and exclusions.
+* **Activities**: Resolve the project slug and output requirements, then run the Phase 1 preflight:
+  1. Discover optional document and Mural templates. Validate and persist references by kind without URLs, credentials, or signed query data. Before the first `mural` command that reads a Mural template, follow the `mural` skill `references/bootstrap.md`.
+  2. When templates exist, create `assessment-content.md` for their structure, output requirements, stable IDs, and recovery mappings. Persist a non-empty `stableIdMap` within every document or Mural template object, using ordinary source-key properties such as `A1/system-purpose`. Separate template ownership makes repeated source keys valid across templates. Treat placeholders as layout rather than content capacity.
+  3. Discover project materials and evidence. Inspect PRD or security-plan content here, and inspect recent communications only when WorkIQ is available and the user grants permission.
+  4. When templates exist, populate `assessment-content.md`, record evidence gaps, and expand it as needed while keeping `rai-plan.md` authoritative.
+
+  Apply the Resume Protocol before dereferencing persisted references. When no template is supplied, skip the template-specific steps and continue with project-material discovery. An unrecoverable required `assessment-content.md` blocks template population only when a template was supplied. Confirm existing reference content or request evaluation standards and code-of-conduct documents, confirm output preferences, then scope the system's purpose, stack, models, deployment, stakeholders, data, outputs, demographics, use boundaries, autonomy, components, and exclusions. Name salient risk signals as they surface and record them in `runningObservations`, per the `rai-planner` skill `references/capture-coaching.md`; formal classification remains Phase 2 work.
 * **Exit criteria**: Summary-and-advance: present a summary of captured context, AI element inventory, stakeholder map, and output preferences. Advance unless the user objects.
 * **Artifacts**: `rai-plan.md` sections `## System Definition` (with an `### AI Component Inventory` table subsection) and `## Stakeholder Impact`
 * **Transition**: Advance to Phase 2 after summary.
@@ -54,7 +60,7 @@ Six sequential phases structure the RAI assessment. Each phase declares entry cr
 
 * **Entry criteria**: Phase 1 complete; system scope confirmed.
 * **Activities**: Classify risk level using the active framework's risk indicators. The default NIST framework uses three indicators: `safety_reliability` (binary), `rights_fairness_privacy` (categorical), and `security_explainability` (continuous). Each indicator maps to NIST MEASURE subcategories. Run the Prohibited Uses Gate first using any `prohibited-use-framework` references or the active framework's prohibited uses definitions. Then evaluate each risk indicator; for activated indicators, ask depth questions to capture evidence and context. Determine the suggested assessment depth tier based on activated count (0 = `basic`, 1 = `standard`, 2+ = `comprehensive`). When a custom framework is active (`replaceDefaultIndicators: true`), use the custom framework's indicators and assessment methods instead.
-* **Exit criteria**: Hard gate: present risk classification screening summary and suggested depth tier assignment. User must confirm tier before advancing. Rationale: tier-change affects scope and effort of all downstream phases.
+* **Exit criteria**: Hard gate: present risk classification screening summary and suggested depth tier assignment. User must confirm tier before advancing. Rationale: tier-change affects scope and effort of all downstream phases. In the same summary turn, ask whether the user wants a Mural team board that reflects the Phase 2 classification. The board is optional; declining or not answering does not block Phase 3. When the user accepts, follow the `rai-planner` skill `references/mural-board-bootstrap.md`.
 * **Artifacts**: Risk classification screening summary added to the `### Risk Classification Screening` subsection under `## System Definition` in `rai-plan.md`
 * **Transition**: Advance to Phase 3 after user confirms depth tier.
 
@@ -77,7 +83,7 @@ Six sequential phases structure the RAI assessment. Each phase declares entry cr
 ### Phase 5: RAI Impact Assessment (NIST Manage)
 
 * **Entry criteria**: Phase 4 complete; security model confirmed.
-* **Activities**: Evaluate control surface completeness for each identified threat. Document evidence of existing mitigations and identify coverage gaps. Analyze tradeoffs between competing trustworthiness characteristics (for example, transparency versus privacy, fairness versus performance). Generate the control surface catalog, evidence register, and tradeoffs analysis.
+* **Activities**: Evaluate control surface completeness for each identified threat. Document evidence of existing mitigations and identify coverage gaps. Explore appropriate reliance by examining trust calibration mechanisms, human-in-the-loop design for high-stakes decisions, and patterns of over-reliance or under-reliance. Analyze tradeoffs between competing trustworthiness characteristics (for example, transparency versus privacy, fairness versus performance). Generate the control surface catalog, evidence register, and tradeoffs analysis. When populating an impact assessment template, add rows or cells when the complete content set exceeds the existing structure. Preserve the source's logical reading order and stable IDs. Expanded tables must retain explicit semantic column and row headers so assistive technologies can identify each cell's relationships.
 * **Exit criteria**: Summary-and-advance: present impact assessment summary with maturity indicators and generated observations. Advance unless the user raises concerns.
 * **Artifacts**: `rai-plan.md` sections `## Control Surface Catalog`, `## Evidence Register`, and `## Tradeoffs`
 * **Transition**: Advance to Phase 6 after summary.
@@ -96,11 +102,11 @@ Three entry modes determine Phase 1 initialization. All modes converge at Phase 
 
 ### `capture`
 
-Fresh assessment. Display the disclaimer and attribution notices, then initialize blank `state.json` with `entryMode: "capture"`. Scan for existing reference content in `.copilot-tracking/rai-plans/references/`. Conduct reference content and output format discovery before the scoping interview. Then conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in the `rai-planner` skill.
+Fresh assessment. Display the disclaimer and attribution notices, initialize blank `state.json` with `entryMode: "capture"`, and enter the Phase 1 preflight. After preflight and reference discovery, conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in the `rai-planner` skill.
 
 ### `from-prd`
 
-PRD-seeded assessment. Display the disclaimer and attribution notices, then scan `.copilot-tracking/prd-sessions/` for the user-identified PRD session directory (or accept a user-supplied PRD file path when scanning yields multiple candidates). Extract the following fields from the PRD artifacts and pre-populate Phase 1 state:
+PRD-seeded assessment. Display the disclaimer and attribution notices, resolve the user-identified PRD session or supplied PRD path without reading its content, then enter the Phase 1 preflight. Inspect the PRD during project-material discovery and extract the following fields to pre-populate Phase 1 state:
 
 - `projectSlug` — derived from the PRD session directory name (kebab-case).
 - AI system purpose, technology stack, model types, deployment model — used to seed scoping interview answers (not stored as discrete state fields; carried forward as conversational context for confirmation).
@@ -114,7 +120,7 @@ Present the extracted information to the user for confirmation or refinement bef
 
 ### `from-security-plan`
 
-Security plan-seeded assessment. Display the disclaimer and attribution notices, then read `state.json` and artifacts from the path specified in `securityPlanRef`. Extract AI components from the security plan's `aiComponents` array. Pre-populate the AI element inventory. Set `raiThreatCount` start offset from the security plan's threat count. Present extracted information to the user for confirmation or refinement before advancing.
+Security plan-seeded assessment. Display the disclaimer and attribution notices, validate and persist the workspace-contained `securityPlanRef` without reading its content, then enter the Phase 1 preflight. Inspect the security plan during project-material discovery. Extract AI components from its `aiComponents` array, pre-populate the AI element inventory, and set the `raiThreatCount` start offset from its threat count. Present extracted information to the user for confirmation or refinement before advancing.
 
 ## State Management
 
@@ -128,6 +134,10 @@ State persists across sessions in a JSON file at `.copilot-tracking/rai-plans/{p
   "raiPlanFile": "",
   "currentPhase": 1,
   "entryMode": "capture",
+  "preflight": {
+    "templates": [],
+    "assessmentContentFile": null
+  },
   "disclaimerShownAt": null,
   "noticeLog": [],
   "securityPlanRef": null,
@@ -279,8 +289,8 @@ The planner inherits the emoji checklist convention and seven rules from `shared
 The planner inherits the Resume Sequence and Post-Summarization Recovery in `shared/planner-identity-base.instructions.md`. RAI-specific notes on inherited steps:
 
 * Resume Sequence step 2 (disclaimer redisplay) applies; `state.disclaimerShownAt` is the gating field. When redisplaying the disclaimer on resume, also redisplay the framework attribution notice per the Framework Attribution section using the current `riskClassification.framework` values, then set `disclaimerShownAt` to the current ISO-8601 timestamp and append the matching `noticeLog` entries before continuing.
-* Resume Sequence step 4 checks for incomplete artifacts referenced from `principleTracker[*].mappedInPhase3`, `securityModelAnalysisStarted`, `impactAssessmentGenerated`, and `evidenceRegisterComplete`, plus the RAI plan file at `raiPlanFile`.
-* On resume, if `securityPlanRef` is set, verify the referenced security plan file still exists at the recorded workspace-relative path. When present, treat prior security-plan import (technology inventory, compliance targets, deployment context, stakeholder mapping, threat ids) as still valid and skip re-import. When the file is missing or has moved, flag the mismatch with `❌` in the resume checklist and ask the user to supply an updated `securityPlanRef` path before continuing.
+* Resume Sequence step 4 checks for incomplete artifacts referenced from `principleTracker[*].mappedInPhase3`, `securityModelAnalysisStarted`, `impactAssessmentGenerated`, and `evidenceRegisterComplete`, plus the RAI plan file at `raiPlanFile`. It also reads `preflight` and reruns Phase 1 reference validation before dereferencing a template. For a document template, normalize the stored workspace-relative path, resolve it against the workspace root, and reject it when the result escapes the workspace. For a Mural template, accept only the stored opaque ID and keep authentication in the tool boundary. When `templates` is non-empty, verify `assessmentContentFile` exists and is usable. If it is missing or unusable, pause phase work and recreate it from every validated template, the authoritative `rai-plan.md`, and each template's local `stableIdMap`. Require every local map to be non-empty, one-to-one, and consistent with reconstructed content. If a local map is absent, empty, non-bijective, or conflicting, obtain confirmation before issuing replacement IDs. For these recoverable preflight map failures, the RAI-specific stop-and-confirm recovery path takes precedence over generic corrupted-state reset handling; generic corruption handling still applies to other invalid state. Stop and ask the user if validation or recreation fails. When `templates` is empty, require a null content file. Post-Summarization Recovery applies the same check.
+* On resume, if `securityPlanRef` is set, normalize it and resolve it against the workspace root. Reject it immediately without probing existence when the result escapes the workspace. For a contained path, verify the file exists before dereferencing it. When valid, treat prior security-plan import (technology inventory, compliance targets, deployment context, stakeholder mapping, threat ids) as still valid and skip re-import. When validation fails or the file is missing, flag the mismatch with `❌` in the resume checklist and ask the user to supply an updated `securityPlanRef` path before continuing.
 * Post-Summarization Recovery step 3 reads accumulated artifacts under `.copilot-tracking/rai-plans/{project-slug}/` (system definition pack, stakeholder impact map, standards mapping, security model addendum, control surface catalog, evidence register, tradeoffs) and reconstructs context from `principleTracker`, `riskClassification`, and `referencesProcessed` rather than from prior chat history.
 
 ## Error Handling
@@ -305,7 +315,7 @@ Users may supply evaluation standards, risk indicator categories, prohibited use
 
 ### Reference Content Prompt
 
-During Phase 1 (AI System Scoping), after capturing output preferences, ask: "Do you have any specific evaluation standards, risk indicator categories, prohibited use frameworks, or output format requirements you would like the assessment to incorporate?" The reference content prompt — and any follow-up custom-framework replacement decision — runs once during Phase 1, immediately after the output-preferences questions and before the AI system scoping interview. The framework selection (default NIST AI RMF 1.0 vs. user-supplied custom framework) is locked at the end of Phase 1 and persisted to `riskClassification.framework` in `state.json`. Phase 2 does not re-prompt for framework selection; if the user wants to change frameworks after Phase 1 closes, the agent treats it as a scope change, resets `currentPhase` to 1, and re-runs the reference content prompt.
+During Phase 1 (AI System Scoping), after confirming the pre-resolved output preferences, ask: "Do you have any specific evaluation standards, risk indicator categories, prohibited use frameworks, or output format requirements you would like the assessment to incorporate?" The reference content prompt — and any follow-up custom-framework replacement decision — runs once during Phase 1, immediately after that confirmation and before the AI system scoping interview. The framework selection (default NIST AI RMF 1.0 vs. user-supplied custom framework) is locked at the end of Phase 1 and persisted to `riskClassification.framework` in `state.json`. Phase 2 does not re-prompt for framework selection; if the user wants to change frameworks after Phase 1 closes, the agent treats it as a scope change, resets `currentPhase` to 1, and re-runs the reference content prompt.
 
 If the user supplies content, display this disclaimer before processing:
 
@@ -354,7 +364,5 @@ Every `rpi-research` activation supplies:
 * Supplied state, system-definition, stakeholder, framework, provider-policy, security-plan, and user evidence.
 * Requested outputs and output mode (`analysis`, `comparison`, or caller-requested `convergence`).
 * `.copilot-tracking/rai-plans/{project-slug}/` as a trusted alternate evidence root.
-
-Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill owns the exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
 
 The RAI Planner reads the completed primary research artifact and synthesizes applicable findings into shared reference summaries, assessment artifacts, `state.json`, and phase outputs. Preserve all gates. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop evidence-dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain standards, policy, or regulatory content from training data.

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["shapely>=2.0", "networkx>=3.0", "keyring>=24.0"]
+# dependencies = ["shapely>=2.0", "networkx>=3.0", "keyring>=24.0", "pyyaml>=6.0"]
 # ///
 """Mural REST API client and CLI.
 
@@ -12,7 +12,7 @@ The auth surface covers env-var resolution, token-store I/O, PKCE, the
 loopback OAuth ``auth login`` / ``logout`` / ``status`` subcommands. Mural REST
 resource subcommands (workspace, room, mural, widget) live in this same module.
 
-Runtime third-party dependencies are ``shapely`` and ``networkx``;
+Runtime third-party dependencies are ``shapely``, ``networkx``, and ``pyyaml``;
 ``shapely`` requires GEOS >= 3.11 to be present on the host. Test seams are
 exposed via private parameters (``_http``, ``_now``, ``_open_browser``,
 ``_server_factory``) so unit tests can substitute fakes without
@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import getpass  # noqa: F401 - re-exposed as patchable facade attribute
-import json
 import logging
 import os
 import pathlib  # noqa: F401 - re-exposed as patchable facade attribute
@@ -137,16 +136,6 @@ from ._exceptions import (  # noqa: E402,F401
 _ROTATION_ENABLED = os.environ.get("MURAL_SPATIAL_ROTATION_ENABLED", "0") == "1"
 _PARENTID_FILTER_ENABLED = os.environ.get("MURAL_SPATIAL_PARENTID_FILTER", "0") == "1"
 
-# Cross-platform file-lock primitives. Exactly one is non-None at runtime.
-try:  # pragma: no cover - platform-specific
-    import fcntl as _fcntl
-except ImportError:  # pragma: no cover - Windows
-    _fcntl = None  # type: ignore[assignment]
-try:  # pragma: no cover - platform-specific
-    import msvcrt as _msvcrt
-except ImportError:  # pragma: no cover - POSIX
-    _msvcrt = None  # type: ignore[assignment]
-
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -243,6 +232,9 @@ from ._output import (  # noqa: E402,F401
     _emit,
     _emit_debug_traceback,
     _emit_json,
+    _emit_json_error,
+    _redact_payload,
+    _stderr_color_enabled,
 )
 
 # isort: split
@@ -288,6 +280,7 @@ from ._backends import (  # noqa: E402,F401
 from ._transport import (  # noqa: E402,F401
     _API_OPENER,
     _RATE_BUCKET,
+    MAX_ERROR_EXCERPT_CHARS,
     REQUEST_TIMEOUT_SECONDS,
     _SAS_OPENER,
     _TOKEN_OPENER,
@@ -296,6 +289,7 @@ from ._transport import (  # noqa: E402,F401
     _build_api_error,
     _create_asset_url,
     _decode_body,
+    _error_excerpt,
     _extract_error_payload,
     _join_url,
     _NoRedirect,
@@ -470,8 +464,6 @@ __all__ = [
     # env-driven flags defined locally for the importlib.reload contract
     "_ROTATION_ENABLED",
     "_PARENTID_FILTER_ENABLED",
-    # process-local mutable state re-exported from ._geometry
-    "_GEOS_PROBE_DONE",
     # re-exported from ._validation
     "_ALLOWED_HYPERLINK_SCHEMES",
     "_AZURE_BLOB_HOST_SUFFIX",
@@ -675,6 +667,35 @@ def _list_widgets_with_context(
     )
 
 
+def _hydrate_destination_context(
+    mural_id: str,
+    context: dict[str, Any],
+    widget_url: str,
+    *,
+    cache: dict[tuple[str, str], Any],
+) -> dict[str, Any]:
+    """Hydrate a destination record through cached package-facade reads."""
+    return _hydrate_destination_context_impl(
+        mural_id,
+        context,
+        widget_url,
+        cache=cache,
+        get_mural=lambda identifier: _authenticated_request(
+            "GET", f"/murals/{identifier}"
+        ),
+        get_room=lambda identifier: _authenticated_request(
+            "GET", f"/rooms/{identifier}"
+        ),
+        get_workspace=lambda identifier: _authenticated_request(
+            "GET", f"/workspaces/{identifier}"
+        ),
+        list_tags=lambda identifier: list(
+            _paginate("GET", f"/murals/{identifier}/tags")
+        ),
+        hydrate_destination_record=hydrate_destination_record,
+    )
+
+
 # --- Tag manifest helper --------------------------------------------------
 
 from ._tag_helpers import (  # noqa: E402
@@ -862,12 +883,12 @@ from ._area_helpers import (  # noqa: E402,F401
     _get_area_impl,
     _get_area_with_widget_fallback_impl,
     _get_widget_with_context_impl,
+    _hydrate_destination_context_impl,
     _list_areas_with_widget_fallback_impl,
     _list_widgets_with_context_impl,
     _log_area_fallback_once_impl,
 )
 from ._geometry import (  # noqa: E402,F401
-    _GEOS_PROBE_DONE,
     Rect,
     _area_probe_verdict,
     _ensure_geos_ready,
@@ -913,29 +934,7 @@ from ._layout import (  # noqa: E402,F401
 )
 from ._signals import _install_signal_handlers  # noqa: E402,F401
 
-# --- Phase 4 composites: confirmation gate, find, sweep, summary, DT ------
-
-
-_UX_BOARD_AREAS: list[dict[str, Any]] = [
-    {"label": "JTBD", "x": 0, "y": 0, "width": 4000, "height": 3000},
-    {"label": "Journey Stages", "x": 4500, "y": 0, "width": 4000, "height": 3000},
-    {"label": "Pain Points", "x": 9000, "y": 0, "width": 4000, "height": 3000},
-    {
-        "label": "Opportunities",
-        "x": 13500,
-        "y": 0,
-        "width": 4000,
-        "height": 3000,
-    },
-    {
-        "label": "Accessibility Requirements",
-        "x": 18000,
-        "y": 0,
-        "width": 4000,
-        "height": 3000,
-    },
-]
-
+# isort: split
 
 # --- Phase 4 CLI handlers -------------------------------------------------
 
@@ -1034,6 +1033,25 @@ from ._commands import (  # noqa: E402,F401 - re-export carved resource/bulk com
     _template_target_body,
     _typed_widget_path,
     _verify_parent_containment,
+)
+from ._destinations import (  # noqa: E402,F401
+    DestinationAdapter,
+    DestinationEntry,
+    DestinationRegistry,
+    DispatchRequest,
+    DispatchResult,
+    dispatch_destination,
+    hydrate_destination_record,
+    load_destination_registry,
+    project_destination_record,
+    validate_writeback_patch,
+)
+from ._doctor import (  # noqa: E402,F401
+    COMMAND_REQUIRED_SCOPES,
+    _cmd_doctor,
+    command_key,
+    evaluate_readiness,
+    required_scopes_for_args,
 )
 
 # --- Voting tool handlers ----------------------------------------------------
@@ -1181,25 +1199,34 @@ def main(argv: list[str] | None = None) -> int:
         level=getattr(logging, args.log_level, logging.WARNING),
         format="%(levelname)s %(name)s: %(message)s",
     )
-    _state._CLI_QUIET = bool(getattr(args, "quiet", False))
-    _state._CLI_FORCE_JSON = bool(getattr(args, "json_output", False))
-    _state._CLI_COLOR = _color_mode(getattr(args, "color", "auto"))
-    _state._CLI_PROFILE = getattr(args, "profile", None) or None
+    force_json = bool(getattr(args, "json_output", False))
+    _state.set_cli_flags(
+        quiet=bool(getattr(args, "quiet", False)),
+        force_json=force_json,
+        color=_stderr_color_enabled(
+            getattr(args, "color", "auto"), force_json=force_json
+        ),
+        profile=getattr(args, "profile", None) or None,
+    )
     profile_name = (
         getattr(args, "profile", None)
         or os.environ.get(ENV_PROFILE)
         or DEFAULT_PROFILE_NAME
     )
-    try:
-        _autoload_credentials(profile_name)
-    except MuralError as exc:
-        print(str(exc), file=sys.stderr)
-        return EXIT_FAILURE
+    if getattr(args, "command", None) != "doctor":
+        try:
+            _autoload_credentials(profile_name)
+        except MuralError as exc:
+            print(_redact(str(exc)), file=sys.stderr)
+            return EXIT_FAILURE
     func: Callable[[argparse.Namespace], int] = getattr(args, "func", None)
     if func is None:
         parser.print_help(sys.stderr)
         return EXIT_USAGE
     try:
+        required_scopes = required_scopes_for_args(args)
+        if required_scopes:
+            _require_scope(required_scopes, profile_name=profile_name)
         return func(args)
     except SystemExit:
         raise
@@ -1208,7 +1235,7 @@ def main(argv: list[str] | None = None) -> int:
     except BrokenPipeError:
         return 141
     except MuralAuthScopeError as exc:
-        print(f"auth: {exc}", file=sys.stderr)
+        print(f"auth: {_redact(str(exc))}", file=sys.stderr)
         return 77
     except MuralHumanAuthoredProtected as exc:
         envelope = {
@@ -1216,7 +1243,7 @@ def main(argv: list[str] | None = None) -> int:
             "mural": exc.mural_id,
             "widget": exc.widget_id,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_NOPERM
     except MuralTagMergeConflict as exc:
         envelope = {
@@ -1229,7 +1256,7 @@ def main(argv: list[str] | None = None) -> int:
             "extra": exc.extra,
             "attempts": exc.attempts,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_TEMPFAIL
     except MuralAreaCapacityExceeded as exc:
         envelope = {
@@ -1240,14 +1267,22 @@ def main(argv: list[str] | None = None) -> int:
             "computed_extent": exc.computed_extent,
             "suggestion": exc.suggestion,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_AREA_CAPACITY
     except MuralBulkAtomicAbort as exc:
         envelope = {"error": "bulk_atomic_abort", "aborted": True, **exc.summary}
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_TEMPFAIL
+    except MuralAPIError as exc:
+        code = f" code={exc.code}" if exc.code else ""
+        request_id = f" request_id={_redact(exc.request_id)}" if exc.request_id else ""
+        print(
+            f"error: HTTP {exc.status}{code}: {_redact(exc.message)}{request_id}",
+            file=sys.stderr,
+        )
+        return 1
     except MuralError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(f"error: {_redact(str(exc))}", file=sys.stderr)
         return 1
     except Exception as exc:  # noqa: BLE001
         print(f"internal error: {_redact(repr(exc))}", file=sys.stderr)

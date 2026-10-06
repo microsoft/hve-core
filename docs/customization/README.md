@@ -2,9 +2,13 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-26
+ms.date: 2026-10-04
 ms.topic: overview
 sidebar_position: 1
+sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Customizing HVE Core"
+pagination_label: Customizing HVE Core
 keywords:
   - customization
   - github copilot
@@ -82,16 +86,15 @@ graph LR
 
 Use the `hve-builder` skill to create, improve, refactor, replace, review, or
 validate prompts, instructions, agents, subagents, and skills. It resolves the
-write boundary, runs independent static review, and applies one behavior gate
-with route-specific execution. Major mutations and behavior-bearing review
-targets execute testing, while eligible no-runtime review targets and Minor or
-Medium mutations are satisfied-and-skipped. Known target files and
-caller-supplied canonical references remain bounded lifecycle reads;
-open-ended exploration and decision-critical research activate `rpi-research`.
-
-The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills
-remain compatibility aliases for legacy requests. They route to `hve-builder`
-and do not own separate authoring workflows.
+write boundary, completes known edits and local validation, then runs a review
+pass against its requirements catalog and rubric. The main agent reviews the
+candidate itself or dispatches the read-only `HVE Builder Reviewer` subagent for
+a fresh-context review, verifies each finding, batches the required fixes,
+reruns affected checks, and records the review against the reviewed revision.
+It uses as few cycles as needed, stopping rather than repeating unchanged
+failures or chasing advisory polish. Known target files and caller-supplied
+canonical references remain bounded lifecycle reads; open-ended exploration and
+decision-critical research activate `rpi-research`.
 
 Each artifact guide below includes an "Authoring with HVE Builder" section
 with type-specific examples.

@@ -2,7 +2,7 @@
 title: HVE Core Documentation Site
 description: Docusaurus 3 documentation site for HVE Core
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-09-12
 ms.topic: reference
 keywords:
   - docusaurus
@@ -27,6 +27,54 @@ npm run build
 
 This command generates static content into the `build` directory.
 
+## Bundled slide presentations
+
+The Topics menu links to `/hve-core/slides/`, which lists the HTML bundles in
+`docs/slides/`. A presentation opens at `/hve-core/slides/<deck-name>.html`;
+the download link saves the same self-contained file.
+
+Each deck is listed with its generated title and description, sorted by title.
+These come from `slides/<deck-name>/deck.json`, not the filename. The bundler embeds
+them as inert JSON in the HTML, so a site-only build needs no separate catalog edits
+or deck dependencies. Missing or invalid generated metadata fails the site build
+with a rebuild instruction.
+
+To add another deck, run from the repository root:
+
+```bash
+npm run slides:create -- --slug hve-full --title "HVE Core overview"
+```
+
+Set its `description` in `slides/hve-full/deck.json`, restore that deck's dependencies,
+and run the build commands below. The new deck will appear automatically; changing
+its title later does not change the filename-derived URL. Do not edit the generated
+HTML or a site page to add or rename an entry.
+
+Deck source remains under `slides/<deck-name>/`. From the repository root,
+regenerate the committed bundles before building the site:
+
+```bash
+npm run slides:build
+npm run slides:check
+npm run docs:build
+```
+
+The source-to-bundle check refreshes only ignored intermediate assets and rejects
+stale, missing, or orphaned HTML. CodeQL runs this check separately before analyzing
+authored source; only generated `docs/slides/*.html` is excluded from scanning to avoid
+duplicate findings in embedded third-party code. This is not an upstream dependency fix.
+
+Site `build`, `start`, and `deploy` commands run `slides:sync` first. That copies only deck
+HTML into the ignored `static/slides/` staging directory, removes stale staged
+decks, and leaves the originals unchanged. The catalog reads the same source
+directory. Ordinary HTML anchors use Docusaurus's configured base URL without
+client-side routing, so the presentation's own JavaScript and CSS take effect.
+The site build consumes committed bundles rather than rebuilding deck source.
+
+After changing, adding, or deleting a bundle during local development, restart
+`npm start` to refresh staging and the catalog. Commit bundles with their source
+changes, not the generated staging files or the site's `build/` output.
+
 ## Deployment
 
 The site deploys automatically via GitHub Actions on push to `main`. See `.github/workflows/deploy-docs.yml`.
@@ -41,6 +89,22 @@ Accessibility is validated by three tools across four layers that run in `.githu
 4. Full-site crawl (Playwright `@axe-core/playwright`): the `site-crawl` spec scans one representative URL per rendered page template against WCAG 2.x A/AA (plus `wcag22aa` and `best-practice`) at threshold 0.
 
 Layers 3 and 4 both run on Playwright, so the four layers are covered by three tools.
+
+### Custom Mermaid theme
+
+`src/theme/Mermaid` swizzles `@docusaurus/theme-mermaid` so diagrams stay accessible
+across re-renders. Renders are serialized through a module-level queue, so a rapid
+color-mode toggle cannot interleave two `mermaid.render` calls and leave a diagram
+blank; a failed render removes its orphaned node rather than leaving it in the DOM.
+
+Failures surface through an `ErrorBoundary` whose fallback is wrapped in a
+`role="alert"` container, and focus is moved deterministically after the user takes
+action: retrying focuses the retry button, and a retry that then succeeds focuses the
+rendered `svg[role~="graphics-document"]`, so keyboard users are not dropped at the
+top of the page.
+
+`__tests__/Mermaid.test.tsx` is the axe-checked coverage for this override and runs in
+layer 2 of the harness above.
 
 ### Browser E2E prerequisite
 

@@ -118,11 +118,10 @@ class MuralTagMergeConflict(MuralError):
 
 
 class MuralHumanAuthoredProtected(MuralError):
-    """Raised when a guarded mutation targets a widget without the AI tag.
+    """Raised when a mutation targets a widget without the AI tag.
 
-    Triggered when ``--require-author-tag`` is set on ``widget update`` or
-    ``widget delete`` and the target widget lacks the ``authored-by-ai``
-    reserved tag. Operators can opt out per-call with ``--force-human``.
+    Widget update, delete, and bulk update protect human-authored records by
+    default. Operators can opt out per-call with ``--force-human``.
     """
 
     def __init__(self, *, mural_id: str, widget_id: str) -> None:

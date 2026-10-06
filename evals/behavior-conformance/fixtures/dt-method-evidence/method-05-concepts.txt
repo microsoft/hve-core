@@ -1,0 +1,109 @@
+fixture:
+  id: synthetic-dt-method-05
+  fictional: true
+  evidence_ceiling: >-
+    These records test concept lineage and evaluation behavior only. They do
+    not establish stakeholder alignment, desirability, representation,
+    fairness, or concept validity.
+
+project:
+  name: Synthetic Shift Handoff
+  slug: synthetic-shift-handoff
+  created: "2026-09-16"
+  initial_request: Evaluate fictional handoff concepts without real participants.
+  initial_classification: frozen
+
+current:
+  method: 5
+  space: solution
+  phase: concept articulation and evaluation evidence exercise
+  disclaimerShownAt: "2026-09-16T00:00:00Z"
+
+methods_completed: [1, 2, 3, 4]
+
+transition_log:
+  - from_method: 4
+    to_method: 5
+    rationale: Synthetic themes were selected for concept evidence checks.
+    date: "2026-09-16"
+
+hint_calibration:
+  level: 2
+  pattern_notes: Keep simulated perspectives distinct from absent groups.
+
+session_log:
+  - date: "2026-09-16"
+    method: 5
+    summary: Synthetic theme lineage and conflicting evaluation evidence are staged.
+
+artifacts: []
+
+synthetic_extension:
+  preserve_on_update: true
+  evidence_labels: [simulated, unknown, conflicting]
+
+initial_selection:
+  supplied_text: Develop the handoff theme.
+  status: ambiguous
+  missing_fields: [theme_id, constraint_ids, evidence_ids]
+  expected_handling: Ask for clarification and do not write concepts.yml yet.
+
+themes:
+  - id: TH-01
+    name: Resilient local capture
+    idea_ids: [I-01, I-04, I-05]
+    constraint_ids: [C-01, C-02]
+    evidence_label: simulated
+  - id: TH-02
+    name: Explicit accountability
+    idea_ids: [I-02, I-03]
+    constraint_ids: [C-01]
+    evidence_label: simulated
+
+clarified_selection:
+  theme_id: TH-01
+  constraint_ids: [C-01, C-02]
+  evidence_ids: [I-01, I-04, I-05]
+  purpose_id: PURPOSE-01
+  validation_target_id: VT-01
+  status: user_selected
+
+concept_expectation:
+  lineage_ids: [TH-01, C-01, C-02, PURPOSE-01, VT-01]
+  schema_fields: [name, description, file, prompt]
+  prohibited_extra_fields: true
+  fidelity: low
+
+stakeholder_groups:
+  - id: SG-OPERATOR
+    participation: role_played
+    evidence_label: simulated
+  - id: SG-SUPERVISOR
+    participation: role_played
+    evidence_label: simulated
+  - id: SG-TEMP-WORKER
+    participation: absent
+    evidence_label: unknown
+
+lens_evidence:
+  - id: LE-D-01
+    lens: desirability
+    stakeholder_group: SG-OPERATOR
+    finding: The fictional role-play values offline access.
+    evidence_label: simulated
+  - id: LE-F-01
+    lens: feasibility
+    stakeholder_group: SG-SUPERVISOR
+    finding: Local synchronization behavior has not been demonstrated.
+    evidence_label: unknown
+  - id: LE-V-01
+    lens: viability
+    stakeholder_group: SG-SUPERVISOR
+    finding: Ownership maintenance may add fictional workflow cost.
+    evidence_label: simulated
+
+evaluation_state:
+  conflict: Desirability is simulated while feasibility remains unknown.
+  evidence_label: conflicting
+  selection_status: unresolved
+  expected_handling: Preserve the conflict and do not claim stakeholder consensus.

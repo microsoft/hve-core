@@ -6,7 +6,7 @@ compatibility: 'Requires FFmpeg on PATH'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-07-09"
+  last_updated: "2026-09-27"
 ---
 
 # Demo Video Assembly Skill
@@ -69,16 +69,21 @@ The assembly step accepts the following high-level controls:
 * `--output` or `-OutputPath` sets the destination MP4 path
 * `--fps` or `-Fps` controls the output frame rate for rendered segments
 * `--resolution` or `-Resolution` controls the output width and height in the form `WIDTHxHEIGHT`
+* `--timeout` or `-TimeoutSeconds` sets the maximum seconds for each ffprobe or ffmpeg invocation (1-86400, default 600); a timed-out step stops the run with an error that names the step
 * `duration` per segment lets you override the inferred length when narration timing is known in advance
+
+## Failure Behavior
+
+The assembled MP4 is written to a temporary file next to the destination and moved into place only after FFmpeg succeeds. A failed, timed-out, or interrupted run leaves no partial MP4 at the output path and keeps any existing file there unchanged. A successful run replaces an existing file at the output path. Temporary segment files are always removed.
 
 ## Narration Quality
 
 Narration quality is the single biggest driver of how polished the final video feels. Prioritize neural voices from **Azure AI Speech (part of Azure AI Foundry)** through the `tts-voiceover` skill for any video you intend to share.
 
 * **Recommended:** Use the `tts-voiceover` skill backed by Azure AI Speech neural voices (for example `en-US-Andrew:DragonHDLatestNeural` or `en-US-Jenny:DragonHDLatestNeural`). These produce natural, presentation-grade narration and are the default for shareable output.
-* **Fallback only:** Offline open-source engines such as `espeak-ng` require no credentials but sound noticeably robotic. Treat them as a no-network smoke-test fallback, not a delivery format. Regenerate narration with Azure AI Speech before publishing.
+* **Offline alternative:** The `tts-voiceover` skill's `--engine piper` option synthesizes narration locally with a separately installed Piper executable. It needs no credentials or network access, which suits scheduled CI builds, but it sounds less natural than Azure neural voices. Record which engine produced the narration so reviewers know whether to regenerate it with Azure AI Speech before publishing.
 
-See the `tts-voiceover` skill for the neural voice catalog, `--voice` and `--rate` controls, and Azure authentication (Entra ID or key).
+See the `tts-voiceover` skill for the neural voice catalog, `--voice` and `--rate` controls, Azure authentication (Entra ID or key), and Piper setup.
 
 ## Reuse Bridge
 

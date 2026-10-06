@@ -7,6 +7,38 @@ description: Machine-readable JSON and CSV shapes for an AI evaluation dataset, 
 
 Copy these shapes when emitting an evaluation dataset. Produce both forms from the same source of truth so they cannot disagree. Confirm the destination with the caller rather than assuming one; suggest a project-appropriate location only when the caller has no convention.
 
+Validate the completed pair with:
+
+```bash
+uv run python scripts/validate_evaluation_dataset.py --json <dataset.json> --csv <dataset.csv>
+```
+
+The command exits `0` when both artifacts satisfy the contract, `1` for contract failures, and `2` for invocation, read, parse, schema-configuration, or path-containment errors. Diagnostics identify stable fields and categories without reproducing pair content.
+
+## Resource limits
+
+These ceilings apply in addition to the 5 MiB limit per input file:
+
+| Resource                                      | Maximum |
+|-----------------------------------------------|---------|
+| Evaluation pairs or CSV data rows             | 1,000   |
+| Entries per population or expected-tools list | 64      |
+| Population coverage properties                | 64      |
+| Evaluation modes                              | 2       |
+| Characters per content string                 | 16,384  |
+| Characters per ID, list item or property name | 256     |
+| Nested container levels                       | 8       |
+| Visited JSON and CSV nodes combined           | 100,000 |
+| Returned diagnostics, including truncation    | 50      |
+
+Container depth counts each object or array, starting at one for the root. Nodes count containers and scalar values, including both artifact roots; property names do not count as nodes. Repeated references passed directly to the Python API count on each visit, and cyclic objects fail the depth limit. The CSV parser also enforces the node ceiling independently while accumulating rows.
+
+The structural guard runs before schema validation, list uniqueness checks, and sibling-artifact comparisons, including for malformed arbitrary objects. It bounds every object to 64 properties and every array to 1,000 entries, with the tighter list and evaluation-mode limits above. A content string is any string that is not an ID, population name, or tool name. Population and tool names use the identifier ceiling.
+
+CSV fields are checked before row allocation. An encoded list field permits up to 16,447 decoded characters: 64 items of 256 characters with 63 semicolon separators. Each list still obeys its item-count and item-length limits. CSV quoting does not count toward decoded field length, and line breaks inside quoted fields do not count as additional rows. Empty items and duplicates remain invalid.
+
+Resource violations are contract failures. If JSON parsing itself exceeds the parser's recursion limit, the command returns a sanitized parse error instead. Validation stops collecting after detecting a 51st diagnostic and replaces the 50th with `diagnostics truncated; additional errors omitted`. Results retain the shape `{"valid": boolean, "errors": [...]}`; read and parse failures retain their stderr-only error response. Dynamic property names are redacted in diagnostic paths.
+
 ## JSON shape
 
 The example below shows a thirty-pair dataset with three of its pairs written out.
@@ -134,7 +166,9 @@ Difficulty and population answer different questions. Difficulty records how dem
 
 ## Migration from the previous contract
 
-This is a breaking change with no compatibility path. An earlier dataset recorded only non-overlapping `population_coverage` totals that summed to `total_pairs`, and its pairs carried no population field. Those totals cannot be converted, because a total does not identify which pairs produced it, and the pairs it counted may each have served populations the exclusive assignment discarded. Re-derive `populations` on each pair from the confirmed population list, then recompute the counts from the pairs. Do not infer memberships from the old totals and do not add a version field or a dual-mode reader.
+This is a breaking change with no compatibility path. An earlier dataset recorded only non-overlapping `population_coverage` totals that summed to `total_pairs`, and its pairs carried no population field.
+Those totals cannot be converted, because a total does not identify which pairs produced it, and the pairs it counted may each have served populations the exclusive assignment discarded.
+Re-derive `populations` on each pair from the confirmed population list, then recompute the counts from the pairs. Do not infer memberships from the old totals and do not add a version field or a dual-mode reader.
 
 ## Content rules
 

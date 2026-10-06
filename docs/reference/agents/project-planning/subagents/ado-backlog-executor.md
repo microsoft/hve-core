@@ -28,10 +28,8 @@ Applies a dispatched Azure DevOps backlog operation set in one confirmed project
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Backlog Manager dispatches this worker to apply one sanitized operation set in a confirmed Azure DevOps project. The parent owns platform resolution, destination confirmation, and autonomy choices. Use Backlog Manager rather than selecting this worker directly; it cannot redirect work to another tracker.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+After review, the parent supplies the organization and project, ordered work-item operations, relationships, tracking references, and granted confirmations. The executor applies only those operations and returns structured results with work-item identifiers and unresolved actions. Missing destination or approval evidence stops the affected operation; the worker does not broaden the batch or autonomy tier.

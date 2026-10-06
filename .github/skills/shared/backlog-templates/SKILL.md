@@ -21,10 +21,10 @@ Planners that emit Phase-final backlog work items all need the same dual-format 
 Callers:
 
 * RAI Planner (`rai-planner` skill `references/backlog-handoff.md`)
-* Security Planner (`.github/agents/security/security-planner.agent.md`; security-specific handoff details in `.github/skills/project-planning/security-planning/references/backlog-formats.md`)
-* SSSC Planner (`.github/instructions/security/sssc-planner.instructions.md`)
+* Security Planner (`Security Planner` agent; security-specific handoff details in the `security-planning` skill's `references/backlog-formats.md`)
+* SSSC Planner (`SSSC Planner` agent, governed by `sssc-planner.instructions.md`)
 * Accessibility Planner (`accessibility/accessibility` skill `references/phases/backlog-handoff.md`)
-* Privacy Planner (`.github/instructions/privacy/privacy-identity.instructions.md`)
+* Privacy Planner (`Privacy Planner` agent, governed by `privacy-identity.instructions.md`)
 
 What stays per-planner (NOT in this skill):
 
@@ -197,9 +197,9 @@ Every backlog handoff artifact (handoff summary, ADO output file, GitHub output 
 
 Source-of-truth split for the disclaimer text:
 
-* RAI, Security, SSSC — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the corresponding planner section.
-* Privacy — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the Privacy Planning section.
-* Accessibility — Read the disclaimer text from `.github/instructions/accessibility/accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `shared/disclaimer-language.instructions.md`.
+* RAI, Security, SSSC — Read the disclaimer text from the automatically applied `disclaimer-language.instructions.md` under the corresponding planner section.
+* Privacy — Read the disclaimer text from the automatically applied `disclaimer-language.instructions.md` under the Privacy Planning section.
+* Accessibility — Read the disclaimer text from the automatically applied `accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `disclaimer-language.instructions.md`.
 
 Placement rules:
 

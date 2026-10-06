@@ -13,22 +13,27 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
       Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-human-readable-name
+        name: github-backlog-executor-frontmatter-name-and-descri-a43c9154
         config:
           pattern: '(?i)\bGitHub Backlog Executor\b'
       - type: output-matches
-        name: reports-declared-description
+        name: github-backlog-executor-frontmatter-name-and-descri-e088d5d1
         config:
           pattern: '(?i)dispatched GitHub backlog operation set in one confirmed repository'
       - type: output-matches
-        name: does-not-substitute-filename-for-name
+        name: github-backlog-executor-frontmatter-name-and-descri-429fa822
         config:
-          pattern: '(?i)name\s*(is|:)\s*.{0,3}github-backlog-executor'
+          pattern: '(?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}github-backlog-executor\b(?!\.agent\.md)'
           negate: true
 
   - name: github-backlog-executor-user-invocable-flag
@@ -36,51 +41,61 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
       Report the value its frontmatter declares for `user-invocable`, and explain how a user reaches this artifact given that value.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-declared-flag-value
+        name: github-backlog-executor-user-invocable-flag-reports-94615eac
         config:
-          pattern: '(?i)user-invocable\s*(is|:|=)?\s*.{0,3}false'
+          pattern: '(?im)(?<![\s\S])(?![\s\S]*(?:\b(?:not|never|no|omits?|omitted|lacks?)\b|\b\w+n[\x27\u2019]t\b)[\s`*_~]+(?:(?!(?:true|because|since|as|so|given|hence|thus)\b)\w+[\s`*_~]+){0,2}(?:user-invocable[\s`*_~]*:[\s`*_~]*)?\bfalse\b)[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*(?:\buser-invocable\b(?:[^.!?\n]|[.!?](?=\S)){0,40}\bfalse\b|\bfalse\b(?:[^.!?\n]|[.!?](?=\S)){0,60}\buser-invocable\b))(?!(?:[^.!?\n]|[.!?](?=\S))*\bfalse\b[\s`*_~]*(?:is|are)\s+(?:absent|not\s+(?:set|declared|present))\b)(?:[^.!?\n]|[.!?](?=\S))*'
       - type: output-matches
-        name: reaches-through-a-dispatching-parent
+        name: github-backlog-executor-user-invocable-flag-reaches-8375e6af
         config:
           pattern: '(?i)(dispatch|Backlog Manager|parent agent|orchestrator)'
       - type: output-matches
-        name: not-described-as-picker-selectable
+        name: github-backlog-executor-user-invocable-flag-not-des-4db5a97e
         config:
-          pattern: '(?i)(appears in|select(able)? from|choose it in) the (agent )?picker'
+          pattern: '(?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})(?:appears in|select(?:able)? from|choose it in) the (?:agent )?picker'
           negate: true
 
   - name: github-backlog-executor-structural-template
     prompt: |
       Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
-      List its top-level section headings in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+      List every level-one and level-two section heading in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-purpose-section
+        name: github-backlog-executor-structural-template-reports-5ca849de
         config:
-          pattern: '(?im)^\W*Purpose\b'
+          pattern: '\bPurpose\b'
       - type: output-matches
-        name: reports-inputs-section
+        name: github-backlog-executor-structural-template-reports-c87e95c7
         config:
-          pattern: '(?im)^\W*Inputs\b'
+          pattern: '\bInputs\b'
       - type: output-matches
-        name: reports-required-steps-section
+        name: github-backlog-executor-structural-template-reports-427b55be
         config:
           pattern: '(?i)Required\s+Steps'
       - type: output-matches
-        name: reports-response-format-section
+        name: github-backlog-executor-structural-template-reports-23590a04
         config:
           pattern: '(?i)Response\s+Format'
       - type: output-matches
-        name: confirms-heading-matches-name
+        name: github-backlog-executor-structural-template-confirm-7216ee87
         config:
           pattern: '(?i)(match(es|ing)?|same as|identical)'
 
@@ -89,12 +104,22 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
       Read its declared `tools:` list together with its declared description. Assess whether that restriction set is appropriate for the role the description states, and name any tool whose presence or absence you consider inconsistent with that role. Justify the assessment from the artifact rather than from general expectations.
+      Distinguish what the declared tool grants make possible from what the host enforces and from the boundaries the artifact's own execution contract adds.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
+      - Identifies GitHub issue read and write tools, no other tracker family, and no terminal, and relates that grant to the single-repository execution role.
+      - Attributes repository-level confinement to the artifact's contract rather than claiming the tool grant enforces it.
     graders:
       - type: prompt
-        name: tool-restriction-appropriate-for-purpose
+        name: github-backlog-executor-tool-restriction-fit-tool-r-3056e84e
         config:
           prompt: |
             The response assesses whether a subagent's declared tool set fits its
@@ -107,7 +132,7 @@ stimuli:
             artifact's own contract provides.
           threshold: 0.6
       - type: output-matches
-        name: does-not-claim-runtime-enforcement-proof
+        name: github-backlog-executor-tool-restriction-fit-does-n-928e7efe
         config:
           pattern: '(?i)(this (test|check|eval) (proves|demonstrates|verifies))'
           negate: true

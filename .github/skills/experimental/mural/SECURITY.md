@@ -2,7 +2,7 @@
 title: Mural Skill Security Model
 description: STRIDE threat model for the Mural skill covering browser callback, Mural API egress, on-disk cache, caller input, and Azure SAS uploads
 author: microsoft/hve-core
-ms.date: 2026-08-14
+ms.date: 2026-09-17
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -23,17 +23,17 @@ This document records the STRIDE threat model for the Mural skill (the `mural` p
 
 ## Executive Summary
 
-The Mural skill is a local Python CLI with an embedded stdio MCP server. It authenticates to Mural with OAuth 2.0 Authorization Code + PKCE, caches access and refresh tokens in the OS keyring (or a `0600` file fallback), and makes authenticated HTTPS calls to the Mural REST API. Its highest-risk behaviors are at-rest credential storage on the operator workstation and the browser-mediated OAuth login flow; both are mitigated in code, with residual gaps tracked in the gap register. The skill runs no public listener (the loopback receiver is single-shot and bound to `127.0.0.1`) and treats all Mural-authored content returned through the CLI as untrusted.
+The Mural skill is a local Python CLI dispatched through `argparse`. It authenticates to Mural with OAuth 2.0 Authorization Code + PKCE, caches access and refresh tokens in the OS keyring (or a `0600` file fallback), and makes authenticated HTTPS calls to the Mural REST API. Its highest-risk behaviors are at-rest credential storage on the operator workstation and the browser-mediated OAuth login flow; both are mitigated in code, with residual gaps tracked in the gap register. The skill runs no public listener (the loopback receiver is single-shot and bound to `127.0.0.1`) and treats all Mural-authored content returned through the CLI as untrusted. An agent caller invokes the CLI through a terminal tool, so stdout and stderr are captured into agent context. B4 names the protected diagnostic, machine-readable envelope, top-level error, record-output, ordinary API, token, and SAS channels. Remaining direct `print` and `LOGGER` calls are outside a package-wide guarantee and require sink-specific review.
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                                |
-|--------------------|--------------------------------------------------------------------------------------|
-| Runtime surface    | REST CLI + embedded stdio MCP server; OAuth Auth Code + PKCE; single-shot loopback   |
-| Trust buckets      | B1 Browser→Loopback, B2 CLI→Mural, B3 cache, B4 caller, B5 Azure SAS upload          |
-| Credentials        | OAuth access/refresh tokens + `client_id`/`client_secret`; OS keyring or `0600` file |
-| Network egress     | HTTPS through separate no-redirect API, token, and Azure SAS upload openers          |
-| Open residual gaps | 10 (EoP-High: no client-side token revocation / refresh-token non-rotation)          |
+| Dimension          | Value                                                                                                |
+|--------------------|------------------------------------------------------------------------------------------------------|
+| Runtime surface    | `argparse` REST CLI consumed by an agent terminal tool; OAuth Auth Code + PKCE; single-shot loopback |
+| Trust buckets      | B1 Browser→Loopback, B2 CLI→Mural, B3 cache, B4 caller, B5 Azure SAS upload                          |
+| Credentials        | OAuth access/refresh tokens + `client_id`/`client_secret`; OS keyring or `0600` file                 |
+| Network egress     | HTTPS through separate no-redirect API, token, and Azure SAS upload openers                          |
+| Open residual gaps | 10 (EoP-High: no client-side token revocation / refresh-token non-rotation)                          |
 
 ## Contents
 
@@ -53,7 +53,7 @@ The Mural skill is a local Python CLI with an embedded stdio MCP server. It auth
 
 ### Components
 
-1. `scripts/mural/` Python package — the CLI entry point, command handlers, and the embedded stdio MCP server.
+1. `scripts/mural/` Python package — the `argparse` CLI entry point and command handlers. The package exports a `MCPInvalidParamsError` validation exception retained for CLI helper compatibility; it implements no JSON-RPC framing, tool dispatch, or stdio server loop.
 2. OAuth login flow (`_run_login`) — opens the browser to Mural's authorization URL and runs a single-shot loopback receiver at `http://127.0.0.1:8765/callback`.
 3. Token store and credential file — per-user cache (`mural-token.json`, mode `0600`) and `mural.{profile}.env`, or the OS keyring backend.
 4. REST and token clients — separate `urllib.request` no-redirect openers for the canonical Mural API and OAuth token endpoint.
@@ -64,7 +64,7 @@ The Mural skill is a local Python CLI with an embedded stdio MCP server. It auth
 ```mermaid
 flowchart TD
     subgraph HOST["Operator Workstation (trust zone)"]
-        CLI["mural CLI / MCP server"]
+        CLI["mural CLI (argparse)"]
         LOOP["Single-shot loopback<br/>127.0.0.1:8765"]
         STORE["Token store + credential file<br/>(keyring or 0600 file)"]
     end
@@ -98,8 +98,8 @@ flowchart TD
 ┌───────────────────────────────────────────────────────────────┐
 │ TRUST BOUNDARY: Operator Workstation                          │
 │  ┌─────────────┐  ┌────────────────┐  ┌────────────────────┐  │
-│  │ mural CLI / │  │ Loopback recv  │  │ Token store +      │  │
-│  │ MCP server │  │ 127.0.0.1:8765 │  │ credential file    │  │
+│  │ mural CLI   │  │ Loopback recv  │  │ Token store +      │  │
+│  │ (argparse)  │  │ 127.0.0.1:8765 │  │ credential file    │  │
 │  └─────────────┘  └────────────────┘  └────────────────────┘  │
 └───────────────┬───────────────────────────────┬───────────────┘
                 │ open browser                  │ HTTPS (TLS)
@@ -263,12 +263,14 @@ This bucket also covers the per-user credential file (`mural.{profile}.env`) cre
 
 `MURAL_CREDENTIAL_BACKEND` selects how A2 (refresh tokens) and A3 (client secrets) are persisted at rest. The four modes share the same wire-level behavior but have distinct at-rest threat surfaces:
 
-* **`auto` (default).** Prefers the OS keychain when the `keyring` package and a usable backend are present; falls back to the file backend otherwise. The chosen backend is reported by `mural auth status`.
+* **`auto` (default).** Prefers the OS keychain when the `keyring` package and a usable backend are present; falls back to the file backend when the keychain is unavailable, or when the keychain is reachable but holds no usable credentials while the file backend does. Either fallback emits a one-shot WARN per profile. The chosen backend is reported by `mural auth status`.
 * **`keyring`.** OS keychain only (macOS Keychain, Windows Credential Manager via DPAPI, freedesktop SecretService). Defends ADV-c (backup/sync exfiltration) and partially defends ADV-d (stolen device) when the keychain requires explicit unlock. Does **not** defend ADV-a.
 * **`file`.** Plaintext-at-rest under `0600` permissions, with the protections described below. Defends only ADV-d on encrypted-at-rest disks. Does not defend ADV-a or ADV-c.
 * **`env-only`.** Reads credentials only from process environment; never persists. Suitable for ephemeral CI runners. Removes ADV-c entirely; introduces a Repudiation gap (no `obtained_at` history is recorded).
 
 `mural auth migrate` round-trips credentials between backends and verifies the destination read before deleting the source (when `--cleanup --force` is passed).
+
+In `auto` mode the auth write flows (`mural auth login`, `mural auth bootstrap`) also promote file-backend credentials into a reachable-but-empty keyring automatically: each key is written and verified with a read-back before the file copy is removed, moving plaintext-at-rest material behind the keychain and restoring the ADV-c defense above. On any write or verification failure the keyring writes are rolled back and the file copy is kept. Promotion is skipped in non-interactive contexts (`MURAL_NONINTERACTIVE=1` or `CI=true`).
 
 Devcontainer, Codespaces, and WSL2 contexts inherit the host operator's trust; the keyring backend may be unavailable inside the container, in which case `auto` falls through to the file backend or env-only and the resulting backend is logged at startup.
 
@@ -339,9 +341,12 @@ The skill exposes Mural operations through local CLI commands. The caller proces
 
 ### Information Disclosure
 
-* Command output is JSON-encoded Mural payloads; tokens never appear in normal command output.
-* All log output is filtered through `_redact`, which masks the access token, refresh token, code verifier, code challenge, `client_secret`, and the form-style `code` parameter in any logged JSON or form payload (see [`scripts/mural/`](scripts/mural/) `_redact`). Bearer headers and Azure Blob SAS query strings are also redacted.
-* Unexpected errors emitted to stderr are passed through `_redact(repr(exc))` before logging.
+* Diagnostic messages routed through `_emit` are filtered by `_redact`. The token, authenticated API, and Azure SAS transport URL debug logs also redact their URL values before calling `LOGGER.debug` (see [`scripts/mural/`](scripts/mural/) `_redact`).
+* Machine-readable envelopes routed through `_emit_json` or `_emit_json_error` apply structural `_redact_payload` masking before serialization. The structured stderr helper preserves valid JSON and its key set.
+* The top-level `main()` handlers redact credential-autoload, auth-scope, typed `MuralError`, and unexpected-error text. The four structured error envelopes route through `_emit_json_error`.
+* Record output routed through `_emit_record` or `_emit_records` preserves Mural-authored text and field names. It masks only complete Azure Blob SAS URLs that pass `_validate_asset_url` and contain a `sig` query parameter.
+* Ordinary Mural API errors carry a bounded, redacted `_error_excerpt`. Token parsing, refresh, authorization-code exchange, and Azure SAS upload failures discard opaque response bodies and retain only HTTP status, a stable internal error code, and a static message.
+* Remaining direct `print` and `LOGGER` calls do not inherit a package-wide redaction guarantee. Each such sink requires review against the data it emits.
 * Mural-authored text (sticky notes, textboxes, descriptions, attachments, etc.) returned through CLI output must be treated as untrusted by downstream automation. Mural-sourced text is JSON-encoded output data and is never interpolated into model instructions by the CLI.
 
 ### Denial of Service
@@ -353,8 +358,14 @@ The skill exposes Mural operations through local CLI commands. The caller proces
 ### Elevation of Privilege
 
 * Write commands dispatch through `_require_scope`; there is no CLI path that skips the granted-scope check before calling a write endpoint.
-* Guarded destructive commands honor the AI-authored tag contract and require explicit override flags before mutating human-authored widgets.
+* Existing-widget update, delete, and bulk update require the AI-authored tag by default. `--force-human` is an explicit per-call override before mutating a human-authored widget.
 * Dry-run capable commands return structured previews without invoking the underlying Mural API call.
+
+### Local destination control plane
+
+The registry loader uses `yaml.safe_load`, rejects malformed or unsafe entries, and applies the optional override by destination identifier before dispatch. Destination and action intent must both be explicit. The dispatcher can invoke only an adapter supplied by the caller and contains no real destination-system adapter.
+
+Hydration treats widget text as untrusted source data, preserves `text` and `htmlText`, and keeps derived hierarchy, tag, lineage, authorship, and partial-state metadata in separate fields. Existing-widget writeback accepts only `tags`, `hyperlink`, and `parentId`. Local test-double evidence does not establish native Mural behavior or real destination effectiveness.
 
 ### Risk Rating
 
@@ -417,6 +428,7 @@ The following gaps are known limitations of the current implementation. They are
 | G-SUP-1 | The skill's Python dependencies are listed in `pyproject.toml` but the project does not yet publish an SBOM, sign release artifacts, or pin transitive dependency hashes for the skill.                                                                                                                                                                                                                                                                                                                 | SupplyChain-Med | Tracked at the repository level.                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | G-INF-4 | Mural payloads returned through CLI output may include PII or confidential workshop content (A4). The skill does not classify or redact this content; downstream handling is the caller's responsibility.                                                                                                                                                                                                                                                                                               | InfoDisc-Med    | By design; documented in B4 Information Disclosure.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | G-TLS-1 | The skill performs no certificate pinning for `app.mural.co`; TLS validation depends entirely on the system trust store. A compromised local CA, an operator-installed inspection root, or a vulnerability in the underlying OpenSSL/SChannel/Security framework therefore extends to the skill. See the **TLS posture** subsection under B2 for the full inventory.                                                                                                                                    | InfoDisc-Low    | Operator-acceptable for a public SaaS endpoint; documented for customers whose policy mandates pinning.                                                                                                                                                                                                                                                                                                                                                                                  |
+| G-INF-5 | The CLI's top-level `MuralError` handlers wrote exception text to stderr without passing it through `_redact`, while the adjacent broad `Exception` handler did redact. Transport-tier `MuralAPIError` messages were constructed directly from raw OAuth token-endpoint and Azure Blob asset-upload response bodies, so a token-refresh failure could print credential material in clear text. The four structured stderr envelopes bypassed the barrier for the same reason.                           | InfoDisc-Med    | Fixed: both `MuralError` handlers and the auth-scope handler redact at the sink, and the four envelopes use `_emit_json_error`. Ordinary Mural API errors use bounded, redacted `_error_excerpt` diagnostics. Token parsing, refresh, authorization-code exchange, and SAS upload failures discard opaque bodies and retain status, stable code, and static messages. Behavioral coverage spans redaction, transport, and OAuth tests. Runtime tests pass. Row retained for audit trail. |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

@@ -270,8 +270,8 @@ test.describe('Focus management', () => {
     await expectNextTabEntersMain(page, 'After activating a navbar dropdown item');
   });
 
-  // WCAG 2.4.3 Focus Order: the defect is direction-agnostic, so navigating
-  // from a docs route back to the landing page must behave identically.
+  // WCAG 2.4.3 Focus Order applies consistently when navigation returns from a
+  // documentation route to the landing page.
   test('returning to the landing page moves focus to main content', async ({ page }) => {
     await page.goto('/hve-core/docs/getting-started/');
 

@@ -7,24 +7,27 @@ import subprocess
 from types import SimpleNamespace
 
 import pytest
+
 import runtime_a11y.__main__ as cli
 from runtime_a11y._errors import ScriptError
 
 
 def test_emit_live_test_start_notice_uses_dot_and_repo_relative_paths(capsys) -> None:
-    cli._emit_live_test_start_notice(None, 2)
+    cli._emit_live_test_start_notice(None, ["alpha", "beta"])
     first = capsys.readouterr()
     assert first.err.splitlines() == [
         cli._LIVE_TEST_START_NOTICE,
         "Run root: . | Journey count: 2",
+        "Journeys: alpha, beta",
     ]
 
-    cli._emit_live_test_start_notice("docs/docusaurus", 1)
+    cli._emit_live_test_start_notice("docs/docusaurus", ["alpha"])
     second = capsys.readouterr()
     assert second.err.splitlines() == [
         cli._LIVE_TEST_START_NOTICE,
         "Run root: .github/skills/accessibility/accessibility/docs/docusaurus "
-        "| Journey count: 1",
+        + "| Journey count: 1",
+        "Journeys: alpha",
     ]
 
 
@@ -54,9 +57,9 @@ def test_run_calibration_emits_start_and_finish_notices_for_script_error(
     real_start_notice = cli._emit_live_test_start_notice
     real_finish_notice = cli._emit_live_test_finish_notice
 
-    def capture_start(run_root, journey_count):
-        events.append(("start", (run_root, journey_count)))
-        return real_start_notice(run_root, journey_count)
+    def capture_start(run_root, journey_ids):
+        events.append(("start", (run_root, journey_ids)))
+        return real_start_notice(run_root, journey_ids)
 
     def capture_finish():
         events.append(("finish", None))
@@ -87,7 +90,7 @@ def test_run_calibration_emits_start_and_finish_notices_for_script_error(
 
     assert exit_code == cli.EXIT_USAGE
     assert events == [
-        ("start", (expected_run_root, 1)),
+        ("start", (expected_run_root, ["14399"])),
         ("stop", process),
         ("finish", None),
     ]
@@ -95,7 +98,8 @@ def test_run_calibration_emits_start_and_finish_notices_for_script_error(
     assert stderr[0] == cli._LIVE_TEST_START_NOTICE
     assert stderr[1].startswith("Run root: ")
     assert stderr[1].endswith(" | Journey count: 1")
-    assert stderr[2] == cli._LIVE_TEST_FINISH_NOTICE
+    assert stderr[2] == "Journeys: 14399"
+    assert stderr[3] == cli._LIVE_TEST_FINISH_NOTICE
     assert stderr[-1] == "Error: calibration failed"
 
 
@@ -125,9 +129,9 @@ def test_run_calibration_emits_finish_notice_for_keyboard_interrupt(
     real_start_notice = cli._emit_live_test_start_notice
     real_finish_notice = cli._emit_live_test_finish_notice
 
-    def capture_start(run_root, journey_count):
-        events.append(("start", (run_root, journey_count)))
-        return real_start_notice(run_root, journey_count)
+    def capture_start(run_root, journey_ids):
+        events.append(("start", (run_root, journey_ids)))
+        return real_start_notice(run_root, journey_ids)
 
     def capture_finish():
         events.append(("finish", None))
@@ -158,11 +162,11 @@ def test_run_calibration_emits_finish_notice_for_keyboard_interrupt(
         )
 
     assert events == [
-        ("start", (expected_run_root, 1)),
+        ("start", (expected_run_root, ["14399"])),
         ("stop", process),
         ("finish", None),
     ]
-    assert capsys.readouterr().err.splitlines()[2] == cli._LIVE_TEST_FINISH_NOTICE
+    assert capsys.readouterr().err.splitlines()[3] == cli._LIVE_TEST_FINISH_NOTICE
 
 
 def test_run_calibration_skips_notices_for_prerequisite_only(
@@ -172,7 +176,7 @@ def test_run_calibration_skips_notices_for_prerequisite_only(
         "baseUrl": "http://127.0.0.1:3001",
         "calibration": {"journeys": [{"id": "14399"}]},
     }
-    start_calls: list[tuple[str | None, int]] = []
+    start_calls: list[tuple[str | None, list[str]]] = []
     finish_calls: list[tuple[()]] = []
 
     expected_run_root = tmp_path / "test-run-root"
@@ -187,7 +191,7 @@ def test_run_calibration_skips_notices_for_prerequisite_only(
     mocker.patch.object(
         cli,
         "_emit_live_test_start_notice",
-        side_effect=lambda run_root, count: start_calls.append((run_root, count)),
+        side_effect=lambda run_root, ids: start_calls.append((run_root, ids)),
     )
     mocker.patch.object(
         cli,
@@ -238,7 +242,7 @@ def test_run_calibration_keeps_server_reuse_without_stopping_it(
     mocker.patch.object(
         cli,
         "_run_calibration_session",
-        return_value={"aggregate": {"status": "successful"}, "journeys": []},
+        return_value={"aggregate": {"status": "successful"}, "journeys": ["14399"]},
     )
     mocker.patch.object(
         cli,

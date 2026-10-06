@@ -119,9 +119,15 @@ ENV_XDG_CONFIG_HOME = "XDG_CONFIG_HOME"
 # refresh token is stored persistently per-profile alongside client_id and
 # client_secret so keyring-backed deployments can retain authentication
 # state across processes without an env file.
+#
+# Entries are literal key names rather than references to ENV_CLIENT_ID and
+# ENV_CLIENT_SECRET. CodeQL classifies values read from a secret-named variable
+# as sensitive, so referencing ENV_CLIENT_SECRET would flag the bare key name
+# reported in logout's ``removed_keys`` as clear-text secret logging. Tests pin
+# these literals to the ENV_* constants.
 _KNOWN_CREDENTIAL_KEYS: tuple[str, ...] = (
-    ENV_CLIENT_ID,
-    ENV_CLIENT_SECRET,
+    "MURAL_CLIENT_ID",
+    "MURAL_CLIENT_SECRET",
     "MURAL_REFRESH_TOKEN",
 )
 
@@ -237,10 +243,18 @@ _REDACT_PATTERNS.append(
     )
 )
 # Azure Blob SAS query strings (used for image uploads): scrub everything
-# after the storage host's `?` so the `sig=` token is not logged.
+# after the storage host's `?` so the `sig=` token is not logged. The host is
+# matched case-insensitively because DNS labels are case-insensitive and
+# ``_validate_asset_url`` admits a URL on its lowercased ``parsed.hostname``.
+# Without the flag a mixed-case host passes validation and defeats redaction.
 _REDACT_PATTERNS.append(
-    (re.compile(r"(\.blob\.core\.windows\.net/[^\s?]+\?)\S+"), r"\1***")
+    (re.compile(r"(?i)(\.blob\.core\.windows\.net/[^\s?]+\?)\S+"), r"\1***")
 )
+# Standalone SAS signature. The host-anchored pattern above cannot match when
+# the query is rendered without its URL prefix, which happens when an upstream
+# error body quotes the parameters alone or when truncation removes the host.
+# `sig` is the SAS authenticator, so it is masked wherever it appears.
+_REDACT_PATTERNS.append((re.compile(r"(?i)(\bsig=)([^&\s\"'<>]+)"), r"\1***"))
 
 
 _LINE_RE = re.compile(

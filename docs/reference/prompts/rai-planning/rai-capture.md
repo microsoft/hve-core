@@ -3,7 +3,7 @@ title: Rai Capture
 description: Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Start responsible AI assessment planning from existing knowledge using the RAI P
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to begin Responsible AI assessment planning from existing notes or team knowledge. Use a PRD or security-plan entry prompt when a confirmed source artifact is available.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide a fictional or approved `project-slug` and answer the focused discovery questions. The RAI Planner records assessment state and evidence gaps; its output requires qualified professional review before decisions or attestations.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/rai-capture project-slug=customer-support-assistant
+```
+
+The prompt starts capture-mode discovery and creates a draft Responsible AI planning record for review.

@@ -1,9 +1,9 @@
 ---
 title: shared-work-handoff
 description: "Prepare, resume, or close a minimized repository-backed work handoff with explicit acceptance and revision safety. Use for accountable continuation between teammates."
-sidebar_position: 9
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-28
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - skill

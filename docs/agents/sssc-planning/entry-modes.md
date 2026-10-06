@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-09-28
 ms.topic: how-to
 estimated_reading_time: 5
 ---

@@ -3,7 +3,7 @@ title: security-reviewer-formats
 description: Format specifications and data contracts for the security reviewer orchestrator and its subagents.
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-09
 ms.topic: reference
 keywords:
   - skill
@@ -28,10 +28,23 @@ Format specifications and data contracts for the security reviewer orchestrator 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Security, accessibility, and RAI review orchestrators load this skill when they
+need compatible finding, verification, report, and completion formats. Use it to
+exchange assessment results or assemble a report, not to decide which security
+standard applies. Domain references supply assessment criteria; this package
+supplies the reporting contracts and shared severity definitions.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+For an illustrative Security Reviewer diff review, provide the bounded code diff
+and the resulting finding and verification records. Ask the orchestrator to load
+`security-reviewer-formats` and assemble the audit/diff report and completion
+summary. Expect severity counts and verification outcomes to agree with the
+underlying records, with unassessed areas still visible.
+
+For a plan review, supply the proposed architecture instead. The output should
+distinguish risks, cautions, and covered elements rather than claiming runtime
+verification. Success is a report in the correct contract with traceable counts
+and its qualified-security-review caution intact. For RAI output, human acceptance
+remains `PENDING`; report generation is not human approval. Missing or malformed
+records must not become a successful empty report.

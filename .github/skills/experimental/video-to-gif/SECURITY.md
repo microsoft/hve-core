@@ -2,7 +2,7 @@
 title: Video-to-GIF Skill Security Model
 description: STRIDE threat model for the video-to-gif skill organized by assets, adversaries, and trust buckets (CLI to FFmpeg subprocess, untrusted media parsing, CLI caller process and filesystem) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-07-02
+ms.date: 2026-09-27
 ms.topic: reference
 estimated_reading_time: 9
 keywords:
@@ -69,7 +69,7 @@ flowchart TD
         FFPROBE["ffprobe<br/>(HDR metadata)"]
         FFMPEG["ffmpeg<br/>(decode + palette)"]
     end
-    CLI -->|"validated args (array, no shell)"| FFPROBE
+    CLI -->|"validated args (array, no shell), bounded by timeout"| FFPROBE
     CLI -->|"validated args (array, no shell), bounded by timeout"| FFMPEG
     INPUT -->|"untrusted bitstream"| FFPROBE
     INPUT -->|"untrusted bitstream"| FFMPEG
@@ -145,7 +145,7 @@ flowchart TD
 
 ### Denial of Service
 
-* Every `ffprobe` and `ffmpeg` invocation is bounded by a wall-clock timeout (bash `timeout`/`gtimeout`, PowerShell `Process.WaitForExit` + `Kill`), default 600 seconds and overridable via `VIDEO_TO_GIF_TIMEOUT` / `-TimeoutSeconds` (V-DOS-1, mitigated). A pathological input can still consume CPU and disk within the bound.
+* Every `ffprobe` and `ffmpeg` invocation is bounded by a wall-clock timeout (bash `timeout`/`gtimeout`, PowerShell `Process.WaitForExit` + `Kill` through `Invoke-BoundedProcess`), default 600 seconds and overridable via `VIDEO_TO_GIF_TIMEOUT` / `-TimeoutSeconds` (V-DOS-1, mitigated). A timed-out or failed HDR probe is treated as SDR input rather than aborting. A pathological input can still consume CPU and disk within the bound.
 
 ### Elevation of Privilege
 
@@ -200,7 +200,7 @@ flowchart TD
 
 ### Tampering
 
-* The intermediate palette is written inside a private, unpredictable temporary directory (bash `mktemp -d ... 0700`, PowerShell random directory under the system temp path) rather than a predictable `/tmp/palette_$$.png` or `%TEMP%\palette_$PID.png`, closing a symlink/pre-creation race on a shared temp location (V-TMP-1, mitigated). Cleanup runs on process exit (a bash `EXIT` handler; PowerShell `finally`) so the directory is removed even on failure or timeout.
+* The intermediate palette is written inside a private, unpredictable temporary directory (bash `mktemp -d ... 0700`, PowerShell random directory under the system temp path) rather than a predictable `/tmp/palette_$$.png` or `%TEMP%\palette_$PID.png`, closing a symlink/pre-creation race on a shared temp location (V-TMP-1, mitigated). Cleanup runs on process exit (a bash `EXIT` handler bound to a script-global path so it still resolves after `main` returns or `set -e` unwinds it; PowerShell `finally`) so the directory is removed on success, failure, and timeout.
 
 ### Repudiation
 
@@ -208,7 +208,7 @@ flowchart TD
 
 ### Information Disclosure
 
-* The convenience file search resolves a bare filename across the current directory, the workspace root, and `~/Movies`/`~/Videos`, `~/Downloads`, and `~/Desktop`. A bare name could resolve to an unintended file in a lower-priority location (G-INF-1). The output path is derived from the input, and existing destinations are overwritten with `-y`.
+* The convenience file search resolves a bare filename across the current directory, the workspace root, and `~/Movies`/`~/Videos`, `~/Downloads`, and `~/Desktop`. A bare name could resolve to an unintended file in a lower-priority location (G-INF-1); the bash prefix fallback matches the requested name literally, so glob characters in it are not expanded. The output path is derived from the input, existing destinations are overwritten with `-y`, and an output that resolves to the input path is refused before any FFmpeg call so the source cannot be overwritten.
 
 ### Denial of Service
 

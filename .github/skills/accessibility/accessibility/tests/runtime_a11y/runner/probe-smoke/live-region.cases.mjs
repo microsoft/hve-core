@@ -3,8 +3,8 @@
 
 // Fixture cases for the probe-live-region smoke tests. Each case is
 // framework-agnostic HTML paired with the interaction state and the expected
-// WCAG 4.1.3 (Status Messages) verdict. Cases guard the shipped defect where a
-// status region existed but never announced, and the wrong-surface silence.
+// WCAG 4.1.3 (Status Messages) verdict. Cases require an updated status region
+// on the intended surface and silence on unrelated surfaces.
 export const CASES = [
   {
     name: 'status region that fires an update passes (WCAG 4.1.3)',

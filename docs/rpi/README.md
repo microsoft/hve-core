@@ -2,8 +2,12 @@
 title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
+sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Understanding the RPI Workflow"
+pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-08-28
+ms.date: 2026-10-06
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -12,6 +16,7 @@ keywords:
   - rpi plan
   - rpi implement
   - rpi review
+  - rpi walkthrough
   - follow-up
   - github copilot
 estimated_reading_time: 7
@@ -36,7 +41,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 > [!TIP]
 > See [Why the RPI Workflow Works](why-rpi) for the psychology, quality comparisons, and entry surfaces behind the lifecycle.
 
-RPI separates lifecycle concepts without requiring an autonomous chain of specialized task workers. Use `RPI Agent` as a user-selected lifecycle wrapper, `/rpi-quick` as a skill-based full-flow entry point, or a direct phase skill when you need focused work.
+RPI separates lifecycle concepts without requiring an autonomous chain of specialized task workers. Use `RPI Agent` as a user-selected lifecycle wrapper, or a direct phase skill when you need focused work.
 
 ## The Lifecycle Concepts
 
@@ -56,19 +61,22 @@ Reuse supplied or completed evidence when it is adequate. Record why research wa
 
 Use `/rpi-plan` when adequate evidence must become a sequenced, verifiable implementation strategy. Planning focuses on dependencies, acceptance criteria, boundaries, and stable work identifiers instead of changing source files.
 
-The skill creates or revises three coordinated artifacts:
+The skill creates or revises the plan and, unless you skip the critique, a critique artifact:
 
 ```text
 .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 ```
 
-The plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. Phase details add evidence-based context, boundaries, dependencies, validation expectations, and completion evidence. An independent critique records `Pass`, `Revise`, or `Blocked` before implementation readiness.
+The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. It opens with an executive summary and a Phase Checklist that starts with a Mermaid diagram of the overall change; each phase repeats that diagram with its own portion highlighted.
+
+Every task carries labeled `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks, with backticks around code and commands and Markdown links to the files it touches. The `Requirements:` block is the checkable record for the task; how to verify it is left to the implementer.
+
+The critique runs by default and records `Pass`, `Revise`, or `Blocked` before implementation readiness. Pass `critique=skip` or ask to skip it, and planning records the critique as skipped; the plan's other readiness checks still apply.
 
 ### ⚡ Implement with rpi-implement
 
-Use `/rpi-implement` to execute approved `Pxx` or `Pxx-Txx` work. Provide the dated plan, phase details, critique disposition, and exact phase or task when the execution scope is bounded.
+Use `/rpi-implement` to execute approved `Pxx` or `Pxx-Txx` work. Provide the dated plan, critique disposition, and exact phase or task when the execution scope is bounded.
 
 Implementation records material work and truthful validation in:
 
@@ -76,11 +84,11 @@ Implementation records material work and truthful validation in:
 .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 ```
 
-Implementation records material work under descriptive headings tied to plan areas or markers. Completion checkboxes change only after evidence exists. If new information changes requirements, scope, architecture, acceptance criteria, dependencies, or the evidence boundary, implementation updates the current plan and details after the required user decision. The task's existing critique remains historical evidence rather than running again.
+Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence; a follow-up critique is optional.
 
 ### ✅ Review with rpi-review
 
-Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time decisions, changes, blockers, follow-up items, and validation evidence in one record:
+Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review is optional; skip it when you do not need an acceptance record. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, changes, and validation evidence in one record, and records the final outcome and routing:
 
 ```text
 .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md
@@ -96,16 +104,17 @@ Follow-up does not rename or repeat another lifecycle concept. It routes defects
 
 Choose the smallest entry surface that owns the next action:
 
-| Entry surface    | Use it when                                          | Contract                                                                        |
-|------------------|------------------------------------------------------|---------------------------------------------------------------------------------|
-| `RPI Agent`      | You want a user-selected lifecycle wrapper           | Activates the applicable RPI skills with one task identity                      |
-| `/rpi-quick`     | You want a skill-based full-flow entry point         | Coordinates research readiness, planning, implementation, review, and follow-up |
-| `/rpi-research`  | A demonstrated evidence gap blocks credible progress | Produces research evidence without planning or implementation                   |
-| `/rpi-plan`      | Adequate evidence needs an implementation strategy   | Produces the plan, phase details, and critique disposition                      |
-| `/rpi-implement` | Approved work is ready to execute                    | Produces source changes, change evidence, and validation                        |
-| `/rpi-review`    | Implementation evidence is ready for reconciliation  | Produces one review record and routes open work                                 |
+| Entry surface      | Use it when                                                   | Contract                                                                                            |
+|--------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `RPI Agent`        | You want a user-selected lifecycle wrapper                    | Activates the applicable RPI skills with one task identity; manual by default, Full Auto on request |
+| `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                                       |
+| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                                            |
+| `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                                            |
+| `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                                     |
+| `/rpi-challenger`  | You want to expose assumptions before acting                  | Asks adaptive skeptical questions and records unresolved items                                      |
+| `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed                           |
 
-Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. `RPI Agent` and `/rpi-quick` are alternative entry surfaces, not autonomous dispatchers of specialized task workers.
+Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. It runs in manual mode until you confirm an automatic session, which then completes the remaining phases through Review and offers ranked follow-up work. `RPI Agent` is an entry surface, not an autonomous dispatcher of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
 
 ## Managing Context Between Lifecycle Concepts
 
@@ -114,10 +123,10 @@ Use `/clear` or a new chat when a long lifecycle has accumulated context, you ar
 Workspace-local artifacts carry the necessary context through chat resets and later sessions when the same working copy remains available:
 
 ```text
-research, when it runs → plan and details → changes → review and routed follow-up
+research, when it runs → task-centered plan → changes → review and routed follow-up
 ```
 
-Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan and detail sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
+Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 Because `.copilot-tracking` is gitignored, another contributor or a fresh clone cannot depend on these files. Use [Share Work for Another Contributor](shared-work-handoff) when a named teammate needs intentionally minimized, checked-in continuation context.
 
@@ -142,7 +151,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 5. Review with `/rpi-review`, then route defects, decisions, evidence gaps, or residual work through Follow-up.
 
 > [!TIP]
-> Use `/rpi-quick` or select `RPI Agent` when you want a lifecycle entry surface. Use a direct phase skill when the required next action is already clear.
+> Select `RPI Agent` when you want a lifecycle entry surface. Use a direct phase skill when the required next action is already clear.
 
 ## Next Steps
 
@@ -150,7 +159,8 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 * [Using RPI Together](using-together) - Follow a complete workflow example
 * [Context Engineering](context-engineering) - Why context management matters
 * [Share Work for Another Contributor](shared-work-handoff) - Publish optional minimized continuation context
-* [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) - All available agents
+* [RPI Walkthrough](rpi-walkthrough) - Explore code or artifacts through a guided explanation
+* [Agents Reference](../reference/agents/) - All available agents
 * [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI
 
 ## See Also

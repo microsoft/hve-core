@@ -3,7 +3,7 @@ title: Accessibility Coverage Matrix
 description: "Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and methods."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Build, refresh, report, or probe an accessibility coverage matrix across criteri
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to build, refresh, report on, or probe an accessibility coverage matrix for a defined scope. Use a focused framework assessment instead when you need findings for one standard rather than cross-surface coverage.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the required `scope`, then optionally select frameworks, a mode, a base URL, or a serve command. Confirm before probing a non-loopback target, and treat qualified assistive-technology review as unresolved human work.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/accessibility-coverage-matrix scope=docs/docusaurus frameworks=wcag-22,aria-apg mode=report
+```
+
+The prompt reports coverage across the selected frameworks without probing an external site.

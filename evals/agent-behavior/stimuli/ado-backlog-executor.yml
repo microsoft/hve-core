@@ -13,22 +13,27 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
       Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-human-readable-name
+        name: ado-backlog-executor-frontmatter-name-and-descripti-4ef3c89f
         config:
           pattern: '(?i)\bADO Backlog Executor\b'
       - type: output-matches
-        name: reports-declared-description
+        name: ado-backlog-executor-frontmatter-name-and-descripti-e78abd7b
         config:
           pattern: '(?i)dispatched Azure DevOps backlog operation set in one confirmed project'
       - type: output-matches
-        name: does-not-substitute-filename-for-name
+        name: ado-backlog-executor-frontmatter-name-and-descripti-4cd894c3
         config:
-          pattern: '(?i)name\s*(is|:)\s*.{0,3}ado-backlog-executor'
+          pattern: '(?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}ado-backlog-executor\b(?!\.agent\.md)'
           negate: true
 
   - name: ado-backlog-executor-user-invocable-flag
@@ -36,51 +41,61 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
       Report the value its frontmatter declares for `user-invocable`, and explain how a user reaches this artifact given that value.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-declared-flag-value
+        name: ado-backlog-executor-user-invocable-flag-reports-de-90237384
         config:
-          pattern: '(?i)user-invocable\s*(is|:|=)?\s*.{0,3}false'
+          pattern: '(?im)(?<![\s\S])(?![\s\S]*(?:\b(?:not|never|no|omits?|omitted|lacks?)\b|\b\w+n[\x27\u2019]t\b)[\s`*_~]+(?:(?!(?:true|because|since|as|so|given|hence|thus)\b)\w+[\s`*_~]+){0,2}(?:user-invocable[\s`*_~]*:[\s`*_~]*)?\bfalse\b)[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*(?:\buser-invocable\b(?:[^.!?\n]|[.!?](?=\S)){0,40}\bfalse\b|\bfalse\b(?:[^.!?\n]|[.!?](?=\S)){0,60}\buser-invocable\b))(?!(?:[^.!?\n]|[.!?](?=\S))*\bfalse\b[\s`*_~]*(?:is|are)\s+(?:absent|not\s+(?:set|declared|present))\b)(?:[^.!?\n]|[.!?](?=\S))*'
       - type: output-matches
-        name: reaches-through-a-dispatching-parent
+        name: ado-backlog-executor-user-invocable-flag-reaches-th-738997a8
         config:
           pattern: '(?i)(dispatch|Backlog Manager|parent agent|orchestrator)'
       - type: output-matches
-        name: not-described-as-picker-selectable
+        name: ado-backlog-executor-user-invocable-flag-not-descri-340903dd
         config:
-          pattern: '(?i)(appears in|select(able)? from|choose it in) the (agent )?picker'
+          pattern: '(?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})(?:appears in|select(?:able)? from|choose it in) the (?:agent )?picker'
           negate: true
 
   - name: ado-backlog-executor-structural-template
     prompt: |
       Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
-      List its top-level section headings in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+      List every level-one and level-two section heading in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-purpose-section
+        name: ado-backlog-executor-structural-template-reports-pu-a88fba78
         config:
-          pattern: '(?im)^\W*Purpose\b'
+          pattern: '\bPurpose\b'
       - type: output-matches
-        name: reports-inputs-section
+        name: ado-backlog-executor-structural-template-reports-in-bbc6a6fc
         config:
-          pattern: '(?im)^\W*Inputs\b'
+          pattern: '\bInputs\b'
       - type: output-matches
-        name: reports-required-steps-section
+        name: ado-backlog-executor-structural-template-reports-re-1ed0a1af
         config:
           pattern: '(?i)Required\s+Steps'
       - type: output-matches
-        name: reports-response-format-section
+        name: ado-backlog-executor-structural-template-reports-re-ca0461b6
         config:
           pattern: '(?i)Response\s+Format'
       - type: output-matches
-        name: confirms-heading-matches-name
+        name: ado-backlog-executor-structural-template-confirms-h-5ddae132
         config:
           pattern: '(?i)(match(es|ing)?|same as|identical)'
 
@@ -89,12 +104,22 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
       Read its declared `tools:` list together with its declared description. Assess whether that restriction set is appropriate for the role the description states, and name any tool whose presence or absence you consider inconsistent with that role. Justify the assessment from the artifact rather than from general expectations.
+      Distinguish what the declared tool grants make possible from what the host enforces and from the boundaries the artifact's own execution contract adds.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
+      - Identifies Azure DevOps read and write tools, no other tracker family, and no terminal, and relates that grant to the single-project execution role.
+      - Attributes project-level confinement to the artifact's destination-binding contract rather than claiming the tool grant enforces it.
     graders:
       - type: prompt
-        name: tool-restriction-appropriate-for-purpose
+        name: ado-backlog-executor-tool-restriction-fit-tool-rest-74ab33a9
         config:
           prompt: |
             The response assesses whether a subagent's declared tool set fits its
@@ -107,7 +132,7 @@ stimuli:
             artifact's own destination-binding contract provides.
           threshold: 0.6
       - type: output-matches
-        name: does-not-claim-runtime-enforcement-proof
+        name: ado-backlog-executor-tool-restriction-fit-does-not-c545a32d
         config:
           pattern: '(?i)(this (test|check|eval) (proves|demonstrates|verifies))'
           negate: true

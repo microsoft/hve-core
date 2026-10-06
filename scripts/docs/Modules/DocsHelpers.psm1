@@ -398,8 +398,9 @@ function Get-AssetInvocation {
 
     .PARAMETER Path
         Optional repo-relative source path. When an agent's path lies under a
-        subagents directory the invocation is classified as a delegated subagent
-        rather than a chat-picker agent.
+        subagents directory the invocation is classified as a delegated subagent.
+        An agent that explicitly sets user-invocable to false elsewhere is
+        classified as a background agent rather than a chat-picker agent.
 
     .OUTPUTS
         [hashtable] With Mechanism and Token keys.
@@ -432,6 +433,10 @@ function Get-AssetInvocation {
             }
             if ($Path -match '(?:^|[\\/])subagents[\\/]') {
                 return @{ Mechanism = 'subagent-delegated'; Token = $displayName }
+            }
+            if ($Frontmatter.ContainsKey('user-invocable') -and
+                [string]$Frontmatter['user-invocable'] -ieq 'false') {
+                return @{ Mechanism = 'background-agent'; Token = $displayName }
             }
             return @{ Mechanism = 'agent-picker'; Token = $displayName }
         }
@@ -472,10 +477,11 @@ function Test-AssetInteractive {
     .DESCRIPTION
         Classifies whether an asset has an interactive usage flow so documentation
         generation can decide whether to include a "How to use" section. Agents are
-        conversational and always interactive. Prompts are interactive when they
-        declare inputs (argument-hint) or launch an agent (agent field). Instructions
-        and skills are passive: instructions apply automatically and skills load in
-        the background, so neither is interactive.
+        conversational when user-invocable. Delegated agents and agents that
+        explicitly set user-invocable to false are non-interactive. Prompts are
+        interactive when they declare inputs (argument-hint) or launch an agent
+        (agent field). Instructions and skills are passive: instructions apply
+        automatically and skills load in the background, so neither is interactive.
 
     .PARAMETER Kind
         The artifact kind (agent, prompt, instruction, skill).
@@ -508,6 +514,10 @@ function Test-AssetInteractive {
     switch ($Kind) {
         'agent' {
             if ($Path -match '(?:^|[\\/])subagents[\\/]') {
+                return $false
+            }
+            if ($Frontmatter.ContainsKey('user-invocable') -and
+                [string]$Frontmatter['user-invocable'] -ieq 'false') {
                 return $false
             }
             return $true
@@ -673,6 +683,7 @@ function Format-AssetInvocation {
         'skill-user-and-load' { return "Invoked directly as $tick$token$tick, or loaded on demand by referencing agents" }
         'skill-load' { return 'Loaded on demand by referencing agents' }
         'subagent-delegated' { return 'Delegated subagent, dispatched by a parent agent (not selected directly)' }
+        'background-agent' { return "Background agent $tick$token$tick, invoked by automation (not selected directly)" }
         default {
             $mechanism = ConvertTo-TableCell -Value ([string]$Invocation.Mechanism)
             Write-Warning "Format-AssetInvocation: unrecognized mechanism '$mechanism'; rendering drift marker."

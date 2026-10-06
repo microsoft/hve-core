@@ -184,7 +184,7 @@ Evidence-register entries are reusable across planners by stable `id` and `sourc
 
 Activate `rpi-research` only for bounded evolving standards, regulatory, or assistive-technology questions. Supply the topic and phase purpose; assessment authors, affected audiences, and qualified reviewers as the audience and intended use; explicit questions and evidence criteria; source, version, surface, and assistive-technology scope plus non-goals; licensing, quotation, regulatory-currency, phase-gate, and write-boundary constraints; supplied state, mapping, evidence-register, framework, and user evidence; requested outputs; and output mode (`analysis` unless another supported mode is required).
 
-Explicitly identify `.copilot-tracking/accessibility/{project-slug}/` as a trusted alternate evidence root and require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill owns the exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
+Explicitly identify `.copilot-tracking/accessibility/{project-slug}/` as a trusted alternate evidence root.
 
 The Accessibility Planner reads the completed primary research artifact and synthesizes applicable findings into active phase artifacts and `state.json`, preserving every gate and confirmation. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop the dependent lookup. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain standards or regulatory content from training data.
 
@@ -192,9 +192,9 @@ The Accessibility Planner reads the completed primary research artifact and synt
 
 The planner follows the shared base's Session Start Display cadence. This file is the canonical source-of-truth for the accessibility planning disclaimer (the L7 lever pins the disclaimer copy here); do not edit `shared/disclaimer-language.instructions.md` to add an accessibility variant.
 
-On the first turn of every session, emit the canonical accessibility disclaimer block below verbatim before Phase 1 work begins. Record the timestamp in `state.disclaimerShownAt` and append a `noticeLog` entry with `noticeType: "session-start-disclaimer"` and `source: ".github/instructions/accessibility/accessibility-identity.instructions.md"`.
+On the first turn of every session, emit the canonical accessibility disclaimer block below verbatim before Phase 1 work begins. Record the timestamp in `state.disclaimerShownAt` and append a `noticeLog` entry with `noticeType: "session-start-disclaimer"` and `source: "accessibility-identity.instructions.md"`.
 
-During Phase 6 (Backlog Handoff), include the same disclaimer block verbatim at the end of every handoff summary, every ADO output file, and every GitHub output file, and surface the professional-review reminder before presenting the final handoff summary. Append a `noticeLog` entry with `noticeType: "handoff-disclaimer"` and `source: ".github/instructions/accessibility/accessibility-identity.instructions.md"` for each generated artifact, and a `noticeType: "professional-review-reminder"` entry when the reminder is displayed.
+During Phase 6 (Backlog Handoff), include the same disclaimer block verbatim at the end of every handoff summary, every ADO output file, and every GitHub output file, and surface the professional-review reminder before presenting the final handoff summary. Append a `noticeLog` entry with `noticeType: "handoff-disclaimer"` and `source: "accessibility-identity.instructions.md"` for each generated artifact, and a `noticeType: "professional-review-reminder"` entry when the reminder is displayed.
 
 ```markdown
 > [!CAUTION]

@@ -3,7 +3,7 @@ title: gh-code-scanning
 description: Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-09
 ms.topic: reference
 keywords:
   - skill
@@ -28,10 +28,29 @@ Retrieves and groups GitHub code scanning alerts by rule and severity using the 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this skill to triage existing GitHub code scanning alerts by rule, frequency,
+severity, and affected paths. It retrieves findings; it does not run CodeQL or fix
+the code. Supply the repository owner, repository name, and branch, which defaults
+to `main`.
+
+The supported PowerShell retrieval script requires PowerShell 7+ and an
+authenticated GitHub CLI with appropriate repository access. Use JSON for
+programmatic consumption. Do not substitute `gh api` for alert listing or grouping;
+single-alert detail and analysis metadata are separate supported reads.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+For a repository you are authorized to inspect, ask: `/gh-code-scanning Summarize
+open alerts for example-org/sample-service on release; do not create issues or
+change alert status.` Replace the illustrative repository with your own.
+
+The expected flow uses `scripts/Get-CodeScanningAlerts.ps1` within the skill
+directory with `-Owner`, `-Repo`, `-Branch release`, and `-OutputFormat Json`.
+The summary should retain rule IDs, counts, alert links, and affected paths rather
+than inventing one file per finding. Repository-level findings can have
+`HasFilePaths: false` and an empty `AffectedPaths` array.
+
+A useful result distinguishes a missing `SecuritySeverity` from the fallback
+`Severity` and identifies the largest groups for follow-up. Authentication failure
+is a prerequisite blocker, not evidence of zero alerts. Keep credentials out of
+the request; issue creation is a separate write decision.

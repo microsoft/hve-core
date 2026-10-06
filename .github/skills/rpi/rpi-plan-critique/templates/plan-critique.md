@@ -6,17 +6,24 @@
 * Task ID: {{task_id}}
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
-* Critique execution status: {{Complete, Partial, or Blocked}}
+* Critique execution: {{Complete_Partial_Blocked_or_not_produced}}
+* Critique depth: {{standard_or_deep}}
+* Depth provenance: {{default_or_explicit_user_request}}
+* Critique type: {{initial_or_follow_up}}
+* Earlier critique: {{not_applicable_or_earlier_critique_path}}
+
+<!-- For no assessment, record the limitation and unavailable verdict rather than fabricated coverage or findings. -->
 
 ## Inputs and Criterion Boundary
 
 * Task context and caller requirements: {{requirements_or_context_summary}}
 * Research and evidence considered: {{workspace_relative_evidence_paths}}
-* Decisions, dependencies, and acceptance criteria considered: {{decision_dependency_and_acceptance_summary}}
-* Assessment boundary: {{what_the_critique_can_and_cannot_conclude_from_supplied_inputs}}
+* Decisions, dependencies, task Goals, and task Requirements considered: {{decision_dependency_goal_and_requirement_summary}}
+* Assessment boundary: {{supplied_plan_and_evidence_scope_and_what_the_critique_can_and_cannot_conclude}}
 
 ## Coverage Assessment
+
+<!-- In standard mode, aggregate fully covered IDs where practical and give individual rows to Partial or Missing coverage and material concerns. In deep mode, expand traceability when it helps resolve substantive concerns. -->
 
 | Requirement, research, phase, or task ID | Coverage                       | Evidence or concern     |
 |------------------------------------------|--------------------------------|-------------------------|
@@ -24,8 +31,16 @@
 
 ## Verdict
 
-* Verdict: {{Pass_Revise_or_Blocked}}
+* Verdict: {{Pass_Revise_Blocked_or_unavailable_when_no_assessment}}
 * Rationale: {{concise_evidence_based_rationale}}
+
+## Earlier Finding Reconciliation
+
+<!-- Follow-up critique only; omit this section for an initial critique. -->
+
+| Earlier finding | Status                                | Evidence     |
+|-----------------|---------------------------------------|--------------|
+| {{PC_xxx}}      | {{resolved_still_open_or_superseded}} | {{evidence}} |
 
 ## Findings
 
@@ -43,7 +58,7 @@
 
 ## Strengths and Residual Risk
 
-* {{credible_coverage_or_explicitly_accepted_residual_risk}}
+* {{concise_credible_coverage_or_explicitly_accepted_residual_risk}}
 
 ## Questions or Blocking Evidence Gaps
 
@@ -57,5 +72,5 @@
 
 * Highest-impact finding: {{PC_xxx_or_none}}
 * Action owner: {{planning_parent, user, or none}}
-* Smallest next action: {{direct_revision_one_phase_planner_dispatch_decision_question_or_finalization}}
+* Smallest next action: {{direct_revision_phase_revision_decision_question_or_finalization}}
 * User response required: {{yes_only_for_a_decision_critical_unresolved_choice, otherwise_no}}

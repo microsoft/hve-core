@@ -5,6 +5,9 @@
 from __future__ import annotations
 
 import argparse
+import os
+import pathlib
+import stat
 from dataclasses import dataclass, field
 
 import jira
@@ -65,6 +68,37 @@ def test_main_dispatches_and_splits_fields(monkeypatch: pytest.MonkeyPatch) -> N
     assert print_recorder.calls == [({"key": TEST_ISSUE_KEY}, FIELDS_ISSUE)]
 
 
+def test_main_loads_default_env_file_before_client_creation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text("JIRA_PAT=file-pat\n", encoding="utf-8")
+    env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+    monkeypatch.setattr(jira, "_default_env_file", lambda: env_path)
+    monkeypatch.delenv("JIRA_PAT", raising=False)
+    seen: list[str] = []
+
+    class FakeParser:
+        def parse_args(self) -> argparse.Namespace:
+            return argparse.Namespace(
+                fields=None,
+                command="search",
+                handler=lambda *_args: {},
+            )
+
+    def fake_from_environment() -> object:
+        seen.append(os.environ["JIRA_PAT"])
+        return object()
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
+    monkeypatch.setattr(jira.JiraClient, "from_environment", fake_from_environment)
+    monkeypatch.setattr(jira, "_print_result", lambda _result, _fields: None)
+
+    assert jira.main() == jira.EXIT_SUCCESS
+    assert seen == ["file-pat"]
+
+
 def test_main_refuses_unconfirmed_write_operations(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -116,6 +150,32 @@ def test_main_allows_confirmed_write_operations_via_environment(
 
     assert jira.main() == jira.EXIT_SUCCESS
     assert seen == [(sentinel_client, "create", False)]
+
+
+def test_main_refuses_unconfirmed_write_before_loading_file(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: list[str] = []
+
+    class FakeParser:
+        def parse_args(self) -> argparse.Namespace:
+            return argparse.Namespace(
+                fields=None,
+                command="create",
+                confirm=False,
+                handler=lambda *_args: {},
+            )
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
+    monkeypatch.setattr(
+        jira,
+        "_load_jira_env_file",
+        lambda: seen.append("loaded"),
+    )
+    monkeypatch.setattr(jira.JiraClient, "from_environment", object)
+
+    assert jira.main() == jira.EXIT_USAGE
+    assert seen == []
 
 
 def test_main_returns_script_error_exit_code(

@@ -3,7 +3,7 @@ title: Cspell Config
 description: Create or update the project cspell configuration with project words and ignores
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Create or update the project cspell configuration with project words and ignores
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a repository needs a new CSpell configuration or curated updates to project words and ignore rules. Use a one-off spelling command instead when no persistent configuration change is needed.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Run the slash command from the target repository. The prompt discovers the current spelling setup, proposes configuration or dictionary changes, applies the scoped updates, and validates the result.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/cspell-config
+```
+
+The prompt reviews the current project vocabulary and updates the repository's CSpell configuration and dictionaries where needed.

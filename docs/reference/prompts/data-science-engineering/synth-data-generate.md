@@ -3,7 +3,7 @@ title: Synth Data Generate
 description: Generate synthetic data for any subject with realistic patterns and relationships
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-17
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Generate synthetic data for any subject with realistic patterns and relationship
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when you need a notebook that produces realistic fictional data for development, demonstrations, or data-science experiments. Use approved source data instead when the work requires actual observed records.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Describe the subject and optionally provide an example schema or sample structure. Confirm before generating PII-like fields, keep values fictional, and review any proposed update to an existing data source.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/synth-data-generate subject="retail inventory demand" example_data="inventory.csv schema"
+```
+
+The prompt creates a notebook that generates fictional inventory and demand records with realistic relationships.

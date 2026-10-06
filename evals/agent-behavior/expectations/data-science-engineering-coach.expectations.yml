@@ -196,3 +196,31 @@ expectations:
       - Continues when scanner data mode is unavailable.
     priority: high
     contract_ref: "agent §Durable-write safety; foundation references/flow-state.md §Durable-write gate"
+
+  - expectation_id: evaluation-current-fact-research-route
+    summary: The confirmed evaluation job may use Research only for a demonstrated live evaluator-catalog gap.
+    signal: Output names `rpi-research`, `evaluation-design`, and unchanged job authority.
+    pass_criteria: |
+      Research verifies current evaluator names, availability, preview state,
+      compatibility, or prerequisites and returns facts to `evaluation-design`.
+      The coach retains job and state authority, while `evaluation-design`
+      selects metrics.
+    failure_modes:
+      - Research selects the metric plan.
+      - The coach changes jobs to perform the lookup.
+      - Another job receives the evaluation-only route.
+    priority: high
+    contract_ref: "agent §Coach the active job; foundation references/job-registry.md §Routing boundary"
+
+  - expectation_id: blocked-evaluator-research-preserves-job
+    summary: Blocked current-fact Research stops only the catalog-backed recommendation.
+    signal: Output refuses to invent availability and keeps job, lifecycle, and state unchanged.
+    pass_criteria: |
+      The coach records the unresolved current-fact gap, does not invent or
+      guess evaluator availability, and does not switch or complete the job.
+    failure_modes:
+      - Recommends likely evaluators from memory.
+      - Switches to another job.
+      - Marks the evaluation invocation complete despite the dependent gap.
+    priority: high
+    contract_ref: "agent §Coach the active job"

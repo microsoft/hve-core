@@ -118,6 +118,56 @@ def _host_is_allowlisted(host: str, allowlist: list[str]) -> bool:
     return False
 
 
+def assert_host_allowed(
+    host: str,
+    allowlist: list[str] | None = None,
+    allow_external: bool = False,
+) -> None:
+    """Require a loopback, allowlisted, or explicitly authorized host."""
+    if _host_is_loopback(host):
+        return
+    if allowlist and _host_is_allowlisted(host, allowlist):
+        return
+    if allow_external:
+        return
+    raise ScriptError(
+        f"Refusing to probe non-loopback host '{host}'. Add it to the allowlist "
+        "or re-run with --allow-external to confirm intentional external access.",
+        EXIT_USAGE,
+    )
+
+
+def _validated_http_host(url: str) -> str:
+    """Return the host from an absolute HTTP(S) URL without credentials."""
+    if (
+        not isinstance(url, str)
+        or not url
+        or any(ord(character) <= 32 or ord(character) == 127 for character in url)
+    ):
+        raise ScriptError(
+            "Config baseUrl must be an absolute HTTP(S) URL without whitespace "
+            "or control characters.",
+            EXIT_USAGE,
+        )
+
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ScriptError(
+            "Config baseUrl must be an absolute HTTP(S) URL with a host "
+            "(for example http://127.0.0.1:3000).",
+            EXIT_USAGE,
+        )
+    if parsed.username is not None or parsed.password is not None:
+        raise ScriptError("Config baseUrl must not include credentials.", EXIT_USAGE)
+    try:
+        parsed.port
+    except ValueError as exc:
+        raise ScriptError(
+            "Config baseUrl includes an invalid port.", EXIT_USAGE
+        ) from exc
+    return parsed.hostname
+
+
 def assert_target_allowed(config: dict[str, Any], allow_external: bool = False) -> None:
     """Enforce the SSRF/localhost-allowlist guard on the config baseUrl.
 
@@ -130,24 +180,12 @@ def assert_target_allowed(config: dict[str, Any], allow_external: bool = False) 
         ScriptError: If the target host is neither loopback nor authorized.
     """
     base_url = config.get("baseUrl", "")
-    host = urlparse(base_url).hostname or ""
-    if not host:
-        raise ScriptError(
-            "Config baseUrl must include a host (for example http://127.0.0.1:3000).",
-            EXIT_USAGE,
-        )
-    if _host_is_loopback(host):
-        return
+    host = _validated_http_host(base_url)
     allowlist = config.get("allowlist") or []
-    if isinstance(allowlist, list) and _host_is_allowlisted(host, allowlist):
-        return
-    if allow_external:
-        return
-    raise ScriptError(
-        f"Refusing to probe non-loopback host '{host}'. Add it to the config "
-        "allowlist or re-run with --allow-external to confirm intentional "
-        "external access.",
-        EXIT_USAGE,
+    assert_host_allowed(
+        host,
+        allowlist=allowlist if isinstance(allowlist, list) else None,
+        allow_external=allow_external,
     )
 
 
@@ -161,4 +199,35 @@ def load_validated_config(
     validate_config(_config_for_validation(config, require_target))
     if require_target:
         assert_target_allowed(config, allow_external=allow_external)
+    repository_root = config_path.parent.resolve()
+    for candidate in (repository_root, *repository_root.parents):
+        if (candidate / ".git").exists():
+            repository_root = candidate
+            break
+    for path_key, payload_key in (
+        ("caseCatalog", "resolvedCaseCatalog"),
+        ("bindingProfile", "resolvedBindingProfile"),
+    ):
+        reference = config.get(path_key)
+        if reference is None:
+            continue
+        if not isinstance(reference, str) or not reference.strip():
+            raise ScriptError(f"Config {path_key} must be a non-empty path", EXIT_USAGE)
+        reference_path = Path(reference)
+        if reference_path.is_absolute():
+            raise ScriptError(
+                f"Config {path_key} must be repository-relative", EXIT_USAGE
+            )
+        resolved_path = (config_path.parent / reference_path).resolve()
+        try:
+            resolved_path.relative_to(repository_root)
+            payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise ScriptError(
+                f"Cannot load repository-contained config {path_key}: {reference}",
+                EXIT_USAGE,
+            ) from exc
+        if not isinstance(payload, dict):
+            raise ScriptError(f"Config {path_key} root must be an object", EXIT_USAGE)
+        config[payload_key] = payload
     return config

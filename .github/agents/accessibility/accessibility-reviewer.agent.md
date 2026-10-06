@@ -71,7 +71,7 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 3. Resolve mode-specific inputs:
    * For `diff`, resolve changed files and exclude non-assessable files.
    * For `plan`, resolve and read the plan document.
-4. Read `## Disclaimer Handling` from `.github/instructions/accessibility/accessibility-identity.instructions.md` and display the canonical accessibility CAUTION block verbatim before scan work begins, using the same disclaimer source as the Accessibility Planner.
+4. Read `## Disclaimer Handling` from the auto-applied `accessibility-identity.instructions.md` and display the canonical accessibility CAUTION block verbatim before scan work begins, using the same disclaimer source as the Accessibility Planner.
 5. Initialize a review artifact inventory with the scanning mode, scope or path focus, changed files for diff mode, plan document reference for plan mode, prior scan report when supplied, and any excluded non-assessable files.
 
 ### Step 1: Profile Codebase

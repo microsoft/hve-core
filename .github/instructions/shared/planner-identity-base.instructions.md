@@ -39,7 +39,7 @@ When a per-planner identity file intentionally diverges from a base pattern, it 
 
 State persists across sessions in a JSON file at `.copilot-tracking/<planner-slug>/{project-slug}/state.json`. The `<planner-slug>` segment is fixed per planner (`sssc-plans`, `rai-plans`, `security-plans`, `accessibility`, `privacy-plans`) and `{project-slug}` is the kebab-case project identifier captured at first invocation.
 
-When a planner state includes `noticeLog`, append a timestamped entry every time the planner displays a disclaimer, framework attribution notice, handoff disclaimer, or professional-review reminder. Each entry records `noticeType`, `shownAt`, `source`, and optional `details`; `disclaimerShownAt` remains the first-display gate for planners that use the disclaimer cadence.
+When a planner state includes `noticeLog`, append a timestamped entry every time the planner displays a disclaimer, framework attribution notice, handoff disclaimer, or professional-review reminder. Each entry records `noticeType`, `shownAt`, `source`, and optional `details`; `disclaimerShownAt` is the most recent full-disclaimer display time and remains the automatic-display gate for planners that use the disclaimer cadence. Use `noticeLog`, not `disclaimerShownAt`, as the immutable display-history record.
 
 Timestamp fields use ISO-8601 (`YYYY-MM-DDTHH:MM:SSZ`). Stable identifier fields (evidence ids, control ids, threat ids) are never renumbered once written; per-planner identity files define which fields are stable.
 
@@ -122,11 +122,11 @@ Per-planner identity files define phase-specific question templates that name th
 
 ## Disclaimer Cadence
 
-When the planner emits a user-facing disclaimer (RAI, SSSC, Accessibility, and Privacy planners do; Security Planner does not), the cadence is:
+When the planner emits a user-facing disclaimer (RAI, SSSC, Security, Accessibility, and Privacy planners do), the cadence is:
 
 ### Session Start Display
 
-On the first turn of every session, display the planner's canonical disclaimer block from `shared/disclaimer-language.instructions.md` verbatim before any phase work begins. Record the display by setting `state.disclaimerShownAt` to the current ISO-8601 timestamp and appending a `noticeLog` entry with `noticeType: "session-start-disclaimer"` before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation unless the user requests it.
+When creating a project state record, or when a recovered record has `disclaimerShownAt` set to `null`, display the planner's canonical disclaimer block from `shared/disclaimer-language.instructions.md` verbatim before any phase work begins. Record the display by setting `state.disclaimerShownAt` to the current ISO-8601 timestamp and appending a `noticeLog` entry with `noticeType: "session-start-disclaimer"` before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `disclaimerShownAt` to the redisplay timestamp, and append a `session-start-disclaimer` entry with `details.reason: "user-requested-redisplay"`.
 
 ### Exit Point Reminder
 
@@ -139,7 +139,7 @@ At each of the following exit points, surface a brief one-line professional-revi
 
 Each reminder states that the generated plan is AI-assisted and requires professional review before execution. Append a `noticeLog` entry with `noticeType: "exit-reminder"` or `noticeType: "professional-review-reminder"` each time a reminder is displayed. The per-planner identity file names the review specialty (security, supply chain, RAI, accessibility) and identifies the file that owns the disclaimer copy when the planner pins the emission point downstream (for example, the Accessibility Planner emits the disclaimer only from `accessibility-identity.instructions.md` per the L7 lever).
 
-Planners without a disclaimer cadence (Security Planner) skip the user-facing disclaimer display rules. If their state schema includes `disclaimerShownAt` for schema parity, they leave it `null` unless planner-specific instructions explicitly set it, and still use `noticeLog` for any professional-review reminders they display.
+Planners without a disclaimer cadence skip the user-facing disclaimer display rules. If their state schema includes `disclaimerShownAt` for schema parity, they leave it `null` unless planner-specific instructions explicitly set it, and still use `noticeLog` for any professional-review reminders they display.
 
 ## Error Handling
 

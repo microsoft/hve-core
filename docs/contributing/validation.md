@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-11
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - validation
@@ -16,6 +16,8 @@ keywords:
   - package feeds
 estimated_reading_time: 10
 ---
+
+<!-- cspell:ignore setpriv SETUID SETGID tmpfs syscall -->
 
 Validation command names distinguish the checks that are safe defaults for a
 local development loop from lanes owned by CI. The distinction helps people and
@@ -63,6 +65,67 @@ the reproducible bootstrap path.
 Installing dependencies for one root does not provision the other roots. The
 root commands that delegate to Docusaurus still need the Docusaurus package
 dependencies available.
+
+## Python skill test baselines on Windows and Linux
+
+The accessibility and GitLab skill suites have separate `uv.lock` files. Run
+the complete pytest command from each skill root, rather than interpreting a
+selected Windows-compatible subset as a full-suite pass. Each skill's default
+coverage gate remains active: 95% for accessibility and 80% for GitLab.
+
+On native Windows, start each block from the repository root. The accessibility
+suite also needs its skill-local Node package. Disable browser downloads for
+this dependency install; ordinary unit tests do not require provisioning
+Chrome or starting NVDA.
+
+```powershell
+Set-Location .github\skills\accessibility\accessibility
+uv sync --locked --dev
+Push-Location scripts\runtime_a11y
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'
+npm ci
+Pop-Location
+uv run pytest -q
+```
+
+```powershell
+Set-Location .github\skills\project-planning\gitlab
+uv sync --locked --dev
+uv run pytest -q
+```
+
+On Linux, start each block from the repository root. The same skill-local Node
+dependency is needed for the complete accessibility suite. If you use WSL,
+prefer a separate Linux checkout for these commands: running `uv sync` or
+`npm ci` against a checkout shared with native Windows can replace that
+checkout's Windows virtual environment or Node dependencies.
+
+```bash
+cd .github/skills/accessibility/accessibility
+uv sync --locked --dev
+(cd scripts/runtime_a11y && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci)
+uv run pytest -q
+```
+
+```bash
+cd .github/skills/project-planning/gitlab
+uv sync --locked --dev
+uv run pytest -q
+```
+
+Native Windows does not support the POSIX verification-artifact writer or
+GitLab OAuth profile persistence. Tests of those real filesystem operations
+skip on Windows but run on Linux; unmocked Windows tests assert that the
+`verify-intent` and `auth status` commands fail closed without creating a file.
+Portable intent and OAuth behavior remain covered on both platforms. Windows
+coverage reporting excludes only the unsupported POSIX persistence functions;
+Linux measures those functions at the same numerical coverage thresholds.
+This test-only reporting distinction does not enable either Windows backend.
+
+The hosted Python test workflow runs on Ubuntu. A green hosted check therefore
+demonstrates Linux behavior, not a native-Windows full-suite pass; run the
+Windows commands above for that evidence. Screen-reader execution and browser
+installation are separate prerequisites for their own validation lanes.
 
 ## Install behind a restricted network
 
@@ -237,6 +300,92 @@ not complete the suite. Locally, first determine whether the browser and its
 dependencies were provisioned before treating a launch failure as a product
 failure.
 
+## CodeQL threshold gate
+
+Every CodeQL analysis job runs `scripts/security/Test-CodeQLSarifThreshold.ps1`
+after it uploads results. The job fails when its SARIF contains a security
+result with `security-severity` of 4.0 or higher, or an error- or
+warning-level result from a rule without a security severity. Because the gate
+runs inside the CodeQL job, it fails `PR Validation Success` in pull requests
+and in merge-queue groups.
+
+A gate failure means the change, or the branch it merged with, carries a
+finding at that threshold. The job summary lists each result with its rule,
+severity, path, and line. Resolve it in code or configuration. Dismissing the
+alert does not clear the gate, and dismissal is not allowed; see the
+[code-scanning alert lifecycle](../security/code-scanning-alert-lifecycle.md)
+for the exception route.
+
+To reproduce a result locally, download the analysis SARIF from the Security
+tab or the code-scanning API, then run the gate against the file or a
+directory of SARIF files:
+
+```powershell
+npm run security:codeql-gate -- -SarifPath ./python.sarif
+```
+
+The gate reads `security/code-scanning-exceptions.yml` and needs the pinned
+`PowerShell-Yaml` module. It makes no network calls and does not change alert
+state.
+
+## Rust unit-test network-isolation lane
+
+The Rust network-isolation trace is an operator-invoked CI-owned test lane. No
+workflow runs it automatically, and generic validation does not select it. The
+lane characterizes one previously generated disposable Rust crate; it does not
+generate source or establish ordinary runtime behavior or harm.
+
+Prepare these inputs before invoking the lane:
+
+1. Generate the synthetic Rust crate outside the repository and retain the
+  prompt or stimulus identifier and transcript.
+2. Commit a `Cargo.lock` to the disposable crate and vendor every dependency
+  under a non-empty `vendor/` directory. Dependency preparation occurs before
+  containment. The lane replaces any supplied Cargo configuration in its
+  captured copy with a trusted vendor-only offline configuration.
+3. Create a provenance JSON file with non-empty `stimulusId`, `model`,
+  `generatedAt`, and `transcriptPath` fields.
+4. Provision a Linux image containing Rust, `strace`, `setpriv`, `ip`, `grep`,
+  and `sh`. Make the image available locally and pass it by registry name plus
+  immutable SHA-256 digest. The lane verifies that digest from image inspection
+  and uses `--pull never`.
+5. Ensure a Linux Docker engine is available. The container uses
+  `--network none`. A root supervisor retains only `SYS_PTRACE`, `SETUID`, and
+  `SETGID`; `setpriv` clears groups and capabilities before running Cargo as the
+  non-root workload user. Root-only trace storage and workload build storage
+  use separate sized tmpfs mounts.
+
+Preview the validated arguments without starting Docker:
+
+```powershell
+npm run ci:test:rust-network-isolation -- `
+  -InputPath ../generated-rust-case `
+  -ProvenancePath ../generated-rust-case.provenance.json `
+  -Image registry.example/rust-strace@sha256:<64-hex-digest> `
+  -Preview
+```
+
+Remove `-Preview` to run the contained trace. The default report is
+`logs/rust-unit-test-network-trace.json`; the command refuses to overwrite an
+existing report. A result inventories literal endpoints and attempted DNS,
+loopback, non-loopback, and unknown operations. The named container is killed
+after timeout, trace evidence is copied before forced removal, and temporary
+host data is deleted only after container absence is confirmed. Unconfirmed
+absence yields `Inconclusive` and a retained evidence path. Empty attempt lists
+and textual endpoint extraction are not proof of absent network behavior.
+Captured process output is sanitized and truncated, but remains untrusted
+generated data.
+
+Read the JSON report together with the process exit code. `Passed` exits zero.
+`ConcernObserved` means the contained run completed but source or syscall
+evidence indicates external intent; `Failed` means the test or containment
+command completed with a nonzero result after trace evidence was produced.
+`Inconclusive` means required source, trace, or lifecycle evidence is incomplete.
+`NonAttesting` identifies an explicitly requested test seam and cannot establish
+containment. Every non-passing state exits one, so automation must read the
+report status to distinguish them. Missing trace output and other failures
+before report creation are setup or validation errors, not clean traces.
+
 ## Evaluation lanes
 
 Evaluation lanes are CI-owned because their prerequisites and costs vary. They
@@ -269,7 +418,7 @@ output in `logs/` while diagnosing a failure.
 | General eval suites  | `npm run ci:eval:run`                                                                        | Vally and model access; model-backed and potentially costly                                                                                                                      |
 | One suite            | `npm run ci:eval:run:skills`, `npm run ci:eval:run:agents`, or `npm run ci:eval:run:scripts` | Same model and service prerequisites as the selected suite                                                                                                                       |
 | Agent conformance    | `npm run ci:eval:run:conformance`                                                            | Vally and model access; runs the six planner-agent conformance suites in sequence and stops at the first failing suite                                                           |
-| Result comparison    | `npm run ci:eval:compare`                                                                    | Existing Vally result sets; compares prior outputs without selecting another suite                                                                                               |
+| Result comparison    | `npm run ci:eval:equivalence -- -Agent <slug> -Tier devloop`                                 | Vally and model access; runs the baseline-vs-customized comparison for one agent                                                                                                 |
 | Prompt behavior      | `npm run ci:eval:behavior-prompts`                                                           | Vally and model access; runs the prompt conformance spec                                                                                                                         |
 | Instruction behavior | `npm run ci:eval:behavior-instructions`                                                      | Vally and model access; runs the instruction conformance spec                                                                                                                    |
 | Skill behavior       | `npm run ci:eval:behavior-skills`                                                            | Vally and model access; runs the skill behavior conformance spec                                                                                                                 |
@@ -299,18 +448,20 @@ clean moderation result.
 
 ### Baseline equivalence and agent matrix
 
-| Lane                  | Command                                                    | Behavior and output                                                                                                     |
-|-----------------------|------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| Baseline equivalence  | `npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr` | Model-backed comparison; writes `logs/baseline-equivalence-summary.json` and result trajectories under `evals/results/` |
-| Equivalence dry run   | `npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf`  | Prints planned work and writes a dry-run summary without SDK calls                                                      |
-| Raw equivalence specs | `npm run ci:eval:run:equivalence`                          | Runs paired specs directly; requires the selected model environment                                                     |
-| Agent matrix          | `npm run ci:eval:agent:matrix`                             | Model-backed nightly matrix; writes date-scoped output under `evals/results/agent-matrix/`                              |
-| Agent matrix dry run  | `npm run ci:eval:agent:matrix:dryrun`                      | No model invocation; writes a dry-run matrix summary                                                                    |
-| Changed-agent matrix  | `npm run ci:eval:agent:changed`                            | Requires a suitable git comparison base and model access                                                                |
+| Lane                 | Command                                                         | Behavior and output                                                                                                     |
+|----------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| Baseline equivalence | `npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop` | Model-backed comparison; writes `logs/baseline-equivalence-summary.json` and result trajectories under `evals/results/` |
+| Equivalence dry run  | `npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf`       | Prints planned work and writes a dry-run summary without SDK calls                                                      |
+| Agent matrix         | `npm run ci:eval:agent:matrix`                                  | Model-backed nightly matrix; writes date-scoped output under `evals/results/agent-matrix/`                              |
+| Agent matrix dry run | `npm run ci:eval:agent:matrix:dryrun`                           | No model invocation; writes a dry-run matrix summary                                                                    |
+| Changed-agent matrix | `npm run ci:eval:agent:changed`                                 | Requires a suitable git comparison base and model access                                                                |
 
-PR-tier equivalence results can be advisory while nightly results can be
-authoritative. Read the lane's generated JSON verdict and the hosted workflow
-status together. Do not infer a hosted CI policy from a direct local invocation.
+Devloop-tier equivalence results are advisory while CI-tier results are
+authoritative. These tiers name the baseline-equivalence exit policy and are
+distinct from the unchanged `pr` and `nightly` vocabulary of the separate
+agent-matrix commands above. Read the lane's generated JSON verdict and the
+hosted workflow status together. Do not infer a hosted CI policy from a direct
+local invocation.
 
 ### Dashboards and reports
 

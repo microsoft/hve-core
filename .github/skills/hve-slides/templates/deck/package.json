@@ -1,0 +1,18 @@
+{
+  "name": "hve-slide-deck",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A presentation-first HTML slide deck.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "bundle": "node bundle.mjs",
+    "test": "node --test deck.test.cjs"
+  },
+  "dependencies": {
+    "reveal.js": "6.0.2"
+  }
+}

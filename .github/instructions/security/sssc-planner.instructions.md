@@ -81,10 +81,10 @@ Four entry modes determine Phase 1 initialization. All modes converge at Phase 2
 All entry prompts scan these supporting context sources alongside their mode-specific primary artifacts:
 
 * `package.json`, `pyproject.toml`, `*.csproj`, `Cargo.toml`, and `go.mod` for language and package manager inventory
-* `.github/workflows/`, `.azure-pipelines/`, `azure-pipelines*.yml`, `Jenkinsfile`, and `.gitlab-ci.yml` for CI/CD platform details
+* The consumer repository's GitHub workflow directory, `.azure-pipelines/`, `azure-pipelines*.yml`, `Jenkinsfile`, and `.gitlab-ci.yml` for CI/CD platform details
 * `release-please-config.json`, `.releaserc*`, and `CHANGELOG.md` for release strategy
 * `Dockerfile`, `compose.yaml`, `helm/`, `k8s/`, `terraform/`, and `bicep/` for deployment surfaces
-* `SECURITY.md`, `.github/dependabot.yml`, CodeQL configuration, and secret-scanning configuration for existing security tooling
+* `SECURITY.md`, the consumer repository's Dependabot configuration, CodeQL configuration, and secret-scanning configuration for existing security tooling
 * `.copilot-tracking/security-plans/`, `.copilot-tracking/rai-plans/`, `.copilot-tracking/prd-sessions/`, and `.copilot-tracking/brd-sessions/` for sibling planner artifacts to cross-link
 * `.copilot-tracking/sssc-plans/references/` for user-supplied evaluation standards, workflow inventories, and output format requirements
 
@@ -404,8 +404,6 @@ Provide `rpi-research` with:
 * Requested outputs and output mode (`analysis`, `audit`, or `comparison`).
 * `.copilot-tracking/sssc-plans/{project-slug}/` as a trusted alternate evidence root.
 
-Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill owns the exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
-
 Read the completed primary research artifact and synthesize applicable evidence before updating `standards-mapping.md` or `gap-analysis.md`. Treat `Blocked` and `Needs clarification` as unresolved evidence, not permission to infer a standard requirement. If `rpi-research` or a required lookup capability is unavailable, inform the user and stop the dependent mapping rather than synthesizing standards from training data.
 
 #### Query Templates
@@ -532,7 +530,7 @@ Generate actionable work items from the gap analysis in dual format (ADO + GitHu
 
 ### Dual-Format Backlog Templates
 
-Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, and temporary-ID conventions defined in `.github/skills/shared/backlog-templates/SKILL.md`. Read the SSSC entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. The markdown body skeleton in the skill is reused verbatim; SSSC fills `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
+Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, and temporary-ID conventions defined in the `backlog-templates` skill. Read the SSSC entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. The markdown body skeleton in the skill is reused verbatim; SSSC fills `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
 
 Work item hierarchy for supply chain security:
 
@@ -547,11 +545,11 @@ Derive work item priority and execution order from the Scorecard risk level usin
 
 ### Content Sanitization
 
-Content sanitization follows the five-rule protocol in `.github/skills/shared/backlog-templates/SKILL.md` under "Content Sanitization Protocol". SSSC-specific standards identifiers that must be preserved verbatim per rule 4: Scorecard check names (Branch-Protection, Code-Review, etc.), SLSA level strings (v1.0 L0-L3), and OpenSSF Best Practices Badge criteria IDs.
+Content sanitization follows the five-rule protocol in the `backlog-templates` skill under "Content Sanitization Protocol". SSSC-specific standards identifiers that must be preserved verbatim per rule 4: Scorecard check names (Branch-Protection, Code-Review, etc.), SLSA level strings (v1.0 L0-L3), and OpenSSF Best Practices Badge criteria IDs.
 
 ### Three-Tier Autonomy Model
 
-The three-tier autonomy model is defined canonically in `.github/skills/shared/backlog-templates/SKILL.md` under "Autonomy-Tier Enumeration". SSSC presents the divergent display vocabulary `Full` / `Partial` / `Guided` to the user (the cross-reference table in the skill maps `Guided` to the canonical `manual` tier). Default tier on first use is `Partial`. Persist the selected tier in session state under `userPreferences.autonomyTier` using the lowercase schema-enum value `full`, `partial`, or `guided` (the `userPreferences.autonomyTier` enum in `scripts/linting/schemas/sssc-state.schema.json`), not the capitalized display label.
+The three-tier autonomy model is defined canonically in the `backlog-templates` skill under "Autonomy-Tier Enumeration". SSSC presents the divergent display vocabulary `Full` / `Partial` / `Guided` to the user (the cross-reference table in the skill maps `Guided` to the canonical `manual` tier). Default tier on first use is `Partial`. Persist the selected tier in session state under `userPreferences.autonomyTier` using the lowercase schema-enum value `full`, `partial`, or `guided` (the `userPreferences.autonomyTier` enum in `scripts/linting/schemas/sssc-state.schema.json`), not the capitalized display label.
 
 ### Phase 5 Output
 
@@ -618,7 +616,7 @@ Assess which Badge tier the repository would qualify for after completing all wo
 
 Write ADO-formatted work items to `.copilot-tracking/workitems/backlog/{project-slug}-sssc/work-items.md`.
 
-Apply the ADO work item template per the convention in `.github/skills/shared/backlog-templates/SKILL.md`, including the SSSC ADO field block enumerated under "ADO Work Item Template" in that skill, with:
+Apply the ADO work item template per the convention in the `backlog-templates` skill, including the SSSC ADO field block enumerated under "ADO Work Item Template" in that skill, with:
 
 * HTML-formatted description fields
 * `WI-SSSC-{NNN}` sequential IDs
@@ -632,7 +630,7 @@ Set `state.json` field `handoffGenerated.ado` to `true` after writing.
 
 Write GitHub-formatted issues to `.copilot-tracking/github-issues/discovery/{project-slug}-sssc/issues-plan.md`.
 
-Apply the GitHub issue template per the convention in `.github/skills/shared/backlog-templates/SKILL.md`, including the SSSC YAML augmentation keys enumerated under "GitHub Issue Template" in that skill, with:
+Apply the GitHub issue template per the convention in the `backlog-templates` skill, including the SSSC YAML augmentation keys enumerated under "GitHub Issue Template" in that skill, with:
 
 * YAML metadata blocks
 * `{{SSSC-TEMP-N}}` temporary IDs

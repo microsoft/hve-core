@@ -3,15 +3,15 @@
   "moderate": true,
   "allowlist": [
     {
-      "GHSA-5p2g-fcmc-qvqq": {
+      "GHSA-vfj7-8cjw-p6xm": {
         "active": true,
-        "notes": "No patched image-size release is available; Docusaurus 3.10.2 transitively requires image-size ^2.0.2."
+        "notes": "No patched braces release is available (affects <= 3.0.3); markdownlint-cli2, Docusaurus, and webpack tooling transitively require braces via micromatch and chokidar."
       }
     },
     {
-      "GHSA-w3rx-r6r6-pgpr": {
+      "GHSA-ch52-4w7c-c8xp": {
         "active": true,
-        "notes": "No patched image-size release is available; Docusaurus 3.10.2 transitively requires image-size ^2.0.2."
+        "notes": "No patched http-cache-semantics release is available (affects <= 4.2.0); Docusaurus 3.10.2 transitively requires it via update-notifier and got."
       }
     }
   ],

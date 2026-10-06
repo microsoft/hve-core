@@ -16,20 +16,20 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic                              | Section in hve-builder.instructions.md                   |
-|------------------------------------|----------------------------------------------------------|
-| Frontmatter and applyTo glob       | Frontmatter Requirements; File Types > Instruction Files |
-| Scope and applicability statement  | File Types > Instruction Files                           |
-| Core conventions as bulleted rules | Writing Style                                            |
-| Code examples in fenced blocks     | Writing Style                                            |
-| Patterns to avoid                  | Stale Patterns to Retire                                 |
-| Validation tooling references      | File Types > Instruction Files                           |
+| Topic                              | Contract source                                                                                                 |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| Frontmatter and applyTo glob       | `hve-builder.instructions.md`, Frontmatter and Portability                                                      |
+| Scope and applicability statement  | `hve-builder.instructions.md`, Outcome and Structure                                                            |
+| Core conventions as bulleted rules | `hve-builder.instructions.md`, Writing                                                                          |
+| Code examples in fenced blocks     | `hve-builder.instructions.md`, Writing; `markdown.instructions.md`                                              |
+| Patterns to avoid                  | `hve-builder.instructions.md`, Writing; `hve-builder` skill `requirements-catalog.md`, Stale patterns to retire |
+| Validation tooling references      | `hve-builder.instructions.md`, Safety and Evidence                                                              |
 
 ## Conformance Checks
 
 ### Check 1: Required Frontmatter Fields
 
-* Contract source: `hve-builder.instructions.md`, Frontmatter Requirements and File Types > Instruction Files.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
 * Testable behavior: instructions frontmatter MUST include a non-empty `description:` field under 120 characters AND an `applyTo:` field whose value is a glob expression.
 * Suggested stimulus: ask the assistant which files a named instructions file auto-applies to and to summarize its purpose.
 * Grader recommendation: `regex` with pattern `(?m)^description:\s*['"]?.{1,120}['"]?` combined with `(?m)^applyTo:\s*['"]?[^'"\n]*\*`.
@@ -37,7 +37,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 2: ApplyTo Glob Validity
 
-* Contract source: `hve-builder.instructions.md`, Frontmatter Requirements and File Types > Instruction Files.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
 * Testable behavior: the `applyTo:` value MUST be a syntactically valid glob (for example `**/*.md`, `**/*.py`, or a comma-separated list of globs) and SHOULD match at least one file in the repository.
 * Suggested stimulus: ask the assistant to list a sample of files in the repository that a named instructions file would auto-apply to.
 * Grader recommendation: `semantic_similarity` with rubric "Is the applyTo value a valid glob, and could it plausibly match real files in this repository?".
@@ -45,7 +45,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 3: Scope or Applicability Statement
 
-* Contract source: `hve-builder.instructions.md`, File Types > Instruction Files.
+* Contract source: `hve-builder.instructions.md`, Outcome and Structure.
 * Testable behavior: the body SHOULD open with an explicit scope or applicability statement (for example "Applies to all X files" or "Applies when Y condition") so readers can confirm relevance quickly. The statement SHOULD appear in the first body section.
 * Suggested stimulus: ask the assistant to quote the scope statement of a named instructions file.
 * Grader recommendation: `regex` with pattern `(?im)\b(scope|applicab|applies\s+to|when\s+to\s+apply)\b`.
@@ -53,7 +53,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 4: Core Conventions as Bulleted Rules
 
-* Contract source: `hve-builder.instructions.md`, Writing Style.
+* Contract source: `hve-builder.instructions.md`, Writing.
 * Testable behavior: core conventions MUST be expressed as bulleted rules (using `*` or `-`) rather than prose paragraphs so readers can scan and reference them by line.
 * Suggested stimulus: ask the assistant to list the top conventions a named instructions file enforces.
 * Grader recommendation: `regex` with pattern `(?m)^\s*[\*-]\s+\S.+` evaluated over the conventions section.
@@ -61,7 +61,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 5: Code Examples in Fenced Blocks
 
-* Contract source: `hve-builder.instructions.md`, Writing Style.
+* Contract source: `hve-builder.instructions.md`, Writing, and `markdown.instructions.md`.
 * Testable behavior: when the instructions file presents code or markup examples, every example MUST appear in a fenced code block. A language identifier SHOULD be present whenever a recognizable language applies.
 * Suggested stimulus: ask the assistant to show a correct example the instructions file recommends.
 * Grader recommendation: `regex` with pattern ``(?ms)^```[a-z0-9_+-]*\n.+?\n```$``.
@@ -69,7 +69,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 6: Patterns to Avoid Section
 
-* Contract source: `hve-builder.instructions.md`, Stale Patterns to Retire and the "Avoid these patterns" list under Writing Style.
+* Contract source: `hve-builder.instructions.md`, Writing (the avoid list), and the `hve-builder` skill's `requirements-catalog.md`, Stale patterns to retire.
 * Testable behavior: when conventions have meaningful counterexamples, the instructions file SHOULD include a "Patterns to Avoid" (or equivalently named) section that contrasts a correct approach with a non-conforming one.
 * Suggested stimulus: ask the assistant which patterns a named instructions file warns against and what to use instead.
 * Grader recommendation: `regex` with pattern `(?im)^##\s+(?:patterns?\s+to\s+avoid|anti-?patterns?|avoid)\b`.
@@ -77,7 +77,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 7: Validation Tooling References
 
-* Contract source: `hve-builder.instructions.md`, File Types > Instruction Files and Evaluation and Validation.
+* Contract source: `hve-builder.instructions.md`, Safety and Evidence, and the `hve-builder` skill's `requirements-catalog.md`, Instruction-file architecture: mechanically checkable where possible.
 * Testable behavior: when a convention is mechanically checkable, the instructions file SHOULD reference the tool or command that verifies compliance (for example `npm run lint:md`, `npm run lint:frontmatter`).
 * Suggested stimulus: ask the assistant which command verifies the conventions of a named instructions file.
 * Grader recommendation: `regex` with pattern `(?i)(?:npm\s+run\s+\S+|pwsh\s+\S+|\blint\b|\bvalidate\b|\btest:[a-z]+\b)`.
@@ -85,7 +85,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 8: Cross-File Consistency With Shared Standards
 
-* Contract source: `hve-builder.instructions.md` cross-references to `markdown.instructions.md` and `writing-style.instructions.md`.
+* Contract source: `hve-builder.instructions.md`, Writing, which defers to `markdown.instructions.md` and `writing-style.instructions.md`.
 * Testable behavior: when two or more instructions files cover overlapping domains (for example markdown rules and writing-style rules both touch markdown body content), the conventions MUST NOT conflict. Conflicts MUST be either reconciled or explicitly justified.
 * Suggested stimulus: ask the assistant to compare a convention from one instructions file with the related convention in another and report whether they align.
 * Grader recommendation: `semantic_similarity` with rubric "Do the cited conventions from two instructions files align without contradiction, or is any divergence explicitly justified?".

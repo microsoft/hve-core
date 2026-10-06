@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 import runtime_a11y.__main__ as cli
 from runtime_a11y import _projection as projection
 from runtime_a11y._errors import EXIT_SUCCESS, EXIT_USAGE, ScriptError

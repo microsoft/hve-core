@@ -3,7 +3,7 @@ title: Git Commit Message
 description: Generate a conventional commit message from all branch changes
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Generate a conventional commit message from all branch changes
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when you need a Conventional Commit message derived from the current branch changes without creating a commit. Use the git-commit prompt only when the changes are also ready to stage and commit.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Invoke the prompt in the target repository and optionally set `useTerminal=false` when supplied context should replace terminal inspection. Review the generated subject and body before using them in Git.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/git-commit-message useTerminal=false
+```
+
+The prompt drafts a Conventional Commit message from the supplied change context and does not create a commit.

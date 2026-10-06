@@ -1,0 +1,23 @@
+fixture:
+  id: synthetic-dt-telemetry-not-observable
+  fictional: true
+  evidence_ceiling: >-
+    This record tests the no-telemetry branch of the Design Thinking decision
+    tree. It is not production behavior and contains no emitted signal.
+
+artifact:
+  project: synthetic-renewal-lab
+  path: .copilot-tracking/dt/synthetic-renewal-lab/paper-sketch.md
+  behavior: A fictional paper sketch groups renewal questions by topic.
+  production_observable: false
+  runtime_component: none
+  service_boundary: none
+
+expected_handling:
+  decision: stop
+  telemetry_required: false
+  prohibited_outputs:
+    - invented span
+    - invented metric
+    - invented log event
+    - settings change

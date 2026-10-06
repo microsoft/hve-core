@@ -23,6 +23,8 @@ from test_constants import (
     TEST_STATE,
 )
 
+_OPAQUE_RESPONSE_MARKER = "LEAK-MARKER"
+
 # ---------------------------------------------------------------------------
 # _build_authorize_url
 # ---------------------------------------------------------------------------
@@ -221,7 +223,10 @@ def test_exchange_authorization_code_http_error_raises_api_error(
     mural_module: Any, recorded_http: Any, http_error_factory: Any, fake_now: Any
 ) -> None:
     recorded_http.responses.append(
-        http_error_factory(b'{"error":"invalid_grant"}', code=400)
+        http_error_factory(
+            f'{{"Access_Token":"{_OPAQUE_RESPONSE_MARKER}"}}'.encode(),
+            code=400,
+        )
     )
 
     with pytest.raises(mural_module.MuralAPIError) as excinfo:
@@ -236,6 +241,36 @@ def test_exchange_authorization_code_http_error_raises_api_error(
         )
     assert excinfo.value.status == 400
     assert excinfo.value.code == "TOKEN_EXCHANGE_FAILED"
+    assert excinfo.value.message == "authorization-code exchange failed"
+    assert _OPAQUE_RESPONSE_MARKER not in str(excinfo.value)
+
+
+def test_exchange_authorization_code_error_status_excludes_payload(
+    mural_module: Any, recorded_http: Any, response_factory: Any, fake_now: Any
+) -> None:
+    recorded_http.responses.append(
+        response_factory(
+            f'{{"\\u0041ccess_Token":"{_OPAQUE_RESPONSE_MARKER}"}}'.encode(),
+            status=400,
+            headers={"Content-Type": "application/json"},
+        )
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._exchange_authorization_code(
+            code=TEST_AUTH_CODE,
+            code_verifier=TEST_CODE_VERIFIER,
+            client_id=TEST_CLIENT_ID,
+            client_secret=None,
+            redirect_uri=TEST_REDIRECT_URI,
+            _http=recorded_http,
+            _now=fake_now,
+        )
+
+    assert excinfo.value.status == 400
+    assert excinfo.value.code == "TOKEN_EXCHANGE_FAILED"
+    assert excinfo.value.message == "authorization-code exchange failed"
+    assert _OPAQUE_RESPONSE_MARKER not in str(excinfo.value)
 
 
 def test_exchange_authorization_code_invalid_json_raises(
@@ -243,7 +278,7 @@ def test_exchange_authorization_code_invalid_json_raises(
 ) -> None:
     recorded_http.responses.append(
         response_factory(
-            b"not-json",
+            f'{{"Access_Token":"{_OPAQUE_RESPONSE_MARKER}'.encode(),
             status=200,
             headers={"Content-Type": "application/json"},
         )
@@ -259,6 +294,8 @@ def test_exchange_authorization_code_invalid_json_raises(
             _now=fake_now,
         )
     assert excinfo.value.code == "TOKEN_INVALID_JSON"
+    assert excinfo.value.message == "token endpoint returned malformed JSON"
+    assert _OPAQUE_RESPONSE_MARKER not in str(excinfo.value)
 
 
 def test_exchange_authorization_code_missing_access_token_raises(
@@ -334,9 +371,9 @@ def test_exchange_authorization_code_rejects_non_json_content_type(
 ) -> None:
     recorded_http.responses.append(
         response_factory(
-            b"<html>oops</html>",
+            _OPAQUE_RESPONSE_MARKER,
             status=200,
-            headers={"Content-Type": "text/html"},
+            headers={"Content-Type": f"text/plain; marker={_OPAQUE_RESPONSE_MARKER}"},
         )
     )
     with pytest.raises(mural_module.MuralAPIError) as excinfo:
@@ -350,7 +387,8 @@ def test_exchange_authorization_code_rejects_non_json_content_type(
             _now=fake_now,
         )
     assert excinfo.value.code == "TOKEN_BAD_CONTENT_TYPE"
-    assert "text/html" in excinfo.value.message
+    assert excinfo.value.message == "token endpoint returned non-JSON Content-Type"
+    assert _OPAQUE_RESPONSE_MARKER not in str(excinfo.value)
 
 
 def test_refresh_access_token_rejects_non_json_content_type(
@@ -358,9 +396,9 @@ def test_refresh_access_token_rejects_non_json_content_type(
 ) -> None:
     recorded_http.responses.append(
         response_factory(
-            b"<html>oops</html>",
+            _OPAQUE_RESPONSE_MARKER,
             status=200,
-            headers={"Content-Type": "text/html"},
+            headers={"Content-Type": f"text/plain; marker={_OPAQUE_RESPONSE_MARKER}"},
         )
     )
     with pytest.raises(mural_module.MuralAPIError) as excinfo:
@@ -371,7 +409,8 @@ def test_refresh_access_token_rejects_non_json_content_type(
             _http=recorded_http,
         )
     assert excinfo.value.code == "TOKEN_BAD_CONTENT_TYPE"
-    assert "text/html" in excinfo.value.message
+    assert excinfo.value.message == "token endpoint returned non-JSON Content-Type"
+    assert _OPAQUE_RESPONSE_MARKER not in str(excinfo.value)
 
 
 def test_exchange_authorization_code_accepts_json_with_charset(

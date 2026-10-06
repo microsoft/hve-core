@@ -1,0 +1,24 @@
+project:
+  name: "Synthetic Service Beta"
+  slug: "synthetic-service-beta"
+  created: "2026-09-07"
+  initial_request: "Explore synthetic service flow beta."
+  initial_classification: "frozen"
+current:
+  method: 3
+  space: "problem"
+  phase: "synthesis"
+  disclaimerShownAt: null
+methods_completed:
+  - 1
+  - 2
+transition_log:
+  - from_method: 2
+    to_method: 3
+    rationale: "Synthetic beta interviews were complete."
+    date: "2026-09-08"
+hint_calibration:
+  level: 1
+  pattern_notes: ""
+session_log: []
+artifacts: []

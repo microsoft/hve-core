@@ -10,7 +10,8 @@
     "schemaVersion": { "type": "string" },
     "baseUrl": {
       "type": "string",
-      "description": "Canonical origin the harness probes. Must be loopback or explicitly allowlisted; enforced by the SSRF guard at runtime."
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+      "description": "Absolute HTTP(S) origin the harness probes. Must be loopback or explicitly allowlisted; enforced by the SSRF guard at runtime."
     },
     "serveMode": {
       "type": "string",
@@ -35,7 +36,7 @@
         "properties": {
           "path": { "type": "string" },
           "title": { "type": "string" },
-          "surfaceIds": { "type": "array", "items": { "type": "string" } }
+          "surfaceIds": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } }
         },
         "additionalProperties": true
       }
@@ -46,10 +47,10 @@
         "type": "object",
         "required": ["id"],
         "properties": {
-          "id": { "type": "string" },
+          "id": { "$ref": "#/$defs/artifactId" },
           "type": {
             "type": "string",
-            "enum": ["page", "component", "widget", "content-type", "global-chrome"]
+            "enum": ["page", "component", "widget", "content-type", "global-chrome", "presentation"]
           },
           "route": { "type": "string" },
           "selector": { "$ref": "#/$defs/selector" },
@@ -69,9 +70,9 @@
         "type": "object",
         "required": ["probe"],
         "properties": {
-          "probe": { "type": "string" },
-          "surfaces": { "type": "array", "items": { "type": "string" } },
-          "states": { "type": "array", "items": { "type": "string" } }
+          "probe": { "$ref": "#/$defs/artifactId" },
+          "surfaces": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } },
+          "states": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } }
         },
         "additionalProperties": true
       }
@@ -86,7 +87,8 @@
         "expectedAnnouncements": {
           "type": "array",
           "items": { "$ref": "#/$defs/expectedAnnouncement" }
-        }
+        },
+        "lifecycle": { "$ref": "#/$defs/screenReaderLifecycle" }
       },
       "additionalProperties": true
     },
@@ -128,11 +130,12 @@
             "type": "object",
             "required": ["id"],
             "properties": {
-              "id": { "type": "string" },
+              "id": { "$ref": "#/$defs/artifactId" },
+              "journeyId": { "$ref": "#/$defs/artifactId" },
               "title": { "type": "string" },
               "route": { "type": "string" },
-              "surfaceId": { "type": "string" },
-              "state": { "type": "string" },
+              "surfaceId": { "$ref": "#/$defs/artifactId" },
+              "state": { "$ref": "#/$defs/artifactId" },
               "trigger": { "$ref": "#/$defs/trigger" },
               "triggerSequence": {
                 "type": "array",
@@ -140,6 +143,10 @@
                 "items": { "$ref": "#/$defs/trigger" }
               },
               "triggerAfterDriverStart": { "type": "boolean" },
+              "captureMode": {
+                "type": "string",
+                "enum": ["single", "clear-and-capture", "action"]
+              },
               "commands": {
                 "type": "array",
                 "items": { "$ref": "#/$defs/screenReaderAction" }
@@ -154,7 +161,7 @@
               },
               "visualStates": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": { "$ref": "#/$defs/artifactId" }
               }
             },
             "additionalProperties": true
@@ -162,7 +169,7 @@
         },
         "visualStates": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "$ref": "#/$defs/artifactId" }
         }
       },
       "additionalProperties": true
@@ -193,15 +200,15 @@
             "required": ["path"],
             "properties": {
               "path": { "type": "string" },
-              "state": { "type": "string" },
-              "surfaceId": { "type": "string" }
+              "state": { "$ref": "#/$defs/artifactId" },
+              "surfaceId": { "$ref": "#/$defs/artifactId" }
             },
             "additionalProperties": true
           }
         },
         "states": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "$ref": "#/$defs/artifactId" }
         }
       },
       "additionalProperties": true
@@ -209,6 +216,11 @@
   },
   "additionalProperties": true,
   "$defs": {
+    "artifactId": {
+      "type": "string",
+      "description": "Portable identifier used as an evidence path segment. Excludes trailing dots and Windows reserved device names, which Win32 would collide or fail on.",
+      "pattern": "^(?![Cc][Oo][Nn](\\.|$))(?![Pp][Rr][Nn](\\.|$))(?![Aa][Uu][Xx](\\.|$))(?![Nn][Uu][Ll](\\.|$))(?![Cc][Oo][Mm][1-9](\\.|$))(?![Ll][Pp][Tt][1-9](\\.|$))(?!.*\\.$)[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
     "selector": {
       "oneOf": [
         { "type": "string" },
@@ -239,6 +251,7 @@
         },
         "value": { "type": "string" },
         "waitFor": { "$ref": "#/$defs/selector" },
+        "scope": { "type": "string", "enum": ["document"] },
         "description": { "type": "string" }
       },
       "additionalProperties": true
@@ -247,7 +260,7 @@
       "type": "object",
       "required": ["state"],
       "properties": {
-        "state": { "type": "string" },
+        "state": { "$ref": "#/$defs/artifactId" },
         "trigger": { "$ref": "#/$defs/trigger" },
         "ariaAt": { "$ref": "#/$defs/ariaAtOverride" },
         "realScreenReader": { "$ref": "#/$defs/realScreenReader" }
@@ -260,7 +273,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["command", "pause", "keyboard", "key", "perform", "type", "waitFor"]
+          "enum": ["command", "navigate", "pause", "keyboard", "key", "perform", "type", "waitFor"]
         },
         "value": { "type": "string", "minLength": 1 },
         "durationMs": { "type": "integer", "minimum": 0 }
@@ -276,12 +289,26 @@
     },
     "expectedAnnouncement": {
       "type": "object",
-      "required": ["type", "value"],
+      "required": ["type"],
       "properties": {
         "id": { "type": "string" },
-        "type": { "type": "string", "enum": ["contains", "matches", "orderedContains"] },
-        "value": { "type": "string" }
+        "type": { "type": "string", "enum": ["contains", "notContains", "matches", "orderedContains", "nodeMatches", "nodeAbsent"] },
+        "value": { "type": "string" },
+        "expected": { "type": "object", "minProperties": 1 },
+        "minCount": { "type": "integer", "minimum": 0 },
+        "maxCount": { "type": "integer", "minimum": 0 },
+        "evidenceType": {
+          "type": "string",
+          "enum": ["speech", "normalizedSpeech", "browserState", "accessibilityTree", "actionSpeech", "actionNormalizedSpeech"]
+        }
       },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "enum": ["nodeMatches", "nodeAbsent"] } } },
+          "then": { "required": ["expected"] },
+          "else": { "required": ["value"] }
+        }
+      ],
       "additionalProperties": true
     },
     "ariaAtOverride": {
@@ -298,6 +325,20 @@
       },
       "additionalProperties": true
     },
+    "screenReaderLifecycle": {
+      "type": "object",
+      "properties": {
+        "startAttempts": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "startRetryDelayMs": { "type": "integer", "minimum": 0, "maximum": 30000 },
+        "startTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 120000 },
+        "stopTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "stopSettleDelayMs": { "type": "integer", "minimum": 0, "maximum": 30000 },
+        "commandTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "captureTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "logTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 30000 }
+      },
+      "additionalProperties": false
+    },
     "realScreenReader": {
       "type": "object",
       "properties": {
@@ -308,7 +349,8 @@
         "expectedAnnouncements": {
           "type": "array",
           "items": { "$ref": "#/$defs/expectedAnnouncement" }
-        }
+        },
+        "lifecycle": { "$ref": "#/$defs/screenReaderLifecycle" }
       },
       "additionalProperties": true
     }

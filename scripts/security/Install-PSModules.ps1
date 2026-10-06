@@ -9,8 +9,11 @@
 .DESCRIPTION
     Reads the pinned module manifest and installs each module at the declared
     version. Modules already present at the correct version are skipped unless
-    -Force is specified. Transient PSGallery failures are retried with
-    exponential backoff.
+    -Force is specified. Transient PSGallery failures during repository
+    registration and installation are retried with exponential backoff. If
+    PowerShellGet's default registration returns without making PSGallery
+    visible, installation uses a temporary repository at the canonical
+    endpoint and removes it afterward.
 
     Colocation rationale: this script lives in scripts/security/ because it
     consumes ps-module-versions.json (the pinned-version manifest that the
@@ -44,8 +47,8 @@
     Installs system-wide and imports (requires elevation on Linux/macOS).
 .NOTES
     Called by: .github/actions/setup-ps-modules/action.yml
-    Called by: .devcontainer/scripts/on-create.sh (planned)
-    Called by: .github/workflows/copilot-setup-steps.yml (planned)
+    Called by: .devcontainer/scripts/on-create.sh
+    Called by: .github/workflows/copilot-setup-steps.yml
 #>
 
 [CmdletBinding()]
@@ -76,6 +79,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$PSGallerySourceUri = 'https://www.powershellgallery.com/api/v2'
 
 #region Functions
 
@@ -144,6 +148,57 @@ function Test-ModulePresent {
     return [bool]$installed
 }
 
+function Register-DefaultPSGallery {
+    <#
+    .SYNOPSIS
+        Registers PowerShellGet's default PSGallery repository.
+    .OUTPUTS
+        [bool] True when PSGallery is discoverable after registration.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $null = Register-PSRepository -Default -ErrorAction Stop
+    return [bool](Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue)
+}
+
+function Initialize-Repository {
+    <#
+    .SYNOPSIS
+        Initializes the requested repository before installation.
+    .OUTPUTS
+        [string] Repository name to use for installation.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name
+    )
+
+    $repo = Get-PSRepository -Name $Name -ErrorAction SilentlyContinue
+    if ($repo) {
+        return $Name
+    }
+
+    if ($Name -ne 'PSGallery') {
+        return $Name
+    }
+
+    if (Register-DefaultPSGallery) {
+        Write-Host "📦 Registered repository $Name" -ForegroundColor DarkCyan
+        return $Name
+    }
+
+    $temporaryName = "HVEPSGallery-$PID-$([guid]::NewGuid().ToString('N'))"
+    $null = Register-PSRepository -Name $temporaryName -SourceLocation $PSGallerySourceUri `
+        -InstallationPolicy Untrusted -ErrorAction Stop
+    Write-Host "📦 Registered temporary repository $temporaryName" -ForegroundColor DarkCyan
+    return $temporaryName
+}
+
 function Install-SingleModule {
     <#
     .SYNOPSIS
@@ -179,28 +234,64 @@ function Install-SingleModule {
 
     $isCI = $env:GITHUB_ACTIONS -eq 'true'
 
-    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
-        try {
-            Install-Module -Name $Name -RequiredVersion $Version -Force -Scope $Scope -Repository $Repository -ErrorAction Stop
-            Write-Host "✅ Installed $Name $Version (attempt $attempt)" -ForegroundColor Green
-            return
-        }
-        catch {
-            if ($attempt -eq $MaxAttempts) {
-                $msg = "Failed to install $Name $Version after $MaxAttempts attempts: $($_.Exception.Message)"
-                if ($isCI) {
-                    Write-Host "::error::$msg"
+    $resolvedRepository = $null
+    $installError = $null
+
+    try {
+        for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+            try {
+                # Registration pings PSGallery; resolve once so retries never add a second temporary repository.
+                if (-not $resolvedRepository) {
+                    $resolvedRepository = Initialize-Repository -Name $Repository
                 }
-                throw $msg
+                # -Force suppresses the prompt for the temporary Untrusted source;
+                # RequiredVersion and the canonical source remain fixed.
+                Install-Module -Name $Name -RequiredVersion $Version -Force -Scope $Scope -Repository $resolvedRepository -ErrorAction Stop
+                Write-Host "✅ Installed $Name $Version (attempt $attempt)" -ForegroundColor Green
+                return
             }
-            $delay = $BaseDelaySeconds * [math]::Pow(2, $attempt - 1)
-            $warnMsg = "Attempt $attempt/$MaxAttempts failed for ${Name}: $($_.Exception.Message). Retrying in ${delay}s..."
-            if ($isCI) {
-                Write-Host "::warning::$warnMsg"
+            catch {
+                if ($attempt -eq $MaxAttempts) {
+                    $msg = "Failed to install $Name $Version after $MaxAttempts attempts: $($_.Exception.Message)"
+                    if ($isCI) {
+                        Write-Host "::error::$msg"
+                    }
+                    throw $msg
+                }
+                $delay = $BaseDelaySeconds * [math]::Pow(2, $attempt - 1)
+                $warnMsg = "Attempt $attempt/$MaxAttempts failed for ${Name}: $($_.Exception.Message). Retrying in ${delay}s..."
+                if ($isCI) {
+                    Write-Host "::warning::$warnMsg"
+                }
+                Write-Host "⚠️  $warnMsg" -ForegroundColor Yellow
+                Start-Sleep -Seconds $delay
             }
-            Write-Host "⚠️  $warnMsg" -ForegroundColor Yellow
-            Start-Sleep -Seconds $delay
         }
+    }
+    catch {
+        $installError = $_
+    }
+    finally {
+        if ($resolvedRepository -and $resolvedRepository -ne $Repository) {
+            try {
+                $null = Unregister-PSRepository -Name $resolvedRepository -ErrorAction Stop
+                Write-Host "🧹 Removed temporary repository $resolvedRepository" -ForegroundColor DarkCyan
+            }
+            catch {
+                $cleanupMessage = "Failed to remove temporary repository ${resolvedRepository}: $($_.Exception.Message)"
+                if ($null -eq $installError) {
+                    throw $cleanupMessage
+                }
+                if ($isCI) {
+                    Write-Host "::warning::$cleanupMessage"
+                }
+                Write-Warning $cleanupMessage
+            }
+        }
+    }
+
+    if ($null -ne $installError) {
+        throw $installError
     }
 }
 

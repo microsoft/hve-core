@@ -11,6 +11,7 @@ of `test_collector_carriers.py`, which is marked `slow` and does start one.
 
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any
 
@@ -25,6 +26,7 @@ from _config_support import (
     ConfigError,
     allowed_keys,
     blocked_values,
+    intrinsic_dispositions,
     load_yaml_file,
     load_yaml_text,
     overreaching_statements,
@@ -512,6 +514,91 @@ class TestScrubStaysInsideTheInventory:
         # Assert
         assert findings == [], f"a scrub rule targets telemetry a shipped panel reads: {findings}"
 
+    def test_given_content_intrinsics_when_policy_is_read_then_each_has_a_disposition(
+        self,
+        collector: dict[str, Any],
+    ) -> None:
+        # Act
+        dispositions = intrinsic_dispositions(collector, shipped_consumers())
+
+        # Assert
+        assert dispositions == {
+            "span.name": "consumer-conditional",
+            "metric.name": "consumer-required",
+            "metric.description": "normalized",
+            "metric.unit": "normalized",
+        }
+
+    def test_given_span_normalization_is_removed_when_policy_is_read_then_gap_is_reported(
+        self,
+        collector: dict[str, Any],
+    ) -> None:
+        # Arrange
+        mutated = copy.deepcopy(collector)
+        statements = mutated["processors"]["transform/scrub"]["trace_statements"]
+        mutated["processors"]["transform/scrub"]["trace_statements"] = [
+            statement for statement in statements if not statement.startswith("set(span.name,")
+        ]
+
+        # Act
+        dispositions = intrinsic_dispositions(mutated, shipped_consumers())
+
+        # Assert
+        assert dispositions["span.name"] == "unaddressed"
+
+    def test_given_span_name_is_blanket_normalized_when_policy_is_read_then_overreach_is_reported(
+        self,
+        collector: dict[str, Any],
+    ) -> None:
+        # Arrange
+        mutated = copy.deepcopy(collector)
+        statements = mutated["processors"]["transform/scrub"]["trace_statements"]
+        mutated["processors"]["transform/scrub"]["trace_statements"] = [
+            'set(span.name, "[redacted]")' if statement.startswith("set(span.name,") else statement
+            for statement in statements
+        ]
+
+        # Act
+        dispositions = intrinsic_dispositions(mutated, shipped_consumers())
+
+        # Assert
+        assert dispositions["span.name"] == "unaddressed"
+
+    @pytest.mark.parametrize("target", ["metric.description", "metric.unit"])
+    def test_given_metric_normalization_is_removed_when_policy_is_read_then_gap_is_reported(
+        self,
+        collector: dict[str, Any],
+        target: str,
+    ) -> None:
+        # Arrange
+        mutated = copy.deepcopy(collector)
+        statements = mutated["processors"]["transform/scrub"]["metric_statements"]
+        mutated["processors"]["transform/scrub"]["metric_statements"] = [
+            statement for statement in statements if not statement.startswith(f"set({target},")
+        ]
+
+        # Act
+        dispositions = intrinsic_dispositions(mutated, shipped_consumers())
+
+        # Assert
+        assert dispositions[target] == "unaddressed"
+
+    def test_given_metric_name_is_normalized_when_policy_is_read_then_overreach_is_reported(
+        self,
+        collector: dict[str, Any],
+    ) -> None:
+        # Arrange
+        mutated = copy.deepcopy(collector)
+        mutated["processors"]["transform/scrub"]["metric_statements"].append(
+            'set(metric.name, "[redacted]")'
+        )
+
+        # Act
+        dispositions = intrinsic_dispositions(mutated, shipped_consumers())
+
+        # Assert
+        assert dispositions["metric.name"] == "overreaching"
+
     def test_given_a_statement_that_rewrites_span_name_when_it_is_checked_then_it_is_reported(
         self,
     ) -> None:
@@ -522,6 +609,37 @@ class TestScrubStaysInsideTheInventory:
         # Act & Assert
         assert overreaching_statements(overreach, shipped_consumers()) == [
             ('set(span.name, "[redacted]")', "span.name")
+        ]
+
+    def test_given_a_span_name_guard_with_the_derived_matcher_when_checked_then_it_is_allowed(
+        self,
+    ) -> None:
+        # Arrange
+        guarded = ['set(span.name, "[redacted]") where not IsMatch(span.name, "invoke_agent.*")']
+
+        # Act & Assert
+        assert overreaching_statements(guarded, shipped_consumers()) == []
+
+    def test_given_a_span_name_guard_with_an_unread_matcher_when_checked_then_it_is_reported(
+        self,
+    ) -> None:
+        # Arrange
+        overreach = ['set(span.name, "[redacted]") where not IsMatch(span.name, "other.*")']
+
+        # Act & Assert
+        assert overreaching_statements(overreach, shipped_consumers()) == [
+            (overreach[0], "span.name")
+        ]
+
+    def test_given_a_statement_that_rewrites_metric_name_when_checked_then_it_is_reported(
+        self,
+    ) -> None:
+        # Arrange
+        overreach = ['set(metric.name, "[redacted]")']
+
+        # Act & Assert
+        assert overreaching_statements(overreach, shipped_consumers()) == [
+            (overreach[0], "metric.name")
         ]
 
     def test_given_a_statement_deleting_a_read_attribute_when_it_is_checked_then_it_is_reported(

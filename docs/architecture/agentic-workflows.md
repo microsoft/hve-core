@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-08-31
+ms.date: 2026-10-06
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -121,7 +121,7 @@ flowchart TD
 
 ## Workflow Configuration
 
-All six workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
+These workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
 
 | Workflow File             | Lock File                       | Trigger                                                                      | Execution Owner          |
 |---------------------------|---------------------------------|------------------------------------------------------------------------------|--------------------------|
@@ -131,6 +131,7 @@ All six workflows are defined as GitHub Agentic Workflow markdown files under `.
 | `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated                                              | Dependency Reviewer      |
 | `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                                                                 | Documentation Agent      |
 | `vex-draft.md`            | `vex-draft.lock.yml`            | VEX Detection `workflow_run` + dispatch                                      | SSSC Reviewer            |
+| `demo-material-author.md` | `demo-material-author.lock.yml` | Weekly schedule + dispatch; skipped when no level's sources changed          | Workflow-owned procedure |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 
@@ -203,12 +204,12 @@ side of the development lifecycle.
 
 The [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) coordinates Research, Plan, Implement, Review, and Follow-up by activating four reusable phase skills:
 
-| Skill           | Responsibility                                                          |
-|-----------------|-------------------------------------------------------------------------|
-| `rpi-research`  | Closes demonstrated evidence gaps and produces research evidence        |
-| `rpi-plan`      | Creates marker-addressed plans, phase details, and independent critique |
-| `rpi-implement` | Executes approved work and records changes, decisions, and validation   |
-| `rpi-review`    | Reconciles evidence, records findings, and routes the next action       |
+| Skill           | Responsibility                                                         |
+|-----------------|------------------------------------------------------------------------|
+| `rpi-research`  | Closes demonstrated evidence gaps and produces research evidence       |
+| `rpi-plan`      | Creates a marker-addressed task-centered plan and independent critique |
+| `rpi-implement` | Executes approved work and records changes, amendments, and validation |
+| `rpi-review`    | Reconciles evidence, records findings, and routes the next action      |
 
 The skills coordinate through workspace-local artifacts stored in `.copilot-tracking/`. These gitignored files survive chat resets while the working copy remains available, but another contributor or fresh clone cannot depend on them. Use [Share Work for Another Contributor](../rpi/shared-work-handoff) for intentionally minimized, checked-in continuation context.
 
@@ -218,13 +219,12 @@ The `hve-builder` skill uses one lifecycle for agents, prompts, instructions, su
 
 1. Resolve mode, targets, write boundary, architecture, and applicable conventions
 2. Author or perform read-only review according to the selected mode
-3. Run fresh-context static review and one behavior gate with route-specific execution: Major mutations and behavior-bearing review targets execute testing, while eligible no-runtime review targets and Minor or Medium mutations are satisfied-and-skipped
-4. Keep known target files and caller-supplied canonical references as bounded lifecycle reads; activate `rpi-research` for open-ended exploration and decision-critical research
-5. Run non-mutating host validation and resolve one overall outcome
+3. Complete known edits and local validation, then run a review pass against the requirements catalog and review rubric
+4. In a mutating mode, batch required in-scope corrections in the main agent, rerun affected checks, and close the corrected findings with a targeted re-review; stop on advisory-only polish or unsupported repetition
+5. Keep known target files and caller-supplied canonical references as bounded lifecycle reads; activate `rpi-research` for open-ended exploration and decision-critical research
+6. Resolve one overall outcome from the delivered candidate's validation and review evidence
 
-HVE Builder selects a reasoning profile from each worker's responsibility. High uses Claude Opus 5, GPT-5.6 Sol, then GPT-5.5 for architecture and consequential decisions. Medium uses GPT-5.6 Terra, Claude Sonnet 5, then MAI-Code-1-Flash for semantic discovery, authoring, research, implementation, and review. Low uses GPT-5.6 Luna, MAI-Code-1-Flash, then Claude Haiku 4.5 for literal simulation and mechanical validation.
-
-Each ordered list is an availability fallback within its selected profile. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases that route legacy requests to this lifecycle.
+The main agent reviews the candidate itself by default. When fresh context would help, it dispatches the read-only `HVE Builder Reviewer` subagent, which returns severity-graded findings as suggestions for the main agent to verify before recording. The lifecycle lead keeps bounded authoring and local validation in the current context rather than creating a worker turn for each stage.
 
 ### Security Review
 

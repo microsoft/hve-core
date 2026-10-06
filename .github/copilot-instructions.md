@@ -119,19 +119,18 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Pull Requests (`.copilot-tracking/pr/`) - PR reference generation, handoff, and review tracking.
 * Changes (`.copilot-tracking/changes/`) - Implementation changes, amendments, and divergences.
 * Plans (`.copilot-tracking/plans/`) - Ordinary plan checklists.
-* Details (`.copilot-tracking/details/`) - Phase details.
 * Research (`.copilot-tracking/research/`) - Technical research findings and subagent research outputs.
 * Reviews (`.copilot-tracking/reviews/`) - Completed review evidence.
+  * Architecture reviews (`.copilot-tracking/reviews/architecture/`) - System Architecture Reviewer records that preserve review analysis while linked ADRs retain decision authority.
 * ADRs (`.copilot-tracking/adrs/`) - Architecture Decision Record drafts.
 * BRD Sessions (`.copilot-tracking/brd-sessions/`) - Business requirements document session state.
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search, triage, and workflow tracking.
-* Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
-* HVE Builder (`.copilot-tracking/hve-builder/`) - Prompt-engineering discovery, authoring, review, behavior-test, and validation evidence.
+* HVE Builder (`.copilot-tracking/hve-builder/`) - Prompt-engineering discovery, authoring, review, and validation evidence.
 * Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Challenges (`.copilot-tracking/challenges/YYYY-MM-DD/`) - Challenge session Q&A logs, unresolved items, and scope records from `rpi-challenger` sessions.
 
-RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copilot-tracking.instructions.md`; ADO, Jira, and GitHub backlog tracking follows its domain-specific instructions.
+RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copilot-tracking.instructions.md`; ADO, Jira, and GitHub backlog tracking follows its domain-specific instructions. Every workflow resolves the tracking folder location and searches its gitignored files as `.github/instructions/hve-core/copilot-tracking-location.instructions.md` defines.
 
 ### Agents and Subagents
 

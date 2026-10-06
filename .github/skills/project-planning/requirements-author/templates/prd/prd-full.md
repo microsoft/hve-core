@@ -301,11 +301,21 @@ Target: `{{fr_to_goal_coverage_threshold_pct}}%`. Any gap requires an active wai
 
 {{assumptions}}
 
-*Guidance*: List assumptions about users, resources, dependencies, technical feasibility, etc. For each:
+*Guidance*: List assumptions about users, resources, dependencies, technical feasibility, and other load-bearing beliefs. Preserve evidence status and source when an assumption comes from an upstream handoff, product discovery, or Research.
 
-* Assumption statement.
-* Impact if false: High, medium, or low.
-* Mitigation strategy.
+| ID     | Assumption    | Evidence status                                | Impact if false | Mitigation     | Source                                  |
+|--------|---------------|------------------------------------------------|-----------------|----------------|-----------------------------------------|
+| `<ID>` | `<Statement>` | `<Untested / Partially supported / Evidenced>` | `<Impact>`      | `<Mitigation>` | `<Handoff, discovery, or evidence IDs>` |
+
+### Research Finding Dispositions
+
+{{research_finding_dispositions}}
+
+*Guidance*: Include this table when bounded `rpi-research` evidence was considered. Record one row per material finding. Keep the primary Research artifact authoritative for evidence and the PRD authoritative for requirement decisions.
+
+| Gap ID     | Evidence IDs | Affected targets              | Disposition                                                            | Rationale     | Primary research artifact   |
+|------------|--------------|-------------------------------|------------------------------------------------------------------------|---------------|-----------------------------|
+| `<Gap ID>` | `<C# / W#>`  | `<Section or requirement ID>` | `<Incorporated / Revised / Rejected / Deferred / Retained-assumption>` | `<Rationale>` | `<Workspace-relative path>` |
 
 ### Risk Register
 

@@ -3,7 +3,7 @@ title: Sssc From Prd
 description: Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Start supply chain security planning from PRD artifacts using the SSSC Planner a
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a confirmed PRD should seed software supply chain security planning. Use capture mode when product requirements are unavailable or omit the dependency, build, and release context needed for assessment.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide an approved or fictional `project-slug`. The SSSC Planner discovers the PRD, extracts applicable evidence, and asks focused questions for unresolved supply-chain controls while preserving qualified-review ownership.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/sssc-from-prd project-slug=sample-api
+```
+
+The prompt creates a draft supply chain security plan from product requirements or records the missing evidence.

@@ -1,53 +1,109 @@
 ---
 title: Grader Catalog
-description: Vally CLI 0.9.0 grader catalog with field schemas, recommended thresholds, and per-kind selection guidance for the vally-tests skill
+description: Vally CLI grader catalog with field schemas, recommended thresholds, and per-kind selection guidance for the vally-tests skill
 ---
 <!-- markdownlint-disable-file -->
+<!-- cspell:ignore xhigh PCRE -->
 
 # Grader Catalog
 
-This catalog documents the four grader identifiers the vally-tests skill cites in [SKILL.md](../SKILL.md) and reconciles each one with the actual `type:` keyword Vally CLI 0.9.0 accepts in stimulus YAML. Authoring agents reading the per-kind references ([prompts.md](./prompts.md), [instructions.md](./instructions.md), [agents.md](./agents.md), [skills.md](./skills.md)) use this catalog to translate the skill's vocabulary into the literal grader blocks that Vally evaluates. The catalog is authoritative for field names, required versus optional fields, recommended thresholds, and per-kind selection guidance.
+This catalog documents the grader families and literal `type:` keywords registered by Vally. Authoring agents reading the per-kind references ([prompts.md](./prompts.md), [instructions.md](./instructions.md), [agents.md](./agents.md), [skills.md](./skills.md)) use this catalog to select a grader that directly measures the behavior under test. The catalog is authoritative for field names, required versus optional fields, recommended thresholds, and per-kind selection guidance.
 
-## Vally CLI 0.9.0 Compatibility Note
+## CLI Compatibility Note
 
-The four grader identifiers used throughout this skill (`semantic_similarity`, `contains`, `regex`, `json_schema`) are the skill's conceptual vocabulary. They are NOT the literal `type:` strings that Vally CLI 0.9.0 reads from stimulus YAML. The mapping is:
+The registry surface below was derived from the lockfile-resolved `@microsoft/vally` **0.15.0** package. The repository pins `@microsoft/vally-cli` 0.15.0, whose dependency on `@microsoft/vally` uses the range `^0.15.0`; re-check the resolved package after a lockfile refresh.
 
-* `semantic_similarity` is rendered as Vally CLI 0.9.0 `type: prompt` (LLM-scored response evaluation).
-* `contains` is rendered as Vally CLI 0.9.0 `type: output-contains` (or `type: output-not-contains` for the negated form).
-* `regex` is rendered as Vally CLI 0.9.0 `type: output-matches` (or `type: output-not-matches` for the negated form).
-* `json_schema` is NOT SHIPPED in Vally CLI 0.9.0. No built-in grader of that name exists in the CLI's registered grader registry. Authoring guidance below recommends the supported `regex` workaround until a JSON-schema grader ships.
+To re-derive this catalog, enumerate the registrations in `createDefaultGraderRegistry` and `registerLlmGraders` from `dist/pipeline/grading.js`, then read `BUILTIN_CONFIG_SCHEMAS` in `dist/eval/validator-schemas.js` for accepted fields. Do not derive the keyword list from `*-grader.d.ts` filenames: aliases, negated forms, and generated metric graders do not each have a declaration file.
 
-Vally CLI 0.9.0 removed the `type: pairwise` grader entirely. `vally lint` rejects any stimulus that still declares it with a hard `unknown-grader-type` error directing authors to `type: prompt` plus `vally compare`. Comparing a baseline run against a treatment run is now exclusively a mode of the `prompt` judge invoked by the `vally compare` CLI command over two experiment output directories; it is not configured through a per-stimulus grader block. See [Comparison Mode](#comparison-mode-vally-compare) below.
+The original grader identifiers used throughout this skill (`semantic_similarity`, `contains`, `regex`, `json_schema`) remain conceptual aliases for compatibility with the per-kind references. They are not the literal `type:` strings Vally reads from stimulus YAML. The mapping is:
+
+* `semantic_similarity` is rendered as `type: prompt` (LLM-scored response evaluation).
+* `contains` is rendered as `type: output-contains` (or `type: output-not-contains` for the negated form).
+* `regex` is rendered as `type: output-matches` (or `type: output-not-matches` for the negated form).
+* `json_schema` is NOT SHIPPED. No built-in grader of that name exists in the CLI's registered grader registry. Authoring guidance below recommends the supported `regex` workaround until a JSON-schema grader ships.
+
+The `type: pairwise` grader was removed. `vally lint` rejects any stimulus that still declares it with a hard `unknown-grader-type` error directing authors to `type: prompt` plus `vally compare`. Comparing a baseline run against a treatment run is now exclusively a mode of the `prompt` judge invoked by the `vally compare` CLI command over two experiment output directories; it is not configured through a per-stimulus grader block. See [Comparison Mode](#comparison-mode-vally-compare) below.
 
 This vocabulary reconciliation is intentional and aligns with the prose in the per-kind references ("Where the research phrasing recommended `output-matches`, the equivalent here is `regex`..."). Authors author with the skill vocabulary; the catalog and per-kind references translate to the actual CLI `type:` keyword in every emitted YAML example.
 
-Suite-level `scoring.threshold` (observed in live eval files such as [`evals/agent-behavior/eval.yaml`](../../../../../evals/agent-behavior/eval.yaml)) is the aggregate pass bar applied across all graders in a stimulus and is distinct from per-grader thresholds. Per-grader thresholds documented below apply only to grader types that support them (`semantic_similarity` does; `contains` and `regex` do not).
+Suite-level `scoring.threshold` (observed in live eval files such as [`evals/agent-behavior/eval.yaml`](../../../../../evals/agent-behavior/eval.yaml)) is the pass bar applied to a trial's mean grader score and is distinct from per-grader thresholds. Without a suite threshold, every grader must pass. For equally weighted boolean graders, the mean score equals the fraction passed; for scored graders it does not. Per-grader thresholds documented below apply only to grader types that support them (`prompt` and `panel` do; `output-contains` and `output-matches` do not).
 
-## Grader Reference Table
+At a suite threshold of 0.6, one miss among two equally weighted boolean graders produces 0.50 and fails the trial; one miss among three produces 0.67 and passes. Grader count is a coverage decision. Never add a redundant grader or lower a threshold merely to raise the score floor or silence an advisory.
 
-| Grader id             | Vally CLI 0.9.0 `type:` keyword | Required fields | Default threshold        | When to use                                                                |
-|-----------------------|---------------------------------|-----------------|--------------------------|----------------------------------------------------------------------------|
-| `semantic_similarity` | `prompt`                        | none            | 0.85 (skill convention)  | Open-ended explanations, rubric judgments, behavior intent matching        |
-| `contains`            | `output-contains`               | `substring`     | none (boolean pass/fail) | Exact phrase, literal substring, or canonical refusal text presence checks |
-| `regex`               | `output-matches`                | `pattern`       | none (boolean pass/fail) | Frontmatter shapes, naming conventions, structural markers, applyTo globs  |
-| `json_schema`         | NOT SHIPPED IN 0.9.0            | n/a             | n/a                      | Defer until Vally ships the grader; use `regex` envelope as workaround     |
+## Complete Registered Grader Surface
+
+The 22 implementation families below expose 36 accepted keywords. Negated forms and aliases share the positive family's configuration. Required fields reflect the built-in validator; `required or disallowed` means at least one non-empty list is required.
+
+| Family                       | Vally `type:` keyword(s)                                                                  | Required fields                     | Best fit                                        |
+|------------------------------|-------------------------------------------------------------------------------------------|-------------------------------------|-------------------------------------------------|
+| Output contains              | `output-contains`, `output-not-contains`                                                  | `substring` or `value`              | Literal final-output assertions                 |
+| Output matches               | `output-matches`, `output-not-matches`                                                    | `pattern`                           | Regex final-output assertions                   |
+| Transcript contains          | `transcript-contains`, `transcript-not-contains`                                          | `substring` or `value`              | Literal assertions across assistant messages    |
+| Transcript matches           | `transcript-matches`, `transcript-not-matches`                                            | `pattern`                           | Regex assertions across assistant messages      |
+| Assistant echoes tool output | `assistant-contains-tool-output`                                                          | `tools`, `pattern`                  | Dynamic tool-result acknowledgement             |
+| File exists                  | `file-exists`, `file-not-exists`                                                          | `path`                              | Workspace artifact presence or absence          |
+| File contains                | `file-contains`, `file-not-contains`                                                      | `path`, `value`                     | Literal workspace artifact content              |
+| File matches                 | `file-matches`, `file-not-matches`                                                        | `path`, `pattern`                   | Structured workspace artifact content           |
+| Diff matches                 | `diff-contains`, `diff-not-contains`                                                      | exactly one of `pattern`, `value`   | Workspace diff content                          |
+| Diff empty                   | `diff-empty`                                                                              | none                                | No-write and read-only behavior                 |
+| Tool calls                   | `tool-calls`                                                                              | one or more constraints             | Required, forbidden, ordered, or parallel tools |
+| Skill invocation             | `skill-invocation`                                                                        | `required` or `disallowed`          | Required or forbidden skill activation          |
+| System event                 | `system-event`                                                                            | `required` or `disallowed`          | Required or forbidden system events             |
+| Run command                  | `run-command`                                                                             | `command`                           | Shell command assertions in the workspace       |
+| Program                      | `program`                                                                                 | `program`                           | Direct executable assertions                    |
+| Prompt judge                 | `prompt`                                                                                  | none; stimulus `rubric` recommended | Single-judge semantic evaluation                |
+| Panel judge                  | `panel`                                                                                   | `models`                            | Multi-judge semantic evaluation                 |
+| Completion                   | `completed`, `exit-success`                                                               | none                                | Successful run completion                       |
+| Metric threshold             | `token-budget`, `tool-call-count`, `step-count`, `turn-count`, `error-count`, `wall-time` | `max`                               | Deterministic trajectory budgets                |
+| Custom metrics               | `custom-metrics`                                                                          | `assertions`                        | Assertions over a metrics artifact              |
+| Max repeat                   | `max-repeat`                                                                              | `max`                               | Repeated-action loop detection                  |
+| Loop outcome                 | `loop-outcome`                                                                            | `max_acceptable_retries`            | Expected or forbidden looping                   |
+
+`tool-calls` accepts `required`, `disallowed`, `sequence`, and `parallel` arrays. Each entry can be a tool-name string or an object whose required `name` is an unanchored regex and whose optional fields include `command`, `path`, `args`, `pattern`, `result`, `write_only`, `read_only`, `before_step`, `at_step`, `min_count`, and `final`.
+
+The metric-threshold `max` is a non-negative integer except for `wall-time`, which accepts a duration. `tool-call-count` and `step-count` also accept a `tools` regex list. `custom-metrics` accepts an optional `path`; its `assertions` entries have their own metric, operator, and expected-value contract.
+
+## Stimulus-Shape Selection
+
+Select the grader that observes the behavior directly. The `shape` values below are the current values in `skill-behavior.eval.yaml`; prompt and instruction specs currently omit `shape`, so apply the same decision by intended behavior.
+
+| Shape or behavior                                                                  | Preferred families                                                                                          |
+|------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `knowledge`                                                                        | `prompt`, `output-contains`, or `output-matches`; stage a repository skill in `agent_environment.skills`    |
+| `tool-trigger`, `operation`                                                        | `skill-invocation`, `tool-calls`, then file or diff graders for the resulting artifact                      |
+| `bleed-detection`, `injected-directive`, `authority-boundary`, `boundary`          | Negated output or transcript graders, `tool-calls` with `disallowed`, `diff-empty`                          |
+| `read-only-status`, `source-immutability`, `source-intake`                         | `diff-empty`, `file-not-exists`, `tool-calls` with `disallowed`, plus a narrow output assertion when needed |
+| `blocking-derivation`, `invalid-continuation`, `routing`, `continuation`           | `skill-invocation`, output or transcript assertions, and absence checks for forbidden outputs               |
+| `cross-domain-draft`, `end-to-end`, `rendering-separation`, `outcome-evidence-gap` | File, diff, command, or program graders for artifacts; prompt/output graders only for semantic claims       |
+
+A knowledge question about a repository skill needs that skill staged: without it the agent has no access to the skill and can only report that it is unavailable. `tool-calls` is in use in this repository, for example in `skill-dt-rpi-integration-validation-and-dispatch-failure`. `skill-invocation` reads the trajectory's `skill_activation` events, which record each staged skill the agent activates. It is validated here by `skill-vally-tests-tool-trigger` (`required: [vally-tests]`), which passed on every hosted trial that activated the skill. A run with no `skill_activation` event would fail the requirement, per the grader's required-entry logic; that negative case has not yet been observed in a hosted run. Validate it again before relying on it under a different executor. This catalog does not authorize migration of existing stimuli.
+
+## Conceptual Compatibility Table
+
+| Grader id             | Vally `type:` keyword | Required fields | Default threshold        | When to use                                                                |
+|-----------------------|-----------------------|-----------------|--------------------------|----------------------------------------------------------------------------|
+| `semantic_similarity` | `prompt`              | none            | 0.85 (skill convention)  | Open-ended explanations, rubric judgments, behavior intent matching        |
+| `contains`            | `output-contains`     | `substring`     | none (boolean pass/fail) | Exact phrase, literal substring, or canonical refusal text presence checks |
+| `regex`               | `output-matches`      | `pattern`       | none (boolean pass/fail) | Frontmatter shapes, naming conventions, structural markers, applyTo globs  |
+| `json_schema`         | NOT SHIPPED           | n/a             | n/a                      | Defer until Vally ships the grader; use `regex` envelope as workaround     |
 
 ## Grader: semantic_similarity
 
 ### Description
 
-Use this grader when the conformance check is a judgment about meaning, intent, or rubric adherence that cannot be reduced to a literal substring or regex shape. The skill vocabulary name maps to Vally CLI 0.9.0 `type: prompt`, an LLM-scored grader that produces a normalized 0-1 score from a scoring rubric. Examples include verifying that an agent's reply reflects the right scope, or that a skill's response acknowledges a required concept without prescribing the exact wording.
+Use this grader when the conformance check is a judgment about meaning, intent, or rubric adherence that cannot be reduced to a literal substring or regex shape. The skill vocabulary name maps to `type: prompt`, an LLM-scored grader that produces a normalized 0-1 score from the stimulus-level `rubric`. The grader's optional `config.prompt` adds judge instructions; it does not define the scored criteria. Examples include verifying that an agent's reply reflects the right scope, or that a skill's response acknowledges a required concept without prescribing the exact wording.
 
 ### YAML Schema
 
 ```yaml
+rubric:
+  - The response explains the prompt's purpose using scope or objective reasoning.
 graders:
   - type: prompt
     name: stating-purpose-matches-rubric
     config:
       prompt: |
-        Score 1 if the response explains the prompt's purpose using the
-        words "scope" or "objective" with reasoning. Score 0 otherwise.
+        Apply the rubric to the response's explanation, not quoted source text.
       model: gpt-4o-mini
       scoring: scale_1_5
       threshold: 0.85
@@ -55,12 +111,16 @@ graders:
 
 ### Field Reference
 
-| Field       | Type   | Required | Description                                                                       | Default |
-|-------------|--------|----------|-----------------------------------------------------------------------------------|---------|
-| `prompt`    | string | no       | LLM rubric used to score the response under test                                  | none    |
-| `model`     | string | no       | Model identifier Vally passes to the configured LLM client                        | none    |
-| `scoring`   | enum   | no       | One of `binary`, `scale_1_5`, `scale_1_10`; controls the rubric scale Vally emits | none    |
-| `threshold` | number | no       | Normalized 0-1 pass bar applied to the scored result                              | none    |
+| Field              | Location | Type     | Required | Description                                                                 | Default          |
+|--------------------|----------|----------|----------|-----------------------------------------------------------------------------|------------------|
+| `rubric`           | stimulus | string[] | no       | Scored criteria; use an explicit non-empty list for reproducible evaluation | built-in rubric  |
+| `prompt`           | config   | string   | no       | Additional judge instructions; does not replace the rubric                  | none             |
+| `model`            | config   | string   | no       | Model identifier Vally passes to the configured LLM client                  | eval-level judge |
+| `reasoning_effort` | config   | enum     | no       | One of `low`, `medium`, `high`, `xhigh`                                     | model default    |
+| `scoring`          | config   | enum     | no       | One of `binary`, `scale_1_5`, `scale_1_10`                                  | `scale_1_5`      |
+| `threshold`        | config   | number   | no       | Normalized 0-1 pass bar                                                     | 0.5              |
+| `evidence`         | config   | string[] | no       | Any of `trajectory`, `diff`, `golden_patch`, `repo`                         | trajectory       |
+| `output_delivery`  | config   | enum     | no       | `inline` or `workspace`                                                     | `inline`         |
 
 ### Recommended Threshold
 
@@ -76,15 +136,15 @@ graders:
 ### Anti-Patterns
 
 * Do not use `semantic_similarity` to validate frontmatter fields, file paths, or any check that has a deterministic textual answer; use `regex` or `contains` instead.
-* Do not omit the `prompt` field expecting Vally to infer a rubric; the LLM grader needs an explicit scoring instruction to produce reproducible scores.
+* Do not put scored criteria only in `config.prompt`. Put criteria in the stimulus-level `rubric`; use `config.prompt` only for additive judge instructions.
 * Do not stack `semantic_similarity` graders in a single stimulus when a single composite rubric covers the same ground; multiple LLM calls inflate cost without improving signal.
-* Do not author a stimulus grader with `type: pairwise` expecting a baseline-versus-treatment comparison inside a normal `vally eval` run; the grader type does not exist in 0.9.0 and `vally lint` rejects it. Score single-run quality with `type: prompt` instead, and reach for `vally compare` when the check requires comparing two runs.
+* Do not author a stimulus grader with `type: pairwise` expecting a baseline-versus-treatment comparison inside a normal `vally eval` run; the grader type does not exist and `vally lint` rejects it. Score single-run quality with `type: prompt` instead, and reach for `vally compare` when the check requires comparing two runs.
 
 ### Comparison Mode (`vally compare`)
 
-Vally CLI 0.9.0 relocated response-versus-response comparison out of the stimulus grader catalog and into the `vally compare` CLI command. `vally compare --baseline <dir> --treatment <dir>` reads two experiment output directories, constructs the `prompt` judge directly with an empty grader config aside from `--judge-model` and `--judge-reasoning-effort`, and judges both position orders (A-as-baseline and B-as-baseline) to cancel position bias. The judge returns a signed magnitude bucket (`much-better`, `slightly-better`, `equal`, `slightly-worse`, `much-worse`) per trial rather than the normalized 0-1 score that single-run `type: prompt` grading returns.
+Vally relocated response-versus-response comparison out of the stimulus grader catalog and into the `vally compare` CLI command. `vally compare --baseline <dir> --treatment <dir>` reads two experiment output directories, constructs the `prompt` judge directly with an empty grader config aside from `--judge-model` and `--judge-reasoning-effort`, and judges both position orders (A-as-baseline and B-as-baseline) to cancel position bias. The judge returns a signed magnitude bucket (`much-better`, `slightly-better`, `equal`, `slightly-worse`, `much-worse`) per trial rather than the normalized 0-1 score that single-run `type: prompt` grading returns.
 
-By default the judge uses an embedded baseline rubric. Passing `--eval-spec <path>` to `vally compare` overrides that rubric with the `prompt` text from the matching stimulus in the referenced eval spec, so an eval spec authored for comparison (for example `evals/baseline-equivalence/compare.eval.yml`) can still carry an A/B-framed rubric in its `type: prompt` grader `config.prompt` field. That rubric text is read as override instructions for the compare judge; it is not evaluated as an ordinary single-run grader during a `vally eval` invocation of that same spec.
+By default the judge uses an embedded baseline rubric. Passing `--eval-spec <path>` to `vally compare` overrides that rubric with the `prompt` text from the matching stimulus in the referenced eval spec, so an eval spec authored for comparison can still carry an A/B-framed rubric in its `type: prompt` grader `config.prompt` field. That rubric text is read as override instructions for the compare judge; it is not evaluated as an ordinary single-run grader during a `vally eval` invocation of that same spec.
 
 ### Example Stimulus
 
@@ -114,7 +174,7 @@ By default the judge uses an embedded baseline rubric. Passing `--eval-spec <pat
 
 ### Description
 
-Use this grader when the conformance check is a literal substring or phrase presence test that does not require regex anchoring. The skill vocabulary name maps to Vally CLI 0.9.0 `type: output-contains`, a boolean grader that returns 1.0 when the substring is present and 0.0 otherwise. The negated form `type: output-not-contains` returns 1.0 when the substring is absent. The grader supports optional case-insensitive matching for documentation-style phrases that may vary in capitalization across responses.
+Use this grader when the conformance check is a literal substring or phrase presence test that does not require regex anchoring. The skill vocabulary name maps to `type: output-contains`, a boolean grader that returns 1.0 when the substring is present and 0.0 otherwise. The negated form `type: output-not-contains` returns 1.0 when the substring is absent. The grader supports optional case-insensitive matching for documentation-style phrases that may vary in capitalization across responses.
 
 ### YAML Schema
 
@@ -178,7 +238,7 @@ No threshold applies. `contains` is a boolean grader: it returns 1.0 on match an
 
 ### Description
 
-Use this grader when the conformance check is a structural pattern: a frontmatter field shape, a naming convention, an applyTo glob form, a subagent invocation pattern, or any contract whose accept condition can be expressed as a regular expression. The skill vocabulary name maps to Vally CLI 0.9.0 `type: output-matches`, a boolean grader that returns 1.0 on regex match and 0.0 on no-match. The negated form `type: output-not-matches` returns 1.0 when the regex does NOT match. This is the most heavily used grader across the live evaluation suites under [`evals/`](../../../../../evals/).
+Use this grader when the conformance check is a structural pattern: a frontmatter field shape, a naming convention, an applyTo glob form, a subagent invocation pattern, or any contract whose accept condition can be expressed as a regular expression. The skill vocabulary name maps to `type: output-matches`, a boolean grader that returns 1.0 on regex match and 0.0 on no-match. The negated form `type: output-not-matches` returns 1.0 when the regex does NOT match. This is the most heavily used grader across the live evaluation suites under [`evals/`](../../../../../evals/).
 
 ### YAML Schema
 
@@ -241,23 +301,23 @@ No threshold applies. `regex` is a boolean grader with the same 1.0 / 0.0 semant
 
 ### Description
 
-The vally-tests skill's conceptual vocabulary includes `json_schema` for cases where the conformance check is a structured JSON contract: tool arguments, agent state objects, or skill outputs whose shape is described by a JSON Schema document. Vally CLI 0.9.0 does NOT ship a `json_schema` grader; no built-in grader registered through Vally's grader registry accepts JSON Schema documents as configuration. Authoring guidance defers shipping `json_schema`-typed graders until the Vally CLI surfaces one, and provides the `regex` workaround below for the most common cases.
+The vally-tests skill's conceptual vocabulary includes `json_schema` for cases where the conformance check is a structured JSON contract: tool arguments, agent state objects, or skill outputs whose shape is described by a JSON Schema document. Vally does NOT ship a `json_schema` grader; no built-in grader registered through Vally's grader registry accepts JSON Schema documents as configuration. Authoring guidance defers shipping `json_schema`-typed graders until the Vally CLI surfaces one, and provides the `regex` workaround below for the most common cases.
 
 ### YAML Schema
 
-`<unknown - not shipped in Vally CLI 0.9.0>`
+`<unknown - not shipped in Vally CLI>`
 
 When a JSON-schema grader ships in a future Vally CLI release, this section is updated in lockstep with the SKILL.md vocabulary table and the per-kind references. Until then, the supported authoring path is the regex envelope below.
 
 ### Field Reference
 
-| Field    | Type | Required | Description                                  | Default |
-|----------|------|----------|----------------------------------------------|---------|
-| `schema` | n/a  | n/a      | `<unknown - not shipped in Vally CLI 0.9.0>` | n/a     |
+| Field    | Type | Required | Description                            | Default |
+|----------|------|----------|----------------------------------------|---------|
+| `schema` | n/a  | n/a      | `<unknown - not shipped in Vally CLI>` | n/a     |
 
 ### Recommended Threshold
 
-Not applicable. The grader is not shipped in Vally CLI 0.9.0.
+Not applicable. The grader is not shipped in the Vally CLI.
 
 ### Best For
 
@@ -267,7 +327,7 @@ Not applicable. The grader is not shipped in Vally CLI 0.9.0.
 
 ### Anti-Patterns
 
-* Do not author stimuli that declare `type: json_schema` against Vally CLI 0.9.0; Vally rejects the stimulus at load time because the grader is not registered.
+* Do not author stimuli that declare `type: json_schema`; Vally rejects the stimulus at load time because the grader is not registered.
 * Do not approximate JSON-schema validation with a single permissive regex such as `^\{.*\}$`; tighten the regex to the specific required field names and value shapes, or split into multiple `output-matches` graders covering each required field.
 * Do not block authoring on the missing grader; the supported authoring path is the `regex` envelope plus, where the check is semantic ("the JSON payload satisfies the contract intent"), a paired `semantic_similarity` grader scoring the contract acknowledgment.
 

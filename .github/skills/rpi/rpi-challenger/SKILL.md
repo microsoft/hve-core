@@ -18,7 +18,7 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 
 1. Form a factual candidate scope from caller-supplied subject, targets, context, and focus. When those inputs are insufficient, inspect only the focused likely targets needed to form a scope, or ask for the smallest missing context.
 2. Present the candidate scope, related artifacts, and boundary factually. Receive user confirmation before asking challenge questions.
-3. Create or resume `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md` from [templates/challenge-session.md](templates/challenge-session.md). Copy only the template body that begins with `<!-- markdownlint-disable-file -->`, excluding its source-template frontmatter.
+3. Create or resume `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md` from [templates/challenge-session.md](templates/challenge-session.md).
 4. Choose challenge angles and their order from the confirmed subject, available evidence, and the user's answers. Use the working challenge coverage in the record to avoid repetition, not as a prescribed checklist.
 5. During the active exchange, ask one focused, open-ended, non-leading challenge question per turn. Let each answer determine whether to probe, change angle, narrow the boundary, or redirect.
 6. Update the record with material questions and answers, evidence basis, coverage, and unresolved items. Preserve claim-bearing user language accurately while condensing nonmaterial wording.
@@ -55,7 +55,7 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
 * At closeout, separate challenge session status from the unresolved-item or decision state. Summarize coverage, material findings, unresolved items, and anything the user might otherwise miss.
 * Advise `/compact` only when completed questioning detail or stale tool output outweighs useful context and the challenge record is current. When advising it, name the challenge state and record pointer to retain. Otherwise omit compaction guidance.
-* In a standalone invocation, do not invoke a peer stage. State the exact next `/rpi-*` command only when an unresolved item makes that next step appropriate. Otherwise state the explicit no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the challenge record to the parent and state that it selects any eligible continuation.
+* In a standalone invocation, do not invoke a peer stage. State the exact next `/rpi-*` command only when an unresolved item makes that next step appropriate. Otherwise state the explicit no-handoff reason. In an active confirmed automatic RPI Agent context, return the challenge record to the parent and state that it selects any eligible continuation.
 * For the challenge record and every other relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
@@ -67,7 +67,7 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 
 ## Handoff
 
-Advisory only: after the challenge concludes, state the exact `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command when an unresolved item makes that next step useful. Do not invoke it. State that no handoff applies when no unresolved item needs downstream work. Return the record to `rpi-quick` or a confirmed automatic RPI Agent parent when one owns continuation.
+Advisory only: after the challenge concludes, state the exact `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command when an unresolved item makes that next step useful. Do not invoke it. State that no handoff applies when no unresolved item needs downstream work. Return the record to a confirmed automatic RPI Agent parent when one owns continuation.
 
 ## Final response
 

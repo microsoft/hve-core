@@ -30,11 +30,11 @@ Treat the matrix as a criterion x surface x method grid.
 3. Delegate to the accessibility-surface-inventory subagent as the sole producer of a11y-runtime.config.json; do not author that config yourself. Pause for the user to review or override it before proceeding.
 4. Build the grid with the runtime_a11y matrix engine, using the loaded framework and surface definitions.
 5. Ingest existing and static evidence as data, including assessor findings, planner state.json data, prior reports, and prior matrix artifacts; preserve provenance and do not invent evidence.
-6. Run the harness from the skill root .github/skills/accessibility/accessibility/, which holds the uv project, using its script entrypoint:
+6. Load the `accessibility` skill and run the harness from that skill's root, which holds the uv project, using its script entrypoint:
    * `uv run scripts/runtime_a11y/__main__.py run-all --config a11y-runtime.config.json --out results.json` for normal runs.
    * `uv run scripts/runtime_a11y/__main__.py probe <probeId> --config ...` for probe mode.
    * From another working directory, pin the project instead: `uv run --project <skill-root> <skill-root>/scripts/runtime_a11y/__main__.py ...`.
-   * Install the skill-local Node dependencies once with `npm ci` in .github/skills/accessibility/accessibility/scripts/runtime_a11y/ before the first run.
+   * Install the skill-local Node dependencies once with `npm ci` in `scripts/runtime_a11y/` under the loaded skill root before the first run.
    * Add `--trace` when a trace is needed and `--allow-external` only when the target is an approved non-loopback host after explicit confirmation.
 7. Route fail, partial, or blocked cells through the Finding Deep Verifier; involve the Codebase Profiler and Accessibility Framework Assessor by role as needed to interpret findings and close gaps.
 8. Compute coverage, residual gaps, and nextActions with the engine, then write the matrix JSON and render the canonical evidence bundle. When a cell still requires human-led assistive-technology evidence, route the tester to the shared [real screen reader testing runbook](../../../docs/planning/runbooks/accessibility/real-screen-reader-testing.md) instead of writing case-specific manual instructions inline.

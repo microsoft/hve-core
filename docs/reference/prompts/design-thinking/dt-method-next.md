@@ -3,7 +3,7 @@ title: Dt Method Next
 description: Assess DT project state and recommend next method with sequencing validation
 sidebar_position: 13
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Assess DT project state and recommend next method with sequencing validation
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a Design Thinking project needs an evidence-based recommendation for its next method. Invoke a specific method prompt instead when the next step is already confirmed.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide `project-slug` when the active project cannot be inferred safely. The prompt checks project state and sequencing evidence, recommends the next method, and waits for confirmation before changing coaching state.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-method-next project-slug=factory-floor-maintenance
+```
+
+The prompt assesses completed artifacts and proposes the next eligible method for the user to confirm.

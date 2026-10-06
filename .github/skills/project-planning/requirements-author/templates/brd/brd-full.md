@@ -306,6 +306,16 @@ outcome-hypothesis IDs and evidence status.
 |--------|---------------|------------------------------------------------|-----------------|----------------|---------------------------------|
 | `<ID>` | `<Statement>` | `<Untested / Partially supported / Evidenced>` | `<Impact>`      | `<Mitigation>` | `<Handoff ID or BRD discovery>` |
 
+### Research Finding Dispositions
+
+{{research_finding_dispositions}}
+
+*Guidance*: Include this table when bounded `rpi-research` evidence was considered. Record one row per material finding. Keep the primary Research artifact authoritative for evidence and the BRD authoritative for requirement decisions.
+
+| Gap ID     | Evidence IDs | Affected targets              | Disposition                                                            | Rationale     | Primary research artifact   |
+|------------|--------------|-------------------------------|------------------------------------------------------------------------|---------------|-----------------------------|
+| `<Gap ID>` | `<C# / W#>`  | `<Section or requirement ID>` | `<Incorporated / Revised / Rejected / Deferred / Retained-assumption>` | `<Rationale>` | `<Workspace-relative path>` |
+
 ### Risk Register
 
 {{risks}}

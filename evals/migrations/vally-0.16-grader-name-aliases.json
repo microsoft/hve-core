@@ -1,0 +1,4158 @@
+{
+  "schemaVersion": "1.0",
+  "migrationId": "vally-grader-names-v0.16",
+  "sourceProvenanceRevision": "ce4c686f8906288db28ccf8a1108c26e2ea52bd9",
+  "sourceRevision": "b4c940cc4067d9b2addbba48ea15e599f4c825c4",
+  "targetRevision": "0b8762fe0003396557820bd6093d88a932047033",
+  "sourceSpecSha256": "4de094694d106aac4e5c1fe52adaf0b8a994b965a5927d421fe154ca9f41c93b",
+  "targetSpecSha256": "aa96de88a9f31d9bd964f3915061d273421fd3117217618a7d635348123d88f3",
+  "mapSha256": "439c4c6445f64d714df83bd78543bca9ba50c9823b2cf9c65e34f5b67fce6084",
+  "counts": {
+    "sourceToTargetPairs": 1240,
+    "authoredAliases": 414,
+    "generatedCopies": 171,
+    "semanticChanges": 0
+  },
+  "aliases": [
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/accessibility-planner.yml",
+      "stimulus": "accessibility-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "accessibility-planner-class-recipe-tracking-file-write",
+      "behaviorSha256": "1c048946096c514382ffa1fd1b349985f0392097651cdc4faaf46bbef267d9c2"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-system-prompt-mention",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-system-prompt-mention-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-persona-name-leak",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-persona-name-leak-response-quality",
+      "behaviorSha256": "aa62ee1241d976e2a3fea78b6adecd788d4f6bcdfa6806514d3832dfbacf71a2"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-persona-name-leak",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-persona-name-leak-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-off-policy-framing",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-off-policy-framing-response-quality",
+      "behaviorSha256": "f732d2b23830fd0f68eee4c8a2ca1df626a1d2eda99ef04f3c6adc50f2f00a2a"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-off-policy-framing",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-off-policy-framing-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-joke",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-joke-response-quality",
+      "behaviorSha256": "bc6667ea69f1f8e1cc40116ac23775a1de3d6a4d2c2ce4d366d9b7d13d1333c5"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-joke",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-joke-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-greeting",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-greeting-response-quality",
+      "behaviorSha256": "3bc331f03c651a99adab1947fd39ca7bfc30f34f86b4426e88f9beaf11418743"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-greeting",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-greeting-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "factual-units-mile-to-km",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-units-mile-to-km-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "factual-science-water-formula",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-science-water-formula-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "factual-history-moon-landing-year",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-history-moon-landing-year-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "factual-geo-france-capital",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-geo-france-capital-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "factual-arithmetic-basic",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-arithmetic-basic-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "code-walkthrough-fizzbuzz",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-walkthrough-fizzbuzz-response-quality",
+      "behaviorSha256": "e480742293f48d7356c9c04b0fdd264b0d4f6c57a3f481fb38273424a77da372"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "code-reverse-string-rust",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-reverse-string-rust-response-quality",
+      "behaviorSha256": "f35e8d8e221f2cea3675bee7caea77adb7638fb228437d2c7070762afdace25b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "code-idiom-translate-python-to-js",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-idiom-translate-python-to-js-response-quality",
+      "behaviorSha256": "eb8a11f3112592aa0aa45dde8526dbe39fa3484587352f10d303706d6410fa6b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "code-hello-world-python",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-hello-world-python-response-quality",
+      "behaviorSha256": "8af90370f2a4f7eb56a53f8ca254c02ad6f3fcdec42aeb513d42434ca51d6477"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "code-error-explain-indexerror",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-error-explain-indexerror-response-quality",
+      "behaviorSha256": "5fa5ae275136769b49466c7de7753157a030833183e7a7b02c9464b3a51b9b1b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-vague-feature",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-vague-feature-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-vague-feature",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-vague-feature-response-quality",
+      "behaviorSha256": "37a59ba21fc98a8bb366d8e50c498fbabbec215c5e731b1f162b1f35107c250d"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "instruction-bleed-system-prompt-mention",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-system-prompt-mention-response-quality",
+      "behaviorSha256": "d22b45acbc626729b59d268a79db54142608f49aab5d5259ab51046fae01514c"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "multi-turn-confirm-action",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-confirm-action-response-quality",
+      "behaviorSha256": "e8557db31ab1f8281d225db37deda485c3bd6d35ebbeadff0ca76e169a8279c4"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "multi-turn-context-recall",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-context-recall-response-quality",
+      "behaviorSha256": "6ae994f34a14afd3af5d74ba91e72d1c0d3e56d321af2569f295d05d33b58bff"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "multi-turn-correct-misunderstanding",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-correct-misunderstanding-response-quality",
+      "behaviorSha256": "e7bae502b3cfdbef79068eeea1f207547a77c0e23e2cb950fe3979c45f87ec6f"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-improve-style",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-improve-style-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-fix-bug",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-fix-bug-response-quality",
+      "behaviorSha256": "78b88623bf5a07d6e9ef927e6385cd052d016af9efc390e05788807e587ca6b5"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-fix-bug",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-fix-bug-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "tool-trigger-readme-summary",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-readme-summary-response-quality",
+      "behaviorSha256": "65a00b0ac87ebd342aa1071764f55873fe01d65b0f6816f646f060c0be48bcd7"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "tool-trigger-readme-summary",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "tool-trigger-readme-summary-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "tool-trigger-package-json",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-package-json-response-quality",
+      "behaviorSha256": "4fda73dc658c275813dde90a7dd8d83b5cf2720e737859fa69b09e096ba31bef"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "tool-trigger-memory-only",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-memory-only-response-quality",
+      "behaviorSha256": "7ee3219c2e18795340b91f0d9288756ec21849dd6d354af4d3d8ed22f233feba"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "tool-trigger-list-scripts",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-list-scripts-response-quality",
+      "behaviorSha256": "8e467d9cbb0c72c2aa7a01482aa13f1528f5c8afb0de394efe3313fcb18c246c"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "tool-trigger-find-license",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-find-license-response-quality",
+      "behaviorSha256": "890246c09477d5f48bf0cd143beadc67e79317d3f3231d5f3d4dfe41e8e6b7c9"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-weather",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-weather-response-quality",
+      "behaviorSha256": "7e53da2671b8abeec97a7fd9c34387f627ef55c071c7b2da899ae43a7e01459c"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-update-thing",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-update-thing-response-quality",
+      "behaviorSha256": "ba55a0a9558ae18a551a403e900ddc50bf29da5d00d05751e555b99b8d42ae9c"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-weather",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-weather-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-travel-tips",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-travel-tips-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-sports",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-sports-response-quality",
+      "behaviorSha256": "739aad2ddf4edb084db4e4d6fb8ae375b74317948f0e7990bd287f207108ef6b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-sports",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-sports-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-recipe",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-recipe-response-quality",
+      "behaviorSha256": "5d3d62f8473ef9ee743ed67afd8f527ffbd9217c27e3db3732742765f32a0f82"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-recipe-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-movie-recommendation",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-movie-recommendation-response-quality",
+      "behaviorSha256": "5b10c7553d6de23a34cc7ee360e592b08a825e446ca33a8f5278bdc5a2def12d"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-movie-recommendation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-movie-recommendation-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "multi-turn-refine-summary",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-refine-summary-response-quality",
+      "behaviorSha256": "1e595d7b3fbc4d19597ac3b30b451038d30511e8af2471ef803bc2c621de7eb2"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "multi-turn-refine-summary",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "multi-turn-refine-summary-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "multi-turn-followup-clarify",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-followup-clarify-response-quality",
+      "behaviorSha256": "84dbc4d7fd4348da8c13fba7273e03da6f93388f61d66f0d5680fa09722525a1"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "scope-redirect-travel-tips",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-travel-tips-response-quality",
+      "behaviorSha256": "fa77cf8dddd44bb5a7e7145bb32baef9e056d1f87df414c6bb7676c04344018b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-update-thing",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-update-thing-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-make-it-faster",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-make-it-faster-response-quality",
+      "behaviorSha256": "b6fba60d6334f694baa42593128ad704f063ae995a56c8fdc3c3168884d59baf"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-make-it-faster",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-make-it-faster-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "startup-disclaimer-and-framework-attribution",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "startup-disclaimer-and-framework-attribution-comple-2ac17d44",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "standards-mapping-trustworthiness-characteristic",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "standards-mapping-trustworthiness-characteristic-co-e679d164",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "regulatory-signoff-boundary-no-certification",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "regulatory-signoff-boundary-no-certification-comple-7031cb22",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "proportionate-low-risk-classification",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "proportionate-low-risk-classification-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "phase2-prohibited-uses-gate-first",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase2-prohibited-uses-gate-first-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "phase1-ai-system-scoping-questions",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase1-ai-system-scoping-questions-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "phase-advance-requires-explicit-confirmation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase-advance-requires-explicit-confirmation-comple-61087717",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "evidence-backed-controls-gap-disclosure",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "evidence-backed-controls-gap-disclosure-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "consequential-use-risk-recognition",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "consequential-use-risk-recognition-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-rai-planner",
+      "source": "evals/agent-conformance/rai-planner/eval.yaml",
+      "stimulus": "ai-security-modeling-prompt-injection",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "ai-security-modeling-prompt-injection-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "ai-component-detection-recommends-rai",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "ai-component-detection-recommends-rai-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "third-party-processing-undocumented-sharing",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "third-party-processing-undocumented-sharing-complet-7d24aae0",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "retention-indefinite-policy-gap",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "retention-indefinite-policy-gap-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "proportionate-dpia-reasoning-routine-processing",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "proportionate-dpia-reasoning-routine-processing-com-77ad1210",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "phase-advance-requires-explicit-confirmation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase-advance-requires-explicit-confirmation-comple-61087717",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "legal-signoff-boundary-no-compliance-claim",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "legal-signoff-boundary-no-compliance-claim-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "high-risk-signal-flags-dpia-consideration",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "high-risk-signal-flags-dpia-consideration-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "data-subject-rights-deletion-request",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "data-subject-rights-deletion-request-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "data-minimization-unjustified-collection",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "data-minimization-unjustified-collection-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "capture-phase-exploratory-data-flow-questions",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "capture-phase-exploratory-data-flow-questions-compl-1a0e0b50",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "transparent-method-shift",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "transparent-method-shift-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "think-speak-empower-pattern",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "think-speak-empower-pattern-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-privacy-planner",
+      "source": "evals/agent-conformance/privacy-planner/eval.yaml",
+      "stimulus": "startup-disclaimer-before-questions",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "startup-disclaimer-before-questions-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-improve-style",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-improve-style-response-quality",
+      "behaviorSha256": "7e3e5c14d48c9111b8e8ea2a037cc2d24a36e5bbd9b32b49b4130b2c9db3e4c3"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "authorization-missing-check",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "authorization-missing-check-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "phase1-hard-gate-requires-confirmation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase1-hard-gate-requires-confirmation-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-improve-style",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-improve-style-response-quality",
+      "behaviorSha256": "7e3e5c14d48c9111b8e8ea2a037cc2d24a36e5bbd9b32b49b4130b2c9db3e4c3"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-improve-style",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-improve-style-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-fix-bug",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-fix-bug-response-quality",
+      "behaviorSha256": "78b88623bf5a07d6e9ef927e6385cd052d016af9efc390e05788807e587ca6b5"
+    },
+    {
+      "evalName": "baseline-equivalence-baseline",
+      "source": "evals/baseline-equivalence/baseline/eval.yaml",
+      "stimulus": "ambiguous-spec-fix-bug",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-fix-bug-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "workflow-token-permissions-overbroad",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "workflow-token-permissions-overbroad-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "startup-disclaimer-and-standards-attribution",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "startup-disclaimer-and-standards-attribution-comple-8958e448",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "phase5-prioritized-backlog-handoff",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase5-prioritized-backlog-handoff-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "phase1-hard-gate-requires-confirmation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase1-hard-gate-requires-confirmation-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "phase1-curiosity-first-invitation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase1-curiosity-first-invitation-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "missing-evidence-handling-unverified-claim",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "missing-evidence-handling-unverified-claim-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "phase1-curiosity-first-invitation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase1-curiosity-first-invitation-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "links-existing-security-plan-context",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "links-existing-security-plan-context-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "build-provenance-gap",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "build-provenance-gap-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "artifact-signing-and-sbom-gap",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "artifact-signing-and-sbom-gap-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "trust-boundary-identification",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "trust-boundary-identification-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "stride-reasoning-category-selection",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "stride-reasoning-category-selection-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "startup-disclaimer-before-questions",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "startup-disclaimer-before-questions-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "sensitive-data-handling-logging",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "sensitive-data-handling-logging-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "security-signoff-boundary-no-certification",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "security-signoff-boundary-no-certification-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "risk-prioritization-proportionate-ranking",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "risk-prioritization-proportionate-ranking-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "resume-shown-suppresses-disclaimer",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "resume-shown-suppresses-disclaimer-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-security-planner",
+      "source": "evals/agent-conformance/security-planner/eval.yaml",
+      "stimulus": "resume-null-disclaimer-before-work",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "resume-null-disclaimer-before-work-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-sssc-planner",
+      "source": "evals/agent-conformance/sssc-planner/eval.yaml",
+      "stimulus": "dependency-maintenance-pinning-gap",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "dependency-maintenance-pinning-gap-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-make-it-faster",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-make-it-faster-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-make-it-faster",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-make-it-faster-response-quality",
+      "behaviorSha256": "b6fba60d6334f694baa42593128ad704f063ae995a56c8fdc3c3168884d59baf"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-update-thing",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-update-thing-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-joke",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-joke-response-quality",
+      "behaviorSha256": "bc6667ea69f1f8e1cc40116ac23775a1de3d6a4d2c2ce4d366d9b7d13d1333c5"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-joke",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-joke-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-greeting",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-greeting-response-quality",
+      "behaviorSha256": "3bc331f03c651a99adab1947fd39ca7bfc30f34f86b4426e88f9beaf11418743"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-greeting",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-greeting-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "factual-units-mile-to-km",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-units-mile-to-km-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "factual-science-water-formula",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-science-water-formula-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "factual-history-moon-landing-year",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-history-moon-landing-year-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "factual-geo-france-capital",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-geo-france-capital-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "factual-arithmetic-basic",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-arithmetic-basic-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "code-walkthrough-fizzbuzz",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-walkthrough-fizzbuzz-response-quality",
+      "behaviorSha256": "e480742293f48d7356c9c04b0fdd264b0d4f6c57a3f481fb38273424a77da372"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-off-policy-framing",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-off-policy-framing-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "code-reverse-string-rust",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-reverse-string-rust-response-quality",
+      "behaviorSha256": "f35e8d8e221f2cea3675bee7caea77adb7638fb228437d2c7070762afdace25b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "code-hello-world-python",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-hello-world-python-response-quality",
+      "behaviorSha256": "8af90370f2a4f7eb56a53f8ca254c02ad6f3fcdec42aeb513d42434ca51d6477"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "code-error-explain-indexerror",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-error-explain-indexerror-response-quality",
+      "behaviorSha256": "5fa5ae275136769b49466c7de7753157a030833183e7a7b02c9464b3a51b9b1b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-vague-feature",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-vague-feature-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-vague-feature",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-vague-feature-response-quality",
+      "behaviorSha256": "37a59ba21fc98a8bb366d8e50c498fbabbec215c5e731b1f162b1f35107c250d"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-update-thing",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-update-thing-response-quality",
+      "behaviorSha256": "ba55a0a9558ae18a551a403e900ddc50bf29da5d00d05751e555b99b8d42ae9c"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-update-thing",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-update-thing-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-make-it-faster",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-make-it-faster-response-quality",
+      "behaviorSha256": "b6fba60d6334f694baa42593128ad704f063ae995a56c8fdc3c3168884d59baf"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-make-it-faster",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-make-it-faster-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-improve-style",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-improve-style-response-quality",
+      "behaviorSha256": "7e3e5c14d48c9111b8e8ea2a037cc2d24a36e5bbd9b32b49b4130b2c9db3e4c3"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-improve-style",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-improve-style-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "code-idiom-translate-python-to-js",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-idiom-translate-python-to-js-response-quality",
+      "behaviorSha256": "eb8a11f3112592aa0aa45dde8526dbe39fa3484587352f10d303706d6410fa6b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-fix-bug",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-fix-bug-response-quality",
+      "behaviorSha256": "78b88623bf5a07d6e9ef927e6385cd052d016af9efc390e05788807e587ca6b5"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-off-policy-framing",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-off-policy-framing-response-quality",
+      "behaviorSha256": "f732d2b23830fd0f68eee4c8a2ca1df626a1d2eda99ef04f3c6adc50f2f00a2a"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-persona-name-leak",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-persona-name-leak-response-quality",
+      "behaviorSha256": "aa62ee1241d976e2a3fea78b6adecd788d4f6bcdfa6806514d3832dfbacf71a2"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "tool-trigger-package-json",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-package-json-response-quality",
+      "behaviorSha256": "4fda73dc658c275813dde90a7dd8d83b5cf2720e737859fa69b09e096ba31bef"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "tool-trigger-memory-only",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-memory-only-response-quality",
+      "behaviorSha256": "7ee3219c2e18795340b91f0d9288756ec21849dd6d354af4d3d8ed22f233feba"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "tool-trigger-list-scripts",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-list-scripts-response-quality",
+      "behaviorSha256": "8e467d9cbb0c72c2aa7a01482aa13f1528f5c8afb0de394efe3313fcb18c246c"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "tool-trigger-find-license",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-find-license-response-quality",
+      "behaviorSha256": "890246c09477d5f48bf0cd143beadc67e79317d3f3231d5f3d4dfe41e8e6b7c9"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-weather",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-weather-response-quality",
+      "behaviorSha256": "7e53da2671b8abeec97a7fd9c34387f627ef55c071c7b2da899ae43a7e01459c"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-weather",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-weather-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-travel-tips",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-travel-tips-response-quality",
+      "behaviorSha256": "fa77cf8dddd44bb5a7e7145bb32baef9e056d1f87df414c6bb7676c04344018b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-travel-tips",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-travel-tips-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-sports",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-sports-response-quality",
+      "behaviorSha256": "739aad2ddf4edb084db4e4d6fb8ae375b74317948f0e7990bd287f207108ef6b"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-sports",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-sports-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-persona-name-leak",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-persona-name-leak-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-recipe",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-recipe-response-quality",
+      "behaviorSha256": "5d3d62f8473ef9ee743ed67afd8f527ffbd9217c27e3db3732742765f32a0f82"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-movie-recommendation",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-movie-recommendation-response-quality",
+      "behaviorSha256": "5b10c7553d6de23a34cc7ee360e592b08a825e446ca33a8f5278bdc5a2def12d"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-movie-recommendation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-movie-recommendation-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "multi-turn-refine-summary",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-refine-summary-response-quality",
+      "behaviorSha256": "1e595d7b3fbc4d19597ac3b30b451038d30511e8af2471ef803bc2c621de7eb2"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "multi-turn-refine-summary",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "multi-turn-refine-summary-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "multi-turn-followup-clarify",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-followup-clarify-response-quality",
+      "behaviorSha256": "84dbc4d7fd4348da8c13fba7273e03da6f93388f61d66f0d5680fa09722525a1"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "multi-turn-correct-misunderstanding",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-correct-misunderstanding-response-quality",
+      "behaviorSha256": "e7bae502b3cfdbef79068eeea1f207547a77c0e23e2cb950fe3979c45f87ec6f"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "multi-turn-context-recall",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-context-recall-response-quality",
+      "behaviorSha256": "6ae994f34a14afd3af5d74ba91e72d1c0d3e56d321af2569f295d05d33b58bff"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "multi-turn-confirm-action",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-confirm-action-response-quality",
+      "behaviorSha256": "e8557db31ab1f8281d225db37deda485c3bd6d35ebbeadff0ca76e169a8279c4"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-system-prompt-mention",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-system-prompt-mention-response-quality",
+      "behaviorSha256": "d22b45acbc626729b59d268a79db54142608f49aab5d5259ab51046fae01514c"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "instruction-bleed-system-prompt-mention",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-system-prompt-mention-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "scope-redirect-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-recipe-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "short-conversational-responses",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "short-conversational-responses-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "ambiguous-spec-fix-bug",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-fix-bug-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "tool-trigger-readme-summary",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "tool-trigger-readme-summary-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-off-policy-framing",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-off-policy-framing-response-quality",
+      "behaviorSha256": "f732d2b23830fd0f68eee4c8a2ca1df626a1d2eda99ef04f3c6adc50f2f00a2a"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-off-policy-framing",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rpi-agent-self-reference",
+      "newName": "instruction-bleed-off-policy-framing-rpi-agent-self-f035769c",
+      "behaviorSha256": "3940ceb2d5d466d30765b7a2370fd03cf018cd7302575d9a8e5ba3da32acd232"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-off-policy-framing",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-off-policy-framing-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-joke",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-joke-response-quality",
+      "behaviorSha256": "bc6667ea69f1f8e1cc40116ac23775a1de3d6a4d2c2ce4d366d9b7d13d1333c5"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-joke",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rpi-agent-self-reference",
+      "newName": "instruction-bleed-joke-rpi-agent-self-reference",
+      "behaviorSha256": "3940ceb2d5d466d30765b7a2370fd03cf018cd7302575d9a8e5ba3da32acd232"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-joke",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-joke-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-greeting",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-greeting-response-quality",
+      "behaviorSha256": "3bc331f03c651a99adab1947fd39ca7bfc30f34f86b4426e88f9beaf11418743"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-greeting",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rpi-agent-self-reference",
+      "newName": "instruction-bleed-greeting-rpi-agent-self-reference",
+      "behaviorSha256": "3940ceb2d5d466d30765b7a2370fd03cf018cd7302575d9a8e5ba3da32acd232"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-greeting",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-greeting-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "factual-units-mile-to-km",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-units-mile-to-km-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-persona-name-leak",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-persona-name-leak-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "factual-science-water-formula",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-science-water-formula-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "factual-geo-france-capital",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-geo-france-capital-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "factual-arithmetic-basic",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-arithmetic-basic-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "code-walkthrough-fizzbuzz",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-walkthrough-fizzbuzz-response-quality",
+      "behaviorSha256": "e480742293f48d7356c9c04b0fdd264b0d4f6c57a3f481fb38273424a77da372"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "code-reverse-string-rust",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-reverse-string-rust-response-quality",
+      "behaviorSha256": "f35e8d8e221f2cea3675bee7caea77adb7638fb228437d2c7070762afdace25b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "code-idiom-translate-python-to-js",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-idiom-translate-python-to-js-response-quality",
+      "behaviorSha256": "eb8a11f3112592aa0aa45dde8526dbe39fa3484587352f10d303706d6410fa6b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "code-hello-world-python",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-hello-world-python-response-quality",
+      "behaviorSha256": "8af90370f2a4f7eb56a53f8ca254c02ad6f3fcdec42aeb513d42434ca51d6477"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "code-error-explain-indexerror",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "code-error-explain-indexerror-response-quality",
+      "behaviorSha256": "5fa5ae275136769b49466c7de7753157a030833183e7a7b02c9464b3a51b9b1b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-vague-feature",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "asks-clarifying-question",
+      "newName": "ambiguous-spec-vague-feature-asks-clarifying-question",
+      "behaviorSha256": "4fb017366ef11e494dffc6df92b29ed38bf36f6ed5437e7a45da39254c80821b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-vague-feature",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-vague-feature-response-quality",
+      "behaviorSha256": "37a59ba21fc98a8bb366d8e50c498fbabbec215c5e731b1f162b1f35107c250d"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "ambiguous-spec-update-thing",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "ambiguous-spec-update-thing-response-quality",
+      "behaviorSha256": "ba55a0a9558ae18a551a403e900ddc50bf29da5d00d05751e555b99b8d42ae9c"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "factual-history-moon-landing-year",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "factual-history-moon-landing-year-response-quality",
+      "behaviorSha256": "9f0b8443f52730d7ab136ac5d86233ff241dfe8078036d3d762d9afa9ea22fb1"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "tool-trigger-readme-summary",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-readme-summary-response-quality",
+      "behaviorSha256": "65a00b0ac87ebd342aa1071764f55873fe01d65b0f6816f646f060c0be48bcd7"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-persona-name-leak",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rpi-agent-self-reference",
+      "newName": "instruction-bleed-persona-name-leak-rpi-agent-self-reference",
+      "behaviorSha256": "3940ceb2d5d466d30765b7a2370fd03cf018cd7302575d9a8e5ba3da32acd232"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-system-prompt-mention",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "instruction-bleed-system-prompt-mention-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "tool-trigger-package-json",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-package-json-response-quality",
+      "behaviorSha256": "4fda73dc658c275813dde90a7dd8d83b5cf2720e737859fa69b09e096ba31bef"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "tool-trigger-memory-only",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-memory-only-response-quality",
+      "behaviorSha256": "7ee3219c2e18795340b91f0d9288756ec21849dd6d354af4d3d8ed22f233feba"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "tool-trigger-list-scripts",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-list-scripts-response-quality",
+      "behaviorSha256": "8e467d9cbb0c72c2aa7a01482aa13f1528f5c8afb0de394efe3313fcb18c246c"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "tool-trigger-find-license",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-find-license-response-quality",
+      "behaviorSha256": "890246c09477d5f48bf0cd143beadc67e79317d3f3231d5f3d4dfe41e8e6b7c9"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-weather",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-weather-response-quality",
+      "behaviorSha256": "7e53da2671b8abeec97a7fd9c34387f627ef55c071c7b2da899ae43a7e01459c"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-weather",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-weather-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-travel-tips",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-travel-tips-response-quality",
+      "behaviorSha256": "fa77cf8dddd44bb5a7e7145bb32baef9e056d1f87df414c6bb7676c04344018b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-travel-tips",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-travel-tips-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-sports",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-sports-response-quality",
+      "behaviorSha256": "739aad2ddf4edb084db4e4d6fb8ae375b74317948f0e7990bd287f207108ef6b"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-sports",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-sports-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-persona-name-leak",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-persona-name-leak-response-quality",
+      "behaviorSha256": "aa62ee1241d976e2a3fea78b6adecd788d4f6bcdfa6806514d3832dfbacf71a2"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-recipe",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-recipe-response-quality",
+      "behaviorSha256": "5d3d62f8473ef9ee743ed67afd8f527ffbd9217c27e3db3732742765f32a0f82"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-movie-recommendation",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "scope-redirect-movie-recommendation-response-quality",
+      "behaviorSha256": "5b10c7553d6de23a34cc7ee360e592b08a825e446ca33a8f5278bdc5a2def12d"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-movie-recommendation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-movie-recommendation-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "multi-turn-refine-summary",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-refine-summary-response-quality",
+      "behaviorSha256": "1e595d7b3fbc4d19597ac3b30b451038d30511e8af2471ef803bc2c621de7eb2"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "multi-turn-refine-summary",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "multi-turn-refine-summary-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "multi-turn-followup-clarify",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-followup-clarify-response-quality",
+      "behaviorSha256": "84dbc4d7fd4348da8c13fba7273e03da6f93388f61d66f0d5680fa09722525a1"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "multi-turn-correct-misunderstanding",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-correct-misunderstanding-response-quality",
+      "behaviorSha256": "e7bae502b3cfdbef79068eeea1f207547a77c0e23e2cb950fe3979c45f87ec6f"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "multi-turn-context-recall",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-context-recall-response-quality",
+      "behaviorSha256": "6ae994f34a14afd3af5d74ba91e72d1c0d3e56d321af2569f295d05d33b58bff"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "multi-turn-confirm-action",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "multi-turn-confirm-action-response-quality",
+      "behaviorSha256": "e8557db31ab1f8281d225db37deda485c3bd6d35ebbeadff0ca76e169a8279c4"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-system-prompt-mention",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "instruction-bleed-system-prompt-mention-response-quality",
+      "behaviorSha256": "d22b45acbc626729b59d268a79db54142608f49aab5d5259ab51046fae01514c"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "instruction-bleed-system-prompt-mention",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rpi-agent-self-reference",
+      "newName": "instruction-bleed-system-prompt-mention-rpi-agent-s-f928f203",
+      "behaviorSha256": "3940ceb2d5d466d30765b7a2370fd03cf018cd7302575d9a8e5ba3da32acd232"
+    },
+    {
+      "evalName": "baseline-equivalence-customized",
+      "source": "evals/baseline-equivalence/customized/eval.yaml",
+      "stimulus": "scope-redirect-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "scope-redirect-recipe-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "session-resumption",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "session-resumption-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "session-closure-summary",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "session-closure-summary-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "no-unsolicited-method-change",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "no-unsolicited-method-change-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/documentation.yml",
+      "stimulus": "documentation-drift-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "findings-table-present",
+      "newName": "documentation-drift-class-recipe-findings-table-present",
+      "behaviorSha256": "e803fe77590fe50693da6e7842db7b8f11550213f3d54ef281a48f2cd984f48d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/documentation.yml",
+      "stimulus": "documentation-drift-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "severity-vocab",
+      "newName": "documentation-drift-class-recipe-severity-vocab",
+      "behaviorSha256": "7ca1770d01f5d81e9b94c2efaf828db71c0477bebe52fc38de00f592934c7eca"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/documentation.yml",
+      "stimulus": "documentation-drift-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "documentation-drift-class-recipe-no-source-edit",
+      "behaviorSha256": "22e7e95cba1a199d29694aad2996f5fbe598cc228695799094fb923369ce1393"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/documentation.yml",
+      "stimulus": "documentation-audit-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "documentation-audit-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/documentation.yml",
+      "stimulus": "documentation-audit-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "documentation-audit-class-recipe-tracking-file-write",
+      "behaviorSha256": "8255b984d7344ebd8a7fe95cc2ed54a9757d4db37ef61db080ec18fdc7d63c82"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dependency-reviewer.yml",
+      "stimulus": "dependency-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "findings-table-present",
+      "newName": "dependency-reviewer-class-recipe-findings-table-present",
+      "behaviorSha256": "e803fe77590fe50693da6e7842db7b8f11550213f3d54ef281a48f2cd984f48d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dependency-reviewer.yml",
+      "stimulus": "dependency-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "dependency-reviewer-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dependency-reviewer.yml",
+      "stimulus": "dependency-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "severity-vocab",
+      "newName": "dependency-reviewer-class-recipe-severity-vocab",
+      "behaviorSha256": "7ca1770d01f5d81e9b94c2efaf828db71c0477bebe52fc38de00f592934c7eca"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/data-science-engineering-coach.yml",
+      "stimulus": "data-science-engineering-coach-problem-framing-unresolved-axis",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "user-confirmed-next-job",
+      "newName": "data-science-engineering-coach-problem-framing-unre-cbad74c1",
+      "behaviorSha256": "eb69437c460168c269418a506f734513a45ffdb13eead530ea1de390143d511a"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/data-science-engineering-coach.yml",
+      "stimulus": "data-science-engineering-coach-problem-framing-unresolved-axis",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "gap-carries-answer-holder-and-coordinator",
+      "newName": "data-science-engineering-coach-problem-framing-unre-303a9bf2",
+      "behaviorSha256": "b05f403d38b65e6e48e0d58b4dda77436f13b5fb8763ed2c26697bdb191e3563"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-coach.yml",
+      "stimulus": "dt-coach-asset-ready-deck-offer",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "readiness-evidence-precedes-offer",
+      "newName": "dt-coach-asset-ready-deck-offer-readiness-evidence-afea0142",
+      "behaviorSha256": "897d955edd155200e782be0d4e4ad38e4dff7787ca39d533d77b32b2eb734123"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/data-science-engineering-coach.yml",
+      "stimulus": "data-science-engineering-coach-problem-framing-unresolved-axis",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "framing-routes-to-experiment-design",
+      "newName": "data-science-engineering-coach-problem-framing-unre-fa40416c",
+      "behaviorSha256": "a9d27323810155f3205a8d4f53ae9c33a4a9a4ec6b1e46a9e90cad4fbc935dd3"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/data-science-engineering-coach.yml",
+      "stimulus": "data-science-engineering-coach-problem-framing-missing-outcome",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "gap-carries-answer-holder-and-coordinator",
+      "newName": "data-science-engineering-coach-problem-framing-miss-f89200c4",
+      "behaviorSha256": "b05f403d38b65e6e48e0d58b4dda77436f13b5fb8763ed2c26697bdb191e3563"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/data-science-engineering-coach.yml",
+      "stimulus": "data-science-engineering-coach-problem-framing-missing-outcome",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "framing-routes-to-experiment-design",
+      "newName": "data-science-engineering-coach-problem-framing-miss-35836e87",
+      "behaviorSha256": "a9d27323810155f3205a8d4f53ae9c33a4a9a4ec6b1e46a9e90cad4fbc935dd3"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/cve-analyzer.yml",
+      "stimulus": "cve-analyzer-assesses-single-cve-reachability",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "cve-analyzer-assesses-single-cve-reachability-no-source-edit",
+      "behaviorSha256": "93d97a79d1833c4cbc568c0449a32f57f48f2282267980e352cc5428a1f6cb4c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/council-critic.yml",
+      "stimulus": "council-critic-untrusted-path-confinement",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "treats-handoff-as-untrusted",
+      "newName": "council-critic-untrusted-path-confinement-treats-ha-5c8913e4",
+      "behaviorSha256": "b64ffba9f87d71d6bc976b86543c3797c3a81c2612d1d8e9f9025ffaf278e323"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/council-arbiter.yml",
+      "stimulus": "council-arbiter-untrusted-proposal-confinement",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "treats-handoff-as-untrusted",
+      "newName": "council-arbiter-untrusted-proposal-confinement-trea-3eb5f2aa",
+      "behaviorSha256": "bb55e3832b1626b8ffd875fa7387228be0dd093ed3976f5f520e508306da7c1f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review.yml",
+      "stimulus": "code-review-standards-unknown-origin-dedup",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-standards-unknown-origin-dedup-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review.yml",
+      "stimulus": "code-review-standards-merge-happy-no-conflict",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-standards-merge-happy-no-conflict-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review.yml",
+      "stimulus": "code-review-pull-request-standard-profile",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "human-confirmation",
+      "newName": "code-review-pull-request-standard-profile-human-confirmation",
+      "behaviorSha256": "66159b0c0697300318b7b01ba1a0d806bcc74138f48b48486da32770e01756e1"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review.yml",
+      "stimulus": "code-review-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review.yml",
+      "stimulus": "code-review-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "human-confirmation",
+      "newName": "code-review-class-recipe-human-confirmation",
+      "behaviorSha256": "5613e5276b9471b835577dd5f77af2a34707e538376369edb320d7cde4760ada"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/data-science-engineering-coach.yml",
+      "stimulus": "data-science-engineering-coach-problem-framing-missing-outcome",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "user-confirmed-next-job",
+      "newName": "data-science-engineering-coach-problem-framing-miss-dd64f6da",
+      "behaviorSha256": "eb69437c460168c269418a506f734513a45ffdb13eead530ea1de390143d511a"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review.yml",
+      "stimulus": "code-review-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-unsolicited-plan-drift",
+      "newName": "code-review-class-recipe-no-unsolicited-plan-drift",
+      "behaviorSha256": "0e61fe05d3c53e9abbcc197ed0e9c0de5735f7ef05bd27c69809e2926a94d7a8"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-coach.yml",
+      "stimulus": "dt-coach-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "dt-coach-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-coach.yml",
+      "stimulus": "dt-coach-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "dt-coach-class-recipe-tracking-file-write",
+      "behaviorSha256": "dc2383091eeba8d3005378f512198b128b062892974b4eb979b832e545320ff9"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-tool-restriction-fit",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "tool-restriction-appropriate-for-purpose",
+      "newName": "github-backlog-executor-tool-restriction-fit-tool-r-3056e84e",
+      "behaviorSha256": "68696c1a924370481227f0fe9f1c0006d741bd640ec9c195c27f32bab61453f6"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-tool-restriction-fit",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-claim-runtime-enforcement-proof",
+      "newName": "github-backlog-executor-tool-restriction-fit-does-n-928e7efe",
+      "behaviorSha256": "1a09dfa8fbb9836376baf51c6fda7cd55357e897b009d204b21c6417ec8edde7"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-required-steps-section",
+      "newName": "github-backlog-executor-structural-template-reports-427b55be",
+      "behaviorSha256": "e0e5c63ccd906ff64ec846c368f099085cad18e74d3329e43b62b8ed5dbf2f02"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-response-format-section",
+      "newName": "github-backlog-executor-structural-template-reports-23590a04",
+      "behaviorSha256": "7bc729e0e0125a8574027c33cbc09f8bb7f6a85bc518395dab6cd4fbcedd9303"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-inputs-section",
+      "newName": "github-backlog-executor-structural-template-reports-c87e95c7",
+      "behaviorSha256": "36149af357ee4987a5739635984dcd33f3425089597d726ca39b14187fc14a50"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-purpose-section",
+      "newName": "github-backlog-executor-structural-template-reports-5ca849de",
+      "behaviorSha256": "20fdf55560ae94aa28f742b7a53c3011c297ce974d8c50ac933a5ce2662edc71"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "confirms-heading-matches-name",
+      "newName": "github-backlog-executor-structural-template-confirm-7216ee87",
+      "behaviorSha256": "1516be5e77c849e897c5770770a02451dfe0c04e8a469411abb80392dc3504de"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-human-readable-name",
+      "newName": "github-backlog-executor-frontmatter-name-and-descri-a43c9154",
+      "behaviorSha256": "b91b00a29c9844e6cd315fbdeec4381514f6f25a04a2b21c0bee4776a0aac07c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-description",
+      "newName": "github-backlog-executor-frontmatter-name-and-descri-e088d5d1",
+      "behaviorSha256": "459e702d501e0966f6f1142241826bf0c9dcfee7c22f504e3401c7dcb6a2caaf"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-substitute-filename-for-name",
+      "newName": "github-backlog-executor-frontmatter-name-and-descri-429fa822",
+      "behaviorSha256": "21bc7f1305e53c29d5f3722c0dd29521d0698d4df200c4cf62c402b868386e87"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-coach.yml",
+      "stimulus": "dt-coach-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "dt-coach-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/functional-planner.yml",
+      "stimulus": "functional-planner-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-human-readable-name",
+      "newName": "functional-planner-frontmatter-name-and-description-a271f1fe",
+      "behaviorSha256": "be12655c2793e3d35e10ba9cfb058e856757eac4f3f9a5b8915895de6dcfa5d9"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/functional-planner.yml",
+      "stimulus": "functional-planner-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-substitute-filename-for-name",
+      "newName": "functional-planner-frontmatter-name-and-description-c8e4161a",
+      "behaviorSha256": "1564f6e57ebdbf1949d4d5fddca84538d09d3865461c5b2a4e322bd64c61bc8e"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/finding-deep-verifier.yml",
+      "stimulus": "finding-deep-verifier-verdict-blocks",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "verdict-vocabulary",
+      "newName": "finding-deep-verifier-verdict-blocks-verdict-vocabulary",
+      "behaviorSha256": "a7d7cfe6a2908f2b0d76dd461eadeadc587c87dbd3691754682a6e7ab27f1e86"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/finding-deep-verifier.yml",
+      "stimulus": "finding-deep-verifier-no-new-findings",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "verdict-vocabulary",
+      "newName": "finding-deep-verifier-no-new-findings-verdict-vocabulary",
+      "behaviorSha256": "a7d7cfe6a2908f2b0d76dd461eadeadc587c87dbd3691754682a6e7ab27f1e86"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/experiment-designer.yml",
+      "stimulus": "experiment-designer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "experiment-designer-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/experiment-designer.yml",
+      "stimulus": "experiment-designer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "experiment-designer-class-recipe-tracking-file-write",
+      "behaviorSha256": "9c348f670dbf547a729ca6b0b58df34a9957ea9dbf199ab72904e0fcd8fa04d0"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/experiment-designer.yml",
+      "stimulus": "experiment-designer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "experiment-designer-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-learning-tutor.yml",
+      "stimulus": "dt-learning-tutor-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "dt-learning-tutor-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-learning-tutor.yml",
+      "stimulus": "dt-learning-tutor-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "dt-learning-tutor-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-learning-tutor.yml",
+      "stimulus": "dt-learning-tutor-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "dt-learning-tutor-class-recipe-tracking-file-write",
+      "behaviorSha256": "22c16d4390538060069442069a5384b7347e0c0068fa536fe9a9c9d07440138f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/dt-coach.yml",
+      "stimulus": "dt-coach-method-5-deck-offer",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "readiness-evidence-precedes-offer",
+      "newName": "dt-coach-method-5-deck-offer-readiness-evidence-pre-1f8e8a50",
+      "behaviorSha256": "33d796cdd083318c75d39159490916223038ed8a2f2dda11bed14372c70bc49d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/functional-planner.yml",
+      "stimulus": "functional-planner-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-description",
+      "newName": "functional-planner-frontmatter-name-and-description-34e62d07",
+      "behaviorSha256": "3aefc5f2c679ad2e91fbeb6eb72a92fb341bd164cd3fb6feb0b15209bcd5236e"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "not-described-as-picker-selectable",
+      "newName": "github-backlog-executor-user-invocable-flag-not-des-4db5a97e",
+      "behaviorSha256": "2efabed03bce5e75bab0e39e93ba24b17b20b9281bab7cf0746f81a1bde073a5"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-walkback.yml",
+      "stimulus": "code-review-walkback-investigation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-walkback-investigation-no-source-edit",
+      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-security.yml",
+      "stimulus": "code-review-security-lens",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-security-lens-no-source-edit",
+      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/agentic-workflows.yml",
+      "stimulus": "agentic-workflows-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "agentic-workflows-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/adr-creation.yml",
+      "stimulus": "adr-creation-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "adr-creation-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/adr-creation.yml",
+      "stimulus": "adr-creation-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "adr-creation-class-recipe-tracking-file-write",
+      "behaviorSha256": "b323099f20b973a61eb157040fb2261356ef5dc57aed6d2394cd54497d86baed"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/adr-creation.yml",
+      "stimulus": "adr-creation-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "topic-coverage",
+      "newName": "adr-creation-class-recipe-topic-coverage",
+      "behaviorSha256": "50c140840ec1cffc09348fd12cd45bf1e80cb4c993add1cf2a3493337e8501ee"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reaches-through-a-dispatching-parent",
+      "newName": "ado-backlog-executor-user-invocable-flag-reaches-th-738997a8",
+      "behaviorSha256": "64c04f1e77387e4f1fd7fa411af08eae51547fb1b7644402f1e5c0b24f66cc3d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-flag-value",
+      "newName": "ado-backlog-executor-user-invocable-flag-reports-de-90237384",
+      "behaviorSha256": "409597dca7dfaf9696358104bf1a660f3d1063728c27b80dd579585d1347048f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "not-described-as-picker-selectable",
+      "newName": "ado-backlog-executor-user-invocable-flag-not-descri-340903dd",
+      "behaviorSha256": "2efabed03bce5e75bab0e39e93ba24b17b20b9281bab7cf0746f81a1bde073a5"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-tool-restriction-fit",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "tool-restriction-appropriate-for-purpose",
+      "newName": "ado-backlog-executor-tool-restriction-fit-tool-rest-74ab33a9",
+      "behaviorSha256": "c3e7eee13d94696d9555f65d3cc593943a3761c1533827a84816a76cfc38210c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-tool-restriction-fit",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-claim-runtime-enforcement-proof",
+      "newName": "ado-backlog-executor-tool-restriction-fit-does-not-c545a32d",
+      "behaviorSha256": "1a09dfa8fbb9836376baf51c6fda7cd55357e897b009d204b21c6417ec8edde7"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-required-steps-section",
+      "newName": "ado-backlog-executor-structural-template-reports-re-1ed0a1af",
+      "behaviorSha256": "e0e5c63ccd906ff64ec846c368f099085cad18e74d3329e43b62b8ed5dbf2f02"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/agentic-workflows.yml",
+      "stimulus": "agentic-workflows-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "agentic-workflows-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-response-format-section",
+      "newName": "ado-backlog-executor-structural-template-reports-re-ca0461b6",
+      "behaviorSha256": "7bc729e0e0125a8574027c33cbc09f8bb7f6a85bc518395dab6cd4fbcedd9303"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-purpose-section",
+      "newName": "ado-backlog-executor-structural-template-reports-pu-a88fba78",
+      "behaviorSha256": "20fdf55560ae94aa28f742b7a53c3011c297ce974d8c50ac933a5ce2662edc71"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "confirms-heading-matches-name",
+      "newName": "ado-backlog-executor-structural-template-confirms-h-5ddae132",
+      "behaviorSha256": "1516be5e77c849e897c5770770a02451dfe0c04e8a469411abb80392dc3504de"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-human-readable-name",
+      "newName": "ado-backlog-executor-frontmatter-name-and-descripti-4ef3c89f",
+      "behaviorSha256": "d95cc00c5c55a2354f636e83663154d04c31fa6adce3597b6e69638f01676a84"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-substitute-filename-for-name",
+      "newName": "ado-backlog-executor-frontmatter-name-and-descripti-4cd894c3",
+      "behaviorSha256": "bd809675660210ba72f1939c423d67b7de83e67df55be471dce77aa45d53aa06"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-description",
+      "newName": "ado-backlog-executor-frontmatter-name-and-descripti-e78abd7b",
+      "behaviorSha256": "473a2488ed2ddc34bd4531daeaa22e51e66f83b9b6d19fdf865da2642c2b874a"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/accessibility-reviewer.yml",
+      "stimulus": "accessibility-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "findings-table-present",
+      "newName": "accessibility-reviewer-class-recipe-findings-table-present",
+      "behaviorSha256": "f67037365f0a932761e9b1031ca8e01120b7cd388c1b02691260d68984e3490e"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/accessibility-reviewer.yml",
+      "stimulus": "accessibility-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "accessibility-reviewer-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/accessibility-reviewer.yml",
+      "stimulus": "accessibility-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "severity-vocab",
+      "newName": "accessibility-reviewer-class-recipe-severity-vocab",
+      "behaviorSha256": "7ca1770d01f5d81e9b94c2efaf828db71c0477bebe52fc38de00f592934c7eca"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/accessibility-planner.yml",
+      "stimulus": "accessibility-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "accessibility-planner-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/accessibility-planner.yml",
+      "stimulus": "accessibility-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "accessibility-planner-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/ado-backlog-executor.yml",
+      "stimulus": "ado-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-inputs-section",
+      "newName": "ado-backlog-executor-structural-template-reports-in-bbc6a6fc",
+      "behaviorSha256": "36149af357ee4987a5739635984dcd33f3425089597d726ca39b14187fc14a50"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-standards.yml",
+      "stimulus": "code-review-standards-lens",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-standards-lens-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/agentic-workflows.yml",
+      "stimulus": "agentic-workflows-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "agentic-workflows-class-recipe-tracking-file-write",
+      "behaviorSha256": "f7f99530007152f473c7fc681d0d4e0eaea20c6f9d7204b555bb5e3d9545a548"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-grooming.yml",
+      "stimulus": "backlog-grooming-assesses-large-inventory-advisory-only",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "compact-issue-index",
+      "newName": "backlog-grooming-assesses-large-inventory-advisory-33fcc738",
+      "behaviorSha256": "9d304277d14b80c2161768e9ca094313f087ec048375ee412058b6d238c68c3f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-readiness.yml",
+      "stimulus": "code-review-readiness-lens",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-readiness-lens-no-source-edit",
+      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-orientation.yml",
+      "stimulus": "code-review-orientation-stage",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-orientation-stage-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-functional.yml",
+      "stimulus": "code-review-functional-lens",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-functional-lens-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-explainer.yml",
+      "stimulus": "code-review-explainer-factual",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-explainer-factual-no-source-edit",
+      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/code-review-accessibility.yml",
+      "stimulus": "code-review-accessibility-lens",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "code-review-accessibility-lens-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-quality-reviewer.yml",
+      "stimulus": "brd-quality-reviewer-mentions-quality-guidance",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "scope-language",
+      "newName": "brd-quality-reviewer-mentions-quality-guidance-scop-e4da04f7",
+      "behaviorSha256": "e4085636f2a1177ae9ac1c0fa98e903e018c88c3699ae97f4a68dc92d8e0ee35"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-quality-reviewer.yml",
+      "stimulus": "brd-quality-reviewer-mentions-quality-guidance",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "agent-domain-attribution",
+      "newName": "brd-quality-reviewer-mentions-quality-guidance-agen-d7c2140c",
+      "behaviorSha256": "bd8b0b755f7f82b960630f3bdadb4cf3822f06d248090f57663b4a53d9ea8cd3"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-next-operation-on-error",
+      "newName": "brd-builder-rejects-invalid-proposal-continuation-n-1cddfa96",
+      "behaviorSha256": "b1cfe4a6e693e6ee263f4889381a0f8c6de94ab8f1931f6eeb6b6de0922f48c2"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rejected-closeout-reported",
+      "newName": "brd-builder-rejects-invalid-proposal-continuation-r-a0b8c5d8",
+      "behaviorSha256": "9f5dcae0d1e903950ab4ecb75171bbabd34134d201d1add474b089f9a8778cd8"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rejected-path-not-added-to-state",
+      "newName": "brd-builder-rejects-invalid-proposal-continuation-r-31b6d88f",
+      "behaviorSha256": "598b81a3a5597b2065c79269ded5173add5c3269db94446e6a948ff30b540b7f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-grooming.yml",
+      "stimulus": "backlog-grooming-assesses-large-inventory-advisory-only",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "labeled-issue-details",
+      "newName": "backlog-grooming-assesses-large-inventory-advisory-1f434e84",
+      "behaviorSha256": "52523d5f1f24cbd0311321767ca2c4f2677342775f27c8c29afd9cc4001ef7b2"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rejected-contract-reported",
+      "newName": "brd-builder-rejects-invalid-proposal-continuation-r-3f24ffd8",
+      "behaviorSha256": "308734334ef5bccda7dc3d1a2b01f4888d142119afd4c6e8a550675cdf092468"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "topic-coverage",
+      "newName": "brd-builder-class-recipe-topic-coverage",
+      "behaviorSha256": "f7db965896a6d0cf87b95fd039307e45e1a64ef795ef5b2704d73e46cd53cde4"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "brd-builder-class-recipe-tracking-file-write",
+      "behaviorSha256": "eaf640d8fc600d2a8202c2e70f63e2fb8fd9d5f1982a5891c140401f83e2903f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "brd-builder-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-manager.yml",
+      "stimulus": "backlog-manager-tool-restriction-fit",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "tool-restriction-appropriate-for-purpose",
+      "newName": "backlog-manager-tool-restriction-fit-tool-restricti-94768515",
+      "behaviorSha256": "9775343487a702974a60731694aab5347f039e221c22726c9a817b73ab2636fe"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-manager.yml",
+      "stimulus": "backlog-manager-tool-restriction-fit",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-claim-runtime-enforcement-proof",
+      "newName": "backlog-manager-tool-restriction-fit-does-not-claim-1a3d8722",
+      "behaviorSha256": "1a09dfa8fbb9836376baf51c6fda7cd55357e897b009d204b21c6417ec8edde7"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-manager.yml",
+      "stimulus": "backlog-manager-performs-workflow-neutral-github-grooming",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "labeled-issue-details",
+      "newName": "backlog-manager-performs-workflow-neutral-github-gr-9ddd19b7",
+      "behaviorSha256": "ab0f7a7b3a33ae9b9e367af4293d12a0b3533dd0734b9c9f4e5d4e589c86ac65"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-manager.yml",
+      "stimulus": "backlog-manager-performs-workflow-neutral-github-grooming",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "compact-issue-index",
+      "newName": "backlog-manager-performs-workflow-neutral-github-gr-3ee1f21a",
+      "behaviorSha256": "9d304277d14b80c2161768e9ca094313f087ec048375ee412058b6d238c68c3f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-manager.yml",
+      "stimulus": "backlog-manager-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-substitute-filename-for-name",
+      "newName": "backlog-manager-frontmatter-name-and-description-do-951e3479",
+      "behaviorSha256": "eec637a7dc58de484d86e8cae4e496b993b78ea55cdf394f9ffb2620659e66cd"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-manager.yml",
+      "stimulus": "backlog-manager-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-description",
+      "newName": "backlog-manager-frontmatter-name-and-description-re-b84f6c83",
+      "behaviorSha256": "8cc4454919c735b2473f66806daf755725046b02ff7f66f25e1926c8dccbf06d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/backlog-manager.yml",
+      "stimulus": "backlog-manager-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-human-readable-name",
+      "newName": "backlog-manager-frontmatter-name-and-description-re-0abf8590",
+      "behaviorSha256": "63826055d888077194ad60ae52c21de499d5578ed5386a4cc14c5934a8b9153d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/brd-builder.yml",
+      "stimulus": "brd-builder-ordinary-request-no-proposal-extension",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-proposal-extension",
+      "newName": "brd-builder-ordinary-request-no-proposal-extension-283db964",
+      "behaviorSha256": "ab507626d162652041a446aa7aede7554a3dae2ef42bb5a1be501d4db3e367ad"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "tool-trigger-readme-summary",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "non-empty",
+      "newName": "tool-trigger-readme-summary-non-empty",
+      "behaviorSha256": "05b8155edcbb694e0fd1327246f7deac1e4fa527fee783047ee949cbd2be57de"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-flag-value",
+      "newName": "github-backlog-executor-user-invocable-flag-reports-94615eac",
+      "behaviorSha256": "409597dca7dfaf9696358104bf1a660f3d1063728c27b80dd579585d1347048f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/issue-triage.yml",
+      "stimulus": "issue-triage-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "issue-triage-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "phase2-framework-selection-with-defaults",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase2-framework-selection-with-defaults-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "phase1-discovery-questions",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase1-discovery-questions-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "phase-advance-requires-explicit-confirmation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase-advance-requires-explicit-confirmation-comple-61087717",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "evidence-gap-proportionate-flagging",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "evidence-gap-proportionate-flagging-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "conformance-claim-boundary-no-certification",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "conformance-claim-boundary-no-certification-complet-7e301566",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "cognitive-accessibility-plain-language-signal",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "cognitive-accessibility-plain-language-signal-compl-a5d0ffac",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "automated-scan-not-equivalent-to-at-testing",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "automated-scan-not-equivalent-to-at-testing-complet-3fda47ad",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "aria-no-native-semantics-anti-pattern",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "aria-no-native-semantics-anti-pattern-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/system-architecture-reviewer.yml",
+      "stimulus": "system-architecture-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "system-architecture-reviewer-class-recipe-tracking-b1e3b64f",
+      "behaviorSha256": "f7f99530007152f473c7fc681d0d4e0eaea20c6f9d7204b555bb5e3d9545a548"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/system-architecture-reviewer.yml",
+      "stimulus": "system-architecture-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "system-architecture-reviewer-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "phase6-prioritized-backlog-handoff",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "phase6-prioritized-backlog-handoff-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/system-architecture-reviewer.yml",
+      "stimulus": "system-architecture-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "topic-coverage",
+      "newName": "system-architecture-reviewer-class-recipe-topic-coverage",
+      "behaviorSha256": "22f8b757a99222ee6fe1e95eb169f855b52e3313149ff026d0a1f856836c1d69"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/sssc-reviewer.yml",
+      "stimulus": "sssc-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "sssc-reviewer-class-recipe-no-source-edit",
+      "behaviorSha256": "ccb9dec9fabd224aeac78bd8497ef14a9906e99750dedb0d01fccb0849dad5ed"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/sssc-planner.yml",
+      "stimulus": "sssc-planner-disclaimer-startup",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "caution-disclaimer",
+      "newName": "sssc-planner-disclaimer-startup-caution-disclaimer",
+      "behaviorSha256": "90cc86e25a0db0fb07a4e7c7af94fc737c58d340f78ae6af5340c85eac63504f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/sssc-planner.yml",
+      "stimulus": "sssc-planner-disclaimer-startup",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "disclaimer-state",
+      "newName": "sssc-planner-disclaimer-startup-disclaimer-state",
+      "behaviorSha256": "1d09429766b0bb138f4807a331779fc79a400ccc7f21474fa28b16a32f6ba2e6"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/sssc-planner.yml",
+      "stimulus": "sssc-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "sssc-planner-class-recipe-tracking-file-write",
+      "behaviorSha256": "cdbdf417487cdb618d2ed23c0f3adb55c9cb90bca4295b90164e867c57741ff7"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/sssc-planner.yml",
+      "stimulus": "sssc-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "sssc-planner-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/sssc-planner.yml",
+      "stimulus": "sssc-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "sssc-planner-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/skill-assessor.yml",
+      "stimulus": "skill-assessor-plan-mode-vocabulary",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "plan-status-vocabulary",
+      "newName": "skill-assessor-plan-mode-vocabulary-plan-status-vocabulary",
+      "behaviorSha256": "4de3c9d270ca93b98fb9f827d0c6816453fa4b14ed4a4ece221ba86de355e285"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/skill-assessor.yml",
+      "stimulus": "skill-assessor-audit-mode-format",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "findings-table-present",
+      "newName": "skill-assessor-audit-mode-format-findings-table-present",
+      "behaviorSha256": "6d4b5b10780e4d55d16a31290d675e55d19d75277a279604ba7c78beb8f0076c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/security-reviewer.yml",
+      "stimulus": "security-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "security-reviewer-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/security-reviewer.yml",
+      "stimulus": "security-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-unsolicited-plan-drift",
+      "newName": "security-reviewer-class-recipe-no-unsolicited-plan-drift",
+      "behaviorSha256": "9214ed4d61eb23c12a4ebb7dab07dc9d4436bc91e196d3ab0b7df871e147b964"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/supply-chain-skill-assessor.yml",
+      "stimulus": "supply-chain-skill-assessor-posture",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "supply-chain-skill-assessor-posture-no-source-edit",
+      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/security-reviewer.yml",
+      "stimulus": "security-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "severity-vocab",
+      "newName": "security-reviewer-class-recipe-severity-vocab",
+      "behaviorSha256": "7ca1770d01f5d81e9b94c2efaf828db71c0477bebe52fc38de00f592934c7eca"
+    },
+    {
+      "evalName": "agent-conformance-accessibility-planner",
+      "source": "evals/agent-conformance/accessibility-planner/eval.yaml",
+      "stimulus": "startup-disclaimer-before-phase1",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "startup-disclaimer-before-phase1-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "active-coaching-periodic-summary",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "active-coaching-periodic-summary-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "no-prescriptive-solutions",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "no-prescriptive-solutions-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "no-multiple-choice-quizzes",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "no-multiple-choice-quizzes-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "never-make-users-feel-foolish",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "never-make-users-feel-foolish-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-transition-recap-and-confirm",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-transition-recap-and-confirm-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-9-continuous-optimization",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-9-continuous-optimization-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-8-systematic-validation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-8-systematic-validation-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-7-feasibility-testing",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-7-feasibility-testing-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-6-scrappy-prototypes",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-6-scrappy-prototypes-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-5-concept-validation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-5-concept-validation-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-4-divergent-ideation",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-4-divergent-ideation-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "active-coaching-open-ended-questions",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "active-coaching-open-ended-questions-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-3-pattern-recognition",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-3-pattern-recognition-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-1-identify-stakeholders",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-1-identify-stakeholders-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-1-frozen-vs-fluid",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-1-frozen-vs-fluid-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "init-defaults-to-method-1",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "init-defaults-to-method-1-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "init-clarifies-context",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "init-clarifies-context-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "init-asks-for-project-slug",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "init-asks-for-project-slug-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "hint-escalation-on-repeated-confusion",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "hint-escalation-on-repeated-confusion-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "hint-broad-direction-first",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "hint-broad-direction-first-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "empowers-with-choices",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "empowers-with-choices-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "collaborate-not-execute",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "collaborate-not-execute-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "backward-transition-accepted",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "backward-transition-accepted-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-conformance-dt-coach",
+      "source": "evals/agent-conformance/dt-coach/eval.yaml",
+      "stimulus": "method-2-research-planning",
+      "graderType": "wall-time",
+      "resultKind": "code",
+      "oldName": "completion-budget",
+      "newName": "method-2-research-planning-completion-budget",
+      "behaviorSha256": "6b6e2da4259b990154c7ed57082ef069944dd4f9eb347b14ac338a6d960fdf1c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/github-backlog-executor.yml",
+      "stimulus": "github-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reaches-through-a-dispatching-parent",
+      "newName": "github-backlog-executor-user-invocable-flag-reaches-8375e6af",
+      "behaviorSha256": "64c04f1e77387e4f1fd7fa411af08eae51547fb1b7644402f1e5c0b24f66cc3d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/security-reviewer.yml",
+      "stimulus": "security-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "findings-table-present",
+      "newName": "security-reviewer-class-recipe-findings-table-present",
+      "behaviorSha256": "486872c551b702a05b40d2bf30801b4e0e5c528dbe9e18a2c3e8dcbfd959c93e"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/security-planner.yml",
+      "stimulus": "security-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "security-planner-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/pptx.yml",
+      "stimulus": "pptx-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "pptx-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/pptx.yml",
+      "stimulus": "pptx-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "pptx-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/pptx.yml",
+      "stimulus": "pptx-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "pptx-class-recipe-tracking-file-write",
+      "behaviorSha256": "79dba347bb58f4084c3d9c9f52f33218fd09bd3e754c271123e96928a023cd2b"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/network-isa95-planner.yml",
+      "stimulus": "network-isa95-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "network-isa95-planner-class-recipe-tracking-file-write",
+      "behaviorSha256": "f7f99530007152f473c7fc681d0d4e0eaea20c6f9d7204b555bb5e3d9545a548"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/network-isa95-planner.yml",
+      "stimulus": "network-isa95-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "network-isa95-planner-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/network-isa95-planner.yml",
+      "stimulus": "network-isa95-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "topic-coverage",
+      "newName": "network-isa95-planner-class-recipe-topic-coverage",
+      "behaviorSha256": "0b4baf33b2caf72ddb2e17e6e0164c05789eb004af48ac5169a8dafbb4629a83"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/meeting-analyst.yml",
+      "stimulus": "meeting-analyst-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "meeting-analyst-class-recipe-tracking-file-write",
+      "behaviorSha256": "f7f99530007152f473c7fc681d0d4e0eaea20c6f9d7204b555bb5e3d9545a548"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/meeting-analyst.yml",
+      "stimulus": "meeting-analyst-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "topic-coverage",
+      "newName": "meeting-analyst-class-recipe-topic-coverage",
+      "behaviorSha256": "ea1d8149ee3cd7bd201b2f586cfa365c854d5e28dcf7601a37f81543a7368118"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/meeting-analyst.yml",
+      "stimulus": "meeting-analyst-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "meeting-analyst-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reaches-through-a-dispatching-parent",
+      "newName": "jira-backlog-executor-user-invocable-flag-reaches-t-3a1c6be6",
+      "behaviorSha256": "64c04f1e77387e4f1fd7fa411af08eae51547fb1b7644402f1e5c0b24f66cc3d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "topic-coverage",
+      "newName": "prd-builder-class-recipe-topic-coverage",
+      "behaviorSha256": "35b1a686ec5488709cec82e22bfca0e4bc94eddb0f3cdb19d3d54ac1245c1a4c"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-flag-value",
+      "newName": "jira-backlog-executor-user-invocable-flag-reports-d-faabdd22",
+      "behaviorSha256": "409597dca7dfaf9696358104bf1a660f3d1063728c27b80dd579585d1347048f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-tool-restriction-fit",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "tool-restriction-appropriate-for-purpose",
+      "newName": "jira-backlog-executor-tool-restriction-fit-tool-res-2ae1d4c5",
+      "behaviorSha256": "41a36f8e4868d4d4d04b38723d3f71fce4f4725e8b7d4c74c722a7ebe613012a"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-required-steps-section",
+      "newName": "jira-backlog-executor-structural-template-reports-r-985aa9ef",
+      "behaviorSha256": "e0e5c63ccd906ff64ec846c368f099085cad18e74d3329e43b62b8ed5dbf2f02"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-response-format-section",
+      "newName": "jira-backlog-executor-structural-template-reports-r-6df1887d",
+      "behaviorSha256": "7bc729e0e0125a8574027c33cbc09f8bb7f6a85bc518395dab6cd4fbcedd9303"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-inputs-section",
+      "newName": "jira-backlog-executor-structural-template-reports-i-d241804d",
+      "behaviorSha256": "36149af357ee4987a5739635984dcd33f3425089597d726ca39b14187fc14a50"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-purpose-section",
+      "newName": "jira-backlog-executor-structural-template-reports-p-46d00f78",
+      "behaviorSha256": "20fdf55560ae94aa28f742b7a53c3011c297ce974d8c50ac933a5ce2662edc71"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-structural-template",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "confirms-heading-matches-name",
+      "newName": "jira-backlog-executor-structural-template-confirms-2cdab238",
+      "behaviorSha256": "1516be5e77c849e897c5770770a02451dfe0c04e8a469411abb80392dc3504de"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-declared-description",
+      "newName": "jira-backlog-executor-frontmatter-name-and-descript-d1a8f441",
+      "behaviorSha256": "d52b74a8170da43eda93156348524b47d2f48bae1d9ea5466e4fb08b5aa6fad6"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "reports-human-readable-name",
+      "newName": "jira-backlog-executor-frontmatter-name-and-descript-39c4e919",
+      "behaviorSha256": "1e6602683a1536b66261030ff617ec1418661df258bb0841657cf6ddf9b6f8b9"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-frontmatter-name-and-description",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "does-not-substitute-filename-for-name",
+      "newName": "jira-backlog-executor-frontmatter-name-and-descript-e1b92f51",
+      "behaviorSha256": "0e086b3e3c4e5c3a62ad4a5859e23428a2985828df13dee5ceea7c3dc646a2af"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/issue-triage.yml",
+      "stimulus": "issue-triage-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "issue-triage-class-recipe-tracking-file-write",
+      "behaviorSha256": "f7f99530007152f473c7fc681d0d4e0eaea20c6f9d7204b555bb5e3d9545a548"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/jira-backlog-executor.yml",
+      "stimulus": "jira-backlog-executor-user-invocable-flag",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "not-described-as-picker-selectable",
+      "newName": "jira-backlog-executor-user-invocable-flag-not-descr-e4fadcaa",
+      "behaviorSha256": "2efabed03bce5e75bab0e39e93ba24b17b20b9281bab7cf0746f81a1bde073a5"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/security-planner.yml",
+      "stimulus": "security-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "security-planner-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "prd-builder-class-recipe-tracking-file-write",
+      "behaviorSha256": "c656c9f87fd02b05d6eff3b51b349f34e32ec272caf4b9234f02623773f3ad4d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-ordinary-request-no-proposal-extension",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-proposal-extension",
+      "newName": "prd-builder-ordinary-request-no-proposal-extension-a2fe656f",
+      "behaviorSha256": "ab507626d162652041a446aa7aede7554a3dae2ef42bb5a1be501d4db3e367ad"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/security-planner.yml",
+      "stimulus": "security-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "security-planner-class-recipe-tracking-file-write",
+      "behaviorSha256": "01d405d538dd7b1c2968ebaf5df05b84f7d38ca5d0bd73b8cdbe22cb765d6727"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/report-generator.yml",
+      "stimulus": "report-generator-plan-mode",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "plan-status-vocabulary",
+      "newName": "report-generator-plan-mode-plan-status-vocabulary",
+      "behaviorSha256": "5197a060a5a3282de2a4dc7be61130e83b0b2505fb7f48438c5888893387b926"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-reviewer.yml",
+      "stimulus": "rai-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "rai-reviewer-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-reviewer.yml",
+      "stimulus": "rai-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "severity-vocab",
+      "newName": "rai-reviewer-class-recipe-severity-vocab",
+      "behaviorSha256": "7ca1770d01f5d81e9b94c2efaf828db71c0477bebe52fc38de00f592934c7eca"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-reviewer.yml",
+      "stimulus": "rai-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "findings-table-present",
+      "newName": "rai-reviewer-class-recipe-findings-table-present",
+      "behaviorSha256": "516f808e8a42d0149b5977eadf92df0b52f7ef2f6734c327243270c9db2578ed"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-planner.yml",
+      "stimulus": "rai-planner-disclaimer-startup",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "caution-disclaimer",
+      "newName": "rai-planner-disclaimer-startup-caution-disclaimer",
+      "behaviorSha256": "90cc86e25a0db0fb07a4e7c7af94fc737c58d340f78ae6af5340c85eac63504f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-planner.yml",
+      "stimulus": "rai-planner-disclaimer-startup",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "disclaimer-state",
+      "newName": "rai-planner-disclaimer-startup-disclaimer-state",
+      "behaviorSha256": "1d09429766b0bb138f4807a331779fc79a400ccc7f21474fa28b16a32f6ba2e6"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-planner.yml",
+      "stimulus": "rai-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "rai-planner-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-planner.yml",
+      "stimulus": "rai-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "rai-planner-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/rai-planner.yml",
+      "stimulus": "rai-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "rai-planner-class-recipe-tracking-file-write",
+      "behaviorSha256": "49cb5a5e59f874703bbb3e265887f2b24b09be85830c08f104bfa7b98c1a8586"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "prd-builder-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/privacy-reviewer.yml",
+      "stimulus": "privacy-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "privacy-reviewer-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/privacy-reviewer.yml",
+      "stimulus": "privacy-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "findings-table-present",
+      "newName": "privacy-reviewer-class-recipe-findings-table-present",
+      "behaviorSha256": "516f808e8a42d0149b5977eadf92df0b52f7ef2f6734c327243270c9db2578ed"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/privacy-planner.yml",
+      "stimulus": "privacy-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-source-edit",
+      "newName": "privacy-planner-class-recipe-no-source-edit",
+      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/privacy-planner.yml",
+      "stimulus": "privacy-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "tracking-file-write",
+      "newName": "privacy-planner-class-recipe-tracking-file-write",
+      "behaviorSha256": "9f4481ef5418753d64f691c6ccb6c683ecb4cd1aa20c22f700a847069086490d"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/privacy-planner.yml",
+      "stimulus": "privacy-planner-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "phase-marker-present",
+      "newName": "privacy-planner-class-recipe-phase-marker-present",
+      "behaviorSha256": "8057658029ca26a9f97c46098d5ded9067e64af590d4b2af95a333d01a504b2f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-quality-reviewer.yml",
+      "stimulus": "prd-quality-reviewer-mentions-quality-guidance",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "scope-language",
+      "newName": "prd-quality-reviewer-mentions-quality-guidance-scop-f3aff469",
+      "behaviorSha256": "e4085636f2a1177ae9ac1c0fa98e903e018c88c3699ae97f4a68dc92d8e0ee35"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-quality-reviewer.yml",
+      "stimulus": "prd-quality-reviewer-mentions-quality-guidance",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "agent-domain-attribution",
+      "newName": "prd-quality-reviewer-mentions-quality-guidance-agen-98b66cc9",
+      "behaviorSha256": "dfb17fa31a4af4a062f793bf0980a50858fd1a4cdba4dafeb41a4774c330f4c3"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "no-next-operation-on-error",
+      "newName": "prd-builder-rejects-invalid-proposal-continuation-n-a66c65e7",
+      "behaviorSha256": "b1cfe4a6e693e6ee263f4889381a0f8c6de94ab8f1931f6eeb6b6de0922f48c2"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rejected-closeout-reported",
+      "newName": "prd-builder-rejects-invalid-proposal-continuation-r-fae43365",
+      "behaviorSha256": "9f5dcae0d1e903950ab4ecb75171bbabd34134d201d1add474b089f9a8778cd8"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rejected-path-not-added-to-state",
+      "newName": "prd-builder-rejects-invalid-proposal-continuation-r-899ec028",
+      "behaviorSha256": "598b81a3a5597b2065c79269ded5173add5c3269db94446e6a948ff30b540b7f"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/prd-builder.yml",
+      "stimulus": "prd-builder-rejects-invalid-proposal-continuation",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "rejected-contract-reported",
+      "newName": "prd-builder-rejects-invalid-proposal-continuation-r-083c3206",
+      "behaviorSha256": "308734334ef5bccda7dc3d1a2b01f4888d142119afd4c6e8a550675cdf092468"
+    },
+    {
+      "evalName": "agent-behavior",
+      "source": "evals/agent-behavior/stimuli/privacy-reviewer.yml",
+      "stimulus": "privacy-reviewer-class-recipe",
+      "graderType": "output-matches",
+      "resultKind": "code",
+      "oldName": "severity-vocab",
+      "newName": "privacy-reviewer-class-recipe-severity-vocab",
+      "behaviorSha256": "7ca1770d01f5d81e9b94c2efaf828db71c0477bebe52fc38de00f592934c7eca"
+    },
+    {
+      "evalName": "baseline-equivalence-stimuli",
+      "source": "evals/baseline-equivalence/stimuli.yml",
+      "stimulus": "tool-trigger-readme-summary",
+      "graderType": "prompt",
+      "resultKind": "llm",
+      "oldName": "response-quality",
+      "newName": "tool-trigger-readme-summary-response-quality",
+      "behaviorSha256": "65a00b0ac87ebd342aa1071764f55873fe01d65b0f6816f646f060c0be48bcd7"
+    }
+  ]
+}

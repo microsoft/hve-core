@@ -8,7 +8,7 @@ compatibility: 'Requires Python 3.11+ and Jira credentials in environment variab
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-18"
+  last_updated: "2026-09-04"
 ---
 
 # Jira Skill
@@ -92,13 +92,13 @@ step 4.
 
 ### Operational Variables
 
-| Variable              | When required | Purpose                                                                                 |
-|-----------------------|---------------|-----------------------------------------------------------------------------------------|
-| `JIRA_AUDIT_LOG`      | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging). |
-| `JIRA_AUDIT_ACTOR`    | Optional      | Overrides the recorded actor identity (for example, a CI service principal).            |
-| `JIRA_DEBUG`          | Optional      | Set to `1` to print a redacted traceback on failure. Never disables redaction.          |
-| `JIRA_ALLOW_INSECURE` | Optional      | Set to `1` to permit explicit loopback HTTP development endpoints only.                 |
-| `JIRA_CONFIRM_WRITES` | Optional      | Set to `1` to satisfy the write confirmation gate without `--confirm` or `--yes`.       |
+| Variable              | When required | Purpose                                                                                                       |
+|-----------------------|---------------|---------------------------------------------------------------------------------------------------------------|
+| `JIRA_AUDIT_LOG`      | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging).                       |
+| `JIRA_AUDIT_ACTOR`    | Optional      | Overrides the recorded actor identity (for example, a CI service principal).                                  |
+| `JIRA_DEBUG`          | Optional      | Inherited environment only. Set to `1` to print a redacted traceback on failure. Never disables redaction.    |
+| `JIRA_ALLOW_INSECURE` | Optional      | Set to `1` to permit explicit loopback HTTP development endpoints only.                                       |
+| `JIRA_CONFIRM_WRITES` | Optional      | Inherited environment only. Set to `1` to satisfy the write confirmation gate without `--confirm` or `--yes`. |
 
 ### Audit Logging
 
@@ -143,17 +143,23 @@ These rules are not adjustable by autonomy mode or user request.
 
 ### Terminal session isolation
 
-The agent's terminal and the user's terminal are separate sessions, so an `export` in one is invisible to the other. The environment file is the mechanism that bridges them:
+The agent's terminal and the user's terminal are separate sessions, so an `export` in one is invisible to the other. The CLI loads supported Jira variables from `~/.jira.env` in-process before it creates a client. It treats every value as data, never evaluates the file as shell code, and does not overwrite a variable already inherited by the terminal.
 
-1. Create `~/.jira.env` with non-secret values filled in and placeholder lines for credentials.
+`JIRA_DEBUG` and `JIRA_CONFIRM_WRITES` are inherited-environment-only control variables. An unconfirmed write is rejected before the credential file is read, so that file cannot grant mutation authority.
+
+On POSIX platforms, the CLI requires the file to be owned by the current user and accessible only by that owner. It opens the path without following symlinks and in non-blocking mode, then rejects non-regular files, oversized files, malformed assignments, and files with group or other permissions before loading values. Windows does not expose equivalent owner and mode checks through this path; protect the file with user-only ACLs. Errors name the configuration problem without printing credential values.
+
+The environment file bridges the sessions:
+
+1. On POSIX, create the file with owner-only permissions by running `umask 077; touch ~/.jira.env; chmod 0600 ~/.jira.env`. On Windows, create it under the user's profile and apply a user-only ACL. Fill in non-secret values and credential placeholders.
 2. Resolve and display the **absolute** path so the user knows exactly which file to edit.
 3. Open it with `code ~/.jira.env`.
 4. The user replaces the placeholders and saves.
-5. Source it (`set -a && source ~/.jira.env && set +a`) before running any command.
+5. Run the Jira CLI command. The CLI reads the file directly; do not source it.
 
 ### Protocol
 
-1. **Audit.** Probe the known variable names and classify each as set or missing, without printing any value:
+1. **Audit.** The CLI loads supported values from `~/.jira.env`, so inherited-process probes alone are not a complete setup audit. Check whether the file exists without reading or printing it. For inherited variables only, classify known names as set or missing without printing any value:
 
    ```sh
     for v in JIRA_BASE_URL JIRA_USER_EMAIL JIRA_API_TOKEN JIRA_PAT JIRA_CLOUD_TOKEN_MODE JIRA_CLOUD_ID JIRA_AUDIT_LOG JIRA_AUDIT_ACTOR; do
@@ -161,12 +167,12 @@ The agent's terminal and the user's terminal are separate sessions, so an `expor
    done
    ```
 
-   `printenv` exits zero only when the variable exists, and its output is discarded, so the classification never reveals a value. Use no modifying command during the audit. Check for an existing `~/.jira.env`.
+  `printenv` exits zero only when the inherited variable exists, and its output is discarded, so the classification never reveals a value. Use no modifying command during the audit. Let the Jira CLI's value-free validation identify variables still missing after in-process file loading.
 2. **Detect the platform.** `JIRA_PAT` set indicates Server or Data Center. `JIRA_USER_EMAIL` with `JIRA_API_TOKEN` indicates Cloud. When mixed or ambiguous, ask which platform the user has rather than guessing, because the wrong choice produces an authentication failure that looks like a bad credential.
 3. **Validate what exists.** Confirm `JIRA_BASE_URL` starts with `https://` and flag a malformed value. Identify which required variables are missing for the detected platform.
 4. **Guide acquisition.** Direct the user to their Atlassian account token page for Cloud, or their instance personal-access-token settings for Server or Data Center. Give the steps; never request the result.
 5. **Write the file.** Create or update `~/.jira.env` with non-secret values and credential placeholders, including a do-not-commit warning comment.
-6. **Validate connectivity.** After the user confirms the credential is saved, source the file and run one read-only call. A `401` or `403` means the credential is wrong, expired, or revoked; a connection error means the base URL is wrong.
+6. **Validate connectivity.** After the user confirms the credential is saved, run one read-only call. The CLI loads the file in-process. A `401` or `403` means the credential is wrong, expired, or revoked; a connection error means the base URL is wrong.
 7. **Summarize.** Report what changed, what remains, and the set-or-missing state of each variable.
 
 ### Completion

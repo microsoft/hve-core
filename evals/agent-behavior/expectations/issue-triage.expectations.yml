@@ -151,3 +151,33 @@ expectations:
       - Files a tracking/epic issue.
     priority: medium
     contract_ref: "agent §Constraints (Do not create new issues)"
+
+  - expectation_id: code-scanning-alert-routed
+    summary: Human-filed code-scanning alert reports are routed as active security scanning work.
+    signal: Output names `security` and `code-scanning`, links the alert lifecycle page, and avoids dismissal language.
+    pass_criteria: |
+      For a human-filed issue that references a CodeQL, Code Scanning, Scorecard,
+      or tracked-exception finding, output recommends `security` and
+      `code-scanning`, links the alert lifecycle page, and directs maintainers
+      toward code, configuration, or tracked-exception resolution rather than
+      dismissal.
+    failure_modes:
+      - Omits `security` or `code-scanning`.
+      - Does not link the alert lifecycle page.
+      - Recommends dismissing or suppressing the alert.
+    priority: high
+    contract_ref: "workflow §Triage Procedure (human-filed security scanning reports)"
+
+  - expectation_id: dismissal-request-rejected
+    summary: Requests to dismiss scanning alerts are flagged as contrary to policy.
+    signal: Output explicitly states that dismissing the alert is contrary to repository policy and links the lifecycle page.
+    pass_criteria: |
+      When an issue asks maintainers to dismiss a scanning alert as a false
+      positive, output states that dismissal is contrary to repository policy,
+      links the alert lifecycle page, and does not recommend dismissal.
+    failure_modes:
+      - Treats dismissal as an acceptable maintainer action.
+      - Fails to link the lifecycle page.
+      - Does not identify the request as policy-conflicting.
+    priority: high
+    contract_ref: "workflow §Triage Procedure (human-filed security scanning reports)"

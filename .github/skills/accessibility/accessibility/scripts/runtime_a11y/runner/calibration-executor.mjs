@@ -1,16 +1,34 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { createCalibrationCheckpoint, validateCalibrationCheckpoint } from './calibration-checkpoint.mjs';
+import { materializeExecutionJourneys, materializeMethodCells } from './case-catalog.mjs';
+
+async function runWithTimeout(operation, timeoutMs, label) {
+  let timer = null;
+  try {
+    return await Promise.race([
+      operation(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+}
 import { processAtPlanCase } from './at-plan-executor.mjs';
 import { launchChrome } from './_shared.mjs';
 import { resolveRouteUrl } from './route.mjs';
+import { assertArtifactId } from './validation.mjs';
 import { captureVisualReviewEvidence } from './visual-review-executor.mjs';
 
 function stripNonAuthoritativePersistedArtifactHashes(value, seen = new WeakMap()) {
@@ -149,9 +167,14 @@ function persistJsonArtifact(targetPath, payload) {
   return { artifactPath: resolvedTargetPath, artifactHash };
 }
 
-function persistSampleEvidence({ runRoot = null, journeyId, ordinal, payload }) {
-  const resolvedRunRoot = runRoot ? path.resolve(runRoot) : process.cwd();
+export function persistSampleEvidence({ runRoot = null, journeyId, ordinal, payload }) {
+  const resolvedRunRoot = path.resolve(runRoot || process.cwd());
+  assertArtifactId(String(journeyId), 'Journey ID');
   const evidencePath = path.join(resolvedRunRoot, 'journeys', String(journeyId), String(ordinal), 'evidence.json');
+  // Containment is asserted before persistJsonArtifact so no directory is created on an escape path.
+  if (!isWithinRoot(resolvedRunRoot, evidencePath)) {
+    throw new Error(`Calibration evidence path escapes the run root: ${evidencePath}`);
+  }
   const persisted = persistJsonArtifact(evidencePath, payload);
   const artifactReference = path.relative(resolvedRunRoot, persisted.artifactPath).replace(/\\/g, '/');
   return {
@@ -241,10 +264,49 @@ function hasMeaningfulPhraseEvidence(evidence = {}) {
     && normalizedPhrases.some((entry) => typeof entry === 'string' && entry.trim().length > 0);
 }
 
+function hasRequiredEvidence(evidence, requiredAssertions) {
+  if (!Array.isArray(requiredAssertions) || requiredAssertions.length === 0) {
+    return hasMeaningfulPhraseEvidence(evidence);
+  }
+  return requiredAssertions.every((assertion) => {
+    const evidenceType = assertion?.evidenceType || 'speech';
+    if (evidenceType === 'accessibilityTree') {
+      const tree = evidence?.accessibilityTree;
+      return Boolean(tree && typeof tree === 'object'
+        && (Array.isArray(tree) ? tree.length > 0 : Object.keys(tree).length > 0));
+    }
+    if (evidenceType === 'browserState') {
+      return Boolean(evidence?.browserState && typeof evidence.browserState === 'object'
+        && Object.keys(evidence.browserState).length > 0);
+    }
+    if (evidenceType === 'actionSpeech') {
+      return Array.isArray(evidence?.actionRawPhrases)
+        && evidence.actionRawPhrases.some((entry) => typeof entry === 'string' && entry.trim().length > 0);
+    }
+    if (evidenceType === 'actionNormalizedSpeech') {
+      return Array.isArray(evidence?.actionNormalizedPhrases)
+        && evidence.actionNormalizedPhrases.some((entry) => typeof entry === 'string' && entry.trim().length > 0);
+    }
+    return hasMeaningfulPhraseEvidence(evidence);
+  });
+}
+
 function isRealAtDriver(result = {}, evidence = {}) {
   const driverName = String(result?.driver || evidence?.provenance?.driver || '').toLowerCase();
   const atName = String(result?.at || result?.capability?.at || evidence?.provenance?.at || '').toLowerCase();
-  return /guidepup/i.test(driverName) && atName === 'nvda';
+  if (atName !== 'nvda') {
+    return false;
+  }
+  if (/guidepup/i.test(driverName)) {
+    return true;
+  }
+  const provenance = evidence?.provenance || {};
+  return driverName === 'nvda'
+    && provenance.realAtPassAllowed === true
+    && typeof provenance.guidepupLibraryVersion === 'string'
+    && provenance.guidepupLibraryVersion.trim() !== ''
+    && typeof provenance.nvdaAssetVersion === 'string'
+    && provenance.nvdaAssetVersion.trim() !== '';
 }
 
 export function classifyAtCaseResult(result = {}, runRoot = null) {
@@ -270,11 +332,15 @@ export function classifyAtCaseResult(result = {}, runRoot = null) {
     return !matchingEntry || String(matchingEntry.status || '').toLowerCase() !== 'pass';
   });
 
-  const hasNonEmptyPhrases = hasMeaningfulPhraseEvidence(evidence);
+  const hasAdequateEvidence = hasRequiredEvidence(evidence, requiredAssertions);
   const hasPersistedArtifacts = hasMatchingArtifactHashes(result?.artifactHashes, runRoot);
   const capabilitySupported = result?.capability?.supported !== false;
   const isRealDriver = isRealAtDriver(result, evidence);
-  const isStrictPass = status === 'pass' && isRealDriver && capabilitySupported && !synthetic && !Boolean(evidence?.synthetic) && hasNonEmptyPhrases && hasPersistedArtifacts && !requiredAssertionFailure && !assertionFailure && !invalidAssertion;
+  // A started screen reader that cannot be proven stopped leaves the desktop under
+  // automation control, so its evidence cannot authorize a pass.
+  const cleanup = result?.cleanup || evidence?.cleanup || {};
+  const cleanupProven = cleanup?.driverStarted !== true || cleanup?.driverStopped === true;
+  const isStrictPass = status === 'pass' && isRealDriver && capabilitySupported && !synthetic && !Boolean(evidence?.synthetic) && hasAdequateEvidence && hasPersistedArtifacts && cleanupProven && !requiredAssertionFailure && !assertionFailure && !invalidAssertion;
 
   if (['candidate', 'unsupported', 'unavailable'].includes(status) || ['candidate', 'unsupported', 'unavailable'].includes(explicitClassification)) {
     return 'unavailable';
@@ -300,7 +366,7 @@ export function classifyAtCaseResult(result = {}, runRoot = null) {
   if (!isRealDriver) {
     return 'infrastructureFailure';
   }
-  if (!hasNonEmptyPhrases) {
+  if (!hasAdequateEvidence) {
     return 'infrastructureFailure';
   }
   if (!hasPersistedArtifacts) {
@@ -322,28 +388,60 @@ function buildProfileFingerprint(config, journey = {}) {
 }
 
 function normalizeJourney(config, journey, index) {
-  const journeyId = String(journey?.journeyId || journey?.id || `journey-${index + 1}`);
+  // The schema validates `id`, so it is preferred over the `journeyId` alias.
+  const journeyId = assertArtifactId(
+    String(journey?.id || journey?.journeyId || `journey-${index + 1}`),
+    'Journey ID',
+  );
+  if (journey?.captureMode !== undefined && !['single', 'clear-and-capture', 'action'].includes(journey.captureMode)) {
+    throw new Error(`Unsupported calibration capture mode: ${journey.captureMode}`);
+  }
+  const triggerSequence = Array.isArray(journey?.triggerSequence) && journey.triggerSequence.length > 0
+    ? journey.triggerSequence
+    : undefined;
+  const hasTrigger = Boolean(journey?.trigger || triggerSequence?.length);
+  if (journey?.captureMode === 'action' && (!journey?.triggerAfterDriverStart || !hasTrigger)) {
+    throw new Error('Action capture calibration journeys require triggerAfterDriverStart and a declarative trigger.');
+  }
+  const assertions = Array.isArray(journey?.assertions) && journey.assertions.length > 0
+    ? journey.assertions
+    : [{ id: 'speech', type: 'contains', value: 'search' }];
+  for (const assertion of assertions) {
+    if (assertion?.evidenceType !== undefined && !['speech', 'normalizedSpeech', 'browserState', 'accessibilityTree', 'actionSpeech', 'actionNormalizedSpeech'].includes(assertion.evidenceType)) {
+      throw new Error(`Unsupported calibration assertion evidence type: ${assertion.evidenceType}`);
+    }
+  }
+  const normalizedAssertions = assertions.map((assertion, assertionIndex) => ({
+    ...assertion,
+    id: assertArtifactId(
+      String(assertion?.id || `${journeyId}-assertion-${assertionIndex + 1}`),
+      'Assertion ID',
+    ),
+  }));
+  if (new Set(normalizedAssertions.map((assertion) => assertion.id)).size !== normalizedAssertions.length) {
+    throw new Error(`Duplicate assertion ID in calibration journey ${journeyId}.`);
+  }
   return {
     journeyId,
+    caseId: journey?.caseId || journey?.caseIds?.[0] || journeyId,
     title: journey?.title || `Calibration journey ${journeyId}`,
     route: journey?.route || '/',
     surfaceId: journey?.surfaceId || null,
     state: journey?.state || 'desktop',
     trigger: journey?.trigger || { action: 'focus', target: '#search' },
-    triggerSequence: Array.isArray(journey?.triggerSequence) && journey.triggerSequence.length > 0
-      ? journey.triggerSequence
-      : undefined,
+    triggerSequence,
     triggerAfterDriverStart: Boolean(journey?.triggerAfterDriverStart),
     postCommandSettleMs: journey?.postCommandSettleMs,
     captureMode: journey?.captureMode,
     commands: Array.isArray(journey?.commands) && journey.commands.length > 0
       ? journey.commands
       : [{ kind: 'keyboard', value: 'Tab' }],
-    assertions: Array.isArray(journey?.assertions) && journey.assertions.length > 0
-      ? journey.assertions
-      : [{ id: 'speech', type: 'contains', value: 'search' }],
+    assertions: normalizedAssertions,
     profileFingerprint: buildProfileFingerprint(config, journey),
-    metadata: journey?.metadata || {},
+    metadata: {
+      ...(journey?.metadata || {}),
+      ...(Array.isArray(journey?.caseIds) ? { caseIds: journey.caseIds } : {}),
+    },
     visualStates: Array.isArray(journey?.visualStates) && journey.visualStates.length > 0
       ? journey.visualStates
       : (Array.isArray(config?.calibration?.visualStates) ? config.calibration.visualStates : ['desktop']),
@@ -353,11 +451,49 @@ function normalizeJourney(config, journey, index) {
 // Journeys are defined entirely by the runtime config. There is no built-in
 // default set: a harness that invents journeys the operator did not configure
 // would report evidence about surfaces nobody asked it to exercise.
+function authoredCalibrationJourneys(config = {}) {
+  return Array.isArray(config?.calibration?.journeys) ? config.calibration.journeys : [];
+}
+
 export function resolveCalibrationCases(config = {}) {
-  const journeys = Array.isArray(config?.calibration?.journeys)
-    ? config.calibration.journeys
+  const authoredJourneys = authoredCalibrationJourneys(config);
+  const authoredIds = new Set(authoredJourneys.map((journey) => journey?.id || journey?.journeyId));
+  const boundJourneys = config?.resolvedCaseCatalog && config?.resolvedBindingProfile
+    ? materializeExecutionJourneys(config.resolvedCaseCatalog, config.resolvedBindingProfile)
+      .filter((journey) => !authoredIds.has(journey.id))
     : [];
+  if (config?.resolvedCaseCatalog && config?.resolvedBindingProfile) {
+    // Rejects unknown capabilities and ambiguous state mappings before startup.
+    materializeMethodCells(config.resolvedCaseCatalog, config.resolvedBindingProfile);
+  }
+  const journeys = [...authoredJourneys, ...boundJourneys];
   return journeys.map((journey, index) => normalizeJourney(config, journey, index));
+}
+
+export function selectCalibrationCases(config = {}, requestedJourneyIds = []) {
+  const journeys = resolveCalibrationCases(config);
+  if (!Array.isArray(requestedJourneyIds) || requestedJourneyIds.length === 0) {
+    // An omitted filter runs only the operator's authored journeys. Bound
+    // catalog executions run when the caller authorizes them by ID, so this
+    // path cannot widen live control beyond what was configured.
+    const authoredIds = new Set(
+      authoredCalibrationJourneys(config).map((journey) => journey?.id || journey?.journeyId),
+    );
+    return journeys.filter((journey) => authoredIds.has(journey.journeyId));
+  }
+  const normalizedIds = requestedJourneyIds.map((value) => String(value || '').trim());
+  if (normalizedIds.some((value) => !value)) {
+    throw new Error('Requested calibration journey IDs must be non-empty strings.');
+  }
+  if (new Set(normalizedIds).size !== normalizedIds.length) {
+    throw new Error('Requested calibration journey IDs must be unique.');
+  }
+  const byId = new Map(journeys.map((journey) => [journey.journeyId, journey]));
+  const unknownIds = normalizedIds.filter((journeyId) => !byId.has(journeyId));
+  if (unknownIds.length > 0) {
+    throw new Error(`Unknown calibration journey ID: ${unknownIds.join(', ')}`);
+  }
+  return normalizedIds.map((journeyId) => byId.get(journeyId));
 }
 
 export async function defaultRunAtCase({
@@ -382,7 +518,7 @@ export async function defaultRunAtCase({
     trigger: journey?.trigger || null,
   };
   const matrixCase = {
-    caseId: journey?.journeyId,
+    caseId: journey?.caseId || journey?.journeyId,
     mappingId: journey?.journeyId,
     state: journey?.state || 'desktop',
     surface: surface.id,
@@ -407,6 +543,7 @@ export async function defaultRunAtCase({
     sourceMatrixMetadata: {
       journeyId: journey?.journeyId,
       title: journey?.title,
+      ...(journey?.metadata || {}),
     },
     at: 'nvda',
     variant: {
@@ -472,7 +609,7 @@ export async function defaultRunAtCase({
     at: provenance.at,
     capability,
     classification: result?.classification || null,
-    requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null })),
+    requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null, evidenceType: assertion?.evidenceType || 'speech' })),
     artifactHashes: { [persisted.artifactReference]: persisted.artifactHash },
     evidence: {
       ...evidence,
@@ -534,161 +671,31 @@ function normalizeVersionOutput(output) {
     .find(Boolean) || null;
 }
 
-// path.basename follows the host OS separator rules, so a Windows path handed
-// to a Linux process keeps its backslashes and returns unchanged. The probe
-// resolves paths for a caller-supplied platform, which may differ from the host,
-// so split on both separators.
-function executableName(candidate) {
-  const segments = String(candidate || '').split(/[\\/]/);
-  return segments[segments.length - 1] || String(candidate || '');
-}
-
-function normalizeChromeVersion(output) {
-  const trimmed = normalizeVersionOutput(output);
-  if (!trimmed) {
-    return null;
-  }
-  const versionMatch = trimmed.match(/(\d+(?:\.\d+){1,3})/);
-  return versionMatch ? versionMatch[1] : null;
-}
-
-function probePlaywrightChromeVersion({ env = {}, platform = 'linux', spawn }) {
-  if (platform !== 'win32') {
-    return null;
-  }
-  const script = "import('playwright').then(({ chromium }) => { const value = chromium.executablePath(); if (value) console.log(value); }).catch(() => process.exit(1));";
-  const probe = spawn(process.execPath, ['-e', script], { encoding: 'utf8' });
-  const resolvedPath = normalizeVersionOutput(probe.stdout || probe.stderr || '');
-  if (!resolvedPath) {
-    return null;
-  }
-  // Read the version from file metadata rather than executing the browser
-  // binary; on Windows a `--version` invocation opens a browser window.
-  return probeChromeVersionFromFileMetadata({ executable: resolvedPath, platform, spawn });
-}
-
-function probeChromeVersionFromFileMetadata({ executable, platform = 'linux', spawn }) {
-  if (platform !== 'win32' || !executable) {
-    return null;
-  }
-  const powershellScript = `[System.Diagnostics.FileVersionInfo]::GetVersionInfo('${String(executable).replace(/'/g, "''")}').ProductVersion`;
-  const probe = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', powershellScript], { encoding: 'utf8' });
-  return normalizeChromeVersion(`${probe.stdout || ''}${probe.stderr || ''}`);
-}
-
-function probeChromeVersion({ executable, env = {}, platform = 'linux', spawn }) {
-  if (!executable) {
-    return null;
-  }
-  // On Windows, `chrome.exe --version` does not print a version and exit. It
-  // launches a browser window against the user's default profile, which steals
-  // OS foreground focus from the automation window and survives Playwright
-  // teardown because Playwright never owned the process. Read the version from
-  // file metadata instead and never execute the browser binary here.
-  if (platform === 'win32') {
-    return probeChromeVersionFromFileMetadata({ executable, platform, spawn });
-  }
-  const probe = spawn(executable, ['--version'], { encoding: 'utf8' });
-  return normalizeChromeVersion(`${probe.stdout || ''}${probe.stderr || ''}`);
-}
-
-export function resolveChromeExecutable({ env = {}, platform = 'linux', spawn }) {
-  const candidates = [];
-  const explicitCandidates = [
-    env.RUNTIME_A11Y_CHROME_PATH,
-    env.CHROME_BIN,
-    env.PLAYWRIGHT_CHROME_EXECUTABLE_PATH,
-    env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-  ].filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
-  candidates.push(...explicitCandidates);
-
-  if (platform === 'win32') {
-    const localAppData = env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe') : null;
-    const programFiles = [env.ProgramFiles, env.PROGRAMFILES, env['ProgramFiles'], env['PROGRAMFILES'], 'C:\\Program Files'].find((entry) => typeof entry === 'string' && entry.trim().length > 0);
-    const programFilesX86 = [env['ProgramFiles(x86)'], env['PROGRAMFILES(X86)'], 'C:\\Program Files (x86)'].find((entry) => typeof entry === 'string' && entry.trim().length > 0);
-    candidates.push(
-      localAppData,
-      programFiles ? path.join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe') : null,
-      programFilesX86 ? path.join(programFilesX86, 'Google', 'Chrome', 'Application', 'chrome.exe') : null,
-      'chrome.exe',
-    );
-  } else {
-    candidates.push('google-chrome', 'chromium');
-  }
-
-  const uniqueCandidates = [];
-  const seenCandidates = new Set();
-  for (const candidate of candidates) {
-    if (!candidate) {
-      continue;
+async function probePlaywrightChrome(launchBrowser) {
+  let browser = null;
+  let version = null;
+  let error = null;
+  try {
+    browser = await launchBrowser();
+    version = browser?.version?.() || null;
+    if (!version) {
+      error = 'Chrome launch did not report a browser version.';
     }
-    const key = String(candidate);
-    if (seenCandidates.has(key)) {
-      continue;
-    }
-    seenCandidates.add(key);
-    uniqueCandidates.push(key);
-  }
-
-  for (const candidate of uniqueCandidates) {
-    const trimmed = String(candidate).trim();
-    if (!trimmed) {
-      continue;
-    }
-
-    const isAbsolutePath = path.isAbsolute(trimmed) || /^[a-z]:[\\/]/i.test(trimmed) || trimmed.includes('/') || trimmed.includes('\\');
-    if (isAbsolutePath) {
-      if (!existsSync(trimmed)) {
-        continue;
-      }
-      const version = probeChromeVersion({ executable: trimmed, env, platform, spawn });
-      if (version) {
-        return {
-          executable: executableName(trimmed),
-          version,
-        };
-      }
-      continue;
-    }
-
-    if (platform === 'win32') {
-      const playrightVersion = probePlaywrightChromeVersion({ env, platform, spawn });
-      if (playrightVersion) {
-        return {
-          executable: 'chrome.exe',
-          version: playrightVersion,
-        };
+  } catch (launchError) {
+    error = `Chrome launch failed: ${launchError instanceof Error ? launchError.message : String(launchError)}`;
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        error = `Chrome close failed: ${closeError instanceof Error ? closeError.message : String(closeError)}`;
       }
     }
-
-    const lookup = spawn(platform === 'win32' ? 'where.exe' : 'which', [trimmed], { encoding: 'utf8' });
-    const resolvedPath = normalizeVersionOutput(lookup.stdout || lookup.stderr || '');
-    if (!resolvedPath) {
-      continue;
-    }
-
-    const version = probeChromeVersion({ executable: resolvedPath, env, platform, spawn });
-    if (version) {
-      return {
-        executable: executableName(resolvedPath),
-        version,
-      };
-    }
   }
-
-  if (platform === 'win32') {
-    const playrightVersion = probePlaywrightChromeVersion({ env, platform, spawn });
-    if (playrightVersion) {
-      return {
-        executable: 'chrome.exe',
-        version: playrightVersion,
-      };
-    }
-  }
-
   return {
-    executable: null,
-    version: null,
+    executable: version && !error ? 'channel:chrome' : null,
+    version: version && !error ? version : null,
+    error,
   };
 }
 
@@ -768,40 +775,35 @@ function resolveGuidepupRegistryVersion({ platform = 'linux', spawn }) {
   return version;
 }
 
-async function resolveGuidepupInstallationPath(moduleApi) {
-  if (!moduleApi || typeof moduleApi !== 'object') {
+function readGuidepupLibraryVersion() {
+  try {
+    const packagePath = fileURLToPath(new URL('../node_modules/@guidepup/guidepup/package.json', import.meta.url));
+    const packagePayload = JSON.parse(readFileSync(packagePath, 'utf8'));
+    return normalizeGuidepupVersion(packagePayload?.version);
+  } catch {
     return null;
   }
-  const candidates = [
-    moduleApi.getNVDAInstallationPath,
-    moduleApi.default?.getNVDAInstallationPath,
-    moduleApi.nvda?.getNVDAInstallationPath,
-    moduleApi.isNVDAInstalled,
-    moduleApi.default?.isNVDAInstalled,
-    moduleApi.nvda?.isNVDAInstalled,
-  ].filter((entry) => typeof entry === 'function');
-
-  for (const candidate of candidates) {
-    try {
-      const payload = await candidate();
-      if (typeof payload === 'string' && payload.trim().length > 0) {
-        return payload.trim();
-      }
-      if (typeof payload === 'boolean') {
-        return payload ? '' : null;
-      }
-    } catch {
-      // Ignore probe failures and fall back to registry-based detection.
-    }
-  }
-  return null;
 }
 
-export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuidepup }) {
-  let guidepupRegistered = false;
+async function detectSelectedNvdaAsset(importGuidepupAssetProbe) {
+  try {
+    const probeModule = typeof importGuidepupAssetProbe === 'function'
+      ? await importGuidepupAssetProbe()
+      : await import('@guidepup/guidepup/lib/windows/NVDA/isNVDAInstalled.js');
+    const probe = probeModule?.isNVDAInstalled || probeModule?.default?.isNVDAInstalled;
+    return typeof probe === 'function' && Boolean(await probe());
+  } catch {
+    return false;
+  }
+}
+
+export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuidepup, importGuidepupAssetProbe }) {
+  let libraryInstalled = false;
+  let selectedAssetInstalled = false;
   let guidepupCapabilities = [];
   let conflictingNvdaProcess = false;
-  let guidepupVersion = null;
+  let guidepupLibraryVersion = null;
+  let nvdaAssetVersion = null;
   try {
     const importedModule = typeof importGuidepup === 'function' ? await importGuidepup() : null;
     const moduleCandidates = [importedModule, importedModule?.default, importedModule?.nvda, importedModule?.default?.nvda].filter(Boolean);
@@ -840,22 +842,16 @@ export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuid
       }
     }
     guidepupCapabilities = capabilities.map((entry) => String(entry)).filter(Boolean);
-    const capabilityMatch = guidepupCapabilities.some((entry) => String(entry).toLowerCase().includes('nvda'));
-    guidepupRegistered = Boolean(runtimeTarget || capabilityMatch);
-    const moduleApi = moduleCandidates.find((entry) => entry && typeof entry === 'object') || null;
-    const installationPath = await resolveGuidepupInstallationPath(moduleApi);
-    if (installationPath) {
-      const candidatePath = installationPath.endsWith('.exe') ? installationPath : path.join(installationPath, 'nvda.exe');
-      if (existsSync(candidatePath)) {
-        guidepupRegistered = true;
-      }
-    }
-    const versionValue = moduleApi?.version || moduleApi?.default?.version || moduleApi?.nvda?.version || moduleApi?.guidepupVersion || null;
-    guidepupVersion = normalizeGuidepupVersion(versionValue);
+    libraryInstalled = Boolean(runtimeTarget);
+    guidepupLibraryVersion = normalizeGuidepupVersion(importedModule?.guidepupVersion) || readGuidepupLibraryVersion();
+    nvdaAssetVersion = normalizeGuidepupVersion(runtimeTarget?.version);
+    selectedAssetInstalled = libraryInstalled && await detectSelectedNvdaAsset(importGuidepupAssetProbe);
   } catch {
-    guidepupRegistered = false;
+    libraryInstalled = false;
+    selectedAssetInstalled = false;
     guidepupCapabilities = [];
-    guidepupVersion = null;
+    guidepupLibraryVersion = null;
+    nvdaAssetVersion = null;
   }
 
   if (platform === 'win32') {
@@ -864,19 +860,16 @@ export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuid
     conflictingNvdaProcess = output.toLowerCase().includes('nvda.exe');
   }
 
-  if (platform === 'win32' && (!guidepupRegistered || !guidepupVersion)) {
-    const registryVersion = resolveGuidepupRegistryVersion({ platform, spawn });
-    if (registryVersion) {
-      guidepupVersion = registryVersion;
-      guidepupRegistered = true;
-    }
-  }
+  const registryVersion = resolveGuidepupRegistryVersion({ platform, spawn });
 
   return {
-    guidepupRegistered,
+    libraryInstalled,
+    selectedAssetInstalled,
     guidepupCapabilities,
     conflictingNvdaProcess,
-    guidepupVersion,
+    guidepupLibraryVersion,
+    nvdaAssetVersion,
+    registryVersion,
   };
 }
 
@@ -890,31 +883,44 @@ export async function probePrerequisites(config = {}, runtime = null) {
   const env = executionRuntime?.env || process.env || {};
   const spawn = executionRuntime?.spawnSync || spawnSync;
   const desktop = detectInteractiveDesktop({ env, platform, spawn });
-  const chrome = resolveChromeExecutable({ env, platform, spawn });
-  const nvda = await detectGuidepupNvda({ platform, spawn, importGuidepup: executionRuntime?.dependencies?.importGuidepup });
+  const chrome = await probePlaywrightChrome(
+    executionRuntime?.dependencies?.launchBrowser || launchChrome,
+  );
+  const nvda = await detectGuidepupNvda({
+    platform,
+    spawn,
+    importGuidepup: executionRuntime?.dependencies?.importGuidepup,
+    importGuidepupAssetProbe: executionRuntime?.dependencies?.importGuidepupAssetProbe,
+  });
   const reasons = [];
   if (!desktop.ok) {
     reasons.push('Interactive desktop was not available.');
   }
   if (!chrome.executable || !chrome.version) {
-    reasons.push('Chrome executable/version was not verified.');
+    reasons.push(chrome.error || 'Chrome launch/version was not verified.');
   }
-  if (!nvda.guidepupRegistered) {
-    reasons.push('NVDA registration for isolated Guidepup execution was not verified.');
+  if (!nvda.libraryInstalled) {
+    reasons.push('The skill-local @guidepup/guidepup package was not available.');
+  }
+  if (!nvda.selectedAssetInstalled) {
+    reasons.push('The manifest-selected NVDA asset was not installed. From the skill-local runtime_a11y directory, run: npx --yes @guidepup/setup@0.25.3 install nvda');
   }
   if (nvda.conflictingNvdaProcess) {
     reasons.push('A conflicting normal NVDA process was detected.');
   }
 
-  const ok = Boolean(desktop.ok && chrome.executable && chrome.version && nvda.guidepupRegistered && !nvda.conflictingNvdaProcess);
+  const ok = Boolean(desktop.ok && chrome.executable && chrome.version && nvda.libraryInstalled && nvda.selectedAssetInstalled && !nvda.conflictingNvdaProcess);
   return {
     ok,
     desktopUnlocked: desktop.ok,
-    nvdaAvailable: Boolean(nvda.guidepupRegistered && !nvda.conflictingNvdaProcess),
+    nvdaAvailable: Boolean(nvda.libraryInstalled && nvda.selectedAssetInstalled && !nvda.conflictingNvdaProcess),
     chromeExecutable: chrome.executable,
     chromeVersion: chrome.version,
-    guidepupRegistered: nvda.guidepupRegistered,
-    guidepupVersion: nvda.guidepupVersion,
+    libraryInstalled: nvda.libraryInstalled,
+    selectedAssetInstalled: nvda.selectedAssetInstalled,
+    guidepupLibraryVersion: nvda.guidepupLibraryVersion,
+    nvdaAssetVersion: nvda.nvdaAssetVersion,
+    registryVersion: nvda.registryVersion,
     nvdaProcessActive: nvda.conflictingNvdaProcess,
     reasons,
     reason: reasons.length > 0 ? reasons.join(' ') : null,
@@ -923,7 +929,9 @@ export async function probePrerequisites(config = {}, runtime = null) {
       chromeExecutable: chrome.executable,
       chromeVersion: chrome.version,
       guidepupCapabilities: nvda.guidepupCapabilities,
-      guidepupVersion: nvda.guidepupVersion,
+      guidepupLibraryVersion: nvda.guidepupLibraryVersion,
+      nvdaAssetVersion: nvda.nvdaAssetVersion,
+      registryVersion: nvda.registryVersion,
       nvdaProcessActive: nvda.conflictingNvdaProcess,
       interactiveDesktopSignal: desktop.source,
     },
@@ -1023,12 +1031,14 @@ export async function runDefaultVisualPreflight({ config = {}, runRoot = null, c
 export async function runRealCalibrationSession({
   config = {},
   runRoot = null,
+  journeyIds = [],
+  teardownTimeoutMs = 10000,
   probePrerequisites: probePrerequisitesHandler = null,
   runVisualPreflight: runVisualPreflightHandler = null,
   runAtCase: runAtCaseHandler = null,
   launchBrowser = launchChrome,
 } = {}) {
-  const journeys = resolveCalibrationCases(config);
+  const journeys = selectCalibrationCases(config, journeyIds);
   const resolvedRunRoot = runRoot ? path.resolve(runRoot) : null;
   const checkpoints = [];
   const browserTeardown = {
@@ -1082,6 +1092,9 @@ export async function runRealCalibrationSession({
     }
 
     for (const journey of journeys) {
+      if (sharedPage && typeof sharedPage.goto === 'function') {
+        await sharedPage.goto('about:blank', { waitUntil: 'domcontentloaded' });
+      }
       const executor = typeof runAtCaseHandler === 'function' ? runAtCaseHandler : defaultRunAtCase;
       const payload = await executor({
         journeyId: journey.journeyId,
@@ -1158,7 +1171,7 @@ export async function runRealCalibrationSession({
       evidence,
       provenance,
       outcome: payload?.outcome || {},
-      requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null })),
+      requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null, evidenceType: assertion?.evidenceType || 'speech' })),
     }, resolvedRunRoot);
 
       if (classification === 'pass' && hasValidEvidence) {
@@ -1180,7 +1193,7 @@ export async function runRealCalibrationSession({
   } finally {
     if (sharedPage && typeof sharedPage.close === 'function') {
       try {
-        await sharedPage.close();
+        await runWithTimeout(() => sharedPage.close(), teardownTimeoutMs, 'Page close');
         browserTeardown.pageCloseStatus = 'closed';
       } catch (error) {
         browserTeardown.pageCloseStatus = 'failed';
@@ -1189,7 +1202,7 @@ export async function runRealCalibrationSession({
     }
     if (sharedBrowser && typeof sharedBrowser.close === 'function') {
       try {
-        await sharedBrowser.close();
+        await runWithTimeout(() => sharedBrowser.close(), teardownTimeoutMs, 'Browser close');
         browserTeardown.browserCloseStatus = 'closed';
       } catch (error) {
         browserTeardown.browserCloseStatus = 'failed';
@@ -1205,9 +1218,22 @@ export async function runRealCalibrationSession({
     }
   }
 
+  const teardownProven = browserTeardown.pageCloseStatus !== 'failed'
+    && browserTeardown.browserCloseStatus !== 'failed'
+    && browserTeardown.browserConnectedAfterClose !== true;
+
+  let aggregateReason = 'Calibration completed for the requested journeys.';
+  if (visualPreflightStatus === 'fail') {
+    aggregateReason = 'Visual preflight did not complete successfully.';
+  } else if (checkpoints.length !== journeys.length) {
+    aggregateReason = 'Calibration did not complete successfully because some journeys lacked accepted evidence.';
+  } else if (!teardownProven) {
+    aggregateReason = 'Calibration could not prove browser teardown, so the run is not accepted.';
+  }
+
   const aggregate = {
-    status: visualPreflightStatus === 'fail' || checkpoints.length !== journeys.length ? 'unsuccessful' : 'successful',
-    reason: visualPreflightStatus === 'fail' ? 'Visual preflight did not complete successfully.' : (checkpoints.length === journeys.length ? 'Calibration completed for the requested journeys.' : 'Calibration did not complete successfully because some journeys lacked accepted evidence.'),
+    status: visualPreflightStatus === 'fail' || checkpoints.length !== journeys.length || !teardownProven ? 'unsuccessful' : 'successful',
+    reason: aggregateReason,
     completedCount: checkpoints.length,
   };
 
@@ -1242,9 +1268,16 @@ export async function main() {
   const runRoot = process.env.RUNTIME_A11Y_RUN_ROOT
     ? path.resolve(process.env.RUNTIME_A11Y_RUN_ROOT)
     : null;
+  const journeyIds = process.env.RUNTIME_A11Y_JOURNEYS
+    ? JSON.parse(process.env.RUNTIME_A11Y_JOURNEYS)
+    : [];
+  const methodCells = config?.resolvedCaseCatalog && config?.resolvedBindingProfile
+    ? materializeMethodCells(config.resolvedCaseCatalog, config.resolvedBindingProfile)
+    : null;
   const session = await runRealCalibrationSession({
     config,
     runRoot,
+    journeyIds,
   });
   const document = {
     tool: 'runtime_a11y',
@@ -1258,6 +1291,7 @@ export async function main() {
     checkpoints: session.checkpoints,
     state: session.state,
     browserTeardown: session.browserTeardown,
+    ...(methodCells ? { methodCells } : {}),
   };
   process.stdout.write(`${JSON.stringify(document, null, 2)}\n`);
   return document;

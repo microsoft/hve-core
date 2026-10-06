@@ -127,21 +127,14 @@
             "provider": "OpenAI"
         },
         {
-            "name": "GPT-5.6 Luna (copilot)",
+            "name": "GPT-6 Luna (copilot)",
             "tier": "standard",
             "multiplier": 1,
             "status": "ga",
             "provider": "OpenAI"
         },
         {
-            "name": "GPT-5.6 Sol (copilot)",
-            "tier": "standard",
-            "multiplier": 1,
-            "status": "ga",
-            "provider": "OpenAI"
-        },
-        {
-            "name": "GPT-5.6 Terra (copilot)",
+            "name": "GPT-6 Sol (copilot)",
             "tier": "standard",
             "multiplier": 1,
             "status": "ga",
@@ -210,6 +203,13 @@
             "multiplier": 0.33,
             "status": "ga",
             "provider": "Microsoft"
+        },
+        {
+            "name": "MAI-Code-1.1-Flash (copilot)",
+            "tier": "fast",
+            "multiplier": 0.25,
+            "status": "ga",
+            "provider": "Microsoft"
         }
     ],
     "providerAllowlist": [
@@ -219,6 +219,6 @@
         "Microsoft"
     ],
     "$schema": "./schemas/model-catalog.schema.json",
-    "lastUpdated": "2026-07-09",
+    "lastUpdated": "2026-09-23",
     "source": "https://docs.github.com/en/copilot/reference/ai-models/supported-models"
 }

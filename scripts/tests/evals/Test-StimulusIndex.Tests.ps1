@@ -47,6 +47,39 @@ Describe 'Get-StimulusBacklink' -Tag 'Unit' {
         $links.Count | Should -Be 1
         $links[0].slug | Should -Be 'sample-prompt'
     }
+
+    It 'Expands a YAML list tag into one record per slug' {
+        # A parsed YAML list cast with [string] joins its elements with a space, which
+        # produced the compound slug 'code-review rpi-agent'. That value reached agent
+        # arguments and output paths, so a real stimulus resolved to a nonexistent agent.
+        $stim = @{ tags = @{ agent = @('code-review', 'rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 2
+        ($links | ForEach-Object { $_.slug }) | Sort-Object | Should -Be @('code-review', 'rpi-agent')
+        foreach ($link in $links) { $link.slug | Should -Not -Match '\s' }
+    }
+
+    It 'Treats a single-element list like a scalar' {
+        $stim = @{ tags = @{ agent = @('rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 1
+        $links[0].slug | Should -Be 'rpi-agent'
+    }
+
+    It 'Trims and drops empty entries within a list tag' {
+        $stim = @{ tags = @{ agent = @('  rpi-agent  ', '', '   ') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 1
+        $links[0].slug | Should -Be 'rpi-agent'
+    }
+
+    It 'Expands the largest corpus backlink list without producing a compound slug' {
+        # The largest real tag in the baseline-equivalence corpus.
+        $stim = @{ tags = @{ agent = @('backlog-manager', 'brd-builder', 'issue-triage', 'prd-builder', 'rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 5
+        ($links | Where-Object { $_.slug -match '\s' }) | Should -BeNullOrEmpty
+    }
 }
 
 Describe 'New-StimulusIndex' -Tag 'Unit' {
@@ -89,6 +122,35 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $key = 'skill:python-foundational'
         $index.coverage.ContainsKey($key) | Should -BeTrue
         $index.coverage[$key] -join ';' | Should -Match 'behavior-conformance/skill-behavior\.eval\.yaml'
+    }
+
+    It 'Excludes agent-behavior source partials while retaining generated spec coverage' {
+        $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
+        try {
+            $stimuliDir = Join-Path $tempRoot 'agent-behavior/stimuli'
+            New-Item -ItemType Directory -Path $stimuliDir -Force | Out-Null
+            $stimulus = @{
+                name = 'sample-agent-behavior'
+                prompt = 'Exercise the sample agent.'
+                tags = @{ agent = 'sample-agent' }
+                graders = @(@{ type = 'output-matches'; config = @{ pattern = 'sample' } })
+            }
+            @{ stimuli = @($stimulus) } | ConvertTo-Yaml | Set-Content -LiteralPath (Join-Path $stimuliDir 'sample-agent.yml') -Encoding utf8
+            @{
+                name = 'agent-behavior'
+                type = 'capability'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli = @($stimulus)
+            } | ConvertTo-Yaml | Set-Content -LiteralPath (Join-Path $tempRoot 'agent-behavior/eval.yaml') -Encoding utf8
+
+            $index = New-StimulusIndex -EvalRoot $tempRoot
+
+            $index.specsScanned | Should -Be 1
+            $index.coverage['agent:sample-agent'] | Should -Be @('agent-behavior/eval.yaml')
+        }
+        finally {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
     }
 
     It 'Continues past unparseable spec files and records them under errors' {

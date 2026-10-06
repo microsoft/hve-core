@@ -28,10 +28,8 @@ Assesses supply-chain posture against the supply-chain skill and returns structu
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+SSSC Reviewer dispatches this worker to assess one supply-chain skill and its reference catalogs against repository evidence or a plan. It records posture, adoption categories, gaps, and remediation guidance. The parent owns scope, verification, and the final report rather than this delegated assessor.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies the supply-chain skill, codebase profile, and changed release workflows in diff mode. The worker returns structured findings about provenance, dependency, or repository controls with supporting evidence and adoption categories. For plan mode it reports proposed-risk coverage instead of observed posture, and it does not change workflows or certify a supply-chain maturity level.

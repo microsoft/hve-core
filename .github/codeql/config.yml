@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: HVE Core source analysis
+
+# Authored slide sources remain in scope. The workflow verifies generated HTML
+# against those sources before analysis. Generated decks embed third-party
+# reveal.js and are analyzed separately with generated-slides.yml under the
+# /language:javascript-typescript/generated-slides category.
+paths-ignore:
+  - 'docs/slides/*.html'

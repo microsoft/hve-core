@@ -28,10 +28,8 @@ Executes PowerPoint skill operations including content extraction, YAML creation
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+PowerPoint Builder dispatches this worker for a specific extraction, content, build, validation, or export operation. It uses the PowerPoint skill within the assigned working paths and returns execution evidence. Users coordinate the presentation through the parent rather than invoking the worker directly.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies `task type=build-deck`, content and style YAML, an exact output PPTX path, and an execution-log path. The worker builds the assigned deck and returns output and execution details for parent validation. It does not launch another subagent, invent missing content decisions, or continue a dependent operation after a blocking failure.

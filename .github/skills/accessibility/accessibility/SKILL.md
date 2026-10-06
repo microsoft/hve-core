@@ -2,12 +2,12 @@
 name: accessibility
 description: "Consolidated accessibility skill entrypoint for WCAG 2.2, ARIA Authoring Practices, cognitive accessibility, Section 508, EN 301 549, design intent verification, and the Accessibility Planner workflow."
 license: MIT
-compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to run 'npx --yes @axe-core/cli@4.12.1'."
+compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to fetch the pinned axe-core CLI from the public npm registry."
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-11"
+  last_updated: "2026-09-14"
 ---
 
 # Accessibility — Skill Entry
@@ -106,16 +106,31 @@ The scanner CLI ([scripts/scan.py](scripts/scan.py)) wraps the Node-based axe-co
 ### Quick Start
 
 ```bash
-uv run scripts/scan.py https://example.com
+uv run scripts/scan.py https://example.com --allow-host example.com
 uv run scripts/scan.py ./page.html --output results.json
+uv run scripts/scan.py file:///path/to/page.html
 ```
+
+Loopback HTTP(S) targets need no additional option. Every other remote host
+requires either a matching, repeatable `--allow-host HOST` value or the broader
+`--allow-external` confirmation. Local paths and local `file:` URIs must resolve
+to existing regular files. Network shares, remote file authorities, directories,
+missing files, credentials, leading-dash targets, and non-HTTP(S) remote schemes
+are rejected before the axe CLI starts.
 
 ### Parameters Reference
 
-| Parameter  | Required | Default | Description                                |
-|------------|----------|---------|--------------------------------------------|
-| `target`   | Yes      | —       | URL or local file to scan.                 |
-| `--output` | No       | stdout  | Path to write the normalized JSON results. |
+| Parameter          | Required | Default | Description                                                    |
+|--------------------|----------|---------|----------------------------------------------------------------|
+| `target`           | Yes      | —       | Authorized HTTP(S) URL or existing regular local file to scan. |
+| `--output`         | No       | stdout  | Path to write the normalized JSON results.                     |
+| `--allow-host`     | No       | none    | Authorize one non-loopback HTTP(S) host; repeat as needed.     |
+| `--allow-external` | No       | false   | Confirm access to any non-loopback HTTP(S) host.               |
+
+Remote authorization applies to the initial scanner target only. It does not
+constrain browser redirects, DNS address changes, subresources, WebSockets,
+Service Workers, downloads, or other browser-derived requests. Run the scanner
+only from a workstation whose network reach matches the target's trust level.
 
 ### Script Reference
 
@@ -148,6 +163,8 @@ uv run scripts/scan.py ./page.html --output results.json
 |------------------------------------------|--------------------------------------------|------------------------------------------------------------------|-----------|
 | `scanner unavailable` error              | Node.js or `npx` not on PATH               | Install Node.js so `npx` resolves, then re-run.                  | `2`       |
 | Long pause or download on first run      | `npx` is fetching `@axe-core/cli`          | Allow network access on the first run; later runs use the cache. | —         |
+| `Refusing to probe non-loopback host`    | Remote host was not explicitly authorized  | Add `--allow-host HOST` or confirm with `--allow-external`.      | `2`       |
+| `Local scan target does not exist`       | Local path or file URI cannot be resolved  | Supply an existing regular local file, not a directory or share. | `2`       |
 | `scan failed or returned invalid output` | axe-core CLI errored or emitted non-JSON   | Confirm the target URL or file is reachable and well-formed.     | `1`       |
 | Empty `violations` but issues expected   | Page rendered after the scan, or rules N/A | Confirm the target fully loads; check `summary.inapplicable`.    | `0`       |
 
@@ -173,6 +190,7 @@ Complete these once before any runtime-harness command. They are separate from t
 * Python 3.11+ with [uv](https://docs.astral.sh/uv/) available on PATH.
 * Node.js available on PATH, plus system Google Chrome, because the probes target `channel: 'chrome'`.
 * Skill-local Node dependencies installed under [scripts/runtime_a11y](scripts/runtime_a11y). The CLI fails fast with an install hint when they are missing.
+* Automated Windows NVDA runs additionally require the manifest-selected Guidepup NVDA asset. Machine setup and asset installation are separate actions from `npm ci`.
 
 Install the harness dependencies from the `scripts/runtime_a11y` directory:
 
@@ -186,6 +204,26 @@ $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'; npm ci
 
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` avoids downloading bundled browsers that the harness never uses.
 
+For automated NVDA runs, prepare the Windows machine once, then install the asset selected by the skill-local Guidepup package. Run the asset command again after updating Guidepup:
+
+```powershell
+Set-Location <skill-root>/scripts/runtime_a11y
+npx --yes --registry=https://registry.npmjs.org/ @guidepup/setup@0.25.3 setup
+npx --yes --registry=https://registry.npmjs.org/ @guidepup/setup@0.25.3 install nvda
+```
+
+The commands configure the machine and write versioned assets to the Guidepup user cache. They are not part of ordinary dependency installation. Run the prerequisite-only probe before a calibration session:
+
+```bash
+uv run scripts/runtime_a11y/__main__.py run-calibration --config <path-to>/a11y-runtime.config.json --prerequisite-only
+```
+
+The preflight reports the skill-local library, manifest-selected NVDA asset, and any conflicting NVDA process independently. Do not start a personal NVDA instance before an automated run; the harness starts an isolated session and rejects an existing process.
+
+Product-neutral screen-reader cases live in `scripts/runtime_a11y/screen-reader-cases.json`. A downstream binding supplies named routes, targets, states, and explicit execution recipes. Catalog digest drift, missing target closure, duplicate identities, unsupported commands, secret-bearing binding keys, and inferred actions fail before browser startup.
+
+Use repeatable `run-calibration --journey <id>` arguments for an authorized live subset. Run the downstream integrity recipe before product cases and keep real NVDA advisory/manual. For deterministic evidence, use `run-all --probe <probe-id>` with surface/state filters or a reviewed `probeScoping` configuration; ordinary `run-all` must not be treated as permission to start a real screen reader.
+
 #### Invocation
 
 Run the harness through its script entrypoint. Invoke it from the skill root, which is the directory holding `pyproject.toml`, so uv resolves the skill's own environment. This matches the invocation convention used by `scan.py` and the other Python skills, and it needs no `PYTHONPATH`.
@@ -194,6 +232,7 @@ Run the harness through its script entrypoint. Invoke it from the skill root, wh
 uv run scripts/runtime_a11y/__main__.py run-all --config a11y-runtime.config.json --out results.json
 uv run scripts/runtime_a11y/__main__.py probe <probeId> --config a11y-runtime.config.json
 uv run scripts/runtime_a11y/__main__.py render-artifacts --matrix coverage-matrix-repo.json --output-dir .copilot-tracking/accessibility/coverage --repo-slug repo
+uv run scripts/runtime_a11y/__main__.py compose-evidence --help
 ```
 
 To run from any other working directory, pin the skill as the uv project and use the same script path:
@@ -208,6 +247,26 @@ uv run --project <skill-root> <skill-root>/scripts/runtime_a11y/__main__.py run-
 * `--trace` captures Playwright traces and screenshots.
 * `--allow-external` confirms intentional probing of a non-loopback host.
 * `render-artifacts` turns a rendered matrix JSON document into the complete coverage evidence bundle.
+
+#### Evidence bundle composition
+
+`compose-evidence` combines downstream-owned catalogs, cadence scope, run context, normalized source envelopes, state proofs, and optional qualified-reviewer supplements into one deterministic evidence bundle. It is separate from `render-artifacts`: rendering creates coverage, EARL, and manual-plan views from a matrix, while composition creates a revision-bound trust envelope across evidence producers.
+
+The command requires explicit input paths and never infers product scope, Git state, time, retention, branch policy, or a release verdict. A consuming project owns those decisions. The composer validates artifact bytes beneath `--artifact-root`, preserves conflicts and quarantined results, and always emits non-attestation metadata. Automation, reviewer evidence, and release evidence have separate completeness states.
+
+For pull requests, a valid initial bundle may report reviewer evidence as pending. A qualified reviewer can later provide a privacy-minimized, digest-bound supplement and registry snapshot for deterministic recomposition against the prior bundle. Recomposition supplies both `--prior-bundle` and its independently retained `--prior-bundle-digest`; omission or mutation of prior history fails closed. Missing required reviewer evidence blocks release completeness, not ordinary bundle production. Raw screen-reader phrases and restricted transcript paths are forbidden in ordinary bundles; only approved counts, redacted metadata, and digests cross this boundary.
+
+Use `--require-completeness automated`, `reviewer`, or `release` only when the downstream workflow intends that dimension to gate. Valid incomplete bundles are still written for diagnosis. The additional exits are:
+
+| Exit code | Meaning                                  |
+|-----------|------------------------------------------|
+| `5`       | Automated evidence is incomplete.        |
+| `6`       | Reviewer evidence is pending or invalid. |
+| `7`       | Release evidence is incomplete.          |
+
+Existing exits `0` through `4` retain their meanings. The JSON contracts live beside the runtime at `evidence-bundle.schema.json`, `evidence-source.schema.json`, `evidence-scope.schema.json`, `screen-reader-method-cell.schema.json`, and `qualified-human-result.schema.json`.
+
+For a complete adopter path from an inactive template to a first retained bundle and deterministic recomposition, including schema-valid examples for every authored input, read [references/evidence-composition-adoption.md](references/evidence-composition-adoption.md).
 
 #### Visual review capture
 
@@ -244,6 +303,14 @@ The Docusaurus site in this repository is configured for `auto` at `http://127.0
 #### Config summary
 
 The harness loads [scripts/runtime_a11y/config-schema.json](scripts/runtime_a11y/config-schema.json) and expects a runtime config with fields such as `baseUrl`, `serveMode`, `allowlist`, `routes`, `surfaces`, and `probeScoping`. The config defines the surfaces and interaction states the probes execute. A runtime guard blocks non-loopback targets unless the host is allowlisted or the caller supplies `--allow-external`. `serveMode` controls server ownership for visual review capture, described under [Server modes](#server-modes).
+
+Real-NVDA journeys support three capture modes:
+
+* `single` reads the cumulative speech log after commands and the configured settle interval.
+* `clear-and-capture` clears earlier speech before the settle interval, then reads the cumulative log.
+* `action` wraps an existing post-start declarative trigger with Guidepup action capture. Assertions can select `actionSpeech` or `actionNormalizedSpeech` to evaluate only output attributed to that trigger.
+
+Action capture waits for Guidepup's one-second speech quiet window. It is appropriate for immediate interaction-driven announcements but does not extend to arbitrary delayed updates and cannot create speech that NVDA does not emit. Keep `single`, `clear-and-capture`, accessibility-tree evidence, and manual AT evidence available for those cases. Action mode fails closed when the journey lacks `triggerAfterDriverStart`, a declarative trigger, a real Guidepup driver, or action-capture support.
 
 #### Probe inventory and adequacy map
 
@@ -320,7 +387,7 @@ The two are separate because a failed check and an unrun check call for differen
 
 #### Runtime dependencies
 
-The harness resolves its Node dependencies from a skill-local package under [scripts/runtime_a11y](scripts/runtime_a11y) (`package.json` plus committed `package-lock.json`), pinning `playwright@1.61.1`, `@axe-core/playwright@4.12.1`, and `@guidepup/virtual-screen-reader@0.32.1`. Install them once as described under [Harness prerequisites](#harness-prerequisites). The probes then resolve their dependencies from the local `node_modules`; the CLI fails fast with an install hint when `node_modules` is absent, before it probes or starts any server.
+The harness resolves its Node dependencies from a skill-local package under [scripts/runtime_a11y](scripts/runtime_a11y) (`package.json` plus committed `package-lock.json`), pinning `playwright@1.61.1`, `@axe-core/playwright@4.12.1`, `@guidepup/virtual-screen-reader@0.32.1`, and optional real-AT integration through `@guidepup/guidepup@0.34.0`. Install the Node dependencies and the separately managed NVDA asset as described under [Harness prerequisites](#harness-prerequisites). The probes then resolve their dependencies from the local `node_modules`; the CLI fails fast with an install hint when `node_modules` is absent, before it probes or starts any server.
 
 #### Testing
 
@@ -328,7 +395,7 @@ The harness is tested in two tiers. Browserless verdict and pure-helper unit tes
 
 ### CI regression gate
 
-Use the ready-to-copy workflow template at [references/ci/accessibility-coverage.workflow-template.yml](references/ci/accessibility-coverage.workflow-template.yml) as the documentation-first integration point for a target project. Copy it into a real workflow under `.github/workflows/` only after the target project commits an `a11y-runtime.config.json` and has a build/serve path that the template can invoke. Once authored `*.intent.yaml` records exist, the template fails closed if the config or current-run results are missing.
+Use the ready-to-copy workflow template at [references/ci/accessibility-coverage.workflow-template.yml](references/ci/accessibility-coverage.workflow-template.yml) as the documentation-first integration point for a target project. Copy it into the target repository's GitHub Actions workflow directory only after the target project commits an `a11y-runtime.config.json` and has a build/serve path that the template can invoke. Once authored `*.intent.yaml` records exist, the template fails closed if the config or current-run results are missing.
 
 The template mirrors the Docusaurus workflow recipe by provisioning system Chrome, setting up Node 24 plus Python and `uv`, building the target, serving it under a configurable base URL, and running the harness script entrypoint with `uv run --project` pinned at the vendored skill root. The core high-confidence probes always block: `probe-axe`, `probe-dom-hygiene`, `probe-broken-links`, `probe-console-errors`, `probe-target-size`, `probe-contrast`, and `probe-reflow-resize`. The interaction-state and announcement probes (`probe-keyboard-traversal`, `probe-widget-keyboard`, `probe-live-region`, `probe-aria-tree`, `probe-virtual-sr`, `probe-real-sr`) are the adequate method for the classes static analysis only informs, and their blocking posture follows the `A11Y_TIER` dial defined under [Gate strictness by assessment tier](#gate-strictness-by-assessment-tier): `basic` reports them advisory, `standard` ratchets (blocking on the surfaces listed in `A11Y_RATCHET_SURFACES`), and `comprehensive` blocks them everywhere. The remaining heuristic probes such as `use-of-color`, `hover-focus`, `link-purpose`, `name-in-label`, and `focus-*` are surfaced as informational results so they can guide follow-up work without blocking initial adoption. The real-screen-reader probe stays advisory by default unless a project opts into it through configured expected assertions and a supported OS/AT stack; it returns `candidate` when the platform or AT is unavailable rather than pretending a pass or failure. Decisive coverage of the adaptive-rendering class depends on the target committing the `zoom-200`, `reflow-320`, and text-spacing states in its `a11y-runtime.config.json`.
 

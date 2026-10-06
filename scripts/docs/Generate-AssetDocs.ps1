@@ -115,6 +115,13 @@ function New-DocFrontmatter {
         Content categorization keywords emitted as a YAML block sequence.
     .PARAMETER Author
         Author or team responsible for the content.
+    .PARAMETER SidebarLabel
+        Optional sidebar label that replaces the title in the sidebar.
+    .PARAMETER PaginationLabel
+        Optional label for previous and next pagination links.
+    .PARAMETER SidebarAccessibleName
+        Optional accessible name for the sidebar link, emitted as the
+        accessibleName sidebar custom prop.
     .OUTPUTS
         [string] The frontmatter block including the delimiting fences.
     #>
@@ -127,18 +134,30 @@ function New-DocFrontmatter {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$MsDate,
         [Parameter(Mandatory = $true)][ValidateSet('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting', 'architecture')][string]$Topic,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string[]]$Keywords,
-        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$Author = 'Microsoft'
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$Author = 'Microsoft',
+        [Parameter(Mandatory = $false)][string]$SidebarLabel,
+        [Parameter(Mandatory = $false)][string]$PaginationLabel,
+        [Parameter(Mandatory = $false)][string]$SidebarAccessibleName
     )
 
     $keywordLines = foreach ($keyword in $Keywords) {
         "  - $(Format-YamlScalar -Value $keyword)"
     }
+    $labelLines = @(
+        if ($SidebarLabel) { "sidebar_label: $(Format-YamlScalar -Value $SidebarLabel)" }
+        if ($SidebarAccessibleName) {
+            'sidebar_custom_props:'
+            "  accessibleName: $(Format-YamlScalar -Value $SidebarAccessibleName)"
+        }
+        if ($PaginationLabel) { "pagination_label: $(Format-YamlScalar -Value $PaginationLabel)" }
+    )
 
     return (@(
             '---'
             "title: $(Format-YamlScalar -Value $Title)"
             "description: $(Format-YamlScalar -Value $Description)"
             "sidebar_position: $SidebarPosition"
+            $labelLines
             "author: $(Format-YamlScalar -Value $Author)"
             "ms.date: $MsDate"
             "ms.topic: $Topic"
@@ -225,6 +244,28 @@ function Get-AssetDocTemplateSectionBody {
     }
 
     return $Template.Substring($bodyStart, $endIndex - $bodyStart).Trim("`r", "`n")
+}
+
+function Remove-HowToUseSection {
+    <#
+    .SYNOPSIS
+        Removes the top-level How to use it section from a documentation tail.
+    .PARAMETER Tail
+        Human-authored page content after the generated overview region.
+    .OUTPUTS
+        [string] The tail with the How to use it section removed.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Tail
+    )
+
+    return [regex]::Replace(
+        $Tail,
+        '(?ms)^## How to use it[^\S\r\n]*\r?\n.*?(?=^## |\z)',
+        ''
+    )
 }
 
 function Get-AssetDocPageRelPath {
@@ -478,6 +519,12 @@ function New-AssetDocContent {
             throw "Overview markers missing in $($Model.DocRel); refusing to regenerate because doing so would discard human-authored sections. Restore the AUTO-GENERATED markers (or delete the page to re-scaffold) and re-run."
         }
         $humanTail = $split.After
+        if (-not $Model.Interactive) {
+            $howToUse = [regex]::Match($humanTail, '(?ms)^## How to use it\s*\r?\n(?<body>.*?)(?=^## |\z)')
+            if ($howToUse.Success -and $howToUse.Groups['body'].Value.Contains('<!-- asset-docs:stub -->')) {
+                $humanTail = Remove-HowToUseSection -Tail $humanTail
+            }
+        }
     }
     else {
         $msDate = $today
@@ -596,7 +643,7 @@ function New-RootIndexContent {
 
     $table = Format-MarkdownTable -Header @('Category', 'Assets') -Rows $rows.ToArray()
     $body = "This page lists the generated reference documentation, grouped by asset kind.`n`n" + $table
-    return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -Keywords @('reference', 'assets') -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md'))
+    return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -Keywords @('reference', 'assets') -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md') -SidebarLabel 'Overview' -PaginationLabel 'Reference' -SidebarAccessibleName 'Overview: Reference')
 }
 
 function New-IndexContent {
@@ -617,6 +664,12 @@ function New-IndexContent {
         Path to an existing index page. Its ms.date is preserved when the
         regenerated content is identical, and advanced to today when the
         generated index region or frontmatter changes.
+    .PARAMETER SidebarLabel
+        Optional sidebar label that replaces the title in the sidebar.
+    .PARAMETER PaginationLabel
+        Optional label for previous and next pagination links.
+    .PARAMETER SidebarAccessibleName
+        Optional accessible name for the sidebar link.
     .OUTPUTS
         [string] The index page content ending with a single newline.
     #>
@@ -628,7 +681,10 @@ function New-IndexContent {
         [Parameter(Mandatory = $true)][int]$SidebarPosition,
         [Parameter(Mandatory = $true)][string]$RegionBody,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string[]]$Keywords,
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExistingPath
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExistingPath,
+        [Parameter(Mandatory = $false)][string]$SidebarLabel,
+        [Parameter(Mandatory = $false)][string]$PaginationLabel,
+        [Parameter(Mandatory = $false)][string]$SidebarAccessibleName
     )
 
     $today = Get-Date -Format 'yyyy-MM-dd'
@@ -645,11 +701,14 @@ function New-IndexContent {
     $region = New-AssetGeneratedRegion -Region 'index' -Body $RegionBody
 
     $frontmatterArgs = @{
-        Title           = $Title
-        Description     = $Description
-        SidebarPosition = $SidebarPosition
-        Topic           = 'overview'
-        Keywords        = $Keywords
+        Title                 = $Title
+        Description           = $Description
+        SidebarPosition       = $SidebarPosition
+        Topic                 = 'overview'
+        Keywords              = $Keywords
+        SidebarLabel          = $SidebarLabel
+        PaginationLabel       = $PaginationLabel
+        SidebarAccessibleName = $SidebarAccessibleName
     }
 
     # Advance ms.date to today only when the regenerated index differs, so the

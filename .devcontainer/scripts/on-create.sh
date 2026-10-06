@@ -7,6 +7,41 @@
 
 set -euo pipefail
 
+sync_python_environments() {
+  local repo_root
+  local project_file
+  local project_dir
+  local failed=0
+
+  repo_root="$(cd "${1}" && pwd)"
+
+  while IFS= read -r -d '' project_file; do
+    project_dir="$(dirname "${project_file}")"
+    echo "Installing dependencies in ${project_dir}"
+
+    if [[ ! -f "${project_dir}/uv.lock" ]]; then
+      echo "ERROR: Missing uv.lock in ${project_dir}" >&2
+      failed=1
+      continue
+    fi
+
+    if ! (cd "${project_dir}" && uv sync --locked); then
+      echo "ERROR: uv sync --locked failed in ${project_dir}" >&2
+      failed=1
+    fi
+  done < <(
+    find "${repo_root}" \
+      -type d \( \
+        -name node_modules -o \
+        -path "${repo_root}/plugins" -o \
+        -path "${repo_root}/scripts/evals/moderation" \
+      \) -prune -o \
+      -type f -name pyproject.toml -print0
+  )
+
+  return "${failed}"
+}
+
 main() {
   # Enterprise artifact hub overrides (public defaults when unset)
   GITHUB_RELEASES_URL="${HVE_GITHUB_RELEASES_URL:-https://github.com}"
@@ -45,6 +80,7 @@ main() {
 
   echo "Installing PowerShell modules..."
   if [[ -n "${PSGALLERY_SOURCE}" ]]; then
+    # shellcheck disable=SC2016  # PowerShell expands these environment variables.
     PSGALLERY_REPO="${PSGALLERY_REPO}" PSGALLERY_SOURCE="${PSGALLERY_SOURCE}" \
       pwsh -NoProfile -Command 'Register-PSRepository -Name $env:PSGALLERY_REPO -SourceLocation $env:PSGALLERY_SOURCE -InstallationPolicy Trusted -ErrorAction SilentlyContinue'
   fi
@@ -144,8 +180,11 @@ main() {
   sudo tar -xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 "uv-${UV_ARCH}/uv" "uv-${UV_ARCH}/uvx"
   rm /tmp/uv.tar.gz
 
-  echo "Syncing Python environments for skills..."
-  find .github/skills -name pyproject.toml -type f -execdir uv sync \;
+  echo "Syncing lint-eligible Python environments..."
+  if ! sync_python_environments "."; then
+    echo "ERROR: One or more Python environment installations failed" >&2
+    exit 1
+  fi
 
   echo "Syncing Python environment for moderation eval..."
   (cd scripts/evals/moderation && uv sync --locked)
@@ -153,4 +192,6 @@ main() {
   echo "System dependencies installed successfully"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

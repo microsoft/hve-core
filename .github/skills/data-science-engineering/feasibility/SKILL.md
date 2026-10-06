@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "Microsoft (planning synthesis)"
   spec_version: "1.0"
-  last_updated: "2026-08-03"
+  last_updated: "2026-09-14"
   content_based_on: "https://specif.de/; https://docs.oasis-open-projects.org/oslc-op/rm/v2.1/os/; https://www.w3.org/TR/prov-o/; https://www.dublincore.org/specifications/dublin-core/dcmi-terms/; https://www.rfc-editor.org/rfc/rfc9562.html; https://json-schema.org/draft/2020-12/"
 ---
 
@@ -25,7 +25,7 @@ Produce one durable Markdown feasibility study that remains useful to people and
 5. Write or update the single named `FEASIBILITY-STUDY-INTERCHANGE` YAML block. Narrative can explain machine facts but cannot redefine them.
 6. Validate constrained YAML, JSON Schema 2020-12 structure, semantic closure, revision lineage, tombstones, and narrative anchors with `scripts/validate_feasibility.py`.
 7. Present the recommendation and unresolved review gaps. Preserve the study as read-only evidence for downstream consumers.
-8. After the study is final, emit the sibling feasibility-to-PRD handoff described in [feasibility-to-prd-handoff.md](references/feasibility-to-prd-handoff.md). Regenerate it after any material study revision.
+8. After the study is final, emit the sibling feasibility-to-PRD handoff described in [feasibility-to-prd-handoff.md](references/feasibility-to-prd-handoff.md). Regenerate it after any material study revision, then validate both artifacts with `scripts/validate_feasibility.py <study.md> --handoff <handoff.yml>`.
 
 ## Inputs
 
@@ -66,16 +66,17 @@ Produce one durable Markdown feasibility study that remains useful to people and
 
 ## Package resources
 
-| Resource                                                                  | Use                                                                                                             |
-|---------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| [interchange-profile.md](references/interchange-profile.md)               | Read for authority, constrained YAML, identity, lifecycle, compatibility, and producer rules                    |
-| [standards-crosswalk.md](references/standards-crosswalk.md)               | Read for SpecIF, OSLC RM, PROV, and DCMI mappings and non-conformance boundaries                                |
-| [provenance.md](references/provenance.md)                                 | Read for source licensing, attribution, and profile independence                                                |
-| [feasibility-to-prd-handoff.md](references/feasibility-to-prd-handoff.md) | Read for the sibling handoff's emission trigger, field set, verdict presence rules, and regeneration obligation |
-| [feasibility-study.md](templates/feasibility-study.md)                    | Copy when starting a study                                                                                      |
-| [valid-study.md](examples/valid-study.md)                                 | Read as a valid profile fixture with revision, evidence, and dependency relations                               |
-| `assets/feasibility-study-interchange-1.0.0.schema.json`                  | Use as the local structural JSON Schema 2020-12 profile                                                         |
-| `scripts/validate_feasibility.py`                                         | Execute with `uv run python scripts/validate_feasibility.py <study.md>` before publishing a revision            |
+| Resource                                                                  | Use                                                                                                                                       |
+|---------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| [interchange-profile.md](references/interchange-profile.md)               | Read for authority, constrained YAML, identity, lifecycle, compatibility, and producer rules                                              |
+| [standards-crosswalk.md](references/standards-crosswalk.md)               | Read for SpecIF, OSLC RM, PROV, and DCMI mappings and non-conformance boundaries                                                          |
+| [provenance.md](references/provenance.md)                                 | Read for source licensing, attribution, and profile independence                                                                          |
+| [feasibility-to-prd-handoff.md](references/feasibility-to-prd-handoff.md) | Read for the sibling handoff's emission trigger, field set, verdict presence rules, and regeneration obligation                           |
+| [feasibility-study.md](templates/feasibility-study.md)                    | Copy when starting a study                                                                                                                |
+| [valid-study.md](examples/valid-study.md)                                 | Read as a valid profile fixture with revision, evidence, and dependency relations                                                         |
+| `assets/feasibility-study-interchange-1.0.0.schema.json`                  | Use as the local structural JSON Schema 2020-12 profile                                                                                   |
+| `assets/feasibility-to-prd-handoff.schema.json`                           | Use through the validator for handoff shape, verdict presence rules, and vocabulary                                                       |
+| `scripts/validate_feasibility.py`                                         | Execute with `uv run python scripts/validate_feasibility.py <study.md> [--handoff <handoff.yml>]` before publishing a revision or handoff |
 
 ## Attribution
 

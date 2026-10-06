@@ -2,7 +2,7 @@
 title: Jira Skill Security Model
 description: STRIDE threat model for the Jira skill covering API egress, Cloud and Data Center credentials, structured output, audit logging, and caller-process boundaries
 author: microsoft/hve-core
-ms.date: 2026-08-13
+ms.date: 2026-09-04
 ms.topic: reference
 estimated_reading_time: 10
 keywords:
@@ -15,17 +15,17 @@ keywords:
 <!-- markdownlint-disable-file -->
 # Jira Skill Security Model
 
-This document records the STRIDE threat model for the Jira skill (`scripts/jira.py`). The model is organized by trust bucket: CLI → Jira API (B1), Environment credentials (B2), and CLI caller process (B3). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
+This document records the STRIDE threat model for the Jira skill (`scripts/jira.py`). The model is organized by trust bucket: CLI → Jira API (B1), environment and local-file credentials (B2), and CLI caller process (B3). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
 
-The skill is a single-file, standard-library-only CLI. It performs no OAuth browser flow, runs no local listener, persists no tokens to disk, and spawns no subprocesses. Credentials are read from the process environment per invocation.
+The skill is a single-file, standard-library-only CLI. It performs no OAuth browser flow, runs no local listener, and spawns no subprocesses. Credentials are read from the process environment and may be loaded from an operator-managed local environment file without shell evaluation.
 
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
 
 ## Executive Summary
 
 The Jira skill is a single-file, standard-library-only REST CLI. It reads an
-expiring Cloud API token or Data Center PAT from the environment and persists no
-credentials. Scoped Cloud mode binds requests to the fixed Atlassian resource
+expiring Cloud API token or Data Center PAT from the environment or an
+operator-managed `~/.jira.env` file. Scoped Cloud mode binds requests to the fixed Atlassian resource
 origin; unscoped Cloud and Data Center retain validated configured origins.
 Mixed modes fail closed. The optional audit sink records normalized origin and
 auth mode and is operationally sensitive.
@@ -34,11 +34,11 @@ auth mode and is operationally sensitive.
 
 | Dimension          | Value                                                                     |
 |--------------------|---------------------------------------------------------------------------|
-| Runtime surface    | REST CLI (stdlib only); env credentials; no listener, no subprocess       |
-| Trust buckets      | B1 CLI→Jira API, B2 environment credentials, B3 CLI caller process        |
-| Credentials        | Expiring Cloud token or Data Center PAT from env; never persisted to disk |
+| Runtime surface    | REST CLI (stdlib only); env/file credentials; no listener, no subprocess  |
+| Trust buckets      | B1 CLI→Jira API, B2 environment/local-file credentials, B3 caller process |
+| Credentials        | Expiring Cloud token or Data Center PAT from env or protected local file  |
 | Network egress     | HTTPS to validated `JIRA_BASE_URL` or fixed `https://api.atlassian.com`   |
-| Open residual gaps | 6 (EoP-Med: skill cannot revoke a leaked token)                           |
+| Open residual gaps | 7 (includes Windows credential-file ACL reliance)                         |
 
 ## Contents
 
@@ -47,7 +47,7 @@ auth mode and is operationally sensitive.
 * [Assets](#assets)
 * [Adversaries](#adversaries)
 * [Bucket B1: CLI → Jira API](#bucket-b1-cli--jira-api)
-* [Bucket B2: Environment credentials](#bucket-b2-environment-credentials)
+* [Bucket B2: Environment and local-file credentials](#bucket-b2-environment-and-local-file-credentials)
 * [Bucket B3: CLI caller process](#bucket-b3-cli-caller-process)
 * [Enterprise Readiness Gaps](#enterprise-readiness-gaps)
 * [References](#references)
@@ -66,6 +66,7 @@ flowchart TD
     subgraph HOST["Operator Workstation / Runner (trust zone)"]
         CLI["jira.py CLI"]
         ENVCRED["Cloud token / PAT / base URL<br/>Cloud mode + Cloud ID (env)"]
+        ENVFILE["Operator-managed ~/.jira.env<br/>literal assignments"]
         OUT["JSON output / audit log"]
     end
     subgraph JIRA["Jira Instance (network boundary)"]
@@ -74,6 +75,7 @@ flowchart TD
     subgraph ATLASSIAN["Atlassian Resource API (network boundary)"]
         SCOPED["Scoped Jira Cloud REST API"]
     end
+    ENVFILE -->|"bounded local file read"| CLI
     CLI -->|"reads per invocation"| ENVCRED
     CLI -->|"Bearer/Basic request (TLS, no-redirect)"| API
     CLI -->|"Scoped Basic request (TLS, no-redirect)"| SCOPED
@@ -89,8 +91,8 @@ flowchart TD
 ┌───────────────────────────────────────────────┐
 │ TRUST BOUNDARY: Operator Workstation / Runner             │
 │  ┌─────────┐   ┌─────────────┐   ┌───────────┐  │
-│  │ jira CLI │   │ Env creds   │   │ JSON/audit │  │
-│  │         │   │ (PAT/Basic) │   │ output     │  │
+│  │ jira CLI │   │ Env/file    │   │ JSON/audit │  │
+│  │         │   │ credentials │   │ output     │  │
 │  └─────────┘   └─────────────┘   └───────────┘  │
 └────────────────────────┬─────────────────────┘
                           │ HTTPS (TLS, no-redirect)
@@ -106,20 +108,21 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary                      | Assets Protected                         | Controls Enforced                                                                 |
-|-------------------------------|------------------------------------------|-----------------------------------------------------------------------------------|
-| Operator Workstation / Runner | API token, output                        | Per-invocation env resolution (no persistence); redaction; write-confirm gate     |
-| Jira Instance                 | Request/response integrity, bearer token | TLS (system trust store); `_NoRedirect`; origin-only base URL; capped JSON parser |
-| Atlassian Resource API        | Scoped token, Cloud request integrity    | Fixed HTTPS origin; single-segment Cloud ID; `_NoRedirect`; capped JSON parser    |
+| Boundary                      | Assets Protected                         | Controls Enforced                                                                                               |
+|-------------------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| Operator Workstation / Runner | API token, environment file, output      | In-process literal parsing; POSIX owner/mode checks; non-blocking no-follow open; redaction; write-confirm gate |
+| Jira Instance                 | Request/response integrity, bearer token | TLS (system trust store); `_NoRedirect`; origin-only base URL; capped JSON parser                               |
+| Atlassian Resource API        | Scoped token, Cloud request integrity    | Fixed HTTPS origin; single-segment Cloud ID; `_NoRedirect`; capped JSON parser                                  |
 
 ## Assets
 
-| Id | Asset                                   | Lifetime         | Notes                                                                                                                                          |
-|----|-----------------------------------------|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| A1 | Jira API token / PAT                    | Operator-managed | Read from `JIRA_API_TOKEN` / PAT env at invocation. Sent as Bearer (Server/DC) or HTTP Basic (`email:token` base64, Cloud) in `Authorization`. |
-| A2 | Jira destination configuration          | Operator-managed | Scoped Cloud uses the fixed Atlassian resource origin; other modes use validated `JIRA_BASE_URL`.                                              |
-| A3 | Request/response bodies, issue payloads | Command lifetime | Server responses may include issue text, comments, and field data authored by other users; downstream automation must treat as untrusted.      |
-| A4 | Diagnostic / audit output               | Command lifetime | stderr diagnostics and the optional audit log; must never contain unredacted secrets.                                                          |
+| Id | Asset                                   | Lifetime         | Notes                                                                                                                                               |
+|----|-----------------------------------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| A1 | Jira API token / PAT                    | Operator-managed | Read from `JIRA_API_TOKEN` / PAT env at invocation. Sent as Bearer (Server/DC) or HTTP Basic (`email:token` base64, Cloud) in `Authorization`.      |
+| A2 | Jira destination configuration          | Operator-managed | Scoped Cloud uses the fixed Atlassian resource origin; other modes use validated `JIRA_BASE_URL`.                                                   |
+| A3 | Request/response bodies, issue payloads | Command lifetime | Server responses may include issue text, comments, and field data authored by other users; downstream automation must treat as untrusted.           |
+| A4 | Diagnostic / audit output               | Command lifetime | stderr diagnostics and the optional audit log; must never contain unredacted secrets.                                                               |
+| A5 | Local Jira environment file             | Operator-managed | Optional `~/.jira.env` containing supported assignments; read as data without shell evaluation. On Windows, ACL enforcement remains operator-owned. |
 
 ## Adversaries
 
@@ -129,6 +132,7 @@ flowchart TD
 | ADV-b | Network attacker on the CLI ↔ Jira channel            | TLS with stdlib certificate validation; HTTP redirects refused (`_NoRedirect`); HTTPS required for non-loopback hosts; capped, content-type-checked response parser. |
 | ADV-c | Hostile or malformed Jira server / response           | No-redirect opener; response size cap (`MAX_BODY_BYTES`); JSON content-type fail-closed; error bodies parsed-then-redacted before display.                           |
 | ADV-d | Hostile caller process controlling argv / stdin / env | Inputs validated and URL-encoded; `JIRA_BASE_URL` canonicalized to origin-only; Basic-auth components ASCII-validated; stdin/JSON size-capped before parse.          |
+| ADV-e | Different local user or substituted file path         | POSIX current-user ownership and mode checks; no-follow, non-blocking descriptor open; regular-file validation. Windows relies on user-only ACLs.                    |
 
 ## Bucket B1: CLI → Jira API
 
@@ -178,7 +182,7 @@ target validated `JIRA_BASE_URL`.
 
 ### TLS posture
 
-The skill performs every Jira call through the stdlib opener with no custom `SSLContext`, CA-bundle flag, or certificate pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; custom internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (recorded as G-TLS-1). HTTPS is required for non-loopback hosts; plaintext `http://` is refused even when `JIRA_ALLOW_INSECURE=1` is set. The bypass is limited to loopback hosts only. Write operations such as `create`, `update`, `transition`, and `comment` now require explicit confirmation via `--confirm`/`--yes` or `JIRA_CONFIRM_WRITES=1` before dispatch.
+The skill performs every Jira call through the stdlib opener with no custom `SSLContext`, CA-bundle flag, or certificate pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; custom internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (recorded as G-TLS-1). HTTPS is required for non-loopback hosts; plaintext `http://` is refused even when `JIRA_ALLOW_INSECURE=1` is set. The bypass is limited to loopback hosts only. Write operations such as `create`, `update`, `transition`, and `comment` require explicit confirmation via `--confirm`/`--yes` or inherited `JIRA_CONFIRM_WRITES=1` before the credential file is read or a request is dispatched.
 
 ### Risk Rating
 
@@ -189,9 +193,9 @@ The skill performs every Jira call through the stdlib opener with no custom `SSL
 | Unconfirmed write operation             | Low        | Med    | Low           | Mitigated (confirm gate)        |
 | Oversized-response memory exhaustion    | Low        | Low    | Low           | Mitigated (body cap + timeout)  |
 
-## Bucket B2: Environment credentials
+## Bucket B2: Environment and local-file credentials
 
-Credentials and the instance origin are read from the process environment per invocation (`JiraClient.from_environment`). Nothing is persisted to disk.
+Credentials and the instance origin are read from the process environment per invocation (`JiraClient.from_environment`). Before client construction, the CLI may load absent supported Jira variables from the operator-managed `~/.jira.env` file. The parser reads assignments in-process without shell evaluation, preserves inherited variables, and never logs loaded values.
 
 ### Spoofing
 
@@ -199,6 +203,9 @@ Credentials and the instance origin are read from the process environment per in
 
 ### Tampering
 
+* The optional environment file must be a regular non-symlink file. On platforms with POSIX permission bits, group or other access is rejected before reading.
+* On POSIX, the opened file must be owned by the current user. The descriptor is opened with no-follow and non-blocking flags where supported, then checked as a regular file before reading.
+* The environment parser accepts assignments as literal data, limits file size, rejects malformed or unterminated assignments, and ignores keys outside the supported Jira variable set.
 * `JIRA_BASE_URL` is rejected when it contains control characters, embedded userinfo, a query, a fragment, or a non-root path — it is reduced to an origin-only URL before any request is built.
 * Cloud mode must be `unscoped` or `scoped`; scoped mode requires a validated single-segment Cloud ID, and PAT/Cloud credential conflicts fail before authorization-header construction.
 * The HTTP Basic credential is constructed from validated components and the resulting header is ASCII-only, preventing header injection via newline- or control-bearing email/token values.
@@ -209,12 +216,12 @@ Credentials and the instance origin are read from the process environment per in
 
 ### Information Disclosure
 
-* Tokens are never written to disk and never logged. The Basic-auth base64 value is used only to build the `Authorization` header.
+* The CLI never writes tokens to disk or logs values loaded from the operator-managed environment file. The Basic-auth base64 value is used only to build the `Authorization` header.
 * Audit records exclude the Cloud ID, request path, query, and credential material.
 
 ### Denial of Service
 
-* Not applicable; credential resolution is a bounded, in-process step.
+* The environment file is size-capped. Non-blocking open prevents a substituted FIFO from waiting for a writer on platforms that support the flag.
 
 ### Elevation of Privilege
 
@@ -222,10 +229,11 @@ Credentials and the instance origin are read from the process environment per in
 
 ### Risk Rating
 
-| Threat                                          | Likelihood | Impact | Residual Risk | Status                       |
-|-------------------------------------------------|------------|--------|---------------|------------------------------|
-| Header injection via credential components      | Low        | Med    | Low           | Mitigated (ASCII validation) |
-| Base-URL host impersonation (embedded userinfo) | Low        | Med    | Low           | Mitigated (origin-only)      |
+| Threat                                          | Likelihood | Impact | Residual Risk                | Status                                                 |
+|-------------------------------------------------|------------|--------|------------------------------|--------------------------------------------------------|
+| Header injection via credential components      | Low        | Med    | Low                          | Mitigated (ASCII validation)                           |
+| Base-URL host impersonation (embedded userinfo) | Low        | Med    | Low                          | Mitigated (origin-only)                                |
+| Different-owner or non-regular credential file  | Low        | High   | Low on POSIX; Med on Windows | Mitigated on POSIX; operator-controlled ACL on Windows |
 
 ## Bucket B3: CLI caller process
 
@@ -279,6 +287,7 @@ The following are known limitations recorded so operators can make informed depl
 | G-EOP-1 | The skill cannot revoke a leaked expiring Cloud API token or Data Center PAT; revocation is performed at Atlassian or the Jira instance.                                                   | EoP-Med         | Upstream control; rotate or revoke at the provider on suspicion of compromise.                              |
 | G-SUP-1 | The skill's Python dependencies are declared in `pyproject.toml` but transitive hashes are not pinned and no SBOM is published for the skill; transport/URL/auth fuzz coverage is partial. | SupplyChain-Med | Tracked at the repository level.                                                                            |
 | G-TLS-1 | No certificate pinning for the Jira origin; TLS validation depends entirely on the system trust store.                                                                                     | InfoDisc-Low    | Operator-acceptable for a managed Jira endpoint; documented for customers whose policy mandates pinning.    |
+| G-TAM-1 | Windows does not expose POSIX ownership and mode checks through this loader, so credential-file access control depends on operator-managed user-only ACLs.                                 | Tampering-Med   | Platform residual; keep the file under the user profile and restrict its ACL to that user.                  |
 
 For an active issue tracker entry covering these gaps, see [microsoft/hve-core#2225](https://github.com/microsoft/hve-core/issues/2225).
 

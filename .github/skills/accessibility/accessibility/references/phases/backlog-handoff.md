@@ -134,11 +134,11 @@ Tags apply to work items in both ADO and GitHub for filtering, dashboards, and c
 
 ## Target System Selection
 
-Target system selection (ADO, GitHub, both) follows the canonical convention in `.github/skills/shared/backlog-templates/SKILL.md` under the Overview's Output Targets table. Accessibility emits the neutral intermediate to `.copilot-tracking/accessibility/{slug}/backlog-handoff.md`; platform-specific files derive per the skill's Per-Platform Field Mappings.
+Target system selection (ADO, GitHub, both) follows the canonical convention in the `backlog-templates` skill under the Overview's Output Targets table. Accessibility emits the neutral intermediate to `.copilot-tracking/accessibility/{slug}/backlog-handoff.md`; platform-specific files derive per the skill's Per-Platform Field Mappings.
 
 ## Dual-Format Backlog Templates
 
-Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, title prefix, and temporary-ID conventions defined in `.github/skills/shared/backlog-templates/SKILL.md`. Read the accessibility entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. Accessibility tag and label vocabulary lives in `## Accessibility Tags` above.
+Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, title prefix, and temporary-ID conventions defined in the `backlog-templates` skill. Read the accessibility entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. Accessibility tag and label vocabulary lives in `## Accessibility Tags` above.
 
 ## Severity-to-Field Mapping
 
@@ -155,7 +155,7 @@ When the seed framework is `coga` and `riskClassification.tier = comprehensive`,
 
 ## Autonomy-Tier Routing
 
-The three-tier autonomy model is defined canonically in `.github/skills/shared/backlog-templates/SKILL.md` under `Autonomy-Tier Enumeration`. Accessibility uses the canonical vocabulary directly: `manual`, `supervised`, and `autonomous` (matching the seed-schema `autonomyTier` enum). Accessibility-specific severity-to-tier routing: seed `severity = critical` or seed references an open tradeoff routes to `manual`; seed `severity in (major, minor)` routes to `supervised`; seed `severity = enhancement` with `evidence.status = verified` routes to `autonomous`. The default tier on first use is `supervised`. Persist the user's response under `userPreferences.autonomyTier`.
+The three-tier autonomy model is defined canonically in the `backlog-templates` skill under `Autonomy-Tier Enumeration`. Accessibility uses the canonical vocabulary directly: `manual`, `supervised`, and `autonomous` (matching the seed-schema `autonomyTier` enum). Accessibility-specific severity-to-tier routing: seed `severity = critical` or seed references an open tradeoff routes to `manual`; seed `severity in (major, minor)` routes to `supervised`; seed `severity = enhancement` with `evidence.status = verified` routes to `autonomous`. The default tier on first use is `supervised`. Persist the user's response under `userPreferences.autonomyTier`.
 
 ## Suggested Priority Derivation
 
@@ -219,7 +219,7 @@ The SSSC Planner pulls these work items into its supply chain evidence inventory
 
 ## Content Sanitization Protocol
 
-Content sanitization follows the five-rule protocol in `.github/skills/shared/backlog-templates/SKILL.md` under `Content Sanitization Protocol`. Accessibility-specific standards identifiers that must be preserved verbatim per rule 4: WCAG criterion IDs (for example, `1.1.1`, `1.3.5`, `2.4.7`), WCAG levels (`A`, `AA`, `AAA`), Section 508 chapter and clause IDs, EN 301 549 clause numbers, and EAA article references. Debug-mode output remains under `.copilot-tracking/accessibility/{slug}/debug/`.
+Content sanitization follows the five-rule protocol in the `backlog-templates` skill under `Content Sanitization Protocol`. Accessibility-specific standards identifiers that must be preserved verbatim per rule 4: WCAG criterion IDs (for example, `1.1.1`, `1.3.5`, `2.4.7`), WCAG levels (`A`, `AA`, `AAA`), Section 508 chapter and clause IDs, EN 301 549 clause numbers, and EAA article references. Debug-mode output remains under `.copilot-tracking/accessibility/{slug}/debug/`.
 
 ## Handoff Summary Format
 

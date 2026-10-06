@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-07-28
+ms.date: 2026-10-03
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -36,6 +36,8 @@ The `skill-hygiene` suite is the only entry that uses `vally lint` instead of `v
 
 The `agent-conformance` suites are the only entries that use `turns` stimuli and a model-judge (`type: prompt`) grader. Each suite carries one `eval.yaml` per agent, keyed to a `category: agent-conformance-<agent>` tag with a matching entry in `.vally.yaml`.
 
+Vally runs each trial in a temporary workspace that does not contain the repository tree. A conformance suite must therefore declare a suite-level `agent_environment` that stages its agent at the path turn 0 launches, along with the instruction files and skills that agent delegates to. Without it, the launch read fails and the judge grades general model knowledge rather than the agent. [`agent-conformance/rai-planner/eval.yaml`](agent-conformance/rai-planner/eval.yaml) shows the pattern.
+
 `scoring.weights` makes the judge the deciding grader; `wall-time` and `output-contains` are advisory budgets that cannot pass a stimulus on their own. These suites run from `.github/workflows/agent-conformance.yml`, which `weekly-validation.yml` invokes; they are not part of the PR changed-artifact lane.
 
 ## Running Evals
@@ -55,9 +57,36 @@ npm run ci:eval:run:skills
 npm run ci:eval:run:scripts
 npm run ci:eval:run:conformance
 
-# Compare results against baseline
-npm run ci:eval:compare
+# Compare a customized agent against the empty baseline
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop
 ```
+
+## Execution Evidence
+
+Ordinary producer summaries expose a versioned `diagnostics` object per spec run.
+It includes configured scenario and grader identities, every outer attempt,
+hashed native trial IDs, trial indices, scores, execution and grader statuses,
+trajectory end reason, configured/observed/response turn counts, per-trial wall
+time, per-stimulus means, declared models, installed Vally versions, checkout
+identity, and input/selection digests. Raw responses, grader rationale, tool
+arguments, environment values and absolute paths are excluded from this projection.
+
+`thresholdPassed` follows the suite's existing score rule; `allGradersPassed`
+reports a distinct per-trial result. A passing mean or trial can still contain a
+failed required check. These fields do not replace suite thresholds or advisory
+classification. Ordinary execution uses `gpt-6-luna`; the separate baseline
+equivalence lane retains its own declared models.
+
+The selected attempt remains the one with the fewest trials lacking a grade, keeping
+the first on ties. All attempts remain visible. `integrity-failure` blocks a
+producer independently of advisory behavior when selected evidence is missing,
+duplicated, malformed, lacks usable grades or contains grader errors. Fan-in checks the
+contract, ownership, configured populations and aggregate arithmetic rather than
+treating absent diagnostics as success. Legitimate empty producers and the
+separate baseline schema retain their existing meanings.
+
+Input digests cover the checkout's tracked evaluation artifacts and those not ignored,
+fixtures, scripts and root lockfile. They identify inputs, not agent behavior.
 
 ## Adding New Evals
 

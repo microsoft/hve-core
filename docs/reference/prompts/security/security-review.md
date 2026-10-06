@@ -3,7 +3,7 @@ title: security-review
 description: Run an OWASP vulnerability assessment against the current codebase
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Run an OWASP vulnerability assessment against the current codebase
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt for a profile-driven security assessment when the applicable OWASP or security skill is not already known. Use a fixed fast-path prompt for a web, LLM, or Secure by Design assessment with a confirmed scope.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Optionally provide `scope`, assessment `mode`, a target skill, or an existing plan. The prompt profiles the codebase, runs applicable assessments, and produces findings that require qualified security review before remediation or closure decisions.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/security-review scope=src mode=audit targetSkill=owasp-top-10
+```
+
+The prompt assesses the sample source boundary and generates an evidence-backed draft report for security review.

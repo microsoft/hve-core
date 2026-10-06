@@ -3,7 +3,7 @@ title: risk-register
 description: Create a qualitative risk register using a Probability × Impact (P×I) matrix
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Create a qualitative risk register using a Probability × Impact (P×I) matrix
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to create a qualitative project risk register using probability and impact. Use quantitative risk analysis when monetary exposure, distributions, or statistically supported forecasts are required.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-name` and optionally a `focus-area`. Review the proposed risks, scores, owners, and mitigations with qualified stakeholders; generated ratings are draft inputs, not risk acceptance decisions.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/risk-register project-name="sample checkout service" focus-area="availability"
+```
+
+The prompt drafts an availability-focused risk register for stakeholder review.

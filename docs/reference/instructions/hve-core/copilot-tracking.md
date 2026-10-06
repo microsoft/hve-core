@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Copilot Tracking
 description: "Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence"
-sidebar_position: 2
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-29
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                                                                                                                                                                                                                                                                                    |
-|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                                                                                                                                                                                                                                                                                              |
-| Source      | `.github/instructions/hve-core/copilot-tracking.instructions.md`                                                                                                                                                                                                                                                                                         |
-| Invocation  | Applied automatically to `.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/sandbox/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**, .copilot-tracking/proposal-responses/**` |
-| Interactive | No                                                                                                                                                                                                                                                                                                                                                       |
+| Field       | Value                                                                                                                                                                                                                                                                                                                         |
+|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                                                                                                                                                                   |
+| Source      | `.github/instructions/hve-core/copilot-tracking.instructions.md`                                                                                                                                                                                                                                                              |
+| Invocation  | Applied automatically to `.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/challenges/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**, .copilot-tracking/proposal-responses/**` |
+| Interactive | No                                                                                                                                                                                                                                                                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

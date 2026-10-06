@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-08-27
+ms.date: 2026-10-04
 ms.topic: reference
 keywords:
   - powershell
@@ -107,7 +107,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 
 ##### Parameters
 
-* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch
+* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch, or every workflow file when `.github/actionlint.yaml` changed
 * `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
 * `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
 
@@ -129,7 +129,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 * Workflow: `.github/workflows/yaml-lint.yml`
 * Configuration: `.github/actionlint.yaml`
 * Artifacts: `yaml-lint-results` (JSON)
-* Exit Code: Non-zero if violations found
+* Exit Code: Non-zero if violations are found or actionlint itself fails (invalid options or an unreadable configuration)
 
 ### Markdown Validation
 
@@ -237,6 +237,7 @@ Purpose: Detect broken links before deployment.
 * Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
 * Validates internal links repository-wide, because renaming or deleting a target breaks references in files the change never touched
 * Restricts external-link fetching to files changed against a base branch with `-ChangedFilesOnly` and `-BaseBranch`; external links in unchanged files are reported as skipped
+* Supports `-ExternalLinksAsWarnings` so external findings remain visible without weakening internal-link failures
 * Fetches each unique external URL once, no matter how many files reference it
 * Checks files concurrently, bounded by `-ThrottleLimit` (default 8)
 * Configurable via `markdown-link-check.config.json`
@@ -258,9 +259,9 @@ Purpose: Detect broken links before deployment.
 * Workflow: `.github/workflows/markdown-link-check.yml`
 * Configuration: `markdown-link-check.config.json`
 * Artifacts: `markdown-link-check-results` (JSON)
-* Annotations: Error for each broken link
-* Exit Code: Non-zero if broken links found
-* Scope: pull request validation always checks internal links repository-wide and limits external-link fetching to changed files; `weekly-validation.yml` fetches external links across the full repository
+* Annotations: Errors for blocking findings; warnings for external findings when `-ExternalLinksAsWarnings` is active
+* Exit Code: Non-zero for any finding by default, or only for internal and source-report failures with `-ExternalLinksAsWarnings`
+* Scope: pull request validation hard-gates internal links repository-wide, reports external findings from changed files as advisory, and `weekly-validation.yml` fetches external links across the full repository
 
 ### ADR Consistency Validation
 
@@ -320,8 +321,9 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 * Validates Python skills with `tests/` include `tests/fuzz_harness.py` for Scorecard compliance
 * Warns when a Python skill has `pyproject.toml` without a committed `uv.lock` (required for Dependabot uv ecosystem coverage)
 * When `SECURITY.md` is present, validates the canonical per-skill security-model headings: trust buckets at H2 and STRIDE categories plus Risk Rating at H3
+* Requires every skill that ships non-test scripts to have a `SECURITY.md` or an exempt or pending entry in `scripts/linting/skill-security-classification.json`, and rejects entries that name a missing skill or a skill that already has a model
 * Warns on unrecognized directories
-* Supports changed-files-only mode via Git
+* Supports changed-files-only mode via Git; the skill security classification coverage check still runs across every skill so a classification change cannot pass unchecked
 * Creates CI annotations for violations
 * Exports JSON results to `logs/skill-validation-results.json`
 
@@ -329,8 +331,9 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 
 * `-SkillsPath` (string) - Root path containing skill directories (default: `.github/skills`)
 * `-WarningsAsErrors` (switch) - Treat warnings as errors
-* `-ChangedFilesOnly` (switch) - Validate only skills with changed files
+* `-ChangedFilesOnly` (switch) - Validate only skills with changed files, plus repository-wide skill security classification coverage
 * `-BaseBranch` (string) - Git reference for changed file detection (default: `origin/main`)
+* `-SecurityClassificationPath` (string) - Skill security classification file (default: `scripts/linting/skill-security-classification.json`)
 
 ##### Usage
 
@@ -450,16 +453,20 @@ Purpose: Flag documentation files whose `ms.date` exceeds a configurable stalene
 
 #### `Invoke-PythonLint.ps1`
 
-Lints Python skills using ruff.
+Lints and format-checks Python skills using ruff.
 
 Purpose: Enforce Python code quality standards across all Python skills in the repository by dynamically discovering and linting each skill.
 
 ##### Features
 
-* Discovers Python skills via `pyproject.toml` file search
-* Verifies ruff availability before running
+* Discovers lint-eligible Python projects via `pyproject.toml`, excluding generated `plugins/` output, dependency trees, and the heavyweight `scripts/evals/moderation` project
+* Resolves ruff per project: a project committing `uv.lock` must already provide a ruff binary matching the locked version, preferring its own `.venv` over a global install
+* Fails a project before running ruff when no exact-version binary is present, reporting the required version and `uv sync --locked` as the setup action; it never installs or synchronizes dependencies
+* Intentionally verifies existing environments while `Invoke-PythonTests.ps1` provisions before testing; devcontainer and coding-agent setup synchronize all lint-eligible locked projects, including `.github/hooks/shared/telemetry`
+* Falls back to the project `.venv` ruff and then a global ruff, without a version guarantee, for projects that have no `uv.lock`
+* Default mode runs `ruff check` followed by the non-mutating `ruff format --check`, always running both so a lint failure cannot hide a formatting failure
 * Lints each skill directory independently
-* Reports per-skill pass/fail results
+* Reports per-skill pass/fail results with separate lint and format exit codes
 * Supports optional JSON output
 * `-Fix` mode applies `ruff check --fix` followed by `ruff format`; writes results to `python-lint-fix-results.json` instead of `python-lint-results.json`
 
@@ -467,12 +474,12 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 * `-RepoRoot` (string) - Repository root path (default: current directory)
 * `-OutputPath` (string) - Optional path for JSON results
-* `-Fix` (switch) - Applies `ruff check --fix` + `ruff format` to each skill directory; intended for local developer use, not CI gating
+* `-Fix` (switch) - Applies `ruff check --fix` + `ruff format` to each skill directory using the same locked ruff version as the default mode; intended for local developer use, not CI gating
 
 ##### Usage
 
 ```powershell
-# Lint all Python skills
+# Lint and format-check all Python skills
 ./scripts/linting/Invoke-PythonLint.ps1
 
 # Lint from a specific repository root
@@ -527,16 +534,17 @@ Purpose: Execute Python test suites for all Python skills that include a `tests/
 
 The linting directory also contains these scripts that are not covered in the earlier sections. Entries with a dedicated subsection below are documented in full; the rest are summarized here only:
 
-| Script                             | Purpose                                                                                              |
-|------------------------------------|------------------------------------------------------------------------------------------------------|
-| `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                   |
-| `Validate-HookManifests.ps1`       | Validate package-scoped hook manifests under `.github/hooks/`                                        |
-| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                         |
-| `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                        |
-| `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows |
-| `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                      |
-| `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                    |
-| `Validate-AssetDocs.ps1`           | Validate asset documentation coverage, orphans, sync, structure, and authored completeness           |
+| Script                             | Purpose                                                                                                                                                               |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                                                                                    |
+| `Validate-HookManifests.ps1`       | Validate package-scoped hook manifests under `.github/hooks/`                                                                                                         |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                                                                                          |
+| `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                                                                                         |
+| `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows                                                                  |
+| `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                                                                                       |
+| `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                                                                                     |
+| `Validate-AssetDocs.ps1`           | Validate asset documentation coverage, orphans, sync, structure, and authored completeness                                                                            |
+| `Test-AgentColdStartBudget.ps1`    | Enforce cold-start byte budgets (agent file, recursive `#file:` imports, and always-on instructions) for the planning-chain agents in `agent-cold-start-budgets.json` |
 
 #### `Validate-AssetDocs.ps1`
 
@@ -545,24 +553,27 @@ GenAI asset (agent, prompt, instruction, skill) against the `docs/reference` tre
 It runs five checks and writes a JSON summary, exiting non-zero when any
 error-level finding is present:
 
-| Check     | Behavior                                                                                                                                      |
-|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| Coverage  | Every asset has a docs page; an error under `-FailOnMissing`, otherwise a warning                                                             |
-| Orphans   | Every `docs/reference` page maps to an existing asset                                                                                         |
-| Sync      | Generated regions match a fresh render; reported under `-CheckSync`                                                                           |
-| Structure | Required H2 sections and generated-region markers are present                                                                                 |
-| Authored  | Applicable human sections differ from stubs; a Required stub is an error for kinds selected by `-RequireAuthoredContent`, otherwise a warning |
+| Check     | Behavior                                                                                                |
+|-----------|---------------------------------------------------------------------------------------------------------|
+| Coverage  | Every asset has a docs page; an error under `-FailOnMissing`, otherwise a warning                       |
+| Orphans   | Every `docs/reference` page maps to an existing asset                                                   |
+| Sync      | Generated regions match a fresh render; reported under `-CheckSync`                                     |
+| Structure | Required H2 sections and generated-region markers are present                                           |
+| Authored  | Required human-section stub sentinels are errors for every kind; Optional-section stubs remain warnings |
 
 Reference index pages (`README.md`) are excluded from the coverage, sync,
 structure, and authored checks and are never treated as orphans. The
-`How to use it` section is required only for interactive assets.
+`How to use it` section is required only for interactive agents and prompts.
+Skills require `When to use it` and `Example usage`; `How to use it` is not
+applicable. All four kinds enforce Required authored stubs without an opt-in
+selector. Optional instruction examples remain advisory. Authored detection uses
+the stub sentinel only, not blank-body or prose-quality analysis.
 
 ##### Parameters
 
 * `-RepoRoot` - Repository root (default: the git top level)
 * `-FailOnMissing` (switch) - Treat missing documentation pages as errors
 * `-CheckSync` (switch) - Compare generated regions against a fresh render and report drift as errors
-* `-RequireAuthoredContent` (string array) - Treat Required-section stubs as errors for selected `agent`, `prompt`, `instruction`, or `skill` kinds; separate multiple command-line values with commas
 * `-ChangedFilesOnly` (switch) - Validate only assets and pages affected by changed files
 * `-BaseBranch` - Git reference for changed-file detection (default: `origin/main`)
 * `-OutputPath` - JSON results path (default: `logs/asset-docs-validation-results.json`)
@@ -570,17 +581,11 @@ structure, and authored checks and are never treated as orphans. The
 ##### Usage
 
 ```powershell
-# Warning-level report
+# Enforce Required authored content; missing coverage remains advisory
 ./scripts/linting/Validate-AssetDocs.ps1
 
 # Enforce coverage and generated-region sync
 ./scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync
-
-# Also enforce Required instruction guidance
-./scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync -RequireAuthoredContent instruction
-
-# Select multiple kinds in one direct command-line value
-./scripts/linting/Validate-AssetDocs.ps1 -RequireAuthoredContent instruction,prompt
 ```
 
 ##### GitHub Actions Integration
@@ -712,8 +717,9 @@ blockquote markers, so line wrapping does not affect matching.
 ##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/ai-artifact-validation.yml`
-* Artifacts: `ai-artifact-results` (JSON)
-* npm script: `npm run lint:ai-artifacts`
+* Validation: footer and disclaimer validation plus artifact path portability run independently before one blocking result gate
+* Artifacts: `ai-artifact-results` (contains `ai-artifact-results.json` and `artifact-path-portability-results.json`)
+* npm scripts: `npm run lint:ai-artifacts` and `npm run lint:artifact-portability`
 * Exit Code: Non-zero when `-FailOnMissing` is set and issues are found
 
 ## npm Scripts
@@ -721,7 +727,9 @@ blockquote markers, so line wrapping does not affect matching.
 | npm Script                       | Description                                                                                                                                                                              |
 |----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                            |
-| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync -RequireAuthoredContent instruction` to enforce asset docs and Required instruction guidance |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                    |
+| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                     |
+| `lint:cold-start`                | Run `pwsh -NoProfile -File scripts/linting/Test-AgentColdStartBudget.ps1` to enforce planning-chain cold-start byte budgets; the Pester suite enforces the same budgets in pull requests |
 | `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                   |
 | `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                 |
 

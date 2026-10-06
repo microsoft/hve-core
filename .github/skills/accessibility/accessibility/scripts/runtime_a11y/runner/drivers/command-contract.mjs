@@ -29,6 +29,21 @@ export const ALLOWLISTED_PERFORM_VALUES = new Set([
   'toggleBetweenBrowseAndFocusMode',
   'moveToNextFormField',
   'performDefaultActionForItem',
+  'moveToPreviousColumn',
+  'moveToNextColumn',
+  'moveToPreviousRow',
+  'moveToNextRow',
+]);
+
+export const ALLOWLISTED_NAVIGATE_VALUES = new Set([
+  'previous',
+  'next',
+  'previousHeading',
+  'nextHeading',
+  'previousLink',
+  'nextLink',
+  'previousLandmark',
+  'nextLandmark',
 ]);
 
 // Printable characters only: no C0 or C1 control characters, no line breaks.
@@ -43,6 +58,15 @@ export function validateScreenReaderCommand(command) {
     return typeof command.value === 'string' && command.value.trim() !== ''
       ? null
       : 'Command entries require a non-empty string value.';
+  }
+
+  if (command.kind === 'navigate') {
+    if (typeof command.value !== 'string' || command.value.trim() === '') {
+      return 'Navigate entries require a non-empty string value.';
+    }
+    return ALLOWLISTED_NAVIGATE_VALUES.has(command.value)
+      ? null
+      : `Unsupported navigate value: ${command.value}`;
   }
 
   if (command.kind === 'key' || command.kind === 'keyboard') {

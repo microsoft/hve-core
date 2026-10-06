@@ -28,10 +28,8 @@ Discovers runtime surfaces and interaction states from a codebase profile, then 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+An accessibility workflow dispatches this worker to translate a codebase profile into routes, surfaces, and interaction states for runtime probes. It produces a reviewable runtime configuration rather than a conformance verdict. Its discovered scope still needs human review where routes or states cannot be inferred reliably.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a UI profile, route focus, and configuration output path for a booking application. The worker emits `a11y-runtime.config.json` with supported serve settings and probe scope, then returns a surface/state summary and open questions. Success means downstream probes have an explicit target set; undiscovered or unreachable states are not counted as tested.

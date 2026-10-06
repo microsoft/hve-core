@@ -1,0 +1,46 @@
+project:
+  name: "Synthetic Agent Lifecycle"
+  slug: "synthetic-agent-lifecycle"
+  created: "2026-09-09"
+  initial_request: "Exercise contained coaching continuity without external destinations."
+  initial_classification: "frozen"
+
+current:
+  method: 5
+  space: "solution"
+  phase: "concept evaluation"
+  disclaimerShownAt: "2026-09-09T00:00:00Z"
+
+methods_completed:
+  - 1
+  - 2
+  - 3
+  - 4
+
+transition_log:
+  - from_method: 4
+    to_method: 5
+    rationale: "Synthetic concepts were ready for evaluation."
+    date: "2026-09-10"
+
+hint_calibration:
+  level: 2
+  pattern_notes: "The synthetic team benefits from contextual focus."
+
+session_log:
+  - date: "2026-09-10"
+    method: 5
+    summary: "The team declined all external board destinations and requested a backward transition to Method 3."
+
+artifacts:
+  - path: ".copilot-tracking/dt/synthetic-agent-lifecycle/method-05-concept-evidence.md"
+    method: 5
+    type: "concept-evidence"
+
+synthetic_extension:
+  board_intent: "declined"
+  evidence_labels:
+    - "observed"
+    - "simulated"
+    - "conflicting"
+  preserve_on_update: true

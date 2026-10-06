@@ -1,0 +1,44 @@
+<!-- markdownlint-disable-file -->
+# UX Artifact: Renewal review
+
+## Artifact Context
+
+* Project: synthetic-renewal-lab
+* Subject: renewal-review
+* Mode: map-journey
+* Status: partial
+* Sources: synthetic in-context evidence only
+
+## Observed
+
+* OBS-01: The staged form has three required fields.
+
+## Reported
+
+* REP-01: A fictional support analyst reports uncertainty about confirmation.
+
+## Assumed
+
+* ASM-01: A summary step may reduce uncertainty; observation is required.
+
+## Unresolved
+
+* UNR-01: The unavailable-record recovery path has no product decision.
+
+## Journey
+
+* Review: The fictional user inspects the staged renewal fields.
+* Confirm: The confirmation behavior remains unresolved.
+
+## Destination Intent
+
+* Figma: Missing destination kind, target, and intended change. No write is authorized.
+* Mural: Extractor mode was named, but the board target and publication consent are missing. No write is authorized.
+* Publication decision: Declined for this fixture.
+
+## Human Review
+
+> [!CAUTION]
+> **Disclaimer:** This agent is an assistive coaching tool only. It does not conduct user research, observe stakeholders, or speak for the people whose problems you are designing for, and it does not replace primary research, direct stakeholder contact, design review, or product and strategy decision authority. Personas, problem statements, journey maps, empathy maps, concept tests, and other Design Thinking artifacts produced with this tool are scaffolding for your own research and synthesis — not substitutes for real stakeholder voice or observed behavior. Validate all AI-generated assumptions, personas, themes, and insights against actual stakeholders before treating any Design Thinking artifact as a basis for product, design, or strategy commitments. Outputs from this tool do not constitute validated research findings or design approval.
+
+- [ ] Reviewed and validated by a qualified human reviewer

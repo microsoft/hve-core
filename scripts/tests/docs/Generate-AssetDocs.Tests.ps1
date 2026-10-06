@@ -132,6 +132,16 @@ Describe 'Invoke-AssetDocsGeneration scaffolding' -Tag 'Unit' {
         $index | Should -Match '\[Skills\]\(skills/README\.md\)\s*\|\s*1\s*\|'
     }
 
+    It 'Labels only the root index as Overview in the sidebar' {
+        Get-PageField -Path (Join-Path $script:repo 'docs/reference/README.md') -Field 'sidebar_label' | Should -Be 'Overview'
+        Get-PageField -Path (Join-Path $script:repo 'docs/reference/README.md') -Field 'pagination_label' | Should -Be 'Reference'
+        Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/README.md') -Raw |
+            Should -Match '(?m)^sidebar_custom_props:\r?\n  accessibleName: "Overview: Reference"$'
+        foreach ($rel in @('docs/reference/agents/README.md', 'docs/reference/agents/hve-core/alpha-agent.md')) {
+            Get-Content -LiteralPath (Join-Path $script:repo $rel) -Raw | Should -Not -Match '(?m)^(sidebar|pagination)_(label|custom_props):' -Because "'$rel' keeps its title as its label"
+        }
+    }
+
     It 'Uses package terminology and no collection wording in generated output' {
         foreach ($rel in ($script:ExpectedAssetPages + $script:ExpectedIndexPages)) {
             (Get-Content -LiteralPath (Join-Path $script:repo $rel) -Raw) | Should -Not -Match '(?i)collection' -Because "generated page '$rel' must not reintroduce collection vocabulary"
@@ -180,10 +190,10 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
         Get-Content -LiteralPath $script:TemplatePath -Raw | Should -Not -Match '(?m)^## '
     }
 
-    It 'Preserves an authored human tail while refreshing the generated regions' {
+    It 'Preserves authored guidance and curated links while refreshing generated regions' {
         $pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
         $page = Join-Path $script:repo $pageRel
-        $authored = "`n`n## When to use it`n`nUse Alpha Agent when the demo needs a first agent.`n`n## Example usage`n`nAuthored example.`n"
+        $authored = "`n`n## When to use it`n`nUse Alpha Agent when the demo needs a first agent.`n`nSee [Coaching guide](../../../design-thinking/dt-coach) and [RPI handoff](../../../design-thinking/dt-rpi-integration).`n`n## How to use it`n`nSelect Alpha Agent and provide the demo input.`n`n## Example usage`n`nAuthored example.`n"
         $original = Get-Content -LiteralPath $page -Raw
         $split = Split-AssetDocByMarkers -Content $original -Region 'overview'
         Set-Content -LiteralPath $page -Value ("$($split.Before)$(New-AssetGeneratedRegion -Region 'overview' -Body $split.Body)$authored") -Encoding utf8NoBOM -NoNewline
@@ -198,6 +208,10 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
         (Split-AssetDocByMarkers -Content $updated -Region 'overview').Body | Should -Be 'A revised first demo agent.'
         (Split-AssetDocByMarkers -Content $updated -Region 'overview').After | Should -Be $authored
         Test-AssetDocStub -Content $updated | Should -BeFalse
+        $repeat = Invoke-AssetDocsGeneration -RepoRoot $script:repo -TemplatePath $script:TemplatePath
+        $repeat.DriftCount | Should -Be 0
+        (Split-AssetDocByMarkers -Content (Get-Content -LiteralPath $page -Raw) -Region 'overview').After |
+            Should -BeExactly $authored
     }
 }
 
@@ -242,6 +256,30 @@ Describe 'Invoke-AssetDocsGeneration idempotence' -Tag 'Unit' {
             (Get-Content -LiteralPath (Join-Path $crlfRepo $rel) -Raw) |
                 Should -Be (Get-Content -LiteralPath (Join-Path $lfRepo $rel) -Raw) -Because "page '$rel' must not depend on source line endings"
         }
+    }
+}
+
+Describe 'Invoke-AssetDocsGeneration interactivity migration' -Tag 'Unit' {
+    It 'Removes untouched interactive scaffolding when an existing agent becomes background-only' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $pagePath = Join-Path $repo 'docs/reference/agents/hve-core/alpha-agent.md'
+        $page = Get-Content -LiteralPath $pagePath -Raw
+        $page = $page -replace 'Provide a concrete example that shows the asset in action, including representative input and the resulting output\.', 'Run the alpha agent with a representative request and preserve this authored example.'
+        Set-Content -LiteralPath $pagePath -Value $page -Encoding utf8NoBOM -NoNewline
+        $expectedTail = [regex]::Match($page, '(?ms)^## Example usage\s*\r?\n.*\z').Value
+        $agentPath = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        $agent = Get-Content -LiteralPath $agentPath -Raw
+        $agent = $agent -replace '(?m)^description:', "user-invocable: false`ndescription:"
+        Set-Content -LiteralPath $agentPath -Value $agent -Encoding utf8NoBOM -NoNewline
+
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $content = Get-Content -LiteralPath $pagePath -Raw
+        $content | Should -Match 'Background agent'
+        $content | Should -Match '(?m)^\| Interactive\s+\| No\s+\|$'
+        $content | Should -Not -Match '## How to use it'
+        [regex]::Match($content, '(?ms)^## Example usage\s*\r?\n.*\z').Value | Should -BeExactly $expectedTail
     }
 }
 
@@ -387,6 +425,16 @@ Describe 'New-DocFrontmatter' -Tag 'Unit' {
     It 'Honors an explicit author' {
         $fm = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -Author 'HVE Core Team'
         $fm | Should -Match '(?m)^author: HVE Core Team$'
+    }
+
+    It 'Emits sidebar and pagination labels only when provided' {
+        $plain = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo')
+        $plain | Should -Not -Match '(?m)^(sidebar|pagination)_(label|custom_props):'
+
+        $labelled = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -SidebarLabel 'Overview' -PaginationLabel 'Demo' -SidebarAccessibleName 'Overview: Demo'
+        $labelled | Should -Match '(?m)^sidebar_label: Overview$'
+        $labelled | Should -Match '(?m)^pagination_label: Demo$'
+        $labelled | Should -Match '(?m)^sidebar_custom_props:\n  accessibleName: "Overview: Demo"$'
     }
 
     It 'Rejects a topic outside the docs schema enum' {

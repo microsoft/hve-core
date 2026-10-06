@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { SITE_PAGES, openSearchWidget, visitInvariantPage, waitForHydration } from './_helpers/a11yInvariants';
 
 function parseColor(color: string): { r: number; g: number; b: number; a: number } | null {
@@ -90,6 +90,173 @@ async function measureContrast(page: any, selector: string, pseudoElt?: string) 
   );
 }
 
+interface MermaidContrastMeasurement {
+  route: string;
+  theme: 'light' | 'dark';
+  category: 'text' | 'edge' | 'arrowhead' | 'node-border' | 'meaningful-shape';
+  element: string;
+  paint: 'fill' | 'stroke' | 'color';
+  foreground: string;
+  background: string;
+  opacity: number;
+  threshold: number;
+  ratio: number | null;
+  status: 'measured' | 'manual-review';
+  reason?: string;
+}
+
+function compositeColor(foreground: string, background: string, opacity: number): string | null {
+  const fg = parseColor(foreground);
+  const bg = parseColor(background);
+  if (!fg || !bg || bg.a < 1) {
+    return null;
+  }
+  const alpha = Math.max(0, Math.min(1, fg.a * opacity));
+  return `rgb(${Math.round(fg.r * alpha + bg.r * (1 - alpha))}, ${Math.round(fg.g * alpha + bg.g * (1 - alpha))}, ${Math.round(fg.b * alpha + bg.b * (1 - alpha))})`;
+}
+
+async function measureMermaidSvgContrast(
+  page: Page,
+  route: string,
+  theme: 'light' | 'dark',
+): Promise<MermaidContrastMeasurement[]> {
+  const raw = await page.locator('svg[role~="graphics-document"]').evaluateAll((svgs) => {
+    type RawMeasurement = Omit<MermaidContrastMeasurement, 'route' | 'theme' | 'ratio' | 'status'>;
+    const records: RawMeasurement[] = [];
+    const colorIsAmbiguous = (value: string) => !value || value === 'none' || /url\(|gradient|pattern/i.test(value);
+    const opacityOf = (style: CSSStyleDeclaration, paint: 'fill' | 'stroke' | 'color') => {
+      const paintOpacity = paint === 'fill' ? style.fillOpacity : paint === 'stroke' ? style.strokeOpacity : '1';
+      return Number.parseFloat(style.opacity || '1') * Number.parseFloat(paintOpacity || '1');
+    };
+    const pageBackground = (svg: Element) => {
+      let current: Element | null = svg.parentElement;
+      while (current) {
+        const style = window.getComputedStyle(current);
+        if (style.backgroundImage && style.backgroundImage !== 'none') {
+          return { color: '', reason: 'effective background uses an image or gradient' };
+        }
+        if (style.backgroundColor && !['rgba(0, 0, 0, 0)', 'transparent'].includes(style.backgroundColor)) {
+          return { color: style.backgroundColor };
+        }
+        current = current.parentElement;
+      }
+      return { color: '' , reason: 'no effective page background could be established' };
+    };
+    const elementName = (element: Element) => {
+      const id = element.id ? `#${element.id}` : '';
+      const classes = element.getAttribute('class')?.trim().split(/\s+/).slice(0, 2).join('.') ?? '';
+      return `${element.tagName.toLowerCase()}${id}${classes ? `.${classes}` : ''}`;
+    };
+    const add = (
+      element: Element,
+      category: RawMeasurement['category'],
+      paint: RawMeasurement['paint'],
+      background: { color: string; reason?: string },
+    ) => {
+      const style = window.getComputedStyle(element);
+      const foreground = paint === 'color' ? style.color : paint === 'fill' ? style.fill : style.stroke;
+      const fontSize = Number.parseFloat(style.fontSize || '0');
+      const fontWeight = Number.parseInt(style.fontWeight || '400', 10);
+      const largeText = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
+      records.push({
+        background: background.color,
+        category,
+        element: elementName(element),
+        foreground,
+        opacity: opacityOf(style, paint),
+        paint,
+        reason: background.reason ?? (colorIsAmbiguous(foreground) ? 'paint uses a gradient, pattern, or unresolved value' : undefined),
+        threshold: category === 'text' ? (largeText ? 3 : 4.5) : 3,
+      });
+    };
+
+    for (const svg of svgs) {
+      const baseBackground = pageBackground(svg);
+      const textElements = Array.from(svg.querySelectorAll('text, foreignObject span, foreignObject div, foreignObject p'))
+        .filter((element) => {
+          if ((element.textContent ?? '').trim().length === 0 || element.querySelector('span, div, p')) {
+            return false;
+          }
+          const rect = element.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        });
+      for (const element of textElements) {
+        let ancestor: Element | null = element.parentElement;
+        let shape: Element | null = null;
+        while (ancestor && ancestor !== svg) {
+          shape = Array.from(ancestor.children).find((child) =>
+            child.matches('rect, polygon, circle, ellipse, path')) ?? null;
+          if (shape) {
+            break;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        const shapeFill = shape ? window.getComputedStyle(shape).fill : '';
+        const background = shape && !colorIsAmbiguous(shapeFill)
+          ? { color: shapeFill }
+          : baseBackground;
+        add(element, 'text', element instanceof SVGElement ? 'fill' : 'color', background);
+      }
+
+      const edgeElements = new Set(Array.from(svg.querySelectorAll(
+        'path.flowchart-link, .edgePath path, path.relationshipLine, path.transition, line, polyline',
+      )));
+      for (const element of edgeElements) {
+        add(element, 'edge', 'stroke', baseBackground);
+        const marker = element.getAttribute('marker-end');
+        const markerId = marker?.match(/url\(["']?#([^"')]+)["']?\)/)?.[1];
+        const markerElement = markerId ? svg.querySelector(`#${CSS.escape(markerId)} path, #${CSS.escape(markerId)} polygon`) : null;
+        if (markerElement) {
+          const markerStyle = window.getComputedStyle(markerElement);
+          add(markerElement, 'arrowhead', markerStyle.fill !== 'none' ? 'fill' : 'stroke', baseBackground);
+        }
+      }
+
+      const nodeShapes = new Set(Array.from(svg.querySelectorAll(
+        '.node rect, .node polygon, .node circle, .node ellipse, .entityBox, .stateGroup rect',
+      )));
+      for (const shape of nodeShapes) {
+        const fill = window.getComputedStyle(shape).fill;
+        add(shape, 'node-border', 'stroke', !colorIsAmbiguous(fill) ? { color: fill } : baseBackground);
+      }
+
+      const meaningfulShapes = new Set(Array.from(svg.querySelectorAll(
+        'rect.task, rect.journey-section, rect.entityBox, .cluster > rect',
+      )));
+      for (const shape of meaningfulShapes) {
+        add(shape, 'meaningful-shape', 'fill', {
+          color: baseBackground.color,
+          reason: 'whether category fill conveys meaning requires qualified color-independence review',
+        });
+      }
+    }
+    return records;
+  });
+
+  return raw.map((measurement) => {
+    if (measurement.reason || !measurement.background || !measurement.foreground) {
+      return { ...measurement, route, theme, ratio: null, status: 'manual-review' as const };
+    }
+    const composited = compositeColor(measurement.foreground, measurement.background, measurement.opacity);
+    if (!composited) {
+      return {
+        ...measurement,
+        route,
+        theme,
+        ratio: null,
+        status: 'manual-review' as const,
+        reason: 'transparency or compositing could not be resolved against an opaque background',
+      };
+    }
+    return {
+      ...measurement,
+      route,
+      theme,
+      ratio: calculateContrastRatio(composited, measurement.background),
+      status: 'measured' as const,
+    };
+  });
+}
 test.describe('Contrast measurement gates', () => {
   for (const pageCase of SITE_PAGES) {
     test(`${pageCase.name} keeps links visually distinct without relying on color alone`, async ({ page }) => {
@@ -208,9 +375,8 @@ test.describe('Contrast measurement gates', () => {
         `${describeContrastCase('Selected search result', '[role="option"][aria-selected="true"]')} should meet SC 1.4.3 AA (4.5:1) in ${mode} mode`,
       ).toBeGreaterThanOrEqual(4.5);
 
-      // The matched term is a <mark> descendant that upstream paints in its own
-      // color. A container-only measurement misses it entirely, and the defect
-      // was the mark resolving to the option's own background.
+      // Measure the matched <mark> directly because its foreground and
+      // background can differ from the selected option container.
       const markCount = await page.locator('[role="option"][aria-selected="true"] mark').count();
       expect(markCount, 'the query should highlight a matched term inside the selected option').toBeGreaterThan(0);
 
@@ -290,5 +456,55 @@ test.describe('Contrast measurement gates', () => {
 
     expect(headingRatio).toBeNull();
     expect(subtitleRatio).toBeNull();
+  });
+
+  test('measures Mermaid text and required graphical contrast in both themes', async ({ page }, testInfo) => {
+    const routes = [
+      '/hve-core/docs/architecture/workflows',
+      '/hve-core/docs/architecture/agentic-workflows',
+      '/hve-core/docs/planning/prds/sssc-planner',
+    ];
+    const measurements: MermaidContrastMeasurement[] = [];
+
+    for (const theme of ['light', 'dark'] as const) {
+      for (const route of routes) {
+        await page.goto(route, { waitUntil: 'domcontentloaded' });
+        await waitForHydration(page);
+        const diagrams = page.locator('svg[role~="graphics-document"]');
+        await expect(diagrams.first()).toBeVisible({ timeout: 15000 });
+        const initialTheme = await page.locator('html').getAttribute('data-theme');
+        const markupBeforeThemeChange = await diagrams.evaluateAll(
+          (elements) => elements.map((element) => element.outerHTML).join('\n'),
+        );
+        const toggle = page.getByRole('button', { name: /switch between dark and light mode/i });
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          if (await page.locator('html').getAttribute('data-theme') === theme) {
+            break;
+          }
+          const titleBefore = await toggle.getAttribute('title');
+          await toggle.press('Enter');
+          await expect.poll(() => toggle.getAttribute('title')).not.toBe(titleBefore);
+        }
+        await expect.poll(() => page.locator('html').getAttribute('data-theme')).toBe(theme);
+        if (initialTheme !== theme) {
+          await expect.poll(async () => diagrams.evaluateAll(
+            (elements) => elements.map((element) => element.outerHTML).join('\n'),
+          )).not.toBe(markupBeforeThemeChange);
+        }
+        measurements.push(...await measureMermaidSvgContrast(page, route, theme));
+      }
+    }
+
+    await testInfo.attach('mermaid-contrast-measurements', {
+      body: Buffer.from(JSON.stringify(measurements, null, 2)),
+      contentType: 'application/json',
+    });
+
+    const measured = measurements.filter((measurement) => measurement.status === 'measured');
+    const failures = measured.filter((measurement) => measurement.ratio! < measurement.threshold);
+    const categories = new Set(measurements.map((measurement) => measurement.category));
+    expect(measured.length, 'real Mermaid output should produce inspectable paint pairs').toBeGreaterThan(0);
+    expect(categories).toEqual(new Set(['text', 'edge', 'arrowhead', 'node-border', 'meaningful-shape']));
+    expect(failures, `Measured Mermaid contrast failures: ${JSON.stringify(failures, null, 2)}`).toEqual([]);
   });
 });

@@ -60,7 +60,7 @@ from ._constants import (
     DEFAULT_PROFILE_NAME,
     DEFAULT_REDIRECT_URI,
     ENV_CLIENT_ID,
-    ENV_CLIENT_SECRET,
+    ENV_NONINTERACTIVE,
     ENV_PROFILE,
     ENV_SCOPES,
     EXIT_FAILURE,
@@ -71,6 +71,8 @@ from ._constants import (
     WRITE_SCOPES,
 )
 from ._credentials import (
+    _backend_has_credentials,
+    _check_credential_file_perms,
     _resolve_credential_file,
     _resolve_token_store_path,
     _service_name_for,
@@ -152,6 +154,135 @@ def _save_token_store_locked(path: pathlib.Path, data: dict[str, Any]) -> None:
             tmp.unlink()
 
 
+def _is_noninteractive_context() -> bool:
+    """Return True when side-effectful credential migration should be skipped."""
+    return os.environ.get(ENV_NONINTERACTIVE) == "1" or (
+        os.environ.get("CI", "").lower() == "true"
+    )
+
+
+def _maybe_promote_file_credentials_to_keyring(profile_name: str) -> None:
+    """Promote auto-mode file credentials to keyring for ``profile_name``.
+
+    Runs only in auth write flows so passive read paths (for example
+    ``auth status``) remain side-effect free.
+    """
+    selector = os.environ.get("MURAL_CREDENTIAL_BACKEND", "auto").lower()
+    if selector != "auto":
+        return
+
+    attempt_key = f"promotion-attempt:{profile_name}"
+    if attempt_key in _state.seen_fallback_warn():
+        return
+    _state.seen_fallback_warn().add(attempt_key)
+
+    if _is_noninteractive_context():
+        info_key = f"promotion-skip-noninteractive:{profile_name}"
+        if info_key not in _state.seen_fallback_warn():
+            _state.seen_fallback_warn().add(info_key)
+            _emit(
+                f"skipping file-to-keyring credential promotion for profile "
+                f"{profile_name!r} in non-interactive mode",
+                level=logging.INFO,
+            )
+        return
+
+    file_path = _resolve_credential_file(profile_name, os.environ)
+    service = _service_name_for(profile_name)
+
+    try:
+        keyring_backend = KeyringBackend()
+    except _KeyringUnavailable:
+        return
+
+    try:
+        keyring_populated = _backend_has_credentials(keyring_backend, service)
+    except _KeyringUnavailable:
+        return
+    if keyring_populated:
+        return
+
+    file_backend = FileBackend(file_path)
+    file_populated = _backend_has_credentials(
+        file_backend,
+        service,
+        enforce_file_perms=True,
+        file_env=os.environ,
+    )
+    if not file_populated:
+        return
+
+    entries = file_backend._read_all()
+    payload = {key: entries[key] for key in _KNOWN_CREDENTIAL_KEYS if entries.get(key)}
+    if not payload:
+        return
+
+    written_keys: list[str] = []
+
+    def _rollback_written_keys() -> None:
+        for written_key in reversed(written_keys):
+            try:
+                keyring_backend.delete(service, written_key)
+            except _KeyringUnavailable as exc:
+                _emit(
+                    f"failed to roll back keyring credential {written_key!r} "
+                    f"for profile {profile_name!r} ({exc})",
+                    level=logging.WARNING,
+                )
+
+    for key, value in payload.items():
+        try:
+            keyring_backend.set(service, key, value)
+            written_keys.append(key)
+            roundtrip = keyring_backend.get(service, key)
+        except _KeyringUnavailable as exc:
+            _rollback_written_keys()
+            _emit(
+                f"file-to-keyring credential promotion failed for profile "
+                f"{profile_name!r}; keeping file copy at {file_path} "
+                f"({exc})",
+                level=logging.WARNING,
+            )
+            return
+        if roundtrip != value:
+            _rollback_written_keys()
+            _emit(
+                f"file-to-keyring credential promotion failed verification for "
+                f"profile {profile_name!r}; keeping file copy at {file_path}",
+                level=logging.WARNING,
+            )
+            return
+
+    try:
+        _check_credential_file_perms(file_path, os.environ)
+        remaining = {k: v for k, v in entries.items() if k not in payload}
+        if remaining:
+            file_backend._write_all(remaining)
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(file_path)
+    except OSError as exc:
+        _emit(
+            f"promoted credentials for profile {profile_name!r} to keyring, "
+            f"but file cleanup failed; keeping file copy at {file_path} ({exc})",
+            level=logging.WARNING,
+        )
+        return
+    except MuralError as exc:
+        _emit(
+            f"promoted credentials for profile {profile_name!r} to keyring, "
+            f"but file cleanup failed permission checks at {file_path} ({exc})",
+            level=logging.WARNING,
+        )
+        return
+
+    _emit(
+        f"promoted credentials for profile {profile_name!r} from file backend "
+        f"at {file_path} to keyring backend and removed the file copy",
+        level=logging.INFO,
+    )
+
+
 def _cmd_auth_login(args: argparse.Namespace) -> int:
     _emit("mural auth login", level=logging.INFO)
     if not os.environ.get(ENV_CLIENT_ID):
@@ -168,7 +299,9 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                     f"{ENV_CLIENT_ID} is not set.",
                     "",
                     "Looked for credentials in this order:",
-                    f"  1. Process environment ({ENV_CLIENT_ID}, {ENV_CLIENT_SECRET})",
+                    # Literal name: CodeQL flags interpolated ENV_CLIENT_SECRET
+                    # as clear-text secret logging.
+                    f"  1. Process environment ({ENV_CLIENT_ID}, MURAL_CLIENT_SECRET)",
                     (
                         "  2. Active credential backend "
                         + "(MURAL_CREDENTIAL_BACKEND={auto|keyring|file|env-only})"
@@ -180,7 +313,7 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                         + " credentials interactively,"
                     ),
                     (
-                        f"or set {ENV_CLIENT_ID} and {ENV_CLIENT_SECRET} in your"
+                        f"or set {ENV_CLIENT_ID} and MURAL_CLIENT_SECRET in your"
                         + " environment."
                     ),
                 ]
@@ -195,6 +328,7 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
     except MuralError as exc:
         _emit(str(exc), level=logging.ERROR)
         return EXIT_USAGE
+    _maybe_promote_file_credentials_to_keyring(profile_name)
     force = bool(getattr(args, "force", False))
     service = _service_name_for(profile_name)
     try:
@@ -372,7 +506,7 @@ _LOGOUT_TRANSPARENCY_LINES: tuple[str, ...] = (
 
 def _cmd_auth_setup(args: argparse.Namespace) -> int:
     """Provision a new profile non-interactively from env or CLI args."""
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     if not json_mode:
         redacted = _pkg()._redact(_OAUTH_SETUP_WALKTHROUGH)
         print(redacted)
@@ -527,6 +661,7 @@ def _cmd_auth_bootstrap(args: argparse.Namespace) -> int:
             level=logging.ERROR,
         )
         return EXIT_FAILURE
+    _maybe_promote_file_credentials_to_keyring(profile_name)
     force = bool(getattr(args, "force", False))
     service = _service_name_for(profile_name)
 
@@ -704,7 +839,7 @@ def _cmd_auth_list(_args: argparse.Namespace) -> int:
                 "active": name == active,
             }
         )
-    if _state._CLI_FORCE_JSON or getattr(_args, "format", "json") != "table":
+    if _state.cli_force_json() or getattr(_args, "format", "json") != "table":
         print(
             json.dumps(
                 {"token_store": str(path), "active_profile": active, "profiles": rows},
@@ -743,7 +878,7 @@ def _cmd_auth_list(_args: argparse.Namespace) -> int:
 
 def _cmd_auth_use(args: argparse.Namespace) -> int:
     """Set the active profile in the v2 envelope."""
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     try:
         name = _validate_profile_name(args.name)
     except MuralError as exc:
@@ -867,7 +1002,7 @@ def _cmd_auth_logout(args: argparse.Namespace) -> int:
     state untouched. ``--force`` is required to delete from the
     :class:`FileBackend` (since it removes the on-disk credential file).
     """
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     keep_credentials = bool(getattr(args, "keep_credentials", False))
     force = bool(getattr(args, "force", False))
     path = _resolve_token_store_path()
@@ -1154,7 +1289,7 @@ def _cmd_auth_migrate(args: argparse.Namespace) -> int:
     successful round-trip; ``--yes`` skips the confirmation prompt
     (required when ``MURAL_NONINTERACTIVE=1``).
     """
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     direction = getattr(args, "to", None)
     if direction not in {"keyring", "file"}:
         _emit("--to must be one of 'keyring' or 'file'", level=logging.ERROR)

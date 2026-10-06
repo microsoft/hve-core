@@ -1,0 +1,11 @@
+{
+  "name": "sample-project",
+  "version": "1.0.0",
+  "description": "Fixture project for the baseline-equivalence suite",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "build": "node scripts/build.js"
+  },
+  "license": "MIT"
+}

@@ -5,13 +5,13 @@
 
 <#
 .SYNOPSIS
-    Verifies that a published release carries its exact expected asset set.
+    Verifies that a release carries its exact expected asset set.
 .DESCRIPTION
-    Reconciles the actual asset names on an immutable published release against
-    the one hve-core VSIX identity the released version defines, its complete
-    sidecar set, and the channel's required singleton assets. The VSIX identity
-    is derived from the released version alone, so no release asset defines the
-    expectation it is verified against.
+    Reconciles the actual asset names on a draft or immutable published release
+    against the one hve-core VSIX identity the released version defines, its
+    complete sidecar set, and the channel's required singleton assets. The VSIX
+    identity is derived from the released version alone, so no release asset
+    defines the expectation it is verified against.
 
     All identity comparison is ordinal and case sensitive. Missing, unexpected,
     duplicate, sidecar-incomplete, and otherwise unapproved assets are all
@@ -35,8 +35,9 @@
     release records are not replay inputs, and legacy asset shapes remain
     rejected.
 
-    Invoked by the published-release recovery path of release-prerelease.yml and
-    release-stable-publish.yml.
+    Invoked by the published-release verification path of
+    release-vsix-publish.yml. A rerun of the immutable tag-push event verifies
+    an already published release without rebuilding or replacing assets.
 #>
 
 [CmdletBinding()]
@@ -262,7 +263,7 @@ function Get-ReleaseAssetNameFromFile {
 function Assert-ReleaseAssetSet {
     <#
     .SYNOPSIS
-        Fails unless a published release carries its exact expected asset set.
+        Fails unless a release carries its exact expected asset set.
     .PARAMETER AssetNamePath
         File containing one actual release asset name per line.
     .PARAMETER RequiredAssetPath
@@ -301,11 +302,11 @@ function Assert-ReleaseAssetSet {
 
     $assetName = Get-ReleaseAssetNameFromFile -Path $AssetNamePath
     if ($assetName.Count -eq 0) {
-        throw "published $ReleaseTag carries no release assets"
+        throw "$ReleaseTag release carries no release assets"
     }
     $requiredAsset = Get-ReleaseAssetNameFromFile -Path $RequiredAssetPath
     if ($requiredAsset.Count -eq 0) {
-        throw "No required singleton assets were supplied for published $ReleaseTag"
+        throw "No required singleton assets were supplied for $ReleaseTag release"
     }
     $optionalAsset = if ($OptionalAssetPath) {
         Get-ReleaseAssetNameFromFile -Path $OptionalAssetPath
@@ -323,12 +324,12 @@ function Assert-ReleaseAssetSet {
 
     if ($findings.Count -gt 0) {
         foreach ($finding in $findings) {
-            Write-CIAnnotation -Message "published ${ReleaseTag}: $finding" -Level Error
+            Write-CIAnnotation -Message "${ReleaseTag} release: $finding" -Level Error
         }
-        throw "published $ReleaseTag has incomplete release assets: $($findings.Count) findings; reconcile it before rerunning"
+        throw "$ReleaseTag release has incomplete release assets: $($findings.Count) findings; reconcile it before rerunning"
     }
 
-    Write-Host "Verified $($expectedVsix.Count) VSIX, $($requiredAsset.Count) required singleton assets, and $($optionalAsset.Count) optional singleton assets with complete sidecars on published $ReleaseTag"
+    Write-Host "Verified $($expectedVsix.Count) VSIX, $($requiredAsset.Count) required singleton assets, and $($optionalAsset.Count) optional singleton assets with complete sidecars on $ReleaseTag release"
     return [pscustomobject]@{
         ReleaseTag = $ReleaseTag
         Version    = $Version

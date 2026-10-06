@@ -27,7 +27,7 @@ Current agent-oriented evaluator families, cited as factual identifiers, group r
 * Response-quality-oriented: relevance, groundedness, answer completeness, appropriate abstention, and use of available context.
 * Responsibility-and-safety-oriented: fairness across confirmed user populations, harmful-content behavior, and groundedness under adversarial framing.
 
-Do not treat this grouping as a frozen catalog. Evaluator names, availability, and preview status change between platform releases, and some evaluators have constrained support depending on which tools an agent uses. Confirm the current set against the authoritative source recorded in [provenance.md](provenance.md) before committing a plan, and record the date you checked.
+Do not treat this grouping as a frozen catalog. Evaluator names, availability, and preview status change between platform releases, and some evaluators have constrained support depending on which tools an agent uses. Follow the Current Evaluator Research contract in [../SKILL.md](../SKILL.md) to verify the current set against the authoritative source recorded in [provenance.md](provenance.md) before committing a plan, and record the date you checked.
 
 ## Building the plan
 

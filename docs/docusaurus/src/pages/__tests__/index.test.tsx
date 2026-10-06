@@ -24,6 +24,9 @@ function card(name: string, overrides: Partial<PackageCardData> = {}): PackageCa
     title: `HVE Core - ${name}`,
     description: `${name} description`,
     artifacts: 3,
+    contents: [
+      { kind: 'agents', label: 'Agents', count: 3, href: '/docs/reference/agents' },
+    ],
     maturity: 'Stable',
     href: `/docs/plugins/${name}`,
     ...overrides,

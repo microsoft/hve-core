@@ -1,0 +1,15 @@
+project:
+  name: "Inventory Flow"
+  slug: "inventory-flow"
+  created: "2026-09-24"
+  initial_request: "Improve inventory flow."
+  initial_classification: "fluid"
+
+current:
+  method: 2
+  space: "problem"
+  phase: "research planning"
+  disclaimerShownAt: "2026-09-24T00:00:00Z"
+
+methods_completed:
+  - 1

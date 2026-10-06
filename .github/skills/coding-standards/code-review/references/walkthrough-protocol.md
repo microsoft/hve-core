@@ -1,7 +1,7 @@
 ---
 title: Code Review Walkthrough Protocol
 description: Orientation-first review walkthrough rules for the full-diff orientation floor and the dispatch board handoff.
-ms.date: 2026-06-20
+ms.date: 2026-08-26
 ---
 
 ## Purpose
@@ -33,13 +33,22 @@ Use this protocol before any detailed dispatch. It creates a factual Register 1 
 
 ## Appendix outputs for dispatch
 
-The walkthrough should end with appendices that feed the dispatch board:
+The walkthrough should end with a decision-ready dispatch appendix. Group files
+into coherent review areas rather than producing one item per file. For each
+area include:
 
-- changed areas,
-- likely entry points,
-- likely risk surfaces,
-- candidate symbols or functions to inspect,
-- questions that merit a deeper dive.
+* a concise area name,
+* a factual preliminary signal that explains what changed, why it merits review,
+  and any visible contract, regression, validation, or rollout boundary,
+* openable changed-file or symbol references that support the signal,
+* likely entry points and blast radius,
+* candidate symbols or functions to inspect,
+* and questions that merit a deeper dive.
+
+The preliminary signal is orientation evidence, not a finding. It may identify a
+specific mismatch or verification question visible in the supplied evidence, but
+it does not assign severity, declare a defect proven, recommend a fix, or issue a
+verdict.
 
 ## Register separation
 

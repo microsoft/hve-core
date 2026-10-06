@@ -3,7 +3,7 @@ title: "Context Engineering: Why AI Context Management Matters"
 description: Understand how long RPI lifecycles accumulate context and how workspace-local artifacts support deliberate resumption
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-28
+ms.date: 2026-10-06
 ms.topic: concept
 keywords:
   - context engineering
@@ -16,7 +16,7 @@ keywords:
 estimated_reading_time: 7
 ---
 
-You begin a long RPI lifecycle through `RPI Agent` or `/rpi-quick` to add a feature. The research-readiness assessment reuses adequate evidence or activates research for a demonstrated gap. Planning, implementation, and review then leave workspace-local task evidence. In the same conversation, you ask for a second feature: "Now add input validation to the API endpoint."
+You begin a long RPI lifecycle through `RPI Agent` to add a feature. The research-readiness assessment reuses adequate evidence or activates research for a demonstrated gap. Planning, implementation, and review then leave workspace-local task evidence. In the same conversation, you ask for a second feature: "Now add input validation to the API endpoint."
 
 The conversation jumps straight to writing code without reassessing whether the new task has adequate evidence, an approved plan, or a decision-critical gap. The output compiles. Tests pass. But the validation logic misses three edge cases, ignores the validation patterns already established in your codebase, and introduces a naming convention that contradicts every other validator in the project.
 
@@ -74,14 +74,14 @@ Two mechanisms work reliably:
 
 ### What to Open at Each Transition
 
-| Transition or resumption point | Open or Reference                                                                                                                                                                                                              |
-|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Research, when it runs → Plan  | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`                                                                                                                                                          |
-| Plan → Implement               | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`, `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`, and `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` |
-| Implement → Review             | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` with the plan, details, and critique                                                                                                                       |
-| Review → Follow-up             | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`                                                                                                                                                        |
+| Transition or resumption point | Open or Reference                                                                                                                                  |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Research, when it runs → Plan  | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`                                                                              |
+| Plan → Implement               | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md` and `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` |
+| Implement → Review             | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` with the task-centered plan and critique                                       |
+| Review → Follow-up             | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`                                                                            |
 
-When resuming a plan or phase-details artifact, navigate by the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers such as `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->`.
+When resuming a plan, navigate by the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers such as `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->`.
 
 When multiple artifact sets exist, open the relevant file or reference its path explicitly so the resumed work uses the intended task identity.
 
@@ -118,11 +118,11 @@ The tradeoff is precision. `/compact` summaries lose detail because the model de
 
 ## Long-Lifecycle Context
 
-`RPI Agent` is a user-selected lifecycle wrapper, and `/rpi-quick` is a skill-based full-flow entry point. They activate the same phase skills and may coordinate a long task, but neither guarantees that every run executes fresh research or all lifecycle concepts in one conversation.
+`RPI Agent` is a user-selected lifecycle wrapper. It activates the phase skills and may coordinate a long task, but it does not guarantee that every run executes fresh research or all lifecycle concepts in one conversation.
 
 When a lifecycle spans planning, implementation, review, and follow-up, tokens can accumulate across the task. Research readiness remains conditional: adequate evidence can be reused, while a demonstrated gap activates research. A context reset does not change those decisions; it lets you resume the next responsible action from the workspace-local artifact set.
 
-Use `/clear` or `/compact` when the conversation has accumulated irrelevant detail, then reference the stable task ID and the plan, phase details, critique, changes, or review record that establishes the next action.
+Use `/clear` or `/compact` when the conversation has accumulated irrelevant detail, then reference the stable task ID and the plan, critique, changes, or review record that establishes the next action.
 
 ## Recognizing Context Degradation
 

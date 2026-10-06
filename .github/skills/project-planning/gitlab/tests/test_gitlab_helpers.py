@@ -83,15 +83,150 @@ def _network_invocations(source: str, module: str) -> list[tuple[str, str, str]]
     return visitor.invocations
 
 
-class TestDie:
-    """Tests for die."""
+def _is_main_guard(node: ast.AST) -> bool:
+    """Report whether a node is the ``if __name__ == "__main__":`` guard."""
+    if not isinstance(node, ast.If) or not isinstance(node.test, ast.Compare):
+        return False
+    left = node.test.left
+    operators = node.test.ops
+    comparators = node.test.comparators
+    return (
+        isinstance(left, ast.Name)
+        and left.id == "__name__"
+        and len(operators) == 1
+        and isinstance(operators[0], ast.Eq)
+        and len(comparators) == 1
+        and isinstance(comparators[0], ast.Constant)
+        and comparators[0].value == "__main__"
+    )
 
-    def test_prints_error_and_exits(self, capsys: pytest.CaptureFixture[str]) -> None:
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.die("boom", gitlab.EXIT_USAGE)
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert capsys.readouterr().err.strip() == "error: boom"
+class _ExitMechanismVisitor(ast.NodeVisitor):
+    """Collect process-exit violations using lexical import bindings."""
+
+    _IMPLICIT_BINDINGS = {
+        "SystemExit": "builtins.SystemExit",
+        "sys": "sys",
+    }
+
+    def __init__(self, guarded: set[int]) -> None:
+        self.guarded = guarded
+        self.scope_stack: list[tuple[dict[str, str], dict[str, str]]] = []
+        self.violations: list[str] = []
+
+    def visit(self, node: ast.AST) -> object:
+        if id(node) in self.guarded:
+            return None
+        return super().visit(node)
+
+    def visit_Module(self, node: ast.Module) -> None:
+        self._visit_scope(node.body, self._IMPLICIT_BINDINGS, is_class=False)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        if node.name == "die":
+            self.violations.append("def die")
+        self._visit_function(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        if node.name == "die":
+            self.violations.append("def die")
+        self._visit_function(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for base in node.bases:
+            self.visit(base)
+        for keyword in node.keywords:
+            self.visit(keyword)
+        self._visit_scope(node.body, self._child_bindings(), is_class=True)
+
+    def visit_Raise(self, node: ast.Raise) -> None:
+        raised = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
+        if self._resolve_target(raised) == "builtins.SystemExit":
+            self.violations.append("raise SystemExit")
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if self._resolve_target(node.func) == "sys.exit":
+            self.violations.append("sys.exit")
+        self.generic_visit(node)
+
+    def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        self.visit(node.args)
+        if node.returns is not None:
+            self.visit(node.returns)
+        self._visit_scope(node.body, self._child_bindings(), is_class=False)
+
+    def _visit_scope(
+        self,
+        body: list[ast.stmt],
+        inherited: dict[str, str],
+        *,
+        is_class: bool,
+    ) -> None:
+        bindings = inherited.copy()
+        for statement in body:
+            self._collect_import_bindings(statement, bindings)
+        child_bindings = inherited if is_class else bindings
+        self.scope_stack.append((bindings, child_bindings))
+        for statement in body:
+            self.visit(statement)
+        self.scope_stack.pop()
+
+    def _collect_import_bindings(self, node: ast.AST, bindings: dict[str, str]) -> None:
+        if id(node) in self.guarded or isinstance(
+            node,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
+        ):
+            return
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                bound_name = alias.asname or alias.name.partition(".")[0]
+                bindings[bound_name] = alias.name if alias.asname else bound_name
+            return
+        if isinstance(node, ast.ImportFrom) and node.module is not None:
+            for alias in node.names:
+                if alias.name != "*":
+                    bindings[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+            return
+        for child in ast.iter_child_nodes(node):
+            self._collect_import_bindings(child, bindings)
+
+    def _child_bindings(self) -> dict[str, str]:
+        return self.scope_stack[-1][1]
+
+    def _resolve_target(self, node: ast.AST | None) -> str | None:
+        if isinstance(node, ast.Name):
+            return self.scope_stack[-1][0].get(node.id)
+        if isinstance(node, ast.Attribute):
+            parent = self._resolve_target(node.value)
+            if parent is not None:
+                return f"{parent}.{node.attr}"
+        return None
+
+
+def _exit_mechanism_violations(source: str) -> list[str]:
+    """Return violations of the single-failure-mechanism contract.
+
+    ``GitLabError`` is the module's only failure mechanism. Process exit belongs
+    to the ``__main__`` guard alone, so a ``raise SystemExit`` or ``sys.exit``
+    anywhere else, or any ``die`` definition, reintroduces the second mechanism
+    this contract exists to prevent.
+    """
+    tree = ast.parse(source)
+    guarded: set[int] = set()
+    for node in ast.walk(tree):
+        if _is_main_guard(node):
+            for statement in node.body:
+                for child in ast.walk(statement):
+                    guarded.add(id(child))
+
+    visitor = _ExitMechanismVisitor(guarded)
+    visitor.visit(tree)
+    return visitor.violations
 
 
 class TestRedact:
@@ -288,9 +423,90 @@ class TestSourceContracts:
         self, source: str, expected: str
     ) -> None:
         invocations = _network_invocations(source, "unexpected.py")
-
         assert invocations
         assert invocations[0][1] == expected
+
+    def test_gitlab_error_is_the_only_failure_mechanism(self) -> None:
+        assert _exit_mechanism_violations(SOURCE) == []
+        assert not hasattr(gitlab, "die")
+
+    @pytest.mark.parametrize(
+        ("source", "expected"),
+        [
+            ("def bypass():\n    raise SystemExit(2)\n", "raise SystemExit"),
+            ("def bypass():\n    sys.exit(2)\n", "sys.exit"),
+            ("def die(message):\n    return message\n", "def die"),
+            (
+                "import builtins\n\ndef bypass():\n    raise builtins.SystemExit(2)\n",
+                "raise SystemExit",
+            ),
+            (
+                "def owner():\n    import builtins as bi\n"
+                "    raise bi.SystemExit(2)\n\n"
+                "def sibling():\n    raise bi.SystemExit(2)\n",
+                "raise SystemExit",
+            ),
+            (
+                "class Owner:\n"
+                "    from builtins import SystemExit as Stop\n"
+                "    raise Stop(2)\n\n"
+                "    def method(self):\n        raise Stop(2)\n",
+                "raise SystemExit",
+            ),
+            (
+                "def outer():\n    import sys as system\n\n"
+                "    def inner():\n        system.exit(2)\n",
+                "sys.exit",
+            ),
+            (
+                "from sys import exit\n\ndef bypass():\n    exit(2)\n",
+                "sys.exit",
+            ),
+            (
+                "def bypass():\n    from sys import exit as stop\n    stop(2)\n",
+                "sys.exit",
+            ),
+        ],
+    )
+    def test_source_contract_detects_second_failure_mechanism(
+        self, source: str, expected: str
+    ) -> None:
+        assert _exit_mechanism_violations(source) == [expected]
+
+    def test_source_contract_allows_guarded_process_exit(self) -> None:
+        guarded = 'if __name__ == "__main__":\n    sys.exit(main())\n'
+
+        assert _exit_mechanism_violations(guarded) == []
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            (
+                "class Owner:\n    from sys import exit\n\n"
+                "    def method(self):\n"
+                "        def exit(code):\n            return code\n\n"
+                "        exit(2)\n"
+            ),
+            (
+                "def owner():\n    import sys as target\n\n"
+                "def sibling(target):\n    target.exit(2)\n"
+            ),
+        ],
+    )
+    def test_source_contract_allows_unrelated_exit_forms(self, source: str) -> None:
+        assert _exit_mechanism_violations(source) == []
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            'if __name__ != "__main__":\n    sys.exit(2)\n',
+            ('if __name__ == "__main__":\n    main()\nelse:\n    sys.exit(2)\n'),
+        ],
+    )
+    def test_source_contract_rejects_exit_outside_canonical_guard_body(
+        self, source: str
+    ) -> None:
+        assert _exit_mechanism_violations(source) == ["sys.exit"]
 
     def test_job_log_output_is_redacted(
         self,
@@ -334,16 +550,12 @@ class TestValidateNumericId:
         gitlab.validate_numeric_id(value)
 
     @pytest.mark.parametrize("value", ["", "abc", "12a", "-1", "1.2", " 5 "])
-    def test_rejects_non_numeric_values(
-        self,
-        value: str,
-        capsys: pytest.CaptureFixture[str],
-    ) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+    def test_rejects_non_numeric_values(self, value: str) -> None:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.validate_numeric_id(value)
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert f"expected numeric ID, got: {value}" in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert f"expected numeric ID, got: {value}" in str(exc_info.value)
 
 
 class TestValidatePositiveInt:
@@ -354,18 +566,13 @@ class TestValidatePositiveInt:
         gitlab.validate_positive_int(value, "max_results")
 
     @pytest.mark.parametrize("value", ["", "ten", "5x", "-2", "3.14"])
-    def test_rejects_invalid_values(
-        self,
-        value: str,
-        capsys: pytest.CaptureFixture[str],
-    ) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+    def test_rejects_invalid_values(self, value: str) -> None:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.validate_positive_int(value, "max_results")
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert (
-            f"max_results must be a positive integer, got: {value}"
-            in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert f"max_results must be a positive integer, got: {value}" in str(
+            exc_info.value
         )
 
 
@@ -394,16 +601,13 @@ class TestParseFields:
         assert cleaned == ["mr-get", "7"]
         assert gitlab.selected_fields == ["iid", "title"]
 
-    def test_requires_value_after_fields(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+    def test_requires_value_after_fields(self) -> None:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.parse_fields(["mr-list", "--fields"])
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert (
-            "usage: --fields requires a comma-separated value list"
-            in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert "usage: --fields requires a comma-separated value list" in str(
+            exc_info.value
         )
 
 

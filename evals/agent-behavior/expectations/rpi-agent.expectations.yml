@@ -10,7 +10,7 @@ class: planner-coach
 agent_file: .github/agents/hve-core/rpi-agent.agent.md
 stimulus_file: evals/agent-behavior/stimuli/rpi-agent.yml
 latest_result: evals/results/agent-matrix/2026-05-28/rpi-agent.json
-source_review_date: 2026-07-13
+source_review_date: 2026-09-04
 
 expectations:
   - expectation_id: tracking-path-output
@@ -19,7 +19,6 @@ expectations:
     pass_criteria: |
       When the workflow describes an artifact, the response cites the applicable
       plain dated path: `.copilot-tracking/plans/<YYYY-MM-DD>/<task>-plan.md`,
-      `.copilot-tracking/details/<YYYY-MM-DD>/<task>-phase-details.md`,
       `.copilot-tracking/reviews/plans/<YYYY-MM-DD>/<task>-plan-critique.md`,
       `.copilot-tracking/changes/<YYYY-MM-DD>/<task>-changes.md`, or
       `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<task>-review.md`.
@@ -65,7 +64,7 @@ expectations:
     summary: Related RPI artifacts retain a stable task identity and navigable markers.
     signal: Output references a shared task ID and stable phase or task markers.
     pass_criteria: |
-      When plan, details, critique, changes, or review records are discussed, the
+      When plan, critique, changes, or review records are discussed, the
       response keeps one stable task ID across them and uses stable IDs or markers
       to identify phases and tasks.
     failure_modes:
@@ -92,7 +91,7 @@ expectations:
     pass_criteria: |
       When execution changes an approved plan, the response records the amendment
       and the implementation divergence in the appropriate artifacts, with the
-      divergence linked to the amendment and affected plan or detail sections.
+      divergence linked to the amendment and affected plan task sections.
     failure_modes:
       - Unrecorded scope change during implementation.
       - Divergence noted without its related amendment.
