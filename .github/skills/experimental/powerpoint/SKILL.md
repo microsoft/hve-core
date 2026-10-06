@@ -37,7 +37,7 @@ winget install --id astral-sh.uv -e
 brew install uv
 ```
 
-To install from a release archive instead, download it from the [uv releases page](https://github.com/astral-sh/uv/releases) and check it against its `.sha256` file before extracting. The repository dev container already installs a checksum-verified uv.
+To install from a release archive instead, download it from the [uv releases page](https://github.com/astral-sh/uv/releases) and check it against its `.sha256` file before extracting.
 
 ### System Dependencies (Export and Validation)
 

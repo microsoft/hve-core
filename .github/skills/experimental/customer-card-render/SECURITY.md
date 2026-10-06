@@ -2,7 +2,7 @@
 title: Customer Card Render Skill Security Model
 description: STRIDE threat model for the customer-card-render skill organized by assets, adversaries, and trust buckets (untrusted DT markdown parsing, YAML content emission, CLI caller with out-of-process PowerPoint handoff) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: reference
 estimated_reading_time: 8
 keywords:
@@ -33,7 +33,7 @@ The customer-card-render skill converts untrusted Design Thinking markdown into 
 | Trust buckets      | B1 untrusted markdown parsing, B2 YAML content emission, B3 caller/filesystem + PPTX handoff                     |
 | Credentials        | None handled or persisted                                                                                        |
 | Network egress     | None                                                                                                             |
-| Open residual gaps | 2 (SupplyChain-Med: inherited powerpoint build toolchain and uv bootstrap)                                       |
+| Open residual gaps | 2 (SupplyChain-Med: inherited powerpoint build toolchain; InfoDisc-Low: unclassified DT content)                 |
 
 ## Contents
 
