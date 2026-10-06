@@ -1,9 +1,8 @@
 ---
 description: 'Mural is the durable record of human conversation; AI never silently authors decisions and AI contribution must remain visible somewhere durable.'
-applyTo: '**/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md, **/.github/instructions/experimental/mural/**'
 ---
 
-## Mural Human Record
+# Mural Human Record
 
 The Mural board is the durable record of the human conversation that produced it. Every Layer B agent and prompt that touches a board operates *on* that record; it never silently substitutes for it.
 

@@ -692,7 +692,7 @@ def _evaluate_containment_geometry(
             f"widget (x={x}, y={y}) is outside parent area "
             + f"(width={width}, height={height}); parentId is correct but "
             + "the widget will render off-area — see geometry rules in "
-            + "mural-seeding-patterns.instructions.md"
+            + "the Mural skill references/seeding-patterns.md"
         ),
     )
 
@@ -753,7 +753,7 @@ def _verify_parent_containment(
                 f"{chain_ids} do not contain expected area "
                 f"{expected_parent_id!r}; the Mural API may have ignored "
                 "parentId for this widget type — see probe-before-bulk in "
-                "mural-seeding-patterns.instructions.md"
+                "the Mural skill references/seeding-patterns.md"
             ),
         }
     geometry_verdict, geometry_detail = _evaluate_containment_geometry(

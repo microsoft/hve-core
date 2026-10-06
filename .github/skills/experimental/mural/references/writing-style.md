@@ -1,9 +1,8 @@
 ---
 description: 'Asymmetric writing style for Mural: outbound (writing into Mural) is sticky-concise; inbound (extracting from Mural) is context-hydrated.'
-applyTo: '**/.copilot-tracking/mural/**, **/.github/skills/experimental/mural/**, **/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md'
 ---
 
-## Mural Writing Style
+# Mural Writing Style
 
 The writing style for Mural is asymmetric. Content moving *into* Mural is constrained by the medium (room-readable stickies). Content moving *out of* Mural is hydrated with the context the medium dropped. Pattern J (role-shape) and the M2 Q3 contract govern both directions.
 

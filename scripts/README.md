@@ -21,7 +21,6 @@ This directory contains PowerShell scripts for automating linting, validation, a
 scripts/
 ├── agentic-workflows/ Runtime support for compiled Agentic Workflows
 ├── lib/             Shared artifact and CI helpers
-├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
 ├── release/         Release version normalization and assurance helpers
 ├── devcontainer/    Devcontainer lockfile and change log validation
@@ -50,18 +49,6 @@ Shared utility modules used across scripts.
 | Script                     | Purpose                              |
 |----------------------------|--------------------------------------|
 | `Get-VerifiedDownload.ps1` | Download files with SHA verification |
-
-## Agents
-
-The `agents/` directory contains the activation harness for Copilot agent cold-start validation.
-
-| Script                                                   | Purpose                                                                              |
-|----------------------------------------------------------|--------------------------------------------------------------------------------------|
-| `activation-harness/Get-AgentActivationFingerprint.psm1` | Compute deterministic activation fingerprints for custom agents across scenarios     |
-| `activation-harness/Update-AgentActivationBaseline.ps1`  | Regenerate baseline.json for the activation harness and support dry-run drift checks |
-| `activation-harness/baseline.json`                       | Snapshot of the current activation fingerprint baseline for the ADR creation agent   |
-
-See [activation-harness/README.md](agents/activation-harness/README.md) for the full harness contract and baseline workflow.
 
 ## Agentic Workflows
 
@@ -415,7 +402,6 @@ Key rules:
 * [Linting Scripts Documentation](linting/README.md)
 * [Security Scripts Documentation](security/README.md)
 * [Test Organization Documentation](tests/README.md)
-* [Agent Activation Harness Documentation](agents/activation-harness/README.md)
 * [Evaluation Framework Documentation](../evals/README.md)
 * [GitHub Workflows Documentation](../.github/workflows/README.md)
 * [Contributing Guidelines](../CONTRIBUTING.md)
