@@ -862,7 +862,7 @@
         }
       ],
       "status": "fixed",
-      "impact_statement": "The committed environment resolves tinypool 2.2.0, which is later than the 2.1.1 release where this issue was fixed. tinypool is a transitive dependency of @docusaurus/core 3.10.2, which loads it only for the opt-in SSG worker-thread executor at build time; the published site is static output. @docusaurus/core requires tinypool ^1.0.2 and no 1.x release is patched, so the documentation site's package manifest overrides tinypool to exactly 2.2.0, and the committed package-lock.json resolves that version for clean installs. A clean build produced output identical to the pre-override build apart from content-hash names.",
+      "impact_statement": "The committed environment resolves tinypool 2.2.0, which is later than the 2.1.1 release where this issue was fixed. tinypool is a transitive dependency of @docusaurus/core 3.10.2, which uses it at build time to render pages on worker threads, a setting this site enables through future.v4; the published site is static output. @docusaurus/core requires tinypool ^1.0.2 and no 1.x release is patched, so the documentation site's package manifest overrides tinypool to exactly 2.2.0, and the committed package-lock.json resolves that version for clean installs. A clean build that rendered every page through tinypool 2.2.0 produced output identical to the pre-override build apart from content-hash names.",
       "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-5gmw-xhrv-c9v3. Pin evidence: docs/docusaurus/package.json overrides tinypool to 2.2.0; docs/docusaurus/package-lock.json resolves tinypool 2.2.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
       "timestamp": "2026-10-06T04:21:27.000Z"
     },
@@ -891,7 +891,7 @@
         }
       ],
       "status": "fixed",
-      "impact_statement": "The committed environment resolves tinypool 2.2.0, which is later than the 2.1.2 release where this issue was fixed. tinypool is a transitive dependency of @docusaurus/core 3.10.2, which loads it only for the opt-in SSG worker-thread executor at build time; the published site is static output. @docusaurus/core requires tinypool ^1.0.2 and no 1.x release is patched, so the documentation site's package manifest overrides tinypool to exactly 2.2.0, and the committed package-lock.json resolves that version for clean installs.",
+      "impact_statement": "The committed environment resolves tinypool 2.2.0, which is later than the 2.1.2 release where this issue was fixed. tinypool is a transitive dependency of @docusaurus/core 3.10.2, which uses it at build time to render pages on worker threads, a setting this site enables through future.v4; the published site is static output. @docusaurus/core requires tinypool ^1.0.2 and no 1.x release is patched, so the documentation site's package manifest overrides tinypool to exactly 2.2.0, and the committed package-lock.json resolves that version for clean installs.",
       "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-85c8-ppgw-ccpr. Pin evidence: docs/docusaurus/package.json overrides tinypool to 2.2.0; docs/docusaurus/package-lock.json resolves tinypool 2.2.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
       "timestamp": "2026-10-06T04:21:27.000Z"
     },
