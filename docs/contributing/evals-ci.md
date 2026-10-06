@@ -118,6 +118,20 @@ evidence fails closed.
 artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
 or decide whether evidence is complete.
 
+The per-artifact table includes `Input tokens / trial` and `Cache-read tokens / trial`
+columns. Each value is the artifact's summed token count divided by the trials that
+reported usage, taken from Vally's native `trajectory.metrics.tokenUsage` for the
+selected attempt of each spec. The columns are advisory and never gate a pull request.
+Model-backed trials vary from run to run, so compare a value against several runs
+rather than one. A dash means no trial reported usable token counts, or the summary
+predates token reporting.
+
+The token columns never fail a pull request. Cold-start growth is enforced statically
+instead: `npm run lint:cold-start` and its Pester suite sum each planning-chain agent's
+file, recursive `#file:` imports, and always-on instructions against the budgets in
+`scripts/linting/agent-cold-start-budgets.json`, and fail when a set exceeds its ceiling.
+This replaces the retired activation harness, which gated only the ADR Creator.
+
 ## Advisory Model Lanes
 
 The `equivalence-advisory` job reports how additional models behave on the

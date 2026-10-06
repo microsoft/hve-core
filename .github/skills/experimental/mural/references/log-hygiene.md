@@ -1,11 +1,10 @@
 ---
 description: 'Operator log-hygiene contract for Mural customizations: never echo raw URLs, Azure SAS query strings, OAuth tokens, or Authorization headers; the skill _redact() is a defense-in-depth backstop, not a license to log.'
-applyTo: '**/.copilot-tracking/mural/**, **/.github/skills/experimental/mural/**, **/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md, **/.github/instructions/experimental/mural/**'
 ---
 
-## Mural Log Hygiene
+# Mural Log Hygiene
 
-Mural traffic carries credential material at every hop: the OAuth authorization flow, the localhost browser callback, the `Authorization: Bearer …` header on every authenticated API call, and Azure Blob SAS query strings returned by asset-upload responses. None of that material may be echoed into chat, transcripts, planning artifacts, work items, screenshots, or pasted shell output. Mural is the durable record of human conversation (see [mural-human-record.instructions.md](mural-human-record.instructions.md)); the operator is the second line of defense behind the skill's `_redact` and is responsible for what leaves the terminal.
+Mural traffic carries credential material at every hop: the OAuth authorization flow, the localhost browser callback, the `Authorization: Bearer …` header on every authenticated API call, and Azure Blob SAS query strings returned by asset-upload responses. None of that material may be echoed into chat, transcripts, planning artifacts, work items, screenshots, or pasted shell output. Mural is the durable record of human conversation (see [human-record.md](human-record.md)); the operator is the second line of defense behind the skill's `_redact` and is responsible for what leaves the terminal.
 
 ## Sensitive Material Inventory
 
@@ -40,7 +39,7 @@ The `mural` skill provides a single `_redact(text)` helper that masks the items 
 
 ## Cross-references
 
-* #file:mural-human-record.instructions.md
-* #file:mural-writeback-hygiene.instructions.md
+* [human-record.md](human-record.md)
+* [writeback-hygiene.md](writeback-hygiene.md)
 * The `mural` skill's `SECURITY.md`
 * The `mural` skill's `scripts/mural/_transport.py`
