@@ -265,8 +265,9 @@ restores target-owned release metadata, writes the exact `release-as`, and
 opens a reviewed PR. Promotion heads are stable per hop and are updated without
 force. The promotion merge creates no tag.
 
-The PR-close release workflows accept only the exact promotion or managed head
-for their channel. A promotion merge selects PR-only mode. A managed PR merge
+The merge-driven (push) release workflows resolve the pull request merged by
+each push and accept only the exact promotion or managed head for their
+channel. A promotion merge selects PR-only mode. A managed PR merge
 selects tag-only mode, and release-please creates
 `prerelease-v<version>` for PreRelease or `v<version>` for Stable plus the
 matching draft at that managed merge commit.
@@ -519,7 +520,9 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 `npm run lint:py` runs the same command set as `python-lint.yml`: `ruff check` followed by the non-mutating `ruff format --check`. Execution conditions still differ in three ways:
 
 * Provisioning: the hosted lane runs `uv sync --locked` itself. The local lint runner intentionally verifies rather than provisions, while `test:py` provisions before testing. A locked project without the exact ruff version fails before ruff executes and reports `uv sync --locked` as the setup action. Devcontainer and coding-agent setup synchronize every lint-eligible project, including the telemetry hook, with `uv sync --locked`.
-* Project scope: local discovery covers directories containing a `pyproject.toml` except generated `plugins/` output, dependency trees, and `scripts/evals/moderation`. The moderation eval remains excluded from per-PR Python matrix jobs and local lint because its torch/detoxify environment belongs to the dedicated moderation lane. Other eligible projects outside `.github/skills`, including `.github/hooks/shared/telemetry`, remain in local and hosted lint scope.
+* Project scope: local discovery covers directories containing a `pyproject.toml` except generated `plugins/` output, dependency trees, `scripts/evals/moderation`, and the `scripts/tools/` locked tool environments, which hold no Python sources.
+  The moderation eval remains excluded from per-PR Python matrix jobs and local lint because its torch/detoxify environment belongs to the dedicated moderation lane. The per-PR and weekly matrices also skip `scripts/tools/`.
+  Other eligible projects outside `.github/skills`, including `.github/hooks/shared/telemetry`, remain in local and hosted lint scope.
 * Execution gate: the hosted lane defaults to running only when a pull request changes `.py` or `.pyi` files, while the local lane always scans every discovered project.
 
 ## Related Documentation

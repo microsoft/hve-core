@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -43,11 +43,11 @@ To add tools or adjust versions, modify `.devcontainer/devcontainer.json`. The
 {
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "24",
+      "version": "24.21.0",
       "pnpmVersion": "none"
     },
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11",
+      "version": "3.12.15",
       "installTools": false
     },
     "ghcr.io/devcontainers/features/powershell:1": {}
@@ -104,9 +104,15 @@ array. Each entry uses the `publisher.extensionId` format:
 
 Three lifecycle hooks execute during container setup:
 
-* `onCreateCommand` runs `.devcontainer/scripts/on-create.sh` to install system
-  dependencies (shellcheck, PowerShell modules, gitleaks)
-* `updateContentCommand` runs `npm ci` to install JavaScript dependencies
+* `onCreateCommand` runs `.devcontainer/scripts/on-create.sh` to install
+  shellcheck, zizmor, gitleaks, cosign, osv-scanner, and uv, each pinned and
+  SHA-256 verified against digests that
+  `npm run lint:tool-version-consistency` keeps equal to
+  `scripts/security/tool-checksums.json`, plus the version-pinned PowerShell
+  modules from `scripts/security/ps-module-versions.json`
+* `updateContentCommand` runs `npm ci` at the repository root and
+  `npm ci --prefix scripts/linting/workflow-validator --ignore-scripts` for the
+  workflow validator
 * `postCreateCommand` runs `.devcontainer/scripts/post-create.sh` for final
   configuration
 
@@ -264,15 +270,18 @@ The coding agent environment includes:
 * Node.js 24.21.0 (from `.node-version`) with npm dependencies from `package.json`
 * Python 3.12.15 (from `.python-version`)
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
-* shellcheck 0.11.0, pinned and checksum-verified from `scripts/security/tool-checksums.json`
-* zizmor 1.30.1, pinned and checksum-verified from `scripts/security/tool-checksums.json`
+* shellcheck 0.11.0 and zizmor 1.30.1, each pinned with per-architecture
+  SHA-256 digests in `copilot-setup-steps.yml`. `npm run
+  lint:tool-version-consistency` requires those versions and digests to match
+  `scripts/security/tool-checksums.json` for the same architecture.
 * cosign for artifact signing and verification
 * osv-scanner for dependency vulnerability scanning
 
 ### Adding Tools for the Coding Agent
 
 Add installation steps to `copilot-setup-steps.yml`. Each tool should include
-SHA-verified downloads for security:
+SHA-verified downloads for security, and the tool must be registered in
+`scripts/security/tool-checksums.json` with the same version and digests:
 
 ```yaml
 - name: Install custom tool

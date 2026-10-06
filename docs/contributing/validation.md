@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-06
 ms.topic: how-to
 keywords:
   - validation
@@ -328,6 +328,30 @@ The gate reads `security/code-scanning-exceptions.yml` and needs the pinned
 `PowerShell-Yaml` module. It makes no network calls and does not change alert
 state. It accepts SARIF from any code-scanning tool; pass `-Threshold All` to
 fail every result, as scanners gated at zero findings do.
+
+### Gated local scanner runs
+
+`validate:local` runs the workflow validator, tool-version check, and
+dependency-pinning scan through the same gate, as CI does. A finding fails only
+when `security/code-scanning-exceptions.yml` does not excuse it, and a stale or
+malformed exception also fails.
+
+| Command                                       | Scanner                           | SARIF                                   |
+|-----------------------------------------------|-----------------------------------|-----------------------------------------|
+| `npm run lint:workflows:gated`                | Workflow validator and ShellCheck | `logs/workflow-validation.sarif`        |
+| `npm run lint:tool-version-consistency:gated` | `Test-ToolVersionConsistency.ps1` | `logs/tool-version-consistency.sarif`   |
+| `npm run lint:dependency-pinning:gated`       | `Test-DependencyPinning.ps1`      | `logs/dependency-pinning-results.sarif` |
+
+Each command runs `scripts/security/Invoke-ScannerGate.ps1`. It fails when the
+scanner exits with a code it never uses for findings or writes no SARIF.
+`lint:workflows:gated` needs the validator's npm dependencies and the exact
+ShellCheck version from `scripts/security/tool-checksums.json` on `PATH`. The
+raw `lint:workflows`, `lint:tool-version-consistency`, and
+`lint:dependency-pinning` scripts report every finding without consulting the
+register.
+
+`npm run lint:zizmor` passes `--no-ignores`, as `zizmor-scan.yml` does, so
+inline `zizmor: ignore` comments suppress nothing.
 
 ## Rust unit-test network-isolation lane
 

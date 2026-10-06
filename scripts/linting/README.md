@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-05
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - powershell
@@ -505,7 +505,7 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 ##### Features
 
-* Discovers lint-eligible Python projects via `pyproject.toml`, excluding generated `plugins/` output, dependency trees, and the heavyweight `scripts/evals/moderation` project
+* Discovers lint-eligible Python projects via `pyproject.toml`, excluding generated `plugins/` output, dependency trees, the heavyweight `scripts/evals/moderation` project, and the `scripts/tools/` locked tool environments, which hold no Python sources
 * Resolves ruff per project: a project committing `uv.lock` must already provide a ruff binary matching the locked version, preferring its own `.venv` over a global install
 * Fails a project before running ruff when no exact-version binary is present, reporting the required version and `uv sync --locked` as the setup action; it never installs or synchronizes dependencies
 * Intentionally verifies existing environments while `Invoke-PythonTests.ps1` provisions before testing; devcontainer and coding-agent setup synchronize all lint-eligible locked projects, including `.github/hooks/shared/telemetry`
@@ -770,14 +770,16 @@ blockquote markers, so line wrapping does not affect matching.
 
 ## npm Scripts
 
-| npm Script                       | Description                                                                                                                                                                                        | |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                                      |
-| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                              |
-| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                               |
-| `lint:cold-start`                | Run `pwsh -NoProfile -File scripts/linting/Test-AgentColdStartBudget.ps1` to enforce planning-chain cold-start byte budgets; the Pester suite enforces the same budgets in pull requests           |
-| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                             |
-| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                           |
-| `lint:workflows`                 | Run `node scripts/linting/workflow-validator/validate-workflows.mjs --sarif logs/workflow-validation.sarif` to validate workflows and composite actions with GitHub's parser and pinned shellcheck |
+| npm Script                       | Description                                                                                                                                                                                                          |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                                                        |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                                                |
+| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                                                 |
+| `lint:cold-start`                | Run `pwsh -NoProfile -File scripts/linting/Test-AgentColdStartBudget.ps1` to enforce planning-chain cold-start byte budgets; the Pester suite enforces the same budgets in pull requests                             |
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                                               |
+| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                                             |
+| `lint:workflows`                 | Run `node scripts/linting/workflow-validator/validate-workflows.mjs --sarif logs/workflow-validation.sarif` to validate workflows and composite actions with GitHub's parser and pinned shellcheck                   |
+| `lint:workflows:gated`           | Run `pwsh -NoProfile -File ./scripts/security/Invoke-ScannerGate.ps1 -Scanner workflows` to run the validator and fail only on findings the exception register does not excuse, as CI does; `validate:local` uses it |
 
 ## Shared Module
 
