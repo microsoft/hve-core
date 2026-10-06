@@ -83,6 +83,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/EvalSpecSchema.psm1') -Force
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
     Write-Error "Required module 'powershell-yaml' is not installed. Run 'Install-Module powershell-yaml -Scope CurrentUser' before invoking this script."
@@ -197,7 +198,7 @@ function Write-EvalSpecAnnotations {
     foreach ($entry in $Invalid) {
         foreach ($err in $entry.errors) {
             $msg = "[$($err.field)] $($err.message)"
-            Write-Host "::error file=$($entry.path)::$msg"
+            Write-CIAnnotation -Level Error -File $entry.path -Message "$msg"
         }
     }
 }
@@ -425,7 +426,7 @@ function Write-OrphanedStimulusTagAnnotations {
 
     foreach ($entry in $OrphanedTags) {
         $msg = "Orphaned $($entry.tag) tag '$($entry.value)' in stimulus '$($entry.stimulusName)' ($($entry.reason))."
-        Write-Host "::error file=$EvalSpecPath::$msg"
+        Write-CIAnnotation -Level Error -File $EvalSpecPath -Message "$msg"
     }
 }
 
@@ -890,7 +891,7 @@ function Write-EquivalenceStimulusSyncAnnotations {
 
     foreach ($entry in $Violations) {
         $msg = "[$($entry.field)] $($entry.message)"
-        Write-Host "::error file=$CanonicalPath::$msg"
+        Write-CIAnnotation -Level Error -File $CanonicalPath -Message "$msg"
     }
 }
 
@@ -1089,7 +1090,7 @@ function Write-AgentCoverageAnnotations {
 
     foreach ($entry in $Missing) {
         $msg = "Parent agent '$($entry.slug)' is missing eval stimulus partial '$StimuliRoot/$($entry.slug).yml'. Author one using the class recipe in evals/agent-behavior/README.md and regenerate evals/agent-behavior/eval.yaml."
-        Write-Host "::error file=$($entry.agentPath)::$msg"
+        Write-CIAnnotation -Level Error -File $entry.agentPath -Message "$msg"
     }
 }
 
@@ -1175,7 +1176,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $exitCode = 1
     }
     if ($orphanReport.inventoryError) {
-        Write-Host "::error file=$($orphanReport.inventoryPath)::$($orphanReport.inventoryError)"
+        Write-CIAnnotation -Level Error -File $orphanReport.inventoryPath -Message "$($orphanReport.inventoryError)"
         $exitCode = 1
     }
     elseif ($orphanReport.orphanedTags.Count -gt 0) {

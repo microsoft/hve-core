@@ -308,3 +308,37 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $exit | Should -Be 0
     }
 }
+
+Describe 'Write-TextModerationAnnotations' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        Mock Write-CIAnnotation {}
+    }
+
+    It 'Maps error and warning messages to annotations with file, line, and message' {
+        $results = @(
+            [pscustomobject]@{
+                spec     = 'evals/sample/stimuli.yml'
+                stimulus = 's1'
+                messages = @(
+                    [pscustomobject]@{ rule = 'profanity'; message = 'Avoid this word'; line = 4; source = 'retext-profanities' }
+                    [pscustomobject]@{ rule = 'gendered'; message = 'Use neutral wording'; line = 9; source = 'alex' }
+                )
+            }
+        )
+
+        $counts = Write-TextModerationAnnotations -Results $results
+
+        $counts.errorCount | Should -Be 1
+        $counts.warningCount | Should -Be 1
+        Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+            $Level -eq 'Error' -and $File -eq 'evals/sample/stimuli.yml' -and $Line -eq 4 -and $Message -eq '[profanity] s1: Avoid this word'
+        }
+        Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+            $Level -eq 'Warning' -and $File -eq 'evals/sample/stimuli.yml' -and $Line -eq 9 -and $Message -eq '[gendered] s1: Use neutral wording'
+        }
+    }
+}
