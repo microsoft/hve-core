@@ -939,12 +939,20 @@ function Get-FilesToScan {
                         continue
                     }
 
-                    # -Force includes dot-directories such as .github and .devcontainer,
-                    # which PowerShell treats as hidden on Linux.
-                    $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -Force -ErrorAction SilentlyContinue
-
                     if ($null -ne $trackedPaths) {
-                        $files = $files | Where-Object { $trackedPaths.Contains([System.IO.Path]::GetFullPath($_.FullName)) }
+                        # Select from tracked files rather than walking the tree, so
+                        # dot-directories are included on every platform and .git or
+                        # ignored dependency trees are never traversed.
+                        $prefix = [System.IO.Path]::GetFullPath($basePath).TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+                        $files = @($trackedPaths |
+                                Where-Object { $_.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase) -and [System.IO.Path]::GetFileName($_) -like $leafFilter } |
+                                ForEach-Object { [System.IO.FileInfo]::new($_) } |
+                                Where-Object { $_.Exists })
+                    }
+                    else {
+                        # -Force includes dot-directories such as .github and .devcontainer,
+                        # which PowerShell treats as hidden on Linux.
+                        $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -Force -ErrorAction SilentlyContinue
                     }
 
                     # Merge type-specific exclude patterns with caller-provided patterns
@@ -1301,6 +1309,12 @@ function Export-ComplianceReport {
         }
 
         'sarif' {
+            # One rule per scan type, declared even with no results, so the exception
+            # gate can report a type-specific entry stale when its finding disappears.
+            $ruleTypes = [System.Collections.Generic.List[string]]::new()
+            foreach ($typeName in @(@($Report.Metadata.IncludedTypes) | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() }) + @($Report.Violations | ForEach-Object { $_.Type })) {
+                if ($typeName -and -not $ruleTypes.Contains($typeName)) { $ruleTypes.Add($typeName) }
+            }
             $sarif = @{
                 version    = "2.1.0"
                 "`$schema" = "https://json.schemastore.org/sarif-2.1.0.json"
@@ -1310,11 +1324,17 @@ function Export-ComplianceReport {
                                 name           = "dependency-pinning-analyzer"
                                 version        = "1.0.0"
                                 informationUri = "https://github.com/microsoft/hve-core"
+                                rules          = @($ruleTypes | ForEach-Object {
+                                        @{
+                                            id               = "dependency-not-pinned/$_"
+                                            shortDescription = @{ text = "Unpinned $_ dependency" }
+                                        }
+                                    })
                             }
                         }
                         results = @($Report.Violations | ForEach-Object {
                                 @{
-                                    ruleId     = "dependency-not-pinned"
+                                    ruleId     = if ($_.Type) { "dependency-not-pinned/$($_.Type)" } else { "dependency-not-pinned" }
                                     level      = switch ($_.Severity) { 'High' { 'error' } 'Medium' { 'warning' } default { 'note' } }
                                     message    = @{ text = $_.Description }
                                     locations  = @(@{

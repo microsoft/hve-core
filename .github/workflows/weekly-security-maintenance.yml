@@ -82,6 +82,9 @@ jobs:
           THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
           PINNING_SCORE: ${{ needs.validate-pinning.outputs.compliance-score }}
           UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
+          UNEXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.unexcepted-count }}
+          EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
+          EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
           CODEQL_RESULT: ${{ needs.codeql-analysis.result }}
           WORKFLOW_SCAN_RESULT: ${{ needs.dangerous-workflow-scan.result }}
@@ -91,7 +94,11 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           $pinningScore = $env:PINNING_SCORE
-          $unpinnedCount = $env:UNPINNED_COUNT
+          # Registered exceptions are tracked findings, not new risks. Fall back to the raw
+          # scanner count only when the gate produced no output.
+          $unpinnedCount = if ($env:UNEXCEPTED_COUNT) { $env:UNEXCEPTED_COUNT } else { $env:UNPINNED_COUNT }
+          $exceptedCount = if ($env:EXCEPTED_COUNT) { $env:EXCEPTED_COUNT } else { '0' }
+          $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
           $codeqlResult = $env:CODEQL_RESULT
           $workflowScanResult = $env:WORKFLOW_SCAN_RESULT
@@ -100,6 +107,7 @@ jobs:
           # Determine overall status
           $hasIssues = $false
           if ($unpinnedCount -ne '0') { $hasIssues = $true }
+          if ($exceptionErrorCount -ne '0') { $hasIssues = $true }
           if ($staleCount -ne '0') { $hasIssues = $true }
           if ($codeqlResult -ne 'success') { $hasIssues = $true }
           if ($workflowScanResult -ne 'success') { $hasIssues = $true }
@@ -115,7 +123,8 @@ jobs:
           | Metric | Status | Details |
           |--------|--------|---------|
           | Dependency Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
-          | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
+          | Unpinned Dependencies (not excepted) | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned or tracked' }) |
+          | Tracked Exceptions | $(if ($exceptionErrorCount -eq '0') { "✅ $exceptedCount excused" } else { "⚠️ $exceptionErrorCount register error(s)" }) | security/code-scanning-exceptions.yml |
           | Stale SHAs (>$thresholdDays days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
           ## 🛡️ Security Analysis
@@ -223,15 +232,23 @@ jobs:
         env:
           THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
           UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
+          UNEXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.unexcepted-count }}
+          EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
+          EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
         run: |
-          $unpinnedCount = $env:UNPINNED_COUNT
+          $unpinnedCount = if ($env:UNEXCEPTED_COUNT) { $env:UNEXCEPTED_COUNT } else { $env:UNPINNED_COUNT }
+          $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
           $thresholdDays = $env:THRESHOLD_DAYS
           
           # Informational output - workflow succeeds but logs warnings
           if ($unpinnedCount -ne '0') {
-            Write-Output "::warning::Found $unpinnedCount unpinned dependencies. Review build warnings for details."
+            Write-Output "::warning::Found $unpinnedCount unpinned dependencies that no tracked exception excuses. Review build warnings for details."
+          }
+
+          if ($exceptionErrorCount -ne '0') {
+            Write-Output "::warning::Found $exceptionErrorCount stale, expired, or mismatched exception entries. Review the dependency pinning gate output."
           }
           
           if ($staleCount -ne '0') {

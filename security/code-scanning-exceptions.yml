@@ -391,7 +391,7 @@ exceptions:
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
   - tool: dependency-pinning-analyzer
-    rule: dependency-not-pinned
+    rule: dependency-not-pinned/setup-action-versions
     path: .github/workflows/demo-material-author.lock.yml
     count: 1
     kind: generated-code
@@ -401,7 +401,7 @@ exceptions:
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
   - tool: dependency-pinning-analyzer
-    rule: dependency-not-pinned
+    rule: dependency-not-pinned/setup-action-versions
     path: .github/workflows/dependency-pr-review.lock.yml
     count: 1
     kind: generated-code
@@ -411,7 +411,7 @@ exceptions:
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
   - tool: dependency-pinning-analyzer
-    rule: dependency-not-pinned
+    rule: dependency-not-pinned/setup-action-versions
     path: .github/workflows/doc-update-check.lock.yml
     count: 1
     kind: generated-code
@@ -421,7 +421,7 @@ exceptions:
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
   - tool: dependency-pinning-analyzer
-    rule: dependency-not-pinned
+    rule: dependency-not-pinned/setup-action-versions
     path: .github/workflows/issue-implement.lock.yml
     count: 1
     kind: generated-code
@@ -431,7 +431,7 @@ exceptions:
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
   - tool: dependency-pinning-analyzer
-    rule: dependency-not-pinned
+    rule: dependency-not-pinned/setup-action-versions
     path: .github/workflows/issue-triage.lock.yml
     count: 1
     kind: generated-code
@@ -441,7 +441,7 @@ exceptions:
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
   - tool: dependency-pinning-analyzer
-    rule: dependency-not-pinned
+    rule: dependency-not-pinned/setup-action-versions
     path: .github/workflows/pr-review.lock.yml
     count: 1
     kind: generated-code
@@ -451,7 +451,7 @@ exceptions:
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
   - tool: dependency-pinning-analyzer
-    rule: dependency-not-pinned
+    rule: dependency-not-pinned/setup-action-versions
     path: .github/workflows/vex-draft.lock.yml
     count: 1
     kind: generated-code

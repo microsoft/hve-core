@@ -559,9 +559,20 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
             $mediumViolation.Description = 'Version range not pinned'
             $mediumViolation.Remediation = 'Pin to exact version'
             $script:MockReport.Violations += $mediumViolation
+            $script:MockReport.Metadata = @{ IncludedTypes = 'github-actions,pip,npm' }
 
             Export-ComplianceReport -Report $script:MockReport -Format 'sarif' -OutputPath $script:SarifFile
             $script:SarifContent = Get-Content $script:SarifFile -Raw | ConvertFrom-Json
+        }
+
+        It 'Uses a type-specific rule ID for each result' {
+            @($script:SarifContent.runs[0].results | ForEach-Object ruleId | Sort-Object) |
+                Should -Be @('dependency-not-pinned/github-actions', 'dependency-not-pinned/pip')
+        }
+
+        It 'Declares a rule for every included type, including types with no results' {
+            @($script:SarifContent.runs[0].tool.driver.rules | ForEach-Object id | Sort-Object) |
+                Should -Be @('dependency-not-pinned/github-actions', 'dependency-not-pinned/npm', 'dependency-not-pinned/pip')
         }
 
         It 'Has valid SARIF version 2.1.0' {
@@ -604,6 +615,65 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
             $result = $script:SarifContent.runs[0].results[0]
             $result.properties.dependencyName | Should -Not -BeNullOrEmpty
             $result.properties.remediation | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Exception gate integration' {
+        BeforeAll {
+            $script:GateScript = Join-Path $PSScriptRoot '../../security/Test-CodeQLSarifThreshold.ps1'
+
+            function script:Invoke-PinningGate {
+                param([object[]]$Violations, [string]$Rule, [string]$Name)
+                $report = [ComplianceReport]::new()
+                $report.ComplianceScore = 90
+                $report.TotalDependencies = 10
+                $report.UnpinnedDependencies = @($Violations).Count
+                $report.Violations = @($Violations)
+                $report.Metadata = @{ IncludedTypes = 'setup-action-versions,container-images' }
+                $sarif = Join-Path $TestDrive "$Name.sarif"
+                Export-ComplianceReport -Report $report -Format 'sarif' -OutputPath $sarif
+                $register = Join-Path $TestDrive "$Name.yml"
+                @(
+                    'exceptions:'
+                    '  - tool: dependency-pinning-analyzer'
+                    "    rule: $Rule"
+                    '    path: .github/workflows/sample.lock.yml'
+                    '    count: 1'
+                    '    kind: generated-code'
+                    '    upstream: https://github.com/github/gh-aw/issues/1'
+                    '    issue: 1'
+                    '    owner: octocat'
+                    '    reason: generated'
+                    '    expires: 2026-12-01'
+                ) | Set-Content -LiteralPath $register -Encoding utf8
+                $output = & pwsh -NoProfile -File $script:GateScript -SarifPath $sarif -ExceptionsPath $register -Threshold All -CheckDate '2026-10-06' -SummaryPath (Join-Path $TestDrive "$Name.md") 2>&1
+                return [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = ($output -join "`n") }
+            }
+
+            function script:New-PinViolation {
+                param([string]$Type)
+                [PSCustomObject]@{
+                    File = '.github/workflows/sample.lock.yml'; Line = 12; Type = $Type; Name = 'example'
+                    Version = '24'; Severity = 'High'; Description = 'Unpinned'; Remediation = 'Pin'
+                }
+            }
+        }
+
+        It 'Reports a type-specific exception stale when its finding disappears' {
+            $gate = Invoke-PinningGate -Violations @() -Rule 'dependency-not-pinned/setup-action-versions' -Name 'stale'
+            $gate.ExitCode | Should -Be 1
+            $gate.Output | Should -Match 'Stale exception: dependency-pinning-analyzer dependency-not-pinned/setup-action-versions'
+        }
+
+        It 'Does not excuse a different category in the same file' {
+            $gate = Invoke-PinningGate -Violations @(New-PinViolation -Type 'container-images') -Rule 'dependency-not-pinned/setup-action-versions' -Name 'other-category'
+            $gate.ExitCode | Should -Be 1
+            $gate.Output | Should -Match 'dependency-not-pinned/container-images'
+        }
+
+        It 'Excuses the registered category' {
+            $gate = Invoke-PinningGate -Violations @(New-PinViolation -Type 'setup-action-versions') -Rule 'dependency-not-pinned/setup-action-versions' -Name 'excused'
+            $gate.ExitCode | Should -Be 0
         }
     }
 

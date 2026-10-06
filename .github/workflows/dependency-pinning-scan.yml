@@ -40,6 +40,15 @@ on:
       is-compliant:
         description: 'Whether repository meets compliance threshold'
         value: ${{ jobs.scan.outputs.is-compliant }}
+      unexcepted-count:
+        description: 'Number of unpinned dependencies that no tracked exception excuses'
+        value: ${{ jobs.scan.outputs.unexcepted-count }}
+      excepted-count:
+        description: 'Number of unpinned dependencies excused by a tracked exception'
+        value: ${{ jobs.scan.outputs.excepted-count }}
+      exception-error-count:
+        description: 'Number of stale, expired, mismatched, or malformed exception entries'
+        value: ${{ jobs.scan.outputs.exception-error-count }}
 
 permissions:
   contents: read
@@ -55,6 +64,9 @@ jobs:
       compliance-score: ${{ steps.pinning.outputs.compliance-score }}
       unpinned-count: ${{ steps.pinning.outputs.unpinned-count }}
       is-compliant: ${{ steps.pinning.outputs.is-compliant }}
+      unexcepted-count: ${{ steps.gate.outputs.failing-count }}
+      excepted-count: ${{ steps.gate.outputs.excepted-count }}
+      exception-error-count: ${{ steps.gate.outputs.exception-error-count }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -141,13 +153,14 @@ jobs:
 
       # The gate reads the exception register with powershell-yaml.
       - name: Setup PowerShell modules
-        if: ${{ !inputs.soft-fail }}
         uses: $/.github/actions/setup-ps-modules
 
       # Every unpinned dependency fails unless a tracked exception in
-      # security/code-scanning-exceptions.yml excuses it. Soft-fail callers only report.
+      # security/code-scanning-exceptions.yml excuses it. Soft-fail callers still
+      # run the gate so their reports separate excepted from unexcepted results.
       - name: Gate on findings
-        if: ${{ !inputs.soft-fail }}
+        id: gate
+        continue-on-error: ${{ inputs.soft-fail }}
         shell: pwsh
         run: ./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath logs/dependency-pinning-results.sarif -Threshold All
 

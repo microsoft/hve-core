@@ -577,6 +577,14 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         $gate = Invoke-CodeQLSarifGate @PSBoundParameters
         Write-Output $gate.Summary
+        if ($env:GITHUB_OUTPUT) {
+            # Callers that report without failing (soft-fail) read these instead of raw scanner counts.
+            @(
+                "failing-count=$(@($gate.Failing).Count)"
+                "excepted-count=$(@($gate.Excepted).Count)"
+                "exception-error-count=$(@($gate.ExceptionErrors).Count + @($gate.InputErrors).Count)"
+            ) | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+        }
         exit $gate.ExitCode
     }
     catch {
