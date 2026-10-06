@@ -193,8 +193,8 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="force",
         action="store_true",
         help=(
-            "Continue even when the active credential backend already "
-            "holds tokens for this profile."
+            "Continue even when the token store already holds an access or "
+            "refresh token for this profile."
         ),
     )
     login.set_defaults(func=_cmd_auth_login)
