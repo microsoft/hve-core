@@ -60,7 +60,10 @@ on:
         # 1 = skip (no findings, or every finding already has a terminal VEX status).
         printf '%s' "$issue_body" | python3 "$gate_script" "$vex_doc"
 
-engine: copilot
+engine:
+  id: copilot
+  # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
+  version: "1.0.87"
 runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04
 runtimes:
@@ -104,6 +107,10 @@ network:
     - api.osv.dev
     - osv.dev
     - services.nvd.nist.gov
+  # runtimes.node opts the agent into Node registry and CDN domains; the agent
+  # installs no packages, so the Node ecosystem stays blocked.
+  blocked:
+    - node
 
 safe-outputs:
   threat-detection:

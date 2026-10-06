@@ -12,12 +12,48 @@ on:
   bots: ["dependabot[bot]"]
   reaction: eyes
 
-engine: copilot
+engine:
+  id: copilot
+  # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
+  version: "1.0.87"
 runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04
 runtimes:
   node:
     version: "24.21.0"
+# runtimes.node opts the agent into every Node ecosystem domain. The dependency
+# reviewer reads package metadata from registry.npmjs.org, so only that domain
+# stays reachable; the rest of the Node ecosystem is blocked. Blocked domains
+# take precedence over allowed ones.
+network:
+  allowed:
+    - defaults
+    - registry.npmjs.org
+  blocked:
+    - api.npms.io
+    - bun.sh
+    - cdn.jsdelivr.net
+    - deb.nodesource.com
+    - deno.land
+    - esm.sh
+    - get.pnpm.io
+    - googleapis.deno.dev
+    - googlechromelabs.github.io
+    - jsr.io
+    - nodejs.org
+    - npm.pkg.github.com
+    - npmjs.com
+    - npmjs.org
+    - registry.bower.io
+    - registry.npmjs.com
+    - registry.yarnpkg.com
+    - repo.yarnpkg.com
+    - skimdb.npmjs.com
+    - storage.googleapis.com
+    - telemetry.vercel.com
+    - www.npmjs.com
+    - www.npmjs.org
+    - yarnpkg.com
 timeout-minutes: 15
 
 imports:
