@@ -118,7 +118,7 @@
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.3.6",
     "@microsoft/vally-cli": "0.17.0",
-    "@modelcontextprotocol/server": "2.2.0",
+    "@modelcontextprotocol/server": "2.3.0",
     "@vscode/vsce": "4.0.0",
     "audit-ci": "7.1.0",
     "cspell": "10.3.6",
