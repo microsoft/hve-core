@@ -57,6 +57,37 @@ BeforeAll {
                     "$Uses`n$Run"
                 }) -join "`n")
     }
+
+    function Find-PackageReference {
+        <#
+        .SYNOPSIS
+        Returns the manifests and lockfiles that declare a package by name.
+        .PARAMETER Root
+        Directory the relative paths resolve against.
+        .PARAMETER RelativePath
+        Candidate manifest and lockfile paths.
+        .PARAMETER Package
+        Package name to look for.
+        .OUTPUTS
+        [string[]] Relative paths, with forward slashes, whose content declares the package.
+        #>
+        [CmdletBinding()]
+        [OutputType([string[]])]
+        param(
+            [Parameter(Mandatory = $true)][string]$Root,
+            [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$RelativePath,
+            [Parameter(Mandatory = $true)][string]$Package
+        )
+
+        $pattern = "(?im)(^|[`"'\s])$([regex]::Escape($Package))([<>=~!;,\s\[`"']|$)"
+        return @($RelativePath | Where-Object {
+                $full = Join-Path $Root $_
+                (Test-Path -LiteralPath $full -PathType Leaf) -and
+                    ([IO.File]::ReadAllText($full) -match $pattern)
+            } | ForEach-Object { $_ -replace '\\', '/' } | Sort-Object)
+    }
+
+    $script:ManifestPathspecs = @('*pyproject.toml', '*uv.lock', '*requirements*.txt', '*Pipfile', '*Pipfile.lock', '*poetry.lock', '*setup.cfg', '*setup.py', '*package.json', '*package-lock.json')
 }
 
 Describe 'Dependency Review workflow contract' -Tag 'Unit' {
@@ -218,5 +249,33 @@ Describe 'Dependency Review workflow contract' -Tag 'Unit' {
         finally {
             $Job['steps'] = $OriginalSteps
         }
+    }
+}
+
+Describe 'GPL license exception scope' -Tag 'Unit' {
+    # allow-dependencies-licenses is keyed by package, not path, so the GPL
+    # piper-tts exception would silently cover any new manifest that adds it.
+    It 'Keeps piper-tts confined to the scripts/tools/piper locked environment' {
+        $tracked = @(git -C $script:RepositoryRoot ls-files -- $script:ManifestPathspecs)
+        $LASTEXITCODE | Should -Be 0
+
+        Find-PackageReference -Root $script:RepositoryRoot -RelativePath $tracked -Package 'piper-tts' |
+            Should -Be @('scripts/tools/piper/pyproject.toml', 'scripts/tools/piper/uv.lock')
+    }
+
+    It 'Detects piper-tts in a manifest outside the Piper environment' {
+        $root = Join-Path $TestDrive 'leak'
+        New-Item -ItemType Directory -Path (Join-Path $root 'skill') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $root 'skill/pyproject.toml') -Encoding utf8 -Value "[project]`ndependencies = [`"piper-tts>=1.8`"]"
+        Set-Content -LiteralPath (Join-Path $root 'skill/other.toml') -Encoding utf8 -Value 'dependencies = ["piper-ttsx"]'
+
+        Find-PackageReference -Root $root -RelativePath @('skill/pyproject.toml', 'skill/other.toml') -Package 'piper-tts' |
+            Should -Be @('skill/pyproject.toml')
+    }
+
+    It 'Keeps the piper-tts allowlist entry next to its scope comment' {
+        $text = Get-Content -LiteralPath $script:WorkflowPath -Raw -Encoding utf8
+        $text | Should -Match 'pkg:pypi/piper-tts,'
+        $text | Should -Match 'DependencyReviewWorkflow\.Tests\.ps1 fails if piper-tts'
     }
 }
