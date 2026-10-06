@@ -159,13 +159,15 @@ def resolve_scan_target(
         raise ScriptError("Scan target must not be empty", EXIT_USAGE)
     if target.startswith("-"):
         raise ScriptError("Scan target must not begin with '-'", EXIT_USAGE)
-    if target.startswith(("\\\\", "//")):
+    local_path = Path(target).expanduser()
+    # Checked before any filesystem probe. Windows treats mixed separators such as
+    # "/\" as a UNC prefix, and a home directory can expand onto a network share.
+    if target.replace("\\", "/").startswith("//") or _is_network_path(local_path):
         raise ScriptError(
             "Network-share and protocol-relative scan targets are not supported",
             EXIT_USAGE,
         )
 
-    local_path = Path(target).expanduser()
     if local_path.exists() or (
         len(target) >= 3 and target[0].isalpha() and target[1:3] in {":\\", ":/"}
     ):
