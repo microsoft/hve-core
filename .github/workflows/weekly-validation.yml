@@ -45,8 +45,10 @@ jobs:
         id: find
         shell: pwsh
         run: |
+          # The scripts/tools/ projects are locked tool environments with no
+          # Python sources, matching PythonLintHelpers.psm1.
           $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and -not $_.FullName.StartsWith((Join-Path $PWD.Path 'scripts' 'tools') + [IO.Path]::DirectorySeparatorChar) } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)

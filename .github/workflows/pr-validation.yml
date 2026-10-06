@@ -116,9 +116,11 @@ jobs:
         run: |
           # The moderation eval (scripts/evals/moderation) carries a heavy
           # torch/detoxify stack and runs weekly via weekly-validation.yml,
-          # so it is excluded from per-PR Python matrix jobs here.
+          # so it is excluded from per-PR Python matrix jobs here. The
+          # scripts/tools/ projects are locked tool environments with no Python
+          # sources, matching PythonLintHelpers.psm1.
           $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' -and $_.FullName -notmatch 'evals[\\/]+moderation' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and $_.FullName -notmatch 'evals[\\/]+moderation' -and -not $_.FullName.StartsWith((Join-Path $PWD.Path 'scripts' 'tools') + [IO.Path]::DirectorySeparatorChar) } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)

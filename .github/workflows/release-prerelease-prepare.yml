@@ -8,7 +8,10 @@ name: Pre-Release Promotion Preparation
 
 on:
   # Every push to main is a reviewed merge through the merge queue, and it runs
-  # on the branch ref the release-governance environment allows.
+  # on the branch ref the release-governance environment allows. Unlike the
+  # release-branch workflows, this needs no merged-PR resolver: main accepts no
+  # direct pushes, and this job only opens or refreshes a promotion pull request
+  # that is itself reviewed before anything is released.
   push:
     branches:
       - main

@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  security-events: read # read code scanning alerts
 
 jobs:
   # Runs the workflow validator's capability probes against the newest
