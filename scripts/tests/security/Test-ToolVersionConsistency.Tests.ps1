@@ -168,6 +168,26 @@ Describe 'File checks' -Tag 'Unit' {
         $lock = "env:`n  GITLEAKS_VERSION: 1.0.0"
         (Invoke-Check (New-Repo -Files @{ '.github/workflows/x.lock.yml' = $lock })).Findings | Should -BeNullOrEmpty
     }
+
+    It 'checks the Copilot CLI install version in lock files: <Name>' -ForEach @(
+        @{ Name = 'no version'; Run = 'run: bash "${RUNNER_TEMP}/gh-aw/actions/install_copilot_cli.sh"'; Rule = 'tool-version/unpinned-install' }
+        @{ Name = 'only a flag'; Run = 'run: bash "${RUNNER_TEMP}/gh-aw/actions/install_copilot_cli.sh" --rootless'; Rule = 'tool-version/unpinned-install' }
+        @{ Name = 'another version'; Run = 'run: bash "${RUNNER_TEMP}/gh-aw/actions/install_copilot_cli.sh" 1.0.90'; Rule = 'tool-version/version-mismatch' }
+        @{ Name = 'the pinned version'; Run = 'run: bash "${RUNNER_TEMP}/gh-aw/actions/install_copilot_cli.sh" 1.0.87 --rootless'; Rule = $null }
+    ) {
+        $cli = [ordered]@{ name = 'copilot-cli'; repo = 'github/copilot-cli'; version = '1.0.87'; verification = 'published-checksums'
+            sha256ByArch = @{ linux_amd64 = $script:Amd }; assetTemplateByArch = @{ linux_amd64 = 'https://x/{version}/amd64' }
+        }
+        $lock = "jobs:`n  agent:`n    steps:`n      - name: Install GitHub Copilot CLI`n        $Run"
+        $result = Invoke-Check (New-Repo -Manifest (New-Manifest -ExtraTools @($cli)) -Files @{ '.github/workflows/x.lock.yml' = $lock })
+        if ($Rule) {
+            $result.Findings.RuleId | Should -Be $Rule
+            $result.Findings.Line | Should -Be 5
+        }
+        else {
+            $result.Findings | Should -BeNullOrEmpty
+        }
+    }
 }
 
 Describe 'Runtime checks' -Tag 'Unit' {

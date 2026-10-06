@@ -20,8 +20,9 @@
     composite actions, and devcontainer scripts:
 
       tool-version/manifest-invalid      the manifest entry is malformed
-      tool-version/version-mismatch      <PREFIX>_VERSION, a gh-aw lock compiler_version,
-                                         or a lockProject's pyproject.toml or uv.lock differs
+      tool-version/version-mismatch      <PREFIX>_VERSION, a gh-aw lock compiler_version, a lock's
+                                         Copilot CLI install version, or a lockProject's
+                                         pyproject.toml or uv.lock differs
       tool-version/checksum-mismatch     <PREFIX>[_<ARCH>]_SHA256 is not the manifest digest for its
                                          architecture, or a manifest digest is missing from a
                                          lockProject's uv.lock
@@ -30,7 +31,8 @@
       tool-version/unregistered-tool     a file pins <NAME>_VERSION with a matching
                                          <NAME>_SHA256 but the manifest has no such tool
       tool-version/unpinned-install      a step uses astral-sh/setup-uv instead of the
-                                         manifest-verified $/.github/actions/setup-uv
+                                         manifest-verified $/.github/actions/setup-uv, or a
+                                         lock installs the Copilot CLI without a version
       tool-version/runtime-invalid       .node-version or .python-version does not hold
                                          exactly one X.Y.Z version
       tool-version/runtime-mismatch      a setup-node or setup-python step reads another
@@ -355,6 +357,22 @@ function Get-ToolFileFinding {
                 elseif ($match.Groups[3].Success -and $match.Groups[3].Value -cne $awf.images.$image) {
                     $findings.Add((New-Finding -RuleId 'tool-version/image-mismatch' -File $RelativePath -Line $line `
                                 -Message "gh-aw-firewall/$image digest $($match.Groups[3].Value) is not the digest recorded in scripts/security/tool-checksums.json."))
+                }
+            }
+        }
+        # Without a version argument the installer resolves the CLI at run time.
+        $cli = $tools | Where-Object name -EQ 'copilot-cli' | Select-Object -First 1
+        if ($cli) {
+            foreach ($match in [regex]::Matches($Content, '(?m)install_copilot_cli\.sh"?([^\r\n#]*)')) {
+                $line = Get-LineNumber $Content $match.Index
+                $version = @($match.Groups[1].Value.Trim() -split '\s+' | Where-Object { $_ -and -not $_.StartsWith('-') }) | Select-Object -First 1
+                if (-not $version) {
+                    $findings.Add((New-Finding -RuleId 'tool-version/unpinned-install' -File $RelativePath -Line $line `
+                                -Message "The Copilot CLI is installed without a version. Set engine.version to $($cli.version) in the workflow source and recompile."))
+                }
+                elseif ($version.Trim('"''') -cne $cli.version) {
+                    $findings.Add((New-Finding -RuleId 'tool-version/version-mismatch' -File $RelativePath -Line $line `
+                                -Message "The Copilot CLI is pinned to $($version.Trim('"''')) here but $($cli.version) in scripts/security/tool-checksums.json."))
                 }
             }
         }

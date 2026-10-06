@@ -126,6 +126,21 @@
       "notes": "Agentic workflow compiler. Every compiled *.lock.yml records this compiler_version. Checksums from checksums.txt."
     },
     {
+      "name": "copilot-cli",
+      "repo": "github/copilot-cli",
+      "version": "1.0.87",
+      "verification": "published-checksums",
+      "sha256": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
+      "sha256ByArch": {
+        "linux_amd64": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
+        "linux_arm64": "c175343f60024d368e58a71f2294384b2b7df7b958079570b05b69ca89ce55f6"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/github/copilot-cli/releases/download/v{version}/copilot-linux-x64.tar.gz",
+        "linux_arm64": "https://github.com/github/copilot-cli/releases/download/v{version}/copilot-linux-arm64.tar.gz"
+      },
+      "notes": "Copilot CLI that gh-aw installs for the agent. Every agentic workflow source pins engine.version to this version, and each compiled *.lock.yml passes it to install_copilot_cli.sh, which verifies the tarball against SHA256SUMS.txt. Checksums from SHA256SUMS.txt."
+    },    {
       "name": "gh-actions-lock",
       "repo": "github/gh-actions-lock",
       "version": "0.1.6",
