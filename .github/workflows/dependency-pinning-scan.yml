@@ -139,6 +139,11 @@ jobs:
           sarif_file: logs/dependency-pinning-results.sarif
           category: dependency-pinning
 
+      # The gate reads the exception register with powershell-yaml.
+      - name: Setup PowerShell modules
+        if: ${{ !inputs.soft-fail }}
+        uses: $/.github/actions/setup-ps-modules
+
       # Every unpinned dependency fails unless a tracked exception in
       # security/code-scanning-exceptions.yml excuses it. Soft-fail callers only report.
       - name: Gate on findings

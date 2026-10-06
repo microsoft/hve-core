@@ -77,6 +77,10 @@ jobs:
           sarif_file: logs/zizmor.sarif
           category: zizmor
 
+      # The gate reads the exception register with powershell-yaml.
+      - name: Setup PowerShell modules
+        uses: $/.github/actions/setup-ps-modules
+
       # Every pedantic finding fails unless a tracked exception excuses it.
       - name: Gate on findings
         shell: pwsh
