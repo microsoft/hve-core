@@ -939,7 +939,9 @@ function Get-FilesToScan {
                         continue
                     }
 
-                    $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -ErrorAction SilentlyContinue
+                    # -Force includes dot-directories such as .github and .devcontainer,
+                    # which PowerShell treats as hidden on Linux.
+                    $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -Force -ErrorAction SilentlyContinue
 
                     if ($null -ne $trackedPaths) {
                         $files = $files | Where-Object { $trackedPaths.Contains([System.IO.Path]::GetFullPath($_.FullName)) }
