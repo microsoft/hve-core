@@ -222,6 +222,12 @@ describe('toSarif', () => {
     assert.equal(sarif.runs[0].tool.driver.rules.find((rule) => rule.id === 'workflow-check/undefined-step').shortDescription.text, CHECK_RULES['workflow-check/undefined-step']);
     assert.deepEqual(sarif.runs[0].results[0].locations[0].physicalLocation.region, { startLine: 1, startColumn: 1 });
   });
+
+  it('declares the shellcheck rule family on a clean run', () => {
+    const sarif = toSarif([], '0.0.0');
+    assert.deepEqual(sarif.runs[0].properties.ruleFamilies, ['shellcheck']);
+    assert.equal(sarif.runs[0].results.length, 0);
+  });
 });
 
 describe('repository', () => {

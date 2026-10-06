@@ -188,8 +188,9 @@ function Get-SarifEvaluation {
     .SYNOPSIS
         Evaluates SARIF files against the threshold contract.
     .OUTPUTS
-        PSCustomObject with Findings (every result with its Tool and Failing flag)
-        and KnownRules (tool and rule ID keys this analysis ran).
+        PSCustomObject with Findings (every result with its Tool and Failing flag),
+        KnownRules (tool and rule ID keys this analysis ran), and KnownFamilies
+        (tool and rule-family keys a run declared in properties.ruleFamilies).
     #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
@@ -204,6 +205,7 @@ function Get-SarifEvaluation {
 
     $findings = [System.Collections.Generic.List[object]]::new()
     $knownRules = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $knownFamilies = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 
     foreach ($file in (Resolve-SarifInputFile -Path $Path)) {
         try {
@@ -226,6 +228,11 @@ function Get-SarifEvaluation {
             foreach ($rule in $ruleSets) {
                 $id = Get-PropertyValue $rule 'id'
                 if ($id) { [void]$knownRules.Add("$toolName`n$id") }
+            }
+            # A run may declare whole rule families it executed (for example every
+            # shellcheck/* rule), so exceptions for those rules can be reported stale.
+            foreach ($family in @(Get-PropertyValue (Get-PropertyValue $run 'properties') 'ruleFamilies')) {
+                if ($family) { [void]$knownFamilies.Add("$toolName`n$family") }
             }
 
             foreach ($result in @(Get-PropertyValue $run 'results')) {
@@ -279,8 +286,9 @@ function Get-SarifEvaluation {
     }
 
     return [pscustomobject]@{
-        Findings   = $findings.ToArray()
-        KnownRules = $knownRules
+        Findings      = $findings.ToArray()
+        KnownRules    = $knownRules
+        KnownFamilies = $knownFamilies
     }
 }
 #endregion
@@ -511,7 +519,10 @@ function Invoke-CodeQLSarifGate {
         }
         foreach ($key in $entryByKey.Keys) {
             $entry = $entryByKey[$key]
-            if ($evaluation.KnownRules.Contains("$($entry.Tool)`n$($entry.Rule)") -and -not $groups.Contains($key)) {
+            $family = if ("$($entry.Rule)".Contains('/')) { "$($entry.Rule)".Split('/')[0] } else { $null }
+            $ruleRan = $evaluation.KnownRules.Contains("$($entry.Tool)`n$($entry.Rule)") -or
+                ($family -and $evaluation.KnownFamilies.Contains("$($entry.Tool)`n$family"))
+            if ($ruleRan -and -not $groups.Contains($key)) {
                 $exceptionErrors.Add("Stale exception: $($entry.Tool) $($entry.Rule) in $($entry.Path) (issue #$($entry.Issue)) matches no failing result. Remove it.")
             }
         }

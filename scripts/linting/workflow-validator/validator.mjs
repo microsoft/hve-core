@@ -357,6 +357,10 @@ export function toSarif(findings, version) {
     runs: [
       {
         tool: { driver: { name: TOOL_NAME, version, informationUri: 'https://github.com/microsoft/hve-core', rules } },
+        // ShellCheck is required and runs every check on every script, so every
+        // shellcheck/* rule ran even when it produced no result. The exception gate
+        // uses this to report a now-clean shellcheck exception as stale.
+        properties: { ruleFamilies: ['shellcheck'] },
         results: findings.map((finding) => ({
           ruleId: finding.ruleId,
           level: finding.level,

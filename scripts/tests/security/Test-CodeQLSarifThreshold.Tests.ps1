@@ -299,6 +299,29 @@ Describe 'Tracked exceptions' {
         @($gate.ExceptionErrors | Where-Object { $_ -match 'Stale exception: .*docs/slides/Deck\.html' }).Count | Should -Be 1
     }
 
+    It 'reports a rule-family exception stale when the family ran without that rule' {
+        $sarif = Join-Path $TestDrive 'family.sarif'
+        [ordered]@{
+            version = '2.1.0'
+            runs    = @([ordered]@{
+                    tool       = [ordered]@{ driver = [ordered]@{ name = 'hve-workflow-validator'; rules = @() } }
+                    properties = @{ ruleFamilies = @('shellcheck') }
+                    results    = @()
+                })
+        } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $sarif -Encoding utf8
+        $yaml = New-ExceptionYaml -Tool 'hve-workflow-validator' -Rule 'shellcheck/SC2154' -Path '.github/workflows/sample.lock.yml'
+        $gate = Invoke-Gate -Sarif $sarif -Exceptions (Write-Exceptions -Yaml $yaml -Name 'family') -Threshold All
+        $gate.ExitCode | Should -Be 1
+        $gate.ExceptionErrors | Should -Match 'Stale exception: hve-workflow-validator shellcheck/SC2154'
+    }
+
+    It 'does not report a rule-family exception stale when the family did not run' {
+        $sarif = Write-Sarif -Name 'no-family' -ToolName 'hve-workflow-validator'
+        $yaml = New-ExceptionYaml -Tool 'hve-workflow-validator' -Rule 'shellcheck/SC2154' -Path '.github/workflows/sample.lock.yml'
+        $gate = Invoke-Gate -Sarif $sarif -Exceptions (Write-Exceptions -Yaml $yaml -Name 'no-family') -Threshold All
+        $gate.ExceptionErrors | Should -BeNullOrEmpty
+    }
+
     It 'fails when more results match than the pinned count' {
         $sarif = Write-Sarif -Name 'count-more' `
             -DriverRules @(New-SarifRule -Id 'js/missing-origin-check' -SecuritySeverity '5.0') `
