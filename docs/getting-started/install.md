@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install the HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
@@ -15,7 +15,7 @@ HVE Core delivers one complete component set through the `hve-core` VS Code exte
 
 Install `ise-hve-essentials.hve-core` from the VS Code Marketplace, or register this repository as a Copilot CLI marketplace and install `hve-core@hve-core`.
 
-Stable and PreRelease contain the same complete component set. They differ in source ownership, cadence, and version. See [HVE Core Identity and Channels](packages) for the release contract.
+The VS Code extension's Stable and PreRelease channels contain the same complete component set. They differ in source ownership, cadence, and version. The Copilot CLI plugin has one registration that tracks `main`. See [HVE Core Identity and Channels](packages) for the release contract.
 
 ## Selective Clone Adoption
 
@@ -70,73 +70,41 @@ graph LR
 
 ## Distribution Identity and Channels
 
-`main` is the ref-less development tip. PreRelease and Stable are reviewed
+The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`. There are no PreRelease or Stable plugin channels.
+
+The VS Code extension is published as PreRelease and Stable from reviewed
 release branches that advance through `main` to `release/prerelease` to
-`release/stable`. An exact channel tag freezes one release catalog and its
-source payloads.
+`release/stable`.
 
-| Use case             | Marketplace registration                   | Source resolution                  |
-|----------------------|--------------------------------------------|------------------------------------|
-| Development tip      | `microsoft/hve-core`                       | Current `main` repository root     |
-| Moving PreRelease    | `microsoft/hve-core#release/prerelease`    | Current reviewed PreRelease branch |
-| Moving Stable        | `microsoft/hve-core#release/stable`        | Current reviewed Stable branch     |
-| Immutable PreRelease | `microsoft/hve-core#prerelease-v<version>` | One exact PreRelease tag           |
-| Immutable Stable     | `microsoft/hve-core#v<version>`            | One exact Stable tag               |
-
-A moving release registration selects the catalog and repository-root source currently committed to its reviewed branch. The branch can advance, while an exact-tag registration remains fixed.
-
-A published channel release is the assurance boundary for its immutable tag.
+A published extension release is the assurance boundary for its immutable tag.
 The release workflow applies review and release gates, produces one VSIX and its
 SBOM and provenance sidecars, verifies provenance, and publishes through
-the configured release path. The ref-less development tip intentionally does
+the configured release path. The plugin registration resolves `main` and does
 not carry that published-release assurance.
-
-The plugin includes the telemetry hook. VS Code does not expose a declarative hook contribution point, so configure its location manually for extension installations.
 
 See [HVE Core Identity and Channels](packages) for the lifecycle and source contract.
 
 ### Copilot Plugin Registration
 
-Register the development tip without a ref:
+Register the marketplace and install the plugin:
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
-```
-
-Register a moving reviewed channel:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#release/prerelease
-copilot plugin marketplace add microsoft/hve-core#release/stable
-```
-
-Register an immutable channel tag:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
-copilot plugin marketplace add microsoft/hve-core#v<version>
-```
-
-Install the plugin:
-
-```bash
 copilot plugin install hve-core@hve-core
 ```
 
-### Refresh, Update, and Switching
+### Refresh and Update
 
 Marketplace refresh and installed-plugin update are separate client actions.
-When following a moving registration, refresh the catalog before requesting a
-plugin update:
+Refresh the catalog before requesting a plugin update:
 
 ```bash
 copilot plugin marketplace update hve-core
 copilot plugin update hve-core@hve-core
 ```
 
-Changing registrations can require removing and re-adding the marketplace in
-the client. Do not rely on a particular result for duplicate same-name
-registrations; confirm the behavior supported by your Copilot CLI version.
+If you registered a release-channel or tag ref earlier, follow
+[Replace an Earlier Registration](methods/cli-plugins#replace-an-earlier-registration).
 
 ### Clone Methods
 

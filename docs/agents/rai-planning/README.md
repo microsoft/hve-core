@@ -3,6 +3,8 @@ title: RAI Planning
 description: Structured Responsible AI assessment planning through a 6-phase conversational workflow aligned with NIST AI RMF 1.0
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: RAI Planning"
 keywords:
   - responsible AI
   - RAI planner
@@ -12,7 +14,7 @@ tags:
   - agents
   - rai-planning
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-04
 ms.topic: concept
 estimated_reading_time: 8
 ---

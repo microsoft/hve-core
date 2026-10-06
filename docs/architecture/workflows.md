@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-09-29
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - github actions
@@ -68,33 +68,33 @@ flowchart TD
 
 ## Workflow Inventory
 
-| Workflow                             | Trigger                           | Purpose                                                                 |
-|--------------------------------------|-----------------------------------|-------------------------------------------------------------------------|
-| `pr-validation.yml`                  | Pull request, manual              | Pre-merge quality gate for main, develop, and both release branches     |
-| `release-prerelease-prepare.yml`     | Merged PR to `main`, manual       | Open the reviewed `main` to `release/prerelease` promotion PR           |
-| `release-prerelease.yml`             | Merged PR to `release/prerelease` | Prepare metadata or create the exact odd-minor tag and draft            |
-| `release-stable.yml`                 | Published PreRelease, manual      | Open the reviewed `release/prerelease` to `release/stable` promotion PR |
-| `release-stable-publish.yml`         | Merged PR to `release/stable`     | Prepare metadata or create the exact even-minor tag and draft           |
-| `release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`   | Produce and publish the exact immutable channel release                 |
-| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual           | Scheduled security posture review                                       |
-| `weekly-validation.yml`              | Schedule, manual                  | Weekly full validation sweep                                            |
-| `security-scan.yml`                  | Push to main/develop              | CodeQL security validation                                              |
-| `release-marketplace-stable.yml`     | Published Stable release, manual  | VS Code extension Marketplace publishing                                |
-| `release-marketplace-prerelease.yml` | Published PreRelease, manual      | VS Code extension pre-release publishing                                |
-| `copilot-setup-steps.yml`            | Manual                            | Coding agent environment setup                                          |
-| `devcontainer-change-log.yml`        | Push to main/develop              | Logs devcontainer infrastructure file changes to the step summary       |
-| `devcontainer-lockfile-check.yml`    | Reusable                          | Validates devcontainer lockfile integrity and SHA-256 pinning           |
-| `scorecard.yml`                      | Schedule, push, post-tag release  | OpenSSF Scorecard security analysis                                     |
-| `codeql-analysis.yml`                | Schedule                          | Weekly CodeQL security scan (also reusable)                             |
-| `dependency-review.yml`              | Pull request                      | Dependency vulnerability review (also reusable)                         |
-| `sha-staleness-check.yml`            | Manual                            | SHA reference freshness check (also reusable)                           |
-| `deploy-docs.yml`                    | Push to main, manual              | Docusaurus documentation site deployment                                |
-| `create-stale-docs-issues.yml`       | Schedule                          | Automated stale docs issue creation from ms.date freshness              |
-| `msdate-freshness-check.yml`         | Schedule, manual                  | ms.date freshness validation across documentation                       |
-| `label-sync.yml`                     | Push to main, manual              | Repository label synchronization                                        |
-| `workflow-permissions-scan.yml`      | Schedule, manual                  | GitHub Actions permissions audit                                        |
-| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual           | Weekly GitHub code scanning alert retrieval and issue creation          |
-| `vex-detect.yml`                     | Schedule, release, manual         | Dependency vulnerability scan and VEX triage issue creation             |
+| Workflow                             | Trigger                           | Purpose                                                                                              |
+|--------------------------------------|-----------------------------------|------------------------------------------------------------------------------------------------------|
+| `pr-validation.yml`                  | Pull request, manual              | Pre-merge quality gate for main, develop, and both release branches                                  |
+| `release-prerelease-prepare.yml`     | Merged PR to `main`, manual       | Open the reviewed `main` to `release/prerelease` promotion PR                                        |
+| `release-prerelease.yml`             | Merged PR to `release/prerelease` | Prepare metadata or create the exact odd-minor tag and draft                                         |
+| `release-stable.yml`                 | Published PreRelease, manual      | Open the reviewed `release/prerelease` to `release/stable` promotion PR                              |
+| `release-stable-publish.yml`         | Merged PR to `release/stable`     | Prepare metadata or create the exact even-minor tag and draft                                        |
+| `release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`   | Produce and publish the exact immutable channel release                                              |
+| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual           | Scheduled security posture review                                                                    |
+| `weekly-validation.yml`              | Schedule, manual                  | Weekly full validation sweep                                                                         |
+| `security-scan.yml`                  | Push to main/develop              | CodeQL security validation                                                                           |
+| `release-marketplace-stable.yml`     | Published Stable release, manual  | VS Code extension Marketplace publishing                                                             |
+| `release-marketplace-prerelease.yml` | Published PreRelease, manual      | VS Code extension pre-release publishing                                                             |
+| `copilot-setup-steps.yml`            | Manual                            | Coding agent environment setup                                                                       |
+| `devcontainer-change-log.yml`        | Push to main/develop              | Logs devcontainer infrastructure file changes to the step summary                                    |
+| `devcontainer-lockfile-check.yml`    | Reusable                          | Validates devcontainer lockfile integrity and SHA-256 pinning                                        |
+| `scorecard.yml`                      | Schedule, push, post-tag release  | OpenSSF Scorecard security analysis                                                                  |
+| `codeql-analysis.yml`                | Sunday 4 AM UTC                   | Weekly CodeQL security scan with threshold gate (also reusable)                                      |
+| `dependency-review.yml`              | Pull request                      | Dependency vulnerability review (also reusable)                                                      |
+| `sha-staleness-check.yml`            | Manual                            | SHA reference freshness check (also reusable)                                                        |
+| `deploy-docs.yml`                    | Push to main, manual              | Docusaurus documentation site deployment                                                             |
+| `create-stale-docs-issues.yml`       | Schedule                          | Automated stale docs issue creation from ms.date freshness                                           |
+| `msdate-freshness-check.yml`         | Schedule, manual                  | ms.date freshness validation across documentation                                                    |
+| `label-sync.yml`                     | Push to main, manual              | Repository label synchronization                                                                     |
+| `workflow-permissions-scan.yml`      | Schedule, manual                  | GitHub Actions permissions audit                                                                     |
+| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual           | Weekly code-scanning issue filing, including dismissed-still-detected alerts and exception follow-up |
+| `vex-detect.yml`                     | Schedule, release, manual         | Dependency vulnerability scan and VEX triage issue creation                                          |
 
 GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`, `pr-review.md`, `dependency-pr-review.md`, `doc-update-check.md`, and `vex-draft.md`) compile to `*.lock.yml` workflows and are documented in [Agentic Workflows](agentic-workflows).
 
@@ -102,38 +102,38 @@ GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`,
 
 Individual validation workflows called by orchestration workflows:
 
-| Workflow                              | Purpose                                        | npm Script                               |
-|---------------------------------------|------------------------------------------------|------------------------------------------|
-| `markdown-lint.yml`                   | Markdownlint validation                        | `npm run lint:md`                        |
-| `spell-check.yml`                     | cspell dictionary check                        | `npm run spell-check`                    |
-| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                | `npm run lint:frontmatter`               |
-| `markdown-link-check.yml`             | Broken link detection                          | `npm run lint:md-links`                  |
-| `link-lang-check.yml`                 | Link language validation                       | `npm run lint:links`                     |
-| `yaml-lint.yml`                       | YAML syntax validation                         | `npm run lint:yaml`                      |
-| `ps-script-analyzer.yml`              | PowerShell static analysis                     | `npm run lint:ps`                        |
-| `table-format.yml`                    | Markdown table formatting                      | `npm run format:tables`                  |
-| `pester-tests.yml`                    | PowerShell unit tests                          | `npm run test:ps`                        |
-| `skill-validation.yml`                | Skill structure validation                     | `npm run validate:skills`                |
-| `dependency-pinning-scan.yml`         | Dependency pinning validation                  | N/A (PowerShell direct)                  |
-| `sha-staleness-check.yml`             | SHA reference freshness*                       | N/A (PowerShell direct)                  |
-| `codeql-analysis.yml`                 | CodeQL security scanning*                      | N/A (GitHub native)                      |
-| `dependency-review.yml`               | Dependency vulnerability review*               | N/A (GitHub native)                      |
-| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval           | N/A (PowerShell direct)                  |
-| `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts | N/A (bash + gh CLI direct)               |
-| `extension-provenance-signer.yml`     | Split VSIX packaging, attestation, and upload  | N/A                                      |
-| `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`             |
-| `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                    |
-| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation  | `npm run plugin:validate`                |
-| `extension-marketplace-publish.yml`   | Extension marketplace publishing               | N/A                                      |
-| `python-lint.yml`                     | Python lint and format checks (ruff)           | `npm run lint:py`                        |
-| `pytest-tests.yml`                    | Python unit tests                              | `npm run test:py`                        |
-| `pip-audit.yml`                       | Python dependency auditing                     | N/A (pip-audit direct)                   |
-| `fuzz-tests.yml`                      | Python fuzz testing                            | N/A (pytest direct)                      |
-| `docusaurus-tests.yml`                | Docusaurus test suite                          | N/A (npm test)                           |
-| `model-validation.yml`                | Model reference validation                     | `npm run lint:models`                    |
-| `ai-artifact-validation.yml`          | AI artifact structure validation               | `npm run lint:ai-artifacts`              |
-| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                | `npm run validate:devcontainer-lockfile` |
-| `action-version-consistency-scan.yml` | Action version consistency                     | `npm run lint:version-consistency`       |
+| Workflow                              | Purpose                                                       | npm Script                                                       |
+|---------------------------------------|---------------------------------------------------------------|------------------------------------------------------------------|
+| `markdown-lint.yml`                   | Markdownlint validation                                       | `npm run lint:md`                                                |
+| `spell-check.yml`                     | cspell dictionary check                                       | `npm run spell-check`                                            |
+| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                               | `npm run lint:frontmatter`                                       |
+| `markdown-link-check.yml`             | Broken link detection                                         | `npm run lint:md-links`                                          |
+| `link-lang-check.yml`                 | Link language validation                                      | `npm run lint:links`                                             |
+| `yaml-lint.yml`                       | YAML syntax validation                                        | `npm run lint:yaml`                                              |
+| `ps-script-analyzer.yml`              | PowerShell static analysis                                    | `npm run lint:ps`                                                |
+| `table-format.yml`                    | Markdown table formatting                                     | `npm run format:tables`                                          |
+| `pester-tests.yml`                    | PowerShell unit tests                                         | `npm run test:ps`                                                |
+| `skill-validation.yml`                | Skill structure validation                                    | `npm run validate:skills`                                        |
+| `dependency-pinning-scan.yml`         | Dependency pinning validation                                 | N/A (PowerShell direct)                                          |
+| `sha-staleness-check.yml`             | SHA reference freshness*                                      | N/A (PowerShell direct)                                          |
+| `codeql-analysis.yml`                 | CodeQL security scanning and threshold gate*                  | `npm run security:codeql-gate` (gate only)                       |
+| `dependency-review.yml`               | Dependency vulnerability review*                              | N/A (GitHub native)                                              |
+| `gh-code-scanning.yml`                | Code scanning alert and exception status retrieval            | N/A (PowerShell direct)                                          |
+| `create-gh-code-scanning-issues.yml`  | File code scanning issues and follow up on tracked exceptions | N/A (bash + gh CLI direct)                                       |
+| `extension-provenance-signer.yml`     | Split VSIX packaging, attestation, and upload                 | N/A                                                              |
+| `copyright-headers.yml`               | Copyright header validation                                   | `npm run validate:copyright`                                     |
+| `gitleaks-scan.yml`                   | Secret detection scanning                                     | N/A (gitleaks direct)                                            |
+| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation                 | `npm run plugin:validate`                                        |
+| `extension-marketplace-publish.yml`   | Extension marketplace publishing                              | N/A                                                              |
+| `python-lint.yml`                     | Python lint and format checks (ruff)                          | `npm run lint:py`                                                |
+| `pytest-tests.yml`                    | Python unit tests                                             | `npm run test:py`                                                |
+| `pip-audit.yml`                       | Python dependency auditing                                    | N/A (pip-audit direct)                                           |
+| `fuzz-tests.yml`                      | Python fuzz testing                                           | N/A (pytest direct)                                              |
+| `docusaurus-tests.yml`                | Docusaurus test suite                                         | N/A (npm test)                                                   |
+| `model-validation.yml`                | Model reference validation                                    | `npm run lint:models`                                            |
+| `ai-artifact-validation.yml`          | AI artifact structure validation                              | `npm run lint:ai-artifacts`, `npm run lint:artifact-portability` |
+| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                               | `npm run validate:devcontainer-lockfile`                         |
+| `action-version-consistency-scan.yml` | Action version consistency                                    | `npm run lint:version-consistency`                               |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
 
@@ -336,31 +336,49 @@ PreRelease releases still need successful runtime evidence, active governance
 evidence, platform assurance mapping, and qualified human review before making
 that claim.
 
-The ref-less `microsoft/hve-core` registration sources canonical content from `.github` through the main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate, SBOM, or attestation. PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable delivery through moving branch registrations and exact tags.
+The `microsoft/hve-core` plugin registration sources canonical content from
+`.github` through the main catalog. An explicit marketplace refresh and plugin
+update are required for that catalog, which has no release gate or release
+attestation. Each push to `main` publishes an unattested dependency SBOM,
+described in
+[Continuous Main SBOM](../contributing/release-process.md#continuous-main-sbom).
+There are no release-channel plugin registrations; PreRelease and Stable retain
+reviewed, release-gated, SBOM-covered, and attested immutable VSIX delivery
+through exact tags.
 
 ## Security Workflows
 
 ### Weekly Security Maintenance
 
-The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, providing scheduled security posture review.
+The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC on the default branch, providing scheduled security posture review. Manual dispatch uses the selected ref.
 
-| Job              | Purpose                              |
-|------------------|--------------------------------------|
-| validate-pinning | Verify dependency pinning compliance |
-| check-staleness  | Detect outdated SHA references       |
-| codeql-analysis  | Full CodeQL security scan            |
-| summary          | Aggregate security status report     |
+| Job                     | Purpose                                       |
+|-------------------------|-----------------------------------------------|
+| validate-pinning        | Verify dependency pinning compliance          |
+| check-staleness         | Detect outdated SHA references                |
+| codeql-analysis         | Full CodeQL security scan with threshold gate |
+| dangerous-workflow-scan | Advisory homegrown and Poutine scans          |
+| summary                 | Aggregate execution and dependency status     |
+
+The weekly caller reuses `dangerous-workflow-scan.yml` with both scanners advisory,
+SARIF and artifact uploads enabled, and only read-content/SARIF-write permissions.
+PR validation retains the blocking homegrown gate. A successful advisory job does not
+prove zero findings or successful analysis; inspect its logs and retained SARIF.
+See [Dangerous Workflow Detection](../security/dangerous-workflow-detection) for baseline
+dispositions and acknowledgment removal conditions.
 
 ### Security Validation Tools
 
-| Tool               | Script                            | Checks                                                                        |
-|--------------------|-----------------------------------|-------------------------------------------------------------------------------|
-| Dependency Pinning | `Test-DependencyPinning.ps1`      | Actions use SHA refs; npm uses exact versions                                 |
-| SHA Staleness      | `Test-SHAStaleness.ps1`           | SHAs reference recent commits                                                 |
-| audit-ci           | `audit-ci --config audit-ci.json` | Known vulnerabilities in dependencies, using the allowlist in `audit-ci.json` |
-| CodeQL             | GitHub native                     | Code patterns indicating security issues                                      |
-| Gitleaks           | `gitleaks`                        | Secret detection in repository history                                        |
-| Dependency Review  | GitHub native                     | Dependency vulnerability analysis                                             |
+| Tool               | Script                                         | Checks                                                                         |
+|--------------------|------------------------------------------------|--------------------------------------------------------------------------------|
+| Dependency Pinning | `Test-DependencyPinning.ps1`                   | Actions use SHA refs; npm uses exact versions                                  |
+| SHA Staleness      | `Test-SHAStaleness.ps1`                        | SHAs reference recent commits                                                  |
+| audit-ci           | `audit-ci --config audit-ci.json`              | Known vulnerabilities in dependencies, using the allowlist in `audit-ci.json`  |
+| CodeQL             | GitHub native; `Test-CodeQLSarifThreshold.ps1` | Code patterns indicating security issues; fails at the code-scanning threshold |
+| Gitleaks           | `gitleaks`                                     | Secret detection in repository history                                         |
+| Dependency Review  | GitHub native                                  | Dependency vulnerability analysis                                              |
+
+The CodeQL threshold gate, the weekly code-scanning issue filer, and tracked exceptions follow the [code-scanning alert lifecycle](../security/code-scanning-alert-lifecycle.md). Alerts are resolved in code or configuration and never dismissed.
 
 ## Extension Publishing
 
@@ -441,6 +459,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:py`                       | `ruff check` + `ruff format --check`                                                                       | python-lint.yml                             |
 | `lint:models`                   | `Validate-ModelReferences.ps1`                                                                             | model-validation.yml                        |
 | `lint:ai-artifacts`             | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                                                             | ai-artifact-validation.yml                  |
+| `lint:artifact-portability`     | `Test-ArtifactPathPortability.ps1`                                                                         | ai-artifact-validation.yml                  |
 | `lint:permissions`              | `Test-WorkflowPermissions.ps1`                                                                             | workflow-permissions-scan.yml               |
 | `lint:ps-module-pins`           | `Test-PSModulePins.ps1`                                                                                    | Local                                       |
 | `lint:dependency-pinning`       | `Test-DependencyPinning.ps1`                                                                               | dependency-pinning-scan.yml                 |

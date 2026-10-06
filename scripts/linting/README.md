@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-04
 ms.topic: reference
 keywords:
   - powershell
@@ -237,6 +237,7 @@ Purpose: Detect broken links before deployment.
 * Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
 * Validates internal links repository-wide, because renaming or deleting a target breaks references in files the change never touched
 * Restricts external-link fetching to files changed against a base branch with `-ChangedFilesOnly` and `-BaseBranch`; external links in unchanged files are reported as skipped
+* Supports `-ExternalLinksAsWarnings` so external findings remain visible without weakening internal-link failures
 * Fetches each unique external URL once, no matter how many files reference it
 * Checks files concurrently, bounded by `-ThrottleLimit` (default 8)
 * Configurable via `markdown-link-check.config.json`
@@ -258,9 +259,9 @@ Purpose: Detect broken links before deployment.
 * Workflow: `.github/workflows/markdown-link-check.yml`
 * Configuration: `markdown-link-check.config.json`
 * Artifacts: `markdown-link-check-results` (JSON)
-* Annotations: Error for each broken link
-* Exit Code: Non-zero if broken links found
-* Scope: pull request validation always checks internal links repository-wide and limits external-link fetching to changed files; `weekly-validation.yml` fetches external links across the full repository
+* Annotations: Errors for blocking findings; warnings for external findings when `-ExternalLinksAsWarnings` is active
+* Exit Code: Non-zero for any finding by default, or only for internal and source-report failures with `-ExternalLinksAsWarnings`
+* Scope: pull request validation hard-gates internal links repository-wide, reports external findings from changed files as advisory, and `weekly-validation.yml` fetches external links across the full repository
 
 ### ADR Consistency Validation
 
@@ -533,16 +534,17 @@ Purpose: Execute Python test suites for all Python skills that include a `tests/
 
 The linting directory also contains these scripts that are not covered in the earlier sections. Entries with a dedicated subsection below are documented in full; the rest are summarized here only:
 
-| Script                             | Purpose                                                                                              |
-|------------------------------------|------------------------------------------------------------------------------------------------------|
-| `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                   |
-| `Validate-HookManifests.ps1`       | Validate package-scoped hook manifests under `.github/hooks/`                                        |
-| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                         |
-| `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                        |
-| `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows |
-| `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                      |
-| `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                    |
-| `Validate-AssetDocs.ps1`           | Validate asset documentation coverage, orphans, sync, structure, and authored completeness           |
+| Script                             | Purpose                                                                                                                                                               |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                                                                                    |
+| `Validate-HookManifests.ps1`       | Validate package-scoped hook manifests under `.github/hooks/`                                                                                                         |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                                                                                          |
+| `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                                                                                         |
+| `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows                                                                  |
+| `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                                                                                       |
+| `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                                                                                     |
+| `Validate-AssetDocs.ps1`           | Validate asset documentation coverage, orphans, sync, structure, and authored completeness                                                                            |
+| `Test-AgentColdStartBudget.ps1`    | Enforce cold-start byte budgets (agent file, recursive `#file:` imports, and always-on instructions) for the planning-chain agents in `agent-cold-start-budgets.json` |
 
 #### `Validate-AssetDocs.ps1`
 
@@ -715,18 +717,21 @@ blockquote markers, so line wrapping does not affect matching.
 ##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/ai-artifact-validation.yml`
-* Artifacts: `ai-artifact-results` (JSON)
-* npm script: `npm run lint:ai-artifacts`
+* Validation: footer and disclaimer validation plus artifact path portability run independently before one blocking result gate
+* Artifacts: `ai-artifact-results` (contains `ai-artifact-results.json` and `artifact-path-portability-results.json`)
+* npm scripts: `npm run lint:ai-artifacts` and `npm run lint:artifact-portability`
 * Exit Code: Non-zero when `-FailOnMissing` is set and issues are found
 
 ## npm Scripts
 
-| npm Script                       | Description                                                                                                                                                          |
-|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                        |
-| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds |
-| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                               |
-| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                             |
+| npm Script                       | Description                                                                                                                                                                              |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                            |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                    |
+| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                     |
+| `lint:cold-start`                | Run `pwsh -NoProfile -File scripts/linting/Test-AgentColdStartBudget.ps1` to enforce planning-chain cold-start byte budgets; the Pester suite enforces the same budgets in pull requests |
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                   |
+| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                 |
 
 ## Shared Module
 

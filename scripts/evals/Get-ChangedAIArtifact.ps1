@@ -5,15 +5,21 @@
 
 <#
 .SYNOPSIS
-    Emits a JSON manifest of AI customization artifacts from a canonical change set.
+    Emits a JSON manifest of AI customization artifacts from a canonical change set
+    or from every tracked file.
 
 .DESCRIPTION
-    Reads a required immutable eval change set and classifies each entry
+    Reads a required immutable eval change set, or with -AllTracked every file
+    tracked at HEAD, and classifies each entry
     as an agent / prompt / instruction / skill artifact via the
     ArtifactDetection module. Writes a manifest JSON array to `-OutFile` (default
     `logs/changed-ai-artifacts.json`) where each entry has `kind`, `path`, `artifactId`,
     `status`, and (for renames/copies) `previousPath`. Repo-root-only artifacts and nested
     package-scoped artifacts are both detected.
+
+    With -AllTracked, every tracked file is classified as an added (`A`) record,
+    `baseRef` is null, and `headRef` is the checked-out commit. Full-scope
+    validation uses this mode when no verified change range exists.
 
     Exit codes:
       0 = manifest written successfully (manifest may be empty).
@@ -21,6 +27,10 @@
 
 .PARAMETER ChangeSetPath
     Required canonical manifest written by Get-EvalChangeSet.ps1, relative to RepoRoot.
+    Cannot be combined with -AllTracked.
+
+.PARAMETER AllTracked
+    Classify every file tracked at HEAD instead of reading a change set.
 
 .PARAMETER OutFile
     Output JSON path. Defaults to `logs/changed-ai-artifacts.json` (relative to RepoRoot).
@@ -32,14 +42,21 @@
     pwsh -File scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json
     Classify the frozen comparison and emit logs/changed-ai-artifacts.json.
 
+.EXAMPLE
+    pwsh -File scripts/evals/Get-ChangedAIArtifact.ps1 -AllTracked
+    Classify every tracked file for full-scope validation.
+
 .NOTES
     Used by the PR-time eval coverage workflow to feed Test-StimulusPresence.ps1.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'ChangeSet')]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'ChangeSet')]
     [string]$ChangeSetPath = 'logs/eval-change-set.json',
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'AllTracked')]
+    [switch]$AllTracked,
 
     [Parameter(Mandatory = $false)]
     [string]$OutFile,
@@ -77,26 +94,83 @@ function Resolve-RepoRoot {
     return (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).ProviderPath
 }
 
-function Invoke-ChangedArtifactScan {
+function Get-TrackedFileChangeSet {
     <#
     .SYNOPSIS
-    Classifies canonical change records into an artifact manifest.
+    Represents every file tracked at HEAD as added change records.
+
+    .PARAMETER RepoRoot
+    Repository root.
 
     .OUTPUTS
-    [hashtable] `@{ baseRef; headRef; artifacts = @(...) }`.
+    [hashtable] `@{ baseRef = $null; headRef; changes = @(...) }`.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $headRef = & git -C $RepoRoot rev-parse --verify 'HEAD^{commit}' 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($headRef)) {
+        throw "Cannot resolve HEAD in '$RepoRoot'."
+    }
+
+    $trackedOutput = & git -C $RepoRoot ls-files -z 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Cannot list tracked files in '$RepoRoot'."
+    }
+
+    $paths = @((@($trackedOutput) -join "`n") -split "`0" | Where-Object { -not [string]::IsNullOrEmpty($_) } | Sort-Object -CaseSensitive)
+    $changes = foreach ($path in $paths) {
+        @{ status = 'A'; path = $path; previousPath = $null }
+    }
+
+    return @{
+        baseRef = $null
+        headRef = ([string]$headRef).Trim()
+        changes = @($changes)
+    }
+}
+
+function Invoke-ChangedArtifactScan {
+    <#
+    .SYNOPSIS
+    Classifies canonical change records into an artifact manifest.
+
+    .PARAMETER ChangeSetPath
+    Canonical change-set path, relative to RepoRoot when not rooted.
+
+    .PARAMETER AllTracked
+    Classify every file tracked at HEAD as an added record.
+
+    .PARAMETER RepoRoot
+    Repository root.
+
+    .OUTPUTS
+    [hashtable] `@{ baseRef; headRef; artifacts = @(...) }`.
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'ChangeSet')]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true, ParameterSetName = 'ChangeSet')]
         [string]$ChangeSetPath,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'AllTracked')]
+        [switch]$AllTracked,
 
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot
     )
 
-    if (-not [System.IO.Path]::IsPathRooted($ChangeSetPath)) { $ChangeSetPath = Join-Path $RepoRoot $ChangeSetPath }
-    $changeSet = Read-EvalChangeSet -Path $ChangeSetPath
+    if ($PSCmdlet.ParameterSetName -eq 'AllTracked') {
+        $changeSet = Get-TrackedFileChangeSet -RepoRoot $RepoRoot
+    }
+    else {
+        if (-not [System.IO.Path]::IsPathRooted($ChangeSetPath)) { $ChangeSetPath = Join-Path $RepoRoot $ChangeSetPath }
+        $changeSet = Read-EvalChangeSet -Path $ChangeSetPath
+    }
     $changes = $changeSet.changes
 
     $artifacts = [System.Collections.Generic.List[hashtable]]::new()
@@ -134,7 +208,12 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 
     try {
-        $manifest = Invoke-ChangedArtifactScan -ChangeSetPath $ChangeSetPath -RepoRoot $resolvedRepoRoot
+        $manifest = if ($AllTracked) {
+            Invoke-ChangedArtifactScan -AllTracked -RepoRoot $resolvedRepoRoot
+        }
+        else {
+            Invoke-ChangedArtifactScan -ChangeSetPath $ChangeSetPath -RepoRoot $resolvedRepoRoot
+        }
     }
     catch {
         Write-Error -ErrorAction Continue $_.Exception.Message
@@ -148,7 +227,12 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutFile -Encoding UTF8
 
-    Write-Host "Detected $($manifest.artifacts.Count) changed AI artifact(s) between $($manifest.baseRef) and $($manifest.headRef)."
+    if ($AllTracked) {
+        Write-Host "Detected $($manifest.artifacts.Count) tracked AI artifact(s) at $($manifest.headRef)."
+    }
+    else {
+        Write-Host "Detected $($manifest.artifacts.Count) changed AI artifact(s) between $($manifest.baseRef) and $($manifest.headRef)."
+    }
     Write-Host "Affected agent slugs: $($manifest.affectedAgents.Count)"
     Write-Host "Manifest: $OutFile"
     exit 0

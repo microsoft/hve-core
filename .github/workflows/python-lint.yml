@@ -5,6 +5,21 @@ name: Python Lint
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or run full validation'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       soft-fail:
         description: 'When true, linting warnings do not fail the build'
         required: false
@@ -39,6 +54,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Derive artifact name
         id: meta
@@ -65,11 +93,23 @@ jobs:
       - name: Detect changed Python files
         if: inputs.changed-files-only
         env:
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+          INPUT_HEAD_SHA: ${{ inputs.head-sha }}
           INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
-          $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
+          if ($env:INPUT_CHANGE_MODE -eq 'full') {
+            "HAS_CHANGES=true" >> $env:GITHUB_ENV
+            Write-Output 'Full validation mode selected.'
+            return
+          }
+          if ($env:INPUT_CHANGE_MODE -ne 'range' -or -not $env:INPUT_BASE_SHA -or -not $env:INPUT_HEAD_SHA) {
+            throw 'Range mode requires immutable base and head commit IDs.'
+          }
           $workingDir = $env:INPUT_WORKING_DIRECTORY
-          $changed = git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- $workingDir | Where-Object { $_ -match '\.pyi?$' }
+          $changed = git diff --name-only --diff-filter=ACMR "$env:INPUT_BASE_SHA..$env:INPUT_HEAD_SHA" -- $workingDir |
+            Where-Object { $_ -match '\.pyi?$' }
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to compute the immutable workflow range.' }
           if ($changed) {
             "HAS_CHANGES=true" >> $env:GITHUB_ENV
             $fileCount = @($changed).Count

@@ -49,8 +49,8 @@ capture fidelity, and criterion templates, while topic sets the source set.
   required; ask for it under `manual` and `partial`, and set the level
   `Deferred` under `full`.
 * `source_roots`, the folders a dynamic topic is researched in, defaulting to
-  those of `docs/`, `.github/skills/`, and `.github/agents/` that exist, or the
-  repository root when none do
+  the workspace's `docs/` folder and its skill and agent artifact folders, those
+  that exist, or the repository root when none do
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and to `deck-export` for L100 and L200

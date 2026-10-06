@@ -15,7 +15,6 @@ BeforeAll {
                     type = 'publish_backlog_grooming_result'
                     'issue-number' = $IssueNumber
                     title = "Issue $IssueNumber"
-                    'selection-reason' = 'priority'
                     'activity-and-ownership-context' = 'active'
                     'acceptance-signals' = 'requested behavior is present'
                     'evidence-1-category' = 'Repository'
@@ -35,7 +34,8 @@ BeforeAll {
         param(
             [Parameter(Mandatory)] [string]$AgentOutputPath,
             [Parameter(Mandatory)] [string]$OutputPath,
-            [string]$OrderedCandidateIdsJson = '[42]'
+            [string]$OrderedCandidateIdsJson = '[42]',
+            [string]$TotalOpenInventoryText = '1'
         )
 
         $Output = & pwsh -NoProfile -File $script:CollectorPath `
@@ -45,7 +45,7 @@ BeforeAll {
             -OrderedCandidateIdsJson $OrderedCandidateIdsJson `
             -PriorityCandidateIdsJson $OrderedCandidateIdsJson `
             -RoundRobinCandidateIdsJson '[]' `
-            -TotalOpenInventoryText '1' `
+            -TotalOpenInventoryText $TotalOpenInventoryText `
             -PriorCursorText '0' `
             -OrchestratorRunId '12345' `
             -OrchestratorAttemptText '1' `
@@ -102,6 +102,7 @@ Describe 'Invoke-BacklogGroomResultCollector process boundary' -Tag 'Unit' {
         $OutputPath | Should -Exist
         $Result = Get-Content -LiteralPath $OutputPath -Raw | ConvertFrom-Json
         $Result.report_data.issues.issue | Should -Be @(42)
+        $Result.report_data.issues.selection_reason | Should -BeExactly 'Priority cohort'
         $Result.report_data.contract_errors | Should -HaveCount 0
     }
 
@@ -122,6 +123,55 @@ Describe 'Invoke-BacklogGroomResultCollector process boundary' -Tag 'Unit' {
         $Result.report_data.issues.issue | Should -Be @(42)
         $Result.report_data.contract_errors | Should -HaveCount 0
         $Result.result_digest | Should -Match '^[a-f0-9]{64}$'
+    }
+
+    It 'writes v2 with contract errors for duplicate and missing planned calls' {
+        $AgentOutputPath = Join-Path $TestDrive 'duplicate/agent-output.json'
+        $OutputPath = Join-Path $TestDrive 'duplicate/result/shard-result.json'
+        $SummaryPath = Join-Path $TestDrive 'duplicate/step-summary.md'
+        $null = New-Item -ItemType Directory -Path (Split-Path -Parent $AgentOutputPath) -Force
+        $AgentOutput = [ordered]@{
+            items = @(
+                (New-CollectorAgentOutput -IssueNumber 10).items[0]
+                (New-CollectorAgentOutput -IssueNumber 20).items[0]
+                (New-CollectorAgentOutput -IssueNumber 30).items[0]
+                (New-CollectorAgentOutput -IssueNumber 30).items[0]
+                (New-CollectorAgentOutput -IssueNumber 40).items[0]
+            )
+        }
+        $AgentOutput | ConvertTo-Json -Depth 20 |
+            Set-Content -LiteralPath $AgentOutputPath -Encoding utf8NoBOM
+
+        $OriginalGitHubActions = $env:GITHUB_ACTIONS
+        $OriginalStepSummary = $env:GITHUB_STEP_SUMMARY
+        try {
+            $env:GITHUB_ACTIONS = 'true'
+            $env:GITHUB_STEP_SUMMARY = $SummaryPath
+            $Process = Invoke-CollectorProcess -AgentOutputPath $AgentOutputPath -OutputPath $OutputPath `
+                -OrderedCandidateIdsJson '[10,20,30,40,50]' -TotalOpenInventoryText '5'
+        }
+        finally {
+            $env:GITHUB_ACTIONS = $OriginalGitHubActions
+            $env:GITHUB_STEP_SUMMARY = $OriginalStepSummary
+        }
+
+        $Process.ExitCode | Should -Be 0 -Because ($Process.Output -join "`n")
+        $Process.Output -join "`n" | Should -Match '::warning::Backlog grooming candidate #30: invalid_row_contract'
+        $Process.Output -join "`n" | Should -Match '::warning::Backlog grooming candidate #50: invalid_row_contract'
+        $OutputPath | Should -Exist
+        $Result = Get-Content -LiteralPath $OutputPath -Raw | ConvertFrom-Json
+        $Result.report_data.issues.issue | Should -Be @(10, 20, 40)
+        $Result.report_data.contract_errors.issue | Should -Be @(30, 50)
+        $Result.report_data.contract_errors.code | Should -Be @(
+            'invalid_row_contract',
+            'invalid_row_contract'
+        )
+        $Summary = Get-Content -LiteralPath $SummaryPath -Raw
+        $Summary | Should -Match '\| Accepted rows \| 3 \|'
+        $Summary | Should -Match '\| Deferred rows \| 0 \|'
+        $Summary | Should -Match '\| Contract errors \| 2 \|'
+        $Summary | Should -Match '\| Normalizations \| 0 \|'
+        $Summary | Should -Match 'Contract-error issue IDs: #30, #50'
     }
 
     It 'returns nonzero and writes no shard result when trusted shard context is invalid' {

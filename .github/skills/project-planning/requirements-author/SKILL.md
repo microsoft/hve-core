@@ -475,7 +475,7 @@ PRD Builder directives:
 | Validate  | `#prd-validate`  | `prd-author#validate`              |
 | Finalize  | `#prd-finalize`  | `prd-author#finalize`              |
 
-The agent loads sections via `read_file` against this skill file and records the entry in `state.phaseSkillsLoaded` before any phase work executes. Re-entering a previously loaded phase does not require reloading; the agent checks `phaseSkillsLoaded` first.
+The agent loads sections via `read_file` against this skill file and records the entry in `state.phaseSkillsLoaded` before any phase work executes. `phaseSkillsLoaded` is durable load history, not proof that the guidance is present in the current model context. Within one live context, re-entering a phase whose section was already read does not require reloading. After a cold start, resume, or context summarization, the agent reloads the current phase section even when its entry is recorded.
 
 ## Source Attribution
 

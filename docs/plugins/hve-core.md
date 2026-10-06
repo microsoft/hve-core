@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - package
@@ -14,23 +14,24 @@ keywords:
 HVE Core is the single plugin and extension identity for all distributable HVE Core content.
 
 > [!CAUTION]
-> HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and pin an exact release tag when reproducible source is required.
+> HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and use the VS Code extension or a pinned selective clone when reproducible, release-gated source is required. The Copilot CLI plugin tracks `main`, which has no release gate or release attestation.
 
 Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
 
-Stable and PreRelease contain the same complete agents, prompts, instructions,
+The VS Code extension's Stable and PreRelease channels contain the same complete agents, prompts, instructions,
 and skills. Channel selection changes source ownership, cadence, version,
 release assurance, and VS Code Marketplace behavior, not membership.
 
-The channels differ in cadence, version, and source ownership. `main` provides ref-less development-tip delivery. PreRelease follows a reviewed promotion from `main` to `release/prerelease`. Stable follows a reviewed promotion from `release/prerelease` to `release/stable`.
+The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`; there are no PreRelease or Stable plugin channels. The extension's PreRelease follows a reviewed promotion from `main` to `release/prerelease`, and Stable follows a reviewed promotion from `release/prerelease` to `release/stable`.
 
-The moving Copilot CLI registrations are `microsoft/hve-core#release/prerelease` and `microsoft/hve-core#release/stable`. For reproducible source selection, use `prerelease-v<version>` or `v<version>`. Release workflows package one VSIX from the selected exact tag and bind it to its source SHA with SPDX and provenance attestations. Stable also publishes OpenVEX.
+Release workflows package one VSIX from an exact release tag and bind it to its source SHA with SPDX and provenance attestations. Stable also publishes OpenVEX.
 
 ## Install and Select
 
-Install the plugin from a registered marketplace:
+Register the marketplace and install the plugin:
 
 ```bash
+copilot plugin marketplace add microsoft/hve-core
 copilot plugin install hve-core@hve-core
 ```
 

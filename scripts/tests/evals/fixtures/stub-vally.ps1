@@ -310,7 +310,7 @@ function New-StubRecord {
             events = @([ordered]@{ type = 'assistant_message'; turn = 0; data = [ordered]@{ content = 'Synthetic response' } })
             metrics  = [ordered]@{
                 wallTimeMs = $WallMs
-                tokenUsage = [ordered]@{ totalTokens = 7 }
+                tokenUsage = [ordered]@{ totalTokens = 7; inputTokens = 5; outputTokens = 2; cacheReadTokens = 3; callCount = 1 }
             }
         }
         gradeResult = [ordered]@{
