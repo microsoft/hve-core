@@ -470,3 +470,53 @@ exceptions:
     owner: WilliamBerryiii
     reason: gh-aw activation runs its own scripts from RUNNER_TEMP, which the computed .github checkout cannot supply
     expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/code-injection/medium
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 3
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/envvar-injection/medium
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 1
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/untrusted-checkout/medium
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 1
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/envvar-injection/medium
+    path: .github/workflows/extension-marketplace-publish.yml
+    count: 1
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ callers (release and dispatch only), so it analyzes this reusable workflow as externally callable
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/untrusted-checkout/medium
+    path: .github/workflows/extension-marketplace-publish.yml
+    count: 2
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ callers (release and dispatch only), so it analyzes this reusable workflow as externally callable
+    expires: 2026-12-31

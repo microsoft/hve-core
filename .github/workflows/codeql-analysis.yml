@@ -11,6 +11,12 @@ on:
 permissions:
   contents: read
 
+# Pull request runs analyze the whole tree, as push and scheduled runs do.
+# Diff-informed analysis would report only results on changed lines, so the
+# gate's exact exception counts would differ between pull requests and main.
+env:
+  CODEQL_ACTION_DIFF_INFORMED_QUERIES: 'false'
+
 concurrency:
   group: codeql-analysis-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
