@@ -824,8 +824,8 @@ def verify_open_captions(
             str(finalized),
             "-filter_complex",
             "[0:v][1:v]blend=all_mode=difference,"
-            "crop=iw:ih/3:0:2*ih/3,signalstats,bbox=min_val=16,"
-            "metadata=mode=print:file=-",
+            + "crop=iw:ih/3:0:2*ih/3,signalstats,bbox=min_val=16,"
+            + "metadata=mode=print:file=-",
             "-frames:v",
             "1",
             "-f",
