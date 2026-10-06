@@ -92,9 +92,9 @@ Steps 1-6 below are internal reasoning. Never surface step labels (READ, VALIDAT
 Phase names (`Frame`, `Decide`, `Govern`) remain user-facing and may appear in replies; the six step labels above are the only internal-only vocabulary. Every conversation turn follows this protocol, regardless of phase or entry mode:
 
 1. **READ**: Load `state.json` from the active project slug directory.
-2. **VALIDATE**: Confirm state integrity. Check required fields exist and contain valid values. Verify `phaseSkillsLoaded` includes the section anchor for the current phase before executing phase work.
+2. **VALIDATE**: Confirm state integrity. Check required fields exist and contain valid values. Confirm the current phase's `adr-author` section has been read in this live context before executing phase work. A recorded `phaseSkillsLoaded` anchor is load history and does not satisfy this check.
 3. **DETERMINE**: Identify current phase, entry mode, output template, `userPreferences.autonomyTier`, and next actions from state fields.
-4. **EXECUTE**: Perform phase work. Ask coaching questions, evaluate user responses, and update the ADR draft. If the required phase skill section is not yet recorded in `phaseSkillsLoaded`, load it via `read_file` against `../../skills/project-planning/adr-author/SKILL.md` and append the section anchor to `phaseSkillsLoaded` before continuing.
+4. **EXECUTE**: Perform phase work. Ask coaching questions, evaluate user responses, and update the ADR draft. If the current phase section has not been read in this live context, load it via `read_file` against `../../skills/project-planning/adr-author/SKILL.md` and append its anchor to `phaseSkillsLoaded` when absent before continuing.
 5. **UPDATE**: Update in-memory state with results from execution. Refresh `lastUpdatedAt` to the current ISO 8601 timestamp.
 6. **WRITE**: Persist updated `state.json` to disk.
 
@@ -223,13 +223,13 @@ On first invocation, after the bootstrap prompt confirms `entryMode`, `projectSl
 
 ## Phase to Skill Load Directives
 
-Each phase requires the corresponding section of the `adr-author` skill to be loaded before EXECUTE runs. The VALIDATE step enforces this contract by checking `phaseSkillsLoaded`.
+Each phase requires the corresponding section of the `adr-author` skill to be loaded in the current live context before EXECUTE runs. The VALIDATE step enforces this contract against the live context, not the persisted marker.
 
 * **Frame**: MUST `read_file` `../../skills/project-planning/adr-author/SKILL.md` and target the `#frame` section before executing Frame phase work. Append `adr-author/SKILL.md#frame` to `phaseSkillsLoaded`.
 * **Decide**: MUST `read_file` `../../skills/project-planning/adr-author/SKILL.md` and target the `#decide` section before executing Decide phase work. Append `adr-author/SKILL.md#decide` to `phaseSkillsLoaded`.
 * **Govern**: MUST `read_file` `../../skills/project-planning/adr-author/SKILL.md` and target the `#govern` section before executing Govern phase work. Append `adr-author/SKILL.md#govern` to `phaseSkillsLoaded`.
 
-A phase whose required section is absent from `phaseSkillsLoaded` is treated as not-yet-prepared. The agent must perform the load before continuing, even if the section was loaded in a prior session whose state was lost.
+`phaseSkillsLoaded` is durable load history. Within one live context, a section already read is not re-read. After a cold start, resume, or context summarization, load the current phase section before continuing even when its anchor is recorded.
 
 ## Session Recovery
 
@@ -238,5 +238,5 @@ On any new turn, the agent applies this recovery protocol before producing outpu
 1. Determine the active project slug from the user's prompt, the editor context, or the most recently modified directory under `.copilot-tracking/adr-plans/`.
 2. If `.copilot-tracking/adr-plans/{projectSlug}/state.json` exists, load it and resume at `state.phase`. Display a brief recovered-state summary (project slug, entry mode, output template, phase) before continuing.
 3. If `state.phase` is `complete`, treat the session as finished and ask the user whether to start a new ADR or supersede the prior one.
-4. If `phaseSkillsLoaded` does not include the section anchor for the current phase, load it before EXECUTE per the phase to skill load directives.
+4. If the current phase section has not been read in this live context, such as after a cold start, resume, or context summarization, load it before EXECUTE per the phase to skill load directives. A recorded `phaseSkillsLoaded` anchor does not satisfy this step.
 5. If no `state.json` exists for the active project slug, initialize a new state file with default values. The disclaimer trigger logic is owned by `adr-creation.agent.md`; display the disclaimer first when its trigger condition fires, then prompt the user to confirm `entryMode`, `projectSlug`, and `outputTemplate` before any phase work begins. Stamp `state.disclaimerShownAt` on display. Defer `userPreferences.autonomyTier` confirmation to Govern-phase entry.

@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 252
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 253
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -2379,6 +2379,28 @@ stimuli:
         config:
           pattern: '(?i)(mural|collaboration|workspace|artifact|whiteboard)'
 
+  - name: skill-rai-planner-on-demand-references
+    prompt: |
+      Using the `rai-planner` skill, name the reference you read when entering
+      Phase 2 risk classification and the reference that governs an optional
+      Mural team board for Phase 2. State when each one is read.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/rai-planner
+    tags:
+      category: behavior-conformance
+      skill: rai-planner
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rai-planner-on-demand-references-phase2
+        config:
+          pattern: '(?i)risk-classification\.md'
+      - type: output-matches
+        name: skill-rai-planner-on-demand-references-mural-on-accept
+        config:
+          pattern: '(?is)mural-board-bootstrap\.md.{0,240}(accept|only when|when the user|asks? for)|(accept|only when|when the user|asks? for).{0,240}mural-board-bootstrap\.md'
   - name: skill-requirements-author-knowledge
     prompt: |
       Summarize what the `requirements-author` skill helps with and name one

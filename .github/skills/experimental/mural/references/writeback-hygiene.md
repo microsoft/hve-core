@@ -1,9 +1,8 @@
 ---
 description: 'Writeback hygiene rules for Mural: tags, hyperlinks, and parentId are the only stable channels; reserved tags are protected; tag manifests are re-applied defensively.'
-applyTo: '**/.copilot-tracking/mural/**, **/.github/skills/experimental/mural/**, **/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md'
 ---
 
-## Mural Writeback Hygiene
+# Mural Writeback Hygiene
 
 Writeback is the act of attaching structure to widgets after the workshop. The Mural API exposes only three stable channels for that structure. This file defines the rules for using them and the invariants that protect the human-authored content beneath.
 
@@ -35,7 +34,7 @@ The skill reserves a fixed set of tag prefixes for machine semantics:
 
 * `authored-by-ai`: set on every widget AI authors.
 * `dt:method=<n>`, `dt:section=<name>`: DT lineage on composite outputs.
-* `destination:<adapter-id>`: set during retro / extractor writeback (see [mural-destinations.instructions.md](mural-destinations.instructions.md)).
+* `destination:<adapter-id>`: set during retro / extractor writeback (see [destinations.md](destinations.md)).
 * `intent:<create|mutate|append|no-op>`: set during retro / extractor writeback.
 
 Reserved tags are recognized by `_is_reserved_tag_id`. Removal requires `--force-reserved`. Manual creation of tags using these prefixes for non-skill purposes is forbidden.
@@ -58,7 +57,7 @@ Every writeback that closes a workshop must re-apply the tag manifest before exi
 
 * Treat any mural id outside the configured production workspace as sandbox.
 * Sandbox writebacks may set arbitrary tags and hyperlinks; they still respect reserved-tag protection.
-* Production writebacks additionally require the destination registry (see [mural-destinations.instructions.md](mural-destinations.instructions.md)) to declare the tag they will apply.
+* Production writebacks additionally require the destination registry (see [destinations.md](destinations.md)) to declare the tag they will apply.
 
 ## Failure handling
 

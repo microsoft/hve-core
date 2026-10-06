@@ -344,6 +344,83 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
         }
     }
 
+    Context 'when repository initialization fails twice then succeeds' {
+        BeforeAll {
+            $script:InitCount = 0
+            Mock Initialize-Repository {
+                $script:InitCount++
+                if ($script:InitCount -le 2) {
+                    throw "The specified Uri 'https://www.powershellgallery.com/api/v2' for parameter 'SourceLocation' is an invalid Web Uri."
+                }
+                'PSGallery'
+            }
+            Mock Install-Module {}
+            Mock Unregister-PSRepository {}
+        }
+        BeforeEach {
+            $script:InitCount = 0
+        }
+
+        It 'Retries registration with exponential backoff and installs once' {
+            Install-SingleModule -Name 'TestMod' -Version '1.0.0' -Scope 'CurrentUser' `
+                -Repository 'PSGallery' -MaxAttempts 3 -BaseDelaySeconds 10
+
+            Should -Invoke Initialize-Repository -Times 3 -Exactly
+            Should -Invoke Install-Module -Times 1 -Exactly
+            Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 10 }
+            Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 20 }
+            Should -Invoke Unregister-PSRepository -Times 0 -Exactly
+        }
+    }
+
+    Context 'when repository initialization fails on all attempts' {
+        BeforeAll {
+            Mock Initialize-Repository { throw 'PSGallery unreachable' }
+            Mock Install-Module {}
+            Mock Unregister-PSRepository {}
+        }
+
+        It 'Throws after exhausting retries without installing or cleaning up' {
+            { Install-SingleModule -Name 'TestMod' -Version '1.0.0' -Scope 'CurrentUser' `
+                -Repository 'PSGallery' -MaxAttempts 3 -BaseDelaySeconds 1 } |
+                Should -Throw '*Failed to install TestMod 1.0.0 after 3 attempts*'
+
+            Should -Invoke Initialize-Repository -Times 3 -Exactly
+            Should -Invoke Install-Module -Times 0 -Exactly
+            Should -Invoke Unregister-PSRepository -Times 0 -Exactly
+        }
+    }
+
+    Context 'when installation from a temporary repository is retried' {
+        BeforeAll {
+            $script:InstallCount = 0
+            Mock Initialize-Repository { "HVEPSGallery-$PID-test" }
+            Mock Install-Module {
+                $script:InstallCount++
+                if ($script:InstallCount -eq 1) {
+                    throw 'PSGallery transient failure'
+                }
+            }
+            Mock Unregister-PSRepository {}
+        }
+        BeforeEach {
+            $script:InstallCount = 0
+        }
+
+        It 'Registers and removes exactly one temporary repository' {
+            Install-SingleModule -Name 'TestMod' -Version '1.0.0' -Scope 'CurrentUser' `
+                -Repository 'PSGallery' -MaxAttempts 3 -BaseDelaySeconds 1
+
+            Should -Invoke Initialize-Repository -Times 1 -Exactly
+            Should -Invoke Install-Module -Times 2 -Exactly -ParameterFilter {
+                $Repository -eq "HVEPSGallery-$PID-test"
+            }
+            Should -Invoke Unregister-PSRepository -Times 1 -Exactly -ParameterFilter {
+                $Name -eq "HVEPSGallery-$PID-test"
+            }
+        }
+    }
+
     Context 'when Install-Module fails twice then succeeds' {
         BeforeAll {
             $script:CallCount = 0

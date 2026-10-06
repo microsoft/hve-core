@@ -1122,18 +1122,28 @@ jobs:
                 '',
               ];
 
+              // Advisory token means come from Vally's native tokenUsage; a null or
+              // absent mean (no measured trials, or an older summary) renders as an em dash.
+              const formatTokens = (value) => {
+                if (value === null || value === undefined || value === '') { return '—'; }
+                const n = Number(value);
+                return Number.isFinite(n) ? Math.round(n).toLocaleString('en-US') : '—';
+              };
+
               if (artifacts.length > 0) {
-                lines.push('| Artifact | Kind | Status | Specs | Passed | Failed (blocking) | Failed (advisory) | Trial dips (tolerated) |');
-                lines.push('|----------|------|--------|-------|--------|-------------------|-------------------|------------------------|');
+                lines.push('| Artifact | Kind | Status | Specs | Passed | Failed (blocking) | Failed (advisory) | Trial dips (tolerated) | Input tokens / trial | Cache-read tokens / trial |');
+                lines.push('|----------|------|--------|-------|--------|-------------------|-------------------|------------------------|----------------------|---------------------------|');
                 for (const a of artifacts) {
                   const icon = a.status === 'pass' ? '✅' : a.status === 'skipped' ? '⏭️' : a.status === 'advisory-fail' ? '⚠️' : '❌';
                   const { blocking, advisory, tolerated } = splitFailures(a);
-                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.specCount || 0} | ${a.assertionsPassed} | ${blocking} | ${advisory} | ${tolerated} |`);
+                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.specCount || 0} | ${a.assertionsPassed} | ${blocking} | ${advisory} | ${tolerated} | ${formatTokens(a.meanInputTokensPerTrial)} | ${formatTokens(a.meanCacheReadTokensPerTrial)} |`);
                 }
                 lines.push('');
                 lines.push('> **Legend** — ✅ clean · ⚠️ advisory failures only (non-blocking) · ⏭️ skipped · ❌ merge-blocking failure');
                 lines.push('>');
                 lines.push('> Only **Failed specs (merge-blocking)** gates this PR. Advisory assertion failures are signal-quality checks captured during iteration; review them, but they do not block merge and may be acceptable.');
+                lines.push('>');
+                lines.push('> Token columns are advisory means per trial reported by the model provider. They vary between trials and never gate this PR.');
               } else {
                 lines.push('No changed AI artifacts required evaluation.');
               }

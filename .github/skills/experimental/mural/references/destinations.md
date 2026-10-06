@@ -1,9 +1,8 @@
 ---
 description: 'Open destination registry for Mural extractor writeback: registered adapters, intent axis, and per-destination loop-closure metrics.'
-applyTo: '**/.copilot-tracking/mural/**, **/.github/instructions/experimental/mural/destinations/**, **/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md'
 ---
 
-## Mural Destinations
+# Mural Destinations
 
 Action-item destinations are an open registry of named adapters. The extractor core does not change when a new destination is added; the new adapter is registered in the data file and the writeback applies the registered tag.
 
@@ -11,7 +10,7 @@ The Mural skill provides an effect-free control plane for this registry. `load_d
 
 ## Registry data file
 
-The authoritative list of adapters lives in [.github/instructions/experimental/mural/destinations/registry.yml](destinations/registry.yml). Layer B agents read it at invocation time. Do not hardcode the destination set into agent or prompt logic.
+The authoritative list of adapters lives in [assets/destinations/registry.yml](../assets/destinations/registry.yml). Layer B agents read it at invocation time. Do not hardcode the destination set into agent or prompt logic.
 
 Each registry entry has:
 
@@ -58,11 +57,11 @@ The writeback applies one reserved tag per writeback channel:
 * `lifecycle:committed` — adapter accepted the write and returned an external identifier.
 * `lifecycle:loop-closed` — loop-closure check passed.
 
-Reserved-tag protection rules in [mural-writeback-hygiene.instructions.md](mural-writeback-hygiene.instructions.md) apply.
+Reserved-tag protection rules in [writeback-hygiene.md](writeback-hygiene.md) apply.
 
 ## Adding a new destination
 
-1. Add an entry to `destinations/registry.yml` with `id`, `intent`, `target`, and `loop_closure`.
+1. Add an entry to `assets/destinations/registry.yml` in the Mural skill with `id`, `intent`, `target`, and `loop_closure`.
 2. Implement the adapter as a handoff target on the relevant Slot 2 agent (work item creation prompt, ADR creation prompt, instructions writer, etc.).
 3. Update the workshop family's Slot 2 agent `handoffs` frontmatter to include the new adapter.
 4. Do not modify extractor core logic.
@@ -73,4 +72,4 @@ The retro v1 wedge ships with the first three adapters (`backlog-item`, `instruc
 
 ## Override file
 
-Repos that need to hide or override registry entries can supply `destinations/dt-sections.yml` (deep-merge override; not populated by default). The Mural registry loader reads both files, applies removals, merges entries by `id`, validates the merged result, and fails before adapter dispatch when either input is invalid.
+Repos that need to hide or override registry entries can supply `assets/destinations/dt-sections.yml` (deep-merge override; not populated by default). The Mural registry loader reads both files, applies removals, merges entries by `id`, validates the merged result, and fails before adapter dispatch when either input is invalid.

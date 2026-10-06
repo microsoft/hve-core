@@ -1196,6 +1196,10 @@ foreach ($plan in $artifactPlan) {
     $artifactPassed    = 0
     $artifactFailed    = 0
     $artifactDurationMs = 0
+    $artifactInputTokens = [long]0
+    $artifactOutputTokens = [long]0
+    $artifactCacheReadTokens = [long]0
+    $artifactTokenTrials = 0
     $artifactExitCode  = 0
     $artifactAuthoritativeFailed = 0
     $artifactAdvisoryFailed      = 0
@@ -1217,6 +1221,14 @@ foreach ($plan in $artifactPlan) {
         $artifactPassed     += [int]$r.assertionsPassed
         $artifactFailed     += [int]$r.assertionsFailed
         $artifactDurationMs += [int]$r.durationMs
+        $specInputTokens = if ($r.ContainsKey('inputTokens')) { [long]$r.inputTokens } else { [long]0 }
+        $specOutputTokens = if ($r.ContainsKey('outputTokens')) { [long]$r.outputTokens } else { [long]0 }
+        $specCacheReadTokens = if ($r.ContainsKey('cacheReadTokens')) { [long]$r.cacheReadTokens } else { [long]0 }
+        $specTokenTrials = if ($r.ContainsKey('tokenTrials')) { [int]$r.tokenTrials } else { 0 }
+        $artifactInputTokens += $specInputTokens
+        $artifactOutputTokens += $specOutputTokens
+        $artifactCacheReadTokens += $specCacheReadTokens
+        $artifactTokenTrials += $specTokenTrials
 
         $specStatus = if ($r.ContainsKey('status')) { [string]$r.status } else { '' }
         $specIsAdvisory = $r.ContainsKey('isAdvisory') -and [bool]$r.isAdvisory
@@ -1261,6 +1273,10 @@ foreach ($plan in $artifactPlan) {
             stimuliPassed     = if ($r.ContainsKey('stimuliPassed')) { $r.stimuliPassed } else { 0 }
             stimuliFailed     = if ($r.ContainsKey('stimuliFailed')) { $r.stimuliFailed } else { 0 }
             durationMs       = $r.durationMs
+            inputTokens      = $specInputTokens
+            outputTokens     = $specOutputTokens
+            cacheReadTokens  = $specCacheReadTokens
+            tokenTrials      = $specTokenTrials
             trials           = $r.trials
             runDir           = $r.runDir
             resultsPath      = $r.resultsPath
@@ -1277,6 +1293,9 @@ foreach ($plan in $artifactPlan) {
               elseif ($artifactAdvisoryFailed -gt 0) { 'advisory-fail' }
               else { 'pass' }
     $artifactIsAdvisory = ($status -eq 'advisory-fail')
+    # Means derive from summed totals; $null marks a run with no token measurement.
+    $meanInputTokensPerTrial = if ($artifactTokenTrials -gt 0) { [math]::Round($artifactInputTokens / $artifactTokenTrials, 1) } else { $null }
+    $meanCacheReadTokensPerTrial = if ($artifactTokenTrials -gt 0) { [math]::Round($artifactCacheReadTokens / $artifactTokenTrials, 1) } else { $null }
 
     $artifactKey  = Get-ArtifactFileKey -Kind $plan.kind -ArtifactId $plan.artifactId
     $artifactFile = Join-Path -Path $resolvedLogsDir -ChildPath "eval-results-$artifactKey.json"
@@ -1288,6 +1307,12 @@ foreach ($plan in $artifactPlan) {
         status              = $status
         isAdvisory          = $artifactIsAdvisory
         durationMs          = $artifactDurationMs
+        inputTokens         = $artifactInputTokens
+        outputTokens        = $artifactOutputTokens
+        cacheReadTokens     = $artifactCacheReadTokens
+        tokenTrials         = $artifactTokenTrials
+        meanInputTokensPerTrial     = $meanInputTokensPerTrial
+        meanCacheReadTokensPerTrial = $meanCacheReadTokensPerTrial
         assertionsPassed    = $artifactPassed
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
@@ -1308,6 +1333,12 @@ foreach ($plan in $artifactPlan) {
         status              = $status
         isAdvisory          = $artifactIsAdvisory
         durationMs          = $artifactDurationMs
+        inputTokens         = $artifactInputTokens
+        outputTokens        = $artifactOutputTokens
+        cacheReadTokens     = $artifactCacheReadTokens
+        tokenTrials         = $artifactTokenTrials
+        meanInputTokensPerTrial     = $meanInputTokensPerTrial
+        meanCacheReadTokensPerTrial = $meanCacheReadTokensPerTrial
         assertionsPassed    = $artifactPassed
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
