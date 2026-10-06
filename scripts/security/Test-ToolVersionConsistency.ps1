@@ -72,10 +72,11 @@ Import-Module (Join-Path $PSScriptRoot 'Modules/SecurityHelpers.psm1') -Force
 $script:ToolName = 'hve-tool-version-consistency'
 $script:Verifications = @('published-checksums', 'attestation', 'release-digest', 'pypi', 'oci-digest')
 $script:ArchTokens = 'AMD64|ARM64|X86_64|AARCH64|X64'
+$script:ArchKeyByToken = @{ AMD64 = 'linux_amd64'; X86_64 = 'linux_amd64'; X64 = 'linux_amd64'; ARM64 = 'linux_arm64'; AARCH64 = 'linux_arm64' }
 $script:Rules = @(
     @{ id = 'tool-version/manifest-invalid'; name = 'ManifestInvalid'; description = 'A tool manifest entry is missing a field or has an invalid value.'; level = 'error' }
     @{ id = 'tool-version/version-mismatch'; name = 'VersionMismatch'; description = 'A hard-coded tool version differs from the tool manifest.'; level = 'error' }
-    @{ id = 'tool-version/checksum-mismatch'; name = 'ChecksumMismatch'; description = 'A hard-coded tool checksum is not a digest recorded in the tool manifest.'; level = 'error' }
+    @{ id = 'tool-version/checksum-mismatch'; name = 'ChecksumMismatch'; description = 'A hard-coded tool checksum is not the digest the tool manifest records for its architecture.'; level = 'error' }
     @{ id = 'tool-version/commit-mismatch'; name = 'CommitMismatch'; description = 'A tool download URL does not use the commit recorded in the tool manifest.'; level = 'error' }
     @{ id = 'tool-version/image-mismatch'; name = 'ImageMismatch'; description = 'A container image tag or digest differs from the tool manifest.'; level = 'error' }
     @{ id = 'tool-version/unregistered-tool'; name = 'UnregisteredTool'; description = 'A file pins a downloaded tool version and checksum that the tool manifest does not register.'; level = 'error' }
@@ -113,6 +114,29 @@ function Get-LineNumber {
         [Parameter(Mandatory)][int]$Index
     )
     return ([regex]::Matches($Content.Substring(0, $Index), "`n")).Count + 1
+}
+
+function Get-ContextArchKey {
+    <#
+    .SYNOPSIS
+        Infers the manifest architecture key for an unsuffixed checksum variable.
+    .DESCRIPTION
+        Installers often assign one unsuffixed *_SHA256 variable inside per-architecture
+        case branches. The nearest architecture label within the six preceding lines
+        decides which digest the assignment must hold. Returns $null when no label is
+        nearby, in which case any digest recorded for the tool is accepted.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)][string]$Content,
+        [Parameter(Mandatory)][int]$Index
+    )
+    $before = $Content.Substring(0, $Index) -split "`n"
+    $window = ($before | Select-Object -Last 7) -join "`n"
+    $labels = [regex]::Matches($window, '(?i)\b(x86_64|amd64|x64|aarch64|arm64)\b')
+    if ($labels.Count -eq 0) { return $null }
+    return $script:ArchKeyByToken[$labels[$labels.Count - 1].Value.ToUpperInvariant()]
 }
 
 function Get-ToolManifestFinding {
@@ -270,11 +294,16 @@ function Get-ToolFileFinding {
             }
 
             $digests = @($tool.sha256ByArch.PSObject.Properties.Value)
-            $checksumPattern = "(?m)\b$([regex]::Escape($prefix))(?:_(?:$($script:ArchTokens)))?_SHA256\s*[:=]\s*['""]?([0-9A-Fa-f]{64})\b"
+            $checksumPattern = "(?m)\b$([regex]::Escape($prefix))(?:_($($script:ArchTokens)))?_SHA256\s*[:=]\s*['""]?([0-9A-Fa-f]{64})\b"
             foreach ($match in [regex]::Matches($Content, $checksumPattern)) {
-                if ($match.Groups[1].Value.ToLowerInvariant() -notin $digests) {
+                $digest = $match.Groups[2].Value.ToLowerInvariant()
+                $archKey = if ($match.Groups[1].Success) { $script:ArchKeyByToken[$match.Groups[1].Value.ToUpperInvariant()] } else { Get-ContextArchKey -Content $Content -Index $match.Index }
+                $expected = if ($archKey) { [string]$tool.sha256ByArch.$archKey } else { $null }
+                $isRecorded = if ($expected) { $digest -ceq $expected } else { $digest -in $digests }
+                if (-not $isRecorded) {
+                    $archText = if ($expected) { " for $archKey" } else { '' }
                     $findings.Add((New-Finding -RuleId 'tool-version/checksum-mismatch' -File $RelativePath -Line (Get-LineNumber $Content $match.Index) `
-                                -Message "$($tool.name) checksum $($match.Groups[1].Value) is not recorded for version $($tool.version) in scripts/security/tool-checksums.json."))
+                                -Message "$($tool.name) checksum $($match.Groups[2].Value) is not recorded$archText for version $($tool.version) in scripts/security/tool-checksums.json."))
                 }
             }
 

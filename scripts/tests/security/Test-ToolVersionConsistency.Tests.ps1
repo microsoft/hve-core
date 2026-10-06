@@ -97,6 +97,21 @@ Describe 'File checks' -Tag 'Unit' {
         ($result.Findings | Where-Object RuleId -EQ 'tool-version/checksum-mismatch').Line | Should -Be 2
     }
 
+    It 'reports <Name>' -ForEach @(
+        @{ Name = 'swapped arch-suffixed checksums'; Content = "env:`n  UV_X86_64_SHA256: '$('b' * 64)'`n  UV_AARCH64_SHA256: '$('a' * 64)'"; Lines = @(2, 3) }
+        @{ Name = 'swapped checksums in per-arch branches'; Content = "if [[ `"`${ARCH}`" == `"x86_64`" ]]; then`n  GITLEAKS_SHA256=`"$('b' * 64)`"`nelif [[ `"`${ARCH}`" == `"aarch64`" ]]; then`n  GITLEAKS_SHA256=`"$('a' * 64)`"`nfi"; Lines = @(2, 4) }
+    ) {
+        $result = Invoke-Check (New-Repo -Files @{ '.devcontainer/scripts/on-create.sh' = $Content })
+        $result.ExitCode | Should -Be 1
+        @($result.Findings | Where-Object RuleId -EQ 'tool-version/checksum-mismatch').Line | Should -Be $Lines
+        ($result.Findings.Message -join ' ') | Should -Match 'for linux_(amd64|arm64)'
+    }
+
+    It 'passes checksums that match their per-arch branches' {
+        $content = "if [[ `"`${ARCH}`" == `"x86_64`" ]]; then`n  GITLEAKS_ARCH=`"x64`"`n  GITLEAKS_SHA256=`"$($script:Amd)`"`nelif [[ `"`${ARCH}`" == `"aarch64`" ]]; then`n  GITLEAKS_ARCH=`"arm64`"`n  GITLEAKS_SHA256=`"$($script:Arm)`"`nfi"
+        (Invoke-Check (New-Repo -Files @{ '.devcontainer/scripts/on-create.sh' = $content })).Findings | Should -BeNullOrEmpty
+    }
+
     It 'ignores non-arch checksums that share a prefix' {
         $files = @{ '.github/workflows/demo.yml' = "env:`n  UV_CACHE_SHA256: $('f' * 64)" }
         (Invoke-Check (New-Repo -Files $files)).Findings | Should -BeNullOrEmpty
