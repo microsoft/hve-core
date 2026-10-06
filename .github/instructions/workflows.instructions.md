@@ -42,7 +42,7 @@ An empty workflow-level block is a default, not a ceiling. A job that does decla
 ```yaml
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: write # comment on the pull request
 ```
 
 **Job-level permissions example:**
@@ -241,14 +241,14 @@ jobs:
       - name: Run Analysis
         id: analyze
         run: |
-          echo "compliance-score=95" >> $GITHUB_OUTPUT
-          echo "unpinned-count=2" >> $GITHUB_OUTPUT
-          echo "is-compliant=true" >> $GITHUB_OUTPUT
+          echo "compliance-score=95" >> "${GITHUB_OUTPUT}"
+          echo "unpinned-count=2" >> "${GITHUB_OUTPUT}"
+          echo "is-compliant=true" >> "${GITHUB_OUTPUT}"
 ```
 
 ### Consuming Reusable Workflows
 
-Reusable workflows MUST be called using relative paths with explicit permissions and inputs.
+Reusable workflows in this repository MUST be called with the `$/` self-repository reference (`uses: $/.github/workflows/<name>.yml`), with explicit permissions and inputs. Annotate every permission beyond `contents: read` with a reason comment.
 
 **Example usage:**
 
@@ -268,7 +268,7 @@ jobs:
     uses: $/.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write # upload SARIF to code scanning
     with:
       soft-fail: false
       upload-sarif: true
@@ -282,19 +282,19 @@ All workflows MUST pass the following validation checks:
 
 * **Script:** `scripts/linting/workflow-validator/validate-workflows.mjs` (`npm run lint:workflows`)
 * **What it enforces:** GitHub's own workflow parser validates every workflow and composite action, custom checks catch undefined references and undeclared action inputs, and the manifest-pinned shellcheck checks every bash and sh `run:` script. Nothing is ignored or disabled.
-* **CI blocking:** `workflow-validation-scan.yml` fails PR validation on any finding and reports SARIF to code scanning
+* **CI blocking:** `workflow-validation-scan.yml` reports SARIF to code scanning and fails PR validation on any finding that no tracked exception in `security/code-scanning-exceptions.yml` excuses (`npm run lint:workflows:gated` runs the same gate locally)
 
 ### zizmor Audit
 
 * **Tool:** zizmor at the `pedantic` persona, installed from `scripts/security/tool-checksums.json` by `.github/actions/setup-zizmor` (`npm run lint:zizmor` in the devcontainer)
 * **What it enforces:** Every workflow, composite action, and `dependabot.yml` passes zizmor's audits, including template injection, `GITHUB_PATH` and `GITHUB_ENV` writes, dangerous triggers, unscoped GitHub App tokens, and undocumented permissions. Every permission beyond `contents: read` carries a `# reason` comment.
-* **CI blocking:** `zizmor-scan.yml` uploads SARIF under category `zizmor` and fails PR validation on any result that no tracked exception in `security/code-scanning-exceptions.yml` excuses (`Test-CodeQLSarifThreshold.ps1 -Threshold All`)
+* **CI blocking:** `zizmor-scan.yml` runs with `--no-ignores`, so inline `zizmor: ignore` comments suppress nothing. It uploads SARIF under category `zizmor` and fails PR validation on any result that no tracked exception in `security/code-scanning-exceptions.yml` excuses (`Test-CodeQLSarifThreshold.ps1 -Threshold All`)
 
 ### Dependency Pinning Validation
 
 * **Script:** `scripts/security/Test-DependencyPinning.ps1`
 * **What it enforces:** All third-party actions use full SHA pins
-* **CI blocking:** Failures block CI when configured to enforce compliance
+* **CI blocking:** `dependency-pinning-scan.yml` reports one SARIF rule per dependency type and fails on any finding that no tracked exception excuses; soft-fail callers report the gate result without failing (`npm run lint:dependency-pinning:gated` runs the same gate locally)
 
 ### Action Pin Provenance Validation
 
@@ -333,16 +333,21 @@ All workflows MUST pass the following validation checks:
 
 **Example event guard pattern:**
 
+Pass event values to the script through step `env:`; never interpolate `${{ }}` inside `run:`.
+
 ```yaml
 - name: Process Release
+  env:
+    EVENT_NAME: ${{ github.event_name }}
+    RELEASE_TAG: ${{ github.event.release.tag_name }}
+    INPUT_VERSION: ${{ inputs.version }}
   run: |
-    if [ "${{ github.event_name }}" == "release" ]; then
-      VERSION="${{ github.event.release.tag_name }}"
-      echo "Processing release: $VERSION"
+    if [ "${EVENT_NAME}" == "release" ]; then
+      VERSION="${RELEASE_TAG}"
     else
-      VERSION="${{ inputs.version }}"
-      echo "Processing version: $VERSION"
+      VERSION="${INPUT_VERSION}"
     fi
+    echo "Processing version: ${VERSION}"
 ```
 
 ## YAML Expression Quoting
