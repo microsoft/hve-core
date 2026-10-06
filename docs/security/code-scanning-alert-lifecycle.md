@@ -57,7 +57,7 @@ flowchart LR
 | Tool version consistency | Hard-coded tool versions, digests, and runtimes that differ from `scripts/security/tool-checksums.json`                  | Pull requests                                                                           |
 | Action pin provenance    | Action pins whose commit is not on an upstream tag or default branch, or whose comment names the wrong tag               | Pull requests                                                                           |
 | Dependency pinning       | Unpinned dependencies, one rule per dependency type                                                                      | Pull requests and the weekly security maintenance run                                   |
-| Poutine                  | Supply-chain risks in GitHub Actions workflows; advisory, not gated                                                      | Pull requests                                                                           |
+| Poutine                  | Supply-chain risks in GitHub Actions workflows; advisory, not gated                                                      | Pull requests and the weekly security maintenance run                                   |
 
 The scanners that run only from pull requests have no analysis on `main`, so their alerts appear on pull-request branches, and the weekly exception status reports their tracked exceptions as not observed rather than closed.
 
