@@ -82,7 +82,7 @@ jobs:
           THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
           PINNING_SCORE: ${{ needs.validate-pinning.outputs.compliance-score }}
           UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
-          UNEXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.unexcepted-count }}
+          FAILING_COUNT: ${{ needs.validate-pinning.outputs.failing-count }}
           EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
           EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
@@ -96,7 +96,7 @@ jobs:
           $pinningScore = $env:PINNING_SCORE
           # Registered exceptions are tracked findings, not new risks. Fall back to the raw
           # scanner count only when the gate produced no output.
-          $unpinnedCount = if ($env:UNEXCEPTED_COUNT) { $env:UNEXCEPTED_COUNT } else { $env:UNPINNED_COUNT }
+          $unpinnedCount = if ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
           $exceptedCount = if ($env:EXCEPTED_COUNT) { $env:EXCEPTED_COUNT } else { '0' }
           $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
@@ -232,12 +232,12 @@ jobs:
         env:
           THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
           UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
-          UNEXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.unexcepted-count }}
+          FAILING_COUNT: ${{ needs.validate-pinning.outputs.failing-count }}
           EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
           EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
         run: |
-          $unpinnedCount = if ($env:UNEXCEPTED_COUNT) { $env:UNEXCEPTED_COUNT } else { $env:UNPINNED_COUNT }
+          $unpinnedCount = if ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
           $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
           $thresholdDays = $env:THRESHOLD_DAYS

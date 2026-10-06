@@ -6,7 +6,7 @@ on:
   workflow_call:
     inputs:
       threshold:
-        description: 'Compliance threshold percentage (0-100) for the reported is-compliant output; the gate fails on any unexcepted unpinned dependency'
+        description: 'Compliance threshold percentage (0-100) for the reported is-compliant output; the gate fails on any unpinned dependency that no tracked exception excuses'
         required: false
         type: number
         default: 100
@@ -16,7 +16,7 @@ on:
         type: string
         default: 'github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints'
       soft-fail:
-        description: 'Whether to skip the gate and only report'
+        description: 'Whether to report the gate result without failing the job'
         required: false
         type: boolean
         default: false
@@ -40,9 +40,9 @@ on:
       is-compliant:
         description: 'Whether repository meets compliance threshold'
         value: ${{ jobs.scan.outputs.is-compliant }}
-      unexcepted-count:
+      failing-count:
         description: 'Number of unpinned dependencies that no tracked exception excuses'
-        value: ${{ jobs.scan.outputs.unexcepted-count }}
+        value: ${{ jobs.scan.outputs.failing-count }}
       excepted-count:
         description: 'Number of unpinned dependencies excused by a tracked exception'
         value: ${{ jobs.scan.outputs.excepted-count }}
@@ -64,7 +64,7 @@ jobs:
       compliance-score: ${{ steps.pinning.outputs.compliance-score }}
       unpinned-count: ${{ steps.pinning.outputs.unpinned-count }}
       is-compliant: ${{ steps.pinning.outputs.is-compliant }}
-      unexcepted-count: ${{ steps.gate.outputs.failing-count }}
+      failing-count: ${{ steps.gate.outputs.failing-count }}
       excepted-count: ${{ steps.gate.outputs.excepted-count }}
       exception-error-count: ${{ steps.gate.outputs.exception-error-count }}
     steps:
@@ -157,7 +157,7 @@ jobs:
 
       # Every unpinned dependency fails unless a tracked exception in
       # security/code-scanning-exceptions.yml excuses it. Soft-fail callers still
-      # run the gate so their reports separate excepted from unexcepted results.
+      # run the gate so their reports separate excused results from failing ones.
       - name: Gate on findings
         id: gate
         continue-on-error: ${{ inputs.soft-fail }}
