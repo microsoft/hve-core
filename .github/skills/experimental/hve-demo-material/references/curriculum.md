@@ -94,6 +94,8 @@ The `capture` input selects how a level produces its visual evidence. It takes
 
 Apply these rules to the profile:
 
+* L100 and L200 require `capture: deck-export`. Reject a caller's `live`
+  selection during intake rather than silently changing the requested profile.
 * Only the caller may set `capture: deck-export` for L300 or L400. A run never
   downgrades a level on its own, because a downgraded run and a live capture run
   produce different evidence and have to stay distinguishable after the fact.

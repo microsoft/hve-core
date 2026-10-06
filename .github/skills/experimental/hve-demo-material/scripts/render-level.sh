@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 #
 # render-level.sh
-# Render one authored demo-material level into a deck, frames, narration, a
+# Render one authored non-character level into a deck, frames, narration, a
 # captioned MP4, a transcript page, and, when the HVE Slides starter is
 # available, a single-file HTML deck, then score the machine-verifiable
 # criteria.
@@ -30,6 +30,7 @@ LEVEL_DIR=""
 WORKSPACE=""
 NARRATION="piper"
 CAPTURE=""
+ANIMATION="none"
 VISION_PROMPT_FILE=""
 HTML_DECK_TEMPLATE=""
 HTML_DECK="auto"
@@ -46,6 +47,7 @@ Options:
   --workspace <repo>            Repository folder opened for live captures
   --narration <azure|piper>     Narration engine (default: piper)
   --capture <live|deck-export>  Capture profile (default: the level default)
+  --animation <none|characters>  Only none is supported; use the builder for characters
   --vision-prompt-file <path>   Run the vision slide check with this prompt
   --html-deck-template <dir>    HVE Slides starter; required, fails when missing
   --no-html-deck                Skip the HTML deck even when the starter exists
@@ -72,6 +74,7 @@ parse_args() {
       --workspace) WORKSPACE="$2"; shift 2 ;;
       --narration) NARRATION="$2"; shift 2 ;;
       --capture) CAPTURE="$2"; shift 2 ;;
+      --animation) ANIMATION="$2"; shift 2 ;;
       --vision-prompt-file) VISION_PROMPT_FILE="$2"; shift 2 ;;
       --html-deck-template) HTML_DECK_TEMPLATE="$2"; HTML_DECK="required"; shift 2 ;;
       --no-html-deck) HTML_DECK="off"; shift ;;
@@ -94,6 +97,11 @@ validate_args() {
     esac
   fi
   [[ "${CAPTURE}" =~ ^(live|deck-export)$ ]] || err "--capture must be live or deck-export."
+  LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
+  command -v uv >/dev/null || err "uv is required."
+  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py \
+    scripted-preflight --level "${LEVEL}" --level-dir "${LEVEL_DIR}" \
+    --capture "${CAPTURE}" --animation "${ANIMATION}"
   local tool_report ffmpeg_path ffprobe_path ffmpeg_dir ffprobe_dir
   tool_report="$(bash "${FINALIZE_ACCESSIBLE_VIDEO}" --check-prerequisites)"
   ffmpeg_path="$(printf '%s\n' "${tool_report}" | sed -n 's/^ffmpeg=//p')"
@@ -105,7 +113,6 @@ validate_args() {
   export FFMPEG_COMMAND="${ffmpeg_path}"
   export FFPROBE_COMMAND="${ffprobe_path}"
   export PATH="${ffmpeg_dir}:${ffprobe_dir}:${PATH}"
-  LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
   WORKSPACE="$(cd "${WORKSPACE}" && pwd)"
   case "${HTML_DECK}" in
     required)

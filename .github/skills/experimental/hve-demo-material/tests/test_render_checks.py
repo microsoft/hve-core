@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import wave
 import zipfile
 from pathlib import Path
@@ -36,6 +37,7 @@ from render_checks import (
     parse_webvtt,
     style_metadata,
     subtitle_languages,
+    validate_scripted_render,
     verify_open_captions,
 )
 
@@ -178,6 +180,177 @@ class TestParseCurriculum:
         assert set(levels) == {"L100", "L200", "L300", "L400"}
         assert "docs/README.md" in levels["L100"]["sources"]
         assert levels["L300"]["min"] == 8.0
+
+
+class TestScriptedRenderPreflight:
+    @pytest.mark.parametrize(
+        ("level", "capture"),
+        [
+            ("L100", "deck-export"),
+            ("L200", "deck-export"),
+            ("L300", "live"),
+            ("L400", "live"),
+            ("L300", "deck-export"),
+            ("L400", "deck-export"),
+        ],
+    )
+    def test_given_supported_profile_when_checked_then_accepted(
+        self, tmp_path, level, capture
+    ):
+        validate_scripted_render(level, tmp_path, capture)
+
+    @pytest.mark.parametrize("level", ["L100", "L200"])
+    def test_given_low_level_live_capture_when_checked_then_rejected(
+        self, tmp_path, level
+    ):
+        with pytest.raises(CheckError, match="requires capture: deck-export"):
+            validate_scripted_render(level, tmp_path, "live")
+
+    def test_given_character_argument_when_checked_then_rejected(self, tmp_path):
+        with pytest.raises(CheckError, match="supports animation: none only"):
+            validate_scripted_render("L300", tmp_path, "live", "characters")
+
+    @pytest.mark.parametrize("relative", ["manifest.yml", "output/manifest.yml"])
+    def test_given_character_manifest_when_checked_then_preserved(
+        self, tmp_path, relative
+    ):
+        # Arrange
+        manifest = tmp_path / relative
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        content = "animation: characters\n"
+        manifest.write_text(content, encoding="utf-8")
+
+        # Act / Assert
+        with pytest.raises(CheckError, match="declares character animation"):
+            validate_scripted_render("L300", tmp_path, "live")
+        assert manifest.read_text(encoding="utf-8") == content
+
+    def test_given_clip_segments_when_checked_then_preserved(self, tmp_path):
+        # Arrange
+        manifest = tmp_path / "output/segments.yml"
+        manifest.parent.mkdir()
+        content = "segments:\n  - type: clip\n    clip: ../clips/scene.webm\n"
+        manifest.write_text(content, encoding="utf-8")
+
+        # Act / Assert
+        with pytest.raises(CheckError, match="clip segments would be replaced"):
+            validate_scripted_render("L300", tmp_path, "live")
+        assert manifest.read_text(encoding="utf-8") == content
+
+    @pytest.mark.parametrize(
+        ("relative", "content"),
+        [
+            ("manifest.yml", "animation: ["),
+            ("output/manifest.yml", "- characters\n"),
+            ("output/segments.yml", "segments: invalid\n"),
+        ],
+    )
+    def test_given_invalid_manifest_when_checked_then_rejected_without_writing(
+        self, tmp_path, relative, content
+    ):
+        manifest = tmp_path / relative
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text(content, encoding="utf-8")
+
+        with pytest.raises(CheckError):
+            validate_scripted_render("L300", tmp_path, "live")
+        assert manifest.read_text(encoding="utf-8") == content
+
+    @pytest.mark.parametrize(
+        ("level", "capture", "animation", "relative", "content", "message"),
+        [
+            ("L100", "live", "none", None, None, "requires capture: deck-export"),
+            ("L200", "live", "none", None, None, "requires capture: deck-export"),
+            (
+                "L300",
+                "deck-export",
+                "characters",
+                None,
+                None,
+                "supports animation: none only",
+            ),
+            (
+                "L300",
+                "deck-export",
+                "none",
+                "output/manifest.yml",
+                "animation: characters\n",
+                "declares character animation",
+            ),
+            (
+                "L300",
+                "deck-export",
+                "none",
+                "output/segments.yml",
+                "segments:\n  - type: clip\n    path: ../clips/scene.webm\n",
+                "clip segments would be replaced",
+            ),
+        ],
+    )
+    def test_given_unsupported_run_when_shell_invoked_then_level_files_unchanged(
+        self,
+        tmp_path,
+        monkeypatch,
+        level,
+        capture,
+        animation,
+        relative,
+        content,
+        message,
+    ):
+        level_dir = tmp_path / "level"
+        (level_dir / "content").mkdir(parents=True)
+        if relative:
+            manifest = level_dir / relative
+            manifest.parent.mkdir(parents=True, exist_ok=True)
+            manifest.write_text(content, encoding="utf-8")
+        before = {
+            entry.relative_to(level_dir): entry.read_bytes()
+            for entry in level_dir.rglob("*")
+            if entry.is_file()
+        }
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        uv = bin_dir / "uv"
+        uv.write_text(
+            f'#!/bin/sh\ncd "$3"\nshift 4\nexec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        uv.chmod(0o755)
+        monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+        script = Path(__file__).resolve().parents[1] / "scripts/render-level.sh"
+
+        result = subprocess.run(
+            [
+                "bash",
+                str(script),
+                "--level",
+                level,
+                "--level-dir",
+                str(level_dir),
+                "--workspace",
+                str(tmp_path),
+                "--capture",
+                capture,
+                "--animation",
+                animation,
+                "--no-html-deck",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+
+        assert result.returncode != 0
+        assert message in result.stderr
+        after = {
+            entry.relative_to(level_dir): entry.read_bytes()
+            for entry in level_dir.rglob("*")
+            if entry.is_file()
+        }
+        assert after == before
+        if relative is None:
+            assert not (level_dir / "output").exists()
 
 
 class TestLevelTouched:

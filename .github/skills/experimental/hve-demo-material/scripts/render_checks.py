@@ -240,6 +240,51 @@ def slide_numbers(content_dir: Path) -> list[int]:
     return sorted(numbers)
 
 
+def validate_scripted_render(
+    level: str, level_dir: Path, capture: str, animation: str = "none"
+) -> None:
+    """Reject inputs that the deck-frame scripted renderer cannot preserve."""
+    import yaml
+
+    if level in {"L100", "L200"} and capture != "deck-export":
+        raise CheckError(f"{level} requires capture: deck-export")
+    if animation != "none":
+        raise CheckError(
+            "Character animation requires the HVE Demo Material Builder's "
+            "clip-aware workflow; render-level.sh supports animation: none only"
+        )
+    for relative in ("manifest.yml", "output/manifest.yml", "output/segments.yml"):
+        manifest = level_dir / relative
+        if not manifest.is_file():
+            continue
+        try:
+            data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError) as error:
+            raise CheckError(
+                f"Cannot read scripted-render input: {relative}"
+            ) from error
+        if not isinstance(data, dict):
+            raise CheckError(f"Scripted-render input must be a mapping: {relative}")
+        if data.get("animation", "none") != "none":
+            raise CheckError(
+                f"{relative} declares character animation; use the "
+                "HVE Demo Material Builder's clip-aware workflow"
+            )
+        if relative == "output/segments.yml":
+            segments = data.get("segments", [])
+            if not isinstance(segments, list):
+                raise CheckError("Existing segments must be a list")
+            if any(
+                isinstance(segment, dict)
+                and (segment.get("type") == "clip" or "clip" in segment)
+                for segment in segments
+            ):
+                raise CheckError(
+                    "Existing clip segments would be replaced by deck frames; "
+                    "use the HVE Demo Material Builder's clip-aware workflow"
+                )
+
+
 def build_segments(level_dir: Path, output_name: str) -> str:
     """Return a ``segments.yml`` that pairs each deck frame with its WAV.
 
@@ -1151,6 +1196,15 @@ def build_parser() -> argparse.ArgumentParser:
     segments = sub.add_parser("segments", help="Write output/segments.yml")
     segments.add_argument("--level-dir", type=Path, required=True)
     segments.add_argument("--output-name", required=True)
+    preflight = sub.add_parser(
+        "scripted-preflight", help="Reject unsupported deck-frame render inputs"
+    )
+    preflight.add_argument("--level", required=True, choices=LEVELS)
+    preflight.add_argument("--level-dir", type=Path, required=True)
+    preflight.add_argument("--capture", required=True, choices=("live", "deck-export"))
+    preflight.add_argument(
+        "--animation", choices=("none", "characters"), default="none"
+    )
     captions = sub.add_parser("captions", help="Write WebVTT captions")
     captions.add_argument("--level-dir", type=Path, required=True)
     captions.add_argument("--output", type=Path, required=True)
@@ -1197,6 +1251,11 @@ def main(argv: list[str] | None = None) -> int:
                 " ".join(
                     changed_levels(load_curriculum(), index, args.repo, args.force)
                 )
+            )
+            return EXIT_SUCCESS
+        if args.command == "scripted-preflight":
+            validate_scripted_render(
+                args.level, args.level_dir, args.capture, args.animation
             )
             return EXIT_SUCCESS
         if args.command == "segments":

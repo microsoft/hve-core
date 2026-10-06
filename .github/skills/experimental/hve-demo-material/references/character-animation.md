@@ -29,6 +29,12 @@ its recording under `clips/`. Each scene has:
 * No network dependency during playback or recording
 * A source-register mapping for every factual claim
 
+After authoring the scenes, synthesize each scene's canonical narration using
+its approved voice and measure the generated WAV with FFprobe. The measured
+WAV duration, not a word-count estimate, supplies the recorder's duration.
+Complete this narration step before validating a speaking sample or recording
+the remaining scenes.
+
 Set `data-animation-ready="true"` on the scene body when local assets and state
 are ready. Invoke the `vscode-playwright` skill's scripted browser-video recorder
 with the scene HTML, output WebM path, narration duration, and target resolution.
@@ -54,6 +60,10 @@ sequence is:
 Place each character scene and product capture in `output/segments.yml` in
 storyboard order. Use the shared half-second transition profile for opening,
 scene, audio, and closing fades.
+
+Assemble character runs through the builder's clip-aware workflow and
+`demo-video`, not the deck-frame `render-level.sh` path. Preserve the authored
+clip segments through finalization.
 
 ## Validation
 

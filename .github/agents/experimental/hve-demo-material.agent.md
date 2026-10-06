@@ -28,7 +28,7 @@ the engine in force, and a complete output manifest.
   default the skill's curriculum defines
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
-  and to `deck-export` for L100 and L200
+  and fixed to `deck-export` for L100 and L200; reject `live` for those levels
 * `narration` from `azure` or `piper`, defaulting to `azure`
 * `animation` from `none` or `characters`, defaulting to `none`; select
   `characters` only when the caller supplies it or explicitly requests
@@ -171,14 +171,13 @@ through a human-configured pipeline outside the agent.
   condition and the resumption action in the manifest, naming the unavailable
   entrypoint.
 * Set a level running under `capture: live` to `Deferred` when the VS Code CLI
-  is absent, or when an attempted browser navigation through the host's
-  Playwright MCP tools fails. Determine availability by attempting the
-  navigation, never by judging tool names: MCP tool prefixes are derived from
-  the server's registration name and vary between hosts, so an unfamiliar prefix
-  is not evidence of absence. Name the missing entrypoint as the rerun
-  condition and do not substitute deck export. If the only reachable browser
-  tools cannot drive the VS Code Web workbench, record that as the observed
-  failure after attempting it.
+  or the selected capture path's prerequisites are unavailable. Prefer the
+  `vscode-playwright` scripted path for unattended or repeatable capture; it
+  needs `uv`, its Playwright environment, and Chromium, not an MCP server.
+  For the interactive path, establish availability by attempting navigation
+  through Playwright MCP, never by judging tool names. Missing MCP tools do not
+  prevent the scripted path from running. Name the unavailable entrypoint and
+  rerun condition without substituting deck export.
 * Set a level with `animation: characters` to `Deferred` when original character
   assets, browser animation recording, or approved dialogue voices are
   unavailable. Name the missing prerequisite and do not silently fall back to
@@ -205,22 +204,24 @@ through a human-configured pipeline outside the agent.
    engine, audience, delivery context, approved voice, the Azure Speech region
    under `narration: azure`, and whether a GIF is explicitly requested. Apply
    the documented defaults for anything unstated, and under `full` never prompt
-   for them.
+  for them. Reject `capture: live` for L100 and L200 before creating level
+  artifacts; those levels require deterministic deck-export frames.
 2. Create `.copilot-tracking/demo-material/{{YYYY-MM-DD}}/{{level}}/` with the
    subdirectories defined in the skill's output contract.
 3. Check `uv`, LibreOffice, the narration engine in force (Azure Speech
-  authentication, or the Piper executable and voice), `rpi-research`
-  availability as needed, and, for any level under `capture: live`, the VS Code
-  CLI plus Playwright MCP browser tools. Run
+  authentication, or the Piper executable and voice), and `rpi-research`
+  availability as needed. For `capture: live`, check the VS Code CLI and
+  select the `vscode-playwright` scripted path for unattended or repeatable
+  work. Check its Playwright environment and Chromium. The interactive path
+  instead requires Playwright MCP browser tools and `curl`; test navigation
+  only when selecting that path. Run
   `scripts/finalize-accessible-video.sh --check-prerequisites` to resolve
   FFmpeg and FFprobe and confirm the `subtitles` filter and `libx264` encoder.
   Capture its `ffmpeg=` and `ffprobe=` paths. Before invoking `demo-video` or
   the finalizer, set `FFMPEG_COMMAND` and `FFPROBE_COMMAND` to those paths and
-  prepend both parent directories to `PATH` in the same terminal session, so
-  every shell and Python operation uses the resolved pair.
+  prepend both parent directories to `PATH` in the same terminal session.
   When setup is missing, apply the approval-gated installation rule before
-  deciding `Deferred`. Establish browser availability by attempting a
-  navigation rather than by inspecting tool names.
+  deciding `Deferred`.
 
 ### 2. Resolve Sources and Storyboard
 
@@ -270,49 +271,51 @@ through a human-configured pipeline outside the agent.
 
 1. For any level under `capture: deck-export`, dispatch `PowerPoint Subagent`
    with task type `export` to place deterministic deck frames in `frames/`.
-2. For any level under `capture: live`, gate the live VS Code capture plan
+2. For L300 and L400 under `capture: live`, gate the live VS Code capture plan
    under `manual` only; under `partial` and `full` record
-   `approvals.capture_plan: auto` and proceed. Then use `vscode-playwright` to
-   place live captures in `frames/` or `clips/`. Open a file that renders in the
-   Monaco text editor, raise rendered text size by setting
-   `document.body.style.zoom` through the Playwright evaluate tool, because
-   VS Code Web keeps user settings in browser IndexedDB and a settings-based
-   font size never reaches the capture. Measure the result and record the
-   measured font size and source resolution per capture ID.
+  `approvals.capture_plan: auto` and proceed. Prefer the `vscode-playwright`
+  scripted capture with the approved plan, workspace, and level output root;
+  record its measured font size and source resolution per capture ID. For
+  interactive capture, open Monaco files, apply
+  `document.body.style.zoom`, and measure with the curriculum procedure.
+  Both paths retain `capture: live` and the same readability floor.
 3. Under `animation: characters`, author original character assets and
-  self-contained browser scene pages under `animation/`. Mark a scene ready by
-  setting `data-animation-ready="true"` on its body, then invoke the
-  `vscode-playwright` scripted browser-video recorder with the scene, target
-  WebM path, narration duration, and output resolution. Validate one
-  speaking-state sample and one scene-to-product handoff before recording the
-  remaining scenes. Under `animation: none`, do not create character assets or
-  animation clips.
+  self-contained browser scene pages under `animation/`, with dialogue copied
+  from canonical speaker notes. Mark a scene ready by setting
+  `data-animation-ready="true"` on its body. Author scenes now but record them
+  only after their narration WAVs exist. Under `animation: none`, do not
+  create character assets or animation clips.
 4. Use `tts-voiceover` with the narration engine in force to create per-slide
    WAV files in `audio/`, passing `--engine piper` under `narration: piper`.
+  Apply the approved speaker-to-voice map to character scenes, keeping one
+  authored content item and WAV per scene. Measure each generated WAV with
+  FFprobe before recording its animation.
    Pass `--collapse-newlines` whenever speaker notes use
    YAML block scalars, because each hard line wrap in a block scalar is
    otherwise spoken as a pause: one measured level ran 361 seconds without the
    option and 284 seconds with it. Under `narration: azure`, verify `SPEECH_KEY`
    or `SPEECH_RESOURCE_ID` and `SPEECH_REGION` are available without reading or
    recording secret values.
-5. Create `output/segments.yml` and set its transition to `crossfade` with a
-  `0.5` second duration, opening fade, and closing fade. Order character clips,
-  product recordings, and deck frames according to the approved storyboard,
-  then use `demo-video` to assemble the narrated
-   MP4 in `output/`. Its paths resolve relative to the manifest file, not the
-   level directory, so reference sibling directories as `../frames/...` and
-   `../audio/...` and set `output` to `./<name>.mp4`. Measure the assembled
-   MP4's duration, for example with `ffprobe`, and record it with the narration
-   word count and the level's contract range in the manifest.
-    Keep the resolved FFmpeg environment from prerequisite checking in force for
-    assembly and measurement.
-  6. Run the `hve-demo-material` skill's bundled
-    `scripts/finalize-accessible-video.sh` with the level and level directory.
-    This mandatory step applies in every repository. It generates WebVTT from
-    the canonical speaker notes, burns the captions into the video picture,
-    retains an English selectable subtitle track, and writes the transcript
-    page. Do not present the raw MP4 as a completed deliverable before this step
-    succeeds.
+5. Under `animation: characters`, invoke the `vscode-playwright` browser-video
+  recorder for each ready scene with its measured WAV duration, target WebM
+  path, and output resolution. Validate one speaking sample and one
+  scene-to-product handoff with their narration before recording the remaining
+  scenes. The final caption/transcript check uses those same canonical notes.
+6. Create `output/segments.yml` with one visual segment per authored content
+  item and WAV. Set `crossfade` with a `0.5` second duration and opening and
+  closing fades. Order character clips, product captures, and deck frames
+  according to the approved storyboard, then use `demo-video` to assemble the
+  MP4 in `output/`. Do not use the deck-frame `render-level.sh` path for
+  character or existing clip manifests. Paths resolve relative to the segment
+  manifest, so reference `../frames/...`, `../clips/...`, and `../audio/...`
+  and set `output` to `./<name>.mp4`. Measure the assembled duration and record
+  it with the word count and contract range. Keep the resolved FFmpeg
+  environment in force for assembly and measurement.
+7. Run the `hve-demo-material` skill's bundled
+  `scripts/finalize-accessible-video.sh` with the level and level directory.
+  It generates WebVTT from canonical speaker notes, burns captions into the
+  picture, retains English selectable subtitles, and writes the transcript.
+  Do not present the raw MP4 as complete before this mandatory step succeeds.
 
 ### 5. Verify and Finalize
 

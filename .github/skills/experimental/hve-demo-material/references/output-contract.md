@@ -66,7 +66,8 @@ the video frames.
 | Vision slide check                              | GitHub Copilot CLI, authenticated                                                                                | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
 | Approved narration voice                        | A caller-named voice, otherwise `en-US-Andrew:DragonHDLatestNeural` for Azure or `en_US-norman-medium` for Piper | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
 | MP4 assembly and visible captions               | Discoverable FFmpeg and ffprobe; FFmpeg exposes the libass-backed `subtitles` filter and `libx264` encoder       | Offer approval-gated setup under attended modes; otherwise record `Deferred` and do not claim an accessible MP4 exists                         |
-| Live capture, `capture: live` only              | VS Code CLI plus Playwright MCP browser tools                                                                    | Record the unavailable entrypoint by name as `Deferred`; do not replace an L300 or L400 live capture with deck export                          |
+| Scripted live capture, `capture: live` only     | VS Code CLI, `uv`, the `vscode-playwright` environment, and Playwright Chromium; no MCP server                   | Record the unavailable entrypoint as `Deferred`; preserve live capture and do not substitute deck export                                       |
+| Interactive live capture, `capture: live` only  | VS Code CLI, Playwright MCP browser tools, and `curl`                                                            | Defer when the selected interactive path cannot run; missing MCP does not prevent scripted live capture                                        |
 | Character animation, `animation: characters`    | Original known-rights character assets, approved dialogue voices, and browser video recording through Playwright | Record the missing capability as `Deferred`; do not silently replace requested animation with `none`                                           |
 | Dynamic topic resolution                        | The `rpi-research` skill                                                                                         | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
 | HTML slide deck, scripted renders only          | The hve-core HVE Slides starter, Node.js 24 with npm, and Chromium through `vscode-playwright`                   | Without the starter, skip the deck and record `html_deck: not-applicable`; a missing Node.js or Chromium fails `T-10`                          |
@@ -92,15 +93,19 @@ Confirm that the selected build exposes libass subtitles and `libx264`. Under
 approval, then rerun the resolver and resume. Under `full`, record the
 applicable command and set the level to `Deferred` instead of changing the host.
 
-Establish live-capture availability by attempting a browser navigation, never by
-inspecting tool names. MCP tool prefixes are derived from the server's
-registration name and vary between hosts, so an unfamiliar prefix is not
-evidence of absence. Record the prerequisite as unavailable only after an
-attempt fails, and record what failed. VS Code's built-in browser tools are a
-known case that reaches the page but cannot drive the VS Code Web workbench.
+Select the `vscode-playwright` scripted path for unattended or repeatable live
+capture. Check its VS Code CLI, `uv`, Playwright environment, and Chromium;
+it does not require MCP. Pass the approved plan, workspace, and level output
+root to the capture script and record its measured font size and resolution.
 
-VS Code Web keeps user settings in browser IndexedDB, so a settings-based font
-size never reaches a live capture. Raise rendered text size by setting
+For interactive capture, establish availability by attempting browser
+navigation, never by inspecting tool names. MCP prefixes vary between hosts,
+so an unfamiliar prefix is not evidence of absence. Record an observed failure
+and rerun condition without ruling out the supported scripted path. VS Code's
+built-in browser tools can reach the page without driving the Web workbench.
+
+For the interactive path, VS Code Web keeps user settings in browser IndexedDB.
+Raise rendered text size by setting
 `document.body.style.zoom` through the Playwright evaluate tool, then measure the
 result with the readability measurement procedure in `curriculum.md`.
 
