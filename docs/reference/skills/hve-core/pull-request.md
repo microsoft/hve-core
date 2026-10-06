@@ -45,3 +45,10 @@ writes `.copilot-tracking/pr/pr.md`, and runs focused checks for the changed are
 `action=create` to request one final approval before the branch is pushed and the GitHub pull request
 is opened. If you ask it to fix a reported failure, the skill validates and commits the isolated
 repair, refreshes the pull request context, and includes the new commit in the final approval summary.
+
+The workflow may offer `/shared-work-handoff prepare preview` with proposed sources, target, and
+actual audience for you to complete and invoke manually. It does not load that manual-only skill or
+prepare its file. Declining leaves PR preparation unchanged. Preview grants no publication or Git
+write authority, and private sources need explicit selection. After taking the detour, explicitly
+resume PR preparation; a PR body link requires verified publication and disclosure approval, separate
+from the final PR-write approval.

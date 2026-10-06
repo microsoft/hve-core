@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Understanding the RPI Workflow"
 pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -36,7 +36,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 
 * Assesses evidence before opening a research stage, so adequate research is reused rather than repeated.
 * Uses verified existing patterns instead of inventing plausible ones.
-* Preserves decisions, changes, validation, and review routing in durable task artifacts.
+* Preserves decisions, changes, validation, and review routing in workspace-local task artifacts.
 
 > [!TIP]
 > See [Why the RPI Workflow Works](why-rpi) for the psychology, quality comparisons, and entry surfaces behind the lifecycle.
@@ -49,7 +49,7 @@ RPI separates lifecycle concepts without requiring an autonomous chain of specia
 
 Use `/rpi-research` only when available evidence is not adequate for requirements, acceptance criteria, dependencies, material risks, complexity, uncertainty, or a decision-critical question. Multi-file changes, new patterns, external integrations, and architecture decisions can reveal a gap, but they do not automatically require fresh research.
 
-Research is read-only. It searches the workspace and relevant external sources, distinguishes evidence from assumptions, evaluates alternatives, and records planning readiness. When research runs, its durable output is:
+Research is read-only. It searches the workspace and relevant external sources, distinguishes evidence from assumptions, evaluates alternatives, and records planning readiness. When research runs, its workspace-local output is:
 
 ```text
 .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md
@@ -120,13 +120,15 @@ Select `RPI Agent` when you want a user-selected lifecycle wrapper that activate
 
 Use `/clear` or a new chat when a long lifecycle has accumulated context, you are switching concepts, or the conversation is no longer serving the task well. A context reset is a tool for clarity, not a requirement to repeat research or restart the lifecycle.
 
-Durable artifacts carry the necessary context:
+Workspace-local artifacts carry the necessary context through chat resets and later sessions when the same working copy remains available:
 
 ```text
 research, when it runs → task-centered plan → changes → review and routed follow-up
 ```
 
 Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
+
+Because `.copilot-tracking` is gitignored, another contributor or a fresh clone cannot depend on these files. Use [Share Work for Another Contributor](shared-work-handoff) when a named teammate needs intentionally minimized, checked-in continuation context.
 
 For the technical explanation of why this matters, see [Context Engineering](context-engineering).
 
@@ -136,7 +138,7 @@ For the technical explanation of why this matters, see [Context Engineering](con
 |-----------------------------------------------------------|-------------------------------------------------|
 | The task needs evidence, planning, or review routing      | The change is clear and isolated                |
 | Dependencies, risk, or uncertainty need explicit handling | Existing evidence and acceptance are sufficient |
-| A handoff needs durable task evidence                     | No durable lifecycle evidence is needed         |
+| A task needs workspace-local lifecycle evidence           | No lifecycle evidence is needed                 |
 
 Use research when readiness identifies a gap. Otherwise, select the smallest lifecycle action that gives the task credible evidence and a clear owner.
 
@@ -156,6 +158,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 * [Why the RPI Workflow Works](why-rpi) - Understand why phase separation improves evidence and traceability
 * [Using RPI Together](using-together) - Follow a complete workflow example
 * [Context Engineering](context-engineering) - Why context management matters
+* [Share Work for Another Contributor](shared-work-handoff) - Publish optional minimized continuation context
 * [RPI Walkthrough](rpi-walkthrough) - Explore code or artifacts through a guided explanation
 * [Agents Reference](../reference/agents/) - All available agents
 * [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI

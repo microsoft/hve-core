@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-06
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -43,7 +43,7 @@ Use `/clear` or start a new chat when a long lifecycle has accumulated context, 
 Why this matters:
 
 * Accumulated context can obscure evidence, decisions, and the next owner.
-* Durable task artifacts carry context through a reset or a later session.
+* Workspace-local task artifacts carry context through a reset or a later session when the working copy remains available.
 * Stable IDs and markers locate the relevant scope when surrounding prose changes.
 
 For the deeper explanation of how LLM context affects agent behavior, see [Context Engineering](context-engineering).
@@ -285,13 +285,13 @@ Destination: distinct follow-up
 Follow-up item:
 - Add performance benchmarks for large file uploads (deferred from research)
 
-Return RV-001 to a later `rpi-implement` invocation.
+Return RV-001 to a later `rpi-implement` invocation and preserve the resulting validation evidence.
 ```
 
 1. Address findings through their recorded next owner:
 
    * Address each `RV-xxx` finding through its recorded next owner
-   * Return the implementation defect in `RV-001` to a later `rpi-implement` invocation
+   * Return the implementation defect in `RV-001` to a later `rpi-implement` invocation and preserve the resulting validation evidence
    * Resolve or explicitly accept material findings before committing
    * Track residual work as a distinct follow-up item
 
@@ -326,7 +326,7 @@ If implementation or review reveals a demonstrated evidence gap:
 1. Record the gap and its affected task scope.
 2. Return to `/rpi-research` for the bounded investigation.
 3. Update planning only when the evidence changes the approved scope, decision, or acceptance criteria.
-4. Resume the earliest affected lifecycle concept from the durable artifacts.
+4. Resume the earliest affected lifecycle concept from the workspace-local artifacts.
 
 ### Handling Complex Tasks
 
@@ -339,12 +339,14 @@ For very large tasks:
 
 ### Team Handoffs
 
-RPI artifacts support handoffs:
+RPI artifacts support transitions inside an available working copy:
 
 * Research doc explains decisions
 * The task-centered plan shows remaining `Pxx` and `Pxx-Txx` work and the context needed to implement it
 * Changes record shows completed work, validation, and implementation-time plan updates with their rationale
 * Review record shows separate execution status, outcome, findings, and routing
+
+Use [Share Work for Another Contributor](shared-work-handoff) when a named teammate needs checked-in continuation context without access to private `.copilot-tracking` files.
 
 ## Review Routing
 
@@ -392,7 +394,7 @@ When `/rpi-review` identifies research or planning gaps:
 > [!TIP]
 > `RPI Agent` is a lifecycle entry surface for the phase skills. It uses research readiness and does not require fresh research or every lifecycle concept in one conversation.
 
-For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers in the durable artifacts.
+For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers in the workspace-local artifacts.
 
 ## RPI Entry Surfaces
 
@@ -413,12 +415,12 @@ Both modes persist one JSON state record with the task identity, mode, active ph
 
 ## Resuming a Long Lifecycle
 
-A long lifecycle can accumulate context. Resume from the durable RPI artifact set rather than relying on a conversation transcript:
+A long lifecycle can accumulate context. Resume from the workspace-local RPI artifact set rather than relying on a conversation transcript:
 
 1. Open or reference the dated artifact that establishes the next action.
 2. Use the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers to find the affected scope.
 3. Start a fresh chat or use `/compact` only when it will improve the next responsible action.
-4. Treat the durable artifact set, rather than the conversation transcript, as the source of truth.
+4. Treat the available artifact set, rather than the conversation transcript, as the source of truth for current workflow state.
 
 > [!TIP]
 > For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering).
@@ -430,6 +432,7 @@ See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the ag
 * [RPI Overview](./) - Understand the workflow
 * [Why the RPI Workflow Works](why-rpi) - Understand the rationale for phase separation
 * [Context Engineering](context-engineering) - Why context management matters
+* [Share Work for Another Contributor](shared-work-handoff) - Cross-contributor continuation without private workflow state
 
 ---
 

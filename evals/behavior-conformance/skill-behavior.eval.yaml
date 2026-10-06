@@ -1,13 +1,13 @@
-# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat authoriz finaliz verif disclos unsubmitted identit minimiz
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 253
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 264
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, proposal-response, and
-  outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
-  graders with AND logic, and the suite-level scoring threshold gates the
-  aggregate pass rate across stimuli.
+  outcome-hypothesis skill updates, plus shared-work-handoff contracts. Each
+  tool-trigger stimulus uses at least two graders with AND logic, and the
+  suite-level scoring threshold gates the aggregate pass rate across stimuli.
 type: capability
 defaults:
   runs: 3
@@ -5855,3 +5855,776 @@ stimuli:
         name: skill-rpi-review-interrupted-resume-continues
         config:
           pattern: '(?i)^\s*[`*''"]*continue-review[`*''"]*[.!]?\s*$'
+  - name: skill-shared-work-handoff-eligible-prepare-preview
+    prompt: |
+      Consult shared-work-handoff without executing it. All preparation inputs
+      and authority are supplied. Decide what preview must describe and how
+      finalize treats three observations of the selected shared reference:
+      the expected object is absent; every identity, event, revision and
+      authority check matches; or the observed object differs from preview.
+      Return exactly four lines, no Markdown or explanation. Use yes/no for
+      boolean fields, contract outcome names, and a receipt location:
+      Preview: exact-mutation=<boolean>; predecessor=<boolean>; separate-consent=<boolean>
+      Absent: <outcome>; effective=<boolean>; receipt=<boolean>
+      Matching: <outcome>; effective=<boolean>; receipt=<location>
+      Mismatch: <outcome>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: exact-preview-and-separate-publication
+        config:
+          pattern: '(?i)^\s*Preview: exact-mutation=yes; predecessor=yes; separate-consent=yes\r?\nAbsent: [a-z-]+; effective=(?:yes|no); receipt=(?:yes|no)\r?\nMatching: [a-z-]+; effective=(?:yes|no); receipt=[a-z-]+\r?\nMismatch: [a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: shared-only-after-finalize
+        config:
+          pattern: '(?i)^\s*Preview: exact-mutation=(?:yes|no); predecessor=(?:yes|no); separate-consent=(?:yes|no)\r?\nAbsent: still-prepared; effective=no; receipt=no\r?\nMatching: shared; effective=yes; receipt=out-of-band\r?\nMismatch: conflict\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-denied-disclosure
+    prompt: |
+      Consult shared-work-handoff for a knowledge decision, not a mutation.
+      A public repository is the selected store. Disclosure approval covers
+      only one teammate, although the source paths and other inputs are valid.
+      Return exactly two lines without Markdown or explanation:
+      Outcome: <contract outcome>
+      Publish: <yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: disclosure-block
+        config:
+          pattern: '(?i)^\s*Outcome: blocked\r?\nPublish: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: no-publication
+        config:
+          pattern: '(?i)^\s*Outcome: [a-z-]+\r?\nPublish: no\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-physical-erasure-block
+    prompt: |
+      Consult shared-work-handoff without preparing a record. A proposed
+      repository-files handoff has a mandatory physical-erasure requirement.
+      Return exactly two lines without Markdown or explanation:
+      Outcome: <contract outcome>
+      History-erasure-guarantee: <yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: erasure-capability-block
+        config:
+          pattern: '(?i)^\s*Outcome: blocked\r?\nHistory-erasure-guarantee: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: no-history-deletion-promise
+        config:
+          pattern: '(?i)^\s*Outcome: [a-z-]+\r?\nHistory-erasure-guarantee: no\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-resume-conflict
+    prompt: |
+      Consult shared-work-handoff for a knowledge decision only. Resume
+      finalization observes a new content publication, event sequence, and
+      provider revision that differ from the preview's expected predecessor.
+      Acceptance exists only for the older content revision.
+      Return exactly three lines without Markdown or explanation:
+      Outcome: <contract outcome>; silent-retry=<yes/no>
+      Prior-acceptance-current: <yes/no>
+      Finalized-receipt: <yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: visible-conflict-no-retry
+        config:
+          pattern: '(?i)^\s*Outcome: conflict; silent-retry=no\r?\nPrior-acceptance-current: (?:yes|no)\r?\nFinalized-receipt: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: changed-revision-invalidates-acceptance
+        config:
+          pattern: '(?i)^\s*Outcome: [a-z-]+; silent-retry=(?:yes|no)\r?\nPrior-acceptance-current: no\r?\nFinalized-receipt: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: no-finalized-receipt
+        config:
+          pattern: '(?i)^\s*Outcome: [a-z-]+; silent-retry=(?:yes|no)\r?\nPrior-acceptance-current: (?:yes|no)\r?\nFinalized-receipt: no\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-explicit-recipient-acceptance
+    prompt: |
+      Consult shared-work-handoff for this knowledge question; perform no
+      lifecycle action. A verified, current publication has content revision 4.
+      Its eligible recipient selected source baseline abc123. The publisher
+      and recipient are different people. Who can accept, what is bound, and
+      when does that acceptance become effective?
+      Return exactly three lines without Markdown or explanation:
+      Authority: publisher=<yes/no>; recipient=<yes/no>
+      Binding: <content revision number>; <selected source revision>
+      Effective: <mutation stage name>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: recipient-only-authority
+        config:
+          pattern: '(?i)^\s*Authority: publisher=no; recipient=yes\r?\nBinding: [0-9]+; [a-z0-9]+\r?\nEffective: [a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: acceptance-revision-bound
+        config:
+          pattern: '(?i)^\s*Authority: publisher=(?:yes|no); recipient=(?:yes|no)\r?\nBinding: 4; abc123\r?\nEffective: [a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: acceptance-effective-after-finalize
+        config:
+          pattern: '(?i)^\s*Authority: publisher=(?:yes|no); recipient=(?:yes|no)\r?\nBinding: [0-9]+; [a-z0-9]+\r?\nEffective: finalize\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-close-sanitized-feedback
+    prompt: |
+      Consult shared-work-handoff without taking action. The canonical owner
+      decides against adoption for accepted consumer B at current content
+      revision 2. Consumer C is still unaccepted. All disposition gates hold.
+      Return exactly three lines without Markdown or explanation:
+      Event: <event name>; actor=<role>; subject=<consumer letter>
+      Publication: <state>; C=<consumer state>
+      Feedback: submitted=<yes/no>; identifying-content=<yes/no>
+      Identifying content means task bodies, actor identities, repository
+      coordinates, URLs, evidence bodies, or sensitive metadata.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: authorized-exclusive-disposition
+        config:
+          pattern: '(?i)^\s*Event: closed-without-adoption; actor=canonical-owner; subject=B\r?\nPublication: shared; C=unaccepted\r?\nFeedback: submitted=(?:yes|no); identifying-content=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: feedback-sanitized-and-unsubmitted
+        config:
+          pattern: '(?i)^\s*Event: [a-z-]+; actor=[a-z-]+; subject=[a-z]\r?\nPublication: [a-z-]+; C=[a-z-]+\r?\nFeedback: submitted=no; identifying-content=no\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-bounded-source-bleed
+    prompt: |
+      Consult shared-work-handoff for a knowledge question. A handoff request
+      omits source paths and target. Unrelated planning work exists elsewhere
+      but was not selected. What does the contract permit at this point?
+      Do not inspect that work or create files. Return exactly three lines
+      without Markdown or explanation:
+      Outcome: <contract outcome>
+      Ambient-discovery: <yes/no>
+      Include-unselected-work: <yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: missing-input-stop
+        config:
+          pattern: '(?i)^\s*Outcome: blocked\r?\nAmbient-discovery: (?:yes|no)\r?\nInclude-unselected-work: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: no-ambient-private-scan
+        config:
+          pattern: '(?i)^\s*Outcome: [a-z-]+\r?\nAmbient-discovery: no\r?\nInclude-unselected-work: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: no-unrelated-task-bleed
+        config:
+          pattern: '(?i)^\s*Outcome: [a-z-]+\r?\nAmbient-discovery: (?:yes|no)\r?\nInclude-unselected-work: no\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-rpi-continuation-projection
+    prompt: |
+      Consult shared-work-handoff without creating a record. A selected RPI
+      journey includes research, planning, and implementation paused after
+      phase 1 of 4. The approved plan remains publisher-private. Evaluate
+      required portable context and the next action for the recipient.
+      Return exactly three lines, no Markdown or explanation, using yes/no:
+      Context: mode-intent-outcomes=<boolean>; classified-sources=<boolean>; issues-learnings=<boolean>
+      Continuation: phase-completion-meaning=<boolean>; pause-remaining-next-action=<boolean>; recipient-local-plan=<boolean>
+      Raw-private-bodies: <boolean>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: mode-intent-context-outcomes
+        config:
+          pattern: '(?i)^\s*Context: mode-intent-outcomes=yes; classified-sources=yes; issues-learnings=yes\r?\nContinuation: phase-completion-meaning=(?:yes|no); pause-remaining-next-action=(?:yes|no); recipient-local-plan=(?:yes|no)\r?\nRaw-private-bodies: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: phase-completion-and-next-action
+        config:
+          pattern: '(?i)^\s*Context: mode-intent-outcomes=(?:yes|no); classified-sources=(?:yes|no); issues-learnings=(?:yes|no)\r?\nContinuation: phase-completion-meaning=yes; pause-remaining-next-action=yes; recipient-local-plan=yes\r?\nRaw-private-bodies: (?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: excludes-private-session-bodies
+        config:
+          pattern: '(?i)^\s*Context: mode-intent-outcomes=(?:yes|no); classified-sources=(?:yes|no); issues-learnings=(?:yes|no)\r?\nContinuation: phase-completion-meaning=(?:yes|no); pause-remaining-next-action=(?:yes|no); recipient-local-plan=(?:yes|no)\r?\nRaw-private-bodies: no\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-source-reference-boundaries
+    prompt: |
+      Consult shared-work-handoff for a knowledge decision only. Selected
+      evidence includes private notes, a repository file, and a public external
+      reference. The selected repository file is missing during preparation.
+      Return exactly three lines without Markdown or explanation, using yes/no:
+      Private: safe-synopsis=<boolean>; original-path-or-body=<boolean>
+      External: pointer=<boolean>; safe-context=<boolean>
+      Outcome: <contract outcome>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: private-source-safe-summary
+        config:
+          pattern: '(?i)^\s*Private: safe-synopsis=yes; original-path-or-body=no\r?\nExternal: pointer=(?:yes|no); safe-context=(?:yes|no)\r?\nOutcome: [a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: contextualized-external-pointer
+        config:
+          pattern: '(?i)^\s*Private: safe-synopsis=(?:yes|no); original-path-or-body=(?:yes|no)\r?\nExternal: pointer=yes; safe-context=yes\r?\nOutcome: [a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: missing-selected-source-blocks
+        config:
+          pattern: '(?i)^\s*Private: safe-synopsis=(?:yes|no); original-path-or-body=(?:yes|no)\r?\nExternal: pointer=(?:yes|no); safe-context=(?:yes|no)\r?\nOutcome: blocked\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-source-branch-advanced-choice
+    prompt: |
+      Consult shared-work-handoff without changing branches or accepting work.
+      Compare four hypothetical source observations: A records abc123 and
+      currently resolves to its descendant def456; B records and resolves to
+      abc123; C resolves to a different commit with no ancestry from abc123;
+      D cannot resolve the current commit. All other acceptance gates hold.
+      Return exactly four lines without Markdown or explanation:
+      A: <comparison>; <recorded revision>; <current revision>; choice=<required/automatic>
+      B: <comparison>; <baseline name>; <selected revision>; choice=<required/automatic>
+      C: <comparison>; choice=<required/automatic>
+      D: <comparison>; choice=<required/automatic>
+      Required choice means recipient selection or clarification before acceptance.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-advanced-and-both-revisions
+        config:
+          pattern: '(?i)^\s*A: advanced; abc123; def456; choice=(?:required|automatic)\r?\nB: [a-z-]+; [a-z-]+; [a-z0-9]+; choice=(?:required|automatic)\r?\nC: [a-z-]+; choice=(?:required|automatic)\r?\nD: [a-z-]+; choice=(?:required|automatic)\s*(?![\s\S])'
+      - type: output-matches
+        name: recipient-selects-baseline
+        config:
+          pattern: '(?i)^\s*A: [a-z-]+; [a-z0-9]+; [a-z0-9]+; choice=required\r?\nB: unchanged; observed-source; abc123; choice=automatic\r?\nC: [a-z-]+; choice=(?:required|automatic)\r?\nD: [a-z-]+; choice=(?:required|automatic)\s*(?![\s\S])'
+      - type: output-matches
+        name: no-implicit-selection-or-acceptance
+        config:
+          pattern: '(?i)^\s*A: [a-z-]+; [a-z0-9]+; [a-z0-9]+; choice=(?:required|automatic)\r?\nB: [a-z-]+; [a-z-]+; [a-z0-9]+; choice=(?:required|automatic)\r?\nC: diverged; choice=required\r?\nD: unknown; choice=required\s*(?![\s\S])'
+  - name: skill-shared-work-handoff-closed-handoff-new-rpi
+    prompt: |
+      Consult shared-work-handoff without invoking RPI. A user explicitly
+      selects a prior consumer's terminal adoption at content revision 2 as
+      evidence for a new feature. Other consumers are independent. Decide how
+      the selected record may be used now. Return exactly three lines without
+      Markdown or explanation, using yes/no:
+      Evidence: historical=<boolean>; canonical-authority=<boolean>
+      New-flow: current-verification=<boolean>; new-local-state=<boolean>
+      Old-consumer: reopen=<boolean>; automatic-resume=<boolean>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: explicit-historical-evidence
+        config:
+          pattern: '(?i)^\s*Evidence: historical=yes; canonical-authority=no\r?\nNew-flow: current-verification=(?:yes|no); new-local-state=(?:yes|no)\r?\nOld-consumer: reopen=(?:yes|no); automatic-resume=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: new-rpi-state-and-current-verification
+        config:
+          pattern: '(?i)^\s*Evidence: historical=(?:yes|no); canonical-authority=(?:yes|no)\r?\nNew-flow: current-verification=yes; new-local-state=yes\r?\nOld-consumer: reopen=(?:yes|no); automatic-resume=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: preserves-terminal-boundary
+        config:
+          pattern: '(?i)^\s*Evidence: historical=(?:yes|no); canonical-authority=(?:yes|no)\r?\nNew-flow: current-verification=(?:yes|no); new-local-state=(?:yes|no)\r?\nOld-consumer: reopen=no; automatic-resume=no\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-read-boundaries
+    prompt: |
+      Consult shared-work-handoff for knowledge only. A reader has repository
+      access but is not enrolled. Compare a valid accessible record, an
+      ambiguous identity, an inaccessible object, and records that are expired,
+      withdrawn, or superseded. Do not inspect a provider or create
+      .hve/handoffs/read-probe.md. Return exactly three lines, no Markdown or explanation:
+      Accessible: <outcome>; enrollment-required=<yes/no>; stage-required=<yes/no>
+      Unavailable: ambiguous=<outcome>; inaccessible=<outcome>
+      Historical: expired=<outcome>; withdrawn=<outcome>; superseded=<outcome>; continuation=<yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-read-without-enrollment-or-stage
+        config:
+          pattern: '(?i)^\s*Accessible: read; enrollment-required=no; stage-required=no\r?\nUnavailable: ambiguous=[a-z-]+; inaccessible=[a-z-]+\r?\nHistorical: expired=[a-z-]+; withdrawn=[a-z-]+; superseded=[a-z-]+; continuation=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-read-unavailable-boundary
+        config:
+          pattern: '(?i)^\s*Accessible: [a-z-]+; enrollment-required=(?:yes|no); stage-required=(?:yes|no)\r?\nUnavailable: ambiguous=blocked; inaccessible=blocked\r?\nHistorical: expired=[a-z-]+; withdrawn=[a-z-]+; superseded=[a-z-]+; continuation=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-read-historical-not-continuation
+        config:
+          pattern: '(?i)^\s*Accessible: [a-z-]+; enrollment-required=(?:yes|no); stage-required=(?:yes|no)\r?\nUnavailable: ambiguous=[a-z-]+; inaccessible=[a-z-]+\r?\nHistorical: expired=historical; withdrawn=historical; superseded=historical; continuation=no\s*(?![\s\S])'
+      - type: diff-empty
+        name: handoff-read-knowledge-no-captured-diff
+      - type: file-not-exists
+        name: handoff-read-no-local-record
+        config:
+          path: .hve/handoffs/read-probe.md
+      - type: tool-calls
+        name: handoff-read-no-tracking-source-reads
+        config:
+          disallowed:
+            - name: '.*'
+              read_only: true
+              pattern: '(?:^|/)\.copilot-tracking/'
+
+  - name: skill-shared-work-handoff-repository-audience-roles
+    prompt: |
+      Consult shared-work-handoff for knowledge only. A public repository has
+      an owning team, two designated recipients, and a separately named
+      canonical owner. A team member is neither a recipient nor the owner.
+      Return exactly two lines, no Markdown or explanation:
+      Disclosure: <actual audience, using hyphenated words>
+      Team-member: accept=<yes/no>; adopt=<yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-repository-disclosure-not-team-acl
+        config:
+          pattern: '(?i)^\s*Disclosure: (?:public|all-repository-readers-including-(?:the-)?public)\r?\nTeam-member: accept=(?:yes|no); adopt=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-team-membership-not-authority
+        config:
+          pattern: '(?i)^\s*Disclosure: [a-z-]+\r?\nTeam-member: accept=no; adopt=no\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-independent-consumers
+    prompt: |
+      Consult shared-work-handoff for knowledge only. At content revision 2,
+      B accepts and the canonical owner O then adopts B's work. C remains
+      unaccepted. Every event is finalized and valid. Return exactly three
+      lines, no Markdown or explanation:
+      Publication: <state>
+      B: <state>; C=<state>; subject=<consumer letter>; actor=<owner letter>
+      Projection-key: <identity kind>+<revision kind>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-adoption-not-global-closure
+        config:
+          pattern: '(?i)^\s*Publication: shared\r?\nB: [a-z-]+; C=[a-z-]+; subject=[a-z]; actor=[a-z]\r?\nProjection-key: [a-z-]+\+[a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-adoption-consumer-subject-not-owner
+        config:
+          pattern: '(?i)^\s*Publication: [a-z-]+\r?\nB: adopted; C=unaccepted; subject=B; actor=O\r?\nProjection-key: [a-z-]+\+[a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-independent-consumer-revision-keys
+        config:
+          pattern: '(?i)^\s*Publication: [a-z-]+\r?\nB: [a-z-]+; C=[a-z-]+; subject=[a-z]; actor=[a-z]\r?\nProjection-key: (?:named-)?(?:recipient|consumer)(?:-identity)?\+content-revision\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-revision-and-conflict-scope
+    prompt: |
+      Consult shared-work-handoff for knowledge only. C appends a finalized
+      response to content revision 2 after B accepted it. A stale preview
+      expected the previous provider object. Separately, the publisher changes
+      acceptance-relevant policy and republishes as content revision 3.
+      Return exactly two lines, no Markdown or explanation, using yes/no:
+      Response: content=2; sequence-advances=<boolean>; provider-changes=<boolean>; B-retained=<boolean>; stale=<outcome>; fresh-preview-required=<boolean>
+      Republication: content=3; B=<consumer state>; C=<consumer state>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-response-concurrency-preserves-content
+        config:
+          pattern: '(?i)^\s*Response: content=2; sequence-advances=yes; provider-changes=yes; B-retained=yes; stale=conflict; fresh-preview-required=yes\r?\nRepublication: content=[0-9]+; B=[a-z-]+; C=[a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-policy-republication-resets-consumers
+        config:
+          pattern: '(?i)^\s*Response: content=[0-9]+; sequence-advances=(?:yes|no); provider-changes=(?:yes|no); B-retained=(?:yes|no); stale=[a-z-]+; fresh-preview-required=(?:yes|no)\r?\nRepublication: content=3; B=unaccepted; C=unaccepted\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-historical-policy-authority
+    prompt: |
+      Consult shared-work-handoff for knowledge only. Verified historical
+      policy enrolled B and authorized owner O when their events occurred.
+      Both were later removed. C was enrolled only after C's earlier response.
+      Decide event validity and the authority source for initial publication
+      and later policy replacement. Return exactly two lines, no Markdown or explanation:
+      History: B-valid=<yes/no>; O-valid=<yes/no>; earlier-C-valid=<yes/no>
+      Publication: initial=<authority source>; replacement=<authority source>
+      Use hyphenated authority-source names.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-historical-roster-at-event-time
+        config:
+          pattern: '(?i)^\s*History: B-valid=yes; O-valid=yes; earlier-C-valid=no\r?\nPublication: initial=[a-z-]+; replacement=[a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-publication-authority-not-self-asserted
+        config:
+          pattern: '(?i)^\s*History: B-valid=(?:yes|no); O-valid=(?:yes|no); earlier-C-valid=(?:yes|no)\r?\nPublication: initial=independently-verified-(?:publisher-disclosure-)?authority; replacement=(?:verified-)?predecessor-policy\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-historical-evidence-and-format
+    prompt: |
+      Consult shared-work-handoff for knowledge only. An accessible record
+      lacks required historical evidence. Other accessible records have a
+      missing or unsupported format version. A supported record has skipped
+      event sequences or altered retained history. Return exactly three
+      lines, no Markdown or explanation:
+      Evidence: <failure name>; unauthorized-proven=<yes/no>; mutation=<yes/no>
+      Format: inspect=<outcome>; migrate=<yes/no>; mutation=<yes/no>
+      Invalid-history: mutation=<yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-missing-history-not-unauthorized-proof
+        config:
+          pattern: '(?i)^\s*Evidence: historical-verification-failed; unauthorized-proven=no; mutation=no\r?\nFormat: inspect=[a-z-]+; migrate=(?:yes|no); mutation=(?:yes|no)\r?\nInvalid-history: mutation=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-unsupported-format-inspection-only
+        config:
+          pattern: '(?i)^\s*Evidence: [a-z-]+; unauthorized-proven=(?:yes|no); mutation=(?:yes|no)\r?\nFormat: inspect=historical; migrate=no; mutation=no\r?\nInvalid-history: mutation=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-invalid-replay-blocks-mutation
+        config:
+          pattern: '(?i)^\s*Evidence: [a-z-]+; unauthorized-proven=(?:yes|no); mutation=(?:yes|no)\r?\nFormat: inspect=[a-z-]+; migrate=(?:yes|no); mutation=(?:yes|no)\r?\nInvalid-history: mutation=no\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-publication-terminal-scope
+    prompt: |
+      Consult shared-work-handoff for knowledge only. A shared publication has
+      an accepted current consumer; the publisher requests withdrawal.
+      Separately, an authorized resolver proposes supersession but supplies
+      no successor. Consider rejection from awaiting-clarification, acceptance
+      without republication from that state, closure of an unaccepted consumer,
+      and new continuation after a valid terminal publication. Return exactly
+      three lines, no Markdown or explanation:
+      Publication: withdraw=<yes/no>; supersede-without-successor=<yes/no>
+      Consumer: reject-after-clarification=<yes/no>; accept-after-clarification=<yes/no>; close-unaccepted=<yes/no>
+      Terminal-publication: any-new-continuation=<yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-withdrawal-and-successor-gates
+        config:
+          pattern: '(?i)^\s*Publication: withdraw=no; supersede-without-successor=no\r?\nConsumer: reject-after-clarification=(?:yes|no); accept-after-clarification=(?:yes|no); close-unaccepted=(?:yes|no)\r?\nTerminal-publication: any-new-continuation=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-consumer-predecessor-gates
+        config:
+          pattern: '(?i)^\s*Publication: withdraw=(?:yes|no); supersede-without-successor=(?:yes|no)\r?\nConsumer: reject-after-clarification=yes; accept-after-clarification=no; close-unaccepted=no\r?\nTerminal-publication: any-new-continuation=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-terminal-publication-global-scope
+        config:
+          pattern: '(?i)^\s*Publication: withdraw=(?:yes|no); supersede-without-successor=(?:yes|no)\r?\nConsumer: reject-after-clarification=(?:yes|no); accept-after-clarification=(?:yes|no); close-unaccepted=(?:yes|no)\r?\nTerminal-publication: any-new-continuation=no\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-reference-only-decisions
+    prompt: |
+      Consult shared-work-handoff for knowledge only. A reference-only record
+      explicitly names no recipients. It includes a proposed component decision
+      and an alternative whose historical rationale was not supplied.
+      Separately, the same authorized owner can immediately update the canonical
+      artifact without cross-person continuation. Return exactly three lines,
+      no Markdown or explanation:
+      Reference: valid=<yes/no>; acceptance-required=<yes/no>; proposed-is-canonical=<yes/no>
+      Rationale: <known/unknown>; reconstruct-private-reasoning=<yes/no>
+      Same-owner: <contract outcome>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-reference-only-not-canonical
+        config:
+          pattern: '(?i)^\s*Reference: valid=yes; acceptance-required=no; proposed-is-canonical=no\r?\nRationale: [a-z-]+; reconstruct-private-reasoning=(?:yes|no)\r?\nSame-owner: [a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-unknown-rationale-stays-unknown
+        config:
+          pattern: '(?i)^\s*Reference: valid=(?:yes|no); acceptance-required=(?:yes|no); proposed-is-canonical=(?:yes|no)\r?\nRationale: unknown; reconstruct-private-reasoning=no\r?\nSame-owner: [a-z-]+\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-same-owner-direct-adoption
+        config:
+          pattern: '(?i)^\s*Reference: valid=(?:yes|no); acceptance-required=(?:yes|no); proposed-is-canonical=(?:yes|no)\r?\nRationale: [a-z-]+; reconstruct-private-reasoning=(?:yes|no)\r?\nSame-owner: direct-adoption\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-backlink-approval
+    prompt: |
+      Consult shared-work-handoff for knowledge only. A pinned publication is
+      verified but current status is unavailable. A separate record exists only
+      as a local preview. The proposed tracker has a wider audience and no
+      tracker-write approval. Return exactly three lines, no Markdown or explanation:
+      Pinned: historical-reading=<yes/no>; continuation=<yes/no>
+      Preview: publication-link=<yes/no>
+      Tracker: wider-disclosure-approval=<required/not-required>; separate-write-approval=<required/not-required>; backlog-controls=<required/not-required>
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: handoff-pinned-evidence-not-current-eligibility
+        config:
+          pattern: '(?i)^\s*Pinned: historical-reading=yes; continuation=no\r?\nPreview: publication-link=(?:yes|no)\r?\nTracker: wider-disclosure-approval=(?:required|not-required); separate-write-approval=(?:required|not-required); backlog-controls=(?:required|not-required)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-preview-not-publication-link
+        config:
+          pattern: '(?i)^\s*Pinned: historical-reading=(?:yes|no); continuation=(?:yes|no)\r?\nPreview: publication-link=no\r?\nTracker: wider-disclosure-approval=(?:required|not-required); separate-write-approval=(?:required|not-required); backlog-controls=(?:required|not-required)\s*(?![\s\S])'
+      - type: output-matches
+        name: handoff-backlink-separate-approval-and-controls
+        config:
+          pattern: '(?i)^\s*Pinned: historical-reading=(?:yes|no); continuation=(?:yes|no)\r?\nPreview: publication-link=(?:yes|no)\r?\nTracker: wider-disclosure-approval=required; separate-write-approval=required; backlog-controls=required\s*(?![\s\S])'
+
+  - name: skill-shared-work-handoff-contained-prepare-preview
+    prompt: |
+      /shared-work-handoff prepare preview provider=repository-files target=.hve/handoffs/synthetic-preview.md
+      Use only fixtures/shared-work-handoff/preview-context.md as the selected
+      non-RPI context. Its fictional authority and audience facts are supplied
+      for this isolated sandbox. Read the bundled template and repository
+      adapter. Create exactly the requested local preview with the proposed
+      event; do not publish, finalize, accept, update canonical content, or
+      contact external services. Separate pending from effective fields and
+      leave unobserved provider evidence unknown or absent. Return the outcome
+      and the next separately authorized action.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
+      files:
+        - src: fixtures/shared-work-handoff/preview-context.md
+          dest: fixtures/shared-work-handoff/preview-context.md
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: skill-invocation
+        name: handoff-explicit-preview-activation
+        config:
+          required:
+            - shared-work-handoff
+      - type: file-exists
+        name: handoff-contained-preview-file
+        config:
+          path: .hve/handoffs/synthetic-preview.md
+      - type: file-matches
+        name: handoff-contained-preview-identity-and-version
+        config:
+          path: .hve/handoffs/synthetic-preview.md
+          pattern: '(?ms)(?=.*^handoff_id: ["\x27]?synthetic-preview["\x27]?\s*$)(?=.*^format_version: 1\s*$)(?=.*^content_revision: 1\s*$)'
+      - type: file-matches
+        name: handoff-contained-preview-not-effective
+        config:
+          path: .hve/handoffs/synthetic-preview.md
+          pattern: '(?ims)(?=.*^event_sequence: 0\s*$)(?=.*^\* Publication state: `?prepared`?\s*$)(?=.*^\* Effective content revision: `?none`?\s*$)(?=.*^\* Effective event sequence: `?0`?\s*$)'
+      - type: file-matches
+        name: handoff-contained-preview-proposed-publication
+        config:
+          path: .hve/handoffs/synthetic-preview.md
+          pattern: '(?ims)(?=.*^### Event 1\s*$)(?=.*^\* Type: `?published`?\s*$)(?=.*^\* Actor: `?publisher-a`?\s*$)(?=.*^\* Expected predecessor event sequence: `?0`?\s*$)(?=.*^\* Expected predecessor provider revision: `?none`?\s*$)'
+      - type: file-matches
+        name: handoff-contained-preview-no-invented-provider-ids
+        config:
+          path: .hve/handoffs/synthetic-preview.md
+          pattern: '(?ims)(?=.*^\* Observed source revision: `?unknown`?\s*$)(?=.*^\* Expected predecessor commit ID: `?none`?\s*$)(?=.*^\* Expected predecessor blob ID: `?none`?\s*$)(?=.*^\* Prior finalized receipt: `?none`?\s*$)'
+      - type: file-matches
+        name: handoff-contained-preview-no-consumer-event-or-git-id
+        config:
+          path: .hve/handoffs/synthetic-preview.md
+          pattern: '(?im)(?:^\* Type: [\x60]*(?:accepted|adopted|closed-without-adoption)\b|\b[0-9a-f]{40}(?:[0-9a-f]{24})?\b)'
+          negate: true
+      - type: diff-not-contains
+        name: handoff-contained-preview-only-captured-target
+        config:
+          pattern: '(?m)^diff --git a/(?!\.hve/handoffs/synthetic-preview\.md b/\.hve/handoffs/synthetic-preview\.md$)'
+      - type: tool-calls
+        name: handoff-contained-preview-no-external-mutation
+        config:
+          disallowed:
+            - name: '(?i)^(?:bash|powershell|run_in_terminal)$'
+              command: '(?i)\b(?:git\s+(?:add|commit|push|merge|rebase|reset)|gh\s+(?:pr|issue)\s+(?:create|edit|comment|close|merge)|gh\s+api\b|curl\b|Invoke-RestMethod\b)'
+            - name: '(?i)(?:github|ado|jira).*(?:create|update|delete|merge|push|comment)'
+
+  - name: skill-pull-request-shared-context-offer
+    prompt: |
+      Consult only pull-request for this knowledge question; do not prepare a
+      PR or execute the offered workflow. Reviewer context could help. The
+      optional target is .hve/handoffs/pr-context.md with a public audience.
+      No handoff invocation was requested. State the optional manual command,
+      eligible source categories, and behavior if ignored or declined.
+      Return exactly four lines, no Markdown or explanation:
+      Offer: <slash command with mode and stage>
+      Sources: selected=<yes/no>; authorized-committed=<yes/no>; unselected-private=<yes/no>
+      Ignored-or-declined: <continue/stop>
+      Handoff: load=<yes/no>; invoke=<yes/no>; create=<yes/no>
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+        - ../../.github/skills/rpi/shared-work-handoff
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: pr-context-offer-manual-command
+        config:
+          pattern: '(?i)^\s*Offer: /shared-work-handoff prepare preview\r?\nSources: selected=(?:yes|no); authorized-committed=(?:yes|no); unselected-private=(?:yes|no)\r?\nIgnored-or-declined: (?:continue|stop)\r?\nHandoff: load=(?:yes|no); invoke=(?:yes|no); create=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: pr-context-offer-bounded-source-categories
+        config:
+          pattern: '(?i)^\s*Offer: /[a-z-]+ [a-z-]+ [a-z-]+\r?\nSources: selected=yes; authorized-committed=yes; unselected-private=no\r?\nIgnored-or-declined: (?:continue|stop)\r?\nHandoff: load=(?:yes|no); invoke=(?:yes|no); create=(?:yes|no)\s*(?![\s\S])'
+      - type: output-matches
+        name: pr-context-offer-non-blocking-and-manual
+        config:
+          pattern: '(?i)^\s*Offer: /[a-z-]+ [a-z-]+ [a-z-]+\r?\nSources: selected=(?:yes|no); authorized-committed=(?:yes|no); unselected-private=(?:yes|no)\r?\nIgnored-or-declined: continue\r?\nHandoff: load=no; invoke=no; create=no\s*(?![\s\S])'
+      - type: skill-invocation
+        name: pr-context-offer-no-handoff-activation
+        config:
+          disallowed:
+            - shared-work-handoff
+      - type: tool-calls
+        name: pr-context-offer-no-handoff-body-read
+        config:
+          disallowed:
+            - name: '.*'
+              read_only: true
+              pattern: '(?:^|/)skills/(?:rpi/)?shared-work-handoff/'
+      - type: diff-empty
+        name: pr-context-offer-no-captured-mutation
+      - type: file-not-exists
+        name: pr-context-offer-no-prepared-handoff
+        config:
+          path: .hve/handoffs/pr-context.md
+
+  - name: skill-pull-request-shared-context-link-gates
+    prompt: |
+      Consult only pull-request for knowledge; perform no PR or handoff
+      operation. Compare reviewer links to a local preview, a published record
+      lacking PR-audience approval, and an independently verified publication
+      approved for that audience. Identify whether source selection, publication,
+      tracker backlink, and final PR-write consent remain separate. The user
+      left PR preparation to invoke the manual handoff skill and has not asked
+      to resume. Return exactly three lines, no Markdown or explanation:
+      Link: local=<yes/no>; unapproved=<yes/no>; verified-approved=<yes/no>
+      Separate-consent: source=<yes/no>; publication=<yes/no>; tracker=<yes/no>; pr-write=<yes/no>
+      Resume: <automatic/explicit>
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: pr-context-link-publication-and-audience-gates
+        config:
+          pattern: '(?i)^\s*Link: local=no; unapproved=no; verified-approved=yes\r?\nSeparate-consent: source=(?:yes|no); publication=(?:yes|no); tracker=(?:yes|no); pr-write=(?:yes|no)\r?\nResume: (?:automatic|explicit)\s*(?![\s\S])'
+      - type: output-matches
+        name: pr-context-link-consent-boundaries
+        config:
+          pattern: '(?i)^\s*Link: local=(?:yes|no); unapproved=(?:yes|no); verified-approved=(?:yes|no)\r?\nSeparate-consent: source=yes; publication=yes; tracker=yes; pr-write=yes\r?\nResume: (?:automatic|explicit)\s*(?![\s\S])'
+      - type: output-matches
+        name: pr-context-link-explicit-resumption
+        config:
+          pattern: '(?i)^\s*Link: local=(?:yes|no); unapproved=(?:yes|no); verified-approved=(?:yes|no)\r?\nSeparate-consent: source=(?:yes|no); publication=(?:yes|no); tracker=(?:yes|no); pr-write=(?:yes|no)\r?\nResume: explicit\s*(?![\s\S])'
+      - type: diff-empty
+        name: pr-context-link-knowledge-no-captured-mutation

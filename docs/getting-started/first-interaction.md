@@ -3,7 +3,7 @@ title: Your First Interaction
 description: Talk to an HVE Core agent and see it respond in under 60 seconds
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-08-28
 ms.topic: tutorial
 keywords:
   - getting started
@@ -37,14 +37,17 @@ and natural-language requests reach the intended workflow owner.
 
 ## How Workflow Context Persists
 
-HVE Core workflows produce durable artifacts when work needs to span phases
-or sessions. RPI uses research, plan, phase-detail, change, and review records.
+HVE Core workflows produce workspace-local artifacts when work needs to span
+phases or sessions in an available working copy. RPI uses research, plan,
+phase-detail, change, and review records.
 Backlog, planning, and documentation workflows use their own state and handoff
 files. Resume from those workflow-owned artifacts instead of relying on a
 generic conversation-memory or checkpoint command.
 
-This artifact-first pattern keeps important context reviewable and lets a new
-chat continue from recorded evidence rather than reconstructed chat history.
+This artifact-first pattern lets a new chat continue from recorded evidence
+rather than reconstructed chat history. For continuation by another
+contributor, use [Share Work for Another Contributor](../rpi/shared-work-handoff)
+instead of committing `.copilot-tracking`.
 
 ## Next Step
 
