@@ -30,6 +30,8 @@ after one final approval.
 * `draft`: Whether a newly created pull request is a draft. Default to `false`.
 * `action`: `prepare`, `create`, or `update`. Infer from the request and default to `prepare` when
   external write intent is unclear.
+* Optional user-selected shared-context sources, target, and actual repository disclosure audience
+   for a manual handoff preview offer. These are not required for ordinary PR preparation.
 
 Use the current checked-out branch as the head. Ask only for an input that cannot be inferred and
 changes the resulting pull request.
@@ -48,6 +50,9 @@ changes the resulting pull request.
 3. Inspect the committed diff from the reported merge base. Start with changed files and diff stats,
    then read the diffs that determine reviewer-visible behavior. Group related files and use
    delegation only when a large, separable diff would materially benefit from isolated review.
+   When bounded decision context would help reviewers or future consumers, optionally offer the
+   manual command described in Shared Context Offer. Declining or ignoring the offer leaves normal
+   PR preparation unchanged; do not load or invoke the manual-only skill.
 4. Derive the title from the branch and commits. Follow the repository's title convention when one
    exists; otherwise use a concise imperative title. Extract closing issue references only when they
    appear in branch or commit evidence.
@@ -96,6 +101,23 @@ changes the resulting pull request.
    create or update the pull request. Never force-push. If an open pull request already exists, update
    it only when the requested action permits; otherwise return its URL instead of creating a
    duplicate.
+
+## Shared Context Offer
+
+Offer `/shared-work-handoff prepare preview` as text for the user to complete and invoke, with a
+proposed explicit source set, repository target, and actual disclosure audience. Use the stable skill
+name, not an installed path. The `shared-work-handoff` skill remains `disable-model-invocation: true`
+and `user-invocable: true`: do not automatically load it, invoke it, or prepare its handoff file from
+this workflow. Permission to inspect the committed diff does not authorize reading private tracking
+sources; propose only explicitly selected sources or already authorized committed evidence.
+
+The offer is optional and non-blocking. If the user leaves PR preparation to invoke it, resume this
+PR workflow only through explicit user direction. A preview stages, commits, pushes, submits,
+finalizes, and backlinks nothing; an unpublished local preview is not available to reviewers.
+Include a handoff link in the PR body only after independently verifying its publication and obtaining
+disclosure approval for the PR audience. Keep source selection, handoff publication approval, tracker
+backlink approval, and final PR-write approval separate. Personal Git and GitHub consent rules remain
+controlling; the offer grants none of these permissions.
 
 ## Template Rules
 
@@ -169,4 +191,6 @@ user's behalf.
 
 Return the outcome, title, base and head, pull request body path, repair commits, targeted checks and
 results, skipped broad checks, material limitations, and pull request URL when one exists. Keep the
-response brief and do not repeat the full body.
+response brief and do not repeat the full body. When relevant, include the optional manual handoff
+command with its proposed inputs or the verified, disclosure-approved publication link. Never imply
+that a local preview is shared.

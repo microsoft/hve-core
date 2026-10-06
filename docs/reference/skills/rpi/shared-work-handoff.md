@@ -1,6 +1,6 @@
 ---
 title: shared-work-handoff
-description: "Prepare, resume, or close a minimized repository-backed work handoff with explicit acceptance and revision safety. Use for accountable continuation between teammates."
+description: Read or share bounded repository context and decision rationale with independent named-consumer continuation. Use for reusable context or accountable work handoffs.
 sidebar_position: 8
 author: Microsoft
 ms.date: 2026-10-06
@@ -23,21 +23,24 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Prepare, resume, or close a minimized repository-backed work handoff with explicit acceptance and revision safety. Use for accountable continuation between teammates.
+Read or share bounded repository context and decision rationale with independent named-consumer continuation. Use for reusable context or accountable work handoffs.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use `/shared-work-handoff` when a named teammate needs minimized continuation context in a checked-in repository file and must explicitly accept, reject, or request clarification on a verified revision. It is also suitable for recording an authorized final disposition after acceptance.
+Use `/shared-work-handoff read` for bounded repository context and decision rationale without accepting work. Named consumers may independently accept, reject, or request clarification on a verified content revision; the canonical owner can record a disposition for one consumer without closing the publication or other consumers.
 
 Use the ordinary RPI skills when one person continues work within private `.copilot-tracking` state. Update a canonical artifact directly when no cross-person continuation is needed. Do not use repository-backed handoffs for content that requires physical erasure.
 
 ## Example usage
 
 ```text
+/shared-work-handoff read provider=repository-files target=.hve/handoffs/api-timeout.md shared-ref=main
 /shared-work-handoff prepare preview provider=repository-files target=.hve/handoffs/api-timeout.md
 ```
 
-The skill checks the explicit source paths, audience, disclosure authority, retention constraints, and expected predecessor revision. It then previews the exact minimized record and the separate publication action. After that action is authorized and completed, run the same mode with `finalize` to verify the selected shared reference and return either a finalized receipt, `still-prepared`, or `conflict`.
+Read mode has no stage or mutation and reports historical limitations. Preparation checks selected sources, actual repository-wide audience, authority, retention, and expected content/event/provider revisions before previewing a mutation. After separately approved publication, run the same mutation mode with `finalize`.
 
-See [Share Work for Another Contributor](../../../rpi/shared-work-handoff) for role assignment, source baseline semantics, consent boundaries, conflict handling, recipient responses, and terminal dispositions.
+Response-only appends preserve other consumers; changed content requires fresh acceptance. Format `1` is experimental, and older unsupported records are historical-only without automatic migration.
+
+See [Share Context and Continue Work](../../../rpi/shared-work-handoff) for roles, source baselines, historical policy, bounded backlinks, and the optional manual PR offer. Team labels are not access controls; every publication and tracker mutation retains its separate approval boundary.
