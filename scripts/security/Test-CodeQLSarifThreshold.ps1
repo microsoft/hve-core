@@ -484,18 +484,20 @@ function Invoke-CodeQLSarifGate {
     if ($null -ne $evaluation) {
         $resultCount = @($evaluation.Findings).Count
         $tools = @($evaluation.Findings | ForEach-Object Tool | Sort-Object -Unique)
-        $groups = [ordered]@{}
+        # Ordinal keys keep matching consistent with the ordinal duplicate check in Read-CodeScanningException.
+        $groups = [System.Collections.Specialized.OrderedDictionary]::new([System.StringComparer]::Ordinal)
         foreach ($finding in @($evaluation.Findings | Where-Object Failing)) {
             $key = "$($finding.Tool)`n$($finding.RuleId)`n$($finding.Path)"
             if (-not $groups.Contains($key)) { $groups[$key] = [System.Collections.Generic.List[object]]::new() }
             $groups[$key].Add($finding)
         }
-        $entryByKey = @{}
+        $entryByKey = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
         foreach ($entry in $exceptionEntries) { $entryByKey["$($entry.Tool)`n$($entry.Rule)`n$($entry.Path)"] = $entry }
 
         foreach ($key in $groups.Keys) {
             $group = $groups[$key]
-            $match = $entryByKey[$key]
+            $match = $null
+            [void]$entryByKey.TryGetValue($key, [ref]$match)
             if (-not $match) {
                 $failing.AddRange([object[]]$group.ToArray())
             }

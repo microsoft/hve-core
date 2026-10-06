@@ -279,6 +279,26 @@ Describe 'Tracked exceptions' {
         $gate.Summary | Should -Match 'excepted as false-positive \(issue #1234, upstream https://github.com/github/codeql/issues/1, expires 2026-11-15\)'
     }
 
+    It 'does not excuse a result whose <Field> differs only in case' -ForEach @(
+        @{ Field = 'tool'; Tool = 'codeql'; Rule = 'js/missing-origin-check'; Path = 'docs/slides/deck.html' }
+        @{ Field = 'rule'; Tool = 'CodeQL'; Rule = 'JS/missing-origin-check'; Path = 'docs/slides/deck.html' }
+        @{ Field = 'path'; Tool = 'CodeQL'; Rule = 'js/missing-origin-check'; Path = 'docs/slides/Deck.html' }
+    ) {
+        $yaml = New-ExceptionYaml -Tool $Tool -Rule $Rule -Path $Path
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name "case-$Field") -Exceptions (Write-Exceptions -Yaml $yaml -Name "case-$Field")
+        $gate.ExitCode | Should -Be 1
+        @($gate.Failing).Count | Should -Be 1
+        @($gate.Excepted).Count | Should -Be 0
+    }
+
+    It 'keeps two entries that differ only in case distinct' {
+        $exact = New-ExceptionYaml
+        $variant = (New-ExceptionYaml -Path 'docs/slides/Deck.html') -replace '^exceptions:\r?\n', ''
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name 'case-pair') -Exceptions (Write-Exceptions -Yaml "$exact`n$variant" -Name 'case-pair')
+        @($gate.Excepted).Count | Should -Be 1
+        @($gate.ExceptionErrors | Where-Object { $_ -match 'Stale exception: .*docs/slides/Deck\.html' }).Count | Should -Be 1
+    }
+
     It 'fails when more results match than the pinned count' {
         $sarif = Write-Sarif -Name 'count-more' `
             -DriverRules @(New-SarifRule -Id 'js/missing-origin-check' -SecuritySeverity '5.0') `
