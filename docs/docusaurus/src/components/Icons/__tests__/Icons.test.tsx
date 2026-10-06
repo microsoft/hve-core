@@ -11,6 +11,7 @@ import {
   WorkflowsIcon,
   DesignThinkingIcon,
   TemplatesExamplesIcon,
+  SlidesIcon,
 } from '..';
 
 expect.extend(toHaveNoViolations);
@@ -22,6 +23,7 @@ const icons = [
   { name: 'WorkflowsIcon', Component: WorkflowsIcon },
   { name: 'DesignThinkingIcon', Component: DesignThinkingIcon },
   { name: 'TemplatesExamplesIcon', Component: TemplatesExamplesIcon },
+  { name: 'SlidesIcon', Component: SlidesIcon },
 ];
 
 describe('Icons', () => {

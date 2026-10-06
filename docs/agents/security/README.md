@@ -3,6 +3,8 @@ title: Security Planning
 description: Automated security analysis agent that guides teams through threat modeling, standards mapping, and backlog generation using a structured six-phase workflow
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Security Planning"
 keywords:
   - security planning
   - threat modeling
@@ -14,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-04
 ms.topic: concept
 estimated_reading_time: 8
 ---

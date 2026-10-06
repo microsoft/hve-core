@@ -1,5 +1,5 @@
 ---
-description: 'When a skill needs a per-skill STRIDE security model (SECURITY.md) and when a change makes one stale, plus its canonical structure and conformance rules: required sections, data-flow and trust-boundary diagrams, all-six-STRIDE buckets, risk-rating tables, G-prefixed gap IDs, and no internal-path leakage'
+description: 'When a skill needs a per-skill STRIDE security model (SECURITY.md) and when a change makes one stale, plus its canonical structure and conformance rules: required sections, data-flow and trust-boundary diagrams, all-six-STRIDE buckets, risk-rating tables, G-prefixed gap IDs, and no internal-path leakage; also which security references to read before changing a skill''s scripts'
 applyTo: '**/.github/skills/**/SECURITY.md, **/.github/skills/**/*.ps1, **/.github/skills/**/*.psm1, **/.github/skills/**/*.sh, **/.github/skills/**/*.py, **/.github/skills/**/*.js, **/.github/skills/**/*.mjs, **/.github/skills/**/*.cjs, **/.github/skills/**/*.ts, **/scripts/linting/skill-security-classification.json'
 ---
 
@@ -38,6 +38,10 @@ Make a significant change and its security-model update in the same change:
 * A skill that becomes exempt, or loses its model, gets an exempt entry with its reason.
 
 Refactors, message and output wording, and test-only changes are not significant unless they alter a cited control.
+
+### Code-Change References
+
+Before changing a skill's shipped scripts, read that skill's `SECURITY.md` when one exists, or confirm its exempt or pending entry in `scripts/linting/skill-security-classification.json` when none does. Also read every reference its `SKILL.md` names for code changes, such as the Mural skill's `references/log-hygiene.md`. Those references carry the controls the model cites, such as log redaction, and they load only on demand, so editing a script does not surface them otherwise.
 
 ## Required Structure
 

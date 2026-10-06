@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-10-02
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - github actions
@@ -336,20 +336,36 @@ PreRelease releases still need successful runtime evidence, active governance
 evidence, platform assurance mapping, and qualified human review before making
 that claim.
 
-The ref-less `microsoft/hve-core` registration sources canonical content from `.github` through the main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate, SBOM, or attestation. PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable delivery through moving branch registrations and exact tags.
+The `microsoft/hve-core` plugin registration sources canonical content from
+`.github` through the main catalog. An explicit marketplace refresh and plugin
+update are required for that catalog, which has no release gate or release
+attestation. Each push to `main` publishes an unattested dependency SBOM,
+described in
+[Continuous Main SBOM](../contributing/release-process.md#continuous-main-sbom).
+There are no release-channel plugin registrations; PreRelease and Stable retain
+reviewed, release-gated, SBOM-covered, and attested immutable VSIX delivery
+through exact tags.
 
 ## Security Workflows
 
 ### Weekly Security Maintenance
 
-The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, providing scheduled security posture review.
+The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC on the default branch, providing scheduled security posture review. Manual dispatch uses the selected ref.
 
-| Job              | Purpose                                       |
-|------------------|-----------------------------------------------|
-| validate-pinning | Verify dependency pinning compliance          |
-| check-staleness  | Detect outdated SHA references                |
-| codeql-analysis  | Full CodeQL security scan with threshold gate |
-| summary          | Aggregate security status report              |
+| Job                     | Purpose                                       |
+|-------------------------|-----------------------------------------------|
+| validate-pinning        | Verify dependency pinning compliance          |
+| check-staleness         | Detect outdated SHA references                |
+| codeql-analysis         | Full CodeQL security scan with threshold gate |
+| dangerous-workflow-scan | Advisory homegrown and Poutine scans          |
+| summary                 | Aggregate execution and dependency status     |
+
+The weekly caller reuses `dangerous-workflow-scan.yml` with both scanners advisory,
+SARIF and artifact uploads enabled, and only read-content/SARIF-write permissions.
+PR validation retains the blocking homegrown gate. A successful advisory job does not
+prove zero findings or successful analysis; inspect its logs and retained SARIF.
+See [Dangerous Workflow Detection](../security/dangerous-workflow-detection) for baseline
+dispositions and acknowledgment removal conditions.
 
 ### Security Validation Tools
 

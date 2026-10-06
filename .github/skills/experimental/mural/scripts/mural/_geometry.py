@@ -253,7 +253,7 @@ def _area_probe_verdict(
                 "to the operator. Do not re-run the probe, destroy and "
                 "recreate the widget, or hand-tune (x, y) offsets — see "
                 "the Z-Order Visibility section of "
-                "mural-seeding-patterns.instructions.md."
+                "the Mural skill references/seeding-patterns.md."
             ),
         }
 

@@ -1,3 +1,4 @@
+# cspell:ignore duplicat occlu
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
@@ -234,6 +235,47 @@ stimuli:
         name: instruction-backlog-guardrails-conformance-stop-behavior
         config:
           pattern: "(?i)stop|halt|do not proceed|cannot proceed|before the mutation"
+
+  - name: instruction-skill-security-model-conformance
+    prompt: |
+      You are adding a `LOGGER.warning(...)` call that includes an HTTP
+      response to `.github/skills/experimental/mural/scripts/mural/_transport.py`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), which of the skill's security references must you read before
+      editing, and how must the logged values be handled?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/skill-security-model.instructions.md
+          dest: .github/instructions/skill-security-model.instructions.md
+        - src: ../../.github/skills/experimental/mural/SKILL.md
+          dest: .github/skills/experimental/mural/SKILL.md
+        - src: ../../.github/skills/experimental/mural/SECURITY.md
+          dest: .github/skills/experimental/mural/SECURITY.md
+        - src: ../../.github/skills/experimental/mural/references/log-hygiene.md
+          dest: .github/skills/experimental/mural/references/log-hygiene.md
+        - src: ../../.github/skills/experimental/mural/scripts/mural/_transport.py
+          dest: .github/skills/experimental/mural/scripts/mural/_transport.py
+    tags:
+      category: behavior-conformance
+      instruction: skill-security-model
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-skill-security-model-path
+        config:
+          pattern: '(?i)skill-security-model'
+      - type: output-matches
+        name: instruction-skill-security-model-security-md
+        config:
+          pattern: '(?i)SECURITY\.md'
+      - type: output-matches
+        name: instruction-skill-security-model-log-hygiene
+        config:
+          pattern: '(?i)log-hygiene'
+      - type: output-matches
+        name: instruction-skill-security-model-redaction
+        config:
+          pattern: '(?i)_redact|redact|mask'
 
   - name: instruction-markdown-conformance
     prompt: |
@@ -1402,44 +1444,50 @@ stimuli:
         config:
           pattern: '(?i)(rpi-research|WAF|CAF|MCSB|version[-\s]sensitive|runtime lookup)'
 
-  - name: instruction-mural-seeding-patterns-conformance
+  - name: skill-mural-seeding-patterns-conformance
     prompt: |
-      You are extending `.github/agents/rai-planning/rai-planner.agent.md`
+      You are extending the RAI Planner's Mural board flow
       to seed a Mural board from a completed RAI Phase 2 source artifact.
-      Which `.github/instructions/**/*.instructions.md` file applies (cite
-      its path) and what does it require for duplicating the source board
+      Which `mural` skill reference applies (cite its file name) and what
+      does it require for duplicating the source board
       instead of fabricating coordinates, inheriting placeholder anchor
       geometry, probing an area before bulk population, and responding when
       a probe reports a widget hidden behind a sibling panel?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-seeding-patterns
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: instruction-mural-seeding-patterns-conformance-appl-60bd0669
         config:
-          pattern: "(?i)dt-coach\\.agent\\.md|rai-planner\\.agent\\.md|ux-ui-designer\\.agent\\.md"
+          pattern: "(?i)seeding-patterns\\.md|Mural Seeding Patterns"
       - type: output-matches
         name: instruction-mural-seeding-patterns-conformance-scop-6a413577
         config:
-          pattern: "(?i)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order"
+          pattern: "(?is)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order|^(?=.*duplicat)(?=.*(?:inherit|placeholder|anchor))(?=.*\\bprobe)(?=.*(?:occlu|stack|sibling))"
 
-  - name: instruction-mural-bootstrap-scope-conformance
+  - name: skill-mural-bootstrap-scope-conformance
     prompt: |
       You are preparing a fresh-session Mural sequence that instantiates a
-      template and then creates widgets. Which Mural bootstrap instruction
+      template and then creates widgets. Which Mural skill bootstrap reference
       applies, what exact local doctor scope arguments are required, and what
       must happen when the verdict is not `ready`?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-bootstrap
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-bootstrap-instruction
         config:
-          pattern: '(?i)mural-bootstrap\.instructions\.md|Mural Bootstrap'
+          pattern: '(?i)bootstrap\.md|Mural Bootstrap'
       - type: output-matches
         name: mural-bootstrap-scopes
         config:
@@ -1447,23 +1495,26 @@ stimuli:
       - type: output-matches
         name: mural-bootstrap-not-ready-stop
         config:
-          pattern: '(?i)(not ready|non-ready|needs_setup|needs_login|needs_scope_upgrade|wrong_cwd|deps_missing).{0,160}(pause|stop|do not proceed)'
+          pattern: '(?is)(not\W{0,3}ready|non-ready|other than\W{0,3}ready|any other verdict|only if[^.]{0,40}ready|otherwise|needs_setup|needs_login|needs_scope_upgrade|wrong_cwd|deps_missing).{0,160}(pause|stop|do not proceed|don[\x27\u2019]t (?:continue|proceed|instantiate|create|run))'
 
-  - name: instruction-mural-human-writeback-conformance
+  - name: skill-mural-human-writeback-conformance
     prompt: |
       A Mural extractor is preparing metadata writeback to an existing widget
-      that lacks the `authored-by-ai` tag. Which Mural instructions govern the
+      that lacks the `authored-by-ai` tag. Which Mural skill references govern the
       operation, which fields are permitted, and what explicit override would
       be required before updating a human-authored widget?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-human-record
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-writeback-instructions
         config:
-          pattern: '(?i)(mural-human-record|mural-writeback-hygiene)\.instructions\.md'
+          pattern: '(?i)(human-record|writeback-hygiene)\.md'
       - type: output-matches
         name: mural-writeback-fields
         config:
@@ -1471,28 +1522,31 @@ stimuli:
       - type: output-matches
         name: mural-writeback-default-protection
         config:
-          pattern: '(?i)(MuralHumanAuthoredProtected|protected by default|fail).{0,160}--force-human'
+          pattern: '(?is)(MuralHumanAuthoredProtected|(?<!\bnot\s)\bprotected\b|blocked\b[^.]{0,40}\bby default|fail).{0,200}--force-human|--force-human.{0,200}(MuralHumanAuthoredProtected|block|reject)'
       - type: output-matches
         name: mural-writeback-no-old-flag
         config:
           pattern: '(?i)--require-author-tag'
           negate: true
 
-  - name: instruction-mural-writeback-hygiene-conformance
+  - name: skill-mural-writeback-hygiene-conformance
     prompt: |
       A Mural extractor is closing a workshop and needs to update an existing
       AI-authored widget whose tags have drifted from the saved manifest. Which
-      Mural instruction governs writeback, which fields may change, and how
+      Mural skill reference governs writeback, which fields may change, and how
       must reserved tags and participant-added tags be protected?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-writeback-hygiene
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-hygiene-instruction
         config:
-          pattern: '(?i)mural-writeback-hygiene\.instructions\.md|Mural Writeback Hygiene'
+          pattern: '(?i)writeback-hygiene\.md|Mural Writeback Hygiene'
       - type: output-matches
         name: mural-hygiene-stable-fields
         config:
@@ -1504,31 +1558,34 @@ stimuli:
       - type: output-matches
         name: mural-hygiene-additive-repair
         config:
-          pattern: '(?is)(_ensure_tag_manifest|repair-tag-drift|tag manifest).{0,160}(additive|does not strip|missing)'
+          pattern: '(?is)(_ensure_tag_manifest|repair-tag-drift|manifest|drift).{0,300}(additive|does not strip|not (?:be )?stripped|without stripping|missing)|(additive\w*|not (?:be )?stripped).{0,160}(repair-tag-drift|tag manifest)'
 
-  - name: instruction-mural-destination-routing-conformance
+  - name: skill-mural-destination-routing-conformance
     prompt: |
       A Mural extractor has a hydrated synthetic action record but the caller
-      has supplied neither a destination nor an action intent. Which Mural
-      destination instruction applies, what must the dispatcher do, and what
+      has supplied neither a destination nor an action intent. Which Mural skill
+      destination reference applies, what must the dispatcher do, and what
       evidence limit applies to a local test-double result?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-destinations
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-destination-instruction
         config:
-          pattern: '(?i)mural-destinations\.instructions\.md|Mural Destinations'
+          pattern: '(?i)destinations\.md|Mural Destinations'
       - type: output-matches
         name: mural-destination-explicit-route
         config:
-          pattern: '(?i)(destination).{0,120}(action intent|create|mutate|append|no-op).{0,160}(no-dispatch|do not dispatch|never guesses)'
+          pattern: '(?is)(destination).{0,160}(intent|create|mutate|append|no-op).{0,200}(no[- ]dispatch|do not dispatch|never guess|not guess|not infer)'
       - type: output-matches
         name: mural-destination-evidence-ceiling
         config:
-          pattern: '(?i)(local test double|LOCAL_TEST_DOUBLE).{0,160}(not|does not).{0,80}(native Mural|real destination|production)'
+          pattern: '(?is)(local test[- ]double|LOCAL_TEST_DOUBLE).{0,400}\b(not|does not)\b.{0,80}(native Mural|real destination|production|destination system|target-system)'
 
   - name: instruction-licensing-posture-conformance
     prompt: |
@@ -1636,26 +1693,29 @@ stimuli:
         config:
           pattern: '(?i)(do not|not|leave|preserve).{0,60}(change|modify|source|record)'
 
-  - name: instruction-mural-log-hygiene-redaction-boundary
+  - name: skill-mural-log-hygiene-redaction-boundary
     prompt: |
       You are troubleshooting Mural automation and receive a log line that may
       contain an authorization header and an Azure Blob SAS query string.
-      Which instruction governs operator handling, and what may be copied into
+      Which Mural skill reference governs operator handling, and what may be copied into
       chat or a planning artifact?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-log-hygiene
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-log-hygiene-instruction
         config:
-          pattern: '(?i)mural-log-hygiene\.instructions\.md|Mural Log Hygiene'
+          pattern: '(?i)log-hygiene\.md|Mural Log Hygiene'
       - type: output-matches
         name: mural-log-hygiene-no-raw-secrets
         config:
-          pattern: '(?is)(never|must not|do not).{0,120}(raw|authorization|bearer|SAS|token)'
+          pattern: '(?is)(never|must\W{0,4}not|do\W{0,4}not|don[\x27\u2019]t|prohibit\w*|forbid\w*).{0,120}(raw|authorization|bearer|SAS|token)'
       - type: output-matches
         name: mural-log-hygiene-redacted-evidence
         config:
-          pattern: '(?is)(_redact|redact|masked).{0,120}(evidence|log|output|copy)'
+          pattern: '(?is)(_redact|redact|masked).{0,120}(evidence|log|output|copy)|(evidence|log line|output|copy|quote).{0,200}(_redact|redact|masked|sanitiz)'

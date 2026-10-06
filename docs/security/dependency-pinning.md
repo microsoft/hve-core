@@ -1,9 +1,9 @@
 ---
 title: Dependency Pinning
 description: How HVE Core enforces dependency pinning across GitHub Actions, npm, pip, and shell downloads with automated CI validation
-sidebar_position: 3
+sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-10-03
 ms.topic: concept
 keywords:
   - dependency pinning
