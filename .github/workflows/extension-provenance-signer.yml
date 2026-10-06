@@ -173,6 +173,11 @@ jobs:
               '.[] | select(.name == $name) | .id | select(type == "number")' "$RULESET_LIST")
             gh api "/repos/$REPOSITORY/rulesets/$RULESET_ID?includes_parents=true" \
               > "$RUNNER_TEMP/$RULESET_NAME.json"
+            # A missing list is hidden, not empty. The predicates below then rest on
+            # current_user_can_bypass; the release runbook's admin audit covers other actors.
+            if jq -e 'has("bypass_actors") | not' "$RUNNER_TEMP/$RULESET_NAME.json" >/dev/null; then
+              echo "::notice::$RULESET_NAME: bypass list not visible to this token; checking current_user_can_bypass only"
+            fi
           done
 
           if ! jq -e --arg name "$CREATION_RULESET" '

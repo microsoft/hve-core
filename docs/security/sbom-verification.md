@@ -3,7 +3,7 @@ title: SBOM Verification
 description: Verify, download, and inspect the Software Bill of Materials published with each HVE Core release
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-05
+ms.date: 2026-10-06
 ms.topic: how-to
 keywords:
   - SBOM
@@ -118,11 +118,11 @@ No job both installs or packages dependencies and signs the result.
 > required tag governance is active, platform assurance mapping, and qualified
 > human review before making that claim.
 
-The required tag governance is not yet active or proven. The intended
-`release-tags-creation-by-release-app` ruleset restricts tag creation and gives
-the Release App its only bypass. The separate `release-tags-immutable` ruleset
-restricts update, deletion, and force pushes with no bypass. Their names in
-documentation are not evidence that either ruleset is installed.
+Both tag rulesets are active. The `release-tags-creation-by-release-app`
+ruleset restricts tag creation and gives the Release App its only bypass. The
+separate `release-tags-immutable` ruleset restricts update, deletion, and force
+pushes with no bypass. No release has run under them yet, and the signer
+cannot see bypass lists, so an administrator audits them before each release.
 
 > [!TIP]
 > Build provenance and SPDX predicates are independent attestations. Omit

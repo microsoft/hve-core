@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -193,17 +193,24 @@ and does not rebuild the extension.
 
 ### Required Tag Governance
 
-Tag governance is a mandatory activation prerequisite for post-tag production,
-but it is not yet active or proven. The intended repository configuration has
-two rulesets:
+Tag governance is a mandatory activation prerequisite for post-tag production.
+Both rulesets are active and target `v*` and `prerelease-v*` tags:
 
 * `release-tags-creation-by-release-app` restricts creation only and grants a
     bypass to the Release App
 * `release-tags-immutable` restricts updates, deletion, and force pushes with
     no bypass
 
-Do not interpret this intended configuration as evidence that either ruleset
-is installed.
+No release has run under these rulesets yet. The provenance signer checks
+both rulesets before packaging, but its token cannot see bypass lists, so it
+cannot detect another actor added as a bypass. Before each release, a
+repository administrator completes this audit:
+
+1. Open **Settings → Rules → Rulesets** for `microsoft/hve-core`.
+2. Confirm `release-tags-creation-by-release-app` is active and lists only the
+    Release App as a bypass actor.
+3. Confirm `release-tags-immutable` is active and lists no bypass actors.
+4. Stop the release if either check fails.
 
 > [!IMPORTANT]
 > This release architecture does not establish SLSA Build Level 3. Future

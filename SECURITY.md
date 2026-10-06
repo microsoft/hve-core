@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - security
@@ -153,12 +153,24 @@ extension. No job both packages and signs.
 > evidence, platform assurance mapping, and qualified human review before such
 > a claim can be made.
 
-Tag governance is a mandatory activation prerequisite and is not yet active or
-proven. The intended `release-tags-creation-by-release-app` ruleset restricts
-creation only and gives the Release App its only bypass. The separate
-`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
-with no bypass. This documentation does not imply that either ruleset is
-installed.
+Tag governance is a mandatory activation prerequisite. Both tag rulesets are
+active on `microsoft/hve-core` and target `v*` and `prerelease-v*` tags:
+
+* `release-tags-creation-by-release-app` restricts creation only and gives the
+  Release App its only bypass.
+* `release-tags-immutable` restricts updates, deletion, and force pushes with
+  no bypass.
+
+No release has run under these rulesets yet. Before packaging, the provenance
+signer confirms that both rulesets are active with exactly these targets and
+rules, that the Release App can bypass creation, and that it cannot bypass
+immutability. The signer reads rulesets with Metadata read only, and GitHub
+hides bypass lists from tokens without ruleset administration. The signer
+therefore sees only the Release App's own bypass state, logs a notice when a
+bypass list is hidden, and cannot detect another actor added to either
+ruleset. To cover that residual risk, a repository administrator audits both
+bypass lists before each release, as described in the
+[release process](docs/contributing/release-process.md#required-tag-governance).
 
 Post-tag recovery begins by classifying the tag and release state. When both
 the tag and matching draft or published release exist, recovery reruns the

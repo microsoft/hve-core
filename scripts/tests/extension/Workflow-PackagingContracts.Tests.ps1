@@ -1035,6 +1035,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             -Environment $script:AuthorizationEnvironment -RulesetList $script:RulesetList `
             -CreationRuleset $script:CreationRuleset -ImmutableRuleset $script:ImmutableRuleset
         $result.ExitCode | Should -Be 0
+        $result.Output | Should -Not -Match 'bypass list not visible'
     }
 
     It 'Accepts hidden bypass lists when the app reports its own bypass state' -Skip:$script:SkipShellFixtureTests {
@@ -1048,6 +1049,8 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             -Environment $script:AuthorizationEnvironment -RulesetList $script:RulesetList `
             -CreationRuleset $creation -ImmutableRuleset $immutable
         $result.ExitCode | Should -Be 0
+        $result.Output | Should -Match '::notice::release-tags-creation-by-release-app: bypass list not visible to this token'
+        $result.Output | Should -Match '::notice::release-tags-immutable: bypass list not visible to this token'
     }
 
     It 'Rejects an unexpected release actor before packaging' -Skip:$script:SkipShellFixtureTests {

@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-05
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - github actions
@@ -256,11 +256,12 @@ identity.
 
 `extension-marketplace-publish.yml` has four jobs: `validate-inputs`, `verify`, `prepare-publisher`, and `publish`. Input validation resolves immutable release and protected-main commits before Marketplace environment activation. Verification downloads the one VSIX and checks its lane-specific attestation. Publisher preparation builds the minimal locked `vsce` toolchain from protected `main`. The protected publish job re-verifies provenance, obtains Azure OIDC, and invokes `vsce` directly.
 
-Tag governance is a mandatory activation prerequisite but is not yet active or
-proven. The intended `release-tags-creation-by-release-app` ruleset restricts
-creation only and grants a bypass to the Release App. The separate
-`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
-with no bypass. Their description here is not evidence that they are installed.
+Tag governance is a mandatory activation prerequisite. Both rulesets are
+active: `release-tags-creation-by-release-app` restricts creation only and
+grants a bypass to the Release App, and `release-tags-immutable` restricts
+updates, deletion, and force pushes with no bypass. No release has run under
+them yet. `extension-provenance-signer.yml` checks both before packaging; it
+cannot see bypass lists, so an administrator audits them before each release.
 Marketplace environment reviewers and Azure OIDC claim policy remain external
 controls.
 

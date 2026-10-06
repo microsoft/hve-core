@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: overview
 keywords:
   - github actions
@@ -340,12 +340,12 @@ development-tip channel sourced from canonical `.github` content and is not
 updated by release completion. Release branches, immutable tags, and published
 releases own release state and history.
 
-Tag governance is a mandatory activation prerequisite, but it is not yet
-active or proven. The intended `release-tags-creation-by-release-app` ruleset
-restricts creation only and grants a bypass to the Release App. The separate
-`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
-with no bypass. Documentation of these controls is not evidence that they are
-installed.
+Tag governance is a mandatory activation prerequisite. Both rulesets are
+active: `release-tags-creation-by-release-app` restricts creation only and
+grants a bypass to the Release App, and `release-tags-immutable` restricts
+updates, deletion, and force pushes with no bypass. No release has run under
+them yet. The signer cannot see bypass lists, so an administrator audits them
+before each release (see the release process).
 
 This architecture does not establish SLSA Build Level 3. Future Stable and
 PreRelease releases still need successful runtime evidence, active governance
