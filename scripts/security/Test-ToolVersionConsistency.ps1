@@ -22,8 +22,9 @@
       tool-version/manifest-invalid      the manifest entry is malformed
       tool-version/version-mismatch      <PREFIX>_VERSION, a gh-aw lock compiler_version,
                                          or a lockProject's pyproject.toml or uv.lock differs
-      tool-version/checksum-mismatch     <PREFIX>[_<ARCH>]_SHA256 is not a manifest digest, or a
-                                         manifest digest is missing from a lockProject's uv.lock
+      tool-version/checksum-mismatch     <PREFIX>[_<ARCH>]_SHA256 is not the manifest digest for its
+                                         architecture, or a manifest digest is missing from a
+                                         lockProject's uv.lock
       tool-version/commit-mismatch       <PREFIX>_URL lacks the manifest commit
       tool-version/image-mismatch        a gh-aw-firewall image tag or digest differs
       tool-version/unregistered-tool     a file pins <NAME>_VERSION with a matching
