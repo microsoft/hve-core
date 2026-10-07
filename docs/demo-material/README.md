@@ -2,7 +2,7 @@
 title: Demo Material
 description: Levelled HVE Core training decks, narrated videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - demo material
@@ -79,8 +79,11 @@ source documents changed:
   reads that same index, so a missing level appears as unavailable rather than
   linking to files that do not exist.
 
-The narration uses an offline [Piper](https://github.com/OHF-Voice/piper1-gpl)
-voice (`en_US-norman-medium`), so the builds need no cloud speech service.
+New builds default to the offline [Piper](https://github.com/OHF-Voice/piper1-gpl)
+voice `en_US-norman-medium`, so they need no cloud speech service. During the
+regeneration window, a level can retain its earlier passing video and voice if
+its replacement has not passed. The default is not a claim that every published
+level has already been regenerated with Norman.
 Norman's [model
 card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/norman/medium/MODEL_CARD)
 records that it was trained from scratch on public-domain LibriVox recordings,

@@ -2,7 +2,7 @@
 name: vscode-playwright
 description: 'Capture VS Code screenshots and self-contained browser animation scenes through Playwright. Use for editor evidence, slide imagery, or silent WebM scene clips.'
 license: MIT
-compatibility: 'Requires VS Code CLI (code or code-insiders). Scripted capture requires uv and Python 3.11+; interactive capture requires Playwright MCP tools and curl'
+compatibility: 'VS Code screenshots require its CLI. Scripted capture requires uv, Python 3.11+, and Chromium; animation encoding also requires FFmpeg. Interactive capture requires Playwright MCP tools and curl'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
@@ -48,9 +48,16 @@ The script exits `0` only when every capture was written and met `min_font_pt`, 
 ## Browser Animation Recording
 
 `scripts/record_browser_video.py` records one self-contained HTML animation to
-a silent WebM clip through Playwright's native video recorder. The scene must set
+a silent WebM clip from ready-scene frames. The scene must set
 `data-animation-ready="true"` on its body after local assets and animation state
-are ready. Network requests are blocked; use local, `data:`, or `blob:` assets.
+are ready and define `window.startAnimation()` to reset narrative motion and
+timers. Recording starts at that handshake, not at page navigation.
+The browser context is offline, service workers are blocked, WebSocket traffic
+is intercepted without forwarding, and popups are closed. A synthetic origin
+serves only files below the approved asset root; traversal and escaping symlinks
+are rejected. The default root is the scene directory; use `--asset-root` for a
+caller-approved shared asset directory containing the scene. Do not grant the
+workspace or home directory as an asset root.
 
 ```bash
 uv run python scripts/record_browser_video.py \
@@ -62,16 +69,17 @@ uv run python scripts/record_browser_video.py \
 
 The recorder writes a silent clip. Pair it with the matching narration WAV in a
 `demo-video` segment; that assembler trims or loops the browser clip to the
-declared narration duration and supplies the final audio. Playwright's raw WebM
-container may include startup or closing padding, so do not treat its container
-duration as final delivery timing.
+declared narration duration and supplies the final audio. Frames are sampled at
+24 fps using virtual scene time, then encoded with FFmpeg. Startup and closing
+browser frames are excluded; duration is accurate to a video-frame boundary.
 
 ## Prerequisites
 
 Scripted screenshots require the VS Code or VS Code Insiders CLI (`code` or
 `code-insiders`). Interactive VS Code capture also requires genuine Playwright
 MCP browser tools and `curl`. Browser animation recording requires `uv`, the
-skill environment, and Playwright Chromium; it does not require VS Code or MCP.
+skill environment, Playwright Chromium, and FFmpeg with `libvpx-vp9`; it does
+not require VS Code or MCP.
 
 Tool names in this skill use an `mcp_microsoft_pla_browser_*` prefix. The actual prefix is derived from the MCP server's registration name in your host, so it may differ, for example `mcp_playwright_browser_*`. Match the prefix your host exposes.
 

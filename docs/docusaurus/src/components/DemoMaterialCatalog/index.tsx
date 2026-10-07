@@ -11,6 +11,7 @@ type PublishedFiles = {
   html: string;
   pptx: string;
   mp4: string;
+  vtt: string;
 };
 
 type LevelEntry = {
@@ -52,12 +53,40 @@ const levels: Array<{
   },
 ];
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isSiteIndex(value: unknown): value is SiteIndex {
+  if (!isRecord(value) || value.schema_version !== 'demo-material-site/v1' ||
+      !isRecord(value.levels)) {
+    return false;
+  }
+  return Object.values(value.levels).every((entry) => {
+    if (!isRecord(entry) || (entry.files !== undefined && !isRecord(entry.files))) {
+      return false;
+    }
+    if (entry.last_failed_attempt === undefined) {
+      return true;
+    }
+    if (!isRecord(entry.last_failed_attempt)) {
+      return false;
+    }
+    const checks = entry.last_failed_attempt.checks;
+    return checks === undefined || (isRecord(checks) && Object.values(checks).every(
+      (check) => isRecord(check) &&
+        (check.result === undefined || typeof check.result === 'string'),
+    ));
+  });
+}
+
 function publishedFiles(level: LevelName, entry?: LevelEntry): PublishedFiles | null {
   const expected: PublishedFiles = {
     page: `${level}/index.html`,
     html: `${level}/hve-demo-${level}.html`,
     pptx: `${level}/hve-demo-${level}.pptx`,
     mp4: `${level}/hve-demo-${level}.mp4`,
+    vtt: `${level}/hve-demo-${level}.vtt`,
   };
   if (!entry?.files) {
     return null;
@@ -87,11 +116,11 @@ export default function DemoMaterialCatalog(): React.ReactElement {
         if (!response.ok) {
           throw new Error(`Demo material index returned ${response.status}`);
         }
-        return response.json() as Promise<SiteIndex>;
+        return response.json() as Promise<unknown>;
       })
       .then((value) => {
-        if (value.schema_version !== 'demo-material-site/v1') {
-          throw new Error('Unknown demo material index schema');
+        if (!isSiteIndex(value)) {
+          throw new Error('Invalid demo material index');
         }
         setIndex(value);
       })

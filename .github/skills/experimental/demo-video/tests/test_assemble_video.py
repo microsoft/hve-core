@@ -27,6 +27,79 @@ def mock_ffmpeg_dependencies(mocker):
     )
 
 
+class TestRuntimeTransitions:
+    def test_given_short_scene_without_fades_when_filtered_then_noop(self):
+        assert assemble_video._transition_filter(
+            [0.4], {"duration": 0.5, "fade_in": False, "fade_out": False}
+        ) == ("", "0:v:0", "0:a:0")
+
+    @pytest.mark.parametrize(
+        "endpoints", [None, (False, False), (False, True), (True, False), (True, True)]
+    )
+    def test_given_one_scene_when_encoded_then_all_endpoint_combinations_work(
+        self, tmp_path, endpoints
+    ):
+        import json
+        import shutil
+        import subprocess
+        import wave
+
+        import yaml
+
+        ffmpeg = shutil.which("ffmpeg")
+        ffprobe = shutil.which("ffprobe")
+        if not ffmpeg or not ffprobe:
+            pytest.skip("Existing FFmpeg and ffprobe required")
+        visual = tmp_path / "frame.ppm"
+        visual.write_bytes(b"P6\n160 90\n255\n" + b"\x40\x90\x40" * (160 * 90))
+        with wave.open(str(tmp_path / "voice.wav"), "wb") as audio:
+            audio.setnchannels(1)
+            audio.setsampwidth(2)
+            audio.setframerate(8000)
+            audio.writeframes(b"\x00\x00" * 16000)
+        data = {
+            "output": "result.mp4",
+            "resolution": "160x90",
+            "fps": 24,
+            "segments": [{"visual": "frame.ppm", "narration": "voice.wav"}],
+        }
+        if endpoints is not None:
+            data["transition"] = {
+                "duration": 0.5,
+                "fade_in": endpoints[0],
+                "fade_out": endpoints[1],
+            }
+        else:
+            data["transition"] = "none"
+        manifest = tmp_path / "segments.yml"
+        manifest.write_text(yaml.safe_dump(data), encoding="utf-8")
+
+        result = assemble_video.assemble_video(
+            manifest_path=manifest, output_path=None, fps=None, resolution=None
+        )
+        measured = json.loads(
+            subprocess.run(
+                [
+                    ffprobe,
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "json",
+                    str(result),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        )
+        expected = 2 + (sum(endpoints) * 0.5 if endpoints else 0)
+        assert float(measured["format"]["duration"]) == pytest.approx(
+            expected, abs=0.15
+        )
+
+
 class TestAssembleVideo:
     """Tests for the manifest-driven assembly workflow."""
 
@@ -391,10 +464,10 @@ class TestAssembleVideo:
         filter_graph = final_command[final_command.index("-filter_complex") + 1]
         assert "fade=t=in:st=0:d=0.5" in filter_graph
         assert "afade=t=in:st=0:d=0.5" in filter_graph
-        assert "xfade=transition=fade:duration=0.5:offset=2.5" in filter_graph
+        assert "xfade=transition=fade:duration=0.5:offset=3.5" in filter_graph
         assert "acrossfade=d=0.5:c1=tri:c2=tri" in filter_graph
-        assert "fade=t=out:st=6:d=0.5" in filter_graph
-        assert "afade=t=out:st=6:d=0.5" in filter_graph
+        assert "fade=t=out:st=8:d=0.5" in filter_graph
+        assert "afade=t=out:st=8:d=0.5" in filter_graph
 
     def test_given_short_segment_when_transition_built_then_raises(self):
         # Act / Assert

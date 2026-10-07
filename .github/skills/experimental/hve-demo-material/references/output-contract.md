@@ -75,10 +75,17 @@ the video frames.
 Run the bundled resolver before rendering:
 
 ```bash
-scripts/finalize-accessible-video.sh --check-prerequisites
+bash "$DEMO_SKILL_ROOT/scripts/finalize-accessible-video.sh" --check-prerequisites
 ```
 
 It checks `FFMPEG_COMMAND` and `FFPROBE_COMMAND`, searches `PATH`, and recognizes
+the installed skill root rather than requiring an executable script bit.
+Set `DEMO_SKILL_ROOT` to the resolved `hve-demo-material` skill directory.
+Use Bash on macOS/Linux or WSL2 on Windows with Linux paths and tools; native
+PowerShell alone does not run this finalizer. A Windows-native finalization
+path is not supported or claimed as tested.
+
+The resolver recognizes
 Homebrew's keg-only `ffmpeg-full` locations. On macOS, Homebrew's standard
 `ffmpeg` formula omits libass, so use:
 
@@ -136,6 +143,7 @@ deliverables:
   pptx: output/hve-demo-L100.pptx
   narrated_pptx: output/hve-demo-L100-narrated.pptx
   mp4: output/hve-demo-L100.mp4 # shows open captions and carries an English selectable caption track
+  raw_assembly: output/hve-demo-L100.raw.mp4 # retained clean input; never burn captions over a finalized MP4
   captions: output/hve-demo-L100.vtt
   transcript_page: output/index.html
   open_caption_evidence: output/open-captions.json
@@ -157,6 +165,15 @@ narration:
   engine: <azure | piper> # caller-selected; default azure
   provider: <Azure AI Speech | Piper>
   voice: <approved voice name>
+  speaker_voices: # characters only; omit for animation none
+    Casey: <approved Casey voice>
+    Morgan: <approved Morgan voice>
+  scene_audio: # characters only; one entry per canonical content item
+    - slide: 1
+      speaker: Casey
+      voice: <approved Casey voice>
+      wav: audio/slide-001.wav
+      duration_seconds: <measured WAV duration>
   speech_region: <approved region name | not-applicable> # not-applicable under piper
   total_word_count: <number> # summed across the synthesized speaker notes
   measured_duration_minutes: <number> # measured from the produced MP4, for example with ffprobe
@@ -196,6 +213,15 @@ evidence:
 
 ## State Rules
 
+* Assemble to the retained raw MP4, then invoke the finalizer through Bash.
+  It stages WebVTT, the finalized MP4, evidence bound to the raw source, and
+  transcript before installing a complete delivery with rollback on failure.
+  Missing raw input requires reassembly; missing evidence never permits
+  burning over an existing finalized picture.
+* Finalization supports canonical content/WAV order and full WAV durations.
+  Other assembler segment orders, narration sources, or trimmed durations
+  require a different caption timeline and are rejected here. Silent handles
+  are added by the assembler; do not manually pad canonical narration WAVs.
 * Under `manual` and `partial`, use `Complete` only when every requested
   deliverable is present, every acceptance criterion records `pass` or a
   permitted `not-applicable` with recorded evidence, and `approvals.delivery:

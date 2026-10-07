@@ -226,7 +226,7 @@ main() {
   mkdir -p "${LEVEL_DIR}/output" "${LEVEL_DIR}/frames/deck" "${LEVEL_DIR}/audio"
 
   local deck="${LEVEL_DIR}/output/hve-demo-${LEVEL}.pptx"
-  local video_name="hve-demo-${LEVEL}.mp4"
+  local video_name="hve-demo-${LEVEL}.raw.mp4"
 
   if [[ "${CAPTURE}" == "live" ]]; then
     run_captures

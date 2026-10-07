@@ -207,6 +207,15 @@ machine can verify (`T-04` through `T-10`). The bundled
 `scripts/finalize-accessible-video.sh` owns the same accessible-media step for
 agent-driven renders in any repository.
 
+Retain `output/hve-demo-<level>.raw.mp4` as the clean assembly source. Invoke the
+finalizer through `bash "$DEMO_SKILL_ROOT/scripts/finalize-accessible-video.sh"`
+from the resolved installed skill root, using Bash on macOS/Linux or WSL2 with
+Linux paths on Windows. Native PowerShell alone is not a supported entrypoint.
+The finalizer stages the video, captions, evidence, and transcript and rolls back
+failed publication. It refuses to reburn a finalized MP4 when raw input is absent.
+The selectable subtitles and browser track are not requested as default captions,
+because the picture already contains open captions.
+
 When the repository's HVE Slides starter is present, the script also converts
 the same slide content into a browser deck. `scripts/html_deck.py` maps each
 slide to semantic markup with its speaker notes and embedded images, the

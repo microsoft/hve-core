@@ -367,6 +367,16 @@ def _render_segment(
     clip_source = segment.get("clip")
     narration_path = Path(segment["narration"])
     duration = segment["duration"]
+    lead = segment.get("lead", 0.0)
+    tail = segment.get("tail", 0.0)
+    rendered_duration = duration + lead + tail
+    video_filter = _build_filter_string(resolution, fps)
+    if lead or tail:
+        video_filter += (
+            f",trim=duration={duration},setpts=PTS-STARTPTS,"
+            f"tpad=start_duration={lead}:stop_duration={tail}:"
+            "start_mode=clone:stop_mode=clone"
+        )
 
     if visual_source is not None:
         command = [
@@ -385,14 +395,14 @@ def _render_segment(
             "-pix_fmt",
             "yuv420p",
             "-vf",
-            _build_filter_string(resolution, fps),
+            video_filter,
             "-c:a",
             "aac",
             "-b:a",
             "192k",
             "-shortest",
             "-t",
-            f"{duration}",
+            f"{rendered_duration}",
             str(output_path),
         ]
     else:
@@ -414,16 +424,22 @@ def _render_segment(
             "-pix_fmt",
             "yuv420p",
             "-vf",
-            _build_filter_string(resolution, fps),
+            video_filter,
             "-c:a",
             "aac",
             "-b:a",
             "192k",
             "-t",
-            f"{duration}",
+            f"{rendered_duration}",
             str(output_path),
         ]
 
+    if lead or tail:
+        command[-1:-1] = [
+            "-af",
+            f"adelay={round(lead * 1000)}:all=1,apad,"
+            + f"atrim=duration={rendered_duration}",
+        ]
     _run_ffmpeg(command, timeout=timeout, step=f"FFmpeg render of {output_path.name}")
 
 
@@ -454,6 +470,8 @@ def _transition_filter(
     durations: list[float], transition: dict[str, Any]
 ) -> tuple[str, str, str]:
     """Return filter graph and final video/audio labels for smooth transitions."""
+    if len(durations) == 1 and not transition["fade_in"] and not transition["fade_out"]:
+        return "", "0:v:0", "0:a:0"
     duration = float(transition["duration"])
     if any(segment_duration <= duration * 2 for segment_duration in durations):
         raise ManifestError(
@@ -546,6 +564,7 @@ def assemble_video(
 
     normalized_paths: list[Path] = []
     segment_durations: list[float] = []
+    transition = config.get("transition")
     with tempfile.TemporaryDirectory(
         prefix="demo-video-", dir=str(output_path.parent)
     ) as temp_dir_name:
@@ -579,6 +598,15 @@ def assemble_video(
             segment_data = dict(segment)
             segment_data["narration"] = str(narration_path)
             segment_data["duration"] = duration
+            lead = tail = 0.0
+            if transition:
+                handle = float(transition["duration"])
+                lead = handle if index > 1 or transition["fade_in"] else 0.0
+                tail = (
+                    handle if index < len(segments) or transition["fade_out"] else 0.0
+                )
+            segment_data["lead"] = lead
+            segment_data["tail"] = tail
             if visual_source is not None:
                 segment_data["visual"] = str(visual_path)
             else:
@@ -593,7 +621,7 @@ def assemble_video(
                 timeout=timeout,
             )
             normalized_paths.append(normalized_path)
-            segment_durations.append(float(duration))
+            segment_durations.append(float(duration) + lead + tail)
 
         staged_output = temp_dir / f"assembled{output_path.suffix or '.mp4'}"
         transition = config.get("transition")
@@ -604,14 +632,21 @@ def assemble_video(
             transition_command = [ffmpeg_path, "-y"]
             for normalized_path in normalized_paths:
                 transition_command.extend(["-i", str(normalized_path)])
+            if filter_graph:
+                transition_command.extend(
+                    [
+                        "-filter_complex",
+                        filter_graph,
+                        "-map",
+                        f"[{video_label}]",
+                        "-map",
+                        f"[{audio_label}]",
+                    ]
+                )
+            else:
+                transition_command.extend(["-map", video_label, "-map", audio_label])
             transition_command.extend(
                 [
-                    "-filter_complex",
-                    filter_graph,
-                    "-map",
-                    f"[{video_label}]",
-                    "-map",
-                    f"[{audio_label}]",
                     "-c:v",
                     "libx264",
                     "-pix_fmt",

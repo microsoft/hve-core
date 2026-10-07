@@ -29,6 +29,7 @@ function indexWithL100() {
           html: 'L100/hve-demo-L100.html',
           pptx: 'L100/hve-demo-L100.pptx',
           mp4: 'L100/hve-demo-L100.mp4',
+          vtt: 'L100/hve-demo-L100.vtt',
         },
       },
       L400: {
@@ -78,5 +79,28 @@ describe('DemoMaterialCatalog', () => {
     const results = await axe(container, { rules: { region: { enabled: false } } });
 
     expect(results).toHaveNoViolations();
+  });
+
+  it('hides links for a bundle missing its required WebVTT', async () => {
+    const index = indexWithL100();
+    Reflect.deleteProperty(index.levels.L100.files, 'vtt');
+    mockFetch.mockResolvedValue(response(index));
+
+    render(<DemoMaterialCatalog />);
+
+    await screen.findByText('Showing currently published demo material.');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it.each([null, [], 'invalid'])('handles malformed nested checks (%s)', async (check) => {
+    mockFetch.mockResolvedValue(response({
+      schema_version: 'demo-material-site/v1',
+      levels: { L400: { last_failed_attempt: { checks: { 'T-07': check } } } },
+    }));
+
+    render(<DemoMaterialCatalog />);
+
+    await screen.findByRole('alert');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 });

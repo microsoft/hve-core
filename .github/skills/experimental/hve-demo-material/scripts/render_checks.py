@@ -38,8 +38,10 @@ import html
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import wave
 import xml.etree.ElementTree as ET
 import zipfile
@@ -581,14 +583,41 @@ def transition_overlap(level_dir: Path, segment_count: int) -> float:
     if not manifest.is_file():
         return 0.0
     data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
-    transition = data.get("transition") if isinstance(data, dict) else None
-    if not isinstance(transition, dict):
-        return 0.0
+    if not isinstance(data, dict):
+        raise CheckError("segments.yml must contain a mapping")
     segments = data.get("segments") or []
-    if len(segments) != segment_count:
+    if not isinstance(segments, list) or len(segments) != segment_count:
         raise CheckError(
             "caption generation requires one authored content item per video segment"
         )
+    slides = load_slides(level_dir / "content")
+    for segment, (number, _) in zip(segments, slides, strict=True):
+        canonical = (level_dir / "audio" / f"slide-{number:03d}.wav").resolve()
+        if not isinstance(segment, dict) or not isinstance(
+            segment.get("narration"), str
+        ):
+            raise CheckError(
+                "Each caption segment requires its canonical narration path"
+            )
+        narration = (manifest.parent / segment["narration"]).resolve()
+        if narration != canonical:
+            raise CheckError("Caption segments must follow canonical slide/WAV order")
+        if segment.get("duration") is not None:
+            try:
+                matches = (
+                    abs(float(segment["duration"]) - _wav_seconds(canonical)) < 0.001
+                )
+            except (TypeError, ValueError) as error:
+                raise CheckError("Invalid caption segment duration") from error
+            if not matches:
+                raise CheckError(
+                    "Caption segments require full canonical WAV durations"
+                )
+    transition = data.get("transition")
+    if transition in (None, "none"):
+        return 0.0
+    if not isinstance(transition, dict):
+        raise CheckError("Caption transition must be a mapping or none")
     try:
         duration = float(transition.get("duration", 0.5))
     except (TypeError, ValueError) as exc:
@@ -601,15 +630,21 @@ def transition_overlap(level_dir: Path, segment_count: int) -> float:
 def build_captions(level_dir: Path) -> str:
     """Return WebVTT captions for the level's narration.
 
-    Each slide's cues span exactly that slide's narration WAV, which is how
-    ``demo-video`` sizes a segment. Within a slide, time is shared across
-    sentences by length, so cue text is exact and cue timing is estimated.
+    Cues span each unpadded narration WAV, offset by the assembler's silent
+    handles. Sentence lengths estimate within-slide timing; cue text is exact.
     """
     lines = ["WEBVTT", ""]
     offset = 0.0
-    index = 1
+    cues: list[tuple[float, float, str]] = []
     slides = load_slides(level_dir / "content")
     overlap = transition_overlap(level_dir, len(slides))
+    transition = {}
+    if overlap:
+        import yaml
+
+        transition = yaml.safe_load(
+            (level_dir / "output/segments.yml").read_text(encoding="utf-8")
+        )["transition"]
     for slide_index, (number, slide) in enumerate(slides):
         wav = level_dir / "audio" / f"slide-{number:03d}.wav"
         if not wav.is_file():
@@ -621,20 +656,29 @@ def build_captions(level_dir: Path) -> str:
             for chunk in _caption_chunks(sentence)
         ]
         total = sum(len(chunk) for chunk in chunks) or 1
-        start = offset
+        lead = overlap if slide_index > 0 or transition.get("fade_in", True) else 0.0
+        tail = (
+            overlap
+            if slide_index < len(slides) - 1 or transition.get("fade_out", True)
+            else 0.0
+        )
+        start = offset + lead
         for chunk in chunks:
             end = start + duration * len(chunk) / total
-            lines += [
-                str(index),
-                f"{_timestamp(start)} --> {_timestamp(end)}",
-                html.escape(_caption_lines(chunk), quote=False),
-                "",
-            ]
-            index += 1
+            cues.append((start, end, chunk))
             start = end
-        offset += duration
+        offset += duration + lead + tail
         if slide_index < len(slides) - 1:
             offset -= overlap
+    for index, (start, end, chunk) in enumerate(
+        sorted(cues, key=lambda cue: cue[0]), 1
+    ):
+        lines += [
+            str(index),
+            f"{_timestamp(start)} --> {_timestamp(end)}",
+            html.escape(_caption_lines(chunk), quote=False),
+            "",
+        ]
     return "\n".join(lines)
 
 
@@ -648,6 +692,29 @@ def style_metadata(level_dir: Path) -> dict:
     style = yaml.safe_load(style_file.read_text(encoding="utf-8")) or {}
     metadata = style.get("metadata") if isinstance(style, dict) else None
     return metadata if isinstance(metadata, dict) else {}
+
+
+def validate_media_timeline(level_dir: Path, video: Path) -> None:
+    """Reject raw assemblies whose duration differs from the canonical timeline."""
+    import yaml
+
+    cues = parse_webvtt(build_captions(level_dir))
+    if not cues:
+        raise CheckError("Canonical narration has no caption cues")
+    overlap = transition_overlap(level_dir, len(load_slides(level_dir / "content")))
+    tail = 0.0
+    if overlap:
+        data = yaml.safe_load(
+            (level_dir / "output/segments.yml").read_text(encoding="utf-8")
+        )
+        tail = overlap if data["transition"].get("fade_out", True) else 0.0
+    expected = max(cue[1] for cue in cues) + tail
+    minutes = measure_minutes(video)
+    if minutes is None or abs(minutes * 60 - expected) > 0.15:
+        raise CheckError(
+            f"Raw assembly differs from canonical captions ({expected:.3f}s); "
+            "reassemble with canonical WAV order, full durations, and silent handles"
+        )
 
 
 _PAGE_STYLE = (
@@ -667,7 +734,9 @@ def transcript_on_screen(slide: dict, title: str) -> list[str]:
     ]
 
 
-def build_transcript_page(level: str, level_dir: Path) -> str:
+def build_transcript_page(
+    level: str, level_dir: Path, output_dir: Path | None = None
+) -> str:
     """Return an HTML page with a captioned player and a full transcript.
 
     The transcript lists every slide's title, on-screen text, and narration,
@@ -678,7 +747,9 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
     metadata = style_metadata(level_dir)
     title = str(metadata.get("title") or f"HVE Core {level}")
     language = str(metadata.get("language") or "en-US")
-    minutes = measure_minutes(level_dir / "output" / f"hve-demo-{level}.mp4")
+    minutes = measure_minutes(
+        (output_dir or level_dir / "output") / f"hve-demo-{level}.mp4"
+    )
     length = f" &middot; {minutes:.1f} minutes" if minutes else ""
     stem = f"hve-demo-{level}"
     slides_link = (
@@ -714,7 +785,7 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
         f"<h1>{esc(title)}</h1><p>{esc(level)}{length}</p>"
         f'<video controls preload="metadata"><source src="{stem}.mp4" type="video/mp4">'
         f'<track kind="captions" src="{stem}.vtt" srclang="{esc(language[:2])}" '
-        'label="English" default></video>'
+        'label="English"></video>'
         f'<p><a href="{stem}.mp4">Download the video (MP4)</a> &middot; '
         f'<a href="{stem}.pptx">Download the deck (PowerPoint)</a> &middot; '
         f'<a href="{stem}.vtt">Download the captions (WebVTT)</a>{slides_link}</p>'
@@ -848,7 +919,11 @@ def _sha256(path: Path) -> str:
 
 
 def verify_open_captions(
-    control: Path, finalized: Path, captions: Path, evidence: Path
+    control: Path,
+    finalized: Path,
+    captions: Path,
+    evidence: Path,
+    source: Path | None = None,
 ) -> dict:
     """Compare captioned and uncaptioned encodes and write hash-bound evidence."""
     cues = parse_webvtt(captions.read_text(encoding="utf-8"))
@@ -883,7 +958,14 @@ def verify_open_captions(
         check=False,
     )
     if result.returncode != 0:
-        raise CheckError("could not compare the source and captioned video frames")
+        detail = (
+            result.stderr.strip() or result.stdout.strip() or "no FFmpeg diagnostics"
+        )
+        raise CheckError(
+            f"FFmpeg frame comparison failed (exit {result.returncode}) for "
+            f"{control} and {finalized} at {sample_seconds:.3f}s: {detail}. "
+            "Verify that both inputs decode and FFmpeg supports the comparison filters."
+        )
     values = {
         line.rsplit(".", 1)[1].split("=", 1)[0]: int(line.rsplit("=", 1)[1])
         for line in result.stdout.splitlines()
@@ -912,6 +994,7 @@ def verify_open_captions(
         "difference_box_height": values["h"],
         "difference_box_area": box_area,
         "control_video_sha256": _sha256(control),
+        "source_video_sha256": _sha256(source or control),
         "video_sha256": _sha256(finalized),
         "captions_sha256": _sha256(captions),
     }
@@ -921,7 +1004,7 @@ def verify_open_captions(
 
 
 def open_caption_evidence_problems(
-    video: Path, captions: Path, evidence: Path
+    video: Path, captions: Path, evidence: Path, source: Path | None = None
 ) -> list[str]:
     """Return problems with hash-bound open-caption verification evidence."""
     if not evidence.is_file():
@@ -945,7 +1028,46 @@ def open_caption_evidence_problems(
         problems.append("open-caption evidence does not match the delivered MP4")
     if not captions.is_file() or record.get("captions_sha256") != _sha256(captions):
         problems.append("open-caption evidence does not match the delivered WebVTT")
+    if source is not None and (
+        not source.is_file() or record.get("source_video_sha256") != _sha256(source)
+    ):
+        problems.append("open-caption evidence does not match the raw assembly")
     return problems
+
+
+def publish_generation(level: str, stage: Path, output: Path) -> None:
+    """Install a validated delivery, rolling back replacements on failure."""
+    names = (
+        f"hve-demo-{level}.mp4",
+        f"hve-demo-{level}.vtt",
+        "open-captions.json",
+        "index.html",
+    )
+    if any(not (stage / name).is_file() for name in names):
+        raise CheckError("Incomplete staged delivery; previous output was preserved")
+    problems = open_caption_evidence_problems(
+        stage / names[0], stage / names[1], stage / names[2]
+    )
+    if problems:
+        raise CheckError("Invalid staged delivery: " + "; ".join(problems))
+    installed: list[str] = []
+    with tempfile.TemporaryDirectory(prefix=".delivery-backup-", dir=output) as backup:
+        backup_dir = Path(backup)
+        for name in names:
+            if (output / name).exists():
+                shutil.copy2(output / name, backup_dir / name)
+        try:
+            for name in names:
+                os.replace(stage / name, output / name)
+                installed.append(name)
+        except (OSError, KeyboardInterrupt):
+            for name in reversed(installed):
+                saved = backup_dir / name
+                if saved.exists():
+                    os.replace(saved, output / name)
+                else:
+                    (output / name).unlink(missing_ok=True)
+            raise
 
 
 class _TranscriptParser(HTMLParser):
@@ -1037,18 +1159,18 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
     accessible deck."""
     output = level_dir / "output"
     problems = []
-    slides = load_slides(level_dir / "content")
-    narration = normalized_text(" ".join(notes_text(slide) for _, slide in slides))
     captions = output / f"hve-demo-{level}.vtt"
     if not captions.is_file():
         problems.append("captions file missing")
     else:
         try:
             cues = parse_webvtt(captions.read_text(encoding="utf-8"))
+            expected_cues = parse_webvtt(build_captions(level_dir))
         except CheckError as error:
             problems.append(str(error))
         else:
-            if normalized_text(" ".join(cue[2] for cue in cues)) != narration:
+            expected = normalized_text(" ".join(cue[2] for cue in expected_cues))
+            if normalized_text(" ".join(cue[2] for cue in cues)) != expected:
                 problems.append("caption text does not match the narration")
     video = output / f"hve-demo-{level}.mp4"
     if not video.is_file():
@@ -1212,6 +1334,11 @@ def build_parser() -> argparse.ArgumentParser:
     transcript = sub.add_parser("transcript", help="Write output/index.html")
     transcript.add_argument("--level", required=True, choices=LEVELS)
     transcript.add_argument("--level-dir", type=Path, required=True)
+    transcript.add_argument("--output-dir", type=Path)
+    publish = sub.add_parser("publish-generation", help="Install a staged delivery")
+    publish.add_argument("--level", required=True, choices=LEVELS)
+    publish.add_argument("--stage", type=Path, required=True)
+    publish.add_argument("--output-dir", type=Path, required=True)
     verify_captions = sub.add_parser(
         "verify-open-captions", help="Verify caption burn-in and write evidence"
     )
@@ -1219,12 +1346,15 @@ def build_parser() -> argparse.ArgumentParser:
     verify_captions.add_argument("--finalized", type=Path, required=True)
     verify_captions.add_argument("--captions", type=Path, required=True)
     verify_captions.add_argument("--output", type=Path, required=True)
+    verify_captions.add_argument("--source", type=Path)
+    verify_captions.add_argument("--level-dir", type=Path)
     caption_status = sub.add_parser(
         "check-open-caption-evidence", help="Check existing caption evidence"
     )
     caption_status.add_argument("--video", type=Path, required=True)
     caption_status.add_argument("--captions", type=Path, required=True)
     caption_status.add_argument("--evidence", type=Path, required=True)
+    caption_status.add_argument("--source", type=Path)
     evaluate_cmd = sub.add_parser("evaluate", help="Score a rendered level")
     evaluate_cmd.add_argument("--level", required=True, choices=LEVELS)
     evaluate_cmd.add_argument("--level-dir", type=Path, required=True)
@@ -1271,21 +1401,27 @@ def main(argv: list[str] | None = None) -> int:
             args.output.write_text(build_captions(args.level_dir), encoding="utf-8")
             return EXIT_SUCCESS
         if args.command == "transcript":
-            target = args.level_dir / "output" / "index.html"
+            target = (args.output_dir or args.level_dir / "output") / "index.html"
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(
-                build_transcript_page(args.level, args.level_dir), encoding="utf-8"
+                build_transcript_page(args.level, args.level_dir, args.output_dir),
+                encoding="utf-8",
             )
             return EXIT_SUCCESS
+        if args.command == "publish-generation":
+            publish_generation(args.level, args.stage, args.output_dir)
+            return EXIT_SUCCESS
         if args.command == "verify-open-captions":
+            if args.level_dir:
+                validate_media_timeline(args.level_dir, args.source or args.control)
             result = verify_open_captions(
-                args.control, args.finalized, args.captions, args.output
+                args.control, args.finalized, args.captions, args.output, args.source
             )
             print(json.dumps(result, indent=2))
             return EXIT_SUCCESS
         if args.command == "check-open-caption-evidence":
             problems = open_caption_evidence_problems(
-                args.video, args.captions, args.evidence
+                args.video, args.captions, args.evidence, args.source
             )
             print(json.dumps({"ok": not problems, "problems": problems}, indent=2))
             return EXIT_FAILURE if problems else EXIT_SUCCESS

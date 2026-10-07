@@ -108,20 +108,26 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ## Parameters Reference
 
+For different speakers, synthesize one voice's selected slides per invocation
+using repeated `--slide <number>` arguments. Only those canonical `slide-NNN`
+folders are read and their WAVs replaced; other speakers' outputs are untouched.
+Omit `--slide` to synthesize the whole deck.
+
 ### generate_voiceover.py
 
-| Parameter             | Type   | Default                             | Description                                                                                |
-|:----------------------|:-------|:------------------------------------|:-------------------------------------------------------------------------------------------|
-| `--dry-run`           | flag   | `false`                             | Print SSML (`azure`) or plain text (`piper`) without generating audio                      |
-| `--engine`            | string | `azure`                             | Synthesis engine: `azure` or `piper`                                                       |
-| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Voice name; the `piper` default is `en_US-norman-medium`                                   |
-| `--rate`              | string | `+10%`                              | Azure speech prosody rate; ignored by `piper`                                              |
-| `--piper-data-dir`    | path   | `PIPER_DATA_DIR`                    | Directory holding downloaded Piper voices                                                  |
-| `--content-dir`       | path   | `content`                           | Path to slide content directory                                                            |
-| `--output-dir`        | path   | `voice-over`                        | Path to WAV output directory                                                               |
-| `--lexicon`           | path   | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
-| `--collapse-newlines` | flag   | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
-| `--verbose` / `-v`    | flag   | `false`                             | Enable verbose (DEBUG) logging output                                                      |
+| Parameter             | Type    | Default                             | Description                                                                                |
+|:----------------------|:--------|:------------------------------------|:-------------------------------------------------------------------------------------------|
+| `--dry-run`           | flag    | `false`                             | Print SSML (`azure`) or plain text (`piper`) without generating audio                      |
+| `--engine`            | string  | `azure`                             | Synthesis engine: `azure` or `piper`                                                       |
+| `--voice`             | string  | `en-US-Andrew:DragonHDLatestNeural` | Voice name; the `piper` default is `en_US-norman-medium`                                   |
+| `--rate`              | string  | `+10%`                              | Azure speech prosody rate; ignored by `piper`                                              |
+| `--piper-data-dir`    | path    | `PIPER_DATA_DIR`                    | Directory holding downloaded Piper voices                                                  |
+| `--content-dir`       | path    | `content`                           | Path to slide content directory                                                            |
+| `--output-dir`        | path    | `voice-over`                        | Path to WAV output directory                                                               |
+| `--slide`             | integer | all slides                          | Repeat to synthesize only the selected canonical slide numbers                             |
+| `--lexicon`           | path    | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
+| `--collapse-newlines` | flag    | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
+| `--verbose` / `-v`    | flag    | `false`                             | Enable verbose (DEBUG) logging output                                                      |
 
 ### embed_audio.py
 

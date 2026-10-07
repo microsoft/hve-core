@@ -196,17 +196,18 @@ validate_args() {
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${LEVEL_DIR}/output" ]] || err "No output/ under ${LEVEL_DIR}."
   LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
-  [[ -f "${LEVEL_DIR}/output/hve-demo-${LEVEL}.mp4" ]] \
-    || err "The rendered MP4 is missing."
+  [[ -f "${LEVEL_DIR}/output/hve-demo-${LEVEL}.raw.mp4" ]] \
+    || err "Clean raw assembly missing; reassemble hve-demo-${LEVEL}.raw.mp4 before finalizing."
 }
 
 finalize_video() {
   local video="${LEVEL_DIR}/output/hve-demo-${LEVEL}.mp4"
-  local captions="${LEVEL_DIR}/output/hve-demo-${LEVEL}.vtt"
+  local raw="${LEVEL_DIR}/output/hve-demo-${LEVEL}.raw.mp4"
   local evidence="${LEVEL_DIR}/output/open-captions.json"
-  CAPTIONED="${video%.mp4}.captioned.tmp.mp4"
-  CONTROL="${video%.mp4}.uncaptioned.tmp.mp4"
-  TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/hve-demo-captions.XXXXXX")"
+  TEMP_DIR="$(mktemp -d "${LEVEL_DIR}/output/.captions.XXXXXX")"
+  local captions="${TEMP_DIR}/hve-demo-${LEVEL}.vtt"
+  CAPTIONED="${TEMP_DIR}/hve-demo-${LEVEL}.mp4"
+  CONTROL="${TEMP_DIR}/control.mp4"
   trap cleanup EXIT
 
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py captions \
@@ -217,17 +218,14 @@ finalize_video() {
     check-open-caption-evidence \
     --video "${video}" \
     --captions "${captions}" \
+    --source "${raw}" \
     --evidence "${evidence}" >/dev/null 2>&1; then
-    uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py transcript \
-      --level "${LEVEL}" \
-      --level-dir "${LEVEL_DIR}"
-    return
-  fi
-
+    cp "${video}" "${CAPTIONED}"
+    cp "${evidence}" "${TEMP_DIR}/open-captions.json"
+  else
   cp "${captions}" "${TEMP_DIR}/captions.vtt"
-
   "${FFMPEG}" -y -v error \
-    -i "${video}" \
+    -i "${raw}" \
     -map 0:v:0 -map '0:a?' \
     -c:v libx264 -preset medium -crf 18 \
     -c:a copy \
@@ -235,7 +233,7 @@ finalize_video() {
     "${CONTROL}"
 
   "${FFMPEG}" -y -v error \
-    -i "${video}" \
+    -i "${raw}" \
     -i "${TEMP_DIR}/captions.vtt" \
     -vf "subtitles=filename='${TEMP_DIR}/captions.vtt'" \
     -map 0:v:0 -map '0:a?' -map 1:0 \
@@ -243,24 +241,27 @@ finalize_video() {
     -c:a copy -c:s mov_text \
     -metadata:s:a:0 language=eng \
     -metadata:s:s:0 language=eng \
-    -disposition:s:0 default \
+    -disposition:s:0 0 \
     -movflags +faststart \
     "${CAPTIONED}"
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py \
     verify-open-captions \
     --control "${CONTROL}" \
     --finalized "${CAPTIONED}" \
+    --source "${raw}" \
+    --level-dir "${LEVEL_DIR}" \
     --captions "${captions}" \
     --output "${TEMP_DIR}/open-captions.json"
   rm -f "${CONTROL}"
   CONTROL=""
-  mv "${CAPTIONED}" "${video}"
-  CAPTIONED=""
-  mv "${TEMP_DIR}/open-captions.json" "${evidence}"
+  fi
 
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py transcript \
     --level "${LEVEL}" \
-    --level-dir "${LEVEL_DIR}"
+    --level-dir "${LEVEL_DIR}" --output-dir "${TEMP_DIR}"
+  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py publish-generation \
+    --level "${LEVEL}" --stage "${TEMP_DIR}" --output-dir "${LEVEL_DIR}/output"
+  CAPTIONED=""
 }
 
 main() {

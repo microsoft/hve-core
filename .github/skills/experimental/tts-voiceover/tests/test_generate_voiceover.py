@@ -451,6 +451,38 @@ class TestRunPiper:
         assert rc == 0
         assert (tmp_path / "output" / "slide-001.wav").is_file()
 
+    def test_given_two_speakers_when_selected_in_two_passes_then_prior_wav_unchanged(
+        self, tmp_path, monkeypatch, mocker
+    ):
+        from generate_voiceover import _run
+
+        args = self._args(
+            tmp_path, "First speaker", ["--slide", "1", "--voice", "first"]
+        )
+        second = tmp_path / "content/slide-002"
+        second.mkdir()
+        (second / "content.yaml").write_text(
+            "slide: 2\ntitle: Second\nspeaker_notes: Second speaker\n", encoding="utf-8"
+        )
+        monkeypatch.setenv("PIPER_COMMAND", shlex.join(_fake_piper(tmp_path)))
+
+        def synthesize(_text, destination, _command, voice, _data_dir):
+            destination.write_bytes(voice.encode())
+            return 1.0
+
+        generator = mocker.patch(
+            "generate_voiceover.generate_audio_piper", side_effect=synthesize
+        )
+        assert _run(args) == 0
+        first = (tmp_path / "output/slide-001.wav").read_bytes()
+        args.slide = [2]
+        args.voice = "second"
+        assert _run(args) == 0
+
+        assert (tmp_path / "output/slide-001.wav").read_bytes() == first == b"first"
+        assert (tmp_path / "output/slide-002.wav").read_bytes() == b"second"
+        assert generator.call_count == 2
+
 
 class TestWrapSsml:
     """Tests for wrap_ssml."""

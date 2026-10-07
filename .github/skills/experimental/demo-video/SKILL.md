@@ -61,10 +61,12 @@ segments:
 * `fade_in` controls the opening video and audio fade (default `true`)
 * `fade_out` controls the closing video and audio fade (default `true`)
 
-Every segment must be longer than twice the transition duration so its incoming
-and outgoing transitions cannot consume the scene. Each scene transition
-overlaps adjacent segments, so the assembled duration is the sum of segment
-durations minus one transition duration per scene boundary.
+The assembler adds silent handles around speech and holds the matching endpoint
+pictures. Crossfades overlap those handles, not adjacent spoken instructions;
+do not pre-pad narration to compensate. The normalized segments must exceed
+twice the transition duration. Output duration is the sum of unpadded narration
+durations plus one transition duration per scene boundary and per enabled
+opening/closing fade. With transitions disabled, no handles are added.
 
 ### Segment fields
 

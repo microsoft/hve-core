@@ -35,8 +35,10 @@ from render_checks import (
     open_caption_evidence_problems,
     parse_curriculum,
     parse_webvtt,
+    publish_generation,
     style_metadata,
     subtitle_languages,
+    validate_media_timeline,
     validate_scripted_render,
     verify_open_captions,
 )
@@ -703,6 +705,90 @@ class TestOnScreenText:
         assert text == ["Heading", "Card", "One", "Two", "Image: Editor view"]
 
 
+class TestCaptionTimeline:
+    def test_given_wrong_raw_duration_when_checked_then_requires_reassembly(
+        self, tmp_path, mocker
+    ):
+        _write_slides(tmp_path, 1)
+        mocker.patch("render_checks.measure_minutes", return_value=1 / 60)
+        with pytest.raises(CheckError, match="reassemble"):
+            validate_media_timeline(tmp_path, tmp_path / "raw.mp4")
+
+    def test_given_failed_frame_decode_when_compared_then_retains_diagnostics(
+        self, tmp_path, mocker
+    ):
+        captions = tmp_path / "captions.vtt"
+        captions.write_text(
+            "WEBVTT\n\n1\n00:00:00.000 --> 00:00:02.000\nWords\n", encoding="utf-8"
+        )
+        mocker.patch(
+            "render_checks.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 23, "", "decoder failed"),
+        )
+        with pytest.raises(CheckError, match=r"exit 23.*decoder failed"):
+            verify_open_captions(
+                tmp_path / "control.mp4",
+                tmp_path / "final.mp4",
+                captions,
+                tmp_path / "evidence.json",
+            )
+
+    @pytest.mark.parametrize("mutation", ["order", "duration", "narration"])
+    def test_given_noncanonical_segments_when_captioned_then_rejected(
+        self, tmp_path, mutation
+    ):
+        import yaml
+
+        _write_slides(tmp_path, 2)
+        output = tmp_path / "output"
+        output.mkdir()
+        data = yaml.safe_load(build_segments(tmp_path, "demo.mp4"))
+        if mutation == "order":
+            data["segments"].reverse()
+        elif mutation == "duration":
+            data["segments"][0]["duration"] = 1
+        else:
+            data["segments"][0]["narration"] = "../audio/other.wav"
+        (output / "segments.yml").write_text(yaml.safe_dump(data), encoding="utf-8")
+        with pytest.raises(CheckError, match="canonical"):
+            build_captions(tmp_path)
+
+
+class TestDeliveryRollback:
+    @pytest.mark.parametrize(
+        "failing_name",
+        ["hve-demo-L100.mp4", "hve-demo-L100.vtt", "open-captions.json", "index.html"],
+    )
+    def test_given_replacement_failure_when_published_then_all_prior_files_restored(
+        self, tmp_path, mocker, failing_name
+    ):
+        output = tmp_path / "output"
+        stage = tmp_path / "stage"
+        output.mkdir()
+        stage.mkdir()
+        names = (
+            "hve-demo-L100.mp4",
+            "hve-demo-L100.vtt",
+            "open-captions.json",
+            "index.html",
+        )
+        for name in names:
+            (output / name).write_bytes(b"prior")
+            (stage / name).write_bytes(b"next")
+        mocker.patch("render_checks.open_caption_evidence_problems", return_value=[])
+        replace = os.replace
+
+        def fail_selected(source, destination):
+            if Path(source).parent == stage and Path(source).name == failing_name:
+                raise OSError("injected install failure")
+            replace(source, destination)
+
+        mocker.patch("render_checks.os.replace", side_effect=fail_selected)
+        with pytest.raises(OSError, match="injected"):
+            publish_generation("L100", stage, output)
+        assert all((output / name).read_bytes() == b"prior" for name in names)
+
+
 class TestCaptions:
     """Tests for build_captions."""
 
@@ -757,15 +843,210 @@ class TestCaptions:
         cues = parse_webvtt(build_captions(tmp_path))
 
         # Assert
-        assert cues[2][0] == pytest.approx(1.5)
-        assert cues[-1][1] == pytest.approx(3.5)
+        assert cues[2][0] == pytest.approx(3.0)
+        assert cues[-1][1] == pytest.approx(5.0)
+
+    def test_given_short_final_sentence_when_crossfaded_then_cues_stay_ordered(
+        self, tmp_path
+    ):
+        _write_slides(
+            tmp_path,
+            2,
+            notes=(
+                "This scene explains how the product supports a repeatable "
+                "review of source files. OK."
+            ),
+        )
+        for number in (1, 2):
+            _write_wav(tmp_path / f"audio/slide-{number:03d}.wav", 4)
+        (tmp_path / "content/slide-002/content.yaml").write_text(
+            "slide: 2\ntitle: Next\nspeaker_notes: Next scene.\n", encoding="utf-8"
+        )
+        output = tmp_path / "output"
+        output.mkdir()
+        (output / "segments.yml").write_text(
+            "transition: {type: crossfade, duration: 0.5}\n"
+            "segments:\n  - narration: ../audio/slide-001.wav\n"
+            "  - narration: ../audio/slide-002.wav\n",
+            encoding="utf-8",
+        )
+
+        captions = build_captions(tmp_path)
+        cues = parse_webvtt(captions)
+        (output / "hve-demo-L300.vtt").write_text(captions, encoding="utf-8")
+
+        assert [cue[0] for cue in cues] == sorted(cue[0] for cue in cues)
+        assert cues[1][2] == "OK."
+        assert cues[2][0] == pytest.approx(5.0)
+        assert (
+            "caption text does not match"
+            not in check_accessibility("L300", tmp_path)["evidence"]
+        )
 
 
 class TestAccessibleVideoFinalizer:
     """Tests for the portable accessible-media finalizer."""
 
+    def test_given_two_audio_scenes_when_finalized_then_handles_are_silent(
+        self, tmp_path, monkeypatch
+    ):
+        import array
+        import importlib.util
+        import math
+
+        import yaml
+
+        script = (
+            Path(__file__).resolve().parents[1] / "scripts/finalize-accessible-video.sh"
+        )
+        prerequisites = subprocess.run(
+            ["bash", str(script), "--check-prerequisites"],
+            capture_output=True,
+            text=True,
+        )
+        if prerequisites.returncode:
+            pytest.skip(prerequisites.stderr)
+        tools = dict(line.split("=", 1) for line in prerequisites.stdout.splitlines())
+        monkeypatch.setenv("FFMPEG_COMMAND", tools["ffmpeg"])
+        monkeypatch.setenv("FFPROBE_COMMAND", tools["ffprobe"])
+        monkeypatch.setenv(
+            "PATH", f"{Path(tools['ffmpeg']).parent}{os.pathsep}{os.environ['PATH']}"
+        )
+        _write_slides(tmp_path, 2, notes="First voice describes the scene.")
+        for number, frequency in ((1, 440), (2, 880)):
+            samples = array.array(
+                "h",
+                [
+                    int(12000 * math.sin(2 * math.pi * frequency * index / 8000))
+                    for index in range(16000)
+                ],
+            )
+            with wave.open(
+                str(tmp_path / f"audio/slide-{number:03d}.wav"), "wb"
+            ) as audio:
+                audio.setnchannels(1)
+                audio.setsampwidth(2)
+                audio.setframerate(8000)
+                audio.writeframes(samples.tobytes())
+            (tmp_path / f"frames/frame-{number}.ppm").write_bytes(
+                b"P6\n640 360\n255\n" + bytes((number * 40, 90, 40)) * (640 * 360)
+            )
+        output = tmp_path / "output"
+        output.mkdir()
+        manifest = output / "segments.yml"
+        manifest.write_text(
+            yaml.safe_dump(
+                {
+                    "output": "hve-demo-L300.raw.mp4",
+                    "resolution": "640x360",
+                    "fps": 24,
+                    "transition": {"duration": 0.5},
+                    "segments": [
+                        {
+                            "visual": f"../frames/frame-{number}.ppm",
+                            "narration": f"../audio/slide-{number:03d}.wav",
+                        }
+                        for number in (1, 2)
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        recorder_root = Path(__file__).resolve().parents[2] / "vscode-playwright"
+        recorder_python = recorder_root / ".venv/bin/python"
+        if recorder_python.is_file():
+            scene = tmp_path / "scene.html"
+            scene.write_text(
+                '<body data-animation-ready="true" style="margin:0;background:red">'
+                '<script>window.startAnimation=()=>{document.body.style.background="red";'
+                'setTimeout(()=>document.body.style.background="blue",1000);};</script></body>',
+                encoding="utf-8",
+            )
+            clip = tmp_path / "scene.webm"
+            subprocess.run(
+                [
+                    str(recorder_python),
+                    str(recorder_root / "scripts/record_browser_video.py"),
+                    "--scene",
+                    str(scene),
+                    "--output",
+                    str(clip),
+                    "--duration",
+                    "2",
+                    "--resolution",
+                    "640x360",
+                ],
+                check=True,
+                timeout=60,
+            )
+            data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+            data["segments"][0].pop("visual")
+            data["segments"][0]["clip"] = "../scene.webm"
+            manifest.write_text(yaml.safe_dump(data), encoding="utf-8")
+        module_path = (
+            Path(__file__).resolve().parents[2] / "demo-video/scripts/assemble_video.py"
+        )
+        spec = importlib.util.spec_from_file_location("runtime_assembler", module_path)
+        assembler = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(assembler)
+
+        raw = assembler.assemble_video(
+            manifest_path=manifest, output_path=None, fps=None, resolution=None
+        )
+        subprocess.run(
+            ["bash", str(script), "--level", "L300", "--level-dir", str(tmp_path)],
+            check=True,
+        )
+        cues = parse_webvtt((output / "hve-demo-L300.vtt").read_text())
+        assert measure_minutes(raw) * 60 == pytest.approx(5.5, abs=0.15)
+        assert max(cue[1] for cue in cues) == pytest.approx(5)
+        silent = subprocess.run(
+            [
+                tools["ffmpeg"],
+                "-v",
+                "error",
+                "-ss",
+                "2.7",
+                "-i",
+                str(raw),
+                "-t",
+                "0.1",
+                "-f",
+                "s16le",
+                "-acodec",
+                "pcm_s16le",
+                "-",
+            ],
+            capture_output=True,
+            check=True,
+        ).stdout
+        assert max(abs(sample) for sample in array.array("h", silent)) < 200
+        streams = json.loads(
+            subprocess.run(
+                [
+                    tools["ffprobe"],
+                    "-v",
+                    "error",
+                    "-show_streams",
+                    "-of",
+                    "json",
+                    str(output / "hve-demo-L300.mp4"),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        )["streams"]
+        assert any(
+            stream["codec_type"] == "subtitle"
+            and stream["disposition"]["forced"] == 0
+            and stream.get("tags", {}).get("language") == "eng"
+            for stream in streams
+        )
+        assert " default" not in (output / "index.html").read_text()
+
     def test_given_authored_level_when_finalized_then_captions_are_visible(
-        self, tmp_path
+        self, tmp_path, monkeypatch
     ):
         # Arrange
         script = (
@@ -820,6 +1101,7 @@ class TestAccessibleVideoFinalizer:
         )
         source = tmp_path / "source.mp4"
         shutil.copyfile(video, source)
+        shutil.copyfile(video, output / "hve-demo-L100.raw.mp4")
         # Act
         subprocess.run(
             ["bash", str(script), "--level", "L100", "--level-dir", str(tmp_path)],
@@ -858,6 +1140,99 @@ class TestAccessibleVideoFinalizer:
             )
             == []
         )
+        raw = output / "hve-demo-L100.raw.mp4"
+        raw_bytes = raw.read_bytes()
+        original_hash = video.read_bytes()
+        (tmp_path / "content/slide-001/content.yaml").write_text(
+            "slide: 1\ntitle: Updated\nspeaker_notes: Updated caption text.\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["bash", str(script), "--level", "L100", "--level-dir", str(tmp_path)],
+            check=True,
+        )
+        assert raw.read_bytes() == raw_bytes
+        assert video.read_bytes() != original_hash
+        assert "Updated caption text." in (output / "hve-demo-L100.vtt").read_text()
+        current_hash = video.read_bytes()
+        (output / "open-captions.json").unlink()
+        subprocess.run(
+            ["bash", str(script), "--level", "L100", "--level-dir", str(tmp_path)],
+            check=True,
+        )
+        assert video.read_bytes() == current_hash
+        prior = {
+            name: (output / name).read_bytes()
+            for name in (
+                "hve-demo-L100.mp4",
+                "hve-demo-L100.vtt",
+                "open-captions.json",
+                "index.html",
+            )
+        }
+        tool_bin = tmp_path / "test-bin"
+        tool_bin.mkdir()
+        fake_uv = tool_bin / "uv"
+        fake_uv.write_text(
+            '#!/bin/sh\ncd "$3"\nshift 4\n'
+            'if [ "$2" = "$FAIL_STAGE" ]; then '
+            'echo "injected stage failure" >&2; exit 71; fi\n'
+            f'exec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        fake_uv.chmod(0o755)
+        fake_ffmpeg = tool_bin / "ffmpeg"
+        fake_ffmpeg.write_text(
+            '#!/bin/sh\nif [ "$1" = "-y" ] && [ "$FAIL_STAGE" = "encode" ]; '
+            "then exit 72; fi\n"
+            f'exec "{ffmpeg}" "$@"\n',
+            encoding="utf-8",
+        )
+        fake_ffmpeg.chmod(0o755)
+        successful_content = (tmp_path / "content/slide-001/content.yaml").read_bytes()
+        (tmp_path / "content/slide-001/content.yaml").write_text(
+            "slide: 1\ntitle: Failed generation\n"
+            "speaker_notes: This update must not publish.\n",
+            encoding="utf-8",
+        )
+        with monkeypatch.context() as environment:
+            environment.setenv("PATH", f"{tool_bin}{os.pathsep}{os.environ['PATH']}")
+            environment.setenv("FFMPEG_COMMAND", str(fake_ffmpeg))
+            environment.setenv("FFPROBE_COMMAND", ffprobe)
+            for stage in ("encode", "verify-open-captions", "transcript"):
+                environment.setenv("FAIL_STAGE", stage)
+                attempt = subprocess.run(
+                    [
+                        "bash",
+                        str(script),
+                        "--level",
+                        "L100",
+                        "--level-dir",
+                        str(tmp_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                assert attempt.returncode != 0
+                assert all(
+                    (output / name).read_bytes() == content
+                    for name, content in prior.items()
+                )
+        raw.unlink()
+        failed = subprocess.run(
+            ["bash", str(script), "--level", "L100", "--level-dir", str(tmp_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert failed.returncode != 0
+        assert "reassemble" in failed.stderr
+        assert all(
+            (output / name).read_bytes() == content for name, content in prior.items()
+        )
+        raw.write_bytes(raw_bytes)
+        (tmp_path / "content/slide-001/content.yaml").write_bytes(successful_content)
         pixels = subprocess.run(
             [
                 ffmpeg,
@@ -953,6 +1328,31 @@ class TestAccessibleVideoFinalizer:
         # Assert
         assert result.returncode == 1
         assert "FFMPEG_COMMAND does not resolve" in result.stderr
+
+    def test_given_relocated_script_when_called_with_bash_then_tools_resolve(
+        self, tmp_path
+    ):
+        original = (
+            Path(__file__).resolve().parents[1] / "scripts/finalize-accessible-video.sh"
+        )
+        relocated = (
+            tmp_path
+            / "installed/skills/demo-material/scripts/finalize-accessible-video.sh"
+        )
+        relocated.parent.mkdir(parents=True)
+        shutil.copyfile(original, relocated)
+        relocated.chmod(0o644)
+
+        result = subprocess.run(
+            ["bash", str(relocated), "--check-prerequisites"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        if result.returncode:
+            pytest.skip(result.stderr)
+        assert "ffmpeg=" in result.stdout and "ffprobe=" in result.stdout
 
     def test_given_unusable_ffprobe_override_when_checked_then_reports_it(
         self, tmp_path

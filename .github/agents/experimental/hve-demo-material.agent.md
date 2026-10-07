@@ -215,7 +215,8 @@ through a human-configured pipeline outside the agent.
   work. Check its Playwright environment and Chromium. The interactive path
   instead requires Playwright MCP browser tools and `curl`; test navigation
   only when selecting that path. Run
-  `scripts/finalize-accessible-video.sh --check-prerequisites` to resolve
+  `bash "$DEMO_SKILL_ROOT/scripts/finalize-accessible-video.sh" --check-prerequisites`
+  from the resolved installed skill root (Bash on macOS/Linux or WSL2) to resolve
   FFmpeg and FFprobe and confirm the `subtitles` filter and `libx264` encoder.
   Capture its `ffmpeg=` and `ffprobe=` paths. Before invoking `demo-video` or
   the finalizer, set `FFMPEG_COMMAND` and `FFPROBE_COMMAND` to those paths and
@@ -282,7 +283,8 @@ through a human-configured pipeline outside the agent.
 3. Under `animation: characters`, author original character assets and
   self-contained browser scene pages under `animation/`, with dialogue copied
   from canonical speaker notes. Mark a scene ready by setting
-  `data-animation-ready="true"` on its body. Author scenes now but record them
+  `data-animation-ready="true"` on its body and define `window.startAnimation()`
+  to reset narrative motion. Author scenes now but record them
   only after their narration WAVs exist. Under `animation: none`, do not
   create character assets or animation clips.
 4. Use `tts-voiceover` with the narration engine in force to create per-slide
@@ -290,6 +292,9 @@ through a human-configured pipeline outside the agent.
   Apply the approved speaker-to-voice map to character scenes, keeping one
   authored content item and WAV per scene. Measure each generated WAV with
   FFprobe before recording its animation.
+  Use the character reference's selected-slide synthesis recipe and persist
+  `narration.speaker_voices` and `narration.scene_audio`; do not synthesize the
+  whole deck again for each character voice.
    Pass `--collapse-newlines` whenever speaker notes use
    YAML block scalars, because each hard line wrap in a block scalar is
    otherwise spoken as a pause: one measured level ran 361 seconds without the
@@ -308,11 +313,14 @@ through a human-configured pipeline outside the agent.
   MP4 in `output/`. Do not use the deck-frame `render-level.sh` path for
   character or existing clip manifests. Paths resolve relative to the segment
   manifest, so reference `../frames/...`, `../clips/...`, and `../audio/...`
-  and set `output` to `./<name>.mp4`. Measure the assembled duration and record
+  and set `output` to `./hve-demo-<level>.raw.mp4`. The assembler adds silent
+  handles and held pictures for the half-second transitions. Measure the
+  assembled duration and record
   it with the word count and contract range. Keep the resolved FFmpeg
   environment in force for assembly and measurement.
 7. Run the `hve-demo-material` skill's bundled
-  `scripts/finalize-accessible-video.sh` with the level and level directory.
+  finalizer through `bash "$DEMO_SKILL_ROOT/scripts/finalize-accessible-video.sh"`
+  with the level and level directory. Keep the raw assembly for later rebuilds.
   It generates WebVTT from canonical speaker notes, burns captions into the
   picture, retains English selectable subtitles, and writes the transcript.
   Do not present the raw MP4 as complete before this mandatory step succeeds.
