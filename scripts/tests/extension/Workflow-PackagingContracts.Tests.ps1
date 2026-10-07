@@ -994,6 +994,18 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         [string]$identity['run'] | Should -Match "EVENT_ACTOR_ID.*EXPECTED_ACTOR_ID"
     }
 
+    It 'Denies Actions cache access to the release producer and every job it runs' {
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        $document.Contains('cache-mode') | Should -BeTrue
+        [string]$document['cache-mode'] | Should -BeExactly 'none'
+        foreach ($jobName in @($document['jobs'].Keys)) {
+            $job = $document['jobs'][$jobName]
+            if ($job.Contains('cache-mode')) {
+                [string]$job['cache-mode'] | Should -BeExactly 'none' -Because "job '$jobName' must not widen cache access"
+            }
+        }
+    }
+
     It 'Authenticates source eligibility and exact governance without exposing the private key to source jobs' {
         $document = Get-WorkflowDocument -Name 'extension-provenance-signer.yml'
         $authorize = $document['jobs']['authorize']

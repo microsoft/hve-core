@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -167,6 +167,11 @@ only `contents: read`. Its dependent privileged `attest` job receives the
 fixed-name VSIX and dependency SBOM through digest-checked transfers. It never
 installs dependencies or packages the extension. No job both packages and
 signs.
+
+`release-vsix-publish.yml` sets `cache-mode: none`, so the post-tag producer
+and every workflow it calls, including the pinned signer, run without GitHub
+Actions cache access. Each release installs its dependencies fresh, and no
+cache written by another workflow can influence the signed VSIX.
 
 The signer revision is pinned, and Dependabot ignores it. Update the caller in
 `release-vsix-publish.yml`, the expected signer revisions in the release and
