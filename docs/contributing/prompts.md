@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords:
   - contributing
@@ -582,20 +582,6 @@ There is no slash command; `hve-builder` is a skill, not a prompt.
 
 The skill infers the narrowest safe mode when you do not name one, and asks only when
 plausible modes would grant materially different write authority.
-
-### Compatibility aliases
-
-Three alias skills preserve legacy activation phrasing and route straight to
-`hve-builder`. They add no second author, review, or evaluation loop.
-
-| Alias skill       | Routes to                              |
-|-------------------|----------------------------------------|
-| `prompt-builder`  | `hve-builder` in `create` or `improve` |
-| `prompt-analyze`  | `hve-builder` in read-only `review`    |
-| `prompt-refactor` | `hve-builder` in `refactor`            |
-
-Each alias translates its legacy `promptFiles` input to the `hve-builder` `targets`
-input. New work should name `hve-builder` and its mode directly.
 
 ### Review pass
 

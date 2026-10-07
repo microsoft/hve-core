@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-10-04
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - powershell
@@ -21,7 +21,6 @@ This directory contains PowerShell scripts for automating linting, validation, a
 scripts/
 ├── agentic-workflows/ Runtime support for compiled Agentic Workflows
 ├── lib/             Shared artifact and CI helpers
-├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
 ├── release/         Release version normalization and assurance helpers
 ├── devcontainer/    Devcontainer lockfile and change log validation
@@ -51,18 +50,6 @@ Shared utility modules used across scripts.
 |----------------------------|--------------------------------------|
 | `Get-VerifiedDownload.ps1` | Download files with SHA verification |
 
-## Agents
-
-The `agents/` directory contains the activation harness for Copilot agent cold-start validation.
-
-| Script                                                   | Purpose                                                                              |
-|----------------------------------------------------------|--------------------------------------------------------------------------------------|
-| `activation-harness/Get-AgentActivationFingerprint.psm1` | Compute deterministic activation fingerprints for custom agents across scenarios     |
-| `activation-harness/Update-AgentActivationBaseline.ps1`  | Regenerate baseline.json for the activation harness and support dry-run drift checks |
-| `activation-harness/baseline.json`                       | Snapshot of the current activation fingerprint baseline for the ADR creation agent   |
-
-See [activation-harness/README.md](agents/activation-harness/README.md) for the full harness contract and baseline workflow.
-
 ## Agentic Workflows
 
 The `agentic-workflows/` directory contains trusted runtime support invoked by
@@ -86,8 +73,9 @@ collector owns its structural encoding:
 * Construct an empty deferral reason for `Assessed` and require a non-empty reason for `Deferred`
 * Construct canonical rows, counts, cursors, provenance, timestamps, envelopes, and digests
 
-The supported superseded-similarity conversion remains an explicit `{ issue,
-code }` record in `normalizations`. Malformed JSON, missing semantic fields,
+The defensive superseded-similarity conversion remains an explicit `{ issue,
+code }` record in `normalizations`, but the worker contract does not advertise
+that invalid similarity value. Malformed JSON, missing semantic fields,
 incomplete or noncontiguous evidence pairs, unsupported enum values, duplicate
 candidate calls, and missing deferred reasons remain candidate-local contract
 errors.
@@ -415,7 +403,6 @@ Key rules:
 * [Linting Scripts Documentation](linting/README.md)
 * [Security Scripts Documentation](security/README.md)
 * [Test Organization Documentation](tests/README.md)
-* [Agent Activation Harness Documentation](agents/activation-harness/README.md)
 * [Evaluation Framework Documentation](../evals/README.md)
 * [GitHub Workflows Documentation](../.github/workflows/README.md)
 * [Contributing Guidelines](../CONTRIBUTING.md)

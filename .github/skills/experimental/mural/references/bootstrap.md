@@ -1,9 +1,8 @@
 ---
 description: 'Fresh-session Mural bootstrap requirements for doctor checks, credential backend selection, and safe escalation before Mural tool use.'
-applyTo: '**/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md, **/.github/instructions/experimental/mural/**'
 ---
 
-## Mural Bootstrap
+# Mural Bootstrap
 
 Before any Mural verb in a fresh session, call `mural doctor`. Add one repeatable `--require-scope <scope>` argument for every scope required by the intended verb sequence. No `--require-scope` argument means read-only readiness. Act on the verdict before proceeding. A fresh session is any agent turn where no successful `mural doctor` or Mural command has already confirmed readiness for the current workspace, credential backend, working directory, and intended scopes.
 

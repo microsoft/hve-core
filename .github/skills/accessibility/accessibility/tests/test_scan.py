@@ -182,6 +182,7 @@ def test_given_external_target_without_authorization_when_resolve_then_rejects()
     [
         "file:////attacker.example/share/page.html",
         "file://localhost//attacker.example/share/page.html",
+        "file:///%3F%3F/UNC/attacker.example/share/page.html",
     ],
 )
 def test_given_unc_file_uri_when_resolve_then_rejects_before_network_probe(
@@ -201,6 +202,53 @@ def test_given_unc_file_uri_when_resolve_then_rejects_before_network_probe(
         scan.resolve_scan_target(target, allow_external=True)
 
     assert not any(scan._is_network_path(Path(probe)) for probe in probes)
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        r"/\attacker.example\share\page.html",
+        r"\/attacker.example/share/page.html",
+        r"/\?\UNC\attacker.example\share\page.html",
+        r"\??\UNC\attacker.example\share\page.html",
+        r"\??\GLOBALROOT\Device\Mup\attacker.example\share\page.html",
+    ],
+)
+def test_given_mixed_separator_unc_target_when_resolve_then_rejects_without_probe(
+    target: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    probes: list[str] = []
+
+    def _record_exists(self: Path) -> bool:
+        probes.append(str(self))
+        return False
+
+    monkeypatch.setattr(Path, "exists", _record_exists)
+
+    with pytest.raises(scan.ScriptError, match="Network-share"):
+        scan.resolve_scan_target(target, allow_external=True)
+
+    assert probes == []
+
+
+def test_given_home_on_network_share_when_resolve_then_rejects_without_probe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    probes: list[str] = []
+
+    def _record_exists(self: Path) -> bool:
+        probes.append(str(self))
+        return False
+
+    monkeypatch.setenv("HOME", r"\\attacker.example\home")
+    monkeypatch.setenv("USERPROFILE", r"\\attacker.example\home")
+    monkeypatch.setattr(Path, "exists", _record_exists)
+
+    with pytest.raises(scan.ScriptError, match="Network-share"):
+        scan.resolve_scan_target("~/page.html", allow_external=True)
+
+    assert probes == []
 
 
 def test_given_unc_path_when_canonical_local_file_then_rejects_without_probe(
