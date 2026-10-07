@@ -286,8 +286,12 @@ const revealFixture = [
   'o.split(`,`).forEach(t=>{let n=document.createElement(`source`);n.setAttribute(`src`,t);e.appendChild(n)});',
   'a&&a.getAttribute(`src`)!==r&&a.setAttribute(`src`,r);',
   'i&&(e.removeEventListener(`load`,f),e.setAttribute(`src`,e.getAttribute(`data-src`)));',
-  '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))&&e?p(1):/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))&&e?p(2):p(3);'
+  '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))&&e?p(1):/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))&&e?p(2):p(3);',
+  'function Ve(){f.postMessage&&window.addEventListener(`message`,Jt,!1)}',
+  'function O(e,t){let n=M()[e],r=n&&n.querySelectorAll(`section`);return r&&r.length&&typeof t==`number`?r?r[t]:void 0:n}'
 ].join('\n');
+const revealMessageListener = /addEventListener\(`message`/;
+const revealRedundantGetSlide = 'r?r[t]:void 0';
 
 function revealPage() {
   return {
@@ -296,7 +300,7 @@ function revealPage() {
   };
 }
 
-test('reveal.js lazy-load sinks and embed host checks are removed from the installed release and every inlined script', async () => {
+test('reveal.js lazy-load sinks, embed host checks, message listener and redundant getSlide branch are removed from the installed release and every inlined script', async () => {
   const { neutralizeRevealSinks, supportedRevealVersion, createStandaloneHtml } = await import('./bundle.mjs');
   const flow = /setAttribute\(`src`,(?:e\.getAttribute\(`data-src`\)|t\)|r\))/;
   const installed = path.join(__dirname, 'node_modules/reveal.js/dist/reveal.js');
@@ -306,6 +310,9 @@ test('reveal.js lazy-load sinks and embed host checks are removed from the insta
     for (const hostCheck of ['/youtube\\.com\\/embed\\//.test(', '/player\\.vimeo\\.com\\//.test(']) {
       assert.ok(!patched.includes(hostCheck), hostCheck);
     }
+    assert.doesNotMatch(patched, revealMessageListener);
+    assert.ok(!patched.includes(revealRedundantGetSlide));
+    assert.ok(patched.includes('r&&r.length&&typeof t==`number`?r[t]:n'));
     assert.doesNotThrow(() => new vm.Script(patched));
   }
   const { page, assets } = revealPage();
@@ -321,6 +328,8 @@ test('reveal.js patch fails closed on a changed anchor or unsupported version', 
   assert.throws(() => neutralizeRevealSinks(revealFixture.replace('n.setAttribute(`src`,t);', 'n.src=t;'), supportedRevealVersion), /anchor "background video source" matched 0 times/);
   assert.throws(() => neutralizeRevealSinks(`${revealFixture}\na.setAttribute(\`src\`,r)`, supportedRevealVersion), /anchor "background iframe" matched 2 times/);
   assert.throws(() => neutralizeRevealSinks(revealFixture.replace('/player\\.vimeo\\.com\\//', '/vimeo\\.com\\//'), supportedRevealVersion), /anchor "embedded Vimeo host check" matched 0 times/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('window.addEventListener(`message`,Jt,!1)', 'window.addEventListener(`message`,Qt,!1)'), supportedRevealVersion), /anchor "window message listener registration" matched 0 times/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('r?r[t]:void 0:n', 'r[t]:n'), supportedRevealVersion), /anchor "getSlide redundant conditional" matched 0 times/);
   assert.throws(() => neutralizeRevealSinks(revealFixture, '6.1.0'), /reveal\.js 6\.1\.0 is not supported/);
   assert.throws(() => neutralizeRevealSinks(revealFixture, undefined), /is not supported/);
 });
@@ -338,7 +347,12 @@ test('provenance block matches its contract, is deterministic, and cannot termin
   assert.deepEqual(JSON.parse(blocks[0][1]), {
     generator: 'hve-slides',
     revealVersion: '6.0.2',
-    patches: ['reveal-lazy-src-neutralized', 'reveal-embed-host-regex-neutralized'],
+    patches: [
+      'reveal-lazy-src-neutralized',
+      'reveal-embed-host-regex-neutralized',
+      'reveal-postmessage-listener-removed',
+      'reveal-getslide-redundant-conditional-removed'
+    ],
     securityChecks: ['raw-text-delimiters', 'inline-styles', 'resource-markup', 'reveal-lazy-src'],
     securityCheckResult: 'passed'
   });

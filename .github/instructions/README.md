@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - copilot
@@ -72,7 +72,7 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 | [hve-core/copilot-tracking.instructions.md](hve-core/copilot-tracking.instructions.md)                   | RPI, HVE Builder, and proposal-response tracking folders | Intermediate tracking artifact conventions       |
 | [hve-core/copilot-tracking-location.instructions.md](hve-core/copilot-tracking-location.instructions.md) | `**/.copilot-tracking/**`                                | Tracking root and ignored-file search            |
 | [hve-core/licensing-posture.instructions.md](hve-core/licensing-posture.instructions.md)                 | `**/skills/**, **/.copilot-tracking/**`                  | Licensing, reproduction, and attribution posture |
-| [skill-security-model.instructions.md](skill-security-model.instructions.md)                             | `**/.github/skills/**/SECURITY.md`                       | Per-skill STRIDE security model rules            |
+| [skill-security-model.instructions.md](skill-security-model.instructions.md)                             | Skill `SECURITY.md`, skill scripts, classification JSON  | Per-skill STRIDE security model rules            |
 | [workflows.instructions.md](workflows.instructions.md)                                                   | `**/.github/workflows/*.yml`                             | GitHub Actions workflow conventions              |
 
 ### GitHub Integration
@@ -142,7 +142,7 @@ The instructions below are scoped to specific planning agents and their `.copilo
 | [experimental/experiment-designer.instructions.md](experimental/experiment-designer.instructions.md) | `**/.copilot-tracking/mve/**` | MVE experiment designer conventions |
 | [experimental/pptx.instructions.md](experimental/pptx.instructions.md)                               | `**/.copilot-tracking/ppt/**` | PowerPoint builder conventions      |
 
-The `experimental/mural/` directory holds the Mural workflow instruction set (bootstrap, seeding, writeback, and log-hygiene rules) scoped to the DT, RAI, and UX/UI agents; see [experimental/mural/mural-bootstrap.instructions.md](experimental/mural/mural-bootstrap.instructions.md) as the entry point.
+Mural workflow rules (bootstrap, seeding, writeback, writing style, destinations, and log hygiene) are on-demand references in the `mural` skill rather than instruction files, so they load only when a workflow uses Mural.
 
 ### GitLab Workflow Entry Points
 
@@ -181,8 +181,7 @@ Activate the `hve-builder` skill:
 3. HVE Builder resolves the mode, write boundary, and applicable conventions
 4. HVE Builder runs a review pass against its requirements catalog and review rubric, reviewing the candidate itself or dispatching the read-only `HVE Builder Reviewer` subagent in fresh context, and verifies every finding before recording it
 5. Known target files and caller-supplied canonical references remain bounded lifecycle reads; open-ended exploration and decision-critical research activate `rpi-research`
-6. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases
-7. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome
+6. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome
 
 For manual creation, see [Contributing Instructions](../../docs/contributing/instructions.md).
 
@@ -216,15 +215,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── python-tests.instructions.md
 │   └── uv-projects.instructions.md
 ├── experimental/                     # Experimental workflows
-│   ├── mural/
-│   │   ├── destinations/
-│   │   ├── mural-bootstrap.instructions.md
-│   │   ├── mural-destinations.instructions.md
-│   │   ├── mural-human-record.instructions.md
-│   │   ├── mural-log-hygiene.instructions.md
-│   │   ├── mural-seeding-patterns.instructions.md
-│   │   ├── mural-writeback-hygiene.instructions.md
-│   │   └── mural-writing-style.instructions.md
 │   ├── experiment-designer.instructions.md
 │   └── pptx.instructions.md
 ├── hve-core/                         # HVE Core workflow

@@ -876,6 +876,99 @@ Describe 'component-copy destination containment' -Tag 'Unit' {
     }
 }
 
+Describe 'component-copy source and manifest link refusal' -Tag 'Unit' {
+    BeforeEach {
+        $script:linkFixture = New-ComponentCopyFixture
+        $script:linkOutside = Join-Path $script:linkFixture.Root 'outside'
+        New-Item -ItemType Directory -Path $script:linkOutside -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $script:linkOutside 'secret.txt') -Value 'outside-secret' -NoNewline
+    }
+
+    It 'Refuses a skill whose source directory is a link, in normal and report-only modes' {
+        if (-not $script:linkFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $skillPath = Join-Path $script:linkFixture.Source '.github/skills/rpi/rpi-plan'
+        Remove-Item -LiteralPath $skillPath -Recurse -Force
+        Set-Content -LiteralPath (Join-Path $script:linkOutside 'SKILL.md') -Value '# Outside' -NoNewline
+        New-Item -ItemType SymbolicLink -Path $skillPath -Target $script:linkOutside -ErrorAction Stop | Out-Null
+
+        { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('skills/rpi/rpi-plan') } |
+            Should -Throw -ExpectedMessage '*source resolves through a link*'
+        { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('skills/rpi/rpi-plan') -ReportOnly } |
+            Should -Throw -ExpectedMessage '*source resolves through a link*'
+
+        Get-TargetFile -Fixture $script:linkFixture | Should -BeNullOrEmpty
+    }
+
+    It 'Refuses a component whose source ancestor directory is a link' {
+        if (-not $script:linkFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $ancestorPath = Join-Path $script:linkFixture.Source '.github/agents/hve-core'
+        Remove-Item -LiteralPath $ancestorPath -Recurse -Force
+        Set-Content -LiteralPath (Join-Path $script:linkOutside 'rpi-agent.agent.md') -Value '# Outside agent' -NoNewline
+        New-Item -ItemType SymbolicLink -Path $ancestorPath -Target $script:linkOutside -ErrorAction Stop | Out-Null
+
+        { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage '*source resolves through a link*'
+
+        Get-TargetFile -Fixture $script:linkFixture | Should -BeNullOrEmpty
+    }
+
+    It 'Refuses a single-file component whose source file is a link' {
+        if (-not $script:linkFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $agentPath = Join-Path $script:linkFixture.Source '.github/agents/hve-core/rpi-agent.agent.md'
+        Remove-Item -LiteralPath $agentPath -Force
+        New-Item -ItemType SymbolicLink -Path $agentPath -Target (Join-Path $script:linkOutside 'secret.txt') -ErrorAction Stop | Out-Null
+
+        { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage '*source resolves through a link*'
+
+        Get-TargetFile -Fixture $script:linkFixture | Should -BeNullOrEmpty
+    }
+
+    It 'Refuses a tracking manifest that is a link and leaves its target unchanged' {
+        if (-not $script:linkFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $victim = Join-Path $script:linkOutside 'victim.json'
+        Set-Content -LiteralPath $victim -Value '{"schemaVersion":2,"files":{}}' -NoNewline
+        $before = [System.IO.File]::ReadAllBytes($victim)
+        New-Item -ItemType SymbolicLink -Path (Join-Path $script:linkFixture.Target '.hve-tracking.json') -Target $victim -ErrorAction Stop | Out-Null
+
+        { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage '*Tracking manifest*is a link*'
+
+        [System.IO.File]::ReadAllBytes($victim) | Should -Be $before
+        Test-Path -LiteralPath (Join-Path $script:linkFixture.Target '.github') | Should -BeFalse
+
+        # A dangling link must be refused too, even where Test-Path reports it as
+        # absent; the mock simulates PowerShell releases that behave that way.
+        $manifestLink = Join-Path $script:linkFixture.Target '.hve-tracking.json'
+        Remove-Item -LiteralPath $manifestLink -Force
+        $danglingTarget = Join-Path $script:linkOutside 'dangling-manifest.json'
+        New-Item -ItemType SymbolicLink -Path $manifestLink -Target $danglingTarget -ErrorAction Stop | Out-Null
+        Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -like '*.hve-tracking.json' }
+
+        { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage '*Tracking manifest*is a link*'
+
+        [System.IO.File]::Exists($danglingTarget) | Should -BeFalse
+        [System.IO.Directory]::Exists((Join-Path $script:linkFixture.Target '.github')) | Should -BeFalse
+    }
+}
+
 Describe 'component-copy containment parity' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
     BeforeEach {
         $script:parityFixture = New-ComponentCopyFixture
@@ -918,5 +1011,94 @@ Describe 'component-copy containment parity' -Tag 'Unit' -Skip:(-not $script:Bas
 
         $bashInstalled | Should -Be $powerShellInstalled
         $powerShellInstalled | Should -BeTrue
+    }
+
+    It 'Reaches the same refusal verdict in both shells for a linked source skill directory' {
+        if (-not $script:parityFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $skillPath = Join-Path $script:parityFixture.Source '.github/skills/rpi/rpi-plan'
+        Remove-Item -LiteralPath $skillPath -Recurse -Force
+        Set-Content -LiteralPath (Join-Path $script:parityOutside 'SKILL.md') -Value '# Outside' -NoNewline
+        New-Item -ItemType SymbolicLink -Path $skillPath -Target $script:parityOutside -ErrorAction Stop | Out-Null
+
+        $powerShellRefused = $false
+        try { Invoke-ComponentCopy -Fixture $script:parityFixture -Component @('skills/rpi/rpi-plan') | Out-Null }
+        catch { $powerShellRefused = $true }
+
+        $bashOutput = Invoke-BashComponentCopy -Fixture $script:parityFixture -Component @('skills/rpi/rpi-plan')
+        $bashRefused = $LASTEXITCODE -ne 0
+
+        $powerShellRefused | Should -BeTrue
+        $bashRefused | Should -Be $powerShellRefused
+        $bashOutput | Should -Match 'source resolves through a link'
+        Get-TargetFile -Fixture $script:parityFixture | Should -BeNullOrEmpty
+    }
+
+    It 'Reaches the same refusal verdict in both shells for a linked single-file source' {
+        if (-not $script:parityFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $agentPath = Join-Path $script:parityFixture.Source '.github/agents/hve-core/rpi-agent.agent.md'
+        Remove-Item -LiteralPath $agentPath -Force
+        New-Item -ItemType SymbolicLink -Path $agentPath -Target (Join-Path $script:parityOutside 'bystander.txt') -ErrorAction Stop | Out-Null
+
+        $powerShellRefused = $false
+        try { Invoke-ComponentCopy -Fixture $script:parityFixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null }
+        catch { $powerShellRefused = $true }
+
+        $bashOutput = Invoke-BashComponentCopy -Fixture $script:parityFixture -Component @('agents/hve-core/rpi-agent.md')
+        $bashRefused = $LASTEXITCODE -ne 0
+
+        $powerShellRefused | Should -BeTrue
+        $bashRefused | Should -Be $powerShellRefused
+        $bashOutput | Should -Match 'source resolves through a link'
+        Get-TargetFile -Fixture $script:parityFixture | Should -BeNullOrEmpty
+    }
+
+    It 'Reaches the same refusal verdict in both shells for a linked tracking manifest' {
+        if (-not $script:parityFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $victim = Join-Path $script:parityOutside 'victim.json'
+        Set-Content -LiteralPath $victim -Value '{"schemaVersion":2,"files":{}}' -NoNewline
+        $before = [System.IO.File]::ReadAllBytes($victim)
+        New-Item -ItemType SymbolicLink -Path (Join-Path $script:parityFixture.Target '.hve-tracking.json') -Target $victim -ErrorAction Stop | Out-Null
+
+        $powerShellRefused = $false
+        try { Invoke-ComponentCopy -Fixture $script:parityFixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null }
+        catch { $powerShellRefused = $true }
+
+        $bashOutput = Invoke-BashComponentCopy -Fixture $script:parityFixture -Component @('agents/hve-core/rpi-agent.md')
+        $bashRefused = $LASTEXITCODE -ne 0
+
+        $powerShellRefused | Should -BeTrue
+        $bashRefused | Should -Be $powerShellRefused
+        $bashOutput | Should -Match 'is a link'
+        [System.IO.File]::ReadAllBytes($victim) | Should -Be $before
+
+        # Both shells must also refuse a dangling manifest link.
+        $manifestLink = Join-Path $script:parityFixture.Target '.hve-tracking.json'
+        Remove-Item -LiteralPath $manifestLink -Force
+        $danglingTarget = Join-Path $script:parityOutside 'dangling-manifest.json'
+        New-Item -ItemType SymbolicLink -Path $manifestLink -Target $danglingTarget -ErrorAction Stop | Out-Null
+
+        $powerShellRefusedDangling = $false
+        try { Invoke-ComponentCopy -Fixture $script:parityFixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null }
+        catch { $powerShellRefusedDangling = $true }
+
+        $bashDanglingOutput = Invoke-BashComponentCopy -Fixture $script:parityFixture -Component @('agents/hve-core/rpi-agent.md')
+        $bashRefusedDangling = $LASTEXITCODE -ne 0
+
+        $powerShellRefusedDangling | Should -BeTrue
+        $bashRefusedDangling | Should -Be $powerShellRefusedDangling
+        $bashDanglingOutput | Should -Match 'is a link'
+        [System.IO.File]::Exists($danglingTarget) | Should -BeFalse
     }
 }

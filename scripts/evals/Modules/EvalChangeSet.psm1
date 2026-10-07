@@ -102,9 +102,6 @@ function New-EvalChangeSet {
     Resolves two commits and freezes their three-dot comparison.
     .PARAMETER BaseRef
     Explicit base revision.
-    .PARAMETER MergeRef
-    Pull request test-merge commit; its first parent becomes the base after its
-    second parent is verified to equal HeadRef.
     .PARAMETER HeadRef
     Explicit head revision, never inferred from the checkout.
     .PARAMETER RepoRoot
@@ -114,11 +111,10 @@ function New-EvalChangeSet {
     .OUTPUTS
     System.Collections.IDictionary
     #>
-    [CmdletBinding(DefaultParameterSetName = 'Base')]
+    [CmdletBinding()]
     [OutputType([System.Collections.IDictionary])]
     param(
-        [Parameter(Mandatory, ParameterSetName = 'Base')][string]$BaseRef,
-        [Parameter(Mandatory, ParameterSetName = 'Merge')][string]$MergeRef,
+        [Parameter(Mandatory)][string]$BaseRef,
         [Parameter(Mandatory)][string]$HeadRef,
         [Parameter(Mandatory)][string]$RepoRoot,
         [string]$GitCommand = 'git'
@@ -126,20 +122,7 @@ function New-EvalChangeSet {
 
     $Git = @{ RepoRoot = $RepoRoot; GitCommand = $GitCommand }
     $Head = (Invoke-EvalGit @Git -Arguments @('rev-parse', '--verify', '--end-of-options', "$HeadRef^{commit}")).Trim()
-    if ($PSCmdlet.ParameterSetName -eq 'Merge') {
-        $Merge = (Invoke-EvalGit @Git -Arguments @('rev-parse', '--verify', '--end-of-options', "$MergeRef^{commit}")).Trim()
-        $Parents = @((Invoke-EvalGit @Git -Arguments @('rev-list', '--parents', '-n', '1', $Merge)).Trim() -split '\s+' | Select-Object -Skip 1)
-        if ($Parents.Count -ne 2) {
-            throw "Merge ref $Merge must have exactly two parents; found $($Parents.Count)."
-        }
-        if ($Parents[1] -ne $Head) {
-            throw "Merge ref $Merge second parent $($Parents[1]) does not match head $Head."
-        }
-        $Base = $Parents[0]
-    }
-    else {
-        $Base = (Invoke-EvalGit @Git -Arguments @('rev-parse', '--verify', '--end-of-options', "$BaseRef^{commit}")).Trim()
-    }
+    $Base = (Invoke-EvalGit @Git -Arguments @('rev-parse', '--verify', '--end-of-options', "$BaseRef^{commit}")).Trim()
     $MergeBases = (Invoke-EvalGit @Git -Arguments @('merge-base', '--all', $Base, $Head)).Trim() -split '\r?\n'
     if ($MergeBases.Count -ne 1) { throw 'Eval comparison requires exactly one merge base.' }
     $ComparisonBase = $MergeBases[0]

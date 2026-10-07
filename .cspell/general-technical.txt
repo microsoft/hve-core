@@ -77,6 +77,7 @@ backlink
 backlinks
 backticked
 bargauge
+basehead
 beforeall
 blockchain
 chatbot
@@ -853,6 +854,7 @@ rbsc
 rcnn
 rdbms
 rdma
+readback
 readonly
 rearchitect
 rearchitected

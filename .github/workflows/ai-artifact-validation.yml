@@ -30,12 +30,19 @@ jobs:
         uses: ./.github/actions/setup-ps-modules
 
       - name: Validate AI artifact footers and disclaimers
-        id: validate
+        id: planner-artifacts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
           & scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing
-        continue-on-error: ${{ inputs.soft-fail }}
+        continue-on-error: true
+
+      - name: Validate artifact path portability
+        id: artifact-portability
+        shell: pwsh
+        run: |
+          & scripts/linting/Test-ArtifactPathPortability.ps1
+        continue-on-error: true
 
       - name: Upload results
         if: always()
@@ -44,12 +51,19 @@ jobs:
           name: ai-artifact-results
           path: |
             logs/ai-artifact-results.json
+            logs/artifact-path-portability-results.json
           retention-days: 30
           if-no-files-found: ignore
 
       - name: Check results
-        if: always() && steps.validate.outcome == 'failure' && !inputs.soft-fail
+        if: >-
+          always() &&
+          !inputs.soft-fail &&
+          (
+            steps.planner-artifacts.outcome == 'failure' ||
+            steps.artifact-portability.outcome == 'failure'
+          )
         shell: pwsh
         run: |
-          Write-Error "AI artifact validation found violations — check uploaded results for details"
+          Write-Error "AI artifact validation found violations; check uploaded results for details."
           exit 1

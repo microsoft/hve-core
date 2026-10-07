@@ -300,6 +300,34 @@ not complete the suite. Locally, first determine whether the browser and its
 dependencies were provisioned before treating a launch failure as a product
 failure.
 
+## CodeQL threshold gate
+
+Every CodeQL analysis job runs `scripts/security/Test-CodeQLSarifThreshold.ps1`
+after it uploads results. The job fails when its SARIF contains a security
+result with `security-severity` of 4.0 or higher, or an error- or
+warning-level result from a rule without a security severity. Because the gate
+runs inside the CodeQL job, it fails `PR Validation Success` in pull requests
+and in merge-queue groups.
+
+A gate failure means the change, or the branch it merged with, carries a
+finding at that threshold. The job summary lists each result with its rule,
+severity, path, and line. Resolve it in code or configuration. Dismissing the
+alert does not clear the gate, and dismissal is not allowed; see the
+[code-scanning alert lifecycle](../security/code-scanning-alert-lifecycle.md)
+for the exception route.
+
+To reproduce a result locally, download the analysis SARIF from the Security
+tab or the code-scanning API, then run the gate against the file or a
+directory of SARIF files:
+
+```powershell
+npm run security:codeql-gate -- -SarifPath ./python.sarif
+```
+
+The gate reads `security/code-scanning-exceptions.yml` and needs the pinned
+`PowerShell-Yaml` module. It makes no network calls and does not change alert
+state.
+
 ## Rust unit-test network-isolation lane
 
 The Rust network-isolation trace is an operator-invoked CI-owned test lane. No

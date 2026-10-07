@@ -180,7 +180,7 @@ Offer naturally: "Would you like to export these artifacts to a FigJam board for
 
 Offer to seed a Mural board for the active method at the same milestones (Methods 1, 3, 4, 5, 6). Confirm the user wants the Mural board seeded for Method N before invoking the verb sequence; the agent runs the sequence inline rather than handing off to a separate prompt.
 
-Declare this board-seeding flow as `mode=facilitator`; never infer mode from the request. Before any `mural <verb>` call in a fresh session, run `mural doctor --require-scope murals:write`. Add `--require-scope templates:read` when the confirmed sequence uses template instantiation. Act on the verdict according to `#file:../../instructions/experimental/mural/mural-bootstrap.instructions.md`. Report the exact verdict token and remediation, then stop and wait for retry on any non-ready verdict, including `needs_scope_upgrade`. Before invoking the Mural skill, own the method-specific board contract: choose the element type for each output block using the explicit widget-type decision rule in `#file:../../instructions/experimental/mural/mural-seeding-patterns.instructions.md`, decompose method artifacts into the expected widget count, resolve the target parent area or anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
+Declare this board-seeding flow as `mode=facilitator`; never infer mode from the request. Before any `mural <verb>` call in a fresh session, run `mural doctor --require-scope murals:write`. Add `--require-scope templates:read` when the confirmed sequence uses template instantiation. Act on the verdict according to the `mural` skill `references/bootstrap.md`. Report the exact verdict token and remediation, then stop and wait for retry on any non-ready verdict, including `needs_scope_upgrade`. Before invoking the Mural skill, own the method-specific board contract: choose the element type for each output block using the explicit widget-type decision rule in the `mural` skill `references/seeding-patterns.md`, decompose method artifacts into the expected widget count, resolve the target parent area or anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
 
 Verb sequence per method:
 
@@ -190,7 +190,7 @@ Verb sequence per method:
 * `mural widget create-bulk` to write generated widgets into each area, applying the reserved tag `dt-method-{N}` so downstream extraction can scope by method.
 * `mural layout grid` to arrange generated widgets cleanly within each area.
 
-Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by `#file:../../instructions/experimental/mural/mural-seeding-patterns.instructions.md`. Follow that file rather than restating the patterns here.
+Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by the `mural` skill `references/seeding-patterns.md`. Follow that file rather than restating the patterns here.
 
 When the team declines a previewed Mural write, acknowledge the decline, state that no board change will occur, and continue coaching with the next method step. Do not re-offer that specific write during the current checkpoint unless the team explicitly asks.
 

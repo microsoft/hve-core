@@ -5,6 +5,21 @@ name: Gitleaks Secret Scan
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or scan full repository history'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       soft-fail:
         description: 'Whether to continue on secret detection'
         required: false
@@ -20,11 +35,6 @@ on:
         required: false
         type: boolean
         default: true
-      log-opts:
-        description: 'Extra git log options passed to gitleaks (e.g. a revision range to scope the scan)'
-        required: false
-        type: string
-        default: ''
 
 permissions:
   contents: read
@@ -42,6 +52,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
+            echo "::error::Checked-out commit ${actual_head_sha} does not match the resolved head commit."
+            exit 1
+          fi
 
       - name: Download and verify gitleaks
         shell: bash
@@ -70,7 +93,9 @@ jobs:
         id: gitleaks
         shell: bash
         env:
-          INPUT_LOG_OPTS: ${{ inputs.log-opts }}
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+          INPUT_HEAD_SHA: ${{ inputs.head-sha }}
           INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
         run: |
           set -euo pipefail
@@ -85,10 +110,19 @@ jobs:
             "--log-level" "info"
           )
 
-          LOG_OPTS="$INPUT_LOG_OPTS"
-          if [ -n "$LOG_OPTS" ]; then
-            SCAN_ARGS+=("--log-opts=$LOG_OPTS")
-            echo "Scoping scan with log-opts: $LOG_OPTS"
+          if [ "$INPUT_CHANGE_MODE" = 'range' ]; then
+            if [ -z "$INPUT_BASE_SHA" ] || [ -z "$INPUT_HEAD_SHA" ]; then
+              echo '::error::Range mode requires immutable base and head commit IDs.'
+              exit 1
+            fi
+            SCAN_ARGS+=("--log-opts=--diff-merges=first-parent ${INPUT_BASE_SHA}..${INPUT_HEAD_SHA}")
+            echo 'Scanning the verified immutable workflow range, including first-parent merge-commit patches.'
+          elif [ "$INPUT_CHANGE_MODE" = 'full' ]; then
+            SCAN_ARGS+=("--log-opts=--full-history --diff-filter=tuxdb --diff-merges=first-parent HEAD")
+            echo 'Full validation mode selected; scanning the full history of the checked-out commit, including first-parent merge-commit patches.'
+          else
+            echo "::error::Unsupported change mode: $INPUT_CHANGE_MODE"
+            exit 1
           fi
 
           # Respect .gitleaksignore for pre-existing secrets

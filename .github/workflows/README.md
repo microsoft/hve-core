@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-21
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - github actions
@@ -47,20 +47,119 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                           |
-|-----------------------------------|---------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
-| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
-| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
-| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
-| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
-| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
-| `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                         | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
-| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
-| `backlog-groom-publisher.yml`     | Completed sweep                                         | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                           |
-| `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)  | SARIF upload                  | OpenSSF Scorecard security posture                                                |
+| Workflow                          | Triggers                                                                     | Mode                          | Purpose                                                                           |
+|-----------------------------------|------------------------------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main, develop, or either release branch; merge group to main; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
+| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                                                | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
+| `release-prerelease.yml`          | Merged PR to `release/prerelease`                                            | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
+| `release-stable.yml`              | Published PreRelease; dispatch                                               | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`                                                | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
+| `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                                              | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
+| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                                       | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
+| `backlog-groom-publisher.yml`     | Completed sweep                                                              | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                                       | Soft-fail warnings            | Weekly security posture                                                           |
+| `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)                       | SARIF upload                  | OpenSSF Scorecard security posture                                                |
 
 The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
+
+### Merge Queue Contract
+
+`pr-validation.yml` owns both pull-request validation and the `merge_group`
+`checks_requested` event for candidates targeting `main`. Reusable workflows do
+not subscribe to merge-group events independently. The aggregate resolves one
+immutable base and head pair, then passes that decision to every changed-file
+selector.
+
+Range mode validates the exact resolved commits. The resolver picks a base per
+event and verifies it before use:
+
+* Pull requests use the first parent of the checked-out test-merge commit after
+  verifying that its second parent is the pull request head.
+* Merge groups use the merge-group base and head commits.
+* Manual dispatch uses the merge base of the checked-out commit and
+  `origin/<default branch>`.
+
+Every range requires a base that is an ancestor of the head and distinct from
+it, a head equal to the checked-out commit, and a pair Git can diff. Any failed
+check, or an event without a range rule, selects full mode with empty commit
+IDs. A manual dispatch from the default-branch tip, or from a branch with no
+commits ahead of it, therefore selects full mode rather than an empty range.
+
+Every range-capable reusable workflow checks out `github.sha`, the trusted
+event commit, instead of a caller-supplied ref. In range mode, each job then
+fails before it runs repository code unless `HEAD` equals the resolved head
+commit.
+
+Full mode runs each owning validation across its complete scope instead of
+skipping it:
+
+* Content moderation covers every eval spec and every tracked AI artifact.
+* Agent-eval selection fails, because a pull request or manual dispatch reaches
+  full mode only when the resolver cannot prove a non-empty range. Dispatch
+  from a branch with commits ahead of the default branch to select agent evals.
+* ms.date freshness checks every markdown file but reports stale files as an
+  advisory warning for the aggregate's changed-files caller, because staleness
+  accrues with time rather than with the change. The weekly repository-wide run
+  stays blocking.
+* Gitleaks scans every commit reachable from the checked-out commit instead of
+  every fetched ref, keeping its default history and diff filters and adding
+  first-parent merge patches.
+
+Gitleaks passes `--diff-merges=first-parent` in both modes, so content that
+exists only in a merge commit, such as a conflict resolution, is scanned
+against the merge's first parent.
+
+`PR Validation Success` is the sole stable required status context for hosted
+branch and queue policy. Do not require individual validation or matrix-job
+contexts because those names and cardinalities can change. The aggregate gate
+must continue to depend on every non-gate job, as enforced by
+`npm run lint:pr-gate`.
+
+Merge-group evals run unprivileged relevance, lint, and content-moderation
+validation without `COPILOT_GITHUB_TOKEN`. The aggregate passes the custom
+token only for manual dispatch and for pull requests whose head repository
+`full_name` equals `github.repository`, and passes an empty value for merge
+groups, fork pull requests, and every other event. Every eval job that uses
+the token, or needs a job that does, repeats that same-repository check. The
+`full_name` comparison fails closed when the head repository is missing, unlike
+a `fork == false` check, which GitHub's type coercion treats as true for a
+missing value. Manual dispatch resolves a range against the default branch, so
+when the dispatched commit is ahead of the default branch it selects agent
+evals the same way a pull request does. Gitleaks scans the resolved commit
+range in range mode.
+
+Merge-group runs execute in the base-repository context, including for pull
+requests that originated in a fork. Their jobs can reach `id-token: write` for
+Codecov OIDC uploads, `security-events: write` for SARIF uploads, and
+`pull-requests: write`, which only the pull-request-only eval report uses. No
+secret other than the gated `COPILOT_GITHUB_TOKEN` is passed. The merge-queue
+contract test pins each job's write scopes and the workflow's secret references
+so that a new grant fails until it is reviewed.
+
+Pull requests and merge groups share a concurrency group per ref and cancel
+superseded runs. Each manual dispatch run gets its own concurrency group, so
+manual runs do not cancel each other.
+
+Workflow compatibility must reach `main` before maintainers activate or change
+the hosted ruleset. The confirmed initial hosted policy is intentionally
+serial:
+
+| Hosted setting           | Confirmed value         |
+|--------------------------|-------------------------|
+| Merge method             | Squash                  |
+| Build concurrency        | `1`                     |
+| Minimum merge group size | `1`                     |
+| Maximum merge group size | `1`                     |
+| Strict branch freshness  | Disabled                |
+| Required status context  | `PR Validation Success` |
+
+These values describe the activation target, not evidence that Merge Queue is
+active. Before applying the hosted policy, administrators confirm that no
+federated identity credential, in Azure, Entra ID, or elsewhere, trusts a
+wildcard branch subject that matches `refs/heads/gh-readonly-queue/main/*`.
+After the compatible workflow is on `main`, apply the hosted policy and
+queue one pull request to prove that the merge-group run reports the stable
+context and completes a squash merge.
 
 release-stable.yml jobs: prepare-promotion, open-promotion-pr
 
@@ -109,15 +208,9 @@ be restored only before publication. The producer has no default
 a tag or converts a published release back to draft. Bounded discovery is a
 fail-closed safety control, not a draft-visibility guarantee.
 
-| Registration                               | Repository contract                                    |
-|--------------------------------------------|--------------------------------------------------------|
-| `microsoft/hve-core`                       | Ref-less development-tip registration for `main`       |
-| `microsoft/hve-core#release/prerelease`    | Moving registration for the reviewed PreRelease branch |
-| `microsoft/hve-core#release/stable`        | Moving registration for the reviewed Stable branch     |
-| `microsoft/hve-core#prerelease-v<version>` | Immutable exact PreRelease registration                |
-| `microsoft/hve-core#v<version>`            | Immutable exact Stable registration                    |
+The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`. Release channels apply to the VSIX only; there are no release-channel plugin registrations.
 
-Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for ref-less main, which has no release gate, SBOM, or attestation. Release-channel assets remain release-gated, SBOM-covered, and attested.
+Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for the `main` registration, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../docs/contributing/release-process.md#continuous-main-sbom). Release-channel VSIX assets remain release-gated, SBOM-covered, and attested.
 
 Both release channels preserve one VSIX, its SPDX, Sigstore, and in-toto
 sidecars, `dependencies.spdx.json`, provenance verification, and Azure OIDC
@@ -170,7 +263,7 @@ release-state decision. Odd/even minor parity remains repository policy
 aligned with VS Code Marketplace guidance and behavior, rather than a
 requirement of `MAJOR.MINOR.PATCH` syntax.
 
-Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, release-gated VSIX assets remain SBOM-covered, attested, and immutable. The ref-less main catalog instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
+Reviewed, release-gated VSIX assets from release branches and exact tags remain SBOM-covered, attested, and immutable. The Copilot CLI plugin registration instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
 
 Final publication in `release-vsix-publish.yml` mints a release GitHub App
 token and atomically runs the channel-specific `gh release edit` command with
@@ -212,9 +305,17 @@ handoff can proceed to GitHub Backlog Executor, and `Close` remains prohibited.
 The reducer retains detailed JSON and Markdown for 30 days and writes the exact
 terminal artifact identity to its job summary. It does not mutate the tracker.
 Completion activates `backlog-groom-publisher.yml` through the platform
-`workflow_run` event. The publisher resolves the terminal artifact from the
-completed run, authenticates its producer and source revision, revalidates the
-final aggregate, and compares the trusted tracker state before any persistence.
+`workflow_run` event. The trigger accepts runs from `main` and from
+`backlog-grooming-sweep/**`, because continuation waves run at the pinned
+execution tag. The publisher resolves the terminal artifact from the completed
+run, authenticates its producer and source revision, revalidates the final
+aggregate, and compares the trusted tracker state before any persistence.
+
+Discovery skips runs from any other ref without failing. A tag-origin run must
+name the final artifact's sweep, the tag must still pin the run's commit, and
+the sweep's single retained snapshot must come from a default-branch
+orchestrator run at that same commit. Every terminal run's source revision must
+be contained in the current default branch.
 
 Core publication revalidates the aggregate and updates or reopens the compact
 bot-owned tracker without report-history or Pages permissions, wording, or
@@ -252,17 +353,18 @@ only `github-actions[bot]` may supply it. Partial tuples, human-supplied
 continuation state, unknown protocol versions, and moved source refs fail before
 worker execution.
 
-| Orchestrator input       | Type     | Default                     | Valid value or range                         | Applies to   | Permission effect             |
-|--------------------------|----------|-----------------------------|----------------------------------------------|--------------|-------------------------------|
-| `protocol-version`       | `string` | `backlog-grooming-sweep/v1` | Exact supported version                      | Both         | None                          |
-| `sweep-id`               | `string` | Empty                       | Empty initially; 64 lowercase hex characters | Continuation | Binds artifact discovery      |
-| `wave-number`            | `number` | `1`                         | `1` initially; `2..required_waves` afterward | Both         | Controls one bounded wave     |
-| `snapshot-run-id`        | `string` | Empty                       | Positive run ID from the accepted snapshot   | Continuation | Requires plan `actions: read` |
-| `snapshot-artifact-id`   | `string` | Empty                       | Positive immutable artifact ID               | Continuation | Requires plan `actions: read` |
-| `snapshot-digest`        | `string` | Empty                       | 64 lowercase hex characters                  | Continuation | No added permission           |
-| `checkpoint-run-id`      | `string` | Empty                       | Positive predecessor run ID                  | Continuation | Requires plan `actions: read` |
-| `checkpoint-artifact-id` | `string` | Empty                       | Positive immutable artifact ID               | Continuation | Requires plan `actions: read` |
-| `checkpoint-digest`      | `string` | Empty                       | 64 lowercase hex characters                  | Continuation | No added permission           |
+| Orchestrator input       | Type     | Default                     | Valid value or range                            | Applies to   | Permission effect                       |
+|--------------------------|----------|-----------------------------|-------------------------------------------------|--------------|-----------------------------------------|
+| `protocol-version`       | `string` | `backlog-grooming-sweep/v1` | Exact supported version                         | Both         | None                                    |
+| `source-ref`             | `string` | Empty                       | Empty initially; initiating fully qualified ref | Continuation | Binds concurrency and snapshot identity |
+| `sweep-id`               | `string` | Empty                       | Empty initially; 64 lowercase hex characters    | Continuation | Binds artifact discovery                |
+| `wave-number`            | `number` | `1`                         | `1` initially; `2..required_waves` afterward    | Both         | Controls one bounded wave               |
+| `snapshot-run-id`        | `string` | Empty                       | Positive run ID from the accepted snapshot      | Continuation | Requires plan `actions: read`           |
+| `snapshot-artifact-id`   | `string` | Empty                       | Positive immutable artifact ID                  | Continuation | Requires plan `actions: read`           |
+| `snapshot-digest`        | `string` | Empty                       | 64 lowercase hex characters                     | Continuation | No added permission                     |
+| `checkpoint-run-id`      | `string` | Empty                       | Positive predecessor run ID                     | Continuation | Requires plan `actions: read`           |
+| `checkpoint-artifact-id` | `string` | Empty                       | Positive immutable artifact ID                  | Continuation | Requires plan `actions: read`           |
+| `checkpoint-digest`      | `string` | Empty                       | 64 lowercase hex characters                     | Continuation | No added permission                     |
 
 Publication derives the run, artifact, sweep, and source identities only from
 the completed orchestrator run delivered by `workflow_run`. The publisher has
@@ -272,15 +374,21 @@ retained, rerun the failed jobs in that original publisher run. When the
 artifact has expired or its source revision is no longer accepted, start a new
 sweep instead of replaying publication from another ref.
 
+A dispatch from `backlog-grooming-sweep/<sweep-id>` with continuation inputs
+empty is recovery only. It resumes that sweep's retained snapshot, no-ops when
+the sweep is already complete, and fails closed when the snapshot is missing,
+expired, or invalid. It never captures a new snapshot.
+
 ### Permissions
 
 | Job or workflow        | Permissions                                        | Responsibility                                               |
 |------------------------|----------------------------------------------------|--------------------------------------------------------------|
 | Plan                   | `actions: read`, `issues: read`                    | Capture or recover the snapshot and plan one wave            |
+| Pin source             | `contents: write`                                  | Create or verify the execution tag before workers run        |
 | Assess                 | `actions: write`, `contents: read`, `issues: read` | Run the bounded workers and upload shard evidence            |
 | Validate and reduce    | `actions: read`                                    | Validate immutable artifacts and reconstruct results         |
 | Checkpoint             | `actions: read`                                    | Persist one accepted checkpoint after exact wave validation  |
-| Continue               | `actions: write`, `contents: read`                 | Dispatch exactly one authenticated successor                 |
+| Continue               | `actions: write`, `contents: read`                 | Verify the execution tag and dispatch one successor          |
 | Core publisher         | `actions: read`, `issues: write`                   | Revalidate the aggregate and update the compact tracker      |
 | Optional history       | `actions: read`, `contents: write`                 | Persist authenticated report history when explicitly enabled |
 | Optional Pages request | `actions: write`, `contents: read`                 | Dispatch the existing docs deployment at the report head     |
@@ -360,7 +468,7 @@ repository and account billing before approving a large snapshot.
 | Workflow duration   | A workflow run may last 35 days, but this design starts one sequential run per wave                                                                            |
 | Event rate          | GitHub limits workflow-triggering events to 1,500 per 10 seconds per repository                                                                                |
 | Queued runs         | GitHub limits queued workflow runs to 500 per 10 seconds; account concurrency and larger-runner limits also apply                                              |
-| Sweep concurrency   | One repository/ref concurrency group runs at a time with `cancel-in-progress: false`                                                                           |
+| Sweep concurrency   | One repository-wide concurrency group runs at a time with `cancel-in-progress: false`                                                                          |
 | Primary REST rate   | `GITHUB_TOKEN` normally receives 1,000 requests per hour per repository; qualifying Enterprise Cloud resources may receive 15,000                              |
 | Secondary REST rate | GitHub documents 100 concurrent requests and 900 REST points per minute, plus content-creation limits                                                          |
 | Discovery metadata  | At most 500 snapshot and checkpoint candidates are authenticated by producer metadata per discovery pass                                                       |
@@ -368,7 +476,7 @@ repository and account billing before approving a large snapshot.
 | Artifact retrieval  | Cross-run download requires an authenticated token and exact run ID; artifact ID, name, producer workflow, run, source SHA, schema, and digest are revalidated |
 | Artifact retention  | Sweep-critical artifacts use 30-day retention; when enabled, accepted final reports persist on the report-history branch and Pages                             |
 | Artifact storage    | Stored bytes count against repository or account quotas; artifact count grows per wave and with reruns                                                         |
-| Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses nine and the publisher uses none                            |
+| Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses ten and the publisher uses none                             |
 | Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; enabled optional publication escapes detailed evidence for Pages                         |
 
 See GitHub's [Actions limits](https://docs.github.com/en/actions/reference/limits),
@@ -382,50 +490,58 @@ account concurrency, and billing limits.
 
 ### Failure and recovery
 
-| Condition                                                               | Detection                                                       | Tracker and cursor | Automatic behavior                                            | Operator recovery                                                            | Reassessment                              |
-|-------------------------------------------------------------------------|-----------------------------------------------------------------|--------------------|---------------------------------------------------------------|------------------------------------------------------------------------------|-------------------------------------------|
-| Worker timeout or missing shard                                         | Shared validator cannot find the exact result set               | Unchanged          | No aggregate, checkpoint, or successor                        | Rerun the bound wave                                                         | The failed wave may run again             |
-| Malformed, stale, duplicate, conflicting, or manifest-mismatched result | Shared schema, identity, digest, and coverage checks fail       | Unchanged          | Fails before checkpoint upload                                | Correct the producer or rerun the wave                                       | The rejected wave may run again           |
-| Aggregate or checkpoint upload fails                                    | Required upload step fails                                      | Unchanged          | No successor dispatch                                         | Rerun the same wave; accepted duplicate detection prevents two checkpoints   | The unaccepted wave may run again         |
-| Duplicate wave dispatch                                                 | One valid checkpoint already exists for the wave                | Unchanged          | Worker-free no-op                                             | Resume from that accepted checkpoint                                         | No accepted issue is reassessed           |
-| Continuation API request fails                                          | Dispatch step fails after checkpoint persistence                | Unchanged          | No successor starts                                           | Manually dispatch the exact next tuple from the checkpoint                   | Accepted waves are not reassessed         |
-| Run stops after checkpoint and before dispatch                          | Later initiation discovers a nonterminal contiguous chain       | Unchanged          | Active sweep resumes at the first missing wave                | Initiate the coordinator on the same ref                                     | Accepted waves are not reassessed         |
-| Active sweep is found by a later initiation                             | One valid nonterminal snapshot and chain are discovered         | Unchanged          | Coordinator resumes instead of capturing another snapshot     | Let the resumed wave continue                                                | Accepted waves are not reassessed         |
-| Snapshot or checkpoint expires                                          | Artifact metadata reports expiry or download fails              | Unchanged          | Resume and publication fail closed                            | Start a new snapshot after reviewing abandoned evidence                      | A new snapshot reassesses eligible issues |
-| API or concurrency throttling                                           | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write | Wait for limits to reset, then resume from the last accepted checkpoint      | Only an unaccepted wave may repeat        |
-| Multiple trusted trackers                                               | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                | Resolve tracker ambiguity manually, then rerun the failed publisher job      | No assessment rerun required              |
-| Final reducer fails                                                     | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary             | Repair or rerun the first invalid or missing wave                            | Only unaccepted work should repeat        |
-| Core publisher fails                                                    | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced      | Correct the blocker, then rerun the failed job in the original publisher run | No assessment rerun required              |
-| Optional history or Pages publication fails                             | History write, SHA handoff, staging, or deployment fails        | Already advanced   | Core tracker remains published; optional job records failure  | Correct the prerequisite, then rerun the failed job in the original run      | No assessment rerun required              |
+| Condition                                                                        | Detection                                                       | Tracker and cursor | Automatic behavior                                                | Operator recovery                                                                                | Reassessment                              |
+|----------------------------------------------------------------------------------|-----------------------------------------------------------------|--------------------|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|-------------------------------------------|
+| Worker timeout, `noop`, no result call, or missing shard                         | Shared validator cannot find the exact result set               | Unchanged          | No aggregate, checkpoint, or successor                            | Start a trusted coordinator continuation; never use the rerun button                             | The failed wave may run again             |
+| Malformed, stale, foreign, conflicting-provenance, or manifest-mismatched result | Shared schema, identity, digest, and coverage checks fail       | Unchanged          | Fails before checkpoint upload                                    | Correct the producer, then start a trusted coordinator continuation                              | The rejected wave may run again           |
+| Aggregate or checkpoint upload fails                                             | Required upload step fails                                      | Unchanged          | No successor dispatch                                             | Resume through the trusted coordinator; duplicate detection prevents overlap                     | The unaccepted wave may run again         |
+| Human rerun of a bot-authenticated continuation                                  | Worker caller gate rejects the changed `triggering_actor`       | Unchanged          | No trusted worker result is accepted                              | Start a trusted coordinator continuation; keep caller authentication                             | No issue is reassessed                    |
+| Duplicate wave dispatch                                                          | One valid checkpoint already exists for the wave                | Unchanged          | Worker-free no-op                                                 | Resume from that accepted checkpoint                                                             | No accepted issue is reassessed           |
+| Continuation API request fails                                                   | Dispatch step fails after checkpoint persistence                | Unchanged          | No successor starts                                               | Dispatch the coordinator from `backlog-grooming-sweep/<sweep-id>` with continuation inputs empty | Accepted waves are not reassessed         |
+| Run stops after checkpoint and before dispatch                                   | Later initiation discovers a nonterminal contiguous chain       | Unchanged          | Active sweep resumes at the first missing wave                    | Dispatch the coordinator from the retained sweep tag                                             | Accepted waves are not reassessed         |
+| Active sweep is found by a later initiation                                      | One valid nonterminal snapshot and chain are discovered         | Unchanged          | Coordinator resumes instead of capturing another snapshot         | Let the resumed wave continue                                                                    | Accepted waves are not reassessed         |
+| Snapshot or checkpoint expires                                                   | Artifact metadata reports expiry or download fails              | Unchanged          | Resume and publication fail closed                                | Start a new snapshot after reviewing abandoned evidence                                          | A new snapshot reassesses eligible issues |
+| Tag recovery finds no valid snapshot                                             | Tag dispatch finds no single valid retained snapshot            | Unchanged          | Fails before capture or worker execution                          | Start a new sweep from `main` after reviewing abandoned evidence                                 | A new snapshot reassesses eligible issues |
+| Tag recovery targets a completed sweep                                           | Retained checkpoint chain is already complete                   | Unchanged          | Worker-free no-op                                                 | None; the original terminal run owns publication                                                 | No issue is reassessed                    |
+| Multi-wave sweep finishes without a publisher run                                | No publisher run follows a successful tag-origin terminal run   | Unchanged          | None; the `branches` filter did not match the tag                 | Remove the publisher `branches` filter in a reviewed change; in-script checks still gate refs    | No assessment rerun required              |
+| API or concurrency throttling                                                    | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write     | Wait for limits to reset, then resume from the last accepted checkpoint                          | Only an unaccepted wave may repeat        |
+| Multiple trusted trackers                                                        | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                    | Resolve tracker ambiguity manually, then rerun the failed publisher job                          | No assessment rerun required              |
+| Final reducer fails                                                              | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary                 | Repair or rerun the first invalid or missing wave                                                | Only unaccepted work should repeat        |
+| Terminal contract errors                                                         | Final aggregate contains one or more fixed candidate errors     | Already advanced   | Valid assessments and contract-error diagnostics publish together | Correct the producer or contract before the next scheduled sweep                                 | Normal cursor rotation reassesses issues  |
+| Core publisher fails                                                             | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced          | Correct the blocker, then rerun the failed job in the original publisher run                     | No assessment rerun required              |
+| Optional history or Pages publication fails                                      | History write, SHA handoff, staging, or deployment fails        | Already advanced   | Core tracker remains published; optional job records failure      | Correct the prerequisite, then rerun the failed job in the original run                          | No assessment rerun required              |
 
 ### Monitoring and escalation
 
-The final aggregate, shard results, checkpoint chain, job summaries, compact
-tracker, and optional immutable report history form the audit record. Workflow
-artifacts remain available for 30 days. The tracker retains the latest compact
-state, and optional history retains accepted reports beyond artifact expiry.
-Do not copy sensitive issue details into monitoring notes.
+The final aggregate, retained final detail, shard results, checkpoint chain, job
+summaries, compact tracker, and optional immutable report history form the audit
+record. Workflow artifacts remain available for 30 days. The tracker retains
+the latest compact state, contract-error count, and normalization count.
+Optional history retains accepted reports, candidate-local contract errors, and
+per-issue normalization codes beyond artifact expiry. Do not copy sensitive
+issue details into monitoring notes.
 
 The `@microsoft/edge-ai-core-dev` CODEOWNERS team owns review and escalation.
 After each terminal sweep, a maintainer reviews the final aggregate and records
 any overturned recommendation in the affected issue or pull request so the
 decision remains linked to repository evidence.
 
-| Measure              | Review threshold                                                                        | Required response                                                                                                                                      |
-|----------------------|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Contract errors      | Any value above zero                                                                    | Publication remains blocked. Inspect the rejected shard, correct the producer or contract, and rerun the unaccepted wave.                              |
-| Normalizations       | Any value above zero                                                                    | Review every normalized issue before using its recommendation. Escalate repeated normalization codes in two consecutive sweeps to the CODEOWNERS team. |
-| Deferred rate        | At least 25% of the snapshot                                                            | Review deferral reasons before the next sweep. At 50% or more, suspend reliance on the report until repository access or evidence gaps are corrected.  |
-| `Uncertain` rate     | At least 25% of assessed rows                                                           | Sample every `Uncertain` row and review evidence quality before maintainers act on adjacent dispositions.                                              |
-| Disposition mix      | Any disposition changes by at least 20 percentage points from the prior accepted sweep  | Compare the two retained aggregates and investigate selection, evidence, or model changes before acting on the shift.                                  |
-| Maintainer overturns | Two or more in one sweep, or the same evidence pattern overturned twice in three sweeps | Escalate the pattern to the CODEOWNERS team and update deterministic validation or worker guidance before the next scheduled sweep.                    |
+| Measure              | Review threshold                                                                        | Required response                                                                                                                                                                     |
+|----------------------|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Contract errors      | Any value above zero                                                                    | Inspect the published candidate-local diagnostics. Publication continues with explicit candidate-local diagnostics. Correct the producer or contract before the next scheduled sweep. |
+| Normalizations       | Any value above zero                                                                    | Review every normalized issue before using its recommendation. Escalate repeated normalization codes in two consecutive sweeps to the CODEOWNERS team.                                |
+| Deferred rate        | At least 25% of the snapshot                                                            | Review deferral reasons before the next sweep. At 50% or more, suspend reliance on the report until repository access or evidence gaps are corrected.                                 |
+| `Uncertain` rate     | At least 25% of assessed rows                                                           | Sample every `Uncertain` row and review evidence quality before maintainers act on adjacent dispositions.                                                                             |
+| Disposition mix      | Any disposition changes by at least 20 percentage points from the prior accepted sweep  | Compare the two retained aggregates and investigate selection, evidence, or model changes before acting on the shift.                                                                 |
+| Maintainer overturns | Two or more in one sweep, or the same evidence pattern overturned twice in three sweeps | Escalate the pattern to the CODEOWNERS team and update deterministic validation or worker guidance before the next scheduled sweep.                                                   |
 
 Every disposition is advisory. A qualified human maintainer must review the
 linked repository evidence before closing, relabeling, rewriting, or otherwise
-changing a community issue. Contract errors have no exceptional publication
-path. Any proposed bypass or alternate privileged recovery path requires a
-reviewed workflow change with CODEOWNER approval; operators must not run
-publisher code from another ref.
+changing a community issue. Contract errors publish only through the ordinary
+authenticated aggregate path and never bypass provenance, exact-set, or digest
+validation. Any alternate privileged recovery path requires a reviewed workflow
+change with CODEOWNER approval; operators must not run publisher code from
+another ref.
 
 During transition from the former manual publisher, cancel queued manual
 publisher runs and use only new `workflow_run` activations. Rerun failed jobs
@@ -451,18 +567,18 @@ and cannot start or continue a sweep.
 
 ### Validation Workflows
 
-| Workflow                     | Tool                     | Purpose                              | Key Inputs                                                                                                      | Artifacts                      |
-|------------------------------|--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------|--------------------------------|
-| `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                             | spell-check-results            |
-| `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                             | markdown-lint-results          |
-| `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                             | table-format-results           |
-| `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                | psscriptanalyzer-results       |
-| `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
-| `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                | skill-validation-results       |
-| `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
-| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `throttle-limit` (8)                     | markdown-link-check-results    |
+| Workflow                     | Tool                     | Purpose                              | Key Inputs                                                                                                                        | Artifacts                      |
+|------------------------------|--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
+| `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                                               | spell-check-results            |
+| `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                                               | markdown-lint-results          |
+| `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                                               | table-format-results           |
+| `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                                  | psscriptanalyzer-results       |
+| `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true)                   | frontmatter-validation-results |
+| `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                                  | skill-validation-results       |
+| `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                                               | link-lang-check-results        |
+| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `external-links-as-warnings` (false), `throttle-limit` (8) | markdown-link-check-results    |
 
-Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. Callers override them per lane: `pr-validation.yml` and `weekly-validation.yml` both invoke `markdown-link-check.yml` with `soft-fail: true`, and `weekly-validation.yml` additionally sets `changed-files-only: false` for the full-repository sweep.
+Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. `pr-validation.yml` sets `soft-fail: false` and `external-links-as-warnings: true`, so internal failures block while external findings remain advisory. `weekly-validation.yml` sets `soft-fail: true` and `changed-files-only: false` for an advisory full-repository sweep.
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
@@ -549,9 +665,12 @@ Features:
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
 * Not analyzed: CodeQL does not analyze Markdown, generic YAML, PowerShell, shell, or PPTX content; markdownlint, YAML lint, PSScriptAnalyzer, shellcheck, and the dependency and workflow security lints cover those formats
 * Integration: Results appear in Security > Code Scanning tab
+* Threshold gate: after each analysis uploads its SARIF, `scripts/security/Test-CodeQLSarifThreshold.ps1` fails the job on any result with `security-severity` of 4.0 or higher, or any error- or warning-level result from a rule without a security severity. Because the gate runs inside the job, it also blocks merge-queue groups, which ruleset code-scanning protection does not cover.
+  A finding is excused only by a tracked entry in `security/code-scanning-exceptions.yml`; the alert stays open and the gate lists it.
+  Alerts are never dismissed. See the [code-scanning alert lifecycle](../../docs/security/code-scanning-alert-lifecycle.md)
 * Auto-build: Prepares compiled code where required for each language target; Actions analysis needs no compilation
 
-Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details
+Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details and the threshold gate result
 
 #### `dangerous-workflow-scan.yml`
 

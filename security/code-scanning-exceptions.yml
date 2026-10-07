@@ -1,0 +1,21 @@
+# Tracked code-scanning exceptions read by scripts/security/Test-CodeQLSarifThreshold.ps1.
+#
+# An entry lets the CodeQL threshold gate pass while one rule keeps reporting in
+# one file. It never dismisses or hides the alert: the alert stays open on GitHub,
+# the gate lists the excused result, and the weekly code-scanning job keeps the
+# linked issue current. Use it only for a demonstrated analyzer false positive or
+# third-party code this repository cannot patch, after reporting it upstream.
+# See docs/security/code-scanning-alert-lifecycle.md for the full policy.
+#
+# Each entry needs every field below and is reviewed like any other change:
+#
+#   - rule: js/example-rule        # exact SARIF ruleId
+#     path: docs/example/file.js   # exact repository-relative path
+#     issue: 1234                  # open issue tracking the real fix
+#     owner: github-login-or-team
+#     reason: one-line explanation and upstream report link
+#     expires: 2026-12-31          # ISO date, at most 90 days after the check date
+#
+# The gate fails on an expired entry, an entry more than 90 days out, a missing or
+# unknown field, or an entry that no longer matches a result (remove it).
+exceptions: []

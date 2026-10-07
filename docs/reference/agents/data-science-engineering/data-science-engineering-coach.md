@@ -51,6 +51,16 @@ durable customer-artifact safety gates.
 6. At completion, choose whether to resume paused work, enrich continuous
    catalog context, select another job, or close.
 
+## RPI depth matrix and execution loops
+
+The coach can, per job and only on explicit user confirmation, activate a bounded `rpi-research` Research segment for a demonstrated evidence gap, or a full Plan/Implement/Review loop for substantial delivery work.
+
+Bounded Research: When the owning skill identifies an eligible evidence gap, the coach presents the eligible segment with its purpose, expected artifact, expected interaction cost, limits, and direct path. The coach waits for explicit user confirmation before each Research, Plan, Implement, or Review segment; it never changes the active job implicitly.
+
+Substantial Delivery: For substantial delivery work (multi-step code or artifact production), the coach begins Plan only after the owning skill and user accept the domain design. Plan, Implement, and Review use canonical RPI artifacts and return their pointers to the active job's artifact list.
+
+Boundaries: Activating an RPI segment does not change the active job, lifecycle class, owning skill, or durable-write gate. Before every proposed customer-artifact write from direct or RPI execution, the existing durable-write gate is applied. When an RPI segment returns, control returns to the active job without auto-transitioning.
+
 ## Example usage
 
 > Start a data workstream for `retail-demand-forecasting`. I need to assess

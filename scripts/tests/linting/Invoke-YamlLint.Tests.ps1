@@ -41,7 +41,7 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
     Context 'ChangedFilesOnly parameter' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
             Mock Get-ChangedFilesFromGit { @() }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock Set-CIOutput {}
@@ -62,7 +62,7 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
     Context 'OutputPath parameter' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
@@ -99,7 +99,7 @@ Describe 'actionlint Tool Availability' -Tag 'Unit' {
     Context 'Tool installed' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'C:\tools\actionlint.exe' } } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
@@ -121,7 +121,7 @@ Describe 'File Discovery' -Tag 'Unit' {
     Context 'All files mode' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
@@ -167,7 +167,7 @@ Describe 'File Discovery' -Tag 'Unit' {
     Context 'Changed files only mode' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
@@ -202,6 +202,18 @@ Describe 'File Discovery' -Tag 'Unit' {
             Invoke-YamlLintCore -ChangedFilesOnly
             # Should only count 2 workflow files
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
+        }
+
+        It 'Analyzes all workflow files when the actionlint config changed' {
+            Mock Get-ChangedFilesFromGit { @('.github/actionlint.yaml') }
+            Mock Test-Path { $true } -ParameterFilter { $Path -eq '.github/workflows' }
+            Mock Get-ChildItem {
+                @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
+            } -ParameterFilter { $Path -eq '.github/workflows' }
+
+            Invoke-YamlLintCore -ChangedFilesOnly
+            Should -Invoke actionlint -Times 1
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '1' }
         }
     }
 
@@ -248,21 +260,21 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
 
     Context 'Empty output scenarios' {
         It 'Handles null output gracefully' {
-            Mock actionlint { $null }
+            Mock actionlint { $global:LASTEXITCODE = 0; $null }
 
             Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles "null" string output' {
-            Mock actionlint { 'null' }
+            Mock actionlint { $global:LASTEXITCODE = 0; 'null' }
 
             Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles empty array output' {
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
 
             Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
@@ -272,6 +284,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
     Context 'Single issue output' {
         It 'Converts single object to array' {
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '{"message":"test error","filepath":".github/workflows/ci.yml","line":10,"column":5}'
             }
 
@@ -284,6 +297,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
     Context 'Multiple issues output' {
         It 'Parses array of issues correctly' {
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '[{"message":"error 1","filepath":".github/workflows/ci.yml","line":10,"column":5},{"message":"error 2","filepath":".github/workflows/ci.yml","line":20,"column":3}]'
             }
 
@@ -291,16 +305,65 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
             Should -Invoke Write-CIAnnotation -Times 2
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '2' }
         }
+
+        It 'Parses issues from stdout when actionlint also writes to stderr' {
+            Mock actionlint {
+                $global:LASTEXITCODE = 1
+                Write-Error 'shellcheck was not found on the system' -ErrorAction Continue
+                '[{"message":"error 1","filepath":".github/workflows/ci.yml","line":10,"column":5}]'
+            }
+
+            { Invoke-YamlLintCore } | Should -Throw '*found 1 issue*'
+            Should -Invoke Write-CIAnnotation -Times 1
+        }
     }
 
     Context 'Invalid JSON output' {
         It 'Handles malformed JSON gracefully' {
-            Mock actionlint { 'not valid json {{{' }
+            Mock actionlint { $global:LASTEXITCODE = 0; 'not valid json {{{' }
             Mock Write-Warning {}
 
             Invoke-YamlLintCore
             Should -Invoke Write-Warning -Times 1
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
+        }
+    }
+
+    Context 'actionlint failures' {
+        BeforeEach {
+            Mock Remove-Item {}
+        }
+
+        It 'Throws with stderr text when actionlint exits 3 without JSON output' {
+            Mock actionlint {
+                $global:LASTEXITCODE = 3
+                Write-Error 'could not parse config file ".github/actionlint.yaml"' -ErrorAction Continue
+            }
+
+            { Invoke-YamlLintCore } | Should -Throw '*exit code 3*could not parse config file*'
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter { $Content -like '*exit code 3*' }
+        }
+
+        It 'Throws with stderr text when actionlint exits 2 on invalid options' {
+            Mock actionlint {
+                $global:LASTEXITCODE = 2
+                Write-Error 'flag provided but not defined: -bogus' -ErrorAction Continue
+            }
+
+            { Invoke-YamlLintCore } | Should -Throw '*exit code 2*flag provided but not defined*'
+        }
+
+        It 'Throws when actionlint exits 1 but no issues can be parsed' {
+            Mock actionlint {
+                $global:LASTEXITCODE = 1
+                Write-Error 'some stderr text' -ErrorAction Continue
+                'not valid json {{{'
+            }
+            Mock Write-Warning {}
+
+            { Invoke-YamlLintCore } | Should -Throw '*no issues could be parsed*some stderr text*'
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter { $Content -like '*no issues could be parsed*' }
+            Should -Invoke Remove-Item -Times 1
         }
     }
 }
@@ -327,6 +390,7 @@ Describe 'Issue Processing' -Tag 'Unit' {
     Context 'Annotation creation' {
         It 'Creates annotation with correct parameters for each issue' {
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '{"message":"property runs-on is required","filepath":".github/workflows/ci.yml","line":15,"column":5}'
             }
 
@@ -342,6 +406,7 @@ Describe 'Issue Processing' -Tag 'Unit' {
 
         It 'Creates annotation for each issue in array' {
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '[{"message":"error 1","filepath":"file1.yml","line":1,"column":1},{"message":"error 2","filepath":"file2.yml","line":2,"column":2}]'
             }
 
@@ -353,6 +418,7 @@ Describe 'Issue Processing' -Tag 'Unit' {
     Context 'Host output' {
         It 'Writes formatted error message to host' {
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '{"message":"test message","filepath":".github/workflows/ci.yml","line":10,"column":5}'
             }
             Mock Write-Host {}
@@ -387,7 +453,7 @@ Describe 'Output Generation' -Tag 'Unit' {
             Mock Get-ChildItem {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
@@ -424,7 +490,7 @@ Describe 'Output Generation' -Tag 'Unit' {
             Mock Get-ChildItem {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
@@ -462,21 +528,21 @@ Describe 'CI Integration' -Tag 'Unit' {
 
     Context 'CI outputs' {
         It 'Sets count output with file count' {
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
 
             Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' }
         }
 
         It 'Sets issues output with issue count' {
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
 
             Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' }
         }
 
         It 'Sets errors output with error count' {
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
 
             Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'errors' }
@@ -486,6 +552,7 @@ Describe 'CI Integration' -Tag 'Unit' {
     Context 'CI environment variables' {
         It 'Sets YAML_LINT_FAILED when issues found' {
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '{"message":"error","filepath":"ci.yml","line":1,"column":1}'
             }
 
@@ -496,7 +563,7 @@ Describe 'CI Integration' -Tag 'Unit' {
         }
 
         It 'Does not set YAML_LINT_FAILED when no issues' {
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
 
             Invoke-YamlLintCore
             Should -Invoke Set-CIEnv -Times 0 -ParameterFilter {
@@ -507,7 +574,7 @@ Describe 'CI Integration' -Tag 'Unit' {
 
     Context 'CI step summary' {
         It 'Writes success summary when no issues' {
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
 
             Invoke-YamlLintCore
             Should -Invoke Write-CIStepSummary -Times 2
@@ -515,6 +582,7 @@ Describe 'CI Integration' -Tag 'Unit' {
 
         It 'Writes failure summary with table when issues found' {
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '{"message":"error","filepath":"ci.yml","line":1,"column":1}'
             }
 
@@ -551,7 +619,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
             Mock Get-ChildItem {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock actionlint { '[]' }
+            Mock actionlint { $global:LASTEXITCODE = 0; '[]' }
 
             { Invoke-YamlLintCore } | Should -Not -Throw
         }
@@ -578,6 +646,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock actionlint {
+                $global:LASTEXITCODE = 1
                 '{"message":"error found","filepath":"ci.yml","line":1,"column":1}'
             }
             Mock New-Item {}
