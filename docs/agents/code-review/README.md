@@ -19,7 +19,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -142,15 +142,18 @@ For pull-request and branch-diff targets, the agent resolves an immutable target
 
 The review workflow lives in the `code-review` skill, not in the agent. The orchestrator and subagents read the skill entry and its references once and apply them verbatim:
 
-| Reference         | Provides                                                                   |
-|-------------------|----------------------------------------------------------------------------|
-| Context Bootstrap | Tier 0 procedure for proving the change surface and scoping hotspots       |
-| Depth Tiers       | Basic, standard, and comprehensive verification-rigor dials                |
-| Lens Checklists   | Per-perspective review questions                                           |
-| Severity Taxonomy | Severity levels, verdict normalization, and risk classification            |
-| Output Formats    | Reporting structure, merged report skeleton, and persisted artifact schema |
-| Review Targets    | Target resolution, profile expansion, task state, and emission identity    |
-| Change-Risk Model | Advisory evidence checklist and recommended review depth                   |
+| Reference                    | Provides                                                                   |
+|------------------------------|----------------------------------------------------------------------------|
+| Context Bootstrap            | Tier 0 procedure for proving the change surface and scoping hotspots       |
+| [Depth Tiers]                | Basic, standard, and comprehensive verification-rigor dials                |
+| Lens Checklists              | Per-perspective review questions                                           |
+| Severity Taxonomy            | Severity levels, verdict normalization, and risk classification            |
+| Output Formats               | Reporting structure, merged report skeleton, and persisted artifact schema |
+| Review Targets               | Target resolution, profile expansion, task state, and emission identity    |
+| [Change-Risk Evidence Model] | Advisory evidence checklist and recommended review depth                   |
+
+[Depth Tiers]: pathname://../../../.github/skills/coding-standards/code-review/references/depth-tiers.md
+[Change-Risk Evidence Model]: pathname://../../../.github/skills/coding-standards/code-review/references/change-risk-model.md
 
 The Standards perspective is language-agnostic: it discovers `coding-standards` skills from the built-in hve-core baseline and supported repository skill roots, de-duplicates same-named skills with repository precedence, matches the remaining candidates against the languages in the diff, and loads the relevant skills. See [Language Skills](language-skills.md) for details on built-in skills, supported discovery roots, skill stacking, and conflict behavior.
 
@@ -199,11 +202,16 @@ In non-interactive (workflow) mode, Steps 2, 3, and 5 are skipped and the board 
 
 Depth controls how deeply each selected perspective verifies the confirmed scope. It does not add or remove perspectives.
 
-| Tier | Depth           | When to use                                               |
-|------|-----------------|-----------------------------------------------------------|
-| 1    | `basic`         | Quick pass on small or low-risk changes                   |
-| 2    | `standard`      | Default rigor for most reviews                            |
-| 3    | `comprehensive` | Deep verification for high-risk surfaces or large changes |
+Before a depth is selected, the agent records evidence for six categories: change scope, path criticality, history, test presence, coverage, and rollback. Each category uses one of three evidence states: `observed` for directly supported facts, `unavailable` when the required source is missing or too shallow, and `qualitative` for interpretation-dependent evidence.
+Automation-derived qualitative evidence remains proposed until a human confirms or corrects it in an interactive review. In a non-interactive workflow, generated evidence remains labeled as automation-derived. Missing evidence does not increase risk by itself. See the [Change-Risk Evidence Model] for the full checklist and interpretation safeguards.
+
+The checklist produces an advisory recommendation, not an automatic risk rating or final choice. In interactive reviews, you confirm or correct the evidence and select the final depth tier; the review persists your selection and the rationale for any difference from the recommendation. In non-interactive workflow reviews, the automated selection and its provenance are persisted without representing them as human-confirmed.
+
+| Tier | Depth           | When it is recommended                                                                                                                |
+|------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| 1    | `basic`         | Available evidence consistently supports a narrow, reversible, well-tested change with no critical-path concern                       |
+| 2    | `standard`      | Most changes and whenever evidence is incomplete, unavailable in a material category, or inconclusive                                 |
+| 3    | `comprehensive` | Evidence identifies critical paths, broad behavioral spread, weak detection for important logic, hard rollback, or material ambiguity |
 
 ## Usage
 
@@ -223,6 +231,7 @@ Check out the PR or branch head before starting the review. The agent compares c
 
 When the agent reaches the selection step, choose any combination of `functional`, `standards`, `accessibility`, `security`, and `readiness`, or select `full` to run all five. Pick a depth tier (`basic`, `standard`, or `comprehensive`) independently.
 The `standard` profile pre-populates Functional, Standards, and Readiness for every target. It adds Accessibility only when a UI, markup, or documentation surface is in scope and Security when a hotspot touches auth, crypto, parsing, deserialization, secrets, or networking. PR metadata enrichment, readiness PR checks, PR-comment drafts, and native emission apply only when the resolved target is a pull request and its `prContext` is available.
+For depth, the agent presents the change-risk evidence checklist and an advisory recommendation. In interactive reviews, you can correct the evidence before confirming the final tier; workflow mode keeps the evidence and selection automation-derived.
 
 ## Review Output
 
