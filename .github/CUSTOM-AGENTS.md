@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-09-04
+ms.date: 2026-10-03
 ms.topic: guide
 keywords:
   - copilot
@@ -72,9 +72,7 @@ Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject
 
 Use `hve-builder` as the canonical lifecycle for creating, improving,
 refactoring, reviewing, or validating prompts, instructions, agents,
-subagents, and skills. The retained `prompt-builder`, `prompt-analyze`, and
-`prompt-refactor` skills are compatibility aliases that route legacy requests
-to `hve-builder`; they are not independent agents or lifecycle owners.
+subagents, and skills.
 
 ### Platform Integration Agents
 

@@ -132,6 +132,16 @@ Describe 'Invoke-AssetDocsGeneration scaffolding' -Tag 'Unit' {
         $index | Should -Match '\[Skills\]\(skills/README\.md\)\s*\|\s*1\s*\|'
     }
 
+    It 'Labels only the root index as Overview in the sidebar' {
+        Get-PageField -Path (Join-Path $script:repo 'docs/reference/README.md') -Field 'sidebar_label' | Should -Be 'Overview'
+        Get-PageField -Path (Join-Path $script:repo 'docs/reference/README.md') -Field 'pagination_label' | Should -Be 'Reference'
+        Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/README.md') -Raw |
+            Should -Match '(?m)^sidebar_custom_props:\r?\n  accessibleName: "Overview: Reference"$'
+        foreach ($rel in @('docs/reference/agents/README.md', 'docs/reference/agents/hve-core/alpha-agent.md')) {
+            Get-Content -LiteralPath (Join-Path $script:repo $rel) -Raw | Should -Not -Match '(?m)^(sidebar|pagination)_(label|custom_props):' -Because "'$rel' keeps its title as its label"
+        }
+    }
+
     It 'Uses package terminology and no collection wording in generated output' {
         foreach ($rel in ($script:ExpectedAssetPages + $script:ExpectedIndexPages)) {
             (Get-Content -LiteralPath (Join-Path $script:repo $rel) -Raw) | Should -Not -Match '(?i)collection' -Because "generated page '$rel' must not reintroduce collection vocabulary"
@@ -415,6 +425,16 @@ Describe 'New-DocFrontmatter' -Tag 'Unit' {
     It 'Honors an explicit author' {
         $fm = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -Author 'HVE Core Team'
         $fm | Should -Match '(?m)^author: HVE Core Team$'
+    }
+
+    It 'Emits sidebar and pagination labels only when provided' {
+        $plain = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo')
+        $plain | Should -Not -Match '(?m)^(sidebar|pagination)_(label|custom_props):'
+
+        $labelled = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -SidebarLabel 'Overview' -PaginationLabel 'Demo' -SidebarAccessibleName 'Overview: Demo'
+        $labelled | Should -Match '(?m)^sidebar_label: Overview$'
+        $labelled | Should -Match '(?m)^pagination_label: Demo$'
+        $labelled | Should -Match '(?m)^sidebar_custom_props:\n  accessibleName: "Overview: Demo"$'
     }
 
     It 'Rejects a topic outside the docs schema enum' {

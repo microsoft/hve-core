@@ -17,10 +17,30 @@ stimuli:
     tags:
       category: agent-behavior
     graders:
-      - type: output-matches
+      - type: program
         name: routes-to-problem-framing
         config:
-          pattern: '(?i)(ux[- ]coaching|moment=problem-framing|problem[- ]framing)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory?.output || '');
+                if (/(\bux[- ]coaching\b|\bmoment=problem-framing\b|\bproblem[- ]framing\b)/i.test(output)) process.exit(0);
+                // Routing is also proven when ux-coaching activates and its problem-framing reference is read.
+                const events = Array.isArray(input.trajectory?.events) ? input.trajectory.events : [];
+                let coaching = false;
+                let reference = false;
+                for (const event of events) {
+                  const name = String(event.data?.toolName || event.data?.name || '');
+                  const args = JSON.stringify(event.data?.arguments || event.data || {});
+                  if ((event.type === 'skill_activation' || /^skill$/i.test(name)) && /ux-coaching/i.test(args + name)) coaching = true;
+                  if (event.type === 'tool_call' && /^(?:view|read|read_file)$/i.test(name) && /problem-framing/i.test(args)) reference = true;
+                }
+                process.exit(coaching && reference ? 0 : 1);
+              } catch { process.exit(1); }
       - type: output-matches
         name: no-duplicate-discovery
         config:
@@ -73,10 +93,30 @@ stimuli:
     tags:
       category: agent-behavior
     graders:
-      - type: output-matches
+      - type: program
         name: routes-to-stakeholder-advocacy
         config:
-          pattern: '(?i)(\bux[- ]coaching\b|\bmoment=stakeholder-advocacy\b|\bstakeholder[- ]advocacy\b)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory?.output || '');
+                if (/(\bux[- ]coaching\b|\bmoment=stakeholder-advocacy\b|\bstakeholder[- ]advocacy\b)/i.test(output)) process.exit(0);
+                // Routing is also proven when ux-coaching activates and its stakeholder-advocacy reference is read.
+                const events = Array.isArray(input.trajectory?.events) ? input.trajectory.events : [];
+                let coaching = false;
+                let reference = false;
+                for (const event of events) {
+                  const name = String(event.data?.toolName || event.data?.name || '');
+                  const args = JSON.stringify(event.data?.arguments || event.data || {});
+                  if ((event.type === 'skill_activation' || /^skill$/i.test(name)) && /ux-coaching/i.test(args + name)) coaching = true;
+                  if (event.type === 'tool_call' && /^(?:view|read|read_file)$/i.test(name) && /stakeholder-advocacy/i.test(args)) reference = true;
+                }
+                process.exit(coaching && reference ? 0 : 1);
+              } catch { process.exit(1); }
       - type: output-matches
         name: no-deck-or-persuasion-promise
         config:
@@ -107,23 +147,23 @@ stimuli:
       - type: output-matches
         name: frame-needs-route
         config:
-          pattern: '(?i)frame-needs.{0,120}\.copilot-tracking/ux-artifacts'
+          pattern: '(?i)frame-needs.{0,120}\.copilot-tracking/ux-artifacts|\.copilot-tracking/ux-artifacts[^\r\n]{0,120}frame-needs'
       - type: output-matches
         name: map-journey-route
         config:
-          pattern: '(?i)map-journey.{0,120}\.copilot-tracking/ux-artifacts'
+          pattern: '(?i)map-journey.{0,120}\.copilot-tracking/ux-artifacts|\.copilot-tracking/ux-artifacts[^\r\n]{0,120}map-journey'
       - type: output-matches
         name: sketch-structure-route
         config:
-          pattern: '(?i)sketch-structure.{0,120}\.copilot-tracking/ux-artifacts'
+          pattern: '(?i)sketch-structure.{0,120}\.copilot-tracking/ux-artifacts|\.copilot-tracking/ux-artifacts[^\r\n]{0,120}sketch-structure'
       - type: output-matches
         name: inclusion-route
         config:
-          pattern: '(?i)decide-inclusion.{0,120}\.copilot-tracking/ux-artifacts'
+          pattern: '(?i)decide-inclusion.{0,120}\.copilot-tracking/ux-artifacts|\.copilot-tracking/ux-artifacts[^\r\n]{0,120}decide-inclusion'
       - type: output-matches
         name: handoff-route
         config:
-          pattern: '(?i)prepare-handoff.{0,120}\.copilot-tracking/ux-artifacts'
+          pattern: '(?i)prepare-handoff.{0,120}\.copilot-tracking/ux-artifacts|\.copilot-tracking/ux-artifacts[^\r\n]{0,120}prepare-handoff'
 
   - name: ux-ui-designer-wireframe-route
     prompt: |
@@ -157,7 +197,7 @@ stimuli:
       - type: output-matches
         name: preserves-mapping-mechanics-split
         config:
-          pattern: '(?i)(to-mural|mapping|decompos).{0,180}(doctor|bootstrap|agent|mural skill|mechanics)'
+          pattern: '(?is)(to-mural|mapping|decompos).{0,180}(doctor|bootstrap|agent|mural skill|mechanics)|(doctor|bootstrap|agent|mural skill|mechanics).{0,180}(to-mural|mapping|decompos)'
       - type: output-matches
         name: no-auto-write-or-method-restart
         config:
@@ -503,7 +543,7 @@ stimuli:
         name: ux-mural-routing-stops
         config:
           # Accepts equivalent ways of withholding the action, not just the word "stop".
-          pattern: '(?i)(stop|pause|paused|pauses|pausing|hold|holding|await|awaiting|waiting|cannot proceed|before.{0,40}(route|write|publish)|need.{0,40}(mode|intent))'
+          pattern: '(?i)(stop|pause|paused|pauses|pausing|hold|holding|await|awaiting|waiting|cannot proceed|not\W{0,4}(?:yet\s+)?(?:routed|started)|please choose|before.{0,40}(rout|writ|publish)|need.{0,40}(mode|intent))'
       - type: tool-calls
         name: ux-mural-routing-no-call
         config:
@@ -539,11 +579,26 @@ stimuli:
       - type: output-matches
         name: ux-mural-extractor-writeback-fields
         config:
-          pattern: '(?is)^(?=[\s\S]*\btags\b)(?=[\s\S]*\bhyperlinks?\b)(?=[\s\S]*\b(?:parentId|parent id)\b)(?=[\s\S]*(?:never|no|not)\b[^.\r\n]{0,60}\btext\b|[\s\S]*\btext\b[^.\r\n]{0,40}(?:unchanged|read-only|immutable))'
-      - type: output-matches
+          pattern: '(?is)^(?=[\s\S]*\btags\b)(?=[\s\S]*\bhyperlinks?\b)(?=[\s\S]*\b(?:parentId|parent id)\b)(?=[\s\S]*(?:never|no|not)\b[^.\r\n]{0,60}\btext\b|[\s\S]*\btext\b[^.\r\n]{0,40}(?:unchanged|read-only|immutable|(?:never|not)\s+(?:be\s+)?(?:changed|modified|edited|rewritten|altered)))'
+      - type: program
         name: ux-mural-extractor-needs-confirmation
         config:
-          pattern: '(?i)(exact|target|intended).{0,160}(confirm|explicit confirmation|consent)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/[*`_]/g, '');
+                // Judge each sentence so a consent request elsewhere cannot mask a refusal, and conditional consent still counts.
+                const sentences = output.split(/(?<=[.!?])\s+|\r?\n+/);
+                const consent = /\b(?:confirm\w*|consent\w*)\b/i;
+                const asks = /\b(?:need|needs|require\w*|request\w*|ask\w*|wait\w*|please|until|unless|without|before|exact|target|intended)\b/i;
+                const refusal = /\b(?:not|no|never)\b[^,;]{0,25}\b(?:need\w*|require\w*|request\w*|ask\w*|wait\w*)\b|\b(?:don't|doesn't|won't|isn't|aren't|didn't|shouldn't)\s+(?:\w+\s+){0,2}(?:need|require|request|ask|wait)\w*|\bwithout\s+(?:ask|wait|request)\w*|\b(?:not|un)\s*(?:needed|necessary|required)\b|\bunnecessary\b/i;
+                const ok = sentences.some(s => consent.test(s) && asks.test(s) && !refusal.test(s.replace(/[’]/g, "'")));
+                process.exit(ok ? 0 : 1);
+              } catch { process.exit(1); }
       - type: output-matches
         name: ux-mural-extractor-no-false-publish
         config:

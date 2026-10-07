@@ -1,13 +1,12 @@
 ---
 description: "Cross-cutting Mural seeding conventions: duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, z-order visibility (detection-only), layout primitives applied across DT, RAI, and UX/UI workflows."
-applyTo: '**/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md, **/.github/skills/design-thinking/ux-artifacts/**'
 ---
 
-## Mural Seeding Patterns
+# Mural Seeding Patterns
 
 These conventions apply when a caller shapes or seeds a Mural board from a source artifact (DT method outputs, RAI Phase 2 packs, UX assets). Workflow-specific contracts (cardinality assertions, A1/A2/A3 wedge bindings, journey-stage decompositions) live with the consuming caller. This file holds only the patterns that recur across every seeding workflow.
 
-The skill is content-agnostic transport. An under-populated board surfaces as a missing caller-owned decomposition rule, not a missing skill guard rail. See [mural-writeback-hygiene.instructions.md](mural-writeback-hygiene.instructions.md) for stable channel rules and [mural-human-record.instructions.md](mural-human-record.instructions.md) for the durable-record stance.
+The skill is content-agnostic transport. An under-populated board surfaces as a missing caller-owned decomposition rule, not a missing skill guard rail. See [writeback-hygiene.md](writeback-hygiene.md) for stable channel rules and [human-record.md](human-record.md) for the durable-record stance.
 
 ## Caller-Owned Element and Parent Intent
 
@@ -61,7 +60,7 @@ Use `mural area probe` before bulk-populating any area. The verb creates a 1×1 
 * `ok` — area is safe for bulk seeding.
 * `unbound` — empty `area_chain`. Hard stop: surface the area id and observed parent ids, do not bulk-populate into an unbound area.
 * `parent_mismatch` — nearest area in the chain is not the expected `parentId`. Hard stop: a similarly named sibling frame is being targeted instead of the intended area.
-* `occluded` — probe bounding box is fully contained within one or more siblings (returned in `siblings_above`). Hard stop: a sticky that renders behind an area background panel is invisible to the human user and violates the durable-record stance in [mural-human-record.instructions.md](mural-human-record.instructions.md).
+* `occluded` — probe bounding box is fully contained within one or more siblings (returned in `siblings_above`). Hard stop: a sticky that renders behind an area background panel is invisible to the human user and violates the durable-record stance in [human-record.md](human-record.md).
 
 A clean (`ok`) probe is also positive evidence that the chosen `parentId` resolves to the intended area title, not a sibling frame with a similar name.
 
@@ -91,30 +90,30 @@ If a layout primitive cannot express the intended arrangement, escalate to a new
 
 ## 404 Recovery
 
-Treat HTTP 404 from any `mural` CLI verb as a re-read-SKILL.md trigger, not a drop-down-a-layer trigger. The verb name, argument shape, or required scope is wrong, and the fix lives in [SKILL.md](../../../skills/experimental/mural/SKILL.md).
+Treat HTTP 404 from any `mural` CLI verb as a re-read-SKILL.md trigger, not a drop-down-a-layer trigger. The verb name, argument shape, or required scope is wrong, and the fix lives in [SKILL.md](../SKILL.md).
 
 Do not import private skill helpers (`_authenticated_request`, `_merge_tags`, `_resolve_area_id`, etc.) into operator code. Private helpers are not a stable surface and any reach-around is treated as a regression in the consuming caller.
 
 ## Reserved Tag Manifest
 
-Every seeded widget carries `authored-by-ai` (the Pattern C reserved author tag from [mural-writeback-hygiene.instructions.md](mural-writeback-hygiene.instructions.md)) plus exactly one workflow lineage tag from the manifest below. Tags are re-applied defensively on every seed run via `mural tag create` and `mural widget update-bulk` because workspace state may have drifted since the last invocation.
+Every seeded widget carries `authored-by-ai` (the Pattern C reserved author tag from [writeback-hygiene.md](writeback-hygiene.md)) plus exactly one workflow lineage tag from the manifest below. Tags are re-applied defensively on every seed run via `mural tag create` and `mural widget update-bulk` because workspace state may have drifted since the last invocation.
 
-| Workflow                  | Lineage tag     | Set by                                                 |
-|---------------------------|-----------------|--------------------------------------------------------|
-| RAI Phase 2 board seeding | `rai-phase2`    | `rai-planner.agent.md`                                 |
-| DT Method N export        | `dt-method-{N}` | `dt-coach.agent.md`                                    |
-| UX research bootstrap     | `ux-research`   | `ux-ui-designer.agent.md` using `ux-artifacts` mapping |
+| Workflow                  | Lineage tag     | Set by                                                    |
+|---------------------------|-----------------|-----------------------------------------------------------|
+| RAI Phase 2 board seeding | `rai-phase2`    | `rai-planner` skill `references/mural-board-bootstrap.md` |
+| DT Method N export        | `dt-method-{N}` | `dt-coach.agent.md`                                       |
+| UX research bootstrap     | `ux-research`   | `ux-ui-designer.agent.md` using `ux-artifacts` mapping    |
 
-Workflow tags must respect the 25-character cap from [mural-writing-style.instructions.md](mural-writing-style.instructions.md). Substitute the concrete value for `{N}` at seed time.
+Workflow tags must respect the 25-character cap from [writing-style.md](writing-style.md). Substitute the concrete value for `{N}` at seed time.
 
 ## Participating Workflows
 
 Three agents and the UX artifact mapping package share these conventions. Each caller owns its own decomposition rules and cardinality contracts, then relies on this file for the cross-cutting patterns above.
 
-The `applyTo` glob in this file's frontmatter is anchored on the repository artifact root, so it scopes editing assistance inside this repository. Packaging strips that source-tree prefix, so the glob does not by itself guarantee that a packaged host loads this file for the agents below. Treat runtime delivery as the consuming caller's responsibility rather than something this frontmatter establishes.
+Each consuming caller reads this reference on demand before shaping or seeding a board; it does not load automatically.
 
-| Customization file                                                                  | Workflow            | Inline contract owned by the customization                                                                          |
-|-------------------------------------------------------------------------------------|---------------------|---------------------------------------------------------------------------------------------------------------------|
-| [dt-coach.agent.md](../../../agents/design-thinking/dt-coach.agent.md)              | DT board export     | Per-method binding map; trigger milestones for Methods 1/3/4/5/6                                                    |
-| [rai-planner.agent.md](../../../agents/rai-planning/rai-planner.agent.md)           | RAI Phase 2 seeding | A1 / A2 / A3 wedge bindings; per-area cardinality assertion; `state.json` write-back                                |
-| [ux-ui-designer.agent.md](../../../agents/project-planning/ux-ui-designer.agent.md) | UX research seeding | `ux-artifacts` owns the current area mapping and its per-row element type and cardinality; the agent owns execution |
+| Customization file                                                                                                | Workflow            | Inline contract owned by the customization                                                                          |
+|-------------------------------------------------------------------------------------------------------------------|---------------------|---------------------------------------------------------------------------------------------------------------------|
+| [dt-coach.agent.md](../../../../agents/design-thinking/dt-coach.agent.md)                                         | DT board export     | Per-method binding map; trigger milestones for Methods 1/3/4/5/6                                                    |
+| [rai-planner mural-board-bootstrap.md](../../../project-planning/rai-planner/references/mural-board-bootstrap.md) | RAI Phase 2 seeding | A1 / A2 / A3 wedge bindings; per-area cardinality assertion; `state.json` write-back                                |
+| [ux-ui-designer.agent.md](../../../../agents/project-planning/ux-ui-designer.agent.md)                            | UX research seeding | `ux-artifacts` owns the current area mapping and its per-row element type and cardinality; the agent owns execution |

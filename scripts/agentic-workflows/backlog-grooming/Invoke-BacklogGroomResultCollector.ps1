@@ -76,6 +76,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/BacklogGrooming.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 
 #region Functions
 <#
@@ -151,6 +152,32 @@ function Invoke-BacklogGroomResultCollection {
     }
     $Json = $Result | ConvertTo-Json -Depth 20
     [System.IO.File]::WriteAllText($OutputPath, $Json + "`n", [System.Text.UTF8Encoding]::new($false))
+
+    $ContractErrors = @($Result.report_data.contract_errors)
+    foreach ($ContractError in $ContractErrors) {
+        Write-CIAnnotation -Level Warning `
+            -Message "Backlog grooming candidate #$($ContractError.issue): $($ContractError.code)"
+    }
+    $ContractErrorIssueIds = if ($ContractErrors.Count -eq 0) {
+        'None'
+    }
+    else {
+        @($ContractErrors | ForEach-Object { "#$($_.issue)" }) -join ', '
+    }
+    $Summary = @(
+        '## Backlog Grooming Shard Result'
+        ''
+        '| Metric | Count |'
+        '|---|---:|'
+        "| Accepted rows | $(@($Result.report_data.issues).Count) |"
+        "| Deferred rows | $($Result.report_data.run.deferred) |"
+        "| Contract errors | $($ContractErrors.Count) |"
+        "| Normalizations | $(@($Result.report_data.normalizations).Count) |"
+        ''
+        "Contract-error issue IDs: $ContractErrorIssueIds"
+    ) -join "`n"
+    Write-CIStepSummary -Content $Summary
+
     return $OutputPath
 }
 #endregion Functions
