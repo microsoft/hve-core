@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -65,6 +65,34 @@ Workflow ownership is explicit:
 * `release-stable-publish.yml` validates reviewed heads, synchronizes release
     preparation, and lets release-please create the Stable tag and draft.
 * `release-vsix-publish.yml` is the sole post-tag producer for both channels.
+
+### Release Branch Gating
+
+The `release-branches` ruleset protects `release/prerelease` and
+`release/stable` against deletion and force pushes, and requires a pull
+request with one approval, approval of the most recent push, and stale-review
+dismissal. It deliberately does not require the `PR Validation Success` status
+check:
+
+* A promotion pull request carries only `main` content, and every `main`
+  commit already passed `PR Validation Success` in the merge queue. The
+  preparation workflows stop when merging `main` or the selected tag conflicts
+  outside the release-owned files: `CHANGELOG.md`, the channel release-please
+  config and manifest, the version fields, `plugin.json`, and
+  `.github/plugin/marketplace.json`. Those files are restored or written by
+  the workflow itself.
+* The managed release pull request contains only release-please and version
+  synchronization output.
+* Every hop needs a human approval of the latest push, and auto-merge is never
+  enabled.
+* After each merge, `release-prerelease.yml` and `release-stable-publish.yml`
+  revalidate the merged head identity and release intent before release-please
+  can create a tag, and `release-vsix-publish.yml` proves the tag, source
+  commit, channel branch, and committed release state before packaging.
+
+`PR Validation` still runs on pull requests into both release branches.
+Reviewing its result is part of the review steps below; it is a review step,
+not an enforced gate.
 
 ## How Releases Work
 
@@ -187,17 +215,19 @@ and does not rebuild the extension.
 
 ### Required Tag Governance
 
-Tag governance is a mandatory activation prerequisite for post-tag production,
-but it is not yet active or proven. The intended repository configuration has
-two rulesets:
+Tag governance is a mandatory activation prerequisite for post-tag production.
+Both tag rulesets have been active since 2026-10-04 and target
+`refs/tags/v*` and `refs/tags/prerelease-v*`:
 
 * `release-tags-creation-by-release-app` restricts creation only and grants a
     bypass to the Release App
 * `release-tags-immutable` restricts updates, deletion, and force pushes with
     no bypass
 
-Do not interpret this intended configuration as evidence that either ruleset
-is installed.
+Ruleset bypass lists are visible only to repository administrators. The
+signer's authorization job re-reads both rulesets at release time and fails
+unless the creation ruleset grants exactly one bypass, to the Release App, and
+the immutability ruleset grants none.
 
 > [!IMPORTANT]
 > This release architecture does not establish SLSA Build Level 3. Future
@@ -445,7 +475,7 @@ Documentation-only releases may not require an extension publish.
 
 ## Historical Release Identities
 
-Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
+Because snapshot publication has stopped, tags and catalogs are supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. These tag names fall outside the `v*` and `prerelease-v*` tag rulesets, so no ruleset protects them. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
 
 ## Version Quick Reference
 

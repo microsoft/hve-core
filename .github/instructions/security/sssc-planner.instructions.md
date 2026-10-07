@@ -351,7 +351,7 @@ Record the produced artifact `supply-chain-assessment.md` in the SSSC plan markd
 
 ## Phase 3 Protocol — Standards Mapping
 
-Map the assessed supply chain posture against the open standards anchored in the `supply-chain-security` skill: OpenSSF Scorecard, SLSA v1.0, OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements. Use the Phase 2 assessment results as input.
+Map the assessed supply chain posture against the open standards anchored in the `supply-chain-security` skill: OpenSSF Scorecard, SLSA v1.2 (Build track unchanged since v1.0), OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements. Use the Phase 2 assessment results as input.
 
 ### Framework Reference
 
@@ -360,7 +360,7 @@ The durable standard catalogs live in the `supply-chain-security` skill. Read th
 | Framework                     | Skill reference                      |
 |-------------------------------|--------------------------------------|
 | OpenSSF Scorecard (20 checks) | `references/openssf-scorecard.md`    |
-| SLSA v1.0 Build track levels  | `references/slsa-levels.md`          |
+| SLSA v1.2 Build track levels  | `references/slsa-levels.md`          |
 | OpenSSF Best Practices Badge  | `references/best-practices-badge.md` |
 | Sigstore (cosign) maturity    | `references/sigstore-maturity.md`    |
 | NTIA SBOM minimum elements    | `references/sbom-elements.md`        |

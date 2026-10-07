@@ -76,4 +76,4 @@ Use the links below as the reference catalog for open standards and governance r
 - EUR-Lex EU AI Act: https://eur-lex.europa.eu/eli/reg/2024/1689
 - ISO/IEC 42001 (AI management systems): https://www.iso.org/standard/81230.html
 - ISO/IEC 23894 (AI risk management): https://www.iso.org/standard/77304.html
-- ISO/IEC 42005 (AI impact assessment): https://www.iso.org/standard/88144.html
+- ISO/IEC 42005 (AI impact assessment): https://www.iso.org/standard/42005
