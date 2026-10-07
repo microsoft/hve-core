@@ -3,8 +3,6 @@ title: 'DT Figma Export Exercise Templates'
 description: FigJam layouts, reference Figma Plugin API code, and data mappings for the Project Details card and Persona Card exercises.
 ---
 
-# DT Figma Export Exercise Templates
-
 The following structured templates define precise FigJam layouts for specific DT exercises.
 When artifacts match a template type, use the template layout instead of the generic section/sticky approach.
 Each template specifies sections, rows, sticky colors, and spatial arrangement.
