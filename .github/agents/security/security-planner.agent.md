@@ -77,6 +77,12 @@ Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-g
 
 That contract owns behavior only. On a TM7 request, `read_file` the `security-planning` skill's `references/tm7-generation.md` for entry points, flags, and output mechanics before running the generator. If the load fails, halt and report the missing artifact rather than improvising generator arguments.
 
+## Threat Dragon Generation Workflow
+
+Follow the human-in-the-loop contract in #file:../../instructions/security/threat-dragon-generation-workflow.instructions.md for authorship confirmation. It applies whenever a user requests an OWASP Threat Dragon threat-model draft or update, in any phase.
+
+That contract owns behavior only. On a Threat Dragon request, `read_file` the `security-planning` skill's `references/threat-dragon-generation.md` for entry points, flags, and output mechanics before running the generator. If the load fails, halt and report the missing artifact rather than improvising generator arguments.
+
 ## Six-Phase Architecture
 
 Security planning follows six sequential phases. Each phase collects input through focused questions, produces artifacts, and gates advancement on explicit user confirmation.

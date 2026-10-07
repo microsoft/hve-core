@@ -17,6 +17,7 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 import generate_tm7  # noqa: E402
+import validate_threat_dragon  # noqa: E402
 
 try:
     import atheris
@@ -49,9 +50,21 @@ def fuzz_tm7_importer(data: bytes) -> None:
             return
 
 
+def fuzz_threat_dragon_validator(data: bytes) -> None:
+    """Fuzz the Threat Dragon model validator over arbitrary bytes."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        path = Path(temp_dir) / "model.json"
+        path.write_bytes(data)
+        try:
+            validate_threat_dragon.validate_file(path)
+        except (UnicodeError, ValueError, RecursionError):
+            return
+
+
 FUZZ_TARGETS = [
     fuzz_spec_loader,
     fuzz_tm7_importer,
+    fuzz_threat_dragon_validator,
 ]
 
 
@@ -101,6 +114,27 @@ class TestGenerateTm7FuzzHarness:
             except (generate_tm7.GenerationError, UnicodeError, ValueError):
                 return
             assert isinstance(result, ET.Element)
+
+    @pytest.mark.parametrize(
+        "payload",
+        [b"", b"{", b"[]", b"null", b'{"detail": 1}', b'{"version": []}', b"\xff"],
+    )
+    def test_given_arbitrary_bytes_when_validate_td_model_then_no_uncaught_exception(
+        self,
+        payload: bytes,
+    ) -> None:
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "model.json"
+            path.write_bytes(payload)
+
+            # Act and Assert
+            try:
+                result = validate_threat_dragon.validate_file(path)
+            except (UnicodeError, ValueError):
+                return
+            assert isinstance(result, list)
+            assert result
 
 
 if __name__ == "__main__" and FUZZING:

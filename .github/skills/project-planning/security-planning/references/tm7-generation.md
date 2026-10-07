@@ -1,7 +1,7 @@
 ---
 title: TM7 Generation Format Contract
 description: OTM-aligned input schema, mapping reference, template profile contract, and current native feedback workflow for TM7 generation.
-ms.date: 2026-09-21
+ms.date: 2026-10-06
 ms.topic: reference
 ---
 
@@ -431,6 +431,47 @@ connector but draws nothing a reviewer can see or select, which silently removes
 a declared interaction from the diagram while the run still exits zero. Model a
 loop back into the same component as an explicit intermediate element, or as a
 component threat with a reviewed `placement_override`.
+
+### Optional security facts for other exporters
+
+The spec may carry optional, vendor-neutral security facts that other exporters
+consume. TM7 and the Markdown report ignore them, and TM7 output for a spec that
+carries them is identical to the output without them. Every field is optional.
+An absent field means the fact is unknown; exporters never treat it as `false`.
+
+```yaml
+project_metadata:
+  owner: Platform security          # accountable owner of the model
+
+components:                         # also inline representation elements
+  - id: comp-01
+    out_of_scope: true
+    out_of_scope_reason: Managed by the hosting provider
+
+data_flows:
+  - id: flow-01
+    bidirectional: true             # request and response share the flow
+    public_network: true            # traverses an untrusted network
+    encrypted: true                 # complements the free-text `encryption`
+
+threats:
+  - id: threat-01
+    severity: high                  # low | medium | high | critical
+    likelihood: medium              # low | medium | high | critical
+    impact: high                    # low | medium | high | critical
+    risk: high                      # informational | low | medium | high | critical
+
+export_options:
+  threat_dragon:                    # Threat Dragon presentation details only
+    elements:
+      comp-01:
+        is_web_application: true
+```
+
+The `export_options` block holds tool-specific details that are not general
+security facts. The Threat Dragon keys, their applicable element kinds, and the
+mapping of every field above are defined in
+[threat-dragon-generation.md](threat-dragon-generation.md).
 
 ### Layout geometry
 

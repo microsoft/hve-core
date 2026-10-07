@@ -31,6 +31,12 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 
 Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
 
+## Threat Dragon Generation Workflow
+
+Follow the human-in-the-loop contract in #file:../../instructions/security/threat-dragon-generation-workflow.instructions.md for authorship confirmation. It applies whenever a review requires generating or refreshing an OWASP Threat Dragon threat model.
+
+On a Threat Dragon request, `read_file` the `security-planning` skill's `references/threat-dragon-generation.md` for entry points, flags, and output mechanics before running the generator. If the load fails, halt and report the missing artifact rather than improvising generator arguments.
+
 ## Inputs
 
 * (Optional) Mode: `audit`, `diff`, or `plan`. Defaults to `audit` when not specified.

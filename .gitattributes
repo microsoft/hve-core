@@ -23,3 +23,9 @@
 # to prevent CRLF normalization churn during merges.
 plugins/** linguist-generated=true
 plugins/**/*.md text eol=lf
+
+# The vendored Threat Dragon schema assets are hash-pinned to upstream bytes, and
+# the Threat Dragon golden models are compared byte-for-byte with LF generator
+# output, so neither may be converted to CRLF on checkout.
+.github/skills/project-planning/security-planning/assets/threat-dragon/** -text
+.github/skills/project-planning/security-planning/tests/fixtures/threat-dragon/** text eol=lf

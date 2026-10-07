@@ -1,9 +1,9 @@
 ---
 title: Security/Tm7 Generation Workflow
 description: Human-in-the-loop contract for TM7 threat-model generation and the native Windows TMT feedback loop
-sidebar_position: 4
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - instruction

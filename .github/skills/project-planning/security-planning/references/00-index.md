@@ -5,7 +5,7 @@ description: Navigation catalog for the Security Planning skill references.
 
 # Security Planning Reference Index
 
-This index is the entry point for the reusable security-planning skill. It summarizes durable planning, plan-drift, and TM7 references shared by Security Planner, Security Reviewer, and Code Review.
+This index is the entry point for the reusable security-planning skill. It summarizes durable planning, plan-drift, TM7, and Threat Dragon references shared by Security Planner, Security Reviewer, and Code Review.
 
 ## Reference catalog
 
@@ -23,6 +23,7 @@ This index is the entry point for the reusable security-planning skill. It summa
 | [drift-report-contract.md](drift-report-contract.md)         | Canonical report body and destination adaptations for direct use, Reviewer, Planner, and Code Review                              | Repository-original output contract                                                                         |
 | [drift-worked-examples.md](drift-worked-examples.md)         | Synthetic baseline, finding, edge-case, and caller-regression scenarios                                                           | Repository-original behavior fixtures                                                                       |
 | [tm7-generation.md](tm7-generation.md)                       | TM7 input schema, dual-output generation contract, mapping contract, template-profile guidance, CLI surface, and operator runbook | TM7 wire facts extracted from a genuine TMT reference export and verified against the tool's own serializer |
+| [threat-dragon-generation.md](threat-dragon-generation.md)   | Threat Dragon v2.6.2 export contract: CLI surface, spec-to-native mapping, threat placement, canvas attributes, and validation    | Vendored Threat Dragon v2.6.2 schema and loader behavior verified against the pinned upstream release       |
 
 ## Usage notes
 
@@ -42,6 +43,7 @@ Upstream sources summarized by this reference set, each cited in the file that s
 | STRIDE threat model (Microsoft SDL)                                     | Microsoft Learn documentation terms | `stride-model.md`              |
 | Microsoft Purview sensitivity labels and data classification categories | Microsoft Learn documentation terms | `data-classification.md`       |
 | Open Threat Model (OTM)                                                 | CC BY-SA 4.0                        | `tm7-generation.md`            |
+| OWASP Threat Dragon v2.6.2 JSON schema                                  | Apache-2.0                          | `threat-dragon-generation.md`  |
 | NIST SP 800-53 control families                                         | Public domain (17 U.S.C. § 105)     | `nist-control-families.md`     |
 | OWASP, NIST, and MITRE cross-references                                 | See each entry                      | `standards-cross-reference.md` |
 

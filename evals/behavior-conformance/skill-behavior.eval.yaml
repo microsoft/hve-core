@@ -4644,6 +4644,27 @@ stimuli:
         config:
           pattern: '(?i)(generate_tm7|generate_markdown|\.tm7|threat model)'
 
+  - name: skill-security-planning-threat-dragon-generation
+    prompt: |
+      I have a threat-model spec in YAML and I want an editable model I can open
+      in OWASP Threat Dragon, generated from the same spec I use for TM7. Which
+      skill covers this, and which entry point produces the Threat Dragon file?
+    tags:
+      category: behavior-conformance
+      skill: security-planning
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: e0feae1bcc5b5cbf09b23f10d2bf30081ed9520c78ad00db08deba40ae602400
+    graders:
+      - type: output-matches
+        name: skill-security-planning-threat-dragon-generation-skill-attribution
+        config:
+          pattern: '(?i)security-planning'
+      - type: output-matches
+        name: skill-security-planning-threat-dragon-generation-scope-language
+        config:
+          pattern: '(?i)(generate_threat_dragon|threat dragon)'
+
   - name: skill-security-planning-native-loop-bleed
     prompt: |
       I am on macOS and want to run the native Threat Modeling Tool feedback
