@@ -3,7 +3,7 @@ title: GitHub Codespaces Installation
 description: Install HVE Core in GitHub Codespaces using postCreateCommand
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - codespaces
@@ -86,13 +86,6 @@ Add the clone command and VS Code settings:
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
           "/workspaces/hve-core/.github/agents/security": true
         },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true
-        },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
@@ -163,13 +156,6 @@ git push
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
           "/workspaces/hve-core/.github/agents/security": true
         },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true
-        },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
@@ -219,14 +205,6 @@ git push
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true,
-          ".github/prompts": true
-        },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
@@ -288,18 +266,6 @@ For projects needing HVE Core in both local devcontainers and Codespaces:
     "vscode": {
       "settings": {
         // Both paths - VS Code ignores non-existent paths
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true,
-          "../hve-core/.github/prompts/ado": true,
-          "../hve-core/.github/prompts/design-thinking": true,
-          "../hve-core/.github/prompts/github": true,
-          "../hve-core/.github/prompts/hve-core": true,
-          "../hve-core/.github/prompts/security": true
-        },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,

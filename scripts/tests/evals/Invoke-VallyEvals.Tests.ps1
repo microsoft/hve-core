@@ -81,6 +81,113 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.resultsPath | Should -Match 'results\.jsonl$'
         }
 
+        It 'Sums native token usage across trials' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $rec1 = @{
+                trajectory = @{ stimulus = @{ name = 's1' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 1200; outputTokens = 80; cacheReadTokens = 900 } } }
+                gradeResult = @{ passed = $true }
+            } | ConvertTo-Json -Depth 6 -Compress
+            $rec2 = @{
+                trajectory = @{ stimulus = @{ name = 's2' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 800; outputTokens = 20 } } }
+                gradeResult = @{ passed = $false }
+            } | ConvertTo-Json -Depth 6 -Compress
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value @($rec1, $rec2) -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.inputTokens | Should -Be 2000
+            $result.outputTokens | Should -Be 100
+            $result.cacheReadTokens | Should -Be 900
+            $result.tokenTrials | Should -Be 2
+        }
+
+        It 'Excludes trials without valid token usage from token totals without raising record issues' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-missing'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $records = @(
+                (@{ trajectory = @{ stimulus = @{ name = 's1' }; metrics = @{ wallTimeMs = 1 } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress),
+                (@{ trajectory = @{ stimulus = @{ name = 's2' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ totalTokens = 7 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress),
+                (@{ trajectory = @{ stimulus = @{ name = 's3' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = -5; outputTokens = 2 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress),
+                (@{ trajectory = @{ stimulus = @{ name = 's4' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 'many'; outputTokens = 2 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress)
+            )
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $records -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.trials | Should -Be 4
+            $result.assertionsPassed | Should -Be 4
+            $result.inputTokens | Should -Be 0
+            $result.outputTokens | Should -Be 0
+            $result.cacheReadTokens | Should -Be 0
+            $result.tokenTrials | Should -Be 0
+            @($result.recordIssues) | Should -HaveCount 0
+        }
+
+        It 'Excludes zero-filled callCount 0 usage from token means' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-callcount'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $records = @(
+                (@{ trajectory = @{ stimulus = @{ name = 's1' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 1000; outputTokens = 40; cacheReadTokens = 600; callCount = 2 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress),
+                (@{ trajectory = @{ stimulus = @{ name = 's2' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 0; outputTokens = 0; cacheReadTokens = 0; callCount = 0 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress)
+            )
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $records -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.trials | Should -Be 2
+            $result.inputTokens | Should -Be 1000
+            $result.cacheReadTokens | Should -Be 600
+            $result.tokenTrials | Should -Be 1
+            @($result.recordIssues) | Should -HaveCount 0
+        }
+
+        It 'Reports no token trials when every record is zero-filled with callCount 0' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-unmeasured'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $record = @{ trajectory = @{ stimulus = @{ name = 's1' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 0; outputTokens = 0; cacheReadTokens = 0; callCount = 0 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value @($record) -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.tokenTrials | Should -Be 0
+            $result.inputTokens | Should -Be 0
+        }
+
+        It 'Treats unrepresentable token counts as unmeasured without throwing or raising record issues' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-range'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $records = @(
+                '{"trajectory":{"stimulus":{"name":"double"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":1e20,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"bigint"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":100000000000000000000,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"beyond-decimal"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":1e30,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"fraction"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":1.5,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+            )
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $records -Encoding utf8
+
+            { $script:RangeResult = Read-VallyResultsJsonl -RunDir $runDir } | Should -Not -Throw
+            $script:RangeResult.trials | Should -Be 4
+            $script:RangeResult.assertionsPassed | Should -Be 4
+            $script:RangeResult.tokenTrials | Should -Be 0
+            $script:RangeResult.inputTokens | Should -Be 0
+            @($script:RangeResult.recordIssues) | Should -HaveCount 0
+        }
+
+        It 'Accepts Int64.MaxValue exactly and skips a trial that would overflow the running total' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-overflow'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $records = @(
+                '{"trajectory":{"stimulus":{"name":"max"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":9223372036854775807,"outputTokens":1}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"overflow"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":5,"outputTokens":1}}},"gradeResult":{"passed":false}}'
+            )
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $records -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.tokenTrials | Should -Be 1
+            $result.inputTokens | Should -Be ([long]::MaxValue)
+            $result.inputTokens | Should -BeOfType ([long])
+            $result.outputTokens | Should -Be 1
+            $result.assertionsPassed | Should -Be 1
+            $result.assertionsFailed | Should -Be 1
+            @($result.recordIssues) | Should -HaveCount 0
+        }
+
         It 'Treats a score above the configured threshold as passed even when gradeResult.passed is false' {
             $runDir = Join-Path $script:WorkRoot 'run-threshold'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
@@ -1274,6 +1381,52 @@ stimuli:
         $detail.specs[0].diagnostics.schemaVersion | Should -Be '1.0.0'
         $summary.perSpec[0].diagnostics.runKey | Should -Be 'skill-pr-reference.yaml'
         @($summary.perSpec[0].diagnostics.attempts[0].trials) | Should -HaveCount 2
+    }
+
+    It 'Records per-artifact token totals and per-trial means from native usage' {
+        $spec = @'
+name: skill-cover
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      skill: pr-reference
+'@
+        $artifacts = @(
+            @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'skill-pr-reference.yaml'; Yaml = $spec })
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+        $LASTEXITCODE | Should -Be 0
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $artifact = $summary.perArtifact[0]
+        $artifact.inputTokens | Should -Be 10
+        $artifact.outputTokens | Should -Be 4
+        $artifact.cacheReadTokens | Should -Be 6
+        $artifact.tokenTrials | Should -Be 2
+        $artifact.meanInputTokensPerTrial | Should -Be 5
+        $artifact.meanCacheReadTokensPerTrial | Should -Be 3
+
+        $detail = Get-Content -LiteralPath (Join-Path $fx.LogsDir 'eval-results-skill-pr-reference.json') -Raw | ConvertFrom-Json
+        $detail.meanInputTokensPerTrial | Should -Be 5
+        $detail.specs[0].inputTokens | Should -Be 10
+        $detail.specs[0].tokenTrials | Should -Be 2
+        $summary.totals.PSObject.Properties.Name | Should -Not -Contain 'inputTokens'
     }
 
     It 'Exits 1 when a spec fails, recording the failure per artifact' {
@@ -2794,6 +2947,9 @@ stimuli:
         $summary.perArtifact[0].status | Should -Be 'fail'
         $summary.perArtifact[0].advisoryFailed | Should -Be 2
         $summary.perArtifact[0].authoritativeFailed | Should -Be 0
+        $summary.perArtifact[0].tokenTrials | Should -Be 0
+        $summary.perArtifact[0].meanInputTokensPerTrial | Should -BeNullOrEmpty
+        $summary.perArtifact[0].meanCacheReadTokensPerTrial | Should -BeNullOrEmpty
     }
 
     It 'Promotes when an authoritative stimulus fails alongside an advisory one' {

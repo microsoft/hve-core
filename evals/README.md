@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-09-27
+ms.date: 2026-10-07
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -16,7 +16,7 @@ evals/
 ├── agent-conformance/    copilot-sdk multi-turn behavioral conformance per planner agent
 ├── script-validation/    copilot-sdk evals testing deterministic scripts
 ├── baseline-equivalence/ parameterized baseline-vs-customized equivalence suite
-├── behavior-conformance/ Tier 3 advisory conformance for prompts, instructions, and skill behavior
+├── behavior-conformance/ Tier 3 advisory conformance for instructions and skill behavior
 └── skill-hygiene/        vally lint structural checks for .github/skills/
 ```
 
@@ -29,12 +29,14 @@ evals/
 | `agent-conformance`    | `copilot-sdk` | Two-turn behavioral conformance per planner agent: turn 0 launches the agent, turn 1 sends the case  |
 | `script-validation`    | `copilot-sdk` | Tests agent reasoning about validation rules (will migrate to mock when available)                   |
 | `baseline-equivalence` | `copilot-sdk` | Asserts hve-core agent customization preserves baseline model behavior beyond documented divergences |
-| `behavior-conformance` | `copilot-sdk` | Tier 3 advisory conformance for prompts, instructions, and skill behavior (does not fail PR builds)  |
+| `behavior-conformance` | `copilot-sdk` | Tier 3 advisory conformance for instructions and skill behavior (does not fail PR builds)            |
 | `skill-hygiene`        | `vally lint`  | Structural checks for every `SKILL.md` under `.github/skills/`; authoritative, no executor calls     |
 
 The `skill-hygiene` suite is the only entry that uses `vally lint` instead of `vally eval`. It is a README-only suite (no `eval.yaml`) that reuses the lint pipeline's static grader registry to validate the skill catalog on every PR that touches `.github/skills/`. See [`skill-hygiene/README.md`](skill-hygiene/README.md) for coverage and grader detail.
 
 The `agent-conformance` suites are the only entries that use `turns` stimuli and a model-judge (`type: prompt`) grader. Each suite carries one `eval.yaml` per agent, keyed to a `category: agent-conformance-<agent>` tag with a matching entry in `.vally.yaml`.
+
+Vally runs each trial in a temporary workspace that does not contain the repository tree. A conformance suite must therefore declare a suite-level `agent_environment` that stages its agent at the path turn 0 launches, along with the instruction files and skills that agent delegates to. Without it, the launch read fails and the judge grades general model knowledge rather than the agent. [`agent-conformance/rai-planner/eval.yaml`](agent-conformance/rai-planner/eval.yaml) shows the pattern.
 
 `scoring.weights` makes the judge the deciding grader; `wall-time` and `output-contains` are advisory budgets that cannot pass a stimulus on their own. These suites run from `.github/workflows/agent-conformance.yml`, which `weekly-validation.yml` invokes; they are not part of the PR changed-artifact lane.
 

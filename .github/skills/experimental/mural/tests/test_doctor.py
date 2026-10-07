@@ -214,11 +214,11 @@ def test_caller_and_bootstrap_scope_declarations_match_exported_policy(
     mural_module: Any,
 ) -> None:
     repo_root = pathlib.Path(__file__).parents[5]
+    skills = pathlib.Path(__file__).parents[3]
     paths = [
-        repo_root
-        / ".github/instructions/experimental/mural/mural-bootstrap.instructions.md",
+        skills / "experimental/mural/references/bootstrap.md",
         repo_root / ".github/agents/design-thinking/dt-coach.agent.md",
-        repo_root / ".github/agents/rai-planning/rai-planner.agent.md",
+        skills / "project-planning/rai-planner/references/mural-board-bootstrap.md",
         repo_root / ".github/agents/project-planning/ux-ui-designer.agent.md",
     ]
     documented_scopes = {

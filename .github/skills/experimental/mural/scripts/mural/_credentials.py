@@ -33,6 +33,16 @@ from ._constants import (
 from ._exceptions import MuralError, MuralValidationError
 from ._protocols import CredentialBackend
 
+# Cross-platform file-lock primitives. Exactly one is non-None at runtime.
+try:  # pragma: no cover - platform-specific
+    import fcntl as _fcntl
+except ImportError:  # pragma: no cover - Windows
+    _fcntl = None  # type: ignore[assignment]
+try:  # pragma: no cover - platform-specific
+    import msvcrt as _msvcrt
+except ImportError:  # pragma: no cover - POSIX
+    _msvcrt = None  # type: ignore[assignment]
+
 
 def _pkg() -> Any:
     """Return the live ``mural`` package module for monkeypatch-aware routing."""
@@ -475,8 +485,6 @@ def _acquire_cache_lock(path: pathlib.Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = path.with_name(path.name + ".lock")
     fd = os.open(str(lock_path), os.O_RDWR | os.O_CREAT, 0o600)
-    _fcntl = _pkg()._fcntl
-    _msvcrt = _pkg()._msvcrt
     try:
         if _fcntl is not None:
             _fcntl.flock(fd, _fcntl.LOCK_EX)

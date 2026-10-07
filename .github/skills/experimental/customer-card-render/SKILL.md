@@ -6,7 +6,7 @@ compatibility: 'Requires Python 3.11+, uv, and the experimental powerpoint skill
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-10"
+  last_updated: "2026-10-02"
 ---
 
 # Customer Card Render Skill
@@ -126,7 +126,7 @@ The `powerpoint` skill owns the `Invoke-PptxPipeline.ps1` orchestrator, its para
 
 ## DT Coach Integration
 
-The `dt-canonical-deck` prompt and the `dt-coaching-foundation` skill's `canonical-deck` reference provide opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to build customer cards at method exit points. The two-command flow above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
+The `dt-coaching-foundation` skill's `canonical-deck` reference provides opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to build customer cards at method exit points. The two-command flow above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
 
 Canonical artifacts are produced by the DT coach and live under `.copilot-tracking/dt/<project-slug>/canonical/`.
 

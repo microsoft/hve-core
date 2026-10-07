@@ -25,6 +25,18 @@ Apply these rules during capture:
 * Surface assumptions as observations that the user can confirm or refine.
 * Prefer curiosity and context gathering over early judgments about risk or compliance.
 
+## Salient Risk Signals
+
+Exploration-first does not mean staying silent about an obvious risk. When the user's description reveals a salient risk signal, name it in the same turn as an observation, record it in `runningObservations` with `phase: 1`, and say that formal classification follows in Phase 2. Then continue scoping. Signals that warrant naming include:
+
+* Consequential automated decisions about people, such as approvals, denials, or eligibility, without human review. Name it as a consequential-use risk and the missing human oversight.
+* A system that acts on instructions found in content it ingests, such as messages, documents, or web pages. Name it as prompt-injection exposure under the Secure and Resilient characteristic.
+* Different outcomes for equally qualified groups. Name it as a fairness concern under the Fair with Harmful Bias Managed characteristic.
+
+Use the active framework's characteristic names. Set `flagLevel` to `concern` for a salient risk signal, to `critical` when the signal suggests a possible prohibited use or severe harm to people, and to `noted` for mitigating or neutral context. Do not assign a risk tier, a depth tier, or a compliance conclusion in Phase 1.
+
+Proportionality applies in both directions. When the description shows mainly mitigating signals, such as internal-only use, no automated decisions about people, and human review before anything is shared, say that the early signals point to a low-risk profile and that Phase 2 screening will confirm it. Do not escalate a reviewed, internal tool toward a high-risk framing.
+
 ## Question Cadence
 
 Use a compact, balanced question set per turn:

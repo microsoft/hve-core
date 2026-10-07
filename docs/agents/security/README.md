@@ -3,6 +3,8 @@ title: Security Planning
 description: Automated security analysis agent that guides teams through threat modeling, standards mapping, and backlog generation using a structured six-phase workflow
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Security Planning"
 keywords:
   - security planning
   - threat modeling
@@ -14,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-07
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -97,12 +99,12 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 ## Entry Modes
 
-The Security Planner supports two entry modes, each matched to a prompt file.
+The Security Planner supports two entry modes. Select the Security Planner agent and describe your starting point; the agent resolves the mode from your request and any artifacts you supply.
 
-| Mode     | Prompt                   | Starting point                                              |
-|----------|--------------------------|-------------------------------------------------------------|
-| From-PRD | `security-plan-from-prd` | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
-| Capture  | `security-capture`       | Starts a blank Phase 1 interview to gather scope directly   |
+| Mode     | How to start                                      | Starting point                                              |
+|----------|---------------------------------------------------|-------------------------------------------------------------|
+| From-PRD | Ask to start from your product requirements       | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
+| Capture  | Describe the project, optionally with prior notes | Starts a blank Phase 1 interview to gather scope directly   |
 
 ## When to Use
 
