@@ -1842,7 +1842,7 @@ stimuli:
       `Update:` `stop-unsupported` | `run-creation`
       Return exactly five labeled lines without bullets in that order, using
       only the selected value after each label and no explanation.
-    environment:
+    agent_environment:
       skills:
         - ../../.github/skills/hve-core/pull-request
     tags:
