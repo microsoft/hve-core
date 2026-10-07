@@ -52,7 +52,7 @@ Reach for a different asset when:
 
 ## How to use it
 
-1. Select **RPI Agent** from the chat agent picker, or run the [/rpi](../../prompts/hve-core/rpi) prompt.
+1. Select **RPI Agent** from the chat agent picker.
 2. Describe the task, or supply an issue or PR reference, a task slug, or an existing artifact path. An explicit anchor identifies the task; a new conversation alone does not resume earlier work.
 3. In manual mode, the agent walks you through each phase's artifacts and asks whether to refine the work or advance. Request the next phase in your answer, use the **Research**, **Plan**, **Implement**, and **Review** handoffs, or invoke the matching `/rpi-*` command.
 4. To switch to automatic mode, select **Full Auto** or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, choose one of the four options below. Every question includes freeform input.

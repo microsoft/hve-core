@@ -9,7 +9,10 @@ description: >
 type: capability
 defaults:
   runs: 5
-  timeout: 120s
+  # Raised from 120s: the security-reviewer-plan-drift stimulus, whose inputs
+  # did not change, measured 52s to 159s per completed trial, and others ran
+  # past 180s, so lower caps failed integrity on most attempts.
+  timeout: 300s
   executor: copilot-sdk
   judge_model: claude-sonnet-5
 
@@ -6145,6 +6148,31 @@ stimuli:
     config:
       pattern: (?im)(?<!\b(?:not|never|without)\s)(?<!\b(?:not|never|without)\s(?:complete|completed|completing|finish|finished|finishing|execute|executed|executing|run|running)\s)\bsuccessfully\b|^\s*(?:[-*]\s*)?`?lifecycle:(?:committed|loop-closed)`?\s*$
       negate: true
+- name: rai-planner-from-security-plan-no-plans
+  prompt: |
+    Start a Responsible AI assessment from our completed security plan. No security plan path was supplied, and this workspace has no `.copilot-tracking/security-plans/` directory. Follow the startup contract, then explain how you looked for a security plan and what happens next. Reply in chat only.
+  environment:
+    files:
+    - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
+      dest: .github/instructions/rai-planning/rai-identity.instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: from-security-plan-no-plans
+    agent: rai-planner
+  graders:
+  - type: output-matches
+    name: rai-planner-from-security-plan-discovery-location
+    config:
+      pattern: (?i)security-plans
+  - type: output-matches
+    name: rai-planner-from-security-plan-capture-fallback
+    config:
+      pattern: (?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(security plan|plan|state\.json)[\s\S]{0,500}capture
 - name: rai-planner-cold-start-scoped-load
   prompt: |
     Start a new RAI assessment in capture mode for an AI feature that drafts
@@ -7041,6 +7069,35 @@ stimuli:
           const summary = /(?:phase\s*6|review[^.!?\n]*handoff)/i.test(reply) && /(?:confirm|approval|hard gate|human review)/i.test(reply);
           process.exit(unchanged && state.currentPhase === 6 && state.handoffGenerated?.ado === false && state.handoffGenerated?.github === false && summary ? 0 : 1);
         } catch { process.exit(1); }
+- name: security-planner-from-prd-no-artifacts
+  prompt: |
+    Start security planning from our existing product requirements. No PRD or BRD path was supplied, and this workspace has no `.copilot-tracking/prd-sessions/` or `.copilot-tracking/brd-sessions/` directories. Follow the startup contract, then explain how you looked for requirements artifacts and what happens next. Reply in chat only.
+  environment:
+    files:
+    - src: ../../.github/agents/security/security-planner.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/security/identity.instructions.md
+      dest: .github/instructions/security/identity.instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: from-prd-no-artifacts
+    agent: security-planner
+  graders:
+  - type: output-matches
+    name: security-planner-from-prd-attribution
+    config:
+      pattern: (?is)OWASP ASVS[\s\S]{0,12}OWASP Top 10[\s\S]{0,12}NIST SSDF
+  - type: output-matches
+    name: security-planner-from-prd-discovery-paths
+    config:
+      pattern: (?is)prd-sessions[\s\S]{0,400}brd-sessions|brd-sessions[\s\S]{0,400}prd-sessions
+  - type: output-matches
+    name: security-planner-from-prd-no-artifact-fallback
+    config:
+      pattern: (?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(PRD|BRD|artifact|requirement)[\s\S]{0,500}(capture|file path|path)
 - name: security-reviewer-class-recipe
   prompt: |
     Review this code for security issues with severity levels:
@@ -7111,6 +7168,56 @@ stimuli:
     config:
       pattern: (?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|saved)\b.{0,80}security-audit-\d{4}-\d{2}-\d{2}-\d{3}\.md
       negate: true
+- name: security-reviewer-llm-agentic-preset
+  prompt: |
+    A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
+  environment:
+    files:
+    - src: ../../.github/agents/security/security-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: llm-agentic-preset
+    agent: security-reviewer
+  graders:
+  - type: output-matches
+    name: security-reviewer-llm-agentic-preset-skills
+    config:
+      pattern: (?is)(?=.*owasp[\s_-]*(?:top[\s_-]*10[\s_-]*for[\s_-]*)?llm)(?=.*owasp[\s_-]*(?:top[\s_-]*10[\s_-]*for[\s_-]*)?agentic)
+  - type: output-matches
+    name: security-reviewer-llm-agentic-preset-profiling-retained
+    config:
+      pattern: (?is)profil\w*[^.]{0,120}(still|runs?|running|retain\w*|continu\w*|context|perform\w*|execut\w*|invok\w*|remain\w*)|(still|runs?|perform\w*|execut\w*|invok\w*)[^.]{0,80}profil\w*
+  - type: output-matches
+    name: security-reviewer-llm-agentic-preset-single-report
+    config:
+      pattern: (?is)(single|one|unified|consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*)[^.]{0,80}report|report[^.]{0,80}(consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*|generator)
+- name: security-reviewer-web-fast-path
+  prompt: |
+    A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
+  environment:
+    files:
+    - src: ../../.github/agents/security/security-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: web-fast-path
+    agent: security-reviewer
+  graders:
+  - type: output-matches
+    name: security-reviewer-web-fast-path-target-skill
+    config:
+      pattern: (?i)owasp[\s_-]*top[\s_-]*(?:10|ten)\b
+  - type: output-matches
+    name: security-reviewer-web-fast-path-profiling-skipped
+    config:
+      pattern: (?is)(skip\w*|bypass\w*|without|no)[^.]{0,80}profil\w*|profil\w*[^.]{0,80}(skip\w*|bypass\w*)
+  - type: output-matches
+    name: security-reviewer-web-fast-path-audit-mode
+    config:
+      pattern: (?i)\baudit\b
 - name: skill-assessor-audit-mode-format
   prompt: |
     You are the Skill Assessor subagent. The Security Reviewer orchestrator
@@ -7208,6 +7315,39 @@ stimuli:
     name: sssc-planner-disclaimer-startup-disclaimer-state
     config:
       pattern: (?i)disclaimerShownAt|ISO\s*8601
+- name: sssc-planner-from-security-plan-selection
+  prompt: |
+    Extend our completed security plans with supply chain coverage. Two Security Planner projects exist, at `.copilot-tracking/security-plans/payments-api/state.json` and `.copilot-tracking/security-plans/ledger-service/state.json`. Follow the startup contract, then explain which entry mode you are using and how you will choose the source security plan before scoping. Reply in chat only.
+  environment:
+    files:
+    - src: ../../.github/agents/security/sssc-planner.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/security/sssc-planner.instructions.md
+      dest: .github/instructions/security/sssc-planner.instructions.md
+    - src: fixtures/security-planner-disclaimer-shown-state.json
+      dest: .copilot-tracking/security-plans/payments-api/state.json
+    - src: fixtures/security-planner-disclaimer-shown-state.json
+      dest: .copilot-tracking/security-plans/ledger-service/state.json
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: from-security-plan-selection
+    agent: sssc-planner
+  graders:
+  - type: output-matches
+    name: sssc-planner-from-security-plan-attribution
+    config:
+      pattern: (?is)OpenSSF Scorecard[\s\S]{0,12}SLSA Build Levels[\s\S]{0,12}OpenSSF Best Practices Badge[\s\S]{0,12}Sigstore[\s\S]{0,12}SBOM
+  - type: output-matches
+    name: sssc-planner-from-security-plan-entry-mode
+    config:
+      pattern: (?i)from-security-plan
+  - type: output-matches
+    name: sssc-planner-from-security-plan-selection-requested
+    config:
+      pattern: (?is)(select|choose|which)[\s\S]{0,240}(payments-api|ledger-service)|(payments-api|ledger-service)[\s\S]{0,240}(select|choose|which)
 - name: sssc-reviewer-class-recipe
   prompt: |
     Review the software supply chain security posture of a repository that publishes container images and npm packages from a GitHub Actions pipeline. Summarize the findings with severity, citing the relevant frameworks (OpenSSF Scorecard, SLSA, or Sigstore). Write the report under `.copilot-tracking/sssc-reviews/` and report the path.
@@ -7279,6 +7419,64 @@ stimuli:
     name: degraded-evidence-recorded
     config:
       pattern: (?is)(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable)[^.]{0,120}(evidence|rigor|pr-reference|confidence|quality)|(evidence|rigor|pr-reference|confidence)[^.]{0,120}(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable|not available|could not)
+- name: sssc-reviewer-vex-full-scan-shape
+  prompt: |
+    Run the full VEX pipeline for this repository with product `pkg:npm/@contoso/widget`. Reply in chat only before running any command: list the pipeline stages in order, state how the product identifier is used, and state what must happen before any `not_affected` determination is published.
+  environment:
+    files:
+    - src: ../../.github/agents/security/sssc-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/security/vex-generation.instructions.md
+      dest: .github/instructions/security/vex-generation.instructions.md
+    skills:
+    - ../../.github/skills/security/vex
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: vex-full-scan
+    agent: sssc-reviewer
+  graders:
+  - type: output-matches
+    name: sssc-reviewer-vex-full-scan-stage-order
+    config:
+      pattern: (?is)scan\w*[\s\S]{0,400}enrich\w*[\s\S]{0,400}(analy[sz]\w*|exploitab\w*)[\s\S]{0,400}draft\w*
+  - type: output-matches
+    name: sssc-reviewer-vex-full-scan-product
+    config:
+      pattern: (?i)pkg:npm/@contoso/widget
+  - type: output-matches
+    name: sssc-reviewer-vex-full-scan-human-review
+    config:
+      pattern: (?is)not_affected[\s\S]{0,300}(human|qualified)[\s\S]{0,60}review|(human|qualified)[\s\S]{0,60}review[\s\S]{0,300}not_affected
+- name: sssc-reviewer-vex-triage-from-report
+  prompt: |
+    Triage the CVEs in the existing Trivy report at `reports/trivy.json` and draft an OpenVEX document. An OSV-Scanner report also exists at `reports/osv.json`. Reply in chat only before running any command: state which pipeline stage you skip, where the work begins, and which report takes precedence.
+  environment:
+    files:
+    - src: ../../.github/agents/security/sssc-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/security/vex-generation.instructions.md
+      dest: .github/instructions/security/vex-generation.instructions.md
+    skills:
+    - ../../.github/skills/security/vex
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: vex-triage-from-report
+    agent: sssc-reviewer
+  graders:
+  - type: output-matches
+    name: sssc-reviewer-vex-triage-skips-scan
+    config:
+      pattern: (?is)(skip\w*|bypass\w*|without|omit\w*)[^.]{0,60}scan|scan[^.]{0,60}(skip\w*|bypass\w*|omit\w*)
+  - type: output-matches
+    name: sssc-reviewer-vex-triage-begins-at-enrichment
+    config:
+      pattern: (?is)(begin|start)\w*[^.]{0,60}enrich\w*|enrich\w*[^.]{0,60}(first|begin\w*|start\w*)
+  - type: output-matches
+    name: sssc-reviewer-vex-triage-trivy-precedence
+    config:
+      pattern: (?is)trivy[^.]{0,120}(precedence|prefer\w*|first|over|before|priority)|(precedence|prefer\w*|priority)[^.]{0,120}trivy
 - name: supply-chain-skill-assessor-posture
   prompt: |
     As the supply-chain skill assessor, assess a repository's supply-chain

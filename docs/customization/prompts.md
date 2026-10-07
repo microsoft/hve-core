@@ -2,7 +2,7 @@
 title: Creating Custom Prompts
 description: Author reusable prompt templates with variables, agent delegation, and tool restrictions for team workflows
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - prompts
@@ -16,9 +16,9 @@ estimated_reading_time: 6
 
 Prompts are single-session workflow definitions. You invoke a prompt, Copilot executes it, and the task completes in one shot. This distinguishes prompts from agents (multi-turn conversations) and instructions (passive guidance applied to file edits).
 
-Prompt files live under `.github/prompts/`. They are commonly organized into
-package-scoped subdirectories such as `.github/prompts/hve-core/` or
-`.github/prompts/security/`, though the repository also contains top-level prompt files:
+Prompt files live under `.github/prompts/`, optionally organized into
+package-scoped subdirectories. HVE Core ships its own reusable workflows as
+skills, so the examples here show prompts a team adds for itself:
 
 ```text
 .github/prompts/
@@ -26,7 +26,7 @@ package-scoped subdirectories such as `.github/prompts/hve-core/` or
 │   ├── sprint-summary.prompt.md
 │   └── release-notes.prompt.md
 └── shared/
-    └── git-commit-message.prompt.md
+    └── standup-notes.prompt.md
 ```
 
 You invoke prompts through the `/` command picker in Copilot Chat. Each prompt appears by its filename, making descriptive naming essential.

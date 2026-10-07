@@ -63,11 +63,6 @@
       url: `${blob}.github/agents/rai-planning/rai-reviewer.agent.md`,
       note: 'Evidence review of a codebase, diff or plan, separate from the Planner conversation.'
     },
-    prompts: {
-      title: 'RAI prompt files',
-      url: `${tree}.github/prompts/rai-planning`,
-      note: 'rai-capture, rai-plan-from-prd and rai-plan-from-security-plan select RAI Planner.'
-    },
     disclaimer: {
       title: 'Disclaimer language instructions',
       url: `${blob}.github/instructions/shared/disclaimer-language.instructions.md`,
@@ -117,11 +112,6 @@
       title: 'NIST AI 100-1: AI Risk Management Framework 1.0',
       url: 'https://doi.org/10.6028/NIST.AI.100-1',
       note: 'January 2023. U.S. Government work and the planner\'s default framework.'
-    },
-    'vscode-prompts': {
-      title: 'VS Code: Use prompt files',
-      url: `${vscode}agent-customization/prompt-files`,
-      note: `Prompt files are deprecated for Agent Host sessions and still work with the Local agent. ${read}`
     },
     'vscode-skills': {
       title: 'VS Code: Use Agent Skills',

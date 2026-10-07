@@ -3,7 +3,7 @@ title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - tech lead
@@ -104,9 +104,9 @@ specificity, and alignment with repository conventions.
 | **rpi-plan**              | Structured implementation planning                    | [RPI workflow](../../rpi/) |
 | **documentation**         | Documentation audit, drift, authoring, and validation | Agent file                 |
 
-Prompts complement the agents for cross-cutting workflows:
+Skills complement the agents for cross-cutting workflows:
 
-| Prompt       | Purpose                                                       | Invoke          |
+| Skill        | Purpose                                                       | Invoke          |
 |--------------|---------------------------------------------------------------|-----------------|
 | git-commit   | Stage and commit changes with conventional message formatting | `/git-commit`   |
 | pull-request | Create a pull request with structured description             | `/pull-request` |

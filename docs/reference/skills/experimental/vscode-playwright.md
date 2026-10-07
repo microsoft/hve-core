@@ -1,9 +1,9 @@
 ---
 title: vscode-playwright
 description: "Capture VS Code screenshots and self-contained browser animation scenes through Playwright. Use for editor evidence, slide imagery, or silent WebM scene clips."
-sidebar_position: 10
+sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-09
 ms.topic: reference
 keywords:
   - skill

@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - reference
@@ -40,7 +40,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Hve Core/Commit Message](hve-core/commit-message.md)                                             | Commit message format and conventions                                                                                                                                                                                                                                                 |
 | [Hve Core/Copilot Tracking Location](hve-core/copilot-tracking-location.md)                       | Where .copilot-tracking/ lives (codebase root, not a host session folder) and how to find its gitignored files. Use when creating, finding, listing, or reading tracking files or storing intermediate files.                                                                         |
 | [Hve Core/Copilot Tracking](hve-core/copilot-tracking.md)                                         | Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence                                                                                                                                                                     |
-| [Hve Core/Git Merge](hve-core/git-merge.md)                                                       | Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls                                                                                                                                                                                               |
+| [Hve Core/Git Merge](hve-core/git-merge.md)                                                       | Git merge, rebase, and rebase --onto conventions for workspace preparation, conflict resolution, and no-push guardrails. Use when merging or rebasing a branch or resolving Git conflicts.                                                                                            |
 | [Hve Core/Hve Builder](hve-core/hve-builder.md)                                                   | Core authoring conventions for prompts, agents, subagents, instructions, and skills                                                                                                                                                                                                   |
 | [Hve Core/Licensing Posture](hve-core/licensing-posture.md)                                       | Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts                                                                                                                                                             |
 | [Hve Core/Markdown](hve-core/markdown.md)                                                         | Markdown authoring conventions for all .md files                                                                                                                                                                                                                                      |
