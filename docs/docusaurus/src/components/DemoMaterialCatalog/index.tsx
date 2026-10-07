@@ -145,7 +145,7 @@ export default function DemoMaterialCatalog(): React.ReactElement {
         className={styles.tableWrapper}
         role="group"
         aria-label="Published demo material, scrollable table"
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex
         tabIndex={0}
       >
         <table>
