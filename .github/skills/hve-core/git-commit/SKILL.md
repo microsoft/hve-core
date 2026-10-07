@@ -20,7 +20,7 @@ Create one local Conventional Commit from whole paths the user selects and confi
 
 ## Message Rules
 
-Generate every message by following the [commit-message instructions](../../../instructions/hve-core/commit-message.instructions.md). They own types, scopes, description and body limits, and the footer line. Once generated, the message is authoritative for the commit.
+Generate every message by following the `commit-message` instructions. They own types, scopes, description and body limits, and the footer line. Once generated, the message is authoritative for the commit.
 
 ## Message-Only Mode
 

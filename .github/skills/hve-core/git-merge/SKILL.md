@@ -15,7 +15,7 @@ Run a merge, rebase, or `rebase --onto` sequence from the current branch with ex
 
 ## Conventions
 
-The [git-merge instructions](../../../instructions/hve-core/git-merge.instructions.md) own workspace preparation, the operation commands, conflict resolution, finishing steps, and the no-push guardrail. Apply them at every step below.
+The `git-merge` instructions own workspace preparation, the operation commands, conflict resolution, finishing steps, and the no-push guardrail. Apply them at every step below.
 
 ## Inputs
 
