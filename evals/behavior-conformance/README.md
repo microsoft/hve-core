@@ -11,7 +11,6 @@ This directory hosts the behavior conformance suite. It is the only suite under 
 
 Behavior conformance answers a focused question per stimulus: *does the asset under test behave according to its documented contract?* Most stimuli assess model output. A smaller set also stages synthetic files and uses deterministic workspace graders to assess contained file effects.
 
-* Prompt conformance: verifies prompts in `.github/prompts/**/*.prompt.md` invoke the correct subagent identity, scope language, structural sections, and selected contained file effects.
 * Instruction conformance: verifies that instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
 * Skill behavior: verifies that skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
@@ -38,7 +37,7 @@ The maintained `skill-behavior.eval.yaml` inventory contains 301 stimuli across 
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. Other installed skill domains remain in advisory mode.
 
-The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while one skill stimulus uses `prompt` to assess a semantic changes-record contract.
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while five skill graders use `prompt` model judgment for semantic contracts such as the changes-record contract.
 
 ### Rust HTTP unit-test evidence boundary
 

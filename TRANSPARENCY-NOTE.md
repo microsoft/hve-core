@@ -2,7 +2,7 @@
 title: "Transparency Note for HVE Core"
 description: "What HVE Core does, how we test it, its limitations, and what you should know before using it with GitHub Copilot."
 author: HVE Core Maintainers
-ms.date: 2026-09-25
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -15,7 +15,7 @@ estimated_reading_time: 10
 
 ## About HVE Core
 
-HVE Core provides reusable agents, prompts, instructions, skills, and tools for
+HVE Core provides reusable agents, instructions, skills, and tools for
 AI-assisted engineering. You can use them with GitHub Copilot to research a
 problem, plan changes, write code, review work, or prepare documents for your
 team.

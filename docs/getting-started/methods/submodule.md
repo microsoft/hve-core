@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - git submodule
@@ -41,8 +41,8 @@ your-project/
 │   └── hve-core/        ← Submodule (points to specific commit)
 │       └── .github/
 │           ├── agents/
-│           ├── prompts/
-│           └── instructions/
+│           ├── instructions/
+│           └── skills/
 └── .vscode/
     └── settings.json    ← Points to lib/hve-core paths
 ```

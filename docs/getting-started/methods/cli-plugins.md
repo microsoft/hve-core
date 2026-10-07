@@ -97,8 +97,8 @@ The CLI loads path-specific instructions exclusively from
 Instruction files in plugin directories are **not** auto-applied via `applyTo`
 pattern matching.
 
-Instruction files are still included in the plugin because agents and
-prompts reference them via `#file:` directives. Those cross-file references
+Instruction files are still included in the plugin because agents reference
+them via `#file:` directives and skills link to them. Those cross-file references
 resolve correctly within the plugin directory tree. The difference is between
 explicit inclusion (an agent pulls in instruction content at execution time)
 and automatic application (the CLI matches `applyTo` patterns against the

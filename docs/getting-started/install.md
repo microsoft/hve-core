@@ -142,7 +142,7 @@ The three paths above cover the vast majority of scenarios. If your environment 
 
 After installing, verify artifacts declared by the HVE Core plugin:
 
-1. Open [HVE Core Plugin](../plugins/hve-core) and choose a declared agent, prompt, instruction, or skill to verify.
+1. Open [HVE Core Plugin](../plugins/hve-core) and choose a declared agent, instruction, or skill to verify.
 2. Confirm that component is available through the installed extension or plugin client.
 3. Open Copilot Chat, type `@` to find `RPI Agent`, then type `/` and verify its RPI entry points.
 

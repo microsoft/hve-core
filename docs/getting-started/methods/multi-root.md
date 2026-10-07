@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -242,7 +242,7 @@ Folder display names (`"name"` field) label roots in the Explorer sidebar but do
 
 ## Keeping Your Fork Updated
 
-Sync your fork with upstream `microsoft/hve-core` to pick up new agents, prompts, and improvements. Pull from your fork into workspaces on a schedule that suits your team.
+Sync your fork with upstream `microsoft/hve-core` to pick up new agents, skills, and improvements. Pull from your fork into workspaces on a schedule that suits your team.
 
 ### Syncing Upstream Changes into Your Fork
 

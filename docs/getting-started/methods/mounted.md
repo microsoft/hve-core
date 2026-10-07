@@ -3,7 +3,7 @@ title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE Core from host filesystem
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - mounted directory
@@ -52,8 +52,8 @@ projects/
 └── hve-core/                      # Peer directory on HOST
     └── .github/
         ├── agents/
-        ├── prompts/
-        └── instructions/
+        ├── instructions/
+        └── skills/
 
 Inside Container (after rebuild):
 /workspaces/

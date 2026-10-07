@@ -55,7 +55,6 @@ publication path.
 | Content              | Stable | PreRelease |
 |----------------------|--------|------------|
 | Agents               | Same   | Same       |
-| Prompts              | Same   | Same       |
 | Instructions         | Same   | Same       |
 | Distributable skills | Same   | Same       |
 

@@ -96,12 +96,14 @@ This applies even when using the extension. The folder is created in your projec
 
 The extension provides all HVE Core components:
 
-| Component    | Examples                                 |
-|--------------|------------------------------------------|
-| Chat Agents  | RPI Agent, code-review, adr-creation     |
-| Prompts      | git-commit, pull-request, ado-create-pr  |
-| Instructions | markdown, python-script, commit-message  |
-| Skills       | rpi-research, pr-reference, video-to-gif |
+| Component           | Examples                                                                |
+|---------------------|-------------------------------------------------------------------------|
+| Chat Agents         | RPI Agent, code-review, adr-creation                                    |
+| User-invoked skills | `/git-commit`, `/pull-request` for GitHub or Azure DevOps, `/git-merge` |
+| Instructions        | markdown, python-script, commit-message                                 |
+| Skills              | rpi-research, pr-reference, video-to-gif                                |
+
+HVE Core no longer ships prompt files. [Retired Prompt Commands](../package-migration.md#retired-prompt-commands) maps each former prompt command to its replacement.
 
 ## Updating
 
