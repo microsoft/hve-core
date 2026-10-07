@@ -1,5 +1,5 @@
 ---
-applyTo: '**/bicep/**'
+applyTo: '**/*.bicep, **/*.bicepparam, **/bicep/**'
 description: 'Bicep infrastructure-as-code authoring conventions'
 ---
 # Bicep Instructions
@@ -11,15 +11,18 @@ These instructions define conventions for Bicep Infrastructure as Code (IaC) dev
 
 ## MCP Tools
 
-Bicep MCP tools provide schema information and best practices:
+The Bicep MCP server provides schema information, best practices, and diagnostics:
 
 <!-- <reference-mcp-tools> -->
-| Tool                                                    | Purpose                                                                 | Parameters                                     |
-|---------------------------------------------------------|-------------------------------------------------------------------------|------------------------------------------------|
-| `mcp_bicep_experim_get_az_resource_type_schema`         | Retrieves the schema for a specific Azure resource type and API version | `azResourceType`, `apiVersion` (both required) |
-| `mcp_bicep_experim_list_az_resource_types_for_provider` | Lists all available resource types for a provider namespace             | `providerNamespace` (required)                 |
-| `mcp_bicep_experim_get_bicep_best_practices`            | Returns current Bicep authoring best practices                          | None                                           |
+| Tool                                  | Purpose                                                                 | Parameters                                     |
+|---------------------------------------|-------------------------------------------------------------------------|------------------------------------------------|
+| `get_az_resource_type_schema`         | Retrieves the schema for a specific Azure resource type and API version | `azResourceType`, `apiVersion` (both required) |
+| `list_az_resource_types_for_provider` | Lists the resource types available for a provider namespace             | `providerNamespace` (required)                 |
+| `get_bicep_best_practices`            | Returns current Bicep authoring best practices                          | None                                           |
+| `get_bicep_file_diagnostics`          | Returns compilation diagnostics for a Bicep file                        | The Bicep file to analyze                      |
 <!-- </reference-mcp-tools> -->
+
+Some MCP clients expose these tools with a server prefix, such as `bicep-get_az_resource_type_schema`. The [Bicep MCP server](https://learn.microsoft.com/azure/azure-resource-manager/bicep/bicep-mcp-server) documentation lists the full tool set.
 
 ## Project Structure
 
@@ -246,17 +249,31 @@ Section order with `/* */` comment headers:
 
 ## API Versioning
 
-| Guideline           | Details                                                                                       |
-|---------------------|-----------------------------------------------------------------------------------------------|
-| Discover versions   | Use `mcp_bicep_experim_list_az_resource_types_for_provider` and `get_az_resource_type_schema` |
-| Version consistency | Identical resource types within a file use the same API version                               |
-| New resources       | Use the latest stable API version                                                             |
-| Existing resources  | Retain API version unless significant changes warrant upgrade                                 |
+| Guideline           | Details                                                                                                   |
+|---------------------|-----------------------------------------------------------------------------------------------------------|
+| Discover versions   | Use `list_az_resource_types_for_provider` and `get_az_resource_type_schema`                               |
+| Version consistency | Identical resource types within a file use the same API version                                           |
+| New resource types  | A resource type not yet declared in the file uses the latest stable API version                           |
+| Existing types      | A new declaration of a type already in the file reuses that file's API version                            |
+| Existing resources  | Retain API version unless significant changes warrant upgrade                                             |
+| Upgrades            | Upgrading every declaration of a type is a separate change; report a newer stable version when one exists |
+
+Version consistency takes precedence over the latest stable version. When a file already declares a resource type at an older API version, reuse that version for the new declaration and state that a newer stable version is available.
+
+### Schema Tools Unavailable
+
+When Bicep MCP schema tools are not configured or return errors, choose an API version in this order:
+
+1. Reuse an API version already present in the workspace for the same resource type.
+2. Otherwise, use a version cited from the [Azure resource reference](https://learn.microsoft.com/azure/templates/).
+3. Otherwise, use the best-known stable version and label it unverified.
+
+In every case, state that schema data was unavailable, name the API versions that remain unverified, and do not claim the template was schema-validated. Build the file with `bicep build` or `az bicep build` and resolve `BCP036`, `BCP037`, and `BCP081` before finishing.
 
 ## Best Practices
 
 <!-- <reference-best-practices> -->
-Best practices retrieved via `mcp_bicep_experim_get_bicep_best_practices`:
+Best practices retrieved via `get_bicep_best_practices`:
 
 | Category     | Practice                                                                                    |
 |--------------|---------------------------------------------------------------------------------------------|
@@ -293,12 +310,12 @@ param location = 'eastus2'
 |----------------------|--------------------------|-------------------------------------------------------------------------------------|
 | Testing Framework    | `testFramework`          | `test storageTest 'tests/storage.tests.bicep' = { params: { location: 'eastus' } }` |
 | Assertions           | `assertions`             | `assert locationValid = location != 'centralus'`                                    |
-| Parameter Validation | `userDefinedConstraints` | `@validate(length(value) >= 3 && length(value) <= 24) param storageName string`     |
+| Parameter Validation | `userDefinedConstraints` | `@validate(x => length(x) >= 3 && length(x) <= 24) param storageName string`        |
 
-Enable features in `bicepconfig.json`: `{ "experimentalFeaturesEnabled": { "featureName": true } }`
+Enable features in `bicepconfig.json`: `{ "experimentalFeaturesEnabled": { "featureName": true } }`. The `@validate()` decorator takes a lambda that receives the value and returns `true` when it is valid, plus an optional error message.
 
 ## Validation
 
 * Search codebase for existing Bicep patterns before implementing
-* Use MCP tools or Microsoft docs (`learn.microsoft.com/azure/templates/{provider}/{type}`) for schema reference
+* Use MCP tools or Microsoft docs (`learn.microsoft.com/azure/templates/{provider}/{type}`) for schema reference; follow [Schema Tools Unavailable](#schema-tools-unavailable) when MCP tools cannot provide it
 * Run `az bicep build` and address all diagnostic warnings and errors before committing
