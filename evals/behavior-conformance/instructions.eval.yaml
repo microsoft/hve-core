@@ -1792,7 +1792,7 @@ stimuli:
       F. An `it('renders the empty state', () => { ... })` callback and a
          `vi.fn()` mock used only inside that test.
       G. `export * from './chunk';` in a package `index.ts` barrel.
-      H. `export const MAX_RETRIES = 3;` in `src/http/retry.ts`.
+      H. `export const HTTP_STATUS_NOT_FOUND = 404;` in `src/http/status.ts`.
       I. `src/generated/api-client.ts`, regenerated from an OpenAPI document
          on every build.
     agent_environment:
