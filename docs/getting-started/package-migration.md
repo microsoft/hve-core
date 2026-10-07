@@ -245,7 +245,7 @@ These commands became skills with the same name, so the slash command still work
 | `/git-commit-message`      | `/git-commit mode=message-only`, which writes a message for your staged changes without committing                                                  |
 | `/vally-test-write`        | `/vally-tests mode=from-artifact`, with `files=<path>`                                                                                              |
 | `/evals-import`            | `/vally-tests mode=corpus-import`, with `path=<corpus>`                                                                                             |
-| `/ado-create-pull-request` | `/pull-request`, which routes Azure DevOps repositories to the `backlog-management` pull request protocol                                           |
+| `/ado-create-pull-request` | `/pull-request action=create`, which routes Azure DevOps repositories to the `backlog-management` pull request protocol                             |
 | `/ado-get-build-info`      | The Azure DevOps build reference in the `backlog-management` skill, loaded when you ask for build status                                            |
 
 ## Historical Catalog Support

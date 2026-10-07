@@ -34,6 +34,12 @@ needs correctness, security, or standards assessment instead of authoring. When 
 repair a local preflight failure, it reruns the affected checks and commits only that repair under the
 repository's commit-message rules. Existing working-tree changes remain unstaged.
 
+When the push remote is on Azure DevOps, the skill follows the `backlog-management` pull request
+protocol and maps `base` and `draft` to that protocol's `baseBranch` and `isDraft` inputs.
+`action=prepare` writes only the local description, `action=create` runs the full protocol with its
+destination and approval gates, and `action=update` stops because updating an existing Azure DevOps
+pull request is not supported.
+
 ## Example usage
 
 ```text

@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 300
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 301
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, and
@@ -1828,6 +1828,33 @@ stimuli:
         name: skill-pull-request-workflow-component-checks-workfl-ffbcc389
         config:
           pattern: '(?i)^[ \t]*Workflow:[ \t]*inspect-matching[ \t]*\r?\n[ \t]*Wrapper:[ \t]*skip-unless-requested[ \t]*\r?\n[ \t]*Components:[ \t]*run-locally-safe[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-pull-request-ado-action-routing
+    prompt: |
+      The push remote for this branch is hosted on `dev.azure.com`. The user runs
+      `/pull-request action=prepare base=origin/release draft=true`. Choose one
+      value from each pair based on the skill's Azure DevOps routing, where
+      `Update:` covers a separate `action=update` request for an existing pull
+      request:
+      `Protocol:` `backlog-management` | `github-flow`
+      `Base:` `baseBranch=origin/release` | `baseBranch=origin/main`
+      `Draft:` `isDraft=true` | `isDraft=false`
+      `Prepare:` `stop-before-mutation` | `create-work-item`
+      `Update:` `stop-unsupported` | `run-creation`
+      Return exactly five labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-pull-request-ado-action-routing-labeled-values
+        config:
+          pattern: '(?i)^[ \t]*Protocol:[ \t]*backlog-management[ \t]*\r?\n[ \t]*Base:[ \t]*baseBranch=origin/release[ \t]*\r?\n[ \t]*Draft:[ \t]*isDraft=true[ \t]*\r?\n[ \t]*Prepare:[ \t]*stop-before-mutation[ \t]*\r?\n[ \t]*Update:[ \t]*stop-unsupported[ \t]*(?:\r?\n)?(?![\s\S])'
   - name: skill-rpi-walkthrough-knowledge
     prompt: |
       Is `rpi-walkthrough` read-only by default or does it edit immediately?
