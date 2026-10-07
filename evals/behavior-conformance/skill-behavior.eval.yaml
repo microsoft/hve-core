@@ -5704,6 +5704,72 @@ stimuli:
         name: skill-rpi-plan-revision-no-progress-stops-revise
         config:
           pattern: '(?i)^\s*stop-revise\s*$'
+  - name: skill-rpi-plan-revision-revert-without-follow-up
+    prompt: |
+      Using rpi-plan, a critique returned Revise with required finding PC-001. The
+      planner corrected the plan, then reverted that correction in the next revision,
+      and PC-001 is still unresolved with no new evidence. No follow-up critique has
+      run. Choose continue, stop-revise, or finalize. Return only the choice.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 87b241686edb087bf18e11cbc2490e2c1f44d477e641065cf63f263a103be0ba
+    graders:
+      - type: output-matches
+        name: skill-rpi-plan-revision-revert-stops-revise
+        config:
+          pattern: '(?i)^\s*stop-revise\s*$'
+  - name: skill-rpi-plan-critique-repeated-interruption
+    prompt: |
+      Using rpi-plan, Critique Disposition records that the critique was interrupted
+      by a session timeout and rerun once on resume. The rerun also hit a session
+      timeout before saving a result, and nothing about scope or session capacity
+      has changed. A: Choose the next action now. B: Instead, the second interruption
+      was the user closing the window. Return exactly two lines, A and B, each with
+      rerun-critique or stop-not-ready.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 042d3d2a1a6652f744ff11bc7af6a6bda922b41b18d2c3d30c35b711828ca1d3
+    graders:
+      - type: output-matches
+        name: skill-rpi-plan-critique-repeat-interruption-same-kind
+        config:
+          pattern: '(?i)^\s*A:[ \t]*stop-not-ready[ \t]*\r?\nB:[ \t]*rerun-critique\s*$'
+  - name: skill-rpi-plan-critique-follow-up-interruption-allowance
+    prompt: |
+      Using rpi-plan, the first critique was interrupted by a session timeout, rerun
+      once on resume, and completed. After corrections, a follow-up critique writing
+      to the next numbered output path was interrupted by its first session timeout
+      before saving a result, and nothing about scope or session capacity has changed.
+      A: Choose the next action for the follow-up critique now. B: Instead, the
+      follow-up critique was already rerun once after a session timeout and timed out
+      again. Return exactly two lines, A and B, each with rerun-critique or
+      stop-not-ready.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 4e9009c36a564fe88abbcf271ea2def58a11969e946c0c5af935507a8f24a0ed
+    graders:
+      - type: output-matches
+        name: skill-rpi-plan-critique-follow-up-interruption-per-output
+        config:
+          pattern: '(?i)^\s*A:[ \t]*rerun-critique[ \t]*\r?\nB:[ \t]*stop-not-ready\s*$'
   - name: skill-rpi-critique-standalone-without-planner
     prompt: |
       Only the complete rpi-plan-critique skill is installed; the rpi-plan skill
@@ -5814,6 +5880,28 @@ stimuli:
         name: skill-rpi-implement-critique-not-required-confirms-open
         config:
           pattern: '(?i)^\s*A:[ \t]*implement[ \t]*\r?\nB:[ \t]*confirm-first\s*$'
+  - name: skill-rpi-implement-human-review-scope
+    prompt: |
+      A user invokes standalone rpi-implement on an implementation-ready plan with no
+      open blockers. A: The only unchecked boxes are the plan's agent-owned Artifact
+      Self-Check items. B: A repository instruction requires a named human reviewer
+      to sign off before task P01-T01 publishes its output, and that sign-off box is
+      unchecked. For task P01-T01, return exactly two lines, A and B, each with
+      implement or wait-for-human.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: e0b5ee9f5f87aa19f959599df63f8c6585d4cf82d300d26e1a6163a64da543fb
+    graders:
+      - type: output-matches
+        name: skill-rpi-implement-human-review-scope-named-source-only
+        config:
+          pattern: '(?i)^\s*A:[ \t]*implement[ \t]*\r?\nB:[ \t]*wait-for-human\s*$'
   - name: skill-rpi-implement-significant-plan-change
     prompt: |
       During rpi-implement, evidence shows one task's public API contract must
