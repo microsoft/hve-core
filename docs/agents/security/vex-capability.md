@@ -3,7 +3,7 @@ title: VEX Capability
 description: HVE Core's VEX capability - triage dependency vulnerabilities and draft OpenVEX documents via the SSSC Reviewer, SSSC Planner, and the vex skill
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-07
 ms.topic: concept
 keywords:
   - VEX
@@ -62,7 +62,7 @@ flowchart LR
 
 ## Usage
 
-Select the **SSSC Reviewer** agent and describe one of two request shapes. Another agent can also delegate either request to the SSSC Reviewer as a subagent.
+Select the **SSSC Reviewer** agent and describe one of two request shapes. The SSSC Reviewer runs only when you select it, so another agent can prepare a handoff for either request, which you then run with the SSSC Reviewer.
 
 ### Full pipeline scan (Mode 1)
 
