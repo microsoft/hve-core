@@ -1,0 +1,62 @@
+{
+  "success": {
+    "list_az_resource_types_for_provider": {
+      "result": {
+        "providerNamespace": "Microsoft.Storage",
+        "resourceTypes": [
+          {
+            "resourceType": "Microsoft.Storage/storageAccounts",
+            "apiVersions": ["2025-06-01", "2023-05-01"],
+            "latestStableApiVersion": "2025-06-01"
+          }
+        ]
+      }
+    },
+    "get_az_resource_type_schema": {
+      "result": {
+        "azResourceType": "Microsoft.Storage/storageAccounts",
+        "schema": {
+          "type": "object",
+          "required": ["name", "location", "kind", "sku"],
+          "properties": {
+            "name": { "type": "string" },
+            "location": { "type": "string" },
+            "kind": { "type": "string" },
+            "sku": {
+              "type": "object",
+              "properties": { "name": { "type": "string" } }
+            },
+            "properties": {
+              "type": "object",
+              "properties": {
+                "minimumTlsVersion": { "type": "string" },
+                "supportsHttpsTrafficOnly": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "get_bicep_best_practices": {
+      "result": {
+        "practices": [
+          "Synthetic guidance: prefer user-defined types over open object types.",
+          "Synthetic guidance: mark sensitive parameters with @secure().",
+          "Synthetic guidance: build the file and resolve diagnostics before finishing."
+        ]
+      }
+    }
+  },
+  "schema-unavailable": {
+    "list_az_resource_types_for_provider": {
+      "isError": true,
+      "code": "schema_unavailable",
+      "message": "Synthetic schema data is unavailable."
+    },
+    "get_az_resource_type_schema": {
+      "isError": true,
+      "code": "schema_unavailable",
+      "message": "Synthetic schema data is unavailable."
+    }
+  }
+}

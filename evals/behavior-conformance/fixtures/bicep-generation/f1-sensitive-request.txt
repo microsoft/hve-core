@@ -1,0 +1,15 @@
+Synthetic request for an evaluation workspace. No real subscription, tenant,
+resource name, or secret value is included.
+
+Create infra/main.bicep for a small reporting service. It needs:
+
+- One Azure Storage account for report exports, named from a prefix parameter.
+- A location parameter.
+- A required administrator password parameter named adminPassword. A later
+  deployment step outside this file consumes it.
+- A required SQL connection string parameter named sqlConnectionString. The
+  same later deployment step consumes it.
+
+Declare only the Storage account resource in this file; do not add any other
+resource types, modules, or outputs for the sensitive parameters. Do not
+provide values for adminPassword or sqlConnectionString.

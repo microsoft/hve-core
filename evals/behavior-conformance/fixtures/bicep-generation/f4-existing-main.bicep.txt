@@ -1,0 +1,36 @@
+metadata name = 'Synthetic Reporting Storage'
+metadata description = 'Synthetic evaluation fixture that deploys one storage account for report exports.'
+
+/*
+  Common parameters
+*/
+
+@description('Resource name prefix.')
+param prefix string
+
+@description('Azure region for resources.')
+param location string = resourceGroup().location
+
+/*
+  Resources
+*/
+
+resource exportStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: take('st${prefix}exp${uniqueString(resourceGroup().id)}', 24)
+  location: location
+  kind: 'StorageV2'
+  sku: {
+    name: 'Standard_LRS'
+  }
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+  }
+}
+
+/*
+  Outputs
+*/
+
+@description('Resource ID of the export storage account.')
+output exportStorageId string = exportStorage.id
