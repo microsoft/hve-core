@@ -7077,6 +7077,8 @@ stimuli:
       files:
         - src: ../../.github/skills/hve-core/git-merge
           dest: .github/skills/hve-core/git-merge
+        - src: ../../.github/instructions/hve-core/git-merge.instructions.md
+          dest: .github/instructions/hve-core/git-merge.instructions.md
     tags:
       category: behavior-conformance
       skill: git-merge

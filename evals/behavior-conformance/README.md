@@ -20,14 +20,14 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `instructions.eval.yaml`   | 3i   | Advisory | 76      | `behavior-conformance` | Active (Phase 11) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 77      | `behavior-conformance` | Active (Phase 11) |
 | `skill-behavior.eval.yaml` | 3s   | Advisory | 301     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
-The maintained `instructions.eval.yaml` inventory contains 76 stimuli: 68 instruction-tagged stimuli across 50 instruction subjects, plus eight skill-tagged stimuli (six `mural` and two `backlog-management`). Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 77 stimuli: 69 instruction-tagged stimuli across 51 instruction subjects, plus eight skill-tagged stimuli (six `mural` and two `backlog-management`). Coverage spans:
 
-* Delivery workflows: the Azure DevOps pull request and build-info protocols in `backlog-management`, and `pull-request`.
+* Delivery workflows: the Azure DevOps pull request and build-info protocols in `backlog-management`, `git-merge`, and `pull-request`.
 * HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`, `skill-security-model`.

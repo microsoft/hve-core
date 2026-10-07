@@ -106,6 +106,7 @@
     ".github/instructions/hve-core/commit-message.instructions.md",
     ".github/instructions/hve-core/copilot-tracking-location.instructions.md",
     ".github/instructions/hve-core/copilot-tracking.instructions.md",
+    ".github/instructions/hve-core/git-merge.instructions.md",
     ".github/instructions/hve-core/hve-builder.instructions.md",
     ".github/instructions/hve-core/licensing-posture.instructions.md",
     ".github/instructions/hve-core/markdown.instructions.md",
