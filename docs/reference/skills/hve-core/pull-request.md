@@ -1,9 +1,9 @@
 ---
 title: pull-request
-description: "Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs. Use when a user asks to prepare, create, or update a pull request."
-sidebar_position: 5
+description: "Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps."
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs. Use when a user asks to prepare, create, or update a pull request.
+Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -33,6 +33,12 @@ checks, or GitHub pull request creation. Use the code review workflow when an ex
 needs correctness, security, or standards assessment instead of authoring. When you ask the skill to
 repair a local preflight failure, it reruns the affected checks and commits only that repair under the
 repository's commit-message rules. Existing working-tree changes remain unstaged.
+
+When the push remote is on Azure DevOps, the skill follows the `backlog-management` pull request
+protocol and maps `base` and `draft` to that protocol's `baseBranch` and `isDraft` inputs.
+`action=prepare` writes only the local description, `action=create` runs the full protocol with its
+destination and approval gates, and `action=update` stops because updating an existing Azure DevOps
+pull request is not supported.
 
 ## Example usage
 

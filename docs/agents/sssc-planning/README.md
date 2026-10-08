@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -99,14 +99,14 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 ## Entry Modes
 
-The SSSC Planner supports four entry modes, each matched to a prompt file.
+The SSSC Planner supports four entry modes. Select the SSSC Planner agent and describe your starting point, or use the SSSC Planner handoff from a Security Planner session; the agent resolves the mode from your request, supplied artifacts, or the handoff.
 
-| Mode               | Prompt                    | Starting point                                             |
-|--------------------|---------------------------|------------------------------------------------------------|
-| Capture            | `sssc-capture`            | Starts a blank Phase 1 interview to gather scope directly  |
-| From-PRD           | `sssc-from-prd`           | Seeds Phase 1 from PRD artifacts found in the workspace    |
-| From-BRD           | `sssc-from-brd`           | Seeds Phase 1 from BRD artifacts found in the workspace    |
-| From-Security-Plan | `sssc-from-security-plan` | Seeds Phase 1 from an existing Security Planner state file |
+| Mode               | How to start                                         | Starting point                                             |
+|--------------------|------------------------------------------------------|------------------------------------------------------------|
+| Capture            | Describe the repository, optionally with prior notes | Starts a blank Phase 1 interview to gather scope directly  |
+| From-PRD           | Ask to start from your product requirements          | Seeds Phase 1 from PRD artifacts found in the workspace    |
+| From-BRD           | Ask to start from your business requirements         | Seeds Phase 1 from BRD artifacts found in the workspace    |
+| From-Security-Plan | Ask to extend a completed security plan              | Seeds Phase 1 from an existing Security Planner state file |
 
 ## When to Use
 

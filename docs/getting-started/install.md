@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install the HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
@@ -26,7 +26,7 @@ Teams that need a repository-owned subset can use `hve-core-installer`.
 3. Review component kinds and collisions before writes.
 4. Choose automatic source updates or a controlled pinned version.
 
-The installer can copy agents, prompts, instructions, and complete skill directories. It preserves repository-relative paths and records the result in `.hve-tracking.json` schema version 2. Hooks are not copied.
+The installer can copy agents, instructions, and complete skill directories. It preserves repository-relative paths and records the result in `.hve-tracking.json` schema version 2. Hooks are not copied.
 
 ### Decision Matrix
 
@@ -142,7 +142,7 @@ The three paths above cover the vast majority of scenarios. If your environment 
 
 After installing, verify artifacts declared by the HVE Core plugin:
 
-1. Open [HVE Core Plugin](../plugins/hve-core) and choose a declared agent, prompt, instruction, or skill to verify.
+1. Open [HVE Core Plugin](../plugins/hve-core) and choose a declared agent, instruction, or skill to verify.
 2. Confirm that component is available through the installed extension or plugin client.
 3. Open Copilot Chat, type `@` to find `RPI Agent`, then type `/` and verify its RPI entry points.
 

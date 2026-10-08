@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore aggregat collat combin compil continu execut invok merg profil
 stimuli:
   - name: security-reviewer-class-recipe
     prompt: |
@@ -71,3 +72,53 @@ stimuli:
         config:
           pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|saved)\b.{0,80}security-audit-\d{4}-\d{2}-\d{2}-\d{3}\.md'
           negate: true
+
+  - name: security-reviewer-llm-agentic-preset
+    prompt: |
+      A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
+    environment:
+      files:
+        - src: ../../.github/agents/security/security-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: llm-agentic-preset
+    graders:
+      - type: output-matches
+        name: security-reviewer-llm-agentic-preset-skills
+        config:
+          pattern: '(?is)(?=.*owasp[\s_-]*(?:top[\s_-]*10[\s_-]*for[\s_-]*)?llm)(?=.*owasp[\s_-]*(?:top[\s_-]*10[\s_-]*for[\s_-]*)?agentic)'
+      - type: output-matches
+        name: security-reviewer-llm-agentic-preset-profiling-retained
+        config:
+          pattern: '(?is)profil\w*[^.]{0,120}(still|runs?|running|retain\w*|continu\w*|context|perform\w*|execut\w*|invok\w*|remain\w*)|(still|runs?|perform\w*|execut\w*|invok\w*)[^.]{0,80}profil\w*'
+      - type: output-matches
+        name: security-reviewer-llm-agentic-preset-single-report
+        config:
+          pattern: '(?is)(single|one|unified|consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*)[^.]{0,80}report|report[^.]{0,80}(consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*|generator)'
+
+  - name: security-reviewer-web-fast-path
+    prompt: |
+      A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
+    environment:
+      files:
+        - src: ../../.github/agents/security/security-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: web-fast-path
+    graders:
+      - type: output-matches
+        name: security-reviewer-web-fast-path-target-skill
+        config:
+          pattern: '(?i)owasp[\s_-]*top[\s_-]*(?:10|ten)\b'
+      - type: output-matches
+        name: security-reviewer-web-fast-path-profiling-skipped
+        config:
+          pattern: '(?is)(skip\w*|bypass\w*|without|no)[^.]{0,80}profil\w*|profil\w*[^.]{0,80}(skip\w*|bypass\w*)'
+      - type: output-matches
+        name: security-reviewer-web-fast-path-audit-mode
+        config:
+          pattern: '(?i)\baudit\b'

@@ -103,7 +103,6 @@
     "ci:eval:run:conformance": "vally eval --suite agent-conformance-accessibility-planner && vally eval --suite agent-conformance-dt-coach && vally eval --suite agent-conformance-privacy-planner && vally eval --suite agent-conformance-rai-planner && vally eval --suite agent-conformance-security-planner && vally eval --suite agent-conformance-sssc-planner",
     "ci:eval:equivalence": "pwsh -NoProfile -File scripts/evals/Invoke-BaselineEquivalence.ps1",
     "ci:eval:dashboard": "pwsh -NoProfile -File scripts/evals/New-EquivalenceDashboard.ps1",
-    "ci:eval:behavior-prompts": "vally eval --eval-spec evals/behavior-conformance/prompts.eval.yaml",
     "ci:eval:behavior-instructions": "vally eval --eval-spec evals/behavior-conformance/instructions.eval.yaml",
     "ci:eval:behavior-skills": "vally eval --eval-spec evals/behavior-conformance/skill-behavior.eval.yaml",
     "ci:eval:agent": "pwsh -NoProfile -File scripts/evals/Invoke-AgentMatrix.ps1",
@@ -118,7 +117,7 @@
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.3.6",
     "@microsoft/vally-cli": "0.17.0",
-    "@modelcontextprotocol/server": "2.2.0",
+    "@modelcontextprotocol/server": "2.3.0",
     "@vscode/vsce": "4.0.0",
     "audit-ci": "7.1.0",
     "cspell": "10.3.6",
