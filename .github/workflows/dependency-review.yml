@@ -267,34 +267,6 @@ jobs:
           # does not relicense separately authored repository code. This
           # package-scoped exception requires organizational approval before
           # merge and does not allow EPL-2.0 repository-wide.
-          # The scripts/tools/piper locked environment installs the Piper
-          # text-to-speech engine that demo-material-render.yml runs as a
-          # separate executable to narrate demo videos. It is CI tooling,
-          # not part of the plugin or extension, and no Piper code is
-          # linked into or redistributed with a shipped artifact.
-          # pkg:pypi/piper-tts is GPL-3.0-or-later (OHF-Voice/piper1-gpl) and
-          # embeds espeak-ng (GPL-3.0) for phonemization. GPL obligations
-          # attach to distribution; this exception covers CI-only execution
-          # in scripts/tools/piper and nothing else. The allowlist is keyed by
-          # package, so DependencyReviewWorkflow.Tests.ps1 fails if piper-tts
-          # appears in any other manifest or lockfile. This exception requires
-          # organizational approval before merge and does not allow GPL
-          # repository-wide.
-          # pkg:pypi/numpy and pkg:pypi/protobuf were added for that locked
-          # Piper environment. The numpy entry also covers the existing numpy
-          # locks in the mural skill and the moderation eval; each installs
-          # numpy from PyPI at use time, and none redistributes it.
-          # pkg:pypi/numpy resolves as the compound expression
-          # "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0", which covers
-          # its source; Zlib is not in allow-licenses. The installed manylinux
-          # wheel also bundles runtimes under numpy.libs/ that the expression
-          # omits: OpenBLAS (BSD-3-Clause), LAPACK (BSD-3-Clause-Open-MPI),
-          # libgfortran (GPL-3.0-or-later WITH GCC-exception-3.1), and
-          # libquadmath (LGPL-2.1-or-later). The GCC runtime exception and
-          # dynamic LGPL linking permit CI-only use without redistribution.
-          # pkg:pypi/protobuf resolves as
-          # "BSD-3-Clause AND LicenseRef-scancode-protobuf"; the scancode
-          # reference is Google's BSD-style protobuf license text.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -319,9 +291,6 @@ jobs:
             pkg:pypi/pillow,
             pkg:pypi/pywin32,
             pkg:pypi/pyyaml,
-            pkg:pypi/piper-tts,
-            pkg:pypi/numpy,
-            pkg:pypi/protobuf,
             pkg:npm/dompurify,
             pkg:npm/elkjs,
             pkg:npm/robust-predicates,

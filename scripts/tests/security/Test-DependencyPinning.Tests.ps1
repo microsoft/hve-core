@@ -2194,7 +2194,7 @@ Describe 'Expanded pinning rules' -Tag 'Unit' {
     Context 'python-tool-runs' {
         It 'flags <Name>' -ForEach @(
             @{ Name = 'uvx with a pinned top-level package'; Line = '          uvx pip-audit@2.10.0 -r req.txt' }
-            @{ Name = 'uv tool install'; Line = '          uv tool install "piper-tts==1.8.0"' }
+            @{ Name = 'uv tool install'; Line = '          uv tool install "pip-audit==2.10.0"' }
             @{ Name = 'uv tool run'; Line = '          uv tool run ruff check .' }
             @{ Name = 'pipx run'; Line = '          pipx run black .' }
         ) {
@@ -2206,7 +2206,7 @@ Describe 'Expanded pinning rules' -Tag 'Unit' {
         It 'accepts locked runs, version queries, comments, and file names' {
             $result = Invoke-Rule Get-PythonToolRunViolations 'python-tool-runs' 'ok.sh' @(
                 'uv run --locked --project scripts/tools/pip-audit pip-audit -r req.txt'
-                'uv sync --locked --project scripts/tools/piper'
+                'uv sync --locked --project scripts/tools/pip-audit'
                 'uvx --version'
                 '# uvx pip-audit'
                 'tar -xzf uv.tar.gz "uv-x86_64/uvx"'
