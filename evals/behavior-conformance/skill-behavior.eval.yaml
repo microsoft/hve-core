@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 301
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 303
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, and
@@ -1964,6 +1964,106 @@ stimuli:
         name: skill-rpi-research-bleed-detection-scope-language
         config:
           pattern: '(?i)(research\s+complete|code\s+changes|implement|plan|phase)'
+  - name: skill-rpi-research-closeout-answers-questions
+    prompt: |
+      Use the `rpi-research` skill for a standalone research task. Task slug:
+      `synthetic-exporter-check`. Use evidence date 2026-10-02 and write the
+      primary research artifact to
+      `.copilot-tracking/research/2026-10-02/synthetic-exporter-check-research.md`.
+      Output mode is research-only, and the scope below is final, so do not ask
+      questions. Answer two verification questions about this workspace:
+      1. Does `src/export/legacy_exporter.py` still exist?
+      2. How many days does `config/export.yaml` retain exported files?
+      Change no file other than the research artifact.
+    rubric:
+      - The final response answers both questions directly in plain language, stating that `src/export/legacy_exporter.py` does not exist and that `config/export.yaml` retains exported files for 45 days. A reader learns both answers from the response itself, without opening the research artifact or interpreting workflow labels such as disposition or readiness.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+      files:
+        - src: ../../.github/skills/rpi/rpi-research
+          dest: .github/skills/rpi/rpi-research
+        - src: fixtures/rpi-research-closeout/export-config.txt
+          dest: config/export.yaml
+        - src: fixtures/rpi-research-closeout/csv-exporter.txt
+          dest: src/export/csv_exporter.py
+    tags:
+      category: behavior-conformance
+      skill: rpi-research
+      shape: closeout-answer
+      advisory: "true"
+      prompt_sha256: a0f8e0ec5dde4403ede2b747018d619a0e7cf4ba7316731ac92a229d3411e345
+    graders:
+      - type: file-exists
+        name: skill-rpi-research-closeout-artifact-written
+        config:
+          path: .copilot-tracking/research/2026-10-02/synthetic-exporter-check-research.md
+      - type: output-matches
+        name: skill-rpi-research-closeout-answers-absent-file
+        config:
+          pattern: '(?is)(legacy_exporter\.py.{0,160}?\b(does(?:\s+not|n.t)\s+exist|no\s+longer\s+exists|absent|missing|not\s+present|not\s+found|(was|has\s+been)\s+removed)|\bno\b[^.\n]{0,80}legacy_exporter\.py)'
+      - type: output-matches
+        name: skill-rpi-research-closeout-answers-retention
+        config:
+          pattern: '(?i)\b45\b\W{0,4}days?\b'
+      - type: output-not-matches
+        name: skill-rpi-research-closeout-no-workflow-status-fields
+        config:
+          pattern: '(?im)^\s*(?:[*-]\s*)?(?:\*\*)?(?:research\s+disposition|planning\s+readiness|research\s+depth(?:\s+and\s+helpers)?|artifact\s+self-check|continuation\s+owner|research-only\s+constraint\s+status)(?:\*\*)?\s*:'
+      - type: prompt
+        name: skill-rpi-research-closeout-direct-answers
+        config:
+          scoring: binary
+          threshold: 0.85
+  - name: skill-rpi-research-closeout-topic-bottom-line
+    prompt: |
+      /rpi-research topic="Export retention in this workspace"
+      Use the `rpi-research` skill for a standalone research task. Task slug:
+      `synthetic-export-retention`. Use evidence date 2026-10-02 and write the
+      primary research artifact to
+      `.copilot-tracking/research/2026-10-02/synthetic-export-retention-research.md`.
+      Output mode is research-only, and the scope is final, so do not ask
+      questions. Change no file other than the research artifact.
+    rubric:
+      - The final response leads with a plain-language bottom line on the topic, stating that exported files are retained for 45 days as set in `config/export.yaml`, before supporting detail. It does not restate research questions the skill derived for itself, and it does not report workflow labels such as disposition or readiness.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+      files:
+        - src: ../../.github/skills/rpi/rpi-research
+          dest: .github/skills/rpi/rpi-research
+        - src: fixtures/rpi-research-closeout/export-config.txt
+          dest: config/export.yaml
+        - src: fixtures/rpi-research-closeout/csv-exporter.txt
+          dest: src/export/csv_exporter.py
+    tags:
+      category: behavior-conformance
+      skill: rpi-research
+      shape: closeout-answer
+      advisory: "true"
+      prompt_sha256: 489e354a7aff48835f5fe1b66c162732bd1f302f1ba2844085163b3081a8faa4
+    graders:
+      - type: file-exists
+        name: skill-rpi-research-topic-closeout-artifact-written
+        config:
+          path: .copilot-tracking/research/2026-10-02/synthetic-export-retention-research.md
+      - type: output-matches
+        name: skill-rpi-research-topic-closeout-states-retention
+        config:
+          pattern: '(?i)\b45\b\W{0,4}days?\b'
+      - type: output-not-matches
+        name: skill-rpi-research-topic-closeout-no-workflow-status-fields
+        config:
+          pattern: '(?im)^\s*(?:[*-]\s*)?(?:\*\*)?(?:research\s+disposition|planning\s+readiness|research\s+depth(?:\s+and\s+helpers)?|artifact\s+self-check|continuation\s+owner|research-only\s+constraint\s+status)(?:\*\*)?\s*:'
+      - type: output-not-matches
+        name: skill-rpi-research-topic-closeout-no-derived-question-list
+        config:
+          pattern: '(?m)^\s*(?:[*-]\s*|\|\s*)?(?:\*\*)?Q\d+\b'
+      - type: prompt
+        name: skill-rpi-research-topic-closeout-bottom-line
+        config:
+          scoring: binary
+          threshold: 0.85
   - name: skill-rpi-plan-knowledge
     prompt: |
       The skill that independently critiques an RPI plan is
