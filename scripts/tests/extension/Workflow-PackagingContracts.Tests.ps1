@@ -1006,6 +1006,35 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         }
     }
 
+    It 'Keeps every workflow the release producer calls within its cache-mode cap' {
+        # A called workflow that requests more cache access than the caller's
+        # explicit cap fails validation before the release starts. The pinned
+        # signer revision is a snapshot of the local signer file, so the local
+        # file stands in for the next snapshot.
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        $calledNames = @(foreach ($jobName in @($document['jobs'].Keys)) {
+                $uses = [string]$document['jobs'][$jobName]['uses']
+                if ($uses -match '^(?:\./|microsoft/hve-core/)\.github/workflows/([^@/]+\.ya?ml)(?:@[0-9a-f]{40})?$') {
+                    $Matches[1]
+                }
+            })
+        $calledNames | Should -Contain 'extension-provenance-signer.yml'
+        $calledNames | Should -Contain 'vex-attest.yml'
+        $calledNames | Should -Contain 'release-close-milestone.yml'
+        foreach ($calledName in ($calledNames | Sort-Object -Unique)) {
+            $called = Get-WorkflowDocument -Name $calledName
+            if ($called.Contains('cache-mode')) {
+                [string]$called['cache-mode'] | Should -BeExactly 'none' -Because "$calledName must not request cache access beyond the caller's cap"
+            }
+            foreach ($jobName in @($called['jobs'].Keys)) {
+                $job = $called['jobs'][$jobName]
+                if ($job.Contains('cache-mode')) {
+                    [string]$job['cache-mode'] | Should -BeExactly 'none' -Because "$calledName job '$jobName' must not request cache access beyond the caller's cap"
+                }
+            }
+        }
+    }
+
     It 'Authenticates source eligibility and exact governance without exposing the private key to source jobs' {
         $document = Get-WorkflowDocument -Name 'extension-provenance-signer.yml'
         $authorize = $document['jobs']['authorize']
