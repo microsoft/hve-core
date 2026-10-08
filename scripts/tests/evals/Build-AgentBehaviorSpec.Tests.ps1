@@ -47,6 +47,27 @@ BeforeAll {
     }
 }
 
+Describe 'Code review native editing contract' -Tag 'Unit' {
+  It 'Grants native editing to <AgentPath>' -ForEach @(
+    @{ AgentPath = 'code-review.agent.md' }
+    @{ AgentPath = 'subagents/code-review-accessibility.agent.md' }
+    @{ AgentPath = 'subagents/code-review-explainer.agent.md' }
+    @{ AgentPath = 'subagents/code-review-functional.agent.md' }
+    @{ AgentPath = 'subagents/code-review-orientation.agent.md' }
+    @{ AgentPath = 'subagents/code-review-readiness.agent.md' }
+    @{ AgentPath = 'subagents/code-review-security.agent.md' }
+    @{ AgentPath = 'subagents/code-review-standards.agent.md' }
+    @{ AgentPath = 'subagents/code-review-walkback.agent.md' }
+  ) {
+    $Path = Join-Path $PSScriptRoot "../../../.github/agents/coding-standards/$AgentPath"
+    $Content = Get-Content -Raw -LiteralPath $Path
+    $Frontmatter = [regex]::Match($Content, '\A---\r?\n(.*?)\r?\n---', 'Singleline')
+    $Frontmatter.Success | Should -BeTrue
+    $Agent = ConvertFrom-Yaml -Yaml $Frontmatter.Groups[1].Value
+    $Agent.tools | Should -Contain 'edit/editFiles'
+  }
+}
+
 Describe 'Build-AgentBehaviorSpec.ps1' -Tag 'Unit' {
     BeforeEach {
         $script:TestRoot = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
