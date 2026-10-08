@@ -2,7 +2,7 @@
 title: "Transparency Note for HVE Core"
 description: "What HVE Core does, how we test it, its limitations, and what you should know before using it with GitHub Copilot."
 author: HVE Core Maintainers
-ms.date: 2026-09-25
+ms.date: 2026-10-08
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -117,15 +117,42 @@ Optional tools have separate data paths.
 [Mural](docs/reference/skills/experimental/mural.md),
 [Jira](docs/reference/skills/project-planning/jira.md), and
 [GitLab](docs/reference/skills/project-planning/gitlab.md) use configured APIs.
-[TTS Voice-over](docs/reference/skills/experimental/tts-voiceover.md) uses Azure
-Speech to create audio from authored notes. If you use a Microsoft AI Service
-covered by Microsoft Product Terms, follow the
+If you use a Microsoft AI Service covered by Microsoft Product Terms, follow the
 [Code of Conduct for Microsoft AI Services](https://learn.microsoft.com/legal/ai-code-of-conduct).
 That code governs covered services; it is not HVE Core's license or a substitute
 for GitHub Copilot's terms.
 
 Keep credentials out of prompts, source files, saved working notes, and logs.
 Use the credential storage and permissions documented for each tool.
+
+### Audio, image, and video
+
+HVE Core does not include generative media models. Each media type uses a
+different path:
+
+| Media  | What HVE Core does                                                      | Service used                                                       | What leaves your machine | Learn more                                                                                                                         |
+|--------|-------------------------------------------------------------------------|--------------------------------------------------------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| Audio  | Turns slide speaker notes into narration, including demo-material video | Azure AI Speech neural voices in the region you configure          | Speaker-notes text       | [TTS Voice-over](docs/reference/skills/experimental/tts-voiceover.md)                                                              |
+| Video  | Combines slide images, screen captures, and narration                   | None; FFmpeg assembles the video locally                           | Nothing                  | [Demo Video](docs/reference/skills/experimental/demo-video.md), [Video to GIF](docs/reference/skills/experimental/video-to-gif.md) |
+| Images | Writes text prompts for simple stick-figure concept sketches            | None; you choose whether to paste a prompt into another image tool | Only what you paste      | [Design Thinking methods](docs/reference/skills/design-thinking/dt-methods.md)                                                     |
+
+For narration:
+
+* Sign in to Azure AI Speech with Microsoft Entra ID rather than a long-lived
+  key where you can.
+* For prebuilt neural voices, Microsoft states that neither the input text nor
+  the output audio is stored in Microsoft logs. See
+  [Data, privacy, and security for text to speech](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/data-privacy-security).
+* Follow the
+  [disclosure design guidelines for synthetic voices](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-guidelines)
+  when you share narrated material.
+
+Design Thinking workflows write image prompts that describe a role and one
+action, such as an office manager reviewing a dashboard. They leave out names,
+age, gender, ethnicity, and appearance from interviews and personas unless
+evidence shows the trait matters to the concept. Image tools can still add
+stereotypes to role-only prompts, so review generated images as
+[Safeguards and human review](#safeguards-and-human-review) describes.
 
 ### Telemetry and saved data
 
@@ -233,6 +260,8 @@ For generated media and personas:
   personal details before creating material for sharing.
 * Clearly label invented personas and AI-generated media. Check for stereotypes
   and unsupported assumptions about people.
+* Review generated images for stereotyped defaults, and keep names, age,
+  gender, ethnicity, and appearance out of image prompts you write yourself.
 * Keep illustrative personas visibly distinct from portraits of real people.
   The customer-card renderer does not automatically label personas as synthetic
   or remove identifying details.
