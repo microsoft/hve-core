@@ -162,3 +162,54 @@ Describe 'Build-PathspecExclusions' {
         }
     }
 }
+
+Describe 'Resolve-UnquotedGitPath' {
+    It 'Returns unquoted path unchanged when no quotes or escapes' {
+        $result = Resolve-UnquotedGitPath -Path 'src/file.ts'
+        $result | Should -Be 'src/file.ts'
+    }
+
+    It 'Strips surrounding quotes' {
+        $result = Resolve-UnquotedGitPath -Path '"src/file.ts"'
+        $result | Should -Be 'src/file.ts'
+    }
+
+    It 'Decodes octal UTF-8 escapes' {
+        # \342\234\223 represents UTF-8 checkmark
+        $result = Resolve-UnquotedGitPath -Path '"src/\342\234\223.txt"'
+        $result | Should -Be "src/$([char]0x2713).txt"
+    }
+
+    It 'Decodes escaped characters' {
+        $result = Resolve-UnquotedGitPath -Path '"src/tab\there.txt"'
+        $result | Should -Be "src/tab`there.txt"
+    }
+
+    It 'Returns empty string for null or empty input' {
+        $result = Resolve-UnquotedGitPath -Path $null
+        $result | Should -Be ''
+    }
+}
+
+Describe 'Format-PathOrdinal' {
+    It 'Sorts paths using ordinal comparison matching LC_ALL=C sort -f' {
+        $items = @(
+            [pscustomobject]@{ Path = 'foo_bar.ts' }
+            [pscustomobject]@{ Path = 'foo-bar.ts' }
+            [pscustomobject]@{ Path = 'foo.ts' }
+        )
+        $sorted = $items | Format-PathOrdinal
+        $sorted[0].Path | Should -Be 'foo-bar.ts'
+        $sorted[1].Path | Should -Be 'foo.ts'
+        $sorted[2].Path | Should -Be 'foo_bar.ts'
+    }
+
+    It 'Sorts string arrays using ordinal comparison' {
+        $items = @('b.ts', 'A.ts', 'a.ts')
+        $sorted = $items | Format-PathOrdinal
+        $sorted[0] | Should -Be 'A.ts'
+        $sorted[1] | Should -Be 'a.ts'
+        $sorted[2] | Should -Be 'b.ts'
+    }
+}
+

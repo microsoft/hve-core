@@ -316,7 +316,7 @@ System.String[]
         [string[]]$ExcludePath = @()
     )
 
-    $diffArgs = @('--no-pager', 'diff', $ComparisonRef)
+    $diffArgs = @('-c', 'core.quotePath=false', '--no-pager', 'diff', $ComparisonRef)
 
     $pathspecs = @()
     if ($ExcludeMarkdownDiff) {
@@ -368,7 +368,7 @@ System.String
         [string[]]$ExcludePath = @()
     )
 
-    $diffStatArgs = @('--no-pager', 'diff', '--shortstat', $ComparisonRef)
+    $diffStatArgs = @('-c', 'core.quotePath=false', '--no-pager', 'diff', '--shortstat', $ComparisonRef)
 
     $pathspecs = @()
     if ($ExcludeMarkdownDiff) {
@@ -431,7 +431,7 @@ System.String
     }
 
     $diffBlock = if ($DiffOutput) {
-        ($DiffOutput | ForEach-Object { "  $_" }) -join [Environment]::NewLine
+        $DiffOutput -join [Environment]::NewLine
     } else {
         ""
     }

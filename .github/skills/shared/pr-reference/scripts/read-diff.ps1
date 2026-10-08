@@ -138,11 +138,16 @@ function Get-FileDiff {
     $escapedPath = [regex]::Escape($FilePath)
 
     foreach ($line in $Content) {
-        if ($line -match "^diff --git") {
-            if ($line -match "a/$escapedPath b/") {
+        if ($line -match '^[ ]*diff --git') {
+            if ($line -match "(?:a/|`"a/)$escapedPath(?:`"|\s+)" -or $line -match "(?:b/|`"b/)$escapedPath(?:`"|\s*`$|\s+)") {
                 $inTargetFile = $true
             }
             elseif ($inTargetFile) {
+                break
+            }
+        }
+        elseif ($line -match '^[ ]*</full_diff>') {
+            if ($inTargetFile) {
                 break
             }
         }
@@ -167,9 +172,10 @@ function Get-DiffSummary {
     $currentFile = $null
     $added = 0
     $removed = 0
+    $inHunk = $false
 
     foreach ($line in $Content) {
-        if ($line -match "^diff --git a/(.+?) b/") {
+        if ($line -match '^[ ]*diff --git\s+(.+)$') {
             if ($currentFile) {
                 $files += [PSCustomObject]@{
                     Path    = $currentFile
@@ -177,13 +183,47 @@ function Get-DiffSummary {
                     Removed = $removed
                 }
             }
-            $currentFile = $Matches[1]
+            $header = $Matches[1].Trim()
+            $currentFile = $null
+            if ($header -match '^"a/(.+?)"\s+"b/(.+?)"$') {
+                $currentFile = Resolve-UnquotedGitPath $Matches[2]
+            }
+            elseif ($header -match '^a/(.+)\s+b/(.+)$') {
+                $currentFile = Resolve-UnquotedGitPath $Matches[2]
+            }
             $added = 0
             $removed = 0
+            $inHunk = $false
         }
-        elseif ($currentFile) {
-            if ($line -match "^\+[^+]") { $added++ }
-            elseif ($line -match "^-[^-]") { $removed++ }
+        elseif ($line -match '^[ ]*</full_diff>') {
+            break
+        }
+        elseif ($null -ne $currentFile -or $line -match '^[ ]*(?:\+\+\+|---|rename to)') {
+            if (-not $inHunk) {
+                if ($line -match '^[ ]*\+\+\+\s+(?:b/|"b/)(.+?)"?$') {
+                    $p = $Matches[1].Trim()
+                    if ($p -ne '/dev/null') {
+                        $currentFile = Resolve-UnquotedGitPath $p
+                    }
+                }
+                elseif ($line -match '^[ ]*---\s+(?:a/|"a/)(.+?)"?$') {
+                    $p = $Matches[1].Trim()
+                    if ($p -ne '/dev/null' -and -not $currentFile) {
+                        $currentFile = Resolve-UnquotedGitPath $p
+                    }
+                }
+                elseif ($line -match '^[ ]*rename to\s+(.+)$') {
+                    $currentFile = Resolve-UnquotedGitPath $Matches[1].Trim()
+                }
+            }
+
+            if ($line -match '^[ ]*@@') {
+                $inHunk = $true
+            }
+            elseif ($inHunk) {
+                if ($line -match '^[ ]*\+') { $added++ }
+                elseif ($line -match '^[ ]*-') { $removed++ }
+            }
         }
     }
 
@@ -196,7 +236,8 @@ function Get-DiffSummary {
     }
 
     $output = @("Changed files:")
-    foreach ($file in ($files | Sort-Object Path)) {
+    $sortedFiles = $files | Format-PathOrdinal
+    foreach ($file in $sortedFiles) {
         $output += "  $($file.Path) (+$($file.Added)/-$($file.Removed))"
     }
 

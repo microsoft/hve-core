@@ -249,6 +249,33 @@ index a1b2c3d..d4e5f6a 100644
             { Get-FileChanges -XmlPath $script:FixturePath -ExcludeFilterType @('Invalid') } | Should -Throw '*Invalid exclude type*'
         }
     }
+
+    Context 'Indented and complex diff content' {
+        BeforeAll {
+            $script:IndentedXml = @'
+<commit_history>
+  <full_diff>
+    diff --git a/src/indented.ts b/src/indented.ts
+    index 111..222 100644
+    --- a/src/indented.ts
+    +++ b/src/indented.ts
+    @@ -1,2 +1,3 @@
+    +diff --git a/fake.ts b/fake.ts
+    +real content
+  </full_diff>
+</commit_history>
+'@
+            $script:IndentedXmlPath = Join-Path $script:TempDir 'indented.xml'
+            Set-Content -Path $script:IndentedXmlPath -Value $script:IndentedXml -NoNewline
+        }
+
+        It 'Extracts changes from indented diff headers and ignores diff strings inside hunks' {
+            $changes = Get-FileChanges -XmlPath $script:IndentedXmlPath -FilterType 'All'
+            $changes.Count | Should -Be 1
+            $changes[0].Path | Should -Be 'src/indented.ts'
+            $changes[0].Type | Should -Be 'Modified'
+        }
+    }
 }
 
 Describe 'Format-Output' {

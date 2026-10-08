@@ -180,9 +180,9 @@ mkdir -p "$(dirname "${PR_REF_FILE}")"
   # Add the full diff, excluding specified files
   echo "  <full_diff>"
   if [[ ${#PATHSPEC_ARGS[@]} -gt 0 ]]; then
-    git --no-pager diff "${COMPARISON_REF}" -- "${PATHSPEC_ARGS[@]}"
+    git -c core.quotePath=false --no-pager diff "${COMPARISON_REF}" -- "${PATHSPEC_ARGS[@]}"
   else
-    git --no-pager diff "${COMPARISON_REF}"
+    git -c core.quotePath=false --no-pager diff "${COMPARISON_REF}"
   fi
   echo "  </full_diff>"
   echo "</commit_history>"

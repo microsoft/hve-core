@@ -113,11 +113,79 @@ fi
 # Show summary mode
 if [[ "${SHOW_SUMMARY}" == "true" ]]; then
   echo "Changed files:"
-  grep -E '^diff --git' "${INPUT_FILE}" | sed 's|diff --git a/||;s| b/.*||' | sort -u | while read -r file; do
-    # Count lines changed for this file
-    added=$(grep -A 1000 "diff --git a/${file} b/" "${INPUT_FILE}" | grep -m 1 -B 1000 "^diff --git" | grep -c "^+" 2>/dev/null || echo "0")
-    removed=$(grep -A 1000 "diff --git a/${file} b/" "${INPUT_FILE}" | grep -m 1 -B 1000 "^diff --git" | grep -c "^-" 2>/dev/null || echo "0")
-    echo "  ${file} (+${added}/-${removed})"
+  awk '
+    /^[ ]*diff --git/ {
+      if (file != "") {
+        print file "\t" added "\t" removed
+      }
+      file = ""
+      added = 0
+      removed = 0
+      in_hunk = 0
+      header = $0
+      sub(/^[ ]*diff --git[ ]+/, "", header)
+      if (match(header, /^"a\/(.+)"[ ]+"b\/(.+)"$/)) {
+        sub(/^"a\/(.+)"[ ]+"b\//, "", header)
+        sub(/"$/, "", header)
+        file = header
+      } else if (match(header, /^a\/(.+)[ ]+b\/(.+)$/)) {
+        sub(/^a\/(.+)[ ]+b\//, "", header)
+        file = header
+      }
+    }
+    /^[ ]*<\/full_diff>/ {
+      if (file != "") {
+        print file "\t" added "\t" removed
+        file = ""
+      }
+      next
+    }
+    !in_hunk && /^[ ]*\+\+\+[ ]+/ {
+      line = $0
+      sub(/^[ ]*\+\+\+[ ]+/, "", line)
+      if (line !~ /^\/dev\/null/) {
+        sub(/^"?b\//, "", line)
+        sub(/"$/, "", line)
+        file = line
+      }
+    }
+    !in_hunk && /^[ ]*---[ ]+/ {
+      line = $0
+      sub(/^[ ]*---[ ]+/, "", line)
+      if (line !~ /^\/dev\/null/ && file == "") {
+        sub(/^"?a\//, "", line)
+        sub(/"$/, "", line)
+        file = line
+      }
+    }
+    !in_hunk && /^[ ]*rename to[ ]+/ {
+      line = $0
+      sub(/^[ ]*rename to[ ]+/, "", line)
+      sub(/^"/, "", line)
+      sub(/"$/, "", line)
+      file = line
+    }
+    /^[ ]*@@/ {
+      in_hunk = 1
+      next
+    }
+    in_hunk && /^[ ]*\+/ {
+      added++
+    }
+    in_hunk && /^[ ]*-/ {
+      removed++
+    }
+    END {
+      if (file != "") {
+        print file "\t" added "\t" removed
+      }
+    }
+  ' "${INPUT_FILE}" | LC_ALL=C sort -f -k1,1 | while IFS=$'\t' read -r raw_f added removed; do
+    if [[ -n "${raw_f}" ]]; then
+      f_octal=$(echo "${raw_f}" | sed -E "s/\\\\([0-7])/\\\\0\1/g")
+      unquoted=$(printf "%b" "${f_octal}")
+      echo "  ${unquoted} (+${added}/-${removed})"
+    fi
   done
   exit 0
 fi
@@ -126,9 +194,15 @@ fi
 if [[ -n "${FILE_PATH}" ]]; then
   # Find the diff block for this file
   awk -v file="${FILE_PATH}" '
-    /^diff --git/ {
+    /^[ ]*diff --git/ {
       if (printing) { printing = 0 }
-      if ($0 ~ "a/" file " b/") { printing = 1 }
+      header = $0
+      if (index(header, "a/" file) || index(header, "b/" file) || index(header, "\"a/" file) || index(header, "\"b/" file)) {
+        printing = 1
+      }
+    }
+    /^[ ]*<\/full_diff>/ {
+      printing = 0
     }
     printing { print }
   ' "${INPUT_FILE}"
