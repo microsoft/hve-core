@@ -167,6 +167,7 @@
     "networkidle",
     "NOEXEC",
     "noname",
+    "nontracking",
     "npmjs",
     "octocat",
     "onclick",
