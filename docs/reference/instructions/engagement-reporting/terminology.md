@@ -3,7 +3,7 @@ title: Engagement Reporting/Terminology
 description: "Correct spellings and naming conventions for people, products, and teams"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                                                                                                           |
-|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                                                                                                                     |
-| Source      | `.github/instructions/engagement-reporting/terminology.instructions.md`                                                                                                         |
-| Invocation  | Applied automatically to `**/.github/agents/engagement-reporting/**, **/.github/prompts/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml` |
-| Interactive | No                                                                                                                                                                              |
+| Field       | Value                                                                                                                               |
+|-------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                         |
+| Source      | `.github/instructions/engagement-reporting/terminology.instructions.md`                                                             |
+| Invocation  | Applied automatically to `**/.github/agents/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml` |
+| Interactive | No                                                                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

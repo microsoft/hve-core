@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - contributing
@@ -564,11 +564,12 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-| Artifact Type | Location                                                                  |
-|---------------|---------------------------------------------------------------------------|
-| Agents        | Files in `.github/agents/{package-id}/` (the conventional location)       |
-| Prompts       | Files in `.github/prompts/{package-id}/` (the conventional location)      |
-| Instructions  | Files in `.github/instructions/{package-id}/` (the conventional location) |
+| Artifact Type | Location                                                                                      |
+|---------------|-----------------------------------------------------------------------------------------------|
+| Agents        | Files in `.github/agents/{package-id}/` (the conventional location)                           |
+| Prompts       | The examples in [Contributing Prompts](prompts), because HVE Core ships no prompt files today |
+| Instructions  | Files in `.github/instructions/{package-id}/` (the conventional location)                     |
+| Skills        | Folders in `.github/skills/{package-id}/{skill-name}/` (the conventional location)            |
 
 ### Check Repository Standards
 

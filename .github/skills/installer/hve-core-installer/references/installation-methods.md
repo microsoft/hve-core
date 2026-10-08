@@ -51,9 +51,9 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 After cloning, update `.vscode/settings.json` with entries for each package subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
 
-Enumerate each package subdirectory under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/hooks/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each package folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the package-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). Include the `installer` package so clone-based users can invoke the guided installer skill. For `.github/hooks/`, list only the package-level folders directly under `.github/hooks/` (e.g., `shared`); the default `chat.hookFilesLocations` value only covers the workspace `.github/hooks`, so clone-based installs must add each package's hook folder explicitly.
+Enumerate each package subdirectory under `.github/agents/`, `.github/instructions/`, and `.github/hooks/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each package folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the package-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). Include the `installer` package so clone-based users can invoke the guided installer skill. For `.github/hooks/`, list only the package-level folders directly under `.github/hooks/` (e.g., `shared`); the default `chat.hookFilesLocations` value only covers the workspace `.github/hooks`, so clone-based installs must add each package's hook folder explicitly.
 
-Any folder named `experimental` under any artifact type (agents, prompts, instructions, or skills) must not be included without first asking the user whether they want experimental features. If the user opts in, add the `experimental` entries (and `experimental/subagents` for agents when that subfolder exists).
+Any folder named `experimental` under any artifact type (agents, instructions, or skills) must not be included without first asking the user whether they want experimental features. If the user opts in, add the `experimental` entries (and `experimental/subagents` for agents when that subfolder exists).
 
 <!-- <settings-template> -->
 ```json
@@ -69,15 +69,6 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
     "<PREFIX>/.github/agents/hve-core/subagents": true,
     "<PREFIX>/.github/agents/project-planning": true,
     "<PREFIX>/.github/agents/security": true
-  },
-  "chat.promptFilesLocations": {
-    "<PREFIX>/.github/prompts/accessibility": true,
-    "<PREFIX>/.github/prompts/ado": true,
-    "<PREFIX>/.github/prompts/data-science": true,
-    "<PREFIX>/.github/prompts/design-thinking": true,
-    "<PREFIX>/.github/prompts/github": true,
-    "<PREFIX>/.github/prompts/hve-core": true,
-    "<PREFIX>/.github/prompts/security": true
   },
   "chat.instructionsFilesLocations": {
     "<PREFIX>/.github/instructions/ado": true,
@@ -174,15 +165,6 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
           "/workspaces/hve-core/.github/agents/project-planning": true,
           "/workspaces/hve-core/.github/agents/security": true
-        },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/accessibility": true,
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/data-science": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true
         },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,

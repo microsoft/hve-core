@@ -20,9 +20,9 @@ This reference documents how the `vally-tests` skill routes newly authored stimu
 
 ### `prompt`
 
-* Primary target: [evals/behavior-conformance/prompts.eval.yaml](../../../../../evals/behavior-conformance/prompts.eval.yaml).
-* Filesystem state: exists today.
-* Append-vs-create rule: append a new stimulus block to the existing `stimuli:` array. The file is single-purpose and aggregates all prompt conformance stimuli. Dedupe is enforced by the Phase 5 dedupe rule (SHA-256 of normalized prompt text); see Phase 5 dedupe rule.
+* Primary target: `evals/behavior-conformance/prompts.eval.yaml`.
+* Filesystem state: created on first use. This repository ships no prompt files, so the file is absent until a repository authors its first prompt stimulus.
+* Append-vs-create rule: append a new stimulus block to the existing `stimuli:` array, or create the file with the same preamble shape as `instructions.eval.yaml` (`name`, `description`, `type`, and `defaults`) and a single `stimuli:` entry when it does not exist. The file is single-purpose and aggregates all prompt conformance stimuli. Dedupe is enforced by the Phase 5 dedupe rule (SHA-256 of normalized prompt text); see Phase 5 dedupe rule.
 * Class recipe: not applicable. Per-prompt checks come from `references/prompts.md`.
 
 ### `instructions`

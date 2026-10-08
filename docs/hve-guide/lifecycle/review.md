@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -41,16 +41,14 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 | rpi-review  | `/rpi-review`     | Review implementation evidence against the approved RPI plan |
 | hve-builder | Use `hve-builder` | Review or validate prompts, instructions, agents, and skills |
 
-### Prompts and Instructions
+### Other Skills, Agents, and Instructions
 
-| Tool                    | Type        | How to Invoke                  | Purpose                                          |
-|-------------------------|-------------|--------------------------------|--------------------------------------------------|
-| pr-review               | Prompt      | `/pr-review`                   | Run a multi-perspective review of a pull request |
-| pull-request            | Prompt      | `/pull-request`                | Create a pull request for current changes        |
-| ado-create-pull-request | Prompt      | `/ado-create-pull-request`     | Create an ADO-linked pull request                |
-| documentation           | Agent       | Select **documentation** agent | Audit, drift, author, and validate documentation |
-| commit-message          | Instruction | Auto-activated                 | Enforces commit message conventions              |
-| community-interaction   | Instruction | Auto-activated                 | Enforces community communication standards       |
+| Tool                  | Type        | How to Invoke                  | Purpose                                                          |
+|-----------------------|-------------|--------------------------------|------------------------------------------------------------------|
+| pull-request          | Skill       | `/pull-request`                | Create a GitHub or Azure DevOps pull request for current changes |
+| documentation         | Agent       | Select **documentation** agent | Audit, drift, author, and validate documentation                 |
+| commit-message        | Instruction | Auto-activated                 | Enforces commit message conventions                              |
+| community-interaction | Instruction | Auto-activated                 | Enforces community communication standards                       |
 
 ## Role-Specific Guidance
 
@@ -83,11 +81,8 @@ validation on the new endpoints.
 ```
 
 ```text
-/ado-create-pull-request adoProject=hve-core baseBranch=origin/main isDraft=true workItemIds=54321,54322
-```
-
-```text
-/pr-review
+/pull-request action=create draft=true base=origin/main Create the pull request in the
+hve-core Azure DevOps project and link work items 54321 and 54322.
 ```
 
 Select **code-review** agent:
@@ -119,7 +114,7 @@ Use `hve-builder` review mode for an AI artifact:
 
 ```text
 Use hve-builder with mode=review and
-targets=.github/prompts/hve-core/rpi.prompt.md. Evaluate activation,
+targets=.github/agents/hve-core/rpi-agent.agent.md. Evaluate activation,
 lifecycle routing, review requirements, and host compatibility.
 ```
 
