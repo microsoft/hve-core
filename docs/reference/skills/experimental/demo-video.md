@@ -1,9 +1,9 @@
 ---
 title: demo-video
 description: Assemble ordered frames or clips with narration into a narrated MP4 via FFmpeg
-sidebar_position: 4
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

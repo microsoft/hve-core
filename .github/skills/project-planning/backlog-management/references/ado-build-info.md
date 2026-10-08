@@ -147,7 +147,7 @@ Identify whether the user requests persistent tracking or conversational output.
 
 ### Step 2: Identify Build Information Type
 
-Determine what information to retrieve based on user keywords:
+Determine what information to retrieve based on user keywords. When the request names no information type, retrieve build status:
 
 * **Status keywords** (status, state, summary, error, information, issue): Retrieve build status using `mcp_ado_pipelines_get_build_status`.
 * **Log keywords** (logs, stack trace, detailed, output): Retrieve logs using `mcp_ado_pipelines_get_build_log` and `mcp_ado_pipelines_get_build_log_by_id`.
@@ -164,8 +164,8 @@ Determine the build to query based on user input:
 
 **Generic references**:
 
-* Current context (my pull request, this branch, current branch): Derive {{prNumber}} from the current git branch, then construct the branch name.
-* Latest build (latest, current, failing, recent): Use `mcp_ado_pipelines_get_builds` with `top` set to 1 and `queryOrder` set to `queueTimeDescending`.
+* Current context (my pull request, my PR, current PR, this branch, current branch): Derive {{prNumber}} from the current git branch, then construct the branch name.
+* Latest build (latest, most recent, current, failing, recent): Use `mcp_ado_pipelines_get_builds` with `top` set to 1 and `queryOrder` set to `queueTimeDescending`.
 
 **Query parameters**:
 

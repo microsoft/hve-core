@@ -282,7 +282,6 @@ Before contributing AI artifacts, review these resources:
 
 * Agents directory: [`.github/agents/`](./.github/agents/)
 * Instructions directory: [`.github/instructions/`](./.github/instructions/)
-* Prompts directory: [`.github/prompts/`](./.github/prompts/)
 * Skills directory: [`.github/skills/`](./.github/skills/)
 
 ## Dependabot Pull Requests

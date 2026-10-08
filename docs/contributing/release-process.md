@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-06
+ms.date: 2026-10-07
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -71,6 +71,48 @@ Every job that mints a release GitHub App token reads the app key from the
 branches, and the `v*` and `prerelease-v*` tags. The three merge-driven
 workflows therefore start on the push a reviewed merge produces rather than on
 the pull request event, whose `refs/pull/N/merge` ref the environment rejects.
+
+### Release Branch Gating
+
+The `release-branches` ruleset protects `release/prerelease` and
+`release/stable` against deletion and force pushes, and requires a pull
+request with one approval, approval of the most recent push, and stale-review
+dismissal. It deliberately does not require the `PR Validation Success` status
+check. The release workflows are designed so that release-branch pull
+requests carry only reviewed content:
+
+* Promotion pull requests that the preparation workflows generate carry `main`
+  content, and every change to `main` merged through a reviewed pull request
+  that passed the required checks of its time. Since 2026-10-04 that is
+  `PR Validation Success`, re-run in the merge queue. The preparation
+  workflows stop when merging `main` or the selected tag conflicts outside
+  the release-owned files: `CHANGELOG.md`, the channel release-please config
+  and manifest, the version fields, `plugin.json`, and
+  `.github/plugin/marketplace.json`. The workflow restores or writes those
+  files itself.
+* Managed release pull requests that release-please opens carry release-please
+  and version synchronization output.
+* Every hop needs a human approval of the latest push, and auto-merge is never
+  enabled.
+* After each merge, `release-prerelease.yml` and `release-stable-publish.yml`
+  revalidate the merged head identity and release intent before release-please
+  can create a tag, and `release-vsix-publish.yml` proves the tag, source
+  commit, channel branch, and committed release state before packaging.
+
+These properties describe workflow-generated pull requests; they are not
+enforced on content. No ruleset restricts who can push to a
+`release-promotion--*` or `release-please--*` head branch, merge-time
+revalidation checks head identity and release intent rather than the merged
+content, and the Stable promotion check accepts a head that is ahead of the
+selected tag. Anyone with write access can add commits to a release head
+branch, and the change can reach a tagged, signed release with only the
+approval of someone other than the last pusher. Release-branch merges are not
+gated by `PR Validation`.
+
+`PR Validation` still runs on pull requests into both release branches.
+Reviewing its result, and confirming that the pull request contains only the
+expected promotion or release-please commits, is part of the review steps
+below; it is a review step, not an enforced gate.
 
 ## How Releases Work
 
@@ -194,7 +236,8 @@ and does not rebuild the extension.
 ### Required Tag Governance
 
 Tag governance is a mandatory activation prerequisite for post-tag production.
-Both rulesets are active and target `v*` and `prerelease-v*` tags:
+Both tag rulesets were created on 2026-10-04 (Pacific time), are active,
+and target `refs/tags/v*` and `refs/tags/prerelease-v*`:
 
 * `release-tags-creation-by-release-app` restricts creation only and grants a
     bypass to the Release App
@@ -458,7 +501,7 @@ Documentation-only releases may not require an extension publish.
 
 ## Historical Release Identities
 
-Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
+Because snapshot publication has stopped, tags and catalogs are supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. These tag names fall outside the `v*` and `prerelease-v*` tag rulesets, so no ruleset protects them. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
 
 ## Version Quick Reference
 

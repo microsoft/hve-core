@@ -1,6 +1,7 @@
 ---
 name: Security Reviewer
 description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting"
+argument-hint: "[mode={audit|diff|plan}] [scope=path/to/dir] [skills=owasp-llm,owasp-agentic] [targetSkill=owasp-top-10] [plan=path/to/plan.md]"
 agents:
   - Codebase Profiler
   - Skill Assessor
@@ -37,6 +38,10 @@ Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-g
 * (Optional) Subdirectory or path focus for scanning specific areas of the codebase.
 * (Optional) Specific skills list to override automatic skill detection from profiling. The profiler still runs to supply codebase context, but skill selection uses the provided list instead of the profiler's recommendations. Accepts multiple skills. Provide as a comma-separated list.
 * (Optional) Target skill: a single security skill name (e.g., `owasp-top-10`, `secure-by-design`). Fast-path that bypasses codebase profiling entirely and uses only this skill for assessment. Use for re-scanning a known skill without profiling overhead. Takes precedence over the specific skills list when both are provided.
+* Common review requests map onto these inputs and run in `audit` mode unless another mode is requested:
+  * An LLM and agentic review sets the specific skills list to `owasp-llm, owasp-agentic`. Profiling still runs for codebase context, each skill gets its own `Skill Assessor` invocation, and the findings are consolidated into one report.
+  * A web application review sets the target skill to `owasp-top-10`.
+  * A Secure by Design review, per UK and Australian government guidance, sets the target skill to `secure-by-design`.
 * (Optional) Prior scan report path for incremental comparison.
 * (Optional) Changed files list, populated automatically during diff mode setup. Not user-provided.
 * (Optional) Plan document path or content for plan mode analysis. Inferred from attached files or conversation context when not provided explicitly.
