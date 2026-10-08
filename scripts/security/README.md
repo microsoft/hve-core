@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-08
 ms.topic: reference
 keywords:
   - powershell
@@ -290,12 +290,24 @@ workflow-level block is a default, not a ceiling: a job that does declare its ow
 block still receives what it declares, because job-level permissions replace the
 workflow-level set rather than being capped by it.
 
+#### Breadth rules
+
+Two further rules apply regardless of the classification above:
+
+| Violation type                 | SARIF rule                       | Fires when                                                                                                  |
+|--------------------------------|----------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `ExcessiveWorkflowPermissions` | `excessive-workflow-permissions` | The workflow-level block grants anything beyond `contents: read`; entries set to `none` are allowed         |
+| `BroadPermissionsScalar`       | `broad-permissions-scalar`       | The workflow-level block or any job's block is `read-all` or `write-all`, whatever the workflow-level state |
+
+A workflow-level `read-all` or `write-all` is reported only as
+`BroadPermissionsScalar`. Additional scopes belong on the jobs that use them.
+
 #### Features
 
 * Scans `.github/workflows/*.yml` and `.yaml` files
 * Parses each workflow with `ConvertFrom-Yaml`, so job indentation and the
   `permissions` value shape do not affect detection
-* Reports workflow-level and job-level compliance as separate metrics
+* Reports workflow-level, job-level, and breadth violations as separate metrics
 * Outputs results in JSON, SARIF, or console format
 * Configurable workflow exclusions
 * Integrates with `npm run lint:permissions`
@@ -305,7 +317,7 @@ workflow-level set rather than being capped by it.
 * `-Path` - Directory containing workflow YAML files (default: `.github/workflows`)
 * `-Format` - Output format: `json`, `sarif`, or `console` (default: `json`)
 * `-OutputPath` - Path for result output file (default: `logs/workflow-permissions-results.json`)
-* `-FailOnViolation` (switch) - Exit with non-zero code if any workflow or job is missing permissions
+* `-FailOnViolation` (switch) - Exit with non-zero code if any violation is found
 * `-ExcludePaths` - Workflow filenames to exclude (default: `copilot-setup-steps.yml`)
 
 #### Usage

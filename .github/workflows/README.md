@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-05
+ms.date: 2026-10-08
 ms.topic: reference
 keywords:
   - github actions
@@ -1031,16 +1031,22 @@ workflow_call:
 
 ### Permissions
 
-* Declare minimal required permissions at workflow and job levels
-* Use `permissions: {}` to disable all permissions when not needed
-* Escalate permissions only where necessary (e.g., `security-events: write` for SARIF upload)
+* Set the workflow-level block to `contents: read` or `permissions: {}`; `Test-WorkflowPermissions.ps1` rejects any other workflow-level grant
+* Declare each job's permissions on the job, and escalate only where necessary (e.g., `security-events: write` for SARIF upload)
+* Use `permissions: {}` on a job that never uses `GITHUB_TOKEN`
+* Never use `read-all` or `write-all`
 
 Example:
 
 ```yaml
 permissions:
   contents: read
-  security-events: write  # Required for SARIF upload
+
+jobs:
+  scan:
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload
 ```
 
 ### Security Considerations
