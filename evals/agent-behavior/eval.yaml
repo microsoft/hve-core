@@ -2403,7 +2403,7 @@ stimuli:
       - |
         const fs = require('node:fs');
         const assert = require('node:assert/strict');
-        const original = '{\n  "reviewId": "native-edit-fixture",\n  "status": "pending",\n  "humanReviewed": false\n}\n';
+        const original = '{\n    "reviewId": "native-edit-fixture",\n    "status": "pending",\n    "humanReviewed": false\n}\n';
         const reviewRoot = '.copilot-tracking/reviews/code-reviews/';
         const updated = JSON.parse(fs.readFileSync(reviewRoot + 'native-edit/metadata.json', 'utf8'));
         assert.deepEqual(updated, { ...JSON.parse(original), status: 'ready' });

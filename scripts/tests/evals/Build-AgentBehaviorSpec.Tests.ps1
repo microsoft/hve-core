@@ -66,6 +66,41 @@ Describe 'Code review native editing contract' -Tag 'Unit' {
     $Agent = ConvertFrom-Yaml -Yaml $Frontmatter.Groups[1].Value
     $Agent.tools | Should -Contain 'edit/editFiles'
   }
+
+  It 'Checks resumed-review preservation for <Scenario>' -Tag 'NativeEditGrader' -ForEach @(
+    @{ Scenario = 'correct update'; ChangedPath = ''; ChangeApproval = $false; ExpectedExitCode = 0 }
+    @{ Scenario = 'changed approval'; ChangedPath = ''; ChangeApproval = $true; ExpectedExitCode = 1 }
+    @{ Scenario = 'changed other review'; ChangedPath = '.copilot-tracking/reviews/code-reviews/other-review/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
+    @{ Scenario = 'changed source'; ChangedPath = 'src/review-input.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
+    @{ Scenario = 'changed host session'; ChangedPath = 'host-session/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
+  ) {
+    $SuiteRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
+    $Partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw -LiteralPath (Join-Path $SuiteRoot 'stimuli/code-review.yml'))
+    $Stimulus = $Partial.stimuli | Where-Object { $_.name -eq 'code-review-resume-native-edit' }
+    $Grader = $Stimulus.graders | Where-Object { $_.name -eq 'review-resume-preserves-protected-files' }
+    $Workspace = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
+    foreach ($Mount in $Stimulus.agent_environment.files) {
+      $Destination = Join-Path $Workspace $Mount.dest
+      New-Item -ItemType Directory -Path (Split-Path $Destination -Parent) -Force | Out-Null
+      Copy-Item -LiteralPath (Join-Path $SuiteRoot $Mount.src) -Destination $Destination
+    }
+    $MetadataPath = Join-Path $Workspace '.copilot-tracking/reviews/code-reviews/native-edit/metadata.json'
+    $Metadata = Get-Content -Raw -LiteralPath $MetadataPath | ConvertFrom-Json
+    $Metadata.status = 'ready'
+    $Metadata.humanReviewed = $ChangeApproval
+    [System.IO.File]::WriteAllText($MetadataPath, ($Metadata | ConvertTo-Json))
+    if ($ChangedPath) {
+      [System.IO.File]::AppendAllText((Join-Path $Workspace $ChangedPath), "`n")
+    }
+    Push-Location $Workspace
+    try {
+      $Output = & node @($Grader.config.args) 2>&1 | Out-String
+      $LASTEXITCODE | Should -Be $ExpectedExitCode -Because $Output
+    }
+    finally {
+      Pop-Location
+    }
+  }
 }
 
 Describe 'Build-AgentBehaviorSpec.ps1' -Tag 'Unit' {
