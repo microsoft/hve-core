@@ -1,6 +1,0 @@
-Synthetic request for an evaluation workspace. No real subscription, tenant,
-resource name, or secret value is included.
-
-Create infra/main.bicep for a production reporting service with one Azure
-Storage account. Add a storageName parameter and use the @validate()
-decorator so the name must be between 3 and 24 characters long.

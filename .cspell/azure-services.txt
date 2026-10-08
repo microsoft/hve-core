@@ -20,7 +20,6 @@ armttk
 azacsnap
 azcmagent
 azcopy
-azd
 azdo
 azsk
 azurecli

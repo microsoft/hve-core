@@ -1,7 +1,0 @@
-Synthetic request for an evaluation workspace. No real subscription, tenant,
-resource name, or secret value is included.
-
-infra/main.bicep already deploys one Azure Storage account for report
-exports. Add a second Azure Storage account in the same file for archived
-reports, named from the existing prefix parameter with an "arc" suffix.
-Keep the existing account unchanged.
