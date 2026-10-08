@@ -11,18 +11,24 @@ These instructions define conventions for Bicep Infrastructure as Code (IaC) dev
 
 ## MCP Tools
 
-The Bicep MCP server provides schema information, best practices, and diagnostics:
+The Bicep MCP server provides schema information, best practices, and compilation. Tool names changed in Bicep MCP 0.43.1 and 0.43.8; parameters are as of 0.48.1:
 
 <!-- <reference-mcp-tools> -->
-| Tool                                  | Purpose                                                                 | Parameters                                     |
-|---------------------------------------|-------------------------------------------------------------------------|------------------------------------------------|
-| `get_az_resource_type_schema`         | Retrieves the schema for a specific Azure resource type and API version | `azResourceType`, `apiVersion` (both required) |
-| `list_az_resource_types_for_provider` | Lists the resource types available for a provider namespace             | `providerNamespace` (required)                 |
-| `get_bicep_best_practices`            | Returns current Bicep authoring best practices                          | None                                           |
-| `get_bicep_file_diagnostics`          | Returns compilation diagnostics for a Bicep file                        | The Bicep file to analyze                      |
+| Tool                             | Earlier name                          | Purpose                                                     | Parameters                                         |
+|----------------------------------|---------------------------------------|-------------------------------------------------------------|----------------------------------------------------|
+| `get_azure_resource_type_schema` | `get_az_resource_type_schema`         | Retrieves the schema for an Azure resource type             | `resourceType` (required), `apiVersion` (optional) |
+| `list_azure_resource_types`      | `list_az_resource_types_for_provider` | Lists the resource types available for a provider namespace | `providerNamespace` (required)                     |
+| `get_bicep_best_practices`       | `get_bicep_best_practices`            | Returns current Bicep authoring best practices              | None                                               |
+| `build_bicep`                    | `get_bicep_file_diagnostics`          | Compiles a Bicep file and returns ARM JSON and diagnostics  | `filePath` (required, absolute path)               |
 <!-- </reference-mcp-tools> -->
 
-Some MCP clients expose these tools with a server prefix, such as `bicep-get_az_resource_type_schema`. The [Bicep MCP server](https://learn.microsoft.com/azure/azure-resource-manager/bicep/bicep-mcp-server) documentation lists the full tool set.
+Before calling a Bicep MCP tool, check which names the host lists:
+
+* Use the names the host exposes, including any prefix the client adds, such as `bicep-get_azure_resource_type_schema` or `mcp_bicep_get_azure_resource_type_schema`. Do not call a name the host does not list.
+* Servers older than 0.43.1 expose only the earlier names, and their `get_az_resource_type_schema` requires both `azResourceType` and `apiVersion`.
+* When `apiVersion` is omitted, the server chooses a default, which can be a preview version. Pass the version that [API Versioning](#api-versioning) selects.
+
+See the [Bicep MCP server](https://learn.microsoft.com/azure/azure-resource-manager/bicep/bicep-mcp-server) documentation for setup.
 
 ## Project Structure
 
@@ -130,7 +136,7 @@ Resource names follow [Azure naming conventions](https://learn.microsoft.com/azu
 
 | Aspect     | Main Module                                             | Sub-Module                                  |
 |------------|---------------------------------------------------------|---------------------------------------------|
-| Location   | `bicep/main.bicep`                                      | `bicep/modules/{name}.bicep`                |
+| Location   | `main.bicep` at the Bicep folder root                   | `modules/{name}.bicep` in the same folder   |
 | Parameters | Include defaults when sensible                          | No defaults (parent provides all values)    |
 | Resources  | Defined in `main.bicep`                                 | Scoped to specific functionality            |
 | References | Orchestrates sub-modules                                | Cannot reference other sub-modules directly |
@@ -251,7 +257,7 @@ Section order with `/* */` comment headers:
 
 | Guideline           | Details                                                                                                   |
 |---------------------|-----------------------------------------------------------------------------------------------------------|
-| Discover versions   | Use `list_az_resource_types_for_provider` and `get_az_resource_type_schema`                               |
+| Discover versions   | Use `list_azure_resource_types` and `get_azure_resource_type_schema`, or the earlier names the host lists |
 | Version consistency | Identical resource types within a file use the same API version                                           |
 | New resource types  | A resource type not yet declared in the file uses the latest stable API version                           |
 | Existing types      | A new declaration of a type already in the file reuses that file's API version                            |
