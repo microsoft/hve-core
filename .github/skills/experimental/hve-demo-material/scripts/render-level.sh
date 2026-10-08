@@ -27,7 +27,6 @@ readonly DEFAULT_HTML_DECK_TEMPLATE="${SKILLS_ROOT}/../hve-slides/templates/deck
 LEVEL=""
 LEVEL_DIR=""
 WORKSPACE=""
-NARRATION="piper"
 CAPTURE=""
 VISION_PROMPT_FILE=""
 HTML_DECK_TEMPLATE=""
@@ -43,7 +42,6 @@ Options:
   --level <level>               Level label from the curriculum
   --level-dir <dir>             Authored level directory containing content/
   --workspace <repo>            Repository folder opened for live captures
-  --narration <azure|piper>     Narration engine (default: piper)
   --capture <live|deck-export>  Capture profile (default: the level default)
   --vision-prompt-file <path>   Run the vision slide check with this prompt
   --html-deck-template <dir>    HVE Slides starter; required, fails when missing
@@ -69,7 +67,6 @@ parse_args() {
       --level) LEVEL="$2"; shift 2 ;;
       --level-dir) LEVEL_DIR="$2"; shift 2 ;;
       --workspace) WORKSPACE="$2"; shift 2 ;;
-      --narration) NARRATION="$2"; shift 2 ;;
       --capture) CAPTURE="$2"; shift 2 ;;
       --vision-prompt-file) VISION_PROMPT_FILE="$2"; shift 2 ;;
       --html-deck-template) HTML_DECK_TEMPLATE="$2"; HTML_DECK="required"; shift 2 ;;
@@ -85,7 +82,6 @@ validate_args() {
   [[ "${LEVEL}" =~ ^L[1-4]00$ ]] || err "--level must be L100 to L400."
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${WORKSPACE}" ]] || err "--workspace must be a directory."
-  [[ "${NARRATION}" =~ ^(azure|piper)$ ]] || err "--narration must be azure or piper."
   if [[ -z "${CAPTURE}" ]]; then
     case "${LEVEL}" in
       L300|L400) CAPTURE="live" ;;
@@ -151,9 +147,8 @@ build_and_validate_deck() {
 
 narrate_and_assemble() {
   local video_name="$1"
-  log "Synthesizing narration with ${NARRATION}"
+  log "Synthesizing narration with Azure AI Speech"
   bash "${VOICEOVER}" "${SKIP_VENV[@]}" \
-    --engine "${NARRATION}" \
     --collapse-newlines \
     --content-dir "${LEVEL_DIR}/content" \
     --output-dir "${LEVEL_DIR}/audio"
@@ -240,7 +235,6 @@ main() {
     --level "${LEVEL}" \
     --level-dir "${LEVEL_DIR}" \
     --capture "${CAPTURE}" \
-    --narration "${NARRATION}" \
     "${html_deck[@]}" \
     > "${LEVEL_DIR}/output/render-result.json" || exit_code=$?
   cat "${LEVEL_DIR}/output/render-result.json"

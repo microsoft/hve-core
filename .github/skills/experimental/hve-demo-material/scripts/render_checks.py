@@ -49,6 +49,7 @@ STYLE_TEMPLATE = SKILL_ROOT / "templates" / "style.yaml"
 
 LEVELS = ("L100", "L200", "L300", "L400")
 LIVE_LEVELS = frozenset({"L300", "L400"})
+NARRATION_ENGINE = "azure"
 
 # A change under any of these paths rebuilds every level.
 SHARED_TRIGGER_PATHS = (
@@ -919,7 +920,6 @@ def evaluate(
     level_dir: Path,
     curriculum: dict[str, dict],
     capture_profile: str | None = None,
-    narration_engine: str = "piper",
     html_deck: bool = False,
 ) -> dict:
     """Score the machine-verifiable criteria for one rendered level.
@@ -965,7 +965,7 @@ def evaluate(
         "schema_version": 1,
         "level": level,
         "capture_profile": "live" if live else "deck-export",
-        "narration_engine": narration_engine,
+        "narration_engine": NARRATION_ENGINE,
         "total_word_count": word_count(level_dir / "content"),
         "measured_duration_minutes": round(minutes, 2) if minutes else None,
         "contract_duration_minutes": {"min": contract["min"], "max": contract["max"]},
@@ -995,9 +995,6 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_cmd.add_argument("--level", required=True, choices=LEVELS)
     evaluate_cmd.add_argument("--level-dir", type=Path, required=True)
     evaluate_cmd.add_argument("--capture", choices=("live", "deck-export"))
-    evaluate_cmd.add_argument(
-        "--narration", choices=("azure", "piper"), default="piper"
-    )
     evaluate_cmd.add_argument(
         "--html-deck", action="store_true", help="Score T-10 for the HTML deck"
     )
@@ -1043,7 +1040,6 @@ def main(argv: list[str] | None = None) -> int:
             args.level_dir,
             load_curriculum(),
             capture_profile=args.capture,
-            narration_engine=args.narration,
             html_deck=args.html_deck,
         )
         print(json.dumps(result, indent=2))

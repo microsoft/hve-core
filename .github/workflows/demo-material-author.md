@@ -219,10 +219,11 @@ assemble video here.
 ## Run Parameters
 
 * Levels to author: `${{ needs.detect.outputs.levels }}`
-* `topic: hve-core-general`, `autonomy: full`, `narration: piper`
+* `topic: hve-core-general`, `autonomy: full`
 * `capture`: the level default (`deck-export` for L100 and L200, `live` for
   L300 and L400)
-* Narration voice: `en_US-joe-medium`
+* Narration: Azure AI Speech with the voice `en-US-Andrew:DragonHDLatestNeural`,
+  synthesized by the render job
 
 If the level list is empty, call `noop` with the message "No level sources
 changed." and stop.
@@ -272,9 +273,10 @@ For each level in the level list, work in
    shows. Describe the capture in that slide's speaker notes as well. Do not
    create the image; the render job captures it.
 6. Write `manifest.yml` from the output contract's schema with
-   `autonomy: full`, `narration.engine: piper`, `narration.provider: Piper`,
-   `narration.voice: en_US-joe-medium`, and
-   `narration.speech_region: not-applicable`. Score the content criteria you can
+   `autonomy: full`, `narration.engine: azure`,
+   `narration.provider: Azure AI Speech`,
+   `narration.voice: en-US-Andrew:DragonHDLatestNeural`, and
+   `narration.speech_region: render-job`. Score the content criteria you can
    judge from sources (T-01, T-02, T-03). Record T-04 through T-09 as `deferred`
    with the evidence "scored by the render job", set
    `approvals.delivery: pending`, and set `state: Deferred` with the render job

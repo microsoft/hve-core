@@ -2,7 +2,7 @@
 title: Demo Material
 description: Levelled HVE Core training decks, narrated videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-08
 ms.topic: overview
 keywords:
   - demo material
@@ -79,8 +79,9 @@ source documents changed:
    slide overflowing. A level that fails any check keeps its previous files.
 3. The documentation deployment publishes the latest passing files on this page.
 
-The narration uses an offline [Piper](https://github.com/OHF-Voice/piper1-gpl)
-voice (`en_US-joe-medium`, CC0), so the builds need no cloud speech service. The
+The narration is an AI-generated voice synthesized by Azure AI Speech
+(`en-US-Andrew:DragonHDLatestNeural`); the render workflow signs in to Azure
+with OpenID Connect rather than a stored key. The
 [level contracts and sources](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/references/curriculum.md)
 define what each level covers.
 

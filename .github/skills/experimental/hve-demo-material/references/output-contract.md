@@ -56,18 +56,17 @@ the video frames.
 
 ## Prerequisite Matrix
 
-| Capability                                      | Required prerequisite                                                                                               | Deferred behavior                                                                                                                              |
-|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| Build and deck operations                       | `uv`, Python 3.11+, and PowerShell 7+                                                                               | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
-| Deterministic deck frame export                 | LibreOffice                                                                                                         | Record `LibreOffice` absence as `Deferred`; do not claim the L100 or L200 visual evidence passed                                               |
-| Azure neural narration, `narration: azure` only | `SPEECH_KEY` or `SPEECH_RESOURCE_ID`, plus `SPEECH_REGION`                                                          | Record unavailable authentication or region approval as `Deferred`; do not switch to Piper                                                     |
-| Local narration, `narration: piper` only        | The Piper executable (`PIPER_COMMAND` or `piper` on `PATH`) and a downloaded voice                                  | Record the missing executable or voice as `Deferred`; do not switch to Azure                                                                   |
-| Vision slide check                              | GitHub Copilot CLI, authenticated                                                                                   | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
-| Approved narration voice                        | A caller-named voice, otherwise `en-US-Andrew:DragonHDLatestNeural` for Azure or `en_US-joe-medium` (CC0) for Piper | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
-| MP4 assembly                                    | FFmpeg and ffprobe on `PATH`                                                                                        | Record the missing executable as `Deferred`; do not claim an MP4 exists                                                                        |
-| Live capture, `capture: live` only              | VS Code CLI plus Playwright MCP browser tools                                                                       | Record the unavailable entrypoint by name as `Deferred`; do not replace an L300 or L400 live capture with deck export                          |
-| Dynamic topic resolution                        | The `rpi-research` skill                                                                                            | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
-| HTML slide deck, scripted renders only          | The hve-core HVE Slides starter, Node.js 24 with npm, and Chromium through `vscode-playwright`                      | Without the starter, skip the deck and record `html_deck: not-applicable`; a missing Node.js or Chromium fails `T-10`                          |
+| Capability                             | Required prerequisite                                                                          | Deferred behavior                                                                                                                              |
+|----------------------------------------|------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Build and deck operations              | `uv`, Python 3.11+, and PowerShell 7+                                                          | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
+| Deterministic deck frame export        | LibreOffice                                                                                    | Record `LibreOffice` absence as `Deferred`; do not claim the L100 or L200 visual evidence passed                                               |
+| Azure AI Speech narration              | `SPEECH_RESOURCE_ID` (Microsoft Entra ID, recommended) or `SPEECH_KEY`, plus `SPEECH_REGION`   | Record unavailable authentication or region approval as `Deferred`; do not substitute another speech engine                                    |
+| Vision slide check                     | GitHub Copilot CLI, authenticated                                                              | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
+| Approved narration voice               | A caller-named Azure AI Speech voice, otherwise `en-US-Andrew:DragonHDLatestNeural`            | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
+| MP4 assembly                           | FFmpeg and ffprobe on `PATH`                                                                   | Record the missing executable as `Deferred`; do not claim an MP4 exists                                                                        |
+| Live capture, `capture: live` only     | VS Code CLI plus Playwright MCP browser tools                                                  | Record the unavailable entrypoint by name as `Deferred`; do not replace an L300 or L400 live capture with deck export                          |
+| Dynamic topic resolution               | The `rpi-research` skill                                                                       | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
+| HTML slide deck, scripted renders only | The hve-core HVE Slides starter, Node.js 24 with npm, and Chromium through `vscode-playwright` | Without the starter, skip the deck and record `html_deck: not-applicable`; a missing Node.js or Chromium fails `T-10`                          |
 
 Establish live-capture availability by attempting a browser navigation, never by
 inspecting tool names. MCP tool prefixes are derived from the server's
@@ -87,7 +86,7 @@ Read this schema and copy its structure into `output/manifest.yml`. Values in
 angle brackets are placeholders, not literal output.
 
 ```yaml
-schema_version: 4
+schema_version: 5
 level: L100
 topic: <topic name; hve-core-general is the default only in the hve-core repository>
 source_roots: <researched folders | not-applicable> # not-applicable for a pinned topic
@@ -118,10 +117,10 @@ visuals:
       rendered_font_size_pt: <measured number | not-applicable>
       source_resolution: <width>x<height | not-applicable>
 narration:
-  engine: <azure | piper> # caller-selected; default azure
-  provider: <Azure AI Speech | Piper>
+  engine: azure
+  provider: Azure AI Speech
   voice: <approved voice name>
-  speech_region: <approved region name | not-applicable> # not-applicable under piper
+  speech_region: <approved region name | render-job> # render-job when the render workflow supplies the region
   total_word_count: <number> # summed across the synthesized speaker notes
   measured_duration_minutes: <number> # measured from the produced MP4, for example with ffprobe
   contract_duration_minutes:
@@ -142,8 +141,7 @@ prerequisites:
   uv: <available | missing>
   libreoffice: <available | missing | not-required>
   ffmpeg: <available | missing>
-  azure_speech: <available | missing | not-required>
-  piper: <available | missing | not-required>
+  azure_speech: <available | missing>
   playwright: <available | missing | not-required>
   rpi_research: <available | missing | not-required>
 approvals:

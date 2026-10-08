@@ -4,6 +4,11 @@
 # Renders demo-material content authored by the Demo Material Author agentic
 # workflow into decks and narrated MP4s, then publishes a site bundle artifact
 # that the documentation deployment stages under /demo-material/.
+#
+# Narration uses Azure AI Speech. The render job signs in with Azure OIDC in the
+# demo-material environment, which supplies the Azure identifiers as secrets
+# and SPEECH_RESOURCE_ID and SPEECH_REGION as variables. A level whose render
+# fails keeps its previously published files.
 
 name: Demo Material Render
 
@@ -26,10 +31,6 @@ concurrency:
 permissions: {}
 
 env:
-  PIPER_VOICE: en_US-joe-medium
-  PIPER_VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/joe/medium
-  PIPER_VOICE_ONNX_SHA256: 58afce0321b8d9c46d7cdf9c16500cc55a793b4220212dba6b70fb788b3baf06
-  PIPER_VOICE_JSON_SHA256: 3d6d5410b3795cb1950595247ef8f06190719e6fdbfa3a2356d8ec368e1aad33
   VSCODE_CLI_URL: https://vscode.download.prss.microsoft.com/dbazure/download/stable/2242ebbb54efeeb0129e08e919e7e8d43033cd83/vscode_cli_linux_x64_cli.tar.gz
   VSCODE_CLI_SHA256: 651bc54695531375589c837b907a4e784bc2892076592e2464da12ead994d4bd
   # A bundle older than this is re-uploaded so it never reaches the 90-day artifact expiry.
@@ -207,9 +208,11 @@ jobs:
     if: ${{ needs.resolve.outputs.mode == 'render' && needs.resolve.outputs.levels != '[]' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    environment: demo-material
     permissions:
       actions: read # download the author content artifact
       contents: read
+      id-token: write # Azure OIDC login for Azure AI Speech narration
     strategy:
       fail-fast: false
       matrix:
@@ -217,8 +220,26 @@ jobs:
     env:
       LEVEL: ${{ matrix.level }}
       LEVEL_DIR: ${{ github.workspace }}/../demo-level/${{ matrix.level }}
-      PIPER_DATA_DIR: ${{ github.workspace }}/../piper-voices
     steps:
+      - name: Check Azure AI Speech configuration
+        shell: bash
+        env:
+          SPEECH_RESOURCE_ID: ${{ vars.SPEECH_RESOURCE_ID }}
+          SPEECH_REGION: ${{ vars.SPEECH_REGION }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in SPEECH_RESOURCE_ID SPEECH_REGION AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::${name} is not configured in the demo-material environment."
+              missing=1
+            fi
+          done
+          exit "${missing}"
+
       # Scripts come from the trusted default branch; the authored commit only
       # supplies the content artifact, which is validated as data.
       - name: Checkout the default branch
@@ -265,30 +286,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libreoffice-impress ffmpeg
 
-      # Piper and its transitive dependencies install from a locked uv project
-      # whose uv.lock pins every package with hashes.
-      - name: Install Piper and its voice
-        shell: bash
-        run: |
-          set -euo pipefail
-          uv sync --locked --project scripts/tools/piper
-          # A verified link in /usr/local/bin replaces a GITHUB_PATH write, which
-          # would also have put the venv's python ahead of setup-python's.
-          sudo ln -sfn "${GITHUB_WORKSPACE}/scripts/tools/piper/.venv/bin/piper" /usr/local/bin/piper
-          if [[ "$(command -v piper || true)" != '/usr/local/bin/piper' ]]; then
-            echo "::error::piper does not resolve to /usr/local/bin/piper."
-            exit 1
-          fi
-          mkdir -p "${PIPER_DATA_DIR}"
-          cd "${PIPER_DATA_DIR}"
-          curl --fail --location --silent --show-error \
-            --output "${PIPER_VOICE}.onnx" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx"
-          curl --fail --location --silent --show-error \
-            --output "${PIPER_VOICE}.onnx.json" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx.json"
-          printf '%s  %s\n%s  %s\n' \
-            "${PIPER_VOICE_ONNX_SHA256}" "${PIPER_VOICE}.onnx" \
-            "${PIPER_VOICE_JSON_SHA256}" "${PIPER_VOICE}.onnx.json" | sha256sum --check
-
       - name: Install Chromium for the HTML deck check and live capture
         shell: bash
         run: |
@@ -314,16 +311,32 @@ jobs:
             exit 1
           fi
 
+      # The Azure identity is signed in only for the render step and signed out
+      # before outputs are collected.
+      - name: Azure Login (OIDC)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Render ${{ matrix.level }}
         shell: bash
+        env:
+          SPEECH_RESOURCE_ID: ${{ vars.SPEECH_RESOURCE_ID }}
+          SPEECH_REGION: ${{ vars.SPEECH_REGION }}
         run: |
           set -euo pipefail
           bash .github/skills/experimental/hve-demo-material/scripts/render-level.sh \
             --level "${LEVEL}" \
             --level-dir "${LEVEL_DIR}" \
             --workspace "${GITHUB_WORKSPACE}" \
-            --narration piper \
             --html-deck-template "${GITHUB_WORKSPACE}/.github/skills/hve-slides/templates/deck"
+
+      - name: Azure logout
+        if: ${{ always() }}
+        shell: bash
+        run: az logout || true
 
       - name: Collect render outputs
         if: ${{ always() }}
