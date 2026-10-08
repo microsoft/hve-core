@@ -5,7 +5,7 @@
 BeforeAll {
     $script:EvalsRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../evals')).Path
     $script:SourceFiles = @(Get-ChildItem -Path $script:EvalsRoot -Recurse -File -Include '*.ps1', '*.psm1')
-    $script:RawEmitterPattern = '(Write-Host|Write-Output|echo)\s+(-Object\s+)?["'']\s*::(error|warning|notice)\b'
+    $script:RawEmitterPattern = '["'']\s*::(error|warning|notice)\b'
 }
 
 Describe 'Eval workflow-command emitters' -Tag 'Unit' {
