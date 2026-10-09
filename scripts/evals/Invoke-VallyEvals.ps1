@@ -148,6 +148,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 if (-not (Get-Module -Name powershell-yaml)) {
     Import-Module powershell-yaml -ErrorAction Stop
@@ -385,11 +386,11 @@ $resolvedLogsDir  = Resolve-PathFromRoot -Path $LogsDir      -RepoRoot $resolved
 $resolvedPlanPath = if ([string]::IsNullOrWhiteSpace($PlanPath)) { $null } else { Resolve-PathFromRoot -Path $PlanPath -RepoRoot $resolvedRoot }
 
 if (-not (Test-Path -LiteralPath $resolvedManifest -PathType Leaf)) {
-    Write-Host "::error file=$ManifestPath::Manifest not found: $resolvedManifest"
+    Write-CIAnnotation -Level Error -File $ManifestPath -Message "Manifest not found: $resolvedManifest"
     exit 2
 }
 if (-not (Test-Path -LiteralPath $resolvedEvalRoot -PathType Container)) {
-    Write-Host "::error::Eval root not found: $resolvedEvalRoot"
+    Write-CIAnnotation -Level Error -Message "Eval root not found: $resolvedEvalRoot"
     exit 2
 }
 if (-not (Test-Path -LiteralPath $resolvedLogsDir -PathType Container)) {
@@ -397,7 +398,7 @@ if (-not (Test-Path -LiteralPath $resolvedLogsDir -PathType Container)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($PlanPath) -xor [string]::IsNullOrWhiteSpace($ShardId)) {
-    Write-Host '::error::PlanPath and ShardId must be supplied together.'
+    Write-CIAnnotation -Level Error -Message 'PlanPath and ShardId must be supplied together.'
     exit 2
 }
 
@@ -405,32 +406,32 @@ $canonicalPlan = $null
 $assignedShard = $null
 if ($resolvedPlanPath) {
     if (-not (Test-Path -LiteralPath $resolvedPlanPath -PathType Leaf)) {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan not found."
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan not found."
         exit 2
     }
     if ([string]::IsNullOrWhiteSpace($ChangedSpecManifestPath)) {
-        Write-Host '::error::ChangedSpecManifestPath is required for canonical shard validation.'
+        Write-CIAnnotation -Level Error -Message 'ChangedSpecManifestPath is required for canonical shard validation.'
         exit 2
     }
     $resolvedChangedSpecForPlan = Resolve-PathFromRoot -Path $ChangedSpecManifestPath -RepoRoot $resolvedRoot
     if (-not (Test-Path -LiteralPath $resolvedChangedSpecForPlan -PathType Leaf)) {
-        Write-Host "::error file=$ChangedSpecManifestPath::Changed-spec manifest not found."
+        Write-CIAnnotation -Level Error -File $ChangedSpecManifestPath -Message "Changed-spec manifest not found."
         exit 2
     }
     try {
         $canonicalPlan = Get-Content -LiteralPath $resolvedPlanPath -Raw -Encoding utf8 | ConvertFrom-Json -Depth 50 -ErrorAction Stop
     }
     catch {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan is unreadable."
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan is unreadable."
         exit 2
     }
     if (([string]$canonicalPlan.schemaVersion -split '\.')[0] -ne '1' -or -not (Test-AgentEvalPlanDigest -Plan $canonicalPlan)) {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan schema or digest is invalid."
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan schema or digest is invalid."
         exit 2
     }
     if ([string]$canonicalPlan.manifestDigests.changedArtifacts -cne (Get-AgentEvalFileDigest -Path $resolvedManifest) -or
         [string]$canonicalPlan.manifestDigests.changedSpecs -cne (Get-AgentEvalFileDigest -Path $resolvedChangedSpecForPlan)) {
-        Write-Host '::error::Canonical agent eval plan manifest digests do not match worker inputs.'
+        Write-CIAnnotation -Level Error -Message 'Canonical agent eval plan manifest digests do not match worker inputs.'
         exit 2
     }
     try {
@@ -454,12 +455,12 @@ if ($resolvedPlanPath) {
             -Shard @($canonicalPlan.ordinaryShards)
     }
     catch {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan ownership is invalid: $($_.Exception.Message)"
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan ownership is invalid: $($_.Exception.Message)"
         exit 2
     }
     $matchingShards = @($canonicalPlan.ordinaryShards | Where-Object { [string]$_.id -ceq $ShardId })
     if ($matchingShards.Count -ne 1) {
-        Write-Host "::error::Canonical agent eval plan contains $($matchingShards.Count) matches for shard '$ShardId'."
+        Write-CIAnnotation -Level Error -Message "Canonical agent eval plan contains $($matchingShards.Count) matches for shard '$ShardId'."
         exit 2
     }
     $assignedShard = $matchingShards[0]
@@ -525,14 +526,14 @@ if ($kindFilter.Count -gt 0) {
 if ($assignedShard) {
     $assignedKind = [string]$assignedShard.kind
     if ([string]::IsNullOrWhiteSpace($assignedKind) -or $kindFilter.Count -ne 1 -or $kindFilter[0] -cne $assignedKind) {
-        Write-Host "::error::Canonical shard '$ShardId' requires Kind '$assignedKind'."
+        Write-CIAnnotation -Level Error -Message "Canonical shard '$ShardId' requires Kind '$assignedKind'."
         exit 2
     }
     $assignedArtifactKeys = @($assignedShard.artifacts | ForEach-Object { [string]$_ } | Sort-Object -Unique)
     $artifacts = @($artifacts | Where-Object { "${assignedKind}:$([string]$_.artifactId)" -in $assignedArtifactKeys })
     $observedArtifactKeys = @($artifacts | ForEach-Object { "$([string]$_.kind):$([string]$_.artifactId)" } | Sort-Object -Unique)
     if (@(Compare-Object -ReferenceObject $assignedArtifactKeys -DifferenceObject $observedArtifactKeys).Count -gt 0) {
-        Write-Host "::error::Worker artifact set does not match canonical shard '$ShardId'."
+        Write-CIAnnotation -Level Error -Message "Worker artifact set does not match canonical shard '$ShardId'."
         exit 2
     }
 }
@@ -643,16 +644,16 @@ if ($assignedShard) {
     $expectedRunKeys = @($assignedShard.runKeys | ForEach-Object { [string]$_ } | Sort-Object -Unique)
     $observedRunKeys = @($uniqueSpecRuns.GetEnumerator() | ForEach-Object { [string]$_.Key } | Sort-Object -Unique)
     if (@(Compare-Object -ReferenceObject $expectedRunKeys -DifferenceObject $observedRunKeys).Count -gt 0) {
-        Write-Host "::error::Worker run-key set does not match canonical shard '$ShardId'."
+        Write-CIAnnotation -Level Error -Message "Worker run-key set does not match canonical shard '$ShardId'."
         exit 2
     }
 }
 
 if ($missingSpecs.Count -gt 0) {
     foreach ($m in $missingSpecs) {
-        Write-Host "::error file=$($m.path)::No eval spec resolves $($m.kind):$($m.artifactId); run Test-StimulusPresence first."
+        Write-CIAnnotation -Level Error -File $m.path -Message "No eval spec resolves $($m.kind):$($m.artifactId); run Test-StimulusPresence first."
     }
-    Write-Host "::error::Cannot execute evals: $($missingSpecs.Count) artifact(s) have no covering spec."
+    Write-CIAnnotation -Level Error -Message "Cannot execute evals: $($missingSpecs.Count) artifact(s) have no covering spec."
     exit 2
 }
 
@@ -695,7 +696,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             -RepoRoot $resolvedRoot
 
         if ($inputModeration.flagged) {
-            Write-Host "::error file=$specRel::Content moderation flagged $($inputModeration.flaggedCount) input prompt(s); eval blocked"
+            Write-CIAnnotation -Level Error -File $specRel -Message "Content moderation flagged $($inputModeration.flaggedCount) input prompt(s); eval blocked"
             $specResults[$runKey] = @{
                 specPath         = $specAbs
                 specRel          = $specRel
@@ -715,7 +716,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             continue
         }
         elseif ($inputModeration.error) {
-            Write-Host "::error file=$specRel::Input content moderation could not run (infrastructure error); eval blocked"
+            Write-CIAnnotation -Level Error -File $specRel -Message "Input content moderation could not run (infrastructure error); eval blocked"
             $specResults[$runKey] = @{
                 specPath         = $specAbs
                 specRel          = $specRel
@@ -777,9 +778,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $specResults[$runKey] = $result
         $failedSpecs++
         $promotedRunKeys[$runKey] = $true
-        Write-Host "::error file=$specRel::Vally exited $($result.exitCode) without gradeable trial or assertion evidence; promoting evaluator error to CI failure"
+        Write-CIAnnotation -Level Error -File $specRel -Message "Vally exited $($result.exitCode) without gradeable trial or assertion evidence; promoting evaluator error to CI failure"
         if ($FailFast) {
-            Write-Host "::warning::FailFast set; skipping remaining specs after evaluator error in $specRel"
+            Write-CIAnnotation -Level Warning -Message "FailFast set; skipping remaining specs after evaluator error in $specRel"
             break
         }
         continue
@@ -878,7 +879,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             if ($erroredTrials -gt 0) {
                 # The nonzero exit is explained solely by transient errored trials that
                 # persisted after retries; surface it but do not gate the build.
-                Write-Host "::warning file=$specRel::$erroredTrials trial(s) errored (transient executor failure) with no grader failures after retries; not promoting to CI failure"
+                Write-CIAnnotation -Level Warning -File $specRel -Message "$erroredTrials trial(s) errored (transient executor failure) with no grader failures after retries; not promoting to CI failure"
             }
             else {
                 $promote = $true
@@ -889,21 +890,21 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             $failedSpecs++
             $promotedRunKeys[$runKey] = $true
             if ($outputModeration.error) {
-                Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error); promoting to CI failure"
+                Write-CIAnnotation -Level Error -File $specRel -Message "Output content moderation could not run (infrastructure error); promoting to CI failure"
             }
             elseif ($authoritativeStimuliFailed -gt 0 -and $advisoryFailed -gt 0) {
-                Write-Host "::warning file=$specRel::Per-stimulus advisory failures coexist with authoritative failures; promoting to CI failure"
+                Write-CIAnnotation -Level Warning -File $specRel -Message "Per-stimulus advisory failures coexist with authoritative failures; promoting to CI failure"
             }
             if ($FailFast) {
-                Write-Host "::warning::FailFast set; skipping remaining specs after failure in $specRel"
+                Write-CIAnnotation -Level Warning -Message "FailFast set; skipping remaining specs after failure in $specRel"
                 break
             }
         }
         elseif ($advisoryFailed -gt 0) {
-            Write-Host "::warning file=$specRel::Per-stimulus advisory failures: $advisoryFailed assertion(s) across advisory stimuli; not promoting to CI failure"
+            Write-CIAnnotation -Level Warning -File $specRel -Message "Per-stimulus advisory failures: $advisoryFailed assertion(s) across advisory stimuli; not promoting to CI failure"
         }
         elseif ($toleratedFailed -gt 0) {
-            Write-Host "::warning file=$specRel::$toleratedFailed trial dip(s) occurred inside aggregate-passing authoritative stimuli; not promoting to CI failure"
+            Write-CIAnnotation -Level Warning -File $specRel -Message "$toleratedFailed trial dip(s) occurred inside aggregate-passing authoritative stimuli; not promoting to CI failure"
         }
     }
     else {
@@ -947,13 +948,13 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         if ($hardFailure) {
             if ($isAdvisory -and -not $outputModeration.error) {
                 $result['status'] = 'advisory-fail'
-                Write-Host "::warning file=$specRel::Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
+                Write-CIAnnotation -Level Warning -File $specRel -Message "Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
             }
             else {
                 $failedSpecs++
                 $promotedRunKeys[$runKey] = $true
                 if ($FailFast) {
-                    Write-Host "::warning::FailFast set; skipping remaining specs after failure in $specRel"
+                    Write-CIAnnotation -Level Warning -Message "FailFast set; skipping remaining specs after failure in $specRel"
                     break
                 }
             }
@@ -966,7 +967,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             $failedSpecs++
             $promotedRunKeys[$runKey] = $true
         }
-        Write-Host "::error file=$specRel::Selected evaluation evidence failed integrity validation"
+        Write-CIAnnotation -Level Error -File $specRel -Message "Selected evaluation evidence failed integrity validation"
         if ($FailFast) { break }
     }
 }
@@ -1000,7 +1001,7 @@ if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
         $result['moderationOutput'] = $outputModeration
 
         if ($outputModeration.flagged) {
-            Write-Host "::warning file=$($result.specRel)::Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
+            Write-CIAnnotation -Level Warning -File $result.specRel -Message "Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
             $previousFailed = [int]$result.assertionsFailed
             $result.assertionsFailed = [Math]::Max($previousFailed, [int]$outputModeration.flaggedCount)
             $moderationFailureDelta = [int]$result.assertionsFailed - $previousFailed
@@ -1032,7 +1033,7 @@ if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
         }
 
         if ($outputModeration.error) {
-            Write-Host "::error file=$($result.specRel)::Output content moderation could not run or could not be attributed (infrastructure error)"
+            Write-CIAnnotation -Level Error -File $result.specRel -Message "Output content moderation could not run or could not be attributed (infrastructure error)"
             $result.status = 'content-moderation-error-output'
             if (-not $promotedRunKeys.ContainsKey($runKey)) {
                 $failedSpecs++
@@ -1141,7 +1142,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
         }
 
         if ($contractError) {
-            Write-Host "::error::$contractError"
+            Write-CIAnnotation -Level Error -Message "$contractError"
             $verdict = 'fail'
         }
 

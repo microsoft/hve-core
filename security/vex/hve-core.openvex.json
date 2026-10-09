@@ -1,11 +1,11 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-06-v8",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-08-v9",
   "author": "Microsoft HVE Core Maintainers",
-  "timestamp": "2026-10-06T04:21:27.000Z",
-  "last_updated": "2026-10-06T04:21:27.000Z",
-  "version": 8,
-  "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
+  "timestamp": "2026-10-08T23:51:30.266Z",
+  "last_updated": "2026-10-08T23:51:30.266Z",
+  "version": 9,
+  "tooling": "Drafted with an AI assistant using Copilot SDK in VS Code; maintained with human review and merge, and published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
   "statements": [
     {
       "vulnerability": {
@@ -810,6 +810,35 @@
       "impact_statement": "http-cache-semantics 4.2.0 is installed only in the documentation toolchain, where its sole consumer is cacheable-request, which got 12.6.1 creates only when a request sets the cache option. The only got caller in the tree is package-json 8.1.1, reached through the Docusaurus update notifier, and it builds its request options from headers and agents alone, so got's default of no cache applies and the cache-policy code is never executed. Nothing in the repository or the published static site uses this package to cache HTTP responses for multiple users. No patched release exists, so the finding is tracked rather than upgraded away.",
       "status_notes": "OSV entry: https://osv.dev/GHSA-ch52-4w7c-c8xp. Dependency path: docs/docusaurus/package-lock.json resolves http-cache-semantics 4.2.0 through @docusaurus/core 3.10.2, update-notifier 6.0.2, latest-version 7.0.0, package-json 8.1.1, got 12.6.1, and cacheable-request 10.2.14; no other package depends on cacheable-request or http-cache-semantics. Execute-path evidence: got/dist/source/core/options.js defaults cache to undefined; got/dist/source/core/index.js selects _createCacheableRequest only when options.cache is set; package-json/index.js passes gotOptions containing only headers and agent. Every parent package is at its latest release. Upstream bump tracked in https://github.com/microsoft/hve-core/issues/3109; Scorecard alert #16 stays open until it is fixed.",
       "timestamp": "2026-10-03T01:26:58.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-ch52-4w7c-c8xp",
+        "@id": "https://osv.dev/GHSA-ch52-4w7c-c8xp",
+        "aliases": [
+          "CVE-2026-93748"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/http-cache-semantics@4.3.0",
+              "identifiers": {
+                "purl": "pkg:npm/http-cache-semantics@4.3.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The documentation dependency tree resolves http-cache-semantics 4.3.0, outside the advisory's affected range of versions through 4.2.0. The documentation manifest pins this patched version through an override, and the regenerated lockfile records its public registry tarball and integrity hash. The obsolete audit exception has been removed.",
+      "status_notes": "Advisory reference: https://github.com/advisories/GHSA-ch52-4w7c-c8xp. Pin evidence: docs/docusaurus/package.json and docs/docusaurus/package-lock.json resolve http-cache-semantics 4.3.0. npm audit no longer reports this advisory. Remediation tracked in https://github.com/microsoft/hve-core/issues/3171. The previous statement is retained as historical evidence; the unpatched braces advisory remains tracked in https://github.com/microsoft/hve-core/issues/3109.",
+      "timestamp": "2026-10-08T23:51:30.266Z"
     },
     {
       "vulnerability": {

@@ -17,7 +17,7 @@ This skill reads `content.yaml` files from a PowerPoint skill content directory,
 Two engines are available through `--engine`:
 
 * `azure` (default) sends SSML to Azure AI Speech neural voices. Use it for published narration.
-* `piper` runs a separately installed [Piper](https://github.com/OHF-Voice/piper1-gpl) executable on the local machine. It needs no credentials or network access after the voice is downloaded, which suits scheduled CI builds. Narration never leaves the host.
+* `piper` is an explicit optional local choice using a separately installed [Piper](https://github.com/OHF-Voice/piper1-gpl) executable. It needs no credentials or network access after the voice is downloaded. Narration never leaves the host. HVE demo-material CI does not use either speech engine; it generates silent videos instead.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ Piper is not a dependency of this skill. It is licensed GPL-3.0-or-later, so the
 
 ```bash
 uv tool install piper-tts
-uvx --from piper-tts python -m piper.download_voices en_US-joe-medium --data-dir ~/.local/share/piper
+uvx --from piper-tts python -m piper.download_voices en_US-norman-medium --data-dir ~/.local/share/piper
 export PIPER_DATA_DIR=~/.local/share/piper
 ```
 
@@ -71,7 +71,13 @@ export PIPER_COMMAND="uvx --from piper-tts piper"
 | `PIPER_COMMAND`  | Command that runs Piper, split without a shell (default: `piper`)        |
 | `PIPER_DATA_DIR` | Directory holding downloaded voices; `--piper-data-dir` takes precedence |
 
-Voice models carry their own licenses, listed in each voice's `MODEL_CARD`. The default `en_US-joe-medium` is CC0. Check the model card before publishing narration from any other voice, because some Piper voices are non-commercial or require attribution.
+Voice models carry their own licenses and dataset provenance in each voice's
+`MODEL_CARD`. The default `en_US-norman-medium` [model
+card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/norman/medium/MODEL_CARD)
+records that it was trained from scratch on public-domain LibriVox recordings,
+and the Piper voices repository is MIT licensed. Check the model card before
+publishing narration from any other voice, because some voices have
+noncommercial or research-only source restrictions.
 
 ## Quick Start
 
@@ -102,20 +108,26 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ## Parameters Reference
 
+For different speakers, synthesize one voice's selected slides per invocation
+using repeated `--slide <number>` arguments. Only those canonical `slide-NNN`
+folders are read and their WAVs replaced; other speakers' outputs are untouched.
+Omit `--slide` to synthesize the whole deck.
+
 ### generate_voiceover.py
 
-| Parameter             | Type   | Default                             | Description                                                                                |
-|:----------------------|:-------|:------------------------------------|:-------------------------------------------------------------------------------------------|
-| `--dry-run`           | flag   | `false`                             | Print SSML (`azure`) or plain text (`piper`) without generating audio                      |
-| `--engine`            | string | `azure`                             | Synthesis engine: `azure` or `piper`                                                       |
-| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Voice name; the `piper` default is `en_US-joe-medium`                                      |
-| `--rate`              | string | `+10%`                              | Azure speech prosody rate; ignored by `piper`                                              |
-| `--piper-data-dir`    | path   | `PIPER_DATA_DIR`                    | Directory holding downloaded Piper voices                                                  |
-| `--content-dir`       | path   | `content`                           | Path to slide content directory                                                            |
-| `--output-dir`        | path   | `voice-over`                        | Path to WAV output directory                                                               |
-| `--lexicon`           | path   | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
-| `--collapse-newlines` | flag   | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
-| `--verbose` / `-v`    | flag   | `false`                             | Enable verbose (DEBUG) logging output                                                      |
+| Parameter             | Type    | Default                             | Description                                                                                |
+|:----------------------|:--------|:------------------------------------|:-------------------------------------------------------------------------------------------|
+| `--dry-run`           | flag    | `false`                             | Print SSML (`azure`) or plain text (`piper`) without generating audio                      |
+| `--engine`            | string  | `azure`                             | Synthesis engine: `azure` or `piper`                                                       |
+| `--voice`             | string  | `en-US-Andrew:DragonHDLatestNeural` | Voice name; the `piper` default is `en_US-norman-medium`                                   |
+| `--rate`              | string  | `+10%`                              | Azure speech prosody rate; ignored by `piper`                                              |
+| `--piper-data-dir`    | path    | `PIPER_DATA_DIR`                    | Directory holding downloaded Piper voices                                                  |
+| `--content-dir`       | path    | `content`                           | Path to slide content directory                                                            |
+| `--output-dir`        | path    | `voice-over`                        | Path to WAV output directory                                                               |
+| `--slide`             | integer | all slides                          | Repeat to synthesize only the selected canonical slide numbers                             |
+| `--lexicon`           | path    | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
+| `--collapse-newlines` | flag    | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
+| `--verbose` / `-v`    | flag    | `false`                             | Enable verbose (DEBUG) logging output                                                      |
 
 ### embed_audio.py
 

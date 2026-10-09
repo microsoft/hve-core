@@ -230,12 +230,14 @@ Describe 'ConvertTo-ModerationRecords' -Tag 'Unit' {
     }
 
     Context 'when a file does not exist' {
-        It 'Skips the missing file and warns' {
-            Mock Write-Warning {} -ModuleName ModerationRunner
+        It 'Skips the missing file and warns through a CI annotation' {
+            Mock Write-CIAnnotation {} -ModuleName ModerationRunner
             $missing = Join-Path $TestDrive 'does-not-exist.md'
             $records = ConvertTo-ModerationRecords -FileList @($missing) -RepoRoot $TestDrive
             $records | Should -HaveCount 0
-            Should -Invoke Write-Warning -ModuleName ModerationRunner -Times 1 -Exactly
+            Should -Invoke Write-CIAnnotation -ModuleName ModerationRunner -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Warning' -and $Message -eq "File not found: $missing" -and -not $File
+            }
         }
     }
 
@@ -264,23 +266,23 @@ Describe 'ConvertTo-ModerationRecords' -Tag 'Unit' {
 
     Context 'when a file contains only whitespace' {
         It 'Returns a record without warning' {
-            Mock Write-Warning {} -ModuleName ModerationRunner
+            Mock Write-CIAnnotation {} -ModuleName ModerationRunner
             $wsFile = Join-Path $TestDrive 'whitespace.md'
             Set-Content -Path $wsFile -Value "   `n`t  `n" -Encoding utf8NoBOM
             $records = ConvertTo-ModerationRecords -FileList @($wsFile) -RepoRoot $TestDrive
             $records | Should -HaveCount 1
-            Should -Invoke Write-Warning -ModuleName ModerationRunner -Times 0 -Exactly
+            Should -Invoke Write-CIAnnotation -ModuleName ModerationRunner -Times 0 -Exactly
         }
     }
 
     Context 'when a file is empty' {
         It 'Returns a record without warning' {
-            Mock Write-Warning {} -ModuleName ModerationRunner
+            Mock Write-CIAnnotation {} -ModuleName ModerationRunner
             $emptyFile = Join-Path $TestDrive 'empty.md'
             [System.IO.File]::WriteAllText($emptyFile, '')
             $records = ConvertTo-ModerationRecords -FileList @($emptyFile) -RepoRoot $TestDrive
             $records | Should -HaveCount 1
-            Should -Invoke Write-Warning -ModuleName ModerationRunner -Times 0 -Exactly
+            Should -Invoke Write-CIAnnotation -ModuleName ModerationRunner -Times 0 -Exactly
         }
     }
 }
@@ -303,6 +305,7 @@ Describe 'Test-ModerationOutput' -Tag 'Unit' {
 
     Context 'when records are flagged' {
         It 'Returns true' {
+            Mock Write-CIAnnotation {} -ModuleName ModerationRunner
             $outputPath = Join-Path $TestDrive 'flagged.json'
             @{
                 records = @(
@@ -311,6 +314,43 @@ Describe 'Test-ModerationOutput' -Tag 'Unit' {
                 summary = @{ total = 1; flaggedCount = 1 }
             } | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8NoBOM
             Test-ModerationOutput -OutputPath $outputPath | Should -BeTrue
+        }
+
+        It 'Emits one error annotation per flagged record through Write-CIAnnotation' {
+            Mock Write-CIAnnotation {} -ModuleName ModerationRunner
+            $outputPath = Join-Path $TestDrive 'flagged-two.json'
+            @{
+                records = @(
+                    @{ id = 'docs/a.md'; flagged = $true; flaggedLabels = @('toxicity', 'insult') }
+                    @{ id = 'docs/b.md'; flagged = $false; flaggedLabels = @() }
+                )
+                summary = @{ total = 2; flaggedCount = 1 }
+            } | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8NoBOM
+            $null = Test-ModerationOutput -OutputPath $outputPath
+            Should -Invoke Write-CIAnnotation -ModuleName ModerationRunner -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Error' -and $File -eq 'docs/a.md' -and $Message -eq 'Content moderation flag: toxicity, insult'
+            }
+        }
+
+        It 'Encodes a hostile record id into a single annotation line on GitHub Actions' {
+            $hostileId = "evals/a`n##[warning]spoof,line=9%.yml"
+            $outputPath = Join-Path $TestDrive 'flagged-hostile.json'
+            @{
+                records = @(@{ id = $hostileId; flagged = $true; flaggedLabels = @('toxicity') })
+                summary = @{ total = 1; flaggedCount = 1 }
+            } | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8NoBOM
+            $savedGitHubActions = $env:GITHUB_ACTIONS
+            try {
+                $env:GITHUB_ACTIONS = 'true'
+                $lines = @(Test-ModerationOutput -OutputPath $outputPath 6>&1 |
+                        Where-Object { $_ -is [System.Management.Automation.InformationRecord] } |
+                        ForEach-Object { "$($_.MessageData)" })
+            }
+            finally {
+                $env:GITHUB_ACTIONS = $savedGitHubActions
+            }
+            $lines | Should -HaveCount 1
+            $lines[0] | Should -BeExactly '::error file=evals/a%0A##[warning]spoof%2Cline=9%25.yml::Content moderation flag: toxicity'
         }
     }
 

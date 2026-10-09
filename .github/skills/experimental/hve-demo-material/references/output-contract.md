@@ -26,6 +26,7 @@ Use this canonical structure for every requested level:
   frames/
   audio/
   clips/
+  animation/ # present only under animation: characters
   changes/
   output/
 ```
@@ -56,28 +57,71 @@ the video frames.
 
 ## Prerequisite Matrix
 
-| Capability                                      | Required prerequisite                                                                                               | Deferred behavior                                                                                                                              |
-|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| Build and deck operations                       | `uv`, Python 3.11+, and PowerShell 7+                                                                               | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
-| Deterministic deck frame export                 | LibreOffice                                                                                                         | Record `LibreOffice` absence as `Deferred`; do not claim the L100 or L200 visual evidence passed                                               |
-| Azure neural narration, `narration: azure` only | `SPEECH_KEY` or `SPEECH_RESOURCE_ID`, plus `SPEECH_REGION`                                                          | Record unavailable authentication or region approval as `Deferred`; do not switch to Piper                                                     |
-| Local narration, `narration: piper` only        | The Piper executable (`PIPER_COMMAND` or `piper` on `PATH`) and a downloaded voice                                  | Record the missing executable or voice as `Deferred`; do not switch to Azure                                                                   |
-| Vision slide check                              | GitHub Copilot CLI, authenticated                                                                                   | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
-| Approved narration voice                        | A caller-named voice, otherwise `en-US-Andrew:DragonHDLatestNeural` for Azure or `en_US-joe-medium` (CC0) for Piper | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
-| MP4 assembly                                    | FFmpeg and ffprobe on `PATH`                                                                                        | Record the missing executable as `Deferred`; do not claim an MP4 exists                                                                        |
-| Live capture, `capture: live` only              | VS Code CLI plus Playwright MCP browser tools                                                                       | Record the unavailable entrypoint by name as `Deferred`; do not replace an L300 or L400 live capture with deck export                          |
-| Dynamic topic resolution                        | The `rpi-research` skill                                                                                            | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
-| HTML slide deck, scripted renders only          | The hve-core HVE Slides starter, Node.js 24 with npm, and Chromium through `vscode-playwright`                      | Without the starter, skip the deck and record `html_deck: not-applicable`; a missing Node.js or Chromium fails `T-10`                          |
+Azure Speech is the default narration engine outside CI. Piper requires an
+explicit local selection. CI selects `narration: none` and needs no voice model,
+speech service, or speech credentials; mark both speech prerequisites
+`not-required`. Silent runs retain text alternatives and do not claim audio
+description or a narrated PPTX.
 
-Establish live-capture availability by attempting a browser navigation, never by
-inspecting tool names. MCP tool prefixes are derived from the server's
-registration name and vary between hosts, so an unfamiliar prefix is not
-evidence of absence. Record the prerequisite as unavailable only after an
-attempt fails, and record what failed. VS Code's built-in browser tools are a
-known case that reaches the page but cannot drive the VS Code Web workbench.
+| Capability                                      | Required prerequisite                                                                                            | Deferred behavior                                                                                                                              |
+|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Build and deck operations                       | `uv`, Python 3.11+, and PowerShell 7+                                                                            | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
+| Deterministic deck frame export                 | LibreOffice                                                                                                      | Record `LibreOffice` absence as `Deferred`; do not claim the L100 or L200 visual evidence passed                                               |
+| Azure neural narration, `narration: azure` only | `SPEECH_KEY` or `SPEECH_RESOURCE_ID`, plus `SPEECH_REGION`                                                       | Record unavailable authentication or region approval as `Deferred`; do not switch to Piper                                                     |
+| Local narration, `narration: piper` only        | The Piper executable (`PIPER_COMMAND` or `piper` on `PATH`) and a downloaded voice                               | Record the missing executable or voice as `Deferred`; do not switch to Azure                                                                   |
+| Vision slide check                              | GitHub Copilot CLI, authenticated                                                                                | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
+| Approved narration voice                        | A caller-named voice, otherwise `en-US-Andrew:DragonHDLatestNeural` for Azure or `en_US-norman-medium` for Piper | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
+| MP4 assembly and visible captions               | Discoverable FFmpeg and ffprobe; FFmpeg exposes the libass-backed `subtitles` filter and `libx264` encoder       | Offer approval-gated setup under attended modes; otherwise record `Deferred` and do not claim an accessible MP4 exists                         |
+| Scripted live capture, `capture: live` only     | VS Code CLI, `uv`, the `vscode-playwright` environment, and Playwright Chromium; no MCP server                   | Record the unavailable entrypoint as `Deferred`; preserve live capture and do not substitute deck export                                       |
+| Interactive live capture, `capture: live` only  | VS Code CLI, Playwright MCP browser tools, and `curl`                                                            | Defer when the selected interactive path cannot run; missing MCP does not prevent scripted live capture                                        |
+| Character animation, `animation: characters`    | Original known-rights character assets, approved dialogue voices, and browser video recording through Playwright | Record the missing capability as `Deferred`; do not silently replace requested animation with `none`                                           |
+| Dynamic topic resolution                        | The `rpi-research` skill                                                                                         | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
+| HTML slide deck, scripted renders only          | The hve-core HVE Slides starter, Node.js 24 with npm, and Chromium through `vscode-playwright`                   | Without the starter, skip the deck and record `html_deck: not-applicable`; a missing Node.js or Chromium fails `T-10`                          |
 
-VS Code Web keeps user settings in browser IndexedDB, so a settings-based font
-size never reaches a live capture. Raise rendered text size by setting
+Run the bundled resolver before rendering:
+
+```bash
+bash "$DEMO_SKILL_ROOT/scripts/finalize-accessible-video.sh" --check-prerequisites
+```
+
+It checks `FFMPEG_COMMAND` and `FFPROBE_COMMAND`, searches `PATH`, and recognizes
+the installed skill root rather than requiring an executable script bit.
+Set `DEMO_SKILL_ROOT` to the resolved `hve-demo-material` skill directory.
+Use Bash on macOS/Linux or WSL2 on Windows with Linux paths and tools; native
+PowerShell alone does not run this finalizer. A Windows-native finalization
+path is not supported or claimed as tested.
+
+The resolver recognizes
+Homebrew's keg-only `ffmpeg-full` locations. On macOS, Homebrew's standard
+`ffmpeg` formula omits libass, so use:
+
+```bash
+brew install ffmpeg-full
+```
+
+On Linux, the resolver selects guidance for `apt-get`, `dnf`, `apk`, or
+`pacman` when present. On Windows, open the supported WSL2 Linux distribution
+and use its package manager to install Linux FFmpeg and ffprobe, for example
+`sudo apt-get update && sudo apt-get install ffmpeg` on Ubuntu/Debian.
+Windows-native tools installed through `winget` are not this execution path.
+Confirm that the selected build exposes libass subtitles and `libx264`. Under
+`manual` and `partial`, run a package-manager command only after explicit
+approval, then rerun the resolver and resume. Under `full`, record the
+applicable command and set the level to `Deferred` instead of changing the host.
+
+Select the `vscode-playwright` scripted path for unattended or repeatable live
+capture. Check its VS Code CLI, `uv`, Playwright environment, and Chromium;
+it does not require MCP. Pass the approved plan, workspace, and level output
+root to the capture script and record its measured font size and resolution.
+
+For interactive capture, establish availability by attempting browser
+navigation, never by inspecting tool names. MCP prefixes vary between hosts,
+so an unfamiliar prefix is not evidence of absence. Record an observed failure
+and rerun condition without ruling out the supported scripted path. VS Code's
+built-in browser tools can reach the page without driving the Web workbench.
+
+For the interactive path, VS Code Web keeps user settings in browser IndexedDB.
+Raise rendered text size by setting
 `document.body.style.zoom` through the Playwright evaluate tool, then measure the
 result with the readability measurement procedure in `curriculum.md`.
 
@@ -92,6 +136,7 @@ level: L100
 topic: <topic name; hve-core-general is the default only in the hve-core repository>
 source_roots: <researched folders | not-applicable> # not-applicable for a pinned topic
 autonomy: <full | partial | manual>
+animation: <none | characters> # defaults to none; characters requires explicit caller intent
 state: <Complete | Deferred | Blocked> # See State Rules; the Complete condition depends on autonomy
 audience: <audience>
 target_duration_minutes: <number>
@@ -105,30 +150,48 @@ sources:
     untrusted_content_note: <one-line note | none>
 deliverables:
   pptx: output/hve-demo-L100.pptx
-  narrated_pptx: output/hve-demo-L100-narrated.pptx
-  mp4: output/hve-demo-L100.mp4 # carries an English caption track
+  narrated_pptx: <output/hve-demo-L100-narrated.pptx | not-applicable> # not-applicable for none
+  mp4: output/hve-demo-L100.mp4 # shows open captions and carries an English selectable caption track
+  raw_assembly: output/hve-demo-L100.raw.mp4 # retained clean input; never burn captions over a finalized MP4
   captions: output/hve-demo-L100.vtt
   transcript_page: output/index.html
+  open_caption_evidence: output/open-captions.json
   html_deck: <output/hve-demo-L100.html | not-applicable> # scripted renders with the HVE Slides starter
 visuals:
   capture_profile: <live | deck-export> # deck-export at L300 or L400 only when the caller supplied it
+  transition:
+    type: crossfade
+    duration_seconds: 0.5
+    fade_in: true
+    fade_out: true
+  animation_evidence: <not-applicable | animation/character-sheet.md and recorded clip paths>
   evidence:
     - capture_id: slide-001
       path: frames/slide-001.jpg
       rendered_font_size_pt: <measured number | not-applicable>
       source_resolution: <width>x<height | not-applicable>
 narration:
-  engine: <azure | piper> # caller-selected; default azure
-  provider: <Azure AI Speech | Piper>
-  voice: <approved voice name>
-  speech_region: <approved region name | not-applicable> # not-applicable under piper
-  total_word_count: <number> # summed across the synthesized speaker notes
+  engine: <azure | piper | none> # default azure outside CI; CI explicitly selects none
+  provider: <Azure AI Speech | Piper | none>
+  voice: <approved voice name | not-applicable> # not-applicable for none
+  timing_basis: <speech-wav | notes-word-count> # notes-word-count for none
+  speaker_voices: # characters only; omit for animation none
+    Casey: <approved Casey voice>
+    Morgan: <approved Morgan voice>
+  scene_audio: # characters only; one entry per canonical content item
+    - slide: 1
+      speaker: Casey
+      voice: <approved Casey voice>
+      wav: audio/slide-001.wav
+      duration_seconds: <measured WAV duration>
+  speech_region: <approved region name | not-applicable> # only applicable under azure
+  total_word_count: <number> # summed across authored speaker notes
   measured_duration_minutes: <number> # measured from the produced MP4, for example with ffprobe
   contract_duration_minutes:
     min: <number>
     max: <number>
   audio_files:
-    - audio/slide-001.wav
+    - audio/slide-001.wav # internal silent timing only when engine is none; not published
 validation:
   deck: <pass | fail | deferred>
   video: <pass | fail | deferred>
@@ -160,6 +223,15 @@ evidence:
 
 ## State Rules
 
+* Assemble to the retained raw MP4, then invoke the finalizer through Bash.
+  It stages WebVTT, the finalized MP4, evidence bound to the raw source, and
+  transcript before installing a complete delivery with rollback on failure.
+  Missing raw input requires reassembly; missing evidence never permits
+  burning over an existing finalized picture.
+* Finalization supports canonical content/WAV order and full WAV durations.
+  Other assembler segment orders, narration sources, or trimmed durations
+  require a different caption timeline and are rejected here. Silent handles
+  are added by the assembler; do not manually pad canonical narration WAVs.
 * Under `manual` and `partial`, use `Complete` only when every requested
   deliverable is present, every acceptance criterion records `pass` or a
   permitted `not-applicable` with recorded evidence, and `approvals.delivery:
