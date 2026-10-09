@@ -2352,6 +2352,47 @@ stimuli:
     name: complete-pr-state-check
     config:
       pattern: (?is)^(?=[\s\S]*(?:revalidate|validate|check))(?=[\s\S]*(?:open|state))(?=[\s\S]*base)(?=[\s\S]*head)(?=[\s\S]*(?:sha|commit))
+- name: code-review-invocation-preauthorization
+  prompt: |
+    This is a behavior-contract scenario, not a live review. The human invoked
+    the Code Review agent with `autoApprove=true`. Orientation produced a
+    recommended perspective set and depth, the merged review has no accepted
+    findings, and the canonical draft is persisted. Explain whether the run
+    pauses before dispatch or native emission, which event it emits, what PR
+    identity checks still apply, and what happens to the qualified-human-review
+    checkbox. State the exact event mappings for Critical or High findings,
+    Medium or Low findings, and no findings. Also state what happens if the
+    provider or stable target identifier changed. Do not call tools.
+  environment:
+    files:
+    - src: ../../.github/agents/coding-standards/code-review.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/coding-standards/code-review
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: preauthorization-skips-both-pauses
+    config:
+      pattern: (?is)(does not|do not|without|skip).{0,180}(pause|confirmation).{0,500}(dispatch|perspective|depth)(?=[\s\S]{0,1200}(does not|do not|without|skip).{0,180}(pause|confirmation).{0,500}(emit|emission|post))
+  - type: output-matches
+    name: event-remains-verdict-normalized
+    config:
+      pattern: (?is)^(?=[\s\S]*(?:critical|high).{0,300}REQUEST_CHANGES)(?=[\s\S]*(?:medium|low).{0,300}COMMENT)(?=[\s\S]*(?:no|zero) accepted findings.{0,300}APPROVE)
+  - type: output-matches
+    name: preauthorization-keeps-pr-state-check
+    config:
+      pattern: (?is)^(?=[\s\S]*(?:revalidate|validate|check))(?=[\s\S]*(?:open|state))(?=[\s\S]*provider)(?=[\s\S]*(?:target id|target identifier))(?=[\s\S]*base)(?=[\s\S]*head)(?=[\s\S]*(?:sha|commit))
+  - type: output-matches
+    name: target-identity-change-blocks
+    config:
+      pattern: (?is)(provider|target id|target identifier).{0,300}(change|mismatch|differ).{0,300}(block|stop|invalidate|cannot|must not)|(block|stop|invalidate|cannot|must not).{0,300}(provider|target id|target identifier).{0,300}(change|mismatch|differ)
+  - type: output-matches
+    name: human-review-remains-unchecked
+    config:
+      pattern: (?is)(qualified[- ]human[- ]review|reviewed and validated by a qualified human reviewer|human-review).{0,300}(unchecked|not checked|remain.{0,80}unchecked)
 - name: codebase-profiler-skill-mapping
   prompt: |
     Scan the current repository in audit mode and produce a Codebase Profile

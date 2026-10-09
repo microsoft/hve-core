@@ -1,12 +1,12 @@
 ---
 title: Code Review Context Bootstrap
 description: Tier 0 workflow for establishing the change surface, drafting a change brief, and scoping review hotspots.
-ms.date: 2026-09-08
+ms.date: 2026-10-02
 ---
 
 ## Objective
 
-Before any worker is dispatched, resolve the review target and profile, establish the review context once, and serialize it for reuse across the run. This Tier 0 step produces a human-confirmable change brief and a scoped set of hotspot candidates.
+Before any worker is dispatched, resolve the review target and profile, establish the review context once, and serialize it for reuse across the run. This Tier 0 step produces a decision-ready change brief and a scoped set of hotspot candidates.
 
 ## Orientation entry
 
@@ -21,9 +21,9 @@ Start with the orientation floor from [Walkthrough Protocol](walkthrough-protoco
 5. Auto-detect hotspot candidates and specialist concern signals from the diff and file paths in the same pass. Tag the specialist concern classes for security, supply-chain, RAI or AI, accessibility, sustainability or efficiency, and privacy or PII using the signal-to-concern mapping in [Cross-Skill Forks](cross-skill-forks.md). Use available history evidence to inform hotspot ordering without treating co-change or churn as proof of a defect.
 6. Derive an advisory depth recommendation from the checklist. Use `standard` when the evidence is incomplete or inconclusive.
 7. Persist the target, profile, emerging brief, checklist evidence, recommendation, hotspot list, tagged specialist concerns, out-of-scope areas, diff identity, and orientation task before dispatching the fresh-context orientation worker.
-8. Present the walkthrough, emerging brief, checklist evidence, recommendation, and hotspot candidates to the human for confirmation and correction.
-9. Invite the human to correct evidence, add or remove hotspots, select the review depth, explain any difference from the recommendation, and mark out-of-scope areas before findings perspectives dispatch.
-10. Persist the target, profile, brief, `changeRiskEvidence`, `recommendedDepth`, selected `depthTier`, `depthRationale`, scoped hotspots, tagged specialist concerns, and out-of-scope areas as the review context for later aggregation. In interactive mode, identify values the human confirmed or corrected. In workflow mode, identify generated or defaulted values as automation-derived.
+8. Present the walkthrough, emerging brief, checklist evidence, recommendation, and hotspot candidates. In default interactive mode, ask the human for confirmation and correction. With explicit invocation preauthorization, accept the recommended defaults without a pause and label them automation-derived.
+9. In default interactive mode, invite the human to correct evidence, add or remove hotspots, select the review depth, explain any difference from the recommendation, and mark out-of-scope areas before findings perspectives dispatch. In preauthorized mode, use the recommended perspective set and depth and proceed to the batch sweep.
+10. Persist the target, profile, brief, `changeRiskEvidence`, `recommendedDepth`, selected `depthTier`, `depthRationale`, scoped hotspots, tagged specialist concerns, and out-of-scope areas as the review context for later aggregation. In default interactive mode, identify values the human confirmed or corrected. In preauthorized and workflow modes, identify generated or defaulted values as automation-derived.
 
 ## Change brief expectations
 
@@ -36,11 +36,11 @@ The change brief should be short and specific. It should explain:
 
 ## Change-risk evidence expectations
 
-The checklist is advisory evidence, not an overall score, categorical rating, or confidence assessment. Cite concrete observations when available, mark missing history or coverage `unavailable`, and identify interpretation-dependent evidence as `qualitative`. Treat agent-generated qualitative evidence as proposed until a human confirms or corrects it. Missing evidence must remain visible and defaults the recommendation to standard unless other evidence supports comprehensive review.
+The checklist is advisory evidence, not an overall score, categorical rating, or confidence assessment. Cite concrete observations when available, mark missing history or coverage `unavailable`, and identify interpretation-dependent evidence as `qualitative`. Treat agent-generated qualitative evidence as proposed until a human confirms or corrects it. In preauthorized mode, retain it as automation-derived rather than implying confirmation. Missing evidence must remain visible and defaults the recommendation to standard unless other evidence supports comprehensive review.
 
-## Human-scoping protocol
+## Scope-resolution protocol
 
-Do not let the agent decide the entire scope alone. The human should be able to:
+In default interactive mode, do not let the agent decide the entire scope alone. The human should be able to:
 
 * confirm or edit the change brief,
 * review and correct the change-risk evidence and recommendation,
@@ -48,4 +48,4 @@ Do not let the agent decide the entire scope alone. The human should be able to:
 * add or remove hotspot candidates,
 * and explicitly mark areas that should not be reviewed in this run.
 
-The review should pause for confirmation before dispatching perspective subagents or applying deeper verification.
+The default interactive review should pause for confirmation before dispatching perspective subagents or applying deeper verification. A run invoked with `autoApprove=true` presents the same decision-ready surface but accepts its recommended defaults without pausing.

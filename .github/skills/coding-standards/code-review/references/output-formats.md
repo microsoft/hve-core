@@ -1,7 +1,7 @@
 ---
 title: Code Review Output Formats
 description: Report structure, findings schema, and persistence rules for review orchestrators and skill-backed subagents.
-ms.date: 2026-08-31
+ms.date: 2026-10-02
 ---
 
 ## Output contract
@@ -37,6 +37,7 @@ Review findings should be expressed as structured data first, then rendered into
     "applies": true,
     "event": "REQUEST_CHANGES | COMMENT | APPROVE",
     "body": "<pre-filled general PR or MR comment text>",
+    "authorization": "pending_human | invocation_preauthorized",
     "approved_for_posting": false
   },
   "out_of_scope_observations": [
@@ -73,7 +74,7 @@ Review findings should be expressed as structured data first, then rendered into
 }
 ```
 
-Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `security_plan_drift` field is present only when a confirmed Security Planner baseline was correlated through the `security-planning` skill's drift capability; an executed drift result is not also added to `recommended_specialist_reviews`. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request; its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`.
+Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `security_plan_drift` field is present only when a confirmed Security Planner baseline was correlated through the `security-planning` skill's drift capability; an executed drift result is not also added to `recommended_specialist_reviews`. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request. In default interactive mode, its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`. In preauthorized mode, set `authorization` to `invocation_preauthorized` and set `approved_for_posting` to `true` only after all emission eligibility checks pass.
 
 ## Report skeleton
 
@@ -123,12 +124,19 @@ Render the section in `review.md` with this shape:
 - [ ] Reviewed, edited, and approved this comment for posting to the PR
 ```
 
+For `autoApprove=true`, replace the pending posting checkbox with this authorization record:
+
+```markdown
+**Posting authorization:** Preauthorized by the human for this invocation with `autoApprove=true`.
+```
+
 Authoring rules:
 
 - Pre-fill the **Proposed event** from the normalized verdict: `request_changes` maps to `REQUEST_CHANGES`, `approve_with_comments` to `COMMENT`, and `approve` to `APPROVE`. The human may change it.
 - Pre-fill the **Comment body** with a concise, courteous general comment that acknowledges the work, states whether changes are requested based on the verdict, and summarizes the top findings at a glance. Keep it self-contained so it reads well as a single PR comment.
-- Leave the posting checkbox unchecked. The agent never checks it; only the human may convert `[ ]` to `[x]`.
-- Treat this checkbox as the human gate for posting the general PR or MR comment, per the interactive emission guardrails in the [Emission Modes](emission-modes.md) reference. Do not post the comment while the box is unchecked.
+- In default interactive mode, leave the posting checkbox unchecked. The agent never checks it; only the human may convert `[ ]` to `[x]`.
+- In preauthorized mode, omit the pending posting checkbox and render the invocation authorization record. This records prior human authorization without claiming that the generated draft was reviewed.
+- Treat the checkbox or invocation authorization record as the applicable posting gate per the [Emission Modes](emission-modes.md) reference. Do not post while that gate or any emission eligibility check is incomplete.
 - Author the draft only in `review.md`. Do not reproduce the full drafted comment body in the conversational summary; the chat closeout links to this section instead of pasting it inline.
 
 ## Disclaimer and human-review sign-off
