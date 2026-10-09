@@ -1,0 +1,22 @@
+.status {
+  min-height: 1.5rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.tableWrapper table {
+  width: 100%;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+}
+
+.unavailable {
+  color: var(--ifm-color-emphasis-700);
+  font-weight: 600;
+}

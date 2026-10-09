@@ -168,17 +168,17 @@ post-steps:
 
 Author HVE Core demo-material slide content for the levels a trusted
 deterministic job selected. This run writes content only. The Demo Material
-Render workflow builds, validates, narrates, and scores it afterward in a
+Render workflow builds, validates, and scores silent videos afterward in a
 separate job, so do not build decks, capture screens, synthesize audio, or
 assemble video here.
 
 ## Run Parameters
 
 * Levels to author: `${{ needs.detect.outputs.levels }}`
-* `topic: hve-core-general`, `autonomy: full`, `narration: piper`
+* `topic: hve-core-general`, `autonomy: full`, `narration: none`
 * `capture`: the level default (`deck-export` for L100 and L200, `live` for
   L300 and L400)
-* Narration voice: `en_US-joe-medium`
+* No voice, speech service, or speech model is used in CI
 
 If the level list is empty, call `noop` with the message "No level sources
 changed." and stop.
@@ -211,14 +211,15 @@ For each level in the level list, work in
 2. Set the narration word budget from the curriculum's narration budget before
    writing any speaker note, and keep the notes inside it. The measured
    duration of the rendered MP4 is scored against the level's duration
-   contract, so a budget miss fails the level.
+  contract, so a budget miss fails the level. For L400, target about 10.5
+  minutes and 1,850 narration words rather than the 10-minute lower boundary.
 3. Copy `templates/style.yaml` to `content/global/style.yaml` and change only
    the four substitutable fields. Use only the pinned palette colours in every
    `content.yaml` element as well; the render job fails any other colour.
 4. Write one `content/slide-NNN/content.yaml` per slide, numbered from `001`,
    each with a `title` that exactly matches the slide's visible heading text and
-   non-empty `speaker_notes`. The notes are the video's audio description, its
-   captions, and its transcript, so voice every claim the slide shows.
+  non-empty `speaker_notes`. The notes supply silent-video timing, on-screen
+  text, and the transcript; describe every claim and capture in words.
 5. For L300 and L400, write `capture-plan.yml` with at least two captures that
    target repository files which open in the Monaco text editor (never markdown
    files). Set each capture's `output` to
@@ -228,10 +229,10 @@ For each level in the level list, work in
    shows. Describe the capture in that slide's speaker notes as well. Do not
    create the image; the render job captures it.
 6. Write `manifest.yml` from the output contract's schema with
-   `autonomy: full`, `narration.engine: piper`, `narration.provider: Piper`,
-   `narration.voice: en_US-joe-medium`, and
-   `narration.speech_region: not-applicable`. Score the content criteria you can
-   judge from sources (T-01, T-02, T-03). Record T-04 through T-09 as `deferred`
+  `autonomy: full`, `narration.engine: none`, `narration.provider: none`,
+  `narration.voice: not-applicable`, `narration.timing_basis: notes-word-count`,
+  and `narration.speech_region: not-applicable`. Score the content criteria you can
+  judge from sources (T-01, T-02, T-03). Record T-04 through T-11 as `deferred`
    with the evidence "scored by the render job", set
    `approvals.delivery: pending`, and set `state: Deferred` with the render job
    named as the deferred item.

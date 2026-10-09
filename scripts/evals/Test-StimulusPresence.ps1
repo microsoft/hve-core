@@ -79,6 +79,7 @@ $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
     Write-Error "Test-StimulusPresence.ps1 requires the 'powershell-yaml' module."
@@ -298,7 +299,7 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     foreach ($entry in $report.missing) {
         $msg = "Missing eval coverage for $($entry.kind) '$($entry.artifactId)' (no stimulus declares tags.$($entry.kind) = $($entry.artifactId))"
-        Write-Host "::error file=$($entry.path)::$msg"
+        Write-CIAnnotation -Level Error -File $entry.path -Message "$msg"
     }
 
     Write-Host "Checked $($report.covered.Count + $report.missing.Count + $report.skipped.Count) changed artifact(s): $($report.covered.Count) covered, $($report.missing.Count) missing, $($report.skipped.Count) skipped."

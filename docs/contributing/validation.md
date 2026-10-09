@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-08
 ms.topic: how-to
 keywords:
   - validation
@@ -41,6 +41,7 @@ plan, a log, or an error message is not an agent execution request.
 | Documentation static and component checks | `npm run validate:docs`      | Does not run the browser E2E lane                     |
 | Markdown tables check                     | `npm run lint:tables`        | Non-mutating table alignment check                    |
 | Markdown link check                       | `npm run lint:md-links`      | Non-mutating link check included in `validate:local`  |
+| TypeScript type check                     | `npm run lint:ts`            | Runs `tsc --noEmit` on root `scripts/**/*.mts` files  |
 | Markdown tables fix                       | `npm run format:tables`      | Explicitly mutates table formatting                   |
 | Markdown lint fix                         | `npm run lint:md:fix`        | Explicitly mutates Markdown where possible            |
 | Targeted check                            | `npm run <local-check>`      | Choose the check that owns the changed file           |
