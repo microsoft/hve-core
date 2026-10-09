@@ -72,6 +72,7 @@ parse_args() {
       --level) LEVEL="$2"; shift 2 ;;
       --level-dir) LEVEL_DIR="$2"; shift 2 ;;
       --workspace) WORKSPACE="$2"; shift 2 ;;
+      --narration) NARRATION="$2"; shift 2 ;;
       --capture) CAPTURE="$2"; shift 2 ;;
       --animation) ANIMATION="$2"; shift 2 ;;
       --vision-prompt-file) VISION_PROMPT_FILE="$2"; shift 2 ;;
@@ -256,6 +257,7 @@ main() {
     --level "${LEVEL}" \
     --level-dir "${LEVEL_DIR}" \
     --capture "${CAPTURE}" \
+    --narration "${NARRATION}" \
     "${html_deck[@]}" \
     > "${LEVEL_DIR}/output/render-result.json" || exit_code=$?
   cat "${LEVEL_DIR}/output/render-result.json"

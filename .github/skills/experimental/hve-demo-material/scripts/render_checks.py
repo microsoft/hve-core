@@ -1534,6 +1534,7 @@ def main(argv: list[str] | None = None) -> int:
             args.level_dir,
             load_curriculum(),
             capture_profile=args.capture,
+            narration_engine=args.narration,
             html_deck=args.html_deck,
         )
         print(json.dumps(result, indent=2))

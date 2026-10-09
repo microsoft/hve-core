@@ -85,7 +85,7 @@ jobs:
 
   typescript-check:
     name: TypeScript Check
-    uses: ./.github/workflows/typescript-check.yml
+    uses: $/.github/workflows/typescript-check.yml
     permissions:
       contents: read
     with:

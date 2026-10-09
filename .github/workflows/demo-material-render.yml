@@ -254,9 +254,9 @@ jobs:
     name: Dispatch forced authoring for failed levels
     needs: resolve
     if: ${{ github.event_name == 'schedule' && needs.resolve.outputs.retry-levels != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      actions: write
+      actions: write # start Demo Material Author for failed or unpublished levels
     steps:
       - name: Dispatch forced authoring
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
