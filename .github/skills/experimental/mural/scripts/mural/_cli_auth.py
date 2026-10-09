@@ -104,15 +104,12 @@ def _backend_has_refresh_token(profile_name: str) -> bool:
     """
     keyring_available, _backend_name, _error = _pkg()._probe_keyring_availability()
     if keyring_available:
-        try:
-            if (
-                _pkg()
-                .KeyringBackend()
-                .get(_service_name_for(profile_name), _SESSION_BACKEND_KEY)
-            ):
+        # A keyring that fails at read time holds no readable session, so the
+        # probe falls through to the credential file instead of failing.
+        with contextlib.suppress(_KeyringUnavailable):
+            keyring = _pkg().KeyringBackend()
+            if keyring.get(_service_name_for(profile_name), _SESSION_BACKEND_KEY):
                 return True
-        except _KeyringUnavailable:
-            pass
     cred_path = _resolve_credential_file(profile_name, os.environ)
     if not cred_path.exists():
         return False
