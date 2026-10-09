@@ -2,7 +2,7 @@
 title: Backlog Management
 description: Cross-platform work item discovery, triage, sprint planning, and execution for Azure DevOps, GitHub, and Jira
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-02
 ms.topic: concept
 keywords:
   - backlog management
@@ -129,10 +129,10 @@ The workflows are the same on every platform. What differs is the vocabulary eac
 
 ### Delivery workflows are Azure DevOps only
 
-Pull request creation and build monitoring are not backlog workflows and are not part of these commands. They ship as prompts in the `hve-core` collection:
+Pull request creation and build monitoring are not backlog workflows and are not part of these commands. They run through skills in the `hve-core` collection:
 
-* `/ado-create-pull-request` creates an Azure DevOps PR with a generated description, linked work items, and reviewers.
-* `/ado-get-build-info` retrieves pipeline status and logs by PR, build ID, or branch.
+* `/pull-request` creates an Azure DevOps PR with a generated description, linked work items, and reviewers when the repository is hosted on Azure DevOps.
+* Asking for Azure DevOps build status loads the `backlog-management` build reference, which retrieves pipeline status and logs by PR, build ID, or branch.
 
 ## Autonomy Levels
 

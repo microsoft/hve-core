@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: HVE Guide"
 pagination_label: HVE Guide
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - hve guide
@@ -25,7 +25,7 @@ The HVE Guide combines two complementary perspectives on AI-assisted engineering
 
 ### AI-Assisted Project Lifecycle
 
-A 9-stage lifecycle from initial setup through ongoing operations, with AI-assisted tooling at each stage. Every stage maps to specific agents, prompts, instructions, and skills that accelerate your work.
+A 9-stage lifecycle from initial setup through ongoing operations, with AI-assisted tooling at each stage. Every stage maps to specific agents, instructions, and skills that accelerate your work.
 
 ```mermaid
 flowchart LR
@@ -57,7 +57,7 @@ flowchart LR
 | Stage 5 | Sprint Planning    | backlog-manager, backlog-management                                                                                            |
 | Stage 6 | Implementation     | RPI Agent, rpi-plan, rpi-implement, hve-builder, coding-standards                                                              |
 | Stage 7 | Review             | rpi-review, code-review, hve-builder                                                                                           |
-| Stage 8 | Delivery           | pull-request, git-commit, git-merge, ado-get-build-info                                                                        |
+| Stage 8 | Delivery           | pull-request, git-commit, git-merge, backlog-management                                                                        |
 | Stage 9 | Operations         | documentation, hve-builder, incident-response                                                                                  |
 
 > Cross-cutting: each workflow persists its own durable state, evidence, and

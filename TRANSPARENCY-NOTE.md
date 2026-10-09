@@ -2,7 +2,7 @@
 title: "Transparency Note for HVE Core"
 description: "What HVE Core does, how we test it, its limitations, and what you should know before using it with GitHub Copilot."
 author: HVE Core Maintainers
-ms.date: 2026-10-08
+ms.date: 2026-10-09
 ms.topic: overview
 keywords:
   - responsible-ai

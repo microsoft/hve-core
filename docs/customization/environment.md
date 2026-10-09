@@ -154,9 +154,6 @@ Each entry maps a directory path to `true` to enable scanning:
     ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true
   },
-  "chat.promptFilesLocations": {
-    ".github/prompts/hve-core": true
-  },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
     ".github/skills/accessibility": true,

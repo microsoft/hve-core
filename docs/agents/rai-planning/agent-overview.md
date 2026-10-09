@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-09-10
+ms.date: 2026-10-02
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -167,16 +167,13 @@ When conversation context is compacted, a seven-step recovery process reconstruc
 
 ## Related Files
 
-| File                                                                 | Purpose                             |
-|----------------------------------------------------------------------|-------------------------------------|
-| `.github/agents/rai-planning/rai-planner.agent.md`                   | Agent definition                    |
-| `.github/agents/rai-planning/rai-reviewer.agent.md`                  | Reviewer agent orchestrator         |
-| `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`  | Skill assessor subagent             |
-| `.github/instructions/rai-planning/*.instructions.md`                | Identity and licensing instructions |
-| `.github/prompts/rai-planning/rai-capture.prompt.md`                 | Capture mode entry prompt           |
-| `.github/prompts/rai-planning/rai-plan-from-prd.prompt.md`           | PRD-seeded entry prompt             |
-| `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md` | Security plan-seeded entry prompt   |
-| `.copilot-tracking/rai-plans/{project-slug}/state.json`              | Assessment state                    |
+| File                                                                | Purpose                             |
+|---------------------------------------------------------------------|-------------------------------------|
+| `.github/agents/rai-planning/rai-planner.agent.md`                  | Agent definition                    |
+| `.github/agents/rai-planning/rai-reviewer.agent.md`                 | Reviewer agent orchestrator         |
+| `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md` | Skill assessor subagent             |
+| `.github/instructions/rai-planning/*.instructions.md`               | Identity and licensing instructions |
+| `.copilot-tracking/rai-plans/{project-slug}/state.json`             | Assessment state                    |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

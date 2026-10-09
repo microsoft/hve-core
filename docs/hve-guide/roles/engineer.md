@@ -3,7 +3,7 @@ title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - engineer
@@ -45,14 +45,16 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 
 1. Stage 2: Discovery. Use `/rpi-research` to investigate requirements, explore codebase patterns, and gather evidence for your approach.
 2. Stage 3: Product Definition. Use `/rpi-plan` to transform adequate evidence into a structured implementation plan with phases, tasks, and success criteria.
-3. Stage 6: Implementation. Execute the approved plan with `/rpi-implement`, or use `RPI Agent` or `/rpi` when you want full lifecycle coordination.
+3. Stage 6: Implementation. Execute the approved plan with `/rpi-implement`, or select `RPI Agent` when you want full lifecycle coordination.
 4. Stage 7: Review. Run `/rpi-review` to validate implementation against the plan, check coding standards, and ensure architectural compliance.
 5. Stage 8: Delivery. Use `/git-commit` for conventional commit messages, `/pull-request` for PR creation, and `/git-merge` for merge workflows.
 
 ## Starter Prompts
 
+Select **RPI Agent** for full lifecycle coordination:
+
 ```text
-/rpi Implement the user notification preferences API endpoint from work
+Implement the user notification preferences API endpoint from work
 item #4523. Follow the REST conventions in src/api/handlers/ and add
 integration tests covering email, SMS, and push notification channels.
 ```
@@ -117,7 +119,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 | Do                                                         | Don't                                                            |
 |------------------------------------------------------------|------------------------------------------------------------------|
 | Research before implementing multi-file changes            | Jump straight to coding complex features                         |
-| Use `/rpi` for planned, multi-step work                    | Manually coordinate research, planning, and implementation       |
+| Use `RPI Agent` for planned, multi-step work               | Manually coordinate research, planning, and implementation       |
 | Let coding standards auto-activate by file type            | Override or skip language-specific instructions                  |
 | Review the research doc before starting the planning phase | Skip research for unfamiliar codebases or APIs                   |
 | Clear context between RPI phases with `/clear`             | Carry stale context across research, plan, implement, and review |
