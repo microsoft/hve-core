@@ -185,6 +185,120 @@ class TestRecordBrowserVideo:
         route.abort.assert_called_once()
         route.fulfill.assert_not_called()
 
+    @pytest.mark.parametrize(
+        ("scene_name", "output_name", "duration", "message"),
+        [
+            ("scene.txt", "scene.webm", 1, "existing HTML"),
+            ("scene.html", "scene.mp4", 1, ".webm extension"),
+            ("scene.html", "scene.webm", 0, "Duration must"),
+            ("scene.html", "scene.webm", 601, "Duration must"),
+            ("scene.html", "scene.webm", float("nan"), "Duration must"),
+        ],
+    )
+    def test_given_invalid_input_when_recorded_then_rejects_before_browser(
+        self, tmp_path, mocker, scene_name, output_name, duration, message
+    ):
+        scene = tmp_path / scene_name
+        scene.write_text("<body>Scene</body>", encoding="utf-8")
+        browser = mocker.patch("record_browser_video.sync_playwright")
+
+        with pytest.raises(RecordingError, match=message):
+            record_scene(scene, tmp_path / output_name, duration)
+
+        browser.assert_not_called()
+
+    def test_given_unapproved_scene_when_recorded_then_rejects_before_browser(
+        self, tmp_path, mocker
+    ):
+        scene = tmp_path / "scene.html"
+        scene.write_text("<body>Scene</body>", encoding="utf-8")
+        browser = mocker.patch("record_browser_video.sync_playwright")
+
+        with pytest.raises(RecordingError, match="approved asset root"):
+            record_scene(
+                scene, tmp_path / "scene.webm", 1, asset_root=tmp_path / "assets"
+            )
+
+        browser.assert_not_called()
+
+    @pytest.mark.parametrize("failure", ["missing-start", "empty-output"])
+    def test_given_recording_failure_when_recorded_then_preserves_delivery(
+        self, tmp_path, mocker, failure
+    ):
+        scene = tmp_path / "scene.html"
+        scene.write_text("<body>Scene</body>", encoding="utf-8")
+        output = tmp_path / "scene.webm"
+        output.write_bytes(b"previous delivery")
+        runtime = mocker.patch("record_browser_video.sync_playwright")
+        playwright = runtime.return_value.__enter__.return_value
+        browser = playwright.chromium.launch.return_value
+        context = browser.new_context.return_value
+        context.new_page.return_value.evaluate.return_value = failure != "missing-start"
+        encoder = mocker.patch("record_browser_video._encode_frames")
+
+        with pytest.raises(RecordingError, match="startAnimation|no browser video"):
+            record_scene(scene, output, 0.1, "320x180")
+
+        assert output.read_bytes() == b"previous delivery"
+        assert not list(tmp_path.glob("browser-video-*"))
+        if failure == "missing-start":
+            encoder.assert_not_called()
+        else:
+            encoder.assert_called_once()
+
+    @pytest.mark.parametrize("available", [False, True])
+    def test_given_encoder_failure_when_encoding_then_reports_error(
+        self, tmp_path, mocker, available
+    ):
+        from record_browser_video import _encode_frames
+
+        mocker.patch(
+            "record_browser_video.shutil.which",
+            return_value="ffmpeg" if available else None,
+        )
+        run = mocker.patch("record_browser_video.subprocess.run")
+        run.return_value = subprocess.CompletedProcess([], 1, "", "encoder unavailable")
+
+        with pytest.raises(RecordingError, match="FFmpeg is required|encoding failed"):
+            _encode_frames(tmp_path, tmp_path / "scene.webm", 1)
+
+        assert run.call_count == int(available)
+
+    @pytest.mark.parametrize(
+        "error", [None, RecordingError("invalid scene"), OSError("write failed")]
+    )
+    def test_given_cli_request_when_run_then_reports_result(
+        self, tmp_path, mocker, capsys, error
+    ):
+        from record_browser_video import main
+
+        output = tmp_path / "scene.webm"
+        recorder = mocker.patch(
+            "record_browser_video.record_scene", return_value=output, side_effect=error
+        )
+        arguments = [
+            "--scene",
+            "scene.html",
+            "--output",
+            str(output),
+            "--duration",
+            "1",
+            "--resolution",
+            "320x180",
+            "--asset-root",
+            str(tmp_path),
+        ]
+
+        result = main(arguments)
+
+        assert result == (1 if error else 0)
+        recorder.assert_called_once_with(
+            Path("scene.html"), output, 1.0, "320x180", tmp_path
+        )
+        captured = capsys.readouterr()
+        assert captured.err == (f"ERROR: {error}\n" if error else "")
+        assert captured.out == ("" if error else f"{output}\n")
+
     def test_given_allowed_asset_when_routed_then_fulfills_without_network(
         self, tmp_path, mocker
     ):

@@ -463,6 +463,9 @@ class TestAssembleVideo:
     @pytest.mark.parametrize(
         ("transition", "message"),
         [
+            ([], "must be a mapping"),
+            ({"duration": "invalid"}, "must be a number"),
+            ({"duration": []}, "must be a number"),
             ({"type": "wipe"}, "Unsupported transition type"),
             ({"duration": 0}, "positive finite"),
             ({"duration": float("nan")}, "positive finite"),
@@ -534,6 +537,69 @@ class TestAssembleVideo:
         assert "acrossfade=d=0.5:c1=tri:c2=tri" in filter_graph
         assert "fade=t=out:st=8:d=0.5" in filter_graph
         assert "afade=t=out:st=8:d=0.5" in filter_graph
+
+    def test_given_missing_encoded_output_when_assembled_then_preserves_previous(
+        self, tmp_path, mocker, mock_ffmpeg_dependencies
+    ):
+        for name in ("frame.png", "voice.wav"):
+            (tmp_path / name).write_bytes(b"fixture")
+        manifest = tmp_path / "segments.yml"
+        manifest.write_text(
+            "segments:\n  - visual: frame.png\n"
+            "    narration: voice.wav\n    duration: 2\n",
+            encoding="utf-8",
+        )
+        output = tmp_path / "previous.mp4"
+        output.write_bytes(b"previous delivery")
+        mocker.patch.object(assemble_video, "_render_segment")
+        mocker.patch.object(assemble_video, "_run_ffmpeg")
+
+        with pytest.raises(assemble_video.ManifestError, match="wrote no output"):
+            assemble_video.assemble_video(
+                manifest_path=manifest, output_path=output, fps=None, resolution=None
+            )
+
+        assert output.read_bytes() == b"previous delivery"
+
+    @pytest.mark.parametrize(
+        ("error", "expected"),
+        [
+            (None, assemble_video.EXIT_SUCCESS),
+            (
+                assemble_video.ManifestError("invalid manifest"),
+                assemble_video.EXIT_ERROR,
+            ),
+            (FileNotFoundError("missing media"), assemble_video.EXIT_FAILURE),
+            (KeyboardInterrupt(), 130),
+        ],
+    )
+    def test_given_cli_assembly_when_run_then_preserves_exit_contract(
+        self, tmp_path, mocker, capsys, error, expected
+    ):
+        output = tmp_path / "video.mp4"
+        manifest = tmp_path / "segments.yml"
+        mocker.patch.object(
+            assemble_video.sys, "argv", ["assemble_video", "--manifest", str(manifest)]
+        )
+        operation = mocker.patch.object(
+            assemble_video, "assemble_video", return_value=output, side_effect=error
+        )
+
+        result = assemble_video.main()
+
+        assert result == expected
+        assert operation.call_args.kwargs["manifest_path"] == manifest.resolve()
+        captured = capsys.readouterr()
+        if error is None:
+            assert captured.out.strip() == str(output.resolve())
+            assert captured.err == ""
+        else:
+            assert captured.out == ""
+            assert (
+                "Interrupted by user"
+                if isinstance(error, KeyboardInterrupt)
+                else str(error)
+            ) in captured.err
 
     def test_given_short_segment_when_transition_built_then_raises(self):
         # Act / Assert

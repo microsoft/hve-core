@@ -1820,3 +1820,208 @@ class TestPublicHelpers:
 
     def test_given_no_style_file_when_read_then_empty(self, tmp_path):
         assert style_metadata(tmp_path) == {}
+
+
+class TestRenderCommandContracts:
+    """Exercise command dispatch and generated artifacts without media services."""
+
+    def test_given_authored_notes_when_commands_run_then_silent_assets_agree(
+        self, tmp_path, mocker
+    ):
+        _write_slides(tmp_path, 1)
+        mocker.patch("render_checks.measure_minutes", return_value=2.0)
+        captions = tmp_path / "output/hve-demo-L100.vtt"
+
+        assert main(["silent-timing", "--level-dir", str(tmp_path)]) == 0
+        assert (
+            main(
+                [
+                    "segments",
+                    "--level-dir",
+                    str(tmp_path),
+                    "--output-name",
+                    "hve-demo-L100.raw.mp4",
+                ]
+            )
+            == 0
+        )
+        assert (
+            main(["captions", "--level-dir", str(tmp_path), "--output", str(captions)])
+            == 0
+        )
+        assert (
+            main(
+                [
+                    "transcript",
+                    "--level",
+                    "L100",
+                    "--level-dir",
+                    str(tmp_path),
+                    "--narration",
+                    "none",
+                ]
+            )
+            == 0
+        )
+
+        assert parse_webvtt(captions.read_text())[0][2] == "one two three"
+        assert "hve-demo-L100.raw.mp4" in (tmp_path / "output/segments.yml").read_text()
+        assert (
+            "Silent video: no voiceover" in (tmp_path / "output/index.html").read_text()
+        )
+
+    @pytest.mark.parametrize(
+        ("report", "returncode", "expected"),
+        [
+            ('{"streams": []}', 0, 0),
+            ('{"streams": [{"index": 1}]}', 0, 1),
+            ("{}", 0, 1),
+            ("invalid JSON", 0, 1),
+            ('{"streams": false}', 0, 1),
+            ("", 1, 1),
+        ],
+    )
+    def test_given_probe_report_when_silence_checked_then_fails_closed(
+        self, tmp_path, mocker, capsys, report, returncode, expected
+    ):
+        mocker.patch("render_checks.ffprobe_command", return_value="ffprobe")
+        mocker.patch(
+            "render_checks.subprocess.run",
+            return_value=subprocess.CompletedProcess(
+                [], returncode, report, "probe failed"
+            ),
+        )
+
+        result = main(
+            [
+                "check-audio-mode",
+                "--video",
+                str(tmp_path / "video.mp4"),
+                "--narration",
+                "none",
+            ]
+        )
+
+        assert result == expected
+        assert json.loads(capsys.readouterr().out)["result"] == (
+            "fail" if expected else "pass"
+        )
+
+    def test_given_missing_slides_when_timing_run_then_reports_failure(
+        self, tmp_path, capsys
+    ):
+        result = main(["silent-timing", "--level-dir", str(tmp_path)])
+
+        assert result == 1
+        assert "no slides" in capsys.readouterr().err
+        assert not (tmp_path / "audio").exists()
+
+
+class TestCaptionEvidenceContracts:
+    """Bind accepted caption evidence to all delivery inputs and visibility checks."""
+
+    @pytest.fixture
+    def verified_delivery(self, tmp_path, mocker):
+        _write_slides(tmp_path, 1)
+        paths = {
+            name: tmp_path / name
+            for name in (
+                "control.mp4",
+                "video.mp4",
+                "raw.mp4",
+                "captions.vtt",
+                "evidence.json",
+            )
+        }
+        for name in ("control.mp4", "video.mp4", "raw.mp4"):
+            paths[name].write_bytes(name.encode())
+        paths["captions.vtt"].write_text(build_captions(tmp_path), encoding="utf-8")
+        mocker.patch("render_checks.measure_minutes", return_value=2 / 60)
+        mocker.patch("render_checks.ffmpeg_command", return_value="ffmpeg")
+        mocker.patch(
+            "render_checks.subprocess.run",
+            return_value=subprocess.CompletedProcess(
+                [],
+                0,
+                "lavfi.signalstats.YMAX=100\nlavfi.bbox.w=300\nlavfi.bbox.h=40\n",
+                "",
+            ),
+        )
+        result = main(
+            [
+                "verify-open-captions",
+                "--control",
+                str(paths["control.mp4"]),
+                "--finalized",
+                str(paths["video.mp4"]),
+                "--captions",
+                str(paths["captions.vtt"]),
+                "--output",
+                str(paths["evidence.json"]),
+                "--source",
+                str(paths["raw.mp4"]),
+                "--level-dir",
+                str(tmp_path),
+            ]
+        )
+        assert result == 0
+        return paths
+
+    @pytest.mark.parametrize(
+        ("mutation", "problem"),
+        [
+            ("none", None),
+            ("missing", "evidence missing"),
+            ("unreadable", "unreadable"),
+            ("result", "did not pass"),
+            ("luma", "frame difference"),
+            ("box", "difference region"),
+            ("video.mp4", "delivered MP4"),
+            ("captions.vtt", "delivered WebVTT"),
+            ("raw.mp4", "raw assembly"),
+        ],
+    )
+    def test_given_delivery_evidence_when_verified_then_rejects_tampering(
+        self, verified_delivery, capsys, mutation, problem
+    ):
+        paths = verified_delivery
+        evidence = paths["evidence.json"]
+        if mutation == "missing":
+            evidence.unlink()
+        elif mutation == "unreadable":
+            evidence.write_text("invalid JSON")
+        elif mutation in ("result", "luma", "box"):
+            record = json.loads(evidence.read_text())
+            key = {
+                "result": "result",
+                "luma": "maximum_luma_difference",
+                "box": "difference_box_area",
+            }[mutation]
+            record[key] = "fail" if mutation == "result" else 0
+            evidence.write_text(json.dumps(record))
+        elif mutation != "none":
+            paths[mutation].write_bytes(b"modified delivery")
+        capsys.readouterr()
+
+        result = main(
+            [
+                "check-open-caption-evidence",
+                "--video",
+                str(paths["video.mp4"]),
+                "--captions",
+                str(paths["captions.vtt"]),
+                "--evidence",
+                str(evidence),
+                "--source",
+                str(paths["raw.mp4"]),
+            ]
+        )
+
+        report = json.loads(capsys.readouterr().out)
+        assert result == int(problem is not None)
+        assert report["ok"] == (problem is None)
+        assert (
+            any(problem in message for message in report["problems"])
+            if problem
+            else report["problems"] == []
+        )
