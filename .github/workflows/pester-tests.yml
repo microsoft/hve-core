@@ -191,6 +191,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write  # Required for Codecov OIDC when code-coverage is true
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -219,7 +220,15 @@ jobs:
           # Run the full Integration-tagged suite. Slow remains excluded; passing
           # -ExcludeTag is required because it replaces (not appends to) the runner's
           # default exclude list of @('Integration','Slow').
-          ./scripts/tests/Invoke-PesterTests.ps1 -CI -Tag Integration -ExcludeTag Slow
+          $params = @{ CI = $true; Tag = 'Integration'; ExcludeTag = 'Slow' }
+
+          # The unit lane excludes Integration-tagged tests, so code those tests
+          # exercise is measured only here.
+          if ('${{ inputs.code-coverage }}' -eq 'true') {
+            $params['CodeCoverage'] = $true
+          }
+
+          ./scripts/tests/Invoke-PesterTests.ps1 @params
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload integration test results
@@ -233,6 +242,20 @@ jobs:
             logs/pester-failures.json
           retention-days: 30
           if-no-files-found: ignore
+
+      # Uploaded under the same pester flag as the unit lane so Codecov merges both
+      # reports. No threshold gate applies here: an Integration-only run covers a
+      # small slice of the codebase by design.
+      - name: Upload integration coverage to Codecov
+        if: inputs.code-coverage && success()
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: logs/coverage.xml
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+          flags: pester
+          name: pester-integration-coverage
 
       - name: Check integration results
         if: "!inputs.soft-fail"

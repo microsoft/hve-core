@@ -412,6 +412,62 @@ jobs:
         }
     }
 
+    Context 'Unrecognized permissions shapes' {
+        It 'Should report an unrecognized workflow-level scalar as excessive' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-unknown-scalar' -Content @'
+name: Workflow Level Unknown Scalar
+on: push
+permissions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+            $result[0].Line | Should -Be 3
+        }
+
+        It 'Should report a workflow-level sequence as excessive' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-sequence' -Content @'
+name: Workflow Level Sequence
+on: push
+permissions:
+  - contents
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+        }
+
+        It 'Should report line 0 when a flow-style document hides the permissions key' {
+            $filePath = New-TestWorkflow -Name 'flow-style-document' -Content @'
+{name: Flow Style, on: push, permissions: {issues: write}, jobs: {build: {runs-on: ubuntu-latest, permissions: {issues: write}, steps: [{run: echo hello}]}}}
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+            $result[0].Line | Should -Be 0
+        }
+    }
+
     Context 'Unparseable workflow' {
         It 'Should return no violations rather than throwing' {
             $filePath = New-TestWorkflow -Name 'malformed' -Content @'
@@ -509,6 +565,65 @@ jobs:
 
             $result.Metadata.FullPath | Should -Be $filePath
         }
+    }
+}
+
+Describe 'Get-BroadPermissionsScalar' -Tag 'Unit' {
+    It 'Should return <Expected> for <Description>' -ForEach @(
+        @{ Description = 'read-all'; Node = 'read-all'; Expected = 'read-all' }
+        @{ Description = 'mixed-case write-all with whitespace'; Node = ' Write-All '; Expected = 'write-all' }
+        @{ Description = 'an unrecognized scalar'; Node = 'read'; Expected = '' }
+        @{ Description = 'null'; Node = $null; Expected = '' }
+    ) {
+        Get-BroadPermissionsScalar -Node $Node | Should -BeExactly $Expected
+    }
+
+    It 'Should return an empty string for a mapping' {
+        Get-BroadPermissionsScalar -Node @{ contents = 'read' } | Should -BeExactly ''
+    }
+}
+
+Describe 'Test-NarrowWorkflowPermission' -Tag 'Unit' {
+    It 'Should return <Expected> for <Description>' -ForEach @(
+        @{ Description = 'null'; Node = $null; Expected = $true }
+        @{ Description = 'a blank scalar'; Node = '  '; Expected = $true }
+        @{ Description = 'a non-blank scalar'; Node = 'read'; Expected = $false }
+    ) {
+        Test-NarrowWorkflowPermission -Node $Node | Should -Be $Expected
+    }
+
+    It 'Should return true for an empty mapping' {
+        Test-NarrowWorkflowPermission -Node @{} | Should -BeTrue
+    }
+
+    It 'Should return true for contents read with none entries' {
+        Test-NarrowWorkflowPermission -Node @{ contents = 'Read'; issues = 'none' } | Should -BeTrue
+    }
+
+    It 'Should return false for any other scope' {
+        Test-NarrowWorkflowPermission -Node @{ contents = 'read'; 'security-events' = 'read' } | Should -BeFalse
+    }
+
+    It 'Should return false for a sequence' {
+        Test-NarrowWorkflowPermission -Node @('contents') | Should -BeFalse
+    }
+}
+
+Describe 'Get-TopLevelKeyLine' -Tag 'Unit' {
+    It 'Should return the 1-based line of an unindented key' {
+        Get-TopLevelKeyLine -RawLines @('name: x', 'permissions:', '  contents: read') -Key 'permissions' | Should -Be 2
+    }
+
+    It 'Should match a quoted key' {
+        Get-TopLevelKeyLine -RawLines @('name: x', '"permissions": {}') -Key 'permissions' | Should -Be 2
+    }
+
+    It 'Should ignore an indented key' {
+        Get-TopLevelKeyLine -RawLines @('jobs:', '  build:', '    permissions: {}') -Key 'permissions' | Should -Be 0
+    }
+
+    It 'Should return 0 when the key is absent' {
+        Get-TopLevelKeyLine -RawLines @() -Key 'permissions' | Should -Be 0
     }
 }
 
