@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-10-07
+ms.date: 2026-10-09
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -226,6 +226,26 @@ identity. Missing, additional, or mismatched fields fail verification.
 The published event starts a separate Marketplace workflow. That workflow
 downloads and verifies only the VSIX from the matching published GitHub release
 and does not rebuild the extension.
+
+### Release App Permissions
+
+The release GitHub App installation must grant these repository permissions.
+Each job's token requests only the subset it uses through `permission-*`
+inputs on `actions/create-github-app-token`.
+
+| App permission         | Requesting jobs                                                                                                                                                                                                                                                                                               |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Contents: read & write | Write: `prepare-promotion` in both promotion workflows, `release-please` and `sync-release-pr` in both preparation workflows, `validate-release` and `publish-release` in `release-vsix-publish.yml`. Read: `open-promotion-pr` in both promotion workflows, `authorize` in `extension-provenance-signer.yml` |
+| Pull requests: write   | `open-promotion-pr` in both promotion workflows, `release-please` in both preparation workflows                                                                                                                                                                                                               |
+| Workflows: write       | `prepare-promotion` in both promotion workflows                                                                                                                                                                                                                                                               |
+| Metadata: read         | Granted with every installation token                                                                                                                                                                                                                                                                         |
+
+The promotion jobs need Workflows write because the promotion merge commit
+carries every upstream change under `.github/workflows/`, and GitHub rejects
+an App push that creates or updates workflow files without that permission.
+A token request for a permission the installation does not grant fails. After
+the App's permissions change, an organization owner must accept the new
+permissions on the installation before any job can request them.
 
 ### Required Tag Governance
 

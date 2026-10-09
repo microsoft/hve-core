@@ -58,6 +58,9 @@ jobs:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           permission-contents: write
+          # The promotion merge commit carries upstream .github/workflows changes,
+          # which GitHub rejects from an App push without the workflows permission.
+          permission-workflows: write
 
       # Executable release tooling always comes from main, never from the
       # promotion head or from the release branch being prepared.
