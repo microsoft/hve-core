@@ -62,6 +62,9 @@ Apply the budget this way:
 * Record the produced word count and measured duration in the manifest as
   `narration.total_word_count` and `narration.measured_duration_minutes`, so a
   later run recomputes the rate from evidence instead of re-deriving it.
+* For unattended L400 authoring, target about 10.5 minutes and 1,850 words.
+  This stays near the middle of the allowed word range and avoids publishing at
+  the 10-minute boundary when a voice's natural rate varies.
 
 The measured rate assumes narration was synthesized with newline collapsing in
 effect. Speaker notes written as YAML block scalars are synthesized with the
@@ -69,15 +72,31 @@ effect. Speaker notes written as YAML block scalars are synthesized with the
 wrap in a block scalar is otherwise spoken as a pause and inflates the duration
 without adding a single word.
 
-The same budget applies under `narration: piper`. The same L100 notes ran 284
-seconds with the Azure voice and 285 seconds with Piper's default
-`en_US-joe-medium` voice at its natural rate.
+The same budget applies under `narration: piper`, but natural speaking rate
+varies by voice. Treat the word budget as a planning aid and keep the measured
+duration as the acceptance evidence.
 
 The narration is also the video's audio description. Write speaker notes that
 voice every claim a slide shows and describe every live capture in words, so a
 viewer who cannot see the screen loses nothing. Captions and the transcript are
 generated from the same notes, so notes that skip on-screen content leave a gap
 in all three.
+
+## Silent CI Delivery
+
+CI explicitly selects `narration: none`. Azure Speech remains the default for
+local narration and Piper remains an optional local choice; neither synthesizes
+speech in CI. Keep the notes budget above, but use it as a deterministic reading
+timeline: each slide gets `max(2 seconds, note words / 2.8)` plus the assembler's
+transition handles. The two-second floor keeps short scenes longer than the
+half-second transitions. Internal zero-only WAVs are timing inputs, not narration.
+
+Under this mode, T-04 pairs each visual with a silent timing WAV, and T-09 checks
+the same notes in visible text and the transcript without claiming spoken audio
+description. T-07 still checks actual MP4 duration. Add T-11 to every silent
+level: FFprobe must find zero audio streams. Record `narration.engine: none` and
+`narration.timing_basis: notes-word-count`. Character-dialogue rendering is not
+part of this CI path.
 
 ## Capture Profile
 
@@ -91,6 +110,8 @@ The `capture` input selects how a level produces its visual evidence. It takes
 
 Apply these rules to the profile:
 
+* L100 and L200 require `capture: deck-export`. Reject a caller's `live`
+  selection during intake rather than silently changing the requested profile.
 * Only the caller may set `capture: deck-export` for L300 or L400. A run never
   downgrades a level on its own, because a downgraded run and a live capture run
   produce different evidence and have to stay distinguishable after the fact.

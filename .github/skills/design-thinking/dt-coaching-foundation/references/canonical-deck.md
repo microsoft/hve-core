@@ -22,7 +22,7 @@ Do not duplicate transition gates or non-waivable checks in:
 
 - Method instructions (for example Method 1 or sequencing)
 - DT Coach agent behavior text
-- Other prompt files
+- Other DT skill references
 
 ## Activation Rule
 
@@ -217,6 +217,13 @@ When the active runtime is a bash terminal (Git Bash, WSL, or similar):
 
 - Always require explicit user approval before any PowerShell upgrade action.
 - Do not silently fall back between runtime paths. The shell environment you are running in determines the path: PowerShell terminal → PowerShell script; bash terminal → bash script.
+
+### Build Outcome
+
+- Do not run `pip install` or install dependencies manually. Rely on the `powerpoint` skill's environment setup and its documented prerequisites.
+- Keep generated output under `.copilot-tracking/dt/{project-slug}/render/`.
+- On success, report the canonical artifact path and the PPTX path under `render/output/`.
+- When the build fails for any reason other than the PowerShell version case above, do not retry or troubleshoot on your own. Report that content generation completed but the PPTX build failed, give the cause in plain language, and never claim that a PPTX exists. Then offer the next steps: verify the PowerShell and Python prerequisites, and re-run the build from the same render content.
 
 ### Mandatory Runtime Compliance Contract
 

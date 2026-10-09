@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 #
 # render-level.sh
-# Render one authored demo-material level into a deck, frames, narration, a
+# Render one authored non-character level into a deck, frames, narration, a
 # captioned MP4, a transcript page, and, when the HVE Slides starter is
 # available, a single-file HTML deck, then score the machine-verifiable
 # criteria.
@@ -21,14 +21,16 @@ readonly PPTX_PIPELINE="${SKILLS_ROOT}/powerpoint/scripts/invoke-pptx-pipeline.s
 readonly VOICEOVER="${SKILLS_ROOT}/tts-voiceover/scripts/generate-voiceover.sh"
 readonly ASSEMBLE="${SKILLS_ROOT}/demo-video/scripts/assemble-video.sh"
 readonly CAPTURE_SKILL="${SKILLS_ROOT}/vscode-playwright"
+readonly FINALIZE_ACCESSIBLE_VIDEO="${SCRIPT_DIR}/finalize-accessible-video.sh"
 # The HVE Slides starter lives only in the hve-core repository, not in the plugin.
 readonly DEFAULT_HTML_DECK_TEMPLATE="${SKILLS_ROOT}/../hve-slides/templates/deck"
 
 LEVEL=""
 LEVEL_DIR=""
 WORKSPACE=""
-NARRATION="piper"
+NARRATION="azure"
 CAPTURE=""
+ANIMATION="none"
 VISION_PROMPT_FILE=""
 HTML_DECK_TEMPLATE=""
 HTML_DECK="auto"
@@ -43,8 +45,9 @@ Options:
   --level <level>               Level label from the curriculum
   --level-dir <dir>             Authored level directory containing content/
   --workspace <repo>            Repository folder opened for live captures
-  --narration <azure|piper>     Narration engine (default: piper)
+  --narration <azure|piper|none>  Narration mode (default: azure; CI requires none)
   --capture <live|deck-export>  Capture profile (default: the level default)
+  --animation <none|characters>  Only none is supported; use the builder for characters
   --vision-prompt-file <path>   Run the vision slide check with this prompt
   --html-deck-template <dir>    HVE Slides starter; required, fails when missing
   --no-html-deck                Skip the HTML deck even when the starter exists
@@ -71,6 +74,7 @@ parse_args() {
       --workspace) WORKSPACE="$2"; shift 2 ;;
       --narration) NARRATION="$2"; shift 2 ;;
       --capture) CAPTURE="$2"; shift 2 ;;
+      --animation) ANIMATION="$2"; shift 2 ;;
       --vision-prompt-file) VISION_PROMPT_FILE="$2"; shift 2 ;;
       --html-deck-template) HTML_DECK_TEMPLATE="$2"; HTML_DECK="required"; shift 2 ;;
       --no-html-deck) HTML_DECK="off"; shift ;;
@@ -85,7 +89,10 @@ validate_args() {
   [[ "${LEVEL}" =~ ^L[1-4]00$ ]] || err "--level must be L100 to L400."
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${WORKSPACE}" ]] || err "--workspace must be a directory."
-  [[ "${NARRATION}" =~ ^(azure|piper)$ ]] || err "--narration must be azure or piper."
+  [[ "${NARRATION}" =~ ^(azure|piper|none)$ ]] || err "--narration must be azure, piper, or none."
+  if [[ "${GITHUB_ACTIONS:-false}" == "true" && "${NARRATION}" != "none" ]]; then
+    err "CI demo rendering requires --narration none; speech synthesis is disabled."
+  fi
   if [[ -z "${CAPTURE}" ]]; then
     case "${LEVEL}" in
       L300|L400) CAPTURE="live" ;;
@@ -94,6 +101,21 @@ validate_args() {
   fi
   [[ "${CAPTURE}" =~ ^(live|deck-export)$ ]] || err "--capture must be live or deck-export."
   LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
+  command -v uv >/dev/null || err "uv is required."
+  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py \
+    scripted-preflight --level "${LEVEL}" --level-dir "${LEVEL_DIR}" \
+    --capture "${CAPTURE}" --animation "${ANIMATION}"
+  local tool_report ffmpeg_path ffprobe_path ffmpeg_dir ffprobe_dir
+  tool_report="$(bash "${FINALIZE_ACCESSIBLE_VIDEO}" --check-prerequisites)"
+  ffmpeg_path="$(printf '%s\n' "${tool_report}" | sed -n 's/^ffmpeg=//p')"
+  ffprobe_path="$(printf '%s\n' "${tool_report}" | sed -n 's/^ffprobe=//p')"
+  [[ -n "${ffmpeg_path}" && -n "${ffprobe_path}" ]] \
+    || err "Could not resolve compatible FFmpeg tools."
+  ffmpeg_dir="$(dirname "${ffmpeg_path}")"
+  ffprobe_dir="$(dirname "${ffprobe_path}")"
+  export FFMPEG_COMMAND="${ffmpeg_path}"
+  export FFPROBE_COMMAND="${ffprobe_path}"
+  export PATH="${ffmpeg_dir}:${ffprobe_dir}:${PATH}"
   WORKSPACE="$(cd "${WORKSPACE}" && pwd)"
   case "${HTML_DECK}" in
     required)
@@ -151,14 +173,20 @@ build_and_validate_deck() {
 
 narrate_and_assemble() {
   local video_name="$1"
-  log "Synthesizing narration with ${NARRATION}"
-  bash "${VOICEOVER}" "${SKIP_VENV[@]}" \
-    --engine "${NARRATION}" \
-    --collapse-newlines \
-    --content-dir "${LEVEL_DIR}/content" \
-    --output-dir "${LEVEL_DIR}/audio"
+  if [[ "${NARRATION}" == "none" ]]; then
+    log "Preparing silent slide timing without speech synthesis"
+    uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py silent-timing \
+      --level-dir "${LEVEL_DIR}"
+  else
+    log "Synthesizing narration with ${NARRATION}"
+    bash "${VOICEOVER}" "${SKIP_VENV[@]}" \
+      --engine "${NARRATION}" \
+      --collapse-newlines \
+      --content-dir "${LEVEL_DIR}/content" \
+      --output-dir "${LEVEL_DIR}/audio"
+  fi
 
-  log "Assembling narrated MP4"
+  log "Assembling MP4 (${NARRATION})"
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py segments \
     --level-dir "${LEVEL_DIR}" \
     --output-name "${video_name}"
@@ -195,21 +223,11 @@ build_html_deck() {
 }
 
 write_accessible_media() {
-  local video="${LEVEL_DIR}/output/$1"
-  local captions="${video%.mp4}.vtt"
-  local captioned="${video%.mp4}.captioned.mp4"
-  log "Writing captions and transcript"
-  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py captions \
-    --level-dir "${LEVEL_DIR}" \
-    --output "${captions}"
-  ffmpeg -y -v error -i "${video}" -i "${captions}" \
-    -map 0 -map 1 -c copy -c:s mov_text \
-    -metadata:s:a:0 language=eng -metadata:s:s:0 language=eng \
-    "${captioned}"
-  mv "${captioned}" "${video}"
-  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py transcript \
+  log "Burning captions and writing accessible media"
+  bash "${FINALIZE_ACCESSIBLE_VIDEO}" \
     --level "${LEVEL}" \
-    --level-dir "${LEVEL_DIR}"
+    --level-dir "${LEVEL_DIR}" \
+    --narration "${NARRATION}"
 }
 
 main() {
@@ -218,7 +236,7 @@ main() {
   mkdir -p "${LEVEL_DIR}/output" "${LEVEL_DIR}/frames/deck" "${LEVEL_DIR}/audio"
 
   local deck="${LEVEL_DIR}/output/hve-demo-${LEVEL}.pptx"
-  local video_name="hve-demo-${LEVEL}.mp4"
+  local video_name="hve-demo-${LEVEL}.raw.mp4"
 
   if [[ "${CAPTURE}" == "live" ]]; then
     run_captures
@@ -232,7 +250,7 @@ main() {
   else
     log "Skipping the HTML slide deck: no HVE Slides starter"
   fi
-  write_accessible_media "${video_name}"
+  write_accessible_media
 
   log "Scoring machine-verifiable criteria"
   local exit_code=0

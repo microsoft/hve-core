@@ -16,6 +16,10 @@ Usage::
     python render_checks.py segments --level-dir DIR --output-name x.mp4
     python render_checks.py captions --level-dir DIR --output DIR/output/x.vtt
     python render_checks.py transcript --level L100 --level-dir DIR
+    python render_checks.py verify-open-captions --control BASE --finalized MP4 \
+        --captions VTT --output JSON
+    python render_checks.py check-open-caption-evidence --video MP4 \
+        --captions VTT --evidence JSON
     python render_checks.py evaluate --level L100 --level-dir DIR [--html-deck]
 
 ``levels`` and ``changed`` use only the standard library so a runner can call
@@ -29,11 +33,15 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import wave
 import xml.etree.ElementTree as ET
 import zipfile
@@ -70,6 +78,20 @@ MIN_RENDERED_FONT_PT = 18.0
 # Two caption lines of about 42 characters each, the common broadcast limit.
 CAPTION_LINE_CHARS = 42
 CAPTION_MAX_CHARS = 2 * CAPTION_LINE_CHARS
+MIN_OPEN_CAPTION_LUMA_DIFFERENCE = 64
+MIN_OPEN_CAPTION_BOX_DIMENSION = 8
+MIN_OPEN_CAPTION_BOX_AREA = 64
+
+
+def ffmpeg_command() -> str:
+    """Return the caller-selected FFmpeg executable."""
+    return os.environ.get("FFMPEG_COMMAND", "ffmpeg")
+
+
+def ffprobe_command() -> str:
+    """Return the caller-selected FFprobe executable."""
+    return os.environ.get("FFPROBE_COMMAND", "ffprobe")
+
 
 TEXT_KEYS = ("text", "title", "subtitle", "label", "heading", "description")
 TEXT_LIST_KEYS = ("bullets", "items", "segments", "paragraphs", "rows", "cells")
@@ -220,6 +242,72 @@ def slide_numbers(content_dir: Path) -> list[int]:
     return sorted(numbers)
 
 
+def validate_scripted_render(
+    level: str, level_dir: Path, capture: str, animation: str = "none"
+) -> None:
+    """Reject inputs that the deck-frame scripted renderer cannot preserve."""
+    import yaml
+
+    if level in {"L100", "L200"} and capture != "deck-export":
+        raise CheckError(f"{level} requires capture: deck-export")
+    if animation != "none":
+        raise CheckError(
+            "Character animation requires the HVE Demo Material Builder's "
+            "clip-aware workflow; render-level.sh supports animation: none only"
+        )
+    for relative in ("manifest.yml", "output/manifest.yml", "output/segments.yml"):
+        manifest = level_dir / relative
+        if not manifest.is_file():
+            continue
+        try:
+            data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError) as error:
+            raise CheckError(
+                f"Cannot read scripted-render input: {relative}"
+            ) from error
+        if not isinstance(data, dict):
+            raise CheckError(f"Scripted-render input must be a mapping: {relative}")
+        if data.get("animation", "none") != "none":
+            raise CheckError(
+                f"{relative} declares character animation; use the "
+                "HVE Demo Material Builder's clip-aware workflow"
+            )
+        if relative == "output/segments.yml":
+            segments = data.get("segments", [])
+            if not isinstance(segments, list):
+                raise CheckError("Existing segments must be a list")
+            if any(
+                isinstance(segment, dict)
+                and (segment.get("type") == "clip" or "clip" in segment)
+                for segment in segments
+            ):
+                raise CheckError(
+                    "Existing clip segments would be replaced by deck frames; "
+                    "use the HVE Demo Material Builder's clip-aware workflow"
+                )
+
+
+def build_silent_timing(level_dir: Path) -> None:
+    """Write silent timing WAVs from notes at the curriculum's 2.8 words/second."""
+    slides = load_slides(level_dir / "content")
+    if not slides:
+        raise CheckError(f"no slides under {level_dir / 'content'}")
+    durations = []
+    for number, slide in slides:
+        words = len(notes_text(slide).split())
+        if not words:
+            raise CheckError(f"Slide {number} needs speaker notes for silent timing")
+        durations.append((number, max(2.0, words / 2.8)))
+    audio_dir = level_dir / "audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    for number, duration in durations:
+        with wave.open(str(audio_dir / f"slide-{number:03d}.wav"), "wb") as audio:
+            audio.setnchannels(1)
+            audio.setsampwidth(2)
+            audio.setframerate(8000)
+            audio.writeframes(b"\x00\x00" * round(duration * 8000))
+
+
 def build_segments(level_dir: Path, output_name: str) -> str:
     """Return a ``segments.yml`` that pairs each deck frame with its WAV.
 
@@ -233,6 +321,11 @@ def build_segments(level_dir: Path, output_name: str) -> str:
         f"output: ./{output_name}",
         "resolution: 1920x1080",
         "fps: 24",
+        "transition:",
+        "  type: crossfade",
+        "  duration: 0.5",
+        "  fade_in: true",
+        "  fade_out: true",
         "segments:",
     ]
     for number in numbers:
@@ -380,7 +473,7 @@ def measure_minutes(mp4: Path) -> float | None:
     try:
         result = subprocess.run(
             [
-                "ffprobe",
+                ffprobe_command(),
                 "-v",
                 "error",
                 "-show_entries",
@@ -503,17 +596,77 @@ def _timestamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
 
 
+def transition_overlap(level_dir: Path, segment_count: int) -> float:
+    """Return the scene overlap declared by ``output/segments.yml``."""
+    import yaml
+
+    manifest = level_dir / "output" / "segments.yml"
+    if not manifest.is_file():
+        return 0.0
+    data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise CheckError("segments.yml must contain a mapping")
+    segments = data.get("segments") or []
+    if not isinstance(segments, list) or len(segments) != segment_count:
+        raise CheckError(
+            "caption generation requires one authored content item per video segment"
+        )
+    slides = load_slides(level_dir / "content")
+    for segment, (number, _) in zip(segments, slides, strict=True):
+        canonical = (level_dir / "audio" / f"slide-{number:03d}.wav").resolve()
+        if not isinstance(segment, dict) or not isinstance(
+            segment.get("narration"), str
+        ):
+            raise CheckError(
+                "Each caption segment requires its canonical narration path"
+            )
+        narration = (manifest.parent / segment["narration"]).resolve()
+        if narration != canonical:
+            raise CheckError("Caption segments must follow canonical slide/WAV order")
+        if segment.get("duration") is not None:
+            try:
+                matches = (
+                    abs(float(segment["duration"]) - _wav_seconds(canonical)) < 0.001
+                )
+            except (TypeError, ValueError) as error:
+                raise CheckError("Invalid caption segment duration") from error
+            if not matches:
+                raise CheckError(
+                    "Caption segments require full canonical WAV durations"
+                )
+    transition = data.get("transition")
+    if transition in (None, "none"):
+        return 0.0
+    if not isinstance(transition, dict):
+        raise CheckError("Caption transition must be a mapping or none")
+    try:
+        duration = float(transition.get("duration", 0.5))
+    except (TypeError, ValueError) as exc:
+        raise CheckError("segments.yml has an invalid transition duration") from exc
+    if duration <= 0:
+        raise CheckError("segments.yml transition duration must be positive")
+    return duration
+
+
 def build_captions(level_dir: Path) -> str:
     """Return WebVTT captions for the level's narration.
 
-    Each slide's cues span exactly that slide's narration WAV, which is how
-    ``demo-video`` sizes a segment. Within a slide, time is shared across
-    sentences by length, so cue text is exact and cue timing is estimated.
+    Cues span each unpadded narration WAV, offset by the assembler's silent
+    handles. Sentence lengths estimate within-slide timing; cue text is exact.
     """
     lines = ["WEBVTT", ""]
     offset = 0.0
-    index = 1
-    for number, slide in load_slides(level_dir / "content"):
+    cues: list[tuple[float, float, str]] = []
+    slides = load_slides(level_dir / "content")
+    overlap = transition_overlap(level_dir, len(slides))
+    transition = {}
+    if overlap:
+        import yaml
+
+        transition = yaml.safe_load(
+            (level_dir / "output/segments.yml").read_text(encoding="utf-8")
+        )["transition"]
+    for slide_index, (number, slide) in enumerate(slides):
         wav = level_dir / "audio" / f"slide-{number:03d}.wav"
         if not wav.is_file():
             raise CheckError(f"missing narration {wav}")
@@ -524,18 +677,29 @@ def build_captions(level_dir: Path) -> str:
             for chunk in _caption_chunks(sentence)
         ]
         total = sum(len(chunk) for chunk in chunks) or 1
-        start = offset
+        lead = overlap if slide_index > 0 or transition.get("fade_in", True) else 0.0
+        tail = (
+            overlap
+            if slide_index < len(slides) - 1 or transition.get("fade_out", True)
+            else 0.0
+        )
+        start = offset + lead
         for chunk in chunks:
             end = start + duration * len(chunk) / total
-            lines += [
-                str(index),
-                f"{_timestamp(start)} --> {_timestamp(end)}",
-                html.escape(_caption_lines(chunk), quote=False),
-                "",
-            ]
-            index += 1
+            cues.append((start, end, chunk))
             start = end
-        offset += duration
+        offset += duration + lead + tail
+        if slide_index < len(slides) - 1:
+            offset -= overlap
+    for index, (start, end, chunk) in enumerate(
+        sorted(cues, key=lambda cue: cue[0]), 1
+    ):
+        lines += [
+            str(index),
+            f"{_timestamp(start)} --> {_timestamp(end)}",
+            html.escape(_caption_lines(chunk), quote=False),
+            "",
+        ]
     return "\n".join(lines)
 
 
@@ -549,6 +713,37 @@ def style_metadata(level_dir: Path) -> dict:
     style = yaml.safe_load(style_file.read_text(encoding="utf-8")) or {}
     metadata = style.get("metadata") if isinstance(style, dict) else None
     return metadata if isinstance(metadata, dict) else {}
+
+
+def validate_media_timeline(level_dir: Path, video: Path) -> None:
+    """Reject raw assemblies whose duration differs from the canonical timeline."""
+    import yaml
+
+    slides = load_slides(level_dir / "content")
+    if not slides:
+        raise CheckError("Canonical timeline has no scenes")
+    overlap = transition_overlap(level_dir, len(slides))
+    expected = sum(
+        _wav_seconds(level_dir / "audio" / f"slide-{number:03d}.wav")
+        for number, _slide in slides
+    )
+    if overlap:
+        data = yaml.safe_load(
+            (level_dir / "output/segments.yml").read_text(encoding="utf-8")
+        )
+        transition = data["transition"]
+        expected += overlap * (
+            len(slides)
+            - 1
+            + int(transition.get("fade_in", True))
+            + int(transition.get("fade_out", True))
+        )
+    minutes = measure_minutes(video)
+    if minutes is None or abs(minutes * 60 - expected) > 0.15:
+        raise CheckError(
+            f"Raw assembly differs from canonical captions ({expected:.3f}s); "
+            "reassemble with canonical WAV order, full durations, and silent handles"
+        )
 
 
 _PAGE_STYLE = (
@@ -568,7 +763,12 @@ def transcript_on_screen(slide: dict, title: str) -> list[str]:
     ]
 
 
-def build_transcript_page(level: str, level_dir: Path) -> str:
+def build_transcript_page(
+    level: str,
+    level_dir: Path,
+    output_dir: Path | None = None,
+    narration_engine: str = "azure",
+) -> str:
     """Return an HTML page with a captioned player and a full transcript.
 
     The transcript lists every slide's title, on-screen text, and narration,
@@ -579,9 +779,16 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
     metadata = style_metadata(level_dir)
     title = str(metadata.get("title") or f"HVE Core {level}")
     language = str(metadata.get("language") or "en-US")
-    minutes = measure_minutes(level_dir / "output" / f"hve-demo-{level}.mp4")
+    minutes = measure_minutes(
+        (output_dir or level_dir / "output") / f"hve-demo-{level}.mp4"
+    )
     length = f" &middot; {minutes:.1f} minutes" if minutes else ""
     stem = f"hve-demo-{level}"
+    narration_notice = (
+        "<p>Silent video: no voiceover. The transcript contains the authored notes.</p>"
+        if narration_engine == "none"
+        else ""
+    )
     slides_link = (
         f' &middot; <a href="{stem}.html">Open the slides (HTML)</a>'
         if (level_dir / "output" / f"{stem}.html").is_file()
@@ -613,9 +820,10 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
         f"<style>{_PAGE_STYLE}</style></head><body><main>"
         '<p><a href="../../docs/demo-material/">Back to Demo Material</a></p>'
         f"<h1>{esc(title)}</h1><p>{esc(level)}{length}</p>"
+        f"{narration_notice}"
         f'<video controls preload="metadata"><source src="{stem}.mp4" type="video/mp4">'
         f'<track kind="captions" src="{stem}.vtt" srclang="{esc(language[:2])}" '
-        'label="English" default></video>'
+        'label="English"></video>'
         f'<p><a href="{stem}.mp4">Download the video (MP4)</a> &middot; '
         f'<a href="{stem}.pptx">Download the deck (PowerPoint)</a> &middot; '
         f'<a href="{stem}.vtt">Download the captions (WebVTT)</a>{slides_link}</p>'
@@ -712,7 +920,7 @@ def subtitle_languages(mp4: Path) -> list[str] | None:
     try:
         result = subprocess.run(
             [
-                "ffprobe",
+                ffprobe_command(),
                 "-v",
                 "error",
                 "-select_streams",
@@ -738,6 +946,209 @@ def subtitle_languages(mp4: Path) -> list[str] | None:
     return [
         str((stream.get("tags") or {}).get("language", "und")) for stream in streams
     ]
+
+
+def check_audio_mode(video: Path, narration_engine: str) -> dict:
+    """Verify that silent delivery contains no audio stream, even a silent one."""
+    try:
+        result = subprocess.run(
+            [
+                ffprobe_command(),
+                "-v",
+                "error",
+                "-select_streams",
+                "a",
+                "-show_entries",
+                "stream=index",
+                "-of",
+                "json",
+                str(video),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode:
+            raise CheckError(f"Cannot inspect audio streams: {result.stderr.strip()}")
+        streams = json.loads(result.stdout)["streams"]
+        if not isinstance(streams, list):
+            raise CheckError("Invalid audio stream report from FFprobe")
+    except (OSError, ValueError, KeyError, CheckError) as error:
+        return {"result": "fail", "evidence": str(error)}
+    expected_silence = narration_engine == "none"
+    passed = not streams if expected_silence else bool(streams)
+    return {
+        "result": "pass" if passed else "fail",
+        "evidence": (
+            "no audio stream; voiceover disabled"
+            if expected_silence and passed
+            else "audio stream present"
+            if passed
+            else "silent delivery contains an audio stream"
+            if expected_silence
+            else "narrated delivery has no audio stream"
+        ),
+    }
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_open_captions(
+    control: Path,
+    finalized: Path,
+    captions: Path,
+    evidence: Path,
+    source: Path | None = None,
+) -> dict:
+    """Compare captioned and uncaptioned encodes and write hash-bound evidence."""
+    cues = parse_webvtt(captions.read_text(encoding="utf-8"))
+    if not cues:
+        raise CheckError("captions file has no cues")
+    sample_seconds = (cues[0][0] + cues[0][1]) / 2
+    result = subprocess.run(
+        [
+            ffmpeg_command(),
+            "-v",
+            "error",
+            "-ss",
+            f"{sample_seconds:.3f}",
+            "-i",
+            str(control),
+            "-ss",
+            f"{sample_seconds:.3f}",
+            "-i",
+            str(finalized),
+            "-filter_complex",
+            "[0:v][1:v]blend=all_mode=difference,"
+            + "crop=iw:ih/3:0:2*ih/3,signalstats,bbox=min_val=16,"
+            + "metadata=mode=print:file=-",
+            "-frames:v",
+            "1",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = (
+            result.stderr.strip() or result.stdout.strip() or "no FFmpeg diagnostics"
+        )
+        raise CheckError(
+            f"FFmpeg frame comparison failed (exit {result.returncode}) for "
+            f"{control} and {finalized} at {sample_seconds:.3f}s: {detail}. "
+            "Verify that both inputs decode and FFmpeg supports the comparison filters."
+        )
+    values = {
+        line.rsplit(".", 1)[1].split("=", 1)[0]: int(line.rsplit("=", 1)[1])
+        for line in result.stdout.splitlines()
+        if line.startswith(
+            ("lavfi.signalstats.YMAX=", "lavfi.bbox.w=", "lavfi.bbox.h=")
+        )
+    }
+    box_area = values.get("w", 0) * values.get("h", 0)
+    if (
+        values.get("YMAX", 0) < MIN_OPEN_CAPTION_LUMA_DIFFERENCE
+        or values.get("w", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or values.get("h", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or box_area < MIN_OPEN_CAPTION_BOX_AREA
+    ):
+        raise CheckError(
+            "caption burn-in did not create a visible frame difference "
+            f"(YMAX={values.get('YMAX', 0)}, box={values.get('w', 0)}x"
+            f"{values.get('h', 0)})"
+        )
+    record = {
+        "schema_version": 1,
+        "result": "pass",
+        "sample_seconds": round(sample_seconds, 3),
+        "maximum_luma_difference": values["YMAX"],
+        "difference_box_width": values["w"],
+        "difference_box_height": values["h"],
+        "difference_box_area": box_area,
+        "control_video_sha256": _sha256(control),
+        "source_video_sha256": _sha256(source or control),
+        "video_sha256": _sha256(finalized),
+        "captions_sha256": _sha256(captions),
+    }
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    evidence.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return record
+
+
+def open_caption_evidence_problems(
+    video: Path, captions: Path, evidence: Path, source: Path | None = None
+) -> list[str]:
+    """Return problems with hash-bound open-caption verification evidence."""
+    if not evidence.is_file():
+        return ["open-caption verification evidence missing"]
+    try:
+        record = json.loads(evidence.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["open-caption verification evidence is unreadable"]
+    problems = []
+    if record.get("result") != "pass":
+        problems.append("open-caption verification did not pass")
+    if record.get("maximum_luma_difference", 0) < MIN_OPEN_CAPTION_LUMA_DIFFERENCE:
+        problems.append("open-caption frame difference is below the visibility floor")
+    if (
+        record.get("difference_box_width", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or record.get("difference_box_height", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or record.get("difference_box_area", 0) < MIN_OPEN_CAPTION_BOX_AREA
+    ):
+        problems.append("open-caption difference region is below the visibility floor")
+    if not video.is_file() or record.get("video_sha256") != _sha256(video):
+        problems.append("open-caption evidence does not match the delivered MP4")
+    if not captions.is_file() or record.get("captions_sha256") != _sha256(captions):
+        problems.append("open-caption evidence does not match the delivered WebVTT")
+    if source is not None and (
+        not source.is_file() or record.get("source_video_sha256") != _sha256(source)
+    ):
+        problems.append("open-caption evidence does not match the raw assembly")
+    return problems
+
+
+def publish_generation(level: str, stage: Path, output: Path) -> None:
+    """Install a validated delivery, rolling back replacements on failure."""
+    names = (
+        f"hve-demo-{level}.mp4",
+        f"hve-demo-{level}.vtt",
+        "open-captions.json",
+        "index.html",
+    )
+    if any(not (stage / name).is_file() for name in names):
+        raise CheckError("Incomplete staged delivery; previous output was preserved")
+    problems = open_caption_evidence_problems(
+        stage / names[0], stage / names[1], stage / names[2]
+    )
+    if problems:
+        raise CheckError("Invalid staged delivery: " + "; ".join(problems))
+    installed: list[str] = []
+    with tempfile.TemporaryDirectory(prefix=".delivery-backup-", dir=output) as backup:
+        backup_dir = Path(backup)
+        for name in names:
+            if (output / name).exists():
+                shutil.copy2(output / name, backup_dir / name)
+        try:
+            for name in names:
+                os.replace(stage / name, output / name)
+                installed.append(name)
+        except (OSError, KeyboardInterrupt):
+            for name in reversed(installed):
+                saved = backup_dir / name
+                if saved.exists():
+                    os.replace(saved, output / name)
+                else:
+                    (output / name).unlink(missing_ok=True)
+            raise
 
 
 class _TranscriptParser(HTMLParser):
@@ -829,23 +1240,26 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
     accessible deck."""
     output = level_dir / "output"
     problems = []
-    slides = load_slides(level_dir / "content")
-    narration = normalized_text(" ".join(notes_text(slide) for _, slide in slides))
     captions = output / f"hve-demo-{level}.vtt"
     if not captions.is_file():
         problems.append("captions file missing")
     else:
         try:
             cues = parse_webvtt(captions.read_text(encoding="utf-8"))
+            expected_cues = parse_webvtt(build_captions(level_dir))
         except CheckError as error:
             problems.append(str(error))
         else:
-            if normalized_text(" ".join(cue[2] for cue in cues)) != narration:
+            expected = normalized_text(" ".join(cue[2] for cue in expected_cues))
+            if normalized_text(" ".join(cue[2] for cue in cues)) != expected:
                 problems.append("caption text does not match the narration")
     video = output / f"hve-demo-{level}.mp4"
     if not video.is_file():
         problems.append("video missing")
     else:
+        problems += open_caption_evidence_problems(
+            video, captions, output / "open-captions.json"
+        )
         languages = subtitle_languages(video)
         if languages is None:
             problems.append("could not read the MP4 streams")
@@ -865,8 +1279,9 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
     return {
         "result": "fail" if problems else "pass",
         "evidence": "; ".join(problems)
-        or "English caption track and captions matching the narration, a transcript "
-        "covering every slide, slide titles, alt text, and language present",
+        or "open captions, an English selectable caption track, captions matching "
+        "the narration, a transcript covering every slide, slide titles, alt text, "
+        "and language present",
     }
 
 
@@ -919,7 +1334,7 @@ def evaluate(
     level_dir: Path,
     curriculum: dict[str, dict],
     capture_profile: str | None = None,
-    narration_engine: str = "piper",
+    narration_engine: str = "azure",
     html_deck: bool = False,
 ) -> dict:
     """Score the machine-verifiable criteria for one rendered level.
@@ -959,6 +1374,11 @@ def evaluate(
         else {"result": "deferred", "evidence": "content/global/style.yaml missing"}
     )
     checks["T-09"] = check_accessibility(level, level_dir)
+    if narration_engine == "none":
+        checks["T-11"] = check_audio_mode(
+            level_dir / "output" / f"hve-demo-{level}.mp4", narration_engine
+        )
+        checks["T-04"]["evidence"] += "; WAVs provide silent timing, not narration"
     if html_deck:
         checks["T-10"] = check_html_deck(level, level_dir)
     return {
@@ -966,6 +1386,9 @@ def evaluate(
         "level": level,
         "capture_profile": "live" if live else "deck-export",
         "narration_engine": narration_engine,
+        "timing_basis": "notes-word-count"
+        if narration_engine == "none"
+        else "speech-wav",
         "total_word_count": word_count(level_dir / "content"),
         "measured_duration_minutes": round(minutes, 2) if minutes else None,
         "contract_duration_minutes": {"min": contract["min"], "max": contract["max"]},
@@ -985,18 +1408,60 @@ def build_parser() -> argparse.ArgumentParser:
     segments = sub.add_parser("segments", help="Write output/segments.yml")
     segments.add_argument("--level-dir", type=Path, required=True)
     segments.add_argument("--output-name", required=True)
+    silent_timing = sub.add_parser(
+        "silent-timing", help="Write silent timing WAVs without speech synthesis"
+    )
+    silent_timing.add_argument("--level-dir", type=Path, required=True)
+    preflight = sub.add_parser(
+        "scripted-preflight", help="Reject unsupported deck-frame render inputs"
+    )
+    preflight.add_argument("--level", required=True, choices=LEVELS)
+    preflight.add_argument("--level-dir", type=Path, required=True)
+    preflight.add_argument("--capture", required=True, choices=("live", "deck-export"))
+    preflight.add_argument(
+        "--animation", choices=("none", "characters"), default="none"
+    )
     captions = sub.add_parser("captions", help="Write WebVTT captions")
     captions.add_argument("--level-dir", type=Path, required=True)
     captions.add_argument("--output", type=Path, required=True)
     transcript = sub.add_parser("transcript", help="Write output/index.html")
     transcript.add_argument("--level", required=True, choices=LEVELS)
     transcript.add_argument("--level-dir", type=Path, required=True)
+    transcript.add_argument("--output-dir", type=Path)
+    transcript.add_argument(
+        "--narration", choices=("azure", "piper", "none"), default="azure"
+    )
+    audio_check = sub.add_parser("check-audio-mode", help="Verify delivery audio mode")
+    audio_check.add_argument("--video", type=Path, required=True)
+    audio_check.add_argument(
+        "--narration", choices=("azure", "piper", "none"), required=True
+    )
+    publish = sub.add_parser("publish-generation", help="Install a staged delivery")
+    publish.add_argument("--level", required=True, choices=LEVELS)
+    publish.add_argument("--stage", type=Path, required=True)
+    publish.add_argument("--output-dir", type=Path, required=True)
+    verify_captions = sub.add_parser(
+        "verify-open-captions", help="Verify caption burn-in and write evidence"
+    )
+    verify_captions.add_argument("--control", type=Path, required=True)
+    verify_captions.add_argument("--finalized", type=Path, required=True)
+    verify_captions.add_argument("--captions", type=Path, required=True)
+    verify_captions.add_argument("--output", type=Path, required=True)
+    verify_captions.add_argument("--source", type=Path)
+    verify_captions.add_argument("--level-dir", type=Path)
+    caption_status = sub.add_parser(
+        "check-open-caption-evidence", help="Check existing caption evidence"
+    )
+    caption_status.add_argument("--video", type=Path, required=True)
+    caption_status.add_argument("--captions", type=Path, required=True)
+    caption_status.add_argument("--evidence", type=Path, required=True)
+    caption_status.add_argument("--source", type=Path)
     evaluate_cmd = sub.add_parser("evaluate", help="Score a rendered level")
     evaluate_cmd.add_argument("--level", required=True, choices=LEVELS)
     evaluate_cmd.add_argument("--level-dir", type=Path, required=True)
     evaluate_cmd.add_argument("--capture", choices=("live", "deck-export"))
     evaluate_cmd.add_argument(
-        "--narration", choices=("azure", "piper"), default="piper"
+        "--narration", choices=("azure", "piper", "none"), default="azure"
     )
     evaluate_cmd.add_argument(
         "--html-deck", action="store_true", help="Score T-10 for the HTML deck"
@@ -1020,6 +1485,14 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             return EXIT_SUCCESS
+        if args.command == "scripted-preflight":
+            validate_scripted_render(
+                args.level, args.level_dir, args.capture, args.animation
+            )
+            return EXIT_SUCCESS
+        if args.command == "silent-timing":
+            build_silent_timing(args.level_dir)
+            return EXIT_SUCCESS
         if args.command == "segments":
             target = args.level_dir / "output" / "segments.yml"
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -1032,12 +1505,36 @@ def main(argv: list[str] | None = None) -> int:
             args.output.write_text(build_captions(args.level_dir), encoding="utf-8")
             return EXIT_SUCCESS
         if args.command == "transcript":
-            target = args.level_dir / "output" / "index.html"
+            target = (args.output_dir or args.level_dir / "output") / "index.html"
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(
-                build_transcript_page(args.level, args.level_dir), encoding="utf-8"
+                build_transcript_page(
+                    args.level, args.level_dir, args.output_dir, args.narration
+                ),
+                encoding="utf-8",
             )
             return EXIT_SUCCESS
+        if args.command == "check-audio-mode":
+            result = check_audio_mode(args.video, args.narration)
+            print(json.dumps(result))
+            return EXIT_SUCCESS if result["result"] == "pass" else EXIT_FAILURE
+        if args.command == "publish-generation":
+            publish_generation(args.level, args.stage, args.output_dir)
+            return EXIT_SUCCESS
+        if args.command == "verify-open-captions":
+            if args.level_dir:
+                validate_media_timeline(args.level_dir, args.source or args.control)
+            result = verify_open_captions(
+                args.control, args.finalized, args.captions, args.output, args.source
+            )
+            print(json.dumps(result, indent=2))
+            return EXIT_SUCCESS
+        if args.command == "check-open-caption-evidence":
+            problems = open_caption_evidence_problems(
+                args.video, args.captions, args.evidence, args.source
+            )
+            print(json.dumps({"ok": not problems, "problems": problems}, indent=2))
+            return EXIT_FAILURE if problems else EXIT_SUCCESS
         result = evaluate(
             args.level,
             args.level_dir,

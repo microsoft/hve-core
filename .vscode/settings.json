@@ -67,16 +67,6 @@
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
   },
-  "chat.promptFilesLocations": {
-    ".github/prompts/accessibility": true,
-    ".github/prompts/data-science-engineering": true,
-    ".github/prompts/design-thinking": true,
-    ".github/prompts/engagement-reporting": true,
-    ".github/prompts/experimental": true,
-    ".github/prompts/hve-core": true,
-    ".github/prompts/rai-planning": true,
-    ".github/prompts/security": true
-  },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
     ".github/skills/accessibility": true,

@@ -8,7 +8,7 @@ tools:
 handoffs:
   - agent: DT Coach
     label: Start a DT project
-    prompt: /dt-start-project
+    prompt: "Start a new Design Thinking coaching project."
 ---
 
 # Design Thinking Learning Tutor

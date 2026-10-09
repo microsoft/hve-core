@@ -1,9 +1,9 @@
 ---
 title: backlog-management
-description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality."
+description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality, and for Azure DevOps pull request creation and build status or log retrieval."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-21
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality.
+Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality, and for Azure DevOps pull request creation and build status or log retrieval.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

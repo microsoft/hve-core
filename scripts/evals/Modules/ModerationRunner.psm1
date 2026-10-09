@@ -4,6 +4,9 @@
 # Purpose: Helpers for content moderation batch processing and orchestration
 #Requires -Version 7.4
 
+# Omit -Force so the standalone CIHelpers export is not shadowed by a nested re-import.
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1')
+
 <#
 .SYNOPSIS
     Builds a JSON-lines input file from a batch of records.
@@ -87,7 +90,7 @@ function ConvertTo-ModerationRecords {
     $records = @()
     foreach ($filePath in $FileList) {
         if (-not (Test-Path -LiteralPath $filePath)) {
-            Write-Warning "File not found: $filePath"
+            Write-CIAnnotation -Level Warning -Message "File not found: $filePath"
             continue
         }
         $relativePath = (Resolve-Path -LiteralPath $filePath -Relative -RelativeBasePath $RepoRoot).TrimStart('.', '\', '/')
@@ -145,7 +148,7 @@ function Test-ModerationOutput {
     foreach ($record in $output.records) {
         if ($record.flagged) {
             $labels = $record.flaggedLabels -join ', '
-            Write-Host "::error file=$($record.id)::Content moderation flag: $labels"
+            Write-CIAnnotation -Level Error -File $record.id -Message "Content moderation flag: $labels"
         }
     }
     return $true

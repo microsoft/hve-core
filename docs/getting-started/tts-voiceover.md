@@ -3,7 +3,7 @@ title: TTS Voice-Over Skill
 description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure Speech SDK or an offline Piper engine
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-10-09
 ms.topic: how-to
 keywords:
   - tts
@@ -69,16 +69,25 @@ uv run scripts/generate_voiceover.py --dry-run --content-dir path/to/content
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
 
-To generate narration offline without an Azure Speech resource, install [Piper](https://github.com/OHF-Voice/piper1-gpl) separately, download a voice, and select the `piper` engine:
+Azure Speech remains the default. For optional local narration without an Azure
+Speech resource, install [Piper](https://github.com/OHF-Voice/piper1-gpl)
+separately, download a voice, and explicitly select the `piper` engine.
+The HVE demo-material CI workflow uses neither engine and generates silent videos.
 
 ```bash
 uv tool install piper-tts
-uvx --from piper-tts python -m piper.download_voices en_US-joe-medium --data-dir ~/.local/share/piper
+uvx --from piper-tts python -m piper.download_voices en_US-norman-medium --data-dir ~/.local/share/piper
 uv run scripts/generate_voiceover.py --engine piper --piper-data-dir ~/.local/share/piper \
   --content-dir path/to/content --output-dir voice-over
 ```
 
-Piper is GPL-3.0-or-later and is not installed with the skill. Each voice has its own license in its model card; the default `en_US-joe-medium` voice is CC0. Piper sounds less natural than Azure neural voices, so prefer Azure for published narration.
+Piper is GPL-3.0-or-later and is not installed with the skill. Each voice has
+its own license and dataset provenance in its model card. The default
+`en_US-norman-medium` [model
+card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/norman/medium/MODEL_CARD)
+records that it was trained from scratch on public-domain LibriVox recordings,
+and the Piper voices repository is MIT licensed. Piper sounds less natural than
+Azure neural voices, so prefer Azure for published narration.
 
 ### 3. Embed Audio into PPTX
 
