@@ -3,12 +3,39 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 import scan
+
+# Shape of `@axe-core/cli@4.12.1 --stdout` output: a JSON array with one result
+# object per scanned URL, trimmed to the fields scan.py reads.
+AXE_STDOUT_PAYLOAD = [
+    {
+        "testEngine": {"name": "axe-core", "version": "4.12.1"},
+        "url": "https://example.com/",
+        "violations": [
+            {
+                "id": "image-alt",
+                "impact": "critical",
+                "description": (
+                    "Ensure <img> elements have alternative text or a role of "
+                    "none or presentation"
+                ),
+                "nodes": [{"html": '<img src="x.png">', "target": ["img"]}],
+            }
+        ],
+        "passes": [
+            {"id": "document-title", "nodes": [{"target": ["html"]}]},
+            {"id": "html-has-lang", "nodes": [{"target": ["html"]}]},
+        ],
+        "incomplete": [],
+        "inapplicable": [{"id": "accesskeys", "nodes": []}],
+    }
+]
 
 
 def test_given_parser_when_target_and_output_provided_then_arguments_are_parsed() -> (
@@ -109,6 +136,40 @@ def test_given_target_when_run_scan_then_invokes_scanner_with_list_arguments() -
     ]
     assert command[-2:] == ["--", "https://example.com"]
     assert mock_run.call_args.kwargs["cwd"] == scan.SCANNER_NPM_ROOT
+
+
+def test_given_axe_stdout_array_when_run_scan_then_returns_normalized_json() -> None:
+    with patch("scan.subprocess.run") as mock_run:
+        mock_run.return_value = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(AXE_STDOUT_PAYLOAD, indent=2),
+            stderr="",
+        )
+
+        result = scan.run_scan("https://example.com", allow_hosts=["example.com"])
+
+    command = mock_run.call_args.args[0]
+    assert command[4:] == ["--stdout", "--", "https://example.com"]
+    assert result == {
+        "target": "https://example.com",
+        "summary": {
+            "violations": 1,
+            "passes": 2,
+            "incomplete": 0,
+            "inapplicable": 1,
+        },
+        "violations": [
+            {
+                "id": "image-alt",
+                "impact": "critical",
+                "description": (
+                    "Ensure <img> elements have alternative text or a role of "
+                    "none or presentation"
+                ),
+                "nodes": 1,
+            }
+        ],
+    }
 
 
 def test_given_scanner_npm_root_when_inspected_then_registry_is_anchored() -> None:

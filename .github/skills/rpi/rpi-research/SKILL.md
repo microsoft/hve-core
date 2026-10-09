@@ -70,7 +70,7 @@ When the invoking agent or the user's request names the Research task or its slu
    4. Use `vscode_askQuestions` when available. When it is unavailable, ask the same decision in chat and wait. Persist each answer, unanswered item, resulting decision, and readiness effect before continuing.
    5. For `agent-owned`, select the evidence-supported option from the brief, criteria, confirmed direction, and recorded trade-offs. Persist the decision, rationale, evidence, and readiness effect without asking the user. When evidence cannot support a material choice, record the smallest evidence gap and stop with Not ready or Blocked rather than guessing.
    6. When no unresolved material decision remains, record that no walkthrough is required. Do not use the question tool only to obtain acknowledgment.
-10. When useful, offer a conversational walkthrough in the final response and use the primary artifact as its navigable source of truth. Reserve `vscode_askQuestions` for material `user-owned` or `user-retained` intake, direction, research, and decision checkpoints in steps 4, 5, and 9.
+10. Close with the Final Response below. Reserve `vscode_askQuestions` for material `user-owned` or `user-retained` intake, direction, research, and decision checkpoints in steps 4, 5, and 9.
 
 ## Inputs
 
@@ -92,7 +92,7 @@ When the invoking agent or the user's request names the Research task or its slu
 * The artifact preserves alternatives and records a selected recommendation with evidence-based rejection rationale when the caller requests convergence. Other output modes preserve the decision state without forcing a selection.
 * Material decisions are resolved according to the recorded participation mode. User-owned and user-retained decisions use a focused, link-backed walkthrough; agent-owned decisions record an evidence-based selection or an honest blocker.
 * Any helper use is recorded with what was verified at the source. Waves that ran without a helper record their evidence without implying one ran.
-* The final response is concise, evidence-first, and names any unresolved blocker or explicit no-handoff reason.
+* The final response leads with the result of what the user asked for, backed by evidence, and names any unresolved blocker or explicit no-handoff reason.
 
 ## Constraints
 
@@ -113,10 +113,6 @@ When the invoking agent or the user's request names the Research task or its slu
 * Keep hypotheses, conjectures, claims, ideas, and discoveries distinct from facts by using the evidence states and message shapes in the reference.
 * Before a user question, provide its decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 * Review Decisions and Feedback by related group. Present one group at a time by default and batch only tightly coupled decisions. Keep the explanation and any useful Mermaid diagram in the conversation before invoking `vscode_askQuestions`; keep tool prompts concise and directly answerable.
-* At closeout, separate research execution status from planning readiness or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
-* Advise `/compact` only when stale tool output, superseded reasoning, or completed-wave detail outweighs useful current context and the primary research artifact is current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-* Apply the continuation contract in `references/research.md` at closeout. In standalone context, remain research-only and do not invoke a peer phase. Return the primary artifact to an active RPI Agent parent for parent-owned continuation.
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop Rules
 
@@ -126,12 +122,19 @@ When the invoking agent or the user's request names the Research task or its slu
 * Complete the contrarian wave and synthesis before stopping an executed cycle, even when earlier waves meet their local criteria.
 * Re-enter research with another complete three-wave cycle when a material gap remains and a targeted source or question could change the current decision or readiness state.
 
-## Handoff
-
-The primary artifact is the only research artifact. It owns synthesized questions, findings, canonical evidence IDs, current decisions, user research decisions, Research disposition, and Planning Readiness. Return a pointer-first handoff containing current decisions, blockers, evidence IDs, Planning Readiness, Research disposition, and the primary artifact path. Exclude raw helper returns and obsolete artifact bodies. Apply the canonical continuation contract in `references/research.md`: standalone research provides only its permitted advisory, while a confirmed automatic RPI Agent owns any eligible continuation.
-
 ## Final Response
 
-Return a concise, evidence-first response headed `## rpi-research: [Topic]`. Include research execution status, Research disposition, Planning Readiness or decision state, selected approach only when applicable, key evidence, alternatives, unresolved decisions or risks, research-only constraint status, artifact self-check, and the continuation record required by `references/research.md`. Follow Conversation guidance for conditional compaction advice, standalone or parent-owned continuation, the linked artifact table, and final next steps.
+Close the research with one response in this order. Progress updates during research do not replace it.
+
+1. Start with the heading `## rpi-research: [Topic]`.
+2. Give the result of what the user asked for, in plain language: the bottom line when they asked to research a topic or task, or a direct answer to each question they asked. Say whether the research completed, partially completed, or stopped blocked, and name any part of the request it could not resolve with the evidence still missing. Do not restate the research questions you derived; they stay in the artifact.
+3. Give only what supports or qualifies that result: the decisive evidence, and any caveat, blocker, or decision the user still needs to make.
+4. Give the continuation for the current context, as defined by the Planning Readiness, Continuation, and Re-entry table in `references/research.md`:
+   * Standalone: recommend exactly `/rpi-plan` when the research supports planning; otherwise say in plain language why there is no handoff. Do not invoke a peer phase.
+   * RPI Agent session: return the current decisions, blockers, canonical evidence IDs, Research disposition, Planning Readiness, and primary artifact path, and state whether the parent continues automatically, waits for explicit advancement, or stays stopped by a recorded gate. Do not ask the user to attach the artifact.
+5. Add a Markdown table with the header `| Artifact | Description |` and one row per relevant existing artifact, starting with the primary artifact. Write each row as `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using the actual workspace-relative path as both link text and destination. Omit unavailable files.
+6. End with `## Next Steps`: the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When a walkthrough of the findings would help, offer one, using the primary artifact as its source. When stale tool output, superseded reasoning, or completed-wave detail outweighs useful context and the primary artifact is current, also tell the user to run `/compact` before the next RPI command and name the state and artifact pointers to keep; otherwise omit compaction advice.
+
+Keep Research disposition, Planning Readiness, research waves, helper use, constraint status, and the artifact self-check in the primary artifact. Outside the RPI Agent continuation in step 4, mention one only when it changes what the user should do or the caller asks for an audit closeout, and state it as a plain sentence, such as "Planning can start now" rather than "Planning Readiness: Ready". Leave out raw helper returns and obsolete artifact bodies.
 
 

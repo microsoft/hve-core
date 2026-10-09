@@ -14,14 +14,14 @@ Behavior conformance answers a focused question per stimulus: *does the asset un
 * Instruction conformance: verifies that instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
 * Skill behavior: verifies that skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
-Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses five `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
+Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses seven `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
 
 ## Spec inventory
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `instructions.eval.yaml`   | 3i   | Advisory | 77      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 301     | `behavior-conformance` | Active (Phase 13) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 303     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
@@ -33,11 +33,11 @@ The maintained `instructions.eval.yaml` inventory contains 77 stimuli: 69 instru
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`, `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 301 stimuli across 83 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
+The maintained `skill-behavior.eval.yaml` inventory contains 303 stimuli across 83 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. Other installed skill domains remain in advisory mode.
 
-The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while five skill graders use `prompt` model judgment for semantic contracts such as the changes-record contract.
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while seven skill graders use `prompt` model judgment for semantic contracts such as the changes-record contract.
 
 ### Rust HTTP unit-test evidence boundary
 
