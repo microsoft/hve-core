@@ -2017,4 +2017,81 @@ jobs:
             $result.Violations[0].Name | Should -BeLike 'npm install*'
         }
     }
+
+    Context 'when workflow uses list-item run steps and npm options' {
+        BeforeAll {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-list-item.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-list-item.yml'
+            }
+            $script:listItemViolations = @((Get-WorkflowNpmCommandViolations -FileInfo $fileInfo).Violations)
+        }
+
+        It 'should detect npm install in a one-line list-item run step' {
+            ($script:listItemViolations | Where-Object Line -EQ 7).Name | Should -Be 'npm install'
+        }
+
+        It 'should detect npm install inside a list-item run block' {
+            ($script:listItemViolations | Where-Object Line -EQ 9).Name | Should -Be 'npm install'
+        }
+
+        It 'should detect npm install when npm options precede the subcommand' {
+            ($script:listItemViolations | Where-Object Line -EQ 16).Name | Should -Be 'npm --prefix scripts/extension install'
+        }
+
+        It 'should not treat sibling keys or the next step as list-item block content' {
+            $script:listItemViolations.Line | Should -Not -Contain 12
+            $script:listItemViolations.Line | Should -Not -Contain 13
+        }
+
+        It 'should not flag npm ci with options or non-npm list-item steps' {
+            $script:listItemViolations.Line | Should -Not -Contain 17
+            $script:listItemViolations.Line | Should -Not -Contain 18
+        }
+
+        It 'should keep scanning a run block after a heredoc line that looks like a run key' {
+            ($script:listItemViolations | Where-Object Line -EQ 24).Name | Should -Be 'npm install'
+            $script:listItemViolations.Line | Should -Not -Contain 22
+        }
+
+        It 'should report only the four unpinned commands' {
+            $script:listItemViolations.Line | Should -Be @(7, 9, 16, 24)
+        }
+    }
+}
+
+Describe 'Test-NpmCommandLine' -Tag 'Unit' {
+    It 'Matches <Line> when npm options precede the subcommand' -ForEach @(
+        @{ Line = 'npm --prefix scripts/extension install'; Expected = 'npm --prefix scripts/extension install' }
+        @{ Line = 'npm --prefix=dir install'; Expected = 'npm --prefix=dir install' }
+        @{ Line = 'npm -g install foo'; Expected = 'npm -g install' }
+        @{ Line = 'npm --prefix dir i'; Expected = 'npm --prefix dir i' }
+        @{ Line = 'npm --prefix ${{ matrix.dir }} install'; Expected = 'npm --prefix ${{ matrix.dir }} install' }
+        @{ Line = 'npm --prefix "${{ github.workspace }}/ext" install'; Expected = 'npm --prefix "${{ github.workspace }}/ext" install' }
+        @{ Line = 'npm --prefix="${{ matrix.dir }}" install'; Expected = 'npm --prefix="${{ matrix.dir }}" install' }
+        @{ Line = 'npm --omit dev install'; Expected = 'npm --omit dev install' }
+    ) {
+        Test-NpmCommandLine -Line $Line | Should -Be $Expected
+    }
+
+    It 'Does not match <Line>' -ForEach @(
+        @{ Line = 'npm ci' }
+        @{ Line = 'npm --prefix dir ci' }
+        @{ Line = 'npm --prefix ${{ matrix.dir }} ci' }
+        @{ Line = 'npm --prefix update-dir ci' }
+        @{ Line = 'npm --silent ci' }
+        @{ Line = 'npm --prefix docs run build' }
+        @{ Line = 'npm run install-deps' }
+        @{ Line = 'npm -s run update-snapshots' }
+        @{ Line = 'npm --silent run install-deps' }
+        @{ Line = 'npm --workspaces --if-present run update:version' }
+        @{ Line = 'npm --yes exec -- playwright install --with-deps chromium' }
+        @{ Line = 'npm --prefix install ci' }
+        @{ Line = 'npm --version' }
+        @{ Line = 'npx playwright install' }
+        @{ Line = 'pnpm install' }
+    ) {
+        Test-NpmCommandLine -Line $Line | Should -BeNullOrEmpty
+    }
 }

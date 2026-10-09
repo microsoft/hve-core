@@ -210,6 +210,11 @@ fixed-name VSIX and dependency SBOM through digest-checked transfers. It never
 installs dependencies or packages the extension. No job both packages and
 signs.
 
+`release-vsix-publish.yml` sets `cache-mode: none`, so the post-tag producer
+and every workflow it calls, including the pinned signer, run without GitHub
+Actions cache access. Each release installs its dependencies fresh, and no
+cache written by another workflow can influence the signed VSIX.
+
 The signer revision is pinned, and Dependabot ignores it. Update the caller in
 `release-vsix-publish.yml`, the expected signer revisions in the release and
 Marketplace publish workflows, the extension tests, and the `--signer-digest`

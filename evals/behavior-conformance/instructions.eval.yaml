@@ -1043,6 +1043,30 @@ stimuli:
         config:
           pattern: "(?i)\\bthis\\b|data\\s+source|singleton|azurerm_client_config"
 
+  - name: instruction-bicep-parameter-conformance
+    prompt: |
+      You are adding an `adminPassword` parameter to the Bicep template at
+      `infra/main.bicep`. Which `.github/instructions/**/*.instructions.md`
+      file applies (cite its path) and what does it require for sensitive
+      parameters and required parameter defaults?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/coding-standards/bicep/bicep.instructions.md
+          dest: .github/instructions/coding-standards/bicep/bicep.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: bicep
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-bicep-parameter-conformance-applyto-evidence
+        config:
+          pattern: "(?i)\\*\\.bicep|bicep\\.instructions\\.md|bicep/"
+      - type: output-matches
+        name: instruction-bicep-parameter-conformance-scope-language
+        config:
+          pattern: "(?i)@secure|secure\\(\\)|\\bno\\s+defaults?\\b"
+
   - name: instruction-pptx-conformance
     prompt: |
       You are building a PowerPoint deck and authoring content under

@@ -68,6 +68,8 @@ Describe 'DependencyViolation' -Tag 'Unit' {
             @{ Value = 'MissingVersionComment' }
             @{ Value = 'MissingPermissions' }
             @{ Value = 'MissingJobPermissions' }
+            @{ Value = 'ExcessiveWorkflowPermissions' }
+            @{ Value = 'BroadPermissionsScalar' }
             @{ Value = '' }
         ) {
             $v = [DependencyViolation]::new()
