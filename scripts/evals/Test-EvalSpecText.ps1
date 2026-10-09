@@ -340,7 +340,7 @@ function Write-TextModerationAnnotations {
 
 if ($MyInvocation.InvocationName -ne '.') {
     $resolvedRepoRoot = Resolve-RepoRoot -Hint $RepoRoot
-    $shimPath = Join-Path -Path $PSScriptRoot -ChildPath 'Modules/retext-runner.mjs'
+    $shimPath = Join-Path -Path $PSScriptRoot -ChildPath 'Modules/retext-runner.mts'
     if (-not (Test-Path -LiteralPath $shimPath -PathType Leaf)) {
         Write-Error "retext-runner shim not found at '$shimPath'"
         exit 2

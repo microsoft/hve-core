@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
-// retext-runner.mjs
+// retext-runner.mts
 //
 // Runs retext-equality and retext-profanities against stimulus prompt text
 // supplied via a JSON manifest on stdin. Emits a JSON report on stdout and
@@ -21,11 +21,36 @@ import retextProfanities from 'retext-profanities';
 import retextStringify from 'retext-stringify';
 import { compareMessage } from 'vfile-sort';
 
+interface ManifestItem {
+    spec?: string;
+    stimulus?: string;
+    text?: unknown;
+}
+
+interface ReportMessage {
+    source: string;
+    rule: string;
+    message: string;
+    line: number | null;
+    column: number | null;
+}
+
+interface ReportEntry {
+    spec: string;
+    stimulus: string;
+    messages: ReportMessage[];
+}
+
+interface Offsets {
+    start: number;
+    end: number;
+}
+
 // Phrase-aware allowlist keyed by rule ID. When a rule fires, the ±60-char
 // window around the match is tested against each regex. A match suppresses
 // the message, so bare uses ("abuse") still flag while established technical
 // bigrams ("token abuse", "penetration test") pass through.
-const PHRASE_ALLOWLIST = {
+const PHRASE_ALLOWLIST: Readonly<Record<string, readonly RegExp[]>> = {
     execution: [
         /\b(code|command|remote|arbitrary|script|query|task|job|pipeline|workflow|test|order|parallel|sequential|tool|function|program|process|step)[\s-]+execution\b/i,
         /\bexecution\s+(context|environment|order|mode|model|engine|plan|policy|time|path|trace|step|flow|phase)\b/i,
@@ -154,15 +179,16 @@ const PHRASE_ALLOWLIST = {
 
 const CONTEXT_RADIUS = 60;
 
-function messageOffsets(message) {
-    const place = message.place ?? message.position;
-    const start = place?.start?.offset;
-    const end = place?.end?.offset ?? start;
-    return start == null ? null : { start, end };
+function messageOffsets(message: VFileMessage): Offsets | null {
+    // A bare Point carries no start/end range, so only a Position yields offsets.
+    const place = message.place && 'start' in message.place ? message.place : undefined;
+    const start = place?.start.offset;
+    const end = place?.end.offset ?? start;
+    return start == null || end == null ? null : { start, end };
 }
 
-function isAllowedByPhrase(message, text) {
-    const patterns = PHRASE_ALLOWLIST[message.ruleId];
+function isAllowedByPhrase(message: VFileMessage, text: string): boolean {
+    const patterns = message.ruleId ? PHRASE_ALLOWLIST[message.ruleId] : undefined;
     if (!patterns || patterns.length === 0) {
         return false;
     }
@@ -176,7 +202,7 @@ function isAllowedByPhrase(message, text) {
     return patterns.some((re) => re.test(window));
 }
 
-async function readStdin() {
+async function readStdin(): Promise<string> {
     let data = '';
     input.setEncoding('utf8');
     for await (const chunk of input) {
@@ -185,7 +211,7 @@ async function readStdin() {
     return data;
 }
 
-function normalizeMessage(message, source) {
+function normalizeMessage(message: VFileMessage, source: string): ReportMessage {
     return {
         source,
         rule: message.ruleId ?? message.source ?? source,
@@ -200,7 +226,9 @@ const equalityProcessor = unified()
     .use(retextEquality)
     .use(retextStringify);
 
-async function runEquality(text) {
+type VFileMessage = Awaited<ReturnType<typeof equalityProcessor.process>>['messages'][number];
+
+async function runEquality(text: string): Promise<ReportMessage[]> {
     const file = await equalityProcessor.process(text);
     return [...(file.messages ?? [])]
         .sort(compareMessage)
@@ -215,14 +243,14 @@ const profanityProcessor = unified()
     .use(retextProfanities, { sureness: 1 })
     .use(retextStringify);
 
-async function runProfanities(text) {
+async function runProfanities(text: string): Promise<ReportMessage[]> {
     const file = await profanityProcessor.process(text);
     return (file.messages ?? [])
         .filter((m) => !isAllowedByPhrase(m, text))
         .map((m) => normalizeMessage(m, 'retext-profanities'));
 }
 
-async function main() {
+async function main(): Promise<void> {
     const raw = await readStdin();
     if (!raw.trim()) {
         output.write(JSON.stringify({ results: [] }) + '\n');
@@ -230,11 +258,12 @@ async function main() {
         return;
     }
 
-    let manifest;
+    let manifest: unknown;
     try {
         manifest = JSON.parse(raw);
     } catch (err) {
-        stderr.write(`retext-runner: failed to parse manifest JSON — ${err.message}\n`);
+        const reason = err instanceof Error ? err.message : String(err);
+        stderr.write(`retext-runner: failed to parse manifest JSON — ${reason}\n`);
         process.exitCode = 2;
         return;
     }
@@ -245,10 +274,11 @@ async function main() {
         return;
     }
 
-    const results = [];
+    const items: (ManifestItem | null | undefined)[] = manifest;
+    const results: ReportEntry[] = [];
     let flagged = 0;
 
-    for (const item of manifest) {
+    for (const item of items) {
         const spec = item?.spec ?? '<unknown>';
         const stimulus = item?.stimulus ?? '<unknown>';
         const text = typeof item?.text === 'string' ? item.text : '';
@@ -271,7 +301,8 @@ async function main() {
     process.exitCode = flagged > 0 ? 1 : 0;
 }
 
-main().catch((err) => {
-    stderr.write(`retext-runner: unexpected error — ${err.stack ?? err.message}\n`);
+main().catch((err: unknown) => {
+    const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+    stderr.write(`retext-runner: unexpected error — ${detail}\n`);
     process.exitCode = 2;
 });
