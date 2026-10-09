@@ -28,6 +28,72 @@ def mock_ffmpeg_dependencies(mocker):
 
 
 class TestRuntimeTransitions:
+    def test_given_long_audio_when_scene_trimmed_then_trailing_handle_is_silent(
+        self, tmp_path
+    ):
+        import array
+        import math
+        import shutil
+        import subprocess
+        import wave
+
+        ffmpeg = shutil.which("ffmpeg")
+        if not ffmpeg:
+            pytest.skip("Existing FFmpeg required")
+        visual = tmp_path / "frame.ppm"
+        visual.write_bytes(b"P6\n160 90\n255\n" + b"\x40\x90\x40" * (160 * 90))
+        narration = tmp_path / "long.wav"
+        samples = array.array(
+            "h",
+            [
+                int(12000 * math.sin(2 * math.pi * 440 * index / 48000))
+                for index in range(4 * 48000)
+            ],
+        )
+        with wave.open(str(narration), "wb") as audio:
+            audio.setnchannels(1)
+            audio.setsampwidth(2)
+            audio.setframerate(48000)
+            audio.writeframes(samples.tobytes())
+        output = tmp_path / "trimmed.mp4"
+
+        assemble_video._render_segment(
+            segment={
+                "visual": str(visual),
+                "narration": str(narration),
+                "duration": 2,
+                "lead": 0.5,
+                "tail": 0.5,
+            },
+            output_path=output,
+            resolution="160x90",
+            fps=24,
+            ffmpeg_path=ffmpeg,
+        )
+        decoded = subprocess.run(
+            [
+                ffmpeg,
+                "-v",
+                "error",
+                "-ss",
+                "2.52",
+                "-i",
+                str(output),
+                "-t",
+                "0.48",
+                "-f",
+                "s16le",
+                "-acodec",
+                "pcm_s16le",
+                "-",
+            ],
+            capture_output=True,
+            check=True,
+        ).stdout
+
+        assert decoded
+        assert max(abs(sample) for sample in array.array("h", decoded)) < 200
+
     def test_given_short_scene_without_fades_when_filtered_then_noop(self):
         assert assemble_video._transition_filter(
             [0.4], {"duration": 0.5, "fade_in": False, "fade_out": False}

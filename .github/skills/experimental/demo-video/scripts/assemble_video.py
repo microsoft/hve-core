@@ -437,7 +437,8 @@ def _render_segment(
     if lead or tail:
         command[-1:-1] = [
             "-af",
-            f"adelay={round(lead * 1000)}:all=1,apad,"
+            f"atrim=duration={duration},asetpts=PTS-STARTPTS,"
+            + f"adelay={round(lead * 1000)}:all=1,apad,"
             + f"atrim=duration={rendered_duration}",
         ]
     _run_ffmpeg(command, timeout=timeout, step=f"FFmpeg render of {output_path.name}")

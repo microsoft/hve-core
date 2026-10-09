@@ -3,7 +3,7 @@ title: TTS Voice-Over Skill
 description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure Speech SDK or an offline Piper engine
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-10-09
 ms.topic: how-to
 keywords:
   - tts
@@ -69,7 +69,10 @@ uv run scripts/generate_voiceover.py --dry-run --content-dir path/to/content
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
 
-To generate narration offline without an Azure Speech resource, install [Piper](https://github.com/OHF-Voice/piper1-gpl) separately, download a voice, and select the `piper` engine:
+Azure Speech remains the default. For optional local narration without an Azure
+Speech resource, install [Piper](https://github.com/OHF-Voice/piper1-gpl)
+separately, download a voice, and explicitly select the `piper` engine.
+The HVE demo-material CI workflow uses neither engine and generates silent videos.
 
 ```bash
 uv tool install piper-tts

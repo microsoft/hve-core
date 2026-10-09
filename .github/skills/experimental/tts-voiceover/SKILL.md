@@ -17,7 +17,7 @@ This skill reads `content.yaml` files from a PowerPoint skill content directory,
 Two engines are available through `--engine`:
 
 * `azure` (default) sends SSML to Azure AI Speech neural voices. Use it for published narration.
-* `piper` runs a separately installed [Piper](https://github.com/OHF-Voice/piper1-gpl) executable on the local machine. It needs no credentials or network access after the voice is downloaded, which suits scheduled CI builds. Narration never leaves the host.
+* `piper` is an explicit optional local choice using a separately installed [Piper](https://github.com/OHF-Voice/piper1-gpl) executable. It needs no credentials or network access after the voice is downloaded. Narration never leaves the host. HVE demo-material CI does not use either speech engine; it generates silent videos instead.
 
 ## Prerequisites
 

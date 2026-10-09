@@ -15,6 +15,7 @@ readonly SKILL_ROOT
 
 LEVEL=""
 LEVEL_DIR=""
+NARRATION="azure"
 CHECK_PREREQUISITES="false"
 TEMP_DIR=""
 CAPTIONED=""
@@ -29,6 +30,7 @@ Usage: $(basename "$0") --level <L100|L200|L300|L400> --level-dir <dir>
 Options:
   --level <level>      Level label from the curriculum
   --level-dir <dir>    Authored level directory containing content/ and output/
+  --narration <azure|piper|none>  Audio mode (default: azure; none removes all audio)
   --check-prerequisites
                        Resolve and print compatible FFmpeg executables, then exit
   -h, --help           Show this help message
@@ -52,6 +54,7 @@ parse_args() {
     case "$1" in
       --level) LEVEL="$2"; shift 2 ;;
       --level-dir) LEVEL_DIR="$2"; shift 2 ;;
+      --narration) NARRATION="$2"; shift 2 ;;
       --check-prerequisites) CHECK_PREREQUISITES="true"; shift ;;
       -h|--help) usage ;;
       *) err "Unknown option: $1" ;;
@@ -105,9 +108,10 @@ print_install_guidance() {
       ;;
     MINGW*|MSYS*|CYGWIN*)
       printf '%s\n' \
-        "Install a compatible FFmpeg after approval, for example:" \
-        "  winget install Gyan.FFmpeg" \
-        "The selected build must include libass subtitles and libx264."
+        "Native Windows shells are not supported by this finalizer." \
+        "Open a WSL2 Linux shell and install Linux FFmpeg/ffprobe after approval." \
+        "For Ubuntu/Debian in WSL2: sudo apt-get update && sudo apt-get install ffmpeg" \
+        "Use Linux paths and a build with libass subtitles and libx264."
       ;;
     *)
       printf '%s\n' \
@@ -192,6 +196,7 @@ validate_tools() {
 }
 
 validate_args() {
+  [[ "${NARRATION}" =~ ^(azure|piper|none)$ ]] || err "Invalid narration mode."
   [[ "${LEVEL}" =~ ^L[1-4]00$ ]] || err "--level must be L100 to L400."
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${LEVEL_DIR}/output" ]] || err "No output/ under ${LEVEL_DIR}."
@@ -219,11 +224,17 @@ finalize_video() {
     --video "${video}" \
     --captions "${captions}" \
     --source "${raw}" \
-    --evidence "${evidence}" >/dev/null 2>&1; then
+    --evidence "${evidence}" >/dev/null 2>&1 \
+    && uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py \
+      check-audio-mode --video "${video}" --narration "${NARRATION}" >/dev/null 2>&1; then
     cp "${video}" "${CAPTIONED}"
     cp "${evidence}" "${TEMP_DIR}/open-captions.json"
   else
   cp "${captions}" "${TEMP_DIR}/captions.vtt"
+  local -a audio_options=(-map '0:a?' -c:a copy -metadata:s:a:0 language=eng)
+  if [[ "${NARRATION}" == "none" ]]; then
+    audio_options=(-an)
+  fi
   "${FFMPEG}" -y -v error \
     -i "${raw}" \
     -map 0:v:0 -map '0:a?' \
@@ -232,18 +243,19 @@ finalize_video() {
     -movflags +faststart \
     "${CONTROL}"
 
+  pushd "${TEMP_DIR}" >/dev/null
   "${FFMPEG}" -y -v error \
     -i "${raw}" \
-    -i "${TEMP_DIR}/captions.vtt" \
-    -vf "subtitles=filename='${TEMP_DIR}/captions.vtt'" \
-    -map 0:v:0 -map '0:a?' -map 1:0 \
+    -i captions.vtt \
+    -vf "subtitles=filename=captions.vtt" \
+    -map 0:v:0 -map 1:0 \
     -c:v libx264 -preset medium -crf 18 \
-    -c:a copy -c:s mov_text \
-    -metadata:s:a:0 language=eng \
+    "${audio_options[@]}" -c:s mov_text \
     -metadata:s:s:0 language=eng \
     -disposition:s:0 0 \
     -movflags +faststart \
     "${CAPTIONED}"
+  popd >/dev/null
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py \
     verify-open-captions \
     --control "${CONTROL}" \
@@ -256,9 +268,11 @@ finalize_video() {
   CONTROL=""
   fi
 
+  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py \
+    check-audio-mode --video "${CAPTIONED}" --narration "${NARRATION}"
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py transcript \
     --level "${LEVEL}" \
-    --level-dir "${LEVEL_DIR}" --output-dir "${TEMP_DIR}"
+    --level-dir "${LEVEL_DIR}" --output-dir "${TEMP_DIR}" --narration "${NARRATION}"
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py publish-generation \
     --level "${LEVEL}" --stage "${TEMP_DIR}" --output-dir "${LEVEL_DIR}/output"
   CAPTIONED=""

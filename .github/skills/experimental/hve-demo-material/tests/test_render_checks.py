@@ -17,10 +17,13 @@ from render_checks import (
     STYLE_TEMPLATE,
     CheckError,
     build_captions,
+    build_parser,
     build_segments,
+    build_silent_timing,
     build_transcript_page,
     changed_levels,
     check_accessibility,
+    check_audio_mode,
     check_captures,
     check_duration,
     check_style,
@@ -336,6 +339,8 @@ class TestScriptedRenderPreflight:
                 capture,
                 "--animation",
                 animation,
+                "--narration",
+                "none",
                 "--no-html-deck",
             ],
             capture_output=True,
@@ -705,7 +710,223 @@ class TestOnScreenText:
         assert text == ["Heading", "Card", "One", "Two", "Image: Editor view"]
 
 
+class TestSilentTiming:
+    @pytest.mark.parametrize(
+        "engine,audio_check,published",
+        [
+            ("none", "pass", True),
+            ("piper", "pass", False),
+            ("azure", "pass", False),
+            ("none", "fail", False),
+        ],
+    )
+    def test_given_render_when_bundled_then_only_verified_silent_output_replaces_prior(
+        self, tmp_path, engine, audio_check, published
+    ):
+        import yaml
+
+        workflow = (
+            Path(__file__).resolve().parents[5]
+            / ".github/workflows/demo-material-render.yml"
+        )
+        config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
+        command = next(
+            step["run"]
+            for step in config["jobs"]["bundle"]["steps"]
+            if step["name"] == "Assemble the bundle"
+        )
+        site = tmp_path / "site"
+        prior = site / "L100"
+        prior.mkdir(parents=True)
+        (prior / "hve-demo-L100.mp4").write_bytes(b"previous passing video")
+        (site / "index.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "demo-material-site/v1",
+                    "levels": {
+                        "L100": {
+                            "source_sha": "prior",
+                            "files": {"mp4": "L100/hve-demo-L100.mp4"},
+                        }
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        renders = tmp_path / "renders"
+        candidate = renders / "L100"
+        candidate.mkdir(parents=True)
+        for extension in ("mp4", "pptx", "vtt", "html"):
+            (candidate / f"hve-demo-L100.{extension}").write_bytes(b"new render")
+        (candidate / "index.html").write_text("Transcript", encoding="utf-8")
+        (candidate / "render-result.json").write_text(
+            json.dumps(
+                {
+                    "ok": True,
+                    "narration_engine": engine,
+                    "timing_basis": "notes-word-count",
+                    "checks": {"T-11": {"result": audio_check}},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        subprocess.run(
+            ["bash", "-c", command],
+            check=True,
+            env={
+                "PATH": os.pathsep.join(
+                    (str(Path(sys.executable).parent), os.environ["PATH"])
+                ),
+                "SITE": str(site),
+                "RENDERS": str(renders),
+                "SOURCE_SHA": "candidate",
+                "AUTHOR_RUN_ID": "1",
+                "RENDER_RUN_ID": "2",
+                "RUNNER_TEMP": str(tmp_path),
+            },
+            capture_output=True,
+            text=True,
+        )
+
+        entry = json.loads((site / "index.json").read_text())["levels"]["L100"]
+        assert (prior / "hve-demo-L100.mp4").read_bytes() == (
+            b"new render" if published else b"previous passing video"
+        )
+        if published:
+            assert entry["narration_engine"] == "none"
+            assert entry["timing_basis"] == "notes-word-count"
+        else:
+            assert entry["last_failed_attempt"]["render_run_id"] == "2"
+
+    def test_given_default_arguments_when_parsed_then_azure_remains_default(self):
+        args = build_parser().parse_args(
+            ["evaluate", "--level", "L100", "--level-dir", "."]
+        )
+        assert args.narration == "azure"
+
+    @pytest.mark.parametrize("engine", ["azure", "piper"])
+    def test_given_ci_voice_selection_when_rendered_then_rejected_before_writes(
+        self, tmp_path, monkeypatch, engine
+    ):
+        (tmp_path / "content").mkdir()
+        script = Path(__file__).resolve().parents[1] / "scripts/render-level.sh"
+        monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+        result = subprocess.run(
+            [
+                "bash",
+                str(script),
+                "--level",
+                "L100",
+                "--level-dir",
+                str(tmp_path),
+                "--workspace",
+                str(tmp_path),
+                "--narration",
+                engine,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode != 0
+        assert "speech synthesis is disabled" in result.stderr
+        assert not (tmp_path / "output").exists()
+
+    def test_given_workflow_when_inspected_then_synthesis_is_not_configured(self):
+        import yaml
+
+        workflow = (
+            Path(__file__).resolve().parents[5]
+            / ".github/workflows/demo-material-render.yml"
+        )
+        source = workflow.read_text(encoding="utf-8")
+        config = yaml.safe_load(source)
+        render = next(
+            step
+            for step in config["jobs"]["render"]["steps"]
+            if step["name"].startswith("Render ")
+        )
+        assert "--narration none" in render["run"]
+        assert "piper" not in source.lower()
+        assert "SPEECH_KEY" not in source
+
+    @pytest.mark.parametrize(
+        "streams,expected", [([], "pass"), ([{"index": 1}], "fail")]
+    )
+    def test_given_silent_mode_when_scored_then_audio_presence_is_enforced(
+        self, tmp_path, mocker, streams, expected
+    ):
+        mocker.patch(
+            "render_checks.subprocess.run",
+            return_value=subprocess.CompletedProcess(
+                [], 0, json.dumps({"streams": streams}), ""
+            ),
+        )
+        assert check_audio_mode(tmp_path / "video.mp4", "none")["result"] == expected
+
+    def test_given_notes_when_timed_then_canonical_wavs_contain_only_silence(
+        self, tmp_path
+    ):
+        _write_slides(tmp_path, 2, notes=" ".join(["word"] * 28))
+
+        build_silent_timing(tmp_path)
+
+        for number in (1, 2):
+            with wave.open(str(tmp_path / f"audio/slide-{number:03d}.wav")) as audio:
+                assert audio.getnframes() / audio.getframerate() == 10
+                assert not any(audio.readframes(audio.getnframes()))
+        assert parse_webvtt(build_captions(tmp_path))[-1][1] == 20
+
+    def test_given_short_notes_when_timed_then_scene_has_minimum_reading_time(
+        self, tmp_path
+    ):
+        _write_slides(tmp_path, 1, notes="Short.")
+
+        assert main(["silent-timing", "--level-dir", str(tmp_path)]) == 0
+
+        assert parse_webvtt(build_captions(tmp_path))[-1][1] == 2
+
+    def test_given_missing_notes_when_timed_then_existing_audio_is_preserved(
+        self, tmp_path
+    ):
+        _write_slides(tmp_path, 1, notes="")
+        audio = tmp_path / "audio/slide-001.wav"
+        before = audio.read_bytes()
+
+        with pytest.raises(CheckError, match="needs speaker notes"):
+            build_silent_timing(tmp_path)
+
+        assert audio.read_bytes() == before
+
+
 class TestCaptionTimeline:
+    @pytest.mark.parametrize("crossfade,expected", [(False, 4.0), (True, 5.5)])
+    def test_given_silent_closing_scene_when_validated_then_full_duration_counts(
+        self, tmp_path, mocker, crossfade, expected
+    ):
+        import yaml
+
+        _write_slides(tmp_path, 2, notes="Opening narration.")
+        closing = tmp_path / "content/slide-002/content.yaml"
+        closing.write_text(
+            "slide: 2\ntitle: Closing\nspeaker_notes: ''\n", encoding="utf-8"
+        )
+        (tmp_path / "output").mkdir()
+        segments = yaml.safe_load(build_segments(tmp_path, "raw.mp4"))
+        if not crossfade:
+            segments["transition"] = "none"
+        (tmp_path / "output/segments.yml").write_text(
+            yaml.safe_dump(segments), encoding="utf-8"
+        )
+        mocker.patch("render_checks.measure_minutes", return_value=expected / 60)
+
+        validate_media_timeline(tmp_path, tmp_path / "raw.mp4")
+
+        assert parse_webvtt(build_captions(tmp_path))[-1][1] < expected
+
     def test_given_wrong_raw_duration_when_checked_then_requires_reassembly(
         self, tmp_path, mocker
     ):
@@ -887,8 +1108,9 @@ class TestCaptions:
 class TestAccessibleVideoFinalizer:
     """Tests for the portable accessible-media finalizer."""
 
+    @pytest.mark.parametrize("narration_engine", ["azure", "none"])
     def test_given_two_audio_scenes_when_finalized_then_handles_are_silent(
-        self, tmp_path, monkeypatch
+        self, tmp_path, monkeypatch, narration_engine
     ):
         import array
         import importlib.util
@@ -983,6 +1205,10 @@ class TestAccessibleVideoFinalizer:
             data["segments"][0].pop("visual")
             data["segments"][0]["clip"] = "../scene.webm"
             manifest.write_text(yaml.safe_dump(data), encoding="utf-8")
+        else:
+            pytest.skip(
+                "Browser-clip integration requires the sibling recorder environment"
+            )
         module_path = (
             Path(__file__).resolve().parents[2] / "demo-video/scripts/assemble_video.py"
         )
@@ -993,10 +1219,20 @@ class TestAccessibleVideoFinalizer:
         raw = assembler.assemble_video(
             manifest_path=manifest, output_path=None, fps=None, resolution=None
         )
+        finalizer_args = [
+            "bash",
+            str(script),
+            "--level",
+            "L300",
+            "--level-dir",
+            str(tmp_path),
+        ]
         subprocess.run(
-            ["bash", str(script), "--level", "L300", "--level-dir", str(tmp_path)],
+            finalizer_args,
             check=True,
         )
+        if narration_engine == "none":
+            subprocess.run(finalizer_args + ["--narration", "none"], check=True)
         cues = parse_webvtt((output / "hve-demo-L300.vtt").read_text())
         assert measure_minutes(raw) * 60 == pytest.approx(5.5, abs=0.15)
         assert max(cue[1] for cue in cues) == pytest.approx(5)
@@ -1044,11 +1280,25 @@ class TestAccessibleVideoFinalizer:
             for stream in streams
         )
         assert " default" not in (output / "index.html").read_text()
+        assert any(stream["codec_type"] == "audio" for stream in streams) == (
+            narration_engine != "none"
+        )
+        if narration_engine == "none":
+            assert "Silent video: no voiceover" in (output / "index.html").read_text()
+            scored = evaluate(
+                "L300", tmp_path, load_curriculum(), narration_engine="none"
+            )
+            assert scored["narration_engine"] == "none"
+            assert scored["timing_basis"] == "notes-word-count"
+            assert scored["checks"]["T-11"]["result"] == "pass"
 
+    @pytest.mark.parametrize("folder_name", ["level", "demo's workspace"])
     def test_given_authored_level_when_finalized_then_captions_are_visible(
-        self, tmp_path, monkeypatch
+        self, tmp_path, monkeypatch, folder_name
     ):
         # Arrange
+        tmp_path = tmp_path / folder_name
+        tmp_path.mkdir()
         script = (
             Path(__file__).resolve().parents[1]
             / "scripts"

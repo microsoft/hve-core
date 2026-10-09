@@ -1,8 +1,8 @@
 ---
 title: Demo Material
-description: Levelled HVE Core training decks, narrated videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
+description: Levelled HVE Core training decks, silent CI videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-09
 ms.topic: overview
 keywords:
   - demo material
@@ -19,7 +19,7 @@ pagination_label: Demo Material
 estimated_reading_time: 3
 ---
 
-HVE Core publishes a training deck, a narrated video, and a browser slide deck
+HVE Core publishes a training deck, a video, and a browser slide deck
 for each of four depth levels. Each level targets a different audience and
 builds on the one before it. The catalog reads the published build index and
 shows links only when that level has a complete passing bundle.
@@ -39,12 +39,12 @@ file, so you can download it and present offline.
 
 Every level is published with:
 
-* Captions embedded in the MP4 and as a separate WebVTT file, generated from the
-  exact narration text
+* Visible text embedded in the MP4 and as a separate WebVTT file, generated from
+  the authored speaker notes
 * A video page with a captioned player and a full transcript listing each
   slide's title, on-screen text, image descriptions, and narration
-* Narration that voices what each slide shows and describes each live capture,
-  so the audio carries the visual content
+* A text transcript describing each slide and live capture; new CI videos have
+  no voiceover or audio stream
 * A deck with a title on every slide, alternative text on every image, and the
   document language set, so screen readers can navigate it
 * Browser slides with keyboard navigation, labelled slides, a reading view that
@@ -52,9 +52,9 @@ Every level is published with:
 * Text colors that meet the WCAG 2.2 AA contrast minimum of 4.5:1
 
 The render workflow checks each item it can verify and withholds a level that
-fails. Caption timing within a slide is estimated from sentence length, so
-captions can lead or trail the voice by a moment. Whether the narration fully
-describes each visual cannot be checked by a machine and needs human review.
+fails. Silent CI timing is derived from the notes' word count, not synthesized
+speech. A human must review reading pace and whether the transcript fully
+describes each visual. Silent videos do not provide spoken audio description.
 
 ## How the Material Stays Current
 
@@ -67,9 +67,9 @@ source documents changed:
   agent writes new slide content for changed, failed, or unpublished levels.
   When every level is current and published, the agent does not run.
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
-   workflow builds each authored level into a deck, narration, a video, and
+  workflow builds each authored level into a deck, a silent video, and
    browser slides from the same slide content, then scores the checks a machine
-   can verify: narration paired to every slide, the video landing inside the
+  can verify: timing paired to every slide, absence of an audio stream, the video landing inside the
    level's length, readable live captures, the pinned house style, the
    accessibility items above, and browser slides that open offline with no
   slide overflowing. A level that fails any check keeps its previous files.
@@ -79,15 +79,12 @@ source documents changed:
   reads that same index, so a missing level appears as unavailable rather than
   linking to files that do not exist.
 
-New builds default to the offline [Piper](https://github.com/OHF-Voice/piper1-gpl)
-voice `en_US-norman-medium`, so they need no cloud speech service. During the
-regeneration window, a level can retain its earlier passing video and voice if
-its replacement has not passed. The default is not a claim that every published
-level has already been regenerated with Norman.
-Norman's [model
-card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/norman/medium/MODEL_CARD)
-records that it was trained from scratch on public-domain LibriVox recordings,
-and the Piper voices repository is MIT licensed. The
+New CI builds are silent: neither Piper nor Azure Speech is used for synthesis.
+For local narrated production, Azure AI Speech is the default; Piper remains an
+explicit optional choice subject to applicable review and approval. During
+regeneration, a level may retain an earlier passing video with voiceover until
+its silent replacement passes. The published index records `narration_engine`
+and the timing basis for new renders. The
 [level contracts and sources](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/references/curriculum.md)
 define what each level covers.
 

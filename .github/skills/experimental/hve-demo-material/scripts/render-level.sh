@@ -28,7 +28,7 @@ readonly DEFAULT_HTML_DECK_TEMPLATE="${SKILLS_ROOT}/../hve-slides/templates/deck
 LEVEL=""
 LEVEL_DIR=""
 WORKSPACE=""
-NARRATION="piper"
+NARRATION="azure"
 CAPTURE=""
 ANIMATION="none"
 VISION_PROMPT_FILE=""
@@ -45,7 +45,7 @@ Options:
   --level <level>               Level label from the curriculum
   --level-dir <dir>             Authored level directory containing content/
   --workspace <repo>            Repository folder opened for live captures
-  --narration <azure|piper>     Narration engine (default: piper)
+  --narration <azure|piper|none>  Narration mode (default: azure; CI requires none)
   --capture <live|deck-export>  Capture profile (default: the level default)
   --animation <none|characters>  Only none is supported; use the builder for characters
   --vision-prompt-file <path>   Run the vision slide check with this prompt
@@ -89,7 +89,10 @@ validate_args() {
   [[ "${LEVEL}" =~ ^L[1-4]00$ ]] || err "--level must be L100 to L400."
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${WORKSPACE}" ]] || err "--workspace must be a directory."
-  [[ "${NARRATION}" =~ ^(azure|piper)$ ]] || err "--narration must be azure or piper."
+  [[ "${NARRATION}" =~ ^(azure|piper|none)$ ]] || err "--narration must be azure, piper, or none."
+  if [[ "${GITHUB_ACTIONS:-false}" == "true" && "${NARRATION}" != "none" ]]; then
+    err "CI demo rendering requires --narration none; speech synthesis is disabled."
+  fi
   if [[ -z "${CAPTURE}" ]]; then
     case "${LEVEL}" in
       L300|L400) CAPTURE="live" ;;
@@ -170,14 +173,20 @@ build_and_validate_deck() {
 
 narrate_and_assemble() {
   local video_name="$1"
-  log "Synthesizing narration with ${NARRATION}"
-  bash "${VOICEOVER}" "${SKIP_VENV[@]}" \
-    --engine "${NARRATION}" \
-    --collapse-newlines \
-    --content-dir "${LEVEL_DIR}/content" \
-    --output-dir "${LEVEL_DIR}/audio"
+  if [[ "${NARRATION}" == "none" ]]; then
+    log "Preparing silent slide timing without speech synthesis"
+    uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py silent-timing \
+      --level-dir "${LEVEL_DIR}"
+  else
+    log "Synthesizing narration with ${NARRATION}"
+    bash "${VOICEOVER}" "${SKIP_VENV[@]}" \
+      --engine "${NARRATION}" \
+      --collapse-newlines \
+      --content-dir "${LEVEL_DIR}/content" \
+      --output-dir "${LEVEL_DIR}/audio"
+  fi
 
-  log "Assembling narrated MP4"
+  log "Assembling MP4 (${NARRATION})"
   uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py segments \
     --level-dir "${LEVEL_DIR}" \
     --output-name "${video_name}"
@@ -217,7 +226,8 @@ write_accessible_media() {
   log "Burning captions and writing accessible media"
   bash "${FINALIZE_ACCESSIBLE_VIDEO}" \
     --level "${LEVEL}" \
-    --level-dir "${LEVEL_DIR}"
+    --level-dir "${LEVEL_DIR}" \
+    --narration "${NARRATION}"
 }
 
 main() {

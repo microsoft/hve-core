@@ -16,6 +16,18 @@ from record_browser_video import RecordingError, parse_resolution, record_scene
 class TestRecordBrowserVideo:
     """Tests for record_scene."""
 
+    def test_given_supported_playwright_when_imported_then_recorder_apis_exist(self):
+        import tomllib
+
+        from playwright.sync_api import BrowserContext, Page
+
+        project = tomllib.loads(
+            (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+        )
+        assert "playwright>=1.48" in project["project"]["dependencies"]
+        assert callable(BrowserContext.route_web_socket)
+        assert isinstance(Page.clock, property)
+
     @pytest.mark.parametrize(
         ("value", "expected"),
         [("1920x1080", (1920, 1080)), ("640X360", (640, 360))],

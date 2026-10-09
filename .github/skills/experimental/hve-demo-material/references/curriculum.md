@@ -82,6 +82,22 @@ viewer who cannot see the screen loses nothing. Captions and the transcript are
 generated from the same notes, so notes that skip on-screen content leave a gap
 in all three.
 
+## Silent CI Delivery
+
+CI explicitly selects `narration: none`. Azure Speech remains the default for
+local narration and Piper remains an optional local choice; neither synthesizes
+speech in CI. Keep the notes budget above, but use it as a deterministic reading
+timeline: each slide gets `max(2 seconds, note words / 2.8)` plus the assembler's
+transition handles. The two-second floor keeps short scenes longer than the
+half-second transitions. Internal zero-only WAVs are timing inputs, not narration.
+
+Under this mode, T-04 pairs each visual with a silent timing WAV, and T-09 checks
+the same notes in visible text and the transcript without claiming spoken audio
+description. T-07 still checks actual MP4 duration. Add T-11 to every silent
+level: FFprobe must find zero audio streams. Record `narration.engine: none` and
+`narration.timing_basis: notes-word-count`. Character-dialogue rendering is not
+part of this CI path.
+
 ## Capture Profile
 
 The `capture` input selects how a level produces its visual evidence. It takes

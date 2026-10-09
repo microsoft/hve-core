@@ -287,6 +287,27 @@ def validate_scripted_render(
                 )
 
 
+def build_silent_timing(level_dir: Path) -> None:
+    """Write silent timing WAVs from notes at the curriculum's 2.8 words/second."""
+    slides = load_slides(level_dir / "content")
+    if not slides:
+        raise CheckError(f"no slides under {level_dir / 'content'}")
+    durations = []
+    for number, slide in slides:
+        words = len(notes_text(slide).split())
+        if not words:
+            raise CheckError(f"Slide {number} needs speaker notes for silent timing")
+        durations.append((number, max(2.0, words / 2.8)))
+    audio_dir = level_dir / "audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    for number, duration in durations:
+        with wave.open(str(audio_dir / f"slide-{number:03d}.wav"), "wb") as audio:
+            audio.setnchannels(1)
+            audio.setsampwidth(2)
+            audio.setframerate(8000)
+            audio.writeframes(b"\x00\x00" * round(duration * 8000))
+
+
 def build_segments(level_dir: Path, output_name: str) -> str:
     """Return a ``segments.yml`` that pairs each deck frame with its WAV.
 
@@ -698,17 +719,25 @@ def validate_media_timeline(level_dir: Path, video: Path) -> None:
     """Reject raw assemblies whose duration differs from the canonical timeline."""
     import yaml
 
-    cues = parse_webvtt(build_captions(level_dir))
-    if not cues:
-        raise CheckError("Canonical narration has no caption cues")
-    overlap = transition_overlap(level_dir, len(load_slides(level_dir / "content")))
-    tail = 0.0
+    slides = load_slides(level_dir / "content")
+    if not slides:
+        raise CheckError("Canonical timeline has no scenes")
+    overlap = transition_overlap(level_dir, len(slides))
+    expected = sum(
+        _wav_seconds(level_dir / "audio" / f"slide-{number:03d}.wav")
+        for number, _slide in slides
+    )
     if overlap:
         data = yaml.safe_load(
             (level_dir / "output/segments.yml").read_text(encoding="utf-8")
         )
-        tail = overlap if data["transition"].get("fade_out", True) else 0.0
-    expected = max(cue[1] for cue in cues) + tail
+        transition = data["transition"]
+        expected += overlap * (
+            len(slides)
+            - 1
+            + int(transition.get("fade_in", True))
+            + int(transition.get("fade_out", True))
+        )
     minutes = measure_minutes(video)
     if minutes is None or abs(minutes * 60 - expected) > 0.15:
         raise CheckError(
@@ -735,7 +764,10 @@ def transcript_on_screen(slide: dict, title: str) -> list[str]:
 
 
 def build_transcript_page(
-    level: str, level_dir: Path, output_dir: Path | None = None
+    level: str,
+    level_dir: Path,
+    output_dir: Path | None = None,
+    narration_engine: str = "azure",
 ) -> str:
     """Return an HTML page with a captioned player and a full transcript.
 
@@ -752,6 +784,11 @@ def build_transcript_page(
     )
     length = f" &middot; {minutes:.1f} minutes" if minutes else ""
     stem = f"hve-demo-{level}"
+    narration_notice = (
+        "<p>Silent video: no voiceover. The transcript contains the authored notes.</p>"
+        if narration_engine == "none"
+        else ""
+    )
     slides_link = (
         f' &middot; <a href="{stem}.html">Open the slides (HTML)</a>'
         if (level_dir / "output" / f"{stem}.html").is_file()
@@ -783,6 +820,7 @@ def build_transcript_page(
         f"<style>{_PAGE_STYLE}</style></head><body><main>"
         '<p><a href="../../docs/demo-material/">Back to Demo Material</a></p>'
         f"<h1>{esc(title)}</h1><p>{esc(level)}{length}</p>"
+        f"{narration_notice}"
         f'<video controls preload="metadata"><source src="{stem}.mp4" type="video/mp4">'
         f'<track kind="captions" src="{stem}.vtt" srclang="{esc(language[:2])}" '
         'label="English"></video>'
@@ -908,6 +946,49 @@ def subtitle_languages(mp4: Path) -> list[str] | None:
     return [
         str((stream.get("tags") or {}).get("language", "und")) for stream in streams
     ]
+
+
+def check_audio_mode(video: Path, narration_engine: str) -> dict:
+    """Verify that silent delivery contains no audio stream, even a silent one."""
+    try:
+        result = subprocess.run(
+            [
+                ffprobe_command(),
+                "-v",
+                "error",
+                "-select_streams",
+                "a",
+                "-show_entries",
+                "stream=index",
+                "-of",
+                "json",
+                str(video),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode:
+            raise CheckError(f"Cannot inspect audio streams: {result.stderr.strip()}")
+        streams = json.loads(result.stdout)["streams"]
+        if not isinstance(streams, list):
+            raise CheckError("Invalid audio stream report from FFprobe")
+    except (OSError, ValueError, KeyError, CheckError) as error:
+        return {"result": "fail", "evidence": str(error)}
+    expected_silence = narration_engine == "none"
+    passed = not streams if expected_silence else bool(streams)
+    return {
+        "result": "pass" if passed else "fail",
+        "evidence": (
+            "no audio stream; voiceover disabled"
+            if expected_silence and passed
+            else "audio stream present"
+            if passed
+            else "silent delivery contains an audio stream"
+            if expected_silence
+            else "narrated delivery has no audio stream"
+        ),
+    }
 
 
 def _sha256(path: Path) -> str:
@@ -1253,7 +1334,7 @@ def evaluate(
     level_dir: Path,
     curriculum: dict[str, dict],
     capture_profile: str | None = None,
-    narration_engine: str = "piper",
+    narration_engine: str = "azure",
     html_deck: bool = False,
 ) -> dict:
     """Score the machine-verifiable criteria for one rendered level.
@@ -1293,6 +1374,11 @@ def evaluate(
         else {"result": "deferred", "evidence": "content/global/style.yaml missing"}
     )
     checks["T-09"] = check_accessibility(level, level_dir)
+    if narration_engine == "none":
+        checks["T-11"] = check_audio_mode(
+            level_dir / "output" / f"hve-demo-{level}.mp4", narration_engine
+        )
+        checks["T-04"]["evidence"] += "; WAVs provide silent timing, not narration"
     if html_deck:
         checks["T-10"] = check_html_deck(level, level_dir)
     return {
@@ -1300,6 +1386,9 @@ def evaluate(
         "level": level,
         "capture_profile": "live" if live else "deck-export",
         "narration_engine": narration_engine,
+        "timing_basis": "notes-word-count"
+        if narration_engine == "none"
+        else "speech-wav",
         "total_word_count": word_count(level_dir / "content"),
         "measured_duration_minutes": round(minutes, 2) if minutes else None,
         "contract_duration_minutes": {"min": contract["min"], "max": contract["max"]},
@@ -1319,6 +1408,10 @@ def build_parser() -> argparse.ArgumentParser:
     segments = sub.add_parser("segments", help="Write output/segments.yml")
     segments.add_argument("--level-dir", type=Path, required=True)
     segments.add_argument("--output-name", required=True)
+    silent_timing = sub.add_parser(
+        "silent-timing", help="Write silent timing WAVs without speech synthesis"
+    )
+    silent_timing.add_argument("--level-dir", type=Path, required=True)
     preflight = sub.add_parser(
         "scripted-preflight", help="Reject unsupported deck-frame render inputs"
     )
@@ -1335,6 +1428,14 @@ def build_parser() -> argparse.ArgumentParser:
     transcript.add_argument("--level", required=True, choices=LEVELS)
     transcript.add_argument("--level-dir", type=Path, required=True)
     transcript.add_argument("--output-dir", type=Path)
+    transcript.add_argument(
+        "--narration", choices=("azure", "piper", "none"), default="azure"
+    )
+    audio_check = sub.add_parser("check-audio-mode", help="Verify delivery audio mode")
+    audio_check.add_argument("--video", type=Path, required=True)
+    audio_check.add_argument(
+        "--narration", choices=("azure", "piper", "none"), required=True
+    )
     publish = sub.add_parser("publish-generation", help="Install a staged delivery")
     publish.add_argument("--level", required=True, choices=LEVELS)
     publish.add_argument("--stage", type=Path, required=True)
@@ -1360,7 +1461,7 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_cmd.add_argument("--level-dir", type=Path, required=True)
     evaluate_cmd.add_argument("--capture", choices=("live", "deck-export"))
     evaluate_cmd.add_argument(
-        "--narration", choices=("azure", "piper"), default="piper"
+        "--narration", choices=("azure", "piper", "none"), default="azure"
     )
     evaluate_cmd.add_argument(
         "--html-deck", action="store_true", help="Score T-10 for the HTML deck"
@@ -1389,6 +1490,9 @@ def main(argv: list[str] | None = None) -> int:
                 args.level, args.level_dir, args.capture, args.animation
             )
             return EXIT_SUCCESS
+        if args.command == "silent-timing":
+            build_silent_timing(args.level_dir)
+            return EXIT_SUCCESS
         if args.command == "segments":
             target = args.level_dir / "output" / "segments.yml"
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -1404,10 +1508,16 @@ def main(argv: list[str] | None = None) -> int:
             target = (args.output_dir or args.level_dir / "output") / "index.html"
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(
-                build_transcript_page(args.level, args.level_dir, args.output_dir),
+                build_transcript_page(
+                    args.level, args.level_dir, args.output_dir, args.narration
+                ),
                 encoding="utf-8",
             )
             return EXIT_SUCCESS
+        if args.command == "check-audio-mode":
+            result = check_audio_mode(args.video, args.narration)
+            print(json.dumps(result))
+            return EXIT_SUCCESS if result["result"] == "pass" else EXIT_FAILURE
         if args.command == "publish-generation":
             publish_generation(args.level, args.stage, args.output_dir)
             return EXIT_SUCCESS

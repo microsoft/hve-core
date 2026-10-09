@@ -29,7 +29,8 @@ the engine in force, and a complete output manifest.
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and fixed to `deck-export` for L100 and L200; reject `live` for those levels
-* `narration` from `azure` or `piper`, defaulting to `azure`
+* `narration` from `azure`, `piper`, or `none`, defaulting to `azure` outside CI;
+  the repository's CI workflow selects `none`
 * `animation` from `none` or `characters`, defaulting to `none`; select
   `characters` only when the caller supplies it or explicitly requests
   animated characters, animated comic figures, or character dialogue scenes
@@ -41,7 +42,7 @@ the engine in force, and a complete output manifest.
 * Each requested level reaches the `Complete`, `Deferred`, or `Blocked` state
   defined by the `hve-demo-material` skill's output contract.
 * Under `manual` and `partial`, a `Complete` level has a validated PPTX,
-  narrated MP4, source register, capture evidence, completed manifest, and
+  MP4 in the selected narration mode, source register, capture evidence, completed manifest, and
   `approvals.delivery: approved` recorded from a human decision.
 * Under `full`, a `Complete` level has the same artifacts and evidence, every
   instantiated acceptance criterion recorded `pass` or the `not-applicable`
@@ -129,6 +130,11 @@ through a human-configured pipeline outside the agent.
 * Never switch the narration engine. Only a caller-supplied `narration: piper`
   selects Piper, and the engine in force is recorded as `narration.engine` so
   Piper-narrated output stays distinguishable from Azure-narrated output.
+* CI forbids speech synthesis and explicitly uses `narration: none`. For that
+  mode, follow the skill's silent scripted-render path with `animation: none`.
+  Do not call `tts-voiceover`, request voice credentials, or claim audio
+  description exists. If silent mode and character dialogue are both requested,
+  resolve the combination with the caller or defer under full autonomy.
 * Keep `animation: none` unless the caller explicitly activates
   `animation: characters`. Under character animation, create original recurring
   figures rather than imitating a real person or protected character. Keep
@@ -269,6 +275,11 @@ through a human-configured pipeline outside the agent.
    their disposition in the manifest.
 
 ### 4. Capture and Narrate
+
+For `narration: none`, use the skill's scripted rendering path with
+`--narration none` instead of the spoken-narration steps below. Preserve the
+capture profile and approval gates; verify `T-11` and record the silent timing
+basis before delivery.
 
 1. For any level under `capture: deck-export`, dispatch `PowerPoint Subagent`
    with task type `export` to place deterministic deck frames in `frames/`.

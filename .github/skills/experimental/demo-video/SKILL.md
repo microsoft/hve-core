@@ -112,7 +112,7 @@ the output path. Temporary segment files are always removed.
 Narration quality is the single biggest driver of how polished the final video feels. Prioritize neural voices from **Azure AI Speech (part of Azure AI Foundry)** through the `tts-voiceover` skill for any video you intend to share.
 
 * **Recommended:** Use the `tts-voiceover` skill backed by Azure AI Speech neural voices (for example `en-US-Andrew:DragonHDLatestNeural` or `en-US-Jenny:DragonHDLatestNeural`). These produce natural, presentation-grade narration and are the default for shareable output.
-* **Offline alternative:** The `tts-voiceover` skill's `--engine piper` option synthesizes narration locally with a separately installed Piper executable. It needs no credentials or network access, which suits scheduled CI builds, but it sounds less natural than Azure neural voices. Record which engine produced the narration so reviewers know whether to regenerate it with Azure AI Speech before publishing.
+* **Offline alternative:** The `tts-voiceover` skill's `--engine piper` option remains available for explicitly selected local narration. It needs no credentials or network access after setup. HVE demo-material CI uses neither speech engine and publishes silent videos; internal silent timing tracks are removed during finalization.
 
 See the `tts-voiceover` skill for the neural voice catalog, `--voice` and `--rate` controls, Azure authentication (Entra ID or key), and Piper setup.
 

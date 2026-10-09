@@ -66,7 +66,8 @@ capture fidelity, and criterion templates, while topic sets the source set.
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and fixed to `deck-export` for L100 and L200; reject `live` for those levels
-* `narration` from `azure` or `piper`, defaulting to `azure`
+* `narration` from `azure`, `piper`, or `none`, defaulting to `azure` outside CI;
+  the repository's CI workflow explicitly requires `none`
 * `animation` from `none` or `characters`, defaulting to `none`; activate
   `characters` only for an explicit caller selection or a direct request for
   animated characters, animated comic figures, or character dialogue scenes
@@ -77,7 +78,8 @@ capture fidelity, and criterion templates, while topic sets the source set.
 
 ## Success Criteria
 
-* Each requested level has one PPTX and one narrated MP4 at the manifest paths.
+* Each requested level has one PPTX and one MP4 at the manifest paths, narrated
+  unless `narration: none` was explicitly selected.
 * Each MP4 shows burned-in captions and carries an English selectable subtitle
   track, and each level has a WebVTT captions file and a transcript page covering
   every slide's title, on-screen text, and narration.
@@ -116,11 +118,15 @@ capture fidelity, and criterion templates, while topic sets the source set.
 * Azure AI Speech neural voices are the production narration posture. Speaker
   notes are sent to the configured Azure Speech region for synthesis, so use an
   approved region and do not include confidential material in narration.
-* Only the caller may set `narration: piper`, for example a scheduled build
-  with no Azure Speech resource. Piper runs locally through `tts-voiceover`'s
+* Only the caller may set `narration: piper` for an optional local run outside
+  CI. Piper runs locally through `tts-voiceover`'s
   `--engine piper` option, needs no credentials, and sends nothing off the host,
   but sounds less natural. Record the engine in force in the manifest so
   Piper-narrated output stays distinguishable from Azure-narrated output.
+* CI produces silent videos with `narration: none`: neither Piper nor Azure
+  Speech is installed or invoked for synthesis. This is an explicit workflow
+  policy, not a fallback for missing credentials. Use the silent scripted path
+  below; keep `animation: none` because character dialogue requires voices.
 * Never infer animation from the topic, level, audience, transition request, or
   autonomy mode. `animation: none` creates no character assets. Under
   `animation: characters`, use original figures, known-rights assets, distinct
@@ -192,6 +198,18 @@ capture fidelity, and criterion templates, while topic sets the source set.
 
 ## Scripted Rendering
 
+The script defaults to Azure Speech. Select `--narration piper` explicitly for
+optional local synthesis, or `--narration none` for silent output. CI requires
+`none` and rejects speech modes before rendering. Silent runs skip
+`tts-voiceover` entirely, generate zero-only internal WAVs from the speaker-note
+word count at 2.8 words per second with a two-second scene minimum, and use those
+tracks only for timing. Finalization removes all audio streams, preserves the
+notes as visible text, WebVTT, and transcript, and labels the player as silent.
+`T-11` verifies audio absence; `narration_engine: none` and
+`timing_basis: notes-word-count` distinguish these outputs from spoken narration.
+The usual duration and accessibility-content checks still apply; silent output
+does not claim to provide spoken audio description.
+
 `scripts/render-level.sh` supports `animation: none` only. It performs live
 capture from `capture-plan.yml`, deck build and validation, frame export,
 narration, and deck-frame MP4 assembly for one authored level. Before writing
@@ -229,7 +247,7 @@ sources, linked to the workspace's GitHub `origin` at the checked-out commit.
 When the workspace has no GitHub remote the deck is built without citations.
 
 ```bash
-scripts/render-level.sh --level L100 --level-dir <level-dir> --workspace <repo> --narration piper
+bash scripts/render-level.sh --level L100 --level-dir <level-dir> --workspace <repo> --narration azure
 ```
 
 `scripts/render_checks.py` holds the shared logic. It reads the level contracts

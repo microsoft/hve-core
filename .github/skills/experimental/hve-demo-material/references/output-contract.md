@@ -57,6 +57,12 @@ the video frames.
 
 ## Prerequisite Matrix
 
+Azure Speech is the default narration engine outside CI. Piper requires an
+explicit local selection. CI selects `narration: none` and needs no voice model,
+speech service, or speech credentials; mark both speech prerequisites
+`not-required`. Silent runs retain text alternatives and do not claim audio
+description or a narrated PPTX.
+
 | Capability                                      | Required prerequisite                                                                                            | Deferred behavior                                                                                                                              |
 |-------------------------------------------------|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
 | Build and deck operations                       | `uv`, Python 3.11+, and PowerShell 7+                                                                            | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
@@ -94,7 +100,10 @@ brew install ffmpeg-full
 ```
 
 On Linux, the resolver selects guidance for `apt-get`, `dnf`, `apk`, or
-`pacman` when present. On Windows, it recommends `winget install Gyan.FFmpeg`.
+`pacman` when present. On Windows, open the supported WSL2 Linux distribution
+and use its package manager to install Linux FFmpeg and ffprobe, for example
+`sudo apt-get update && sudo apt-get install ffmpeg` on Ubuntu/Debian.
+Windows-native tools installed through `winget` are not this execution path.
 Confirm that the selected build exposes libass subtitles and `libx264`. Under
 `manual` and `partial`, run a package-manager command only after explicit
 approval, then rerun the resolver and resume. Under `full`, record the
@@ -141,7 +150,7 @@ sources:
     untrusted_content_note: <one-line note | none>
 deliverables:
   pptx: output/hve-demo-L100.pptx
-  narrated_pptx: output/hve-demo-L100-narrated.pptx
+  narrated_pptx: <output/hve-demo-L100-narrated.pptx | not-applicable> # not-applicable for none
   mp4: output/hve-demo-L100.mp4 # shows open captions and carries an English selectable caption track
   raw_assembly: output/hve-demo-L100.raw.mp4 # retained clean input; never burn captions over a finalized MP4
   captions: output/hve-demo-L100.vtt
@@ -162,9 +171,10 @@ visuals:
       rendered_font_size_pt: <measured number | not-applicable>
       source_resolution: <width>x<height | not-applicable>
 narration:
-  engine: <azure | piper> # caller-selected; default azure
-  provider: <Azure AI Speech | Piper>
-  voice: <approved voice name>
+  engine: <azure | piper | none> # default azure outside CI; CI explicitly selects none
+  provider: <Azure AI Speech | Piper | none>
+  voice: <approved voice name | not-applicable> # not-applicable for none
+  timing_basis: <speech-wav | notes-word-count> # notes-word-count for none
   speaker_voices: # characters only; omit for animation none
     Casey: <approved Casey voice>
     Morgan: <approved Morgan voice>
@@ -174,14 +184,14 @@ narration:
       voice: <approved Casey voice>
       wav: audio/slide-001.wav
       duration_seconds: <measured WAV duration>
-  speech_region: <approved region name | not-applicable> # not-applicable under piper
-  total_word_count: <number> # summed across the synthesized speaker notes
+  speech_region: <approved region name | not-applicable> # only applicable under azure
+  total_word_count: <number> # summed across authored speaker notes
   measured_duration_minutes: <number> # measured from the produced MP4, for example with ffprobe
   contract_duration_minutes:
     min: <number>
     max: <number>
   audio_files:
-    - audio/slide-001.wav
+    - audio/slide-001.wav # internal silent timing only when engine is none; not published
 validation:
   deck: <pass | fail | deferred>
   video: <pass | fail | deferred>

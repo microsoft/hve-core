@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 #
 # Renders demo-material content authored by the Demo Material Author agentic
-# workflow into decks and narrated MP4s, then publishes a site bundle artifact
+# workflow into decks and silent MP4s, then publishes a site bundle artifact
 # that the documentation deployment stages under /demo-material/.
 
 name: Demo Material Render
@@ -31,12 +31,6 @@ concurrency:
 permissions: {}
 
 env:
-  PIPER_VERSION: '1.8.0'
-  PIPER_VOICE: en_US-norman-medium
-  PIPER_VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/norman/medium
-  PIPER_VOICE_ONNX_SHA256: b9739443232a80a59c7d18810dd856899bf16a7964725f5ab81ea49b1351cb71
-  PIPER_VOICE_JSON_SHA256: 6c2db7f558a4a8deb9fe822583c1c5105f6c4e834dd0f9de8ad17a888ee9fe1d
-  PIPER_VOICE_MODEL_CARD_SHA256: 60eaf4d10009d1bd4a1aa555d337dae00f60421d72fee415b9139a021e7cb5d0
   VSCODE_CLI_URL: https://vscode.download.prss.microsoft.com/dbazure/download/stable/2242ebbb54efeeb0129e08e919e7e8d43033cd83/vscode_cli_linux_x64_cli.tar.gz
   VSCODE_CLI_SHA256: 651bc54695531375589c837b907a4e784bc2892076592e2464da12ead994d4bd
   # A bundle older than this is re-uploaded so it never reaches the 90-day artifact expiry.
@@ -293,7 +287,6 @@ jobs:
     env:
       LEVEL: ${{ matrix.level }}
       LEVEL_DIR: ${{ github.workspace }}/../demo-level/${{ matrix.level }}
-      PIPER_DATA_DIR: ${{ github.workspace }}/../piper-voices
     steps:
       # Scripts come from the trusted default branch; the authored commit only
       # supplies the content artifact, which is validated as data.
@@ -334,25 +327,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libreoffice-impress ffmpeg
 
-      - name: Install Piper and its voice
-        shell: bash
-        run: |
-          set -euo pipefail
-          uv tool install "piper-tts==${PIPER_VERSION}"
-          uv tool dir --bin >> "${GITHUB_PATH}"
-          mkdir -p "${PIPER_DATA_DIR}"
-          cd "${PIPER_DATA_DIR}"
-          curl --fail --location --silent --show-error \
-            --output "${PIPER_VOICE}.onnx" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx"
-          curl --fail --location --silent --show-error \
-            --output "${PIPER_VOICE}.onnx.json" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx.json"
-          curl --fail --location --silent --show-error \
-            --output MODEL_CARD "${PIPER_VOICE_BASE}/MODEL_CARD"
-          printf '%s  %s\n%s  %s\n%s  %s\n' \
-            "${PIPER_VOICE_ONNX_SHA256}" "${PIPER_VOICE}.onnx" \
-            "${PIPER_VOICE_JSON_SHA256}" "${PIPER_VOICE}.onnx.json" \
-            "${PIPER_VOICE_MODEL_CARD_SHA256}" MODEL_CARD | sha256sum --check
-
       - name: Install Chromium for the HTML deck check and live capture
         shell: bash
         run: |
@@ -382,7 +356,7 @@ jobs:
             --level "${LEVEL}" \
             --level-dir "${LEVEL_DIR}" \
             --workspace "${GITHUB_WORKSPACE}" \
-            --narration piper \
+            --narration none \
             --html-deck-template "${GITHUB_WORKSPACE}/.github/skills/hve-slides/templates/deck"
 
       - name: Collect render outputs
@@ -496,7 +470,11 @@ jobs:
                   "at": now,
                   "checks": result.get("checks", {}),
               }
-              if result.get("ok") is True and all(f.is_file() for f in files.values()) and (level_dir / "index.html").is_file():
+              silent_delivery = (
+                  result.get("narration_engine") == "none"
+                  and result.get("checks", {}).get("T-11", {}).get("result") == "pass"
+              )
+              if result.get("ok") is True and silent_delivery and all(f.is_file() for f in files.values()) and (level_dir / "index.html").is_file():
                   target = site / level
                   shutil.rmtree(target, ignore_errors=True)
                   target.mkdir(parents=True)
@@ -507,6 +485,7 @@ jobs:
                       **attempt,
                       "rendered_at": now,
                       "narration_engine": result.get("narration_engine"),
+                      "timing_basis": result.get("timing_basis"),
                       "capture_profile": result.get("capture_profile"),
                       "measured_duration_minutes": result.get("measured_duration_minutes"),
                       "files": {

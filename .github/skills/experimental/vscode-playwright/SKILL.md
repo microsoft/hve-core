@@ -78,7 +78,7 @@ browser frames are excluded; duration is accurate to a video-frame boundary.
 Scripted screenshots require the VS Code or VS Code Insiders CLI (`code` or
 `code-insiders`). Interactive VS Code capture also requires genuine Playwright
 MCP browser tools and `curl`. Browser animation recording requires `uv`, the
-skill environment, Playwright Chromium, and FFmpeg with `libvpx-vp9`; it does
+skill environment with Playwright 1.48 or newer, Chromium, and FFmpeg with `libvpx-vp9`; it does
 not require VS Code or MCP.
 
 Tool names in this skill use an `mcp_microsoft_pla_browser_*` prefix. The actual prefix is derived from the MCP server's registration name in your host, so it may differ, for example `mcp_playwright_browser_*`. Match the prefix your host exposes.
