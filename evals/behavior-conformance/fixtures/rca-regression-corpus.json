@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "rca-incident-connection-pool",
+      "failure_type": "incident",
+      "question": "Why did checkout requests time out after release R42?",
+      "scope": {
+        "affected": "Checkout API instances running R42",
+        "unaffected": "Checkout API instances running R41",
+        "window": "2026-09-14T18:00:00Z/2026-09-14T19:00:00Z"
+      },
+      "hypotheses": [
+        {
+          "id": "H-001",
+          "statement": "R42 leaks database connections after cancelled checkout requests.",
+          "necessary_prediction": "Pool occupancy and wait time rise on R42 before request timeouts."
+        },
+        {
+          "id": "H-002",
+          "statement": "The database service slowed all checkout instances.",
+          "necessary_prediction": "Database execution latency rises on both R41 and R42."
+        }
+      ],
+      "executed_tests": [
+        {
+          "id": "T-001",
+          "result": "Correlated traces show cancelled R42 requests retain connections until pool exhaustion."
+        },
+        {
+          "id": "T-002",
+          "result": "R41 controls retain normal pool occupancy and database execution latency."
+        },
+        {
+          "id": "T-003",
+          "result": "An authorized isolated replay reproduces the leak on R42 but not R41."
+        },
+        {
+          "id": "T-004",
+          "result": "Rolling back only R42 restores pool occupancy and checkout success."
+        }
+      ],
+      "coverage": {
+        "sufficient": true,
+        "contradictions_resolved": true,
+        "alternatives_excluded": true,
+        "counterfactual_observed": true
+      }
+    },
+    {
+      "id": "rca-data-duplicate-ingestion",
+      "failure_type": "data",
+      "question": "Why did the daily order total double?",
+      "scope": {
+        "affected": "Curated order table for 2026-09-20",
+        "unaffected": "Source order ledger for 2026-09-20"
+      },
+      "hypotheses": [
+        {
+          "id": "H-001",
+          "statement": "A retry duplicated records during ingestion."
+        },
+        {
+          "id": "H-002",
+          "statement": "Customers placed twice as many orders."
+        }
+      ],
+      "executed_tests": [
+        {
+          "id": "T-001",
+          "result": "The curated table contains duplicate order IDs with matching payloads."
+        },
+        {
+          "id": "T-002",
+          "result": "The source ledger contains one row per duplicated order ID."
+        }
+      ],
+      "evidence_gaps": [
+        "Retry attempt identifiers were not retained.",
+        "Pipeline execution logs expired before the investigation.",
+        "No authorized replay environment is available."
+      ],
+      "remaining_ambiguity": "The records could have been duplicated by ingestion retry or a later merge step."
+    },
+    {
+      "id": "rca-software-cache-race",
+      "failure_type": "software",
+      "question": "Did a cache initialization race return stale account permissions?",
+      "hypothesis": {
+        "id": "H-001",
+        "statement": "Concurrent cache initialization publishes an incomplete permission set.",
+        "necessary_prediction": "A failing request reads the cache while initialization is incomplete."
+      },
+      "executed_tests": [
+        {
+          "id": "T-001",
+          "result": "Complete traces cover every failing request and show cache initialization finished before each read."
+        },
+        {
+          "id": "T-002",
+          "result": "A concurrency stress test reaches the suspected interleaving without returning stale permissions."
+        }
+      ],
+      "coverage": {
+        "trace_completeness_verified": true,
+        "stress_test_executed": true
+      }
+    },
+    {
+      "id": "rca-process-release-approval",
+      "failure_type": "process",
+      "question": "Why was an unapproved pricing rule released?",
+      "hypotheses": [
+        {
+          "id": "H-001",
+          "statement": "The release workflow allowed the approval handoff to be skipped."
+        },
+        {
+          "id": "H-002",
+          "statement": "An approver explicitly approved the rule outside the tracked workflow."
+        }
+      ],
+      "executed_tests": [
+        {
+          "id": "T-001",
+          "result": "Workflow history shows the approval stage was bypassed through an allowed manual transition."
+        },
+        {
+          "id": "T-002",
+          "result": "Three comparable releases used the same transition and also omitted the approval record."
+        }
+      ],
+      "evidence_gaps": [
+        "The external approval mailbox did not retain the relevant message.",
+        "The accountable owner cannot confirm whether an offline approval occurred."
+      ],
+      "causal_account": "The bypass mechanism has direct support, but an external approval remains a material competing explanation."
+    }
+  ]
+}
