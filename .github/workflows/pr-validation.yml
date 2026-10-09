@@ -83,6 +83,14 @@ jobs:
     with:
       soft-fail: false
 
+  typescript-check:
+    name: TypeScript Check
+    uses: ./.github/workflows/typescript-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   psscriptanalyzer:
     name: PowerShell Lint
     needs: change-range
@@ -862,6 +870,7 @@ jobs:
       - spell-check
       - markdown-lint
       - table-format
+      - typescript-check
       - psscriptanalyzer
       - discover-python-projects
       - python-lint
