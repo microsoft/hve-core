@@ -20,10 +20,13 @@ permissions:
 jobs:
   validate-release:
     name: Validate Tag and Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
-      attestations: read
+      attestations: read # verify attestations when recovering a published release
     outputs:
       channel: ${{ steps.identity.outputs.channel }}
       version: ${{ steps.identity.outputs.version }}
@@ -245,7 +248,7 @@ jobs:
 
       - name: Setup PowerShell modules for published verification
         if: ${{ steps.release.outputs.release-state == 'published' }}
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       - name: Verify published release assets
         if: ${{ steps.release.outputs.release-state == 'published' }}
@@ -300,14 +303,14 @@ jobs:
             -ArtifactDirectory "$ARTIFACT_DIRECTORY" \
             -Repository "$REPOSITORY" \
             -ExpectedSourceSha "$EXPECTED_SHA" \
-            -ExpectedSignerSha "3a09401536cef0c4559db1aa64b7d1010638fd67" \
+            -ExpectedSignerSha "3b36a825662603c0d564eb0f3b98ce5ba53857da" \
             -ReleaseTag "$RELEASE_TAG"
 
   extension-provenance:
     name: Package and Attest VS Code Extension
     needs: [validate-release]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' }}
-    uses: microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67 # PR #2823 squash
+    uses: microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da # snapshot-20260908
     with:
       source-ref: ${{ github.sha }}
       version: ${{ needs.validate-release.outputs.version }}
@@ -315,32 +318,32 @@ jobs:
       release-tag: ${{ needs.validate-release.outputs.tag-name }}
     permissions:
       contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
+      id-token: write # Sigstore OIDC identity for the signer's attestations
+      attestations: write # store build provenance and SBOM attestations
+      artifact-metadata: write # record attestation artifact metadata
 
   vex-attest:
     name: Attest and Upload Stable VEX
     needs: [validate-release, extension-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
-    uses: ./.github/workflows/vex-attest.yml
+    uses: $/.github/workflows/vex-attest.yml
     with:
       version: ${{ needs.validate-release.outputs.tag-name }}
       sbom-artifact: sbom-dependencies
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
+      contents: write # upload the attested VEX document to the draft release
+      id-token: write # Sigstore OIDC identity for the VEX attestation
+      attestations: write # store the VEX attestation
+      artifact-metadata: write # record attestation artifact metadata
 
   verify-provenance:
     name: Verify Provenance
     needs: [validate-release, extension-provenance, vex-attest]
     if: ${{ always() && !cancelled() && !failure() && needs.validate-release.outputs.release-state == 'draft' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-      attestations: read
+      attestations: read # verify the release asset attestations
     steps:
       - name: Checkout verification script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -371,7 +374,7 @@ jobs:
         env:
           ARTIFACT_DIRECTORY: ./artifacts
           EXPECTED_SOURCE_SHA: ${{ needs.validate-release.outputs.source-sha }}
-          EXPECTED_SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          EXPECTED_SIGNER_SHA: 3b36a825662603c0d564eb0f3b98ce5ba53857da
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.validate-release.outputs.tag-name }}
           REPOSITORY: ${{ github.repository }}
@@ -387,10 +390,10 @@ jobs:
     name: Stable SBOM Dependency Diff
     needs: [validate-release, extension-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     continue-on-error: true
     permissions:
-      contents: write
+      contents: write # upload the SBOM diff to the draft release
     steps:
       - name: Download current dependency SBOM
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -476,9 +479,9 @@ jobs:
     name: Append Stable Verification Instructions
     needs: [validate-release, extension-provenance, verify-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      contents: write
+      contents: write # append verification notes to the draft release
     steps:
       - name: Append verification section to release notes
         shell: bash
@@ -505,7 +508,7 @@ jobs:
 
           gh attestation verify <file>.vsix --repo microsoft/hve-core \
             --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
-            --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
+            --signer-digest 3b36a825662603c0d564eb0f3b98ce5ba53857da \
             --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG"
           ```
 
@@ -575,7 +578,10 @@ jobs:
       - sbom-diff
       - append-verification-notes
     if: ${{ always() && !cancelled() && !failure() && needs.validate-release.outputs.release-state == 'draft' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     steps:
@@ -609,7 +615,7 @@ jobs:
 
           RELEASE_FILE="$RUNNER_TEMP/current-draft.json"
           gh api "/repos/$REPOSITORY/releases/$RELEASE_ID" > "$RELEASE_FILE"
-          if ! jq -e --arg tag "$RELEASE_TAG" --arg sha "${{ github.sha }}" \
+          if ! jq -e --arg tag "$RELEASE_TAG" --arg sha "$GITHUB_SHA" \
             '.tag_name == $tag and .target_commitish == $sha and .draft == true' "$RELEASE_FILE" >/dev/null; then
             echo "::error::Release identity or draft state changed before extension upload"
             exit 1
@@ -663,6 +669,7 @@ jobs:
           TAG: ${{ needs.validate-release.outputs.tag-name }}
           MISSING_JSON: ${{ steps.occupancy.outputs.missing-json }}
           VERSION: ${{ needs.validate-release.outputs.version }}
+          NEEDS_VALIDATE_RELEASE_OUTPUTS_RELEASE_ID: ${{ needs.validate-release.outputs.release-id }}
         run: |
           set -euo pipefail
           VSIX="hve-core-$VERSION.vsix"
@@ -692,7 +699,7 @@ jobs:
           fi
 
           REMOTE_ASSETS="$RUNNER_TEMP/final-draft-assets.txt"
-          gh api --paginate "/repos/$REPOSITORY/releases/${{ needs.validate-release.outputs.release-id }}/assets?per_page=100" \
+          gh api --paginate "/repos/$REPOSITORY/releases/${NEEDS_VALIDATE_RELEASE_OUTPUTS_RELEASE_ID}/assets?per_page=100" \
             --jq '.[].name' | sort > "$REMOTE_ASSETS"
           EXPECTED=(dependencies.spdx.json "${EXTENSION_ASSETS[@]}")
           if [ "$CHANNEL" = 'Stable' ]; then
@@ -726,8 +733,30 @@ jobs:
           && needs.validate-release.outputs.release-state == 'published'
         )
       )
-    uses: ./.github/workflows/release-close-milestone.yml
+    uses: $/.github/workflows/release-close-milestone.yml
     with:
       version: ${{ needs.validate-release.outputs.version }}
     permissions:
-      issues: write
+      issues: write # close the release milestone
+
+  # Scorecard grades the newest releases' signature and SBOM assets, which exist
+  # only once the release is public. Scorecard accepts published results only
+  # from default-branch runs, so this starts it there. GITHUB_TOKEN may start
+  # workflow_dispatch runs; the release app has no actions permission.
+  refresh-scorecard:
+    name: Refresh OpenSSF Scorecard
+    needs: [publish-release]
+    if: ${{ needs.publish-release.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start the Scorecard workflow on the default branch
+    steps:
+      - name: Start Scorecard on the default branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          gh workflow run scorecard.yml --ref "$DEFAULT_BRANCH" -R "$REPOSITORY"

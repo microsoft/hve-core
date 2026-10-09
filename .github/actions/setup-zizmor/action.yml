@@ -1,0 +1,78 @@
+name: Setup zizmor
+description: Installs the zizmor version pinned in scripts/security/tool-checksums.json and verifies its checksum
+
+outputs:
+  zizmor-version:
+    description: The installed zizmor version
+    value: ${{ steps.install.outputs.zizmor-version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install verified zizmor
+      id: install
+      shell: bash
+      env:
+        MANIFEST_PATH: ${{ github.action_path }}/../../../scripts/security/tool-checksums.json
+      run: |
+        set -euo pipefail
+
+        case "${RUNNER_OS}/${RUNNER_ARCH}" in
+          Linux/X64) arch_key='linux_amd64' ;;
+          Linux/ARM64) arch_key='linux_arm64' ;;
+          *)
+            echo "::error::setup-zizmor supports Linux X64 and ARM64 runners, not ${RUNNER_OS}/${RUNNER_ARCH}."
+            exit 1
+            ;;
+        esac
+
+        zizmor_entry() {
+          jq -er --arg arch "${arch_key}" "first(.tools[] | select(.name == \"zizmor\")) | $1" "${MANIFEST_PATH}"
+        }
+        version="$(zizmor_entry '.version')"
+        sha256="$(zizmor_entry ".sha256ByArch[\$arch]")"
+        url_template="$(zizmor_entry ".assetTemplateByArch[\$arch]")"
+        url="${url_template//\{version\}/${version}}"
+
+        if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::The zizmor manifest version '${version}' is not an exact release version."
+          exit 1
+        fi
+        if [[ ! "${sha256}" =~ ^[0-9a-f]{64}$ ]]; then
+          echo "::error::The zizmor manifest checksum for ${arch_key} is not a SHA-256 digest."
+          exit 1
+        fi
+        if [[ "${url}" != "https://github.com/zizmorcore/zizmor/releases/download/v${version}/"*.tar.gz ]]; then
+          echo "::error::The zizmor manifest asset URL is not a zizmorcore/zizmor release asset for ${version}."
+          exit 1
+        fi
+
+        # The manifest digest was recorded after gh attestation verify confirmed
+        # the release workflow built this asset, so the checksum binds the bytes.
+        asset="${url##*/}"
+        archive="${RUNNER_TEMP}/${asset}"
+        install_dir="${RUNNER_TEMP}/zizmor-${version}"
+        curl --proto '=https' --tlsv1.2 -sSfL --retry 3 --retry-all-errors -o "${archive}" "${url}"
+        if ! echo "${sha256}  ${archive}" | sha256sum -c --quiet -; then
+          echo "::error::zizmor ${version} checksum verification failed for ${asset}."
+          exit 1
+        fi
+        mkdir -p "${install_dir}"
+        tar -xzf "${archive}" -C "${install_dir}" zizmor
+        rm -f "${archive}"
+
+        installed="$("${install_dir}/zizmor" --version | awk '{print $2}')"
+        if [[ "${installed}" != "${version}" ]]; then
+          echo "::error::Installed zizmor reports ${installed}, expected ${version}."
+          exit 1
+        fi
+        # Installing into /usr/local/bin avoids a GITHUB_PATH write; the check
+        # fails if another copy of the binary shadows it.
+        sudo install -m 0755 -t /usr/local/bin "${install_dir}/zizmor"
+        resolved="$(command -v zizmor || true)"
+        if [[ "${resolved}" != '/usr/local/bin/zizmor' ]]; then
+          echo "::error::zizmor resolves to '${resolved}', not the verified /usr/local/bin/zizmor."
+          exit 1
+        fi
+        echo "zizmor-version=${version}" >> "${GITHUB_OUTPUT}"
+        echo "Installed zizmor ${version} (${arch_key})"

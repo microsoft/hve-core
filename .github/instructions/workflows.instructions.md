@@ -10,7 +10,7 @@ These instructions define required conventions and security requirements for Git
 
 ## Dependency Pinning
 
-All third-party GitHub Actions MUST be pinned to a full commit SHA. Version tags MUST NOT be used as the reference. A semantic version MAY be included as a trailing comment for readability.
+All third-party GitHub Actions MUST be pinned to a full commit SHA. Version tags MUST NOT be used as the reference. Each pin MUST carry a trailing comment naming the exact release tag that points at the pinned commit (for example `# v4.2.2`, not a moving `# v4`). The commit MUST be a commit, not an annotated tag object, and MUST be on an upstream tag or in the upstream default branch history. A reusable workflow pinned to an untagged commit on the default branch may use a free-text comment that records its origin.
 
 **Required pattern:**
 
@@ -25,9 +25,9 @@ uses: actions/checkout@v4
 uses: actions/checkout@v4.2.2
 ```
 
-Local reusable workflows referenced via relative paths are excluded from SHA pinning requirements.
+Same-repository actions and reusable workflows use the self-repository syntax, `uses: $/.github/actions/<name>` or `uses: $/.github/workflows/<name>.yml`. It resolves to the running commit, needs no checkout, and can't load code a job cloned at runtime, so these references are excluded from SHA pinning requirements. Don't use the workspace-relative `./` form; it loads whatever is checked out in the workspace.
 
-**Enforcement:** Violations are detected by `scripts/security/Test-DependencyPinning.ps1` and `scripts/security/Test-SHAStaleness.ps1`. CI will fail on SHA pinning violations.
+**Enforcement:** Violations are detected by `scripts/security/Test-DependencyPinning.ps1` and `scripts/security/Test-SHAStaleness.ps1`. `scripts/security/Test-ActionPinProvenance.ps1` resolves each comment and commit against the upstream repository with `git ls-remote` and the compare API, and fails on a mislabeled comment, a tag-object pin, or a commit that is on no tag and not in the default branch history (a possible impostor commit). CI will fail on SHA pinning violations.
 
 ## Permissions
 
@@ -42,7 +42,7 @@ An empty workflow-level block is a default, not a ceiling. A job that does decla
 ```yaml
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: write # comment on the pull request
 ```
 
 **Job-level permissions example:**
@@ -51,7 +51,7 @@ permissions:
 jobs:
   validate:
     name: Validate Code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -98,21 +98,47 @@ Workflows MUST NOT persist GitHub credentials by default. Credential persistence
 
 ## Runners
 
-Workflows MUST run on GitHub-hosted Ubuntu runners. Windows, macOS, self-hosted, and other non-Ubuntu runner types are not supported in hve-core.
+Workflows MUST run on dated GitHub-hosted Ubuntu runners. Windows, macOS, self-hosted, and other non-Ubuntu runner types are not supported in hve-core.
 
-**Allowed `runs-on` labels** (GitHub-hosted Ubuntu images only):
+**Allowed `runs-on` labels** (dated GitHub-hosted Ubuntu images only):
 
-* `ubuntu-latest`
-* `ubuntu-24.04`, `ubuntu-22.04` (and other GitHub-hosted Ubuntu version labels as they become available, including ARM variants such as `ubuntu-24.04-arm`)
-* `ubuntu-slim` (lightweight 1 vCPU GitHub-hosted runner; still Ubuntu, still GitHub-hosted)
+* `ubuntu-24.04` (and the other known dated GitHub-hosted Ubuntu images, `ubuntu-22.04` and `ubuntu-26.04`)
+* ARM variants of dated labels, such as `ubuntu-24.04-arm`
+* Firewall variants of dated labels, such as `ubuntu-24.04-firewall`, which run behind GitHub's native egress firewall
 
-**Disallowed `runs-on` values:** `windows-*`, `macos-*`, `self-hosted`, and any custom or third-party runner label.
+**Disallowed `runs-on` values:**
+
+* `ubuntu-latest` and `ubuntu-slim`: their image changes without a workflow change, so an image upgrade would skip review.
+* Dated labels for an Ubuntu version GitHub does not host, such as `ubuntu-25.04`. Add a new image version to `$script:KnownUbuntuVersions` in `scripts/security/Test-WorkflowRunner.ps1` when GitHub publishes it.
+* `windows-*`, `macos-*`, `self-hosted`, and any custom or third-party runner label.
+* Expressions such as `${{ matrix.os }}`: the runner cannot be verified from the workflow file.
 
 **Required pattern:**
 
 ```yaml
-runs-on: ubuntu-latest
+runs-on: ubuntu-24.04
 ```
+
+Moving to a newer image is a deliberate change that updates every job together. `scripts/security/Test-SHAStaleness.ps1` reports when GitHub publishes a newer Ubuntu image.
+
+## Runtime Versions
+
+Node.js and Python versions come from the root `.node-version` and `.python-version` files, each holding one exact `X.Y.Z` version. The devcontainer, `copilot-setup-steps.yml`, and uv read the same files.
+
+* `actions/setup-node` MUST use `node-version-file: .node-version`.
+* `actions/setup-python` MUST use `python-version-file: .python-version`.
+* A job without a checkout MAY use a literal `node-version` or `python-version`; the literal MUST equal the version file.
+
+**Required pattern:**
+
+```yaml
+- name: Setup Node.js
+  uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+  with:
+    node-version-file: .node-version
+```
+
+**Enforcement:** `scripts/security/Test-ToolVersionConsistency.ps1` fails on a setup step without a version, a step that reads another file, a literal that differs from the version file, or a devcontainer runtime feature that differs. `scripts/security/Test-SHAStaleness.ps1` reports a newer patch release on the pinned line.
 
 ## Workflow Structure
 
@@ -148,7 +174,7 @@ permissions:
 jobs:
   validate:
     name: Validate Code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -202,7 +228,7 @@ permissions:
 jobs:
   scan:
     name: Validate Compliance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -215,14 +241,14 @@ jobs:
       - name: Run Analysis
         id: analyze
         run: |
-          echo "compliance-score=95" >> $GITHUB_OUTPUT
-          echo "unpinned-count=2" >> $GITHUB_OUTPUT
-          echo "is-compliant=true" >> $GITHUB_OUTPUT
+          echo "compliance-score=95" >> "${GITHUB_OUTPUT}"
+          echo "unpinned-count=2" >> "${GITHUB_OUTPUT}"
+          echo "is-compliant=true" >> "${GITHUB_OUTPUT}"
 ```
 
 ### Consuming Reusable Workflows
 
-Reusable workflows MUST be called using relative paths with explicit permissions and inputs.
+Reusable workflows in this repository MUST be called with the `$/` self-repository reference (`uses: $/.github/workflows/<name>.yml`), with explicit permissions and inputs. Annotate every permission beyond `contents: read` with a reason comment.
 
 **Example usage:**
 
@@ -239,10 +265,10 @@ permissions:
 jobs:
   validate-pinning:
     name: Validate Dependency Pinning
-    uses: ./.github/workflows/dependency-pinning-scan.yml
+    uses: $/.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write # upload SARIF to code scanning
     with:
       soft-fail: false
       upload-sarif: true
@@ -252,17 +278,29 @@ jobs:
 
 All workflows MUST pass the following validation checks:
 
-### actionlint Validation
+### Workflow Validation
 
-* **What it enforces:** Syntax validation, best practices, and security checks
-* **Configuration:** Uses actionlint with SHA256 verification
-* **CI blocking:** Workflows fail CI if violations are detected
+* **Script:** `scripts/linting/workflow-validator/validate-workflows.mjs` (`npm run lint:workflows`)
+* **What it enforces:** GitHub's own workflow parser validates every workflow and composite action, custom checks catch undefined references and undeclared action inputs, and the manifest-pinned shellcheck checks every bash and sh `run:` script. Nothing is ignored or disabled.
+* **CI blocking:** `workflow-validation-scan.yml` reports SARIF to code scanning and fails PR validation on any finding that no tracked exception in `security/code-scanning-exceptions.yml` excuses (`npm run lint:workflows:gated` runs the same gate locally)
+
+### zizmor Audit
+
+* **Tool:** zizmor at the `pedantic` persona, installed from `scripts/security/tool-checksums.json` by `.github/actions/setup-zizmor` (`npm run lint:zizmor` in the devcontainer)
+* **What it enforces:** Every workflow, composite action, and `dependabot.yml` passes zizmor's audits, including template injection, `GITHUB_PATH` and `GITHUB_ENV` writes, dangerous triggers, unscoped GitHub App tokens, and undocumented permissions. Every permission beyond `contents: read` carries a `# reason` comment.
+* **CI blocking:** `zizmor-scan.yml` runs with `--no-ignores`, so inline `zizmor: ignore` comments suppress nothing. It uploads SARIF under category `zizmor` and fails PR validation on any result that no tracked exception in `security/code-scanning-exceptions.yml` excuses (`Test-CodeQLSarifThreshold.ps1 -Threshold All`)
 
 ### Dependency Pinning Validation
 
 * **Script:** `scripts/security/Test-DependencyPinning.ps1`
 * **What it enforces:** All third-party actions use full SHA pins
-* **CI blocking:** Failures block CI when configured to enforce compliance
+* **CI blocking:** `dependency-pinning-scan.yml` reports one SARIF rule per dependency type and fails on any finding that no tracked exception excuses; soft-fail callers report the gate result without failing (`npm run lint:dependency-pinning:gated` runs the same gate locally)
+
+### Action Pin Provenance Validation
+
+* **Script:** `scripts/security/Test-ActionPinProvenance.ps1` (`npm run lint:action-pin-provenance`)
+* **What it enforces:** Every pin comment names the release tag at the pinned commit, and every pinned commit is on an upstream tag or in the default branch history. The `Update-ActionSHAPinning.ps1` remediation table is held to the same rules, and each entry must map to a release in its key's major version
+* **CI blocking:** `action-pin-provenance-scan.yml` runs it in PR validation and fails closed when upstream cannot be read
 
 ### SHA Staleness Validation
 
@@ -279,7 +317,7 @@ All workflows MUST pass the following validation checks:
 ### Runner Policy Validation
 
 * **Script:** `scripts/security/Test-WorkflowRunner.ps1`
-* **What it enforces:** Every job's `runs-on` value is a GitHub-hosted Ubuntu label (see § Runners for the allow list)
+* **What it enforces:** Every job's `runs-on` value is a dated GitHub-hosted Ubuntu label (see § Runners for the allow list). Floating labels are reported under their own `floating-runner-label` rule. `copilot-setup-steps.yml` is scanned like every other workflow.
 * **CI blocking:** Failures block CI when configured to enforce compliance
 
 ## Security Requirements
@@ -295,16 +333,21 @@ All workflows MUST pass the following validation checks:
 
 **Example event guard pattern:**
 
+Pass event values to the script through step `env:`; never interpolate `${{ }}` inside `run:`.
+
 ```yaml
 - name: Process Release
+  env:
+    EVENT_NAME: ${{ github.event_name }}
+    RELEASE_TAG: ${{ github.event.release.tag_name }}
+    INPUT_VERSION: ${{ inputs.version }}
   run: |
-    if [ "${{ github.event_name }}" == "release" ]; then
-      VERSION="${{ github.event.release.tag_name }}"
-      echo "Processing release: $VERSION"
+    if [ "${EVENT_NAME}" == "release" ]; then
+      VERSION="${RELEASE_TAG}"
     else
-      VERSION="${{ inputs.version }}"
-      echo "Processing version: $VERSION"
+      VERSION="${INPUT_VERSION}"
     fi
+    echo "Processing version: ${VERSION}"
 ```
 
 ## YAML Expression Quoting
@@ -353,8 +396,8 @@ The following scripts enforce compliance:
 * `scripts/security/Test-DependencyPinning.ps1` - Validates dependency pinning
 * `scripts/security/Test-SHAStaleness.ps1` - Checks for stale dependencies
 * `scripts/security/Test-WorkflowPermissions.ps1` - Validates workflow permissions declarations
-* `scripts/security/Test-WorkflowRunner.ps1` - Validates `runs-on` values against the GitHub-hosted Ubuntu allow-list
-* `scripts/linting/Invoke-YamlLint.ps1` - Runs actionlint validation
+* `scripts/security/Test-WorkflowRunner.ps1` - Validates `runs-on` values against the dated GitHub-hosted Ubuntu allow-list
+* `scripts/linting/workflow-validator/validate-workflows.mjs` - Validates workflows and composite actions with GitHub's parser, custom checks, and pinned shellcheck
 * `scripts/security/Test-PrValidationGate.ps1` - Validates the PR validation gate `needs:` completeness
 
 All workflows must pass these validation checks to be merged into the repository.

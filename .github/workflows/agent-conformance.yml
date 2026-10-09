@@ -32,7 +32,7 @@ concurrency:
 jobs:
   conformance:
     name: Conformance (${{ matrix.suite }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -49,7 +49,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install dependencies
@@ -58,7 +58,8 @@ jobs:
       - name: Run behavioral conformance suite
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
-        run: npx vally eval --suite ${{ matrix.suite }}
+          MATRIX_SUITE: ${{ matrix.suite }}
+        run: npx vally eval --suite "${MATRIX_SUITE}"
 
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

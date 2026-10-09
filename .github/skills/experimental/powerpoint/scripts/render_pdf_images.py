@@ -98,7 +98,10 @@ def render_pages(
     try:
         import fitz  # noqa: F401, PLC0415 — PyMuPDF availability check
     except ImportError:
-        logger.error("PyMuPDF is required. Install via: pip install pymupdf")
+        logger.error(
+            "PyMuPDF is required. "
+            "Run 'uv sync --locked' in the powerpoint skill directory"
+        )
         sys.exit(EXIT_FAILURE)
 
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -29,7 +29,7 @@ jobs:
   validate-version:
     name: Validate Pre-Release Version
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == true) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -113,7 +113,7 @@ jobs:
   verify-catalog:
     name: Verify Pre-Release Catalog Version
     needs: [validate-version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -142,12 +142,11 @@ jobs:
     name: Publish Pre-Release Extension
     needs: [validate-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
-    uses: ./.github/workflows/extension-marketplace-publish.yml
+    uses: $/.github/workflows/extension-marketplace-publish.yml
     with:
       tag: ${{ needs.validate-version.outputs.tag }}
       pre-release: true
     permissions:
       contents: read
-      attestations: read
-      id-token: write
-    secrets: inherit
+      attestations: read # the publish workflow verifies VSIX provenance
+      id-token: write # Azure OIDC login in the publish workflow

@@ -175,6 +175,20 @@ BeforeAll {
         return $jobMatch.Value
     }
 
+    function Get-SafeOutputsConfig {
+        param([Parameter(Mandatory)] [string]$LockSource)
+
+        # The compiler embeds the safe-outputs config as a YAML double-quoted JSON string.
+        $configMatches = [regex]::Matches(
+            $LockSource,
+            '(?m)^\s+GH_AW_SAFE_OUTPUTS_CONFIG: "(?<json>(?:[^"\\]|\\.)*)"\s*$'
+        )
+        if ($configMatches.Count -eq 0) { throw 'GH_AW_SAFE_OUTPUTS_CONFIG was not found' }
+        $decoded = @($configMatches | ForEach-Object { $_.Groups['json'].Value -replace '\\(.)', '$1' } | Select-Object -Unique)
+        if ($decoded.Count -ne 1) { throw 'GH_AW_SAFE_OUTPUTS_CONFIG differs between jobs' }
+        return $decoded[0] | ConvertFrom-Json -AsHashtable
+    }
+
     function Test-OptionalPublicationEnabled {
         param([AllowEmptyString()] [string]$Value)
 
@@ -432,7 +446,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     It 'emits one independently validated immutable shard result' {
         $script:Source | Should -Match '(?m)^        - name: Check out the collector implementation$'
         $script:Source | Should -Match 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
-        $script:Source | Should -Match 'ref: \$\{\{ github\.workflow_sha \}\}'
+        $script:Source | Should -Match '(?s)- name: Check out the collector implementation\s+uses: actions/checkout@[0-9a-f]{40} # v7\.0\.1\s+with:\s+persist-credentials: false\s'
+        $script:Source | Should -Not -Match 'github\.workflow_sha'
         $script:Source | Should -Match 'persist-credentials: false'
         $script:Source | Should -Match '(?m)^          run: \./scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomResultCollector\.ps1$'
         $script:Source | Should -Match '(?m)^        - name: Upload immutable shard result$'
@@ -1026,7 +1041,10 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
 
     It 'allows only the artifact-bound result job plus compiler-owned noop handling' {
         $script:Lock | Should -Match 'publish_backlog_grooming_result'
-        $script:Lock | Should -Match '"noop":\{"max":1,"report-as-issue":"false"\}'
+        $config = Get-SafeOutputsConfig -LockSource $script:Lock
+        [string[]]@($config.Keys | Sort-Object) | Should -Be @('noop', 'publish-backlog-grooming-result')
+        $config['noop']['max'] | Should -Be 1
+        $config['noop']['report-as-issue'] | Should -BeExactly 'false'
         $script:Lock | Should -Match 'Upload immutable shard result'
         $script:Lock | Should -Match 'Invoke-BacklogGroomResultCollector\.ps1'
         $script:Lock | Should -Not -Match '"add_comment"'
@@ -1056,7 +1074,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
 
     It 'uploads the validated result without issue-write or SARIF permissions' {
         $script:Lock | Should -Match 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
-        $script:Lock | Should -Match 'ref: \$\{\{ github\.workflow_sha \}\}'
+        $script:Lock | Should -Not -Match 'github\.workflow_sha'
         $script:Lock | Should -Match 'persist-credentials: false'
         $script:Lock | Should -Match 'GH_AW_AGENT_OUTPUT'
         $script:Lock | Should -Match 'Invoke-BacklogGroomResultCollector\.ps1'
@@ -1073,18 +1091,15 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Source | Should -Match '(?ms)^      continuation_authenticated:\s+.*?required: true\s+type: boolean'
         $script:Source | Should -Match "(?m)^if: needs\.pre_activation\.outputs\.trusted_caller == 'true'$"
         $script:Source | Should -Match '(?m)^      trusted_caller: \$\{\{ steps\.trusted-caller\.outputs\.trusted_caller \}\}$'
-        $script:Source | Should -Match 'run\.path === "\.github/workflows/backlog-groom-orchestrator\.yml"'
-        $script:Source | Should -Match 'run\.actor\?\.login === bot'
-        $script:Source | Should -Match 'run\.triggering_actor\?\.login === bot'
-        $script:Source | Should -Match 'context\.eventName === "schedule"'
-        $script:Source | Should -Match 'run\.event === "schedule"'
-        $script:Source | Should -Match 'process\.env\.CONTINUATION_AUTHENTICATED === "false"'
-        $script:Source | Should -Match 'context\.eventName === "workflow_dispatch"'
-        $script:Source | Should -Match 'run\.event === "workflow_dispatch"'
-        $script:Source | Should -Match 'process\.env\.CONTINUATION_AUTHENTICATED === "true"'
-        $script:Source | Should -Match '\(initialRun \|\| continuationRun\)'
-        $script:Source | Should -Match 'String\(process\.env\.ORCHESTRATOR_RUN_ID\) === String\(context\.runId\)'
-        $script:Source | Should -Match 'Number\(process\.env\.ORCHESTRATOR_ATTEMPT\) === Number\(process\.env\.GITHUB_RUN_ATTEMPT\)'
+        $script:Source | Should -Match '\.path == "\.github/workflows/backlog-groom-orchestrator\.yml"'
+        $script:Source | Should -Match '\.actor\.login == \$bot'
+        $script:Source | Should -Match '\.triggering_actor\.login == \$bot'
+        $script:Source | Should -Match '\$event_name == "schedule" and \.event == "schedule" and \$authenticated == "false"'
+        $script:Source | Should -Match '\$event_name == "workflow_dispatch" and \.event == "workflow_dispatch" and \$authenticated == "true"'
+        $script:Source | Should -Match '\(\.id \| tostring\) == \$run_id'
+        $script:Source | Should -Match '\(\.run_attempt \| tostring\) == \$run_attempt'
+        $script:Source | Should -Match '\$orchestrator_run_id == \$run_id'
+        $script:Source | Should -Match '\$orchestrator_attempt == \$run_attempt'
 
         $script:Orchestrator | Should -Match 'continuation-authenticated: \$\{\{ steps\.plan\.outputs\.continuation-authenticated \}\}'
         $script:Orchestrator | Should -Match 'core\.setOutput\("continuation-authenticated", String\(isContinuation\)\)'
@@ -1107,7 +1122,8 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $shardWidth.Success | Should -BeTrue
         $callLimit.Success | Should -BeTrue
         $callLimit.Groups['value'].Value | Should -Be $shardWidth.Groups['value'].Value
-        $script:Lock | Should -Match '(?s)"publish-backlog-grooming-result":\{.*?"max":5'
+        (Get-SafeOutputsConfig -LockSource $script:Lock)['publish-backlog-grooming-result']['max'] |
+            Should -Be ([int]$shardWidth.Groups['value'].Value)
     }
 
     It 'defines typed worker identity, manifest envelopes, and shard-specific generated concurrency' {
@@ -1150,11 +1166,11 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'shard_id: \$\{\{ matrix\.shard\.shard_id \}\}'
         $script:Orchestrator | Should -Match 'ordered_candidate_ids: \$\{\{ toJSON\(matrix\.shard\.ordered_candidate_ids\) \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?shard_id: shard-01'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write(?: #[^\n]*)?\s+contents: read(?: #[^\n]*)?\s+issues: read(?: #[^\n]*)?\s+pull-requests: read'
         $script:Orchestrator | Should -Match '(?ms)^  assess:.*?secrets:\s+COPILOT_GITHUB_TOKEN: \$\{\{ secrets\.COPILOT_GITHUB_TOKEN \}\}\s+GH_AW_GITHUB_MCP_SERVER_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_MCP_SERVER_TOKEN \}\}\s+GH_AW_GITHUB_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_TOKEN \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?secrets: inherit'
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
+        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 1
         $script:WaveValidator | Should -Match '\$ByShard\.Count -ne \$ManifestShards\.Count'
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
         foreach ($rejection in @('missing', 'stale', 'unexpected', 'duplicate', 'manifest-mismatched')) {
@@ -1180,8 +1196,8 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:WaveValidator | Should -Match 'Shard result digest mismatch'
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
         $script:WaveValidator | Should -Match 'Wave issue coverage is incomplete or out of snapshot'
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        $script:Publisher | Should -Not -Match '(?m)^  workflow_dispatch:$'
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
+        $script:Publisher | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+sweep-run-id:\s+description: [^\n]+\s+required: true\s+type: string\s+concurrency:'
     }
 }
 
@@ -1200,11 +1216,13 @@ Describe 'Backlog grooming deterministic fan-in behavior' -Tag 'Unit' {
 
 Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     It 'isolates the sole issue-write permission behind complete fan-in' {
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
-        $script:Publisher | Should -Not -Match '(?m)^  workflow_dispatch:$'
-        $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+- backlog-grooming-sweep/\*\*\s+types:\s+- completed'
-        $script:Publisher | Should -Match 'context\.payload\.workflow_run\?\.id'
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
+        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 1
+        $script:Publisher | Should -Not -Match '(?m)^  workflow_run:$'
+        $script:Publisher | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+sweep-run-id:\s+description: [^\n]+\s+required: true\s+type: string\s+concurrency:'
+        $script:Publisher | Should -Match 'parsePositiveInteger\("sweep-run-id", process\.env\.SWEEP_RUN_ID\)'
+        $script:Publisher | Should -Match 'context\.ref !== `refs/heads/\$\{repository\.default_branch\}`'
+        $script:Publisher | Should -Match 'const run = await waitForRun\(finalRunId\)'
         $script:Publisher | Should -Not -Match 'manualReplay|inputs\.final-|inputs\.snapshot-digest|inputs\.source-sha|inputs\.sweep-id'
         $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch && !executionTagMatch'
         $script:Publisher | Should -Match 'basehead: `\$\{run\.head_sha\}\.\.\.\$\{repository\.default_branch\}`'
@@ -1214,7 +1232,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
         $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
         $script:Publisher | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-orchestrator\.yml"'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write(?: #[^\n]*)?\s+contents: read(?: #[^\n]*)?\s+issues: read(?: #[^\n]*)?\s+pull-requests: read'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Lock | Should -Not -Match '(?m)^\s+issues: write$'
     }
@@ -1231,7 +1249,9 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Orchestrator | Should -Match "steps\.plan\.outputs\.mode != 'calendar-noop'"
         $script:Orchestrator | Should -Match "needs\.plan\.outputs\.mode != 'calendar-noop'"
         $script:Orchestrator | Should -Match "needs\.plan\.outputs\.mode != 'complete-noop'"
-        $script:Publisher | Should -Match "github\.event\.workflow_run\.conclusion == 'success'"
+        $script:Publisher | Should -Match 'if \(run\.conclusion !== "success"\) \{\s+core\.info\(`Sweep run \$\{finalRunId\} concluded'
+        $script:Orchestrator | Should -Match "(?ms)^  dispatch-publisher:\s+name: [^\n]+\s+needs: reduce\s+if: \`$\{\{ needs\.reduce\.result == 'success' \}\}\s+runs-on: ubuntu-24\.04\s+permissions:\s+actions: write"
+        $script:Orchestrator | Should -Match 'workflow_id: "backlog-groom-publisher\.yml",\s+ref: repository\.default_branch,\s+inputs: \{ "sweep-run-id": String\(context\.runId\) \}'
         $script:Source | Should -Match '(?m)^  workflow_call:$'
         $script:Source | Should -Not -Match '(?m)^  (schedule|workflow_dispatch):$'
     }
@@ -1301,10 +1321,10 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         ).Count | Should -Be 1
         [regex]::Matches($script:Publisher, '(?m)^    continue-on-error: true$').Count | Should -Be 1
         $script:HistoryPublisher | Should -Match '(?ms)^  publish-history:.*?needs:\s+- discover\s+- publish'
-        $script:CorePublisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read\s+issues: write'
+        $script:CorePublisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read(?: #[^\n]*)?\s+issues: write'
         $script:CorePublisher | Should -Not -Match 'contents: write|GitHub Pages|pagesRoot|reportUrl|backlog-grooming-reports'
         $script:CorePublisher | Should -Match 'Inspect the \[source workflow run\]'
-        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
+        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read(?: #[^\n]*)?\s+contents: write'
         $script:HistoryPublisher | Should -Not -Match 'issues: write'
         $script:HistoryPublisher | Should -Match 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
     }
@@ -1345,10 +1365,14 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     }
 
     It 'stages reports only from immutable provenance bound to a successful publisher run' {
-        $script:DeployDocs | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Publisher\s+(?:- [^\r\n]+\s+)*branches:\s+- main\s+types:\s+- completed'
-        $script:DeployDocs | Should -Match "if: \$\{\{ github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success' && github\.event\.workflow_run\.path == '\.github/workflows/backlog-groom-publisher\.yml' \}\}"
-        $script:DeployDocs | Should -Match "github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success'"
-        $script:DeployDocs | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-publisher\.yml"'
+        $script:DeployDocs | Should -Not -Match '(?m)^  workflow_run:$'
+        $script:DeployDocs | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+source-run-id:'
+        $script:DeployDocs | Should -Match "if: \$\{\{ github\.event_name == 'workflow_dispatch' && inputs\.source-run-id != '' \}\}"
+        $script:DeployDocs | Should -Match 'const producers = \["\.github/workflows/backlog-groom-publisher\.yml", "\.github/workflows/demo-material-render\.yml"\]'
+        $script:DeployDocs | Should -Match 'run\.head_branch !== repository\.default_branch \|\| run\.conclusion !== "success"'
+        $script:DeployDocs | Should -Match "if: \$\{\{ steps\.requester\.outputs\.path == '\.github/workflows/backlog-groom-publisher\.yml' \}\}"
+        $script:Publisher | Should -Match "(?ms)^  dispatch-deploy:\s+name: [^\n]+\s+needs: publish-history\s+if: \`$\{\{ needs\.publish-history\.result == 'success' \}\}\s+runs-on: ubuntu-24\.04\s+permissions:\s+actions: write"
+        $script:Publisher | Should -Match 'workflow_id: "deploy-docs\.yml",\s+ref: repository\.default_branch,\s+inputs: \{ "source-run-id": String\(context\.runId\) \}'
         $script:DeployDocs | Should -Match 'github\.rest\.actions\.listWorkflowRunArtifacts'
         $script:DeployDocs | Should -Match 'Publisher run must contain exactly one immutable Pages provenance artifact'
         $script:DeployDocs | Should -Match 'artifact-ids: \$\{\{ steps\.reports\.outputs\.artifact-id \}\}'
@@ -1356,7 +1380,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:DeployDocs | Should -Match 'provenance\.publisher_run_attempt !== run\.run_attempt'
         $script:DeployDocs | Should -Match 'provenance\.publisher_source_sha !== run\.head_sha'
         $script:DeployDocs | Should -Match 'recordedDigest !== computedDigest'
-        $script:DeployDocs | Should -Match 'Pages provenance is not bound to the triggering publisher run'
+        $script:DeployDocs | Should -Match 'Pages provenance is not bound to the requesting publisher run'
         $script:DeployDocs | Should -Not -Match 'const reportsBranch = "backlog-grooming-reports"|requestedRef|report-ref'
         $script:DeployDocs | Should -Match 'ref: \$\{\{ steps\.provenance\.outputs\.ref \}\}'
         $script:DeployDocs | Should -Match 'docs/docusaurus/build/backlog-grooming'
@@ -1935,7 +1959,7 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match "(?ms)^  validate-wave:.*?needs:\s+- plan\s+- pin-source\s+- assess.*?needs\.pin-source\.result == 'success'"
         $script:Orchestrator | Should -Match '(?ms)^  checkpoint:.*?if:.*?needs\.validate-wave\.result == ''success'''
         $script:Orchestrator | Should -Match '(?ms)^  continue:.*?if:.*?needs\.checkpoint\.result == ''success''.*?sweep-complete == ''false'''
-        $script:Orchestrator | Should -Match '(?ms)^  validate-wave:.*?permissions:\s+actions: read\s+outputs:'
+        $script:Orchestrator | Should -Match '(?ms)^  validate-wave:.*?permissions:\s+actions: read(?: #[^\n]*)?\s+outputs:'
     }
 
     It 'S10 narrows paginated discovery and resumes the first missing wave within a download limit' {
@@ -1993,15 +2017,16 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
     }
 
     It 'S12 isolates lifecycle dispatch and publisher write scopes' {
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write$').Count | Should -Be 2
-        $script:Orchestrator | Should -Match '(?ms)^  pin-source:.*?permissions:\s+contents: write'
-        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: read'
-        $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read\s+issues: write'
-        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
-        $script:Publisher | Should -Not -Match '(?m)^\s+actions: write$'
-        $script:DeployDocs | Should -Match '(?ms)^  build:.*?permissions:\s+actions: read\s+contents: read\s+pages: write'
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
+        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 1
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write(?: #[^\n]*)?$').Count | Should -Be 3
+        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write(?: #[^\n]*)?\s+contents: read'
+        $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read(?: #[^\n]*)?\s+issues: write'
+        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read(?: #[^\n]*)?\s+contents: write'
+        [regex]::Matches($script:Publisher, '(?m)^\s+actions: write(?: #[^\n]*)?$').Count | Should -Be 1
+        $script:Publisher | Should -Match '(?ms)^  dispatch-deploy:.*?permissions:\s+actions: write # start Deploy Documentation Site'
+        $script:DeployDocs | Should -Match '(?ms)^  build:.*?permissions:\s+actions: read(?: #[^\n]*)?\s+contents: read(?: #[^\n]*)?\s+pages: write'
+        $script:Orchestrator | Should -Match '(?ms)^  pin-source:.*?permissions:\s+contents: write(?: #[^\n]*)?'
     }
 }
 
@@ -2060,7 +2085,7 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
             )) {
             $script:WorkflowReadme | Should -Match $content
         }
-        $script:WorkflowReadme | Should -Match 'no `workflow_dispatch` trigger'
+        $script:WorkflowReadme | Should -Match '(?s)It refuses to run\s+from any ref other than the default branch'
         $script:WorkflowReadme | Should -Match 'rerun the failed jobs in that original publisher run'
         $script:WorkflowReadme | Should -Match 'Terminal contract errors'
         $script:WorkflowReadme | Should -Match 'Valid assessments and contract-error diagnostics publish together'
@@ -2091,7 +2116,7 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:Orchestrator | Should -Match 'Valid assessments and contract-error diagnostics will be published together'
         $script:Orchestrator | Should -Not -Match 'core\.setFailed\(`\$\{contractErrors\} snapshot issues have contract errors`\)'
         $script:Orchestrator | Should -Not -Match 'exact manual replay'
-        $script:Publisher | Should -Match "github\.event\.workflow_run\.conclusion == 'success'"
+        $script:Publisher | Should -Match 'if \(run\.conclusion !== "success"\)'
     }
 
     It 'S20 publishes contract errors and normalization notes through trusted outputs' {
@@ -2163,6 +2188,7 @@ Describe 'Backlog grooming execution-tag github-script behavior' -Tag 'Unit' {
     It 'publisher discover skips <Scenario> without failing' -TestCases @(
         @{ Scenario = 'publisher-main-nonterminal'; Message = 'nonterminal' }
         @{ Scenario = 'publisher-unrelated-branch'; Message = 'did not originate from the default branch or a sweep execution tag' }
+        @{ Scenario = 'publisher-run-failed'; Message = 'concluded failure; publication is not required' }
     ) {
         param($Scenario, $Message)
         $result = Invoke-StepScenario -ScriptPath $script:DiscoverScript -Scenario $Scenario
@@ -2178,6 +2204,8 @@ Describe 'Backlog grooming execution-tag github-script behavior' -Tag 'Unit' {
         @{ Scenario = 'publisher-tag-ref-moved'; Message = 'does not pin the completed orchestrator revision' }
         @{ Scenario = 'publisher-tag-feature-origin'; Message = 'did not originate from a default-branch orchestrator run' }
         @{ Scenario = 'publisher-tag-snapshot-missing'; Message = 'exactly one unexpired initiating snapshot' }
+        @{ Scenario = 'publisher-non-default-ref'; Message = 'runs only from main, not refs/heads/feature/unreviewed' }
+        @{ Scenario = 'publisher-wrong-workflow'; Message = 'requires the backlog grooming orchestrator workflow' }
     ) {
         param($Scenario, $Message)
         $result = Invoke-StepScenario -ScriptPath $script:DiscoverScript -Scenario $Scenario
@@ -2210,5 +2238,161 @@ Describe 'Backlog grooming execution-tag github-script behavior' -Tag 'Unit' {
         $result.outputs.'wave-number' | Should -Be '2'
         $result.outputs.'prior-checkpoint-artifact-id' | Should -Be '2001'
         Test-Path -LiteralPath (Join-Path $TestDrive 'orchestrator-tag-resume/sweep-output/snapshot.json') | Should -BeFalse
+    }
+}
+
+# The trusted-caller check gates every model worker, so each trust branch runs
+# the compiled step against a stubbed workflow-run API response.
+$script:TrustedCallerBash = (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1).Source
+$script:SkipTrustedCallerFixtures = -not $script:TrustedCallerBash
+if (-not $script:SkipTrustedCallerFixtures) {
+    & $script:TrustedCallerBash -c 'command -v jq >/dev/null' 2>$null
+    $script:SkipTrustedCallerFixtures = $LASTEXITCODE -ne 0
+}
+
+Describe 'Backlog grooming trusted caller step' -Tag 'Unit' {
+    BeforeAll {
+        $script:TrustedCallerBash = (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue |
+            Select-Object -First 1).Source
+        $lock = Get-Content -LiteralPath (Join-Path $script:RepoRoot '.github/workflows/backlog-groom.lock.yml') -Raw |
+            ConvertFrom-Yaml
+        $script:TrustedCallerStep = @($lock['jobs']['pre_activation']['steps']) |
+            Where-Object { $_['name'] -eq 'Verify trusted continuation caller' }
+
+        $script:TrustedRun = [ordered]@{
+            id               = 777
+            run_attempt      = 2
+            event            = 'workflow_dispatch'
+            path             = '.github/workflows/backlog-groom-orchestrator.yml'
+            actor            = @{ login = 'github-actions[bot]' }
+            triggering_actor = @{ login = 'github-actions[bot]' }
+        }
+
+        $script:FakeGh = @(
+            '#!/usr/bin/env bash'
+            'set -euo pipefail'
+            'test "$1" = ''api'''
+            'test "$2" = "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"'
+            'echo called > ./api-called.txt'
+            'test -z "${MOCK_API_FAILS}"'
+            'cat ./run.json'
+        ) -join "`n"
+
+        function script:Invoke-TrustedCallerStep {
+            param(
+                [hashtable]$Environment = @{},
+                [System.Collections.IDictionary]$Run = $script:TrustedRun,
+                [switch]$ApiFails
+            )
+
+            $fixture = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString('n'))
+            New-Item -ItemType Directory -Path (Join-Path $fixture 'bin') -Force | Out-Null
+            try {
+                $values = [ordered]@{
+                    GITHUB_ACTOR               = 'github-actions[bot]'
+                    GITHUB_REPOSITORY          = 'microsoft/hve-core'
+                    GITHUB_RUN_ID              = '777'
+                    GITHUB_RUN_ATTEMPT         = '2'
+                    GITHUB_EVENT_NAME          = 'workflow_dispatch'
+                    GITHUB_OUTPUT              = './github-output.txt'
+                    GH_TOKEN                   = 'fixture-token'
+                    CONTINUATION_AUTHENTICATED = 'true'
+                    ORCHESTRATOR_RUN_ID        = '777'
+                    ORCHESTRATOR_ATTEMPT       = '2'
+                    MOCK_API_FAILS             = $(if ($ApiFails) { 'true' } else { '' })
+                }
+                foreach ($key in $Environment.Keys) { $values[$key] = $Environment[$key] }
+                $exports = foreach ($entry in $values.GetEnumerator()) {
+                    $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$entry.Value))
+                    "export $($entry.Key)=`"`$(printf '%s' '$encoded' | base64 --decode)`""
+                }
+                $utf8 = [Text.UTF8Encoding]::new($false)
+                [IO.File]::WriteAllText((Join-Path $fixture 'environment.sh'), ($exports -join "`n") + "`n", $utf8)
+                [IO.File]::WriteAllText((Join-Path $fixture 'run.json'), ($Run | ConvertTo-Json -Compress), $utf8)
+                [IO.File]::WriteAllText((Join-Path $fixture 'bin/gh'), $script:FakeGh + "`n", $utf8)
+                [IO.File]::WriteAllText((Join-Path $fixture 'step.sh'),
+                    ([string]$script:TrustedCallerStep['run'] -replace "`r?`n", "`n"), $utf8)
+
+                Push-Location -LiteralPath $fixture
+                try {
+                    & $script:TrustedCallerBash -c 'chmod +x ./bin/gh && source ./environment.sh && export PATH="$PWD/bin:$PATH" && bash ./step.sh' 2>$null |
+                        Out-Null
+                    $exitCode = $LASTEXITCODE
+                    $output = if (Test-Path -LiteralPath './github-output.txt') {
+                        (Get-Content -LiteralPath './github-output.txt' -Raw).Trim()
+                    } else { '' }
+                    return [pscustomobject]@{
+                        ExitCode  = $exitCode
+                        Output    = $output
+                        ApiCalled = Test-Path -LiteralPath './api-called.txt'
+                    }
+                } finally {
+                    Pop-Location
+                }
+            } finally {
+                Remove-Item -LiteralPath $fixture -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        function script:Copy-TrustedRun {
+            param([hashtable]$Change = @{})
+            $copy = [ordered]@{}
+            foreach ($key in $script:TrustedRun.Keys) { $copy[$key] = $script:TrustedRun[$key] }
+            foreach ($key in $Change.Keys) { $copy[$key] = $Change[$key] }
+            return $copy
+        }
+    }
+
+    It 'runs as a shell step with the job token and no action' {
+        $script:TrustedCallerStep | Should -Not -BeNullOrEmpty
+        $script:TrustedCallerStep.Contains('uses') | Should -BeFalse
+        [string]$script:TrustedCallerStep['env']['GH_TOKEN'] | Should -BeExactly '${{ github.token }}'
+        [string]$script:TrustedCallerStep['run'] | Should -Not -Match '\$\{\{'
+    }
+
+    It 'trusts a human caller without calling the API' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep -Environment @{ GITHUB_ACTOR = 'octocat' }
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=true'
+        $result.ApiCalled | Should -BeFalse
+    }
+
+    It 'trusts the authenticated orchestrator continuation' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=true'
+        $result.ApiCalled | Should -BeTrue
+    }
+
+    It 'trusts the scheduled initial orchestrator run' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep -Environment @{ GITHUB_EVENT_NAME = 'schedule'; CONTINUATION_AUTHENTICATED = 'false' } `
+            -Run (Copy-TrustedRun -Change @{ event = 'schedule' })
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=true'
+    }
+
+    It 'rejects a bot caller when <Name>' -Skip:$script:SkipTrustedCallerFixtures -ForEach @(
+        @{ Name = 'a schedule claims authentication'; Environment = @{ GITHUB_EVENT_NAME = 'schedule'; CONTINUATION_AUTHENTICATED = 'true' }; Change = @{ event = 'schedule' } }
+        @{ Name = 'a dispatch is not authenticated'; Environment = @{ CONTINUATION_AUTHENTICATED = 'false' }; Change = @{} }
+        @{ Name = 'the run event differs from the context'; Environment = @{}; Change = @{ event = 'schedule' } }
+        @{ Name = 'the run is another workflow'; Environment = @{}; Change = @{ path = '.github/workflows/other.yml' } }
+        @{ Name = 'a person started the run'; Environment = @{}; Change = @{ actor = @{ login = 'octocat' } } }
+        @{ Name = 'a person re-triggered the run'; Environment = @{}; Change = @{ triggering_actor = @{ login = 'octocat' } } }
+        @{ Name = 'the run id differs'; Environment = @{}; Change = @{ id = 778 } }
+        @{ Name = 'the run attempt differs'; Environment = @{}; Change = @{ run_attempt = 1 } }
+        @{ Name = 'the orchestrator run id input differs'; Environment = @{ ORCHESTRATOR_RUN_ID = '778' }; Change = @{} }
+        @{ Name = 'the orchestrator attempt input differs'; Environment = @{ ORCHESTRATOR_ATTEMPT = '1' }; Change = @{} }
+        @{ Name = 'the actors are missing'; Environment = @{}; Change = @{ actor = $null; triggering_actor = $null } }
+    ) {
+        $result = Invoke-TrustedCallerStep -Environment $Environment -Run (Copy-TrustedRun -Change $Change)
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=false'
+    }
+
+    It 'fails closed when the workflow-run API fails' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep -ApiFails
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -BeNullOrEmpty
     }
 }

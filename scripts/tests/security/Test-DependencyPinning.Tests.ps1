@@ -194,17 +194,10 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
 
         It 'Detects insecure download when checksum is beyond lookahead window' {
             $scriptPath = Join-Path $TestDrive 'beyond-lookahead.sh'
-            # Download at line 1, checksum at line 8 (beyond 6-line window)
-            $content = @(
-                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
-                'echo "line 2"'
-                'echo "line 3"'
-                'echo "line 4"'
-                'echo "line 5"'
-                'echo "line 6"'
-                'echo "line 7"'
-                'sha256sum -c /tmp/tool.tar.gz.sha256'
-            )
+            # Download at line 1, checksum at line 12 (beyond the 10-line window)
+            $content = @('curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz') +
+                @(2..11 | ForEach-Object { "echo `"line $_`"" }) +
+                @('sha256sum -c /tmp/tool.tar.gz.sha256')
             Set-Content -Path $scriptPath -Value $content
             $fileInfo = @{
                 Path         = $scriptPath
@@ -288,17 +281,12 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
             $result.Violations | Should -HaveCount 0
         }
 
-        It 'Accepts checksum at lookahead boundary (line 5 after download)' {
+        It 'Accepts checksum at lookahead boundary (line 10 after download)' {
             $scriptPath = Join-Path $TestDrive 'boundary-check.sh'
-            # Download at line 1, checksum at line 6 (index 0+5 = within window)
-            $content = @(
-                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
-                'echo "line 2"'
-                'echo "line 3"'
-                'echo "line 4"'
-                'echo "line 5"'
-                'sha256sum -c /tmp/tool.tar.gz.sha256'
-            )
+            # Download at line 1, checksum at line 11 (index 0+10 = within window)
+            $content = @('curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz') +
+                @(2..10 | ForEach-Object { "echo `"line $_`"" }) +
+                @('sha256sum -c /tmp/tool.tar.gz.sha256')
             Set-Content -Path $scriptPath -Value $content
             $fileInfo = @{
                 Path         = $scriptPath
@@ -311,6 +299,23 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
     }
 
     Context 'Edge cases' {
+        It 'Detects a download from a variable URL by its output flag' {
+            $scriptPath = Join-Path $TestDrive 'variable-url.sh'
+            Set-Content -Path $scriptPath -Value @('curl --fail --location --output "${NAME}.onnx" "${BASE}/${NAME}.onnx"')
+            $result = Test-ShellDownloadSecurity -FileInfo @{ Path = $scriptPath; Type = 'shell-downloads'; RelativePath = 'variable-url.sh' }
+            $result.Violations | Should -HaveCount 1
+        }
+
+        It 'Skips commented downloads and API calls without an output flag' {
+            $scriptPath = Join-Path $TestDrive 'api-call.sh'
+            Set-Content -Path $scriptPath -Value @(
+                '# curl -o /tmp/x https://example.com/x'
+                'curl -sf -H "Accept: application/json" "${API}/status" | jq .'
+            )
+            $result = Test-ShellDownloadSecurity -FileInfo @{ Path = $scriptPath; Type = 'shell-downloads'; RelativePath = 'api-call.sh' }
+            $result.TotalCount | Should -Be 0
+        }
+
         It 'Returns empty array for empty file' {
             $scriptPath = Join-Path $TestDrive 'empty.sh'
             Set-Content -Path $scriptPath -Value ''
@@ -432,6 +437,35 @@ dependencies = [
             $result.Violations[0].Severity | Should -Be 'High'
             $result.Violations[0].ViolationType | Should -Be 'Unpinned'
         }
+
+        It 'Detects a remote uses: with no ref and ignores local, docker, and pinned references' {
+            $path = Join-Path $TestDrive 'no-ref.yml'
+            Set-Content -Path $path -Value @(
+                'jobs:'
+                '  a:'
+                '    steps:'
+                '      - uses: actions/checkout'
+                "      - uses: 'owner/repo/sub/path' # no ref"
+                '      - uses: ./.github/actions/local'
+                '      - uses: $/.github/actions/local'
+                '      - uses: docker://alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000'
+                "      - uses: actions/setup-node@$('a' * 40) # v1.0.0"
+                '  b:'
+                '    uses: org/repo/.github/workflows/x.yml'
+                '  c:'
+                '    uses: $/.github/workflows/y.yml'
+            )
+            $result = Get-DependencyViolation -FileInfo @{ Path = $path; Type = 'github-actions'; RelativePath = 'no-ref.yml' }
+            @($result.Violations | ForEach-Object Name) | Should -Be @('actions/checkout', 'owner/repo/sub/path', 'org/repo/.github/workflows/x.yml')
+            @($result.Violations | ForEach-Object Line) | Should -Be @(4, 5, 11)
+        }
+
+        It 'Catches the workflow validator uses-without-ref capability probe' {
+            # The parser misses this case, and the probe watch relies on this rule to cover it.
+            $probe = Join-Path $PSScriptRoot '../../linting/workflow-validator/probes/uses-without-ref.yml'
+            $result = Get-DependencyViolation -FileInfo @{ Path = $probe; Type = 'github-actions'; RelativePath = 'uses-without-ref.yml' }
+            @($result.Violations | ForEach-Object Name) | Should -Be @('actions/checkout')
+        }
     }
 
     Context 'Mixed workflows' {
@@ -525,9 +559,20 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
             $mediumViolation.Description = 'Version range not pinned'
             $mediumViolation.Remediation = 'Pin to exact version'
             $script:MockReport.Violations += $mediumViolation
+            $script:MockReport.Metadata = @{ IncludedTypes = 'github-actions,pip,npm' }
 
             Export-ComplianceReport -Report $script:MockReport -Format 'sarif' -OutputPath $script:SarifFile
             $script:SarifContent = Get-Content $script:SarifFile -Raw | ConvertFrom-Json
+        }
+
+        It 'Uses a type-specific rule ID for each result' {
+            @($script:SarifContent.runs[0].results | ForEach-Object ruleId | Sort-Object) |
+                Should -Be @('dependency-not-pinned/github-actions', 'dependency-not-pinned/pip')
+        }
+
+        It 'Declares a rule for every included type, including types with no results' {
+            @($script:SarifContent.runs[0].tool.driver.rules | ForEach-Object id | Sort-Object) |
+                Should -Be @('dependency-not-pinned/github-actions', 'dependency-not-pinned/npm', 'dependency-not-pinned/pip')
         }
 
         It 'Has valid SARIF version 2.1.0' {
@@ -570,6 +615,65 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
             $result = $script:SarifContent.runs[0].results[0]
             $result.properties.dependencyName | Should -Not -BeNullOrEmpty
             $result.properties.remediation | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Exception gate integration' {
+        BeforeAll {
+            $script:GateScript = Join-Path $PSScriptRoot '../../security/Test-CodeQLSarifThreshold.ps1'
+
+            function script:Invoke-PinningGate {
+                param([object[]]$Violations, [string]$Rule, [string]$Name)
+                $report = [ComplianceReport]::new()
+                $report.ComplianceScore = 90
+                $report.TotalDependencies = 10
+                $report.UnpinnedDependencies = @($Violations).Count
+                $report.Violations = @($Violations)
+                $report.Metadata = @{ IncludedTypes = 'setup-action-versions,container-images' }
+                $sarif = Join-Path $TestDrive "$Name.sarif"
+                Export-ComplianceReport -Report $report -Format 'sarif' -OutputPath $sarif
+                $register = Join-Path $TestDrive "$Name.yml"
+                @(
+                    'exceptions:'
+                    '  - tool: dependency-pinning-analyzer'
+                    "    rule: $Rule"
+                    '    path: .github/workflows/sample.lock.yml'
+                    '    count: 1'
+                    '    kind: generated-code'
+                    '    upstream: https://github.com/github/gh-aw/issues/1'
+                    '    issue: 1'
+                    '    owner: octocat'
+                    '    reason: generated'
+                    '    expires: 2026-12-01'
+                ) | Set-Content -LiteralPath $register -Encoding utf8
+                $output = & pwsh -NoProfile -File $script:GateScript -SarifPath $sarif -ExceptionsPath $register -Threshold All -CheckDate '2026-10-06' -SummaryPath (Join-Path $TestDrive "$Name.md") 2>&1
+                return [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = ($output -join "`n") }
+            }
+
+            function script:New-PinViolation {
+                param([string]$Type)
+                [PSCustomObject]@{
+                    File = '.github/workflows/sample.lock.yml'; Line = 12; Type = $Type; Name = 'example'
+                    Version = '24'; Severity = 'High'; Description = 'Unpinned'; Remediation = 'Pin'
+                }
+            }
+        }
+
+        It 'Reports a type-specific exception stale when its finding disappears' {
+            $gate = Invoke-PinningGate -Violations @() -Rule 'dependency-not-pinned/setup-action-versions' -Name 'stale'
+            $gate.ExitCode | Should -Be 1
+            $gate.Output | Should -Match 'Stale exception: dependency-pinning-analyzer dependency-not-pinned/setup-action-versions'
+        }
+
+        It 'Does not excuse a different category in the same file' {
+            $gate = Invoke-PinningGate -Violations @(New-PinViolation -Type 'container-images') -Rule 'dependency-not-pinned/setup-action-versions' -Name 'other-category'
+            $gate.ExitCode | Should -Be 1
+            $gate.Output | Should -Match 'dependency-not-pinned/container-images'
+        }
+
+        It 'Excuses the registered category' {
+            $gate = Invoke-PinningGate -Violations @(New-PinViolation -Type 'setup-action-versions') -Rule 'dependency-not-pinned/setup-action-versions' -Name 'excused'
+            $gate.ExitCode | Should -Be 0
         }
     }
 
@@ -2015,6 +2119,191 @@ jobs:
             $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
             $result.Violations | Should -HaveCount 1
             $result.Violations[0].Name | Should -BeLike 'npm install*'
+        }
+    }
+}
+
+Describe 'Expanded pinning rules' -Tag 'Unit' {
+    BeforeAll {
+        function script:Invoke-Rule {
+            param([string]$Function, [string]$Type, [string]$Name, [string[]]$Content)
+            $path = Join-Path $TestDrive $Name
+            New-Item -ItemType Directory -Path (Split-Path $path -Parent) -Force | Out-Null
+            Set-Content -LiteralPath $path -Value $Content
+            return & $Function -FileInfo @{ Path = $path; Type = $Type; RelativePath = $Name }
+        }
+        $script:Sha = 'a' * 40
+    }
+
+    Context 'setup-action-versions' {
+        It 'accepts exact versions and version files' {
+            $result = Invoke-Rule Get-SetupActionVersionViolations 'setup-action-versions' 'ok.yml' @(
+                'jobs:'
+                '  build:'
+                '    steps:'
+                "      - uses: actions/setup-node@$script:Sha # v7.0.0"
+                '        with:'
+                '          node-version-file: .node-version'
+                "      - uses: actions/setup-go@$script:Sha"
+                '        with:'
+                '          go-version: "1.24.3"'
+                "      - name: Setup gh-aw"
+                "        uses: github/gh-aw-actions/setup-cli@$script:Sha"
+                '        with:'
+                '          version: v0.86.2'
+            )
+            $result.TotalCount | Should -Be 3
+            $result.Violations | Should -HaveCount 0
+        }
+
+        It 'flags <Name>' -ForEach @(
+            @{ Name = 'a floating major'; With = @('        with:', "          node-version: '24'"); Pattern = "floating version '24'" }
+            @{ Name = 'an lts alias'; With = @('        with:', '          node-version: lts/*'); Pattern = 'floating version' }
+            @{ Name = 'an expression'; With = @('        with:', '          node-version: ${{ matrix.node }}'); Pattern = 'floating version' }
+            @{ Name = 'no version input'; With = @('        with:', '          cache: npm'); Pattern = 'installs no pinned version' }
+        ) {
+            $result = Invoke-Rule Get-SetupActionVersionViolations 'setup-action-versions' "bad-$($Name -replace '\W','-').yml" (@('jobs:', '  build:', '    steps:', "      - uses: actions/setup-node@$script:Sha") + $With)
+            $result.Violations | Should -HaveCount 1
+            $result.Violations[0].Description | Should -Match ([regex]::Escape($Pattern))
+            $result.Violations[0].Line | Should -Be 4
+        }
+
+        It 'flags an unregistered setup or installer action' {
+            $result = Invoke-Rule Get-SetupActionVersionViolations 'setup-action-versions' 'unknown.yml' @(
+                'jobs:', '  build:', '    steps:'
+                "      - uses: example/setup-thing@$script:Sha"
+                '        with:'
+                '          version: 1.2.3'
+                "      - uses: example/tool-installer@$script:Sha"
+            )
+            $result.Violations | Should -HaveCount 2
+            $result.Violations[0].Description | Should -Match 'no registered version input'
+        }
+
+        It 'ignores local composites and non-setup actions' {
+            $result = Invoke-Rule Get-SetupActionVersionViolations 'setup-action-versions' 'local.yml' @(
+                'jobs:', '  build:', '    steps:'
+                '      - uses: ./.github/actions/setup-uv'
+                '      - uses: $/.github/actions/setup-uv'
+                "      - uses: actions/checkout@$script:Sha"
+            )
+            $result.TotalCount | Should -Be 0
+        }
+    }
+
+    Context 'python-tool-runs' {
+        It 'flags <Name>' -ForEach @(
+            @{ Name = 'uvx with a pinned top-level package'; Line = '          uvx pip-audit@2.10.0 -r req.txt' }
+            @{ Name = 'uv tool install'; Line = '          uv tool install "pip-audit==2.10.0"' }
+            @{ Name = 'uv tool run'; Line = '          uv tool run ruff check .' }
+            @{ Name = 'pipx run'; Line = '          pipx run black .' }
+        ) {
+            $result = Invoke-Rule Get-PythonToolRunViolations 'python-tool-runs' 'tool.yml' @('steps:', '  - run: |', $Line)
+            $result.Violations | Should -HaveCount 1
+            $result.Violations[0].Line | Should -Be 3
+        }
+
+        It 'accepts locked runs, version queries, comments, and file names' {
+            $result = Invoke-Rule Get-PythonToolRunViolations 'python-tool-runs' 'ok.sh' @(
+                'uv run --locked --project scripts/tools/pip-audit pip-audit -r req.txt'
+                'uv sync --locked --project scripts/tools/pip-audit'
+                'uvx --version'
+                '# uvx pip-audit'
+                'tar -xzf uv.tar.gz "uv-x86_64/uvx"'
+                'uv tool dir --bin'
+            )
+            $result.TotalCount | Should -Be 0
+        }
+    }
+
+    Context 'container-images' {
+        It 'resolves Dockerfile ARG and default expansions and skips stages and scratch' {
+            $digest = 'b' * 64
+            $result = Invoke-Rule Get-ContainerImageViolations 'container-images' 'img/Dockerfile' @(
+                "ARG BASE=mcr.microsoft.com/devcontainers/base@sha256:$digest"
+                'FROM ${BASE} AS build'
+                'FROM ${OTHER:-node:24}'
+                'FROM build'
+                'FROM scratch'
+                'FROM --platform=linux/amd64 alpine:3.20 AS final'
+            )
+            $result.TotalCount | Should -Be 3
+            @($result.Violations.Name) | Should -Be @('node:24', 'alpine:3.20')
+        }
+
+        It 'checks compose and workflow image references' {
+            $digest = 'c' * 64
+            $result = Invoke-Rule Get-ContainerImageViolations 'container-images' 'compose.yaml' @(
+                'services:'
+                '  ok:'
+                "    image: otel/collector@sha256:$digest"
+                '  bad:'
+                '    image: grafana/otel-lgtm:latest'
+                '  # image: commented/out:1'
+            )
+            $result.TotalCount | Should -Be 2
+            $result.Violations | Should -HaveCount 1
+            $result.Violations[0].Line | Should -Be 5
+        }
+
+        It 'checks container:, docker:// actions, and registry images on docker lines' {
+            $digest = 'd' * 64
+            $result = Invoke-Rule Get-ContainerImageViolations 'container-images' 'wf.yml' @(
+                'jobs:'
+                '  a:'
+                '    container: node:24'
+                '    steps:'
+                '      - uses: docker://alpine:3.20'
+                "      - run: docker pull ghcr.io/org/tool:1.0@sha256:$digest"
+                '      - run: docker run --rm -p 127.0.0.1:80:80 ghcr.io/org/server:v1.2'
+                '      - run: docker pull "$image"'
+            )
+            $result.TotalCount | Should -Be 4
+            @($result.Violations.Name) | Should -Be @('node:24', 'alpine:3.20', 'ghcr.io/org/server:v1.2')
+        }
+    }
+
+    Context 'install-hints' {
+        It 'flags <Name>' -ForEach @(
+            @{ Name = 'a download piped to sh'; Line = 'err "Install with: curl -LsSf https://example.com/install.sh | sh"' }
+            @{ Name = 'a download piped to sudo bash'; Line = '# wget -qO- https://example.com/i.sh | sudo bash' }
+            @{ Name = 'irm piped to iex'; Line = 'throw "Run: irm https://example.com/install.ps1 | iex"' }
+            @{ Name = 'a floating latest tag'; Line = ('    - Linux: go install example.com/tool@' + 'latest') }
+            @{ Name = 'an unversioned pip install'; Line = '"PyMuPDF is required. Install via: pip install pymupdf"' }
+        ) {
+            $result = Invoke-Rule Get-InstallHintViolations 'install-hints' 'hint.ps1' @('# header', $Line)
+            $result.Violations | Should -HaveCount 1
+            $result.Violations[0].Line | Should -Be 2
+        }
+
+        It 'accepts verified and pinned hints' {
+            $result = Invoke-Rule Get-InstallHintViolations 'install-hints' 'ok.ps1' @(
+                'throw "Install with winget install --id astral-sh.uv -e or brew install uv"'
+                '"Run: pip install pymupdf==1.27.1"'
+                '"Run: pip install -r requirements.txt"'
+                '"Run uv sync --locked in the skill directory"'
+                'curl -fsSL -o tool.tgz https://example.com/tool.tgz'
+            )
+            $result.Violations | Should -HaveCount 0
+        }
+
+        It 'does not match its own rule source' {
+            $rule = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
+            $result = Get-InstallHintViolations -FileInfo @{ Path = $rule; Type = 'install-hints'; RelativePath = 'Test-DependencyPinning.ps1' }
+            $result.Violations | Should -HaveCount 0
+        }
+    }
+
+    Context 'file selection' {
+        It 'scans nested and skill shell scripts and workflows for downloads but skips tests and fixtures' {
+            $root = Join-Path $TestDrive 'scan-root'
+            foreach ($relative in 'scripts/a.sh', 'scripts/nested/b.sh', '.github/skills/x/scripts/c.sh', '.github/workflows/w.yml', 'scripts/tests/d.sh', 'scripts/fixtures/e.sh') {
+                $path = Join-Path $root $relative
+                New-Item -ItemType Directory -Path (Split-Path $path -Parent) -Force | Out-Null
+                Set-Content -LiteralPath $path -Value 'echo hi'
+            }
+            $files = @(Get-FilesToScan -ScanPath $root -Types 'shell-downloads' | ForEach-Object { $_.RelativePath -replace '\\', '/' } | Sort-Object)
+            $files | Should -Be @('.github/skills/x/scripts/c.sh', '.github/workflows/w.yml', 'scripts/a.sh', 'scripts/nested/b.sh')
         }
     }
 }

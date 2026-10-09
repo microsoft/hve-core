@@ -204,7 +204,7 @@ Run the deterministic and policy checks before changing the scheduling defaults:
 ```pwsh
 npm run test:ps -- -TestPath scripts/tests/evals/
 npm run lint:ps
-npm run lint:yaml
+npm run lint:workflows
 npm run lint:permissions
 npm run lint:workflow-runner
 npm run lint:dangerous-workflow

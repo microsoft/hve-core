@@ -17,7 +17,7 @@ permissions:
 jobs:
   link-lang-check:
     name: Check for Language Paths in URLs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

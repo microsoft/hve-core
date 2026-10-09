@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - powershell
@@ -88,48 +88,94 @@ Configuration file for PSScriptAnalyzer rules.
 
 * `PSAvoidUsingWriteHost` - Allowed for script output
 
-### YAML Linting
+### Workflow Validation
 
-#### `Invoke-YamlLint.ps1`
+#### `workflow-validator/validate-workflows.mjs`
 
-Static analysis for GitHub Actions workflow files using actionlint.
-
-Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
+Validates every workflow and composite action with GitHub's own parser
+(`@actions/workflow-parser`) and runs the pinned shellcheck over every bash and
+sh `run:` script. It needs no ignore rules, disables no checks, and accepts
+current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
 
 ##### Features
 
-* Validates `.github/workflows/*.yml` and `.yaml` files
-* Detects changed workflow files via Git
-* Supports analyzing all files or changed files only
-* Creates CI annotations for violations
-* Exports JSON results and markdown summary
-* Configurable via `.github/actionlint.yaml`
+* Parses `.github/workflows/*.yml` and `.yaml` with the workflow schema and
+  `.github/actions/**/action.yml` with the action schema, reporting schema,
+  expression, and semantic errors such as unknown `needs` jobs
+* Resolves each step's shell from the step, job defaults, and workflow defaults,
+  and checks bash and sh scripts with shellcheck. `${{ }}` expressions are masked
+  with same-length placeholders, so findings map to the exact workflow line and
+  column, and sourced repository files are followed from the repository root.
+  A gh-aw helper sourced from `${RUNNER_TEMP}/gh-aw/actions` is read from
+  `setup/sh` at the `github/gh-aw-actions/setup` commit the workflow pins,
+  where the setup action copies it from, so shellcheck follows it too
+* Requires the shellcheck version in `scripts/security/tool-checksums.json` and
+  stops with exit code 2 for any other version
+* Writes SARIF (tool `hve-workflow-validator`) with `--sarif`
+* Loads the parser's JSON schemas through a Node resolve hook
+  (`json-import-hooks.mjs`) instead of a bundler
+* Pins `@actions/workflow-parser` and `yaml` exactly in its own
+  `package-lock.json`, covered by Dependabot and `npm run audit:npm`
+* Runs custom checks (`checks.mjs`) for errors the parser accepts:
 
-##### Parameters
+  | Rule                                         | Flags                                                                                                                 |
+  |----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+  | `workflow-check/undefined-need`              | A `needs.<job>` reference to a job the current job does not list in `needs`                                           |
+  | `workflow-check/undefined-step`              | A `steps.<id>` reference to a step id the job does not define                                                         |
+  | `workflow-check/undefined-matrix-key`        | A `matrix.<key>` reference to a key the job's literal matrix does not define                                          |
+  | `workflow-check/undefined-input`             | An `inputs.<name>` reference to an input the workflow or action does not declare                                      |
+  | `workflow-check/unknown-context-property`    | A property that the `github`, `runner`, `job`, or `strategy` context, a step, or a `needs` entry does not provide     |
+  | `workflow-check/always-true-if`              | An `if:` that mixes `${{ }}` with other text, so it is a non-empty string and always true                             |
+  | `workflow-check/invalid-env-name`            | An `env` name that is not a shell identifier                                                                          |
+  | `workflow-check/invalid-path-filter`         | A branch, tag, or path filter that is not a valid glob                                                                |
+  | `workflow-check/deprecated-workflow-command` | A `run:` script that uses the disabled `set-output`, `save-state`, `set-env`, or `add-path` workflow commands         |
+  | `workflow-check/unknown-action-input`        | A `with:` input or `secrets:` entry the referenced action or reusable workflow does not declare                       |
+  | `workflow-check/missing-required-input`      | A required reusable-workflow input or secret that is not passed; `secrets: inherit` satisfies secrets                 |
+  | `workflow-check/action-metadata-unavailable` | An action or reusable workflow whose metadata cannot be read, so its inputs were not verified; the check fails closed |
+  | `workflow-check/sourced-helper-unavailable`  | A gh-aw helper a `run:` script sources that cannot be read at the pinned `github/gh-aw-actions/setup` commit          |
 
-* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch, or every workflow file when `.github/actionlint.yaml` changed
-* `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
-* `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
+  Remote action metadata is fetched by commit SHA from
+  `raw.githubusercontent.com` and cached in
+  `node_modules/.cache/hve-workflow-validator`. Remote references that are not
+  a full commit SHA are left to the pinning check.
+
+##### Capability probes
+
+`probes/` holds one small workflow per known-bad pattern plus a `modern-syntax`
+sample that must stay clean. `probes/probes.json` records each probe's expected
+parser outcome and which check covers the gap today (`parser`, a
+`workflow-check/*` rule, `pinning`, `runner-policy`, or `zizmor`).
+`run-probes.mjs` runs the probes against the parser alone and writes
+observations for `Get-UpstreamWatchStatus.ps1`:
+
+```bash
+node scripts/linting/workflow-validator/run-probes.mjs --parser-root <dir> --out probe-observations.json
+```
+
+The weekly `capability-probes` job in `gh-code-scanning.yml` stages the newest
+`@actions/workflow-parser` release with `npm pack` and runs the probes. Each
+probe has a `probe-outcome` watch in `security/upstream-watches.yml`, so a
+parser release that starts catching a pattern (retire the custom check) or
+stops catching one (add a custom check) opens a tracking issue.
 
 ##### Usage
 
-```powershell
-# Analyze all workflow files
-./scripts/linting/Invoke-YamlLint.ps1 -Verbose
-
-# Analyze only changed files
-./scripts/linting/Invoke-YamlLint.ps1 -ChangedFilesOnly
-
-# View detailed output
-./scripts/linting/Invoke-YamlLint.ps1 -Verbose -Debug
+```bash
+npm ci --prefix scripts/linting/workflow-validator --ignore-scripts
+npm run lint:workflows
+node scripts/linting/workflow-validator/validate-workflows.mjs --shellcheck /path/to/shellcheck --sarif logs/workflow-validation.sarif
 ```
+
+Install the pinned shellcheck with the `.github/actions/setup-shellcheck`
+composite in workflows; the devcontainer and Copilot setup steps install the same
+version. Tests run with `npm test` in the validator directory and in the PR
+`node-tests` lane.
 
 ##### GitHub Actions Integration
 
-* Workflow: `.github/workflows/yaml-lint.yml`
-* Configuration: `.github/actionlint.yaml`
-* Artifacts: `yaml-lint-results` (JSON)
-* Exit Code: Non-zero if violations are found or actionlint itself fails (invalid options or an unreadable configuration)
+* Workflow: `.github/workflows/workflow-validation-scan.yml`, called by PR validation
+* SARIF category: `workflow-validation`; the upload is skipped for fork pull requests
+* Exit code: 1 on any finding, and 2 when shellcheck is not the manifest version
 
 ### Markdown Validation
 
@@ -459,7 +505,7 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 ##### Features
 
-* Discovers lint-eligible Python projects via `pyproject.toml`, excluding generated `plugins/` output, dependency trees, and the heavyweight `scripts/evals/moderation` project
+* Discovers lint-eligible Python projects via `pyproject.toml`, excluding generated `plugins/` output, dependency trees, the heavyweight `scripts/evals/moderation` project, and the `scripts/tools/` locked tool environments, which hold no Python sources
 * Resolves ruff per project: a project committing `uv.lock` must already provide a ruff binary matching the locked version, preferring its own `.venv` over a global install
 * Fails a project before running ruff when no exact-version binary is present, reporting the required version and `uv sync --locked` as the setup action; it never installs or synchronizes dependencies
 * Intentionally verifies existing environments while `Invoke-PythonTests.ps1` provisions before testing; devcontainer and coding-agent setup synchronize all lint-eligible locked projects, including `.github/hooks/shared/telemetry`
@@ -724,14 +770,16 @@ blockquote markers, so line wrapping does not affect matching.
 
 ## npm Scripts
 
-| npm Script                       | Description                                                                                                                                                                              |
-|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                            |
-| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                    |
-| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                     |
-| `lint:cold-start`                | Run `pwsh -NoProfile -File scripts/linting/Test-AgentColdStartBudget.ps1` to enforce planning-chain cold-start byte budgets; the Pester suite enforces the same budgets in pull requests |
-| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                   |
-| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                 |
+| npm Script                       | Description                                                                                                                                                                                                          |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                                                        |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                                                |
+| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                                                 |
+| `lint:cold-start`                | Run `pwsh -NoProfile -File scripts/linting/Test-AgentColdStartBudget.ps1` to enforce planning-chain cold-start byte budgets; the Pester suite enforces the same budgets in pull requests                             |
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                                               |
+| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                                             |
+| `lint:workflows`                 | Run `node scripts/linting/workflow-validator/validate-workflows.mjs --sarif logs/workflow-validation.sarif` to validate workflows and composite actions with GitHub's parser and pinned shellcheck                   |
+| `lint:workflows:gated`           | Run `pwsh -NoProfile -File ./scripts/security/Invoke-ScannerGate.ps1 -Scanner workflows` to run the validator and fail only on findings the exception register does not excuse, as CI does; `validate:local` uses it |
 
 ## Shared Module
 
@@ -963,7 +1011,7 @@ All linting scripts are integrated into GitHub Actions workflows:
 | Script                 | Workflow                                           |
 |------------------------|----------------------------------------------------|
 | PSScriptAnalyzer       | `.github/workflows/ps-script-analyzer.yml`         |
-| YAML Lint              | `.github/workflows/yaml-lint.yml`                  |
+| Workflow Validation    | `.github/workflows/workflow-validation-scan.yml`   |
 | Frontmatter Validation | `.github/workflows/frontmatter-validation.yml`     |
 | Link Language Check    | `.github/workflows/link-lang-check.yml`            |
 | Markdown Link Check    | `.github/workflows/markdown-link-check.yml`        |

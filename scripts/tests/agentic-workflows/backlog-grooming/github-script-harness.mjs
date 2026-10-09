@@ -105,12 +105,13 @@ const snapshotName = (sweepId) => `backlog-grooming-sweep-v1-${REPOSITORY_ID}-sn
 
 const baseState = () => ({
   eventName: "workflow_dispatch",
+  contextRef: "refs/heads/main",
   env: {},
   repository: { id: REPOSITORY_ID, default_branch: "main" },
   runs: {
-    100: { id: 100, path: ORCHESTRATOR, head_branch: "main", head_sha: SOURCE_SHA, conclusion: "success" },
-    200: { id: 200, path: ORCHESTRATOR, head_branch: EXECUTION_TAG, head_sha: SOURCE_SHA, conclusion: "success" },
-    900: { id: 900, path: ORCHESTRATOR, head_branch: "main", head_sha: SOURCE_SHA, conclusion: "success" },
+    100: { id: 100, path: ORCHESTRATOR, head_branch: "main", head_sha: SOURCE_SHA, status: "completed", conclusion: "success" },
+    200: { id: 200, path: ORCHESTRATOR, head_branch: EXECUTION_TAG, head_sha: SOURCE_SHA, status: "completed", conclusion: "success" },
+    900: { id: 900, path: ORCHESTRATOR, head_branch: "main", head_sha: SOURCE_SHA, status: "completed", conclusion: "success" },
   },
   refs: { [`tags/${EXECUTION_TAG}`]: { object: { type: "commit", sha: SOURCE_SHA } } },
   comparisonStatus: "identical",
@@ -171,6 +172,17 @@ const scenarios = {
     return state;
   },
   "publisher-tag-stale": () => Object.assign(publisherTagState(), { comparisonStatus: "behind" }),
+  "publisher-non-default-ref": () => Object.assign(withFinalArtifact(baseState()), { contextRef: "refs/heads/feature/unreviewed" }),
+  "publisher-run-failed": () => {
+    const state = withFinalArtifact(baseState());
+    state.runs[900].conclusion = "failure";
+    return state;
+  },
+  "publisher-wrong-workflow": () => {
+    const state = withFinalArtifact(baseState());
+    state.runs[900].path = ".github/workflows/other.yml";
+    return state;
+  },
   "orchestrator-tag-missing": () => withSnapshotArtifact(tagOrchestratorState(), buildSnapshot({ sweepId: OTHER_SWEEP_ID })),
   "orchestrator-tag-invalid": () => {
     const snapshot = { ...buildSnapshot(), snapshot_digest: "9".repeat(64) };
@@ -268,10 +280,11 @@ const core = {
 };
 const context = {
   eventName: state.eventName,
+  ref: state.contextRef,
   actor: "octocat",
   runId: 300,
   repo: { owner: OWNER, repo: REPO },
-  payload: { repository: { id: REPOSITORY_ID }, workflow_run: { id: 900 } },
+  payload: { repository: { id: REPOSITORY_ID } },
 };
 
 Object.assign(process.env, {
@@ -281,6 +294,7 @@ Object.assign(process.env, {
   SWEEP_DISCOVERY_DOWNLOAD_LIMIT: "50",
   SWEEP_DISCOVERY_METADATA_LIMIT: "500",
   GITHUB_RUN_ATTEMPT: "1",
+  SWEEP_RUN_ID: "900",
   ...state.env,
 });
 

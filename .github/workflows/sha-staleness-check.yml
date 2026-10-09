@@ -28,10 +28,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: sha-staleness-check-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   check-staleness:
     name: Check Action SHA Staleness
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:

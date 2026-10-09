@@ -1,21 +1,522 @@
 # Tracked code-scanning exceptions read by scripts/security/Test-CodeQLSarifThreshold.ps1.
 #
-# An entry lets the CodeQL threshold gate pass while one rule keeps reporting in
+# An entry lets the threshold gate pass while one tool keeps reporting a rule in
 # one file. It never dismisses or hides the alert: the alert stays open on GitHub,
-# the gate lists the excused result, and the weekly code-scanning job keeps the
-# linked issue current. Use it only for a demonstrated analyzer false positive or
-# third-party code this repository cannot patch, after reporting it upstream.
+# the gate lists the excused results, and the weekly code-scanning job keeps the
+# linked issue current. The gate applies to every SARIF-producing tool.
+#
+# Allowed kinds:
+#   false-positive       the analyzer is demonstrably wrong
+#   generated-code       output of a generator this repository does not author
+#   third-party          code or behavior this repository cannot patch
+#   platform-limitation  the platform cannot yet support the fix
+# Every kind needs an upstream report filed before the entry is added.
 # See docs/security/code-scanning-alert-lifecycle.md for the full policy.
 #
 # Each entry needs every field below and is reviewed like any other change:
 #
-#   - rule: js/example-rule        # exact SARIF ruleId
-#     path: docs/example/file.js   # exact repository-relative path
-#     issue: 1234                  # open issue tracking the real fix
+#   - tool: zizmor                         # exact SARIF tool.driver.name
+#     rule: self-repository                # exact SARIF ruleId
+#     path: .github/workflows/example.yml  # exact repository-relative path
+#     count: 2                             # exact number of matching results
+#     kind: platform-limitation            # one of the kinds above
+#     upstream: https://github.com/org/repo/issues/123
+#     issue: 1234                          # open issue tracking the real fix
 #     owner: github-login-or-team
-#     reason: one-line explanation and upstream report link
-#     expires: 2026-12-31          # ISO date, at most 90 days after the check date
+#     reason: one-line explanation
+#     expires: 2026-12-31                  # ISO date, at most 90 days after the check date
 #
 # The gate fails on an expired entry, an entry more than 90 days out, a missing or
-# unknown field, or an entry that no longer matches a result (remove it).
-exceptions: []
+# unknown field, a count that differs from the matching results in either
+# direction, or an entry that no longer matches a result (remove it).
+exceptions:
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/agentics-maintenance.yml
+    count: 11
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 4
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/demo-material-author.lock.yml
+    count: 5
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/dependency-pr-review.lock.yml
+    count: 6
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/doc-update-check.lock.yml
+    count: 6
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/issue-implement.lock.yml
+    count: 6
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/issue-triage.lock.yml
+    count: 6
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/pr-review.lock.yml
+    count: 6
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/anonymous-definition
+    path: .github/workflows/vex-draft.lock.yml
+    count: 6
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw compiles framework jobs without a name, and the workflow source cannot name them
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/concurrency-limits
+    path: .github/workflows/agentics-maintenance.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw generates agentics-maintenance.yml without a concurrency setting
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/template-injection
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 3
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw expands guard-policy step outputs into the MCP gateway script when min-integrity is set
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/template-injection
+    path: .github/workflows/issue-triage.lock.yml
+    count: 3
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw expands guard-policy step outputs into the MCP gateway script when min-integrity is set
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/agentics-maintenance.yml
+    count: 11
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 3
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/demo-material-author.lock.yml
+    count: 5
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/dependency-pr-review.lock.yml
+    count: 4
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/doc-update-check.lock.yml
+    count: 4
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/issue-implement.lock.yml
+    count: 4
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/issue-triage.lock.yml
+    count: 4
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/pr-review.lock.yml
+    count: 5
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: zizmor
+    rule: zizmor/undocumented-permissions
+    path: .github/workflows/vex-draft.lock.yml
+    count: 5
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65940
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw emits permission blocks without comments and drops comments written in the source
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/demo-material-author.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/dependency-pr-review.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/doc-update-check.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/issue-implement.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/issue-triage.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/pr-review.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-workflow-validator
+    rule: shellcheck/SC2154
+    path: .github/workflows/vex-draft.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65941
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw assigns gh_aw_exit_code inside a single-quoted EXIT trap that shellcheck does not parse
+    expires: 2026-12-31
+  - tool: hve-tool-version-consistency
+    rule: tool-version/runtime-mismatch
+    path: .github/workflows/demo-material-author.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: hve-tool-version-consistency
+    rule: tool-version/runtime-mismatch
+    path: .github/workflows/dependency-pr-review.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: hve-tool-version-consistency
+    rule: tool-version/runtime-mismatch
+    path: .github/workflows/doc-update-check.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: hve-tool-version-consistency
+    rule: tool-version/runtime-mismatch
+    path: .github/workflows/issue-implement.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: hve-tool-version-consistency
+    rule: tool-version/runtime-mismatch
+    path: .github/workflows/issue-triage.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: hve-tool-version-consistency
+    rule: tool-version/runtime-mismatch
+    path: .github/workflows/pr-review.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: hve-tool-version-consistency
+    rule: tool-version/runtime-mismatch
+    path: .github/workflows/vex-draft.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: dependency-pinning-analyzer
+    rule: dependency-not-pinned/setup-action-versions
+    path: .github/workflows/demo-material-author.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: dependency-pinning-analyzer
+    rule: dependency-not-pinned/setup-action-versions
+    path: .github/workflows/dependency-pr-review.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: dependency-pinning-analyzer
+    rule: dependency-not-pinned/setup-action-versions
+    path: .github/workflows/doc-update-check.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: dependency-pinning-analyzer
+    rule: dependency-not-pinned/setup-action-versions
+    path: .github/workflows/issue-implement.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: dependency-pinning-analyzer
+    rule: dependency-not-pinned/setup-action-versions
+    path: .github/workflows/issue-triage.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: dependency-pinning-analyzer
+    rule: dependency-not-pinned/setup-action-versions
+    path: .github/workflows/pr-review.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: dependency-pinning-analyzer
+    rule: dependency-not-pinned/setup-action-versions
+    path: .github/workflows/vex-draft.lock.yml
+    count: 1
+    kind: generated-code
+    upstream: https://github.com/github/gh-aw/issues/65939
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
+    expires: 2026-12-31
+  - tool: poutine
+    rule: untrusted_checkout_exec
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 4
+    kind: false-positive
+    upstream: https://github.com/boostsecurityio/poutine/issues/457
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw activation runs its own scripts from RUNNER_TEMP, which the computed .github checkout cannot supply. Poutine runs advisory (poutine-soft-fail) and the gate does not read its SARIF yet, so this entry is not evaluated until Poutine is gated.
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/code-injection/medium
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 3
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable. Any external workflow_call caller runs with its own token, variables, and repository, so it cannot act on hve-core.
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/envvar-injection/medium
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 1
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable. Any external workflow_call caller runs with its own token, variables, and repository, so it cannot act on hve-core.
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/untrusted-checkout/medium
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 1
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable. Any external workflow_call caller runs with its own token, variables, and repository, so it cannot act on hve-core.
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/envvar-injection/medium
+    path: .github/workflows/extension-marketplace-publish.yml
+    count: 1
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ callers (release and dispatch only), so it analyzes this reusable workflow as externally callable. Any external workflow_call caller runs with its own token, variables, and repository, so it cannot act on hve-core.
+    expires: 2026-12-31
+  - tool: CodeQL
+    rule: actions/untrusted-checkout/medium
+    path: .github/workflows/extension-marketplace-publish.yml
+    count: 2
+    kind: false-positive
+    upstream: https://github.com/github/codeql/issues/22755
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: CodeQL cannot resolve the $/ callers (release and dispatch only), so it analyzes this reusable workflow as externally callable. Any external workflow_call caller runs with its own token, variables, and repository, so it cannot act on hve-core.
+    expires: 2026-12-31

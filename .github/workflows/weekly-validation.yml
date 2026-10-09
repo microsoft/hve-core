@@ -14,15 +14,14 @@ concurrency:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   pester-coverage:
     name: Pester Coverage Baseline
-    uses: ./.github/workflows/pester-tests.yml
+    uses: $/.github/workflows/pester-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       soft-fail: true
       changed-files-only: false
@@ -30,7 +29,7 @@ jobs:
 
   discover-python-projects:
     name: Discover Python Projects
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -46,8 +45,10 @@ jobs:
         id: find
         shell: pwsh
         run: |
+          # The scripts/tools/ projects are locked tool environments with no
+          # Python sources, matching PythonLintHelpers.psm1.
           $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and -not $_.FullName.StartsWith((Join-Path $PWD.Path 'scripts' 'tools') + [IO.Path]::DirectorySeparatorChar) } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)
@@ -69,10 +70,10 @@ jobs:
     name: "Pytest Coverage Baseline (${{ matrix.directory }})"
     needs: discover-python-projects
     if: needs.discover-python-projects.outputs.has-projects == 'true'
-    uses: ./.github/workflows/pytest-tests.yml
+    uses: $/.github/workflows/pytest-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       working-directory: ${{ matrix.directory }}
       soft-fail: true
@@ -84,7 +85,7 @@ jobs:
 
   msdate-freshness:
     name: ms.date Freshness Check
-    uses: ./.github/workflows/msdate-freshness-check.yml
+    uses: $/.github/workflows/msdate-freshness-check.yml
     with:
       staleness-threshold-days: 90
       changed-files-only: false
@@ -94,7 +95,7 @@ jobs:
 
   markdown-link-check:
     name: Markdown Link Check (Full Repository)
-    uses: ./.github/workflows/markdown-link-check.yml
+    uses: $/.github/workflows/markdown-link-check.yml
     permissions:
       contents: read
     with:
@@ -105,17 +106,17 @@ jobs:
     name: Create or Update Issues for Stale Documentation
     needs: [msdate-freshness]
     if: failure() && needs.msdate-freshness.result == 'failure'
-    uses: ./.github/workflows/create-stale-docs-issues.yml
+    uses: $/.github/workflows/create-stale-docs-issues.yml
     with:
       threshold-days: 90
       artifact-name: msdate-freshness-results
     permissions:
       contents: read
-      issues: write
+      issues: write # create or update stale documentation issues
 
   agent-conformance:
     name: Agent Behavioral Conformance
-    uses: ./.github/workflows/agent-conformance.yml
+    uses: $/.github/workflows/agent-conformance.yml
     permissions:
       contents: read
     secrets:

@@ -1,29 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Tool version and checksum manifest for staleness detection",
+  "description": "Single source of truth for downloaded tool versions and checksums. Test-ToolVersionConsistency.ps1 fails when a hard-coded copy disagrees, and Test-SHAStaleness.ps1 reports newer releases.",
   "tools": [
-    {
-      "name": "actionlint",
-      "repo": "rhysd/actionlint",
-      "version": "1.7.10",
-      "sha256": "f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f",
-      "downloadUrlTemplate": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_amd64.tar.gz",
-      "sha256ByArch": {
-        "linux_amd64": "f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f",
-        "linux_arm64": "cd3dfe5f66887ec6b987752d8d9614e59fd22f39415c5ad9f28374623f41773a"
-      },
-      "assetTemplateByArch": {
-        "linux_amd64": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_amd64.tar.gz",
-        "linux_arm64": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_arm64.tar.gz"
-      },
-      "notes": "Used in devcontainer for GitHub Actions workflow linting"
-    },
     {
       "name": "gitleaks",
       "repo": "gitleaks/gitleaks",
       "version": "8.30.0",
+      "verification": "published-checksums",
+      "envPrefix": "GITLEAKS",
       "sha256": "79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e",
-      "downloadUrlTemplate": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_x64.tar.gz",
       "sha256ByArch": {
         "linux_amd64": "79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e",
         "linux_arm64": "b4cbbb6ddf7d1b2a603088cd03a4e3f7ce48ee7fd449b51f7de6ee2906f5fa2f"
@@ -32,14 +17,194 @@
         "linux_amd64": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_x64.tar.gz",
         "linux_arm64": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_arm64.tar.gz"
       },
-      "notes": "Used in devcontainer for secret scanning. Vendor names linux amd64 asset 'linux_x64'."
+      "notes": "Secret scanning in the devcontainer and gitleaks-scan.yml. The vendor names the linux amd64 asset 'linux_x64'."
+    },
+    {
+      "name": "cosign",
+      "repo": "sigstore/cosign",
+      "version": "3.0.5",
+      "verification": "published-checksums",
+      "envPrefix": "COSIGN",
+      "sha256": "db15cc99e6e4837daabab023742aaddc3841ce57f193d11b7c3e06c8003642b2",
+      "sha256ByArch": {
+        "linux_amd64": "db15cc99e6e4837daabab023742aaddc3841ce57f193d11b7c3e06c8003642b2",
+        "linux_arm64": "d098f3168ae4b3aa70b4ca78947329b953272b487727d1722cb3cb098a1a20ab"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/sigstore/cosign/releases/download/v{version}/cosign-linux-amd64",
+        "linux_arm64": "https://github.com/sigstore/cosign/releases/download/v{version}/cosign-linux-arm64"
+      },
+      "notes": "Artifact signing in the devcontainer and Copilot setup steps. Checksums from cosign_checksums.txt."
+    },
+    {
+      "name": "osv-scanner",
+      "repo": "google/osv-scanner",
+      "version": "2.3.8",
+      "verification": "published-checksums",
+      "envPrefix": "OSV_SCANNER",
+      "sha256": "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc",
+      "sha256ByArch": {
+        "linux_amd64": "bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc",
+        "linux_arm64": "8158b18edd2d03b1a30d905ca91b032bc62262167be8f206c27114f08823e27c"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/google/osv-scanner/releases/download/v{version}/osv-scanner_linux_amd64",
+        "linux_arm64": "https://github.com/google/osv-scanner/releases/download/v{version}/osv-scanner_linux_arm64"
+      },
+      "notes": "Vulnerability scanning in the devcontainer, Copilot setup steps, and vex-detect.yml. Checksums from osv-scanner_SHA256SUMS."
+    },
+    {
+      "name": "uv",
+      "repo": "astral-sh/uv",
+      "version": "0.10.9",
+      "verification": "published-checksums",
+      "envPrefix": "UV",
+      "sha256": "20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594",
+      "sha256ByArch": {
+        "linux_amd64": "20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594",
+        "linux_arm64": "cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/astral-sh/uv/releases/download/{version}/uv-x86_64-unknown-linux-gnu.tar.gz",
+        "linux_arm64": "https://github.com/astral-sh/uv/releases/download/{version}/uv-aarch64-unknown-linux-gnu.tar.gz"
+      },
+      "notes": "Python package manager for the devcontainer, Copilot setup steps, and every workflow uv install. Checksums from the per-asset .sha256 files; release tags have no v prefix."
+    },
+    {
+      "name": "shellcheck",
+      "repo": "koalaman/shellcheck",
+      "version": "0.11.0",
+      "verification": "release-digest",
+      "envPrefix": "SHELLCHECK",
+      "sha256": "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198",
+      "sha256ByArch": {
+        "linux_amd64": "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198",
+        "linux_arm64": "12b331c1d2db6b9eb13cfca64306b1b157a86eb69db83023e261eaa7e7c14588"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/koalaman/shellcheck/releases/download/v{version}/shellcheck-v{version}.linux.x86_64.tar.xz",
+        "linux_arm64": "https://github.com/koalaman/shellcheck/releases/download/v{version}/shellcheck-v{version}.linux.aarch64.tar.xz"
+      },
+      "notes": "Shell script analysis for workflow validation. The project publishes no checksum file or attestation; digests are the GitHub release asset digests recorded at registration."
+    },
+    {
+      "name": "zizmor",
+      "repo": "zizmorcore/zizmor",
+      "version": "1.30.1",
+      "verification": "attestation",
+      "envPrefix": "ZIZMOR",
+      "sha256": "e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a",
+      "sha256ByArch": {
+        "linux_amd64": "e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a",
+        "linux_arm64": "7ff1dce33bdd18fd2a4affe63bdd47efcccca97b2cec1c1863ec26e9e2647540"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/zizmorcore/zizmor/releases/download/v{version}/zizmor-x86_64-unknown-linux-gnu.tar.gz",
+        "linux_arm64": "https://github.com/zizmorcore/zizmor/releases/download/v{version}/zizmor-aarch64-unknown-linux-gnu.tar.gz"
+      },
+      "attestation": {
+        "repo": "zizmorcore/zizmor",
+        "signerWorkflow": ".github/workflows/release-binaries.yml"
+      },
+      "notes": "GitHub Actions static analysis. No checksum file is published; digests verified with gh attestation verify."
+    },
+    {
+      "name": "gh-aw",
+      "repo": "github/gh-aw",
+      "version": "0.89.21",
+      "verification": "published-checksums",
+      "envPrefix": "GH_AW",
+      "sha256": "1c74ff5fc28b1891d32b67f4348a9b7f750946b6d4a721e909187a848868016b",
+      "sha256ByArch": {
+        "linux_amd64": "1c74ff5fc28b1891d32b67f4348a9b7f750946b6d4a721e909187a848868016b",
+        "linux_arm64": "4e521be28bd45030e8165c8654ee69ea1d6830b4e0fdefdd020ab1a9b1dd19ae"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/github/gh-aw/releases/download/v{version}/linux-amd64",
+        "linux_arm64": "https://github.com/github/gh-aw/releases/download/v{version}/linux-arm64"
+      },
+      "notes": "Agentic workflow compiler. Every compiled *.lock.yml records this compiler_version. Checksums from checksums.txt."
+    },
+    {
+      "name": "copilot-cli",
+      "repo": "github/copilot-cli",
+      "version": "1.0.87",
+      "verification": "published-checksums",
+      "sha256": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
+      "sha256ByArch": {
+        "linux_amd64": "49d81b184f1a1b358af676155fe97e341b9d9f0bc8dd25190dfe17087669b5b9",
+        "linux_arm64": "c175343f60024d368e58a71f2294384b2b7df7b958079570b05b69ca89ce55f6"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/github/copilot-cli/releases/download/v{version}/copilot-linux-x64.tar.gz",
+        "linux_arm64": "https://github.com/github/copilot-cli/releases/download/v{version}/copilot-linux-arm64.tar.gz"
+      },
+      "notes": "Copilot CLI that gh-aw installs for the agent. Every agentic workflow source pins engine.version to this version, and each compiled *.lock.yml passes it to install_copilot_cli.sh, which verifies the tarball against SHA256SUMS.txt. Checksums from SHA256SUMS.txt."
+    },    {
+      "name": "gh-actions-lock",
+      "repo": "github/gh-actions-lock",
+      "version": "0.1.6",
+      "verification": "attestation",
+      "envPrefix": "GH_ACTIONS_LOCK",
+      "sha256": "4181ec1da5408b34b9a542a7ee5c6ce3a4d6ac815c7d0206a00ceca8a817f4e3",
+      "sha256ByArch": {
+        "linux_amd64": "4181ec1da5408b34b9a542a7ee5c6ce3a4d6ac815c7d0206a00ceca8a817f4e3",
+        "linux_arm64": "31c99e586f8f5fa2607ea79af74e3b50bc7ed4be1580a0d8449cdd73d1aba5e4"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/github/gh-actions-lock/releases/download/v{version}/linux-amd64",
+        "linux_arm64": "https://github.com/github/gh-actions-lock/releases/download/v{version}/linux-arm64"
+      },
+      "attestation": {
+        "repo": "github/gh-actions-lock",
+        "signerWorkflow": ".github/workflows/release.yml"
+      },
+      "notes": "Actions lockfile generator and verifier. No checksum file is published; digests verified with gh attestation verify."
+    },
+    {
+      "name": "pip-audit",
+      "repo": "pypa/pip-audit",
+      "version": "2.10.0",
+      "verification": "pypi",
+      "registry": "pypi",
+      "package": "pip-audit",
+      "lockProject": "scripts/tools/pip-audit",
+      "sha256ByArch": {
+        "linux_amd64": "16e02093872fac97580303f0848fa3ad64f7ecf600736ea7835a2b24de49613f"
+      },
+      "notes": "Python dependency audits in pip-audit.yml and Invoke-PipAudit.ps1, run with uv run --locked from lockProject. The digest is the PyPI py3-none-any wheel hash and must appear in that uv.lock."
+    },
+    {
+      "name": "vscode-cli",
+      "repo": "microsoft/vscode",
+      "version": "1.139.0",
+      "verification": "published-checksums",
+      "envPrefix": "VSCODE_CLI",
+      "registry": "vscode-update",
+      "commit": "2242ebbb54efeeb0129e08e919e7e8d43033cd83",
+      "sha256ByArch": {
+        "linux_amd64": "651bc54695531375589c837b907a4e784bc2892076592e2464da12ead994d4bd"
+      },
+      "notes": "VS Code CLI for demo-material-render.yml, downloaded by commit. The checksum is the sha256hash published by the VS Code update API for that commit."
+    },
+    {
+      "name": "gh-aw-firewall",
+      "repo": "github/gh-aw-firewall",
+      "version": "0.28.23",
+      "verification": "oci-digest",
+      "images": {
+        "agent": "sha256:2c78aaba1c108e130e2d6d01e4f2cca334ea04c53e6f258913ac34173fe7e3b2",
+        "api-proxy": "sha256:c15c3d1208df10c5b588a3657be53742aa982ae0909d1eb1812525268794ca64",
+        "squid": "sha256:02ffc56dd40158223064ef03a78c2d9717473c93723b4e403d455ea6f0b09ae0"
+      },
+      "notes": "Agent workflow firewall (AWF) images that the gh-aw compiler pins by digest in every *.lock.yml."
     }
   ],
   "psModules": [
     {
       "name": "PowerShell-Yaml",
       "version": "0.4.7",
-      "notes": "YAML parser used by lint:yaml and artifact metadata validation; pinned to known-good stable per ADR in docs/security/dependency-pinning.md"
+      "notes": "YAML parser used by workflow, frontmatter, and artifact metadata validation; pinned to known-good stable per ADR in docs/security/dependency-pinning.md"
     },
     {
       "name": "Pester",

@@ -46,7 +46,7 @@ permissions:
 jobs:
   node-tests:
     name: Node Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write  # Required for Codecov OIDC
@@ -56,13 +56,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: Verify resolved head commit
-        if: inputs.change-mode == 'range'
         shell: bash
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}
         run: |
           actual_head_sha="$(git rev-parse HEAD)"
           if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
@@ -125,7 +123,7 @@ jobs:
         if: steps.detect.outputs.has_tests == 'true' && (!inputs.changed-files-only || steps.check-mjs.outputs.has_changes == 'true')
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version-file: .node-version
 
       - name: Install skill-local Node dependencies
         if: steps.detect.outputs.has_tests == 'true' && (!inputs.changed-files-only || steps.check-mjs.outputs.has_changes == 'true')

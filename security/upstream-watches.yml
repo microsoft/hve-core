@@ -1,0 +1,211 @@
+# Upstream catch-up watches read by scripts/security/Get-UpstreamWatchStatus.ps1.
+#
+# A watch records an upstream condition that, once met, lets this repository
+# retire a workaround or a tracked exception. The weekly code-scanning workflow
+# evaluates every watch and opens or updates one issue per triggered watch, so a
+# workaround never outlives its reason silently. Add a watch in the same change
+# that adds the workaround it retires.
+#
+# Every watch needs id, kind, issue, and action, plus the fields for its kind:
+#
+#   - id: firewall-runner-repo-root-refs   # unique, lowercase kebab-case
+#     kind: runner-version                 # one of the kinds below
+#     issue: 1234                          # hve-core issue that tracks the workaround
+#     action: one line describing what to change once the watch triggers
+#
+# Kinds and their fields:
+#
+#   issue-closed     url: https://github.com/org/repo/issues/123
+#                    Triggers when the upstream issue or pull request is closed.
+#   release-newer    repo: org/repo
+#                    pinned: 1.2.3
+#                    Triggers when the latest release is newer than pinned.
+#   runner-version   label: ubuntu-24.04-firewall
+#                    minimum: 2.336.0
+#                    Triggers when a job on label reports at least minimum.
+#   probe-outcome    probe: probe-id
+#                    baseline: fail
+#                    Triggers when the named capability probe reports an
+#                    outcome (pass or fail) different from baseline.
+#
+# See docs/security/code-scanning-alert-lifecycle.md for how watches are tracked.
+# Capability probes for the workflow validator (scripts/linting/workflow-validator/
+# probes/). Outcomes come from run-probes.mjs against the newest parser release.
+watches:
+  - id: workflow-parser-probe-expression-syntax
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (expression syntax error); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: expression-syntax
+    baseline: pass
+  - id: workflow-parser-probe-unknown-context
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (unknown context name); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: unknown-context
+    baseline: pass
+  - id: workflow-parser-probe-function-arity
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (wrong number of function arguments); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: function-arity
+    baseline: pass
+  - id: workflow-parser-probe-unknown-function
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (unknown function); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: unknown-function
+    baseline: pass
+  - id: workflow-parser-probe-needs-unknown-job
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (needs names a job that does not exist); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: needs-unknown-job
+    baseline: pass
+  - id: workflow-parser-probe-needs-cycle
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (needs graph has a cycle); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: needs-cycle
+    baseline: pass
+  - id: workflow-parser-probe-duplicate-step-id
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (two steps share an id); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: duplicate-step-id
+    baseline: pass
+  - id: workflow-parser-probe-invalid-cron
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (invalid cron schedule); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: invalid-cron
+    baseline: pass
+  - id: workflow-parser-probe-invalid-dispatch-input-type
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (invalid workflow_dispatch input type); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: invalid-dispatch-input-type
+    baseline: pass
+  - id: workflow-parser-probe-step-uses-and-run
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser stopped catching this (step has both uses and run); add a custom check to scripts/linting/workflow-validator/checks.mjs
+    probe: step-uses-and-run
+    baseline: pass
+  - id: workflow-parser-probe-modern-syntax
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now rejects current syntax (concurrency.queue, job.workflow_sha, or $/ self-repository uses); keep the validator's parser pin, which accepts it, and report the regression upstream before updating the pin
+    probe: modern-syntax
+    baseline: pass
+  - id: workflow-parser-probe-unknown-context-property
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (unknown property of a fixed-shape context); retire the workflow-check/unknown-context-property custom check and its probe
+    probe: unknown-context-property
+    baseline: fail
+  - id: workflow-parser-probe-undefined-step
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (steps.<id> names no step); retire the workflow-check/undefined-step custom check and its probe
+    probe: undefined-step
+    baseline: fail
+  - id: workflow-parser-probe-undefined-need
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (needs.<job> names a job not in needs); retire the workflow-check/undefined-need custom check and its probe
+    probe: undefined-need
+    baseline: fail
+  - id: workflow-parser-probe-undefined-matrix-key
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (matrix.<key> names no matrix key); retire the workflow-check/undefined-matrix-key custom check and its probe
+    probe: undefined-matrix-key
+    baseline: fail
+  - id: workflow-parser-probe-undefined-input
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (inputs.<name> names no declared input); retire the workflow-check/undefined-input custom check and its probe
+    probe: undefined-input
+    baseline: fail
+  - id: workflow-parser-probe-invalid-path-filter
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (path filter has an unbalanced character class); retire the workflow-check/invalid-path-filter custom check and its probe
+    probe: invalid-path-filter
+    baseline: fail
+  - id: workflow-parser-probe-unknown-runner-label
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (runs-on names an image GitHub does not publish); keep the Test-WorkflowRunner.ps1 known-image list, which enforces the runner policy, and retire this probe
+    probe: unknown-runner-label
+    baseline: fail
+  - id: workflow-parser-probe-always-true-if
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (if: mixes text with an expression and is always true); retire the workflow-check/always-true-if custom check and its probe
+    probe: always-true-if
+    baseline: fail
+  - id: workflow-parser-probe-uses-without-ref
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (uses: has no ref); keep the Test-DependencyPinning.ps1 rule, which also gates other files, and retire this probe
+    probe: uses-without-ref
+    baseline: fail
+  - id: workflow-parser-probe-deprecated-workflow-command
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (run: uses the disabled set-output command); retire the workflow-check/deprecated-workflow-command custom check and its probe
+    probe: deprecated-workflow-command
+    baseline: fail
+  - id: workflow-parser-probe-untrusted-input-in-run
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (attacker-controlled context expanded in run:); keep zizmor, which covers more injection sinks, and retire this probe
+    probe: untrusted-input-in-run
+    baseline: fail
+  - id: workflow-parser-probe-invalid-env-name
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (env name is not a shell identifier); retire the workflow-check/invalid-env-name custom check and its probe
+    probe: invalid-env-name
+    baseline: fail
+  - id: workflow-parser-probe-unknown-action-input
+    kind: probe-outcome
+    issue: 3112
+    action: >-
+      The parser now catches this (with: passes an input the action does not declare); retire the workflow-check/unknown-action-input custom check and its probe
+    probe: unknown-action-input
+    baseline: fail
+  # gh-aw compiles every agentic workflow lock file; newer releases may fix the
+  # generated findings recorded as generated-code exceptions.
+  - id: gh-aw-release-newer
+    kind: release-newer
+    issue: 3112
+    action: >-
+      Upgrade gh-aw following "Upgrading gh-aw" in docs/architecture/agentic-workflows.md, then retire generated-code exceptions the new compiler output no longer needs
+    repo: github/gh-aw
+    pinned: 0.89.21

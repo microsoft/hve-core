@@ -42,7 +42,7 @@ permissions:
 jobs:
   scan:
     name: Gitleaks Secret Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -52,13 +52,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: Verify resolved head commit
-        if: inputs.change-mode == 'range'
         shell: bash
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}
         run: |
           actual_head_sha="$(git rev-parse HEAD)"
           if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
@@ -151,7 +149,7 @@ jobs:
 
       - name: Upload SARIF to Security tab
         if: inputs.upload-sarif && always()
-        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: logs/gitleaks-results.sarif
           category: gitleaks

@@ -29,7 +29,7 @@ jobs:
   normalize-version:
     name: Normalize Version
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == false) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -107,7 +107,7 @@ jobs:
   verify-catalog:
     name: Verify Stable Catalog Version
     needs: [normalize-version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -140,12 +140,11 @@ jobs:
     name: Publish Extension
     needs: [normalize-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
-    uses: ./.github/workflows/extension-marketplace-publish.yml
+    uses: $/.github/workflows/extension-marketplace-publish.yml
     with:
       tag: ${{ needs.normalize-version.outputs.tag }}
       pre-release: false
     permissions:
       contents: read
-      attestations: read
-      id-token: write
-    secrets: inherit
+      attestations: read # the publish workflow verifies VSIX provenance
+      id-token: write # Azure OIDC login in the publish workflow

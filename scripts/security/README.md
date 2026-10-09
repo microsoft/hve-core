@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - powershell
@@ -27,8 +27,8 @@ The security scripts share common modules and follow a consistent pattern:
   output utilities
 * `CIHelpers.psm1` (from `scripts/lib/`) provides CI platform detection and
   GitHub Actions output formatting
-* `tool-checksums.json` stores SHA256 checksums for verified tool downloads
-  (see [tool-checksums.json schema](#tool-checksumsjson-schema))
+* `tool-checksums.json` is the single source for downloaded tool versions and
+  checksums (see [tool-checksums.json schema](#tool-checksumsjson-schema))
 
 ## Scripts
 
@@ -41,7 +41,11 @@ The security scripts share common modules and follow a consistent pattern:
 * [`Test-WorkflowPermissions.ps1`](#test-workflowpermissionsps1): workflow permissions validation
 * [`Test-DangerousWorkflow.ps1`](#test-dangerousworkflowps1): workflow template-injection detection
 * [`Test-PrValidationGate.ps1`](#test-prvalidationgateps1): PR-validation gate completeness
-* [`Test-CodeQLSarifThreshold.ps1`](#test-codeqlsarifthresholdps1): CodeQL SARIF threshold gate with tracked exceptions
+* [`Test-CodeQLSarifThreshold.ps1`](#test-codeqlsarifthresholdps1): code-scanning SARIF threshold gate with tracked exceptions
+* [`Get-CodeScanningExceptionStatus.ps1`](#get-codescanningexceptionstatusps1): tracked exception status for the weekly job
+* [`Get-UpstreamWatchStatus.ps1`](#get-upstreamwatchstatusps1): upstream catch-up watches
+* [`Test-ToolVersionConsistency.ps1`](#test-toolversionconsistencyps1): hard-coded tool versions against the manifest
+* [`Test-ActionPinProvenance.ps1`](#test-actionpinprovenanceps1): action pin comments and commits against upstream
 * [`Install-PSModules.ps1`](#install-psmodulesps1): centralized PS module install with retry
 * [`Test-PSModulePins.ps1`](#test-psmodulepinsps1): PS module version pin enforcement
 * [`Sign-PlannerArtifacts.ps1`](#sign-plannerartifactsps1): planner artifact manifest and signing
@@ -50,16 +54,36 @@ The security scripts share common modules and follow a consistent pattern:
 
 ### `Test-DependencyPinning.ps1`
 
-Verifies dependency pinning compliance for all dependencies in GitHub Actions
-workflows and composite actions.
+Verifies dependency pinning compliance across workflows, composite actions,
+package manifests, container definitions, and scripts.
 
 Purpose: Detect unpinned or improperly pinned dependencies to maintain
 supply chain security.
 
+#### Rule types
+
+`-IncludeTypes` selects these rules; the default runs all of them.
+
+| Type                    | Flags                                                                                                                                                                                          |
+|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `github-actions`        | A `uses:` reference that is not a full commit SHA, including a reference with no `@ref`. `docker://` references belong to `container-images`                                                   |
+| `npm`                   | A `package.json` dependency without an exact version                                                                                                                                           |
+| `pip`                   | A Python requirement without `==`                                                                                                                                                              |
+| `workflow-npm-commands` | `npm install` or `npm update` in a workflow instead of `npm ci`                                                                                                                                |
+| `shell-downloads`       | A `curl` or `wget` download in any shell script or workflow without checksum verification within 10 lines, including downloads from variable URLs with an output flag                          |
+| `setup-action-versions` | A setup or installer action with no version, a floating version, or an expression version, and any setup action missing from `$SetupActionVersionInputs`                                       |
+| `python-tool-runs`      | `uvx`, `uv tool`, or `pipx` runs, which resolve transitive dependencies without a lock. Run tools from a locked uv project under `scripts/tools/` with `uv run --locked` or `uv sync --locked` |
+| `container-images`      | A Dockerfile `FROM`, compose or workflow `image:`, `container:`, `docker://`, or registry image on a `docker pull` or `run` line without an `@sha256:` digest                                  |
+| `install-hints`         | Messages, help, or comments that pipe a download into a shell or `Invoke-Expression`, install a floating latest tag, or name a pip package without a version                                   |
+
+Floating runner labels and Node and Python versions are enforced by
+`Test-WorkflowRunner.ps1` and `Test-ToolVersionConsistency.ps1`. The runner
+check also rejects a dated Ubuntu label whose version is not a known
+GitHub-hosted image (`22.04`, `24.04`, or `26.04`). Tests and fixtures are
+excluded from the script-based rules.
+
 #### Features
 
-* Scans workflow files and composite actions (`.github/actions/`) for GitHub
-  Actions, Docker images, and other dependency types
 * Categorizes violations by type (Unpinned, Stale, VersionMismatch,
   MissingVersionComment)
 * Outputs results in JSON, SARIF, CSV, Markdown, or table format
@@ -210,7 +234,8 @@ reach production.
 
 * Discovers Python projects via `pyproject.toml` file search
 * Exports locked dependencies via `uv export` before auditing
-* Runs pip-audit against each project's dependency set
+* Runs pip-audit from the locked `scripts/tools/pip-audit` project
+  (`uv run --locked`), so pip-audit's own dependencies are hash-verified
 * Writes JSON results to the `logs/` directory
 * Configurable path exclusions
 
@@ -392,8 +417,8 @@ This validator requires the `PowerShell-Yaml` module at the version pinned in
 
 ### `Test-CodeQLSarifThreshold.ps1`
 
-Fails a CodeQL analysis job when its SARIF contains a finding at the repository's
-code-scanning threshold.
+Fails a code-scanning job when its SARIF, from CodeQL or any other tool, contains
+a finding at the repository's threshold.
 
 Purpose: Block new findings at merge time in pull requests and merge-queue groups,
 where ruleset code-scanning protection does not apply, without dismissing or
@@ -403,21 +428,25 @@ hiding any alert. See the
 #### Features
 
 * Fails a result whose rule has `security-severity` of 4.0 or higher, or whose
-  rule has no security severity and whose effective level is `error` or `warning`
+  rule has no security severity and whose effective level is `error` or `warning`;
+  with `-Threshold All`, fails every result
+* Attributes each result to its SARIF `tool.driver.name`
 * Resolves the effective level from the result, then the rule's default, then the
   SARIF default of `warning`
 * Resolves rules through `ruleId`, `ruleIndex`, and `toolComponent` across the
   driver and extensions; inline SARIF suppressions do not exempt a result
 * Fails closed on a missing, unreadable, or run-less SARIF input
-* Excuses a result only through a matching entry in
-  `security/code-scanning-exceptions.yml`, lists every excused result, and fails
-  on expired, malformed, over-90-day, or stale entries
+* Excuses results only through an entry in `security/code-scanning-exceptions.yml`
+  with the same tool, rule, and path whose `count` equals the matching results,
+  lists every excused result, and fails on expired, malformed, over-90-day,
+  count-mismatched, or stale entries
 * Writes a Markdown summary to `$GITHUB_STEP_SUMMARY` or `-SummaryPath`
 * Integrates with `npm run security:codeql-gate`
 
 #### Parameters
 
 * `-SarifPath` - SARIF files or directories containing `*.sarif` files
+* `-Threshold` - `Default` (severity and level contract) or `All` (every result fails)
 * `-ExceptionsPath` - Tracked exceptions file (default: `security/code-scanning-exceptions.yml`)
 * `-CheckDate` - Date used for expiry checks (default: current UTC date)
 * `-SummaryPath` - Markdown summary destination (default: `$env:GITHUB_STEP_SUMMARY`)
@@ -430,10 +459,140 @@ hiding any alert. See the
 
 # Gate every SARIF file the CodeQL action wrote
 npm run security:codeql-gate -- -SarifPath ../results
+
+# Gate a zero-finding scanner
+./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath ./zizmor.sarif -Threshold All
+```
+
+### `Get-CodeScanningExceptionStatus.ps1`
+
+Reports each tracked code-scanning exception for the weekly code-scanning job.
+
+Purpose: Keep each exception's issue current and show when an upstream report
+closes, so an exception retires as soon as its reason does.
+
+#### Features
+
+* Reports tool, rule, path, pinned count, kind, upstream report and its state,
+  issue, owner, expiry, and days left
+* Counts open alerts on the branch for the same tool, rule, and path
+* Looks up the upstream issue or pull request state with `gh`; other URLs report
+  `unknown`
+* Writes a JSON array that `create-gh-code-scanning-issues.yml` consumes
+
+#### Usage
+
+```powershell
+./scripts/security/Get-CodeScanningExceptionStatus.ps1 -Owner microsoft -Repo hve-core
+```
+
+### `Get-UpstreamWatchStatus.ps1`
+
+Evaluates the upstream catch-up watches in `security/upstream-watches.yml`.
+
+Purpose: Open an issue when an upstream condition that a workaround or tracked
+exception waits on is met.
+
+#### Features
+
+* Supports `issue-closed`, `release-newer`, `runner-version`, and
+  `probe-outcome` watches, and fails on an invalid watches file
+* Reports each watch as `triggered`, `waiting`, or `unknown`; unknown is
+  never treated as triggered
+* Reads runner versions from the job logs of the static `Runner probe (<label>)`
+  jobs in `gh-code-scanning.yml`, only when a `runner-version` watch exists, and
+  probe outcomes from an observations file
+* In the weekly scan, the observations come from the unprivileged
+  `capability-probes` job, which runs the workflow validator's
+  `run-probes.mjs` against the newest `@actions/workflow-parser` release. When
+  that job fails, no file is passed and every `probe-outcome` watch reports
+  `unknown`
+* Each `runner-version` watch needs a `Runner probe (<label>)` job with a
+  literal `runs-on: <label>` so the runner policy check can verify the label
+
+#### Usage
+
+```powershell
+./scripts/security/Get-UpstreamWatchStatus.ps1 -Owner microsoft -Repo hve-core -RunId 123
+```
+
+### `Test-ToolVersionConsistency.ps1`
+
+Fails when a hard-coded tool version or checksum disagrees with
+`tool-checksums.json`.
+
+Purpose: Keep one verified version source for every downloaded tool so the
+devcontainer, Copilot setup steps, and workflows cannot drift apart.
+
+#### Features
+
+* Validates every manifest entry, including its verification method and digests
+* Compares `<PREFIX>_VERSION`, `<PREFIX>[_<ARCH>]_SHA256`, and `<PREFIX>_URL`
+  values in workflows, composite actions, and devcontainer scripts with the tool
+  whose `envPrefix` matches
+* Flags a tool pinned with a version and checksum that the manifest does not
+  register, and any `astral-sh/setup-uv` step, which bypasses the manifest; use
+  the `.github/actions/setup-uv` composite instead
+* Checks each gh-aw lock file's `compiler_version` and gh-aw-firewall image tags
+  and digests
+* For each PyPI tool with a `lockProject`, requires its `pyproject.toml` to pin
+  `package==version` and its `uv.lock` to resolve that version and contain every
+  manifest digest
+* Requires `.node-version` and `.python-version` to hold one exact `X.Y.Z`
+  version, every `actions/setup-node` and `actions/setup-python` step to read
+  that file (or, without a checkout, use an equal literal), and the devcontainer
+  runtime features to match (`runtime-invalid`, `runtime-mismatch`,
+  `runtime-unpinned`)
+* Writes SARIF (tool `hve-tool-version-consistency`) with `-SarifPath` and exits
+  1 on any finding; `tool-version-consistency-scan.yml` runs it in PR validation and
+  gates the SARIF with `Test-CodeQLSarifThreshold.ps1 -Threshold All`
+
+#### Usage
+
+```powershell
+./scripts/security/Test-ToolVersionConsistency.ps1 -SarifPath logs/tool-version-consistency.sarif
 ```
 
 This gate requires the `PowerShell-Yaml` module at the version pinned in
 `ps-module-versions.json` when the exceptions file is present.
+
+### `Test-ActionPinProvenance.ps1`
+
+Verifies every SHA-pinned action against its upstream repository.
+
+Purpose: Catch version comments that misdescribe a pin, and pins of commits
+that no upstream tag or default-branch history contains, which is how an
+impostor commit from a fork looks.
+
+#### Features
+
+* Scans `uses:` pins in `.github/workflows/` and `.github/actions/`, plus the
+  `Update-ActionSHAPinning.ps1` remediation table
+* Reads each upstream repository's tags and default branch once per run with
+  `git ls-remote` (no API rate limit), peeling annotated tags to their commit
+* Rules:
+  * `action-pin/comment-mismatch`: the comment names a tag at another commit, a
+    moving major or minor tag, a version that is not a tag at the commit, free
+    text on a commit that has a release tag, or a remediation entry outside its
+    key's major
+  * `action-pin/comment-missing`: the pin has no comment
+  * `action-pin/tag-object`: the pin names an annotated tag object, not a commit
+  * `action-pin/unreachable-commit`: no tag points at the commit and the
+    compare API shows it outside the default branch history, or the repository
+    does not contain it
+  * `action-pin/upstream-unavailable`: tags or history could not be read; the
+    check fails closed
+* Calls the compare API only for untagged commits; a free-text comment is
+  allowed only for such a commit in the default branch history
+* Writes SARIF (tool `hve-action-pin-provenance`) with `-SarifPath`;
+  `action-pin-provenance-scan.yml` runs it in PR validation and gates the SARIF with
+  `Test-CodeQLSarifThreshold.ps1 -Threshold All`
+
+#### Usage
+
+```powershell
+./scripts/security/Test-ActionPinProvenance.ps1 -SarifPath logs/action-pin-provenance.sarif
+```
 
 ### `Install-PSModules.ps1`
 
@@ -591,38 +750,62 @@ Shared class definitions imported using `using module` syntax:
 
 Shared utility functions used across security scripts:
 
-| Function            | Purpose                                                                   |
-|---------------------|---------------------------------------------------------------------------|
-| `Write-SecurityLog` | Outputs timestamped, color-coded log entries with optional CI annotations |
+| Function                  | Purpose                                                                   |
+|---------------------------|---------------------------------------------------------------------------|
+| `Write-SecurityLog`       | Outputs timestamped, color-coded log entries with optional CI annotations |
+| `ConvertTo-SecuritySarif` | Builds a SARIF 2.1.0 document for a homegrown security control            |
+| `Get-WorkflowActionStep`  | Returns matching workflow steps with their line, ref, and `with:` inputs  |
 
 ## tool-checksums.json schema
 
-`tool-checksums.json` supports a dual schema for tool download metadata. Legacy
-scalar fields remain available for compatibility, while per-arch maps are
-preferred for new entries.
+`tool-checksums.json` is the single source of truth for every tool the
+repository downloads. `Test-ToolVersionConsistency.ps1` fails when a hard-coded
+copy disagrees, and `Test-SHAStaleness.ps1` reports newer releases.
 
-* Legacy scalar fields: `sha256` and `downloadUrlTemplate`. These fields are
-  deprecated for new entries, but they remain the values the current tooling
-  consumes; for example, `Test-SHAStaleness.ps1` reads `sha256`.
-* Preferred per-arch maps: `sha256ByArch` and `assetTemplateByArch`. New entries
-  should populate these maps to carry architecture-specific download metadata.
-  The current scripts do not yet read these fields, so populate the legacy
-  scalar fields alongside them until a consumer adopts the maps.
-* This documentation describes the manifest schema only and does not change
-  runtime behavior.
+Each `tools` entry has:
+
+* `name`, `repo` (GitHub `owner/name`), and `version` (no `v` prefix)
+* `verification`: how the digests were established
+  * `published-checksums`: the project's published checksum file or API
+  * `attestation`: `gh attestation verify` against `attestation.repo` and
+    `attestation.signerWorkflow`, for releases without a checksum file
+  * `release-digest`: the GitHub release asset digest, for projects that publish
+    neither checksums nor attestations
+  * `pypi`: PyPI wheel hashes for `package`
+  * `oci-digest`: container image digests in `images`
+* `sha256ByArch` and `assetTemplateByArch`, keyed `linux_amd64` and
+  `linux_arm64`; `sha256` repeats the `linux_amd64` digest for staleness
+  reports
+* `envPrefix`: the prefix of the `<PREFIX>_VERSION` and `<PREFIX>_SHA256`
+  variables that hard-code this tool
+* Optional `registry` (`pypi` or `vscode-update`) for tools whose latest
+  version is not a GitHub release, and `commit` for downloads pinned by commit
+* Optional `lockProject` for a PyPI tool: the `scripts/tools/<name>` uv project
+  whose committed `uv.lock` pins the tool and its transitive dependencies with
+  hashes. Workflows run the tool with `uv run --locked` or `uv sync --locked`
+
+Node.js and Python versions are not in the manifest. They live in the root
+`.node-version` and `.python-version` files, which `actions/setup-node`,
+`actions/setup-python`, uv, and the devcontainer read directly.
+
+`psModules` lists pinned PowerShell modules for `Install-PSModules.ps1`.
 
 ## GitHub Actions Integration
 
 Security scripts integrate with these workflows:
 
-| Workflow                        | Script(s)                      | Trigger                       |
-|---------------------------------|--------------------------------|-------------------------------|
-| `dependency-pinning-scan.yml`   | `Test-DependencyPinning.ps1`   | PR, schedule                  |
-| `sha-staleness-check.yml`       | `Test-SHAStaleness.ps1`        | Schedule                      |
-| `pr-validation.yml`             | `Test-DependencyPinning.ps1`   | Pull request                  |
-| `pip-audit.yml`                 | `Invoke-PipAudit.ps1`          | PR, schedule                  |
-| `workflow-permissions-scan.yml` | `Test-WorkflowPermissions.ps1` | PR, schedule                  |
-| `dangerous-workflow-scan.yml`   | `Test-DangerousWorkflow.ps1`   | Called by `pr-validation.yml` |
+| Workflow                            | Script(s)                                                            | Trigger                                                          |
+|-------------------------------------|----------------------------------------------------------------------|------------------------------------------------------------------|
+| `dependency-pinning-scan.yml`       | `Test-DependencyPinning.ps1`, then the threshold gate                | PR, schedule                                                     |
+| `tool-version-consistency-scan.yml` | `Test-ToolVersionConsistency.ps1`, then the threshold gate           | Called by `pr-validation.yml`                                    |
+| `action-pin-provenance-scan.yml`    | `Test-ActionPinProvenance.ps1`, then the threshold gate              | Called by `pr-validation.yml`                                    |
+| `zizmor-scan.yml`                   | zizmor, then `Test-CodeQLSarifThreshold.ps1 -Threshold All`          | Called by `pr-validation.yml`; also on push to `main` and weekly |
+| `gh-code-scanning.yml`              | `Get-CodeScanningExceptionStatus.ps1`, `Get-UpstreamWatchStatus.ps1` | Weekly                                                           |
+| `sha-staleness-check.yml`           | `Test-SHAStaleness.ps1`                                              | Schedule                                                         |
+| `pr-validation.yml`                 | `Test-DependencyPinning.ps1`                                         | Pull request                                                     |
+| `pip-audit.yml`                     | `Invoke-PipAudit.ps1`                                                | PR, schedule                                                     |
+| `workflow-permissions-scan.yml`     | `Test-WorkflowPermissions.ps1`                                       | PR, schedule                                                     |
+| `dangerous-workflow-scan.yml`       | `Test-DangerousWorkflow.ps1`                                         | Called by `pr-validation.yml`                                    |
 
 `dangerous-workflow-scan.yml` is a reusable `workflow_call` workflow rather than a
 directly triggered one. It runs `Test-DangerousWorkflow.ps1` as the blocking gate and

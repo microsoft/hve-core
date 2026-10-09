@@ -173,7 +173,8 @@ def export_pdf_to_svg(
         import fitz  # noqa: F401, PLC0415 — PyMuPDF availability check
     except ImportError as e:
         raise PyMuPDFError(
-            "PyMuPDF is required for SVG export. Install via: pip install pymupdf"
+            "PyMuPDF is required for SVG export. "
+            "Run 'uv sync --locked' in the powerpoint skill directory"
         ) from e
 
     try:

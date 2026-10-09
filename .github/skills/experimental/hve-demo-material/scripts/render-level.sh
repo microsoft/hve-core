@@ -45,7 +45,7 @@ Options:
   --level <level>               Level label from the curriculum
   --level-dir <dir>             Authored level directory containing content/
   --workspace <repo>            Repository folder opened for live captures
-  --narration <azure|piper|none>  Narration mode (default: azure; CI requires none)
+  --narration <azure|none>      Narration mode (default: azure; CI requires none)
   --capture <live|deck-export>  Capture profile (default: the level default)
   --animation <none|characters>  Only none is supported; use the builder for characters
   --vision-prompt-file <path>   Run the vision slide check with this prompt
@@ -89,7 +89,7 @@ validate_args() {
   [[ "${LEVEL}" =~ ^L[1-4]00$ ]] || err "--level must be L100 to L400."
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${WORKSPACE}" ]] || err "--workspace must be a directory."
-  [[ "${NARRATION}" =~ ^(azure|piper|none)$ ]] || err "--narration must be azure, piper, or none."
+  [[ "${NARRATION}" =~ ^(azure|none)$ ]] || err "--narration must be azure or none."
   if [[ "${GITHUB_ACTIONS:-false}" == "true" && "${NARRATION}" != "none" ]]; then
     err "CI demo rendering requires --narration none; speech synthesis is disabled."
   fi
@@ -178,9 +178,8 @@ narrate_and_assemble() {
     uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py silent-timing \
       --level-dir "${LEVEL_DIR}"
   else
-    log "Synthesizing narration with ${NARRATION}"
+    log "Synthesizing narration with Azure AI Speech"
     bash "${VOICEOVER}" "${SKIP_VENV[@]}" \
-      --engine "${NARRATION}" \
       --collapse-newlines \
       --content-dir "${LEVEL_DIR}/content" \
       --output-dir "${LEVEL_DIR}/audio"

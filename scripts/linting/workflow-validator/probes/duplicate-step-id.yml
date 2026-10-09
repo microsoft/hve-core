@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe duplicate-step-id
+permissions: {}
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: same
+        run: echo one
+      - id: same
+        run: echo two

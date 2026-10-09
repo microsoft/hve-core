@@ -11,7 +11,22 @@ on:
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
 
-engine: copilot
+engine:
+  id: copilot
+  # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
+  version: "1.0.87"
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
+# runtimes.node opts the agent into Node registry and CDN domains; the agent
+# installs no packages, so the Node ecosystem stays blocked.
+network:
+  allowed:
+    - defaults
+  blocked:
+    - node
 timeout-minutes: 30
 
 checkout:
@@ -32,6 +47,8 @@ permissions:
   actions: read
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   create-pull-request:
     max: 1
   add-comment:

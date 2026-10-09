@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-06
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -14,7 +14,7 @@ estimated_reading_time: 6
 
 ## DevContainer Configuration
 
-HVE Core uses an Ubuntu 22.04 (Jammy) base image with Node.js 24, Python 3.11,
+HVE Core uses an Ubuntu 22.04 (Jammy) base image with Node.js 24.21.0, Python 3.12.15,
 and PowerShell 7.4 pre-installed. The configuration lives in
 `.devcontainer/devcontainer.json` and includes extensions for Markdown editing,
 spell checking, and GitHub integration.
@@ -23,14 +23,14 @@ spell checking, and GitHub integration.
 
 The DevContainer ships with these tools:
 
-* Node.js 24 with npm
-* Python 3.11
+* Node.js 24.21.0 with npm (from `.node-version`)
+* Python 3.12.15 (from `.python-version`)
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
 * Git and GitHub CLI
 * GitHub Copilot CLI (`copilot`)
 * Azure CLI
-* shellcheck for bash validation
-* actionlint for GitHub Actions workflow validation
+* shellcheck 0.11.0 for bash and workflow `run:` script validation
+* zizmor 1.30.1 for GitHub Actions security auditing
 * cosign for artifact signing and verification
 * gitleaks for secret scanning
 
@@ -43,11 +43,11 @@ To add tools or adjust versions, modify `.devcontainer/devcontainer.json`. The
 {
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "24",
+      "version": "24.21.0",
       "pnpmVersion": "none"
     },
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11",
+      "version": "3.12.15",
       "installTools": false
     },
     "ghcr.io/devcontainers/features/powershell:1": {}
@@ -104,9 +104,15 @@ array. Each entry uses the `publisher.extensionId` format:
 
 Three lifecycle hooks execute during container setup:
 
-* `onCreateCommand` runs `.devcontainer/scripts/on-create.sh` to install system
-  dependencies (shellcheck, actionlint, PowerShell modules, gitleaks)
-* `updateContentCommand` runs `npm ci` to install JavaScript dependencies
+* `onCreateCommand` runs `.devcontainer/scripts/on-create.sh` to install
+  shellcheck, zizmor, gitleaks, cosign, osv-scanner, and uv, each pinned and
+  SHA-256 verified against digests that
+  `npm run lint:tool-version-consistency` keeps equal to
+  `scripts/security/tool-checksums.json`, plus the version-pinned PowerShell
+  modules from `scripts/security/ps-module-versions.json`
+* `updateContentCommand` runs `npm ci` at the repository root and
+  `npm ci --prefix scripts/linting/workflow-validator --ignore-scripts` for the
+  workflow validator
 * `postCreateCommand` runs `.devcontainer/scripts/post-create.sh` for final
   configuration
 
@@ -258,18 +264,21 @@ the agent begins work.
 
 The coding agent environment includes:
 
-* Node.js 24 with npm dependencies from `package.json`
-* Python 3.11
+* Node.js 24.21.0 (from `.node-version`) with npm dependencies from `package.json`
+* Python 3.12.15 (from `.python-version`)
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
-* shellcheck (pre-installed on ubuntu-latest)
-* actionlint for GitHub Actions workflow validation
+* shellcheck 0.11.0 and zizmor 1.30.1, each pinned with per-architecture
+  SHA-256 digests in `copilot-setup-steps.yml`. `npm run
+  lint:tool-version-consistency` requires those versions and digests to match
+  `scripts/security/tool-checksums.json` for the same architecture.
 * cosign for artifact signing and verification
 * osv-scanner for dependency vulnerability scanning
 
 ### Adding Tools for the Coding Agent
 
 Add installation steps to `copilot-setup-steps.yml`. Each tool should include
-SHA-verified downloads for security:
+SHA-verified downloads for security, and the tool must be registered in
+`scripts/security/tool-checksums.json` with the same version and digests:
 
 ```yaml
 - name: Install custom tool
@@ -297,13 +306,13 @@ share most tools but differ intentionally in a few areas.
 
 | Tool                    | DevContainer | Coding Agent |
 |-------------------------|--------------|--------------|
-| Node.js 24              | Yes          | Yes          |
-| Python 3.11             | Yes          | Yes          |
+| Node.js 24.21.0         | Yes          | Yes          |
+| Python 3.12.15          | Yes          | Yes          |
 | PowerShell 7.4          | Yes          | Yes          |
 | PSScriptAnalyzer 1.25.0 | Yes          | Yes          |
 | Pester 5.7.1            | Yes          | Yes          |
 | shellcheck              | Yes          | Yes          |
-| actionlint              | Yes          | Yes          |
+| zizmor                  | Yes          | Yes          |
 | cosign                  | Yes          | Yes          |
 | osv-scanner             | Yes          | Yes          |
 

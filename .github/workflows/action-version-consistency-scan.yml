@@ -37,7 +37,7 @@ permissions:
 jobs:
   scan:
     name: Validate Action Version Consistency
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -68,7 +68,7 @@ jobs:
           }
           
           # Enable failure on violations unless soft-fail is requested
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnMismatch'] = $true
             $params['FailOnMissingComment'] = $true
           }
@@ -77,7 +77,7 @@ jobs:
           & scripts/security/Test-ActionVersionConsistency.ps1 @params
           
           # Generate SARIF format if requested
-          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+          if ($env:INPUT_UPLOAD_SARIF -eq 'true') {
             Write-Host "Generating SARIF format for Security tab..."
             $params['Format'] = 'sarif'
             $params['OutputPath'] = 'logs/action-version-consistency-results.sarif'
@@ -105,10 +105,13 @@ jobs:
             Write-Error "Failed to generate action version consistency report"
             exit 1
           }
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
+          INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
 
       - name: Upload SARIF to Security tab
         if: inputs.upload-sarif && always()
-        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: logs/action-version-consistency-results.sarif
           category: action-version-consistency
@@ -126,9 +129,9 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $mismatchCount = '${{ steps.consistency.outputs.mismatch-count }}'
-          $missingComments = '${{ steps.consistency.outputs.missing-comments }}'
-          $isCompliant = '${{ steps.consistency.outputs.is-compliant }}'
+          $mismatchCount = $env:STEPS_CONSISTENCY_OUTPUTS_MISMATCH_COUNT
+          $missingComments = $env:STEPS_CONSISTENCY_OUTPUTS_MISSING_COMMENTS
+          $isCompliant = $env:STEPS_CONSISTENCY_OUTPUTS_IS_COMPLIANT
           
           @"
           ## Action Version Consistency Scan Results
@@ -158,3 +161,7 @@ jobs:
           "@
           })
           "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+        env:
+          STEPS_CONSISTENCY_OUTPUTS_MISMATCH_COUNT: ${{ steps.consistency.outputs.mismatch-count }}
+          STEPS_CONSISTENCY_OUTPUTS_MISSING_COMMENTS: ${{ steps.consistency.outputs.missing-comments }}
+          STEPS_CONSISTENCY_OUTPUTS_IS_COMPLIANT: ${{ steps.consistency.outputs.is-compliant }}

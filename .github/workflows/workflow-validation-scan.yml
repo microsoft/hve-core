@@ -1,0 +1,70 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Workflow Validation Scan
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Validate Workflows and Actions
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+
+      - name: Install locked validator dependencies
+        run: npm ci --prefix scripts/linting/workflow-validator --ignore-scripts
+
+      - name: Install pinned shellcheck
+        uses: $/.github/actions/setup-shellcheck
+
+      # Parses every workflow and composite action with GitHub's workflow parser,
+      # runs the custom checks, and runs shellcheck over every bash and sh run:
+      # script. The validator exits 1 on findings after writing them to SARIF,
+      # which the gate below decides on. Exit 2 (including a shellcheck version
+      # other than the manifest's) or a missing SARIF means validation failed.
+      - name: Validate workflows and composite actions
+        shell: bash
+        run: |
+          set -uo pipefail
+          rm -f logs/workflow-validation.sarif
+          status=0
+          node scripts/linting/workflow-validator/validate-workflows.mjs --sarif logs/workflow-validation.sarif || status=$?
+          if [ "${status}" -gt 1 ] || [ ! -s logs/workflow-validation.sarif ]; then
+            echo "::error::Workflow validation failed to run (exit ${status})."
+            exit 1
+          fi
+
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the gate below
+      # still decides every pull request.
+      - name: Upload SARIF to Security tab
+        if: always() && hashFiles('logs/workflow-validation.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: logs/workflow-validation.sarif
+          category: workflow-validation
+
+      # The gate reads the exception register with powershell-yaml.
+      - name: Setup PowerShell modules
+        uses: $/.github/actions/setup-ps-modules
+
+      # Every finding fails unless a tracked exception in
+      # security/code-scanning-exceptions.yml excuses it.
+      - name: Gate on findings
+        shell: pwsh
+        run: ./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath logs/workflow-validation.sarif -Threshold All

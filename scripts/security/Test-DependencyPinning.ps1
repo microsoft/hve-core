@@ -8,9 +8,10 @@
     Verifies and reports on dependency pinning compliance for supply chain security.
 
 .DESCRIPTION
-    Cross-platform PowerShell script that analyzes GitHub Actions workflows, Docker images,
-    and other dependency declarations to verify compliance with dependency pinning security practices.
-    Identifies unpinned dependencies and provides remediation guidance.
+    Cross-platform PowerShell script that analyzes GitHub Actions workflows, composite
+    actions, package manifests, container definitions, and scripts to verify compliance
+    with dependency pinning security practices. Identifies unpinned dependencies and
+    provides remediation guidance.
 
 .PARAMETER Path
     Root path to scan for dependency files. Defaults to current directory.
@@ -33,13 +34,14 @@
     Comma-separated list of paths to exclude from scanning (glob patterns supported).
 
 .PARAMETER IncludeTypes
-    Comma-separated list of dependency types to check. Options: github-actions, npm, pip.
-    Default is all types.
+    Comma-separated list of dependency types to check. Options: github-actions, npm, pip,
+    workflow-npm-commands, shell-downloads, setup-action-versions, python-tool-runs,
+    container-images, install-hints. Default is all types.
 
 .PARAMETER Threshold
     Minimum compliance score percentage required for passing grade (0-100).
     Script will exit with code 1 if compliance falls below threshold when -FailOnUnpinned is set.
-    Default is 95%.
+    Default is 100%, so any unpinned dependency fails.
 
 .PARAMETER Remediate
     Generate remediation suggestions with specific SHA pins for unpinned dependencies.
@@ -106,11 +108,11 @@ param(
     [string]$ExcludePaths = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands",
+    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands,setup-action-versions,python-tool-runs,container-images,install-hints",
 
     [Parameter(Mandatory = $false)]
     [ValidateRange(0, 100)]
-    [int]$Threshold = 95,
+    [int]$Threshold = 100,
 
     [Parameter(Mandatory = $false)]
     [switch]$Remediate
@@ -130,9 +132,16 @@ $DependencyPatterns = @{
         FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         VersionPatterns = @(
             @{
-                Pattern     = 'uses:\s*([^@\s]+)@([^#\s]+)'
+                Pattern     = 'uses:\s*(?!docker://)([^@\s]+)@([^#\s]+)'
                 Groups      = @{ Action = 1; Version = 2 }
                 Description = 'GitHub Actions uses statements'
+            }
+            @{
+                # A remote action or reusable workflow with no ref runs the default
+                # branch; the empty second group never matches the SHA pin pattern.
+                Pattern     = '^[ \t]*(?:-[ \t]+)?uses:[ \t]*[''"]?((?!\.{1,2}/|docker://|\$/)[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+?)()[''"]?[ \t]*(?:#[^\r\n]*)?\r?$'
+                Groups      = @{ Action = 1; Version = 2 }
+                Description = 'GitHub Actions uses statements without a ref'
             }
         )
         PinPattern      = '^[a-fA-F0-9]{40}$'
@@ -164,10 +173,10 @@ $DependencyPatterns = @{
     }
 
     'shell-downloads'  = @{
-        FilePatterns    = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
-        ExcludePatterns = @('fixtures')
+        FilePatterns    = @('**/*.sh', '**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
+        ExcludePatterns = @('fixtures', 'node_modules', "$([System.IO.Path]::DirectorySeparatorChar)tests$([System.IO.Path]::DirectorySeparatorChar)")
         ValidationFunc  = 'Test-ShellDownloadSecurity'
-        Description     = 'Shell script downloads must include checksum verification'
+        Description     = 'Shell script and workflow downloads must include checksum verification'
     }
 
     'workflow-npm-commands' = @{
@@ -175,7 +184,57 @@ $DependencyPatterns = @{
         ValidationFunc = 'Get-WorkflowNpmCommandViolations'
         Description    = 'Workflow npm install/update commands should use npm ci'
     }
+
+    'setup-action-versions' = @{
+        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
+        ValidationFunc = 'Get-SetupActionVersionViolations'
+        Description    = 'Setup and installer actions must install an exact tool version'
+    }
+
+    'python-tool-runs' = @{
+        FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml', '**/*.sh', '**/*.ps1', '**/*.psm1')
+        ExcludePatterns = @('fixtures', 'node_modules', "$([System.IO.Path]::DirectorySeparatorChar)tests$([System.IO.Path]::DirectorySeparatorChar)")
+        ValidationFunc  = 'Get-PythonToolRunViolations'
+        Description     = 'Python tools must run from a locked uv project, not uvx, uv tool, or pipx'
+    }
+
+    'container-images' = @{
+        FilePatterns    = @('**/Dockerfile*', '**/*.Dockerfile', '**/Containerfile*', '**/compose*.yml', '**/compose*.yaml', '**/docker-compose*.yml', '**/docker-compose*.yaml', '**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
+        ExcludePatterns = @('fixtures', 'node_modules', "$([System.IO.Path]::DirectorySeparatorChar)tests$([System.IO.Path]::DirectorySeparatorChar)")
+        ValidationFunc  = 'Get-ContainerImageViolations'
+        Description     = 'Container images must be pinned by sha256 digest'
+    }
+
+    'install-hints' = @{
+        FilePatterns    = @('**/*.ps1', '**/*.psm1', '**/*.sh', '**/*.py', '**/*.mjs', '**/*.cjs', '**/*.js', '**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
+        ExcludePatterns = @('fixtures', 'node_modules', "$([System.IO.Path]::DirectorySeparatorChar)tests$([System.IO.Path]::DirectorySeparatorChar)")
+        ValidationFunc  = 'Get-InstallHintViolations'
+        Description     = 'Messages and help must not recommend unverified or floating installs'
+    }
 }
+
+# Version inputs for setup and installer actions. A file input pins through a
+# version file (checked by Test-ToolVersionConsistency.ps1 for Node and Python);
+# a version input must name one exact release.
+$script:SetupActionVersionInputs = @{
+    'actions/setup-node'             = @{ Version = 'node-version'; File = 'node-version-file' }
+    'actions/setup-python'           = @{ Version = 'python-version'; File = 'python-version-file' }
+    'actions/setup-go'               = @{ Version = 'go-version'; File = 'go-version-file' }
+    'actions/setup-java'             = @{ Version = 'java-version'; File = 'java-version-file' }
+    'actions/setup-dotnet'           = @{ Version = 'dotnet-version'; File = 'global-json-file' }
+    'github/gh-aw-actions/setup-cli' = @{ Version = 'version'; File = $null }
+    'sigstore/cosign-installer'      = @{ Version = 'cosign-release'; File = $null }
+}
+$script:ExactVersionPattern = '^v?\d+\.\d+\.\d+$'
+
+# Install-hint patterns. The floating-tag pattern is assembled so this file does
+# not match its own rule.
+$script:InstallHintPatterns = @(
+    @{ Pattern = '\b(?:curl|wget)\b[^|\r\n]*\|\s*(?:sudo\s+)?(?:ba|z|da)?sh\b'; Kind = 'a download piped to a shell' }
+    @{ Pattern = '\b(?:irm|iwr|Invoke-RestMethod|Invoke-WebRequest)\b[^|\r\n]*\|\s*(?:iex|Invoke-Expression)\b'; Kind = 'a download piped to Invoke-Expression' }
+    @{ Pattern = '@' + 'latest\b'; Kind = 'a floating latest tag' }
+    @{ Pattern = '\bpip3?\s+install\s+(?!-)[A-Za-z0-9][A-Za-z0-9._-]*(?![A-Za-z0-9._-]*\s*(?:==|\[))'; Kind = 'an unversioned pip package' }
+)
 
 # DependencyViolation and ComplianceReport classes moved to ./Modules/SecurityClasses.psm1
 
@@ -341,9 +400,11 @@ function Test-ShellDownloadSecurity {
         Scans shell scripts for curl/wget downloads lacking checksum verification.
 
     .DESCRIPTION
-        Analyzes shell scripts to detect download commands (curl/wget) that do not
-        have corresponding checksum verification (sha256sum/shasum) within the
-        following lines.
+        Analyzes shell scripts and workflow run blocks to detect curl or wget
+        downloads that are not followed by checksum verification
+        (sha256sum/shasum) within the next 10 lines. A download is a curl or
+        wget call with a literal http(s) URL, an output-file flag, or a pipe,
+        so downloads from variable URLs are caught too. Comment lines are skipped.
 
     .PARAMETER FileInfo
         Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
@@ -360,21 +421,21 @@ function Test-ShellDownloadSecurity {
         return @{ TotalCount = 0; Violations = @() }
     }
 
-    $lines = Get-Content $FilePath
+    $lines = @(Get-Content $FilePath)
     $violations = @()
     $totalDownloads = 0
 
-    # Pattern to match curl/wget download commands
-    $downloadPattern = '(curl|wget)\s+.*https?://[^\s]+'
+    $toolPattern = '(?<![\w./-])(curl|wget)\s'
+    $downloadPattern = 'https?://|\s(-o|-O|-qO-?|--output|--remote-name|--output-document)(\s|=|$)|\|\s*(?:sudo\s+)?(?:(?:ba|z|da)?sh|tar)\b'
     $checksumPattern = 'sha256sum|shasum|Get-FileHash|openssl\s+dgst\s+-sha256|sha256sum\s+-c'
 
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = $lines[$i]
-        if ($line -match $downloadPattern) {
+        if ($line -match '^\s*#') { continue }
+        if ($line -match $toolPattern -and $line -match $downloadPattern) {
             $totalDownloads++
-            # Check next 5 lines for checksum verification
             $hasChecksum = $false
-            $searchEnd = [Math]::Min($i + 5, $lines.Count - 1)
+            $searchEnd = [Math]::Min($i + 10, $lines.Count - 1)
 
             for ($j = $i; $j -le $searchEnd; $j++) {
                 if ($lines[$j] -match $checksumPattern) {
@@ -399,6 +460,271 @@ function Test-ShellDownloadSecurity {
     }
 
     return @{ TotalCount = $totalDownloads; Violations = $violations }
+}
+
+function New-PinningRuleViolation {
+    <#
+    .SYNOPSIS
+        Creates a DependencyViolation for one of the expanded pinning rules.
+    #>
+    [CmdletBinding()]
+    [OutputType([DependencyViolation])]
+    param(
+        [Parameter(Mandatory)][hashtable]$FileInfo,
+        [Parameter(Mandatory)][int]$Line,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$Description,
+        [Parameter(Mandatory)][string]$Remediation,
+        [Parameter()][string]$CurrentRef = ''
+    )
+
+    $violation = [DependencyViolation]::new()
+    $violation.File = $FileInfo.RelativePath
+    $violation.Line = $Line
+    $violation.Type = $FileInfo.Type
+    $violation.Name = $Name
+    $violation.Severity = 'High'
+    $violation.ViolationType = 'Unpinned'
+    $violation.Description = $Description
+    $violation.Remediation = $Remediation
+    $violation.CurrentRef = $CurrentRef
+    return $violation
+}
+
+function Get-SetupActionVersionViolations {
+    <#
+    .SYNOPSIS
+        Flags setup and installer actions that do not install an exact version.
+
+    .DESCRIPTION
+        Checks every remote action whose path ends in setup-* or *-installer.
+        The action must be listed in $script:SetupActionVersionInputs, and its
+        step must name a version file or an exact X.Y.Z version. A missing,
+        floating, or expression version is a violation, as is an unlisted setup
+        action, so a new installer cannot slip through unreviewed.
+
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    if (-not (Test-Path -LiteralPath $FileInfo.Path)) {
+        return @{ TotalCount = 0; Violations = @() }
+    }
+
+    $content = (Get-Content -LiteralPath $FileInfo.Path -Raw) -replace "`r`n", "`n"
+    if ($null -eq $content) { $content = '' }
+    $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^[^./$][^@]*/(?:setup-[A-Za-z0-9-]+|[A-Za-z0-9-]+-installer)$')
+    $violations = @()
+
+    foreach ($step in $steps) {
+        $spec = $script:SetupActionVersionInputs[$step.Action]
+        if (-not $spec) {
+            $violations += New-PinningRuleViolation -FileInfo $FileInfo -Line $step.Line -Name $step.Action `
+                -Description "Setup action '$($step.Action)' has no registered version input, so its installed version cannot be verified" `
+                -Remediation "Add '$($step.Action)' and its version input to `$SetupActionVersionInputs in Test-DependencyPinning.ps1, then pin an exact version"
+            continue
+        }
+
+        $fileValue = if ($spec.File) { $step.Inputs[$spec.File] } else { $null }
+        $versionValue = $step.Inputs[$spec.Version]
+        if ($fileValue -and $fileValue -notmatch '\$\{\{') { continue }
+        if ($versionValue -and $versionValue -match $script:ExactVersionPattern) { continue }
+
+        $how = if ($spec.File) { "$($spec.File) or an exact $($spec.Version)" } else { "an exact $($spec.Version)" }
+        if (-not $versionValue) {
+            $description = "Setup action '$($step.Action)' installs no pinned version"
+        }
+        else {
+            $description = "Setup action '$($step.Action)' installs floating version '$versionValue'"
+        }
+        $violations += New-PinningRuleViolation -FileInfo $FileInfo -Line $step.Line -Name $step.Action -CurrentRef "$versionValue" `
+            -Description $description -Remediation "Set $how (X.Y.Z)"
+    }
+
+    return @{ TotalCount = $steps.Count; Violations = $violations }
+}
+
+function Get-PythonToolRunViolations {
+    <#
+    .SYNOPSIS
+        Flags Python tools run through uvx, uv tool, or pipx.
+
+    .DESCRIPTION
+        These runners resolve the tool's transitive dependencies at run time
+        with no lockfile or hashes, even when the top-level package is pinned.
+        Tools must run from a locked uv project (uv run --locked or
+        uv sync --locked). Version and help queries are not tool runs. Comment
+        lines are skipped.
+
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    if (-not (Test-Path -LiteralPath $FileInfo.Path)) {
+        return @{ TotalCount = 0; Violations = @() }
+    }
+
+    $patterns = @(
+        @{ Name = 'uvx'; Pattern = '(?<![\w./-])uvx\s+(?!--version\b|--help\b|-V\b|-h\b)[^\s|;&]' }
+        @{ Name = 'uv tool'; Pattern = '(?<![\w./-])uv\s+tool\s+(?:install|run|upgrade)\b' }
+        @{ Name = 'pipx'; Pattern = '(?<![\w./-])pipx\s+(?:run|install|inject|upgrade)\b' }
+    )
+    $lines = @(Get-Content -LiteralPath $FileInfo.Path)
+    $violations = @()
+    $total = 0
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\s*#') { continue }
+        foreach ($runner in $patterns) {
+            if ($lines[$i] -notmatch $runner.Pattern) { continue }
+            $total++
+            $violations += New-PinningRuleViolation -FileInfo $FileInfo -Line ($i + 1) -Name $runner.Name -CurrentRef $lines[$i].Trim() `
+                -Description "'$($runner.Name)' resolves the tool's transitive dependencies without a lockfile or hashes" `
+                -Remediation 'Declare the tool in a uv project with a committed uv.lock and run it with uv run --locked or uv sync --locked'
+            break
+        }
+    }
+
+    return @{ TotalCount = $total; Violations = $violations }
+}
+
+function Get-ContainerImageViolations {
+    <#
+    .SYNOPSIS
+        Flags container image references that are not pinned by sha256 digest.
+
+    .DESCRIPTION
+        Dockerfile and Containerfile FROM lines resolve ${VAR:-default} and ARG
+        defaults and skip scratch and earlier build stages. YAML files are
+        checked for image: keys, scalar container: values, docker:// actions,
+        and registry-qualified images on docker pull, run, or create lines.
+        References built from variables at run time cannot be resolved and are
+        not counted.
+
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    if (-not (Test-Path -LiteralPath $FileInfo.Path)) {
+        return @{ TotalCount = 0; Violations = @() }
+    }
+
+    $lines = @(Get-Content -LiteralPath $FileInfo.Path)
+    $fileName = [System.IO.Path]::GetFileName($FileInfo.Path)
+    $isDockerfile = $fileName -match '^(Dockerfile|Containerfile)' -or $fileName -match '\.Dockerfile$'
+    $digestPattern = '@sha256:[0-9a-f]{64}$'
+    $refs = [System.Collections.Generic.List[object]]::new()
+
+    if ($isDockerfile) {
+        $argDefaults = @{}
+        $stages = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = $lines[$i]
+            if ($line -match '^\s*ARG\s+(\w+)=(\S+)') { $argDefaults[$Matches[1]] = $Matches[2].Trim('"', ''''); continue }
+            $from = [regex]::Match($line, '^\s*FROM\s+(?:--platform=\S+\s+)?(?<ref>\S+)(?:\s+AS\s+(?<stage>\S+))?', 'IgnoreCase')
+            if (-not $from.Success) { continue }
+            $ref = $from.Groups['ref'].Value
+            $expanded = [regex]::Replace($ref, '\$\{(\w+)(?::?-([^}]*))?\}|\$(\w+)', {
+                    param($m)
+                    $name = if ($m.Groups[1].Success) { $m.Groups[1].Value } else { $m.Groups[3].Value }
+                    if ($m.Groups[2].Success -and $m.Groups[2].Value) { return $m.Groups[2].Value }
+                    if ($argDefaults.ContainsKey($name)) { return $argDefaults[$name] }
+                    return $m.Value
+                })
+            $isEarlierStage = $stages.Contains($expanded)
+            if ($from.Groups['stage'].Success) { $null = $stages.Add($from.Groups['stage'].Value) }
+            if ($expanded -eq 'scratch' -or $isEarlierStage) { continue }
+            $refs.Add(@{ Line = $i + 1; Ref = $expanded })
+        }
+    }
+    else {
+        $registryRef = '(?<![\w./:-])(?<ref>(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/[a-z0-9._/-]+(?::[A-Za-z0-9._-]+)?(?:@sha256:[0-9a-f]{64})?)'
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = $lines[$i]
+            if ($line -match '^\s*#') { continue }
+            $candidates = @()
+            $image = [regex]::Match($line, '^\s*(?:-\s+)?image:\s*[''"]?(?<ref>[^''"\s#]+)')
+            if ($image.Success) { $candidates += $image.Groups['ref'].Value }
+            $container = [regex]::Match($line, '^\s*container:\s*[''"]?(?<ref>[^''"\s#{][^''"\s#]*)')
+            if ($container.Success) { $candidates += $container.Groups['ref'].Value }
+            $docker = [regex]::Match($line, 'uses:\s*[''"]?docker://(?<ref>[^''"\s#]+)')
+            if ($docker.Success) { $candidates += $docker.Groups['ref'].Value }
+            if ($line -match '\bdocker\s+(?:pull|run|create)\b') {
+                $candidates += @([regex]::Matches($line, $registryRef) | ForEach-Object { $_.Groups['ref'].Value })
+            }
+            foreach ($candidate in $candidates) {
+                $expanded = [regex]::Replace($candidate, '\$\{(\w+):?-([^}]*)\}', '$2')
+                if ($expanded -match '\$') { continue }
+                $refs.Add(@{ Line = $i + 1; Ref = $expanded })
+            }
+        }
+    }
+
+    $violations = @()
+    foreach ($ref in $refs) {
+        if ($ref.Ref -match $digestPattern) { continue }
+        $violations += New-PinningRuleViolation -FileInfo $FileInfo -Line $ref.Line -Name $ref.Ref -CurrentRef $ref.Ref `
+            -Description "Container image '$($ref.Ref)' is not pinned by sha256 digest" `
+            -Remediation 'Pin the image as name:tag@sha256:<digest> so the pulled content cannot change'
+    }
+
+    return @{ TotalCount = $refs.Count; Violations = $violations }
+}
+
+function Get-InstallHintViolations {
+    <#
+    .SYNOPSIS
+        Flags messages and help text that recommend unverified or floating installs.
+
+    .DESCRIPTION
+        Error messages, help text, and comments are copied into terminals. A
+        hint that pipes a download into a shell or Invoke-Expression, installs a
+        floating latest tag, or names a pip package without a version teaches an
+        unverified install. Every line is checked, including comments.
+
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    if (-not (Test-Path -LiteralPath $FileInfo.Path)) {
+        return @{ TotalCount = 0; Violations = @() }
+    }
+
+    $lines = @(Get-Content -LiteralPath $FileInfo.Path)
+    $violations = @()
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        foreach ($hint in $script:InstallHintPatterns) {
+            $match = [regex]::Match($lines[$i], $hint.Pattern)
+            if (-not $match.Success) { continue }
+            $violations += New-PinningRuleViolation -FileInfo $FileInfo -Line ($i + 1) -Name $hint.Kind -CurrentRef $lines[$i].Trim() `
+                -Description "Install hint recommends $($hint.Kind): '$($match.Value.Trim())'" `
+                -Remediation 'Point to a pinned, checksum-verified install: a package manager that verifies downloads, a release archive checked against its published SHA-256, or a locked project (uv sync --locked, npm ci)'
+            break
+        }
+    }
+
+    return @{ TotalCount = $violations.Count; Violations = $violations }
 }
 
 function Get-NpmDependencyViolations {
@@ -613,10 +939,20 @@ function Get-FilesToScan {
                         continue
                     }
 
-                    $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -ErrorAction SilentlyContinue
-
                     if ($null -ne $trackedPaths) {
-                        $files = $files | Where-Object { $trackedPaths.Contains([System.IO.Path]::GetFullPath($_.FullName)) }
+                        # Select from tracked files rather than walking the tree, so
+                        # dot-directories are included on every platform and .git or
+                        # ignored dependency trees are never traversed.
+                        $prefix = [System.IO.Path]::GetFullPath($basePath).TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+                        $files = @($trackedPaths |
+                                Where-Object { $_.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase) -and [System.IO.Path]::GetFileName($_) -like $leafFilter } |
+                                ForEach-Object { [System.IO.FileInfo]::new($_) } |
+                                Where-Object { $_.Exists })
+                    }
+                    else {
+                        # -Force includes dot-directories such as .github and .devcontainer,
+                        # which PowerShell treats as hidden on Linux.
+                        $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -Force -ErrorAction SilentlyContinue
                     }
 
                     # Merge type-specific exclude patterns with caller-provided patterns
@@ -973,6 +1309,12 @@ function Export-ComplianceReport {
         }
 
         'sarif' {
+            # One rule per scan type, declared even with no results, so the exception
+            # gate can report a type-specific entry stale when its finding disappears.
+            $ruleTypes = [System.Collections.Generic.List[string]]::new()
+            foreach ($typeName in @(@($Report.Metadata.IncludedTypes) | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() }) + @($Report.Violations | ForEach-Object { $_.Type })) {
+                if ($typeName -and -not $ruleTypes.Contains($typeName)) { $ruleTypes.Add($typeName) }
+            }
             $sarif = @{
                 version    = "2.1.0"
                 "`$schema" = "https://json.schemastore.org/sarif-2.1.0.json"
@@ -982,16 +1324,22 @@ function Export-ComplianceReport {
                                 name           = "dependency-pinning-analyzer"
                                 version        = "1.0.0"
                                 informationUri = "https://github.com/microsoft/hve-core"
+                                rules          = @($ruleTypes | ForEach-Object {
+                                        @{
+                                            id               = "dependency-not-pinned/$_"
+                                            shortDescription = @{ text = "Unpinned $_ dependency" }
+                                        }
+                                    })
                             }
                         }
                         results = @($Report.Violations | ForEach-Object {
                                 @{
-                                    ruleId     = "dependency-not-pinned"
+                                    ruleId     = if ($_.Type) { "dependency-not-pinned/$($_.Type)" } else { "dependency-not-pinned" }
                                     level      = switch ($_.Severity) { 'High' { 'error' } 'Medium' { 'warning' } default { 'note' } }
                                     message    = @{ text = $_.Description }
                                     locations  = @(@{
                                             physicalLocation = @{
-                                                artifactLocation = @{ uri = $_.File }
+                                                artifactLocation = @{ uri = ($_.File -replace '\\', '/') }
                                                 region           = @{ startLine = $_.Line }
                                             }
                                         })
@@ -1134,7 +1482,7 @@ function Invoke-DependencyPinningAnalysis {
         [string]$Path = ".",
 
         [Parameter()]
-        [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands",
+        [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands,setup-action-versions,python-tool-runs,container-images,install-hints",
 
         [Parameter()]
         [string]$ExcludePaths = "",
@@ -1149,7 +1497,7 @@ function Invoke-DependencyPinningAnalysis {
         [switch]$FailOnUnpinned,
 
         [Parameter()]
-        [int]$Threshold = 95,
+        [int]$Threshold = 100,
 
         [Parameter()]
         [switch]$Remediate

@@ -8,13 +8,8 @@
 name: Demo Material Render
 
 on:
-  workflow_run:
-    workflows:
-      - Demo Material Author
-    branches:
-      - main
-    types:
-      - completed
+  # Started by the author's dispatch-render job with its run ID, weekly to
+  # refresh the bundle, or manually. A named author run is revalidated here.
   schedule:
     - cron: '47 3 * * 1'
   workflow_dispatch:
@@ -40,9 +35,9 @@ env:
 jobs:
   resolve:
     name: Resolve render inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # find author runs and their content artifacts
       contents: read
     outputs:
       mode: ${{ steps.resolve.outputs.mode }}
@@ -148,17 +143,23 @@ jobs:
               ? Date.now() - Date.parse(previousCreatedAt) > refreshAfterMs
               : process.env.PUBLISHED_STATUS === "recovered";
 
+            // The author dispatches this run before its own run completes.
+            const waitForRun = async (runId) => {
+              const deadline = Date.now() + 30 * 60 * 1000;
+              for (;;) {
+                const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: runId });
+                if (run.status === "completed") return run;
+                if (Date.now() > deadline) throw new Error(`Run ${runId} did not complete within 30 minutes`);
+                await new Promise((resolve) => setTimeout(resolve, 15000));
+              }
+            };
+
             let authorRun = null;
-            if (context.eventName === "workflow_run") {
-              authorRun = context.payload.workflow_run;
-            } else if (context.eventName === "workflow_dispatch" && process.env.DISPATCH_AUTHOR_RUN_ID) {
+            if (context.eventName === "workflow_dispatch" && process.env.DISPATCH_AUTHOR_RUN_ID) {
               if (!/^[0-9]+$/.test(process.env.DISPATCH_AUTHOR_RUN_ID)) {
                 throw new Error("author-run-id must be a numeric run ID");
               }
-              ({ data: authorRun } = await github.rest.actions.getWorkflowRun({
-                ...context.repo,
-                run_id: Number(process.env.DISPATCH_AUTHOR_RUN_ID),
-              }));
+              authorRun = await waitForRun(Number(process.env.DISPATCH_AUTHOR_RUN_ID));
             }
 
             if (authorRun) {
@@ -253,9 +254,9 @@ jobs:
     name: Dispatch forced authoring for failed levels
     needs: resolve
     if: ${{ github.event_name == 'schedule' && needs.resolve.outputs.retry-levels != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      actions: write
+      actions: write # start Demo Material Author for failed or unpublished levels
     steps:
       - name: Dispatch forced authoring
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -275,10 +276,10 @@ jobs:
     name: Render ${{ matrix.level }}
     needs: resolve
     if: ${{ needs.resolve.outputs.mode == 'render' && needs.resolve.outputs.levels != '[]' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
-      actions: read
+      actions: read # download the author content artifact
       contents: read
     strategy:
       fail-fast: false
@@ -310,15 +311,22 @@ jobs:
           mkdir -p "$(dirname "${LEVEL_DIR}")"
           cp -R "${RUNNER_TEMP}/content/${LEVEL}" "${LEVEL_DIR}"
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      # uv honors the root .python-version; install that exact interpreter
+      # rather than letting uv download a managed one.
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          enable-cache: false
+          python-version-file: .python-version
+
+      - name: Setup uv
+        uses: $/.github/actions/setup-uv
+        with:
+          enable-cache: 'false'
 
       - name: Setup Node.js for the HTML slide deck
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
 
       - name: Install LibreOffice and FFmpeg
         shell: bash
@@ -346,7 +354,11 @@ jobs:
             --output "${cli_dir}/cli.tar.gz" "${VSCODE_CLI_URL}"
           printf '%s  %s\n' "${VSCODE_CLI_SHA256}" "${cli_dir}/cli.tar.gz" | sha256sum --check
           tar -xzf "${cli_dir}/cli.tar.gz" -C "${cli_dir}"
-          echo "${cli_dir}" >> "${GITHUB_PATH}"
+          sudo install -m 0755 -t /usr/local/bin "${cli_dir}/code"
+          if [[ "$(command -v code || true)" != '/usr/local/bin/code' ]]; then
+            echo "::error::code does not resolve to the verified /usr/local/bin/code."
+            exit 1
+          fi
 
       - name: Render ${{ matrix.level }}
         shell: bash
@@ -398,9 +410,9 @@ jobs:
       - resolve
       - render
     if: ${{ always() && (needs.resolve.outputs.mode == 'render' || needs.resolve.outputs.mode == 'refresh') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # download render outputs and the previous bundle
     steps:
       - name: Checkout the lookup script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -527,3 +539,25 @@ jobs:
           path: ${{ runner.temp }}/index
           retention-days: 90
           if-no-files-found: error
+
+  # Hands the new bundle to the documentation deploy in a separate run, which
+  # waits for this run to finish before it looks up the newest bundle.
+  dispatch-deploy:
+    name: Start the documentation deploy
+    needs: bundle
+    if: ${{ needs.bundle.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start Deploy Documentation Site on the default branch
+    steps:
+      - name: Dispatch the documentation deploy for this run
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "deploy-docs.yml",
+              ref: repository.default_branch,
+              inputs: { "source-run-id": String(context.runId) },
+            });

@@ -29,13 +29,13 @@ the engine in force, and a complete output manifest.
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and fixed to `deck-export` for L100 and L200; reject `live` for those levels
-* `narration` from `azure`, `piper`, or `none`, defaulting to `azure` outside CI;
+* `narration` from `azure` or `none`, defaulting to `azure` outside CI;
   the repository's CI workflow selects `none`
 * `animation` from `none` or `characters`, defaulting to `none`; select
   `characters` only when the caller supplies it or explicitly requests
   animated characters, animated comic figures, or character dialogue scenes
-* Audience, delivery context, approved voice, the Azure Speech region when
-  `narration` is `azure`, and whether a GIF is explicitly requested
+* Audience, delivery context, approved Azure AI Speech voice, the Azure Speech
+  region when `narration` is `azure`, and whether a GIF is explicitly requested
 
 ## Success Criteria
 
@@ -127,9 +127,10 @@ through a human-configured pipeline outside the agent.
   moves L300 or L400 to `deck-export`, and the profile in force is recorded as
   `visuals.capture_profile` so a downgraded run stays distinguishable from a
   live capture run.
-* Never switch the narration engine. Only a caller-supplied `narration: piper`
-  selects Piper, and the engine in force is recorded as `narration.engine` so
-  Piper-narrated output stays distinguishable from Azure-narrated output.
+* Never switch the narration engine, and never substitute another speech engine
+  for Azure AI Speech. For narrated output, record `narration.engine: azure` and
+  `narration.provider: Azure AI Speech` so the manifest discloses that the
+  narration is synthetic.
 * CI forbids speech synthesis and explicitly uses `narration: none`. For that
   mode, follow the skill's silent scripted-render path with `animation: none`.
   Do not call `tts-voiceover`, request voice credentials, or claim audio
@@ -168,9 +169,8 @@ through a human-configured pipeline outside the agent.
   the same level after setup. Under `full`, or when installation is declined,
   unavailable, requires interactive elevation, or still fails validation, set
   the level to `Deferred` and record the exact rerun condition.
-* Set the affected level to `Deferred` when the narration engine in force
-  (Azure Speech credentials under `narration: azure`, the Piper executable or
-  voice under `narration: piper`), FFmpeg, FFprobe, FFmpeg's libass-backed
+* Set the affected level to `Deferred` when Azure Speech credentials or an
+  approved region under `narration: azure`, FFmpeg, FFprobe, FFmpeg's libass-backed
   `subtitles` filter or `libx264` encoder, LibreOffice, `uv`, live-capture
   tooling, a gate the active autonomy mode requires, or `rpi-research` is absent
   while a topic or lesson needs research beyond its pinned sources. Record the
@@ -206,17 +206,16 @@ through a human-configured pipeline outside the agent.
 
 ### 1. Confirm Scope and Prerequisites
 
-1. Confirm requested levels, topic, autonomy mode, capture profile, narration
-   engine, audience, delivery context, approved voice, the Azure Speech region
-   under `narration: azure`, and whether a GIF is explicitly requested. Apply
+1. Confirm requested levels, topic, autonomy mode, capture profile, audience,
+   delivery context, approved voice, the Azure Speech region, and whether a GIF
+   is explicitly requested. Apply
    the documented defaults for anything unstated, and under `full` never prompt
   for them. Reject `capture: live` for L100 and L200 before creating level
   artifacts; those levels require deterministic deck-export frames.
 2. Create `.copilot-tracking/demo-material/{{YYYY-MM-DD}}/{{level}}/` with the
    subdirectories defined in the skill's output contract.
-3. Check `uv`, LibreOffice, the narration engine in force (Azure Speech
-  authentication, or the Piper executable and voice), and `rpi-research`
-  availability as needed. For `capture: live`, check the VS Code CLI and
+3. Check `uv`, LibreOffice, Azure Speech authentication under
+  `narration: azure`, and `rpi-research` availability as needed. For `capture: live`, check the VS Code CLI and
   select the `vscode-playwright` scripted path for unattended or repeatable
   work. Check its Playwright environment and Chromium. The interactive path
   instead requires Playwright MCP browser tools and `curl`; test navigation
@@ -298,8 +297,8 @@ basis before delivery.
   to reset narrative motion. Author scenes now but record them
   only after their narration WAVs exist. Under `animation: none`, do not
   create character assets or animation clips.
-4. Use `tts-voiceover` with the narration engine in force to create per-slide
-   WAV files in `audio/`, passing `--engine piper` under `narration: piper`.
+4. Under `narration: azure`, use `tts-voiceover` with Azure AI Speech to create
+   per-slide WAV files in `audio/`.
   Apply the approved speaker-to-voice map to character scenes, keeping one
   authored content item and WAV per scene. Measure each generated WAV with
   FFprobe before recording its animation.
@@ -309,8 +308,8 @@ basis before delivery.
    Pass `--collapse-newlines` whenever speaker notes use
    YAML block scalars, because each hard line wrap in a block scalar is
    otherwise spoken as a pause: one measured level ran 361 seconds without the
-   option and 284 seconds with it. Under `narration: azure`, verify `SPEECH_KEY`
-   or `SPEECH_RESOURCE_ID` and `SPEECH_REGION` are available without reading or
+   option and 284 seconds with it. Under `narration: azure`, verify
+   `SPEECH_RESOURCE_ID` or `SPEECH_KEY` and `SPEECH_REGION` are available without reading or
    recording secret values.
 5. Under `animation: characters`, invoke the `vscode-playwright` browser-video
   recorder for each ready scene with its measured WAV duration, target WebM

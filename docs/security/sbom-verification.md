@@ -3,7 +3,7 @@ title: SBOM Verification
 description: Verify, download, and inspect the Software Bill of Materials published with each HVE Core release
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-06
 ms.topic: how-to
 keywords:
   - SBOM
@@ -69,7 +69,7 @@ TAG='v<version>'
 SOURCE_SHA=$(gh api "repos/microsoft/hve-core/commits/$TAG" --jq '.sha')
 gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
   --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
-  --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
+  --signer-digest 3b36a825662603c0d564eb0f3b98ce5ba53857da \
   --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG" \
   --predicate-type https://spdx.dev/Document/v2.3
 
@@ -78,7 +78,7 @@ TAG='prerelease-v<version>'
 SOURCE_SHA=$(gh api "repos/microsoft/hve-core/commits/$TAG" --jq '.sha')
 gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
   --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
-  --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
+  --signer-digest 3b36a825662603c0d564eb0f3b98ce5ba53857da \
   --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG" \
   --predicate-type https://spdx.dev/Document/v2.3
 ```
@@ -118,11 +118,11 @@ No job both installs or packages dependencies and signs the result.
 > required tag governance is active, platform assurance mapping, and qualified
 > human review before making that claim.
 
-The required tag governance is not yet active or proven. The intended
-`release-tags-creation-by-release-app` ruleset restricts tag creation and gives
-the Release App its only bypass. The separate `release-tags-immutable` ruleset
-restricts update, deletion, and force pushes with no bypass. Their names in
-documentation are not evidence that either ruleset is installed.
+Both tag rulesets are active. The `release-tags-creation-by-release-app`
+ruleset restricts tag creation and gives the Release App its only bypass. The
+separate `release-tags-immutable` ruleset restricts update, deletion, and force
+pushes with no bypass. No release has run under them yet, and the signer
+cannot see bypass lists, so an administrator audits them before each release.
 
 > [!TIP]
 > Build provenance and SPDX predicates are independent attestations. Omit

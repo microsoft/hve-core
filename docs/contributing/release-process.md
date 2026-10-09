@@ -66,6 +66,12 @@ Workflow ownership is explicit:
     preparation, and lets release-please create the Stable tag and draft.
 * `release-vsix-publish.yml` is the sole post-tag producer for both channels.
 
+Every job that mints a release GitHub App token reads the app key from the
+`release-governance` environment, which admits only `main`, the two release
+branches, and the `v*` and `prerelease-v*` tags. The three merge-driven
+workflows therefore start on the push a reviewed merge produces rather than on
+the pull request event, whose `refs/pull/N/merge` ref the environment rejects.
+
 ### Release Branch Gating
 
 The `release-branches` ruleset protects `release/prerelease` and
@@ -138,8 +144,8 @@ flowchart TD
 
 ### PreRelease Flow
 
-1. `Pre-Release Promotion Preparation` runs after an eligible merged PR to
-   `main`, or through its input-free recovery dispatch.
+1. `Pre-Release Promotion Preparation` runs on each push to `main` (a merged
+   PR), or through its input-free recovery dispatch.
 2. It refreshes the target-based promotion head from `release/prerelease`,
    merges current `main`, restores channel-owned release state, writes the
    exact `release-as`, and opens a reviewed PR to `release/prerelease`.
@@ -238,10 +244,16 @@ and target `refs/tags/v*` and `refs/tags/prerelease-v*`:
 * `release-tags-immutable` restricts updates, deletion, and force pushes with
     no bypass
 
-Ruleset bypass lists are visible only to repository administrators. The
-signer's authorization job re-reads both rulesets at release time and fails
-unless the creation ruleset grants exactly one bypass, to the Release App, and
-the immutability ruleset grants none.
+No release has run under these rulesets yet. The provenance signer checks
+both rulesets before packaging, but its token cannot see bypass lists, so it
+cannot detect another actor added as a bypass. Before each release, a
+repository administrator completes this audit:
+
+1. Open **Settings → Rules → Rulesets** for `microsoft/hve-core`.
+2. Confirm `release-tags-creation-by-release-app` is active and lists only the
+    Release App as a bypass actor.
+3. Confirm `release-tags-immutable` is active and lists no bypass actors.
+4. Stop the release if either check fails.
 
 > [!IMPORTANT]
 > This release architecture does not establish SLSA Build Level 3. Future

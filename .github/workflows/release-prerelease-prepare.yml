@@ -7,8 +7,12 @@ name: Pre-Release Promotion Preparation
 # merges, when release-prerelease.yml runs release-please on release/prerelease.
 
 on:
-  pull_request:
-    types: [closed]
+  # Every push to main is a reviewed merge through the merge queue, and it runs
+  # on the branch ref the release-governance environment allows. Unlike the
+  # release-branch workflows, this needs no merged-PR resolver: main accepts no
+  # direct pushes, and this job only opens or refreshes a promotion pull request
+  # that is itself reviewed before anything is released.
+  push:
     branches:
       - main
 
@@ -34,17 +38,13 @@ env:
 jobs:
   prepare-promotion:
     name: Prepare Pre-Release Promotion
-    if: >
-      github.event_name == 'workflow_dispatch'
-      || (
-        github.event.pull_request.merged == true
-        && github.event.pull_request.base.ref == 'main'
-        && github.event.pull_request.head.repo.full_name == github.repository
-      )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: read # check for open release and promotion pull requests
     outputs:
       promote: ${{ steps.promote.outputs.promote }}
       version: ${{ steps.resolve.outputs.version }}
@@ -57,6 +57,8 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # The token gets only the permissions this job uses.
+          permission-contents: write
 
       # Executable release tooling always comes from main, never from the
       # promotion head or from the release branch being prepared.
@@ -79,8 +81,7 @@ jobs:
           ref: main
           fetch-depth: 0
           path: promotion
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Resolve promotion state
         id: state
@@ -408,17 +409,33 @@ jobs:
             exit 0
           fi
 
-          git push origin "HEAD:refs/heads/$PROMOTION_HEAD"
           echo "promote=true" >> "$GITHUB_OUTPUT"
+
+      # Only this step receives the app token, and only for the push; the
+      # checkout keeps no credential, so earlier steps that run repository
+      # scripts against the working tree never see one.
+      - name: Push the promotion head
+        if: ${{ steps.promote.outputs.promote == 'true' }}
+        env:
+          PUSH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+          auth="$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)"
+          echo "::add-mask::${auth}"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
+            push origin "HEAD:refs/heads/$PROMOTION_HEAD"
 
   open-promotion-pr:
     name: Open Pre-Release Promotion PR
     needs: [prepare-promotion]
     if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -426,6 +443,9 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # The token gets only the permissions this job uses.
+          permission-contents: read
+          permission-pull-requests: write
 
       # Auto-merge is deliberately never enabled. A human must review and
       # merge this promotion before release-please prepares the PreRelease

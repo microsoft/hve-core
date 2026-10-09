@@ -6,17 +6,17 @@ on:
   workflow_call:
     inputs:
       threshold:
-        description: 'Compliance threshold percentage (0-100)'
+        description: 'Compliance threshold percentage (0-100) for the reported is-compliant output; the gate fails on any unpinned dependency that no tracked exception excuses'
         required: false
         type: number
-        default: 95
+        default: 100
       dependency-types:
         description: 'Comma-separated list of dependency types to check'
         required: false
         type: string
-        default: 'github-actions,npm,workflow-npm-commands'
+        default: 'github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints'
       soft-fail:
-        description: 'Whether to continue on compliance violations'
+        description: 'Whether to report the gate result without failing the job'
         required: false
         type: boolean
         default: false
@@ -40,6 +40,15 @@ on:
       is-compliant:
         description: 'Whether repository meets compliance threshold'
         value: ${{ jobs.scan.outputs.is-compliant }}
+      failing-count:
+        description: 'Number of unpinned dependencies that no tracked exception excuses'
+        value: ${{ jobs.scan.outputs.failing-count }}
+      excepted-count:
+        description: 'Number of unpinned dependencies excused by a tracked exception'
+        value: ${{ jobs.scan.outputs.excepted-count }}
+      exception-error-count:
+        description: 'Number of stale, expired, mismatched, or malformed exception entries'
+        value: ${{ jobs.scan.outputs.exception-error-count }}
 
 permissions:
   contents: read
@@ -47,7 +56,7 @@ permissions:
 jobs:
   scan:
     name: Validate SHA Pinning Compliance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -55,6 +64,9 @@ jobs:
       compliance-score: ${{ steps.pinning.outputs.compliance-score }}
       unpinned-count: ${{ steps.pinning.outputs.unpinned-count }}
       is-compliant: ${{ steps.pinning.outputs.is-compliant }}
+      failing-count: ${{ steps.gate.outputs.failing-count }}
+      excepted-count: ${{ steps.gate.outputs.excepted-count }}
+      exception-error-count: ${{ steps.gate.outputs.exception-error-count }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -82,17 +94,13 @@ jobs:
             OutputPath = 'logs/dependency-pinning-results.json'
           }
           
-          # Enable failure on threshold violations unless soft-fail is requested
-          if ($env:INPUT_SOFT_FAIL -ne 'true') {
-            $params['FailOnUnpinned'] = $true
-          }
-          
+
           # Pass dependency types filter to script
           if ($env:INPUT_DEPENDENCY_TYPES) {
             $params['IncludeTypes'] = $env:INPUT_DEPENDENCY_TYPES
           }
           
-          # Pass compliance threshold to script (script handles enforcement)
+          # Pass compliance threshold to script (reported in is-compliant; the gate step enforces)
           if ($env:INPUT_THRESHOLD) {
             $params['Threshold'] = [int]$env:INPUT_THRESHOLD
           }
@@ -101,13 +109,13 @@ jobs:
           & scripts/security/Test-DependencyPinning.ps1 @params
           $jsonExitCode = $LASTEXITCODE
           
-          # Generate SARIF format if requested
-          if ($env:INPUT_UPLOAD_SARIF -eq 'true') {
-            Write-Host "Generating SARIF format for Security tab..."
-            $params['Format'] = 'sarif'
-            $params['OutputPath'] = 'logs/dependency-pinning-results.sarif'
-            
-            & scripts/security/Test-DependencyPinning.ps1 @params
+          # SARIF feeds the exception-aware gate and, when requested, the Security tab
+          $params['Format'] = 'sarif'
+          $params['OutputPath'] = 'logs/dependency-pinning-results.sarif'
+          & scripts/security/Test-DependencyPinning.ps1 @params
+          if (-not (Test-Path -LiteralPath logs/dependency-pinning-results.sarif)) {
+            Write-Error "Failed to generate dependency pinning SARIF"
+            exit 1
           }
           
           # Extract metrics from JSON report
@@ -133,13 +141,28 @@ jobs:
             exit 1
           }
 
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the gate below
+      # still decides every pull request.
       - name: Upload SARIF to Security tab
-        if: inputs.upload-sarif && always()
-        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        if: inputs.upload-sarif && always() && hashFiles('logs/dependency-pinning-results.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: logs/dependency-pinning-results.sarif
           category: dependency-pinning
-        continue-on-error: true
+
+      # The gate reads the exception register with powershell-yaml.
+      - name: Setup PowerShell modules
+        uses: $/.github/actions/setup-ps-modules
+
+      # Every unpinned dependency fails unless a tracked exception in
+      # security/code-scanning-exceptions.yml excuses it. Soft-fail callers still
+      # run the gate so their reports separate excused results from failing ones.
+      - name: Gate on findings
+        id: gate
+        continue-on-error: ${{ inputs.soft-fail }}
+        shell: pwsh
+        run: ./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath logs/dependency-pinning-results.sarif -Threshold All
 
       - name: Upload validation report
         if: inputs.upload-artifact && always()
@@ -153,9 +176,9 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $complianceScore = '${{ steps.pinning.outputs.compliance-score }}'
-          $unpinnedCount = '${{ steps.pinning.outputs.unpinned-count }}'
-          $isCompliant = '${{ steps.pinning.outputs.is-compliant }}'
+          $complianceScore = $env:STEPS_PINNING_OUTPUTS_COMPLIANCE_SCORE
+          $unpinnedCount = $env:STEPS_PINNING_OUTPUTS_UNPINNED_COUNT
+          $isCompliant = $env:STEPS_PINNING_OUTPUTS_IS_COMPLIANT
           
           @"
           ## Dependency Pinning Scan Results
@@ -186,3 +209,7 @@ jobs:
           "@
           })
           "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+        env:
+          STEPS_PINNING_OUTPUTS_COMPLIANCE_SCORE: ${{ steps.pinning.outputs.compliance-score }}
+          STEPS_PINNING_OUTPUTS_UNPINNED_COUNT: ${{ steps.pinning.outputs.unpinned-count }}
+          STEPS_PINNING_OUTPUTS_IS_COMPLIANT: ${{ steps.pinning.outputs.is-compliant }}

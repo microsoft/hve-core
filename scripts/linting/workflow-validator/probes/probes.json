@@ -1,0 +1,170 @@
+[
+  {
+    "id": "expression-syntax",
+    "file": "expression-syntax.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Expression syntax error"
+  },
+  {
+    "id": "unknown-context",
+    "file": "unknown-context.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Unknown context name"
+  },
+  {
+    "id": "function-arity",
+    "file": "function-arity.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Wrong number of function arguments"
+  },
+  {
+    "id": "unknown-function",
+    "file": "unknown-function.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Unknown function"
+  },
+  {
+    "id": "needs-unknown-job",
+    "file": "needs-unknown-job.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "needs names a job that does not exist"
+  },
+  {
+    "id": "needs-cycle",
+    "file": "needs-cycle.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "needs graph has a cycle"
+  },
+  {
+    "id": "duplicate-step-id",
+    "file": "duplicate-step-id.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Two steps share an id"
+  },
+  {
+    "id": "invalid-cron",
+    "file": "invalid-cron.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Invalid cron schedule"
+  },
+  {
+    "id": "invalid-dispatch-input-type",
+    "file": "invalid-dispatch-input-type.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Invalid workflow_dispatch input type"
+  },
+  {
+    "id": "step-uses-and-run",
+    "file": "step-uses-and-run.yml",
+    "expect": "error",
+    "coveredBy": "parser",
+    "description": "Step has both uses and run"
+  },
+  {
+    "id": "modern-syntax",
+    "file": "modern-syntax.yml",
+    "expect": "clean",
+    "coveredBy": "parser",
+    "description": "Current syntax is accepted (concurrency.queue, job.workflow_sha, $/ self-repository uses)"
+  },
+  {
+    "id": "unknown-context-property",
+    "file": "unknown-context-property.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/unknown-context-property",
+    "description": "Unknown property of a fixed-shape context"
+  },
+  {
+    "id": "undefined-step",
+    "file": "undefined-step.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/undefined-step",
+    "description": "steps.<id> names no step"
+  },
+  {
+    "id": "undefined-need",
+    "file": "undefined-need.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/undefined-need",
+    "description": "needs.<job> names a job not in needs"
+  },
+  {
+    "id": "undefined-matrix-key",
+    "file": "undefined-matrix-key.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/undefined-matrix-key",
+    "description": "matrix.<key> names no matrix key"
+  },
+  {
+    "id": "undefined-input",
+    "file": "undefined-input.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/undefined-input",
+    "description": "inputs.<name> names no declared input"
+  },
+  {
+    "id": "invalid-path-filter",
+    "file": "invalid-path-filter.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/invalid-path-filter",
+    "description": "Path filter has an unbalanced character class"
+  },
+  {
+    "id": "unknown-runner-label",
+    "file": "unknown-runner-label.yml",
+    "expect": "error",
+    "coveredBy": "runner-policy",
+    "description": "runs-on names an image GitHub does not publish"
+  },
+  {
+    "id": "always-true-if",
+    "file": "always-true-if.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/always-true-if",
+    "description": "if: mixes text with an expression and is always true"
+  },
+  {
+    "id": "uses-without-ref",
+    "file": "uses-without-ref.yml",
+    "expect": "error",
+    "coveredBy": "pinning",
+    "description": "uses: has no ref"
+  },
+  {
+    "id": "deprecated-workflow-command",
+    "file": "deprecated-workflow-command.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/deprecated-workflow-command",
+    "description": "run: uses the disabled set-output command"
+  },
+  {
+    "id": "untrusted-input-in-run",
+    "file": "untrusted-input-in-run.yml",
+    "expect": "error",
+    "coveredBy": "zizmor",
+    "description": "Attacker-controlled context expanded in run:"
+  },
+  {
+    "id": "invalid-env-name",
+    "file": "invalid-env-name.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/invalid-env-name",
+    "description": "env name is not a shell identifier"
+  },
+  {
+    "id": "unknown-action-input",
+    "file": "unknown-action-input.yml",
+    "expect": "error",
+    "coveredBy": "workflow-check/unknown-action-input",
+    "description": "with: passes an input the action does not declare"
+  }
+]

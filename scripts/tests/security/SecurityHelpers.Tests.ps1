@@ -786,3 +786,98 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
         }
     }
 }
+
+Describe 'ConvertTo-SecuritySarif' -Tag 'Unit' {
+    BeforeAll {
+        $script:Rules = @(
+            @{ id = 'tool/version-mismatch'; name = 'VersionMismatch'; description = 'A hard-coded version differs from the manifest'; level = 'error' }
+            @{ id = 'tool/advisory'; name = 'Advisory'; description = 'Informational'; level = 'note' }
+        )
+    }
+
+    It 'lists every rule even when there are no findings' {
+        $sarif = ConvertTo-SecuritySarif -ToolName 'hve-test' -Rules $script:Rules
+        $sarif.runs[0].tool.driver.name | Should -Be 'hve-test'
+        @($sarif.runs[0].tool.driver.rules).Count | Should -Be 2
+        @($sarif.runs[0].results).Count | Should -Be 0
+    }
+
+    It 'emits one result per finding with the rule level and a normalized path' {
+        $findings = @(
+            [pscustomobject]@{ RuleId = 'tool/version-mismatch'; Message = 'uv 0.10.8 differs'; File = '.devcontainer\scripts\on-create.sh'; Line = 161 }
+            [pscustomobject]@{ RuleId = 'tool/advisory'; Message = 'note'; File = 'a.yml' }
+        )
+        $sarif = ConvertTo-SecuritySarif -ToolName 'hve-test' -Rules $script:Rules -Findings $findings
+        $results = @($sarif.runs[0].results)
+        $results.Count | Should -Be 2
+        $results[0].level | Should -Be 'error'
+        $results[0].locations[0].physicalLocation.artifactLocation.uri | Should -Be '.devcontainer/scripts/on-create.sh'
+        $results[0].locations[0].physicalLocation.region.startLine | Should -Be 161
+        $results[1].level | Should -Be 'note'
+        $results[1].locations[0].physicalLocation.region.startLine | Should -Be 1
+    }
+
+    It 'round-trips through JSON as a SARIF 2.1.0 document' {
+        $json = ConvertTo-SecuritySarif -ToolName 'hve-test' -Rules $script:Rules | ConvertTo-Json -Depth 20
+        $doc = $json | ConvertFrom-Json
+        $doc.version | Should -Be '2.1.0'
+        $doc.runs.Count | Should -Be 1
+    }
+
+    It 'rejects a finding whose rule is not declared' {
+        $finding = [pscustomobject]@{ RuleId = 'tool/unknown'; Message = 'x'; File = 'a.yml' }
+        { ConvertTo-SecuritySarif -ToolName 'hve-test' -Rules $script:Rules -Findings @($finding) } | Should -Throw '*undeclared rule*'
+    }
+}
+
+Describe 'Get-WorkflowActionStep' -Tag 'Unit' {
+    It 'returns each matching step with its line, ref, and direct with: inputs' {
+        $content = @(
+            'jobs:'
+            '  build:'
+            '    steps:'
+            '      - name: Setup Node.js'
+            '        uses: actions/setup-node@abc123 # v7.0.0'
+            '        with:'
+            '          node-version-file: .node-version # pinned'
+            "          cache: 'npm'"
+            '          nested:'
+            '            ignored: value'
+            '      - uses: actions/setup-python@def456'
+            '        with:'
+            '          python-version: "3.12.15"'
+            '      - run: echo done'
+        ) -join "`n"
+
+        $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^actions/setup-')
+
+        $steps | Should -HaveCount 2
+        $steps[0].Action | Should -Be 'actions/setup-node'
+        $steps[0].Ref | Should -Be 'abc123'
+        $steps[0].Line | Should -Be 5
+        $steps[0].Inputs['node-version-file'] | Should -Be '.node-version'
+        $steps[0].Inputs['cache'] | Should -Be 'npm'
+        $steps[0].Inputs.Contains('ignored') | Should -BeFalse
+        $steps[1].Line | Should -Be 11
+        $steps[1].Inputs['python-version'] | Should -Be '3.12.15'
+    }
+
+    It 'does not attribute a later step input to an earlier step' {
+        $content = @(
+            'steps:'
+            '  - uses: actions/setup-python@def456'
+            '  - uses: example/other@abc'
+            '    with:'
+            '      python-version: "3.12.15"'
+        ) -join "`n"
+
+        $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^actions/setup-python$')
+
+        $steps | Should -HaveCount 1
+        $steps[0].Inputs.Count | Should -Be 0
+    }
+
+    It 'returns nothing when no step matches' {
+        @(Get-WorkflowActionStep -Content "steps:`n  - run: echo hi" -ActionPattern '^actions/') | Should -HaveCount 0
+    }
+}

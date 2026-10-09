@@ -1259,6 +1259,7 @@ seaborn
 timescaledb
 trendline
 underrepresent
+misdescribe
 
 # Security & Compliance
 antimalware
@@ -1538,6 +1539,11 @@ untriaged
 unvalidated
 vscodeignore
 Pipfile
+manylinux
+pipx
+pypa
+zizmor
+zizmorcore
 
 # Video & Image Processing
 drawtext

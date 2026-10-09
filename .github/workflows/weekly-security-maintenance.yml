@@ -24,11 +24,13 @@ jobs:
     # Job 1: Validate dependency pinning
   validate-pinning:
     name: Validate Dependency Pinning Compliance
-    uses: ./.github/workflows/dependency-pinning-scan.yml
+    uses: $/.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
     with:
+      threshold: 100
+      dependency-types: 'github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints'
       soft-fail: true
       upload-sarif: true
       upload-artifact: true
@@ -36,7 +38,7 @@ jobs:
   # Job 2: Check for stale SHA pins
   check-staleness:
     name: Check SHA Staleness
-    uses: ./.github/workflows/sha-staleness-check.yml
+    uses: $/.github/workflows/sha-staleness-check.yml
     permissions:
       contents: read
     with:
@@ -45,16 +47,16 @@ jobs:
   # Job 3: Run CodeQL security analysis
   codeql-analysis:
     name: CodeQL Security Analysis
-    uses: ./.github/workflows/codeql-analysis.yml
+    uses: $/.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
-      actions: read
+      actions: read # codeql-action reads workflow run metadata
 
   # Reuse the advisory hybrid scan for default-branch coverage.
   dangerous-workflow-scan:
     name: Dangerous Workflow and Poutine Scan
-    uses: ./.github/workflows/dangerous-workflow-scan.yml
+    uses: $/.github/workflows/dangerous-workflow-scan.yml
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -69,10 +71,10 @@ jobs:
     name: Security Maintenance Summary
     needs: [validate-pinning, check-staleness, codeql-analysis, dangerous-workflow-scan]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-      issues: write
+      issues: write # create or update the weekly maintenance issue
     steps:
       - name: Generate summary
         shell: pwsh
@@ -80,6 +82,9 @@ jobs:
           THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
           PINNING_SCORE: ${{ needs.validate-pinning.outputs.compliance-score }}
           UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
+          FAILING_COUNT: ${{ needs.validate-pinning.outputs.failing-count }}
+          EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
+          EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
           CODEQL_RESULT: ${{ needs.codeql-analysis.result }}
           WORKFLOW_SCAN_RESULT: ${{ needs.dangerous-workflow-scan.result }}
@@ -89,7 +94,11 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           $pinningScore = $env:PINNING_SCORE
-          $unpinnedCount = $env:UNPINNED_COUNT
+          # Registered exceptions are tracked findings, not new risks. Fall back to the raw
+          # scanner count only when the gate produced no output.
+          $unpinnedCount = if ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
+          $exceptedCount = if ($env:EXCEPTED_COUNT) { $env:EXCEPTED_COUNT } else { '0' }
+          $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
           $codeqlResult = $env:CODEQL_RESULT
           $workflowScanResult = $env:WORKFLOW_SCAN_RESULT
@@ -98,6 +107,7 @@ jobs:
           # Determine overall status
           $hasIssues = $false
           if ($unpinnedCount -ne '0') { $hasIssues = $true }
+          if ($exceptionErrorCount -ne '0') { $hasIssues = $true }
           if ($staleCount -ne '0') { $hasIssues = $true }
           if ($codeqlResult -ne 'success') { $hasIssues = $true }
           if ($workflowScanResult -ne 'success') { $hasIssues = $true }
@@ -113,7 +123,8 @@ jobs:
           | Metric | Status | Details |
           |--------|--------|---------|
           | Dependency Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
-          | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
+          | Unpinned Dependencies (not excepted) | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned or tracked' }) |
+          | Tracked Exceptions | $(if ($exceptionErrorCount -eq '0') { "✅ $exceptedCount excused" } else { "⚠️ $exceptionErrorCount register error(s)" }) | security/code-scanning-exceptions.yml |
           | Stale SHAs (>$thresholdDays days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
           ## 🛡️ Security Analysis
@@ -221,15 +232,23 @@ jobs:
         env:
           THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
           UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
+          FAILING_COUNT: ${{ needs.validate-pinning.outputs.failing-count }}
+          EXCEPTED_COUNT: ${{ needs.validate-pinning.outputs.excepted-count }}
+          EXCEPTION_ERROR_COUNT: ${{ needs.validate-pinning.outputs.exception-error-count }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
         run: |
-          $unpinnedCount = $env:UNPINNED_COUNT
+          $unpinnedCount = if ($env:FAILING_COUNT) { $env:FAILING_COUNT } else { $env:UNPINNED_COUNT }
+          $exceptionErrorCount = if ($env:EXCEPTION_ERROR_COUNT) { $env:EXCEPTION_ERROR_COUNT } else { '0' }
           $staleCount = $env:STALE_COUNT
           $thresholdDays = $env:THRESHOLD_DAYS
           
           # Informational output - workflow succeeds but logs warnings
           if ($unpinnedCount -ne '0') {
-            Write-Output "::warning::Found $unpinnedCount unpinned dependencies. Review build warnings for details."
+            Write-Output "::warning::Found $unpinnedCount unpinned dependencies that no tracked exception excuses. Review build warnings for details."
+          }
+
+          if ($exceptionErrorCount -ne '0') {
+            Write-Output "::warning::Found $exceptionErrorCount stale, expired, or mismatched exception entries. Review the dependency pinning gate output."
           }
           
           if ($staleCount -ne '0') {

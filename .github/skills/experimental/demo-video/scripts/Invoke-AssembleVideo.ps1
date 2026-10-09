@@ -61,7 +61,7 @@ $VenvDir = Join-Path $SkillRoot '.venv'
 
 function Test-UvAvailability {
     if (-not (Get-Command -Name 'uv' -ErrorAction SilentlyContinue)) {
-        throw "uv is required but was not found on PATH. See https://docs.astral.sh/uv/getting-started/installation/ (for example: 'winget install astral-sh.uv' on Windows, or 'curl -LsSf https://astral.sh/uv/install.sh | sh' on Linux/macOS)."
+        throw "uv is required but was not found on PATH. Install a checksum-verified release: winget install --id astral-sh.uv -e, brew install uv, or an archive from https://github.com/astral-sh/uv/releases checked against its .sha256 file."
     }
 }
 

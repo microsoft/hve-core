@@ -4,37 +4,47 @@
 #
 # Test-CodeQLSarifThreshold.ps1
 #
-# Purpose: Fail a CodeQL analysis job when its SARIF contains a finding at the
-#          repository's code-scanning threshold, honoring only tracked exceptions.
+# Purpose: Fail a code-scanning job when its SARIF contains a finding at the
+#          repository's threshold, honoring only tracked exceptions. Works for
+#          any SARIF-producing tool, not only CodeQL.
 # Author: HVE Core Team
 
 #Requires -Version 7.4
 
 <#
 .SYNOPSIS
-    Fails when CodeQL SARIF output contains a result at the code-scanning threshold.
+    Fails when SARIF output from any code-scanning tool contains a result at the threshold.
 
 .DESCRIPTION
     Reads one or more SARIF files (or every *.sarif file under a directory) and
-    evaluates every result against the threshold contract:
+    evaluates every result against the threshold contract. With -Threshold Default:
 
       A result fails when its rule has security-severity >= 4.0, or when its rule
       has no security-severity and its effective level is "error" or "warning".
       Effective level is result.level, else the rule's defaultConfiguration.level,
       else "warning" (the SARIF default). Rules resolve through ruleId, ruleIndex,
-      and toolComponent across tool.driver and tool.extensions. Inline SARIF
-      suppressions do not exempt a result.
+      and toolComponent across tool.driver and tool.extensions.
+
+    With -Threshold All, every result fails regardless of level or severity. Use
+    it for scanners gated at zero findings. Inline SARIF suppressions never
+    exempt a result.
 
     A missing, unreadable, or run-less SARIF input fails the gate.
 
-    A failing result is excused only by a matching entry (same rule ID and path)
-    in the tracked exceptions file. Excused results are still listed. The gate
-    fails when an exception entry is malformed, expired, expires more than 90
-    days after the check date, or no longer matches a failing result for a rule
-    that this analysis ran. The gate never changes alert state on GitHub.
+    Each result is attributed to its run's tool.driver.name. Failing results are
+    grouped by tool, rule ID, and path. A group is excused only by a tracked
+    exception with the same tool, rule, and path whose count equals the group's
+    result count exactly. Excused results are still listed. The gate fails when
+    an exception entry is malformed, expired, expires more than 90 days after the
+    check date, matches a different number of results, or no longer matches any
+    failing result for a tool and rule that this analysis ran. The gate never
+    changes alert state on GitHub.
 
 .PARAMETER SarifPath
     SARIF files or directories containing *.sarif files.
+
+.PARAMETER Threshold
+    Default applies the severity and level contract above. All fails every result.
 
 .PARAMETER ExceptionsPath
     Tracked exceptions file. Defaults to security/code-scanning-exceptions.yml
@@ -51,11 +61,18 @@
 
 .EXAMPLE
     npm run security:codeql-gate -- -SarifPath ./python.sarif
+
+.EXAMPLE
+    ./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath ./poutine.sarif -Threshold All
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
     [string[]]$SarifPath,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('Default', 'All')]
+    [string]$Threshold = 'Default',
 
     [Parameter(Mandatory = $false)]
     [string]$ExceptionsPath,
@@ -69,7 +86,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$script:ExceptionFields = @('rule', 'path', 'issue', 'owner', 'reason', 'expires')
+$script:ExceptionFields = @('tool', 'rule', 'path', 'count', 'kind', 'upstream', 'issue', 'owner', 'reason', 'expires')
+$script:ExceptionKinds = @('false-positive', 'generated-code', 'third-party', 'platform-limitation')
 $script:MaxExceptionDays = 90
 $script:SecuritySeverityThreshold = 4.0
 
@@ -170,18 +188,24 @@ function Get-SarifEvaluation {
     .SYNOPSIS
         Evaluates SARIF files against the threshold contract.
     .OUTPUTS
-        PSCustomObject with Findings (every result with its Failing flag) and
-        KnownRules (rule IDs this analysis ran).
+        PSCustomObject with Findings (every result with its Tool and Failing flag),
+        KnownRules (tool and rule ID keys this analysis ran), and KnownFamilies
+        (tool and rule-family keys a run declared in properties.ruleFamilies).
     #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
     param(
         [Parameter(Mandatory = $true)]
-        [string[]]$Path
+        [string[]]$Path,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Default', 'All')]
+        [string]$Threshold = 'Default'
     )
 
     $findings = [System.Collections.Generic.List[object]]::new()
     $knownRules = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $knownFamilies = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 
     foreach ($file in (Resolve-SarifInputFile -Path $Path)) {
         try {
@@ -197,11 +221,18 @@ function Get-SarifEvaluation {
 
         foreach ($run in $runs) {
             $tool = Get-PropertyValue $run 'tool'
+            $toolName = [string](Get-PropertyValue (Get-PropertyValue $tool 'driver') 'name')
+            if (-not $toolName) { $toolName = '(unknown tool)' }
             $ruleSets = @(@(Get-PropertyValue (Get-PropertyValue $tool 'driver') 'rules')) +
                 @(@(Get-PropertyValue $tool 'extensions') | ForEach-Object { @(Get-PropertyValue $_ 'rules') })
             foreach ($rule in $ruleSets) {
                 $id = Get-PropertyValue $rule 'id'
-                if ($id) { [void]$knownRules.Add($id) }
+                if ($id) { [void]$knownRules.Add("$toolName`n$id") }
+            }
+            # A run may declare whole rule families it executed (for example every
+            # shellcheck/* rule), so exceptions for those rules can be reported stale.
+            foreach ($family in @(Get-PropertyValue (Get-PropertyValue $run 'properties') 'ruleFamilies')) {
+                if ($family) { [void]$knownFamilies.Add("$toolName`n$family") }
             }
 
             foreach ($result in @(Get-PropertyValue $run 'results')) {
@@ -225,7 +256,10 @@ function Get-SarifEvaluation {
                 if (-not $level) { $level = Get-PropertyValue (Get-PropertyValue $rule 'defaultConfiguration') 'level' }
                 if (-not $level) { $level = 'warning' }
 
-                $failing = if ($null -ne $securitySeverity) {
+                $failing = if ($Threshold -eq 'All') {
+                    $true
+                }
+                elseif ($null -ne $securitySeverity) {
                     $securitySeverity -ge $script:SecuritySeverityThreshold
                 }
                 else {
@@ -238,6 +272,7 @@ function Get-SarifEvaluation {
                 $line = Get-PropertyValue (Get-PropertyValue $physical 'region') 'startLine'
 
                 $findings.Add([pscustomobject]@{
+                        Tool             = $toolName
                         RuleId           = $ruleId
                         SecuritySeverity = $securitySeverity
                         Level            = $level
@@ -251,8 +286,9 @@ function Get-SarifEvaluation {
     }
 
     return [pscustomobject]@{
-        Findings   = $findings.ToArray()
-        KnownRules = $knownRules
+        Findings      = $findings.ToArray()
+        KnownRules    = $knownRules
+        KnownFamilies = $knownFamilies
     }
 }
 #endregion
@@ -326,6 +362,19 @@ function Read-CodeScanningException {
             $entryErrors.Add("'issue' must be a positive issue number")
         }
 
+        $count = 0
+        if ($item.Contains('count') -and $null -ne $item['count'] -and -not ([int]::TryParse("$($item['count'])", [ref]$count) -and $count -gt 0)) {
+            $entryErrors.Add("'count' must be a positive number of matching results")
+        }
+
+        if ($item.Contains('kind') -and $null -ne $item['kind'] -and "$($item['kind'])".Trim() -ne '' -and "$($item['kind'])" -cnotin $script:ExceptionKinds) {
+            $entryErrors.Add("'kind' must be one of: $($script:ExceptionKinds -join ', ')")
+        }
+
+        if ($item.Contains('upstream') -and $null -ne $item['upstream'] -and "$($item['upstream'])".Trim() -ne '' -and "$($item['upstream'])" -notmatch '^https://[^\s/]+/\S+$') {
+            $entryErrors.Add("'upstream' must be an https URL to the upstream report")
+        }
+
         $expires = $null
         if ($item.Contains('expires') -and $null -ne $item['expires']) {
             $raw = $item['expires']
@@ -352,23 +401,27 @@ function Read-CodeScanningException {
         }
 
         if ($entryErrors.Count -gt 0) {
-            $errors.Add("${label} ($($item['rule']) in $($item['path'])): $($entryErrors -join '; ').")
+            $errors.Add("${label} ($($item['tool']) $($item['rule']) in $($item['path'])): $($entryErrors -join '; ').")
             continue
         }
 
-        $key = "$($item['rule'])`n$($item['path'])"
+        $key = "$($item['tool'])`n$($item['rule'])`n$($item['path'])"
         if (-not $seen.Add($key)) {
-            $errors.Add("${label} ($($item['rule']) in $($item['path'])): duplicates an earlier entry.")
+            $errors.Add("${label} ($($item['tool']) $($item['rule']) in $($item['path'])): duplicates an earlier entry.")
             continue
         }
 
         $entries.Add([pscustomobject]@{
-                Rule    = [string]$item['rule']
-                Path    = [string]$item['path']
-                Issue   = $issue
-                Owner   = [string]$item['owner']
-                Reason  = [string]$item['reason']
-                Expires = $expires
+                Tool     = [string]$item['tool']
+                Rule     = [string]$item['rule']
+                Path     = [string]$item['path']
+                Count    = $count
+                Kind     = [string]$item['kind']
+                Upstream = [string]$item['upstream']
+                Issue    = $issue
+                Owner    = [string]$item['owner']
+                Reason   = [string]$item['reason']
+                Expires  = $expires
             })
     }
 
@@ -391,6 +444,10 @@ function Invoke-CodeQLSarifGate {
         [string[]]$SarifPath = @(),
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet('Default', 'All')]
+        [string]$Threshold = 'Default',
+
+        [Parameter(Mandatory = $false)]
         [string]$ExceptionsPath,
 
         [Parameter(Mandatory = $false)]
@@ -403,7 +460,7 @@ function Invoke-CodeQLSarifGate {
     $inputErrors = [System.Collections.Generic.List[string]]::new()
     $evaluation = $null
     try {
-        $evaluation = Get-SarifEvaluation -Path $SarifPath
+        $evaluation = Get-SarifEvaluation -Path $SarifPath -Threshold $Threshold
     }
     catch {
         $inputErrors.Add($_.Exception.Message)
@@ -430,24 +487,43 @@ function Invoke-CodeQLSarifGate {
 
     $failing = [System.Collections.Generic.List[object]]::new()
     $excepted = [System.Collections.Generic.List[object]]::new()
-    $usedExceptions = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     $resultCount = 0
+    $tools = @()
     if ($null -ne $evaluation) {
         $resultCount = @($evaluation.Findings).Count
+        $tools = @($evaluation.Findings | ForEach-Object Tool | Sort-Object -Unique)
+        # Ordinal keys keep matching consistent with the ordinal duplicate check in Read-CodeScanningException.
+        $groups = [System.Collections.Specialized.OrderedDictionary]::new([System.StringComparer]::Ordinal)
         foreach ($finding in @($evaluation.Findings | Where-Object Failing)) {
-            $match = $exceptionEntries | Where-Object { $_.Rule -ceq $finding.RuleId -and $_.Path -ceq $finding.Path } | Select-Object -First 1
-            if ($match) {
-                [void]$usedExceptions.Add("$($match.Rule)`n$($match.Path)")
-                $excepted.Add([pscustomobject]@{ Finding = $finding; Exception = $match })
+            $key = "$($finding.Tool)`n$($finding.RuleId)`n$($finding.Path)"
+            if (-not $groups.Contains($key)) { $groups[$key] = [System.Collections.Generic.List[object]]::new() }
+            $groups[$key].Add($finding)
+        }
+        $entryByKey = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
+        foreach ($entry in $exceptionEntries) { $entryByKey["$($entry.Tool)`n$($entry.Rule)`n$($entry.Path)"] = $entry }
+
+        foreach ($key in $groups.Keys) {
+            $group = $groups[$key]
+            $match = $null
+            [void]$entryByKey.TryGetValue($key, [ref]$match)
+            if (-not $match) {
+                $failing.AddRange([object[]]$group.ToArray())
+            }
+            elseif ($match.Count -ne $group.Count) {
+                $failing.AddRange([object[]]$group.ToArray())
+                $exceptionErrors.Add("Count mismatch: $($match.Tool) $($match.Rule) in $($match.Path) (issue #$($match.Issue)) expects $($match.Count) result(s) but found $($group.Count). Fix the new results or update the count in review.")
             }
             else {
-                $failing.Add($finding)
+                foreach ($finding in $group) { $excepted.Add([pscustomobject]@{ Finding = $finding; Exception = $match }) }
             }
         }
-        foreach ($entry in $exceptionEntries) {
-            $key = "$($entry.Rule)`n$($entry.Path)"
-            if ($evaluation.KnownRules.Contains($entry.Rule) -and -not $usedExceptions.Contains($key)) {
-                $exceptionErrors.Add("Stale exception: $($entry.Rule) in $($entry.Path) (issue #$($entry.Issue)) matches no failing result. Remove it.")
+        foreach ($key in $entryByKey.Keys) {
+            $entry = $entryByKey[$key]
+            $family = if ("$($entry.Rule)".Contains('/')) { "$($entry.Rule)".Split('/')[0] } else { $null }
+            $ruleRan = $evaluation.KnownRules.Contains("$($entry.Tool)`n$($entry.Rule)") -or
+                ($family -and $evaluation.KnownFamilies.Contains("$($entry.Tool)`n$family"))
+            if ($ruleRan -and -not $groups.Contains($key)) {
+                $exceptionErrors.Add("Stale exception: $($entry.Tool) $($entry.Rule) in $($entry.Path) (issue #$($entry.Issue)) matches no failing result. Remove it.")
             }
         }
     }
@@ -456,16 +532,18 @@ function Invoke-CodeQLSarifGate {
         param($f)
         $severity = if ($null -ne $f.SecuritySeverity) { "security-severity $($f.SecuritySeverity.ToString([System.Globalization.CultureInfo]::InvariantCulture))" } else { "level $($f.Level)" }
         $where = if ($null -ne $f.Line) { "$($f.Path):$($f.Line)" } else { $f.Path }
-        "$($f.RuleId) ($severity) at $where"
+        "[$($f.Tool)] $($f.RuleId) ($severity) at $where"
     }
 
     $lines = [System.Collections.Generic.List[string]]::new()
     $passed = $inputErrors.Count -eq 0 -and $failing.Count -eq 0 -and $exceptionErrors.Count -eq 0
-    $lines.Add('## CodeQL threshold gate')
+    $toolLabel = if ($tools.Count -gt 0) { " ($($tools -join ', '))" } else { '' }
+    $lines.Add("## Code-scanning threshold gate$toolLabel")
     $lines.Add('')
     $lines.Add($(if ($passed) { "$([char]::ConvertFromUtf32(0x2705)) Passed: no results at the threshold." } else { "$([char]::ConvertFromUtf32(0x274C)) Failed: resolve every item below in code or configuration. Dismissing the alert does not clear this gate." }))
     $lines.Add('')
-    $lines.Add("Threshold: security-severity >= 4.0, or level error/warning for rules without a security severity. Results evaluated: $resultCount.")
+    $thresholdText = if ($Threshold -eq 'All') { 'every result' } else { 'security-severity >= 4.0, or level error/warning for rules without a security severity' }
+    $lines.Add("Threshold: $thresholdText. Results evaluated: $resultCount.")
     foreach ($message in $inputErrors) { $lines.Add("* Input error: $message") }
     if ($failing.Count -gt 0) {
         $lines.Add('')
@@ -478,7 +556,7 @@ function Invoke-CodeQLSarifGate {
         $lines.Add('### Excepted results (still open on GitHub)')
         $lines.Add('')
         foreach ($e in $excepted) {
-            $lines.Add("* $(& $describe $e.Finding): excepted (issue #$($e.Exception.Issue), expires $($e.Exception.Expires.ToString('yyyy-MM-dd')))")
+            $lines.Add("* $(& $describe $e.Finding): excepted as $($e.Exception.Kind) (issue #$($e.Exception.Issue), upstream $($e.Exception.Upstream), expires $($e.Exception.Expires.ToString('yyyy-MM-dd')))")
         }
     }
     if ($exceptionErrors.Count -gt 0) {
@@ -510,6 +588,14 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         $gate = Invoke-CodeQLSarifGate @PSBoundParameters
         Write-Output $gate.Summary
+        if ($env:GITHUB_OUTPUT) {
+            # Callers that report without failing (soft-fail) read these instead of raw scanner counts.
+            @(
+                "failing-count=$(@($gate.Failing).Count)"
+                "excepted-count=$(@($gate.Excepted).Count)"
+                "exception-error-count=$(@($gate.ExceptionErrors).Count + @($gate.InputErrors).Count)"
+            ) | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+        }
         exit $gate.ExitCode
     }
     catch {

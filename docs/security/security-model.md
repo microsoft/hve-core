@@ -2093,7 +2093,7 @@ SC-9 spans three workflows: detection finds untriaged vulnerabilities, drafting 
 | **Detection Trigger**     | Tuesdays 08:00 UTC, after a successful Stable Release Pipeline run, or manual dispatch |
 | **Detection Workflow**    | `vex-detect.yml` runs OSV-Scanner and files or updates a single triage issue           |
 | **Detection Permissions** | `contents: read`, `issues: write`                                                      |
-| **Drafting Trigger**      | `workflow_run` from VEX Detection, plus manual dispatch                                |
+| **Drafting Trigger**      | Dispatch from VEX Detection after a successful default-branch scan, or manual dispatch |
 | **Drafting Workflow**     | `vex-draft.md` invokes the SSSC Reviewer agent and opens one pull request              |
 | **Drafting Permissions**  | `contents: read`, `issues: read`                                                       |
 | **Release Attestation**   | `vex-attest` job in `release-stable.yml`, via the reusable `vex-attest.yml`            |
@@ -2116,7 +2116,7 @@ The merge commit author is the accountable author of record, never the agent.
 | CQ-2 | Markdown Linting              | lint:md npm script                                          | T-2, RAI-4        |
 | CQ-3 | Frontmatter Validation        | Validate-MarkdownFrontmatter.ps1                            | T-2               |
 | CQ-4 | PowerShell Analysis           | Invoke-PSScriptAnalyzer.ps1                                 | T-1               |
-| CQ-5 | YAML Linting                  | Invoke-YamlLint.ps1                                         | T-1               |
+| CQ-5 | Workflow Validation           | workflow-validator/validate-workflows.mjs                   | T-1               |
 | CQ-6 | Workflow Input Isolation      | Step-level `env:` mappings for caller-controlled inputs     | T-3               |
 | CQ-7 | Project Path Validation       | Assert-WorkflowProjectDirectory.ps1                         | T-3               |
 | CQ-8 | Input Interpolation Detection | Test-DangerousWorkflow.ps1                                  | T-3               |
@@ -2344,7 +2344,7 @@ When a new skill meets a trigger, or a change alters a triggered surface or a ci
 
 | Metric                        | Threshold | Source                      |
 |-------------------------------|-----------|-----------------------------|
-| Dependency Pinning Compliance | ≥95%      | dependency-pinning-scan.yml |
+| Dependency Pinning Compliance | 100%      | dependency-pinning-scan.yml |
 | SHA Staleness                 | ≤30 days  | sha-staleness-check.yml     |
 | Dependency Review Fail        | moderate  | dependency-review.yml       |
 | npm Audit Fail Level          | moderate  | pr-validation.yml           |

@@ -644,6 +644,182 @@ function Invoke-GitHubAPIWithRetry {
     return $null
 }
 
+function ConvertTo-SecuritySarif {
+    <#
+    .SYNOPSIS
+        Builds a SARIF 2.1.0 document for a homegrown security control.
+
+    .DESCRIPTION
+        Every rule is listed in tool.driver.rules so the threshold gate can tell
+        a rule that ran clean from one that did not run. Each finding becomes one
+        result with a physical location.
+
+    .PARAMETER ToolName
+        SARIF tool.driver.name. The threshold gate and the exception register key on it.
+
+    .PARAMETER Rules
+        Hashtables with id, name, description, and level (error, warning, or note).
+
+    .PARAMETER Findings
+        Objects with RuleId, Message, File, and optional Line.
+
+    .OUTPUTS
+        Hashtable ready for ConvertTo-Json -Depth 20.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ToolName,
+
+        [Parameter(Mandatory)]
+        [hashtable[]]$Rules,
+
+        [Parameter()]
+        [AllowEmptyCollection()]
+        [object[]]$Findings = @(),
+
+        [Parameter()]
+        [string]$ToolVersion = '1.0.0'
+    )
+
+    $ruleIds = @($Rules | ForEach-Object { $_.id })
+    $driverRules = foreach ($rule in $Rules) {
+        @{
+            id                   = $rule.id
+            name                 = $rule.name
+            shortDescription     = @{ text = $rule.description }
+            fullDescription      = @{ text = $rule.description }
+            defaultConfiguration = @{ level = $rule.level }
+        }
+    }
+
+    $results = foreach ($finding in $Findings) {
+        if ($finding.RuleId -notin $ruleIds) {
+            throw "Finding uses undeclared rule '$($finding.RuleId)'."
+        }
+        $level = ($Rules | Where-Object { $_.id -eq $finding.RuleId } | Select-Object -First 1).level
+        $line = if ($finding.Line -and [int]$finding.Line -gt 0) { [int]$finding.Line } else { 1 }
+        @{
+            ruleId    = $finding.RuleId
+            level     = $level
+            message   = @{ text = $finding.Message }
+            locations = @(
+                @{
+                    physicalLocation = @{
+                        artifactLocation = @{ uri = ($finding.File -replace '\\', '/') }
+                        region           = @{ startLine = $line }
+                    }
+                }
+            )
+        }
+    }
+
+    return @{
+        version   = '2.1.0'
+        '$schema' = 'https://json.schemastore.org/sarif-2.1.0.json'
+        runs      = @(
+            @{
+                tool    = @{
+                    driver = @{
+                        name           = $ToolName
+                        version        = $ToolVersion
+                        informationUri = 'https://github.com/microsoft/hve-core'
+                        rules          = @($driverRules)
+                    }
+                }
+                results = @($results)
+            }
+        )
+    }
+}
+
+function Get-WorkflowActionStep {
+    <#
+    .SYNOPSIS
+        Finds workflow or composite-action steps whose uses: matches a pattern and returns their inputs.
+
+    .DESCRIPTION
+        Line-based and indentation-aware, so it needs no YAML module. A step is
+        bounded by its list item; inputs are the direct children of its with:
+        key. Values are unquoted and stripped of trailing comments. Block-scalar
+        inputs (| or >) are returned as their indicator.
+
+    .PARAMETER Content
+        File content with LF line endings.
+
+    .PARAMETER ActionPattern
+        Regular expression matched against the uses: value before '@'.
+
+    .OUTPUTS
+        PSCustomObject with Action, Ref, Line, and Inputs (ordered hashtable).
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject[]])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$Content,
+
+        [Parameter(Mandatory)]
+        [string]$ActionPattern
+    )
+
+    $lines = $Content -split "`n"
+    $steps = [System.Collections.Generic.List[object]]::new()
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $match = [regex]::Match($lines[$i], '^(?<indent>\s*)(?<dash>-\s+)?uses:\s*[''"]?(?<action>[^@''"\s#]+)(?:@(?<ref>[^''"\s#]+))?')
+        if (-not $match.Success -or $match.Groups['action'].Value -notmatch $ActionPattern) { continue }
+
+        $start = $i
+        $itemIndent = $match.Groups['indent'].Length
+        if (-not $match.Groups['dash'].Success) {
+            for ($j = $i - 1; $j -ge 0; $j--) {
+                $item = [regex]::Match($lines[$j], '^(\s*)-\s')
+                if ($item.Success -and $item.Groups[1].Length -lt $itemIndent) {
+                    $start = $j
+                    $itemIndent = $item.Groups[1].Length
+                    break
+                }
+            }
+        }
+        $end = $lines.Count
+        for ($k = $start + 1; $k -lt $lines.Count; $k++) {
+            if ($lines[$k] -match '^\s*(#.*)?$') { continue }
+            if (([regex]::Match($lines[$k], '^\s*')).Length -le $itemIndent) { $end = $k; break }
+        }
+
+        $inputs = [ordered]@{}
+        for ($k = $start; $k -lt $end; $k++) {
+            $with = [regex]::Match($lines[$k], '^(\s*)(?:-\s+)?with:\s*(?:#.*)?$')
+            if (-not $with.Success) { continue }
+            $withIndent = $lines[$k].IndexOf('with:')
+            $childIndent = -1
+            for ($m = $k + 1; $m -lt $end; $m++) {
+                if ($lines[$m] -match '^\s*(#.*)?$') { continue }
+                $indent = ([regex]::Match($lines[$m], '^\s*')).Length
+                if ($indent -le $withIndent) { break }
+                if ($childIndent -lt 0) { $childIndent = $indent }
+                if ($indent -ne $childIndent) { continue }
+                $pair = [regex]::Match($lines[$m], '^\s*(?<key>[A-Za-z0-9_.-]+):\s*(?<value>.*?)\s*$')
+                if (-not $pair.Success) { continue }
+                $value = $pair.Groups['value'].Value
+                if ($value -notmatch '^[''"]') { $value = ($value -replace '\s+#.*$', '') }
+                $inputs[$pair.Groups['key'].Value] = $value.Trim().Trim('''', '"')
+            }
+            break
+        }
+
+        $steps.Add([pscustomobject]@{
+                Action = $match.Groups['action'].Value
+                Ref    = $match.Groups['ref'].Value
+                Line   = $i + 1
+                Inputs = $inputs
+            })
+    }
+    return $steps.ToArray()
+}
+
 Export-ModuleMember -Function @(
     'Write-SecurityLog'
     'New-SecurityIssue'
@@ -652,4 +828,6 @@ Export-ModuleMember -Function @(
     'Get-PSGalleryApiBase'
     'Test-GitHubToken'
     'Invoke-GitHubAPIWithRetry'
+    'ConvertTo-SecuritySarif'
+    'Get-WorkflowActionStep'
 )

@@ -7,8 +7,7 @@ name: Stable Release Preparation
 # the managed release pull request creates the draft and immutable tag.
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - release/stable
 
@@ -20,17 +19,65 @@ permissions:
   contents: read
 
 jobs:
+  # A push to a protected release branch is the merge of a reviewed pull
+  # request. Resolve that pull request from the pushed commit so every later
+  # job checks the same merged-head identity the pull_request event carried,
+  # while running on the branch ref the release-governance environment allows.
+  resolve-merge:
+    name: Resolve Merged Pull Request
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read # list the pull request merged by this push
+    outputs:
+      merged: ${{ steps.pr.outputs.merged }}
+      base-ref: ${{ steps.pr.outputs.base-ref }}
+      head-ref: ${{ steps.pr.outputs.head-ref }}
+      head-repository: ${{ steps.pr.outputs.head-repository }}
+      head-sha: ${{ steps.pr.outputs.head-sha }}
+      merge-sha: ${{ steps.pr.outputs.merge-sha }}
+    steps:
+      - name: Find the pull request this push merged
+        id: pr
+        env:
+          BASE_BRANCH: ${{ github.ref_name }}
+          EVENT_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          PULLS="$RUNNER_TEMP/pulls.json"
+          gh api "/repos/$REPOSITORY/commits/$EVENT_SHA/pulls" > "$PULLS"
+          MERGED=$(jq -c --arg sha "$EVENT_SHA" --arg base "$BASE_BRANCH" \
+            '[.[] | select(.merged_at != null and .merge_commit_sha == $sha and .base.ref == $base)]' "$PULLS")
+          COUNT=$(jq 'length' <<< "$MERGED")
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::notice::$EVENT_SHA on $BASE_BRANCH is not a pull request merge; nothing to release"
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$COUNT" -ne 1 ]; then
+            echo "::error::$EVENT_SHA is the merge commit of $COUNT pull requests into $BASE_BRANCH"
+            exit 1
+          fi
+          jq -r '.[0] | "merged=true",
+            "base-ref=\(.base.ref)",
+            "head-ref=\(.head.ref)",
+            "head-repository=\(.head.repo.full_name // "")",
+            "head-sha=\(.head.sha)",
+            "merge-sha=\(.merge_commit_sha)"' <<< "$MERGED" >> "$GITHUB_OUTPUT"
   validate-trigger:
+    needs: [resolve-merge]
     name: Validate Stable Release Trigger
     if: >
-      github.event.pull_request.merged == true
-      && github.event.pull_request.base.ref == 'release/stable'
-      && github.event.pull_request.head.repo.full_name == github.repository
+      needs.resolve-merge.outputs.merged == 'true'
+      && needs.resolve-merge.outputs.base-ref == 'release/stable'
+      && needs.resolve-merge.outputs.head-repository == github.repository
       && (
-        github.event.pull_request.head.ref == 'release-please--branches--release/stable'
-        || startsWith(github.event.pull_request.head.ref, 'release-promotion--release-prerelease--to--release-stable--prerelease-v')
+        needs.resolve-merge.outputs.head-ref == 'release-please--branches--release/stable'
+        || startsWith(needs.resolve-merge.outputs.head-ref, 'release-promotion--release-prerelease--to--release-stable--prerelease-v')
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -43,13 +90,13 @@ jobs:
       - name: Validate merged head identity
         id: identity
         env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_REF: ${{ needs.resolve-merge.outputs.base-ref }}
           EVENT_SHA: ${{ github.sha }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ needs.resolve-merge.outputs.head-ref }}
+          HEAD_REPOSITORY: ${{ needs.resolve-merge.outputs.head-repository }}
           MANAGED_HEAD: release-please--branches--release/stable
-          MERGED: ${{ github.event.pull_request.merged }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          MERGED: ${{ needs.resolve-merge.outputs.merged }}
+          MERGE_SHA: ${{ needs.resolve-merge.outputs.merge-sha }}
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -91,7 +138,7 @@ jobs:
         env:
           EVENT_SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ needs.resolve-merge.outputs.head-sha }}
           REPOSITORY: ${{ github.repository }}
           SOURCE_TAG: ${{ steps.identity.outputs.source-tag }}
         run: |
@@ -241,10 +288,12 @@ jobs:
   release-please:
     name: Release Please on release/stable
     needs: [validate-trigger]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     outputs:
       release-pr-branch: ${{ steps.release-pr.outputs.branch }}
     steps:
@@ -254,6 +303,9 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # The token gets only the permissions this job uses.
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Run release-please
         id: release
@@ -399,7 +451,10 @@ jobs:
     name: Sync Release Preparation Versions
     needs: [release-please]
     if: ${{ !cancelled() && !failure() && needs.release-please.outputs.release-pr-branch != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     steps:
@@ -409,6 +464,8 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # The token gets only the permissions this job uses.
+          permission-contents: write
 
       - name: Checkout trusted release updater
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

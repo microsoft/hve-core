@@ -231,6 +231,114 @@ Describe 'Get-ToolStaleness' -Tag 'Integration', 'RequiresNetwork' {
     }
 }
 
+Describe 'Get-ToolLatestVersion' -Tag 'Unit' {
+    BeforeAll {
+        $script:GitHubHeaders = @{ Accept = 'application/vnd.github+json'; Authorization = 'token-value' }
+    }
+
+    It 'reads the latest GitHub release and strips a v prefix' {
+        Mock Invoke-GitHubAPIWithRetry { [pscustomobject]@{ tag_name = 'v1.31.0' } }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ repo = 'zizmorcore/zizmor' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.31.0'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/repos/zizmorcore/zizmor/releases/latest' -and $Headers.Authorization }
+    }
+
+    It 'reads PyPI without sending the GitHub token' {
+        Mock Invoke-GitHubAPIWithRetry { [pscustomobject]@{ info = [pscustomobject]@{ version = '1.9.0' } } }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ registry = 'pypi'; package = 'pip-audit' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.9.0'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -eq 'https://pypi.org/pypi/pip-audit/json' -and -not $Headers.ContainsKey('Authorization') }
+    }
+
+    It 'reads the VS Code update service without sending the GitHub token' {
+        Mock Invoke-GitHubAPIWithRetry { [pscustomobject]@{ productVersion = '1.140.0' } }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ registry = 'vscode-update' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.140.0'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like 'https://update.code.visualstudio.com/*' -and -not $Headers.ContainsKey('Authorization') }
+    }
+
+    It 'returns null when the registry does not respond' {
+        Mock Invoke-GitHubAPIWithRetry { $null }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ repo = 'o/r' }) -GitHubHeaders $script:GitHubHeaders | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Get-RuntimeStaleness' -Tag 'Unit' {
+    BeforeAll {
+        function script:New-RuntimeRepo {
+            param([string]$Node = '24.20.0', [string]$Python = '3.12.14', [string[]]$Labels = @('ubuntu-24.04', 'ubuntu-24.04-firewall'))
+            $root = Join-Path $TestDrive ([guid]::NewGuid().ToString())
+            New-Item -ItemType Directory -Path (Join-Path $root '.github/workflows') -Force | Out-Null
+            if ($Node) { Set-Content -LiteralPath (Join-Path $root '.node-version') -Value $Node }
+            if ($Python) { Set-Content -LiteralPath (Join-Path $root '.python-version') -Value $Python }
+            $jobs = (0..($Labels.Count - 1) | ForEach-Object { "  j${_}:`n    runs-on: $($Labels[$_])" }) -join "`n"
+            Set-Content -LiteralPath (Join-Path $root '.github/workflows/ci.yml') -Value "jobs:`n$jobs"
+            return $root
+        }
+    }
+
+    BeforeEach {
+        Mock Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -eq 'https://nodejs.org/dist/index.json' } {
+            @([pscustomobject]@{ version = 'v25.1.0' }, [pscustomobject]@{ version = 'v24.21.0' }, [pscustomobject]@{ version = 'v24.20.0' })
+        }
+        Mock Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like 'https://raw.githubusercontent.com/actions/python-versions/*' } {
+            @([pscustomobject]@{ version = '3.13.16'; stable = $true }, [pscustomobject]@{ version = '3.12.16rc1'; stable = $false }, [pscustomobject]@{ version = '3.12.15'; stable = $true })
+        }
+        Mock Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/repos/actions/runner-images/contents/images/ubuntu' } {
+            @('Ubuntu2204-Readme.md', 'Ubuntu2404-Arm64-Readme.md', 'Ubuntu2404-Readme.md', 'Ubuntu2604-Readme.md', 'scripts') | ForEach-Object { [pscustomobject]@{ name = $_ } }
+        }
+    }
+
+    It 'compares each runtime with the newest stable release on its own line' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo) -GitHubToken 'token-value'
+        $node = $results | Where-Object Runtime -EQ 'node'
+        $node.LatestVersion | Should -Be '24.21.0'
+        $node.IsStale | Should -BeTrue
+        $python = $results | Where-Object Runtime -EQ 'python'
+        $python.LatestVersion | Should -Be '3.12.15'
+        $python.IsStale | Should -BeTrue
+    }
+
+    It 'reports current runtimes as not stale' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Node '24.21.0' -Python '3.12.15')
+        ($results | Where-Object Runtime -In 'node', 'python').IsStale | Should -Not -Contain $true
+    }
+
+    It 'compares the newest dated runner label with the newest published Ubuntu image' {
+        $result = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Labels @('ubuntu-22.04', 'ubuntu-24.04-arm', 'ubuntu-latest')) | Where-Object Runtime -EQ 'ubuntu-runner-image'
+        $result.CurrentVersion | Should -Be '24.04'
+        $result.LatestVersion | Should -Be '26.04'
+        $result.IsStale | Should -BeTrue
+    }
+
+    It 'sends the GitHub token only to the GitHub API' {
+        $null = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo) -GitHubToken 'token-value'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/repos/actions/runner-images/*' -and $Headers.Authorization } -Times 1
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -notlike '*/repos/*' -and $Headers.ContainsKey('Authorization') } -Times 0
+    }
+
+    It 'reports an error for a missing or malformed version file' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Node '' -Python '3.12') -WarningAction SilentlyContinue
+        ($results | Where-Object Runtime -EQ 'node').Error | Should -Match 'no X.Y.Z version'
+        ($results | Where-Object Runtime -EQ 'python').Error | Should -Match 'no X.Y.Z version'
+        @($results | Where-Object { $_.Runtime -in 'node', 'python' -and $null -ne $_.IsStale }) | Should -HaveCount 0
+    }
+
+    It 'skips the runner image when no workflow uses a dated label' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Labels @('ubuntu-latest'))
+        $results.Runtime | Should -Not -Contain 'ubuntu-runner-image'
+    }
+}
+
+Describe 'Repository tool manifest' -Tag 'Unit' {
+    It 'gives every tool a name, repo, version, and verification' {
+        $manifest = Get-Content -Raw (Join-Path $PSScriptRoot '../../security/tool-checksums.json') | ConvertFrom-Json
+        foreach ($tool in $manifest.tools) {
+            $tool.name | Should -Not -BeNullOrEmpty
+            $tool.repo | Should -Match '^[^/]+/[^/]+$'
+            $tool.version | Should -Not -BeNullOrEmpty
+            $tool.verification | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
 Describe 'Get-PSModuleStaleness' -Tag 'Unit' {
     Context 'With mock manifest and mocked PSGallery' {
         BeforeEach {
@@ -324,6 +432,9 @@ Describe 'Get-PSModuleStaleness' -Tag 'Unit' {
 
 Describe 'Main Script Execution' {
     BeforeAll {
+        # The script reads the repository manifest; count the tools it checks through GitHub Releases.
+        $script:GitHubToolCount = @((Get-Content -Raw (Join-Path $PSScriptRoot '../../security/tool-checksums.json') | ConvertFrom-Json).tools | Where-Object { -not $_.registry }).Count
+
         # Create test repo structure (script expects .github/workflows from current directory)
         $script:TestRepo = Join-Path $TestDrive 'test-repo'
         $script:WorkflowDir = Join-Path $script:TestRepo '.github' 'workflows'
@@ -362,10 +473,9 @@ Describe 'Main Script Execution' {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
                     tag_name = switch ($repoName) {
-                        'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
-                        default      { 'v1.0.0' }
+                        default      { 'v0.0.1' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
                 }
@@ -429,14 +539,15 @@ Describe 'Main Script Execution' {
                     }
                 }
             }
+            elseif ($Uri -like 'https://pypi.org/*') { return @{ info = @{ version = '0.0.1' } } }
+            elseif ($Uri -like 'https://update.code.visualstudio.com/*') { return @{ productVersion = '0.0.1' } }
             elseif ($Uri -like '*/releases/latest') {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
                     tag_name = switch ($repoName) {
-                        'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
-                        default      { 'v1.0.0' }
+                        default      { 'v0.0.1' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
                 }
@@ -475,14 +586,15 @@ Describe 'Main Script Execution' {
                     }
                 }
             }
+            elseif ($Uri -like 'https://pypi.org/*') { return @{ info = @{ version = '0.0.1' } } }
+            elseif ($Uri -like 'https://update.code.visualstudio.com/*') { return @{ productVersion = '0.0.1' } }
             elseif ($Uri -like '*/releases/latest') {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
                     tag_name = switch ($repoName) {
-                        'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
-                        default      { 'v1.0.0' }
+                        default      { 'v0.0.1' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
                 }
@@ -541,7 +653,7 @@ jobs:
 
             # Verify mock API calls: 2 GraphQL batches (repos + commits) + 2 tool release checks
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times $script:GitHubToolCount -Exactly
         }
 
         It 'Processes stale dependencies with array count operations' {
@@ -606,7 +718,7 @@ jobs:
 
             # Verify API calls: 2 GraphQL batches + 2 tool release checks
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times $script:GitHubToolCount -Exactly
         }
 
         It 'Executes result formatting with array operations' {
@@ -756,7 +868,7 @@ jobs:
 
             # No actions found so no GraphQL calls, but tool staleness still runs
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 0 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times $script:GitHubToolCount -Exactly
         }
 
         It 'Processes single stale dependency with array coercion' {
@@ -1256,6 +1368,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
 
             Mock Test-GitHubActionsForStaleness { return @() }
             Mock Get-ToolStaleness { }
+            Mock Get-RuntimeStaleness { }
             Mock Write-SecurityOutput { }
             Mock New-Item { } -ParameterFilter { $ItemType -eq 'Directory' }
             Mock Write-SecurityLog { }
@@ -1277,6 +1390,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 )
             }
             Mock Get-ToolStaleness { }
+            Mock Get-RuntimeStaleness { }
             Mock Get-PSModuleStaleness { }
             Mock Write-SecurityOutput { }
 
@@ -1292,11 +1406,37 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 $script:StaleDependencies = @()
             }
             Mock Get-ToolStaleness { }
+            Mock Get-RuntimeStaleness { }
             Mock Get-PSModuleStaleness { }
             Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |
                 Should -Not -Throw
+        }
+    }
+
+    Context 'Runtime and runner image staleness' {
+        It 'Adds stale runtimes and runner images to the report' {
+            Mock Write-SecurityLog { }
+            Mock New-Item { }
+            Mock Test-GitHubActionsForStaleness { }
+            Mock Get-ToolStaleness { }
+            Mock Get-PSModuleStaleness { }
+            Mock Get-RuntimeStaleness {
+                @(
+                    [pscustomobject]@{ Runtime = 'node'; Source = '.node-version'; CurrentVersion = '24.20.0'; LatestVersion = '24.21.0'; IsStale = $true; Error = $null }
+                    [pscustomobject]@{ Runtime = 'python'; Source = '.python-version'; CurrentVersion = '3.12.15'; LatestVersion = '3.12.15'; IsStale = $false; Error = $null }
+                    [pscustomobject]@{ Runtime = 'ubuntu-runner-image'; Source = '.github/workflows'; CurrentVersion = '24.04'; LatestVersion = '26.04'; IsStale = $true; Error = $null }
+                )
+            }
+            Mock Write-SecurityOutput { $script:CapturedDependencies = $Dependencies }
+
+            Invoke-SHAStalenessCheck -OutputFormat 'console'
+
+            @($script:CapturedDependencies).Count | Should -Be 2
+            ($script:CapturedDependencies | Where-Object Name -EQ 'node').Type | Should -Be 'Runtime'
+            ($script:CapturedDependencies | Where-Object Name -EQ 'node').File | Should -Be '.node-version'
+            ($script:CapturedDependencies | Where-Object Name -EQ 'ubuntu-runner-image').Type | Should -Be 'RunnerImage'
         }
     }
 }

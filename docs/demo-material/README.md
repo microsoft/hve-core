@@ -67,21 +67,22 @@ source documents changed:
   agent writes new slide content for changed, failed, or unpublished levels.
   When every level is current and published, the agent does not run.
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
-  workflow builds each authored level into a deck, a silent video, and
-   browser slides from the same slide content, then scores the checks a machine
-  can verify: timing paired to every slide, absence of an audio stream, the video landing inside the
+   workflow starts when an author run finishes authoring; it waits for that run to
+   complete and checks it before building. It builds each authored level into a
+   deck, a silent video, and browser slides from the same slide content, then
+   scores the checks a machine can verify: timing paired to every slide, absence
+   of an audio stream, the video landing inside the
    level's length, readable live captures, the pinned house style, the
    accessibility items above, and browser slides that open offline with no
-  slide overflowing. A level that fails any check keeps its previous files.
-  The later weekly render check forces another authoring attempt for any level
-  whose latest attempt failed or whose first passing bundle is still missing.
+   slide overflowing. A level that fails any check keeps its previous files.
+   The later weekly render check forces another authoring attempt for any level
+   whose latest attempt failed or whose first passing bundle is still missing.
 3. The documentation deployment publishes the latest passing files. This page
-  reads that same index, so a missing level appears as unavailable rather than
-  linking to files that do not exist.
+   reads that same index, so a missing level appears as unavailable rather than
+   linking to files that do not exist.
 
-New CI builds are silent: neither Piper nor Azure Speech is used for synthesis.
-For local narrated production, Azure AI Speech is the default; Piper remains an
-explicit optional choice subject to applicable review and approval. During
+New CI builds are silent: no speech service or speech model is used. Local
+narrated production uses an AI-generated Azure AI Speech voice. During
 regeneration, a level may retain an earlier passing video with voiceover until
 its silent replacement passes. The published index records `narration_engine`
 and the timing basis for new renders. The

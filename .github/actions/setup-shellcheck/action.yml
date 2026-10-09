@@ -1,0 +1,77 @@
+name: Setup shellcheck
+description: Installs the shellcheck version pinned in scripts/security/tool-checksums.json and verifies its checksum
+
+outputs:
+  shellcheck-version:
+    description: The installed shellcheck version
+    value: ${{ steps.install.outputs.shellcheck-version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install verified shellcheck
+      id: install
+      shell: bash
+      env:
+        MANIFEST_PATH: ${{ github.action_path }}/../../../scripts/security/tool-checksums.json
+      run: |
+        set -euo pipefail
+
+        case "${RUNNER_OS}/${RUNNER_ARCH}" in
+          Linux/X64) arch_key='linux_amd64' ;;
+          Linux/ARM64) arch_key='linux_arm64' ;;
+          *)
+            echo "::error::setup-shellcheck supports Linux X64 and ARM64 runners, not ${RUNNER_OS}/${RUNNER_ARCH}."
+            exit 1
+            ;;
+        esac
+
+        shellcheck_entry() {
+          jq -er --arg arch "${arch_key}" "first(.tools[] | select(.name == \"shellcheck\")) | $1" "${MANIFEST_PATH}"
+        }
+        version="$(shellcheck_entry '.version')"
+        sha256="$(shellcheck_entry ".sha256ByArch[\$arch]")"
+        url_template="$(shellcheck_entry ".assetTemplateByArch[\$arch]")"
+        url="${url_template//\{version\}/${version}}"
+
+        if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::The shellcheck manifest version '${version}' is not an exact release version."
+          exit 1
+        fi
+        if [[ ! "${sha256}" =~ ^[0-9a-f]{64}$ ]]; then
+          echo "::error::The shellcheck manifest checksum for ${arch_key} is not a SHA-256 digest."
+          exit 1
+        fi
+        if [[ "${url}" != "https://github.com/koalaman/shellcheck/releases/download/v${version}/"*.tar.xz ]]; then
+          echo "::error::The shellcheck manifest asset URL is not a koalaman/shellcheck release asset for ${version}."
+          exit 1
+        fi
+
+        asset="${url##*/}"
+        archive="${RUNNER_TEMP}/${asset}"
+        install_dir="${RUNNER_TEMP}/shellcheck-${version}"
+        curl --proto '=https' --tlsv1.2 -sSfL --retry 3 --retry-all-errors -o "${archive}" "${url}"
+        if ! echo "${sha256}  ${archive}" | sha256sum -c --quiet -; then
+          echo "::error::shellcheck ${version} checksum verification failed for ${asset}."
+          exit 1
+        fi
+        mkdir -p "${install_dir}"
+        tar -xJf "${archive}" -C "${install_dir}" --strip-components=1 "shellcheck-v${version}/shellcheck"
+        rm -f "${archive}"
+
+        installed="$("${install_dir}/shellcheck" --version | awk '/^version:/ {print $2}')"
+        if [[ "${installed}" != "${version}" ]]; then
+          echo "::error::Installed shellcheck reports ${installed}, expected ${version}."
+          exit 1
+        fi
+        # Installing into /usr/local/bin, ahead of the image's apt package in
+        # /usr/bin, avoids a GITHUB_PATH write; the check fails if another copy
+        # of the binary shadows it.
+        sudo install -m 0755 -t /usr/local/bin "${install_dir}/shellcheck"
+        resolved="$(command -v shellcheck || true)"
+        if [[ "${resolved}" != '/usr/local/bin/shellcheck' ]]; then
+          echo "::error::shellcheck resolves to '${resolved}', not the verified /usr/local/bin/shellcheck."
+          exit 1
+        fi
+        echo "shellcheck-version=${version}" >> "${GITHUB_OUTPUT}"
+        echo "Installed shellcheck ${version} (${arch_key})"
