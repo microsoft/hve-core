@@ -1452,6 +1452,7 @@ deprioritizes
 experim
 kata
 katas
+katex
 lofi
 miscategorized
 myactivity

@@ -16,7 +16,7 @@ This skill reads `content.yaml` files from a PowerPoint skill content directory,
 
 Synthesis uses Azure AI Speech neural voices, including the HD voices such as `en-US-Andrew:DragonHDLatestNeural`. HD voices are offered in a subset of Azure regions; check the [Speech service regions](https://learn.microsoft.com/azure/ai-services/speech-service/regions) before choosing `SPEECH_REGION`.
 
-Narration produced by this skill is synthetic. Tell listeners that the voice is AI-generated, following Microsoft's [disclosure design guidelines for synthetic voices](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-guidelines).
+Narration produced by this skill is synthetic. Tell listeners that the voice is AI-generated, following Microsoft's [disclosure design guidelines for synthetic voices](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-guidelines). HVE demo-material CI does not synthesize speech; it generates silent videos.
 
 ## Prerequisites
 
@@ -73,18 +73,24 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ## Parameters Reference
 
+For different speakers, synthesize one voice's selected slides per invocation
+using repeated `--slide <number>` arguments. Only those canonical `slide-NNN`
+folders are read and their WAVs replaced; other speakers' outputs are untouched.
+Omit `--slide` to synthesize the whole deck.
+
 ### generate_voiceover.py
 
-| Parameter             | Type   | Default                             | Description                                                                                |
-|:----------------------|:-------|:------------------------------------|:-------------------------------------------------------------------------------------------|
-| `--dry-run`           | flag   | `false`                             | Print SSML without generating audio                                                        |
-| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Azure AI Speech voice name                                                                 |
-| `--rate`              | string | `+10%`                              | Speech prosody rate                                                                        |
-| `--content-dir`       | path   | `content`                           | Path to slide content directory                                                            |
-| `--output-dir`        | path   | `voice-over`                        | Path to WAV output directory                                                               |
-| `--lexicon`           | path   | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
-| `--collapse-newlines` | flag   | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
-| `--verbose` / `-v`    | flag   | `false`                             | Enable verbose (DEBUG) logging output                                                      |
+| Parameter             | Type    | Default                             | Description                                                                                |
+|:----------------------|:--------|:------------------------------------|:-------------------------------------------------------------------------------------------|
+| `--dry-run`           | flag    | `false`                             | Print SSML without generating audio                                                        |
+| `--voice`             | string  | `en-US-Andrew:DragonHDLatestNeural` | Azure AI Speech voice name                                                                 |
+| `--rate`              | string  | `+10%`                              | Speech prosody rate                                                                        |
+| `--content-dir`       | path    | `content`                           | Path to slide content directory                                                            |
+| `--output-dir`        | path    | `voice-over`                        | Path to WAV output directory                                                               |
+| `--slide`             | integer | all slides                          | Repeat to synthesize only the selected canonical slide numbers                             |
+| `--lexicon`           | path    | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
+| `--collapse-newlines` | flag    | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
+| `--verbose` / `-v`    | flag    | `false`                             | Enable verbose (DEBUG) logging output                                                      |
 
 ### embed_audio.py
 

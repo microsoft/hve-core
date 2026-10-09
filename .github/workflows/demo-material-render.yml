@@ -2,13 +2,8 @@
 # SPDX-License-Identifier: MIT
 #
 # Renders demo-material content authored by the Demo Material Author agentic
-# workflow into decks and narrated MP4s, then publishes a site bundle artifact
+# workflow into decks and silent MP4s, then publishes a site bundle artifact
 # that the documentation deployment stages under /demo-material/.
-#
-# Narration uses Azure AI Speech. The render job signs in with Azure OIDC in the
-# demo-material environment, which supplies the Azure identifiers as secrets
-# and SPEECH_RESOURCE_ID and SPEECH_REGION as variables. A level whose render
-# fails keeps its previously published files.
 
 name: Demo Material Render
 
@@ -47,6 +42,7 @@ jobs:
     outputs:
       mode: ${{ steps.resolve.outputs.mode }}
       levels: ${{ steps.levels.outputs.levels || '[]' }}
+      retry-levels: ${{ steps.resolve.outputs.retry-levels }}
       source-sha: ${{ steps.resolve.outputs.source-sha }}
       author-run-id: ${{ steps.resolve.outputs.author-run-id }}
       content-artifact-id: ${{ steps.resolve.outputs.content-artifact-id }}
@@ -70,6 +66,45 @@ jobs:
             --artifact-prefix demo-material-site \
             --exclude-run-id "${GITHUB_RUN_ID}" --github-output "${GITHUB_OUTPUT}"
 
+      - name: Find the latest render index
+        id: retry-index
+        if: ${{ github.event_name == 'schedule' }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 "${LOOKUP}" find --workflow demo-material-render.yml \
+            --artifact-prefix demo-material-index \
+            --exclude-run-id "${GITHUB_RUN_ID}" --github-output "${GITHUB_OUTPUT}"
+
+      - name: Download the latest render index
+        if: ${{ github.event_name == 'schedule' && steps.retry-index.outputs.artifact-id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.retry-index.outputs.artifact-id }}
+          run-id: ${{ steps.retry-index.outputs.run-id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/retry-index
+
+      - name: Recover the published render index
+        if: ${{ github.event_name == 'schedule' && steps.retry-index.outputs.artifact-id == '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "${LOOKUP}" recover --index-only \
+            --target "${RUNNER_TEMP}/retry-index"
+
+      - name: Select failed or unpublished levels
+        id: retry
+        if: ${{ github.event_name == 'schedule' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "${LOOKUP}" retry-levels \
+            --index "${RUNNER_TEMP}/retry-index/index.json" \
+            --github-output "${GITHUB_OUTPUT}"
+
       # Pages keeps the last published bundle after every artifact has expired.
       - name: Check for a published bundle to recover
         id: published
@@ -87,6 +122,7 @@ jobs:
           DISPATCH_AUTHOR_RUN_ID: ${{ inputs.author-run-id }}
           PREVIOUS_CREATED_AT: ${{ steps.previous.outputs.created-at }}
           PUBLISHED_STATUS: ${{ steps.published.outputs.status }}
+          RETRY_LEVELS: ${{ steps.retry.outputs.levels }}
         with:
           script: |
             const refreshAfterMs = Number(process.env.REFRESH_AFTER_DAYS) * 86400000;
@@ -103,6 +139,9 @@ jobs:
             };
 
             const previousCreatedAt = process.env.PREVIOUS_CREATED_AT;
+            const stale = previousCreatedAt
+              ? Date.now() - Date.parse(previousCreatedAt) > refreshAfterMs
+              : process.env.PUBLISHED_STATUS === "recovered";
 
             // The author dispatches this run before its own run completes.
             const waitForRun = async (runId) => {
@@ -145,12 +184,21 @@ jobs:
               return;
             }
 
+            const retryLevels = process.env.RETRY_LEVELS.trim();
+            if (context.eventName === "schedule" && retryLevels) {
+              if (!/^L[1-4]00(?: L[1-4]00)*$/.test(retryLevels)) {
+                throw new Error(`invalid retry levels: ${retryLevels}`);
+              }
+              core.setOutput("retry-levels", retryLevels);
+              core.setOutput("mode", stale ? "refresh" : "skip");
+              return;
+            }
+
             // Without an artifact, a published bundle is recovered from the site and re-uploaded.
             if (!previousCreatedAt) {
               core.setOutput("mode", process.env.PUBLISHED_STATUS === "recovered" ? "refresh" : "skip");
               return;
             }
-            const stale = Date.now() - Date.parse(previousCreatedAt) > refreshAfterMs;
             const manual = context.eventName === "workflow_dispatch";
             core.setOutput("mode", stale || manual ? "refresh" : "skip");
 
@@ -202,17 +250,37 @@ jobs:
           print(f"Levels to render: {levels}")
           PY
 
+  dispatch-retry:
+    name: Dispatch forced authoring for failed levels
+    needs: resolve
+    if: ${{ github.event_name == 'schedule' && needs.resolve.outputs.retry-levels != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch forced authoring
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RETRY_LEVELS: ${{ needs.resolve.outputs.retry-levels }}
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "demo-material-author.lock.yml",
+              ref: repository.default_branch,
+              inputs: { levels: process.env.RETRY_LEVELS, force: "true" },
+            });
+
   render:
     name: Render ${{ matrix.level }}
     needs: resolve
     if: ${{ needs.resolve.outputs.mode == 'render' && needs.resolve.outputs.levels != '[]' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    environment: demo-material
     permissions:
       actions: read # download the author content artifact
       contents: read
-      id-token: write # Azure OIDC login for Azure AI Speech narration
     strategy:
       fail-fast: false
       matrix:
@@ -221,25 +289,6 @@ jobs:
       LEVEL: ${{ matrix.level }}
       LEVEL_DIR: ${{ github.workspace }}/../demo-level/${{ matrix.level }}
     steps:
-      - name: Check Azure AI Speech configuration
-        shell: bash
-        env:
-          SPEECH_RESOURCE_ID: ${{ vars.SPEECH_RESOURCE_ID }}
-          SPEECH_REGION: ${{ vars.SPEECH_REGION }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        run: |
-          set -euo pipefail
-          missing=0
-          for name in SPEECH_RESOURCE_ID SPEECH_REGION AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "::error::${name} is not configured in the demo-material environment."
-              missing=1
-            fi
-          done
-          exit "${missing}"
-
       # Scripts come from the trusted default branch; the authored commit only
       # supplies the content artifact, which is validated as data.
       - name: Checkout the default branch
@@ -311,32 +360,16 @@ jobs:
             exit 1
           fi
 
-      # The Azure identity is signed in only for the render step and signed out
-      # before outputs are collected.
-      - name: Azure Login (OIDC)
-        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
       - name: Render ${{ matrix.level }}
         shell: bash
-        env:
-          SPEECH_RESOURCE_ID: ${{ vars.SPEECH_RESOURCE_ID }}
-          SPEECH_REGION: ${{ vars.SPEECH_REGION }}
         run: |
           set -euo pipefail
           bash .github/skills/experimental/hve-demo-material/scripts/render-level.sh \
             --level "${LEVEL}" \
             --level-dir "${LEVEL_DIR}" \
             --workspace "${GITHUB_WORKSPACE}" \
+            --narration none \
             --html-deck-template "${GITHUB_WORKSPACE}/.github/skills/hve-slides/templates/deck"
-
-      - name: Azure logout
-        if: ${{ always() }}
-        shell: bash
-        run: az logout || true
 
       - name: Collect render outputs
         if: ${{ always() }}
@@ -449,7 +482,11 @@ jobs:
                   "at": now,
                   "checks": result.get("checks", {}),
               }
-              if result.get("ok") is True and all(f.is_file() for f in files.values()) and (level_dir / "index.html").is_file():
+              silent_delivery = (
+                  result.get("narration_engine") == "none"
+                  and result.get("checks", {}).get("T-11", {}).get("result") == "pass"
+              )
+              if result.get("ok") is True and silent_delivery and all(f.is_file() for f in files.values()) and (level_dir / "index.html").is_file():
                   target = site / level
                   shutil.rmtree(target, ignore_errors=True)
                   target.mkdir(parents=True)
@@ -460,6 +497,7 @@ jobs:
                       **attempt,
                       "rendered_at": now,
                       "narration_engine": result.get("narration_engine"),
+                      "timing_basis": result.get("timing_basis"),
                       "capture_profile": result.get("capture_profile"),
                       "measured_duration_minutes": result.get("measured_duration_minutes"),
                       "files": {

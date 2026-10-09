@@ -282,6 +282,71 @@ class TestApplyAcronymAliases:
         assert '<sub alias="S D K">SDK</sub>' in result
 
 
+class TestRunSelectedSlides:
+    """Tests for _run with --slide selection."""
+
+    def test_given_two_speakers_when_selected_in_two_passes_then_prior_wav_unchanged(
+        self, tmp_path, monkeypatch, mocker
+    ):
+        import sys
+
+        from generate_voiceover import _run
+
+        # Arrange
+        content = tmp_path / "content"
+        for number, notes in ((1, "First speaker"), (2, "Second speaker")):
+            slide = content / f"slide-{number:03d}"
+            slide.mkdir(parents=True)
+            (slide / "content.yaml").write_text(
+                yaml.dump({"slide": number, "title": "T", "speaker_notes": notes}),
+                encoding="utf-8",
+            )
+        output = tmp_path / "output"
+        monkeypatch.setenv("SPEECH_REGION", "eastus")
+        monkeypatch.setenv("SPEECH_KEY", "test-key")
+        monkeypatch.delenv("SPEECH_RESOURCE_ID", raising=False)
+        mocker.patch.dict(
+            sys.modules,
+            {
+                "azure": mocker.MagicMock(),
+                "azure.cognitiveservices": mocker.MagicMock(),
+                "azure.cognitiveservices.speech": mocker.MagicMock(),
+            },
+        )
+
+        def synthesize(ssml, destination, _config):
+            destination.write_bytes(b"first" if "first" in ssml else b"second")
+            return 1.0
+
+        generator = mocker.patch(
+            "generate_voiceover.generate_audio", side_effect=synthesize
+        )
+        args = create_parser().parse_args(
+            [
+                "--content-dir",
+                str(content),
+                "--output-dir",
+                str(output),
+                "--slide",
+                "1",
+                "--voice",
+                "first",
+            ]
+        )
+
+        # Act
+        assert _run(args) == 0
+        first = (output / "slide-001.wav").read_bytes()
+        args.slide = [2]
+        args.voice = "second"
+        assert _run(args) == 0
+
+        # Assert
+        assert (output / "slide-001.wav").read_bytes() == first == b"first"
+        assert (output / "slide-002.wav").read_bytes() == b"second"
+        assert generator.call_count == 2
+
+
 class TestWrapSsml:
     """Tests for wrap_ssml."""
 

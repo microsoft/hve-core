@@ -2691,21 +2691,17 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
         $script | Should -Match '"author-run-id": String\(context\.runId\)'
     }
 
-    It 'Narrates demo renders with Azure AI Speech through an OIDC environment' {
+    It 'Renders silent demo videos without Azure sign-in' {
         $render = Get-WorkflowDocument -Name 'demo-material-render.yml'
-        $job = $render['jobs']['render']
-        [string]$job['environment'] | Should -BeExactly 'demo-material'
-        [string]$job['permissions']['id-token'] | Should -BeExactly 'write'
-        foreach ($other in @('resolve', 'bundle', 'dispatch-deploy')) {
-            $render['jobs'][$other]['permissions'].Contains('id-token') | Should -BeFalse
+        foreach ($name in @('resolve', 'render', 'bundle', 'dispatch-deploy')) {
+            $job = $render['jobs'][$name]
+            $job.Contains('environment') | Should -BeFalse
+            $job['permissions'].Contains('id-token') | Should -BeFalse
         }
 
         $steps = Get-JobStepText -Document $render -JobName 'render'
-        @($steps | Where-Object { $_ -match 'azure/login@' }) | Should -HaveCount 1
-        @($steps | Where-Object { $_ -match 'az logout' }) | Should -HaveCount 1
-        $names = [string[]]@($job['steps'] | ForEach-Object { $_['name'] })
-        $names.IndexOf('Azure Login (OIDC)') | Should -Be ($names.IndexOf('Render ${{ matrix.level }}') - 1)
-        @($steps | Where-Object { $_ -match '--narration' }) | Should -HaveCount 0
+        @($steps | Where-Object { $_ -match 'azure/login@|az logout|SPEECH_' }) | Should -HaveCount 0
+        @($steps | Where-Object { $_ -match '--narration none' }) | Should -HaveCount 1
     }
 
     It 'Uses the verified create-github-app-token version comment consistently' {

@@ -3,7 +3,7 @@ title: TTS Voice-Over Skill
 description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure AI Speech neural voices
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-08
+ms.date: 2026-10-09
 ms.topic: how-to
 keywords:
   - tts
