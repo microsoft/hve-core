@@ -29,9 +29,8 @@ the engine in force, and a complete output manifest.
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and to `deck-export` for L100 and L200
-* `narration` from `azure` or `piper`, defaulting to `azure`
-* Audience, delivery context, approved voice, the Azure Speech region when
-  `narration` is `azure`, and whether a GIF is explicitly requested
+* Audience, delivery context, approved Azure AI Speech voice, the Azure Speech
+  region, and whether a GIF is explicitly requested
 
 ## Success Criteria
 
@@ -59,9 +58,9 @@ item and wait for user confirmation. Auto means execute without prompting.
 | Manual            | Gate       | Gate                      | Gate                |
 
 Source-set resolution is never a gate in any mode, so an unattended run can
-resolve a topic on its own. The capture profile and narration engine are
-likewise never gates, and never autonomous decisions: each comes from its
-default or from a caller-supplied `capture` or `narration` value.
+resolve a topic on its own. The capture profile is likewise never a gate and
+never an autonomous decision: it comes from its default or from a
+caller-supplied `capture` value. Narration always uses Azure AI Speech.
 
 Under `full`, which exists so this agent can run from unattended agentic
 workflows where no human can answer a prompt:
@@ -112,9 +111,9 @@ through a human-configured pipeline outside the agent.
   moves L300 or L400 to `deck-export`, and the profile in force is recorded as
   `visuals.capture_profile` so a downgraded run stays distinguishable from a
   live capture run.
-* Never switch the narration engine. Only a caller-supplied `narration: piper`
-  selects Piper, and the engine in force is recorded as `narration.engine` so
-  Piper-narrated output stays distinguishable from Azure-narrated output.
+* Never substitute another speech engine for Azure AI Speech. Record
+  `narration.engine: azure` and `narration.provider: Azure AI Speech` so the
+  manifest discloses that the narration is synthetic.
 * Point every live capture at a file that opens in the Monaco text editor, and
   measure its rendered font size with the procedure in the skill's curriculum. A
   markdown file opens as a cross-origin preview webview whose text cannot be
@@ -129,9 +128,8 @@ through a human-configured pipeline outside the agent.
 
 ## Stop Rules
 
-* Set the affected level to `Deferred` when the narration engine in force
-  (Azure Speech credentials under `narration: azure`, the Piper executable or
-  voice under `narration: piper`), FFmpeg, LibreOffice, `uv`, live-capture
+* Set the affected level to `Deferred` when Azure Speech credentials or an
+  approved region, FFmpeg, LibreOffice, `uv`, live-capture
   tooling, a gate the active autonomy mode requires, or `rpi-research` is
   absent while a topic or lesson needs research beyond its pinned sources.
   Record the condition and the resumption action in the manifest, naming the
@@ -163,15 +161,14 @@ through a human-configured pipeline outside the agent.
 
 ### 1. Confirm Scope and Prerequisites
 
-1. Confirm requested levels, topic, autonomy mode, capture profile, narration
-   engine, audience, delivery context, approved voice, the Azure Speech region
-   under `narration: azure`, and whether a GIF is explicitly requested. Apply
+1. Confirm requested levels, topic, autonomy mode, capture profile, audience,
+   delivery context, approved voice, the Azure Speech region, and whether a GIF
+   is explicitly requested. Apply
    the documented defaults for anything unstated, and under `full` never prompt
    for them.
 2. Create `.copilot-tracking/demo-material/{{YYYY-MM-DD}}/{{level}}/` with the
    subdirectories defined in the skill's output contract.
-3. Check `uv`, LibreOffice, FFmpeg, the narration engine in force (Azure Speech
-   authentication, or the Piper executable and voice), `rpi-research`
+3. Check `uv`, LibreOffice, FFmpeg, Azure Speech authentication, `rpi-research`
    availability as needed, and, for any level under `capture: live`, the VS Code
    CLI plus Playwright MCP browser tools. Establish browser availability by
    attempting a navigation rather than by inspecting tool names. Record missing
@@ -231,14 +228,12 @@ through a human-configured pipeline outside the agent.
    VS Code Web keeps user settings in browser IndexedDB and a settings-based
    font size never reaches the capture. Measure the result and record the
    measured font size and source resolution per capture ID.
-3. Use `tts-voiceover` with the narration engine in force to create per-slide
-   WAV files in `audio/`, passing `--engine piper` under `narration: piper`.
-   Pass `--collapse-newlines` whenever speaker notes use
+3. Use `tts-voiceover` to create per-slide WAV files in `audio/` with Azure AI
+   Speech. Pass `--collapse-newlines` whenever speaker notes use
    YAML block scalars, because each hard line wrap in a block scalar is
    otherwise spoken as a pause: one measured level ran 361 seconds without the
-   option and 284 seconds with it. Under `narration: azure`, verify `SPEECH_KEY`
-   or `SPEECH_RESOURCE_ID` and `SPEECH_REGION` are available without reading or
-   recording secret values.
+   option and 284 seconds with it. Verify `SPEECH_RESOURCE_ID` or `SPEECH_KEY`
+   and `SPEECH_REGION` are available without reading or recording secret values.
 4. Create `output/segments.yml` and use `demo-video` to assemble the narrated
    MP4 in `output/`. Its paths resolve relative to the manifest file, not the
    level directory, so reference sibling directories as `../frames/...` and

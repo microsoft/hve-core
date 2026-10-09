@@ -54,10 +54,9 @@ capture fidelity, and criterion templates, while topic sets the source set.
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and to `deck-export` for L100 and L200
-* `narration` from `azure` or `piper`, defaulting to `azure`
 * Intended audience and training context
 * Approved narration voice, plus the Azure Speech region and authentication
-  posture when `narration` is `azure`
+  posture
 * Any requested delivery location or optional GIF requirement
 
 ## Success Criteria
@@ -94,14 +93,11 @@ capture fidelity, and criterion templates, while topic sets the source set.
 * Only the caller may set `capture: deck-export` for L300 or L400. Never lower a
   level's capture profile on your own, and record the profile in force in the
   manifest so a downgraded run stays distinguishable from a live capture run.
-* Azure AI Speech neural voices are the production narration posture. Speaker
-  notes are sent to the configured Azure Speech region for synthesis, so use an
-  approved region and do not include confidential material in narration.
-* Only the caller may set `narration: piper`, for example a scheduled build
-  with no Azure Speech resource. Piper runs locally through `tts-voiceover`'s
-  `--engine piper` option, needs no credentials, and sends nothing off the host,
-  but sounds less natural. Record the engine in force in the manifest so
-  Piper-narrated output stays distinguishable from Azure-narrated output.
+* Narration always uses Azure AI Speech neural voices through the
+  `tts-voiceover` skill. Speaker notes are sent to the configured Azure Speech
+  region for synthesis, so use an approved region and do not include
+  confidential material in narration. Label the narration as AI-generated
+  wherever the material is published.
 * Budget narration words from the level's duration contract before any speaker
   note is written, using the measured speaking rate in
   `references/curriculum.md`, and trim or extend the notes to stay inside that
@@ -112,9 +108,9 @@ capture fidelity, and criterion templates, while topic sets the source set.
   line wrap in a block scalar is spoken as a pause: one measured level ran 361
   seconds without the option and 284 seconds with it, so roughly 77 seconds were
   dead pause time and the delivery sounded audibly choppy.
-* Under `narration: azure`, authenticate Azure Speech with either `SPEECH_KEY`
-  or `SPEECH_RESOURCE_ID` plus `SPEECH_REGION`. Keep credential values out of
-  manifests, logs, and generated artifacts.
+* Authenticate Azure Speech with `SPEECH_RESOURCE_ID` (Microsoft Entra ID,
+  recommended) or `SPEECH_KEY`, plus `SPEECH_REGION`. Keep credential values out
+  of manifests, logs, and generated artifacts.
 * Use `video-to-gif` only when a GIF is explicitly requested.
 * Author for accessibility. Give every slide a `title` that matches its visible
   heading, give every image `alt` text that says what it shows (or
@@ -127,9 +123,8 @@ capture fidelity, and criterion templates, while topic sets the source set.
 
 ## Stop Rules
 
-* Set the level manifest to `Deferred` when the narration engine in force is
-  unavailable (Azure Speech credentials under `narration: azure`, the Piper
-  executable or voice under `narration: piper`), or when FFmpeg, LibreOffice,
+* Set the level manifest to `Deferred` when Azure Speech credentials or an
+  approved region are unavailable, or when FFmpeg, LibreOffice,
   `uv`, live-capture tooling, or `rpi-research` for a dynamic topic is
   unavailable. Record the missing prerequisite by the name of its unavailable
   entrypoint along with its rerun condition, and do not claim the affected
@@ -144,9 +139,9 @@ capture fidelity, and criterion templates, while topic sets the source set.
   instantiated criterion records `pass` or the `not-applicable` result the
   curriculum permits, deck and video validation both record `pass`, and
   `approvals.delivery: auto-accepted`.
-* Never switch the narration engine or the capture method on your own. A level
-  under `narration: azure` without Azure credentials resolves to `Deferred` and
-  never falls back to Piper. A level running under `capture: live` that cannot
+* Never switch the capture method on your own, and never substitute another
+  speech engine for Azure AI Speech. A level without Azure credentials resolves
+  to `Deferred`. A level running under `capture: live` that cannot
   capture resolves to `Deferred`, and never falls back to deck export.
 
 ## Scripted Rendering
@@ -171,7 +166,7 @@ sources, linked to the workspace's GitHub `origin` at the checked-out commit.
 When the workspace has no GitHub remote the deck is built without citations.
 
 ```bash
-scripts/render-level.sh --level L100 --level-dir <level-dir> --workspace <repo> --narration piper
+scripts/render-level.sh --level L100 --level-dir <level-dir> --workspace <repo>
 ```
 
 `scripts/render_checks.py` holds the shared logic. It reads the level contracts

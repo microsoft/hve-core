@@ -1,9 +1,9 @@
 ---
 title: TTS Voice-Over Skill
-description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure Speech SDK or an offline Piper engine
+description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure AI Speech neural voices
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-10-08
 ms.topic: how-to
 keywords:
   - tts
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-The `tts-voiceover` skill generates per-slide WAV voice-over files from YAML speaker notes using the Azure Speech SDK with SSML pronunciation control for technical acronyms.
+The `tts-voiceover` skill generates per-slide WAV voice-over files from YAML speaker notes using Azure AI Speech neural voices with SSML pronunciation control for technical acronyms.
 
 ## Overview
 
@@ -22,11 +22,12 @@ This skill reads `content.yaml` files produced by the PowerPoint skill, extracts
 
 ## Prerequisites
 
-| Requirement           | Details                                                               |
-|:----------------------|:----------------------------------------------------------------------|
-| Azure Speech resource | Free tier provides 500K characters per month                          |
-| Python 3.11+          | With [uv](https://docs.astral.sh/uv/) for environment management      |
-| Authentication        | Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`) |
+| Requirement           | Details                                                                                                        |
+|:----------------------|:---------------------------------------------------------------------------------------------------------------|
+| Azure Speech resource | See [Azure AI Speech pricing](https://azure.microsoft.com/pricing/details/speech/) for the free-tier allowance |
+| Python 3.11+          | With [uv](https://docs.astral.sh/uv/) for environment management                                               |
+| Authentication        | Microsoft Entra ID (`SPEECH_RESOURCE_ID`, recommended) or a resource key (`SPEECH_KEY`)                        |
+| Region                | `SPEECH_REGION`, required, with no default                                                                     |
 
 ## Setup
 
@@ -39,19 +40,27 @@ uv sync
 
 ### Configure Authentication
 
-Key-based authentication (simplest):
+Microsoft Entra ID authentication is recommended because it avoids storing a long-lived key. It requires a custom domain on the Speech resource and the `Cognitive Services Speech User` role for your identity. The script signs in through `DefaultAzureCredential`, so an `az login` session works:
+
+```bash
+export SPEECH_RESOURCE_ID="/subscriptions/.../Microsoft.CognitiveServices/accounts/your-resource"
+export SPEECH_REGION="eastus"
+```
+
+Key-based authentication:
 
 ```bash
 export SPEECH_KEY="your-speech-key"
 export SPEECH_REGION="eastus"
 ```
 
-Microsoft Entra ID authentication (requires a custom domain on the Speech resource and `Cognitive Services Speech User` role):
+When both are set, the script uses the key and logs a warning.
 
-```bash
-export SPEECH_RESOURCE_ID="/subscriptions/.../Microsoft.CognitiveServices/accounts/your-resource"
-export SPEECH_REGION="eastus"
-```
+### Data Handling and Disclosure
+
+Speaker notes are sent to Azure AI Speech in the region you set. For prebuilt neural voices, Microsoft states that neither the input text nor the output audio is stored in Microsoft logs. See [Data, privacy, and security for text to speech](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/data-privacy-security). Choose an approved region and leave regulated or confidential content out of narration.
+
+The narration is a synthetic voice. Tell listeners so, following the [disclosure design guidelines for synthetic voices](https://learn.microsoft.com/azure/foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-guidelines).
 
 ## Usage
 
@@ -68,17 +77,6 @@ uv run scripts/generate_voiceover.py --dry-run --content-dir path/to/content
 ```bash
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
-
-To generate narration offline without an Azure Speech resource, install [Piper](https://github.com/OHF-Voice/piper1-gpl) separately, download a voice, and select the `piper` engine:
-
-```bash
-uv tool install piper-tts
-uvx --from piper-tts python -m piper.download_voices en_US-joe-medium --data-dir ~/.local/share/piper
-uv run scripts/generate_voiceover.py --engine piper --piper-data-dir ~/.local/share/piper \
-  --content-dir path/to/content --output-dir voice-over
-```
-
-Piper is GPL-3.0-or-later and is not installed with the skill. Each voice has its own license in its model card; the default `en_US-joe-medium` voice is CC0. Piper sounds less natural than Azure neural voices, so prefer Azure for published narration.
 
 ### 3. Embed Audio into PPTX
 

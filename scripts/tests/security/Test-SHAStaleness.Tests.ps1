@@ -244,8 +244,8 @@ Describe 'Get-ToolLatestVersion' -Tag 'Unit' {
 
     It 'reads PyPI without sending the GitHub token' {
         Mock Invoke-GitHubAPIWithRetry { [pscustomobject]@{ info = [pscustomobject]@{ version = '1.9.0' } } }
-        Get-ToolLatestVersion -Tool ([pscustomobject]@{ registry = 'pypi'; package = 'piper-tts' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.9.0'
-        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -eq 'https://pypi.org/pypi/piper-tts/json' -and -not $Headers.ContainsKey('Authorization') }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ registry = 'pypi'; package = 'pip-audit' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.9.0'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -eq 'https://pypi.org/pypi/pip-audit/json' -and -not $Headers.ContainsKey('Authorization') }
     }
 
     It 'reads the VS Code update service without sending the GitHub token' {

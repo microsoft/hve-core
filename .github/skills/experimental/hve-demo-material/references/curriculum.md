@@ -69,10 +69,6 @@ effect. Speaker notes written as YAML block scalars are synthesized with the
 wrap in a block scalar is otherwise spoken as a pause and inflates the duration
 without adding a single word.
 
-The same budget applies under `narration: piper`. The same L100 notes ran 284
-seconds with the Azure voice and 285 seconds with Piper's default
-`en_US-joe-medium` voice at its natural rate.
-
 The narration is also the video's audio description. Write speaker notes that
 voice every claim a slide shows and describe every live capture in words, so a
 viewer who cannot see the screen loses nothing. Captions and the transcript are
