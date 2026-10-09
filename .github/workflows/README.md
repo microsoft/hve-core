@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-05
+ms.date: 2026-10-08
 ms.topic: reference
 keywords:
   - github actions
@@ -572,6 +572,7 @@ and cannot start or continue a sweep.
 | `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                                               | spell-check-results            |
 | `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                                               | markdown-lint-results          |
 | `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                                               | table-format-results           |
+| `typescript-check.yml`       | tsc (`npm run lint:ts`)  | Type-check TypeScript sources        | `soft-fail` (false)                                                                                                               | typescript-check-results       |
 | `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                                  | psscriptanalyzer-results       |
 | `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true)                   | frontmatter-validation-results |
 | `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                                  | skill-validation-results       |
