@@ -113,12 +113,23 @@ fi
 # Show summary mode
 if [[ "${SHOW_SUMMARY}" == "true" ]]; then
   echo "Changed files:"
-  grep -E '^diff --git' "${INPUT_FILE}" | sed 's|diff --git a/||;s| b/.*||' | sort -u | while read -r file; do
-    # Count lines changed for this file
-    added=$(grep -A 1000 "diff --git a/${file} b/" "${INPUT_FILE}" | grep -m 1 -B 1000 "^diff --git" | grep -c "^+" 2>/dev/null || echo "0")
-    removed=$(grep -A 1000 "diff --git a/${file} b/" "${INPUT_FILE}" | grep -m 1 -B 1000 "^diff --git" | grep -c "^-" 2>/dev/null || echo "0")
-    echo "  ${file} (+${added}/-${removed})"
-  done
+  # Count lines changed per file, matching Get-DiffSummary counts in read-diff.ps1
+  awk '
+    { sub(/\r$/, "") }
+    /^diff --git a\/.+ b\// {
+      if (file != "") { printf "  %s (+%d/-%d)\n", file, added, removed }
+      # Skip the 13-char "diff --git a/" prefix; search " b/" from char 2
+      # to mirror the lazy (.+?) b/ match in Get-DiffSummary.
+      rest = substr($0, 14)
+      file = substr(rest, 1, index(substr(rest, 2), " b/"))
+      added = 0
+      removed = 0
+      next
+    }
+    file != "" && /^\+[^+]/ { added++ }
+    file != "" && /^-[^-]/ { removed++ }
+    END { if (file != "") { printf "  %s (+%d/-%d)\n", file, added, removed } }
+  ' < "${INPUT_FILE}" | LC_ALL=C sort -f
   exit 0
 fi
 

@@ -594,6 +594,13 @@ Describe 'Write-CIAnnotation' -Tag 'Unit' {
             $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile }
             $output | Should -Not -Match '::error::Pwned'
         }
+
+        It 'Emits a single encoded line for a hostile file path with legacy command syntax' {
+            $hostileFile = "evals\dir\a:b`n##[warning]x,line=9%.yml"
+            $output = @(Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Error -File $hostileFile })
+            $output | Should -HaveCount 1
+            $output[0] | Should -BeExactly '::error file=evals/dir/a%3Ab%0A##[warning]x%2Cline=9%25.yml::Test'
+        }
     }
 
     Context 'Workflow command injection prevention (Azure DevOps)' {

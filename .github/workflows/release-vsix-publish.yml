@@ -17,6 +17,11 @@ concurrency:
 permissions:
   contents: read
 
+# The release producer never restores or saves Actions caches. The cap also
+# applies to every reusable workflow it calls, including the pinned signer, so
+# no cache written by another workflow can influence the signed artifact.
+cache-mode: none
+
 jobs:
   validate-release:
     name: Validate Tag and Release

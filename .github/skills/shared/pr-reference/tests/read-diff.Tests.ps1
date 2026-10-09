@@ -2,6 +2,13 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
+# Discovery-time capability probe: the Bash parity tests execute the real read-diff.sh.
+$script:BashAvailable = $false
+if (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue) {
+    & bash -c 'test -r "$1"' bash (Join-Path $PSScriptRoot '../scripts/read-diff.sh') 2>$null
+    $script:BashAvailable = $LASTEXITCODE -eq 0
+}
+
 BeforeAll {
     . (Join-Path -Path $PSScriptRoot -ChildPath '../scripts/read-diff.ps1')
 
@@ -217,6 +224,81 @@ Describe 'Get-DiffSummary' {
         $result = Get-DiffSummary -Content $content
         # Only 1 addition and 1 deletion; --- and +++ are excluded
         $result | Should -Match 'file.ts \(\+1/-1\)'
+    }
+}
+
+Describe 'read-diff PowerShell and Bash summary parity' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
+    BeforeAll {
+        $script:BashScript = Join-Path $PSScriptRoot '../scripts/read-diff.sh'
+    }
+
+    It 'Prints one line per file with the same counts as Get-DiffSummary' {
+        $bashLines = @(& bash $script:BashScript --input $script:FixturePath --summary)
+        $LASTEXITCODE | Should -Be 0
+        $bashLines | Should -Be @(
+            'Changed files:'
+            '  src/alpha.ts (+4/-0)'
+            '  src/beta.ts (+3/-1)'
+            '  src/gamma.ts (+0/-3)'
+        )
+        $powerShellLines = (Get-DiffSummary -Content @(Get-Content -LiteralPath $script:FixturePath)) -split "`r?`n"
+        @($bashLines | Sort-Object) | Should -Be @($powerShellLines | Sort-Object)
+    }
+
+    It 'Matches Get-DiffSummary counts for mixed-case and underscore paths with CRLF input' {
+        $crlfPath = Join-Path $TestDrive 'pr-reference-crlf.xml'
+        $crlfContent = @(
+            'diff --git a/src/zeta.ts b/src/zeta.ts'
+            '@@ -1 +1,2 @@'
+            '-old'
+            '+new'
+            '+'
+            'diff --git a/src/__init__.py b/src/__init__.py'
+            '@@ -1,2 +1 @@'
+            '-old'
+            '-old'
+            '+new'
+            'diff --git a/README.md b/README.md'
+            '@@ -1 +1 @@'
+            '-old'
+            '+new'
+            'diff --git a/docs/guide.md b/docs/guide.md'
+            '@@ -0,0 +1 @@'
+            '+line'
+        ) -join "`r`n"
+        Set-Content -Path $crlfPath -Value $crlfContent -NoNewline
+
+        $bashLines = @(& bash $script:BashScript --input $crlfPath --summary)
+        $LASTEXITCODE | Should -Be 0
+        # LC_ALL=C sort -f puts _ after letters, which culture-aware Sort-Object may not
+        # match, and the bare + line is excluded even with a trailing CR
+        $bashLines | Should -Be @(
+            'Changed files:'
+            '  docs/guide.md (+1/-0)'
+            '  README.md (+1/-1)'
+            '  src/zeta.ts (+1/-1)'
+            '  src/__init__.py (+1/-2)'
+        )
+        $powerShellLines = (Get-DiffSummary -Content @(Get-Content -LiteralPath $crlfPath)) -split "`r?`n"
+        @($bashLines | Sort-Object) | Should -Be @($powerShellLines | Sort-Object)
+    }
+
+    It 'Summarizes a relative --input path that contains an equals sign' {
+        Copy-Item -LiteralPath $script:FixturePath -Destination (Join-Path $TestDrive 'pr=ref.xml')
+        Push-Location $TestDrive
+        try {
+            $bashLines = @(& bash $script:BashScript --input 'pr=ref.xml' --summary)
+        }
+        finally {
+            Pop-Location
+        }
+        $LASTEXITCODE | Should -Be 0
+        $bashLines | Should -Be @(
+            'Changed files:'
+            '  src/alpha.ts (+4/-0)'
+            '  src/beta.ts (+3/-1)'
+            '  src/gamma.ts (+0/-3)'
+        )
     }
 }
 

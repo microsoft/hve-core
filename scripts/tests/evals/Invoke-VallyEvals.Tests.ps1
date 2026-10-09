@@ -1523,13 +1523,22 @@ stimuli:
         )
         $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'unrelated.yaml'; Yaml = $spec })
 
-        $output = & pwsh -NoProfile -File $script:ScriptPath `
-            -ManifestPath $fx.ManifestPath `
-            -EvalRoot $fx.EvalRoot `
-            -LogsDir $fx.LogsDir `
-            -RepoRoot $fx.Root `
-            -VallyCommand $script:StubPath 2>&1
-        $LASTEXITCODE | Should -Be 2
+        # Annotations are platform-aware; pin GitHub Actions so the child emits workflow commands.
+        $savedGitHubActions = $env:GITHUB_ACTIONS
+        try {
+            $env:GITHUB_ACTIONS = 'true'
+            $output = & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath 2>&1
+            $exitCode = $LASTEXITCODE
+        }
+        finally {
+            $env:GITHUB_ACTIONS = $savedGitHubActions
+        }
+        $exitCode | Should -Be 2
 
         $joined = $output -join "`n"
         $joined | Should -Match '::error file=.+orphan\.prompt\.md::No eval spec resolves prompt:orphan'
@@ -2531,6 +2540,7 @@ Describe 'Invoke-VallyEvals.ps1 moderation.threshold override' -Tag 'Integration
         $script:RealRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
         $script:RealModerationScript = Join-Path $script:RealRepoRoot 'scripts/evals/Invoke-ContentModeration.ps1'
         $script:RealModerationRunner = Join-Path $script:RealRepoRoot 'scripts/evals/Modules/ModerationRunner.psm1'
+        $script:RealCIHelpers = Join-Path $script:RealRepoRoot 'scripts/lib/Modules/CIHelpers.psm1'
 
         function New-ModerationFixture {
             param([Parameter(Mandatory)][string]$SpecThreshold)
@@ -2541,12 +2551,14 @@ Describe 'Invoke-VallyEvals.ps1 moderation.threshold override' -Tag 'Integration
             $fakeScripts = Join-Path $root 'scripts/evals'
             $fakeModules = Join-Path $fakeScripts 'Modules'
             $fakeMod     = Join-Path $fakeScripts 'moderation'
-            foreach ($d in @($evalRoot, $logsDir, $fakeScripts, $fakeModules, $fakeMod)) {
+            $fakeLibModules = Join-Path $root 'scripts/lib/Modules'
+            foreach ($d in @($evalRoot, $logsDir, $fakeScripts, $fakeModules, $fakeMod, $fakeLibModules)) {
                 New-Item -ItemType Directory -Path $d -Force | Out-Null
             }
 
             Copy-Item -LiteralPath $script:RealModerationScript -Destination $fakeScripts -Force
             Copy-Item -LiteralPath $script:RealModerationRunner -Destination $fakeModules -Force
+            Copy-Item -LiteralPath $script:RealCIHelpers -Destination $fakeLibModules -Force
             Set-Content -LiteralPath (Join-Path $fakeMod 'moderate.py') -Value '# placeholder' -Encoding utf8
 
             $specYaml = @"

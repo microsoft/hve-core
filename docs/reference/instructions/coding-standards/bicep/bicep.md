@@ -3,7 +3,7 @@ title: Coding Standards/Bicep/Bicep
 description: Bicep infrastructure-as-code authoring conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - instruction
@@ -16,7 +16,7 @@ keywords:
 |-------------|---------------------------------------------------------------------|
 | Kind        | instruction                                                         |
 | Source      | `.github/instructions/coding-standards/bicep/bicep.instructions.md` |
-| Invocation  | Applied automatically to `**/bicep/**`                              |
+| Invocation  | Applied automatically to `**/*.bicep, **/*.bicepparam, **/bicep/**` |
 | Interactive | No                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
@@ -28,10 +28,11 @@ Bicep infrastructure-as-code authoring conventions
 
 ## When to use it
 
-Use these instructions when authoring or revising Azure infrastructure in a
-`bicep` directory, including modules, parameter files, types, and outputs.
-Confirm resource schemas and stable API versions before writing unfamiliar
-resources; use the Terraform conventions for HCL-based infrastructure.
+Use these instructions when authoring or revising Azure infrastructure in
+`.bicep` or `.bicepparam` files, including modules, parameter files, types,
+and outputs. Confirm resource schemas and stable API versions before writing
+unfamiliar resources, and disclose unverified versions when schema tools are
+unavailable; use the Terraform conventions for HCL-based infrastructure.
 
 ## Example usage
 

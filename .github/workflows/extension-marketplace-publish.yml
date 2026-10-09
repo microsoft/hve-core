@@ -14,6 +14,16 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      AZURE_CLIENT_ID:
+        description: "Client ID of the federated Azure identity used to publish"
+        required: true
+      AZURE_TENANT_ID:
+        description: "Tenant ID of the federated Azure identity used to publish"
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        description: "Subscription ID for the Azure login"
+        required: true
 
 permissions:
   contents: read
