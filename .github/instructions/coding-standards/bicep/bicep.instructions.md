@@ -271,7 +271,7 @@ Version consistency takes precedence over the latest stable version. When a file
 When Bicep MCP schema tools are not configured or return errors, choose an API version in this order:
 
 1. Reuse an API version already present in the workspace for the same resource type.
-2. Otherwise, use a version cited from the [Azure resource reference](https://learn.microsoft.com/azure/templates/).
+2. Otherwise, when documentation lookups are available and permitted, use a version cited from the [Azure resource reference](https://learn.microsoft.com/azure/templates/).
 3. Otherwise, use the best-known stable version and label it unverified.
 
 In every case, state that schema data was unavailable, name the API versions that remain unverified, and do not claim the template was schema-validated. Build the file with `bicep build` or `az bicep build` and resolve `BCP036`, `BCP037`, and `BCP081` before finishing.

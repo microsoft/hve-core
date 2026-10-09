@@ -1065,7 +1065,7 @@ stimuli:
       - type: output-matches
         name: instruction-bicep-parameter-conformance-scope-language
         config:
-          pattern: "(?i)@secure|secure\\(\\)|no\\s+defaults?"
+          pattern: "(?i)@secure|secure\\(\\)|\\bno\\s+defaults?\\b"
 
   - name: instruction-pptx-conformance
     prompt: |
