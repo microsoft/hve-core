@@ -1856,30 +1856,6 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $run | Should -Not -Match 'git add --all'
     }
 
-    It 'Grants the workflows permission only to the promotion head pushes' {
-        $expected = @('release-prerelease-prepare.yml/prepare-promotion', 'release-stable.yml/prepare-promotion')
-        $grants = foreach ($file in Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml') {
-            $document = Get-WorkflowDocument -Name $file.Name
-            if ($document -isnot [System.Collections.IDictionary] -or -not $document.Contains('jobs')) { continue }
-            foreach ($job in $document['jobs'].GetEnumerator()) {
-                foreach ($step in @($job.Value['steps'])) {
-                    if ($step -is [System.Collections.IDictionary] -and [string]$step['uses'] -match '^actions/create-github-app-token@' `
-                            -and $step.Contains('with') -and $step['with'].Contains('permission-workflows')) {
-                        [pscustomobject]@{ Key = "$($file.Name)/$($job.Key)"; Level = [string]$step['with']['permission-workflows'] }
-                    }
-                }
-            }
-        }
-
-        [string[]]@($grants | ForEach-Object { $_.Key } | Sort-Object) | Should -Be $expected
-        @($grants | Where-Object { $_.Level -ne 'write' }) | Should -BeNullOrEmpty
-        foreach ($workflow in @('release-prerelease-prepare.yml', 'release-stable.yml')) {
-            $token = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $workflow) -JobName 'prepare-promotion' `
-                -StepName 'Generate GitHub App Token'
-            [string]$token['with']['permission-contents'] | Should -BeExactly 'write'
-        }
-    }
-
     It 'Checks out only trusted release tooling from main in <Workflow>' -ForEach @(
         @{ Workflow = 'release-prerelease-prepare.yml' }
         @{ Workflow = 'release-stable.yml' }

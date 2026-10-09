@@ -37,7 +37,7 @@ Every job MUST declare its own `permissions:` block whenever the workflow-level 
 
 An empty workflow-level block is a default, not a ceiling. A job that does declare its own block still receives what it declares, because job-level permissions replace the workflow-level set rather than being capped by it.
 
-A job that acts only through a GitHub App token or another credential, and never uses `GITHUB_TOKEN`, SHOULD declare `permissions: {}`. When a job mints a GitHub App token with `actions/create-github-app-token`, it SHOULD request only the app permissions the job uses through `permission-*` inputs. A job whose App token pushes commits that can carry upstream changes to `.github/workflows/`, such as a merge of another branch, MUST also request `permission-workflows: write`; GitHub rejects such a push without it.
+A job that acts only through a GitHub App token or another credential, and never uses `GITHUB_TOKEN`, SHOULD declare `permissions: {}`. When a job mints a GitHub App token with `actions/create-github-app-token`, it SHOULD request only the app permissions the job uses through `permission-*` inputs.
 
 **Required pattern:**
 
