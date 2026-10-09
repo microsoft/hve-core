@@ -1,23 +1,23 @@
 ---
-title: Coding Standards/Typescript Doc Comments
+title: Coding Standards/Typescript/Typescript Doc Comments
 description: "Contract-focused TSDoc conventions for TypeScript. Use when adding or changing reusable functions, classes, types, components, hooks, props, callbacks, or test helpers"
-sidebar_position: 3
+sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-09
 ms.topic: reference
 keywords:
   - instruction
   - coding-standards
-  - coding-standards/typescript-doc-comments
+  - coding-standards/typescript/typescript-doc-comments
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                           |
-|-------------|---------------------------------------------------------------------------------|
-| Kind        | instruction                                                                     |
-| Source      | `.github/instructions/coding-standards/typescript-doc-comments.instructions.md` |
-| Invocation  | Applied automatically to `**/*.ts, **/*.tsx, **/*.mts, **/*.cts`                |
-| Interactive | No                                                                              |
+| Field       | Value                                                                                      |
+|-------------|--------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                |
+| Source      | `.github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md` |
+| Invocation  | Applied automatically to `**/*.ts, **/*.tsx, **/*.mts, **/*.cts`                           |
+| Interactive | No                                                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

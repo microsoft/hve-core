@@ -1795,8 +1795,8 @@ stimuli:
       ```
     agent_environment:
       files:
-        - src: ../../.github/instructions/coding-standards/typescript-doc-comments.instructions.md
-          dest: .github/instructions/coding-standards/typescript-doc-comments.instructions.md
+        - src: ../../.github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+          dest: .github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
     tags:
       category: behavior-conformance
       instruction: typescript-doc-comments
@@ -1845,8 +1845,8 @@ stimuli:
          on every build.
     agent_environment:
       files:
-        - src: ../../.github/instructions/coding-standards/typescript-doc-comments.instructions.md
-          dest: .github/instructions/coding-standards/typescript-doc-comments.instructions.md
+        - src: ../../.github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+          dest: .github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
     tags:
       category: behavior-conformance
       instruction: typescript-doc-comments

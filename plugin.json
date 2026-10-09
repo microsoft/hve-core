@@ -96,7 +96,7 @@
     ".github/instructions/coding-standards/rust/rust-tests.instructions.md",
     ".github/instructions/coding-standards/rust/rust.instructions.md",
     ".github/instructions/coding-standards/terraform/terraform.instructions.md",
-    ".github/instructions/coding-standards/typescript-doc-comments.instructions.md",
+    ".github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md",
     ".github/instructions/coding-standards/uv-projects.instructions.md",
     ".github/instructions/design-thinking/dt-coach-telemetry.instructions.md",
     ".github/instructions/engagement-reporting/data-handling.instructions.md",
