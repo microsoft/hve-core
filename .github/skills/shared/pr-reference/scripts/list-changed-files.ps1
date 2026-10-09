@@ -99,27 +99,98 @@ function Get-FileChanges {
         }
     }
 
-    $content = Get-Content -LiteralPath $XmlPath -Raw
+    $lines = Get-Content -LiteralPath $XmlPath
+    $blocks = @()
+    $currentBlock = [System.Collections.Generic.List[string]]::new()
+    $inDiff = $false
+
+    foreach ($line in $lines) {
+        if ($line -match '^[ ]*diff --git\s+') {
+            if ($currentBlock.Count -gt 0) {
+                $blocks += ($currentBlock -join [Environment]::NewLine)
+                $currentBlock.Clear()
+            }
+            $inDiff = $true
+        }
+        elseif ($line -match '^[ ]*</full_diff>') {
+            if ($currentBlock.Count -gt 0) {
+                $blocks += ($currentBlock -join [Environment]::NewLine)
+                $currentBlock.Clear()
+            }
+            $inDiff = $false
+            break
+        }
+
+        if ($inDiff) {
+            $currentBlock.Add($line)
+        }
+    }
+    if ($currentBlock.Count -gt 0) {
+        $blocks += ($currentBlock -join [Environment]::NewLine)
+    }
+
     $changes = @()
 
-    # Match diff headers and analyze change type
-    $diffPattern = '(?ms)diff --git a/(.+?) b/(.+?)(?=\n)(.*?)(?=diff --git|</full_diff>)'
-    $regexMatches = [regex]::Matches($content, $diffPattern)
+    foreach ($diffBlock in $blocks) {
+        $oldPath = $null
+        $newPath = $null
 
-    foreach ($match in $regexMatches) {
-        $oldPath = $match.Groups[1].Value.Trim()
-        $newPath = $match.Groups[2].Value.Trim()
-        $diffBlock = $match.Groups[3].Value
+        if ($diffBlock -match '(?m)^[ ]*rename from\s+(.+)$') {
+            $oldPath = Resolve-UnquotedGitPath $Matches[1].Trim()
+        }
+        if ($diffBlock -match '(?m)^[ ]*rename to\s+(.+)$') {
+            $newPath = Resolve-UnquotedGitPath $Matches[1].Trim()
+        }
+
+        if (-not $newPath -and $diffBlock -match '(?m)^[ ]*\+\+\+\s+(?:b/|"b/)(.+?)"?$') {
+            $p = $Matches[1].Trim()
+            if ($p -ne '/dev/null') {
+                $newPath = Resolve-UnquotedGitPath $p
+            }
+        }
+        if (-not $oldPath -and $diffBlock -match '(?m)^[ ]*---\s+(?:a/|"a/)(.+?)"?$') {
+            $p = $Matches[1].Trim()
+            if ($p -ne '/dev/null') {
+                $oldPath = Resolve-UnquotedGitPath $p
+            }
+        }
+
+        if (-not $oldPath -or -not $newPath) {
+            if ($diffBlock -match '(?m)^[ ]*diff --git\s+(.+)$') {
+                $header = $Matches[1].Trim()
+                if ($header -match '^"a/(.+?)"\s+"b/(.+?)"$') {
+                    if (-not $oldPath) { $oldPath = Resolve-UnquotedGitPath $Matches[1] }
+                    if (-not $newPath) { $newPath = Resolve-UnquotedGitPath $Matches[2] }
+                }
+                elseif ($header -match '^a/(.+)\s+b/(.+)$') {
+                    $candOld = $Matches[1]
+                    $candNew = $Matches[2]
+                    if (-not $oldPath) { $oldPath = Resolve-UnquotedGitPath $candOld }
+                    if (-not $newPath) { $newPath = Resolve-UnquotedGitPath $candNew }
+                }
+            }
+        }
 
         $changeType = 'Modified'
-        if ($diffBlock -match 'new file mode') {
+        if ($diffBlock -match '(?m)^[ ]*new file mode') {
             $changeType = 'Added'
+            if (-not $newPath -and $oldPath) { $newPath = $oldPath }
+            if (-not $oldPath -and $newPath) { $oldPath = $newPath }
         }
-        elseif ($diffBlock -match 'deleted file mode') {
+        elseif ($diffBlock -match '(?m)^[ ]*deleted file mode') {
             $changeType = 'Deleted'
+            if (-not $newPath -and $oldPath) { $newPath = $oldPath }
+            if (-not $oldPath -and $newPath) { $oldPath = $newPath }
         }
-        elseif ($diffBlock -match 'rename from' -or $oldPath -ne $newPath) {
+        elseif ($diffBlock -match '(?m)^[ ]*rename from' -or ($oldPath -and $newPath -and $oldPath -ne $newPath)) {
             $changeType = 'Renamed'
+        }
+
+        if (-not $newPath) {
+            $newPath = $oldPath
+        }
+        if (-not $oldPath) {
+            $oldPath = $newPath
         }
 
         # Apply exclusion filter
@@ -144,7 +215,7 @@ function Get-FileChanges {
         }
     }
 
-    return $changes | Sort-Object -Property Path
+    return $changes | Format-PathOrdinal
 }
 
 function Format-Output {

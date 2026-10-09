@@ -121,9 +121,11 @@ extract_files() {
   local exclude="$2"
   local results=()
 
-  # Load all relevant lines into an array so lookahead never consumes the stream
+  # Load all relevant lines into an array
   local lines=()
-  mapfile -t lines < <(grep -E '^(diff --git|new file|deleted file|rename from)' "${INPUT_FILE}" 2>/dev/null || true)
+  while IFS= read -r l; do
+    lines+=("$l")
+  done < <(grep -E '^[ ]*(diff --git|new file|deleted file|rename from|rename to|\+\+\+[ ]+("b/|b/|/dev/null)|---[ ]+("a/|a/|/dev/null))' "${INPUT_FILE}" 2>/dev/null || true)
 
   local i=0
   local count=${#lines[@]}
@@ -132,28 +134,63 @@ extract_files() {
     local line="${lines[i]}"
 
     # Extract file path from diff header
-    if [[ "$line" =~ ^diff\ --git\ a/(.+)\ b/(.+)$ ]]; then
-      local old_path="${BASH_REMATCH[1]}"
-      local new_path="${BASH_REMATCH[2]}"
+    if [[ "$line" =~ ^[[:space:]]*diff\ --git\ (.+)$ ]]; then
+      local header="${BASH_REMATCH[1]}"
+      local old_path=""
+      local new_path=""
       local change_type="modified"
 
-      # Peek at the next line to determine change type (index-based, no stream consumption)
-      local next=$(( i + 1 ))
-      if (( next < count )); then
-        local next_line="${lines[next]}"
-        if [[ "$next_line" =~ ^new\ file ]]; then
+      local j=$(( i + 1 ))
+      while (( j < count )); do
+        local sub="${lines[j]}"
+        if [[ "$sub" =~ ^[[:space:]]*diff\ --git ]]; then
+          break
+        elif [[ "$sub" =~ ^[[:space:]]*new\ file ]]; then
           change_type="added"
-          (( i++ )) || true
-        elif [[ "$next_line" =~ ^deleted\ file ]]; then
+        elif [[ "$sub" =~ ^[[:space:]]*deleted\ file ]]; then
           change_type="deleted"
-          (( i++ )) || true
-        elif [[ "$next_line" =~ ^rename\ from ]]; then
+        elif [[ "$sub" =~ ^[[:space:]]*rename\ from\ (.+)$ ]]; then
           change_type="renamed"
-          (( i++ )) || true
-        elif [[ "$old_path" != "$new_path" ]]; then
+          old_path="${BASH_REMATCH[1]}"
+        elif [[ "$sub" =~ ^[[:space:]]*rename\ to\ (.+)$ ]]; then
           change_type="renamed"
+          new_path="${BASH_REMATCH[1]}"
+        elif [[ "$sub" =~ ^[[:space:]]*\+\+\+[[:space:]]+(b/|\"b/)?(.+)\"?$ ]]; then
+          local p="${BASH_REMATCH[2]}"
+          p="${p%\"}"
+          if [[ "$p" != "/dev/null" && -z "$new_path" ]]; then
+            new_path="$p"
+          fi
+        elif [[ "$sub" =~ ^[[:space:]]*---[[:space:]]+(a/|\"a/)?(.+)\"?$ ]]; then
+          local p="${BASH_REMATCH[2]}"
+          p="${p%\"}"
+          if [[ "$p" != "/dev/null" && -z "$old_path" ]]; then
+            old_path="$p"
+          fi
         fi
-      elif [[ "$old_path" != "$new_path" ]]; then
+        (( j++ )) || true
+      done
+
+      if [[ -z "$old_path" || -z "$new_path" ]]; then
+        if [[ "$header" =~ ^\"a/(.+)\"[[:space:]]+\"b/(.+)\"$ ]]; then
+          [[ -z "$old_path" ]] && old_path="${BASH_REMATCH[1]}"
+          [[ -z "$new_path" ]] && new_path="${BASH_REMATCH[2]}"
+        elif [[ "$header" =~ ^a/(.+)[[:space:]]+b/(.+)$ ]]; then
+          [[ -z "$old_path" ]] && old_path="${BASH_REMATCH[1]}"
+          [[ -z "$new_path" ]] && new_path="${BASH_REMATCH[2]}"
+        fi
+      fi
+
+      [[ -z "$new_path" ]] && new_path="$old_path"
+      [[ -z "$old_path" ]] && old_path="$new_path"
+
+      # Unquote paths
+      old_path=$(echo "${old_path%\"}" | sed -E 's/^"//; s/\\([0-7])/\\0\1/g')
+      old_path=$(printf "%b" "${old_path}")
+      new_path=$(echo "${new_path%\"}" | sed -E 's/^"//; s/\\([0-7])/\\0\1/g')
+      new_path=$(printf "%b" "${new_path}")
+
+      if [[ "$old_path" != "$new_path" ]]; then
         change_type="renamed"
       fi
 
@@ -165,12 +202,16 @@ extract_files() {
           results+=("${new_path}|${change_type}")
         fi
       fi
+
+      i=$(( j - 1 ))
     fi
 
     (( i++ )) || true
   done
 
-  printf '%s\n' "${results[@]}" | sort -t'|' -k1
+  if [[ ${#results[@]} -gt 0 ]]; then
+    printf '%s\n' "${results[@]}" | LC_ALL=C sort -f -t'|' -k1
+  fi
 }
 
 format_output() {

@@ -171,8 +171,8 @@ Describe 'Get-DiffSummary' {
 
     It 'Counts additions and deletions per file' {
         $result = Get-DiffSummary -Content $script:summaryContent
-        # src/alpha.ts: 4 additions (bare + line excluded by regex), 0 deletions
-        $result | Should -Match 'src/alpha.ts \(\+4/-0\)'
+        # src/alpha.ts: 5 additions (including bare + line), 0 deletions
+        $result | Should -Match 'src/alpha.ts \(\+5/-0\)'
     }
 
     It 'Reports correct counts for modified files' {
@@ -217,6 +217,51 @@ Describe 'Get-DiffSummary' {
         $result = Get-DiffSummary -Content $content
         # Only 1 addition and 1 deletion; --- and +++ are excluded
         $result | Should -Match 'file.ts \(\+1/-1\)'
+    }
+
+    It 'Handles indented diff blocks from generate.ps1' {
+        $content = @(
+            '  diff --git a/indented.ts b/indented.ts'
+            '  index 123..456 100644'
+            '  --- a/indented.ts'
+            '  +++ b/indented.ts'
+            '  @@ -1,2 +1,3 @@'
+            '   context'
+            '  -old'
+            '  +'
+            '  +new'
+        )
+        $result = Get-DiffSummary -Content $content
+        $result | Should -Match 'indented.ts \(\+2/-1\)'
+    }
+
+    It 'Counts bare plus additions and markdown or frontmatter removals in hunks' {
+        $content = @(
+            'diff --git a/doc.md b/doc.md'
+            '--- a/doc.md'
+            '+++ b/doc.md'
+            '@@ -1,4 +1,4 @@'
+            '- item 1'
+            '---'
+            '+'
+            '+++added'
+        )
+        $result = Get-DiffSummary -Content $content
+        $result | Should -Match 'doc.md \(\+2/-2\)'
+    }
+
+    It 'Does not treat embedded diff text in hunk as new file header' {
+        $content = @(
+            'diff --git a/patch.ts b/patch.ts'
+            '--- a/patch.ts'
+            '+++ b/patch.ts'
+            '@@ -1,2 +1,2 @@'
+            '-old'
+            '+diff --git a/fake b/fake'
+        )
+        $result = Get-DiffSummary -Content $content
+        $result | Should -Match 'patch.ts \(\+1/-1\)'
+        $result | Should -Not -Match 'fake'
     }
 }
 
