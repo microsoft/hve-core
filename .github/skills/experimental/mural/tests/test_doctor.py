@@ -540,6 +540,32 @@ def test_given_profile_flag_when_scoped_dispatch_then_overrides_active(
     assert called == []
 
 
+def test_given_invalid_profile_when_scoped_dispatch_then_validation_error(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    fake_token_store: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """An invalid profile name fails as a usage error, not a scope denial."""
+    # Arrange
+    _write_scope_store(
+        fake_token_store,
+        active_profile="work",
+        work_scopes=("murals:read", "murals:write"),
+        default_scopes=("murals:read", "murals:write"),
+    )
+
+    # Act
+    rc, called = _dispatch_with_fake_handler(
+        mural_module, monkeypatch, profile="not a profile!"
+    )
+
+    # Assert
+    assert rc == mural_module.EXIT_FAILURE
+    assert called == []
+    assert "invalid profile name" in capsys.readouterr().err
+
+
 def test_given_malformed_store_when_unscoped_command_dispatches_then_handler_runs(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
