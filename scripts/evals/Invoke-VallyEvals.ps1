@@ -746,7 +746,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
     $sourceErrors = @(Test-EvalSpecSources -Spec $parsedSpec -SpecPath $repoRelativeSpecPath -RepoRoot $resolvedRoot)
     if ($sourceErrors.Count -gt 0) {
         foreach ($sourceError in $sourceErrors) {
-            Write-Host "::error file=${repoRelativeSpecPath}::$($sourceError.field): $($sourceError.message)"
+            Write-CIAnnotation -Level Error -File $repoRelativeSpecPath -Message "$($sourceError.field): $($sourceError.message)"
         }
         $specResults[$runKey] = @{
             specPath         = $specAbs

@@ -160,7 +160,7 @@ stimuli:
   - name: rai-planner-from-security-plan-no-plans
     prompt: |
       Start a Responsible AI assessment from our completed security plan. No security plan path was supplied, and this workspace has no `.copilot-tracking/security-plans/` directory. Follow the startup contract, then explain how you looked for a security plan and what happens next. Reply in chat only.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md

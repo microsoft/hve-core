@@ -76,7 +76,7 @@ stimuli:
   - name: security-reviewer-llm-agentic-preset
     prompt: |
       A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/security-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -101,7 +101,7 @@ stimuli:
   - name: security-reviewer-web-fast-path
     prompt: |
       A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/security-reviewer.agent.md
           dest: .github/copilot-instructions.md
