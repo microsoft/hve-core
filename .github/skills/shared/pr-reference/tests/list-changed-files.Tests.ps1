@@ -163,6 +163,113 @@ index a1b2c3d..d4e5f6a 100644
         }
     }
 
+    Context 'Header-like text inside diff content' {
+        BeforeAll {
+            $diffLines = @'
+diff --git a/docs/headers.md b/docs/headers.md
+index 1111111..2222222 100644
+--- a/docs/headers.md
++++ b/docs/headers.md
+@@ -1,3 +1,3 @@
+ diff --git a/path/to/file b/path/to/file
+-old line
++diff --git a/x b/x
+  diff --git a/edge b/edge
+diff --git a/docs/added-note.md b/docs/added-note.md
+index 3333333..4444444 100644
+--- a/docs/added-note.md
++++ b/docs/added-note.md
+@@ -1,2 +1,2 @@
+ new file mode 100644
+-old line
++new line
+diff --git a/docs/deleted-note.md b/docs/deleted-note.md
+index 5555555..6666666 100644
+--- a/docs/deleted-note.md
++++ b/docs/deleted-note.md
+@@ -1 +1 @@
+-old line
++deleted file mode 100644
+diff --git a/docs/renamed-note.md b/docs/renamed-note.md
+index 7777777..8888888 100644
+--- a/docs/renamed-note.md
++++ b/docs/renamed-note.md
+@@ -1,2 +1,2 @@
+ rename from docs/old-note.md
+-old line
++new line
+diff --git a/src/gone.ts b/src/gone.ts
+deleted file mode 100644
+index 9999999..0000000
+--- a/src/gone.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-// new file mode 100644
+diff --git a/src/fresh.ts b/src/fresh.ts
+new file mode 100644
+index 0000000..1212121
+--- /dev/null
++++ b/src/fresh.ts
+@@ -0,0 +1 @@
++// deleted file mode 100644
+diff --git a/src/old-name.ts b/src/new-name.ts
+similarity index 90%
+rename from src/old-name.ts
+rename to src/new-name.ts
+index 1313131..1414141 100644
+--- a/src/old-name.ts
++++ b/src/new-name.ts
+@@ -1 +1 @@
+-old line
++new line
+'@ -split '\r?\n'
+
+            # generate.sh writes the diff unindented; generate.ps1 indents each line by two spaces
+            $writeFixture = {
+                param([string]$Name, [string[]]$Lines, [string]$NewLine)
+                $path = Join-Path $TestDrive $Name
+                $xml = @('<commit_history>', '  <full_diff>') + $Lines + @('  </full_diff>', '</commit_history>')
+                Set-Content -Path $path -Value ($xml -join $NewLine) -NoNewline
+                return $path
+            }
+            $script:HeaderTextFixtures = @{
+                Unindented = & $writeFixture 'header-text.xml' $diffLines "`n"
+                Indented   = & $writeFixture 'header-text-indented.xml' ($diffLines | ForEach-Object { "  $_" }) "`r`n"
+            }
+        }
+
+        It 'Lists only files with a real diff header, typed from header lines (<Fixture>)' -ForEach @(
+            @{ Fixture = 'Unindented' }
+            @{ Fixture = 'Indented' }
+        ) {
+            $changes = Get-FileChanges -XmlPath $script:HeaderTextFixtures[$Fixture]
+            @($changes | ForEach-Object { "$($_.Path)=$($_.Type)" }) | Should -Be @(
+                'docs/added-note.md=Modified'
+                'docs/deleted-note.md=Modified'
+                'docs/headers.md=Modified'
+                'docs/renamed-note.md=Modified'
+                'src/fresh.ts=Added'
+                'src/gone.ts=Deleted'
+                'src/old-name.ts -> src/new-name.ts=Renamed'
+            )
+        }
+
+        It 'Keeps modified files when excluding deleted files (<Fixture>)' -ForEach @(
+            @{ Fixture = 'Unindented' }
+            @{ Fixture = 'Indented' }
+        ) {
+            $changes = Get-FileChanges -XmlPath $script:HeaderTextFixtures[$Fixture] -ExcludeFilterType @('Deleted')
+            @($changes.Path) | Should -Be @(
+                'docs/added-note.md'
+                'docs/deleted-note.md'
+                'docs/headers.md'
+                'docs/renamed-note.md'
+                'src/fresh.ts'
+                'src/old-name.ts -> src/new-name.ts'
+            )
+        }
+    }
+
     Context 'Empty diff' {
         BeforeAll {
             $xml = @'
