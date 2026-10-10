@@ -3,7 +3,7 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-10-10
 ms.topic: concept
 keywords:
   - project planning
@@ -45,12 +45,12 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Skills Overview
 
-| Skill                                                                                                   | Sub-Category              | Key Output                                                       |
-|---------------------------------------------------------------------------------------------------------|---------------------------|------------------------------------------------------------------|
-| [requirements-author](pathname://../../../.github/skills/project-planning/requirements-author/SKILL.md) | Requirements              | Drives the BRD/PRD Builder Q&A workflows                         |
-| [architecture-diagrams](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md)     | Architecture              | ASCII/Mermaid diagrams from IaC analysis                         |
-| [performance-slo-planner](../../reference/skills/project-planning/performance-slo-planner.md)           | Performance & Reliability | SLIs, SLOs, load models, test matrices, and reliability backlogs |
-| [proposal-response](../../reference/skills/project-planning/proposal-response.md)                       | Proposal Responses        | Traceable internal-review question, claim, evidence, and drafts  |
+| Skill                                                                                                                               | Sub-Category              | Key Output                                                       |
+|-------------------------------------------------------------------------------------------------------------------------------------|---------------------------|------------------------------------------------------------------|
+| [requirements-author](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/requirements-author/SKILL.md) | Requirements              | Drives the BRD/PRD Builder Q&A workflows                         |
+| [architecture-diagrams](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/architecture-diagrams/SKILL.md)     | Architecture              | ASCII/Mermaid diagrams from IaC analysis                         |
+| [performance-slo-planner](../../reference/skills/project-planning/performance-slo-planner.md)                                       | Performance & Reliability | SLIs, SLOs, load models, test matrices, and reliability backlogs |
+| [proposal-response](../../reference/skills/project-planning/proposal-response.md)                                                   | Proposal Responses        | Traceable internal-review question, claim, evidence, and drafts  |
 
 ## Requirements
 
@@ -65,13 +65,13 @@ For RFI, RFP, tender, bid, or questionnaire work, use `proposal-response` direct
 
 ## Architecture
 
-Two agents address architecture documentation from different angles. The ADR Creator uses phase-gated, standards-aligned reasoning to guide users through technical decisions (Frame, Decide, Govern), producing architecture decision records. The [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) analyzes infrastructure-as-code files and project structure to generate ASCII architecture diagrams directly in conversation.
+Two agents address architecture documentation from different angles. The ADR Creator uses phase-gated, standards-aligned reasoning to guide users through technical decisions (Frame, Decide, Govern), producing architecture decision records. The [architecture-diagrams skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/architecture-diagrams/SKILL.md) analyzes infrastructure-as-code files and project structure to generate ASCII architecture diagrams directly in conversation.
 
 > [!TIP]
-> Pair the ADR Creator with the [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): create an ADR for a design decision, then generate a diagram showing how the chosen approach fits the broader architecture.
+> Pair the ADR Creator with the [architecture-diagrams skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/architecture-diagrams/SKILL.md): create an ADR for a design decision, then generate a diagram showing how the chosen approach fits the broader architecture.
 
 * [ADR Creator](adr-creation): Guided decision reasoning and documentation
-* [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): Code-to-diagram generation from IaC analysis
+* [architecture-diagrams skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/architecture-diagrams/SKILL.md): Code-to-diagram generation from IaC analysis
 
 ## Performance & Reliability
 
@@ -97,7 +97,7 @@ See the [Security Planning](../security/README.md) guide for the workflow, opera
 * Agent definition files from the `project-planning` collection deployed to `.github/agents/`
 * For Security Planner: agent definition files from the `security` collection
 * For BRD/PRD builders: a writable `.copilot-tracking/` directory for session state persistence
-* For diagram generation: the [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) works with infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
+* For diagram generation: the [architecture-diagrams skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/architecture-diagrams/SKILL.md) works with infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
 
 ## Getting Started
 

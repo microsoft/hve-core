@@ -2,7 +2,7 @@
 title: Authoring Custom Skills
 description: Build self-contained skill packages that bundle domain knowledge, reference materials, and scripts for on-demand use
 author: Microsoft
-ms.date: 2026-08-29
+ms.date: 2026-10-10
 ms.topic: how-to
 keywords:
   - skills
@@ -159,7 +159,7 @@ Skills follow a three-level disclosure model that minimizes context consumption:
 
 This model matters for large skills. A compliance-review skill might include hundreds of pages of regulatory text in its `references/` folder, but Copilot reads only the SKILL.md body until a specific regulation is needed.
 
-The [pr-reference skill](pathname://../../.github/skills/shared/pr-reference/SKILL.md) in this repository demonstrates this pattern: the SKILL.md defines the protocol, and supporting files provide templates and helper scripts that load only during active use.
+The [pr-reference skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/shared/pr-reference/SKILL.md) in this repository demonstrates this pattern: the SKILL.md defines the protocol, and supporting files provide templates and helper scripts that load only during active use.
 
 ## Including Reference Materials
 
