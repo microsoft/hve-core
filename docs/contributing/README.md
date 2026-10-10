@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Contributing AI Artifacts"
 pagination_label: Contributing AI Artifacts
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - contributing
@@ -66,7 +66,6 @@ Use this table to navigate to the appropriate guide based on what you want to co
 
 * [Agents Directory](https://github.com/microsoft/hve-core/blob/main/.github/agents/)
 * [Instructions Directory](https://github.com/microsoft/hve-core/blob/main/.github/instructions/)
-* [Prompts Directory](https://github.com/microsoft/hve-core/blob/main/.github/prompts/)
 * [Skills Directory](https://github.com/microsoft/hve-core/blob/main/.github/skills/)
 
 ---

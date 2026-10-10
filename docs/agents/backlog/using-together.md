@@ -2,7 +2,7 @@
 title: Using Workflows Together
 description: End-to-end backlog pipeline walkthrough from discovery through execution across any supported tracker
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-02
 ms.topic: tutorial
 keywords:
   - backlog management
@@ -108,7 +108,7 @@ The handoff file is the contract between stages. It is plain Markdown, so correc
 ## Related Workflows
 
 * **PRD to hierarchy.** The [Functional Planner](../project-planning/README.md) agent converts a requirements document into a planned hierarchy without touching a tracker. Its output feeds `backlog-execute` after review.
-* **Azure DevOps delivery.** `/ado-create-pull-request` and `/ado-get-build-info` handle pull requests and pipeline status. They are delivery workflows in the `hve-core` collection, not backlog workflows.
+* **Azure DevOps delivery.** `/pull-request` and Azure DevOps build-status requests handle pull requests and pipeline status through the `backlog-management` skill's Azure DevOps references. They are delivery workflows in the `hve-core` collection, not backlog workflows.
 
 ## Next Steps
 

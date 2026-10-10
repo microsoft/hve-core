@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-05
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - copilot

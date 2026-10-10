@@ -1,7 +1,7 @@
 ---
 description: >-
   Correct spellings and naming conventions for people, products, and teams
-applyTo: "**/.github/agents/engagement-reporting/**, **/.github/prompts/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml"
+applyTo: "**/.github/agents/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml"
 ---
 
 # Terminology

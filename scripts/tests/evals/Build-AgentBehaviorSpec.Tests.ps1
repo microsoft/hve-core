@@ -47,6 +47,62 @@ BeforeAll {
     }
 }
 
+Describe 'Code review native editing contract' -Tag 'Unit' {
+  It 'Grants native editing to <AgentPath>' -ForEach @(
+    @{ AgentPath = 'code-review.agent.md' }
+    @{ AgentPath = 'subagents/code-review-accessibility.agent.md' }
+    @{ AgentPath = 'subagents/code-review-explainer.agent.md' }
+    @{ AgentPath = 'subagents/code-review-functional.agent.md' }
+    @{ AgentPath = 'subagents/code-review-orientation.agent.md' }
+    @{ AgentPath = 'subagents/code-review-readiness.agent.md' }
+    @{ AgentPath = 'subagents/code-review-security.agent.md' }
+    @{ AgentPath = 'subagents/code-review-standards.agent.md' }
+    @{ AgentPath = 'subagents/code-review-walkback.agent.md' }
+  ) {
+    $Path = Join-Path $PSScriptRoot "../../../.github/agents/coding-standards/$AgentPath"
+    $Content = Get-Content -Raw -LiteralPath $Path
+    $Frontmatter = [regex]::Match($Content, '\A---\r?\n(.*?)\r?\n---', 'Singleline')
+    $Frontmatter.Success | Should -BeTrue
+    $Agent = ConvertFrom-Yaml -Yaml $Frontmatter.Groups[1].Value
+    $Agent.tools | Should -Contain 'edit/editFiles'
+  }
+
+  It 'Checks resumed-review preservation for <Scenario>' -Tag 'NativeEditGrader' -ForEach @(
+    @{ Scenario = 'correct update'; ChangedPath = ''; ChangeApproval = $false; ExpectedExitCode = 0 }
+    @{ Scenario = 'changed approval'; ChangedPath = ''; ChangeApproval = $true; ExpectedExitCode = 1 }
+    @{ Scenario = 'changed other review'; ChangedPath = '.copilot-tracking/reviews/code-reviews/other-review/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
+    @{ Scenario = 'changed source'; ChangedPath = 'src/review-input.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
+    @{ Scenario = 'changed host session'; ChangedPath = 'host-session/metadata.json'; ChangeApproval = $false; ExpectedExitCode = 1 }
+  ) {
+    $SuiteRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
+    $Partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw -LiteralPath (Join-Path $SuiteRoot 'stimuli/code-review.yml'))
+    $Stimulus = $Partial.stimuli | Where-Object { $_.name -eq 'code-review-resume-native-edit' }
+    $Grader = $Stimulus.graders | Where-Object { $_.name -eq 'review-resume-preserves-protected-files' }
+    $Workspace = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
+    foreach ($Mount in $Stimulus.agent_environment.files) {
+      $Destination = Join-Path $Workspace $Mount.dest
+      New-Item -ItemType Directory -Path (Split-Path $Destination -Parent) -Force | Out-Null
+      Copy-Item -LiteralPath (Join-Path $SuiteRoot $Mount.src) -Destination $Destination
+    }
+    $MetadataPath = Join-Path $Workspace '.copilot-tracking/reviews/code-reviews/native-edit/metadata.json'
+    $Metadata = Get-Content -Raw -LiteralPath $MetadataPath | ConvertFrom-Json
+    $Metadata.status = 'ready'
+    $Metadata.humanReviewed = $ChangeApproval
+    [System.IO.File]::WriteAllText($MetadataPath, ($Metadata | ConvertTo-Json))
+    if ($ChangedPath) {
+      [System.IO.File]::AppendAllText((Join-Path $Workspace $ChangedPath), "`n")
+    }
+    Push-Location $Workspace
+    try {
+      $Output = & node @($Grader.config.args) 2>&1 | Out-String
+      $LASTEXITCODE | Should -Be $ExpectedExitCode -Because $Output
+    }
+    finally {
+      Pop-Location
+    }
+  }
+}
+
 Describe 'Build-AgentBehaviorSpec.ps1' -Tag 'Unit' {
     BeforeEach {
         $script:TestRoot = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
@@ -647,9 +703,9 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $stimulus.tags.advisory | Should -Be 'true'
   }
 
-  It 'Stages both license postures for the standards-handling prompt contract' {
-    $suite = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot '../behavior-conformance/prompts.eval.yaml'))
-    $stimulus = $suite.stimuli | Where-Object { $_.name -eq 'prompt-accessibility-coverage-matrix-standards-paraphrase' }
+  It 'Stages both license postures for the standards-handling skill contract' {
+    $suite = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot '../behavior-conformance/skill-behavior.eval.yaml'))
+    $stimulus = $suite.stimuli | Where-Object { $_.name -eq 'skill-accessibility-coverage-matrix-standards-paraphrase' }
     $files = @($stimulus.agent_environment.files)
     $files | Should -HaveCount 3
     $files.dest | Should -Contain '.github/instructions/hve-core/licensing-posture.instructions.md'
@@ -1522,7 +1578,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
 '@
     function Invoke-ObservationGrader {
       param([string]$Partial, [string]$Name, [string]$Reply, [string]$Workspace)
-      $specPath = if ($Partial -eq 'prompts') { '../behavior-conformance/prompts.eval.yaml' } else { "stimuli/$Partial.yml" }
+      $specPath = if ($Partial -eq 'skills') { '../behavior-conformance/skill-behavior.eval.yaml' } else { "stimuli/$Partial.yml" }
       $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot $specPath))
       $grader = $specification.stimuli.graders | Where-Object { $_.name -eq $Name }
       $grader.type | Should -Be 'program'
@@ -1718,7 +1774,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'missing-attribution'; Reply = 'WCAG: paraphrase. EN 301 549: never reproduce normative text; use the ETSI portal.'; Expected = $false }
     @{ Variant = 'keyword-only'; Reply = 'Verbatim normative text summary.'; Expected = $false }
   ) {
-    $result = Invoke-ObservationGrader -Partial 'prompts' -Name 'prompt-accessibility-coverage-matrix-standards-para-dac2b27b' -Reply $Reply -Workspace $TestDrive
+    $result = Invoke-ObservationGrader -Partial 'skills' -Name 'skill-accessibility-coverage-matrix-standards-para-dac2b27b' -Reply $Reply -Workspace $TestDrive
     $result.passed | Should -Be $Expected
     $result.score | Should -Be ([int]$Expected)
   }

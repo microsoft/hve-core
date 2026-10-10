@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore couldn
 stimuli:
   - name: rai-planner-class-recipe
     prompt: |
@@ -155,6 +156,31 @@ stimuli:
           # Lifecycle markers count as success only when emitted as standalone state lines, not when quoted in a denial.
           pattern: '(?im)(?<!\b(?:not|never|without)\s)(?<!\b(?:not|never|without)\s(?:complete|completed|completing|finish|finished|finishing|execute|executed|executing|run|running)\s)\bsuccessfully\b|^\s*(?:[-*]\s*)?`?lifecycle:(?:committed|loop-closed)`?\s*$'
           negate: true
+
+  - name: rai-planner-from-security-plan-no-plans
+    prompt: |
+      Start a Responsible AI assessment from our completed security plan. No security plan path was supplied, and this workspace has no `.copilot-tracking/security-plans/` directory. Follow the startup contract, then explain how you looked for a security plan and what happens next. Reply in chat only.
+    environment:
+      files:
+        - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
+          dest: .github/instructions/rai-planning/rai-identity.instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: from-security-plan-no-plans
+    graders:
+      - type: output-matches
+        name: rai-planner-from-security-plan-discovery-location
+        config:
+          pattern: '(?i)security-plans'
+      - type: output-matches
+        name: rai-planner-from-security-plan-capture-fallback
+        config:
+          pattern: '(?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(security plan|plan|state\.json)[\s\S]{0,500}capture'
 
   - name: rai-planner-cold-start-scoped-load
     prompt: |

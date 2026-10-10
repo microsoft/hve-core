@@ -23,7 +23,7 @@
 
 .PARAMETER Voice
     Voice name. Defaults to en-US-Andrew:DragonHDLatestNeural for azure and
-    en_US-joe-medium for piper.
+    en_US-norman-medium for piper.
 
 .PARAMETER Rate
     Speech prosody rate. Defaults to +10%.

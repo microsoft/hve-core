@@ -67,6 +67,7 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
 
       # Executable release tooling always comes from main, never from the
       # promotion head or from the release branch being prepared.
@@ -473,9 +474,7 @@ jobs:
     needs: [prepare-promotion]
     if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+    permissions: {}
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -483,6 +482,8 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
 
       # Auto-merge is deliberately never enabled. A human must review and merge
       # this promotion before release-please prepares the Stable release PR.

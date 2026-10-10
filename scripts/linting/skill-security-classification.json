@@ -21,10 +21,6 @@
       "status": "pending",
       "issue": 3026
     },
-    "experimental/hve-demo-material": {
-      "status": "pending",
-      "issue": 3102
-    },
     "experimental/vscode-playwright": {
       "status": "pending",
       "issue": 3103

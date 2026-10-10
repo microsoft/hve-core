@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - package
@@ -18,7 +18,7 @@ HVE Core is the single plugin and extension identity for all distributable HVE C
 
 Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
 
-The VS Code extension's Stable and PreRelease channels contain the same complete agents, prompts, instructions,
+The VS Code extension's Stable and PreRelease channels contain the same complete agents, instructions,
 and skills. Channel selection changes source ownership, cadence, version,
 release assurance, and VS Code Marketplace behavior, not membership.
 
@@ -37,7 +37,7 @@ copilot plugin install hve-core@hve-core
 
 Install the extension as `ise-hve-essentials.hve-core`. For a repository-owned subset, use `hve-core-installer` to choose all manifest components or a custom selection. The installer records `selection.profile` and `selection.components` in `.hve-tracking.json` and does not copy hooks.
 
-The full repository-relative path inventory remains machine-readable in root `plugin.json`. Agent, prompt, instruction, and skill reference pages are available under `docs/reference/`.
+The full repository-relative path inventory remains machine-readable in root `plugin.json`. Agent, instruction, and skill reference pages are available under `docs/reference/`.
 
 ## Component Inventory
 
@@ -54,7 +54,7 @@ The complete plugin includes:
 
 * RPI lifecycle coordination, research, planning, implementation, review, and walkthroughs
 * HVE Builder authoring, review, validation, and Vally conformance support
-* Coding standards and code review for multiple languages and infrastructure formats
+* Coding standards and code review for multiple languages and infrastructure formats, including contract-focused TypeScript documentation comments
 * Security, TM7 threat-model generation, supply-chain security, privacy, accessibility, and Responsible AI planning and review
 * Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, proposal and RFP responses, and backlog workflows
 * Azure DevOps, GitHub, GitLab, and Jira integrations

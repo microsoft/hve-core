@@ -3,7 +3,7 @@ title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-10-02
 ms.topic: tutorial
 keywords:
   - onboarding
@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 12
 ---
 
-This guide helps you get started with HVE Core from your first install through independent, AI-assisted engineering. HVE Core provides 10 addressable assets tailored for new contributors. Follow the four milestones below to progressively build fluency with agents, prompts, and workflows.
+This guide helps you get started with HVE Core from your first install through independent, AI-assisted engineering. HVE Core provides 10 addressable assets tailored for new contributors. Follow the four milestones below to progressively build fluency with agents, skills, and workflows.
 
 ## Recommended Installation
 
@@ -26,7 +26,7 @@ This guide helps you get started with HVE Core from your first install through i
 > help me customize hve-core installation
 > ```
 >
-> Choose the complete manifest unless you already know which agents, prompts, instructions, and distributable skills your repository needs.
+> Choose the complete manifest unless you already know which agents, instructions, and distributable skills your repository needs.
 
 ## What HVE Core Does for You
 
@@ -49,7 +49,7 @@ Install HVE Core and run your first agent interaction.
 3. Open a chat and select **RPI Agent** to verify agent responsiveness.
 4. Run `/rpi-research` against a file or concept in the codebase to see evidence-focused research output.
 
-Start with `RPI Agent` and ask it to explain each lifecycle transition. Use `/rpi` directly as you gain confidence.
+Start with `RPI Agent` and ask it to explain each lifecycle transition. Use the direct `/rpi-*` phase skills as you gain confidence.
 
 Checkpoint: You can invoke agents, see their output, and understand the chat-based interaction model.
 
@@ -70,7 +70,7 @@ Checkpoint: You have completed one full RPI cycle and understand how phases conn
 
 Use agents selectively and combine workflows for larger tasks.
 
-1. Use `/rpi` for end-to-end coordination on a multi-file change.
+1. Use `RPI Agent` for end-to-end coordination on a multi-file change.
 2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
 3. Explore the complete extension inventory, or use the installer skill to make a custom multi-kind selection in a clone setup (see the [Role Overview](./#role-overview)).
 4. Resume longer workflows from their dated research, task-centered plan, changes, and review artifacts.
@@ -124,11 +124,13 @@ correctness against the plan, and validate compliance with coding
 standards.
 ```
 
+Select **RPI Agent**, then enter:
+
 ```text
-/rpi task="Implement the input validation helpers for the user
+Implement the input validation helpers for the user
 registration form. Add email format checking, password strength rules
 matching the policy in docs/security/password-policy.md, and unit tests
-for each validator."
+for each validator.
 ```
 
 ```text

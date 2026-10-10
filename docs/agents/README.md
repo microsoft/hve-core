@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Agent Systems Catalog"
 pagination_label: Agent Systems Catalog
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - github copilot
@@ -16,7 +16,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-hve-core organizes specialized agents into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
+hve-core organizes specialized agents into functional groups. Each group combines agents, skills, and instruction files into cohesive workflows for specific engineering tasks.
 
 | Group                                     | Agents   | Complexity  | Documentation                                                                                                                  |
 |-------------------------------------------|----------|-------------|--------------------------------------------------------------------------------------------------------------------------------|

@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - extension
@@ -28,7 +28,7 @@ VS Code Extension installation provides HVE Core directly through the VS Code Ma
 
 ❌ **Consider alternatives when:**
 
-* You need to customize custom agents, prompts, or instructions → [Peer Clone](peer-clone.md) or [Git-Ignored](git-ignored.md)
+* You need to customize custom agents, skills, or instructions → [Peer Clone](peer-clone.md) or [Git-Ignored](git-ignored.md)
 * Your team needs to version control HVE Core → [Submodule](submodule.md)
 * You're contributing to HVE Core development → [Peer Clone](peer-clone.md)
 * You need to test an unpublished source branch → [Multi-Root Workspace](multi-root)
@@ -41,7 +41,6 @@ The marketplace extension ships the complete active HVE Core component set. Stab
 VS Code Extension System
 ├── Extension installed via marketplace
 │   ├── .github/agents/         # All chat agents
-│   ├── .github/prompts/        # All prompt templates
 │   ├── .github/instructions/   # All coding guidelines
 │   └── .github/skills/         # All skill packages
 └── Only optional workspace configuration needed!
@@ -97,12 +96,14 @@ This applies even when using the extension. The folder is created in your projec
 
 The extension provides all HVE Core components:
 
-| Component    | Examples                                 |
-|--------------|------------------------------------------|
-| Chat Agents  | RPI Agent, code-review, adr-creation     |
-| Prompts      | git-commit, pull-request, ado-create-pr  |
-| Instructions | markdown, python-script, commit-message  |
-| Skills       | rpi-research, pr-reference, video-to-gif |
+| Component           | Examples                                                                |
+|---------------------|-------------------------------------------------------------------------|
+| Chat Agents         | RPI Agent, code-review, adr-creation                                    |
+| User-invoked skills | `/git-commit`, `/pull-request` for GitHub or Azure DevOps, `/git-merge` |
+| Instructions        | markdown, python-script, commit-message                                 |
+| Skills              | rpi-research, pr-reference, video-to-gif                                |
+
+HVE Core no longer ships prompt files. [Retired Prompt Commands](../package-migration.md#retired-prompt-commands) maps each former prompt command to its replacement.
 
 ## Updating
 
@@ -141,13 +142,13 @@ channel-switch behavior.
 
 ### Cons ❌
 
-| Limitation             | Detail                                               |
-|------------------------|------------------------------------------------------|
-| No customization       | Can't modify custom agents, prompts, or instructions |
-| Extension updates only | Testing development versions requires extra setup    |
-| No version pinning     | Uses latest version (or opt into pre-release)        |
-| No team control        | Can't enforce specific versions across team          |
-| Limited flexibility    | Can't combine with custom local modifications        |
+| Limitation             | Detail                                              |
+|------------------------|-----------------------------------------------------|
+| No customization       | Can't modify custom agents, skills, or instructions |
+| Extension updates only | Testing development versions requires extra setup   |
+| No version pinning     | Uses latest version (or opt into pre-release)       |
+| No team control        | Can't enforce specific versions across team         |
+| Limited flexibility    | Can't combine with custom local modifications       |
 
 ## Common Scenarios
 
@@ -256,14 +257,14 @@ The extension includes `hve-core-installer`. Ask an agent to invoke it when you 
 
 1. Ask an agent to use `hve-core-installer`.
 2. Choose the complete manifest or a custom selection for clone adoption.
-3. Review agents, prompts, instructions, distributable skill directories, and collisions before writes.
+3. Review agents, instructions, distributable skill directories, and collisions before writes.
 
-| Capability                   | HVE Core Extension | Installer Skill                       |
-|------------------------------|-------------------:|---------------------------------------|
-| Complete managed content     |                Yes | Available for selective cloning       |
-| MCP configuration guidance   |                 No | Four curated servers                  |
-| Multi-kind custom selection  |                 No | Agents, prompts, instructions, skills |
-| Installation method guidance |                 No | Peer clone, submodule, and others     |
+| Capability                   | HVE Core Extension | Installer Skill                   |
+|------------------------------|-------------------:|-----------------------------------|
+| Complete managed content     |                Yes | Available for selective cloning   |
+| MCP configuration guidance   |                 No | Four curated servers              |
+| Multi-kind custom selection  |                 No | Agents, instructions, skills      |
+| Installation method guidance |                 No | Peer clone, submodule, and others |
 
 > [!NOTE]
 > The installer is a skill that works within any agent conversation. There is no separate installer agent or extension identity.
@@ -287,7 +288,7 @@ If you need customization:
 
 1. Uninstall the extension from Extensions view
 2. Follow a manual method such as [Peer Clone](peer-clone.md) for local customization
-3. Customize agents, prompts, or instructions as needed
+3. Customize agents, skills, or instructions as needed
 
 ## Limitations
 
