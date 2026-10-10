@@ -415,7 +415,7 @@ stimuli:
       Phase 2, explain the Research route, what returns to `context.md`, and
       whether that result validates the hypothesis. Name the Research skill you
       would activate.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -445,7 +445,7 @@ stimuli:
       can be formed, but the Research capability is unavailable. State how you
       record the gap, which hypothesis is blocked, and whether unrelated
       framing of independent hypotheses continues.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -484,7 +484,7 @@ stimuli:
       Research evidence root; no execution or hypothesis validation has occurred. Research posture:
       `focused`. The staged evidence file is the only source; explicit limit:
       one research cycle.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -525,7 +525,7 @@ stimuli:
       record the result for each investigated assumption and a disposition for
       each recommended field, with the artifact path and evidence IDs. No
       execution or hypothesis validation has occurred. Do not rerun Research.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -557,7 +557,7 @@ stimuli:
       behind the threshold and method, using Phase 3 vetting as focus. Create
       the canonical challenge record with task slug `synthetic-batching-h1`
       for synthetic date `2026-09-21` and begin with one open-ended question.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -595,7 +595,7 @@ stimuli:
       then stop before its critique; I will run the critique as a separate
       step. Do not execute it, write results or Changes, perform Review, write
       `outcome.md`, or decide whether `H1` is validated.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -630,7 +630,7 @@ stimuli:
       critique has not run. Run that one initial critique now at standard
       depth, then stop for my acceptance of the plan. Do not implement it,
       write results or Changes, perform Review, or write `outcome.md`.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -670,7 +670,7 @@ stimuli:
       that exact plan. Use the staged run data, write `results.md` and the
       canonical Changes record, and report Review readiness. Do not perform
       Review, write `outcome.md`, or decide whether `H1` is validated.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -722,7 +722,7 @@ stimuli:
       If required evidence is missing, record it in that Review record as a
       Blocked Review, then stop. Do not write `outcome.md` or decide whether
       `H1` is validated.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -769,7 +769,7 @@ stimuli:
       and write `outcome.md` now. Preserve Review execution and outcome values
       separately, bind all four artifacts by path and SHA-256, and record the
       downstream decision.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -837,46 +837,95 @@ stimuli:
             - |
               const fs = require('node:fs');
               const path = require('node:path');
-              let passed = false;
+              const codes = new Set();
+              class Stop extends Error {}
+              const fail = code => { codes.add(code); throw new Stop(code); };
+              const check = run => { try { run(); } catch (error) { if (!(error instanceof Stop)) throw error; } };
               try {
                 const root = process.env.EVALUATE_WORKSPACE;
                 const session = '.copilot-tracking/mve/2026-09-21/synthetic-batching/';
-                const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+                const read = name => {
+                  const file = path.join(root, name);
+                  let size;
+                  try { const stat = fs.statSync(file); if (!stat.isFile()) throw new Error('Not a file'); size = stat.size; } catch { fail('read-error'); }
+                  if (size > 100000) fail('oversized-input');
+                  try { return fs.readFileSync(file, 'utf8'); } catch { fail('read-error'); }
+                };
                 const plan = read(session + 'mve-plan.md');
                 const results = read(session + 'results.md');
                 const review = read('.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md');
-                const text = read(session + 'outcome.md').replace(/[*`]/g, '').replace(/^#{1,6}\s+/gm, '');
-                if (text.length > 100000 || !/at least 20%/i.test(plan) || !/below 1%/i.test(plan)) throw new Error('Invalid criterion boundary');
-                const unique = (value, pattern) => {
-                  const matches = [...value.matchAll(pattern)];
-                  if (matches.length === 0) throw new Error('Missing field');
-                  const values = new Set(matches.map(match => match[1].trim().toLowerCase()));
-                  if (values.size !== 1) throw new Error('Conflicting field');
-                  return matches[0][1];
+                const raw = read(session + 'outcome.md');
+                if (!/at least 20%/i.test(plan) || !/below 1%/i.test(plan)) fail('criteria-mismatch');
+                const values = (value, pattern) => [...value.matchAll(pattern)].map(match => match[1].trim().toLowerCase());
+                const single = (found, missing, conflicting) => {
+                  const distinct = new Set(found);
+                  if (distinct.size === 0) fail(missing);
+                  if (distinct.size > 1) fail(conflicting);
+                  return found[0];
                 };
-                const baseline = Number(unique(results, /Unbatched median latency:\s*([\d.]+)/gi));
-                const treatment = Number(unique(results, /Batched median latency:\s*([\d.]+)/g));
-                const sample = Number(unique(results, /Synthetic requests:\s*([\d.]+)/gi));
-                const errorRate = Number(unique(results, /Batched errors:\s*([\d.]+)/gi));
-                if (![baseline, treatment, sample, errorRate].every(Number.isFinite) || baseline <= 0 || treatment < 0 || sample <= 0 || errorRate < 0 || errorRate > 100) throw new Error('Invalid measurements');
+                const measure = pattern => single(values(results, pattern).map(Number), 'invalid-measurement', 'invalid-measurement');
+                const baseline = measure(/Unbatched median latency:\s*([\d.]+)/gi);
+                const treatment = measure(/Batched median latency:\s*([\d.]+)/g);
+                const sample = measure(/Synthetic requests:\s*([\d.]+)/gi);
+                const errorRate = measure(/Batched errors:\s*([\d.]+)/gi);
+                if (![baseline, treatment, sample, errorRate].every(Number.isFinite) || baseline <= 0 || treatment < 0 || sample <= 0 || errorRate < 0 || errorRate > 100) fail('invalid-measurement');
                 const reduction = (baseline - treatment) / baseline * 100;
-                const latencyPass = reduction >= 20;
-                const errorsPass = errorRate < 1;
-                const expected = latencyPass && errorsPass ? 'validated' : 'invalidated';
+                const expected = reduction >= 20 && errorRate < 1 ? 'validated' : 'invalidated';
                 const decision = expected === 'validated' ? 'go' : 'no-go';
-                const verdict = unique(text, /\bH1\b\s*(?:(?:hypothesis\s+)?outcome\s*)?(?:[|:]|is|\r?\n)\s*(?:(?:hypothesis\s+)?outcome\s*:\s*)?(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gi).toLowerCase();
-                const downstream = unique(text, /(?:downstream decision|decision)\s*(?:[:|]|\r?\n)\s*(go|no-go|adjust)\b/gi).toLowerCase();
-                const reviewExecution = unique(review, /^Review execution:\s*(\w+)/gim);
-                const reviewOutcome = unique(review, /^Review outcome:\s*(\w+)/gim);
-                const reportedExecution = unique(text, /(?:Review execution|execution status)\s*(?:[:|]|\r?\n)\s*(\w+)/gi);
-                const reportedOutcome = unique(text, /(?:Review outcome|execution outcome)\s*(?:[:|]|\r?\n)\s*(\w+)/gi);
-                const reportedReduction = Number(unique(text, /(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\r?\n)\s*([\d.]+)%/gi));
-                const reportedSample = Number(unique(text, /(?:sample size|synthetic requests)\s*(?:[:|]|\r?\n)\s*([\d.]+)/gi));
-                const reportedErrors = Number(unique(text, /(?:error rate|batched errors)\s*(?:[:|]|\r?\n)\s*([\d.]+)%/gi));
-                passed = verdict === expected && downstream === decision && reportedExecution === reviewExecution && reportedOutcome === reviewOutcome &&
-                  Math.abs(reportedReduction - reduction) < 0.001 && reportedSample === sample && reportedErrors === errorRate &&
-                  /(?:anomalies\s*[:|]\s*none|no anomalies)/i.test(text) && /\bconfidence\b/i.test(text) &&
-                  /20%/.test(text) && /1%/.test(text) && /(?:criteria[^.\n]*(?:unchanged|not changed)|(?:unchanged|pre[- ]?committed) criteria|divergence\s*[:|]\s*none|no (?:criteria )?divergence)/i.test(text) &&
-                  !/criteria[^.\n]*(?:changed to|lowered|relaxed)/i.test(text);
-              } catch { passed = false; }
-              console.log(JSON.stringify({ name: 'experiment-outcome-separates-status-and-verdict', kind: 'code', passed, score: Number(passed), evidence: 'Compare H1 with supplied measurements and preserve independent Review values.' }));
+                // Lines under another hypothesis heading cannot supply H1's labeled outcome.
+                const plain = [];
+                const scoped = [];
+                let owner = null;
+                let ownerLevel = 0;
+                for (const line of raw.replace(/\r\n?/g, '\n').replace(/[*`]/g, '').replace(/(\d)[^\S\n]*(?:%|per\s?cent\b)/gi, '$1%').split('\n')) {
+                  const heading = /^(#{1,6})\s+(.*)$/.exec(line);
+                  const body = heading ? heading[2] : line;
+                  if (heading) {
+                    const hypothesis = /^(?:hypothesis\s+)?(H\d+)\b/i.exec(body.trim());
+                    if (hypothesis) { owner = hypothesis[1].toUpperCase(); ownerLevel = heading[1].length; }
+                    else if (owner !== null && heading[1].length <= ownerLevel) owner = null;
+                  }
+                  plain.push(body);
+                  if (owner === null || owner === 'H1') scoped.push(body);
+                }
+                const text = plain.join('\n');
+                const scopedText = scoped.join('\n');
+                check(() => {
+                  const verdicts = [
+                    ...values(text, /\bH1\b[^\S\n]*(?:(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*)?(?:[|:]|\bis\b|\n)\s*(?:(?:hypothesis\s+)?(?:outcome|verdict)\s*[:|]\s*)?(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gi),
+                    ...values(scopedText, /^\|?[^\S\n]*(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*(?:[:|]|\n)\s*(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gim)
+                  ];
+                  if (single(verdicts, 'missing-field', 'conflicting-field') !== expected) codes.add('wrong-verdict');
+                });
+                check(() => {
+                  if (single(values(text, /(?:downstream decision|decision)\s*(?:[:|]|\n)\s*(go|no-go|adjust)\b/gi), 'missing-field', 'conflicting-field') !== decision) codes.add('wrong-decision');
+                });
+                check(() => {
+                  const reviewExecution = single(values(review, /^Review execution:\s*(\w+)/gim), 'review-mismatch', 'review-mismatch');
+                  const reviewOutcome = single(values(review, /^Review outcome:\s*(\w+)/gim), 'review-mismatch', 'review-mismatch');
+                  const reportedExecution = single(values(text, /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi), 'missing-field', 'conflicting-field');
+                  const reportedOutcome = single(values(text, /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi), 'missing-field', 'conflicting-field');
+                  if (reportedExecution !== reviewExecution || reportedOutcome !== reviewOutcome) codes.add('review-mismatch');
+                });
+                const metric = (pattern, actual) => check(() => {
+                  if (!(Math.abs(single(values(text, pattern).map(Number), 'missing-field', 'conflicting-field') - actual) < 0.001)) codes.add('metric-mismatch');
+                });
+                metric(/(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\n)\s*([\d.]+)%/gi, reduction);
+                metric(/(?:sample size|synthetic requests)\s*(?:[:|]|\n)\s*([\d.]+)/gi, sample);
+                metric(/(?:error rate|batched errors)\s*(?:[:|]|\n)\s*([\d.]+)%/gi, errorRate);
+                const anomalies = values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi);
+                if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !/^(?:none|no\b)/.test(value))) codes.add('anomaly-mismatch');
+                if (!/\bconfidence\b/i.test(text)) codes.add('missing-confidence');
+                const unchanged = /(?:criteri[^.\n]*(?:unchanged|not changed)|(?:unchanged|pre[- ]?committed) criteria|divergence\s*[:|]\s*none|no (?:post-start |criteria )?divergence)/i.test(text);
+                const changed = /criteri[^.\n]*(?:changed to|lowered|relaxed)/i.test(text) ||
+                  /(?:criteri\w*|threshold\w*)[^.\n]*\bchanged to\b/i.test(text) ||
+                  /(?:criteri\w*|threshold\w*)\s+(?:\w+\s+){0,3}?(?:was|were|is|are|has been|have been|got)\s+(?:(?!not\b|never\b)\w+\s+)?(?:changed|lowered|relaxed|loosened|reduced|revised|adjusted|modified)\b/i.test(text) ||
+                  /(?:criteri\w*|threshold\w*)\s+(?:changed|lowered|relaxed|loosened|reduced|revised|adjusted|modified)\s+to\b/i.test(text) ||
+                  /(?<!\bnot\s|\bnever\s|n't\s)\b(?:changed|lowered|relaxed|loosened|revised|adjusted|modified)\s+(?:the\s+|our\s+|its\s+)?(?:\w+\s+){0,2}?(?:criteri\w*|threshold\w*)/i.test(text);
+                const boundaries = text.split(/(?<!\d)\.(?!\d)|[\n;]/).filter(sentence => /criteri|threshold|success requires/i.test(sentence)).every(sentence =>
+                  [...sentence.matchAll(/at least\s+([\d.]+)%/gi)].every(match => Number(match[1]) === 20) &&
+                  [...sentence.matchAll(/(?:below|under|less than)\s+([\d.]+)%/gi)].every(match => Number(match[1]) === 1));
+                if (!unchanged || changed || !boundaries || !/(?<![\d.])20%/.test(text) || !/(?<![\d.])1%/.test(text)) codes.add('criteria-mismatch');
+              } catch (error) { if (!(error instanceof Stop)) codes.add('ambiguous-input'); }
+              const passed = codes.size === 0;
+              console.log(JSON.stringify({ name: 'experiment-outcome-separates-status-and-verdict', kind: 'code', passed, score: Number(passed), evidence: 'Compare H1 with supplied measurements and preserve independent Review values.', metadata: { failureCodes: [...codes].sort() } }));

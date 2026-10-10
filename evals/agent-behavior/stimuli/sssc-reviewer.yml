@@ -39,7 +39,7 @@ stimuli:
       Before assessing anything, state how you resolved the changed files for
       this run, which of those two files stay in scope for assessment, and how
       the report records the reduced evidence quality.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -74,7 +74,7 @@ stimuli:
   - name: sssc-reviewer-vex-full-scan-shape
     prompt: |
       Run the full VEX pipeline for this repository with product `pkg:npm/@contoso/widget`. Reply in chat only before running any command: list the pipeline stages in order, state how the product identifier is used, and state what must happen before any `not_affected` determination is published.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -103,7 +103,7 @@ stimuli:
   - name: sssc-reviewer-vex-triage-from-report
     prompt: |
       Triage the CVEs in the existing Trivy report at `reports/trivy.json` and draft an OpenVEX document. An OSV-Scanner report also exists at `reports/osv.json`. Reply in chat only before running any command: state which pipeline stage you skip, where the work begins, and which report takes precedence.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md

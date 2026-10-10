@@ -47,7 +47,7 @@ stimuli:
       The current BRD session has no `proposalResponseArtifacts` field. Read
       and validate the supplied evidence artifact, report the skill result and
       the BRD extension state, and do not replace the invalid artifact.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -86,7 +86,7 @@ stimuli:
       Read it, then show the resulting state receipt entry and the BRD
       `Research Finding Dispositions` row in your reply, then explain the
       authority boundary.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -121,7 +121,7 @@ stimuli:
       Discover depends on a bounded market question, but Research returned
       `Blocked`. Can that result clear the Discover gate? Explain the durable
       state and the smallest work that stops.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -157,7 +157,7 @@ stimuli:
       separate step. Do not merely explain it.
       Research posture: `focused`. The staged evidence file is the only source;
       explicit limit: one research cycle.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -196,7 +196,7 @@ stimuli:
       invocation receipt in state and give its finding a document-owned
       disposition in the BRD. I have not yet answered whether to accept the
       returned work. Do not rerun Research.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -302,7 +302,7 @@ stimuli:
       for `REG-01` returned `Blocked` before producing usable evidence, and I
       defer it. Update the durable invocation state and BRD open question now.
       The blocked segment must not satisfy or clear Discover.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -339,7 +339,7 @@ stimuli:
       exact skipped disposition and continue on the direct builder path. Do not
       create a Research artifact. Preserve the synthetic session date
       `2026-09-21` in paths.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -371,7 +371,7 @@ stimuli:
       adequate, no RPI segment has been proposed, and no external gap remains.
       Record that direct-path assessment in `nextActions` and preserve all
       other state. Do not initialize optional RPI invocation state.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
