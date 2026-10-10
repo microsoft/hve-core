@@ -42,6 +42,16 @@ Implementation does not require a plan critique. If you skipped the critique, im
 normally. When the plan is marked not ready or has unresolved blocking critique findings, the
 implementer names them and confirms with you before implementing affected tasks.
 
+When a plan update changes, or completed behavior differs from, a requirement that cites a BRD,
+PRD, or ADR, the implementer adds a `## Business Alignment` entry to the changes log. The entry
+names the source, the cited IDs, the owner from the source's frontmatter, what changed and why, your
+decision, and whether the change is a `clarification`, a `divergence-confirmed`, a `source-gap`, or
+a `pending-decision` awaiting your answer. Before handing off to review, the implementer compares
+the finished work with every cited requirement so a quiet divergence still gets an entry, and a
+`pending-decision` entry holds review until you decide. The closeout lists the entries. Review uses
+them to check alignment and to offer a note to the source owner. Implementation never edits the
+source document or contacts anyone.
+
 Reach for a different asset when:
 
 * No approved plan exists. Run [rpi-plan](rpi-plan) first; do not implement from research alone.

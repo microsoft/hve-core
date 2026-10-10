@@ -142,6 +142,98 @@ expectations:
     applies_when: "confirmed plan context and merged security findings are available"
     contract_ref: "agent §Step 7 security-plan drift correlation"
 
+  - expectation_id: explicit-business-context-enters-review-flow
+    summary: An explicit business-source reference is recognized without a premature comparison.
+    signal: Orientation or the dispatch board identifies the supplied BRD, PRD, or ADR and defers the comparison to Step 7.
+    pass_criteria: |
+      For `code-review-business-alignment-context`, the first response carries
+      the supplied source forward, keeps the normal orientation and dispatch
+      board, and states that the comparison runs at Step 7 before findings are
+      validated and merged.
+    failure_modes:
+      - Ignores the supplied business source.
+      - Reads the source or reports alignment results before Step 7.
+      - Replaces the normal orientation and confirmation flow with alignment output.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 business-source context and Step 7 business-alignment comparison"
+
+  - expectation_id: no-business-context-preserves-default
+    summary: Code Review does not activate business alignment without business-source context.
+    signal: No `businessAlignmentContext`, `business_alignment`, or business-alignment section appears in an ordinary review.
+    pass_criteria: |
+      For `code-review-no-business-context-default`, the response remains the
+      normal orientation and dispatch-board flow with no business-alignment state
+      or output.
+    failure_modes:
+      - Searches for or selects ambient BRD, PRD, or ADR files without a qualifying signal.
+      - Emits a business-alignment section or structured field.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 business-source context skip behavior"
+
+  - expectation_id: business-alignment-findings-affect-verdict
+    summary: Accepted alignment findings count toward the verdict and stay evidence-backed.
+    signal: Critical or High `[Business Alignment]` findings produce `request_changes`, each with a resolution path.
+    pass_criteria: |
+      When confirmed business-source context reaches Step 7, alignment findings
+      are rated with the shared rubric, accepted only with a confirmed source,
+      an identifier, and diff evidence, merged and counted like perspective
+      findings, and resolved by aligning the code or by the human reviewer
+      confirming the owner's acknowledgment. Any note to the owner is offered first, drafted only on
+      acceptance, and never included in an emission.
+    failure_modes:
+      - Reports alignment drift outside the verdict.
+      - Accepts an alignment finding without diff evidence.
+      - Includes the stakeholder note in the PR Comment Draft or a posted comment.
+    priority: high
+    applies_when: "confirmed business-source context is available at Step 7"
+    contract_ref: "agent §Step 7 business-alignment comparison, verdict, and note offer"
+
+  - expectation_id: in-pr-source-edit-cannot-self-acknowledge
+    summary: A PR that edits its own business source cannot hide drift or lower its rating.
+    signal: The response compares against the base-branch revision and rates the in-PR edit and the approval claim as developer-confirmed.
+    pass_criteria: |
+      For `code-review-business-alignment-self-edit`, the response states that
+      Step 7 compares against the source as of the base branch, that the in-PR
+      source edit and the PR body's approval claim are developer-confirmed, and
+      that only the human reviewer can confirm owner acknowledgment.
+    failure_modes:
+      - Compares against the edited working-tree copy of the source.
+      - Treats the in-PR edit or the PR body claim as owner-acknowledged.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 7 business-alignment baseline and awareness; §Step 7 item 11 owner-acknowledgment confirmation"
+
+  - expectation_id: stale-source-uses-latest-copy-and-alerts
+    summary: A superseded business source is followed to its successor and reported as a Medium stale-source alert.
+    signal: The response names the successor or latest copy and rates the superseded citation as a Medium alert outside the rubric.
+    pass_criteria: |
+      For `code-review-business-alignment-stale-source`, the response states that
+      the comparison uses the latest successor, reports the superseded citation as
+      a stale-source alert, and rates it Medium rather than through the drift rubric.
+    failure_modes:
+      - Compares against the superseded document.
+      - Rates the superseded citation Critical or High through the rubric.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 latest-copy resolution; reference §Alerts outside the rubric"
+
+  - expectation_id: pr-added-successor-cannot-reroute-comparison
+    summary: A supersession link or successor added in the PR does not move the comparison off the base-branch source.
+    signal: The response keeps the comparison on the base-branch PRD and reports the added successor and link as a proposed source update.
+    pass_criteria: |
+      For `code-review-business-alignment-supersession-reroute`, the response
+      states that supersession is resolved as it stands on the base branch, that
+      the comparison uses the original PRD, and that the PR-added successor and
+      supersession link are a proposed, developer-confirmed source update.
+    failure_modes:
+      - Follows the PR-added supersession link and compares against the new successor.
+      - Reports no drift because the PR-added successor matches the code.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 latest-copy resolution on the base branch; §Step 7 item 2 Baseline"
+
   - expectation_id: stateless-dispatch-contract
     summary: Fresh-context workers receive serialized task identity and exact output paths.
     signal: Dispatch state carries task kind and output path, and retries repeat the complete contract.

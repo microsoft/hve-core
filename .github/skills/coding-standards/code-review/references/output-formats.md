@@ -1,7 +1,7 @@
 ---
 title: Code Review Output Formats
 description: Report structure, findings schema, and persistence rules for review orchestrators and skill-backed subagents.
-ms.date: 2026-08-31
+ms.date: 2026-10-10
 ---
 
 ## Output contract
@@ -66,6 +66,29 @@ Review findings should be expressed as structured data first, then rendered into
       "obsolete_plan_items": "diff-scoped evidence"
     }
   },
+  "business_alignment": {
+    "sources": [
+      { "id": "<document id>", "type": "brd|prd|adr", "path": "<path>", "status": "<status>", "owner": "<owners or deciders>", "cited_as": "<original citation when a successor replaced it, else null>", "baseline": "base-ref|diff|head|unavailable" }
+    ],
+    "results": [
+      {
+        "source_id": "<document id>",
+        "kind": "drift|stale-source|source-gap",
+        "requirement_ids": ["<id>"],
+        "stake": "MUST|SHOULD|COULD|WONT|untraced",
+        "awareness": "unrecorded|developer-confirmed|owner-acknowledged",
+        "owner_acknowledgment": "none|claimed-unverified|human-confirmed",
+        "owner_acknowledgment_confirmed_by": "<reviewer who confirmed, or null>",
+        "owner_acknowledgment_confirmed_at": "<ISO 8601 timestamp, or null>",
+        "severity": "Critical|High|Medium|Low|none",
+        "outcome_changed": true,
+        "finding_number": 0,
+        "evidence": "<path and lines or reason>"
+      }
+    ],
+    "unresolved": [ { "citation": "<citation>", "reason": "<reason>" } ],
+    "architecture_review_recommended": false
+  },
   "risk_assessment": "<risk level and explanation>",
   "acceptance_criteria_coverage": [
     { "ac": "<AC text>", "status": "Implemented|Partial|Not found", "notes": "<explanation>" }
@@ -73,7 +96,7 @@ Review findings should be expressed as structured data first, then rendered into
 }
 ```
 
-Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `security_plan_drift` field is present only when a confirmed Security Planner baseline was correlated through the `security-planning` skill's drift capability; an executed drift result is not also added to `recommended_specialist_reviews`. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request; its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`.
+Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `security_plan_drift` field is present only when a confirmed Security Planner baseline was correlated through the `security-planning` skill's drift capability; an executed drift result is not also added to `recommended_specialist_reviews`. The `business_alignment` field is present only when confirmed business-source context was compared through the `rpi-review` skill's alignment reference; an executed comparison is not added to `recommended_specialist_reviews`. In `business_alignment.results`, `stake: "untraced"` records a cited requirement with no goal link; rate it as SHOULD with a traceability gap, as the alignment reference defines. `kind` separates rubric-rated `drift` from the fixed-severity `stale-source` (Medium) and `source-gap` (Low) alerts; alerts set `stake` and `awareness` to `null`. `baseline` records how a source was compared: `base-ref` at the base branch; `diff` against the diff's removed (pre-change) lines when the base revision was unreadable; `head` at its current revision when the source is new in the change; or `unavailable` when some modified passage had no reconstructable pre-change text, such as an added-only passage. `cited_as` keeps a superseded citation that a successor replaced. `owner_acknowledgment` is `claimed-unverified` when the change or its PR only claims approval, and `human-confirmed` only after the reviewer confirms the owner's acknowledgment, in which case `owner_acknowledgment_confirmed_by` and `owner_acknowledgment_confirmed_at` record who confirmed it and when; both are `null` otherwise. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request; its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`.
 
 ## Report skeleton
 
@@ -83,15 +106,17 @@ Structure the merged report in this order:
 2. Changed Files Overview with a unified table of reviewed files, risk levels, and issue counts.
 3. Merged Findings with all issues renumbered and tagged by source perspective.
 4. Security Plan Drift when confirmed plan context was correlated after the findings merge.
-5. Acceptance Criteria Coverage when story context was provided.
-6. Positive Changes and Testing Recommendations.
-7. Recommended Actions and Out-of-scope Observations.
-8. Recommended specialist follow-up reviews when specialist signals fired, with Sustainability pointing to <https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-get-started> and the dated directional caveat from the [Cross-Skill Forks](cross-skill-forks.md) registry.
-9. Risk Assessment and the final verdict.
-10. PR Comment Draft, present only when the review scope targets a pull request or merge request (see the PR comment draft section below).
-11. Disclaimer and human-review sign-off, always present as the final section (see the disclaimer and human-review sign-off section below).
+5. Business Alignment when confirmed business-source context was compared.
+6. Acceptance Criteria Coverage when story context was provided.
+7. Positive Changes and Testing Recommendations.
+8. Recommended Actions and Out-of-scope Observations.
+9. Recommended specialist follow-up reviews when specialist signals fired, with Sustainability pointing to <https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-get-started> and the dated directional caveat from the [Cross-Skill Forks](cross-skill-forks.md) registry.
+10. Risk Assessment and the final verdict.
+11. Stakeholder Note Draft, present only when the human accepted a note offer for a business-alignment finding.
+12. PR Comment Draft, present only when the review scope targets a pull request or merge request (see the PR comment draft section below).
+13. Disclaimer and human-review sign-off, always present as the final section (see the disclaimer and human-review sign-off section below).
 
-Omit sections that only apply to perspectives or optional extensions that were skipped. The disclaimer and human-review sign-off section (item 11) is never omitted.
+Omit sections that only apply to perspectives or optional extensions that were skipped. The disclaimer and human-review sign-off section (item 13) is never omitted.
 
 ## Security plan drift section
 
@@ -102,6 +127,22 @@ Render this section only when Code Review resolved and confirmed a Security Plan
 * Include a one-line pointer to the skill's Security Planning CAUTION disclaimer and default exclusions.
 * Carry the same data in `security_plan_drift`; do not require downstream consumers to parse the rendered prose.
 * Do not add the executed extension to `recommended_specialist_reviews`.
+
+## Business alignment section
+
+Render this section only when Code Review confirmed business-source context and compared the change against it through the shared core of the `rpi-review` skill's alignment reference.
+
+* List each source with its identifier, type, path, status, owner or deciders, and baseline, and name any superseded citation it replaced.
+* List each result with its requirement identifiers, business stake, owner awareness, severity, whether an outcome changed, and the merged finding number when the result produced a finding. Show an `untraced` stake as "No goal link (rated as SHOULD)" so readers see the missing traceability, not a bare SHOULD. Label a claimed acknowledgment "Owner acknowledgment claimed, not verified" and a confirmed one with who confirmed it.
+* Render alerts in plain words: "Stale document: <source> is <status>; compared against <successor>" or the update needed, and "Consider drafting or revising an ADR, BRD, or PRD: <source> does not cover <behavior>".
+* List unresolved citations and `possible drift` results that lacked evidence, with the reason.
+* State whether an architecture review is recommended.
+* Carry the same data in `business_alignment`; do not require downstream consumers to parse the rendered prose.
+* Do not add the executed extension to `recommended_specialist_reviews`.
+
+## Stakeholder note draft
+
+Render a `## Stakeholder Note Draft` section only after the human accepts the offer to draft a note for a Critical or High business-alignment drift finding, with one subsection per accepted note in the alignment reference's note format. The note is plain copy-ready text with no checkbox. It stays in the local `review.md`: never include it in the PR Comment Draft, line comments, or any native emission.
 
 ## PR comment draft
 

@@ -41,7 +41,7 @@ The comparison pass:
 2. Reconcile implementation-time plan updates with current phase and task Goals, Requirements, Details, Guidance, References, triggering evidence, user decisions, and critique state.
 3. Check critique finding dispositions when a critique ran, and whether significant changes preserved confirmed intent before affected work continued.
 4. Assess every `## Follow-Up Items` entry for scope separation, rationale, owner, and changes-record parity.
-5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
+5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift. When business sources are cited or Business Alignment entries exist, include the comparison in `business-alignment.md`.
 6. Write one complete substantive `RV-xxx` finding set, assessed outcome, and proposed routes in the review record.
 
 Inspect existing review state first. Continue a `started` review from its saved record, and reuse a finished review unless the user asks for a new one. An existing record uses its latest participation event.
@@ -188,6 +188,8 @@ Use `vscode_askQuestions` when available with one finding per turn. Configure fr
 
 The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the tool is unavailable, show the same options in chat and wait.
 
+For an alignment finding routed as residual work, the suggested action also offers to draft a note to the source owner. `business-alignment.md` defines the action text, how the user keeps the follow-up without the note, and what an accepted note contains.
+
 Append each response as an `RD-xxx` event before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision and assigns the smallest evidence action to the appropriate owner. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
 
 Material skipped or deferred findings prevent `Conformant` and `Conformant with justified divergence`. A credible completed review may still use Defects found or Residual work; reserve Not accepted for blocked evidence or unresolved critical boundaries that prevent acceptance. Record whether the walkthrough completed, finished early, or was skipped automatically, including decided and remaining finding IDs.
@@ -196,6 +198,6 @@ Material skipped or deferred findings prevent `Conformant` and `Conformant with 
 
 At closeout, project final review execution status, final outcome, validation coverage, blockers, and the disposition for every actionable finding. Keep Complete, Partial, or Blocked execution separate from Conformant, Conformant with justified divergence, Defects found, Residual work, or Not accepted outcome.
 
-Preserve the four-destination matrix: implementation defects go to `rpi-implement`; decision gaps and invalid assumptions go to `rpi-plan`; material evidence gaps go to `rpi-research`; and non-blocking residual work goes to a distinct follow-up owner. Do not describe residual work as a defect. When more than one category occurs, state each distinct destination rather than selecting one aggregate route.
+Preserve the four-destination matrix: implementation defects go to `rpi-implement`; decision gaps and invalid assumptions go to `rpi-plan`; material evidence gaps go to `rpi-research`; and non-blocking residual work goes to a distinct follow-up owner. Do not describe residual work as a defect. When more than one category occurs, state each distinct destination rather than selecting one aggregate route. When the user accepted a stakeholder note, include its text as a copy-ready block.
 
 For standalone use, provide only the eligible advisory command or no-handoff reason. In parent contexts, return the same projection to the parent, which owns continuation. The linked-artifact table follows this projection, immediately before the final `## Next Steps` section.
