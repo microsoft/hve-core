@@ -23,10 +23,11 @@ Deliver the approved outcome by following the current task-centered plan. Keep t
 5. When new information comes to light, classify it using [references/implementation.md](references/implementation.md): ordinary local judgment, an implementation-only annotation, follow-up-only work outside the active plan, or a plan change that may need a user decision.
    * When completed work creates something a later task needs that the plan does not already name, such as a class, API, contract, utility, fixture, or path, add a `Guidance:` block immediately after that task's `Details:` with the concrete pointer. This needs no user decision.
    * Keep the Phase Checklist diagrams current when a plan update adds, merges, splits, or removes phases or tasks.
+   * When a plan update changes, or completed behavior differs from, a requirement that cites a BRD, PRD, or ADR, add a Business Alignment entry as [references/implementation.md](references/implementation.md) defines.
 6. Ask for the smallest decision-critical user input only when available evidence cannot support a responsible user-owned decision. Persist the result in the plan and the changes record. When requirements, scope, architecture, capability, safety, dependencies, or evidence must change, update the affected plan sections under [references/implementation.md](references/implementation.md). A significant or divergent choice needs a user decision first, and affected dependent work pauses until it is recorded; an evidence-backed clarification needs no user question. The confirmed user decision remains authoritative. Do not run a critique from implementation; a follow-up critique is the planner's or user's choice.
 7. Run the checks the task's `Requirements:` or `Details:` name and record each result in the changes record as passed, failed, skipped, or unavailable with its reason. Validation alone does not resume paused dependent work.
 8. When declared scope finishes, bring the changes record, blockers, completion markers, remaining work, and validation state current. Report active plan markers outside the scope as remaining work. Report full-plan completion only when the full plan was declared and every marker has completion evidence.
-9. Before handing a full-plan or review-ready scope to Review, reconcile plan markers and task-local context, completed-work entries, handoff prose, blockers, remaining work, follow-up items, and validation state.
+9. Before handing a full-plan or review-ready scope to Review, reconcile plan markers and task-local context, completed-work entries, handoff prose, blockers, remaining work, follow-up items, and validation state. Compare completed behavior with every cited BRD, PRD, or ADR requirement and add any missing Business Alignment entry.
 10. Return the current implementation result to the caller using the return contract below.
 
 ## Inputs
@@ -44,6 +45,7 @@ Deliver the approved outcome by following the current task-centered plan. Keep t
 * Each changes-record entry is a condensed description of the behavior or functionality that changed, tied to its plan marker, with affected files and validation. Entries use descriptive headings, with no second per-entry identity scheme.
 * New information is classified as local judgment, implementation-only annotation, follow-up-only work, or a plan change; unresolved significant or divergent choices require a user decision before affected work resumes.
 * A later task that depends on something earlier work created receives a `Guidance:` block naming it when the plan did not already do so.
+* Every plan update that changes, and every completed behavior that differs from, a cited business source requirement has a Business Alignment entry naming the source, owner, change, rationale, decision, and alignment value.
 * Affected dependent work resumes after the significant or divergent user decision is reflected in the current plan.
 * Every check the plan names has a recorded result or an explicit skip reason.
 * A later invocation may implement applicable Review findings as ordinary work without a correction run type or mandatory second Review.
@@ -76,4 +78,4 @@ Deliver the approved outcome by following the current task-centered plan. Keep t
 
 ## Return to Caller
 
-Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, the linked artifact table, and final next steps.
+Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan updates, business alignment entries, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, the linked artifact table, and final next steps.

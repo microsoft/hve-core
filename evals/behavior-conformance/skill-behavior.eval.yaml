@@ -6072,6 +6072,126 @@ stimuli:
         name: skill-rpi-review-interrupted-resume-continues
         config:
           pattern: '(?i)^\s*[`*''"]*continue-review[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-implement-business-alignment-class
+    prompt: |
+      During rpi-implement, the user decides to keep delivered behavior that differs
+      from FR-012 in the cited PRD at docs/planning/prds/expense-app.md. Which
+      Alignment value does the Business Alignment entry record: clarification,
+      divergence-confirmed, or source-gap? Return only the value.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 4b98af62dadd84077e6bda6739acc9252c9a4e6d728707cbf0500d032fe753fb
+    graders:
+      - type: output-matches
+        name: skill-rpi-implement-business-alignment-divergence-confirmed
+        config:
+          pattern: '(?i)^\s*[`*''"]*divergence-confirmed[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-plan-superseded-source
+    prompt: |
+      Using rpi-plan, a task's Requirements cite ADR 0007 with its path, and that
+      ADR's frontmatter has status superseded and superseded-by 0009. Choose what
+      the planner does: add-risk-row, edit-the-adr, or block-planning. Return only
+      the chosen action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 150910531eac86d6f6f536f0f76830d2e26d76e6f107ec3c9f9485e382c004da
+    graders:
+      - type: output-matches
+        name: skill-rpi-plan-superseded-source-adds-risk-row
+        config:
+          pattern: '(?i)^\s*[`*''"]*add-risk-row[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-review-stakeholder-note-location
+    prompt: |
+      Using rpi-review in a standalone review, the user accepts the suggested action
+      to draft a note to the PRD owner for an alignment finding. Choose where the
+      note goes: review-record-section-not-sent, separate-file-then-posted, or
+      tracker-comment. Return only the chosen option.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: ec7cb02c96eabc9de837d4b9ca9b09992bfcbec34b7d335f74cae7c61468df13
+    graders:
+      - type: output-matches
+        name: skill-rpi-review-stakeholder-note-in-record-not-sent
+        config:
+          pattern: '(?i)^\s*[`*''"]*review-record-section-not-sent[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-plan-supplied-source-citation
+    prompt: |
+      Using rpi-plan, the user attaches docs/planning/brds/claims-brd.md and the task
+      implements its business rule BR-004 and requirement FR-007. Choose how the task
+      Requirements cite it: cite-path-and-ids, cite-document-only, or omit-citation.
+      Return only the chosen option.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 9946ed6f9c8a2ea4a64dfdc9446b89d6b191b4478dd4d9a97c83f37bdde1ef72
+    graders:
+      - type: output-matches
+        name: skill-rpi-plan-supplied-source-cites-path-and-ids
+        config:
+          pattern: '(?i)^\s*[`*''"]*cite-path-and-ids[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-review-business-alignment-activation
+    prompt: |
+      Using rpi-review, a task's Requirements cite ADR-0007
+      (docs/planning/adrs/0007-cache-tier.md). Choose which reference the review also
+      applies: business-alignment, none, or code-review. Return only the chosen option.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 7dce8092e738cfb240fad08f5a7331f94780fdd9835e307c26ae3900721e7d50
+    graders:
+      - type: output-matches
+        name: skill-rpi-review-business-alignment-reference-applied
+        config:
+          pattern: '(?i)^\s*[`*''"]*business-alignment[`*''"]*[.!]?\s*$'
+  - name: skill-rpi-review-rubric-should-developer-confirmed
+    prompt: |
+      Using rpi-review, delivered behavior changes the expected outcome of PRD
+      requirement FR-012, which traces only to product goal GOAL-002 with priority
+      SHOULD. The changes record has a divergence-confirmed entry, and the PRD owner
+      has not acknowledged it. Choose the drift severity: critical, high, medium, or
+      low. Return only the chosen option.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: d46f315e6fa966f55e22979ca0771ac39dfe3dc0ed38e631cbed20c28a29d278
+    graders:
+      - type: output-matches
+        name: skill-rpi-review-rubric-should-developer-confirmed-medium
+        config:
+          pattern: '(?i)^\s*[`*''"]*medium[`*''"]*[.!]?\s*$'
 
   - name: skill-dt-figma-export-conformance
     turns:

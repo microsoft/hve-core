@@ -45,6 +45,16 @@ user direction outranks critique advice.
 
 The planner drafts every phase itself. Before drafting, it looks for skills and subagents whose descriptions say they are used during planning or with `rpi-plan` and follows each description's guidance on when and how to use it; no subagent is required.
 
+Before drafting tasks, the planner finds the BRD, PRD, and ADR documents behind the work.
+It cites any you supplied, and it runs one quick search of the repository's BRD, PRD, and ADR locations for other relevant ones, recording what it searched and found in the plan's sources.
+It always cites the latest copy: a superseded document, whether supplied or found by the search, is followed to the document that replaced it.
+Each task that implements a source cites it with the specific requirement or decision IDs it satisfies and the document's committed path.
+The planner then reads each source's status and supersession fields.
+A superseded, deprecated, rejected, or withdrawn source is a medium risk; a source that is not yet approved, has no status, or cannot be resolved is a low one.
+Each becomes a row in the plan's risks table, so you see it before work starts.
+Planning never edits the source.
+Implementation and review rely on these citations to check alignment later.
+
 One input shapes the critique:
 
 | Input      | Values                               | Effect                                                                                            |

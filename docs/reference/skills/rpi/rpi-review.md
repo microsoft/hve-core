@@ -36,6 +36,20 @@ The record keeps execution status (`Complete`, `Partial`, `Blocked`) separate fr
 
 In a standalone review you walk through each actionable finding with a suggested action, gather-more-information, skip, and finish choices. Inside an automatic `RPI Agent` session the parent decides routes from evidence unless you explicitly retain Review decisions. Pass `depth=deep` only when you want broader evidence tracing; `standard` completely assesses the material boundary by default.
 
+When the plan cites a BRD, PRD, or ADR, or the changes log has Business Alignment entries, the review also checks delivered work against those sources.
+Severity depends on what is at stake and on whether the source's owner knows, not on the document type.
+Business stake comes from the priority of the goals a requirement traces to; business rules, non-negotiable constraints, and accepted ADRs with security, compliance, or availability triggers count as MUST.
+Drift on a MUST item that nobody recorded is Critical, a divergence only you approved is High, and once the owner acknowledges it the drift drops to Low; SHOULD and COULD items rate lower.
+Owner acknowledgment has to come from the owner: a decision record that names the owner and where they agreed, or a new owner signoff in the updated document. Editing the document yourself doesn't count.
+Anything above Medium needs a changed outcome or acceptance criterion, and MUST-level drift from a BRD is flagged as possible misalignment with business objectives.
+The review also alerts you when a cited document is stale (medium), naming its successor, or when no document covers what was delivered (low), suggesting a new ADR or a BRD or PRD revision.
+An unconfirmed divergence routes like any defect or decision gap.
+A divergence you already approved becomes a follow-up to update the source through its owning workflow: a BRD or PRD revision, or a new ADR that supersedes the original.
+Any drift also adds a follow-up for an architecture review, so the architecture record and diagrams stay current.
+For an approved divergence, the walkthrough suggests creating the follow-up and drafting a note to the source owner, such as your TPM or architect; you can keep the follow-up and skip the note.
+If you accept the note, the review adds it to its record and shows it ready to copy.
+Nothing is sent or posted for you.
+
 Reach for a different asset when:
 
 * You are reviewing a pull request rather than RPI artifacts. Use the [Code Review](../../agents/coding-standards/code-review) agent.
