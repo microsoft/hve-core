@@ -1302,6 +1302,7 @@ ipykernel
 ipywidgets
 iterdir
 langword
+nargs
 nums
 returncode
 rglob

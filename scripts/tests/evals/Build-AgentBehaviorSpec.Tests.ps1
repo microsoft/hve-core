@@ -2614,7 +2614,12 @@ Describe 'Data Science Coach scanner evaluation setup' -Tag 'Unit' {
         $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Stimulus }
         $grader = $stimulus.graders | Where-Object { $_.name -eq $Grader }
         $grader.type | Should -Be 'tool-calls'
-        $simulated = $stimulus.simulation.tool_overrides.powershell.patterns[0].output
+        $simulated = if ($stimulus.Contains('simulation')) {
+            $stimulus.simulation.tool_overrides.powershell.patterns[0].output
+        }
+        else {
+            '{"schema_version":"scan-sensitive-content-v1","status":"error","error":{"code":"scanner-unavailable","message":"data-mode scanning is unavailable in this environment"}}'
+        }
         $events = [System.Collections.Generic.List[object]]::new()
         $index = 0
         foreach ($call in $Calls) {
@@ -2647,6 +2652,9 @@ console.log(JSON.stringify(await new ToolCallGrader().grade(input)));
         $stimulus.prompt | Should -Match 'Scan this candidate, not the prior output'
         $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/data-science-engineering/dataops'
         @($stimulus.agent_environment.files | Where-Object { $_.dest -eq 'evidence/synthetic-pipeline-design.md' }) | Should -HaveCount 1
+        @($stimulus.agent_environment.files | Where-Object { $_.src -eq 'fixtures/rpi-depth/scanner-unavailable-stub.txt' -and $_.dest -eq '.eval-scanner-stub.txt' }) | Should -HaveCount 1
+        @($stimulus.agent_environment.commands | Where-Object { $_ -match "copyFileSync\('\.eval-scanner-stub\.txt','adr-author/scripts/scan_sensitive_content\.py'\)" }) | Should -HaveCount 1
+        $stimulus.Contains('simulation') | Should -BeFalse
         $stimulus.constraints.max_agent_duration | Should -Be '300s'
         $stimulus.constraints.max_duration | Should -Be '360s'
         $stimulus.tags.Contains('advisory') | Should -BeFalse
