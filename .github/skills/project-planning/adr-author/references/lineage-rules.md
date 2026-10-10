@@ -2,7 +2,7 @@
 title: ADR Lineage Rules
 description: Five supersession and lineage rules enforced by the adr-author skill validators (GP-06)
 author: microsoft/hve-core
-ms.date: 2026-05-02
+ms.date: 2026-08-17
 ms.topic: reference
 keywords:
   - adr
@@ -14,7 +14,7 @@ keywords:
 
 # ADR Lineage Rules (GP-06)
 
-The five rules below govern supersession and lineage for ADRs authored by the `adr-author` skill. All five are enforced by `scripts/validate_frontmatter.py` and `scripts/update_lineage.py`. Violations are hard-fail validation errors.
+The five rules below govern supersession and lineage for ADRs authored by the `adr-author` skill. The scripts enforce the structural and mutation invariants described below; workflow-only requirements are identified explicitly.
 
 ## 1. Field Shape
 
@@ -32,10 +32,10 @@ Any given ADR has at most one `superseded-by`. Once an ADR is superseded, a seco
 
 ## 3. Status Transition Rule
 
-The superseding ADR's `status` becomes `accepted` (or remains `proposed` until the Govern phase accepts it). The superseded ADR's `status` becomes `superseded`. The validator rejects any other final-state combination (for example, marking the predecessor `deprecated` while pointing `superseded-by` at a successor).
+The superseding ADR's `status` remains unchanged; it should be `accepted`, or remain `proposed` until the Govern phase accepts it. `scripts/update_lineage.py` changes the superseded ADR's `status` to `superseded`. `scripts/validate_frontmatter.py` validates each status value independently, but does not validate the status pair as a lineage transition.
 
 - Valid: successor `status: accepted`, predecessor `status: superseded`.
-- Invalid (counter-example): successor `status: rejected` paired with predecessor `status: superseded` — rejected because a rejected ADR cannot supersede anything.
+- Invalid by workflow policy: successor `status: rejected` paired with predecessor `status: superseded`. The current scripts do not reject this combination automatically.
 
 ## 4. Atomic Update Rule
 
@@ -46,17 +46,17 @@ Both ADR files MUST be modified in the same Govern phase invocation. `scripts/up
 
 ## 5. Single-Writer Rule for `last_decision_id`
 
-`scripts/update_lineage.py` is the only writer of `last_decision_id` in `.adr-config.yml`. Manual edits to `last_decision_id` are forbidden. `scripts/validate_frontmatter.py` detects drift (for example, when the highest existing ADR identifier on disk does not equal `last_decision_id`) and rejects the workspace until reconciled by re-running the lineage script.
+`scripts/update_lineage.py` is the designated writer of `last_decision_id` in `.adr-config.yml`. Manual edits to `last_decision_id` are forbidden by workflow policy. The allocator validates that the stored value is an integer or four-digit string before incrementing it. It does not currently reconcile the value against ADR identifiers on disk.
 
 - Valid: `last_decision_id` is updated only by the script during ADR allocation in the Govern phase.
-- Invalid (counter-example): a contributor hand-edits `.adr-config.yml` to bump `last_decision_id` ahead of the next allocation — rejected on next validation pass.
+- Invalid by workflow policy: a contributor hand-edits `.adr-config.yml` to bump `last_decision_id` ahead of the next allocation. A correctly formatted manual value is not currently distinguishable from an allocator-written value.
 
 ## Validation Failure Modes
 
-The validator emits one of the following five error categories when a lineage rule is violated. Each maps one-to-one with the rule above.
+The scripts report human-readable errors rather than stable `LINEAGE_*` category identifiers:
 
-1. `LINEAGE_FIELD_SHAPE` — `superseded-by` or `supersedes` is not a scalar string or `null`.
-2. `LINEAGE_MULTIPLE_PARENTS` — an ADR already has a non-null `superseded-by` and a second supersession is attempted against it.
-3. `LINEAGE_BAD_STATUS_TRANSITION` — successor or predecessor ends in a status other than the permitted (`accepted`/`proposed`, `superseded`) combination.
-4. `LINEAGE_ATOMIC_VIOLATION` — exactly one of the two affected ADR files was modified in the Govern invocation; both must be present in the change set.
-5. `LINEAGE_LAST_DECISION_DRIFT` — `last_decision_id` in `.adr-config.yml` does not match the highest ADR identifier on disk, indicating an unauthorized manual edit or a missed script run.
+1. `scripts/validate_frontmatter.py` reports field-specific errors when `supersedes` or `superseded-by` is not a four-digit string or `null`.
+2. `scripts/update_lineage.py` refuses a second supersession when the predecessor already has a non-empty `superseded-by` value.
+3. The supersession command rejects missing files, identical paths, duplicate ADR identifiers, malformed frontmatter, and filenames without a four-digit identifier prefix.
+4. Both ADR files are restored to their original contents when post-write validation fails. A failure replacing the predecessor also restores the superseder.
+5. The allocator rejects a malformed or exhausted `last_decision_id`; detecting a valid but manually modified value remains a workflow responsibility.
