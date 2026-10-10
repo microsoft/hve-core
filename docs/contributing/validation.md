@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-08
 ms.topic: how-to
 keywords:
   - validation
@@ -41,6 +41,7 @@ plan, a log, or an error message is not an agent execution request.
 | Documentation static and component checks | `npm run validate:docs`      | Does not run the browser E2E lane                     |
 | Markdown tables check                     | `npm run lint:tables`        | Non-mutating table alignment check                    |
 | Markdown link check                       | `npm run lint:md-links`      | Non-mutating link check included in `validate:local`  |
+| TypeScript type check                     | `npm run lint:ts`            | Runs `tsc --noEmit` on root `scripts/**/*.mts` files  |
 | Markdown tables fix                       | `npm run format:tables`      | Explicitly mutates table formatting                   |
 | Markdown lint fix                         | `npm run lint:md:fix`        | Explicitly mutates Markdown where possible            |
 | Targeted check                            | `npm run <local-check>`      | Choose the check that owns the changed file           |
@@ -419,7 +420,6 @@ output in `logs/` while diagnosing a failure.
 | One suite            | `npm run ci:eval:run:skills`, `npm run ci:eval:run:agents`, or `npm run ci:eval:run:scripts` | Same model and service prerequisites as the selected suite                                                                                                                       |
 | Agent conformance    | `npm run ci:eval:run:conformance`                                                            | Vally and model access; runs the six planner-agent conformance suites in sequence and stops at the first failing suite                                                           |
 | Result comparison    | `npm run ci:eval:equivalence -- -Agent <slug> -Tier devloop`                                 | Vally and model access; runs the baseline-vs-customized comparison for one agent                                                                                                 |
-| Prompt behavior      | `npm run ci:eval:behavior-prompts`                                                           | Vally and model access; runs the prompt conformance spec                                                                                                                         |
 | Instruction behavior | `npm run ci:eval:behavior-instructions`                                                      | Vally and model access; runs the instruction conformance spec                                                                                                                    |
 | Skill behavior       | `npm run ci:eval:behavior-skills`                                                            | Vally and model access; runs the skill behavior conformance spec                                                                                                                 |
 | Agent matrix entry   | `npm run ci:eval:agent`                                                                      | Agent-matrix arguments supplied after `--`; model-backed when execution is selected                                                                                              |

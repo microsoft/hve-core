@@ -12,6 +12,7 @@ from artifact_lookup import (
     find_artifact,
     main,
     recover_site,
+    retry_levels,
 )
 
 NOW = datetime(2026, 9, 28, tzinfo=timezone.utc)
@@ -52,6 +53,84 @@ def _run(run_id, days_ago, conclusion="success", branch="main"):
 
 def _bundle(run_id, expired=False, prefix="demo-material-site"):
     return {"id": run_id * 10, "name": f"{prefix}-{run_id}", "expired": expired}
+
+
+class TestRenderEventRouting:
+    @pytest.mark.parametrize("event", ["workflow_run", "workflow_dispatch"])
+    def test_given_usable_bundle_and_absent_index_when_resolved_then_skips_retry_fetch(
+        self, event
+    ):
+        import shutil
+        import subprocess
+        from pathlib import Path
+
+        import yaml
+
+        workflow = (
+            Path(__file__).resolve().parents[5]
+            / ".github/workflows/demo-material-render.yml"
+        )
+        steps = yaml.safe_load(workflow.read_text(encoding="utf-8"))["jobs"]["resolve"][
+            "steps"
+        ]
+        retry_names = {
+            "Find the latest render index",
+            "Download the latest render index",
+            "Recover the published render index",
+            "Select failed or unpublished levels",
+        }
+        retry_steps = [step for step in steps if step["name"] in retry_names]
+        assert len(retry_steps) == 4
+        assert all(
+            "github.event_name == 'schedule'" in step["if"] for step in retry_steps
+        )
+        node = shutil.which("node")
+        if not node:
+            pytest.skip("Existing Node is required for contained workflow routing")
+        script = next(
+            step["with"]["script"] for step in steps if step.get("id") == "resolve"
+        )
+        context = {
+            "eventName": event,
+            "repo": {},
+            "payload": {
+                "workflow_run": {
+                    "id": 7,
+                    "conclusion": "success",
+                    "path": ".github/workflows/demo-material-author.lock.yml",
+                    "head_branch": "main",
+                    "head_sha": "a" * 40,
+                }
+            },
+        }
+        harness = (
+            "const output = {}; const core = {"
+            "setOutput:(key,value)=>output[key]=value,notice:()=>{}};"
+            f"const context={json.dumps(context)};"
+            'const github={rest:{repos:{get:async()=>({data:{default_branch:"main"}})},'
+            "actions:{listWorkflowRunArtifacts:()=>{}}},"
+            'paginate:async()=>[{id:9,name:"demo-material-content-7",expired:false}]};'
+            "const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;"
+            f'new AsyncFunction("github","context","core",{json.dumps(script)})'
+            "(github,context,core)"
+            ".then(()=>console.log(JSON.stringify(output))).catch(error=>{console.error(error);process.exit(1)});"
+        )
+        result = subprocess.run(
+            [node, "-e", harness],
+            capture_output=True,
+            text=True,
+            check=True,
+            env={
+                "DISPATCH_AUTHOR_RUN_ID": "",
+                "RETRY_LEVELS": "",
+                "REFRESH_AFTER_DAYS": "60",
+                "PREVIOUS_CREATED_AT": datetime.now(timezone.utc).isoformat(),
+                "PUBLISHED_STATUS": "",
+            },
+        )
+        assert json.loads(result.stdout)["mode"] == (
+            "render" if event == "workflow_run" else "refresh"
+        )
 
 
 class TestFindArtifact:
@@ -150,6 +229,8 @@ def _published(levels=("L100",)):
                 "files": {
                     "pptx": f"{level}/hve-demo-{level}.pptx",
                     "mp4": f"{level}/hve-demo-{level}.mp4",
+                    "vtt": f"{level}/hve-demo-{level}.vtt",
+                    "html": f"{level}/hve-demo-{level}.html",
                     "page": f"{level}/index.html",
                 }
             }
@@ -227,3 +308,52 @@ class TestRecoverSite:
 
         assert result["files"] == 1
         assert not (tmp_path / "L100").exists()
+
+
+class TestRetryLevels:
+    def test_given_complete_levels_when_selected_then_none_retry(self):
+        # Arrange
+        index = json.loads(
+            next(iter(_published(("L100", "L200", "L300", "L400")).values()))
+        )
+
+        # Act
+        result = retry_levels(index)
+
+        # Assert
+        assert result == []
+
+    def test_given_failed_and_unpublished_levels_when_selected_then_both_retry(self):
+        # Arrange
+        index = json.loads(next(iter(_published(("L100", "L200", "L300")).values())))
+        index["levels"]["L300"]["last_failed_attempt"] = {"checks": {}}
+
+        # Act
+        result = retry_levels(index)
+
+        # Assert
+        assert result == ["L300", "L400"]
+
+    def test_given_retry_cli_when_run_then_writes_space_separated_levels(
+        self, tmp_path, capsys
+    ):
+        # Arrange
+        index_path = tmp_path / "index.json"
+        index_path.write_bytes(_published(("L100",))[f"{SITE}demo-material/index.json"])
+        output = tmp_path / "out"
+
+        # Act
+        code = main(
+            [
+                "retry-levels",
+                "--index",
+                str(index_path),
+                "--github-output",
+                str(output),
+            ]
+        )
+
+        # Assert
+        assert code == 0
+        assert output.read_text(encoding="utf-8") == "levels=L200 L300 L400\n"
+        assert json.loads(capsys.readouterr().out) == {"levels": "L200 L300 L400"}

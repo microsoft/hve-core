@@ -3,7 +3,7 @@ title: HVE Core Identity and Channels
 description: Understand the single HVE Core identity, its Copilot CLI plugin registration, and its VS Code extension PreRelease and Stable channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - packages
@@ -55,7 +55,6 @@ publication path.
 | Content              | Stable | PreRelease |
 |----------------------|--------|------------|
 | Agents               | Same   | Same       |
-| Prompts              | Same   | Same       |
 | Instructions         | Same   | Same       |
 | Distributable skills | Same   | Same       |
 
@@ -89,15 +88,14 @@ For a smaller repository-owned footprint, use the installer to copy all manifest
 With the VS Code extension installed:
 
 1. Agents appear in the Copilot Chat agent picker.
-2. Prompts are available as slash commands.
-3. Instructions apply to matching files through their `applyTo` patterns.
-4. Skills become available for semantic or explicit invocation.
+2. Instructions apply to matching files through their `applyTo` patterns.
+3. Skills become available for semantic or explicit invocation, and user-invocable skills appear as slash commands.
 
-Copilot CLI plugins expose agents, commands, and skills, but plugin-contained
+Copilot CLI plugins expose agents and skills, but plugin-contained
 instructions are not auto-applied. See [Copilot CLI Plugin](methods/cli-plugins#instructions-are-not-auto-applied-from-plugins)
 for the host-specific limitation.
 
-The `hve-core` plugin includes `RPI Agent` and the `/rpi`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
+The `hve-core` plugin includes `RPI Agent` and the `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
 
 ---
 

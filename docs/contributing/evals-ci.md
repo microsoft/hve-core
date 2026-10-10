@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-08
 ms.topic: how-to
 keywords:
   - evals
@@ -448,7 +448,7 @@ Pass `-FailOnAlex` to promote only emitted equality findings to errors. It does 
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
 ```
 
-Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mjs` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
+Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mts` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
 
 `Test-EvalSpecText.ps1` exit codes:
 

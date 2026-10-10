@@ -19,6 +19,7 @@ tools:
   - read/readFile
   - edit/createFile
   - edit/createDirectory
+  - edit/editFiles
 user-invocable: true
 disable-model-invocation: true
 ---

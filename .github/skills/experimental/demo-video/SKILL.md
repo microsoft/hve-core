@@ -1,12 +1,12 @@
 ---
 name: demo-video
-description: 'Assemble ordered frames or clips with narration into a narrated MP4 via FFmpeg'
+description: 'Assemble ordered frames or clips with narration and optional synchronized scene transitions into an MP4 via FFmpeg'
 license: MIT
 compatibility: 'Requires FFmpeg on PATH'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-09-27"
+  last_updated: "2026-10-03"
 ---
 
 # Demo Video Assembly Skill
@@ -15,7 +15,11 @@ This skill assembles a narrated demo video from ordered visual segments and matc
 
 ## Overview
 
-The workflow takes a manifest that describes each segment, resolves the visual source, and uses FFmpeg to render each segment into a normalized video clip before concatenating them into a final MP4. The narration track is muxed from WAV files so the output can be reviewed as a polished walkthrough without requiring a separate video-editing tool.
+The workflow takes a manifest that describes each segment, resolves the visual
+source, and uses FFmpeg to render each segment into a normalized video clip
+before assembling the final MP4. It supports hard cuts by default or optional
+synchronized video and audio fades. The narration track is muxed from WAV files
+so the output can be reviewed without a separate video-editing tool.
 
 ## Manifest Schema
 
@@ -25,6 +29,11 @@ Use a `segments.yml` manifest with optional top-level output settings and an ord
 output: ./output/demo.mp4   # optional; destination path for the assembled MP4
 resolution: 1280x720        # optional; default 1280x720
 fps: 24                     # optional; default 24
+transition:                 # optional; omit for hard cuts
+  type: crossfade
+  duration: 0.5
+  fade_in: true
+  fade_out: true
 segments:
   - type: frame
     visual: ./frames/intro.png
@@ -40,6 +49,24 @@ segments:
 * `output` sets the destination path for the assembled MP4, resolved relative to the manifest; the `--output` or `-OutputPath` argument overrides it when supplied
 * `resolution` controls the output width and height in `WIDTHxHEIGHT` form (default `1280x720`); the `--resolution` or `-Resolution` argument overrides it
 * `fps` sets the frame rate applied when rendering each segment (default `24`); the `--fps` or `-Fps` argument overrides it
+* `transition` enables synchronized scene and narration fades; omit it or set it
+  to `none` to retain hard cuts
+
+### Transition fields
+
+* `type` accepts `crossfade` or `fade`, which both select FFmpeg's fade
+  cross-transition
+* `duration` sets every opening, scene, audio, and closing fade in seconds
+  (default `0.5`)
+* `fade_in` controls the opening video and audio fade (default `true`)
+* `fade_out` controls the closing video and audio fade (default `true`)
+
+The assembler adds silent handles around speech and holds the matching endpoint
+pictures. Crossfades overlap those handles, not adjacent spoken instructions;
+do not pre-pad narration to compensate. The normalized segments must exceed
+twice the transition duration. Output duration is the sum of unpadded narration
+durations plus one transition duration per scene boundary and per enabled
+opening/closing fade. With transitions disabled, no handles are added.
 
 ### Segment fields
 
@@ -74,14 +101,18 @@ The assembly step accepts the following high-level controls:
 
 ## Failure Behavior
 
-The assembled MP4 is written to a temporary file next to the destination and moved into place only after FFmpeg succeeds. A failed, timed-out, or interrupted run leaves no partial MP4 at the output path and keeps any existing file there unchanged. A successful run replaces an existing file at the output path. Temporary segment files are always removed.
+The assembled MP4 is written to a temporary file next to the destination and
+moved into place only after FFmpeg succeeds. A failed, timed-out, interrupted,
+or invalid transition run leaves no partial MP4 at the output path and keeps any
+existing file there unchanged. A successful run replaces an existing file at
+the output path. Temporary segment files are always removed.
 
 ## Narration Quality
 
 Narration quality is the single biggest driver of how polished the final video feels. Prioritize neural voices from **Azure AI Speech (part of Azure AI Foundry)** through the `tts-voiceover` skill for any video you intend to share.
 
 * **Recommended:** Use the `tts-voiceover` skill backed by Azure AI Speech neural voices (for example `en-US-Andrew:DragonHDLatestNeural` or `en-US-Jenny:DragonHDLatestNeural`). These produce natural, presentation-grade narration and are the default for shareable output.
-* **Offline alternative:** The `tts-voiceover` skill's `--engine piper` option synthesizes narration locally with a separately installed Piper executable. It needs no credentials or network access, which suits scheduled CI builds, but it sounds less natural than Azure neural voices. Record which engine produced the narration so reviewers know whether to regenerate it with Azure AI Speech before publishing.
+* **Offline alternative:** The `tts-voiceover` skill's `--engine piper` option remains available for explicitly selected local narration. It needs no credentials or network access after setup. HVE demo-material CI uses neither speech engine and publishes silent videos; internal silent timing tracks are removed during finalization.
 
 See the `tts-voiceover` skill for the neural voice catalog, `--voice` and `--rate` controls, Azure authentication (Entra ID or key), and Piper setup.
 

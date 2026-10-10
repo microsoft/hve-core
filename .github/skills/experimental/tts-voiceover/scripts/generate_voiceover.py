@@ -44,7 +44,7 @@ EXIT_ERROR = 2
 ENGINES = ("azure", "piper")
 DEFAULT_ENGINE = "azure"
 DEFAULT_VOICE = "en-US-Andrew:DragonHDLatestNeural"
-DEFAULT_PIPER_VOICE = "en_US-joe-medium"
+DEFAULT_PIPER_VOICE = "en_US-norman-medium"
 DEFAULT_PIPER_COMMAND = "piper"
 PIPER_TIMEOUT_SECONDS = 600
 DEFAULT_RATE = "+10%"
@@ -352,7 +352,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--rate",
         default=DEFAULT_RATE,
-        help=f"Azure speech prosody rate (default: {DEFAULT_RATE}); ignored by piper",
+        help="Azure speech prosody rate (default: %(default)s); ignored by piper",
     )
     parser.add_argument(
         "--piper-data-dir",
@@ -371,6 +371,13 @@ def create_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("voice-over"),
         help="Path to WAV output directory (default: voice-over)",
+    )
+    parser.add_argument(
+        "--slide",
+        type=int,
+        action="append",
+        default=[],
+        help="Synthesize only this slide number; repeat for one speaker's scenes",
     )
     parser.add_argument(
         "--lexicon",
@@ -412,6 +419,17 @@ def _run(args: argparse.Namespace) -> int:
         logger.error("Content directory not found: %s", content_dir)
         return EXIT_FAILURE
 
+    slide_dirs = sorted(content_dir.glob("slide-*"))
+    if args.slide:
+        requested = {f"slide-{number:03d}" for number in args.slide}
+        slide_dirs = [slide for slide in slide_dirs if slide.name in requested]
+        if {slide.name for slide in slide_dirs} != requested:
+            logger.error(
+                "Selected slides are missing; expected %s in %s",
+                sorted(requested),
+                content_dir,
+            )
+            return EXIT_ERROR
     output_dir.mkdir(parents=True, exist_ok=True)
 
     lexicon_path = _resolve_lexicon(args.lexicon, content_dir)
@@ -500,7 +518,7 @@ def _run(args: argparse.Namespace) -> int:
     slide_count = 0
     failed_count = 0
 
-    for slide_dir in sorted(content_dir.glob("slide-*")):
+    for slide_dir in slide_dirs:
         content_file = slide_dir / "content.yaml"
         if not content_file.is_file():
             continue

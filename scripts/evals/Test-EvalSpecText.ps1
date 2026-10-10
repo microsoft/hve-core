@@ -90,6 +90,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 function Resolve-RepoRoot {
     [CmdletBinding()]
@@ -326,11 +327,11 @@ function Write-TextModerationAnnotations {
             $annotation = "[$rule] ${stimulusName}: $body"
             if ($severity -eq 'error') {
                 $errorCount++
-                Write-Host "::error file=$specPath,line=$line::$annotation"
+                Write-CIAnnotation -Level Error -File $specPath -Line $line -Message "$annotation"
             }
             else {
                 $warningCount++
-                Write-Host "::warning file=$specPath,line=$line::$annotation"
+                Write-CIAnnotation -Level Warning -File $specPath -Line $line -Message "$annotation"
             }
         }
     }
@@ -340,7 +341,7 @@ function Write-TextModerationAnnotations {
 
 if ($MyInvocation.InvocationName -ne '.') {
     $resolvedRepoRoot = Resolve-RepoRoot -Hint $RepoRoot
-    $shimPath = Join-Path -Path $PSScriptRoot -ChildPath 'Modules/retext-runner.mjs'
+    $shimPath = Join-Path -Path $PSScriptRoot -ChildPath 'Modules/retext-runner.mts'
     if (-not (Test-Path -LiteralPath $shimPath -PathType Leaf)) {
         Write-Error "retext-runner shim not found at '$shimPath'"
         exit 2

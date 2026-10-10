@@ -186,7 +186,8 @@ function Test-NpmCommandLine {
     .SYNOPSIS
         Tests whether a line contains an unpinned npm command.
     .DESCRIPTION
-        Matches npm install, npm i, npm update, and npm install-test commands.
+        Matches npm install, npm i, npm update, and npm install-test commands,
+        including when npm options such as --prefix come before the subcommand.
         Does not match npm ci, npm run, npm test, npm audit, or npx.
     .PARAMETER Line
         The text line to test for npm commands.
@@ -198,10 +199,18 @@ function Test-NpmCommandLine {
         [string]$Line
     )
 
-    if ($Line -match '\bnpm\s+(install-test|install|update)\b') {
+    # npm options may precede the subcommand (npm --prefix dir install, npm -g install).
+    # Only options known to take a value consume the next word; any other flag is boolean,
+    # so 'run' in 'npm -s run update-snapshots' is not read as a flag value.
+    # A value is a quoted string, a GitHub Actions expression, or a bare token, with an optional suffix.
+    $value = '(?:"[^"]*"|''[^'']*''|\$\{\{.*?\}\}|[^\s-])\S*'
+    $valueOptions = '--prefix|-C|--workspace|-w|--loglevel|--cache|--registry|--userconfig|--globalconfig|--omit|--include|--tag|--location|--before|--install-strategy'
+    $options = "(?>\s+(?:(?:$valueOptions)(?:=$value|\s+$value)|-{1,2}[\w-]+(?:=\S+)?))*"
+
+    if ($Line -match "\bnpm$options\s+(install-test|install|update)\b") {
         return $Matches[0]
     }
-    if ($Line -match '\bnpm\s+i\b(?!nstall|nit)') {
+    if ($Line -match "\bnpm$options\s+i\b(?!nstall|nit)") {
         return $Matches[0]
     }
 
@@ -295,9 +304,11 @@ function Get-WorkflowNpmCommandViolations {
 
         $currentIndent = $line.Length - $line.TrimStart().Length
 
-        if ($trimmed -match '^run:\s*(.*)$') {
+        # Inside a run block, deeper lines are script content even if they look like a run: key
+        if ((-not $inRunBlock -or $currentIndent -le $runBlockIndent) -and $trimmed -match '^(?:-\s+)?run:\s*(.*)$') {
             $runContent = $Matches[1].Trim()
-            $runBlockIndent = $currentIndent
+            # Measure from the run: key itself, which follows the '- ' marker on a list-item step
+            $runBlockIndent = $line.IndexOf('run:', [System.StringComparison]::Ordinal)
 
             if ($runContent -and $runContent -notmatch '^[|>]') {
                 $npmMatch = Test-NpmCommandLine -Line $runContent
@@ -315,10 +326,6 @@ function Get-WorkflowNpmCommandViolations {
         if ($inRunBlock) {
             if ($currentIndent -le $runBlockIndent) {
                 $inRunBlock = $false
-                if ($trimmed -match '^run:\s*(.*)$') {
-                    $i--
-                    continue
-                }
             } else {
                 if ($trimmed.StartsWith('#')) {
                     continue

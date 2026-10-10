@@ -27,6 +27,6 @@ This overlay applies the repository-wide [Licensing Posture](../hve-core/licensi
 * EU AI Act, Regulation (EU) 2024/1689: <https://eur-lex.europa.eu/eli/reg/2024/1689/oj>
 * OWASP AI: <https://owasp.org/www-project-ai-security-and-privacy-guide/>
 * OWASP Top 10: <https://owasp.org/www-project-top-ten/>
-* ISO 42001: <https://www.iso.org/standard/77520.html>
+* ISO 42001: <https://www.iso.org/standard/42001>
 * ISO 27005: <https://www.iso.org/standard/80585.html>
 * ISO/IEC 42030: <https://www.iso.org/standard/73436.html>

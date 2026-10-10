@@ -1,3 +1,4 @@
+# cspell:ignore analy exploitab
 stimuli:
   - name: sssc-reviewer-class-recipe
     prompt: |
@@ -69,3 +70,61 @@ stimuli:
         name: degraded-evidence-recorded
         config:
           pattern: '(?is)(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable)[^.]{0,120}(evidence|rigor|pr-reference|confidence|quality)|(evidence|rigor|pr-reference|confidence)[^.]{0,120}(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable|not available|could not)'
+
+  - name: sssc-reviewer-vex-full-scan-shape
+    prompt: |
+      Run the full VEX pipeline for this repository with product `pkg:npm/@contoso/widget`. Reply in chat only before running any command: list the pipeline stages in order, state how the product identifier is used, and state what must happen before any `not_affected` determination is published.
+    environment:
+      files:
+        - src: ../../.github/agents/security/sssc-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/security/vex-generation.instructions.md
+          dest: .github/instructions/security/vex-generation.instructions.md
+      skills:
+        - ../../.github/skills/security/vex
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: vex-full-scan
+    graders:
+      - type: output-matches
+        name: sssc-reviewer-vex-full-scan-stage-order
+        config:
+          pattern: '(?is)scan\w*[\s\S]{0,400}enrich\w*[\s\S]{0,400}(analy[sz]\w*|exploitab\w*)[\s\S]{0,400}draft\w*'
+      - type: output-matches
+        name: sssc-reviewer-vex-full-scan-product
+        config:
+          pattern: '(?i)pkg:npm/@contoso/widget'
+      - type: output-matches
+        name: sssc-reviewer-vex-full-scan-human-review
+        config:
+          pattern: '(?is)not_affected[\s\S]{0,300}(human|qualified)[\s\S]{0,60}review|(human|qualified)[\s\S]{0,60}review[\s\S]{0,300}not_affected'
+
+  - name: sssc-reviewer-vex-triage-from-report
+    prompt: |
+      Triage the CVEs in the existing Trivy report at `reports/trivy.json` and draft an OpenVEX document. An OSV-Scanner report also exists at `reports/osv.json`. Reply in chat only before running any command: state which pipeline stage you skip, where the work begins, and which report takes precedence.
+    environment:
+      files:
+        - src: ../../.github/agents/security/sssc-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/security/vex-generation.instructions.md
+          dest: .github/instructions/security/vex-generation.instructions.md
+      skills:
+        - ../../.github/skills/security/vex
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: vex-triage-from-report
+    graders:
+      - type: output-matches
+        name: sssc-reviewer-vex-triage-skips-scan
+        config:
+          pattern: '(?is)(skip\w*|bypass\w*|without|omit\w*)[^.]{0,60}scan|scan[^.]{0,60}(skip\w*|bypass\w*|omit\w*)'
+      - type: output-matches
+        name: sssc-reviewer-vex-triage-begins-at-enrichment
+        config:
+          pattern: '(?is)(begin|start)\w*[^.]{0,60}enrich\w*|enrich\w*[^.]{0,60}(first|begin\w*|start\w*)'
+      - type: output-matches
+        name: sssc-reviewer-vex-triage-trivy-precedence
+        config:
+          pattern: '(?is)trivy[^.]{0,120}(precedence|prefer\w*|first|over|before|priority)|(precedence|prefer\w*|priority)[^.]{0,120}trivy'

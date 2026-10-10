@@ -2,7 +2,7 @@
 title: HVE Core
 description: Agentic SDLC framework for context management, governance, shift-left engineering, reusable organizational knowledge, and consistent practices across teams
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-10-02
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -36,9 +36,8 @@ The central principle driving HVE Core is **"AI carries the rules, humans keep t
 HVE Core provides structured workflow building blocks:
 
 * Agents for specialized tasks such as research, planning, implementation, and review
-* Prompts for repeatable workflow entry points
 * Instructions that apply coding standards automatically
-* Skills that add reusable tool capabilities
+* Skills that add reusable workflows and tool capabilities, including entry points you run as slash commands
 
 > [!CAUTION]
 > HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
@@ -54,7 +53,7 @@ HVE Core provides structured workflow building blocks:
 
 1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
 2. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
-3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
+3. Select **RPI Agent** from the agent picker, then describe the task you want to complete.
 
 > [!TIP]
 > Using GitHub Copilot CLI? Register the consolidated HVE Core marketplace and
@@ -84,7 +83,6 @@ HVE Core provides structured workflow building blocks:
 | Browse docs by topic         | [docs/README.md](docs/README.md)                                   |
 | Explore agents               | [.github/CUSTOM-AGENTS.md](.github/CUSTOM-AGENTS.md)               |
 | Explore instructions         | [.github/instructions/README.md](.github/instructions/README.md)   |
-| Explore prompts              | [.github/prompts/README.md](.github/prompts/README.md)             |
 | Explore skills               | [.github/skills/](.github/skills/)                                 |
 
 ## Documentation

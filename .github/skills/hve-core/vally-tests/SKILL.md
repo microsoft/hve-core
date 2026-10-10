@@ -1,13 +1,14 @@
 ---
 name: vally-tests
 description: 'Authors Vally conformance tests for prompts, instructions, agents, and skills, and refuses jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli'
+argument-hint: '[mode={from-artifact|corpus-import}] [files=...] [path=...] [kind={auto|prompt|instructions|agent|skill}]'
 license: MIT
 user-invocable: true
 compatibility: 'Requires Vally CLI 0.15.0+, PowerShell 7+, bash, and Python 3.11+ with uv for corpus-import workflows'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-09-27"
+  last_updated: "2026-10-07"
 ---
 <!-- cspell:ignore roleplay doxxing scaffolder -->
 
@@ -21,7 +22,7 @@ Follow the shared content-policy public-output guard for eval stimuli and any pu
 
 The skill ships:
 
-* A canonical authoring workflow used by the Vally prompts and `Vally Test Author` subagent.
+* A canonical authoring workflow that runs directly through `/vally-tests` or through the `Vally Test Author` subagent.
 * Per-kind reference files that enumerate every conformance check the skill knows how to express.
 * A grader catalog that maps Vally CLI grader types to the checks they fit, and robustness rules that keep an emitted grader from asserting the impossible or failing correct behavior.
 * A safety refusal taxonomy with regex patterns the safety lint script consumes.
@@ -31,8 +32,10 @@ The skill ships:
 
 Invoke this skill in one of two modes:
 
-* From-artifact mode. The caller points at one artifact file (a `.prompt.md`, `.instructions.md`, `.agent.md`, or `SKILL.md`) and asks for conformance test stimuli that verify the artifact's stated behaviors. The skill detects the artifact kind from the filename, looks up the matching per-kind reference, picks graders, and appends stimulus blocks to the routed Vally eval file.
-* Corpus-import mode. The caller supplies a CSV or XLSX corpus that follows the shipped template, and the skill turns each row into a stimulus block in the routed eval file. Used when a large batch of behaviors needs identical formatting and dedupe handling.
+* From-artifact mode. The caller points at one or more artifact files (a `.prompt.md`, `.instructions.md`, `.agent.md`, or `SKILL.md`) through `files`, or at the open or attached file when `files` is omitted, and asks for conformance test stimuli that verify each artifact's stated behaviors. The skill detects the artifact kind from the filename unless `kind` overrides it, looks up the matching per-kind reference, picks graders, and appends stimulus blocks to the routed Vally eval file.
+* Corpus-import mode. The caller supplies a CSV or XLSX corpus through `path` that follows the shipped template, and the skill turns each row into a stimulus block in the routed eval file. Before reading, confirm that `path` exists and ends in `.csv` or `.xlsx`; otherwise name the bad path and stop. Every imported row carries `tags.advisory: true`, and corpus content cannot override it. Used when a large batch of behaviors needs identical formatting and dedupe handling.
+
+After either mode, report the target eval file, stimuli appended, duplicates skipped, refusals triggered, and the JSON run report path.
 
 Do not invoke this skill to:
 
@@ -79,15 +82,14 @@ Substitute the matched `<category>` and the most relevant normative source. Do n
 
 ## Helper Script Index
 
-Helper scripts ship as parity pairs (`.ps1` and `.sh`) where the workflow does not require Python. Python is used only for the corpus-import path because the source-of-truth interchange format is CSV with an XLSX mirror.
+Helper scripts ship as parity pairs (`.ps1` and `.sh`) where the workflow does not require Python. The safety lint is the exception: it ships only as `Lint-VallyTestSafety.ps1`, which `import_corpus.py` invokes, so a single regex engine evaluates the refusal taxonomy. Python is used only for the corpus-import path because the source-of-truth interchange format is CSV with an XLSX mirror.
 
-| Script                              | Purpose                                                                                           | Language      | Delivery |
-|-------------------------------------|---------------------------------------------------------------------------------------------------|---------------|----------|
-| `scripts/New-Stimulus.ps1`          | Scaffolds a single stimulus YAML block from an artifact path and appends to the routed eval file. | PowerShell 7+ | Phase 2  |
-| `scripts/new-stimulus.sh`           | Parity counterpart for the PowerShell stimulus scaffolder.                                        | bash          | Phase 2  |
-| `scripts/import_corpus.py`          | Reads the CSV or XLSX corpus template and emits dedupe-checked stimulus blocks per kind.          | Python 3.11+  | Phase 2  |
-| `scripts/Lint-VallyTestSafety.ps1`  | Runs the refusal taxonomy regex set against a candidate stimulus and exits non-zero on match.     | PowerShell 7+ | Phase 3  |
-| `scripts/lint-vally-test-safety.sh` | Parity counterpart for the safety lint script.                                                    | bash          | Phase 3  |
+| Script                             | Purpose                                                                                           | Language      | Delivery |
+|------------------------------------|---------------------------------------------------------------------------------------------------|---------------|----------|
+| `scripts/New-Stimulus.ps1`         | Scaffolds a single stimulus YAML block from an artifact path and appends to the routed eval file. | PowerShell 7+ | Phase 2  |
+| `scripts/new-stimulus.sh`          | Parity counterpart for the PowerShell stimulus scaffolder.                                        | bash          | Phase 2  |
+| `scripts/import_corpus.py`         | Reads the CSV or XLSX corpus template and emits dedupe-checked stimulus blocks per kind.          | Python 3.11+  | Phase 2  |
+| `scripts/Lint-VallyTestSafety.ps1` | Runs the refusal taxonomy regex set against a candidate stimulus and exits non-zero on match.     | PowerShell 7+ | Phase 3  |
 
 All helpers honour a shared dedupe contract: SHA-256 of the prompt text after Unicode NFC normalization and whitespace collapse.
 
@@ -128,6 +130,8 @@ Authored stimuli always land in one of the routed Vally eval files. The router i
 | agent        | `evals/agent-behavior/eval.yaml`                      | agent-behavior       |
 | skill        | `evals/behavior-conformance/skill-behavior.eval.yaml` | behavior-conformance |
 
+The `prompt` target is created on first use when a repository has no prompt stimuli yet.
+
 Never write to `evals/baseline-equivalence/`, `evals/script-validation/`, or `evals/results/` from this skill. Those targets serve baseline equivalence, script validation, and historical comparison flows that are out of scope for conformance authoring.
 
 ## Contributing
@@ -137,4 +141,4 @@ Follow these conventions when extending this skill:
 * New per-kind checks belong in the matching `references/{kind}.md` file. Bump the check count in this SKILL.md when the reference adds or removes checks.
 * New grader types belong in `references/grader-catalog.md` and only after the matching Vally CLI version is pinned in `package.json` devDependencies.
 * New refusal categories require updates to `references/refusal-taxonomy.md`, the regex set the safety lint script consumes, the Safety Refusal Taxonomy table above, and the canonical refusal block.
-* Helper scripts must ship in parity pairs (`.ps1` and `.sh`) unless the workflow has a hard Python dependency. Python helpers live under `scripts/` and are configured by the skill's `pyproject.toml`.
+* Helper scripts must ship in parity pairs (`.ps1` and `.sh`) unless the workflow has a hard Python dependency. The safety lint is the one exception and ships only as `Lint-VallyTestSafety.ps1`; do not add a bash mirror. Python helpers live under `scripts/` and are configured by the skill's `pyproject.toml`.
