@@ -1,10 +1,10 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-08-v9",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-10-v10",
   "author": "Microsoft HVE Core Maintainers",
-  "timestamp": "2026-10-08T23:51:30.266Z",
-  "last_updated": "2026-10-08T23:51:30.266Z",
-  "version": 9,
+  "timestamp": "2026-10-10T05:50:27.418Z",
+  "last_updated": "2026-10-10T05:50:27.418Z",
+  "version": 10,
   "tooling": "Drafted with an AI assistant using Copilot SDK in VS Code; maintained with human review and merge, and published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
   "statements": [
     {
@@ -1069,6 +1069,64 @@
       "impact_statement": "sprintf-js is no longer present in any committed dependency tree. It previously arrived only through argparse 1.x, a dependency of the js-yaml 3 command-line binary, which @istanbuljs/load-nyc-config pulls in for Jest coverage. load-nyc-config calls only js-yaml's load function, so the documentation site's package manifest overrides its js-yaml to 4.3.2, which provides the same load function without argparse 1.x. No patched sprintf-js release exists.",
       "status_notes": "OSV entry: https://osv.dev/GHSA-hp3w-g68c-fv3c. Dependency tree evidence: docs/docusaurus/package-lock.json contains no sprintf-js or argparse 1.x entry, and @istanbuljs/load-nyc-config resolves the hoisted js-yaml 4.3.2; no other committed package-lock.json in the repository contains a sprintf-js entry. Override evidence: docs/docusaurus/package.json sets @istanbuljs/load-nyc-config js-yaml to 4.3.2. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
       "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-c3jg-qh8m-j3h2",
+        "@id": "https://osv.dev/GHSA-c3jg-qh8m-j3h2",
+        "aliases": [
+          "CVE-2026-107378"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/cairosvg@2.9.1",
+              "identifiers": {
+                "purl": "pkg:pypi/cairosvg@2.9.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed PowerPoint skill environment resolves CairoSVG 2.9.1, the release where this issue was fixed. The skill uses CairoSVG to render sanitized SVG content to PNG. Its manifest requires CairoSVG 2.9.1 or later, and the committed uv.lock resolves 2.9.1 for reproducible installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-c3jg-qh8m-j3h2. Resolution evidence: .github/skills/experimental/powerpoint/pyproject.toml requires cairosvg >=2.9.1; .github/skills/experimental/powerpoint/uv.lock resolves cairosvg 2.9.1. Targeted SVG extraction tests and the project dependency audit pass.",
+      "timestamp": "2026-10-10T05:50:27.418Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-27vj-qcqg-25rc",
+        "@id": "https://osv.dev/GHSA-27vj-qcqg-25rc",
+        "aliases": [
+          "CVE-2026-104851"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/fsspec@2026.9.0",
+              "identifiers": {
+                "purl": "pkg:pypi/fsspec@2026.9.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed moderation environment resolves fsspec 2026.9.0, which is newer than the 2026.6.0 release where this issue was fixed. fsspec enters the environment through torch and huggingface-hub, and the moderation manifest now enforces the fixed version floor for reproducible installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-27vj-qcqg-25rc. Resolution evidence: scripts/evals/moderation/pyproject.toml requires fsspec >=2026.6.0; scripts/evals/moderation/uv.lock resolves fsspec 2026.9.0. Targeted moderation tests pass, and an OSV package query reports no vulnerability for fsspec 2026.9.0.",
+      "timestamp": "2026-10-10T05:50:27.418Z"
     }
   ]
 }
