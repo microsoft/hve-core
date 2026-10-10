@@ -352,7 +352,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--rate",
         default=DEFAULT_RATE,
-        help=f"Azure speech prosody rate (default: {DEFAULT_RATE}); ignored by piper",
+        help="Azure speech prosody rate (default: %(default)s); ignored by piper",
     )
     parser.add_argument(
         "--piper-data-dir",
