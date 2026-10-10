@@ -335,6 +335,72 @@ def _forbid_oauth(monkeypatch: pytest.MonkeyPatch, mural_module: Any) -> None:
     monkeypatch.setattr(mural_module, "_run_login", _boom)
 
 
+def _forbid_backend_probes(monkeypatch: pytest.MonkeyPatch, mural_module: Any) -> None:
+    def _boom(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("credential backend must not be probed")
+
+    monkeypatch.setattr(mural_module, "_probe_keyring_availability", _boom)
+    monkeypatch.setattr(mural_module, "KeyringBackend", _boom)
+    monkeypatch.setattr(mural_module, "FileBackend", _boom)
+
+
+@pytest.mark.parametrize(
+    ("record", "expected"),
+    [
+        pytest.param(_authenticated_record("access"), True, id="access-token"),
+        pytest.param(
+            {**_authenticated_record(""), "refresh_token": "refresh"},
+            True,
+            id="refresh-token-only",
+        ),
+        pytest.param(_authenticated_record(""), False, id="setup-only-empty-tokens"),
+        pytest.param(
+            {"access_token": "access", "refresh_token": "refresh"},
+            False,
+            id="malformed-record-with-tokens",
+        ),
+        pytest.param(None, False, id="profile-missing"),
+    ],
+)
+def test_given_store_record_when_usable_session_checked_then_matches_request_path(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    record: dict[str, Any] | None,
+    expected: bool,
+) -> None:
+    """Only a validated token-store record with a token is a usable session."""
+    # Arrange
+    _forbid_backend_probes(monkeypatch, mural_module)
+    profiles = {} if record is None else {"alpha": record}
+    store = {"schema_version": 2, "profiles": profiles}
+
+    # Act
+    usable = mural_module._profile_has_usable_session("alpha", store)
+
+    # Assert
+    assert usable is expected
+
+
+def test_given_backend_refresh_token_only_when_usable_checked_then_false(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    """A backend refresh token alone never makes a session usable."""
+    # Arrange
+    credential_path = _isolate_session_backends(monkeypatch, mural_module, tmp_path)
+    mural_module.FileBackend(credential_path).set(
+        "ignored", "MURAL_REFRESH_TOKEN", "seeded"
+    )
+    _forbid_backend_probes(monkeypatch, mural_module)
+
+    # Act
+    usable = mural_module._profile_has_usable_session("default", None)
+
+    # Assert
+    assert usable is False
+
+
 def test_given_token_store_refresh_token_when_auth_login_then_skips_oauth(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
@@ -726,6 +792,7 @@ def test_auth_status_no_store(
             "file_populated": False,
             "both_populated": False,
         },
+        "backend_refresh_token": False,
     }
 
 
@@ -785,6 +852,7 @@ def test_auth_status_with_store(
             "file_populated": False,
             "both_populated": False,
         },
+        "backend_refresh_token": False,
     }
 
 
@@ -799,6 +867,7 @@ AUTH_STATUS_UNAUTHENTICATED_KEYS = frozenset(
         "keyring_available",
         "keyring_backend",
         "concurrent_state",
+        "backend_refresh_token",
     }
 )
 AUTH_STATUS_AUTHENTICATED_KEYS = frozenset(
@@ -1122,13 +1191,13 @@ def test_given_setup_profile_when_status_then_login_then_oauth_runs(
     assert mural_module._select_profile(store, "alpha")["access_token"] == "x"
 
 
-def test_given_credential_file_refresh_token_when_auth_status_then_authenticated(
+def test_given_file_refresh_token_when_auth_status_then_flagged_not_authenticated(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Status counts a backend refresh token as a session without a token store."""
+    """A backend refresh token is reported apart from a usable session."""
     # Arrange
     credential_path = _isolate_session_backends(monkeypatch, mural_module, tmp_path)
     mural_module.FileBackend(credential_path).set(
@@ -1140,8 +1209,88 @@ def test_given_credential_file_refresh_token_when_auth_status_then_authenticated
     rc = mural_module.main(["auth", "status"])
 
     # Assert
+    out = json.loads(capsys.readouterr().out)
     assert rc == mural_module.EXIT_SUCCESS
-    assert json.loads(capsys.readouterr().out)["authenticated"] is True
+    assert out["authenticated"] is False
+    assert out["backend_refresh_token"] is True
+
+
+def test_given_keyring_refresh_token_when_auth_status_then_flagged_not_authenticated(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A keyring-only refresh token is flagged without counting as a login."""
+    # Arrange
+    _isolate_session_backends(
+        monkeypatch, mural_module, tmp_path, keyring_refresh_token="seeded"
+    )
+    monkeypatch.setenv(ENV_TOKEN_STORE, str(tmp_path / "absent-store.json"))
+
+    # Act
+    mural_module.main(["auth", "status"])
+
+    # Assert
+    out = json.loads(capsys.readouterr().out)
+    assert out["authenticated"] is False
+    assert out["backend_refresh_token"] is True
+
+
+def test_given_unreadable_credential_file_when_auth_status_then_backend_flag_false(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Status stays non-raising when the credential file cannot be read."""
+    # Arrange
+    credential_path = _isolate_session_backends(monkeypatch, mural_module, tmp_path)
+    # env-only skips credential autoload, while the status probe still reads
+    # the file regardless of the selected backend.
+    monkeypatch.setenv("MURAL_CREDENTIAL_BACKEND", "env-only")
+    credential_path.write_text("MURAL_REFRESH_TOKEN=seeded\n")
+    monkeypatch.setenv(ENV_TOKEN_STORE, str(tmp_path / "absent-store.json"))
+
+    def _unreadable(self: Any) -> dict[str, str]:
+        raise OSError("permission denied")
+
+    monkeypatch.setattr(mural_module.FileBackend, "_read_all", _unreadable)
+
+    # Act
+    mural_module.main(["auth", "status"])
+
+    # Assert
+    out = json.loads(capsys.readouterr().out)
+    assert out["authenticated"] is False
+    assert out["backend_refresh_token"] is False
+
+
+def test_given_malformed_record_with_tokens_when_auth_status_then_unauthenticated(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A record the request path would reject is not reported as a login."""
+    # Arrange
+    _isolate_session_backends(monkeypatch, mural_module, tmp_path)
+    monkeypatch.setattr(
+        mural_module,
+        "_load_token_store",
+        lambda path: {
+            "schema_version": 2,
+            "profiles": {"default": {"access_token": "x", "refresh_token": "y"}},
+        },
+    )
+
+    # Act
+    mural_module.main(["auth", "status"])
+
+    # Assert
+    out = json.loads(capsys.readouterr().out)
+    assert out["authenticated"] is False
+    assert out["backend_refresh_token"] is False
 
 
 def test_auth_setup_requires_client_id(
