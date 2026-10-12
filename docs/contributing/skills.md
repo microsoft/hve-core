@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-29
+ms.date: 2026-10-12
 ms.topic: how-to
 keywords:
   - skills
@@ -441,6 +441,11 @@ Python skill scripts require pytest:
 * When a Python skill has a `tests/` directory, `[tool.ruff.lint].select` in `pyproject.toml` MUST include `"I"` so isort enforcement is active for test files
 * Commit `uv.lock` alongside `pyproject.toml` at the skill root so Dependabot can resolve and patch Python dependencies under `.github/skills/**`
 * `npm run validate:skills` warns when `pyproject.toml` is present without `uv.lock`, and it fails when the validation run is executed with `-WarningsAsErrors`
+* To suppress a pip-audit finding that has no available fix or that the supplier disputes, add a `pip-audit-known-vulnerabilities.txt` file at the skill root, next to `pyproject.toml`
+  * The `pip-audit.yml` workflow runs with the skill root as its working directory and reads the file from there, so a file in any other location is ignored
+  * List one vulnerability ID per line (for example `PYSEC-2025-183`); blank lines and lines starting with `#` are skipped, and each remaining ID is passed to pip-audit as `--ignore-vuln`
+  * Precede each ID with a `#` comment that names the advisory, explains why it is suppressed, and states the condition for removing the entry, such as an upstream fix or a changed disposition
+  * See `.github/skills/experimental/tts-voiceover/pip-audit-known-vulnerabilities.txt` for a worked example
 
 <!-- cspell:ignore conftest mktemp -->
 Do not commit opaque binary test fixtures such as `.pptx` or `.xlsx` files. Binary
