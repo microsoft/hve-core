@@ -48,7 +48,7 @@ function describeContrastCase(label: string, selector: string, pseudoElt?: strin
   return `${label} (${selector})`;
 }
 
-async function measureContrast(page: any, selector: string, pseudoElt?: string) {
+async function measureContrast(page: Page, selector: string, pseudoElt?: string) {
   return await page.evaluate(
     ({ selector, pseudoElt }) => {
       const node = document.querySelector(selector) as HTMLElement | null;
