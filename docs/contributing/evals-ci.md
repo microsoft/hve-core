@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-08
+ms.date: 2026-10-12
 ms.topic: how-to
 keywords:
   - evals
@@ -301,6 +301,8 @@ Eval artifacts therefore publish aggregate results only. These paths are deliber
 
 What is still published covers the summaries that drive the gate and the per-artifact debugging payloads: `logs/eval-summary.json`, `logs/eval-results-*.json`, `logs/baseline-equivalence-*.json`, and the changed-artifact and stimulus-presence manifests. None of these embed model output.
 
+To narrow a failed program grader without a transcript, read its bounded `failureCodes` under `perSpec[].diagnostics.attempts[].trials[].graders[]` in `eval-summary.json`. Only codes from a fixed per-grader vocabulary are published; the [agent-behavior suite guide](https://github.com/microsoft/hve-core/blob/main/evals/agent-behavior/README.md#program-grader-failure-codes) lists the outcome grader's field codes.
+
 The cost is that inspecting what an agent actually said during a failed run means re-running it rather than downloading the artifact. Do not re-add the withheld paths to make debugging easier.
 
 ## Adding a New Eval Spec
@@ -394,22 +396,24 @@ The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeri
 
 Content moderation runs in two complementary CI lanes, each scoped to a different surface.
 
-| Lane              | Job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                  | Surface                                                                   |
-|-------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
-| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)             | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
-| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](../../scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`)   | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
+| Lane                   | Job in [`eval-validation.yml`](../../.github/workflows/eval-validation.yml) | Script                                                                                           | Toolchain                                  | Surface                                                                   |
+|------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
+| Markdown corpus        | `eval-validation`                                                           | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)                 | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
+| Eval specs + artifacts | `content-moderation`                                                        | [scripts/evals/Invoke-ArtifactModeration.ps1](../../scripts/evals/Invoke-ArtifactModeration.ps1) | Python + Detoxify (`unbiased` by default)  | Every eval spec under `evals/` plus the AI artifacts changed in the PR    |
 
-The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
+The two lanes use different checkers: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the moderation lane scores every eval spec, plus the AI artifacts changed in the PR, against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
-The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
+The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), generates the changed-artifact manifest, then runs `npm run ci:eval:moderate:artifacts`.
 
-`Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
+`Invoke-ArtifactModeration.ps1` enumerates every eval spec under `evals/`, adds the changed AI artifacts from the changed-artifact manifest, and passes the de-duplicated file list to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for whole-file moderation.
+
+This lane applies one Detoxify threshold to every file (default `0.5`, set with `-Threshold`); the per-spec `moderation.threshold` field documented above is read by `Invoke-VallyEvals.ps1` for its pre-eval input moderation.
 
 Local opt-in for the Detoxify lane:
 
 ```pwsh
 uv sync --locked --project scripts/evals/moderation
-pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
+npm run ci:eval:moderate:artifacts
 ```
 
 Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs as the CI-owned `ci:eval:lint:text` lane without any moderation-environment opt-in.
@@ -521,7 +525,7 @@ Beyond the lint lanes, `scripts/evals/` holds the scripts that scope runs, moder
 | `Get-AgentDependencyMap.ps1`              | Run directly                                      | Builds a JSON map of agent dependencies for the baseline-equivalence dispatcher             |
 | `Update-AgentMatrixSummariesFromLogs.ps1` | Run directly                                      | Rebuilds per-agent matrix summaries from existing vally logs without re-running `npx vally` |
 
-`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest. Corpus moderation scores stimulus text inside eval specs; artifact moderation covers the specs plus the changed AI artifacts themselves, writing to a separate output file.
+`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest, each writing to its own output file. Artifact moderation covers every eval spec plus the changed AI artifacts and is the lane the `content-moderation` job runs; corpus moderation (`ci:eval:moderate:corpus`) strips frontmatter from the changed `.github/{agents,prompts,instructions,skills}/**/*.md` files and scores only their bodies.
 
 `ci:eval:agent:report` is the end-to-end convenience command: it runs `ci:eval:agent:matrix` and then `ci:eval:agent:dashboard`.
 
