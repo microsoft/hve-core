@@ -7,7 +7,7 @@ compatibility: VS Code with GitHub Copilot, WorkIQ access, optional board MCP ac
 metadata:
   authors: commercial-software-engineering/engagement-scribe
   spec_version: "1.0"
-  last_updated: "2026-09-01"
+  last_updated: "2026-10-02"
 ---
 
 # engagement-reporting
@@ -70,8 +70,9 @@ flatten Markdown or substitute plain text.
     Council Critic evaluations. Dispatch the Council Arbiter in `proposal` mode,
     obtain user decisions on material edits, then dispatch it in `persistence`
     mode with the validated reporting date, report-type slug, and approved
-    decision set. Use the manual Council prompt in separate model sessions when
-    independent agent runs are unavailable
+    decision set. When independent agent runs are unavailable, ask the user to
+    run the manual-only `engagement-report-council-critique` skill
+    (`/engagement-report-council-critique`) in separate model sessions
 12. Present the final draft for explicit user approval and save the approved
    output
 13. When Outlook distribution is configured, ask separately for approval to

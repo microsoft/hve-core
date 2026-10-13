@@ -23,7 +23,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   create-stale-docs-issues:

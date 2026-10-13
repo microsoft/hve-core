@@ -1,0 +1,4 @@
+# Synthetic fixture for the rpi-research closeout eval. Not real configuration.
+exporter:
+  module: src/export/csv_exporter.py
+  retention_days: 45

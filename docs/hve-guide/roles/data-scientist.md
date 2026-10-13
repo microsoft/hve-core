@@ -3,7 +3,7 @@ title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - data science
@@ -108,9 +108,9 @@ granularity, and GDPR privacy constraints for EU customer data.
 | **rpi-research**                       | Data source and pattern research                                 | [RPI workflow](../../rpi/) |
 | **rpi-plan**                           | Analytics pipeline planning                                      | [RPI workflow](../../rpi/) |
 
-Prompts complement the agents for cross-cutting workflows:
+Skills complement the agents for cross-cutting workflows:
 
-| Prompt       | Purpose                                                       | Invoke          |
+| Skill        | Purpose                                                       | Invoke          |
 |--------------|---------------------------------------------------------------|-----------------|
 | git-commit   | Stage and commit changes with conventional message formatting | `/git-commit`   |
 | pull-request | Create a pull request with structured description             | `/pull-request` |

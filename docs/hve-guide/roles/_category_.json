@@ -3,8 +3,5 @@
   "position": 3,
   "collapsible": true,
   "collapsed": true,
-  "link": {
-    "type": "doc",
-    "id": "hve-guide/roles/README"
-  }
+  "link": null
 }

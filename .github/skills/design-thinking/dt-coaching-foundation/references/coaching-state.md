@@ -150,7 +150,7 @@ Specialized DT workflows may extend the base state schema with additional top-le
 
 ### Initialization
 
-Create the state file when starting a new coaching project via the `dt-start-project` prompt. Set `current.method` to 1, `current.space` to `problem`, and record the initial transition log entry.
+Create the state file when DT Coach session initialization starts a new coaching project. Set `current.method` to 1, `current.space` to `problem`, and record the initial transition log entry.
 
 ### Updates
 
@@ -161,6 +161,10 @@ Update the state file at these events:
 * Artifact creation: append to `artifacts` list.
 * Phase change within a method: update `current.phase`.
 * Hint calibration shift: update `hint_calibration.level` when the team's responsiveness to hints changes. Record observations in `hint_calibration.pattern_notes`.
+
+### Write Failures
+
+When a state write fails, report the failure and its cause, state that the recorded state is unchanged, and ask the team how to proceed. Do not retry the write through another path on your own, and do not describe a transition or update as complete when its write failed.
 
 ### Space Derivation
 
@@ -176,15 +180,17 @@ Do not set space independently of method.
 
 When resuming a coaching session:
 
-1. Read the state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
+1. Read the state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`. When the slug is missing or ambiguous, list the projects under `.copilot-tracking/dt/` with their last session dates and ask which one to resume; when no project exists, offer to start a new one.
 2. Verify the file parses as valid YAML and contains required fields (`project`, `current`, `methods_completed`, `transition_log`).
 3. Restore coaching context from `current.method`, `current.space`, and `current.phase`.
 4. Review the most recent `transition_log` and `session_log` entries to understand where the team left off.
 5. Check `methods_completed` to understand overall progress.
 6. Scan the `artifacts` list for available project artifacts to reference.
-7. Announce the resumed state to the user: current method, current phase, and a brief summary of previous work.
+7. Announce the resumed state to the user: current method, current phase, overall progress, the most recent transition rationale when it helps, and a brief summary of previous work.
+8. Ask the user to confirm the summary before resuming active coaching, then continue naturally from where the previous session ended rather than reciting method steps.
+9. Resume hint escalation at the level recorded in `hint_calibration` and recent session logs rather than resetting to Level 1.
 
-If the state file is missing or corrupted, inform the user and offer to reinitialize from scratch or reconstruct state from existing artifacts in the project directory.
+If the state file is missing or corrupted, inform the user which fields are unreadable and offer to reinitialize from scratch or reconstruct state from existing artifacts in the project directory.
 
 ## Project Directory Contents
 

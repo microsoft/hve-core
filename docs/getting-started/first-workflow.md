@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-02
 ms.topic: tutorial
 keywords:
   - getting started
@@ -216,9 +216,9 @@ with `/clear` between each phase. This is a useful way to learn RPI because you
 see each phase produce its own artifact.
 
 For day-to-day work, select
-[RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
-or invoke `/rpi`. Both coordinate the same phase skills and include
-Review and Follow-up when the task reaches those stages.
+[RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent).
+It coordinates the same phase skills and includes Review and Follow-up
+when the task reaches those stages.
 
 To compare the experience, select **RPI Agent** from the agent picker and try
 this prompt:

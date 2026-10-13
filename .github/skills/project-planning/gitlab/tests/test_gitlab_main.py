@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import traceback
 from collections.abc import Callable
@@ -278,6 +279,7 @@ class TestAuthCommands:
         mocker: MockerFixture,
         tmp_path: pathlib.Path,
         capsys: pytest.CaptureFixture[str],
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         _configure_oauth(monkeypatch, store_path)
@@ -312,6 +314,7 @@ class TestAuthCommands:
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: pathlib.Path,
         capsys: pytest.CaptureFixture[str],
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         _configure_oauth(monkeypatch, store_path)
@@ -331,6 +334,7 @@ class TestAuthCommands:
         self,
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: pathlib.Path,
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         _configure_oauth(monkeypatch, store_path)
@@ -351,6 +355,28 @@ class TestAuthCommands:
         store = gitlab.credentials.load_store(store_path)
         assert "selected" not in store["profiles"]
         assert "other" in store["profiles"]
+
+    @pytest.mark.skipif(os.name != "nt", reason="native-Windows OAuth refusal")
+    def test_given_windows_when_auth_status_then_refuses_without_store(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        tmp_path: pathlib.Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        _configure_oauth(monkeypatch, store_path)
+        monkeypatch.setattr("sys.argv", ["gitlab", "auth", "status"])
+        provider_request = mocker.patch.object(gitlab._OPENER, "open")
+
+        code = gitlab.main()
+
+        output = capsys.readouterr()
+        assert code == gitlab.EXIT_FAILURE
+        assert "profile persistence is unavailable on Windows" in output.err
+        assert output.out == ""
+        assert not store_path.exists()
+        provider_request.assert_not_called()
 
     def test_rejects_mixed_legacy_credentials(
         self,

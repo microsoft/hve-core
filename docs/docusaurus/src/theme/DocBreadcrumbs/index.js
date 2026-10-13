@@ -43,6 +43,18 @@ function BreadcrumbsItem({children, active}) {
   );
 }
 
+// Categories carry no link, so a section crumb falls back to the landing README
+// listed as the category's first child.
+function landingHref(item) {
+  if (item.href) {
+    return item.href;
+  }
+  const first = item.type === 'category' ? item.items?.[0] : undefined;
+  return first?.type === 'link' && !first.unlisted && /\/README$/.test(first.docId ?? '')
+    ? first.href
+    : undefined;
+}
+
 export default function DocBreadcrumbsWrapper() {
   const breadcrumbs = useSidebarBreadcrumbs();
   const homePageRoute = useHomePageRoute();
@@ -70,7 +82,7 @@ export default function DocBreadcrumbsWrapper() {
             const href =
               item.type === 'category' && item.linkUnlisted
                 ? undefined
-                : item.href;
+                : landingHref(item);
             return (
               <BreadcrumbsItem key={idx} active={isLast}>
                 <BreadcrumbsItemLink href={href} isLast={isLast}>

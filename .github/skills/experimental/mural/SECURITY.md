@@ -2,7 +2,7 @@
 title: Mural Skill Security Model
 description: STRIDE threat model for the Mural skill covering browser callback, Mural API egress, on-disk cache, caller input, and Azure SAS uploads
 author: microsoft/hve-core
-ms.date: 2026-09-17
+ms.date: 2026-10-09
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -282,6 +282,9 @@ Devcontainer, Codespaces, and WSL2 contexts inherit the host operator's trust; t
 
 * All writes go through `os.open(O_WRONLY | O_CREAT | O_EXCL, 0o600)` followed by `os.replace` so partial writes are never observed.
 * Concurrent CLI writers serialize through an advisory lock on the sibling `<path>.lock` file (`fcntl.flock` on POSIX, `msvcrt.locking` on Windows), preventing interleaved writes from corrupting the v2 envelope (see [`scripts/mural/`](scripts/mural/) `_acquire_cache_lock`).
+* `mural auth login` and `mural auth status` classify an existing session with one shared check: an access or refresh token on the token-store profile, or a `MURAL_REFRESH_TOKEN` in the keyring or credential file. Client ID and client secret are app configuration and never count, so `mural auth setup` followed by `mural auth login` proceeds without `--force` (see [`scripts/mural/`](scripts/mural/) `_profile_has_session`).
+* Without `--force`, login refuses to overwrite an existing session and fails closed before starting OAuth when the token store or credential file cannot be read or validated. After OAuth returns, login re-checks the profile under the same lock as the write, so a session created by a concurrent login is kept rather than overwritten. Replacing an unreadable or incompatible store, which discards every profile in it, requires `--force`; a valid store keeps unrelated profiles (see [`scripts/mural/`](scripts/mural/) `_cmd_auth_login`).
+* Residual: keyring and credential-file reads are not atomic with the token-store lock, so a refresh token written to a backend after the final check is not detected. Tokens minted by a login whose write is skipped are discarded locally but remain valid server-side until they expire or are revoked (see G-EOP-1 and G-EOP-2).
 * The credential-file parser performs no shell expansion and no `$VAR` interpolation; values are stored verbatim and matching surrounding quotes are stripped without further processing (see [`scripts/mural/`](scripts/mural/) `FileBackend._read_all`). A tampered file therefore cannot escalate to subprocess execution via parsed values.
 
 ### Repudiation
@@ -317,6 +320,7 @@ Devcontainer, Codespaces, and WSL2 contexts inherit the host operator's trust; t
 | At-rest token/secret theft (file backend)  | Med        | High   | Med           | Partially Mitigated (keyring backend) |
 | Backup/sync exfiltration of home directory | Med        | High   | Med           | Partially Mitigated (keyring backend) |
 | Cache tampering / partial write            | Low        | Med    | Low           | Mitigated (atomic write + lock)       |
+| Stale or concurrent session overwrite      | Low        | Med    | Low           | Mitigated (session check + re-check)  |
 | Refresh-token non-rotation reuse           | Med        | High   | Med           | Accepted upstream (G-EOP-2)           |
 
 ## Bucket B4: CLI Caller Process

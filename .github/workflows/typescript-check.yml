@@ -1,0 +1,90 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: TypeScript Check
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on TypeScript type-check errors'
+        required: false
+        type: boolean
+        default: false
+
+# Minimal permissions
+permissions:
+  contents: read
+
+jobs:
+  typescript-check:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript type check
+        id: typescript-check
+        run: |
+          set +e
+          npm run lint:ts > typescript-check-output.txt 2>&1
+          TSC_EXIT_CODE=$?
+          set -e
+          cat typescript-check-output.txt
+          if [ "$TSC_EXIT_CODE" -ne 0 ]; then
+            echo "TYPESCRIPT_CHECK_FAILED=true" >> "$GITHUB_ENV"
+          fi
+        continue-on-error: true
+
+      - name: Create annotations
+        if: env.TYPESCRIPT_CHECK_FAILED == 'true'
+        run: |
+          echo "::error::TypeScript type check failed. Run 'npm run lint:ts' locally to reproduce."
+
+      - name: Upload TypeScript check results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: typescript-check-results
+          path: typescript-check-output.txt
+          retention-days: 30
+
+      - name: Add job summary
+        if: always()
+        run: |
+          {
+            echo "## TypeScript Check Results"
+            if [ "${{ env.TYPESCRIPT_CHECK_FAILED }}" == "true" ]; then
+              echo "❌ **Status**: Failed"
+              echo ""
+              echo "Run \`npm run lint:ts\` locally and fix the reported type errors."
+              echo ""
+              echo '```text'
+              cat typescript-check-output.txt
+              echo '```'
+            else
+              echo "✅ **Status**: Passed"
+              echo ""
+              echo "All TypeScript sources type-check cleanly."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail job if issues found
+        if: env.TYPESCRIPT_CHECK_FAILED == 'true' && !inputs.soft-fail
+        run: |
+          echo "TypeScript type check failed"
+          exit 1

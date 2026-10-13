@@ -230,6 +230,11 @@ Describe 'Set-CIOutput' -Tag 'Unit' {
             $content | Should -Match 'key1=value1'
             $content | Should -Match 'key2=value2'
         }
+
+        It 'Writes an explicit empty value' {
+            Set-CIOutput -Name 'empty-key' -Value ''
+            Get-Content -Path $env:GITHUB_OUTPUT | Should -Contain 'empty-key='
+        }
     }
 
     Context 'In Azure DevOps environment' {
@@ -588,6 +593,13 @@ Describe 'Write-CIAnnotation' -Tag 'Unit' {
             $maliciousFile = "path`n::error::Pwned"
             $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile }
             $output | Should -Not -Match '::error::Pwned'
+        }
+
+        It 'Emits a single encoded line for a hostile file path with legacy command syntax' {
+            $hostileFile = "evals\dir\a:b`n##[warning]x,line=9%.yml"
+            $output = @(Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Error -File $hostileFile })
+            $output | Should -HaveCount 1
+            $output[0] | Should -BeExactly '::error file=evals/dir/a%3Ab%0A##[warning]x%2Cline=9%25.yml::Test'
         }
     }
 

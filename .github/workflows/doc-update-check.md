@@ -29,6 +29,8 @@ checkout:
     .github/instructions/coding-standards/
     .github/instructions/hve-core/
     .github/instructions/shared/
+    .github/instructions/skill-security-model.instructions.md
+    .github/skills/
     .github/workflows/
     docs/
     scripts/
@@ -119,6 +121,7 @@ stale.
    command that would surface commit message text for file discovery.
 2. Filter out documentation-only changes.
 3. For each code file changed, use the imported Documentation agent guidance to identify the relevant documentation references and drift signals.
+   * For a changed script file anywhere in a skill outside its `tests/` directory, treat that skill's `SECURITY.md` as mapped documentation when it exists. Apply the "Keeping a Model Current" definition in `.github/instructions/skill-security-model.instructions.md` to decide whether the change is significant. When the skill has no `SECURITY.md`, apply "When a Model Is Required" and check `scripts/linting/skill-security-classification.json` for an exempt or pending entry.
 4. Read each referenced documentation file.
 5. Compare the documentation against the current implementation.
 6. For documentation that no longer accurately describes the implementation, search for existing open issues about the same documentation file.
@@ -131,6 +134,7 @@ When creating issues, use the **bug-report** template structure from `.github/IS
 * Use the `docs:` prefix in the title followed by a concise description (e.g., `docs: update scripts/README.md for new linting commands`).
 * Structure the issue body to match the bug-report template fields.
 * Apply `documentation`, `needs-triage`, and `agent-ready` labels so the issue-implement workflow can pick them up.
+* For a skill security model, title the issue `docs: security model may be stale for <skill>` or `docs: security model needed for <skill>`. Describe only which surface or cited control changed and which model sections need review. Never describe a vulnerability, an exploit path, or an unfixed weakness in the issue; if the change appears to introduce one, say only that the model needs review.
 
 ### Bug-Report Template Field Mapping
 

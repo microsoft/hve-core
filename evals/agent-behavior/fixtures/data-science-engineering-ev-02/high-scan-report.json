@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "modes": {
+    "data": true,
+    "denylist": false
+  },
+  "summary": {
+    "high": 1,
+    "warning": 0
+  },
+  "findings": [
+    {
+      "category": "connection-string",
+      "source": "synthetic-catalog-draft.md",
+      "line": 12,
+      "length": 28
+    }
+  ]
+}

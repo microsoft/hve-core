@@ -1,9 +1,9 @@
 ---
 title: rpi-research
-description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
+description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-26
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
+Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -50,16 +50,12 @@ Invoke the skill with a topic. Add `chat` to let it refine scope from the curren
 /rpi-research topic="Streaming uploads to Azure Blob Storage from the Python pipeline"
 ```
 
-The skill sends one opening update with its interpreted goal, posture, starting areas, and boundaries, then researches and updates the artifact as evidence arrives. The final response separates execution status from readiness:
+The skill sends one opening update with its interpreted goal, posture, starting areas, and boundaries, then researches and updates the artifact as evidence arrives. The final response leads with the result in plain language, which for a topic like this one is the bottom line, then gives the evidence and next step:
 
 ```text
 ## rpi-research: Azure Blob Storage streaming uploads
 
-* Research execution: Complete; disposition `executed`
-* Output mode: convergence; Planning Readiness: Ready (C1-C4, W1-W3)
-* Recommendation: azure-storage-blob async client behind the existing WriterBase contract
-* Rejected alternative: synchronous SDK client (blocks the pipeline event loop, W2)
-* Unresolved decisions: none
+Research is complete. Use the azure-storage-blob async client behind the existing WriterBase contract: it streams uploads without blocking the pipeline event loop, and the synchronous client would block it (W2). Nothing is waiting on a decision from you, so planning can start now.
 
 | Artifact                                                                                                                         | Description               |
 |----------------------------------------------------------------------------------------------------------------------------------|---------------------------|
@@ -70,4 +66,4 @@ The skill sends one opening update with its interpreted goal, posture, starting 
 Run `/rpi-plan` with this research artifact.
 ```
 
-When readiness is `Not ready` or the output mode does not support planning, the response states the no-handoff reason instead of advising a command.
+When the research cannot support planning, the response says why in plain language instead of advising a command.

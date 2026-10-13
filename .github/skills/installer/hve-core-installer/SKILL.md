@@ -6,7 +6,7 @@ license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-13"
+  last_updated: "2026-10-02"
 ---
 
 # HVE-Core Installer Skill
@@ -52,11 +52,10 @@ Present the following and await explicit consent:
 ```text
 🚀 HVE-Core Installer
 
-I'll help you install HVE-Core agents, prompts, instructions and skills.
+I'll help you install HVE-Core agents, instructions and skills.
 
 Available content:
 • Specialized agents, including RPI Agent, Documentation, and domain planners
-• Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
 • Domain-specific skills (pr-reference, etc.)
 
@@ -120,7 +119,7 @@ If user selects Option 2 (Clone-Based):
 
 **When to choose Clone over Extension:**
 
-* Need to customize agents, prompts, instructions, or skills
+* Need to customize agents, instructions, or skills
 * Team requires version-controlled HVE-Core
 * Offline or air-gapped environment
 
@@ -486,6 +485,6 @@ Use these exact emojis for consistency:
 
 ## Success Criteria
 
-**Success:** Environment detected, method selected, HVE-Core directories validated (agents, prompts, instructions, skills), settings configured, user directed to reload.
+**Success:** Environment detected, method selected, HVE-Core directories validated (agents, instructions, skills), settings configured, user directed to reload.
 
 **Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.

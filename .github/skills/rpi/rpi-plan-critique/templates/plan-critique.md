@@ -6,21 +6,20 @@
 * Task ID: {{task_id}}
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Critique execution status: {{Complete, Partial, or Blocked}}
+* Critique execution: {{Complete_Partial_Blocked_or_not_produced}}
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
-* Invocation consumed: yes
-* Attempt ID and kind: {{unique_attempt_id_and_initial_or_recovery}}
-* Candidate identity and saved hash boundary: {{revision_hash_and_reservation_metadata_boundary}}
-* Current-run provenance: {{immediate_planner_activation_or_standalone_initial_reservation}}
-* Original attempt and recovery approval: {{not_applicable_or_original_pointer_and_task_specific_consent}}
+* Critique type: {{initial_or_follow_up}}
+* Earlier critique: {{not_applicable_or_earlier_critique_path}}
+
+<!-- For no assessment, record the limitation and unavailable verdict rather than fabricated coverage or findings. -->
 
 ## Inputs and Criterion Boundary
 
 * Task context and caller requirements: {{requirements_or_context_summary}}
 * Research and evidence considered: {{workspace_relative_evidence_paths}}
 * Decisions, dependencies, task Goals, and task Requirements considered: {{decision_dependency_goal_and_requirement_summary}}
-* Assessment boundary: {{what_the_critique_can_and_cannot_conclude_from_supplied_inputs}}
+* Assessment boundary: {{supplied_plan_and_evidence_scope_and_what_the_critique_can_and_cannot_conclude}}
 
 ## Coverage Assessment
 
@@ -32,8 +31,16 @@
 
 ## Verdict
 
-* Verdict: {{Pass_Revise_or_Blocked}}
+* Verdict: {{Pass_Revise_Blocked_or_unavailable_when_no_assessment}}
 * Rationale: {{concise_evidence_based_rationale}}
+
+## Earlier Finding Reconciliation
+
+<!-- Follow-up critique only; omit this section for an initial critique. -->
+
+| Earlier finding | Status                                | Evidence     |
+|-----------------|---------------------------------------|--------------|
+| {{PC_xxx}}      | {{resolved_still_open_or_superseded}} | {{evidence}} |
 
 ## Findings
 

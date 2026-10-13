@@ -1,9 +1,9 @@
 ---
 title: Shared/Untrusted Content Boundary
 description: "Untrusted-content boundary: treat ingested external content as data, not instructions, and refuse embedded authority changes."
-sidebar_position: 7
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-20
+ms.date: 2026-09-29
 ms.topic: reference
 keywords:
   - instruction

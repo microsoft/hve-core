@@ -32,7 +32,7 @@ Select `RPI Agent` when one task should move through Research, Plan, Implement, 
 
 It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record so a later conversation can resume from the recorded phase.
 
-Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts and critique/Review execution records. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
+Child tasks inherit your participation preferences, session-wide critique and Review choices, and unresolved work, but own fresh phase artifacts; a skip you set for one task does not carry over. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
 
 It offers two modes:
 
@@ -43,6 +43,8 @@ It offers two modes:
 
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
 
+The plan critique and Review run by default in both modes. Ask to skip either one for a task or for the whole session, and the agent records the skip and moves to the next step: Planning finishes without the critique, and a skipped Review moves from Implement to Follow-up.
+
 Reach for a different asset when:
 
 * The next action is already clear. Invoke the phase skill directly.
@@ -50,7 +52,7 @@ Reach for a different asset when:
 
 ## How to use it
 
-1. Select **RPI Agent** from the chat agent picker, or run the [/rpi](../../prompts/hve-core/rpi) prompt.
+1. Select **RPI Agent** from the chat agent picker.
 2. Describe the task, or supply an issue or PR reference, a task slug, or an existing artifact path. An explicit anchor identifies the task; a new conversation alone does not resume earlier work.
 3. In manual mode, the agent walks you through each phase's artifacts and asks whether to refine the work or advance. Request the next phase in your answer, use the **Research**, **Plan**, **Implement**, and **Review** handoffs, or invoke the matching `/rpi-*` command.
 4. To switch to automatic mode, select **Full Auto** or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, choose one of the four options below. Every question includes freeform input.
@@ -66,9 +68,9 @@ The opening question is "How would you like us to work on this?":
 
 You can retain follow-up selection through the second option or a custom answer. Use the ranked handoffs or answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
 
-With the stop-before-Implementation option, the agent completes Planning, including its required critique and decision gates, then returns to manual mode in Plan. It walks you through the research and plan, including trade-offs and readiness, and offers refinement or an explicit Implementation request. Iteration preserves the task and consumed critique gate. Resuming the conversation alone does not start Implementation.
+With the stop-before-Implementation option, the agent completes Planning, including its critique unless you skipped it and its decision gates, then returns to manual mode in Plan. It walks you through the research and plan, including trade-offs and readiness, and offers refinement or an explicit Implementation request. Iteration preserves the task and its planning decisions. Resuming the conversation alone does not start Implementation.
 
-If a critique was interrupted after reservation without a terminal result, `rpi-plan` owns reconciliation and may offer one task-specific, explicitly confirmed recovery after verifying that the original worker ended. A missing result is not a pass. Terminal assessments are not retried, and recovery does not remove your stop-before-Implementation boundary.
+If a critique is interrupted before it saves a result, resuming the task reruns it; a missing result is never a pass. Resuming does not remove your stop-before-Implementation boundary.
 
 ## Example usage
 
@@ -79,9 +81,9 @@ Work through each phase with me to add Azure Blob Storage output to the pipeline
 The agent uses manual mode, walks you through the Research findings, and asks whether to refine them or advance:
 
 ```text
-* Mode: manual; session: n/a; phase: Research; task: blob-storage
-* Research: executed; Planning Readiness Ready
-* Decisions: managed identity for production (confirmed)
+Research is complete. Use the azure-storage-blob async client with managed identity in production, as you confirmed. Nothing else is waiting on you, so Planning can start whenever you're ready.
+
+Session: manual mode, Research phase, task blob-storage
 
 | Artifact                                                                                                                         | Description               |
 |----------------------------------------------------------------------------------------------------------------------------------|---------------------------|

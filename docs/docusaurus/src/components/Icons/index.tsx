@@ -124,3 +124,18 @@ export function TemplatesExamplesIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function SlidesIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <rect x="4" y="6" width="56" height="6" rx="2" fill="#556a8a" />
+      <rect x="8" y="12" width="48" height="32" rx="2" fill="#0078d4" />
+      <rect x="14" y="18" width="20" height="3" rx="1.5" fill="#fff" />
+      <rect x="14" y="25" width="14" height="2" rx="1" fill="#fff" opacity="0.7" />
+      <rect x="14" y="31" width="16" height="2" rx="1" fill="#fff" opacity="0.7" />
+      <rect x="38" y="30" width="5" height="9" fill="#e8740c" />
+      <rect x="45" y="24" width="5" height="15" fill="#7719aa" />
+      <path d="M32 44v8M32 52l-10 8M32 52l10 8" fill="none" stroke="#556a8a" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}

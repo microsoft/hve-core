@@ -147,16 +147,40 @@ test('recovers through the error boundary after an initial rejection', async () 
 
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
-    const recoveredGraphic = await waitFor(() => {
+    await waitFor(() => {
       const graphic = view.container.querySelector('[data-render="recovered"]');
       expect(graphic).toBeInTheDocument();
-      return graphic;
+      expect(graphic).toHaveAttribute('tabindex', '-1');
+      expect(focusGraphic).toHaveBeenCalledTimes(1);
     });
-    expect(recoveredGraphic).toHaveAttribute('tabindex', '-1');
-    expect(focusGraphic).toHaveBeenCalledTimes(1);
     expect(mockRender).toHaveBeenCalledTimes(2);
   } finally {
     focusGraphic.mockRestore();
+    consoleError.mockRestore();
+  }
+});
+
+test('focuses the retry button when the retry also rejects', async () => {
+  mockRender
+    .mockRejectedValueOnce(new Error('initial render failed'))
+    .mockRejectedValueOnce(new Error('retry render failed'));
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  const focusRetry = jest.spyOn(HTMLButtonElement.prototype, 'focus');
+
+  try {
+    render(<Mermaid value="flowchart LR; A --> B" />);
+    expect(await screen.findByText('initial render failed')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('retry render failed');
+      expect(screen.getByRole('button', { name: 'Try again' })).toHaveFocus();
+      expect(focusRetry).toHaveBeenCalledTimes(1);
+    });
+    expect(mockRender).toHaveBeenCalledTimes(2);
+  } finally {
+    focusRetry.mockRestore();
     consoleError.mockRestore();
   }
 });

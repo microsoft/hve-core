@@ -1,6 +1,6 @@
 ---
 description: Formatting, tone, and language rules for engagement reports
-applyTo: "**/.github/agents/engagement-reporting/**, **/.github/prompts/engagement-reporting/**, **/.github/skills/engagement-reporting/**"
+applyTo: "**/.github/agents/engagement-reporting/**, **/.github/skills/engagement-reporting/**"
 ---
 
 # Style Guide

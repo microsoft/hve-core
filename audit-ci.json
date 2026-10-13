@@ -1,6 +1,14 @@
 {
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
   "moderate": true,
+  "allowlist": [
+    {
+      "GHSA-vfj7-8cjw-p6xm": {
+        "active": true,
+        "notes": "No patched braces release is available (affects <= 3.0.3); markdownlint-cli2, Docusaurus, and webpack tooling transitively require braces via micromatch and chokidar."
+      }
+    }
+  ],
   "report-type": "important",
   "output-format": "text"
 }

@@ -22,10 +22,15 @@ This skill belongs to the HVE Core repository. Keep it directly under
 
 * The requested story is covered with dated sources, accurate terminology and explicit limits.
 * The deck uses discrete slides, readable examples and predictable presenter controls.
+* The presenter bar, slide footers and walkthrough controls follow the shared
+  [bottom chrome](references/design-and-examples.md#bottom-chrome) unless the user approves
+  a different design.
 * Slides and walkthroughs support keyboard use, meaningful reading order, readable reflow,
   sufficient contrast and reduced motion, with evidence from the delivered HTML.
 * Scripted conversations, reconstructed UI and actual execution are distinguishable.
 * Source edits, generated output, local checks and browser evidence describe the same revision.
+* Generated bundles pass the bundler's security checks and carry its provenance block;
+  the checks are never bypassed and generated HTML is never hand-edited.
 * The handoff names the viewable file and exact build or sharing command; unfinished checks remain visible.
 
 ## Inputs and Scope

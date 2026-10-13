@@ -34,8 +34,12 @@ Use BRD Builder to turn an initiative into solution-neutral business requirement
 
 1. Select `BRD Builder` and provide the initiative name, business problem, affected stakeholders, and reference material.
 2. Establish scope and ownership in Discover, then refine testable requirements and their goal and acceptance-criteria links in Define.
-3. Review the BRD Quality Reviewer findings and resolve the quality gate before Govern.
-4. Supply the required approver signoff and review the versioned BRD-to-PRD handoff. The agent does not replace business approval with its own assessment.
+3. If Discover has a named external evidence gap, review the proposed bounded `rpi-research` segment before confirming it. The agent records a disposition for each material finding and keeps unresolved evidence as an open question or unvalidated assumption.
+4. For substantial Define authoring with dependencies or interruption risk, the agent may propose an `rpi-plan` segment, followed by a linked `rpi-implement` segment after you accept the Plan. These segments organize drafting without replacing the BRD template or quality review.
+5. Review the BRD Quality Reviewer findings and resolve the quality gate before Govern.
+6. Supply the required approver signoff and review the versioned BRD-to-PRD handoff. The agent does not replace business approval with its own assessment.
+
+Proposed RPI segments are recorded in session state as `rpiInvocations`; existing `researchReceipts` remain available. A Research, Plan, or Implement segment does not approve requirements or clear a phase gate.
 
 ## Example usage
 

@@ -8,7 +8,7 @@
     version 2 .hve-tracking.json so future upgrades skip it. The files remain
     on disk and become owned by the user.
 .PARAMETER Component
-    Marketplace component path such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan.
+    Component path such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan.
 .PARAMETER TargetRoot
     Root of the repository that holds the manifest.
 .EXAMPLE
@@ -39,6 +39,16 @@ function ConvertTo-InstallerTimestamp {
 }
 
 $manifestPath = Join-Path (Resolve-Path -LiteralPath $TargetRoot).Path '.hve-tracking.json'
+# Inspect the link directly; Test-Path handling of a dangling link varies across PowerShell 7 releases.
+$manifestInfo = [System.IO.FileInfo]::new($manifestPath)
+$manifestIsLink = ($manifestInfo.PSObject.Properties.Name -contains 'LinkTarget') -and ($null -ne $manifestInfo.LinkTarget)
+if (-not $manifestIsLink) {
+    $manifestEntry = Get-Item -LiteralPath $manifestPath -Force -ErrorAction SilentlyContinue
+    $manifestIsLink = [bool]($manifestEntry -and ($manifestEntry.Attributes -band [System.IO.FileAttributes]::ReparsePoint))
+}
+if ($manifestIsLink) {
+    throw "Tracking manifest '$manifestPath' is a link, which may redirect writes outside the target root."
+}
 if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
     throw 'No .hve-tracking.json found.'
 }

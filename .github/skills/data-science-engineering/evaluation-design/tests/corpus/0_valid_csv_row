@@ -1,0 +1,2 @@
+id,query,expected_response,category,difficulty,populations,tools_expected,source_reference,needs_sme_review,notes
+001,synthetic query,synthetic response,coverage,easy,cohort-a;cohort-b,search;rank,docs/synthetic.md,false,seed row

@@ -81,14 +81,14 @@ Describe 'Test-HDRContent' -Tag 'Unit' {
 
     It 'Returns true when ffprobe reports HDR color metadata' {
         Mock Get-Command { [pscustomobject]@{ Name = 'ffprobe' } } -ParameterFilter { $Name -eq 'ffprobe' }
-        Mock ffprobe { 'bt2020' }
+        Mock Invoke-BoundedProcess { [pscustomobject]@{ ExitCode = 0; StdOut = 'bt2020' } }
 
         Test-HDRContent -FilePath 'video.mp4' | Should -BeTrue
     }
 
     It 'Returns false when ffprobe reports SDR content' {
         Mock Get-Command { [pscustomobject]@{ Name = 'ffprobe' } } -ParameterFilter { $Name -eq 'ffprobe' }
-        Mock ffprobe { 'bt709' }
+        Mock Invoke-BoundedProcess { [pscustomobject]@{ ExitCode = 0; StdOut = 'bt709' } }
 
         Test-HDRContent -FilePath 'video.mp4' | Should -BeFalse
     }

@@ -118,18 +118,18 @@ Keep this as a concise freeform list. Preserve the user's meaning and add source
 
 ## Planning Readiness and Next Step
 
-| Field                            | Record                                                                                                                                                              |
-|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Planning execution and readiness | {{Complete/Partial/Blocked/Needs clarification and Ready/Not ready/Blocked with reason}}                                                                            |
-| Decision participation           | {{user-owned/agent-owned/user-retained with mode and provenance}}                                                                                                   |
-| Blockers                         | {{none_or_current_blockers}}                                                                                                                                        |
-| Latest critique                  | [.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md](../../reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md) with {{verdict}} |
-| Relevant research                | {{research_link_or_not_applicable_with_reason}}                                                                                                                     |
-| Plan                             | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                                                                                                      |
-| Changes-record role              | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` is implementation evidence                                                                      |
-| Continuation owner               | {{user/manual RPI Agent/confirmed automatic RPI Agent}}                                                                                                             |
-| Required gates or confirmations  | {{passed_pending_or_failed_gates}}                                                                                                                                  |
-| Next action                      | {{implementation_advisory_automatic_transition_waiting_decision_or_blocker_action}}                                                                                 |
+| Field                            | Record                                                                                                                                                                                            |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Planning execution and readiness | {{Complete/Partial/Blocked/Needs clarification and Ready/Not ready/Blocked with reason}}                                                                                                          |
+| Decision participation           | {{user-owned/agent-owned/user-retained with mode and provenance}}                                                                                                                                 |
+| Blockers                         | {{none_or_current_blockers}}                                                                                                                                                                      |
+| Latest critique                  | [.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md](../../reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md) with {{verdict}}, or `skipped` with provenance |
+| Relevant research                | {{research_link_or_not_applicable_with_reason}}                                                                                                                                                   |
+| Plan                             | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                                                                                                                                    |
+| Changes-record role              | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` is implementation evidence                                                                                                    |
+| Continuation owner               | {{user/manual RPI Agent/confirmed automatic RPI Agent}}                                                                                                                                           |
+| Required gates or confirmations  | {{passed_pending_or_failed_gates}}                                                                                                                                                                |
+| Next action                      | {{implementation_advisory_automatic_transition_waiting_decision_or_blocker_action}}                                                                                                               |
 
 <!-- Link the critique and research rows once those files exist; keep a not-yet-created path in backticks. -->
 
@@ -184,17 +184,15 @@ The planner synthesizes and maintains these current requirements from the user l
 
 ## Critique Disposition
 
-Record the latest critique findings, their disposition, and any explicitly accepted residual risk. Keep this section outside user decisions and current planning synthesis.
+Record the critique setting, status, verdict, finding dispositions, and any explicitly accepted residual risk. Keep this section outside user decisions and current planning synthesis.
 
-* Critique candidate identity: {{task_id_and_plan_revision_or_hash}}
-* Critique depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
-* Critique execution: {{not_run_started_complete_partial_or_blocked}}
-* Initial attempt consumed: {{yes_or_no}}
-* Recovery attempt consumed: {{yes_or_no}}
-* Attempt provenance: {{task_attempt_id_kind_candidate_saved_hash_boundary_depth_output_and_current_run_evidence}}
-* Recovery eligibility and consent: {{not_applicable_or_evidence_checks_original_run_inactivity_candidate_reconciliation_and_explicit_task_specific_user_approval}}
+* Critique setting and provenance: {{standard_deep_or_skip}}; {{default_explicit_user_request_or_parent_session}}
+* Critique status: {{not_run_started_skipped_or_Complete_Partial_Blocked_or_not_produced}}
+* Latest critique and verdict: {{critique_path_with_Pass_Revise_Blocked_or_unavailable_or_not_applicable_when_skipped}}
+* Earlier critiques: {{none_or_earlier_critique_paths}}
+* Limitations: {{none_or_run_limitation_interruption_kind_and_next_action}}
 
-<!-- Preserve the original attempt and any recovery as separate records here. Mirror their pointers in the parent's single Planning critique execution entry when present. A current initial or recovery critique run may consume its own just-authorized reservation; a later run cannot replay it. Follow the planning reference's Interrupted critique recovery contract. -->
+<!-- Keep every finding row. A follow-up critique adds rows or updates dispositions without deleting earlier findings. -->
 
 | Critique run and finding | Disposition                                        | Action owner                   | Exact resolving evidence                | Decision route                                     | Plan response or residual risk |
 |--------------------------|----------------------------------------------------|--------------------------------|-----------------------------------------|----------------------------------------------------|--------------------------------|
@@ -213,7 +211,8 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * [ ] Before reflects the evidence-backed pre-change baseline; After reflects the intended result of all phases. Corresponding elements and phase diagrams reuse stable node IDs, with added and removed work distinguishable without color.
 * [ ] Every emitted initialization object has the prescribed string values for themeVariables.fontFamily and themeVariables.fontSize. All diagrams use theme-aware styling, with explicit text colors on custom fills. Dual-theme rendering evidence or its preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
-* [ ] Critique depth, attempt provenance and current-run ownership are recorded; any single recovery follows the explicit interruption protocol, terminal results were not retried, and all findings are disposed without a closure critique.
+* [ ] The critique setting and provenance are recorded. The critique ran on the implementation-ready plan or was skipped by user or parent direction, and every `PC-xxx` has a disposition or accepted residual risk.
+* [ ] Readiness does not rely on a critique that returned no result.
 * [ ] Planning execution, readiness, continuation owner, gates, next action, and implementation paths are complete and consistent.
 * [ ] Follow-Up Items remain outside active plan completion and acceptance claims.
 * Checked sections: {{list_of_checked_sections}}

@@ -1,9 +1,9 @@
 ---
 title: rpi-plan
-description: Create or resume an evidence-based RPI implementation plan. Use for planning from supplied context or reconciling an interrupted planning critique.
+description: Create or resume an evidence-based RPI implementation plan with an optional independent critique. Use when a task needs an implementation plan or an existing plan needs revision.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-16
+ms.date: 2026-09-28
 ms.topic: reference
 keywords:
   - skill
@@ -23,24 +23,33 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create or resume an evidence-based RPI implementation plan. Use for planning from supplied context or reconciling an interrupted planning critique.
+Create or resume an evidence-based RPI implementation plan with an optional independent critique. Use when a task needs an implementation plan or an existing plan needs revision.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
 Use `rpi-plan` when adequate evidence exists and the work needs a sequenced, verifiable plan before implementation. The skill writes one plan under `.copilot-tracking/plans/` with a stable task ID, `Pxx` phases, and `Pxx-Txx` tasks. The plan leads with an executive summary and a diagrammed Phase Checklist; each task carries `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks.
 
-The Phase Checklist opens with **Before** and **After** Mermaid diagrams comparing the evidence-backed starting state with the intended result of all phases. Each phase highlights its changes within the After view, including labeled removal context when needed. Diagrams inherit the renderer's light or dark theme, use readable sans-serif labels, and pair custom highlight fills with explicit contrasting text colors.
+The Phase Checklist opens with **Before** and **After** Mermaid diagrams comparing the
+evidence-backed starting state with the intended result of all phases. Each phase highlights its
+changes within the After view, including labeled removal context when needed. Diagrams inherit the
+renderer's light or dark theme, use readable sans-serif labels, and pair custom highlight fills
+with explicit contrasting text colors.
 
-Planning owns two internal gates. It activates [rpi-research](rpi-research) only for a demonstrated readiness gap, and it runs an initial [rpi-plan-critique](rpi-plan-critique) after the planner judges the plan implementation-ready. A terminal assessment is not repeated. The only additional attempt is one explicitly confirmed recovery of an interrupted reservation without a terminal result. Confirmed user direction outranks critique advice.
+Planning owns two internal steps. It activates [rpi-research](rpi-research) only for a demonstrated
+readiness gap, and runs [rpi-plan-critique](rpi-plan-critique) by default once the plan is
+implementation-ready. You can skip the critique; the planner records it as skipped rather than
+failed. A follow-up critique after corrections is optional, and the planner runs one when
+corrections substantially change requirements, scope, or architecture, or when you ask. Confirmed
+user direction outranks critique advice.
 
 The planner drafts every phase itself. Before drafting, it looks for skills and subagents whose descriptions say they are used during planning or with `rpi-plan` and follows each description's guidance on when and how to use it; no subagent is required.
 
-One input shapes how the critique is done:
+One input shapes the critique:
 
-| Input      | Values                       | Effect                                                                               |
-|------------|------------------------------|--------------------------------------------------------------------------------------|
-| `critique` | `standard` (default), `deep` | How broadly the single critique traces evidence; `deep` requires an explicit request |
+| Input      | Values                               | Effect                                                                                            |
+|------------|--------------------------------------|---------------------------------------------------------------------------------------------------|
+| `critique` | `standard` (default), `deep`, `skip` | How broadly the critique traces evidence; `deep` requires an explicit request and `skip` omits it |
 
 Reach for a different asset when:
 
@@ -49,16 +58,6 @@ Reach for a different asset when:
 * You only want an independent read of an existing plan. Run [rpi-plan-critique](rpi-plan-critique) directly.
 
 ## Example usage
-
-### Resume an interrupted critique
-
-If planning reports `started` but no result survived, resume the same task through `rpi-plan`. It checks recorded evidence, confirms the original critique run has ended, and verifies the saved plan and state. When eligible, it asks for your approval of one recovery for the identified task and candidate, preserving original records and writing a separate recovery result.
-
-A terminal `Complete`, `Partial`, or `Blocked` result remains binding even if its file is missing. An already-reserved recovery cannot be repeated. Missing evidence is not a pass, and implementation remains gated on an actual assessment and resolved findings.
-
-For example, an editor-visible plan that is absent on disk must be saved or synchronized and verified before recovery. Do not delete the reservation to restart. A reconstructed candidate must be identified and approved as current, not represented as the lost original.
-
-Use a consistently updated workflow before resuming: edits to this checkout do not replace instructions already loaded in a conversation or update an installed plugin snapshot. Start a fresh session with the updated repository workflow, or update the installed distribution you use. Choosing this recovery policy or enabling automatic mode does not authorize a specific task's recovery.
 
 ### Create a plan
 
@@ -70,7 +69,7 @@ The skill sends one `RPI Plan` opening with the interpreted goal, starting evide
 
 ```text
 * Planning execution: Complete; Planning Readiness: Ready
-* Critique: standard, verdict Pass; PC-001 (Medium) resolved by adding the retry test to P02-T02 Requirements
+* Critique: standard, Revise; PC-001 (Medium) corrected in P02-T02 Requirements
 * Decisions: managed identity for production confirmed; connection string limited to local development
 
 | Artifact                                                                                                                                             | Description          |
@@ -84,3 +83,21 @@ Run `/rpi-implement plan=.copilot-tracking/plans/2026-09-04/blob-storage-plan.md
 ```
 
 Inside an automatic `RPI Agent` session the parent continues to Implement without waiting for that command.
+
+### Skip the critique
+
+```text
+/rpi-plan task=blob-storage research=.copilot-tracking/research/2026-09-04/blob-storage-research.md critique=skip
+```
+
+The planner finalizes the plan without running `rpi-plan-critique` and records the critique as skipped in Critique Disposition. You can also ask to skip the critique at any point during planning, or move straight to `/rpi-implement`; implementation does not require a critique.
+
+### Resume an interrupted critique
+
+Critique Disposition records the critique status. If a session ends while the status is `started` and no critique result was saved, resume the task through `rpi-plan` and the critique runs again. A saved result is reused as is. A critique that returned no result never counts as a pass: the planner reruns it once the cause is resolved, or continues without it when you say so.
+
+The planner records the kind of interruption, such as a session timeout or a missing dependency. If the same kind of interruption happens again to the same critique, it reruns the critique only after something changes, such as a narrower scope or a repaired dependency. Otherwise it stops and names the evidence needed to continue. A follow-up critique writes to the next numbered output, so it starts with its own once-per-kind rerun allowance.
+
+### Stop when corrections make no progress
+
+Before another revision or follow-up critique, the planner compares earlier plan versions, corrections, and unresolved findings. If a correction is reverted, findings oscillate, or the same required findings return without material progress, planning stops as Revise with the exact clearing action. A new session or task does not reset this check.

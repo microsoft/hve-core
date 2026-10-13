@@ -117,6 +117,8 @@ function New-StimulusIndex {
     $specFiles = Get-ChildItem -LiteralPath $resolvedRoot -Recurse -File -Include '*.yaml', '*.yml' -ErrorAction SilentlyContinue
     foreach ($file in $specFiles) {
         $relPath = [System.IO.Path]::GetRelativePath($resolvedRoot, $file.FullName) -replace '\\', '/'
+        # Agent-behavior partials are generator inputs, not standalone Vally specs.
+        if ($relPath -match '^agent-behavior/stimuli/') { continue }
 
         $parsed = $null
         try {

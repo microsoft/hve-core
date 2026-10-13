@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: HVE Core generated slide analysis
+
+# Delivered single-file slide decks, including the inlined and patched reveal.js.
+# Analyzed in its own category so generated findings stay separate from authored sources.
+paths:
+  - 'docs/slides'

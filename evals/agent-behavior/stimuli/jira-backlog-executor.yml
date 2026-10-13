@@ -13,6 +13,11 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
       Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -28,7 +33,7 @@ stimuli:
       - type: output-matches
         name: jira-backlog-executor-frontmatter-name-and-descript-e1b92f51
         config:
-          pattern: '(?i)name\s*(is|:)\s*.{0,3}jira-backlog-executor'
+          pattern: '(?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}jira-backlog-executor\b(?!\.agent\.md)'
           negate: true
 
   - name: jira-backlog-executor-user-invocable-flag
@@ -36,6 +41,11 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
       Report the value its frontmatter declares for `user-invocable`, and explain how a user reaches this artifact given that value.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -43,7 +53,7 @@ stimuli:
       - type: output-matches
         name: jira-backlog-executor-user-invocable-flag-reports-d-faabdd22
         config:
-          pattern: '(?i)user-invocable\s*(is|:|=)?\s*.{0,3}false'
+          pattern: '(?im)(?<![\s\S])(?![\s\S]*(?:\b(?:not|never|no|omits?|omitted|lacks?)\b|\b\w+n[\x27\u2019]t\b)[\s`*_~]+(?:(?!(?:true|because|since|as|so|given|hence|thus)\b)\w+[\s`*_~]+){0,2}(?:user-invocable[\s`*_~]*:[\s`*_~]*)?\bfalse\b)[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*(?:\buser-invocable\b(?:[^.!?\n]|[.!?](?=\S)){0,40}\bfalse\b|\bfalse\b(?:[^.!?\n]|[.!?](?=\S)){0,60}\buser-invocable\b))(?!(?:[^.!?\n]|[.!?](?=\S))*\bfalse\b[\s`*_~]*(?:is|are)\s+(?:absent|not\s+(?:set|declared|present))\b)(?:[^.!?\n]|[.!?](?=\S))*'
       - type: output-matches
         name: jira-backlog-executor-user-invocable-flag-reaches-t-3a1c6be6
         config:
@@ -51,14 +61,19 @@ stimuli:
       - type: output-matches
         name: jira-backlog-executor-user-invocable-flag-not-descr-e4fadcaa
         config:
-          pattern: '(?i)(appears in|select(able)? from|choose it in) the (agent )?picker'
+          pattern: '(?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})(?:appears in|select(?:able)? from|choose it in) the (?:agent )?picker'
           negate: true
 
   - name: jira-backlog-executor-structural-template
     prompt: |
       Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
-      List its top-level section headings in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+      List every level-one and level-two section heading in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -66,11 +81,11 @@ stimuli:
       - type: output-matches
         name: jira-backlog-executor-structural-template-reports-p-46d00f78
         config:
-          pattern: '(?im)^\W*Purpose\b'
+          pattern: '\bPurpose\b'
       - type: output-matches
         name: jira-backlog-executor-structural-template-reports-i-d241804d
         config:
-          pattern: '(?im)^\W*Inputs\b'
+          pattern: '\bInputs\b'
       - type: output-matches
         name: jira-backlog-executor-structural-template-reports-r-985aa9ef
         config:
@@ -89,9 +104,19 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
       Read its declared `tools:` list together with its declared description and the boundary its body states for that grant. Assess whether the restriction set is appropriate for the role the description states, and state which part of the boundary the tool list enforces and which part it does not. Justify the assessment from the artifact rather than from general expectations.
+      Distinguish what the declared grant makes possible from what the host enforces.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+          dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - Grounds the tool-fit assessment in the artifact's declared tools, description, and stated boundary without inventing tools.
+      - Identifies the grant as a general terminal rather than a Jira-specific tool family and relates it to the declared Jira execution role.
+      - Explains that prose narrows usage to the Jira CLI invocation shape while the host and tool list do not enforce that narrowing.
     graders:
       - type: prompt
         name: jira-backlog-executor-tool-restriction-fit-tool-res-2ae1d4c5
@@ -109,5 +134,5 @@ stimuli:
       - type: output-matches
         name: does-not-claim-host-enforces-cli-only
         config:
-          pattern: '(?i)the (tool (list|grant)|host|frontmatter) (enforces|prevents|blocks|guarantees).{0,60}(only the Jira CLI|CLI[- ]only)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|nor|neither)|n[\x27\u2019]t)\s+(?:\w+\s+){0,3})\bthe (?:tool (?:list|grant)|host|frontmatter) (?:enforces|prevents|blocks|guarantees).{0,60}(?:only the Jira CLI|CLI[- ]only)'
           negate: true

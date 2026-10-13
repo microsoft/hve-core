@@ -8,7 +8,7 @@ The quality standard the `hve-builder` skill applies when it creates, improves, 
 
 ## Provenance
 
-The requirements distill first-party model-provider guidance retrieved on 2026-07-25 from OpenAI, Anthropic, and Google, together with the Agent Skills specification, the AGENTS.md convention, and VS Code and GitHub Copilot customization documentation. That evidence is research-supported, not runtime-validated. Treat the catalog as a strong default and settle a disputed choice with target-model evaluation. Where providers disagree, the entry names the disagreement.
+The requirements distill first-party model-provider guidance retrieved on 2026-07-25 from OpenAI, Anthropic, and Google, together with the Agent Skills specification, the AGENTS.md convention, and VS Code and GitHub Copilot customization documentation. That evidence is research-supported, not runtime-validated. Treat the catalog as a strong default and settle a disputed choice with target-model evaluation. Where providers disagree, the entry names the disagreement. The "Lead with the result the user asked for" entry also draws on OpenAI's GPT-5.6 Sol prompting guidance, retrieved on 2026-10-02.
 
 ## How to use this catalog
 
@@ -61,6 +61,7 @@ Write the artifact outcome-first. Role and process serve the outcome; they never
 * Depth and length belong to runtime controls: use reasoning effort and verbosity controls when the target host exposes them; otherwise state task-specific completeness and output requirements without inventing settings. Example: require cited findings and skipped-check disclosure rather than "think harder" or "be thorough."
 * Re-evaluate on model migration: move the model unchanged, pin effort to match prior depth, baseline evaluations, trim inherited emphasis that newer models over-trigger on, then re-evaluate. Example: migrate with the old prompt, baseline, then remove legacy persistence reminders that no longer help.
 * Output shape matches need: add heavier formatting only when it improves comprehension or interface stability. Example: "Return JSON for the API payload; use prose for the user explanation."
+* Lead with the result the user asked for: a user-facing response contract requires the outcome of the request in plain language, such as the bottom line for a topic or task or a direct answer to each question asked, followed only by the evidence, caveats, and next action that support or qualify it. Keep workflow state, run metadata, and self-checks in durable artifacts, and surface them only when they change the user's next action. A list of status fields to report does not deliver a result. Example: a verification closeout says "Yes, all named assets are absent and nothing replaced them" and links the record, rather than reporting "Disposition: retired; Readiness: not applicable."
 * Execution status is not a verdict: use distinct vocabularies for whether work ran and whether it passed. Example: record execution as Deferred and the verdict as unavailable rather than a partial pass.
 
 ## 3. Instruction-file architecture
@@ -202,7 +203,7 @@ Review these against the current host, target model, required behavior, and main
 
 These are the upstream guidance families named in Provenance, not evidence of a new retrieval or native validation. The maintenance decisions and HVE lifecycle rules are repository conventions. Verify current host or model documentation when a decision depends on version-specific behavior.
 
-* OpenAI: [Prompt engineering](https://platform.openai.com/docs/guides/prompt-engineering) and [Reasoning best practices](https://platform.openai.com/docs/guides/reasoning-best-practices)
+* OpenAI: [Prompt engineering](https://platform.openai.com/docs/guides/prompt-engineering), [Reasoning best practices](https://platform.openai.com/docs/guides/reasoning-best-practices), and [Prompting guidance for GPT-5.6 Sol](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6)
 * Anthropic: [Prompt engineering overview](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview) and [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)
 * Google: [Prompt design strategies](https://ai.google.dev/gemini-api/docs/prompting-strategies)
 * Agent Skills: [Specification](https://agentskills.io/specification)

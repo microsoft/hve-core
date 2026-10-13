@@ -25,6 +25,8 @@ Generate work items from the evidence register and maturity observations using t
 
 For the full dual-format ADO and GitHub templates, content sanitization guidance, autonomy-tier vocabulary, disclaimer placement, and work-item ID naming rules, load the `backlog-templates` skill. This handoff reference stays focused on the RAI-specific review expectations and the final handoff decisions.
 
+Content sanitization: no secrets, credentials, internal URLs, or PII in work item content. Apply this alongside the `backlog-templates` sanitization rules, which cover paths, state JSON, and standards identifiers but not these values.
+
 ## Autonomy and Output Targets
 
 Select the output target and autonomy tier that fit the project context. Persist the choice in session state and allow the user to confirm the final handoff.

@@ -1,9 +1,9 @@
 ---
 title: VEX Verification
 description: Download, verify, and interpret the OpenVEX vulnerability exploitability document published with Stable HVE Core releases
-sidebar_position: 4
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords:
   - VEX

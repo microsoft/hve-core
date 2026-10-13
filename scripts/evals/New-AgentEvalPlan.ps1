@@ -291,7 +291,7 @@ function New-AgentEvalPlanValue {
     $baselineRequired = $affectedAgents -contains $BaselineSubject
     $baselineModels = [System.Collections.Generic.List[string]]::new()
     if ($baselineRequired) {
-        $baselineModels.Add('gpt-5.6-luna')
+        $baselineModels.Add('gpt-6-luna')
         $baselineModels.Add('claude-sonnet-5')
     }
     $baseline = [ordered]@{
@@ -303,7 +303,7 @@ function New-AgentEvalPlanValue {
     foreach ($shard in $ordinaryShards) { $expectedProducers.Add([string]$shard.id) }
     $expectedProducers.Add('prompt')
     if ($baselineRequired) {
-        $expectedProducers.Add('baseline:gpt-5.6-luna')
+        $expectedProducers.Add('baseline:gpt-6-luna')
         $expectedProducers.Add('baseline:claude-sonnet-5')
     }
 

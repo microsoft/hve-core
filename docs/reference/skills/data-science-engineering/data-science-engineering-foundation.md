@@ -37,6 +37,16 @@ Do not invoke it as a standalone data science and engineering workflow. Load `da
 `dataops`, `feasibility`, `experiment-design`, or `ml-experimentation`
 for job-specific methods and outputs.
 
+## RPI depth matrix
+
+RPI is a user-directed depth route inside the confirmed job, not a job or lifecycle. Keep simple or adequately evidenced work on the primary route. No RPI segment auto-activates. Before each eligible segment, state the demonstrated need, purpose, expected artifact, expected interaction cost, limits, and direct path available if the user skips it.
+
+Substantial delivery means multi-step code or artifact production whose dependencies, validation, or interruption risk make direct episodic execution unreliable. The owning skill first accepts the domain design. RPI then plans and executes delivery and reviews conformance without changing the job, class, owning skill, coach state authority, output root, or durable-write gate.
+
+## Execution-loop eligibility
+
+For jobs such as `pipeline`, `analysis`, `evaluation`, `testing`, and `observability`, the RPI depth matrix allows a full Plan, Implement, and Review loop for substantial delivery. For `problem-framing` and `feasibility`, it allows bounded rpi-research for current-fact evidence gaps. This execution loop does not select jobs, change lifecycle class, replace the owning skill, close the session, or write customer artifacts directly.
+
 ## Example usage
 
 A coach resuming a project reads the session-state reference, validates project

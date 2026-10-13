@@ -1,9 +1,9 @@
 ---
 title: security-reviewer-formats
 description: Format specifications and data contracts for the security reviewer orchestrator and its subagents.
-sidebar_position: 11
+sidebar_position: 13
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

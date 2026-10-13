@@ -26,6 +26,7 @@ Describe 'Invoke-AssembleVideo.ps1 wrapper' -Tag 'Unit' {
         $scriptContent | Should -Match '--output'
         $scriptContent | Should -Match '--fps'
         $scriptContent | Should -Match '--resolution'
+        $scriptContent | Should -Match "ContainsKey\('TimeoutSeconds'\)\) \{ \`$PythonArgs \+= '--timeout'"
     }
 
     It 'Defines the expected wrapper parameters' {
@@ -34,5 +35,6 @@ Describe 'Invoke-AssembleVideo.ps1 wrapper' -Tag 'Unit' {
         $scriptContent | Should -Match '\[string\]\$OutputPath'
         $scriptContent | Should -Match '\[int\]\$Fps'
         $scriptContent | Should -Match '\[string\]\$Resolution'
+        $scriptContent | Should -Match '\[ValidateRange\(1, 86400\)\]\s+\[int\]\$TimeoutSeconds'
     }
 }

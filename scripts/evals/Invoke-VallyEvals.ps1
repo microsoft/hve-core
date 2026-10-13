@@ -58,7 +58,7 @@
 .PARAMETER Model
     Model passed to `vally eval --model`. Also forwarded to
     `Invoke-BaselineEquivalence.ps1` when baseline equivalence is explicitly
-    enabled. Defaults to `gpt-5.6-luna`.
+    enabled. Defaults to `gpt-6-luna`.
 
 .PARAMETER VallyCommand
     Path or name of the vally executable. Defaults to `vally`. Tests pass the
@@ -123,7 +123,7 @@ param(
     [string]$LogsDir,
     [ValidateSet('agent','prompt','instruction','skill')]
     [string[]]$Kind = @(),
-    [string]$Model = 'gpt-5.6-luna',
+    [string]$Model = 'gpt-6-luna',
     [string]$VallyCommand = 'vally',
     [string]$EquivalenceDriverPath,
     [ValidateSet('devloop','calibration','ci')]
@@ -148,6 +148,8 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/EvalSpecSchema.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 if (-not (Get-Module -Name powershell-yaml)) {
     Import-Module powershell-yaml -ErrorAction Stop
@@ -360,7 +362,7 @@ function Write-JsonFile {
     if ($dir -and -not (Test-Path -LiteralPath $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
-    $json = $Value | ConvertTo-Json -Depth 12
+    $json = $Value | ConvertTo-Json -Depth 30
     Set-Content -LiteralPath $Path -Value $json -Encoding utf8NoBOM
 }
 
@@ -385,11 +387,11 @@ $resolvedLogsDir  = Resolve-PathFromRoot -Path $LogsDir      -RepoRoot $resolved
 $resolvedPlanPath = if ([string]::IsNullOrWhiteSpace($PlanPath)) { $null } else { Resolve-PathFromRoot -Path $PlanPath -RepoRoot $resolvedRoot }
 
 if (-not (Test-Path -LiteralPath $resolvedManifest -PathType Leaf)) {
-    Write-Host "::error file=$ManifestPath::Manifest not found: $resolvedManifest"
+    Write-CIAnnotation -Level Error -File $ManifestPath -Message "Manifest not found: $resolvedManifest"
     exit 2
 }
 if (-not (Test-Path -LiteralPath $resolvedEvalRoot -PathType Container)) {
-    Write-Host "::error::Eval root not found: $resolvedEvalRoot"
+    Write-CIAnnotation -Level Error -Message "Eval root not found: $resolvedEvalRoot"
     exit 2
 }
 if (-not (Test-Path -LiteralPath $resolvedLogsDir -PathType Container)) {
@@ -397,7 +399,7 @@ if (-not (Test-Path -LiteralPath $resolvedLogsDir -PathType Container)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($PlanPath) -xor [string]::IsNullOrWhiteSpace($ShardId)) {
-    Write-Host '::error::PlanPath and ShardId must be supplied together.'
+    Write-CIAnnotation -Level Error -Message 'PlanPath and ShardId must be supplied together.'
     exit 2
 }
 
@@ -405,32 +407,32 @@ $canonicalPlan = $null
 $assignedShard = $null
 if ($resolvedPlanPath) {
     if (-not (Test-Path -LiteralPath $resolvedPlanPath -PathType Leaf)) {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan not found."
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan not found."
         exit 2
     }
     if ([string]::IsNullOrWhiteSpace($ChangedSpecManifestPath)) {
-        Write-Host '::error::ChangedSpecManifestPath is required for canonical shard validation.'
+        Write-CIAnnotation -Level Error -Message 'ChangedSpecManifestPath is required for canonical shard validation.'
         exit 2
     }
     $resolvedChangedSpecForPlan = Resolve-PathFromRoot -Path $ChangedSpecManifestPath -RepoRoot $resolvedRoot
     if (-not (Test-Path -LiteralPath $resolvedChangedSpecForPlan -PathType Leaf)) {
-        Write-Host "::error file=$ChangedSpecManifestPath::Changed-spec manifest not found."
+        Write-CIAnnotation -Level Error -File $ChangedSpecManifestPath -Message "Changed-spec manifest not found."
         exit 2
     }
     try {
         $canonicalPlan = Get-Content -LiteralPath $resolvedPlanPath -Raw -Encoding utf8 | ConvertFrom-Json -Depth 50 -ErrorAction Stop
     }
     catch {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan is unreadable."
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan is unreadable."
         exit 2
     }
     if (([string]$canonicalPlan.schemaVersion -split '\.')[0] -ne '1' -or -not (Test-AgentEvalPlanDigest -Plan $canonicalPlan)) {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan schema or digest is invalid."
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan schema or digest is invalid."
         exit 2
     }
     if ([string]$canonicalPlan.manifestDigests.changedArtifacts -cne (Get-AgentEvalFileDigest -Path $resolvedManifest) -or
         [string]$canonicalPlan.manifestDigests.changedSpecs -cne (Get-AgentEvalFileDigest -Path $resolvedChangedSpecForPlan)) {
-        Write-Host '::error::Canonical agent eval plan manifest digests do not match worker inputs.'
+        Write-CIAnnotation -Level Error -Message 'Canonical agent eval plan manifest digests do not match worker inputs.'
         exit 2
     }
     try {
@@ -454,12 +456,12 @@ if ($resolvedPlanPath) {
             -Shard @($canonicalPlan.ordinaryShards)
     }
     catch {
-        Write-Host "::error file=$PlanPath::Canonical agent eval plan ownership is invalid: $($_.Exception.Message)"
+        Write-CIAnnotation -Level Error -File $PlanPath -Message "Canonical agent eval plan ownership is invalid: $($_.Exception.Message)"
         exit 2
     }
     $matchingShards = @($canonicalPlan.ordinaryShards | Where-Object { [string]$_.id -ceq $ShardId })
     if ($matchingShards.Count -ne 1) {
-        Write-Host "::error::Canonical agent eval plan contains $($matchingShards.Count) matches for shard '$ShardId'."
+        Write-CIAnnotation -Level Error -Message "Canonical agent eval plan contains $($matchingShards.Count) matches for shard '$ShardId'."
         exit 2
     }
     $assignedShard = $matchingShards[0]
@@ -525,14 +527,14 @@ if ($kindFilter.Count -gt 0) {
 if ($assignedShard) {
     $assignedKind = [string]$assignedShard.kind
     if ([string]::IsNullOrWhiteSpace($assignedKind) -or $kindFilter.Count -ne 1 -or $kindFilter[0] -cne $assignedKind) {
-        Write-Host "::error::Canonical shard '$ShardId' requires Kind '$assignedKind'."
+        Write-CIAnnotation -Level Error -Message "Canonical shard '$ShardId' requires Kind '$assignedKind'."
         exit 2
     }
     $assignedArtifactKeys = @($assignedShard.artifacts | ForEach-Object { [string]$_ } | Sort-Object -Unique)
     $artifacts = @($artifacts | Where-Object { "${assignedKind}:$([string]$_.artifactId)" -in $assignedArtifactKeys })
     $observedArtifactKeys = @($artifacts | ForEach-Object { "$([string]$_.kind):$([string]$_.artifactId)" } | Sort-Object -Unique)
     if (@(Compare-Object -ReferenceObject $assignedArtifactKeys -DifferenceObject $observedArtifactKeys).Count -gt 0) {
-        Write-Host "::error::Worker artifact set does not match canonical shard '$ShardId'."
+        Write-CIAnnotation -Level Error -Message "Worker artifact set does not match canonical shard '$ShardId'."
         exit 2
     }
 }
@@ -635,21 +637,24 @@ $equivalenceRunKeys = @($uniqueSpecRuns.Keys | Where-Object {
 foreach ($equivalenceRunKey in $equivalenceRunKeys) {
     $uniqueSpecRuns.Remove($equivalenceRunKey)
 }
+foreach ($artifactEntry in $artifactPlan) {
+    $artifactEntry.specRuns = @($artifactEntry.specRuns | Where-Object { $_ -notin $equivalenceRunKeys })
+}
 
 if ($assignedShard) {
     $expectedRunKeys = @($assignedShard.runKeys | ForEach-Object { [string]$_ } | Sort-Object -Unique)
     $observedRunKeys = @($uniqueSpecRuns.GetEnumerator() | ForEach-Object { [string]$_.Key } | Sort-Object -Unique)
     if (@(Compare-Object -ReferenceObject $expectedRunKeys -DifferenceObject $observedRunKeys).Count -gt 0) {
-        Write-Host "::error::Worker run-key set does not match canonical shard '$ShardId'."
+        Write-CIAnnotation -Level Error -Message "Worker run-key set does not match canonical shard '$ShardId'."
         exit 2
     }
 }
 
 if ($missingSpecs.Count -gt 0) {
     foreach ($m in $missingSpecs) {
-        Write-Host "::error file=$($m.path)::No eval spec resolves $($m.kind):$($m.artifactId); run Test-StimulusPresence first."
+        Write-CIAnnotation -Level Error -File $m.path -Message "No eval spec resolves $($m.kind):$($m.artifactId); run Test-StimulusPresence first."
     }
-    Write-Host "::error::Cannot execute evals: $($missingSpecs.Count) artifact(s) have no covering spec."
+    Write-CIAnnotation -Level Error -Message "Cannot execute evals: $($missingSpecs.Count) artifact(s) have no covering spec."
     exit 2
 }
 
@@ -664,6 +669,7 @@ $failedSpecs = 0
 $promotedRunKeys = @{}
 $outputModerationRuns = [System.Collections.Generic.List[hashtable]]::new()
 $phaseTimings = [System.Collections.Generic.List[object]]::new()
+$inputDigest = Get-VallyInputDigest -RepoRoot $resolvedRoot
 
 foreach ($runKey in $uniqueSpecRuns.Keys) {
     $run     = $uniqueSpecRuns[$runKey]
@@ -691,7 +697,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             -RepoRoot $resolvedRoot
 
         if ($inputModeration.flagged) {
-            Write-Host "::error file=$specRel::Content moderation flagged $($inputModeration.flaggedCount) input prompt(s); eval blocked"
+            Write-CIAnnotation -Level Error -File $specRel -Message "Content moderation flagged $($inputModeration.flaggedCount) input prompt(s); eval blocked"
             $specResults[$runKey] = @{
                 specPath         = $specAbs
                 specRel          = $specRel
@@ -711,7 +717,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             continue
         }
         elseif ($inputModeration.error) {
-            Write-Host "::error file=$specRel::Input content moderation could not run (infrastructure error); eval blocked"
+            Write-CIAnnotation -Level Error -File $specRel -Message "Input content moderation could not run (infrastructure error); eval blocked"
             $specResults[$runKey] = @{
                 specPath         = $specAbs
                 specRel          = $specRel
@@ -732,6 +738,36 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
     }
 
+    $parsedSpec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $specAbs -Raw -ErrorAction Stop)
+    if ($parsedSpec -isnot [System.Collections.IDictionary]) {
+        throw "Eval spec '$specRel' must be a mapping before source validation."
+    }
+    $repoRelativeSpecPath = [System.IO.Path]::GetRelativePath($resolvedRoot, $specAbs).Replace('\', '/')
+    $sourceErrors = @(Test-EvalSpecSources -Spec $parsedSpec -SpecPath $repoRelativeSpecPath -RepoRoot $resolvedRoot)
+    if ($sourceErrors.Count -gt 0) {
+        foreach ($sourceError in $sourceErrors) {
+            Write-CIAnnotation -Level Error -File $repoRelativeSpecPath -Message "$($sourceError.field): $($sourceError.message)"
+        }
+        $specResults[$runKey] = @{
+            specPath         = $specAbs
+            specRel          = $specRel
+            tag              = $tag
+            exitCode         = 1
+            runDir           = $null
+            assertionsPassed = 0
+            assertionsFailed = 0
+            durationMs       = 0
+            trials           = 0
+            resultsPath      = $null
+            moderationInput  = $inputModeration
+            moderationOutput = $null
+            status           = 'invalid-spec-source'
+        }
+        $failedSpecs++
+        if ($FailFast) { break }
+        continue
+    }
+
     $tagBanner = if (-not [string]::IsNullOrWhiteSpace($tag)) { " --tag $tag" } else { '' }
     Write-Host "Running: vally eval --eval-spec $specRel --model $Model$tagBanner" -ForegroundColor Cyan
     $result = Invoke-VallySpec `
@@ -741,6 +777,8 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         -VallyCommand $VallyCommand `
         -LogPath $specLog `
         -Tag $tag `
+        -RunKey $runKey `
+        -InputDigest $inputDigest `
         -Worker $(if ($assignedShard) { $ShardId } else { $specKey })
     $result['specRel'] = $specRel
     $result['tag'] = $tag
@@ -759,6 +797,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 
     $result['moderationInput'] = $inputModeration
     $result['moderationOutput'] = $outputModeration
+    $result['integrity'] = Test-VallyDiagnosticEvidence -Diagnostics $result.diagnostics -RunKey $runKey
 
     $isEvaluatorError = $result.exitCode -ne 0 -and
         $result.trials -eq 0 -and
@@ -770,9 +809,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $specResults[$runKey] = $result
         $failedSpecs++
         $promotedRunKeys[$runKey] = $true
-        Write-Host "::error file=$specRel::Vally exited $($result.exitCode) without gradeable trial or assertion evidence; promoting evaluator error to CI failure"
+        Write-CIAnnotation -Level Error -File $specRel -Message "Vally exited $($result.exitCode) without gradeable trial or assertion evidence; promoting evaluator error to CI failure"
         if ($FailFast) {
-            Write-Host "::warning::FailFast set; skipping remaining specs after evaluator error in $specRel"
+            Write-CIAnnotation -Level Warning -Message "FailFast set; skipping remaining specs after evaluator error in $specRel"
             break
         }
         continue
@@ -786,6 +825,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $advisoryFailed = 0
         $authoritativePassed = 0
         $authoritativeFailed = 0
+        $advisoryStimuliFailed = 0
+        $authoritativeStimuliFailed = 0
+        $toleratedFailed = 0
         if ($result.ContainsKey('perStimulus') -and $result.perStimulus) {
             foreach ($stimulusName in $result.perStimulus.Keys) {
                 $bucket = $result.perStimulus[$stimulusName]
@@ -796,10 +838,17 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                 if ($stimAdvisory) {
                     $advisoryPassed += [int]$bucket.assertionsPassed
                     $advisoryFailed += [int]$bucket.assertionsFailed
+                    if ($false -eq $bucket.aggregatePassed) { $advisoryStimuliFailed++ }
                 }
                 else {
                     $authoritativePassed += [int]$bucket.assertionsPassed
-                    $authoritativeFailed += [int]$bucket.assertionsFailed
+                    if ($false -eq $bucket.aggregatePassed) {
+                        $authoritativeFailed += [int]$bucket.assertionsFailed
+                        $authoritativeStimuliFailed++
+                    }
+                    else {
+                        $toleratedFailed += [int]$bucket.assertionsFailed
+                    }
                 }
             }
         }
@@ -812,31 +861,30 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         # name). Classify the remainder by the spec's overall advisory posture so
         # advisory failures are never silently counted as authoritative (which would
         # gate the build via the exit-code fallback below).
-        $unattributedFailed = [int]$result.assertionsFailed - ($advisoryFailed + $authoritativeFailed)
+        $unattributedFailed = [int]$result.assertionsFailed - ($advisoryFailed + $authoritativeFailed + $toleratedFailed)
         if ($unattributedFailed -gt 0) {
             if ($specAllAdvisory) { $advisoryFailed += $unattributedFailed }
-            else { $authoritativeFailed += $unattributedFailed }
+            else {
+                $authoritativeFailed += $unattributedFailed
+                $authoritativeStimuliFailed++
+            }
         }
 
-        # A zero vally exit means the spec met its aggregate threshold (the author's
-        # runs/threshold contract), so every stimulus passed overall. Any per-trial
-        # dips counted in assertionsFailed are sub-threshold noise, not merge
-        # blockers; demote them to advisory so an aggregate-passing spec never gates.
-        if ($result.exitCode -eq 0 -and $authoritativeFailed -gt 0) {
-            $advisoryFailed += $authoritativeFailed
-            $authoritativeFailed = 0
-        }
+        # Trust the harness threshold verdict; vally exits nonzero for verdicts only with --require-pass.
 
         $result['advisoryPassed'] = $advisoryPassed
         $result['advisoryFailed'] = $advisoryFailed
         $result['authoritativePassed'] = $authoritativePassed
         $result['authoritativeFailed'] = $authoritativeFailed
-        $result['isAdvisory'] = ($authoritativeFailed -eq 0 -and $advisoryFailed -gt 0)
+        $result['advisoryStimuliFailed'] = $advisoryStimuliFailed
+        $result['authoritativeStimuliFailed'] = $authoritativeStimuliFailed
+        $result['toleratedFailed'] = $toleratedFailed
+        $result['isAdvisory'] = ($authoritativeStimuliFailed -eq 0 -and $advisoryFailed -gt 0)
 
         $erroredTrials = if ($result.ContainsKey('erroredTrials')) { [int]$result['erroredTrials'] } else { 0 }
 
         if (-not $result.ContainsKey('status')) {
-            if ($authoritativeFailed -gt 0 -or $outputModeration.flagged) {
+            if ($authoritativeStimuliFailed -gt 0 -or $outputModeration.flagged) {
                 $result['status'] = 'fail'
             }
             elseif ($advisoryFailed -gt 0) {
@@ -855,14 +903,14 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 
         $specResults[$runKey] = $result
 
-        $promote = $authoritativeFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error
+        $promote = $authoritativeStimuliFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error
         # A nonzero vally exit with no attributed failures gates only when the spec is
         # not wholly advisory; an all-advisory spec surfaces but never blocks merge.
         if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0 -and -not $specAllAdvisory) {
             if ($erroredTrials -gt 0) {
-                # The nonzero exit is explained solely by transient errored trials that
-                # persisted after retries; surface it but do not gate the build.
-                Write-Host "::warning file=$specRel::$erroredTrials trial(s) errored (transient executor failure) with no grader failures after retries; not promoting to CI failure"
+                # The nonzero exit is explained solely by errored trials that persisted
+                # after retries; evidence-integrity validation still decides the gate.
+                Write-CIAnnotation -Level Warning -File $specRel -Message "$erroredTrials trial(s) errored after retries with no grader failures; final evidence-integrity validation decides whether this spec blocks CI"
             }
             else {
                 $promote = $true
@@ -873,18 +921,21 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             $failedSpecs++
             $promotedRunKeys[$runKey] = $true
             if ($outputModeration.error) {
-                Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error); promoting to CI failure"
+                Write-CIAnnotation -Level Error -File $specRel -Message "Output content moderation could not run (infrastructure error); promoting to CI failure"
             }
-            elseif ($authoritativeFailed -gt 0 -and $advisoryFailed -gt 0) {
-                Write-Host "::warning file=$specRel::Per-stimulus advisory failures coexist with authoritative failures; promoting to CI failure"
+            elseif ($authoritativeStimuliFailed -gt 0 -and $advisoryFailed -gt 0) {
+                Write-CIAnnotation -Level Warning -File $specRel -Message "Per-stimulus advisory failures coexist with authoritative failures; promoting to CI failure"
             }
             if ($FailFast) {
-                Write-Host "::warning::FailFast set; skipping remaining specs after failure in $specRel"
+                Write-CIAnnotation -Level Warning -Message "FailFast set; skipping remaining specs after failure in $specRel"
                 break
             }
         }
         elseif ($advisoryFailed -gt 0) {
-            Write-Host "::warning file=$specRel::Per-stimulus advisory failures: $advisoryFailed assertion(s) across advisory stimuli; not promoting to CI failure"
+            Write-CIAnnotation -Level Warning -File $specRel -Message "Per-stimulus advisory failures: $advisoryFailed assertion(s) across advisory stimuli; not promoting to CI failure"
+        }
+        elseif ($toleratedFailed -gt 0) {
+            Write-CIAnnotation -Level Warning -File $specRel -Message "$toleratedFailed trial dip(s) occurred inside aggregate-passing authoritative stimuli; not promoting to CI failure"
         }
     }
     else {
@@ -900,18 +951,27 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $isAdvisory = (Test-SpecIsAdvisory -SpecPath $specAbs) -or $specIsEquivalence
         $result['isAdvisory'] = $isAdvisory
 
-        # A zero vally exit means the spec met its aggregate threshold (the author's
-        # runs/threshold contract), so per-trial assertion dips recorded in
-        # assertionsFailed are sub-threshold noise, not merge blockers. Mirror the
-        # advisory-map branch above and gate only on a nonzero vally exit or a
-        # moderation failure. Without this, a spec that carries no advisory-tagged
-        # stimulus would gate the build on a single sub-threshold dip even though
-        # vally reported an aggregate pass.
-        $hardFailure = ($result.exitCode -ne 0) -or $outputModeration.flagged -or $outputModeration.error
-        $subThresholdDip = (-not $hardFailure) -and ($result.assertionsFailed -gt 0)
+        # Gate authoritative failures using the harness threshold verdict, not vally's operational exit.
+        $hardFailure = ($result.exitCode -ne 0) -or $outputModeration.flagged -or
+            $outputModeration.error -or ([int]$result.stimuliFailed -gt 0)
+        $aggregateAuthoritativeFailed = 0
+        $aggregateToleratedFailed = 0
+        foreach ($bucket in @($result.perStimulus.Values)) {
+            if ($false -eq $bucket.aggregatePassed) {
+                $aggregateAuthoritativeFailed += [int]$bucket.assertionsFailed
+            }
+            else {
+                $aggregateToleratedFailed += [int]$bucket.assertionsFailed
+            }
+        }
+        $result['authoritativeFailed'] = $aggregateAuthoritativeFailed
+        $result['authoritativeStimuliFailed'] = [int]$result.stimuliFailed
+        $result['advisoryFailed'] = 0
+        $result['advisoryStimuliFailed'] = 0
+        $result['toleratedFailed'] = $aggregateToleratedFailed
 
         if (-not $result.ContainsKey('status')) {
-            $result['status'] = if ($hardFailure) { 'fail' } elseif ($subThresholdDip) { 'advisory-fail' } else { 'pass' }
+            $result['status'] = if ($hardFailure) { 'fail' } else { 'pass' }
         }
 
         $specResults[$runKey] = $result
@@ -919,20 +979,27 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         if ($hardFailure) {
             if ($isAdvisory -and -not $outputModeration.error) {
                 $result['status'] = 'advisory-fail'
-                Write-Host "::warning file=$specRel::Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
+                Write-CIAnnotation -Level Warning -File $specRel -Message "Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
             }
             else {
                 $failedSpecs++
                 $promotedRunKeys[$runKey] = $true
                 if ($FailFast) {
-                    Write-Host "::warning::FailFast set; skipping remaining specs after failure in $specRel"
+                    Write-CIAnnotation -Level Warning -Message "FailFast set; skipping remaining specs after failure in $specRel"
                     break
                 }
             }
         }
-        elseif ($subThresholdDip) {
-            Write-Host "::warning file=$specRel::Sub-threshold per-trial dips (exit=0, assertionsFailed=$($result.assertionsFailed)); aggregate threshold met, not promoting to CI failure"
+    }
+    if (-not $result.integrity.integrityPassed) {
+        $result['status'] = 'integrity-failure'
+        $result['isAdvisory'] = $false
+        if (-not $promotedRunKeys.ContainsKey($runKey)) {
+            $failedSpecs++
+            $promotedRunKeys[$runKey] = $true
         }
+        Write-CIAnnotation -Level Error -File $specRel -Message "Selected evaluation evidence failed integrity validation"
+        if ($FailFast) { break }
     }
 }
 
@@ -965,7 +1032,7 @@ if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
         $result['moderationOutput'] = $outputModeration
 
         if ($outputModeration.flagged) {
-            Write-Host "::warning file=$($result.specRel)::Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
+            Write-CIAnnotation -Level Warning -File $result.specRel -Message "Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
             $previousFailed = [int]$result.assertionsFailed
             $result.assertionsFailed = [Math]::Max($previousFailed, [int]$outputModeration.flaggedCount)
             $moderationFailureDelta = [int]$result.assertionsFailed - $previousFailed
@@ -997,12 +1064,16 @@ if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
         }
 
         if ($outputModeration.error) {
-            Write-Host "::error file=$($result.specRel)::Output content moderation could not run or could not be attributed (infrastructure error)"
+            Write-CIAnnotation -Level Error -File $result.specRel -Message "Output content moderation could not run or could not be attributed (infrastructure error)"
             $result.status = 'content-moderation-error-output'
             if (-not $promotedRunKeys.ContainsKey($runKey)) {
                 $failedSpecs++
                 $promotedRunKeys[$runKey] = $true
             }
+        }
+        if ($result.ContainsKey('integrity') -and -not $result.integrity.integrityPassed) {
+            $result.status = 'integrity-failure'
+            $result.isAdvisory = $false
         }
     }
 }
@@ -1102,7 +1173,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
         }
 
         if ($contractError) {
-            Write-Host "::error::$contractError"
+            Write-CIAnnotation -Level Error -Message "$contractError"
             $verdict = 'fail'
         }
 
@@ -1146,6 +1217,8 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
 $hardFailStatuses = @(
     'fail',
     'evaluator-error',
+    'invalid-spec-source',
+    'integrity-failure',
     'content-moderation-input',
     'content-moderation-error-input',
     'content-moderation-output',
@@ -1156,14 +1229,21 @@ foreach ($plan in $artifactPlan) {
     $artifactPassed    = 0
     $artifactFailed    = 0
     $artifactDurationMs = 0
+    $artifactInputTokens = [long]0
+    $artifactOutputTokens = [long]0
+    $artifactCacheReadTokens = [long]0
+    $artifactTokenTrials = 0
     $artifactExitCode  = 0
     $artifactAuthoritativeFailed = 0
     $artifactAdvisoryFailed      = 0
+    $artifactAuthoritativeStimuliFailed = 0
+    $artifactAdvisoryStimuliFailed = 0
+    $artifactToleratedFailed = 0
     $artifactHasHardFail = $false
     $artifactHasEvaluatorError = $false
     $artifactFailedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
     $specBreakdown     = [System.Collections.Generic.List[object]]::new()
-    $allSpecsRan       = $true
+    $allSpecsRan       = @($plan.specRuns).Count -gt 0
 
     foreach ($runKey in $plan.specRuns) {
         if (-not $specResults.ContainsKey($runKey)) {
@@ -1174,6 +1254,14 @@ foreach ($plan in $artifactPlan) {
         $artifactPassed     += [int]$r.assertionsPassed
         $artifactFailed     += [int]$r.assertionsFailed
         $artifactDurationMs += [int]$r.durationMs
+        $specInputTokens = if ($r.ContainsKey('inputTokens')) { [long]$r.inputTokens } else { [long]0 }
+        $specOutputTokens = if ($r.ContainsKey('outputTokens')) { [long]$r.outputTokens } else { [long]0 }
+        $specCacheReadTokens = if ($r.ContainsKey('cacheReadTokens')) { [long]$r.cacheReadTokens } else { [long]0 }
+        $specTokenTrials = if ($r.ContainsKey('tokenTrials')) { [int]$r.tokenTrials } else { 0 }
+        $artifactInputTokens += $specInputTokens
+        $artifactOutputTokens += $specOutputTokens
+        $artifactCacheReadTokens += $specCacheReadTokens
+        $artifactTokenTrials += $specTokenTrials
 
         $specStatus = if ($r.ContainsKey('status')) { [string]$r.status } else { '' }
         $specIsAdvisory = $r.ContainsKey('isAdvisory') -and [bool]$r.isAdvisory
@@ -1182,6 +1270,9 @@ foreach ($plan in $artifactPlan) {
         if ($r.ContainsKey('authoritativeFailed') -or $r.ContainsKey('advisoryFailed')) {
             $artifactAuthoritativeFailed += [int]$r['authoritativeFailed']
             $artifactAdvisoryFailed      += [int]$r['advisoryFailed']
+            if ($r.ContainsKey('authoritativeStimuliFailed')) { $artifactAuthoritativeStimuliFailed += [int]$r['authoritativeStimuliFailed'] }
+            if ($r.ContainsKey('advisoryStimuliFailed')) { $artifactAdvisoryStimuliFailed += [int]$r['advisoryStimuliFailed'] }
+            if ($r.ContainsKey('toleratedFailed')) { $artifactToleratedFailed += [int]$r['toleratedFailed'] }
         }
         elseif ($specIsAdvisory -or $specStatus -eq 'advisory-fail') {
             # A spec the main loop already demoted to 'advisory-fail' (an advisory
@@ -1212,12 +1303,20 @@ foreach ($plan in $artifactPlan) {
             exitCode         = $r.exitCode
             assertionsPassed = $r.assertionsPassed
             assertionsFailed = $r.assertionsFailed
+            stimuliPassed     = if ($r.ContainsKey('stimuliPassed')) { $r.stimuliPassed } else { 0 }
+            stimuliFailed     = if ($r.ContainsKey('stimuliFailed')) { $r.stimuliFailed } else { 0 }
             durationMs       = $r.durationMs
+            inputTokens      = $specInputTokens
+            outputTokens     = $specOutputTokens
+            cacheReadTokens  = $specCacheReadTokens
+            tokenTrials      = $specTokenTrials
             trials           = $r.trials
             runDir           = $r.runDir
             resultsPath      = $r.resultsPath
             status           = $specStatus
             failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
+            diagnostics      = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
+            integrity        = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
         })
     }
 
@@ -1227,6 +1326,9 @@ foreach ($plan in $artifactPlan) {
               elseif ($artifactAdvisoryFailed -gt 0) { 'advisory-fail' }
               else { 'pass' }
     $artifactIsAdvisory = ($status -eq 'advisory-fail')
+    # Means derive from summed totals; $null marks a run with no token measurement.
+    $meanInputTokensPerTrial = if ($artifactTokenTrials -gt 0) { [math]::Round($artifactInputTokens / $artifactTokenTrials, 1) } else { $null }
+    $meanCacheReadTokensPerTrial = if ($artifactTokenTrials -gt 0) { [math]::Round($artifactCacheReadTokens / $artifactTokenTrials, 1) } else { $null }
 
     $artifactKey  = Get-ArtifactFileKey -Kind $plan.kind -ArtifactId $plan.artifactId
     $artifactFile = Join-Path -Path $resolvedLogsDir -ChildPath "eval-results-$artifactKey.json"
@@ -1238,10 +1340,19 @@ foreach ($plan in $artifactPlan) {
         status              = $status
         isAdvisory          = $artifactIsAdvisory
         durationMs          = $artifactDurationMs
+        inputTokens         = $artifactInputTokens
+        outputTokens        = $artifactOutputTokens
+        cacheReadTokens     = $artifactCacheReadTokens
+        tokenTrials         = $artifactTokenTrials
+        meanInputTokensPerTrial     = $meanInputTokensPerTrial
+        meanCacheReadTokensPerTrial = $meanCacheReadTokensPerTrial
         assertionsPassed    = $artifactPassed
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        authoritativeStimuliFailed = $artifactAuthoritativeStimuliFailed
+        advisoryStimuliFailed = $artifactAdvisoryStimuliFailed
+        toleratedFailed     = $artifactToleratedFailed
         failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specs               = @($specBreakdown)
     }
@@ -1255,10 +1366,19 @@ foreach ($plan in $artifactPlan) {
         status              = $status
         isAdvisory          = $artifactIsAdvisory
         durationMs          = $artifactDurationMs
+        inputTokens         = $artifactInputTokens
+        outputTokens        = $artifactOutputTokens
+        cacheReadTokens     = $artifactCacheReadTokens
+        tokenTrials         = $artifactTokenTrials
+        meanInputTokensPerTrial     = $meanInputTokensPerTrial
+        meanCacheReadTokensPerTrial = $meanCacheReadTokensPerTrial
         assertionsPassed    = $artifactPassed
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        authoritativeStimuliFailed = $artifactAuthoritativeStimuliFailed
+        advisoryStimuliFailed = $artifactAdvisoryStimuliFailed
+        toleratedFailed     = $artifactToleratedFailed
         failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specCount           = $specBreakdown.Count
         resultsFile         = "logs/eval-results-$artifactKey.json"
@@ -1274,17 +1394,22 @@ foreach ($runKey in $specResults.Keys) {
         exitCode         = $r.exitCode
         assertionsPassed = $r.assertionsPassed
         assertionsFailed = $r.assertionsFailed
+        stimuliPassed    = if ($r.ContainsKey('stimuliPassed')) { $r.stimuliPassed } else { 0 }
+        stimuliFailed    = if ($r.ContainsKey('stimuliFailed')) { $r.stimuliFailed } else { 0 }
         durationMs       = $r.durationMs
         trials           = $r.trials
     }
     if ($r.ContainsKey('status')) { $record['status'] = $r.status }
     if ($r.ContainsKey('isAdvisory')) { $record['isAdvisory'] = [bool]$r.isAdvisory }
+    $record['diagnostics'] = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
+    $record['integrity'] = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
     if ($r.ContainsKey('failedOrErroredTrials')) { $record['failedOrErroredTrials'] = @($r.failedOrErroredTrials) }
+    foreach ($field in @('advisoryFailed', 'authoritativeFailed', 'advisoryStimuliFailed', 'authoritativeStimuliFailed', 'toleratedFailed')) {
+        if ($r.ContainsKey($field)) { $record[$field] = [int]$r[$field] }
+    }
     if ($r.ContainsKey('perStimulusAdvisory') -and $null -ne $r.perStimulusAdvisory) {
         $record['advisoryPassed'] = [int]$r.advisoryPassed
-        $record['advisoryFailed'] = [int]$r.advisoryFailed
         $record['authoritativePassed'] = [int]$r.authoritativePassed
-        $record['authoritativeFailed'] = [int]$r.authoritativeFailed
         $record['perStimulusAdvisory'] = $r.perStimulusAdvisory
     }
     $perSpec.Add($record) | Out-Null

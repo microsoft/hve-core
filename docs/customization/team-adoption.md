@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - governance
@@ -16,7 +16,7 @@ estimated_reading_time: 7
 ## Recommended Starting Point
 
 Start team adoption with the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the complete managed component set across all team members.
-When the team is ready for clone-based methods, ask an agent to use the included `hve-core-installer` skill. It evaluates the environment, recommends peer clone, submodule, git-ignored, or another method, guides MCP configuration, and supports a complete or custom selection across agents, prompts, instructions, and distributable skill directories.
+When the team is ready for clone-based methods, ask an agent to use the included `hve-core-installer` skill. It evaluates the environment, recommends peer clone, submodule, git-ignored, or another method, guides MCP configuration, and supports a complete or custom selection across agents, instructions, and distributable skill directories.
 Move to direct clone setup only when artifact modification is required beyond what the installer provides.
 
 ## Adoption Strategy
@@ -248,7 +248,7 @@ starting points and progression for each of the nine roles.
 
 ### Utility
 
-1. Use existing prompts and agents without modification
+1. Use existing agents and skills without modification
 2. Customize instructions for your specific workflow context
 3. Contribute improvements to shared components based on
   usage patterns

@@ -15,6 +15,14 @@ dependencies = [
     # in PKCS7 decrypt) fixed in 50.0.0.
     # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
     "cryptography>=50.0.0,<51.0",
+    # transitive via azure-identity/msal; GHSA-42vr-xj54-vc7v and related PyJWT advisories
+    # fixed in 2.15.0 (2.14.0 remains affected).
+    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
+    "pyjwt[crypto]>=2.15.0,<3.0",
+    # transitive via azure-core/msal/requests; GHSA-8988-9cw3-xx77, GHSA-gh4c-6fx4-qh6g,
+    # and GHSA-vxq7-64xx-v4gw fixed in 2.8.0.
+    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
+    "urllib3>=2.8.0,<3.0",
 ]
 
 [dependency-groups]

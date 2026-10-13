@@ -1,0 +1,24 @@
+name: test-npm-list-item
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm install
+      - run: |
+          npm install left-pad
+          npm run build
+        env:
+          INSTALL_NOTE: npm install
+      - name: Sibling step with npm install in its name only
+        run: npm ci
+      - name: Install with prefix
+        run: npm --prefix scripts/extension install
+      - run: npm --prefix scripts/extension ci
+      - run: echo "no npm here"
+      - name: Heredoc that mentions a list-item run key
+        run: |
+          cat <<'EOF' > steps.yml
+          - run: echo hi
+          EOF
+          npm install

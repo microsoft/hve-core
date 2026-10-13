@@ -28,11 +28,11 @@ Compare RPI planning and implementation evidence, record review findings, and ro
 
 ## When to use it
 
-Use `rpi-review` once, after implementation finishes, to compare the plan, critique, changes record, and validation evidence against the accepted requirements. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself.
+Use `rpi-review` after implementation finishes when you want an acceptance review; the review is optional. It compares the plan, the critique when one ran, the changes record, and validation evidence against the accepted requirements. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself. If a session ends mid-review, run it again and it continues from the saved record.
 
 A helper such as [RPI Reviewer](../../agents/hve-core/subagents/rpi-reviewer) is optional: the review parent may assign it one bounded, context-heavy comparison and receive candidate findings with evidence locations, then verifies each one, or investigates further itself, before recording an `RV-xxx`. The review parent owns the final outcome and every route in `## Parent Decision Record`.
 
-The record keeps execution status (`Complete`, `Partial`, `Blocked`) separate from outcome (`Conformant`, `Conformant with justified divergence`, `Defects found`, `Residual work`, `Not accepted`). Each accepted finding routes once: defects to a later `rpi-implement`, decision gaps to `rpi-plan`, evidence gaps to `rpi-research`, residual work to a distinct follow-up. A later fix does not trigger another review.
+The record keeps execution status (`Complete`, `Partial`, `Blocked`) separate from outcome (`Conformant`, `Conformant with justified divergence`, `Defects found`, `Residual work`, `Not accepted`). Each accepted finding routes once: defects to a later `rpi-implement`, decision gaps to `rpi-plan`, evidence gaps to `rpi-research`, residual work to a distinct follow-up. A later fix does not require another review; when you ask for a new review, it writes a separate record with a numbered suffix.
 
 In a standalone review you walk through each actionable finding with a suggested action, gather-more-information, skip, and finish choices. Inside an automatic `RPI Agent` session the parent decides routes from evidence unless you explicitly retain Review decisions. Pass `depth=deep` only when you want broader evidence tracing; `standard` completely assesses the material boundary by default.
 

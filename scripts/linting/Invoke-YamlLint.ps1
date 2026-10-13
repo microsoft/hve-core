@@ -83,7 +83,15 @@ function Invoke-YamlLintCore {
     if ($ChangedFilesOnly) {
         Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
         $changedFiles = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml'))
-        $filesToAnalyze = @($changedFiles | Where-Object { $_ -like "$workflowPath/*" })
+        $configChanged = @($changedFiles | Where-Object { $_ -in '.github/actionlint.yaml', '.github/actionlint.yml' }).Count -gt 0
+
+        if ($configChanged -and (Test-Path $workflowPath)) {
+            Write-Host "actionlint configuration changed; analyzing all workflow files..." -ForegroundColor Cyan
+            $filesToAnalyze = @(Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName })
+        }
+        else {
+            $filesToAnalyze = @($changedFiles | Where-Object { $_ -like "$workflowPath/*" })
+        }
     }
     else {
         Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
@@ -108,8 +116,20 @@ function Invoke-YamlLintCore {
         $actionlintArgs += $filesToAnalyze
     }
 
-    $rawOutput = & actionlint @actionlintArgs 2>&1
-    # actionlint exit code is not used; errors are parsed from JSON output
+    $actionlintOutput = & actionlint @actionlintArgs 2>&1
+    $actionlintExitCode = $LASTEXITCODE
+
+    # Separate stderr so it never reaches the JSON parser
+    $rawOutput = $actionlintOutput | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }
+    $errorOutput = @($actionlintOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }) -join "`n"
+
+    # actionlint exits 0 when clean, 1 when issues are found, 2 on invalid options, 3 on fatal errors
+    if ($actionlintExitCode -notin 0, 1) {
+        $detail = if ($errorOutput) { ": $errorOutput" } else { '' }
+        Remove-Item -Path $OutputPath, 'logs/yaml-lint-summary.json' -ErrorAction SilentlyContinue
+        Write-CIStepSummary -Content "## YAML Lint Results`n`n❌ **Status**: actionlint failed with exit code $actionlintExitCode"
+        throw "actionlint failed with exit code ${actionlintExitCode}$detail"
+    }
 
     # Parse JSON output
     $issues = @()
@@ -123,6 +143,13 @@ function Invoke-YamlLintCore {
             Write-Warning "Failed to parse actionlint output: $($_.Exception.Message)"
             Write-Verbose "Raw output: $rawOutput"
         }
+    }
+
+    if ($actionlintExitCode -eq 1 -and $issues.Count -eq 0) {
+        $detail = if ($errorOutput) { ": $errorOutput" } else { '' }
+        Remove-Item -Path $OutputPath, 'logs/yaml-lint-summary.json' -ErrorAction SilentlyContinue
+        Write-CIStepSummary -Content "## YAML Lint Results`n`n❌ **Status**: actionlint exited with code 1 but no issues could be parsed"
+        throw "actionlint exited with code 1 but no issues could be parsed from its output$detail"
     }
 
     # Process issues and create annotations

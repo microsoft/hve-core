@@ -1,7 +1,7 @@
 ---
 title: HVE Core updates deck
 description: Interactive HTML presentation of HVE Core changes from April to September 2026.
-ms.date: 2026-09-22
+ms.date: 2026-09-30
 ---
 
 ## Build and present
@@ -147,7 +147,7 @@ use the same flow; no site-page or generated-HTML edits are needed.
 
 | Control                           | Behavior                                                   |
 |-----------------------------------|------------------------------------------------------------|
-| Left / Right, Page Up / Page Down | Previous / next slide                                      |
+| Left / Right, Page Up / Page Down | Previous / next slide, including from a focused button     |
 | Space / Shift+Space               | Next / previous slide                                      |
 | Home / End                        | First / last slide                                         |
 | Slides button or O                | Slide index with chapter labels                            |
@@ -164,11 +164,16 @@ use the same flow; no site-page or generated-HTML edits are needed.
 | Tab / Enter                       | Reach and activate visible controls                        |
 
 Slide navigation and demonstration steps are deliberately separate.
-When a button, link or other interactive control has focus, normal keyboard
-activation takes priority over slide shortcuts. Use visible navigation or
-move focus away from the control to resume shortcuts.
-Character shortcuts, including Space, run only when the presentation surface itself has
-focus. Tab reaches that surface. Arrow and Page keys remain available outside controls.
+Left / Right and Page Up / Page Down keep changing slides after you click a presenter
+button or link, because those controls do not use the keys. The read-only source field
+in the install walkthrough keeps its caret keys. Other shortcuts wait while a control
+has focus, so Space and Enter activate it. Character shortcuts, including Space, run
+only when the presentation surface itself has focus. Tab reaches that surface.
+
+The bottom bar keeps the chapter label and slide navigation `--presenter-inset` from the
+window edges, clear of viewer overlays such as the Copilot button SharePoint places at
+the bottom right. With reading view off, the bar stacks centered rows at 1100 pixels
+wide or narrower.
 
 Demo steps persist while revisiting slides in the same page session.
 Reload restores the slide hash but resets all demonstrations to their first

@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-02
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -69,12 +69,16 @@ This directory also contains:
 3. Select **DT Coach**
 4. Describe your project or problem area
 
-### Option 2: Start from a DT Prompt
+### Option 2: Use a Handoff or Ask Directly
 
-Use `/dt-method-next` to have the coach assess where you are and guide you to the next appropriate method.
-Use `/dt-canonical-deck` to generate a canonical deck snapshot, then follow the customer-card workflow when you want a PowerPoint deck derived from the snapshot.
-Use `/rpi-research` when a DT session has reached a natural exit point and you want to begin the RPI Research phase.
-Use `/dt-figma-export` or a Mural board export when you want to turn existing DT artifacts into a collaborative board for review.
+During a session, DT Coach offers handoff buttons for common next steps. You can also ask for any of them in plain language:
+
+* Select **🎯 Method Next**, or ask which method comes next, to have the coach assess where you are and guide you to the next appropriate method.
+* Select **📋 Canonical Deck** to create or refresh the canonical deck snapshot, then **🖼️ Build Customer Cards PPTX** when you want a PowerPoint deck derived from the snapshot.
+* Select **🔬 Hand off to RPI**, or run `/rpi-research`, when a DT session has reached a natural exit point and you want to begin the RPI Research phase.
+* Select **📋 Export to Figma**, run `/dt-figma-export`, or ask for a Mural board export when you want to turn existing DT artifacts into a collaborative board for review.
+
+To resume earlier work, select DT Coach and ask it to resume your project. The coach lists existing projects, confirms which one to continue, and restores context from `coaching-state.md`.
 
 ### Starting a Session
 

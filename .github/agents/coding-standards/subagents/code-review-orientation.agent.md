@@ -8,6 +8,7 @@ tools:
   - read/readFile
   - edit/createFile
   - edit/createDirectory
+  - edit/editFiles
 user-invocable: false
 ---
 

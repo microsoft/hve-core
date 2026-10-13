@@ -34,6 +34,8 @@ Required entity concerns are:
 
 A missing `profile_ref` is valid. A stale pointer becomes an open question and is not replaced with copied profile content.
 
+Source locations must not embed URI user information or nonempty credential parameters. The validator parses query and semicolon-delimited connection parameters, percent-decodes keys once, and compares case-insensitive names after removing hyphens and underscores. It recognizes generic credential names and AWS and Google signing parameters. Empty credential values contain no embedded secret; credential-like text inside an unrelated parameter value is not treated as a parameter key.
+
 ## Privacy vocabulary
 
 The classification object uses all five citation-field names published by `privacy-standards`:

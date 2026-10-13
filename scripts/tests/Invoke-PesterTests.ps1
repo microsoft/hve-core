@@ -85,8 +85,8 @@ if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 }
 
-# Pre-write placeholder outputs so tests that assert these files exist during
-# the run (activation harness) see them even before Invoke-Pester completes.
+# Reset outputs so a run that fails before Invoke-Pester completes never leaves
+# results from an earlier run in place.
 '{}' | Out-File -FilePath $summaryPath -Encoding utf8
 '[]' | Out-File -FilePath $failuresPath -Encoding utf8
 

@@ -1,7 +1,7 @@
 ---
 title: Code Review Lens Checklists
 description: Perspective-specific review questions for functional, standards, accessibility, security, readiness, and full-review workflows.
-ms.date: 2026-08-25
+ms.date: 2026-09-26
 ---
 
 ## Functional review
@@ -31,6 +31,7 @@ ms.date: 2026-08-25
 * Is untrusted input validated and boundaries enforced?
 * Are secrets, credentials, and sensitive data handled safely?
 * Are dependencies, serialization, parsing, and data handling paths reviewed for abuse or misuse?
+* When the repository requires executable components to carry a security or threat model, does a diff that adds, removes, or alters a network, credential, untrusted-input, write-location, or external-program surface also add or update that model? Flag a missing or unchanged model as advisory and cite the repository's rule.
 
 ## Readiness review
 

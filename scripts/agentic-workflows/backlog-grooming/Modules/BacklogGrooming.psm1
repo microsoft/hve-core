@@ -688,6 +688,8 @@ function Test-ValidSupersessionLineage {
     Candidate call object.
 .PARAMETER IssueId
     Trusted planned issue identity.
+.PARAMETER SelectionReason
+    Trusted cohort-derived selection reason.
 .OUTPUTS
     System.Management.Automation.PSCustomObject
 #>
@@ -696,14 +698,16 @@ function ConvertFrom-BacklogGroomingCandidateCall {
     [OutputType([pscustomobject])]
     param(
         [Parameter(Mandatory = $true)] [System.Text.Json.JsonElement]$Call,
-        [Parameter(Mandatory = $true)] [long]$IssueId
+        [Parameter(Mandatory = $true)] [long]$IssueId,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Priority cohort', 'Round-robin cohort')]
+        [string]$SelectionReason
     )
 
     $Valid = $true
     $ScalarValues = [ordered]@{}
     $FieldDefinitions = [ordered]@{
         title = @{ Input = 'title'; Maximum = 500 }
-        selection_reason = @{ Input = 'selection-reason'; Maximum = 200 }
         activity_and_ownership_context = @{ Input = 'activity-and-ownership-context'; Maximum = 2000 }
         acceptance_signals = @{ Input = 'acceptance-signals'; Maximum = 2000 }
         grooming_finding = @{ Input = 'grooming-finding'; Maximum = 2000 }
@@ -751,7 +755,7 @@ function ConvertFrom-BacklogGroomingCandidateCall {
     $Row = [ordered]@{
         issue = $IssueId
         title = $ScalarValues.title
-        selection_reason = $ScalarValues.selection_reason
+        selection_reason = $SelectionReason
         activity_and_ownership_context = $ScalarValues.activity_and_ownership_context
         acceptance_signals = $ScalarValues.acceptance_signals
         repository_evidence = $Evidence.Repository
@@ -766,8 +770,7 @@ function ConvertFrom-BacklogGroomingCandidateCall {
         assessment_status = $ScalarValues.assessment_status
         deferral_reason = $DeferralReason
     }
-    if ($Row.similarity_outcome -ceq 'Superseded' -and $Row.disposition -ceq 'Superseded' -and
-        (Test-ValidSupersessionLineage -Row $Row)) {
+    if ($Row.similarity_outcome -ceq 'Superseded' -and $Row.disposition -ceq 'Superseded') {
         $Row.similarity_outcome = 'Uncertain'
         $NormalizationCodes.Add('superseded_similarity_normalized')
     }
@@ -885,10 +888,9 @@ function ConvertTo-BacklogGroomingShardResult {
         if (-not $CandidateSet.Contains($IssueId)) {
             throw "Backlog grooming result call has foreign issue identity #$IssueId"
         }
-        if ($CallsByIssue.ContainsKey($IssueId)) {
-            throw "Backlog grooming result calls have conflicting issue identity #$IssueId"
+        if (-not $CallsByIssue.ContainsKey($IssueId)) {
+            $CallsByIssue[$IssueId] = [System.Collections.Generic.List[System.Text.Json.JsonElement]]::new()
         }
-        $CallsByIssue[$IssueId] = [System.Collections.Generic.List[System.Text.Json.JsonElement]]::new()
         $CallsByIssue[$IssueId].Add($Item.Clone())
     }
 
@@ -900,7 +902,14 @@ function ConvertTo-BacklogGroomingShardResult {
             $ContractErrors.Add([ordered]@{ issue = $IssueId; code = 'invalid_row_contract' })
             continue
         }
-        $CandidateResult = ConvertFrom-BacklogGroomingCandidateCall -Call $CallsByIssue[$IssueId][0] -IssueId $IssueId
+        $SelectionReason = if ($TrustedContext.PriorityCandidateIds -contains $IssueId) {
+            'Priority cohort'
+        }
+        else {
+            'Round-robin cohort'
+        }
+        $CandidateResult = ConvertFrom-BacklogGroomingCandidateCall -Call $CallsByIssue[$IssueId][0] `
+            -IssueId $IssueId -SelectionReason $SelectionReason
         if (-not $CandidateResult.Valid) {
             $ContractErrors.Add([ordered]@{ issue = $IssueId; code = 'invalid_row_contract' })
             continue

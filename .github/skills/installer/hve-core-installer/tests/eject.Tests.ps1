@@ -157,6 +157,39 @@ Describe 'eject untracked component' -Tag 'Unit' {
 }
 
 Describe 'eject schema gate' -Tag 'Unit' {
+    It 'Refuses a tracking manifest that is a link and leaves its target unchanged' {
+        $target = New-EjectFixture
+        $outside = Join-Path $TestDrive "eject-outside-$($script:FixtureCounter)"
+        New-Item -ItemType Directory -Path $outside -Force | Out-Null
+        $victim = Join-Path $outside 'victim.json'
+        New-TrackedManifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $victim
+        $before = [System.IO.File]::ReadAllBytes($victim)
+        try {
+            New-Item -ItemType SymbolicLink -Path (Join-Path $target '.hve-tracking.json') -Target $victim -ErrorAction Stop | Out-Null
+        }
+        catch {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        { & $script:PowerShellScript -Component 'agents/hve-core/rpi-agent.md' -TargetRoot $target } |
+            Should -Throw -ExpectedMessage '*Tracking manifest*is a link*'
+
+        [System.IO.File]::ReadAllBytes($victim) | Should -Be $before
+
+        # A dangling link is refused as a link even where Test-Path reports it as
+        # absent; the mock simulates PowerShell releases that behave that way.
+        $manifestLink = Join-Path $target '.hve-tracking.json'
+        Remove-Item -LiteralPath $manifestLink -Force
+        $danglingTarget = Join-Path $outside 'dangling-manifest.json'
+        New-Item -ItemType SymbolicLink -Path $manifestLink -Target $danglingTarget -ErrorAction Stop | Out-Null
+        Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -like '*.hve-tracking.json' }
+
+        { & $script:PowerShellScript -Component 'agents/hve-core/rpi-agent.md' -TargetRoot $target } |
+            Should -Throw -ExpectedMessage '*Tracking manifest*is a link*'
+
+        [System.IO.File]::Exists($danglingTarget) | Should -BeFalse
+    }
     It 'Fails when no manifest exists' {
         $target = New-EjectFixture
 
@@ -216,5 +249,52 @@ Describe 'eject PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $script:Bash
         $output = & bash $script:BashScript 'agents/hve-core/rpi-agent.md' $target 2>&1 | Out-String
         $LASTEXITCODE | Should -Not -Be 0
         $output | Should -Match 'clean reinstall'
+    }
+
+    It 'Exits non-zero for a linked tracking manifest and leaves its target unchanged' {
+        $target = New-EjectFixture
+        $outside = Join-Path $TestDrive "eject-bash-outside-$($script:FixtureCounter)"
+        New-Item -ItemType Directory -Path $outside -Force | Out-Null
+        $victim = Join-Path $outside 'victim.json'
+        New-TrackedManifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $victim
+        $before = [System.IO.File]::ReadAllBytes($victim)
+        try {
+            New-Item -ItemType SymbolicLink -Path (Join-Path $target '.hve-tracking.json') -Target $victim -ErrorAction Stop | Out-Null
+        }
+        catch {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $output = & bash $script:BashScript 'agents/hve-core/rpi-agent.md' $target 2>&1 | Out-String
+        $LASTEXITCODE | Should -Not -Be 0
+        $output | Should -Match 'is a link'
+        [System.IO.File]::ReadAllBytes($victim) | Should -Be $before
+    }
+
+    It 'Does not write through a link planted at a predictable temporary manifest path' {
+        $target = New-EjectFixture -Manifest (New-TrackedManifest)
+        $outside = Join-Path $TestDrive "eject-bash-tmp-outside-$($script:FixtureCounter)"
+        New-Item -ItemType Directory -Path $outside -Force | Out-Null
+        $victim = Join-Path $outside 'victim.txt'
+        Set-Content -LiteralPath $victim -Value 'original' -NoNewline
+        try {
+            New-Item -ItemType SymbolicLink -Path (Join-Path $target '.hve-tracking.json.tmp') -Target $victim -ErrorAction Stop | Out-Null
+        }
+        catch {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        & bash $script:BashScript 'agents/hve-core/rpi-agent.md' $target 2>&1 | Out-Null
+
+        $LASTEXITCODE | Should -Be 0
+        Get-Content -LiteralPath $victim -Raw | Should -Be 'original'
+        (Get-Item -LiteralPath (Join-Path $target '.hve-tracking.json') -Force).Attributes -band [System.IO.FileAttributes]::ReparsePoint |
+            Should -Be 0
+        (Get-EjectManifest -Target $target).files['.github/agents/hve-core/rpi-agent.agent.md'].status | Should -Be 'ejected'
+        @(Get-ChildItem -LiteralPath $target -Force |
+                Where-Object { $_.Name -like '.hve-tracking.json.*' -and $_.Name -ne '.hve-tracking.json.tmp' }) |
+            Should -BeNullOrEmpty
     }
 }

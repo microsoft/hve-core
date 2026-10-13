@@ -13,7 +13,7 @@
 After installing this extension, the chat agents are available in GitHub Copilot Chat:
 
 1. **Use custom agents** by selecting the custom agent from the agent picker drop-down list in Copilot Chat
-2. **Apply prompts** through the Copilot Chat interface
+2. **Run skills** as `/` slash commands in Copilot Chat, or let agents load them when relevant
 3. Reference instructions: they are automatically applied based on file patterns
 
 ### Post-Installation Setup

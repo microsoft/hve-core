@@ -31,18 +31,27 @@ Local reusable workflows referenced via relative paths are excluded from SHA pin
 
 ## Permissions
 
-Workflows MUST declare explicit permissions following the principle of least privilege. The default permission set is `contents: read`. Additional permissions MUST be granted at the job level and only when required for a specific capability.
+Workflows MUST declare explicit permissions following the principle of least privilege. The workflow-level block MUST be `contents: read` or `permissions: {}` and MUST NOT grant any other scope, including read scopes such as `security-events: read`. Additional permissions MUST be granted at the job level and only when required for a specific capability. The `read-all` and `write-all` values MUST NOT be used at any level; `read-all` includes reads of security events and vulnerability alerts.
 
 Every job MUST declare its own `permissions:` block whenever the workflow-level block grants any scope. A job with no block silently inherits the workflow grant, which is neither explicit nor auditable. The one exception is a workflow-level `permissions: {}`, which grants nothing, so a job beneath it that declares no block inherits an empty set and holds no scope.
 
 An empty workflow-level block is a default, not a ceiling. A job that does declare its own block still receives what it declares, because job-level permissions replace the workflow-level set rather than being capped by it.
+
+A job that acts only through a GitHub App token or another credential, and never uses `GITHUB_TOKEN`, SHOULD declare `permissions: {}`. When a job mints a GitHub App token with `actions/create-github-app-token`, it SHOULD request only the app permissions the job uses through `permission-*` inputs.
 
 **Required pattern:**
 
 ```yaml
 permissions:
   contents: read
-  pull-requests: write
+
+jobs:
+  comment:
+    name: Comment on Pull Request
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 ```
 
 **Job-level permissions example:**
@@ -71,7 +80,12 @@ jobs:
 | populated            | absent          | inherits the workflow grant        | violation |
 | any                  | present         | job-declared                       | pass      |
 
-CI will fail on either a missing top-level block or a job that omits its own block under a populated workflow-level block. The `copilot-setup-steps.yml` workflow is excluded by default.
+Two breadth rules apply in addition to that matrix:
+
+* A workflow-level block that grants anything beyond `contents: read` (entries set to `none` are allowed) is an `ExcessiveWorkflowPermissions` violation.
+* A `read-all` or `write-all` value at the workflow level or on any job is a `BroadPermissionsScalar` violation, regardless of the workflow-level state.
+
+CI will fail on a missing top-level block, a job that omits its own block under a populated workflow-level block, a workflow-level grant beyond `contents: read`, or any `read-all` or `write-all` value. The `copilot-setup-steps.yml` workflow is excluded by default.
 
 ## Credentials and Secrets
 
@@ -273,7 +287,7 @@ All workflows MUST pass the following validation checks:
 ### Workflow Permissions Validation
 
 * **Script:** `scripts/security/Test-WorkflowPermissions.ps1`
-* **What it enforces:** Every workflow declares a top-level `permissions:` block, and every job declares its own block unless the workflow-level block is empty
+* **What it enforces:** Every workflow declares a top-level `permissions:` block that grants nothing beyond `contents: read`, every job declares its own block unless the workflow-level block is empty, and no workflow or job uses `read-all` or `write-all`
 * **CI blocking:** Failures block CI when configured to enforce compliance
 
 ### Runner Policy Validation

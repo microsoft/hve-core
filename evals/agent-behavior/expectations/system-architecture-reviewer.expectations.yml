@@ -104,3 +104,30 @@ expectations:
       - Review leads to editing application source files.
     priority: medium
     contract_ref: "agent scope (review/assessment-only; no source edits)"
+
+  - expectation_id: bounded-research-gate
+    summary: Decision-critical current architecture gaps activate bounded Research after scope confirmation.
+    signal: Output names `rpi-research`, explicit evidence criteria and scope, and retained reviewer or user authority.
+    pass_criteria: |
+      A current-service, framework, cost, licensing, compatibility, or prior-art
+      gap activates a bounded Research brief before the dependent recommendation.
+      The reviewer and user retain architecture recommendation authority.
+    failure_modes:
+      - Research runs before review scope is confirmed.
+      - Adequate local evidence still triggers Research.
+      - Research selects the architecture decision.
+    priority: high
+    contract_ref: "agent §Architecture Research Activation"
+
+  - expectation_id: unavailable-research-stops-dependent-recommendation
+    summary: Unavailable Research cannot be replaced with model-memory architecture claims.
+    signal: Output records the gap and stops only the dependent recommendation.
+    pass_criteria: |
+      When current evidence is required and Research is unavailable or blocked,
+      the response records the smallest gap, stops the dependent conclusion,
+      and does not substitute training-data or model-memory claims.
+    failure_modes:
+      - Recommends a platform from memory despite the unresolved current fact.
+      - Stops unrelated review work without identifying the dependency.
+    priority: high
+    contract_ref: "agent §Architecture Research Activation"

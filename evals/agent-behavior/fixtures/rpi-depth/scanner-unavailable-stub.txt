@@ -1,0 +1,52 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+"""Evaluation stand-in for an unavailable sensitive-content scanner.
+
+Staged over the skill's scanner inside an eval workspace so every invocation
+route reports the same scanner-unavailable error. Mirrors the real CLI surface
+and error report shape; it never scans content.
+"""
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+SCHEMA_VERSION = "scan-sensitive-content-v1"
+EXIT_ERROR = 2
+
+
+def create_parser() -> argparse.ArgumentParser:
+    """Create the argument parser."""
+    parser = argparse.ArgumentParser(
+        prog="scan_sensitive_content",
+        description=("Scan ADR/handoff content for high-confidence PII and public-repository internal URLs."),
+    )
+    parser.add_argument("paths", nargs="*", type=Path, help="File paths to scan; reads stdin when no paths are given.")
+    parser.add_argument("--allow-root", type=Path, action="append", default=[], help="Additional directory under which scanned paths may live.")
+    parser.add_argument("--public", action="store_true", help="Treat the target repository as public.")
+    parser.add_argument("--data", action="store_true", help="Enable structured data-artifact detection.")
+    parser.add_argument("--denylist", type=Path, help="UTF-8 text file of literal customer-specific terms.")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Report the scanner as unavailable for every scan request."""
+    args, _ = create_parser().parse_known_args(argv)
+    message = "data-mode scanning is unavailable in this environment"
+    print(f"scan_sensitive_content: {message}", file=sys.stderr)
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "status": "error",
+        "error": {"code": "scanner-unavailable", "message": message},
+        "modes": {"public": bool(args.public), "data": bool(args.data), "denylist": args.denylist is not None},
+        "denylist_rule_count": 0,
+        "findings": [],
+        "summary": {"high": 0, "warn": 0, "total": 0},
+    }
+    print(json.dumps(report, indent=2))
+    return EXIT_ERROR
+
+
+if __name__ == "__main__":
+    sys.exit(main())

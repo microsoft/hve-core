@@ -1,0 +1,18 @@
+{
+  "name": "rpi-with-hve",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Presentation-first, source-grounded deck on why and how to use RPI with HVE Core",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "bundle": "node bundle.mjs",
+    "test": "node --test deck.test.cjs"
+  },
+  "dependencies": {
+    "reveal.js": "6.0.2"
+  }
+}

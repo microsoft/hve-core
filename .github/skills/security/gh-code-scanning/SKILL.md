@@ -6,7 +6,7 @@ compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_even
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-04-21"
+  last_updated: "2026-10-02"
 ---
 
 # GitHub Code Scanning Skill
@@ -40,14 +40,15 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 
 ## Parameters Reference
 
-| Parameter       | Type   | Required | Default | Description                                                                                                                 |
-|-----------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------|
-| `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository                                                                        |
-| `-Repo`         | String | Yes      |         | Repository name                                                                                                             |
-| `-OutputFormat` | String | No       | Table   | Output format: agents must always use `Json` for programmatic consumption; `GroupedJson` is accepted as an alias for `Json` |
-| `-Branch`       | String | No       | `main`  | Branch to scope alert results                                                                                               |
+| Parameter                        | Type   | Required | Default | Description                                                                                                                 |
+|----------------------------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------|
+| `-Owner`                         | String | Yes      |         | GitHub organization or user that owns the repository                                                                        |
+| `-Repo`                          | String | Yes      |         | Repository name                                                                                                             |
+| `-OutputFormat`                  | String | No       | Table   | Output format: agents must always use `Json` for programmatic consumption; `GroupedJson` is accepted as an alias for `Json` |
+| `-Branch`                        | String | No       | `main`  | Branch to scope alert results                                                                                               |
+| `-IncludeDismissedStillDetected` | Switch | No       |         | Also report dismissed alerts that are still detected on the branch, as groups with `Kind` set to `dismissed-still-detected` |
 
-> These parameters apply to `Get-CodeScanningAlerts.ps1`. For bash script flags including `-s {severity}`, see the Script Reference section below.
+> These parameters apply to `Get-CodeScanningAlerts.ps1`. For bash script flags including `-s {severity}` and `-d`, see the Script Reference section below.
 
 ## Script Reference
 
@@ -61,6 +62,9 @@ pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputF
 
 # Scope to a specific branch
 pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -Branch "{branch}" -OutputFormat Json
+
+# Also report dismissed alerts that are still detected
+pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json -IncludeDismissedStillDetected
 ```
 
 ### get-code-scanning-alerts.sh
@@ -76,6 +80,9 @@ bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}" -b "{branch}"
 
 # Filter by severity
 bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}" -s critical
+
+# Also report dismissed alerts that are still detected
+bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}" -d
 ```
 
 ## When to Use This Skill
@@ -148,6 +155,8 @@ Use `-Branch {branch}` to scope to a branch other than `main`.
 
 `SecuritySeverity` is `null` for code quality rules that have no security classification; `Severity` (the non-security rule severity: `error`, `warning`, `note`, `none`) provides a fallback. `AffectedPaths` is always a JSON array of unique, sorted file paths with sentinel strings filtered out. `HasFilePaths` is `false` and `AffectedPaths` is `[]` when an alert has no associated source file (for example, `BranchProtectionID`). `AlertUrl` links directly to the alert in the GitHub Security tab. `FindingDescription` is the most recent alert message text.
 
+With `-IncludeDismissedStillDetected` (or `-d` in bash), dismissed alerts whose most recent instance on the branch is not `fixed` are appended as separate groups after the open-alert groups. Those groups add `Kind` (`dismissed-still-detected`) and `DismissedReason`; open-alert groups are unchanged. A dismissal does not resolve an alert, so present these as alerts to reopen and fix.
+
 ### Get single alert detail
 
 This call returns one record; it is not a listing or grouping operation and does not conflict with the `gh api` restriction above.
@@ -169,6 +178,10 @@ These are GitHub API response field paths, not output object properties. The gro
 * `rule.id`: rule identifier used for deduplication and cross-referencing
 * `tool.name`: analysis tool that produced the alert (for example, `CodeQL`)
 * `most_recent_instance.location.path`: source file path of the most recent alert occurrence
+
+### Resolution policy
+
+Resolve alerts in code or configuration. Never dismiss an alert, and never suggest dismissing one, including for false positives or test code. When a finding cannot be fixed yet, a maintainer can add a reviewed, expiring tracked exception; the alert stays open. Repositories that adopt this policy document it in their code-scanning alert lifecycle; for hve-core, see <https://github.com/microsoft/hve-core/blob/main/docs/security/code-scanning-alert-lifecycle.md>.
 
 ## Code Scanning Analyses
 

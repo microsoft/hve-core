@@ -166,6 +166,7 @@ function Set-CIOutput {
         [string]$Name,
 
         [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
         [string]$Value,
 
         [Parameter(Mandatory = $false)]

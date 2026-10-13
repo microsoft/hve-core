@@ -3,7 +3,7 @@ title: MCP Server Configuration
 description: Optional configuration for Model Context Protocol servers used by HVE Core agents
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - mcp
@@ -41,14 +41,14 @@ Backlog and work management does not require you to choose a platform up front. 
 
 ## Agent MCP Dependencies
 
-| Agent, Prompt, or Skill | MCP Servers Used          | Notes                                                              |
-|-------------------------|---------------------------|--------------------------------------------------------------------|
-| backlog-plan            | ado or github             | Read-only backlog planning; server depends on the resolved tracker |
-| backlog-execute         | ado or github             | Backlog mutations; server depends on the resolved tracker          |
-| Functional Planner      | ado, microsoft-docs       | PRD-to-work-item hierarchy planning                                |
-| rpi-research            | context7, microsoft-docs  | Documentation lookup when available                                |
-| RPI Agent               | Varies by activated skill | Coordinates the applicable RPI phase skills                        |
-| dt-figma-export         | figma                     | DT artifact export to FigJam                                       |
+| Agent or Skill     | MCP Servers Used          | Notes                                                              |
+|--------------------|---------------------------|--------------------------------------------------------------------|
+| backlog-plan       | ado or github             | Read-only backlog planning; server depends on the resolved tracker |
+| backlog-execute    | ado or github             | Backlog mutations; server depends on the resolved tracker          |
+| Functional Planner | ado, microsoft-docs       | PRD-to-work-item hierarchy planning                                |
+| rpi-research       | context7, microsoft-docs  | Documentation lookup when available                                |
+| RPI Agent          | Varies by activated skill | Coordinates the applicable RPI phase skills                        |
+| dt-figma-export    | figma                     | DT artifact export to FigJam                                       |
 
 Agents without MCP dependencies work without any MCP configuration.
 
@@ -103,7 +103,7 @@ Figma and FigJam board creation and reading.
 | URL           | `https://mcp.figma.com/mcp`       |
 | Auth          | Browser-based OAuth on first call |
 | Local install | None                              |
-| Used by       | `dt-figma-export` prompt          |
+| Used by       | `dt-figma-export` skill           |
 
 The Figma MCP server requires a Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan for sustained usage. Starter plans are limited to 6 tool calls per month. Authentication happens automatically via browser OAuth on first use.
 

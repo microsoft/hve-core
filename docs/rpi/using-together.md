@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-28
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -196,7 +196,7 @@ Dependencies:
 
 Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes. Code, commands, and symbols use backticks, and existing files are Markdown links relative to the plan so you can open them from the editor.
 
-`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required. `rpi-plan-critique` independently assesses the complete plan once.
+`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required. `rpi-plan-critique` independently assesses the complete plan by default; skip it with `critique=skip` or by asking.
 
 ### Implement
 
@@ -221,11 +221,11 @@ P01-T01 and P01-T02 have completion evidence; P01 is checked.
 
 Check the code and validation evidence, then continue to the next approved `Pxx` or `Pxx-Txx` item.
 
-If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; do not run it again. Ordinary local judgment and non-material updates remain in Implement.
+If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; a follow-up critique is optional. Ordinary local judgment and non-material updates remain in Implement.
 
 When a completed task creates something a later task needs, such as a new class or contract path the plan did not name, implementation adds a `Guidance:` block to that later task so the next agent does not have to rediscover it.
 
-1. When the in-scope implementation is ready for review, hand off the plan, critique disposition, and changes record:
+1. When the in-scope implementation is ready for review, hand off the plan, critique disposition, and changes record. Review is optional; skip it when you do not need an acceptance record:
 
 ```text
 Implementation complete!
