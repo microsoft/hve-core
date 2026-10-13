@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-13
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -128,7 +128,8 @@ The Security Planner supports two entry modes. Select the Security Planner agent
 
 ## Prerequisites
 
-* The Security Planner agent installed and enabled in your VS Code workspace.
+* VS Code with GitHub Copilot Chat enabled.
+* The [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`) installed, or the `hve-core` Copilot CLI plugin. Either one delivers the Security Planner agent along with the skills and agents it hands off to; there is no separate security extension. To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md).
 * The `rpi-research` skill available for standards lookups in Phase 3.
 * For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 
