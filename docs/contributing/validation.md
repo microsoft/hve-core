@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-05
+ms.date: 2026-10-08
 ms.topic: how-to
 keywords:
   - validation
@@ -41,6 +41,7 @@ plan, a log, or an error message is not an agent execution request.
 | Documentation static and component checks | `npm run validate:docs`      | Does not run the browser E2E lane                     |
 | Markdown tables check                     | `npm run lint:tables`        | Non-mutating table alignment check                    |
 | Markdown link check                       | `npm run lint:md-links`      | Non-mutating link check included in `validate:local`  |
+| TypeScript type check                     | `npm run lint:ts`            | Runs `tsc --noEmit` on root `scripts/**/*.mts` files  |
 | Markdown tables fix                       | `npm run format:tables`      | Explicitly mutates table formatting                   |
 | Markdown lint fix                         | `npm run lint:md:fix`        | Explicitly mutates Markdown where possible            |
 | Targeted check                            | `npm run <local-check>`      | Choose the check that owns the changed file           |
@@ -65,6 +66,67 @@ the reproducible bootstrap path.
 Installing dependencies for one root does not provision the other roots. The
 root commands that delegate to Docusaurus still need the Docusaurus package
 dependencies available.
+
+## Python skill test baselines on Windows and Linux
+
+The accessibility and GitLab skill suites have separate `uv.lock` files. Run
+the complete pytest command from each skill root, rather than interpreting a
+selected Windows-compatible subset as a full-suite pass. Each skill's default
+coverage gate remains active: 95% for accessibility and 80% for GitLab.
+
+On native Windows, start each block from the repository root. The accessibility
+suite also needs its skill-local Node package. Disable browser downloads for
+this dependency install; ordinary unit tests do not require provisioning
+Chrome or starting NVDA.
+
+```powershell
+Set-Location .github\skills\accessibility\accessibility
+uv sync --locked --dev
+Push-Location scripts\runtime_a11y
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'
+npm ci
+Pop-Location
+uv run pytest -q
+```
+
+```powershell
+Set-Location .github\skills\project-planning\gitlab
+uv sync --locked --dev
+uv run pytest -q
+```
+
+On Linux, start each block from the repository root. The same skill-local Node
+dependency is needed for the complete accessibility suite. If you use WSL,
+prefer a separate Linux checkout for these commands: running `uv sync` or
+`npm ci` against a checkout shared with native Windows can replace that
+checkout's Windows virtual environment or Node dependencies.
+
+```bash
+cd .github/skills/accessibility/accessibility
+uv sync --locked --dev
+(cd scripts/runtime_a11y && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci)
+uv run pytest -q
+```
+
+```bash
+cd .github/skills/project-planning/gitlab
+uv sync --locked --dev
+uv run pytest -q
+```
+
+Native Windows does not support the POSIX verification-artifact writer or
+GitLab OAuth profile persistence. Tests of those real filesystem operations
+skip on Windows but run on Linux; unmocked Windows tests assert that the
+`verify-intent` and `auth status` commands fail closed without creating a file.
+Portable intent and OAuth behavior remain covered on both platforms. Windows
+coverage reporting excludes only the unsupported POSIX persistence functions;
+Linux measures those functions at the same numerical coverage thresholds.
+This test-only reporting distinction does not enable either Windows backend.
+
+The hosted Python test workflow runs on Ubuntu. A green hosted check therefore
+demonstrates Linux behavior, not a native-Windows full-suite pass; run the
+Windows commands above for that evidence. Screen-reader execution and browser
+installation are separate prerequisites for their own validation lanes.
 
 ## Install behind a restricted network
 
@@ -239,6 +301,34 @@ not complete the suite. Locally, first determine whether the browser and its
 dependencies were provisioned before treating a launch failure as a product
 failure.
 
+## CodeQL threshold gate
+
+Every CodeQL analysis job runs `scripts/security/Test-CodeQLSarifThreshold.ps1`
+after it uploads results. The job fails when its SARIF contains a security
+result with `security-severity` of 4.0 or higher, or an error- or
+warning-level result from a rule without a security severity. Because the gate
+runs inside the CodeQL job, it fails `PR Validation Success` in pull requests
+and in merge-queue groups.
+
+A gate failure means the change, or the branch it merged with, carries a
+finding at that threshold. The job summary lists each result with its rule,
+severity, path, and line. Resolve it in code or configuration. Dismissing the
+alert does not clear the gate, and dismissal is not allowed; see the
+[code-scanning alert lifecycle](../security/code-scanning-alert-lifecycle.md)
+for the exception route.
+
+To reproduce a result locally, download the analysis SARIF from the Security
+tab or the code-scanning API, then run the gate against the file or a
+directory of SARIF files:
+
+```powershell
+npm run security:codeql-gate -- -SarifPath ./python.sarif
+```
+
+The gate reads `security/code-scanning-exceptions.yml` and needs the pinned
+`PowerShell-Yaml` module. It makes no network calls and does not change alert
+state.
+
 ## Rust unit-test network-isolation lane
 
 The Rust network-isolation trace is an operator-invoked CI-owned test lane. No
@@ -330,7 +420,6 @@ output in `logs/` while diagnosing a failure.
 | One suite            | `npm run ci:eval:run:skills`, `npm run ci:eval:run:agents`, or `npm run ci:eval:run:scripts` | Same model and service prerequisites as the selected suite                                                                                                                       |
 | Agent conformance    | `npm run ci:eval:run:conformance`                                                            | Vally and model access; runs the six planner-agent conformance suites in sequence and stops at the first failing suite                                                           |
 | Result comparison    | `npm run ci:eval:equivalence -- -Agent <slug> -Tier devloop`                                 | Vally and model access; runs the baseline-vs-customized comparison for one agent                                                                                                 |
-| Prompt behavior      | `npm run ci:eval:behavior-prompts`                                                           | Vally and model access; runs the prompt conformance spec                                                                                                                         |
 | Instruction behavior | `npm run ci:eval:behavior-instructions`                                                      | Vally and model access; runs the instruction conformance spec                                                                                                                    |
 | Skill behavior       | `npm run ci:eval:behavior-skills`                                                            | Vally and model access; runs the skill behavior conformance spec                                                                                                                 |
 | Agent matrix entry   | `npm run ci:eval:agent`                                                                      | Agent-matrix arguments supplied after `--`; model-backed when execution is selected                                                                                              |

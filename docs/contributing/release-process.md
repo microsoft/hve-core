@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-09-04
+ms.date: 2026-10-07
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -20,12 +20,39 @@ branch and creates no tag. Its merge runs release-please in PR-only mode. The
 later release-please managed PR owns version and changelog metadata. Its merge
 creates `prerelease-v<version>` for PreRelease or `v<version>` for Stable.
 
-`main` is not a release-please target. It is a ref-less development-tip channel and does not receive release metadata or changelog updates when a channel is published. An explicit marketplace refresh and plugin update are required for the ref-less main catalog, whose bytes have no release gate, SBOM, or attestation. Release branches, tags, and published GitHub releases own release state and history.
+`main` is not a release-please target and is not a release channel. The Copilot CLI plugin registration `microsoft/hve-core` tracks it directly. `main` does not receive release metadata or changelog updates when a channel is published, and an explicit marketplace refresh and plugin update are required to pick up new `main` content.
+Its dependencies are represented in GitHub's current dependency graph, but its bytes have no release gate, published artifact SBOM, or release attestation. Release branches, tags, and published GitHub releases own release state and history.
 
-The ref-less `microsoft/hve-core` registration follows `main`. Main bytes have
-no release gate, SBOM, or attestation. Release channels remain the reviewed
-path through moving branch registrations and exact `prerelease-v<version>` or
-`v<version>` refs: they are release-gated, SBOM-covered, and attested.
+The Dependency
+Review workflow keeps the GitHub dependency graph current for vulnerability and
+dependency review. That current-state inventory is not published release
+evidence. Main bytes have no release gate, published artifact SBOM, or release
+attestation. Release channels remain the reviewed VSIX path through exact
+`prerelease-v<version>` or `v<version>` tags: they are release-gated,
+SBOM-covered, and attested. The Copilot CLI plugin has no release-channel
+registrations.
+
+### Continuous Main SBOM
+
+Every successful push to `main` generates an unattested SPDX JSON SBOM and
+uploads it as `main-dependencies-<sha>` for 30 days. The archive contains
+`main-dependencies-<sha>.spdx.json`. The workflow run summary provides the
+authenticated direct download link and artifact digest.
+
+Download the SBOM from a recent
+[Dependency Review run on `main`](https://github.com/microsoft/hve-core/actions/workflows/dependency-review.yml?query=branch%3Amain).
+For a specific commit, use:
+
+```bash
+gh run list --workflow dependency-review.yml --branch main --commit <sha> \
+  --json databaseId,url
+gh run download <run-id> --name main-dependencies-<sha>
+```
+
+The direct artifact URL requires GitHub access and expires with the artifact.
+This SBOM is continuous inventory evidence, not an attested release SBOM.
+Release workflows regenerate and attest their own dependency and VSIX SBOMs
+from the immutable release tag.
 
 Workflow ownership is explicit:
 
@@ -38,6 +65,48 @@ Workflow ownership is explicit:
 * `release-stable-publish.yml` validates reviewed heads, synchronizes release
     preparation, and lets release-please create the Stable tag and draft.
 * `release-vsix-publish.yml` is the sole post-tag producer for both channels.
+
+### Release Branch Gating
+
+The `release-branches` ruleset protects `release/prerelease` and
+`release/stable` against deletion and force pushes, and requires a pull
+request with one approval, approval of the most recent push, and stale-review
+dismissal. It deliberately does not require the `PR Validation Success` status
+check. The release workflows are designed so that release-branch pull
+requests carry only reviewed content:
+
+* Promotion pull requests that the preparation workflows generate carry `main`
+  content, and every change to `main` merged through a reviewed pull request
+  that passed the required checks of its time. Since 2026-10-04 that is
+  `PR Validation Success`, re-run in the merge queue. The preparation
+  workflows stop when merging `main` or the selected tag conflicts outside
+  the release-owned files: `CHANGELOG.md`, the channel release-please config
+  and manifest, the version fields, `plugin.json`, and
+  `.github/plugin/marketplace.json`. The workflow restores or writes those
+  files itself.
+* Managed release pull requests that release-please opens carry release-please
+  and version synchronization output.
+* Every hop needs a human approval of the latest push, and auto-merge is never
+  enabled.
+* After each merge, `release-prerelease.yml` and `release-stable-publish.yml`
+  revalidate the merged head identity and release intent before release-please
+  can create a tag, and `release-vsix-publish.yml` proves the tag, source
+  commit, channel branch, and committed release state before packaging.
+
+These properties describe workflow-generated pull requests; they are not
+enforced on content. No ruleset restricts who can push to a
+`release-promotion--*` or `release-please--*` head branch, merge-time
+revalidation checks head identity and release intent rather than the merged
+content, and the Stable promotion check accepts a head that is ahead of the
+selected tag. Anyone with write access can add commits to a release head
+branch, and the change can reach a tagged, signed release with only the
+approval of someone other than the last pusher. Release-branch merges are not
+gated by `PR Validation`.
+
+`PR Validation` still runs on pull requests into both release branches.
+Reviewing its result, and confirming that the pull request contains only the
+expected promotion or release-please commits, is part of the review steps
+below; it is a review step, not an enforced gate.
 
 ## How Releases Work
 
@@ -141,6 +210,16 @@ fixed-name VSIX and dependency SBOM through digest-checked transfers. It never
 installs dependencies or packages the extension. No job both packages and
 signs.
 
+`release-vsix-publish.yml` sets `cache-mode: none`, so the post-tag producer
+and every workflow it calls, including the pinned signer, run without GitHub
+Actions cache access. Each release installs its dependencies fresh, and no
+cache written by another workflow can influence the signed VSIX.
+
+The signer revision is pinned, and Dependabot ignores it. Update the caller in
+`release-vsix-publish.yml`, the expected signer revisions in the release and
+Marketplace publish workflows, the extension tests, and the `--signer-digest`
+values in the SBOM verification guide together in one reviewed change.
+
 Release verification is cryptographic first and semantic second. GitHub CLI
 verification authenticates the exact subject digest, signer workflow and
 revision, source ref and revision, and hosted-runner constraint. Fail-closed
@@ -155,17 +234,19 @@ and does not rebuild the extension.
 
 ### Required Tag Governance
 
-Tag governance is a mandatory activation prerequisite for post-tag production,
-but it is not yet active or proven. The intended repository configuration has
-two rulesets:
+Tag governance is a mandatory activation prerequisite for post-tag production.
+Both tag rulesets were created on 2026-10-04 (Pacific time), are active,
+and target `refs/tags/v*` and `refs/tags/prerelease-v*`:
 
 * `release-tags-creation-by-release-app` restricts creation only and grants a
     bypass to the Release App
 * `release-tags-immutable` restricts updates, deletion, and force pushes with
     no bypass
 
-Do not interpret this intended configuration as evidence that either ruleset
-is installed.
+Ruleset bypass lists are visible only to repository administrators. The
+signer's authorization job re-reads both rulesets at release time and fails
+unless the creation ruleset grants exactly one bypass, to the Release App, and
+the immutability ruleset grants none.
 
 > [!IMPORTANT]
 > This release architecture does not establish SLSA Build Level 3. Future
@@ -413,7 +494,7 @@ Documentation-only releases may not require an extension publish.
 
 ## Historical Release Identities
 
-Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
+Because snapshot publication has stopped, tags and catalogs are supported only as historical records. Existing `hve-core-v<version>` and `plugins-v<version>` tags, releases, and catalogs are within that historical set. These tag names fall outside the `v*` and `prerelease-v*` tag rulesets, so no ruleset protects them. They are not active registration, publication, recovery, or compatibility namespaces. Current automation does not create, move, rewrite, delete, or migrate them.
 
 ## Version Quick Reference
 

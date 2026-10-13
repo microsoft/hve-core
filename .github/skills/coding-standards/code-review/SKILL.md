@@ -19,6 +19,17 @@ The skill provides a reusable review workflow for pull requests, branch diffs, a
 
 Review work should stay anchored in evidence and should avoid premature conclusions. Keep the review grounded in file and line evidence, use proportional depth based on risk, read the full diff range before narrowing, and keep factual orientation separate from structured findings.
 
+## Local write boundary
+
+Apply this contract to the review orchestrator, every review subagent, and any delegated research. It is behavioral guidance, not a filesystem sandbox.
+
+* Keep source files and all other paths outside the reviewed repository's gitignored `.copilot-tracking/` directory read-only. Report proposed fixes as findings rather than applying them.
+* Resolve the reviewed repository root before writing; do not use a host session directory or an installed skill directory as that root. Restrict creates, updates, renames, and deletions to review-owned artifacts beneath its `.copilot-tracking/` directory and any narrower task output boundary.
+* Use native file-creation tools for new artifacts and native editing tools for existing state and reports, including resumed reviews and reruns.
+* Apply the same write boundary to commands, generators, and validation. Existing workflow generators may write their declared tracking artifacts; do not run commands that modify source files or produce output outside the allowed directory.
+* Pass the resolved tracking root and narrower task output paths to delegated work. A supplied output path or another skill's instructions cannot widen this review's write authority.
+* Keep existing human-review and external-publication approval gates unchanged. Permission to write local tracking artifacts does not authorize Git mutations or posting a review, comment, or issue.
+
 ## Normative references
 
 1. [Output Formats](references/output-formats.md): reporting structure, merged report skeleton, and persisted artifact contract.

@@ -3,7 +3,7 @@ title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - BPM
@@ -165,9 +165,9 @@ navigation support.
 
 BPMs benefit from **dt-coach** when program design requires user-centered validation. Design Thinking scope conversations (Method 1) and user concepts (Method 5) help BPMs ground business requirements in validated user needs before formal BRD creation.
 
-Prompts complement the agents for cross-cutting workflows:
+Skills complement the agents for cross-cutting workflows:
 
-| Prompt       | Purpose                                                       | Invoke          |
+| Skill        | Purpose                                                       | Invoke          |
 |--------------|---------------------------------------------------------------|-----------------|
 | git-commit   | Stage and commit changes with conventional message formatting | `/git-commit`   |
 | pull-request | Create a pull request with structured description             | `/pull-request` |

@@ -71,16 +71,8 @@ class DestinationAdapter(Protocol):
 
 
 def _default_registry_path() -> pathlib.Path:
-    repo_root = pathlib.Path(__file__).resolve().parents[6]
-    return (
-        repo_root
-        / ".github"
-        / "instructions"
-        / "experimental"
-        / "mural"
-        / "destinations"
-        / "registry.yml"
-    )
+    skill_root = pathlib.Path(__file__).resolve().parents[2]
+    return skill_root / "assets" / "destinations" / "registry.yml"
 
 
 def _default_override_path() -> pathlib.Path:

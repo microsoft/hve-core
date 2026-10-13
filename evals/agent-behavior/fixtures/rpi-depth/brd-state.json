@@ -1,0 +1,13 @@
+{
+  "brdFile": "docs/project-planning/atlas-brd.md",
+  "lastAccessed": "2026-09-21T08:00:00Z",
+  "currentPhase": "Discover",
+  "disclaimerShownAt": "2026-09-21T08:00:00Z",
+  "phaseSkillsLoaded": ["brd-author#discover"],
+  "questionsAsked": [],
+  "answeredQuestions": {},
+  "referencesProcessed": [],
+  "nextActions": ["Resolve REG-01"],
+  "qualityChecks": [],
+  "syntheticExtension": {"preserve": true}
+}

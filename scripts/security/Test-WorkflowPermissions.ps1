@@ -31,6 +31,17 @@
     declare its own block still receives what it declares, because job-level
     permissions replace the workflow-level set rather than being capped by it.
 
+    Two breadth rules apply on top of the four-state model:
+
+      * A populated workflow-level block may grant nothing beyond 'contents: read'.
+        Any other scope, including read scopes such as 'security-events: read', is
+        an ExcessiveWorkflowPermissions violation; additional scopes belong on the
+        jobs that use them.
+      * The scalar values 'read-all' and 'write-all' are a BroadPermissionsScalar
+        violation at the workflow level and at every job, whatever the
+        workflow-level state. 'read-all' includes the 'security-events' and
+        'vulnerability-alerts' read scopes, which expose unpatched findings.
+
 .PARAMETER Path
     Directory containing workflow YAML files. Defaults to '.github/workflows'.
 
@@ -41,7 +52,7 @@
     Path for result output file. Defaults to 'logs/workflow-permissions-results.json'.
 
 .PARAMETER FailOnViolation
-    When set, exits with non-zero code if any workflow is missing permissions.
+    When set, exits with non-zero code if any violation is found.
 
 .PARAMETER ExcludePaths
     Comma-separated list of workflow filenames to exclude from scanning.
@@ -112,12 +123,14 @@ function Get-WorkflowPermissionModel {
     )
 
     $model = [pscustomobject]@{
-        FilePath      = $FilePath
-        FileName      = [System.IO.Path]::GetFileName($FilePath)
-        ParseFailed   = $false
-        ParseError    = ''
-        WorkflowState = 'Absent'
-        Jobs          = @()
+        FilePath                = $FilePath
+        FileName                = [System.IO.Path]::GetFileName($FilePath)
+        ParseFailed             = $false
+        ParseError              = ''
+        WorkflowState           = 'Absent'
+        WorkflowPermissions     = $null
+        WorkflowPermissionsLine = 0
+        Jobs                    = @()
     }
 
     $content = ''
@@ -151,6 +164,8 @@ function Get-WorkflowPermissionModel {
 
     if ($document.Contains('permissions')) {
         $model.WorkflowState = Get-PermissionsNodeState -Node $document['permissions']
+        $model.WorkflowPermissions = $document['permissions']
+        $model.WorkflowPermissionsLine = Get-TopLevelKeyLine -RawLines $rawLines -Key 'permissions'
     }
 
     if (-not $document.Contains('jobs')) {
@@ -171,6 +186,7 @@ function Get-WorkflowPermissionModel {
         $jobs += [pscustomobject]@{
             Name           = $jobName
             HasPermissions = $hasPermissions
+            Permissions    = if ($hasPermissions) { $jobNode['permissions'] } else { $null }
             Line           = Get-JobDeclarationLine -RawLines $rawLines -JobName $jobName
         }
     }
@@ -212,6 +228,116 @@ function Get-PermissionsNodeState {
     }
 
     return 'Populated'
+}
+
+function Get-BroadPermissionsScalar {
+    <#
+    .SYNOPSIS
+        Returns 'read-all' or 'write-all' when a permissions node is one of those scalars.
+
+    .DESCRIPTION
+        Returns an empty string for any other node, including mappings, null, and
+        unrecognized scalars. Matching is case-insensitive and ignores surrounding
+        whitespace.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [object]$Node
+    )
+
+    if ($Node -isnot [string]) {
+        return ''
+    }
+
+    $value = $Node.Trim().ToLowerInvariant()
+    if ($value -in @('read-all', 'write-all')) {
+        return $value
+    }
+
+    return ''
+}
+
+function Test-NarrowWorkflowPermission {
+    <#
+    .SYNOPSIS
+        Tests whether a workflow-level permissions node grants nothing beyond 'contents: read'.
+
+    .DESCRIPTION
+        Returns $true for a null value, an empty mapping, a blank scalar, or a mapping
+        whose entries are each 'none' or exactly 'contents: read'. Returns $false for
+        every other shape, including any read or write grant on another scope and any
+        non-blank scalar.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [object]$Node
+    )
+
+    if ($null -eq $Node) {
+        return $true
+    }
+
+    if ($Node -is [string]) {
+        return [string]::IsNullOrWhiteSpace($Node)
+    }
+
+    if ($Node -isnot [System.Collections.IDictionary]) {
+        return $false
+    }
+
+    foreach ($entry in $Node.GetEnumerator()) {
+        $scope = ([string]$entry.Key).Trim().ToLowerInvariant()
+        $level = ([string]$entry.Value).Trim().ToLowerInvariant()
+
+        if ($level -eq 'none') {
+            continue
+        }
+
+        if ($scope -eq 'contents' -and $level -eq 'read') {
+            continue
+        }
+
+        return $false
+    }
+
+    return $true
+}
+
+function Get-TopLevelKeyLine {
+    <#
+    .SYNOPSIS
+        Finds the 1-based line where a top-level key is declared, for reporting only.
+
+    .DESCRIPTION
+        Matches only unindented keys, optionally quoted. Returns 0 when the key cannot
+        be located.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
+        [string[]]$RawLines,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Key
+    )
+
+    $pattern = '^["'']?' + [regex]::Escape($Key) + '["'']?\s*:'
+    for ($i = 0; $i -lt $RawLines.Count; $i++) {
+        if ($RawLines[$i] -match $pattern) {
+            return $i + 1
+        }
+    }
+
+    return 0
 }
 
 function Get-JobDeclarationLine {
@@ -281,10 +407,17 @@ function Test-WorkflowPermissions {
 
     .DESCRIPTION
         Returns zero or more violations. A workflow with no permissions declaration at
-        all produces a single file-level MissingPermissions violation; its jobs are not
-        reported separately because the file-level remediation resolves them. A workflow
-        with a populated block produces one MissingJobPermissions violation per job that
-        omits its own block. A workflow with an empty block produces none.
+        all produces a file-level MissingPermissions violation; its jobs are not
+        reported as missing a block because the file-level remediation resolves them.
+        A workflow with a populated block produces one MissingJobPermissions violation
+        per job that omits its own block. A workflow with an empty block produces none
+        of those.
+
+        Independently of that classification, a populated workflow-level block that
+        grants more than 'contents: read' produces an ExcessiveWorkflowPermissions
+        violation, and each 'read-all' or 'write-all' scalar at the workflow level or
+        on a job produces a BroadPermissionsScalar violation. A workflow-level scalar
+        is reported only as BroadPermissionsScalar.
     #>
     [CmdletBinding(DefaultParameterSetName = 'Path')]
     [OutputType([DependencyViolation[]])]
@@ -319,15 +452,62 @@ function Test-WorkflowPermissions {
         $violation.Remediation = "Add a top-level 'permissions:' block to restrict default token scope and satisfy OpenSSF Scorecard Token-Permissions"
         $violation.Metadata = @{ FullPath = $Model.FilePath }
 
-        return @($violation)
+        $violations += $violation
     }
 
-    if ($Model.WorkflowState -eq 'Empty') {
-        return @()
+    if ($Model.WorkflowState -eq 'Populated') {
+        $workflowScalar = Get-BroadPermissionsScalar -Node $Model.WorkflowPermissions
+        if ($workflowScalar) {
+            $violation = [DependencyViolation]::new()
+            $violation.File = $Model.FilePath
+            $violation.Line = $Model.WorkflowPermissionsLine
+            $violation.Type = 'workflow-permissions'
+            $violation.Name = $fileName
+            $violation.ViolationType = 'BroadPermissionsScalar'
+            $violation.Severity = 'High'
+            $violation.Description = "Workflow '$fileName' sets top-level permissions to '$workflowScalar', which grants every scope"
+            $violation.Remediation = "Replace '$workflowScalar' with 'contents: read' or '{}' at the top level and grant additional scopes on the jobs that use them"
+            $violation.Metadata = @{ FullPath = $Model.FilePath; Value = $workflowScalar }
+
+            $violations += $violation
+        }
+        elseif (-not (Test-NarrowWorkflowPermission -Node $Model.WorkflowPermissions)) {
+            $violation = [DependencyViolation]::new()
+            $violation.File = $Model.FilePath
+            $violation.Line = $Model.WorkflowPermissionsLine
+            $violation.Type = 'workflow-permissions'
+            $violation.Name = $fileName
+            $violation.ViolationType = 'ExcessiveWorkflowPermissions'
+            $violation.Severity = 'Medium'
+            $violation.Description = "Workflow '$fileName' grants more than 'contents: read' at the top level"
+            $violation.Remediation = "Set the top-level block to 'contents: read' or '{}' and declare additional scopes only on the jobs that use them"
+            $violation.Metadata = @{ FullPath = $Model.FilePath }
+
+            $violations += $violation
+        }
     }
 
     foreach ($job in $Model.Jobs) {
         if ($job.HasPermissions) {
+            $jobScalar = Get-BroadPermissionsScalar -Node $job.Permissions
+            if ($jobScalar) {
+                $violation = [DependencyViolation]::new()
+                $violation.File = $Model.FilePath
+                $violation.Line = $job.Line
+                $violation.Type = 'workflow-job-permissions'
+                $violation.Name = $job.Name
+                $violation.ViolationType = 'BroadPermissionsScalar'
+                $violation.Severity = 'High'
+                $violation.Description = "Job '$($job.Name)' in workflow '$fileName' sets permissions to '$jobScalar', which grants every scope"
+                $violation.Remediation = "Replace '$jobScalar' with the specific scopes the job uses"
+                $violation.Metadata = @{ FullPath = $Model.FilePath; Job = $job.Name; Value = $jobScalar }
+
+                $violations += $violation
+            }
+            continue
+        }
+
+        if ($Model.WorkflowState -ne 'Populated') {
             continue
         }
 
@@ -361,8 +541,10 @@ function ConvertTo-PermissionsSarif {
     )
 
     $ruleIds = @{
-        MissingPermissions    = 'missing-permissions'
-        MissingJobPermissions = 'missing-job-permissions'
+        MissingPermissions           = 'missing-permissions'
+        MissingJobPermissions        = 'missing-job-permissions'
+        ExcessiveWorkflowPermissions = 'excessive-workflow-permissions'
+        BroadPermissionsScalar       = 'broad-permissions-scalar'
     }
 
     $rules = @(
@@ -379,6 +561,22 @@ function ConvertTo-PermissionsSarif {
             name                 = 'MissingJobPermissions'
             shortDescription     = @{ text = 'Workflow job missing its own permissions block' }
             fullDescription      = @{ text = 'A job with no permissions block inherits the workflow-level grant implicitly. Declaring permissions on each job keeps the granted scope explicit and auditable.' }
+            helpUri              = 'https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token'
+            defaultConfiguration = @{ level = 'error' }
+        }
+        @{
+            id                   = 'excessive-workflow-permissions'
+            name                 = 'ExcessiveWorkflowPermissions'
+            shortDescription     = @{ text = 'Workflow-level permissions grant more than contents: read' }
+            fullDescription      = @{ text = "The workflow-level permissions block is a default for every job. It should grant nothing beyond 'contents: read'; additional scopes belong on the jobs that use them." }
+            helpUri              = 'https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token'
+            defaultConfiguration = @{ level = 'error' }
+        }
+        @{
+            id                   = 'broad-permissions-scalar'
+            name                 = 'BroadPermissionsScalar'
+            shortDescription     = @{ text = 'Permissions set to read-all or write-all' }
+            fullDescription      = @{ text = "The 'read-all' and 'write-all' values grant every scope, including reads of security events and vulnerability alerts. Declare the specific scopes instead." }
             helpUri              = 'https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token'
             defaultConfiguration = @{ level = 'error' }
         }
@@ -489,7 +687,10 @@ function Invoke-WorkflowPermissionsCheck {
 
     $fileChecks = 0
     $filesWithPermissions = 0
+    $filesPassing = 0
     $fileViolationCount = 0
+    $excessiveViolationCount = 0
+    $broadViolationCount = 0
     $jobChecks = 0
     $jobsPassing = 0
     $jobsDeclaringOwnBlock = 0
@@ -527,9 +728,17 @@ function Invoke-WorkflowPermissionsCheck {
         $violations = @(Test-WorkflowPermissions -Model $model)
         $fileLevel = @($violations | Where-Object { $_.ViolationType -eq 'MissingPermissions' })
         $jobLevel = @($violations | Where-Object { $_.ViolationType -eq 'MissingJobPermissions' })
+        $excessive = @($violations | Where-Object { $_.ViolationType -eq 'ExcessiveWorkflowPermissions' })
+        $broad = @($violations | Where-Object { $_.ViolationType -eq 'BroadPermissionsScalar' })
+        $workflowBroad = @($broad | Where-Object { $_.Type -eq 'workflow-permissions' })
+        $jobBroad = @($broad | Where-Object { $_.Type -eq 'workflow-job-permissions' })
 
         if ($fileLevel.Count -eq 0) {
             $filesWithPermissions++
+        }
+
+        if (($fileLevel.Count + $excessive.Count + $workflowBroad.Count) -eq 0) {
+            $filesPassing++
         }
 
         # A workflow with no permissions declaration at all is reported once at the file
@@ -538,7 +747,7 @@ function Invoke-WorkflowPermissionsCheck {
         if ($model.WorkflowState -ne 'Absent') {
             $modelJobCount = @($model.Jobs).Count
             $jobChecks += $modelJobCount
-            $jobsPassing += ($modelJobCount - $jobLevel.Count)
+            $jobsPassing += ($modelJobCount - $jobLevel.Count - $jobBroad.Count)
             # Counted separately from passing jobs: under an empty workflow-level block a
             # job passes by inheriting nothing, which is not the same as declaring a block.
             $jobsDeclaringOwnBlock += @($model.Jobs | Where-Object { $_.HasPermissions }).Count
@@ -546,6 +755,8 @@ function Invoke-WorkflowPermissionsCheck {
 
         $fileViolationCount += $fileLevel.Count
         $jobViolationCount += $jobLevel.Count
+        $excessiveViolationCount += $excessive.Count
+        $broadViolationCount += $broad.Count
 
         foreach ($violation in $violations) {
             # Normalize to workspace-relative path
@@ -562,6 +773,15 @@ function Invoke-WorkflowPermissionsCheck {
             Write-SecurityLog "  FAIL: $($file.Name) - missing top-level permissions block" -Level Error -CIAnnotation
         }
 
+        if ($excessive.Count -gt 0) {
+            Write-SecurityLog "  FAIL: $($file.Name) - top-level permissions grant more than 'contents: read'" -Level Error -CIAnnotation
+        }
+
+        if ($broad.Count -gt 0) {
+            $broadNames = ($broad | ForEach-Object { if ($_.Type -eq 'workflow-job-permissions') { "job $($_.Name)" } else { 'workflow' } }) -join ', '
+            Write-SecurityLog "  FAIL: $($file.Name) - 'read-all' or 'write-all' permissions: $broadNames" -Level Error -CIAnnotation
+        }
+
         if ($jobLevel.Count -gt 0) {
             $jobNames = ($jobLevel | ForEach-Object { $_.Name }) -join ', '
             Write-SecurityLog "  FAIL: $($file.Name) - $($jobLevel.Count) job(s) missing their own permissions block: $jobNames" -Level Error -CIAnnotation
@@ -573,12 +793,15 @@ function Invoke-WorkflowPermissionsCheck {
     }
 
     $report.TotalDependencies = $fileChecks + $jobChecks
-    $report.PinnedDependencies = $filesWithPermissions + $jobsPassing
+    $report.PinnedDependencies = $filesPassing + $jobsPassing
     $report.CalculateScore()
 
     $report.Metadata['FileChecks'] = $fileChecks
     $report.Metadata['FilesWithPermissions'] = $filesWithPermissions
+    $report.Metadata['FilesPassing'] = $filesPassing
     $report.Metadata['FileLevelViolations'] = $fileViolationCount
+    $report.Metadata['ExcessiveWorkflowPermissionViolations'] = $excessiveViolationCount
+    $report.Metadata['BroadPermissionsScalarViolations'] = $broadViolationCount
     $report.Metadata['JobChecks'] = $jobChecks
     $report.Metadata['JobsPassing'] = $jobsPassing
     $report.Metadata['JobsDeclaringOwnBlock'] = $jobsDeclaringOwnBlock
@@ -586,8 +809,10 @@ function Invoke-WorkflowPermissionsCheck {
     $report.Metadata['UnparsedFiles'] = $unparsedFiles
 
     Write-SecurityLog "Workflow-level: $filesWithPermissions/$fileChecks declare permissions ($fileViolationCount violation(s))" -Level Info
+    Write-SecurityLog "Workflow-level: $filesPassing/$fileChecks pass the top-level checks ($excessiveViolationCount grant(s) beyond 'contents: read')" -Level Info
     Write-SecurityLog "Job-level: $jobsPassing/$jobChecks pass the job-level check ($jobViolationCount violation(s))" -Level Info
     Write-SecurityLog "Job-level: $jobsDeclaringOwnBlock/$jobChecks declare their own permissions block; the remainder pass by inheriting an empty workflow-level block" -Level Info
+    Write-SecurityLog "Broad 'read-all' or 'write-all' values: $broadViolationCount" -Level Info
     if ($unparsedFiles -gt 0) {
         Write-SecurityLog "Unparsed workflows: $unparsedFiles (not evaluated, not counted as compliant)" -Level Warning
     }
@@ -636,6 +861,8 @@ function Invoke-WorkflowPermissionsCheck {
         "| Unparsed (not evaluated) | $unparsedFiles |"
         "| Workflows With Top-Level Permissions | $filesWithPermissions |"
         "| Workflows Missing Top-Level Permissions | $fileViolationCount |"
+        "| Workflows Granting More Than contents: read At Top Level | $excessiveViolationCount |"
+        "| read-all Or write-all Values | $broadViolationCount |"
         "| Jobs Checked | $jobChecks |"
         "| Jobs Passing Job-Level Check | $jobsPassing |"
         "| Jobs Declaring Their Own Block | $jobsDeclaringOwnBlock |"
@@ -652,7 +879,7 @@ function Invoke-WorkflowPermissionsCheck {
             "|----------|-------|-------|"
         )
         foreach ($v in $report.Violations) {
-            $scope = if ($v.ViolationType -eq 'MissingJobPermissions') { "job ``$($v.Name)``" } else { 'workflow' }
+            $scope = if ($v.Type -eq 'workflow-job-permissions') { "job ``$($v.Name)``" } else { 'workflow' }
             $summaryLines += "| ``$($v.File)`` | $scope | $($v.Description) |"
         }
     }

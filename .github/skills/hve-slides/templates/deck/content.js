@@ -37,7 +37,7 @@
       kind: 'implementation', phase: 'Result', state: 'Illustrative result',
       title: 'Read the change and its evidence', context: 'Scripted implementation',
       tasks: ['Add a reset control', 'Check the visible count'],
-      changes: '## Change\nReset clears this example.\n\n## Check\nThe displayed count returns to 0.',
+      changes: '## Change\nReset clears this example.\n\n## Check\nThe count returns to 0.',
       file: 'example.js',
       diff: [
         { type: 'context', text: 'function reset() {' },

@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-22
+ms.date: 2026-10-12
 ms.topic: how-to
 keywords:
   - evals
@@ -118,6 +118,45 @@ evidence fails closed.
 artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
 or decide whether evidence is complete.
 
+The per-artifact table includes `Input tokens / trial` and `Cache-read tokens / trial`
+columns. Each value is the artifact's summed token count divided by the trials that
+reported usage, taken from Vally's native `trajectory.metrics.tokenUsage` for the
+selected attempt of each spec. The columns are advisory and never gate a pull request.
+Model-backed trials vary from run to run, so compare a value against several runs
+rather than one. A dash means no trial reported usable token counts, or the summary
+predates token reporting.
+
+The token columns never fail a pull request. Cold-start growth is enforced statically
+instead: `npm run lint:cold-start` and its Pester suite sum each planning-chain agent's
+file, recursive `#file:` imports, and always-on instructions against the budgets in
+`scripts/linting/agent-cold-start-budgets.json`, and fail when a set exceeds its ceiling.
+This replaces the retired activation harness, which gated only the ADR Creator.
+
+## Advisory Model Lanes
+
+The `equivalence-advisory` job reports how additional models behave on the
+baseline-equivalence suite without gating the pull request. It currently runs Microsoft
+`mai-code-1.1-flash`.
+
+* When it runs: under the same conditions as the gating baseline model lanes, and in
+  parallel with them.
+* What it runs: the equivalence driver in the advisory `devloop` tier with
+  `-Model mai-code-1.1-flash`, `-NoBaselineCache`, and the shared `compare-shard-count`.
+  The model runs at its default reasoning and context settings because GitHub does not
+  list it among models with configurable reasoning or the extended context window.
+* Why it never gates: the job is `continue-on-error`, no fan-in lists it in `needs`, and
+  its artifact name matches no fan-in download pattern. MAI models also receive new
+  checkpoints over time, so their behavior can change independently of this repository.
+* Where results appear: the job's step summary lists the verdict, gate, and key counts,
+  and the `advisory-equivalence-mai` artifact holds only the summary JSON.
+
+To add a model, add a matrix entry to `equivalence-advisory` and confirm the model is listed
+in `scripts/linting/model-catalog.json`; the workflow contract tests reject an uncatalogued
+model. If a parallel advisory lane causes judge errors in the gating lanes, add
+`equivalence-execute` to the advisory job's `needs` so it runs after them. To stop the advisory
+lanes without a workflow edit, set the reusable workflow input `advisory-equivalence` to
+`false`; see Rollback Controls.
+
 ## Trusted Progress
 
 Vally stdout and stderr can contain prompts, responses, trajectories, arbitrary errors,
@@ -128,13 +167,15 @@ While a phase is active, logs expose only these bounded fields:
 
 * Event: `phase-start`, `heartbeat`, or `phase-complete`
 * Phase: one declared eval phase such as `ordinary-eval`, `baseline-eval`, or `compare`
-* Sanitized worker identifier
+* Sanitized worker identifier. A baseline compare shard reports `<model>:compare-NN`.
 * Attempt number
 * Elapsed seconds
 * Fixed exit category
 
 The default heartbeat interval is 60 seconds. Aggregate summaries carry diagnostic
-`phaseTimings`; timing does not affect evaluation verdicts.
+`phaseTimings`, with one compare entry per shard attempt; timing does not affect
+evaluation verdicts. A compare shard worker that fails before a process result exists
+records the fixed category `worker-error`.
 
 ## Rollback Controls
 
@@ -146,6 +187,14 @@ The reusable workflow inputs change scheduling without changing evidence semanti
 | `instruction-shard-count` | `2`          | `1`            | Uses the same planner and runner with one instruction shard |
 | `skill-shard-count`       | `2`          | `1`            | Uses the same planner and runner with one skill shard       |
 | `baseline-max-parallel`   | `2`          | `1`            | Serializes the same isolated baseline model producers       |
+| `compare-shard-count`     | `7`          | `1`            | Runs one serial `vally compare` per baseline model producer |
+| `advisory-equivalence`    | `true`       | `false`        | Skips the non-gating advisory model lanes                   |
+
+Each baseline model producer splits its comparison into `compare-shard-count`
+stimulus-disjoint `vally compare` shards that run concurrently and are merged into one
+comparison file before tallying. A shard that exits nonzero without any comparison
+record is retried once. The rollback value keeps that retry and runs a single compare
+over the run directories.
 
 The single-process fixed-pair baseline driver remains a deterministic aggregation
 oracle for local tests. It is not a second production rollback path.
@@ -200,17 +249,44 @@ change with scheduling.
 
 GitHub Actions does not expose repository secrets to workflows triggered by pull requests from forks. Without `COPILOT_GITHUB_TOKEN`, the `eval-execute` job cannot succeed.
 
-The pipeline clean-skips eval execution for fork PRs rather than failing the check:
+The credential boundary uses an allowlist at two layers. The `pr-validation.yml` caller passes the token only for manual dispatch and same-repository pull requests, and passes an empty value for merge groups, fork pull requests, and every other event:
+
+```yaml
+secrets:
+  copilot-github-token: ${{ (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) && secrets.COPILOT_GITHUB_TOKEN || '' }}
+```
+
+Each job in `eval-validation.yml` that uses the token, or needs a job that does, repeats the same-repository check in its condition, so the pipeline clean-skips eval execution for fork PRs rather than failing the check:
 
 ```yaml
 jobs:
   eval-execute:
-    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
+    if: >-
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch')
 ```
+
+Compare the head repository's `full_name` with `github.repository` instead of using a `fork == false` check. GitHub expressions coerce both `null` and `false` to `0` before comparing, so a `fork == false` check passes when the head repository is missing, for example after a fork is deleted. The `full_name` comparison fails closed in that case.
+
+The `Eval credential boundary` tests in `scripts/tests/security/Test-MergeQueueWorkflowContract.Tests.ps1` evaluate both layers for trusted and untrusted events and fail when a token job lacks the check.
 
 The `eval-execute` job is also skipped for non-eval-relevant PRs (those that change only documentation or other non-AI-artifact paths) through the `eval-relevant` output gate, independent of the fork policy.
 
 The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require no secrets. Structural problems with eval specs (missing coverage, schema violations, profanity in stimulus text) surface immediately. Eval execution itself runs only after a maintainer merges the fork branch into a trusted topic branch on the upstream repository.
+
+## Merge Groups and Full-Mode Validation
+
+The eval lane receives one change-range decision from `pr-validation.yml`. In range mode, it validates the exact resolved commits. Full mode occurs when the resolver cannot prove a range, so the lane validates everything it can without the token, and fails instead of skipping the steps that need a proven range.
+
+| Run                             | Content moderation                             | Agent-eval selection and execution                                                        |
+|---------------------------------|------------------------------------------------|-------------------------------------------------------------------------------------------|
+| Pull request or manual dispatch | Changed artifacts plus every eval spec         | Runs for eligible changes; dispatch resolves against `main` and needs commits ahead of it |
+| Merge group                     | Changed artifacts plus every eval spec         | Skipped; merge groups never receive `COPILOT_GITHUB_TOKEN`                                |
+| Any run in full mode            | Every tracked AI artifact plus every eval spec | Fails for eligible pull requests and manual dispatch; merge groups and forks still skip   |
+
+Merge groups run relevance, lint, and content moderation unprivileged. A full-mode failure in agent-eval selection means the change-range job could not verify a non-empty range. A manual dispatch from the `main` tip, or from a branch with no commits ahead of `main`, has no range to verify and always takes this path; dispatch from a branch with changes instead. Otherwise, investigate the change-range job before rerunning.
 
 ## Published Artifacts and the Transcript Boundary
 
@@ -224,6 +300,8 @@ Eval artifacts therefore publish aggregate results only. These paths are deliber
 | `logs/vally-compare-*.log`       | Raw judge-run output                               |
 
 What is still published covers the summaries that drive the gate and the per-artifact debugging payloads: `logs/eval-summary.json`, `logs/eval-results-*.json`, `logs/baseline-equivalence-*.json`, and the changed-artifact and stimulus-presence manifests. None of these embed model output.
+
+To narrow a failed program grader without a transcript, read its bounded `failureCodes` under `perSpec[].diagnostics.attempts[].trials[].graders[]` in `eval-summary.json`. Only codes from a fixed per-grader vocabulary are published; the [agent-behavior suite guide](https://github.com/microsoft/hve-core/blob/main/evals/agent-behavior/README.md#program-grader-failure-codes) lists the outcome grader's field codes.
 
 The cost is that inspecting what an agent actually said during a failed run means re-running it rather than downloading the artifact. Do not re-add the withheld paths to make debugging easier.
 
@@ -239,7 +317,8 @@ Steps to add coverage:
 4. Run the presence check locally to confirm the artifact is covered:
 
    ```pwsh
-   pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
+   pwsh scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/eval-change-set.json
+   pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
    pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json
    ```
 
@@ -247,8 +326,7 @@ Steps to add coverage:
 
    ```pwsh
    pwsh scripts/evals/Get-ChangedSpecStimulus.ps1 `
-     -BaseRef origin/main `
-     -HeadRef HEAD `
+     -ChangeSetPath logs/eval-change-set.json `
      -OutFile logs/changed-spec-stimuli.json
    pwsh scripts/evals/Test-CopilotToken.ps1 -SmokeTest
    pwsh scripts/evals/Invoke-VallyEvals.ps1 `
@@ -294,7 +372,8 @@ The `-FailOnSpecError` switch promotes recoverable YAML parse failures to a hard
 Run the linter locally before pushing artifact changes:
 
 ```pwsh
-pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
+pwsh scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/eval-change-set.json
+pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
 pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json -FailOnSpecError
 ```
 
@@ -371,7 +450,7 @@ Pass `-FailOnAlex` to promote only emitted equality findings to errors. It does 
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
 ```
 
-Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mjs` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
+Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mts` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
 
 `Test-EvalSpecText.ps1` exit codes:
 

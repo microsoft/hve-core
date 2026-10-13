@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -15,7 +15,7 @@ keywords:
 estimated_reading_time: 8
 ---
 
-Forking HVE Core lets your enterprise customize agents, prompts, instructions, and skills for your organization while staying connected to upstream improvements. Multi-root workspaces bring that fork into any project workspace, giving teams a portable configuration that works across Local VS Code, Devcontainers, and Codespaces.
+Forking HVE Core lets your enterprise customize agents, instructions, and skills for your organization while staying connected to upstream improvements. Multi-root workspaces bring that fork into any project workspace, giving teams a portable configuration that works across Local VS Code, Devcontainers, and Codespaces.
 
 ## When to Use This Method
 
@@ -23,7 +23,7 @@ Forking HVE Core lets your enterprise customize agents, prompts, instructions, a
 
 * Your enterprise maintains a fork of HVE Core with org-specific customizations
 * You need a single configuration that works across Local VS Code, Devcontainers, and Codespaces
-* Teams share a common set of customized agents, prompts, and instructions
+* Teams share a common set of customized agents, skills, and instructions
 * You want to pull upstream improvements on your own schedule
 
 ❌ **Consider alternatives when:**
@@ -112,14 +112,6 @@ Use the absolute clone path:
       "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
       "/workspaces/hve-core/.github/agents/security": true,
       "My Project/.github/agents": true
-    },
-    "chat.promptFilesLocations": {
-      "/workspaces/hve-core/.github/prompts/ado": true,
-      "/workspaces/hve-core/.github/prompts/design-thinking": true,
-      "/workspaces/hve-core/.github/prompts/github": true,
-      "/workspaces/hve-core/.github/prompts/hve-core": true,
-      "/workspaces/hve-core/.github/prompts/security": true,
-      "My Project/.github/prompts": true
     },
     "chat.instructionsFilesLocations": {
       "/workspaces/hve-core/.github/instructions/ado": true,
@@ -250,7 +242,7 @@ Folder display names (`"name"` field) label roots in the Explorer sidebar but do
 
 ## Keeping Your Fork Updated
 
-Sync your fork with upstream `microsoft/hve-core` to pick up new agents, prompts, and improvements. Pull from your fork into workspaces on a schedule that suits your team.
+Sync your fork with upstream `microsoft/hve-core` to pick up new agents, skills, and improvements. Pull from your fork into workspaces on a schedule that suits your team.
 
 ### Syncing Upstream Changes into Your Fork
 

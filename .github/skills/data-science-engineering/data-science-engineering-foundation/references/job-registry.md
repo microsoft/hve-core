@@ -21,10 +21,33 @@ it does not duplicate the methods owned by a skill.
 | `feasibility`     | `bounded`    | `feasibility`: evidence-led feasibility studies with durable traceability                                            | None                                                                                                   | Caller-approved feasibility study                               |
 | `pipeline`        | `episodic`   | `dataops`: tier behavior, pipeline invariants, validation, tests, and drift                                          | None                                                                                                   | Transformation, validation, or pipeline code                    |
 | `analysis`        | `episodic`   | `analysis-authoring`: EDA notebook and analytical dashboard authoring and validation                                 | `data-catalog` for column semantics; `dataops` for derived-dataset persistence                         | Notebook, dashboard, or analysis deliverable                    |
-| `evaluation`      | `episodic`   | `evaluation-design`: AI-system evaluation dataset design, metrics, and tooling                                       | None                                                                                                   | Evaluation dataset with curation, metric, and tooling documents |
+| `evaluation`      | `episodic`   | `evaluation-design`: AI-system evaluation dataset design, metrics, and tooling                                       | `rpi-research` only for a demonstrated live evaluator-catalog fact gap                                 | Evaluation dataset with curation, metric, and tooling documents |
 | `experiment`      | `episodic`   | `experiment-design`: experiment selection, hypotheses, vetting, scope, and evaluation                                | `ml-experimentation`: ML reproducibility, tracking, evaluation, abstractions, and production readiness | Hypothesis, experiment assets, and result disposition           |
 | `testing`         | `episodic`   | `dataops`: DataOps and DS/MLOps test techniques                                                                      | `analysis-authoring` for dashboard validation technique                                                | Test code and assertions                                        |
 | `observability`   | `episodic`   | `dataops`: data/model signals and validation-versus-drift guidance                                                   | None                                                                                                   | Instrumentation code and signal recommendations                 |
+
+Optional supporting routes in the registry are job-specific skill support and do not limit the separate segment-level Research eligibility defined by the RPI depth matrix.
+
+## RPI depth matrix
+
+RPI is a user-directed depth route inside the confirmed job, not a job or lifecycle. Keep simple or adequately evidenced work on the primary route. No RPI segment auto-activates. Before each eligible segment, state the demonstrated need, purpose, expected artifact, expected interaction cost, limits, and direct path available if the user skips it.
+
+| Job               | Research posture                                                                                                         | Execution-loop eligibility                                 | RPI does not own                                                                       |
+|-------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `catalog`         | None by default                                                                                                          | None by default                                            | Catalog identity, semantics, enrichment, or continuous lifecycle                       |
+| `model-diagram`   | None by default                                                                                                          | None by default                                            | Declared relationships, diagram format, or episodic completion                         |
+| `problem-framing` | `analysis` mode for a named current-fact or prior-art gap; preserve alternatives and unknowns                            | None by default                                            | Selecting, ranking, or scoring a problem class                                         |
+| `feasibility`     | Bounded current-fact evidence that the feasibility study cannot establish locally                                        | None by default                                            | Feasibility verdict, study lifecycle, or recommendation authority                      |
+| `pipeline`        | Current platform, compatibility, standard, or prior-art facts identified by `dataops`                                    | Full Plan, Implement, and Review for substantial delivery  | Tier semantics, pipeline invariants, validation placement, or scan authority           |
+| `analysis`        | Current library, platform, accessibility, or analytical-method facts identified by `analysis-authoring`                  | Full Plan, Implement, and Review for substantial delivery  | Analytical intent, visualization choice, dashboard validation, or scan authority       |
+| `evaluation`      | Current evaluator names, availability, preview state, compatibility, and prerequisites identified by `evaluation-design` | Full Plan, Implement, and Review for substantial delivery  | Metric selection, dataset design, tooling fit, or scan authority                       |
+| `experiment`      | Inherit the Experiment Designer convergence Research contract                                                            | Inherit the Experiment Designer post-design execution loop | Hypotheses, criteria, experiment outcome, or partner commitments                       |
+| `testing`         | Current tool, framework, compatibility, or prior-art facts identified by the owning skill                                | Full Plan, Implement, and Review for substantial delivery  | Test intent, assertion authority, or scan authority                                    |
+| `observability`   | Current platform, telemetry, compatibility, or prior-art facts identified by the owning skill                            | Full Plan, Implement, and Review for substantial delivery  | Signal-selection intent, telemetry vocabulary, drift interpretation, or scan authority |
+
+Substantial delivery means multi-step code or artifact production whose dependencies, validation, or interruption risk make direct episodic execution unreliable. The owning skill first accepts the domain design. RPI then plans and executes delivery and reviews conformance without changing the job, class, owning skill, coach state authority, output root, or durable-write gate.
+
+`RPI Researcher` may run only as an internal helper to an active `rpi-research` phase for one bounded source-gathering lane. Its return is not an independent job, invocation, state record, evidence authority, or recommendation. The active Research phase verifies selected sources and exclusively owns canonical evidence IDs, findings, recommendations, and the primary artifact.
 
 The cross-cutting concerns below are evaluated in addition to the routes in this
 table. They are not listed per job, because they apply by trigger rather than by
@@ -121,6 +144,10 @@ A supporting route contributes within its own authority. The coach retains
 session identity, job selection, transition decisions, state mutation, pause and
 resume, durable-write gates, and completion choices. Loading a supporting skill
 never changes the active job without user confirmation.
+
+The RPI depth matrix is the only job-specific Research and execution-routing
+authority. Every route remains subordinate to the active job's primary skill,
+lifecycle class, coach state, transition protocol, and durable-write gate.
 
 ## Provenance
 

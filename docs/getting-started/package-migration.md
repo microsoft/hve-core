@@ -1,9 +1,9 @@
 ---
 title: Migrate to the HVE Core Identity
-description: Move retired package installations to the single HVE Core plugin or extension
+description: Move retired package installations to the single HVE Core plugin or extension and find replacements for retired slash commands
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - migration
@@ -12,12 +12,16 @@ keywords:
   - vscode extension
   - selective clone
   - retired packages
-estimated_reading_time: 8
+  - retired commands
+  - prompt files
+estimated_reading_time: 10
 ---
 
 HVE Core now publishes one `hve-core` plugin and one `ise-hve-essentials.hve-core` extension. Root `plugin.json` owns the complete distributable membership, and `.github/plugin/marketplace.json` contains one relative locator to the repository root.
 
 Choose the migration path for your host. Neither GitHub Copilot nor VS Code provides a universal automatic migration between different published identities.
+
+HVE Core also retired its prompt files. If a slash command you relied on no longer resolves, [Retired Prompt Commands](#retired-prompt-commands) names its replacement.
 
 ## Replace Retired Identities
 
@@ -27,27 +31,21 @@ Remove any retired domain, utility, or `hve-core-all` plugin registration before
 
 Changing a Copilot marketplace registration is a configuration operation. It does not delete files from your repository or modify a cloned HVE Core installation.
 
-Use the ref-less development tip:
+Register the repository as a marketplace. The registration tracks `main`:
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-Use a moving reviewed channel:
+There are no PreRelease or Stable plugin channels. The repository does not publish `release/prerelease` or `release/stable` branches, so a registration such as `microsoft/hve-core#release/stable` no longer resolves, and a tag ref such as `microsoft/hve-core#hve-core-v<version>` stays fixed at that tag. To follow `main`, remove the earlier registration and register again:
 
 ```bash
-copilot plugin marketplace add microsoft/hve-core#release/prerelease
-copilot plugin marketplace add microsoft/hve-core#release/stable
+copilot plugin marketplace remove hve-core --force
+copilot plugin marketplace add microsoft/hve-core
+copilot plugin install hve-core@hve-core
 ```
 
-Use an immutable channel tag:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
-copilot plugin marketplace add microsoft/hve-core#v<version>
-```
-
-The ref-less registration resolves current `main`. A release-branch registration resolves the current reviewed branch. An exact-tag registration fixes the catalog, manifest, and source tree together.
+The `--force` option also uninstalls plugins installed from that marketplace.
 
 Refresh the marketplace before requesting an installed-plugin update:
 
@@ -55,9 +53,6 @@ Refresh the marketplace before requesting an installed-plugin update:
 copilot plugin marketplace update hve-core
 copilot plugin update hve-core@hve-core
 ```
-
-Switching registrations can require removing and re-adding the marketplace.
-Do not depend on a specific outcome for duplicate same-name registrations.
 
 ## VS Code Extension Selection
 
@@ -144,13 +139,6 @@ Each replacement resolves your tracker from the workspace, so you no longer choo
 | `/jira-prd-to-wit` | The `Functional Planner` agent                   |
 | `/jira-setup`      | The Credential Setup section of the `jira` skill |
 
-### Relocated, not retired
-
-| Command                    | Now ships in |
-|----------------------------|--------------|
-| `/ado-create-pull-request` | `hve-core`   |
-| `/ado-get-build-info`      | `hve-core`   |
-
 ### Relocated skills within HVE Core
 
 | Skill              | Source capability area |
@@ -181,6 +169,85 @@ Runtime tracker resolution removed restrictions the platform-specific commands c
 
 Autonomy tiers, content sanitization, dry-run preview, planning file locations and formats, and MCP server configuration are unchanged.
 
+## Retired Prompt Commands
+
+HVE Core no longer ships prompt files. Each workflow a prompt started now lives in the agent, skill, or instruction that owns it, so the behavior has one source instead of a prompt copy that can drift. When a replacement is an agent, select it from the agent picker in VS Code or with `/agent` in Copilot CLI, then make the request shown.
+
+### Commands that kept their names
+
+These commands became skills with the same name, so the slash command still works:
+
+* `/accessibility-coverage-matrix`
+* `/cspell-config`
+* `/dt-figma-export`
+* `/engagement-report-council-critique`
+* `/git-commit`
+* `/git-merge`, which now asks for the branch instead of defaulting to `origin/dev`
+* `/git-setup`
+* `/incident-response`
+* `/risk-register`
+* `/synth-data-generate`
+
+> [!NOTE]
+> Every skill in this list except `/dt-figma-export` sets `disable-model-invocation: true`, so agents do not start it for you and Copilot CLI does not run it yet. Use these skills from VS Code until the CLI supports them. [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode) tracks the limitation.
+
+### Security and supply chain
+
+| Retired command            | Replacement                                                                                                                                                   |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/security-review`         | The `Security Reviewer` agent, which defaults to `audit` mode and accepts the same `mode`, `scope`, `targetSkill`, and `plan` inputs                          |
+| `/security-review-llm`     | The `Security Reviewer` agent; ask for an LLM and agentic review, which sets `skills=owasp-llm,owasp-agentic`                                                 |
+| `/security-review-web`     | The `Security Reviewer` agent; ask for a web application review, which sets `targetSkill=owasp-top-10`                                                        |
+| `/security-review-sbd`     | The `Security Reviewer` agent; ask for a Secure by Design review, which sets `targetSkill=secure-by-design`                                                   |
+| `/security-capture`        | The `Security Planner` agent; start without a PRD or BRD to use `capture` mode                                                                                |
+| `/security-plan-from-prd`  | The `Security Planner` agent; ask to start from your PRD or BRD to use `from-prd` mode                                                                        |
+| `/sssc-capture`            | The `SSSC Planner` agent; start without a PRD, BRD, or security plan to use `capture` mode                                                                    |
+| `/sssc-from-prd`           | The `SSSC Planner` agent; ask to start from your PRD to use `from-prd` mode                                                                                   |
+| `/sssc-from-brd`           | The `SSSC Planner` agent; ask to start from your BRD to use `from-brd` mode                                                                                   |
+| `/sssc-from-security-plan` | The `SSSC Planner` agent; ask to extend a completed security plan to use `from-security-plan` mode, or use the SSSC Planner handoff in the `Security Planner` |
+| `/vex-implement`           | The `SSSC Planner` agent; ask to plan VEX for your project. It plans the stand-up as backlog work rather than changing the project                            |
+| `/vex-scan`                | The `SSSC Reviewer` agent; ask for a VEX scan, optionally with `scope` and `product`                                                                          |
+| `/vex-triage`              | The `SSSC Reviewer` agent; ask to triage an existing Trivy, OSV-Scanner, or SPDX report, and attach it or pass `report=<path>`                                |
+
+### Responsible AI
+
+| Retired command                | Replacement                                                                                                                                                     |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/rai-capture`                 | The `RAI Planner` agent; start without a PRD or security plan to use `capture` mode                                                                             |
+| `/rai-plan-from-prd`           | The `RAI Planner` agent; ask to start from your PRD or BRD to use `from-prd` mode                                                                               |
+| `/rai-plan-from-security-plan` | The `RAI Planner` agent; ask to start from a completed security plan to use `from-security-plan` mode, or use the RAI Planner handoff in the `Security Planner` |
+
+### Design Thinking
+
+| Retired command                    | Replacement                                                                                                                                                                |
+|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/dt-start-project`                | The `DT Coach` agent; describe the project you want coaching on                                                                                                            |
+| `/dt-resume-coaching`              | The `DT Coach` agent; ask to resume, and it lists your existing projects                                                                                                   |
+| `/dt-method-next`                  | The `DT Coach` agent; ask which method comes next, or use its Method Next handoff                                                                                          |
+| `/dt-method-04-ideation`           | The `DT Coach` agent; ask for Method 4 (Brainstorming) ideation                                                                                                            |
+| `/dt-method-04-convergence`        | The `DT Coach` agent; ask to cluster Method 4 ideas into themes                                                                                                            |
+| `/dt-method-05-concepts`           | The `DT Coach` agent; ask to turn brainstorming themes into Method 5 (User Concepts) concepts                                                                              |
+| `/dt-method-05-evaluation`         | The `DT Coach` agent; ask to evaluate Method 5 concepts with stakeholders                                                                                                  |
+| `/dt-method-06-planning`           | The `DT Coach` agent; ask to plan a Method 6 (Low-Fidelity Prototypes) prototype                                                                                           |
+| `/dt-method-06-building`           | The `DT Coach` agent; ask to build the Method 6 prototype                                                                                                                  |
+| `/dt-method-06-testing`            | The `DT Coach` agent; ask to test the Method 6 prototype                                                                                                                   |
+| `/dt-canonical-deck`               | The `DT Coach` agent; ask to create or refresh the canonical deck or to build the customer-card PowerPoint, or use its Canonical Deck or Build Customer Cards PPTX handoff |
+| `/dt-handoff-problem-space`        | The `DT Coach` agent; ask to hand off the Problem Space to RPI                                                                                                             |
+| `/dt-handoff-solution-space`       | The `DT Coach` agent; ask to hand off the Solution Space to RPI                                                                                                            |
+| `/dt-handoff-implementation-space` | The `DT Coach` agent; ask to hand off the Implementation Space to RPI                                                                                                      |
+
+### Development workflow
+
+| Retired command            | Replacement                                                                                                                                         |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/rpi`                     | The `RPI Agent`; describe the task                                                                                                                  |
+| `/pr-review`               | The `Code Review` agent, which reviews the pull request you name or the open one for your branch, and otherwise a branch diff or your local changes |
+| `/git-commit-message`      | `/git-commit mode=message-only`, which writes a message for your staged changes without committing                                                  |
+| `/vally-test-write`        | `/vally-tests mode=from-artifact`, with `files=<path>`                                                                                              |
+| `/evals-import`            | `/vally-tests mode=corpus-import`, with `path=<corpus>`                                                                                             |
+| `/ado-create-pull-request` | `/pull-request action=create`, which routes Azure DevOps repositories to the `backlog-management` pull request protocol                             |
+| `/ado-get-build-info`      | The Azure DevOps build reference in the `backlog-management` skill, loaded when you ask for build status                                            |
+
 ## Historical Catalog Support
 
 Previously issued `plugins-v` and `hve-core-v` catalogs and tags are immutable
@@ -189,7 +256,7 @@ migration commands.
 
 ## Verify the Result
 
-Confirm the plugin's agents, prompts, instructions, and skills are available in the host. For selective clones, verify `.hve-tracking.json` records the intended profile and components. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
+Confirm the plugin's agents, instructions, and skills are available in the host. For selective clones, verify `.hve-tracking.json` records the intended profile and components. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
 
 ---
 

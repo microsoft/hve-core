@@ -69,6 +69,21 @@ def _is_offscreen_media(shape: BaseShape, slide_h_in: float) -> bool:
     return top_in > slide_h_in
 
 
+def _is_offslide_title(shape: BaseShape, slide_w_in: float, slide_h_in: float) -> bool:
+    """Return True for a title placeholder placed entirely outside the slide.
+
+    build_deck.py adds one when no visible text box carries the slide title, so
+    screen readers announce a title that never renders.
+    """
+    if not _is_title_placeholder(shape):
+        return False
+    left = emu_to_inches(shape.left)
+    top = emu_to_inches(shape.top)
+    right = left + emu_to_inches(shape.width)
+    bottom = top + emu_to_inches(shape.height)
+    return left >= slide_w_in or top >= slide_h_in or right <= 0 or bottom <= 0
+
+
 def _shape_label(shape: BaseShape) -> str:
     """Return a human-readable label for a shape."""
     name = shape.name or "unnamed"
@@ -332,6 +347,14 @@ def validate_slide_geometry(
         if _is_offscreen_media(shape, slide_h_in):
             logger.debug(
                 "Slide %d: exempting off-screen media '%s'",
+                slide_num,
+                shape.name,
+            )
+            continue
+
+        if _is_offslide_title(shape, slide_w_in, slide_h_in):
+            logger.debug(
+                "Slide %d: exempting off-slide title '%s'",
                 slide_num,
                 shape.name,
             )

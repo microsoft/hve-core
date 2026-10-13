@@ -100,6 +100,40 @@ assert_within_target_root() {
   echo "$base/$relative"
 }
 
+# The source clone can be a fork or a substituted local checkout, so a link
+# anywhere from the source root down to a component would copy content from
+# outside the clone into the target repository. Mirrors Assert-SourceWithoutLink
+# in component-copy.ps1.
+assert_source_without_link() {
+  local base="$1" relative="$2" component="$3"
+  local current="$base" segment remainder="$relative"
+
+  while [[ -n "$remainder" ]]; do
+    segment="${remainder%%/*}"
+    if [[ "$remainder" == */* ]]; then
+      remainder="${remainder#*/}"
+    else
+      remainder=""
+    fi
+    [[ -n "$segment" ]] || continue
+    current="$current/$segment"
+    [[ -e "$current" || -L "$current" ]] || break
+    if [[ -L "$current" ]]; then
+      fail "Component '$component' source resolves through a link at '$current', which may read outside the HVE-Core source."
+    fi
+  done
+}
+
+# The tracking manifest is read and rewritten in place, so a link at its path
+# would redirect that write outside the target root. Mirrors
+# Assert-ManifestNotLink in component-copy.ps1.
+assert_manifest_not_link() {
+  local manifest_path="$1"
+  if [[ -L "$manifest_path" ]]; then
+    fail "Tracking manifest '$manifest_path' is a link, which may redirect writes outside the target root."
+  fi
+}
+
 # Maps a plugin manifest field to "<kind>|<source root>|<package suffix>|<source suffix>".
 field_descriptor() {
   case "$1" in
@@ -204,6 +238,7 @@ main() {
   source_root=$(cd "$hve_core_base_path" && pwd)
   target_base=$(cd "$target_root_arg" && pwd)
   local manifest_path="$target_base/.hve-tracking.json"
+  assert_manifest_not_link "$manifest_path"
 
   local plugin_manifest_path="$source_root/plugin.json"
   [[ -f "$plugin_manifest_path" ]] || fail "Plugin manifest not found: $plugin_manifest_path"
@@ -270,6 +305,7 @@ main() {
       relative="${relative%"$package_suffix"}$source_suffix"
     fi
     source_rel="$root/$relative"
+    assert_source_without_link "$source_root" "$source_rel" "$candidate"
     [[ -z "${seen_targets[$source_rel]+x}" ]] || fail "Component '$candidate' resolves to duplicate target '$source_rel'."
     seen_targets["$source_rel"]=1
 

@@ -221,8 +221,9 @@ jobs:
 
             $result = @(Test-WorkflowPermissions -FilePath $filePath)
 
-            $result | Should -HaveCount 1
-            $result[0].ViolationType | Should -Be 'MissingJobPermissions'
+            $result | Should -HaveCount 2
+            $result.ViolationType | Should -Contain 'MissingJobPermissions'
+            $result.ViolationType | Should -Contain 'BroadPermissionsScalar'
         }
 
         It 'Should enumerate jobs indented with four spaces' {
@@ -277,6 +278,193 @@ jobs:
             $result | Should -HaveCount 1
             $result[0].ViolationType | Should -Be 'MissingJobPermissions'
             $result[0].Name | Should -Be 'build'
+        }
+    }
+
+    Context 'Permission breadth rules' {
+        It 'Should reject a workflow-level write grant' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-write' -Content @'
+name: Workflow Level Write
+on: push
+permissions:
+  contents: read
+  issues: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+            $result[0].Type | Should -Be 'workflow-permissions'
+            $result[0].Line | Should -Be 3
+        }
+
+        It 'Should reject a workflow-level read grant other than contents' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-security-read' -Content @'
+name: Workflow Level Security Read
+on: push
+permissions:
+  contents: read
+  security-events: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+        }
+
+        It 'Should accept a workflow-level block of only none values' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-none' -Content @'
+name: Workflow Level None
+on: push
+permissions:
+  contents: none
+  issues: none
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 0
+        }
+
+        It 'Should report a workflow-level write-all only as a broad scalar' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-write-all' -Content @'
+name: Workflow Level Write All
+on: push
+permissions: write-all
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'BroadPermissionsScalar'
+            $result[0].Type | Should -Be 'workflow-permissions'
+            $result[0].Metadata.Value | Should -Be 'write-all'
+        }
+
+        It 'Should reject a job-level read-all under an empty workflow-level block' {
+            $filePath = New-TestWorkflow -Name 'job-level-read-all' -Content @'
+name: Job Level Read All
+on: push
+permissions: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'BroadPermissionsScalar'
+            $result[0].Type | Should -Be 'workflow-job-permissions'
+            $result[0].Name | Should -Be 'build'
+        }
+
+        It 'Should reject a job-level write-all when the workflow-level block is absent' {
+            $filePath = New-TestWorkflow -Name 'job-level-write-all-absent' -Content @'
+name: Job Level Write All Absent
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 2
+            $result.ViolationType | Should -Contain 'MissingPermissions'
+            $result.ViolationType | Should -Contain 'BroadPermissionsScalar'
+        }
+    }
+
+    Context 'Unrecognized permissions shapes' {
+        It 'Should report an unrecognized workflow-level scalar as excessive' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-unknown-scalar' -Content @'
+name: Workflow Level Unknown Scalar
+on: push
+permissions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+            $result[0].Line | Should -Be 3
+        }
+
+        It 'Should report a workflow-level sequence as excessive' {
+            $filePath = New-TestWorkflow -Name 'workflow-level-sequence' -Content @'
+name: Workflow Level Sequence
+on: push
+permissions:
+  - contents
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+        }
+
+        It 'Should report line 0 when a flow-style document hides the permissions key' {
+            $filePath = New-TestWorkflow -Name 'flow-style-document' -Content @'
+{name: Flow Style, on: push, permissions: {issues: write}, jobs: {build: {runs-on: ubuntu-latest, permissions: {issues: write}, steps: [{run: echo hello}]}}}
+'@
+
+            $result = @(Test-WorkflowPermissions -FilePath $filePath)
+
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'ExcessiveWorkflowPermissions'
+            $result[0].Line | Should -Be 0
         }
     }
 
@@ -380,6 +568,65 @@ jobs:
     }
 }
 
+Describe 'Get-BroadPermissionsScalar' -Tag 'Unit' {
+    It 'Should return <Expected> for <Description>' -ForEach @(
+        @{ Description = 'read-all'; Node = 'read-all'; Expected = 'read-all' }
+        @{ Description = 'mixed-case write-all with whitespace'; Node = ' Write-All '; Expected = 'write-all' }
+        @{ Description = 'an unrecognized scalar'; Node = 'read'; Expected = '' }
+        @{ Description = 'null'; Node = $null; Expected = '' }
+    ) {
+        Get-BroadPermissionsScalar -Node $Node | Should -BeExactly $Expected
+    }
+
+    It 'Should return an empty string for a mapping' {
+        Get-BroadPermissionsScalar -Node @{ contents = 'read' } | Should -BeExactly ''
+    }
+}
+
+Describe 'Test-NarrowWorkflowPermission' -Tag 'Unit' {
+    It 'Should return <Expected> for <Description>' -ForEach @(
+        @{ Description = 'null'; Node = $null; Expected = $true }
+        @{ Description = 'a blank scalar'; Node = '  '; Expected = $true }
+        @{ Description = 'a non-blank scalar'; Node = 'read'; Expected = $false }
+    ) {
+        Test-NarrowWorkflowPermission -Node $Node | Should -Be $Expected
+    }
+
+    It 'Should return true for an empty mapping' {
+        Test-NarrowWorkflowPermission -Node @{} | Should -BeTrue
+    }
+
+    It 'Should return true for contents read with none entries' {
+        Test-NarrowWorkflowPermission -Node @{ contents = 'Read'; issues = 'none' } | Should -BeTrue
+    }
+
+    It 'Should return false for any other scope' {
+        Test-NarrowWorkflowPermission -Node @{ contents = 'read'; 'security-events' = 'read' } | Should -BeFalse
+    }
+
+    It 'Should return false for a sequence' {
+        Test-NarrowWorkflowPermission -Node @('contents') | Should -BeFalse
+    }
+}
+
+Describe 'Get-TopLevelKeyLine' -Tag 'Unit' {
+    It 'Should return the 1-based line of an unindented key' {
+        Get-TopLevelKeyLine -RawLines @('name: x', 'permissions:', '  contents: read') -Key 'permissions' | Should -Be 2
+    }
+
+    It 'Should match a quoted key' {
+        Get-TopLevelKeyLine -RawLines @('name: x', '"permissions": {}') -Key 'permissions' | Should -Be 2
+    }
+
+    It 'Should ignore an indented key' {
+        Get-TopLevelKeyLine -RawLines @('jobs:', '  build:', '    permissions: {}') -Key 'permissions' | Should -Be 0
+    }
+
+    It 'Should return 0 when the key is absent' {
+        Get-TopLevelKeyLine -RawLines @() -Key 'permissions' | Should -Be 0
+    }
+}
+
 Describe 'ConvertTo-PermissionsSarif' -Tag 'Unit' {
     Context 'With violations' {
         It 'Should produce valid SARIF structure' {
@@ -471,6 +718,38 @@ Describe 'ConvertTo-PermissionsSarif' -Tag 'Unit' {
         It 'Should never emit a startLine below 1' {
             foreach ($result in $script:ContractSarif.runs[0].results) {
                 $result.locations[0].physicalLocation.region.startLine | Should -BeGreaterOrEqual 1
+            }
+        }
+
+        It 'Should route breadth violations to their own declared rules' {
+            $excessive = [DependencyViolation]::new()
+            $excessive.File = '.github/workflows/broad.yml'
+            $excessive.Line = 3
+            $excessive.Type = 'workflow-permissions'
+            $excessive.Name = 'broad.yml'
+            $excessive.Severity = 'Medium'
+            $excessive.ViolationType = 'ExcessiveWorkflowPermissions'
+            $excessive.Description = 'Workflow-level grant beyond contents: read'
+            $excessive.Remediation = 'Move scopes to jobs'
+
+            $scalar = [DependencyViolation]::new()
+            $scalar.File = '.github/workflows/broad.yml'
+            $scalar.Line = 8
+            $scalar.Type = 'workflow-job-permissions'
+            $scalar.Name = 'build'
+            $scalar.Severity = 'High'
+            $scalar.ViolationType = 'BroadPermissionsScalar'
+            $scalar.Description = 'Job uses read-all'
+            $scalar.Remediation = 'Declare specific scopes'
+
+            $sarif = ConvertTo-PermissionsSarif -Violations @($excessive, $scalar)
+            $declared = $sarif.runs[0].tool.driver.rules | ForEach-Object { $_.id }
+            $emitted = $sarif.runs[0].results | ForEach-Object { $_.ruleId }
+
+            $emitted | Should -Contain 'excessive-workflow-permissions'
+            $emitted | Should -Contain 'broad-permissions-scalar'
+            foreach ($ruleId in $emitted) {
+                $declared | Should -Contain $ruleId
             }
         }
     }
@@ -570,6 +849,43 @@ Describe 'Invoke-WorkflowPermissionsCheck' -Tag 'Integration' {
             $content.Metadata.JobsPassing | Should -Be 2
             $content.Metadata.JobsDeclaringOwnBlock | Should -Be 1
             $content.Metadata.JobLevelViolations | Should -Be 0
+        }
+
+        It 'Should count breadth violations and exclude them from passing checks' {
+            $testPath = Join-Path $TestDrive 'breadth-metrics'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Set-Content -Path (Join-Path $testPath 'broad.yml') -Encoding utf8 -Value @'
+name: Broad
+on: push
+permissions:
+  contents: read
+  issues: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - run: echo hello
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo hello
+'@
+
+            $outputPath = Join-Path $TestDrive 'breadth-metrics.json'
+
+            $exitCode = Invoke-WorkflowPermissionsCheck -Path $testPath -OutputPath $outputPath -FailOnViolation
+
+            $exitCode | Should -Be 1
+            $content = Get-Content $outputPath -Raw | ConvertFrom-Json
+            $content.Metadata.FilesWithPermissions | Should -Be 1
+            $content.Metadata.FilesPassing | Should -Be 0
+            $content.Metadata.ExcessiveWorkflowPermissionViolations | Should -Be 1
+            $content.Metadata.BroadPermissionsScalarViolations | Should -Be 1
+            $content.Metadata.JobChecks | Should -Be 2
+            $content.Metadata.JobsPassing | Should -Be 1
         }
 
         It 'Should report an unparseable workflow without counting it as compliant' {

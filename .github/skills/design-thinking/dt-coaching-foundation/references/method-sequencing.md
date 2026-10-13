@@ -49,6 +49,22 @@ Frame iteration as progress: each loop produces deeper understanding. Carry forw
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
+## Next-Method Assessment
+
+When the team asks what to do next, or a session resumes without a clear next step, assess the project before recommending a method:
+
+1. Locate the project from the supplied slug, open files, or conversation. When several projects exist under `.copilot-tracking/dt/` and the slug is ambiguous, list them with their last session dates and ask which one to use. When none exists, offer to start a new project.
+2. Read the coaching state's `current`, `methods_completed`, `transition_log`, `session_log`, and `artifacts`, scan the project directory for method artifacts, and compare them with the exit signals in the Nine-Method Sequence.
+3. Summarize the project: name and slug, current method and phase, methods completed out of nine, the latest session-log summary, and two or three key artifacts from the current method.
+4. Recommend the next method with its transition type:
+   * Forward when the current method's exit signals are met; at the 3→4 and 6→7 boundaries, check the space boundary readiness signals above first. Quote the exit signals or readiness signals that support the move.
+   * Backward when current work reveals gaps in earlier work; name the source method and target method, and quote the Non-Linear Iteration pattern that authorizes the return.
+   * Lateral when all nine methods are complete: offer further Method 9 iteration or a handoff to the RPI workflow.
+5. When the same method or method pair appears three or more times in the last six `transition_log` entries, name the loop and ask whether to revisit the underlying challenge or continue refining that method.
+6. Ask whether the recommendation fits or the team prefers another method. After the team confirms, update `current.method`, append the `transition_log` entry with its rationale and date, load the target method's references, and begin coaching at the appropriate phase.
+
+At space boundaries and after methods that produce visual artifacts (Methods 1, 3, 4, 5, and 6), mention that the team can export artifacts to a collaborative board for review.
+
 ## Method Routing
 
 | Signal                                     | Route To |
@@ -63,4 +79,4 @@ Frame iteration as progress: each loop produces deeper understanding. Carry forw
 | Prototypes need systematic user validation | Method 8 |
 | Deployed solution needs optimization       | Method 9 |
 
-When no coaching state exists, start at Method 1 unless the user demonstrates completed prior work. When users request skipping methods, explore why rather than blocking.
+When no coaching state exists, start at Method 1 unless the user demonstrates completed prior work. When users request skipping methods, explore why rather than blocking: explain the sequencing rationale and what the skipped methods would contribute, then offer to proceed with caution if the team still prefers to skip.

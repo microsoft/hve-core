@@ -1,0 +1,49 @@
+<!-- markdownlint-disable-file -->
+# MVE Plan: Synthetic Invoice Matching
+
+Synthetic preservation marker: EV07-PLAN-PRESERVE-001
+
+## Problem statement and context
+
+A synthetic finance tool matches supplier invoices to purchase orders. This record
+is evaluation fixture data only and represents no real system or customer.
+
+## Hypotheses
+
+* H1 (priority 1): We believe a deterministic matcher handles the common synthetic
+  case. We will test this by replaying a synthetic invoice sample. We will know we
+  are right or wrong when at least 80 percent of that sample matches without
+  manual review.
+
+## Vetting results
+
+Synthetic vetting recorded no unresolved red flag for this fixture.
+
+## Experiment design
+
+* Type: data feasibility
+* Approach: replay a bounded synthetic sample through a prototype matcher.
+* Scope: matching only. Payment posting is out of scope.
+* Timeline: two weeks.
+
+## Success and failure criteria
+
+* Success: at least 80 percent of the synthetic sample matches without review.
+* Failure: below that threshold, which is a valid learning outcome.
+
+## Required resources and team composition
+
+Synthetic: one engineer and one analyst. No real staffing commitment is represented.
+
+## Next steps for both outcomes
+
+* Validated: extend the synthetic prototype to the remaining sample shapes.
+* Invalidated: revisit the matching rules before any further synthetic work.
+
+## Evaluation approach and decision criteria
+
+Compare measured match rate against the recorded threshold.
+
+## Iteration plan for mixed or inconclusive results
+
+Refine the rule set once, then re-run the same synthetic sample.

@@ -27,7 +27,7 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 ### Phase 1: Scoping
 
-* Entry: agent invoked via entry prompt (capture, from-prd, from-brd, or from-security-plan mode)
+* Entry: session started in an entry mode (capture, from-prd, from-brd, or from-security-plan)
 * Activities: identify project scope, technology stack, package managers, CI/CD platform, release strategy, deployment targets, and compliance targets; detect existing security tooling; check for Security Planner and RAI Planner artifacts
 * Exit: all scoping questions answered or skipped, technology inventory confirmed by user
 * Artifacts: populated `state.json` with project context
@@ -76,9 +76,9 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 Four entry modes determine Phase 1 initialization. All modes converge at Phase 2 once supply chain scoping completes.
 
-### Shared entry prompt requirements
+### Shared entry-mode requirements
 
-All entry prompts scan these supporting context sources alongside their mode-specific primary artifacts:
+Every entry mode scans these supporting context sources alongside its mode-specific primary artifacts:
 
 * `package.json`, `pyproject.toml`, `*.csproj`, `Cargo.toml`, and `go.mod` for language and package manager inventory
 * The consumer repository's GitHub workflow directory, `.azure-pipelines/`, `azure-pipelines*.yml`, `Jenkinsfile`, and `.gitlab-ci.yml` for CI/CD platform details
@@ -92,21 +92,25 @@ During Phase 1, ask whether the user has backlog output preferences: dual-format
 
 Before Phase 1 scoping is complete, ask whether the user has evaluation standards, workflow inventories, or output format requirements to store in `.copilot-tracking/sssc-plans/references/`.
 
+Present the scan results as a checklist before Phase 1 questions: ✅ for discovered artifacts and supporting context with file paths and brief descriptions, and ❌ for expected sources that were not found. When a document-seeded mode (`from-prd`, `from-brd`, or `from-security-plan`) finds no primary artifact, fall back to `capture` and explain the switch.
+
 ### `capture`
 
-Fresh assessment. Initialize blank `state.json` with `entryMode: "capture"`. Conduct a scoping interview to discover project scope, technology stack, package managers, CI/CD platform, release strategy, deployment targets, and compliance targets.
+Fresh assessment, selected when the user starts without seed artifacts. Initialize blank `state.json` with `entryMode: "capture"`. When the user supplies existing supply chain notes, workflow inventories, or compliance documentation, extract relevant details and pre-populate Phase 1 fields first. Open with one sentence summarizing the assessment scope, then conduct a scoping interview with 3 to 5 focused questions per turn covering project name and supply chain security purpose; languages, frameworks, and package managers; CI/CD platform and runner topology; release strategy and artifact distribution channels; deployment targets and registry destinations; existing security tooling such as Dependabot, CodeQL, secret scanning, and signing; and compliance targets such as the Scorecard threshold, SLSA Build level, and Best Practices Badge tier. Ask for a project name when the user has not supplied one.
 
 ### `from-prd`
 
-PRD-seeded assessment. Scan `.copilot-tracking/` for PRD artifacts. Extract project scope, technology stack, package managers, deployment targets, and compliance targets. Pre-populate Phase 1 state fields in `context`. Add processed file paths to `referencesProcessed`. Present extracted information to the user for confirmation or refinement before advancing.
+PRD-seeded assessment, selected when the user asks to start from product requirements or supplies a PRD. Scan `.copilot-tracking/prd-sessions/` first; when it yields no matches, scan `.copilot-tracking/` for `prd-*.md`, `*-prd.md`, or `product-definition*.md`, excluding generic matches such as `requirements.txt` and files outside product-scoping contexts. Extract project scope, technology stack, package managers, CI/CD platform and release strategy, deployment targets and registry destinations, compliance targets, and integration points. Pre-populate Phase 1 state fields in `context`. Add processed file paths to `referencesProcessed`. Present extracted information to the user for confirmation or refinement before advancing.
 
 ### `from-brd`
 
-BRD-seeded assessment. Scan `.copilot-tracking/` for BRD artifacts. Extract business requirements that imply supply chain constraints: regulatory compliance targets, vendor and dependency policies, deployment environment requirements, and packaging or distribution standards. Pre-populate Phase 1 state fields in `context`. Add processed file paths to `referencesProcessed`. Present extracted information to the user for confirmation or refinement before advancing.
+BRD-seeded assessment, selected when the user asks to start from business requirements or supplies a BRD. Scan `.copilot-tracking/brd-sessions/` first; when it yields no matches, scan `.copilot-tracking/` for `brd-*.md`, `*-brd.md`, or `business-requirements*.md`, excluding generic matches and files outside business-scoping contexts. Extract business requirements that imply supply chain constraints: regulatory compliance targets, vendor and dependency policies, technology stack and integration points, deployment environment requirements, packaging or distribution standards, and stakeholder acceptance criteria. Pre-populate Phase 1 state fields in `context`. Add processed file paths to `referencesProcessed`. Present extracted information to the user for confirmation or refinement before advancing.
 
 ### `from-security-plan`
 
-Security plan-seeded assessment. Read `state.json` and artifacts from the path specified in `securityPlannerLink`. Extract technology inventory, compliance targets, existing security tooling findings, and dependency management posture from the security plan. Pre-populate Phase 1 state fields in `context`. Add processed file paths to `referencesProcessed`. Present extracted information to the user for confirmation or refinement before advancing.
+Security plan-seeded assessment, selected when the user asks to extend a completed Security Planner assessment or arrives through the Security Planner handoff. Discover Security Planner projects by looking for `state.json` in each subdirectory of `.copilot-tracking/security-plans/`; when several exist, present them and ask the user to select one. Set `securityPlannerLink` to the selected plan, then read its `state.json` and artifacts. Extract technology inventory, deployment model, compliance targets, threat model findings and operational buckets, existing security tooling findings and control gaps, and dependency management posture, mapping application-level threats to dependency and build pipeline priorities. Pre-populate Phase 1 state fields in `context`. Add processed file paths to `referencesProcessed`. Present extracted information to the user for confirmation or refinement before advancing.
+
+For every seeded mode, open with one sentence summarizing the assessment scope, present the extracted scope as a checklist with ✅ for items confirmed from the source and ❓ for items that need clarification or are missing, then invite the user into Phase 1 with 3 to 5 facilitative questions that target supply chain gaps the source does not cover, such as package manager inventory, CI/CD and runner topology, release strategy, signing posture, SBOM tooling, and Best Practices Badge readiness.
 
 ## State Management
 
@@ -172,10 +176,10 @@ Each `referencesProcessed` entry has the shape `{ "filePath": "<workspace-relati
 
 On first invocation, create the project directory and `state.json` with Phase 1 defaults:
 
-* `projectSlug` derived from the project name provided by the user (kebab-case)
+* `projectSlug` derived (kebab-case) from the project name the user provides; in a seeded mode without one, derive it from the project name in the selected PRD, BRD, or Security Plan, and in `capture` mode ask for a name
 * `ssscPlanFile` set to `.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`, and the consolidated plan markdown scaffolded at that path per [SSSC Plan Markdown](#sssc-plan-markdown)
 * `currentPhase` set to `1`
-* `entryMode` set based on the invoking prompt (capture, from-prd, from-brd, or from-security-plan)
+* `entryMode` set to the resolved entry mode (capture, from-prd, from-brd, or from-security-plan)
 * All arrays empty, booleans `false`
 * `ssscEnabled` set to `true`
 * `signingRequested` set to `false` until the user opts in during scoping
@@ -347,7 +351,7 @@ Record the produced artifact `supply-chain-assessment.md` in the SSSC plan markd
 
 ## Phase 3 Protocol — Standards Mapping
 
-Map the assessed supply chain posture against the open standards anchored in the `supply-chain-security` skill: OpenSSF Scorecard, SLSA v1.0, OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements. Use the Phase 2 assessment results as input.
+Map the assessed supply chain posture against the open standards anchored in the `supply-chain-security` skill: OpenSSF Scorecard, SLSA v1.2 (Build track unchanged since v1.0), OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements. Use the Phase 2 assessment results as input.
 
 ### Framework Reference
 
@@ -356,7 +360,7 @@ The durable standard catalogs live in the `supply-chain-security` skill. Read th
 | Framework                     | Skill reference                      |
 |-------------------------------|--------------------------------------|
 | OpenSSF Scorecard (20 checks) | `references/openssf-scorecard.md`    |
-| SLSA v1.0 Build track levels  | `references/slsa-levels.md`          |
+| SLSA v1.2 Build track levels  | `references/slsa-levels.md`          |
 | OpenSSF Best Practices Badge  | `references/best-practices-badge.md` |
 | Sigstore (cosign) maturity    | `references/sigstore-maturity.md`    |
 | NTIA SBOM minimum elements    | `references/sbom-elements.md`        |

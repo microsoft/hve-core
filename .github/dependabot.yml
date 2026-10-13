@@ -6,14 +6,19 @@ updates:
   - /
   - /docs/docusaurus
   - /scripts/extension/marketplace-publisher
+  # Each slide deck pins reveal.js in its own lockfile, and new decks copy the
+  # starter's lockfile. A deck update changes its embedded library, so rebuild
+  # that deck's bundle with `npm run slides:build` before merging.
+  - /slides/*
+  - /.github/skills/hve-slides/templates/deck
   groups:
     npm-dependencies:
       patterns:
       - "*"
   ignore:
-  # eslint-plugin-jsx-a11y declares a peer range that stops at eslint ^9, so an
-  # eslint 10 bump breaks `npm ci` in docs/docusaurus with ERESOLVE. Remove this
-  # entry once a jsx-a11y release supports eslint 10.
+  # Hold eslint on 9.x deliberately. The docs accessibility lint plugin
+  # (eslint-plugin-jsx-a11y-x) supports eslint 10, but adopting eslint 10 is a
+  # separate migration. Remove this entry when that migration is planned.
   - dependency-name: "eslint"
     versions:
     - ">=10"
@@ -44,6 +49,10 @@ updates:
   ignore:
   - dependency-name: "github/gh-aw-actions" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
   - dependency-name: "github/gh-aw-actions/**"
+  # The extension provenance signer revision is pinned by the caller, the
+  # release and Marketplace verifiers, the extension tests, and the SBOM
+  # verification docs. Update it deliberately in one coordinated change.
+  - dependency-name: "microsoft/hve-core/.github/workflows/extension-provenance-signer.yml"
   labels:
   - dependencies
   - github-actions

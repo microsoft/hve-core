@@ -1,0 +1,29 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-demo-material-class-recipe
+    prompt: |
+      Plan the L100 demo deck and narrated video for HVE Core. List the phases
+      from sourcing to the finished MP4, and state the narration engine and the
+      duration contract you will use. Write the plan under
+      `.copilot-tracking/demo-material/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: hve-demo-material-class-recipe-phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: hve-demo-material-class-recipe-tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](demo-material|plans)'
+      - type: output-matches
+        name: hve-demo-material-class-recipe-duration-contract
+        config:
+          pattern: '(?i)\b(4\s*(to|-|–)\s*6\s*min|duration contract)'
+      - type: output-matches
+        name: hve-demo-material-class-recipe-no-source-edit
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
+          negate: true

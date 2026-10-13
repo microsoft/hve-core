@@ -36,7 +36,7 @@ Present the component selection prompt:
 ```text
 📂 Component Installation (Optional)
 
-HVE-Core publishes agents, prompts, instructions, and skills.
+HVE-Core publishes agents, instructions, and skills.
 Copying them into your repository enables local customization and offline use.
 
 Options:

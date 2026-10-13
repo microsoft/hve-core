@@ -7,18 +7,73 @@ stimuli:
       from `owasp-top-10` and `owasp-cicd` skill assessments in audit mode for
       repository `hve-core` dated 2026-05-27. Produce a VULN_REPORT_V1 report,
       sort detailed remediation guidance by severity, and report the output path.
+      This is a synthetic verified collection, not a new scan. Read the staged
+      Report Generator contract and security-reviewer-formats skill. Preserve
+      these four findings and do not invent others:
+      - owasp-top-10 / SYN-A: FAIL, HIGH, CONFIRMED. Authorization is missing.
+        Location src/handler.ts:1. Offending code: `return result;`.
+        Example fix: `authorize(user); return result;`. Require authorization.
+      - owasp-cicd / SYN-B: PARTIAL, LOW, CONFIRMED. Review gate is incomplete.
+        Location ci.yml:1. Offending code: `review: optional`.
+        Example fix: `review: required`. Require approval before deployment.
+      - owasp-top-10 / SYN-C: PASS, severity N/A, UNCHANGED. Represented input
+        validation is covered. Location and fix N/A.
+      - owasp-cicd / SYN-D: NOT_ASSESSED, severity N/A, UNCHANGED. Runtime
+        deployment evidence is absent. Location and fix N/A.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/report-generator.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/security/security-reviewer-formats
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
-      - type: output-matches
+      - type: program
         name: report-output-path
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\]security[-/\\]'
-      - type: output-matches
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs'); const path = require('node:path');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const relative = '.copilot-tracking/security/2026-05-27';
+                const directory = path.join(process.env.EVALUATE_WORKSPACE, relative);
+                const files = fs.readdirSync(directory).filter(name => /^security-report-\d{3}\.md$/.test(name));
+                if (files.length !== 1) process.exit(1);
+                const report = fs.readFileSync(path.join(directory, files[0]), 'utf8');
+                process.exit(report.length > 100 && /Executive Summary/i.test(report) && input.trajectory.output.includes(relative + '/' + files[0]) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
         name: severity-ordering-vocabulary
         config:
-          pattern: '(?i)(critical.*high.*medium.*low|severity|vuln[-_]?report[-_]?v1|remediation)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs'); const path = require('node:path');
+              try {
+                const directory = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security/2026-05-27');
+                const files = fs.readdirSync(directory).filter(name => /^security-report-\d{3}\.md$/.test(name));
+                if (files.length !== 1) process.exit(1);
+                const report = fs.readFileSync(path.join(directory, files[0]), 'utf8').replace(/[*`]/g, '');
+                const summary = /###\s+Summary Counts\s*\n([\s\S]*?)(?=\n#{1,3}\s|$)/i.exec(report)?.[1] || '';
+                const count = status => [...summary.matchAll(new RegExp('^\\s*\\|\\s*' + status + '\\s*\\|\\s*(\\d+)\\s*\\|', 'gim'))];
+                const counts = ['PASS', 'FAIL', 'PARTIAL', 'NOT_ASSESSED'].every(status => count(status).length === 1 && count(status)[0][1] === '1') && count('Total').length === 1 && count('Total')[0][1] === '4';
+                const details = /##\s+Detailed Remediation Guidance\s*\n([\s\S]*?)(?=\n##\s|$)/i.exec(report)?.[1] || '';
+                const ordered = /###\s+HIGH\b[\s\S]*SYN-A[\s\S]*###\s+LOW\b[\s\S]*SYN-B/i.test(details) && !/###\s+LOW\b[\s\S]*###\s+HIGH\b/i.test(details);
+                const findings = /##\s+Findings by Framework\s*\n([\s\S]*?)(?=\n##\s|$)/i.exec(report)?.[1] || '';
+                const rows = findings.split(/\r?\n/).filter(line => /^\s*\|\s*SYN-/.test(line));
+                const expected = [['SYN-A','FAIL','HIGH'], ['SYN-B','PARTIAL','LOW'], ['SYN-C','PASS','N/A'], ['SYN-D','NOT_ASSESSED','N/A']];
+                const supplied = rows.length === 4 && expected.every(([id, status, severity]) => rows.filter(row => {
+                  const cells = row.split('|').map(cell => cell.trim());
+                  return cells[1] === id && cells[3] === status && cells[4] === severity;
+                }).length === 1) && ['owasp-top-10', 'owasp-cicd'].every(value => findings.includes(value));
+                process.exit(counts && ordered && supplied ? 0 : 1);
+              } catch { process.exit(1); }
 
   - name: report-generator-plan-mode
     prompt: |
@@ -26,15 +81,68 @@ stimuli:
       risk assessment for plan reference `plan-001` against repository
       `hve-core` dated 2026-05-27. Include RISK, CAUTION, COVERED, and
       NOT_APPLICABLE status counts and report the output path.
+      This is a synthetic supplied plan assessment, not a new scan. Read the
+      staged Report Generator contract and security-reviewer-formats skill.
+      Preserve exactly these four findings and sort mitigation by severity:
+      - owasp-top-10 / SYN-A: RISK, HIGH. Protected-record authorization is
+        absent from the plan. Mitigation: require authorization before access.
+      - owasp-cicd / SYN-B: CAUTION, LOW. Deployment approval ownership is
+        unresolved. Mitigation: name an owner and require a review gate.
+      - owasp-top-10 / SYN-C: COVERED, severity N/A. Input validation is
+        planned. Risk description and mitigation N/A.
+      - owasp-cicd / SYN-D: NOT_APPLICABLE, severity N/A. No container delivery
+        is in scope. Risk description and mitigation N/A.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/report-generator.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/security/security-reviewer-formats
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
-      - type: output-matches
+      - type: program
         name: plan-report-path
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\]security[-/\\]'
-      - type: output-matches
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs'); const path = require('node:path');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const relative = '.copilot-tracking/security/2026-05-27';
+                const directory = path.join(process.env.EVALUATE_WORKSPACE, relative);
+                const files = fs.readdirSync(directory).filter(name => /^plan-risk-assessment-\d{3}\.md$/.test(name));
+                if (files.length !== 1) process.exit(1);
+                const report = fs.readFileSync(path.join(directory, files[0]), 'utf8');
+                process.exit(report.length > 100 && /plan-001/i.test(report) && input.trajectory.output.includes(relative + '/' + files[0]) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
         name: report-generator-plan-mode-plan-status-vocabulary
         config:
-          pattern: '(?i)(RISK|CAUTION|COVERED|NOT_APPLICABLE|plan[-_]?report[-_]?v1)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs'); const path = require('node:path');
+              try {
+                const directory = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security/2026-05-27');
+                const files = fs.readdirSync(directory).filter(name => /^plan-risk-assessment-\d{3}\.md$/.test(name));
+                if (files.length !== 1) process.exit(1);
+                const report = fs.readFileSync(path.join(directory, files[0]), 'utf8').replace(/[*`]/g, '');
+                const summary = /###\s+Risk Summary\s*\n([\s\S]*?)(?=\n#{1,3}\s|$)/i.exec(report)?.[1] || '';
+                const count = status => [...summary.matchAll(new RegExp('^\\s*\\|\\s*' + status + '\\s*\\|\\s*(\\d+)\\s*\\|', 'gim'))];
+                const counts = ['RISK', 'CAUTION', 'COVERED', 'NOT_APPLICABLE'].every(status => count(status).length === 1 && count(status)[0][1] === '1') && count('Total').length === 1 && count('Total')[0][1] === '4';
+                const details = /##\s+Mitigation Guidance\s*\n([\s\S]*?)(?=\n##\s|$)/i.exec(report)?.[1] || '';
+                const ordered = /###\s+HIGH\b[\s\S]*SYN-A[\s\S]*###\s+LOW\b[\s\S]*SYN-B/i.test(details) && !/###\s+LOW\b[\s\S]*###\s+HIGH\b/i.test(details);
+                const findings = /##\s+Risk Findings by Framework\s*\n([\s\S]*?)(?=\n##\s|$)/i.exec(report)?.[1] || '';
+                const rows = findings.split(/\r?\n/).filter(line => /^\s*\|\s*SYN-/.test(line));
+                const expected = [['SYN-A','RISK','HIGH'], ['SYN-B','CAUTION','LOW'], ['SYN-C','COVERED','N/A'], ['SYN-D','NOT_APPLICABLE','N/A']];
+                const supplied = rows.length === 4 && expected.every(([id, status, severity]) => rows.filter(row => {
+                  const cells = row.split('|').map(cell => cell.trim());
+                  return cells[1] === id && cells[3] === status && cells[4] === severity;
+                }).length === 1) && ['owasp-top-10', 'owasp-cicd'].every(value => findings.includes(value));
+                process.exit(counts && ordered && supplied ? 0 : 1);
+              } catch { process.exit(1); }

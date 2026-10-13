@@ -7,7 +7,7 @@ tools:
   - search/fileSearch
   - read/readFile
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model: GPT-6 Sol (copilot)
 ---
 
 # Report Generator

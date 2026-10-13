@@ -114,6 +114,75 @@ function Get-ExpressionMatches {
     return @($expressionMatchList | ForEach-Object { $_.Groups[1].Value.Trim() })
 }
 
+function ConvertTo-CanonicalExpression {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Expression
+    )
+
+    # Index and bracket syntax reach the same attacker-controlled fields as the dotted
+    # and wildcard spellings the patterns are written for (commits[0].message and
+    # commits.*.message, inputs['name'] and inputs.name). Rewrite quoted keys as property
+    # access and every other index, including a computed one such as
+    # commits[github.run_attempt], as .* so one set of patterns covers them all. A computed
+    # index is appended after a space so references inside it are still matched, and
+    # brackets inside string literals are left alone. The result is for matching only;
+    # line lookup still needs the expression as written.
+    $text = $Expression
+    $canonical = [System.Text.StringBuilder]::new()
+    $computedIndexes = [System.Collections.Generic.List[string]]::new()
+    $depth = 0
+    $indexStart = 0
+    $inString = $false
+    for ($position = 0; $position -lt $text.Length; $position++) {
+        $character = $text[$position]
+        if ($character -eq "'") {
+            $inString = -not $inString
+        }
+        elseif (-not $inString -and $character -eq '[') {
+            if ($depth -eq 0) {
+                # commits [0] evaluates like commits[0]
+                while ($canonical.Length -gt 0 -and [char]::IsWhiteSpace($canonical.Chars($canonical.Length - 1))) {
+                    $canonical.Length--
+                }
+                $indexStart = $position + 1
+            }
+            $depth++
+            continue
+        }
+        elseif (-not $inString -and $character -eq ']' -and $depth -gt 0) {
+            $depth--
+            if ($depth -eq 0) {
+                $index = $text.Substring($indexStart, $position - $indexStart).Trim()
+                if ($index -match "^'((?:[^']|'')*)'$") {
+                    [void]$canonical.Append('.').Append($Matches[1].Replace("''", "'"))
+                }
+                else {
+                    [void]$canonical.Append('.*')
+                    if ($index -notmatch '^(\d+|\*)$') {
+                        $computedIndexes.Add((ConvertTo-CanonicalExpression -Expression $index))
+                    }
+                }
+            }
+            continue
+        }
+
+        if ($depth -eq 0) {
+            [void]$canonical.Append($character)
+        }
+    }
+
+    if ($depth -gt 0) {
+        # Unbalanced brackets: keep the unparsed remainder visible to the patterns.
+        [void]$canonical.Append($text.Substring($indexStart - 1))
+    }
+
+    return (@($canonical.ToString()) + $computedIndexes) -join ' '
+}
+
 function Test-IsUntrustedInjectionExpression {
     [CmdletBinding()]
     param(
@@ -121,7 +190,7 @@ function Test-IsUntrustedInjectionExpression {
         [string]$Expression
     )
 
-    $expression = $Expression.Trim()
+    $expression = ConvertTo-CanonicalExpression -Expression $Expression.Trim()
     if ([string]::IsNullOrWhiteSpace($expression)) {
         return $false
     }
@@ -255,9 +324,10 @@ function Get-InputReference {
         'github\.event\.inputs\.([A-Za-z0-9_-]+)'
     )
 
+    $canonicalExpression = ConvertTo-CanonicalExpression -Expression $Expression
     $names = [System.Collections.Generic.List[string]]::new()
     foreach ($pattern in $referencePatterns) {
-        foreach ($referenceMatch in [System.Text.RegularExpressions.Regex]::Matches($Expression, $pattern)) {
+        foreach ($referenceMatch in [System.Text.RegularExpressions.Regex]::Matches($canonicalExpression, $pattern)) {
             $name = $referenceMatch.Groups[1].Value
             if (-not $names.Contains($name)) {
                 $names.Add($name)

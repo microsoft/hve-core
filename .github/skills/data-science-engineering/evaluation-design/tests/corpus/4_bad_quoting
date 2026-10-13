@@ -1,0 +1,2 @@
+id,query,expected_response,category,difficulty,populations,tools_expected,source_reference,needs_sme_review,notes
+"004"x,bad quoting,synthetic response,coverage,easy,cohort-a,search,,false,

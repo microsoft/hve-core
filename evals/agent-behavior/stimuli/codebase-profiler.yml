@@ -22,19 +22,38 @@ stimuli:
 
   - name: codebase-profiler-diff-mode
     prompt: |
-      As a codebase-profiler subagent, run in diff mode against the changed file
-      list `["src/api/handlers.py", ".github/workflows/ci.yml", "terraform/main.tf"]`
-      and return the Codebase Profile with mode, languages, frameworks, and
-      applicable skills. Include skills when uncertain.
+      This is a represented diff-profile scenario, not a live repository scan.
+      Read `policy/codebase-profiler.agent.md` for the profile contract only.
+      Return a Codebase Profile for these synthetic changed files and supplied
+      source facts, with mode, languages, frameworks and applicable skills:
+      - `src/api/handlers.py`: Python Flask HTTP request handler.
+      - `.github/workflows/ci.yml`: YAML GitHub Actions build and test pipeline.
+      - `terraform/main.tf`: Terraform configuration for an Azure storage account.
+      Include skills when uncertain, cite the represented scope and mark framework
+      details not supplied as unknown. Do not inspect other files or run Git.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/codebase-profiler.agent.md
+          dest: policy/codebase-profiler.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
-      - type: output-matches
+      - type: program
         name: mode-vocabulary
         config:
-          pattern: '(?i)(mode\s*:?\s*diff|diff[- ]?mode|changed files)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = input.trajectory.output.replace(/[*`]/g, '');
+                const fields = [...output.matchAll(/(?:^|[\n,{])\s*["']?mode["']?\s*:\s*["']?([a-z-]+)/gim)].map(match => match[1].toLowerCase());
+                process.exit(fields.length > 0 && fields.every(mode => mode === 'diff') ? 0 : 1);
+              } catch { process.exit(1); }
       - type: output-matches
         name: applicable-skill-vocabulary
         config:
-          pattern: '(?i)(applicable skills|owasp[-_](cicd|infrastructure|top[-_]?10)|terraform|workflow)'
+          pattern: '(?is)^(?=[\s\S]*\bpython\b)(?=[\s\S]*\bflask\b)(?=[\s\S]*\bterraform\b)(?=[\s\S]*owasp-top-10)(?=[\s\S]*owasp-cicd)(?=[\s\S]*owasp-infrastructure)(?=[\s\S]*(?:src/api/handlers\.py|changed files|represented (?:scope|diff)))'

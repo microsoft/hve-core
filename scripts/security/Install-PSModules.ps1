@@ -9,10 +9,11 @@
 .DESCRIPTION
     Reads the pinned module manifest and installs each module at the declared
     version. Modules already present at the correct version are skipped unless
-    -Force is specified. Transient PSGallery failures are retried with
-    exponential backoff. If PowerShellGet's default registration returns
-    without making PSGallery visible, installation uses a temporary repository
-    at the canonical endpoint and removes it afterward.
+    -Force is specified. Transient PSGallery failures during repository
+    registration and installation are retried with exponential backoff. If
+    PowerShellGet's default registration returns without making PSGallery
+    visible, installation uses a temporary repository at the canonical
+    endpoint and removes it afterward.
 
     Colocation rationale: this script lives in scripts/security/ because it
     consumes ps-module-versions.json (the pinned-version manifest that the
@@ -233,13 +234,16 @@ function Install-SingleModule {
 
     $isCI = $env:GITHUB_ACTIONS -eq 'true'
 
-    $resolvedRepository = $Repository
+    $resolvedRepository = $null
     $installError = $null
 
     try {
-        $resolvedRepository = Initialize-Repository -Name $Repository
         for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
             try {
+                # Registration pings PSGallery; resolve once so retries never add a second temporary repository.
+                if (-not $resolvedRepository) {
+                    $resolvedRepository = Initialize-Repository -Name $Repository
+                }
                 # -Force suppresses the prompt for the temporary Untrusted source;
                 # RequiredVersion and the canonical source remain fixed.
                 Install-Module -Name $Name -RequiredVersion $Version -Force -Scope $Scope -Repository $resolvedRepository -ErrorAction Stop
@@ -268,7 +272,7 @@ function Install-SingleModule {
         $installError = $_
     }
     finally {
-        if ($resolvedRepository -ne $Repository) {
+        if ($resolvedRepository -and $resolvedRepository -ne $Repository) {
             try {
                 $null = Unregister-PSRepository -Name $resolvedRepository -ErrorAction Stop
                 Write-Host "🧹 Removed temporary repository $resolvedRepository" -ForegroundColor DarkCyan

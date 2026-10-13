@@ -2,7 +2,7 @@
 title: Managing the HVE Core Plugin Manifest
 description: Maintain the single HVE Core plugin and VSIX membership through the canonical manifest
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords:
   - marketplace
@@ -14,7 +14,7 @@ estimated_reading_time: 6
 
 ## Manifest Authority
 
-Root `plugin.json` is the operational distribution definition for the one `hve-core` plugin and VSIX. Its `agents`, `commands`, `rules`, and `skills` arrays are deterministic repository-relative outputs of tracked path and license classification under `.github`. The fixed `hooks` value includes the telemetry hook.
+Root `plugin.json` is the operational distribution definition for the one `hve-core` plugin and VSIX. Its `agents`, `commands`, `rules`, and `skills` arrays are deterministic repository-relative outputs of tracked path and license classification under `.github`. The manifest declares no `hooks` field.
 
 `.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.`. It owns locator metadata only and must not repeat component arrays or package policy.
 
@@ -32,11 +32,11 @@ A manifest path maps directly to canonical source beneath `.github`. Do not add 
 
 Manifest synchronization discovers every convention-matching tracked artifact. Plugin validation checks deterministic ordering, locator parity and containment, declared component coverage, and hooks.
 
-Stable and PreRelease have the same complete components. They differ only in source ownership, cadence, version, and VS Code Marketplace channel behavior.
+Stable and PreRelease are VS Code extension channels with the same complete components. They differ only in source ownership, cadence, version, and VS Code Marketplace channel behavior. The Copilot CLI plugin has one registration that tracks `main`.
 
 ## Hooks
 
-The plugin manifest includes the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure its location manually. Hooks are not copied during selective installation.
+The plugin manifest declares no hooks. Hooks are not copied during selective installation.
 
 ## Validation and Package Staging
 

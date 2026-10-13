@@ -193,6 +193,81 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
         }
     }
 
+    Context 'Dismissed alerts still detected' {
+        BeforeEach {
+            $openJson = '[{"number":1,"state":"open","rule":{"id":"js/xss","description":"Cross-site scripting vulnerability","security_severity_level":"medium","severity":"warning"},"tool":{"name":"CodeQL"},"html_url":"https://github.com/owner/repo/security/code-scanning/1","most_recent_instance":{"state":"open","location":{"path":"src/render.js"},"message":{"text":"Unsanitized input rendered"}}}]'
+            $script:dismissedJson = '[]'
+            $script:ghCalls = [System.Collections.Generic.List[string]]::new()
+            $callsRef = $script:ghCalls
+            $dismissedRef = [ref]$script:dismissedJson
+            ${Function:gh} = {
+                if ($args[0] -eq 'auth') { $global:LASTEXITCODE = 0; return 'Logged in' }
+                $callsRef.Add([string]$args[1])
+                $global:LASTEXITCODE = 0
+                if ($args[1] -like '*state=dismissed*') { return $dismissedRef.Value }
+                return $openJson
+            }.GetNewClosure()
+        }
+
+        It 'Includes a dismissed alert whose instance on the branch is still open' {
+            $script:dismissedJson = '[{"number":7,"state":"dismissed","dismissed_reason":"false positive","rule":{"id":"py/unused-global-variable","description":"Unused global variable","severity":"note"},"tool":{"name":"CodeQL"},"html_url":"https://github.com/owner/repo/security/code-scanning/7","most_recent_instance":{"state":"open","location":{"path":"src/state.py"},"message":{"text":"The global variable is not used."}}}]'
+
+            $parsed = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json -IncludeDismissedStillDetected | ConvertFrom-Json
+
+            $parsed | Should -HaveCount 2
+            $parsed[0].RuleId | Should -Be 'js/xss'
+            $parsed[0].PSObject.Properties.Name | Should -Not -Contain 'Kind'
+            $parsed[1].RuleId | Should -Be 'py/unused-global-variable'
+            $parsed[1].Kind | Should -Be 'dismissed-still-detected'
+            $parsed[1].DismissedReason | Should -Be 'false positive'
+            $parsed[1].AffectedPaths | Should -Be 'src/state.py'
+            $script:ghCalls | Should -Contain 'repos/testorg/testrepo/code-scanning/alerts?state=dismissed&ref=refs/heads/main&per_page=100'
+        }
+
+        It 'Includes a dismissed alert whose branch instance reports dismissed' {
+            $script:dismissedJson = '[{"number":8,"state":"dismissed","dismissed_reason":"won''t fix","rule":{"id":"py/overly-permissive-file","description":"Overly permissive file permissions","security_severity_level":"high"},"tool":{"name":"CodeQL"},"most_recent_instance":{"state":"dismissed","location":{"path":"tests/test_perm.py"}}}]'
+
+            $parsed = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json -IncludeDismissedStillDetected | ConvertFrom-Json
+
+            ($parsed | Where-Object Kind -eq 'dismissed-still-detected').RuleId | Should -Be 'py/overly-permissive-file'
+        }
+
+        It 'Excludes a dismissed alert whose instance on the branch is fixed' {
+            $script:dismissedJson = '[{"number":9,"state":"dismissed","dismissed_reason":"false positive","rule":{"id":"py/clear-text-logging-sensitive-data","description":"Clear-text logging of sensitive information","security_severity_level":"high"},"tool":{"name":"CodeQL"},"most_recent_instance":{"state":"fixed","location":{"path":"src/output.py"}}},{"number":10,"state":"dismissed","dismissed_reason":"false positive","rule":{"id":"py/unused-global-variable","description":"Unused global variable"},"tool":{"name":"CodeQL"},"most_recent_instance":{"state":"open","location":{"path":"src/state.py"}}}]'
+
+            $parsed = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json -IncludeDismissedStillDetected | ConvertFrom-Json
+            $dismissed = @($parsed | Where-Object Kind -eq 'dismissed-still-detected')
+
+            $dismissed | Should -HaveCount 1
+            $dismissed[0].RuleId | Should -Be 'py/unused-global-variable'
+        }
+
+        It 'Adds nothing when there are no dismissed alerts' {
+            $rawJson = (& $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json -IncludeDismissedStillDetected | Out-String).Trim()
+
+            $parsed = $rawJson | ConvertFrom-Json
+            $rawJson | Should -BeLike '`[*`]'
+            @($parsed) | Should -HaveCount 1
+            @($parsed | Where-Object Kind) | Should -HaveCount 0
+        }
+
+        It 'Does not query dismissed alerts unless the option is set' {
+            & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json | Out-Null
+
+            $script:ghCalls | Should -Not -Contain 'repos/testorg/testrepo/code-scanning/alerts?state=dismissed&ref=refs/heads/main&per_page=100'
+            @($script:ghCalls | Where-Object { $_ -like '*state=dismissed*' }) | Should -HaveCount 0
+        }
+
+        It 'Shows the Kind column in table output when the option is set' {
+            $script:dismissedJson = '[{"number":7,"state":"dismissed","rule":{"id":"py/unused-global-variable","description":"Unused global variable"},"tool":{"name":"CodeQL"},"most_recent_instance":{"state":"open","location":{"path":"src/state.py"}}}]'
+
+            $table = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -IncludeDismissedStillDetected | Out-String
+
+            $table | Should -Match 'Kind'
+            $table | Should -Match 'dismissed-still-detected'
+        }
+    }
+
     Context 'Error propagation' {
         It 'Throws when gh api returns non-zero exit code' {
             ${Function:gh} = {

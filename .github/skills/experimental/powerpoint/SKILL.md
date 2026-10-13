@@ -122,6 +122,8 @@ Text contract: markdown-like list lines in `textbox.text` and `shape.text` are i
 
 See the [content.yaml template](content-yaml-template.md) for the full template, supported element types, supported shape types, and usage instructions.
 
+Accessibility: each slide's `title` becomes the slide title that screen readers announce and navigate by, `alt` or `decorative` on an image sets its alternative text, and `metadata.language` in `style.yaml` sets the document and text language.
+
 ## Complex Drawings (`content-extra.py`)
 
 When a slide requires complex drawings that cannot be expressed through `content.yaml` element definitions, create a `content-extra.py` file in the slide folder. The `render()` function signature is fixed. The build script calls it after placing standard `content.yaml` elements.

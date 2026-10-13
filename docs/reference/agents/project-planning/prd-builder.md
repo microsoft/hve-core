@@ -34,8 +34,12 @@ Use PRD Builder to develop measurable product requirements from a product brief,
 
 1. Select `PRD Builder` and provide the product problem, intended users, scope, and available references.
 2. Answer focused questions as the agent establishes the document and refines requirements. Describe observable behavior rather than prescribing code or internal implementation steps.
-3. Review citations, conflicts, quality findings, and open questions before final approval.
-4. Request a backlog handoff separately when ready. Document completion does not create tracker items or implement the product.
+3. If Discover or Build has a named external evidence gap, review the proposed bounded `rpi-research` segment before confirming it. The agent records a disposition for each material finding and keeps unresolved evidence as an open question or unvalidated assumption.
+4. For substantial Build authoring with dependencies or interruption risk, the agent may propose an `rpi-plan` segment, followed by a linked `rpi-implement` segment after you accept the Plan. These segments organize drafting without replacing the PRD template or quality review.
+5. Review citations, conflicts, quality findings, and open questions before final approval.
+6. Request a backlog handoff separately when ready. Document completion does not create tracker items or implement the product.
+
+Proposed RPI segments are recorded in session state as `rpiInvocations`; existing `researchReceipts` remain available. A Research, Plan, or Implement segment does not approve requirements or clear a phase gate.
 
 ## Example usage
 

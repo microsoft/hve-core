@@ -3,8 +3,5 @@
   "position": 2,
   "collapsible": true,
   "collapsed": true,
-  "link": {
-    "type": "doc",
-    "id": "hve-guide/lifecycle/README"
-  }
+  "link": null
 }

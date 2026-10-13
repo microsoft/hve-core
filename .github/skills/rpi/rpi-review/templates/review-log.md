@@ -78,11 +78,11 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Review scope: {{full_task_or_bounded_pxx_or_pxx_txx_scope}}
 * Assessed boundary: {{requirements_scope_architecture_acceptance_dependencies_and_evidence_boundary_summary}}
 * Review depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
-* Candidate identity: {{task_id_scope_and_artifact_revision_or_hash}}
+* Candidate identity: {{task_id_scope_and_artifact_revision}}
 * Review execution: {{started_Complete_Partial_or_Blocked}}
 * Helper use: {{none_or_helper_use_with_what_was_verified_at_the_cited_evidence}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Plan critique: .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
+* Plan critique: {{latest_plan_critique_path_or_skipped}}
 * Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 * Other evidence considered: {{research_or_validation_evidence}}
 
@@ -107,8 +107,8 @@ Cover every material requirement and in-scope completion claim, grouping rows on
 
 ### Critique and Follow-Up Assessment
 
-* Latest critique dispositions: {{coverage_summary}}
-* Material revisions: {{discovery_plan_detail_reconciliation_and_fresh_planning_and_critique_coverage}}
+* Latest critique dispositions: {{coverage_summary_or_critique_skipped}}
+* Material revisions: {{discovery_plan_detail_reconciliation_and_any_follow_up_critique}}
 * Dependent-work pause assessment: {{no_early_resumption_or_gap}}
 * Justification assessment: {{supported_or_unresolved_rationale}}
 

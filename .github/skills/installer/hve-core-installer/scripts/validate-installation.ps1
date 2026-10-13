@@ -31,7 +31,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $valid = $true
-foreach ($dir in @("$basePath/.github/agents", "$basePath/.github/prompts", "$basePath/.github/instructions", "$basePath/.github/skills")) {
+foreach ($dir in @("$basePath/.github/agents", "$basePath/.github/instructions", "$basePath/.github/skills")) {
     if (-not (Test-Path $dir)) { $valid = $false; Write-Host "❌ Missing: $dir" }
     else { Write-Host "✅ Found: $dir" }
 }

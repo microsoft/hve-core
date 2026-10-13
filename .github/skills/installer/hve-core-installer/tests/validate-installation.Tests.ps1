@@ -42,7 +42,7 @@ Describe 'validate-installation' -Tag 'Unit' {
     Context 'Directory validation' {
         It 'Passes when all required directories exist' {
             $installDir = Join-Path $script:testRoot 'install'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
+            foreach ($dir in @('.github/agents', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 

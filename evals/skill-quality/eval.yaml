@@ -15,11 +15,36 @@ environment:
   skills:
     - ../../.github/skills/security/owasp-top-10
     - ../../.github/skills/security/owasp-cicd
+    - ../../.github/skills/project-planning/architecture-review
 
 scoring:
   threshold: 0.7
 
 stimuli:
+  - name: architecture-review-record-and-authority
+    prompt: |
+      A System Architecture Reviewer confirmed reliability and cost as the
+      focus areas for review `synthetic-queue`. Research recommends option A
+      with evidence `E1`, but final budget approval is unresolved. Explain what
+      the Architecture Review Record must preserve before an ADR or RPI Plan
+      handoff, and who retains decision authority.
+    tags:
+      category: skill-quality
+      skill: architecture-review
+    graders:
+      - type: output-matches
+        name: architecture-review-record-content
+        config:
+          pattern: "(?is)(scope).*(evidence|E1).*(reliability).*(cost).*(trade-off|recommendation).*(limit|unresolved)"
+      - type: output-matches
+        name: architecture-review-preserves-authority
+        config:
+          pattern: "(?is)(ADR|user).*(remain|retain|authoritative|authority).*(review record|Architecture Review Record).*(not|does not|without)"
+      - type: output-matches
+        name: architecture-review-requires-record-first-handoff
+        config:
+          pattern: "(?is)(persist|complete|write).*(Architecture Review Record|record).*(before).*(ADR|RPI Plan|handoff)"
+
   - name: owasp-top10-identify-injection
     prompt: |
       I have a web application that constructs SQL queries by concatenating

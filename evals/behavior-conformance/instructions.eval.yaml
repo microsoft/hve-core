@@ -1,3 +1,4 @@
+# cspell:ignore duplicat occlu
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
@@ -235,6 +236,47 @@ stimuli:
         config:
           pattern: "(?i)stop|halt|do not proceed|cannot proceed|before the mutation"
 
+  - name: instruction-skill-security-model-conformance
+    prompt: |
+      You are adding a `LOGGER.warning(...)` call that includes an HTTP
+      response to `.github/skills/experimental/mural/scripts/mural/_transport.py`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), which of the skill's security references must you read before
+      editing, and how must the logged values be handled?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/skill-security-model.instructions.md
+          dest: .github/instructions/skill-security-model.instructions.md
+        - src: ../../.github/skills/experimental/mural/SKILL.md
+          dest: .github/skills/experimental/mural/SKILL.md
+        - src: ../../.github/skills/experimental/mural/SECURITY.md
+          dest: .github/skills/experimental/mural/SECURITY.md
+        - src: ../../.github/skills/experimental/mural/references/log-hygiene.md
+          dest: .github/skills/experimental/mural/references/log-hygiene.md
+        - src: ../../.github/skills/experimental/mural/scripts/mural/_transport.py
+          dest: .github/skills/experimental/mural/scripts/mural/_transport.py
+    tags:
+      category: behavior-conformance
+      instruction: skill-security-model
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-skill-security-model-path
+        config:
+          pattern: '(?i)skill-security-model'
+      - type: output-matches
+        name: instruction-skill-security-model-security-md
+        config:
+          pattern: '(?i)SECURITY\.md'
+      - type: output-matches
+        name: instruction-skill-security-model-log-hygiene
+        config:
+          pattern: '(?i)log-hygiene'
+      - type: output-matches
+        name: instruction-skill-security-model-redaction
+        config:
+          pattern: '(?i)_redact|redact|mask'
+
   - name: instruction-markdown-conformance
     prompt: |
       You are creating or editing a Markdown file at `docs/example.md`. Which
@@ -295,6 +337,33 @@ stimuli:
         name: instruction-copilot-tracking-conformance-scope-language
         config:
           pattern: "(?i)tracking|artifact|research|plan|details|changes|review"
+
+  - name: instruction-copilot-tracking-location-conformance
+    prompt: |
+      You are resuming an RPI task in a multi-root VS Code workspace. The
+      first folder is the product repository and the second folder is an
+      HVE Core clone. The session also offers a host session folder for
+      intermediate files, and `.copilot-tracking/` is gitignored. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), where should the tracking files live, and how should you
+      search for the existing task state?
+    tags:
+      category: behavior-conformance
+      instruction: copilot-tracking-location
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: tracking-location-instruction
+        config:
+          pattern: "(?i)copilot-tracking-location"
+      - type: output-matches
+        name: tracking-location-primary-root
+        config:
+          pattern: "(?is)(first|primary|default).{0,80}(folder|root)"
+      - type: output-matches
+        name: tracking-location-include-ignored
+        config:
+          pattern: "(?i)include.{0,20}(ignored|excluded)|includeIgnoredFiles|no-ignore"
 
   - name: instruction-pull-request-conformance
     prompt: |
@@ -974,6 +1043,30 @@ stimuli:
         config:
           pattern: "(?i)\\bthis\\b|data\\s+source|singleton|azurerm_client_config"
 
+  - name: instruction-bicep-parameter-conformance
+    prompt: |
+      You are adding an `adminPassword` parameter to the Bicep template at
+      `infra/main.bicep`. Which `.github/instructions/**/*.instructions.md`
+      file applies (cite its path) and what does it require for sensitive
+      parameters and required parameter defaults?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/coding-standards/bicep/bicep.instructions.md
+          dest: .github/instructions/coding-standards/bicep/bicep.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: bicep
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-bicep-parameter-conformance-applyto-evidence
+        config:
+          pattern: "(?i)\\*\\.bicep|bicep\\.instructions\\.md|bicep/"
+      - type: output-matches
+        name: instruction-bicep-parameter-conformance-scope-language
+        config:
+          pattern: "(?i)@secure|secure\\(\\)|\\bno\\s+defaults?\\b"
+
   - name: instruction-pptx-conformance
     prompt: |
       You are building a PowerPoint deck and authoring content under
@@ -1264,24 +1357,6 @@ stimuli:
         config:
           pattern: '(?i)(standard|status|naming|adr|template)'
 
-  - name: instruction-graphify-conformance
-    prompt: |
-      You are preparing a planning note that should connect to the graphify guidance package.
-      Which instruction file applies and what kind of evidence does it help organize?
-    tags:
-      category: behavior-conformance
-      instruction: graphify
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-graphify-conformance-instruction-attribution
-        config:
-          pattern: '(?i)(graphify|evidence|graph|knowledge)'
-      - type: output-matches
-        name: instruction-graphify-conformance-scope-language
-        config:
-          pattern: '(?i)(graph|evidence|knowledge|planning)'
-
   - name: instruction-vex-generation-conformance
     prompt: |
       You are drafting an AI-assisted VEX assessment for a vulnerability finding.
@@ -1368,6 +1443,30 @@ stimuli:
         config:
           pattern: '(?i)(emoji|Generated by Copilot|footer)'
 
+  - name: instruction-git-merge-conformance
+    prompt: |
+      You are merging `origin/main` into a feature branch and Git reports
+      conflicts in two files. Which instruction file defines the repository's
+      merge and rebase conventions, and what does it require for preparing the
+      workspace, resolving each conflict, and publishing the result?
+    tags:
+      category: behavior-conformance
+      instruction: git-merge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-git-merge-conformance-instruction-named
+        config:
+          pattern: '(?i)(git-merge|Git Merge and Rebase Conventions|merge and rebase conventions)'
+      - type: output-matches
+        name: instruction-git-merge-conformance-resolution-contract
+        config:
+          pattern: '(?i)(clean working tree|git status|stash|each conflicted file|rationale|git add|diff --staged)'
+      - type: output-matches
+        name: instruction-git-merge-conformance-no-push-guardrail
+        config:
+          pattern: '(?i)(never push|not push|no push|force-push|without pushing|publish)'
+
   - name: instruction-standards-mapping-conformance
     prompt: |
       You are mapping an Azure component under
@@ -1393,44 +1492,50 @@ stimuli:
         config:
           pattern: '(?i)(rpi-research|WAF|CAF|MCSB|version[-\s]sensitive|runtime lookup)'
 
-  - name: instruction-mural-seeding-patterns-conformance
+  - name: skill-mural-seeding-patterns-conformance
     prompt: |
-      You are extending `.github/agents/rai-planning/rai-planner.agent.md`
+      You are extending the RAI Planner's Mural board flow
       to seed a Mural board from a completed RAI Phase 2 source artifact.
-      Which `.github/instructions/**/*.instructions.md` file applies (cite
-      its path) and what does it require for duplicating the source board
+      Which `mural` skill reference applies (cite its file name) and what
+      does it require for duplicating the source board
       instead of fabricating coordinates, inheriting placeholder anchor
       geometry, probing an area before bulk population, and responding when
       a probe reports a widget hidden behind a sibling panel?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-seeding-patterns
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: instruction-mural-seeding-patterns-conformance-appl-60bd0669
         config:
-          pattern: "(?i)dt-coach\\.agent\\.md|rai-planner\\.agent\\.md|ux-ui-designer\\.agent\\.md"
+          pattern: "(?i)seeding-patterns\\.md|Mural Seeding Patterns"
       - type: output-matches
         name: instruction-mural-seeding-patterns-conformance-scop-6a413577
         config:
-          pattern: "(?i)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order"
+          pattern: "(?is)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order|^(?=.*duplicat)(?=.*(?:inherit|placeholder|anchor))(?=.*\\bprobe)(?=.*(?:occlu|stack|sibling))"
 
-  - name: instruction-mural-bootstrap-scope-conformance
+  - name: skill-mural-bootstrap-scope-conformance
     prompt: |
       You are preparing a fresh-session Mural sequence that instantiates a
-      template and then creates widgets. Which Mural bootstrap instruction
+      template and then creates widgets. Which Mural skill bootstrap reference
       applies, what exact local doctor scope arguments are required, and what
       must happen when the verdict is not `ready`?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-bootstrap
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-bootstrap-instruction
         config:
-          pattern: '(?i)mural-bootstrap\.instructions\.md|Mural Bootstrap'
+          pattern: '(?i)bootstrap\.md|Mural Bootstrap'
       - type: output-matches
         name: mural-bootstrap-scopes
         config:
@@ -1438,23 +1543,26 @@ stimuli:
       - type: output-matches
         name: mural-bootstrap-not-ready-stop
         config:
-          pattern: '(?i)(not ready|non-ready|needs_setup|needs_login|needs_scope_upgrade|wrong_cwd|deps_missing).{0,160}(pause|stop|do not proceed)'
+          pattern: '(?is)(not\W{0,3}ready|non-ready|other than\W{0,3}ready|any other verdict|only if[^.]{0,40}ready|otherwise|needs_setup|needs_login|needs_scope_upgrade|wrong_cwd|deps_missing).{0,160}(pause|stop|do not proceed|don[\x27\u2019]t (?:continue|proceed|instantiate|create|run))'
 
-  - name: instruction-mural-human-writeback-conformance
+  - name: skill-mural-human-writeback-conformance
     prompt: |
       A Mural extractor is preparing metadata writeback to an existing widget
-      that lacks the `authored-by-ai` tag. Which Mural instructions govern the
+      that lacks the `authored-by-ai` tag. Which Mural skill references govern the
       operation, which fields are permitted, and what explicit override would
       be required before updating a human-authored widget?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-human-record
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-writeback-instructions
         config:
-          pattern: '(?i)(mural-human-record|mural-writeback-hygiene)\.instructions\.md'
+          pattern: '(?i)(human-record|writeback-hygiene)\.md'
       - type: output-matches
         name: mural-writeback-fields
         config:
@@ -1462,28 +1570,31 @@ stimuli:
       - type: output-matches
         name: mural-writeback-default-protection
         config:
-          pattern: '(?i)(MuralHumanAuthoredProtected|protected by default|fail).{0,160}--force-human'
+          pattern: '(?is)(MuralHumanAuthoredProtected|(?<!\bnot\s)\bprotected\b|blocked\b[^.]{0,40}\bby default|fail).{0,200}--force-human|--force-human.{0,200}(MuralHumanAuthoredProtected|block|reject)'
       - type: output-matches
         name: mural-writeback-no-old-flag
         config:
           pattern: '(?i)--require-author-tag'
           negate: true
 
-  - name: instruction-mural-writeback-hygiene-conformance
+  - name: skill-mural-writeback-hygiene-conformance
     prompt: |
       A Mural extractor is closing a workshop and needs to update an existing
       AI-authored widget whose tags have drifted from the saved manifest. Which
-      Mural instruction governs writeback, which fields may change, and how
+      Mural skill reference governs writeback, which fields may change, and how
       must reserved tags and participant-added tags be protected?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-writeback-hygiene
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-hygiene-instruction
         config:
-          pattern: '(?i)mural-writeback-hygiene\.instructions\.md|Mural Writeback Hygiene'
+          pattern: '(?i)writeback-hygiene\.md|Mural Writeback Hygiene'
       - type: output-matches
         name: mural-hygiene-stable-fields
         config:
@@ -1495,31 +1606,34 @@ stimuli:
       - type: output-matches
         name: mural-hygiene-additive-repair
         config:
-          pattern: '(?is)(_ensure_tag_manifest|repair-tag-drift|tag manifest).{0,160}(additive|does not strip|missing)'
+          pattern: '(?is)(_ensure_tag_manifest|repair-tag-drift|manifest|drift).{0,300}(additive|does not strip|not (?:be )?stripped|without stripping|missing)|(additive\w*|not (?:be )?stripped).{0,160}(repair-tag-drift|tag manifest)'
 
-  - name: instruction-mural-destination-routing-conformance
+  - name: skill-mural-destination-routing-conformance
     prompt: |
       A Mural extractor has a hydrated synthetic action record but the caller
-      has supplied neither a destination nor an action intent. Which Mural
-      destination instruction applies, what must the dispatcher do, and what
+      has supplied neither a destination nor an action intent. Which Mural skill
+      destination reference applies, what must the dispatcher do, and what
       evidence limit applies to a local test-double result?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-destinations
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-destination-instruction
         config:
-          pattern: '(?i)mural-destinations\.instructions\.md|Mural Destinations'
+          pattern: '(?i)destinations\.md|Mural Destinations'
       - type: output-matches
         name: mural-destination-explicit-route
         config:
-          pattern: '(?i)(destination).{0,120}(action intent|create|mutate|append|no-op).{0,160}(no-dispatch|do not dispatch|never guesses)'
+          pattern: '(?is)(destination).{0,160}(intent|create|mutate|append|no-op).{0,200}(no[- ]dispatch|do not dispatch|never guess|not guess|not infer)'
       - type: output-matches
         name: mural-destination-evidence-ceiling
         config:
-          pattern: '(?i)(local test double|LOCAL_TEST_DOUBLE).{0,160}(not|does not).{0,80}(native Mural|real destination|production)'
+          pattern: '(?is)(local test[- ]double|LOCAL_TEST_DOUBLE).{0,400}\b(not|does not)\b.{0,80}(native Mural|real destination|production|destination system|target-system)'
 
   - name: instruction-licensing-posture-conformance
     prompt: |
@@ -1627,50 +1741,122 @@ stimuli:
         config:
           pattern: '(?i)(do not|not|leave|preserve).{0,60}(change|modify|source|record)'
 
-  - name: instruction-hve-core-location-artifact-root-resolution
-    prompt: |
-      An installed HVE Core artifact refers to an operational path beginning
-      with `.github/`, but the consumer workspace does not contain the HVE
-      Core source tree. Which instruction governs path resolution, and what
-      location must be resolved before attempting a workspace-relative lookup?
-    tags:
-      category: behavior-conformance
-      instruction: hve-core-location
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: hve-location-instruction
-        config:
-          pattern: '(?i)hve-core-location\.instructions\.md|HVE Core Location Guidance'
-      - type: output-matches
-        name: hve-location-artifact-root-first
-        config:
-          pattern: '(?is)(artifact root).{0,160}(before|prior).{0,100}(workspace|lookup|resolve)'
-      - type: output-matches
-        name: hve-location-distribution-contexts
-        config:
-          pattern: '(?i)(repository|extension|plugin)'
-
-  - name: instruction-mural-log-hygiene-redaction-boundary
+  - name: skill-mural-log-hygiene-redaction-boundary
     prompt: |
       You are troubleshooting Mural automation and receive a log line that may
       contain an authorization header and an Azure Blob SAS query string.
-      Which instruction governs operator handling, and what may be copied into
+      Which Mural skill reference governs operator handling, and what may be copied into
       chat or a planning artifact?
+    agent_environment:
+      skills:
+        - ../../.github/skills/experimental/mural
     tags:
       category: behavior-conformance
-      instruction: mural-log-hygiene
+      skill: mural
       advisory: "true"
     graders:
       - type: output-matches
         name: mural-log-hygiene-instruction
         config:
-          pattern: '(?i)mural-log-hygiene\.instructions\.md|Mural Log Hygiene'
+          pattern: '(?i)log-hygiene\.md|Mural Log Hygiene'
       - type: output-matches
         name: mural-log-hygiene-no-raw-secrets
         config:
-          pattern: '(?is)(never|must not|do not).{0,120}(raw|authorization|bearer|SAS|token)'
+          pattern: '(?is)(never|must\W{0,4}not|do\W{0,4}not|don[\x27\u2019]t|prohibit\w*|forbid\w*).{0,120}(raw|authorization|bearer|SAS|token)'
       - type: output-matches
         name: mural-log-hygiene-redacted-evidence
         config:
-          pattern: '(?is)(_redact|redact|masked).{0,120}(evidence|log|output|copy)'
+          pattern: '(?is)(_redact|redact|masked).{0,120}(evidence|log|output|copy)|(evidence|log line|output|copy|quote).{0,200}(_redact|redact|masked|sanitiz)'
+
+  - name: instruction-typescript-doc-comments-contract-content
+    prompt: |
+      Apply the staged TypeScript documentation instruction to this exported
+      helper from `src/config/read-config-files.ts`. Show the complete
+      documented code in your reply, not only a file path.
+
+      ```typescript
+      import { existsSync, promises as fs } from 'node:fs';
+      import path from 'node:path';
+
+      export async function readConfigFiles(dir: string, names: string[]): Promise<Map<string, string>> {
+        const root = path.resolve(dir);
+        const result = new Map<string, string>();
+        for (const name of [...names].sort()) {
+          const full = path.resolve(root, name);
+          if (!full.startsWith(root + path.sep)) {
+            throw new Error('Refusing to read outside ' + root + ': ' + name);
+          }
+          if (existsSync(full)) {
+            result.set(name, await fs.readFile(full, 'utf8'));
+          }
+        }
+        return result;
+      }
+      ```
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+          dest: .github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: typescript-doc-comments
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: typescript-doc-comments-block-precedes-declaration
+        config:
+          pattern: '(?s)/\*\*[\s\S]*?\*/\s*export\s+async\s+function\s+readConfigFiles\b'
+      - type: output-matches
+        name: typescript-doc-comments-missing-and-failure-contract
+        config:
+          pattern: '(?is)/\*\*(?=(?:(?!\*/)[\s\S])*?(?:missing|not exist|n.t exist|nonexistent|absent|skip|omit))(?=(?:(?!\*/)[\s\S])*?(?:reject|throw))'
+      - type: output-matches
+        name: typescript-doc-comments-ordering-contract
+        config:
+          pattern: '(?is)/\*\*(?=(?:(?!\*/)[\s\S])*?(?:\bsort|alphabetical|lexicographic|ascending|by name))'
+      - type: output-not-matches
+        name: typescript-doc-comments-no-redundant-type-tags
+        config:
+          pattern: '/\*\*(?:(?!\*/)[\s\S])*?(?:@(?:param|returns?|type|throws)\s*\{(?!@)|@(?:async|private|static)\b)'
+
+  - name: instruction-typescript-doc-comments-coverage-decisions
+    prompt: |
+      Using the staged TypeScript documentation instruction, decide whether
+      each new declaration below needs a documentation block. Answer with one
+      line per letter in the form `X: doc: yes` or `X: doc: no`, followed by a
+      short reason.
+
+      A. An exported `useDebouncedValue(value, delayMs)` hook in
+         `src/hooks/use-debounced-value.ts`, used by many components.
+      B. An exported `renderWithProviders(ui, options)` helper in
+         `test/utils/render.tsx`, imported by most component test files.
+      C. `export declare function parseManifest(text: string): Manifest;` in a
+         hand-written `types/manifest.d.ts`.
+      D. A non-exported `normalizeKey(key: string): string` in
+         `src/cache.ts`; cache lookups rely on it lowercasing the key and
+         removing one leading `@`.
+      E. The `export default defineConfig({ ... })` in `playwright.config.ts`,
+         read only by the test runner.
+      F. An `it('renders the empty state', () => { ... })` callback and a
+         `vi.fn()` mock used only inside that test.
+      G. `export * from './chunk';` in a package `index.ts` barrel.
+      H. `export const HTTP_STATUS_NOT_FOUND = 404;` in `src/http/status.ts`.
+      I. `src/generated/api-client.ts`, regenerated from an OpenAPI document
+         on every build.
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+          dest: .github/instructions/coding-standards/typescript/typescript-doc-comments.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: typescript-doc-comments
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: typescript-doc-comments-required-declarations
+        config:
+          pattern: '(?m)(?=[\s\S]*^[^\w\n]*A\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)(?=[\s\S]*^[^\w\n]*B\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)(?=[\s\S]*^[^\w\n]*C\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)(?=[\s\S]*^[^\w\n]*D\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)'
+      - type: output-matches
+        name: typescript-doc-comments-exempt-declarations
+        config:
+          pattern: '(?m)(?=[\s\S]*^[^\w\n]*E\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*F\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*G\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*H\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*I\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)'

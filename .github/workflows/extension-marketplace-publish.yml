@@ -14,6 +14,16 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      AZURE_CLIENT_ID:
+        description: "Client ID of the federated Azure identity used to publish"
+        required: true
+      AZURE_TENANT_ID:
+        description: "Tenant ID of the federated Azure identity used to publish"
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        description: "Subscription ID for the Azure login"
+        required: true
 
 permissions:
   contents: read
@@ -329,7 +339,7 @@ jobs:
 
       # Publish credentials become active immediately before they are used.
       - name: Azure Login (OIDC)
-        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

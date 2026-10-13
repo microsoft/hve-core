@@ -37,10 +37,60 @@ test.describe('Document navigation', () => {
     expect(results.violations).toEqual([]);
   });
 
+  test('section breadcrumbs on child pages link to the section overview', async ({ page }) => {
+    const cases = [
+      {
+        route: '/hve-core/docs/security/fuzzing',
+        links: { 'Security Documentation': '/hve-core/docs/security/' },
+        plain: ['Reference'],
+      },
+      {
+        route: '/hve-core/docs/getting-started/methods/extension',
+        links: {
+          'Get Started': '/hve-core/docs/getting-started/',
+          'Setup Methods': '/hve-core/docs/getting-started/methods/',
+        },
+        plain: [],
+      },
+      {
+        route: '/hve-core/docs/hve-guide/lifecycle/setup',
+        links: {
+          'HVE Guide': '/hve-core/docs/hve-guide/',
+          Lifecycle: '/hve-core/docs/hve-guide/lifecycle/',
+        },
+        plain: ['Workflows'],
+      },
+    ];
+
+    for (const { route, links, plain } of cases) {
+      await page.goto(route);
+      await waitForHydration(page);
+      const crumbs = page.locator('nav.theme-doc-breadcrumbs');
+
+      for (const [label, href] of Object.entries(links)) {
+        await expect(
+          crumbs.getByRole('link', { name: label, exact: true }),
+          `${route}: "${label}" crumb should link to its overview`,
+        ).toHaveAttribute('href', href);
+      }
+
+      // A crumb without a landing page must not look like a link.
+      for (const label of plain) {
+        await expect(crumbs.getByRole('link', { name: label, exact: true })).toHaveCount(0);
+        const crumb = crumbs.locator('span.breadcrumbs__link', { hasText: label });
+        const [crumbColor, bodyColor] = await crumb.evaluate((element) => [
+          getComputedStyle(element).color,
+          getComputedStyle(document.body).color,
+        ]);
+        expect(crumbColor, `${route}: "${label}" crumb should use body text color`).toBe(bodyColor);
+      }
+    }
+  });
+
   test('pagination navigates to an adjacent doc', async ({ page }) => {
-    // Start from the docs landing page, whose "next" link targets a distinct
-    // adjacent doc (deeper category-index pages can emit a self-referential
-    // next link, which would never change the URL).
+    // Start from the docs landing page and follow its "next" link to an
+    // adjacent doc. Category landing pages are covered separately by the
+    // landing-page pagination check in the sidebar disclosure spec.
     await page.goto('/hve-core/docs/');
     await waitForHydration(page);
 

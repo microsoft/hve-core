@@ -160,6 +160,7 @@ MVE sessions produce a small set of artifacts. Directory placement, filenames, a
 * Vetting: results of applying the vetting criteria and red flag checklist, documenting which criteria pass, which raise concerns, and any mitigations.
 * Experiment design: the technical approach, scope boundaries, timeline estimate, required resources, and success criteria.
 * MVE plan: findings from all other artifacts consolidated into a single plan document suitable for stakeholder review and approval.
+* Outcome: post-execution results interpreted against precommitted criteria, with RPI execution evidence, hypothesis verdicts, and the downstream decision kept separate.
 * Backlog brief: experiment hypotheses and success criteria reformatted into requirements language for backlog managers. Optional, produced only when the user wants to transition the experiment into backlog work items.
 
 ## Experiment design best practices
@@ -215,6 +216,22 @@ These mistakes occur during experiment design and execution. Unlike red flags, w
 * Go: the hypothesis is validated. Proceed to MVP planning, scale the approach, or apply the finding.
 * No-go: the hypothesis is invalidated. Pivot, abandon, or redesign based on what was learned.
 * Adjust: results are mixed or inconclusive. Refine the hypothesis, increase sample size, or address confounding factors and re-run.
+
+### Outcome record
+
+Write `outcome.md` only after the execution Review is available. Bind the exact pre-execution and execution evidence:
+
+* `mve-plan.md` path and SHA-256.
+* RPI Plan path and SHA-256.
+* RPI Changes path and SHA-256.
+* RPI Review path and SHA-256.
+* Precommitted criteria and any post-start divergence.
+* Quantitative results, sample size, confidence, anomalies, and qualitative observations.
+* One hypothesis outcome per hypothesis: `validated`, `invalidated`, `mixed`, `inconclusive`, or `not-evaluable`.
+* The unchanged RPI Review execution and outcome values as separate fields.
+* One downstream decision: `go`, `no-go`, or `adjust`, with rationale and next action.
+
+Never reinterpret an execution status as a hypothesis outcome. A conformant execution may invalidate a hypothesis and still be a successful MVE. Criteria changed after execution begins are divergence and do not replace the committed comparison boundary.
 
 ### When to iterate versus when to stop
 

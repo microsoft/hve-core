@@ -52,6 +52,18 @@ err() {
 # Override with VIDEO_TO_GIF_TIMEOUT (seconds).
 FFMPEG_TIMEOUT="${VIDEO_TO_GIF_TIMEOUT:-600}"
 
+# Script-global so the EXIT trap can still see it after main returns or errexit
+# unwinds the function; a function-local value is out of scope when the trap runs.
+palette_dir=""
+
+cleanup_palette_dir() {
+  if [[ -n "${palette_dir:-}" ]]; then
+    rm -rf "${palette_dir}"
+  fi
+}
+
+trap cleanup_palette_dir EXIT
+
 # Run an external command under a wall-clock bound when a timeout utility is
 # available (coreutils `timeout`, or macOS `gtimeout` from coreutils); otherwise
 # run it unbounded so the skill still functions where neither is installed.
@@ -85,6 +97,11 @@ format_size() {
   fi
 }
 
+# Escape fnmatch metacharacters so a requested filename is matched literally.
+escape_glob() {
+  printf '%s' "$1" | sed 's/[][*?\\]/\\&/g'
+}
+
 # Find file using prefix matching to handle Unicode whitespace mismatches
 # macOS screen recordings use non-breaking spaces (U+00A0) that look like ASCII spaces
 find_by_prefix() {
@@ -96,14 +113,43 @@ find_by_prefix() {
   local base_no_ext="${basename%.*}"
   local ext="${basename##*.}"
   local prefix="${base_no_ext:0:15}"
+  local pattern
+  pattern="$(escape_glob "${prefix}")*.$(escape_glob "${ext}")"
 
   local found_file
   while IFS= read -r -d '' found_file; do
     echo "${found_file}"
     return 0
-  done < <(find "${dir}" -maxdepth 1 -type f -name "${prefix}*.${ext}" -print0 2>/dev/null)
+  done < <(find "${dir}" -maxdepth 1 -type f -name "${pattern}" -print0 2>/dev/null)
 
   return 1
+}
+
+# Print an absolute path with the directory resolved physically; the file itself
+# need not exist. Paths whose directory does not exist are printed unchanged.
+resolve_path() {
+  local target="$1"
+  local dir base
+  dir="$(dirname -- "${target}")"
+  base="$(basename -- "${target}")"
+  if [[ -d "${dir}" ]]; then
+    printf '%s/%s' "$(cd -- "${dir}" && pwd -P)" "${base}"
+  else
+    printf '%s' "${target}"
+  fi
+}
+
+# Compare two paths, ignoring case on macOS where the default filesystem is
+# case-insensitive.
+same_path() {
+  local left right
+  left="$(resolve_path "$1")"
+  right="$(resolve_path "$2")"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    left="$(printf '%s' "${left}" | tr '[:upper:]' '[:lower:]')"
+    right="$(printf '%s' "${right}" | tr '[:upper:]' '[:lower:]')"
+  fi
+  [[ "${left}" == "${right}" ]]
 }
 
 # Search for file in workspace and common directories
@@ -306,6 +352,11 @@ Searched: current directory, workspace root, ~/Movies (or ~/Videos), ~/Downloads
     output_file="${input_file%.*}.gif"
   fi
 
+  # Refuse to overwrite the source, for example the default output of a .gif input.
+  if same_path "${input_file}" "${output_file}"; then
+    err "Output path is the same as the input path: ${input_file}. Specify a different --output."
+  fi
+
   # Validate dithering algorithm
   case "${dither}" in
     sierra2_4a|floyd_steinberg|bayer|none) ;;
@@ -397,11 +448,9 @@ Searched: current directory, workspace root, ~/Movies (or ~/Videos), ~/Downloads
 
     # Create the palette inside a private, unpredictable temp directory (mode 0700)
     # rather than a predictable /tmp/palette_$$.png, which is exposed to a symlink
-    # or pre-creation race on a world-writable /tmp. The EXIT trap removes it even
-    # on failure or timeout.
-    local palette_dir
+    # or pre-creation race on a world-writable /tmp. The EXIT trap removes it on
+    # success, failure, and timeout.
     palette_dir=$(mktemp -d "${TMPDIR:-/tmp}/video-to-gif.XXXXXX") || err "Failed to create temporary directory"
-    trap 'rm -rf "${palette_dir}"' EXIT
     local palette_file="${palette_dir}/palette.png"
 
     # Pass 1: Generate palette

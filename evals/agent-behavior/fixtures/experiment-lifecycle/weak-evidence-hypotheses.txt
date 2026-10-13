@@ -1,0 +1,22 @@
+<!-- markdownlint-disable-file -->
+# MVE Hypotheses: Synthetic Returns Triage
+
+Synthetic preservation marker: EV07-WEAK-HYP-PRESERVE-001
+
+## H1 (priority 1)
+
+We believe an automated rule set reduces manual handling for the synthetic returns
+queue. We will test this by replaying a synthetic queue sample through a rule
+prototype. We will know we are right or wrong when median handling steps per item
+fall by at least 30 percent against the synthetic baseline.
+
+Rationale: assumed link to the draft problem statement. The problem statement is
+not agreed, so this hypothesis inherits that uncertainty.
+
+## H2 (priority 2)
+
+We believe reviewers disagree about triage categories. We will test this by scoring
+one synthetic sample with two reviewers. We will know we are right or wrong when
+category agreement falls below 0.6 on that sample.
+
+Rationale: assumed, not observed. No reviewer session has taken place.

@@ -1,0 +1,6 @@
+## Level Contracts
+
+| Level | Audience | Target duration    | Capture fidelity |
+|-------|----------|--------------------|------------------|
+| L100  | New      | about five minutes | deck             |
+| L999  | Unknown  | 6 to 4 minutes     | none             |
