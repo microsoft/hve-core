@@ -5,6 +5,7 @@ abou
 activati
 agen
 aggreg
+anomal
 answe
 appl
 appr
@@ -32,6 +33,7 @@ conforman
 consolidat
 conv
 creat
+criteri
 decli
 decompos
 delegat

@@ -27,7 +27,7 @@ stimuli:
       bounded brief, and who still owns the architecture recommendation.
       Name the skill you would activate, and list the brief's questions,
       evidence criteria and scope.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -51,7 +51,7 @@ stimuli:
       The required current compatibility lookup is unresolved and
       `rpi-research` is unavailable. Can you still recommend one architecture
       from model memory? State what proceeds and what stops.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -89,7 +89,7 @@ stimuli:
       Architecture Review Record or make an ADR decision yet. Research posture:
       `focused`. The staged options file is the only source; explicit limit: one
       research cycle.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -150,7 +150,7 @@ stimuli:
       Architecture Review Record for synthetic date `2026-09-21` with a
       disposition for both focus areas, then prepare the existing ADR Creation
       and RPI Plan handoffs from that record.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
           dest: .github/copilot-instructions.md

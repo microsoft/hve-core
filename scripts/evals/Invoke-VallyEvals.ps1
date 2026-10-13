@@ -148,6 +148,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/EvalSpecSchema.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 if (-not (Get-Module -Name powershell-yaml)) {
@@ -737,6 +738,36 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
     }
 
+    $parsedSpec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $specAbs -Raw -ErrorAction Stop)
+    if ($parsedSpec -isnot [System.Collections.IDictionary]) {
+        throw "Eval spec '$specRel' must be a mapping before source validation."
+    }
+    $repoRelativeSpecPath = [System.IO.Path]::GetRelativePath($resolvedRoot, $specAbs).Replace('\', '/')
+    $sourceErrors = @(Test-EvalSpecSources -Spec $parsedSpec -SpecPath $repoRelativeSpecPath -RepoRoot $resolvedRoot)
+    if ($sourceErrors.Count -gt 0) {
+        foreach ($sourceError in $sourceErrors) {
+            Write-CIAnnotation -Level Error -File $repoRelativeSpecPath -Message "$($sourceError.field): $($sourceError.message)"
+        }
+        $specResults[$runKey] = @{
+            specPath         = $specAbs
+            specRel          = $specRel
+            tag              = $tag
+            exitCode         = 1
+            runDir           = $null
+            assertionsPassed = 0
+            assertionsFailed = 0
+            durationMs       = 0
+            trials           = 0
+            resultsPath      = $null
+            moderationInput  = $inputModeration
+            moderationOutput = $null
+            status           = 'invalid-spec-source'
+        }
+        $failedSpecs++
+        if ($FailFast) { break }
+        continue
+    }
+
     $tagBanner = if (-not [string]::IsNullOrWhiteSpace($tag)) { " --tag $tag" } else { '' }
     Write-Host "Running: vally eval --eval-spec $specRel --model $Model$tagBanner" -ForegroundColor Cyan
     $result = Invoke-VallySpec `
@@ -877,9 +908,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         # not wholly advisory; an all-advisory spec surfaces but never blocks merge.
         if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0 -and -not $specAllAdvisory) {
             if ($erroredTrials -gt 0) {
-                # The nonzero exit is explained solely by transient errored trials that
-                # persisted after retries; surface it but do not gate the build.
-                Write-CIAnnotation -Level Warning -File $specRel -Message "$erroredTrials trial(s) errored (transient executor failure) with no grader failures after retries; not promoting to CI failure"
+                # The nonzero exit is explained solely by errored trials that persisted
+                # after retries; evidence-integrity validation still decides the gate.
+                Write-CIAnnotation -Level Warning -File $specRel -Message "$erroredTrials trial(s) errored after retries with no grader failures; final evidence-integrity validation decides whether this spec blocks CI"
             }
             else {
                 $promote = $true
@@ -1186,6 +1217,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
 $hardFailStatuses = @(
     'fail',
     'evaluator-error',
+    'invalid-spec-source',
     'integrity-failure',
     'content-moderation-input',
     'content-moderation-error-input',
