@@ -51,9 +51,10 @@ BeforeAll {
             [ordered]@{ stimulusName = 'synthetic'; trialIndex = $trialIndex; itemIdDigest = $null; identitySource = 'stimulus-trial-index'
                 executionStatus = 'success'; score = 1.0; thresholdPassed = $true; allGradersPassed = $true; gradeStatus = 'success'
                 endReason = 'completed'; configuredTurns = 1; observedTurns = 1; responseTurns = 1; wallTimeMs = 5
-                graders = @([ordered]@{ name = 'check'; graderType = 'program'; score = 1.0; passed = $true; status = 'success' }) }
+                errorCategory = 'none'; elapsedMs = 5000; observedShellTools = @('bash', 'powershell')
+                graders = @([ordered]@{ name = 'check'; graderType = 'program'; score = 1.0; passed = $true; status = 'success'; failureCodes = $null }) }
         })
-        return [ordered]@{ schemaVersion = '1.0.0'; runKey = $RunKey; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+        return [ordered]@{ schemaVersion = '2.0.0'; runKey = $RunKey; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
             inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
             versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1
             attempts = @([ordered]@{ runKey = $RunKey; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'success'
@@ -123,6 +124,73 @@ Describe 'Merge-EvalExecution.ps1' -Tag 'Unit' {
         $trial.observedTurns | Should -Be 1
         $trial.responseTurns | Should -Be 1
         $trial.wallTimeMs | Should -Be 5
+    }
+    It 'preserves <Case> execution facts through authoritative fan-in' -ForEach @(
+        @{ Case = 'observed shell and elapsed'; Elapsed = 5000; Shells = @('bash', 'powershell'); Expected = 'bash,powershell' }
+        @{ Case = 'empty shell'; Elapsed = 0; Shells = @(); Expected = '' }
+        @{ Case = 'unavailable'; Elapsed = $null; Shells = $null; Expected = '<null>' }
+    ) {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $source = $summaries[0].perSpec[0].diagnostics.attempts[0].trials[0]
+        $source.elapsedMs = $Elapsed
+        $source.observedShellTools = $null
+        if ($null -ne $Shells) { $source.observedShellTools = [string[]]$Shells }
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+        $spec = @($result.perSpec | Where-Object specPath -eq 'alpha.yaml')[0]
+        $spec.integrity.integrityPassed | Should -BeTrue
+        $trial = $spec.diagnostics.attempts[0].trials[0]
+        $trial.errorCategory | Should -Be 'none'
+        $trial.elapsedMs | Should -Be $Elapsed
+        if ($Expected -eq '<null>') { ($null -eq $trial.observedShellTools) | Should -BeTrue }
+        else { ($trial.observedShellTools -join ',') | Should -BeExactly $Expected }
+        ($null -eq $trial.graders[0].failureCodes) | Should -BeTrue
+    }
+    It 'handles outcome field codes through authoritative fan-in for <Case>' -ForEach @(
+        @{ Case = 'independent Review fields'; Codes = @('missing-review-execution', 'missing-review-outcome'); Valid = $true }
+        @{ Case = 'concurrent fields'; Codes = @('missing-sample-size', 'review-outcome-mismatch', 'wrong-decision'); Valid = $true }
+        @{ Case = 'unsorted codes'; Codes = @('wrong-decision', 'missing-sample-size'); Valid = $false }
+        @{ Case = 'retired generic code'; Codes = @('missing-field'); Valid = $false }
+    ) {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $grader = 'experiment-outcome-separates-status-and-verdict'
+        $diagnostics = $summaries[0].perSpec[0].diagnostics
+        $diagnostics.expectedStimuli.synthetic.graders[0].name = $grader
+        $diagnostics.selectionDigest = Get-AgentEvalValueDigest -Value $diagnostics.expectedStimuli
+        foreach ($trial in $diagnostics.attempts[0].trials) {
+            $trial.allGradersPassed = $false
+            $trial.graders[0].name = $grader
+            $trial.graders[0].passed = $false
+            $trial.graders[0].score = 0.0
+            $trial.graders[0].failureCodes = [string[]]$Codes
+        }
+        if (-not $Valid) {
+            { Merge-EvalSummaryValue -Plan $plan -Summary $summaries } | Should -Throw '*invalid diagnostic contract*'
+            return
+        }
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+        $spec = @($result.perSpec | Where-Object specPath -eq 'alpha.yaml')[0]
+        $spec.integrity.integrityPassed | Should -BeTrue
+        $spec.integrity.allChecksPassed | Should -BeFalse
+        foreach ($trial in $spec.diagnostics.attempts[0].trials) {
+            ($trial.graders[0].failureCodes -join ',') | Should -BeExactly ($Codes -join ',')
+        }
+    }
+    It 'rejects a poisoned execution fact <Case>' -ForEach @(
+        @{ Case = 'raw error text' }
+        @{ Case = 'forged failure code' }
+        @{ Case = 'unknown error category' }
+    ) {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $trial = $summaries[0].perSpec[0].diagnostics.attempts[0].trials[0]
+        switch ($Case) {
+            'raw error text' { $trial['errorText'] = 'synthetic-private-error' }
+            'forged failure code' { $trial.graders[0].failureCodes = @('state-mismatch') }
+            'unknown error category' { $trial.errorCategory = 'synthetic-private' }
+        }
+        { Merge-EvalSummaryValue -Plan $plan -Summary $summaries } | Should -Throw '*invalid diagnostic contract*'
     }
     It 'rejects a self-consistent reduced population against the canonical plan' {
         $plan = New-FanInPlan

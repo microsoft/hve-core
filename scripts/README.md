@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-10-05
+ms.date: 2026-10-12
 ms.topic: reference
 keywords:
   - powershell
@@ -22,6 +22,7 @@ scripts/
 ├── agentic-workflows/ Runtime support for compiled Agentic Workflows
 ├── lib/             Shared artifact and CI helpers
 ├── evals/           Eval runner and moderation automation
+├── ci/              Workflow helper scripts for CI jobs
 ├── release/         Release version normalization and assurance helpers
 ├── devcontainer/    Devcontainer lockfile and change log validation
 ├── docs/            Asset documentation generator, helper modules, and templates
@@ -79,6 +80,41 @@ that invalid similarity value. Malformed JSON, missing semantic fields,
 incomplete or noncontiguous evidence pairs, unsupported enum values, duplicate
 candidate calls, and missing deferred reasons remain candidate-local contract
 errors.
+
+## CI
+
+The `ci/` directory contains helper scripts that GitHub Actions workflows call directly.
+
+| Script                            | Purpose                                                                            |
+|-----------------------------------|------------------------------------------------------------------------------------|
+| `Resolve-WorkflowChangeRange.ps1` | Resolve a verified immutable change range, or select full validation               |
+| `install-skill-node-deps.sh`      | Install committed Node lockfiles under a skill directory without lifecycle scripts |
+
+`Resolve-WorkflowChangeRange.ps1` is called by the `pr-validation.yml` change-range job.
+It derives the range base from commit structure for the triggering event and checks it
+before any lane trusts it:
+
+* `pull_request`: the base is the first parent of the checked-out test-merge commit, which
+  must have exactly two parents with the second equal to the pull request head.
+* `merge_group`: the base and head come from the merge-group payload.
+* `workflow_dispatch`: the base is the merge base of the checked-out commit and
+  `origin/<default branch>`.
+
+An unknown event or any failed check returns `full` mode with empty commit IDs. The script
+writes `mode`, `base-sha`, and `head-sha` as GitHub Actions step outputs.
+
+| Parameter             | Purpose                                                         |
+|-----------------------|-----------------------------------------------------------------|
+| `-EventName`          | GitHub Actions event that triggered the calling workflow        |
+| `-BaseSha`            | Candidate base commit ID, used for `merge_group` events         |
+| `-HeadSha`            | Candidate head commit ID, which must equal the checked-out HEAD |
+| `-PullRequestHeadSha` | Pull request head commit ID, used for `pull_request` events     |
+| `-DefaultBranch`      | Repository default branch name, used for `workflow_dispatch`    |
+| `-RepoRoot`           | Repository directory containing the checked-out head commit     |
+
+`install-skill-node-deps.sh` reads `SEARCH_ROOT` from the environment, runs `npm ci --ignore-scripts --omit=optional`
+for each `package-lock.json` beneath it, and refuses to run more than `MAX_INSTALLS` (default 5) installs. Set `INCLUDE_OPTIONAL=1` to keep optional dependencies.
+It runs in reusable workflows that grant `id-token: write`, so it never executes dependency lifecycle scripts.
 
 ## Release
 
@@ -275,6 +311,7 @@ Pester test organization matching the scripts structure.
 | Directory            | Tests For                                 |
 |----------------------|-------------------------------------------|
 | `agentic-workflows/` | Compiled Agentic Workflow runtime support |
+| `ci/`                | CI helper tests                           |
 | `lib/`               | Shared helper tests                       |
 | `devcontainer/`      | Devcontainer validation tests             |
 | `extension/`         | Extension packaging tests                 |

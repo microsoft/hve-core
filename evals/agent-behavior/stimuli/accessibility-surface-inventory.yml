@@ -55,7 +55,7 @@ stimuli:
       distinguished by stable semantic or CSS selectors. Explain the inventory
       status and whether an accepted `a11y-runtime.config.json` may be emitted.
       All routes and source text are benign synthetic inputs.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
           dest: .github/copilot-instructions.md
