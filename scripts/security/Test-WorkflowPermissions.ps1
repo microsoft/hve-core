@@ -18,10 +18,12 @@
       absent             absent      repository or organization default    violation
       permissions: {}    absent      none                                  pass
       populated          absent      inherits the workflow grant           violation
-      any                present     job-declared                          pass
+      {} or populated    present     job-declared                          pass
 
     Workflows without any permissions declaration rely on the repository's default
     token permissions, which can cause OpenSSF Scorecard Token-Permissions failures.
+    Such a workflow is reported once at the file level whatever its jobs declare,
+    because a job added later without its own block would still inherit that default.
     A job that omits its own block under a populated workflow-level block silently
     inherits that grant, which is neither explicit nor auditable.
 

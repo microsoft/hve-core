@@ -78,7 +78,9 @@ jobs:
 | absent               | absent          | repository or organization default | violation |
 | `permissions: {}`    | absent          | none                               | pass      |
 | populated            | absent          | inherits the workflow grant        | violation |
-| any                  | present         | job-declared                       | pass      |
+| `{}` or populated    | present         | job-declared                       | pass      |
+
+A workflow with no workflow-level block is a file-level violation whatever its jobs declare, because a job added later without its own block would still inherit the repository or organization default.
 
 Two breadth rules apply in addition to that matrix:
 
