@@ -11,11 +11,12 @@
 
 .DESCRIPTION
     Parses GitHub Actions workflow YAML files and classifies each workflow, then
-    each of its jobs, against a four-state model:
+    each of its jobs, against this classification matrix:
 
       Workflow-level     Job-level   Effective scopes                      Verdict
       -----------------  ----------  ------------------------------------  ---------
       absent             absent      repository or organization default    violation
+      absent             present     job-declared                          violation
       permissions: {}    absent      none                                  pass
       populated          absent      inherits the workflow grant           violation
       {} or populated    present     job-declared                          pass
@@ -33,7 +34,7 @@
     declare its own block still receives what it declares, because job-level
     permissions replace the workflow-level set rather than being capped by it.
 
-    Two breadth rules apply on top of the four-state model:
+    Two breadth rules apply on top of the classification matrix:
 
       * A populated workflow-level block may grant nothing beyond 'contents: read'.
         Any other scope, including read scopes such as 'security-events: read', is

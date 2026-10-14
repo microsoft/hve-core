@@ -280,6 +280,7 @@ scope it holds rather than inheriting the workflow grant implicitly.
 | Workflow-level block | Job-level block | Effective scopes                   | Verdict   |
 |----------------------|-----------------|------------------------------------|-----------|
 | absent               | absent          | repository or organization default | violation |
+| absent               | present         | job-declared                       | violation |
 | `permissions: {}`    | absent          | none                               | pass      |
 | populated            | absent          | inherits the workflow grant        | violation |
 | `{}` or populated    | present         | job-declared                       | pass      |
