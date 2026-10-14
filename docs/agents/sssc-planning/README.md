@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-13
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -130,10 +130,16 @@ The SSSC Planner supports four entry modes. Select the SSSC Planner agent and de
 
 ## Prerequisites
 
-* The SSSC Planner agent installed and enabled in your VS Code workspace.
-* The `rpi-research` skill available for WAF and CAF runtime lookups.
+* HVE Core installed in one of these hosts:
+  * VS Code with GitHub Copilot Chat and the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD/From-BRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 * For From-Security-Plan mode: A completed Security Planner state file.
+
+Either install delivers the SSSC Planner with the skills it uses, including `supply-chain-security` for assessment references and `rpi-research` for WAF and CAF runtime lookups.
+There is no separate security extension.
+In Copilot CLI, plugin instructions are not auto-applied, and the SSSC Planner relies on its auto-applied instructions; see [Instructions are not auto-applied from plugins](../../getting-started/methods/cli-plugins.md#instructions-are-not-auto-applied-from-plugins).
+To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the SSSC Planner agent, the `supply-chain-security` and `rpi-research` skills (plus `vex` for VEX planning), the security `sssc-planner` instructions, and the shared `coaching-patterns` and `disclaimer-language` instructions.
 
 ## Next Steps
 

@@ -128,10 +128,15 @@ The Security Planner supports two entry modes. Select the Security Planner agent
 
 ## Prerequisites
 
-* VS Code with GitHub Copilot Chat enabled.
-* The [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`) installed, or the `hve-core` Copilot CLI plugin. Either one delivers the Security Planner agent along with the skills and agents it hands off to; there is no separate security extension. To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md).
-* The `rpi-research` skill available for standards lookups in Phase 3.
+* HVE Core installed in one of these hosts:
+  * VS Code with GitHub Copilot Chat and the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
+
+Either install delivers the Security Planner with the skills it uses, including `rpi-research` for Phase 3 standards lookups, and the RAI Planner and SSSC Planner it hands off to.
+There is no separate security extension.
+In Copilot CLI, plugin instructions are not auto-applied; see [Instructions are not auto-applied from plugins](../../getting-started/methods/cli-plugins.md#instructions-are-not-auto-applied-from-plugins).
+To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the Security Planner agent, the `security-planning`, `owasp-top-10`, `owasp-llm`, `rpi-research`, and `backlog-templates` skills, the security `identity` and `standards-mapping` instructions, and the shared `coaching-patterns` and `disclaimer-language` instructions.
 
 ## Next Steps
 

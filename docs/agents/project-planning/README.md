@@ -3,7 +3,7 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-10-13
 ms.topic: concept
 keywords:
   - project planning
@@ -93,9 +93,9 @@ See the [Security Planning](../security/README.md) guide for the workflow, opera
 
 ## Prerequisites
 
-* VS Code with the GitHub Copilot Chat extension installed
-* Agent definition files from the `project-planning` collection deployed to `.github/agents/`
-* For Security Planner: agent definition files from the `security` collection
+* HVE Core installed in one of these hosts. Either install delivers every agent on this page, including Security Planner. To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md).
+  * VS Code with GitHub Copilot Chat and the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For BRD/PRD builders: a writable `.copilot-tracking/` directory for session state persistence
 * For diagram generation: the [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) works with infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
 
