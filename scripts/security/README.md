@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-10-08
+ms.date: 2026-10-13
 ms.topic: reference
 keywords:
   - powershell
@@ -280,9 +280,15 @@ scope it holds rather than inheriting the workflow grant implicitly.
 | Workflow-level block | Job-level block | Effective scopes                   | Verdict   |
 |----------------------|-----------------|------------------------------------|-----------|
 | absent               | absent          | repository or organization default | violation |
+| absent               | present         | job-declared                       | violation |
 | `permissions: {}`    | absent          | none                               | pass      |
 | populated            | absent          | inherits the workflow grant        | violation |
-| any                  | present         | job-declared                       | pass      |
+| `{}` or populated    | present         | job-declared                       | pass      |
+
+A workflow with no workflow-level block is reported once at the file level
+(`MissingPermissions`) whatever its jobs declare, because a job added later
+without its own block would still inherit the repository or organization
+default.
 
 A job beneath an empty workflow-level block that declares no block of its own
 inherits an empty set and therefore holds no scope, so that case passes. An empty
