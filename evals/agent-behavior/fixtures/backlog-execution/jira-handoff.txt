@@ -1,0 +1,24 @@
+# Handoff - Inspection Sync Stories
+
+* **Project**: ATLAS
+* **Autonomy**: partial
+
+## Planned Operations
+
+### Create
+
+* [ ] JI001 - Create - `{{TEMP-1}}` - Story: Save in-progress checklists offline
+
+### Comment
+
+* [ ] JI002 - Comment - `ATLAS-212` - Link the offline checklist design notes
+
+### Transition
+
+* [ ] JI003 - Transition - `ATLAS-212` - Move to `In Progress`
+
+## Planning Files
+
+* `artifact-analysis.md`
+* `issues-plan.md`
+* `planning-log.md`

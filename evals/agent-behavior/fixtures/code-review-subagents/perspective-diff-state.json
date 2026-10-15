@@ -1,0 +1,52 @@
+{
+  "branch": "feature/refund-helpers",
+  "base": "main",
+  "reviewTarget": {
+    "kind": "branch_diff",
+    "provider": "unknown",
+    "id": null,
+    "url": null,
+    "baseRef": "main",
+    "headRef": "feature/refund-helpers",
+    "headSha": "4f1c2d9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e"
+  },
+  "reviewProfile": "full",
+  "changeBrief": "Add refund calculation and lookup helpers, a refund button, and refund documentation.",
+  "files": [
+    "src/billing/refunds.py",
+    "web/refund-button.html",
+    "docs/refunds.md"
+  ],
+  "untrackedFiles": [],
+  "extensions": [
+    ".py",
+    ".html",
+    ".md"
+  ],
+  "diffPatchPath": ".copilot-tracking/pr/feature-refund-helpers.diff",
+  "findingsFolder": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/",
+  "recommendedDepth": "standard",
+  "depthTier": "standard",
+  "depthRationale": "Synthetic three-file change with billing and lookup hotspots.",
+  "selectedPerspectives": [
+    "functional",
+    "standards",
+    "security",
+    "accessibility",
+    "readiness"
+  ],
+  "task": {
+    "kind": "perspective_batch",
+    "outputs": {
+      "functional": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/functional-findings.json",
+      "standards": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/standards-findings.json",
+      "security": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/security-findings.json",
+      "accessibility": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/accessibility-findings.json",
+      "readiness": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/readiness-findings.json"
+    }
+  },
+  "hotspots": [
+    "src/billing/refunds.py"
+  ],
+  "outOfScope": []
+}

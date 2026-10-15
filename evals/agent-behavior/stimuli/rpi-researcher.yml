@@ -1,18 +1,52 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the parent's bounded brief names a staged workspace,
+  # and the graders require exact excerpts that exist only in staged files.
   - name: rpi-researcher-return-only-suggestions
     prompt: |
-      You found three documentation pages that answer the caller's bounded
-      question. The caller owns the research artifact at
-      `.copilot-tracking/research/2026-07-17/cache-policy-research.md`. You
-      may return suggestions only and write nothing. Do not call tools.
-      Return exactly `Return source pointers; write nothing.`
+      Bounded question from the calling agent: which container image reference
+      does the release pipeline push, and which package script runs
+      automatically before `npm publish`?
+      Scope: this workspace only (`.github/workflows/`, `package.json`,
+      `Dockerfile`); no external sources.
+      Return kind: source pointers with exact contract excerpts.
+      The caller owns
+      `.copilot-tracking/research/2026-09-21/release-pipeline-research.md` and
+      records findings there itself.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/subagents/rpi-researcher.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/sssc-smoke/release-workflow.fixture
+          dest: .github/workflows/release.yml
+        - src: fixtures/sssc-smoke/package.fixture.json
+          dest: package.json
+        - src: fixtures/sssc-smoke/Dockerfile.fixture
+          dest: Dockerfile
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: bounded-source-pointers
     graders:
       - type: output-matches
-        name: return-only-no-write
+        name: researcher-locates-image-excerpt
         config:
-          pattern: '(?i)^\s*return\s+source\s+pointers;\s*write\s+nothing[.!]?\s*$'
+          pattern: '(?is)^(?=[\s\S]*\.github/workflows/release\.ya?ml\b)(?=[\s\S]*ghcr\.io/contoso/release-widget:\$\{\{\s*github\.ref_name\s*\}\})'
+      - type: output-matches
+        name: researcher-locates-prepublish-excerpt
+        config:
+          pattern: '(?is)^(?=[\s\S]*\bprepublishOnly\b)(?=[\s\S]*\bnpm run build\b)(?![\s\S]*\bprepublishOnly\b[^.\n]{0,30}\b(?:is\s+not|isn[\x27\u2019]t)\s+(?:defined|present|declared)\b)'
+      - type: system-event
+        name: researcher-workspace-unchanged
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: researcher-context
+        config:
+          required:
+            - hve.context.composed

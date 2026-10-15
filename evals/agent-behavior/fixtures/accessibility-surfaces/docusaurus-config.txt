@@ -1,0 +1,14 @@
+module.exports = {
+  title: 'Contoso Docs',
+  url: 'https://docs.contoso.example',
+  baseUrl: '/',
+  presets: [['classic', { docs: { routeBasePath: 'docs' }, blog: false }]],
+  themeConfig: {
+    navbar: {
+      items: [
+        { to: '/docs/intro', label: 'Docs' },
+        { href: 'https://github.com/contoso/docs', label: 'GitHub' },
+      ],
+    },
+  },
+};

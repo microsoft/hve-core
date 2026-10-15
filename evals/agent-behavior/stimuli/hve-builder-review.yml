@@ -1,14 +1,53 @@
+# cspell:ignore delet bfabricat bhallucinat
 stimuli:
+  # Re-measured in place: a setup command derives the maintenance candidate
+  # from the staged baseline by removing its missing-file rule, so the finding
+  # depends on comparing staged files rather than on the brief.
   - name: hve-builder-review-return-only-suggestions
     prompt: |
-      HVE Builder Reviewer returns severity-graded findings as suggestions and
-      never edits the artifact it reviews. Which agent applies the corrections?
-      Do not call tools. Return exactly `parent`.
+      Review this maintenance edit for the HVE Builder parent.
+      Target: `.github/prompts/three-bullet-summary.prompt.md`. Stated purpose:
+      summarize a supplied file in exactly three bullet points.
+      Pre-edit baseline: `evidence/three-bullet-summary-baseline.md`.
+      Requirements catalog: `hve-builder/references/requirements-catalog.md`.
+      Review rubric: `hve-builder/references/review-rubric.md`.
+      Boundary: read-only; review only the target against its baseline.
+      Review shape: full review of the candidate.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/subagents/hve-builder-review.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/three-bullet-summary.txt
+          dest: evidence/three-bullet-summary-baseline.md
+        - src: fixtures/three-bullet-summary.txt
+          dest: .github/prompts/three-bullet-summary.prompt.md
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+      commands:
+        - node -e "const fs=require('fs');const p='.github/prompts/three-bullet-summary.prompt.md';const t=fs.readFileSync(p,'utf8');const i=t.indexOf(' If no readable');if(i<0)process.exit(1);fs.writeFileSync(p,t.slice(0,i)+'\n');"
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: maintenance-removal-review
     graders:
       - type: output-matches
-        name: parent-owns-corrections
+        name: builder-review-flags-unjustified-removal
         config:
-          pattern: '(?i)^\s*[''"`]?(?:the\s+)?(?:calling\s+|hve\s+builder\s+)?parent[''"`]?[.!]?\s*$'
+          pattern: '(?is)^(?=[\s\S]*\b(?:remov\w*|drop\w*|delet\w*|lost|no\s+longer|omit\w*)\b)(?=[\s\S]*(?:\binvent\w*|\bask(?:s|ing)?\b[^.\n]{0,40}\b(?:for|user)\b|\bno\s+(?:readable\s+)?(?:target\s+)?file\b|\bunreadable\b|\bmissing[\s-]+(?:input|file|target)\b|\bfabricat\w*|\bhallucinat\w*))(?![\s\S]*\b(?:removal|change|edit)\b[^.\n]{0,40}\b(?:is|was|looks)\s+(?:fine|acceptable|justified|safe|harmless|correct)\b)(?![\s\S]*\bFindings\W{0,6}None within the reviewed boundary\b)'
+      - type: output-matches
+        name: builder-review-advisory-revise-verdict
+        config:
+          pattern: '(?is)^(?=[\s\S]*\bSuggested verdict\b[^\n]{0,80}\bRevise\b)(?=[\s\S]*\badvisory\b)(?![\s\S]*\bSuggested verdict\b[^\n]{0,40}\bPass\b)'
+      - type: system-event
+        name: builder-review-workspace-unchanged
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: builder-review-context
+        config:
+          required:
+            - hve.context.composed

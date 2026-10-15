@@ -1359,6 +1359,322 @@ function Invoke-VallyCompareShard {
     return $attempts.ToArray()
 }
 
+$script:AgentBehaviorExecutorName = 'hve-agent-behavior'
+$script:VallyMandatoryCodes = @(
+    'context-contradictory', 'context-duplicate', 'context-missing', 'context-unassessed',
+    'filesystem-contradictory', 'filesystem-duplicate', 'filesystem-invalid', 'filesystem-missing',
+    'filesystem-unavailable', 'filesystem-violated', 'policy-mismatch', 'stimulus-mismatch',
+    'trajectory-missing', 'trials-incomplete', 'unknown-host-event'
+)
+
+function Get-VallyAgentBehaviorRuntime {
+    <#
+    .SYNOPSIS
+    Resolves the host executor and mandatory-evidence requirements for the agent-behavior suite.
+
+    .DESCRIPTION
+    Returns `$null` for every spec other than the repository's agent-behavior suite, so
+    unrelated suites keep the stock executor. For the agent-behavior suite, returns the
+    executor plugin arguments, the measurement policy digest the host stamps on its events,
+    and the per-stimulus mandatory requirements declared by policy identity. Legacy
+    entries carry no mandatory requirement and are reported as unassessed.
+
+    .OUTPUTS
+    [System.Collections.Specialized.OrderedDictionary] or `$null`.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$SpecPath,
+        [string]$RepoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
+    )
+
+    $suite = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'evals/agent-behavior/eval.yaml'))
+    if (-not [string]::Equals([IO.Path]::GetFullPath($SpecPath), $suite, [StringComparison]::OrdinalIgnoreCase)) { return $null }
+
+    $pluginPath = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'scripts/evals/agent-behavior-executor.mjs'))
+    $policyPath = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'evals/agent-behavior/measurement-policy.json'))
+    foreach ($required in @($pluginPath, $policyPath)) {
+        if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Agent-behavior runtime file '$required' is missing." }
+    }
+    $policy = Get-Content -LiteralPath $policyPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+    $requirements = [ordered]@{}
+    foreach ($name in @($policy['stimuli'].Keys | Sort-Object)) {
+        $entry = $policy['stimuli'][$name]
+        $measurement = [string]$entry['measurement']
+        if ($measurement -cnotin @('candidate', 'enforced')) { continue }
+        $requires = @(
+            if ([string]$entry['class'] -ceq 'agent-contract') { 'context' }
+            if ($entry.Contains('filesystem')) { 'filesystem' }
+        )
+        $requirements[$name] = [ordered]@{
+            measurement   = $measurement
+            authoritative = [bool]$entry['authoritative']
+            gating        = $measurement -ceq 'enforced' -and [bool]$entry['authoritative']
+            requires      = [string[]]$requires
+        }
+    }
+
+    return [ordered]@{
+        executor     = $script:AgentBehaviorExecutorName
+        pluginPath   = $pluginPath
+        policyPath   = $policyPath
+        policySha256 = (Get-FileHash -LiteralPath $policyPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        arguments    = @('--executor-plugin', $pluginPath, '--executor', $script:AgentBehaviorExecutorName)
+        stimuli      = $requirements
+    }
+}
+
+function Get-VallyMandatoryTrialOutcome {
+    <#
+    .SYNOPSIS
+    Evaluates one trial's host-owned evidence against its mandatory requirements.
+
+    .DESCRIPTION
+    Reads only `system` trajectory events in the reserved `hve.` namespace, which the
+    host executor writes after removing delegate events in that namespace. Status
+    precedence is violated, unavailable, integrity, then passed. A trial without a
+    trajectory is `unobserved`, so transient executor errors remain retryable while
+    the aggregate still fails when the selected attempt lacks complete evidence.
+
+    .OUTPUTS
+    [System.Collections.Specialized.OrderedDictionary] `@{ status; codes }`.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][AllowNull()]$Trajectory,
+        [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Requirement,
+        [Parameter(Mandatory = $true)][string]$StimulusName,
+        [Parameter(Mandatory = $true)][string]$PolicySha256
+    )
+
+    $codes = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+    if ($null -eq $Trajectory -or $Trajectory -isnot [pscustomobject] -or -not $Trajectory.PSObject.Properties['events']) {
+        [void]$codes.Add('trajectory-missing')
+        return [ordered]@{ status = 'unobserved'; codes = [string[]]@($codes) }
+    }
+
+    $hostEvents = @(
+        foreach ($trajectoryEvent in @($Trajectory.events)) {
+            if ($trajectoryEvent -isnot [pscustomobject] -or -not $trajectoryEvent.PSObject.Properties['type'] -or
+                $trajectoryEvent.type -cne 'system' -or -not $trajectoryEvent.PSObject.Properties['data'] -or
+                $trajectoryEvent.data -isnot [pscustomobject] -or -not $trajectoryEvent.data.PSObject.Properties['eventType'] -or
+                $trajectoryEvent.data.eventType -isnot [string] -or -not $trajectoryEvent.data.eventType.StartsWith('hve.', [StringComparison]::Ordinal)) { continue }
+            $trajectoryEvent.data
+        }
+    )
+    $known = @('hve.context.composed', 'hve.context.unassessed', 'hve.filesystem.passed', 'hve.filesystem.violated', 'hve.filesystem.unavailable')
+    if (@($hostEvents | Where-Object { $_.eventType -cnotin $known }).Count -gt 0) { [void]$codes.Add('unknown-host-event') }
+
+    $checkIdentity = {
+        param($Data)
+        $details = if ($Data.PSObject.Properties['details'] -and $Data.details -is [pscustomobject]) { $Data.details } else { $null }
+        if ($null -eq $details -or -not $details.PSObject.Properties['policySha256'] -or [string]$details.policySha256 -cne $PolicySha256) { [void]$codes.Add('policy-mismatch') }
+        if ($null -eq $details -or -not $details.PSObject.Properties['stimulus'] -or [string]$details.stimulus -cne $StimulusName) { [void]$codes.Add('stimulus-mismatch') }
+        return $details
+    }
+
+    $status = 'passed'
+    if ($Requirement['requires'] -contains 'context') {
+        $context = @($hostEvents | Where-Object { $_.eventType -clike 'hve.context.*' })
+        if ($context.Count -eq 0) { [void]$codes.Add('context-missing') }
+        elseif ($context.Count -gt 1) { [void]$codes.Add('context-duplicate') }
+        else {
+            $details = & $checkIdentity $context[0]
+            if ($context[0].eventType -cne 'hve.context.composed') { [void]$codes.Add('context-unassessed') }
+            elseif ($null -eq $details -or -not $details.PSObject.Properties['assessed'] -or $details.assessed -ne $true) { [void]$codes.Add('context-contradictory') }
+        }
+    }
+    if ($Requirement['requires'] -contains 'filesystem') {
+        $filesystem = @($hostEvents | Where-Object { $_.eventType -clike 'hve.filesystem.*' })
+        if ($filesystem.Count -eq 0) { [void]$codes.Add('filesystem-missing') }
+        elseif ($filesystem.Count -gt 1) { [void]$codes.Add('filesystem-duplicate') }
+        else {
+            $details = & $checkIdentity $filesystem[0]
+            $verdict = $filesystem[0].eventType.Substring('hve.filesystem.'.Length)
+            if ($verdict -cnotin @('passed', 'violated', 'unavailable')) { [void]$codes.Add('filesystem-invalid') }
+            elseif ($null -eq $details -or -not $details.PSObject.Properties['status'] -or [string]$details.status -cne $verdict) { [void]$codes.Add('filesystem-contradictory') }
+            elseif ($verdict -ceq 'violated') { $status = 'violated'; [void]$codes.Add('filesystem-violated') }
+            elseif ($verdict -ceq 'unavailable') { $status = 'unavailable'; [void]$codes.Add('filesystem-unavailable') }
+        }
+    }
+    if ($status -ceq 'passed' -and $codes.Count -gt 0) { $status = 'integrity' }
+    return [ordered]@{ status = $status; codes = [string[]]@($codes) }
+}
+
+function Read-VallyMandatoryTrials {
+    <#
+    .SYNOPSIS
+    Reads mandatory host evidence for every configured trial in one run directory.
+
+    .DESCRIPTION
+    Shared by the PR runner and the agent matrix so both apply one evidence parser.
+    Only stimuli that carry a mandatory requirement are returned; malformed records are
+    left to `Read-VallyResultsJsonl` record-issue accounting.
+
+    .OUTPUTS
+    [object[]] Records of `@{ attempt; stimulusName; trialIndex; status; codes }`.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory = $true)][AllowNull()][AllowEmptyString()][string]$RunDir,
+        [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Runtime,
+        [int]$Attempt = 1
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RunDir) -or -not (Test-Path -LiteralPath $RunDir -PathType Container)) { return @() }
+    $jsonl = Get-ChildItem -LiteralPath $RunDir -Filter 'results.jsonl' -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $jsonl) { return @() }
+
+    $records = [System.Collections.Generic.List[object]]::new()
+    foreach ($line in Get-Content -LiteralPath $jsonl.FullName -Encoding utf8) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try { $obj = $line | ConvertFrom-Json -Depth 100 } catch { continue }
+        if ($obj -isnot [pscustomobject]) { continue }
+        if ($obj.PSObject.Properties['type'] -and -not [string]::IsNullOrWhiteSpace([string]$obj.type) -and [string]$obj.type -cne 'trial-result') { continue }
+        $trajectory = if ($obj.PSObject.Properties['trajectory']) { $obj.trajectory } else { $null }
+        $name = $null
+        if ($obj.PSObject.Properties['stimulus'] -and $obj.stimulus -is [string]) { $name = [string]$obj.stimulus }
+        elseif ($trajectory -is [pscustomobject] -and $trajectory.PSObject.Properties['stimulus'] -and $trajectory.stimulus -is [pscustomobject] -and
+            $trajectory.stimulus.PSObject.Properties['name']) { $name = [string]$trajectory.stimulus.name }
+        if ([string]::IsNullOrWhiteSpace($name) -or -not $Runtime.stimuli.Contains($name)) { continue }
+        $outcome = Get-VallyMandatoryTrialOutcome -Trajectory $trajectory -Requirement $Runtime.stimuli[$name] -StimulusName $name -PolicySha256 $Runtime.policySha256
+        $records.Add([ordered]@{
+                attempt      = $Attempt
+                stimulusName = $name
+                trialIndex   = if ($obj.PSObject.Properties['trialIndex'] -and $obj.trialIndex -is [ValueType] -and $obj.trialIndex -isnot [bool]) { [int]$obj.trialIndex } else { $null }
+                status       = $outcome.status
+                codes        = $outcome.codes
+            })
+    }
+    return @($records)
+}
+
+function Get-VallyMandatoryOutcome {
+    <#
+    .SYNOPSIS
+    Aggregates mandatory trial evidence across every attempt into a versioned outcome.
+
+    .DESCRIPTION
+    Violations, unavailable observations and malformed evidence from any attempt are
+    retained, so a later passing retry cannot erase them. Completeness is judged on the
+    selected attempt: every configured trial must carry passing evidence. Enforced
+    authoritative entries gate; candidate and advisory failures are reported and block
+    promotion. The numerical score and aggregate verdict are untouched.
+
+    .OUTPUTS
+    [System.Collections.Specialized.OrderedDictionary]
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Runtime,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Trials,
+        [Parameter(Mandatory = $true)][int]$SelectedAttempt,
+        [Parameter(Mandatory = $true)][System.Collections.IDictionary]$ExpectedStimuli
+    )
+
+    $stimuli = [ordered]@{}
+    $gatingFailures = 0
+    $candidateFailures = 0
+    foreach ($name in @($ExpectedStimuli.Keys | Sort-Object)) {
+        if (-not $Runtime.stimuli.Contains($name)) { continue }
+        $requirement = $Runtime.stimuli[$name]
+        $own = @($Trials | Where-Object { $_.stimulusName -ceq $name })
+        $selected = @($own | Where-Object { $_.attempt -eq $SelectedAttempt })
+        $expected = [int]$ExpectedStimuli[$name].runs
+        $codes = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+        foreach ($trial in $own) { foreach ($code in @($trial.codes)) { if ($trial.status -cne 'unobserved') { [void]$codes.Add($code) } } }
+        $count = { param([string]$State) @($own | Where-Object { $_.status -ceq $State }).Count }
+        $violated = & $count 'violated'
+        $unavailable = & $count 'unavailable'
+        $integrity = & $count 'integrity'
+        $selectedPassed = @($selected | Where-Object { $_.status -ceq 'passed' }).Count
+        if ($selectedPassed -lt $expected -and $violated + $unavailable + $integrity -eq 0) { [void]$codes.Add('trials-incomplete') }
+        $status = if ($violated -gt 0) { 'violated' }
+        elseif ($unavailable -gt 0) { 'unavailable' }
+        elseif ($integrity -gt 0 -or $selectedPassed -lt $expected) { 'integrity' }
+        else { 'passed' }
+        if ($status -cne 'passed') {
+            if ($requirement.gating) { $gatingFailures++ } else { $candidateFailures++ }
+        }
+        $stimuli[$name] = [ordered]@{
+            measurement    = $requirement.measurement
+            authoritative  = $requirement.authoritative
+            gating         = $requirement.gating
+            requires       = $requirement.requires
+            expectedTrials = $expected
+            observedTrials = $own.Count
+            selectedPassed = $selectedPassed
+            violated       = $violated
+            unavailable    = $unavailable
+            integrity      = $integrity
+            unobserved     = & $count 'unobserved'
+            status         = $status
+            codes          = [string[]]@($codes)
+        }
+    }
+
+    return [ordered]@{
+        schemaVersion     = '1.0.0'
+        executor          = $Runtime.executor
+        policySha256      = $Runtime.policySha256
+        status            = if ($stimuli.Count -eq 0) { 'not-applicable' } elseif ($gatingFailures -gt 0) { 'failed' } else { 'passed' }
+        gatingFailures    = $gatingFailures
+        candidateFailures = $candidateFailures
+        promotionBlocked  = $candidateFailures -gt 0
+        stimuli           = $stimuli
+    }
+}
+
+function Test-VallyMandatoryEvidence {
+    <#
+    .SYNOPSIS
+    Validates a persisted mandatory outcome, recomputing its gate from per-stimulus records.
+
+    .DESCRIPTION
+    Used at fan-in so a summary cannot claim acceptance with missing, malformed or
+    internally inconsistent mandatory evidence. When `-Required` is set, an absent
+    outcome is an integrity failure rather than an implicit pass.
+
+    .OUTPUTS
+    [hashtable] `@{ contractValid; gatingFailures; candidateFailures; passed }`.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [AllowNull()]$Mandatory,
+        [switch]$Required
+    )
+
+    $invalid = @{ contractValid = $false; gatingFailures = 0; candidateFailures = 0; passed = $false }
+    if ($null -eq $Mandatory) {
+        if ($Required) { return $invalid }
+        return @{ contractValid = $true; gatingFailures = 0; candidateFailures = 0; passed = $true }
+    }
+    $read = {
+        param($Object, [string]$Name)
+        if ($Object -is [System.Collections.IDictionary]) { if ($Object.Contains($Name)) { return $Object[$Name] } else { return $null } }
+        if ($Object -is [pscustomobject] -and $Object.PSObject.Properties[$Name]) { return $Object.$Name }
+        return $null
+    }
+    if ([string](& $read $Mandatory 'schemaVersion') -cne '1.0.0') { return $invalid }
+    $stimuli = & $read $Mandatory 'stimuli'
+    $entries = if ($stimuli -is [System.Collections.IDictionary]) { @($stimuli.Values) }
+    elseif ($stimuli -is [pscustomobject]) { @($stimuli.PSObject.Properties | ForEach-Object Value) }
+    else { return $invalid }
+    $gating = 0
+    $candidate = 0
+    foreach ($entry in $entries) {
+        $status = [string](& $read $entry 'status')
+        if ($status -cnotin @('passed', 'violated', 'unavailable', 'integrity')) { return $invalid }
+        if ($status -cne 'passed') {
+            if ((& $read $entry 'gating') -eq $true) { $gating++ } else { $candidate++ }
+        }
+    }
+    if ([int](& $read $Mandatory 'gatingFailures') -ne $gating -or [int](& $read $Mandatory 'candidateFailures') -ne $candidate) { return $invalid }
+    return @{ contractValid = $true; gatingFailures = $gating; candidateFailures = $candidate; passed = $gating -eq 0 }
+}
+
 function Invoke-VallySpec {
     <#
     .SYNOPSIS
@@ -1399,7 +1715,9 @@ function Invoke-VallySpec {
     past that product yields nothing.
 
     .OUTPUTS
-    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; inputTokens; outputTokens; cacheReadTokens; tokenTrials; trials; resultsPath; perStimulus; failedOrErroredTrials; tag }`.
+    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; inputTokens; outputTokens; cacheReadTokens; tokenTrials; trials; resultsPath; perStimulus; failedOrErroredTrials; tag; mandatory }`.
+    For the agent-behavior suite the run selects the host executor plugin and `mandatory`
+    carries the versioned outcome from `Get-VallyMandatoryOutcome`; it is `$null` for every other suite.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -1432,6 +1750,9 @@ function Invoke-VallySpec {
     if (-not [string]::IsNullOrWhiteSpace($Tag)) {
         $vallyArgs += @('--tag', $Tag)
     }
+    $runtime = Get-VallyAgentBehaviorRuntime -SpecPath $SpecPath
+    if ($runtime) { $vallyArgs += $runtime.arguments }
+    $mandatoryTrials = [System.Collections.Generic.List[object]]::new()
 
     $threshold = Get-VallySpecThreshold -SpecPath $SpecPath
     $configuration = Get-VallyDiagnosticConfiguration -SpecPath $SpecPath -Tag $Tag
@@ -1471,7 +1792,9 @@ function Invoke-VallySpec {
 
         $runDir = Resolve-VallyRunDir -OutputDir $attemptOutput
         $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold -ExpectedStimuli $configuration.stimuli
-
+        if ($runtime) {
+            foreach ($record in @(Read-VallyMandatoryTrials -RunDir $runDir -Runtime $runtime -Attempt $attempt)) { $mandatoryTrials.Add($record) }
+        }
         $candidate = @{
             attempt   = $attempt
             exitCode  = $processResult.ExitCode
@@ -1579,6 +1902,9 @@ function Invoke-VallySpec {
         }
         tag              = $Tag
         phaseTimings     = @($phaseTimings)
+        mandatory        = if ($runtime) {
+            Get-VallyMandatoryOutcome -Runtime $runtime -Trials @($mandatoryTrials) -SelectedAttempt $best.attempt -ExpectedStimuli $configuration.stimuli
+        } else { $null }
     }
 }
 
@@ -2331,6 +2657,11 @@ Export-ModuleMember -Function @(
     'Test-VallyCompareRetryEligibility',
     'Invoke-VallyCompareShard',
     'Invoke-VallySpec',
+    'Get-VallyAgentBehaviorRuntime',
+    'Get-VallyMandatoryTrialOutcome',
+    'Read-VallyMandatoryTrials',
+    'Get-VallyMandatoryOutcome',
+    'Test-VallyMandatoryEvidence',
     'Test-SpecInputModeration',
     'Test-SpecOutputModerationBatch',
     'Test-SpecOutputModeration',

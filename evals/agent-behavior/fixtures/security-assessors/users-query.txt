@@ -1,0 +1,16 @@
+import sqlite3
+
+from flask import Blueprint
+
+bp = Blueprint("users", __name__)
+
+
+def find_user(conn: sqlite3.Connection, user_id: str):
+    query = f"SELECT id, email FROM users WHERE id = '{user_id}'"
+    return conn.execute(query).fetchone()
+
+
+@bp.get("/users/<user_id>")
+def get_user(user_id: str):
+    conn = sqlite3.connect("app.db")
+    return {"user": find_user(conn, user_id)}

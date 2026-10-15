@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore aggregat collat combin compil continu execut invok merg profil
+# cspell:ignore aggregat collat combin compil continu execut invok merg profil cand Werkzeug
 stimuli:
   - name: security-reviewer-class-recipe
     prompt: |
@@ -122,3 +122,55 @@ stimuli:
         name: security-reviewer-web-fast-path-audit-mode
         config:
           pattern: '(?i)\baudit\b'
+
+  # Advisory candidate for security-reviewer-class-recipe: the agent and its
+  # web review skills are loaded, and the code moves from the prompt into a
+  # staged file. The review disclaimer comes only from the agent; the exec and
+  # debug findings come only from the staged file.
+  - name: security-reviewer-class-recipe-candidate
+    prompt: |
+      Review `app/server.py` for security issues with severity levels.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/security-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-intake/flask-debug-server.txt
+          dest: app/server.py
+      skills:
+        - ../../.github/skills/security/owasp-top-10
+        - ../../.github/skills/security/security-reviewer-formats
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: security-review-staged-flask-app
+    graders:
+      - type: output-matches
+        name: sec-review-flags-exec-cand
+        config:
+          pattern: '(?is)\bexec\b[^\n]{0,240}\b(?:critical|high)\b|\b(?:critical|high)\b[^\n]{0,240}\bexec\b'
+      - type: output-matches
+        name: sec-review-flags-debug-mode-cand
+        config:
+          pattern: '(?i)\bdebug\s*=\s*True\b|\bdebug\s+mode\b|\bWerkzeug\s+debugger\b'
+      - type: output-matches
+        name: sec-review-disclaimer-cand
+        config:
+          pattern: '(?i)\bqualified\s+security\s+reviewer\b'
+      - type: output-matches
+        name: sec-review-no-unsolicited-plan-drift-cand
+        config:
+          pattern: '(?i)(#{1,6}\s*security[_ -]plan[_ -]drift|"?security_plan_drift"?\s*:|filtered findings:\s*\d+|baseline:\s*(complete|incomplete))'
+          negate: true
+      - type: system-event
+        name: sec-review-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: sec-review-context-cand
+        config:
+          required:
+            - hve.context.composed

@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand FEFF
 stimuli:
   - name: accessibility-planner-class-recipe
     prompt: |
@@ -97,3 +98,66 @@ stimuli:
             when it reports a completed handoff, discards the successful draft,
             or describes the simulated result as observed native execution.
           threshold: 0.7
+
+  # Advisory candidate for accessibility-planner-class-recipe: the agent and
+  # the accessibility skill are loaded and the request is unchanged. The
+  # disclaimer wording, phase names and state schema come only from the agent.
+  - name: accessibility-planner-class-recipe-candidate
+    prompt: |
+      Begin an accessibility planning session for a public-facing customer portal that must conform to WCAG 2.2 and Section 508. List the next phases of the assessment. Write the planning state under `.copilot-tracking/accessibility/` and report the path you wrote it to.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: accessibility-session-bootstrap
+    graders:
+      - type: output-matches
+        name: a11y-plan-disclaimer-shown-cand
+        config:
+          pattern: '(?is)\bVPAT\s+auditors\b.{0,40}\bACR\s+signers\b'
+      - type: output-matches
+        name: a11y-next-phases-named-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\bframework[- ]selection\b)(?=[\s\S]*\bstandards[- ]mapping\b)(?=[\s\S]*\b(?:impact[- ]evidence|plan[- ]risk[- ]assessment|backlog[- ]handoff)\b)'
+      - type: output-matches
+        name: a11y-reports-state-path-cand
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]accessibility[/\\][\w.-]+[/\\]state\.json'
+      - type: program
+        name: a11y-state-initialized-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/accessibility');
+                const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+                if (slugs.length !== 1) process.exit(1);
+                const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+                if (text.length > 262144) process.exit(1);
+                const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+                const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+                const project = state.project && typeof state.project === 'object' ? state.project : {};
+                process.exit(stamped && state.phase === 'discovery' && project.entryMode === 'capture' ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: a11y-bootstrap-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: a11y-bootstrap-context-cand
+        config:
+          required:
+            - hve.context.composed

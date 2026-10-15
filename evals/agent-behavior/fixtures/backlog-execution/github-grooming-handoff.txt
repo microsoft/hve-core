@@ -1,0 +1,29 @@
+# Handoff - Backlog Grooming Writeback
+
+* **Repository**: contoso-synthetic/widgets
+* **Workflow**: Grooming
+* **Autonomy**: partial
+
+## Planned Operations
+
+### Update
+
+* [ ] IS001 - Update - `#41` - Retitle to "Export inspection checklist as PDF"
+  * Field: `title`
+  * Expected Updated At: `2026-09-20T10:15:00Z`
+
+### Comment
+
+* [ ] IS003 - Comment - `#43` - Ask the reporter for the failing device model
+  * Field: `body`
+  * Expected Updated At: `2026-09-19T08:02:11Z`
+
+### Close
+
+* [ ] IS002 - Close - `#42` - Close as completed by the offline checklist release
+  * Expected Updated At: `2026-09-18T16:40:00Z`
+
+## Planning Files
+
+* `issue-analysis.md`
+* `planning-log.md`

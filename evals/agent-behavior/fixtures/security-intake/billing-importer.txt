@@ -1,0 +1,20 @@
+"""Bulk upload entry point for the synthetic billing service."""
+import os
+
+from example.parser import parse_untrusted
+
+LEGACY_IMPORT_DEFAULT = False
+
+
+def legacy_import_enabled() -> bool:
+    override = os.environ.get("BILLING_LEGACY_IMPORT")
+    if override is not None:
+        return override == "1"
+    return LEGACY_IMPORT_DEFAULT
+
+
+def handle_upload(payload: bytes) -> dict:
+    """Called by the public upload route with the raw request body."""
+    if legacy_import_enabled():
+        return parse_untrusted(payload)
+    return {"status": "rejected", "reason": "legacy import disabled"}

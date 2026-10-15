@@ -1,0 +1,17 @@
+from flask import Flask, request
+from openai import OpenAI
+
+app = Flask(__name__)
+client = OpenAI()
+
+PROMPT_TEMPLATE = "Summarize this support ticket for an agent:\n{ticket}"
+
+
+@app.post("/summaries")
+def summarize():
+    ticket = request.json["ticket"]
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": PROMPT_TEMPLATE.format(ticket=ticket)}],
+    )
+    return {"summary": response.choices[0].message.content}

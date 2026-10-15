@@ -1,0 +1,38 @@
+diff --git a/src/billing/refunds.py b/src/billing/refunds.py
+new file mode 100644
+--- /dev/null
++++ b/src/billing/refunds.py
+@@ -0,0 +1,15 @@
++from decimal import Decimal
++
++
++def refund_total(charges, refunded_ids):
++    total = Decimal("0")
++    for index in range(len(charges) - 1):
++        charge = charges[index]
++        if charge["id"] in refunded_ids:
++            total += charge["amount"]
++    return total
++
++
++def find_charge(db, charge_id):
++    query = f"SELECT * FROM charges WHERE id = '{charge_id}'"
++    return db.execute(query).fetchone()
+diff --git a/web/refund-button.html b/web/refund-button.html
+new file mode 100644
+--- /dev/null
++++ b/web/refund-button.html
+@@ -0,0 +1,3 @@
++<div class="refund-action" onclick="submitRefund()">
++  <img src="/icons/refund.svg">
++</div>
+diff --git a/docs/refunds.md b/docs/refunds.md
+new file mode 100644
+--- /dev/null
++++ b/docs/refunds.md
+@@ -0,0 +1,5 @@
++# Refunds
++
++Call `refund_total(charges, refunded_ids)` to total refunded charges.
++It counts every charge in the list and returns the amount as a `float`.
++Use the refund button on the billing page to submit a refund.

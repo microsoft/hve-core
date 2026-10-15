@@ -1,0 +1,32 @@
+{
+  "branch": "feature/refund-helpers",
+  "base": "main",
+  "reviewTarget": {
+    "kind": "branch_diff",
+    "provider": "unknown",
+    "id": null,
+    "url": null,
+    "baseRef": "main",
+    "headRef": "feature/refund-helpers",
+    "headSha": "4f1c2d9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e"
+  },
+  "reviewProfile": "full",
+  "files": [
+    "src/billing/refunds.py",
+    "web/refund-button.html",
+    "docs/refunds.md"
+  ],
+  "untrackedFiles": [],
+  "extensions": [
+    ".py",
+    ".html",
+    ".md"
+  ],
+  "diffPatchPath": ".copilot-tracking/pr/feature-refund-helpers.diff",
+  "findingsFolder": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/",
+  "depthTier": "standard",
+  "boardItem": "board-1",
+  "targetSymbol": "refund_total",
+  "targetPath": "src/billing/refunds.py",
+  "question": "What does refund_total compute, and which charges does it include?"
+}

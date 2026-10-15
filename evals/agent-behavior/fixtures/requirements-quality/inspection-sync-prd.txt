@@ -1,0 +1,32 @@
+---
+title: Field Inspection Sync PRD
+description: Synthetic PRD for quality-review evaluation
+prd-id: PRD-FIS-001
+version: 0.4.0
+phase: Validate
+---
+
+# Field Inspection Sync PRD
+
+## Product Goals
+
+* `GOAL-001`: Technicians complete 95% of inspections without a paper fallback by 2027-03-31.
+* `GOAL-002`: Site managers see failed safety items within one business day.
+
+## Functional Requirements
+
+* `FR-001`: The mobile app saves an in-progress checklist on the device. Traces to `GOAL-001`.
+* `FR-002`: The mobile app attaches up to 10 photos to a checklist item. Traces to `GOAL-004`.
+
+## Acceptance Criteria
+
+* `AC-001` (for `FR-001`): Given the app closes unexpectedly, when the technician reopens it, then the in-progress checklist is restored without data loss.
+* `AC-002` (for `FR-002`): Given a checklist item, when the technician attaches a tenth photo, then the app accepts it and rejects an eleventh.
+
+## Non-Functional Requirements
+
+* `NFR-001`: The app restores an in-progress checklist within 2 seconds on a mid-range device.
+
+## Design Decisions
+
+* `DD-001`: Photos are stored on the device until the checklist is submitted.

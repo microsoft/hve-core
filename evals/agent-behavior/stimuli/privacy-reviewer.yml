@@ -1,3 +1,4 @@
+# cspell:ignore cand
 stimuli:
   - name: privacy-reviewer-class-recipe
     prompt: |
@@ -25,3 +26,56 @@ stimuli:
         config:
           pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
+
+  # Advisory candidate for privacy-reviewer-class-recipe: the agent and the
+  # privacy-standards skill are loaded, and the data practices move from the
+  # prompt into a staged file. The review disclaimer and dated report path come
+  # only from the agent; the cited practices come only from the staged file.
+  - name: privacy-reviewer-class-recipe-candidate
+    prompt: |
+      This is a prompt-visible smoke scenario, not a native privacy audit. The
+      data practices of a customer-facing mobile app are described in
+      `docs/mobile-app-data-practices.md`. Summarize candidate privacy findings
+      with severity in chat, citing relevant frameworks (NIST Privacy
+      Framework, NISTIR 8062, GDPR, or CCPA/CPRA) and DPIA considerations.
+      Distinguish inferred risks from verified findings. Show the intended report
+      path under `.copilot-tracking/privacy-reviews/`; do not write files, invoke
+      subagents or claim a completed audit.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/privacy/privacy-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-intake/mobile-app-data-practices.txt
+          dest: docs/mobile-app-data-practices.md
+      skills:
+        - ../../.github/skills/project-planning/privacy-standards
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: privacy-review-staged-practices
+    graders:
+      - type: output-matches
+        name: privacy-review-disclaimer-cand
+        config:
+          pattern: '(?i)\bqualified\s+privacy\s+reviewer\b'
+      - type: output-matches
+        name: privacy-review-report-path-cand
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]privacy-reviews[/\\]\d{4}-\d{2}-\d{2}[/\\]privacy-review-\d{3}\.md'
+      - type: output-matches
+        name: privacy-review-cites-staged-practices-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\b(?:background|every\s+(?:five|5)\s+minutes)\b)(?=[\s\S]*\b(?:consent|opt[- ]?in)\b)(?=[\s\S]*\b(?:retention|retain\w*|deletion|delete)\b)'
+      - type: system-event
+        name: privacy-review-workspace-unchanged-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: privacy-review-context-cand
+        config:
+          required:
+            - hve.context.composed

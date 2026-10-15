@@ -1,27 +1,71 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the tag-pinned actions and the release without an
+  # SBOM exist only in the staged workflow; the prompt no longer names them.
   - name: supply-chain-skill-assessor-posture
     prompt: |
-      As the supply-chain skill assessor, assess a repository's supply-chain
-      posture against the `supply-chain-security` skill. Given a codebase
-      profile that has no SBOM, unpinned GitHub Actions, and no OpenSSF
-      Scorecard workflow, return structured findings with a status and severity
-      for each gap.
+      Security Reviewer dispatch:
+        - skill: supply-chain-security
+        - mode: audit
+        - codebase profile: Node.js library published to npm from GitHub Actions.
+      Return your findings.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/supply-chain-skill-assessor.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/release-workflow.txt
+          dest: .github/workflows/release.yml
+      skills:
+        - ../../.github/skills/security/supply-chain-security
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-unpinned-release-workflow
     graders:
-      - type: output-matches
-        name: supply-chain-vocabulary
+      - type: program
+        name: supply-chain-flags-unpinned-release-actions
         config:
-          pattern: '(?i)(supply[- ]chain|scorecard|SLSA|SBOM|sigstore|pinned|provenance|finding)'
-      - type: output-matches
-        name: status-or-severity-vocabulary
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                process.exit(rows.some(cells => cells.some(cell => /^(?:FAIL|PARTIAL)$/.test(cell)) && /\bpin/i.test(cells.join('|')) && /release\.ya?ml\b/.test(cells.join('|'))) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: supply-chain-flags-missing-sbom
         config:
-          pattern: '(?i)(PASS|FAIL|PARTIAL|NOT_ASSESSED|critical|high|medium|low|severity|status)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                process.exit(rows.some(cells => cells.some(cell => /^(?:FAIL|PARTIAL)$/.test(cell)) && /\bSBOM\b/i.test(cells.join('|'))) ? 0 : 1);
+              } catch { process.exit(1); }
       - type: output-matches
         name: supply-chain-skill-assessor-posture-no-source-edit
         config:
           pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
+      - type: system-event
+        name: supply-chain-read-only
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: supply-chain-context
+        config:
+          required:
+            - hve.context.composed

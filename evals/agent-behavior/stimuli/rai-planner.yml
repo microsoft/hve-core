@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore couldn
+# cspell:ignore couldn cand FEFF
 stimuli:
   - name: rai-planner-class-recipe
     prompt: |
@@ -485,3 +485,66 @@ stimuli:
         config:
           pattern: '(?i)\b(?:I|we) (?:just )?(?:successfully )?(?:created|seeded|duplicated|instantiated)\b[^.\r\n]{0,60}\b(?:board|mural|widgets?)\b'
           negate: true
+
+  # Advisory candidate for rai-planner-class-recipe: the agent and its skills
+  # are loaded and the request is unchanged. The disclaimer wording, phase
+  # names and state schema come only from the agent.
+  - name: rai-planner-class-recipe-candidate
+    prompt: |
+      Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/rai-planning/rai-planner.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/rai-planner
+        - ../../.github/skills/rai/rai-standards
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: rai-session-bootstrap
+    graders:
+      - type: output-matches
+        name: rai-disclaimer-shown-cand
+        config:
+          pattern: '(?is)\bResponsible\s+AI\s+review\s+boards\b.{0,40}\bethics\s+committees\b'
+      - type: output-matches
+        name: rai-next-phases-named-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\brisk\s+classification\b)(?=[\s\S]*\bimpact\s+assessment\b)(?=[\s\S]*\b(?:security\s+model|standards\s+mapping)\b)'
+      - type: output-matches
+        name: rai-reports-state-path-cand
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]rai-plans[/\\][\w.-]+[/\\]state\.json'
+      - type: program
+        name: rai-state-initialized-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/rai-plans');
+                const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+                if (slugs.length !== 1) process.exit(1);
+                const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+                if (text.length > 262144) process.exit(1);
+                const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+                const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+                process.exit(stamped && state.projectSlug === slugs[0] && state.entryMode === 'capture' && state.currentPhase === 1 ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: rai-bootstrap-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: rai-bootstrap-context-cand
+        config:
+          required:
+            - hve.context.composed

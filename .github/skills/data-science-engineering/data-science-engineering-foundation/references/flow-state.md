@@ -57,8 +57,9 @@ Before creating or changing any durable customer artifact:
    session state after the write succeeds.
 
 If the data-mode scanner capability is unavailable, stop the customer-artifact
-write and state the missing dependency. Session-state updates may record the
-blocked attempt, but they are not a substitute for the scan.
+write and state the missing dependency. Record the blocked attempt in session
+state as described in Blocked-write recovery; the record is not a substitute
+for the scan.
 
 ## Untrusted-content boundary
 
@@ -86,7 +87,14 @@ A blocked write is a recoverable state, not a dead end. When the gate blocks:
 4. Offer concrete choices: redact the source and rescan, write to a different
    caller-confirmed location, keep the content in the session without a durable
    write, or stop.
-5. Record the blocked attempt and the user's choice in session state.
+5. Record every blocked attempt in session state, including a blocked attempt
+   caused by an unavailable scanner, an error report, or a missing report. The
+   record names the affected job, destination, and blocking reason, and it
+   preserves the active job, its lifecycle class, and unknown extension blocks.
+   Record the user's recovery choice only after the user makes one; never
+   record an assumed or default choice. When project identity or state validity
+   is unresolved, the identity-validation stop applies instead: report the
+   blocked attempt without writing state.
 
 When the scanner itself is unavailable or returns `status` `error`, name the
 command that could not complete and the reported `error.code`, then offer to

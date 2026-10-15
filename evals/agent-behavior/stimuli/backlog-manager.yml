@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand
 #
 # Conformance checks emitted per the vally-tests agent reference.
 # Applicable to this top-level agent: Check 1 (required frontmatter),
@@ -197,3 +198,107 @@ stimuli:
         config:
           pattern: '(?i)shard[_ -]?id|manifest[_ -]?digest|ordered_candidate_ids|safe[- ]output|publish-backlog-grooming-result'
           negate: true
+
+  # Advisory candidate for backlog-manager-performs-workflow-neutral-github-grooming:
+  # the manager and its imported grooming policy are loaded and the selected
+  # inventory moves into a staged file without the classification, the
+  # similarity and disposition answers, or the handoff sentences. The loaded
+  # contract must route to GitHub Grooming, derive each disposition, and
+  # describe a non-closing, freshness-checked handoff without any tracker call.
+  - name: backlog-manager-performs-workflow-neutral-github-grooming-candidate
+    prompt: |
+      Review the backlog health of the open issues a maintainer selected in
+      `review/selected-issues.md`, using the repository evidence recorded
+      there. Then explain what a writeback handoff for your findings would be
+      allowed to contain and what it would need before execution; do not
+      prepare or run one. Do not execute any GitHub mutation.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/planning-intake/maintainer-selected-issues.txt
+          dest: review/selected-issues.md
+      skills:
+        - ../../.github/skills/project-planning/backlog-management
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: backlog-manager-workflow-neutral-grooming
+    graders:
+      - type: output-matches
+        name: manager-classifies-grooming-cand
+        config:
+          pattern: '(?i)\bGitHub\s+Grooming\b|\b(?:classif\w*|intent|workflow|request)\b[^.\n]{0,40}\bGrooming\b|\bGrooming\b[^.\n]{0,20}\b(?:workflow|intent|classification)\b'
+      - type: program
+        name: manager-grooming-report-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const lines = String(input.trajectory.output || '').replace(/[`*]/g, '').split(/\r?\n/);
+                const cells = line => line.split('|').slice(1, -1).map(cell => cell.trim());
+                const header = lines.findIndex(line => /^\s*\|/.test(line) &&
+                  cells(line).join('|').toLowerCase() === 'issue|similarity|disposition|status|recommended next step');
+                if (header < 0) process.exit(1);
+                const rows = [];
+                for (let index = header + 1; index < lines.length && /^\s*\|/.test(lines[index]); index++) {
+                  if (!/^\s*\|[\s:|-]+\|\s*$/.test(lines[index])) rows.push(cells(lines[index]));
+                }
+                const row = id => rows.find(values => (/\d+/.exec(values[0] || '') || [])[0] === id);
+                const completed = row('2558');
+                const open = row('2601');
+                const indexed = rows.length === 2 && completed && open && /^Likely completed\b/i.test(completed[2] || '') &&
+                  /^(?:Still needed|Uncertain|Needs correction)\b/i.test(open[2] || '');
+                let previous = -1;
+                const detailed = ['2558', '2601'].every(id => {
+                  const start = lines.findIndex(line => new RegExp('^#{2,6}\\s*Issue\\s*#?' + id + '\\b', 'i').test(line));
+                  if (start <= previous) return false;
+                  previous = start;
+                  const next = lines.findIndex((line, index) => index > start && /^#{1,6}\s/.test(line));
+                  const section = lines.slice(start + 1, next < 0 ? lines.length : next).join('\n');
+                  return /\bRepository evidence\s*:/i.test(section) && /\bAssessment status\s*:/i.test(section);
+                });
+                process.exit(indexed && detailed ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: output-matches
+        name: manager-handoff-excludes-close-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\b(?:Update|Comment)\b)(?=[\s\S]*(?:\bClose\b[^.\n]{0,80}\b(?:never|not|prohibit\w*|(?:exclude|excludes|excluded|excluding)|disallow\w*|forbid\w*)\b|\b(?:never|not|no|prohibit\w*|(?:exclude|excludes|excluded|excluding)|disallow\w*|forbid\w*)\b[^.\n]{0,80}\bClose\b|\bclos(?:e|ing|ure)\b[^.\n]{0,40}\b(?:never|not)\s+(?:allowed|permitted|included)\b))(?![\s\S]*\b(?:allowed|permitted)\s+operations?\b[^.;\n]{0,40}(?<!\b(?:not|never|no)\s)\bClose\b)'
+      - type: output-matches
+        name: manager-handoff-freshness-cand
+        config:
+          pattern: '(?i)\bExpected Updated At\b|\bupdated_at\b|\bper-field approval\b|\bfresh(?:ness)?\b[^.\n]{0,60}\b(?:approval|value|check|timestamp)\b|\bstale\b[^.\n]{0,60}\bapproval\b'
+      - type: output-matches
+        name: manager-no-mutation-claim-cand
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s)\b(?:updated|closed|commented on)\s+(?:github\s+)?issue\s*#?\d+'
+          negate: true
+      - type: output-matches
+        name: manager-no-aw-contract-cand
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|no|never|without)|n[\x27\u2019]t)\s+(?:[\w-]+\s+){0,6})\b(?:shard[_ -]?id|manifest[_ -]?digest|ordered_candidate_ids|safe[- ]output|publish-backlog-grooming-result)\b'
+          negate: true
+      - type: tool-calls
+        name: manager-makes-no-tracker-call-cand
+        config:
+          disallowed:
+            - name: '(?i)issue_write|add_issue_comment|sub_issue_write|wit_create|wit_update|wit_add|work_items_link'
+            - name: '^(?:bash|shell|powershell|pwsh|run_in_terminal)$'
+              command: '(?i)\bgh\s+(?:issue|pr|api|label|project)\b|api\.github\.com|\baz\s+boards\b|\bjira(?:\.py)?\b|atlassian\.(?:net|com)'
+      - type: system-event
+        name: manager-grooming-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: manager-grooming-context-cand
+        config:
+          required:
+            - hve.context.composed

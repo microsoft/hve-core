@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand
 stimuli:
   - name: documentation-audit-class-recipe
     prompt: |
@@ -102,3 +103,59 @@ stimuli:
         config:
           pattern: '(?i)```\s*(diff|patch|c#|csharp|cs|python|py|typescript|ts|javascript|js|rust|rs|go|java)\b'
           negate: true
+
+  # Advisory candidate for documentation-drift-class-recipe: the agent and its
+  # skill are loaded, the stale page is staged rather than named, and the
+  # filesystem boundary replaces the reply-only no-edit check.
+  - name: documentation-drift-class-recipe-candidate
+    prompt: |
+      Review the following PR diff for documentation drift in this repository.
+      Do not ask for more context; analyze the diff and the repository
+      documentation.
+
+      ```diff
+      --- a/src/renewal.js
+      +++ b/src/renewal.js
+      @@ -1,3 +1,6 @@
+       export function renew(accountId, options = {}) {
+      -  return 'Renewal confirmed for ' + accountId;
+      +  if (!options.region) {
+      +    throw new Error('region is required');
+      +  }
+      +  return JSON.stringify({ accountId, region: options.region, status: 'renewed' });
+       }
+      ```
+
+      Report your findings as a markdown table with the columns
+      `Finding | Severity | Recommendation`, using severity levels of High,
+      Medium, or Low. Do not edit or rewrite any files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/documentation.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/documentation-audit.txt
+          dest: docs/README.md
+      skills:
+        - ../../.github/skills/hve-core/documentation
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: drift-against-staged-docs
+    graders:
+      - type: output-matches
+        name: documentation-drift-cites-stale-page-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\bdocs/README\.md\b)(?=[\s\S]*\b(?:region|JSON)\b)(?=[\s\S]*\|[^\n]*\b(?:High|Medium|Low)\b[^\n]*\|)(?![\s\S]*\bdocs/README\.md\b[^.\n]{0,80}\b(?:already|correctly|accurately)\s+(?:documents|describes|covers|mentions)\b)'
+      - type: system-event
+        name: documentation-drift-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: documentation-drift-context-cand
+        config:
+          required:
+            - hve.context.composed

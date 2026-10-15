@@ -1,24 +1,74 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the LLM call, MCP server, container, workflow and
+  # Bicep signals exist only in the staged repository, and the skill names they
+  # map to come only from the loaded agent's catalog.
   - name: codebase-profiler-skill-mapping
     prompt: |
-      Scan the current repository in audit mode and produce a Codebase Profile
-      that maps discovered technology signals (languages, frameworks, IaC,
-      CI/CD) to applicable security skills such as owasp-top-10, owasp-llm,
-      owasp-mcp, owasp-cicd, owasp-infrastructure, and secure-by-design.
+      Security Reviewer dispatch: build the codebase profile for the repository
+      in this workspace and return it to me.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/codebase-profiler.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/llm-server.txt
+          dest: app/server.py
+        - src: fixtures/security-assessors/mcp-server.txt
+          dest: mcp/server.ts
+        - src: fixtures/security-assessors/dockerfile.txt
+          dest: Dockerfile
+        - src: fixtures/security-assessors/release-workflow.txt
+          dest: .github/workflows/release.yml
+        - src: fixtures/security-assessors/storage-bicep.txt
+          dest: infra/main.bicep
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-mixed-stack-profile
     graders:
-      - type: output-matches
-        name: profile-structure-vocabulary
+      - type: program
+        name: profiler-audit-mode
         config:
-          pattern: '(?i)(codebase profile|primary languages|frameworks|key directories|applicable skills|technology summary)'
-      - type: output-matches
-        name: skill-vocabulary
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const modes = [...output.matchAll(/^[ \t>*-]*Mode:\s*([a-z-]+)/gim)].map(match => match[1].toLowerCase());
+                process.exit(modes.length > 0 && modes.every(mode => mode === 'audit') ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: profiler-maps-staged-signals
         config:
-          pattern: '(?i)(owasp[-_](top[-_]?10|llm|mcp|cicd|infrastructure|agentic)|secure[-_]by[-_]design)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const section = /#{2,4}[ \t]*Applicable Skills[^\n]*\n([\s\S]*?)(?=\n#{2,4}[ \t]|$)/i.exec(output)?.[1] || '';
+                const skills = ['owasp-llm', 'owasp-mcp', 'owasp-cicd', 'owasp-infrastructure', 'mcsb'];
+                process.exit(skills.every(skill => new RegExp('\\b' + skill + '\\b', 'i').test(section)) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: profiler-read-only
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: profiler-context
+        config:
+          required:
+            - hve.context.composed
 
   - name: codebase-profiler-diff-mode
     prompt: |

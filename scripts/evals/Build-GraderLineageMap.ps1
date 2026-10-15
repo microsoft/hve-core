@@ -240,6 +240,7 @@ function Get-GraderResultKind {
                 'output-contains',
                 'output-matches',
                 'program',
+                'system-event',
                 'tool-calls',
                 'transcript-matches',
                 'wall-time'

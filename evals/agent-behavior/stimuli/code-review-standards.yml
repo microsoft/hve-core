@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore FEFF
 stimuli:
   - name: code-review-standards-lens
     prompt: |
@@ -26,3 +27,64 @@ stimuli:
         config:
           pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
+
+  # Loaded subagent contract: the parent's dispatch brief points at a staged
+  # perspective batch. The suite-level python-foundational skill is the only
+  # staged coding-standards skill, so a skill-traced finding must name it.
+  - name: code-review-standards-writes-batch-findings
+    prompt: |
+      Code Review parent dispatch: run the Standards perspective for the
+      serialized perspective batch in
+      `.copilot-tracking/reviews/code-reviews/feature-refund-helpers/diff-state.json`.
+      Write your structured JSON findings to
+      `.copilot-tracking/reviews/code-reviews/feature-refund-helpers/standards-findings.json`
+      and do not write a markdown report.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/coding-standards/subagents/code-review-standards.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/code-review-subagents/perspective-diff-state.json
+          dest: .copilot-tracking/reviews/code-reviews/feature-refund-helpers/diff-state.json
+        - src: fixtures/code-review-subagents/feature-refund-helpers.diff
+          dest: .copilot-tracking/pr/feature-refund-helpers.diff
+      skills:
+        - ../../.github/skills/coding-standards/code-review
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: perspective-batch-findings
+    graders:
+      - type: program
+        name: standards-findings-trace-to-loaded-skill
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const relative = '.copilot-tracking/reviews/code-reviews/feature-refund-helpers/standards-findings.json';
+                const text = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, relative), 'utf8');
+                if (text.length > 262144) process.exit(1);
+                const report = JSON.parse(text.replace(/^\uFEFF/, ''));
+                const findings = report && Array.isArray(report.findings) ? report.findings : [];
+                const onFile = finding => typeof finding.file === 'string' && finding.file.replace(/\\/g, '/').replace(/^\.\//, '').endsWith('src/billing/refunds.py');
+                const matched = findings.some(finding => finding !== null && typeof finding === 'object' && onFile(finding) &&
+                  /^(?:Critical|High|Medium|Low)$/.test(String(finding.severity)) &&
+                  finding.skill === 'python-foundational');
+                process.exit(matched ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: cr-standards-batch-workspace-bounded
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: cr-standards-batch-context
+        config:
+          required:
+            - hve.context.composed

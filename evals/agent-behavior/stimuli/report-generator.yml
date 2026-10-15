@@ -1,6 +1,9 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: a prior report is staged for the same date, so the
+  # sequence number of the new report comes only from the loaded agent's
+  # collision rule, and the prior report must stay untouched.
   - name: report-generator-vuln-report
     prompt: |
       You are a report-generator subagent invocation. Collate verified findings
@@ -24,11 +27,14 @@ stimuli:
       files:
         - src: ../../.github/agents/security/subagents/report-generator.agent.md
           dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/prior-security-report.txt
+          dest: .copilot-tracking/security/2026-05-27/security-report-001.md
       skills:
         - ../../.github/skills/security/security-reviewer-formats
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-prior-report-sequence
     graders:
       - type: program
         name: report-output-path
@@ -40,12 +46,10 @@ stimuli:
               const fs = require('node:fs'); const path = require('node:path');
               try {
                 const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
-                const relative = '.copilot-tracking/security/2026-05-27';
-                const directory = path.join(process.env.EVALUATE_WORKSPACE, relative);
-                const files = fs.readdirSync(directory).filter(name => /^security-report-\d{3}\.md$/.test(name));
-                if (files.length !== 1) process.exit(1);
-                const report = fs.readFileSync(path.join(directory, files[0]), 'utf8');
-                process.exit(report.length > 100 && /Executive Summary/i.test(report) && input.trajectory.output.includes(relative + '/' + files[0]) ? 0 : 1);
+                const relative = '.copilot-tracking/security/2026-05-27/security-report-002.md';
+                const report = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, relative), 'utf8');
+                const output = String(input.trajectory.output || '').replace(/\\/g, '/');
+                process.exit(report.length > 100 && /Executive Summary/i.test(report) && output.includes(relative) ? 0 : 1);
               } catch { process.exit(1); }
       - type: program
         name: severity-ordering-vocabulary
@@ -56,10 +60,7 @@ stimuli:
             - |
               const fs = require('node:fs'); const path = require('node:path');
               try {
-                const directory = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security/2026-05-27');
-                const files = fs.readdirSync(directory).filter(name => /^security-report-\d{3}\.md$/.test(name));
-                if (files.length !== 1) process.exit(1);
-                const report = fs.readFileSync(path.join(directory, files[0]), 'utf8').replace(/[*`]/g, '');
+                const report = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security/2026-05-27/security-report-002.md'), 'utf8').replace(/[*`]/g, '');
                 const summary = /###\s+Summary Counts\s*\n([\s\S]*?)(?=\n#{1,3}\s|$)/i.exec(report)?.[1] || '';
                 const count = status => [...summary.matchAll(new RegExp('^\\s*\\|\\s*' + status + '\\s*\\|\\s*(\\d+)\\s*\\|', 'gim'))];
                 const counts = ['PASS', 'FAIL', 'PARTIAL', 'NOT_ASSESSED'].every(status => count(status).length === 1 && count(status)[0][1] === '1') && count('Total').length === 1 && count('Total')[0][1] === '4';
@@ -74,6 +75,19 @@ stimuli:
                 }).length === 1) && ['owasp-top-10', 'owasp-cicd'].every(value => findings.includes(value));
                 process.exit(counts && ordered && supplied ? 0 : 1);
               } catch { process.exit(1); }
+      - type: system-event
+        name: report-writes-only-next-report
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: report-context
+        config:
+          required:
+            - hve.context.composed
 
   - name: report-generator-plan-mode
     prompt: |

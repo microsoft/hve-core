@@ -1,3 +1,4 @@
+# cspell:ignore cand
 stimuli:
   - name: ux-ui-designer-problem-framing-route
     prompt: |
@@ -604,3 +605,117 @@ stimuli:
         config:
           pattern: '(?i)(?<!\b(?:not|never|without)\s)\bsuccessfully\b|\bI (?:just )?(?:published|created|updated)\b|\bboard (?:was|is)\s+(?!not\b)updated\b'
           negate: true
+
+  # Advisory candidate for ux-ui-designer-critique-terminal-route: the prompt
+  # still names the practitioner's critique task, so routing is proven only by
+  # the loaded skill name with its moment token, or by activating that skill and
+  # reading its critique reference. The filesystem boundary limits writes to
+  # the coaching state for this project.
+  - name: ux-ui-designer-critique-terminal-route-candidate
+    prompt: |
+      Project `settings-redesign`: help me prepare a critique of our new settings
+      flow with four reviewers. The last review became a subjective approval
+      meeting, and I need this one to surface actionable issues.
+
+      Before you begin, name which capability you are routing this to and the
+      moment or mode token you would pass.
+    agent_environment:
+      skills:
+        - '../../.github/skills/design-thinking/ux-artifacts'
+        - '../../.github/skills/design-thinking/ux-coaching'
+      files:
+        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: ux-critique-route
+    graders:
+      - type: program
+        name: ux-routes-to-critique-moment-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory?.output || '').replace(/[`*]/g, '');
+                const named = /\bux[- ]coaching\b/i.test(output) &&
+                  /\bmoment\s*[=:]\s*critique\b|\bcritique\s+moment\b|\bmoment\s+(?:is\s+)?critique\b/i.test(output) &&
+                  !/\bmoment\s*[=:]\s*(?:problem-framing|stakeholder-advocacy)\b/i.test(output);
+                if (named) process.exit(0);
+                const events = Array.isArray(input.trajectory?.events) ? input.trajectory.events : [];
+                let coaching = false;
+                let reference = false;
+                for (const event of events) {
+                  const name = String(event.data?.toolName || event.data?.name || '');
+                  const args = JSON.stringify(event.data?.arguments || event.data || {});
+                  if ((event.type === 'skill_activation' || /^skill$/i.test(name)) && /ux-coaching/i.test(args + name)) coaching = true;
+                  if (event.type === 'tool_call' && /^(?:view|read|read_file)$/i.test(name) && /ux-coaching[\\/]+references[\\/]+critique\.md/i.test(args)) reference = true;
+                }
+                process.exit(coaching && reference ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: ux-critique-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: ux-critique-context-cand
+        config:
+          required:
+            - hve.context.composed
+
+  # Advisory candidate for ux-ui-designer-mural-publication-gate: the prompt no
+  # longer lists the missing inputs, so the reply must derive the mode, target
+  # and action-intent prerequisites from the loaded contract, and no Mural tool
+  # or CLI call may run before they are supplied.
+  - name: ux-ui-designer-mural-publication-gate-candidate
+    prompt: |
+      Publish completed asset
+      `.copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md` to
+      our Mural board.
+    agent_environment:
+      skills:
+        - '../../.github/skills/design-thinking/ux-artifacts'
+        - '../../.github/skills/design-thinking/ux-coaching'
+        - '../../.github/skills/experimental/mural'
+      files:
+        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/ux-ui-designer-renewal-flow-map-journey.md
+          dest: .copilot-tracking/ux-artifacts/renewal-flow/customer/map-journey.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: mural-publication-gate
+    graders:
+      - type: output-matches
+        name: ux-mural-gate-names-missing-inputs-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\b(?:extractor|facilitator)\b)(?=[\s\S]*\b(?:board|destination[- ]target|target)\b)(?=[\s\S]*(?:\baction[- ]intent\b|\b(?:create|mutate|append|no-op)\b))(?=[\s\S]*\b(?:stop\w*|pause|paused|pauses|pausing|hold\w*|await\w*|wait\w*|need\w*|missing|requires?|before|until)\b)(?![\s\S]*(?<!\b(?:not|never)\s)\b(?:published|seeded)\b[^.\n]{0,40}\b(?:to|on|in)\s+(?:the\s+|your\s+)?(?:Mural|board)\b)'
+      - type: tool-calls
+        name: ux-mural-gate-no-call-cand
+        config:
+          disallowed:
+            - name: '(?i)mural'
+            - name: '^(?:bash|shell|powershell|run_in_terminal)$'
+              command: '(?i)\bpython3?\s+(?:-\S+\s+)*-m\s+mural\b|\buv\s+run\b[^\r\n]*\bmural\b|\bmural\s+(?:doctor|auth|board|widget|room|workspace)\b'
+      - type: system-event
+        name: ux-mural-gate-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: ux-mural-gate-context-cand
+        config:
+          required:
+            - hve.context.composed

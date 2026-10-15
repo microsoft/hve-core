@@ -1,0 +1,8 @@
+import { mount, h, go } from 'tessellate';
+
+mount(document.getElementById('root'), () =>
+  h('main', {}, [
+    h('h1', {}, 'Field Console'),
+    h('x-panel', { onOpen: () => go('/reports') }, 'Open reports'),
+  ]),
+);

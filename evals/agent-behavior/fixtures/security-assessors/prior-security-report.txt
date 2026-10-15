@@ -1,0 +1,8 @@
+# Security Report: hve-core
+
+**Date:** 2026-05-27
+**Mode:** audit
+
+## Executive Summary
+
+An earlier audit of `owasp-top-10` found no failing checks.

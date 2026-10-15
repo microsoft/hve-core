@@ -1,0 +1,4 @@
+<section aria-label="Search">
+  <button type="button">Search</button>
+  <p role="status" aria-live="polite"></p>
+</section>

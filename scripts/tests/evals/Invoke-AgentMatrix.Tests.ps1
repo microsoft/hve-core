@@ -70,8 +70,8 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
 
         It 'Plans a vally command per slug using --eval-spec eval.yaml with an agent tag' {
             $first = $script:Summary.plannedCommands[0]
-            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+$'
-            $first | Should -Match '--model gpt-6-luna$'
+            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+ --executor-plugin scripts/evals/agent-behavior-executor\.mjs --executor hve-agent-behavior$'
+            $first | Should -Match '--model gpt-6-luna '
         }
     }
 
@@ -243,6 +243,29 @@ Describe 'Invoke-AgentMatrix helper functions' -Tag 'Unit' {
             $summary = New-AgentSummary -AgentEntry $script:Entry -ExitCode 0 -Graders $script:Graders -LogPath 'x.log'
             $summary.overall | Should -Be 'fail'
         }
+
+        It 'Reports overall=<Overall> when the mandatory outcome is <Status>' -ForEach @(
+            @{ Status = 'failed'; Overall = 'fail' }
+            @{ Status = 'passed'; Overall = 'pass' }
+        ) {
+            $mandatory = [ordered]@{ status = $Status; gatingFailures = [int]($Status -eq 'failed'); candidateFailures = 0 }
+            $summary = New-AgentSummary -AgentEntry $script:Entry -ExitCode 0 -Graders $script:Graders -LogPath 'x.log' -Mandatory $mandatory
+            $summary.overall | Should -Be $Overall
+            $summary.mandatory.status | Should -Be $Status
+        }
+    }
+
+    Context 'Get-AgentMandatoryOutcome' {
+        It 'Fails mandatory evidence when the run output directory cannot be located' {
+            $specPath = Join-Path $script:RepoRoot 'evals/agent-behavior/eval.yaml'
+            $runtime = Get-VallyAgentBehaviorRuntime -SpecPath $specPath -RepoRoot $script:RepoRoot
+
+            $outcome = Get-AgentMandatoryOutcome -Runtime $runtime -SpecPath $specPath -Slug 'dt-coach' -OutputDir ''
+
+            $outcome.stimuli['dt-coach-denied-board-intent-candidate'].status | Should -Be 'integrity'
+            $outcome.stimuli['dt-coach-denied-board-intent-candidate'].codes | Should -Contain 'trials-incomplete'
+            $outcome.candidateFailures | Should -BeGreaterThan 0
+        }
     }
 
     Context 'New-MatrixSummary' {
@@ -272,6 +295,20 @@ Describe 'Invoke-AgentMatrix helper functions' -Tag 'Unit' {
             $results = [System.Collections.Generic.List[hashtable]]::new()
             $summary = New-MatrixSummary -Tier 'pr' -Mode 'all' -Results $results -PlannedCommands @() -Verdict 'dry-run'
             $summary.overall | Should -Be 'dry-run'
+            $summary.mandatory.acceptance | Should -Be 'not-run'
+        }
+
+        It 'Records mandatory acceptance <Acceptance> for tier <Tier>' -ForEach @(
+            @{ Tier = 'pr'; Gating = 1; Acceptance = 'not-claimed' }
+            @{ Tier = 'nightly'; Gating = 1; Acceptance = 'failed' }
+            @{ Tier = 'nightly'; Gating = 0; Acceptance = 'passed' }
+        ) {
+            $results = [System.Collections.Generic.List[hashtable]]::new()
+            $results.Add(@{ slug = 'a'; overall = 'pass'; mandatory = @{ status = 'passed'; gatingFailures = $Gating; candidateFailures = 2 } })
+            $summary = New-MatrixSummary -Tier $Tier -Mode 'all' -Results $results -PlannedCommands @()
+            $summary.mandatory.acceptance | Should -Be $Acceptance
+            $summary.mandatory.gatingFailures | Should -Be $Gating
+            $summary.mandatory.candidateFailures | Should -Be 2
         }
     }
 

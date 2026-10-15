@@ -1,0 +1,4 @@
+import os
+
+API_TOKEN = os.environ["BILLING_API_TOKEN"]
+TIMEOUT_SECONDS = 30

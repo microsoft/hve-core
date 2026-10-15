@@ -980,6 +980,196 @@ Describe 'VallyRunner module' -Tag 'Unit' {
         }
     }
 
+    Context 'Agent-behavior mandatory evidence' {
+        BeforeAll {
+            $script:PolicySha = 'a' * 64
+            function New-TestTrajectory {
+                param([object[]]$Events)
+                $built = foreach ($descriptor in $Events) {
+                    $eventType = [string]$descriptor.t
+                    $details = if ($eventType -like 'hve.context.*') {
+                        [ordered]@{ stimulus = 's1'; policySha256 = $script:PolicySha; assessed = $eventType -eq 'hve.context.composed' }
+                    }
+                    else { [ordered]@{ stimulus = 's1'; policySha256 = $script:PolicySha; status = $eventType.Split('.')[-1] } }
+                    if ($descriptor.ContainsKey('d')) { foreach ($key in $descriptor.d.Keys) { $details[$key] = $descriptor.d[$key] } }
+                    [pscustomobject]@{
+                        type = if ($descriptor.ContainsKey('kind')) { $descriptor.kind } else { 'system' }
+                        data = [pscustomobject]@{ eventType = $eventType; details = [pscustomobject]$details }
+                    }
+                }
+                return [pscustomobject]@{ events = @($built) }
+            }
+            function New-TestRuntime {
+                return [ordered]@{
+                    executor = 'hve-agent-behavior'; policySha256 = $script:PolicySha; arguments = @('--executor-plugin', 'plugin.mts', '--executor', 'hve-agent-behavior')
+                    stimuli = [ordered]@{
+                        gate = [ordered]@{ measurement = 'enforced'; authoritative = $true; gating = $true; requires = [string[]]@('filesystem') }
+                        cand = [ordered]@{ measurement = 'candidate'; authoritative = $false; gating = $false; requires = [string[]]@('context') }
+                    }
+                }
+            }
+        }
+
+        It 'Selects the executor plugin and policy requirements only for the agent-behavior suite' {
+            Get-VallyAgentBehaviorRuntime -SpecPath (Join-Path $script:WorkRoot 'other.yaml') | Should -BeNullOrEmpty
+            $suite = Join-Path $script:RepositoryRoot 'evals/agent-behavior/eval.yaml'
+
+            $runtime = Get-VallyAgentBehaviorRuntime -SpecPath $suite
+
+            $runtime.arguments | Should -Be @('--executor-plugin', (Join-Path $script:RepositoryRoot 'scripts/evals/agent-behavior-executor.mjs'), '--executor', 'hve-agent-behavior')
+            $runtime.policySha256 | Should -Be (Get-FileHash -Algorithm SHA256 (Join-Path $script:RepositoryRoot 'evals/agent-behavior/measurement-policy.json')).Hash.ToLowerInvariant()
+            $runtime.stimuli['dt-coach-denied-board-intent-candidate'].requires | Should -Be @('context', 'filesystem')
+            $runtime.stimuli['dt-coach-denied-board-intent-candidate'].gating | Should -BeFalse
+            $runtime.stimuli['code-review-resume-native-edit'].requires | Should -Be @('filesystem')
+            $runtime.stimuli.Contains('dt-coach-denied-board-intent') | Should -BeFalse
+        }
+
+        It 'Classifies trial evidence as <Expected> when <Case>' -ForEach @(
+            @{ Case = 'context and filesystem pass'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.passed' }); Expected = 'passed'; Code = $null }
+            @{ Case = 'the boundary is violated'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.violated' }); Expected = 'violated'; Code = 'filesystem-violated' }
+            @{ Case = 'observation is unavailable'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.unavailable' }); Expected = 'unavailable'; Code = 'filesystem-unavailable' }
+            @{ Case = 'context is missing'; Events = @(@{ t = 'hve.filesystem.passed' }); Expected = 'integrity'; Code = 'context-missing' }
+            @{ Case = 'filesystem verdicts are duplicated'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.passed' }, @{ t = 'hve.filesystem.passed' }); Expected = 'integrity'; Code = 'filesystem-duplicate' }
+            @{ Case = 'filesystem evidence is absent'; Events = @(@{ t = 'hve.context.composed' }); Expected = 'integrity'; Code = 'filesystem-missing' }
+            @{ Case = 'context was not composed'; Events = @(@{ t = 'hve.context.unassessed' }, @{ t = 'hve.filesystem.passed' }); Expected = 'integrity'; Code = 'context-unassessed' }
+            @{ Case = 'the policy digest differs'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.passed'; d = @{ policySha256 = ('b' * 64) } }); Expected = 'integrity'; Code = 'policy-mismatch' }
+            @{ Case = 'the stimulus identity differs'; Events = @(@{ t = 'hve.context.composed'; d = @{ stimulus = 'other' } }, @{ t = 'hve.filesystem.passed' }); Expected = 'integrity'; Code = 'stimulus-mismatch' }
+            @{ Case = 'the verdict contradicts its details'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.passed'; d = @{ status = 'violated' } }); Expected = 'integrity'; Code = 'filesystem-contradictory' }
+            @{ Case = 'an unknown host event appears'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.passed' }, @{ t = 'hve.override' }); Expected = 'integrity'; Code = 'unknown-host-event' }
+            @{ Case = 'a non-system event imitates a violation'; Events = @(@{ t = 'hve.context.composed' }, @{ t = 'hve.filesystem.passed' }, @{ t = 'hve.filesystem.violated'; kind = 'assistant_message' }); Expected = 'passed'; Code = $null }
+        ) {
+            $requirement = [ordered]@{ requires = [string[]]@('context', 'filesystem') }
+
+            $outcome = Get-VallyMandatoryTrialOutcome -Trajectory (New-TestTrajectory $Events) -Requirement $requirement -StimulusName 's1' -PolicySha256 $script:PolicySha
+
+            $outcome.status | Should -Be $Expected
+            if ($Code) { $outcome.codes | Should -Contain $Code } else { @($outcome.codes) | Should -HaveCount 0 }
+        }
+
+        It 'Reports a trial without a trajectory as unobserved' {
+            $outcome = Get-VallyMandatoryTrialOutcome -Trajectory $null -Requirement ([ordered]@{ requires = [string[]]@('context') }) -StimulusName 's1' -PolicySha256 $script:PolicySha
+            $outcome.status | Should -Be 'unobserved'
+        }
+
+        It 'Reads mandatory evidence only for configured trial records' {
+            $runDir = Join-Path $script:WorkRoot 'mandatory-run'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $trajectory = New-TestTrajectory @(@{ t = 'hve.filesystem.passed'; d = @{ stimulus = 'gate' } })
+            @(
+                ([ordered]@{ type = 'trial-result'; stimulus = 'gate'; trialIndex = 0; trajectory = $trajectory } | ConvertTo-Json -Depth 20 -Compress)
+                ([ordered]@{ type = 'trial-result'; stimulus = 'unconfigured'; trialIndex = 0; trajectory = $trajectory } | ConvertTo-Json -Depth 20 -Compress)
+                '{"type":"run-summary"}'
+                '{not json'
+            ) | Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Encoding utf8
+
+            $records = @(Read-VallyMandatoryTrials -RunDir $runDir -Runtime (New-TestRuntime) -Attempt 2)
+
+            $records | Should -HaveCount 1
+            $records[0].stimulusName | Should -Be 'gate'
+            $records[0].attempt | Should -Be 2
+            $records[0].status | Should -Be 'passed'
+        }
+
+        It 'Aggregates mandatory outcomes when <Case>' -ForEach @(
+            @{ Case = 'a passing retry follows a violation'; Trials = @(@{ a = 1; s = 'gate'; st = 'violated' }, @{ a = 2; s = 'gate'; st = 'passed' }, @{ a = 2; s = 'gate'; st = 'passed' }, @{ a = 2; s = 'cand'; st = 'passed' }); Selected = 2; Gate = 'violated'; Cand = 'passed'; Status = 'failed'; Gating = 1; Candidate = 0 }
+            @{ Case = 'every trial passes'; Trials = @(@{ a = 1; s = 'gate'; st = 'passed' }, @{ a = 1; s = 'gate'; st = 'passed' }, @{ a = 1; s = 'cand'; st = 'passed' }); Selected = 1; Gate = 'passed'; Cand = 'passed'; Status = 'passed'; Gating = 0; Candidate = 0 }
+            @{ Case = 'the selected attempt is incomplete'; Trials = @(@{ a = 1; s = 'gate'; st = 'passed' }, @{ a = 1; s = 'cand'; st = 'passed' }); Selected = 1; Gate = 'integrity'; Cand = 'passed'; Status = 'failed'; Gating = 1; Candidate = 0 }
+            @{ Case = 'only a candidate fails'; Trials = @(@{ a = 1; s = 'gate'; st = 'passed' }, @{ a = 1; s = 'gate'; st = 'passed' }, @{ a = 1; s = 'cand'; st = 'integrity' }); Selected = 1; Gate = 'passed'; Cand = 'integrity'; Status = 'passed'; Gating = 0; Candidate = 1 }
+            @{ Case = 'an errored attempt is retried cleanly'; Trials = @(@{ a = 1; s = 'gate'; st = 'unobserved' }, @{ a = 2; s = 'gate'; st = 'passed' }, @{ a = 2; s = 'gate'; st = 'passed' }, @{ a = 2; s = 'cand'; st = 'passed' }); Selected = 2; Gate = 'passed'; Cand = 'passed'; Status = 'passed'; Gating = 0; Candidate = 0 }
+        ) {
+            $records = @(foreach ($trial in $Trials) { [ordered]@{ attempt = $trial.a; stimulusName = $trial.s; trialIndex = 0; status = $trial.st; codes = [string[]]@() } })
+            $expected = [ordered]@{ gate = @{ runs = 2 }; cand = @{ runs = 1 }; legacy = @{ runs = 1 } }
+
+            $outcome = Get-VallyMandatoryOutcome -Runtime (New-TestRuntime) -Trials $records -SelectedAttempt $Selected -ExpectedStimuli $expected
+
+            $outcome.stimuli['gate'].status | Should -Be $Gate
+            $outcome.stimuli['cand'].status | Should -Be $Cand
+            $outcome.stimuli.Contains('legacy') | Should -BeFalse
+            $outcome.status | Should -Be $Status
+            $outcome.gatingFailures | Should -Be $Gating
+            $outcome.candidateFailures | Should -Be $Candidate
+            $outcome.promotionBlocked | Should -Be ($Candidate -gt 0)
+            (Test-VallyMandatoryEvidence -Mandatory ($outcome | ConvertTo-Json -Depth 10 | ConvertFrom-Json) -Required).gatingFailures | Should -Be $Gating
+        }
+
+        It 'Reports not-applicable when no selected stimulus carries a requirement' {
+            $outcome = Get-VallyMandatoryOutcome -Runtime (New-TestRuntime) -Trials @() -SelectedAttempt 1 -ExpectedStimuli ([ordered]@{ legacy = @{ runs = 1 } })
+            $outcome.status | Should -Be 'not-applicable'
+            (Test-VallyMandatoryEvidence -Mandatory $outcome -Required).contractValid | Should -BeTrue
+        }
+
+        It 'Validates persisted mandatory evidence when <Case>' -ForEach @(
+            @{ Case = 'a required outcome is missing'; Mutation = 'missing'; Required = $true; Valid = $false }
+            @{ Case = 'an optional outcome is missing'; Mutation = 'missing'; Required = $false; Valid = $true }
+            @{ Case = 'gate counts are understated'; Mutation = 'understated'; Required = $true; Valid = $false }
+            @{ Case = 'a status is unknown'; Mutation = 'unknown-status'; Required = $true; Valid = $false }
+            @{ Case = 'the schema version differs'; Mutation = 'version'; Required = $true; Valid = $false }
+        ) {
+            $outcome = Get-VallyMandatoryOutcome -Runtime (New-TestRuntime) -Trials @([ordered]@{ attempt = 1; stimulusName = 'gate'; trialIndex = 0; status = 'violated'; codes = [string[]]@() }) `
+                -SelectedAttempt 1 -ExpectedStimuli ([ordered]@{ gate = @{ runs = 1 } })
+            switch ($Mutation) {
+                'missing' { $outcome = $null }
+                'understated' { $outcome.gatingFailures = 0 }
+                'unknown-status' { $outcome.stimuli['gate'].status = 'accepted' }
+                'version' { $outcome.schemaVersion = '0.9.0' }
+            }
+
+            (Test-VallyMandatoryEvidence -Mandatory $outcome -Required:$Required).contractValid | Should -Be $Valid
+        }
+
+        It 'Passes adapter arguments and retains an earlier attempt violation after a passing retry' {
+            InModuleScope VallyRunner -Parameters @{ Root = $script:WorkRoot } {
+                $script:MandatoryAttempt = 0
+                $script:CapturedArguments = $null
+                Mock Get-VallyAgentBehaviorRuntime {
+                    [ordered]@{ executor = 'hve-agent-behavior'; policySha256 = ('a' * 64); arguments = @('--executor-plugin', 'plugin.mts', '--executor', 'hve-agent-behavior')
+                        stimuli = [ordered]@{ gate = [ordered]@{ measurement = 'enforced'; authoritative = $true; gating = $true; requires = [string[]]@('filesystem') } } }
+                }
+                Mock Get-VallyDiagnosticConfiguration {
+                    @{ status = 'available'; specDigest = 'sha256:d'; selectionDigest = 'sha256:s'; judgeModels = @(); stimuli = [ordered]@{ gate = @{ runs = 1; graders = @() } } }
+                }
+                Mock Invoke-VallyProcess {
+                    $script:CapturedArguments = $Arguments
+                    @{ ExitCode = 0; Worker = 'synthetic'; ElapsedMilliseconds = 1; ExitCategory = 'success' }
+                }
+                Mock Resolve-VallyRunDir { 'synthetic-run' }
+                Mock Read-VallyResultsJsonl {
+                    $current = $script:MandatoryAttempt++
+                    @{ assertionsPassed = 1; assertionsFailed = 0; errored = 1 - $current; durationMs = 1; trials = 1; stimuliPassed = 1; stimuliFailed = 0
+                        resultsPath = 'r'; perStimulus = @{}; failedOrErroredTrials = @(); trialDiagnostics = @(); recordIssues = @() }
+                }
+                Mock Read-VallyMandatoryTrials {
+                    $state = if ($Attempt -eq 1) { 'violated' } else { 'passed' }
+                    @([ordered]@{ attempt = $Attempt; stimulusName = 'gate'; trialIndex = 0; status = $state; codes = [string[]]@() })
+                }
+
+                $result = Invoke-VallySpec -SpecPath (Join-Path $Root 'suite.yaml') -OutputDir (Join-Path $Root 'mandatory-attempts') -Model 'm' -MaxErroredRetries 1
+
+                $script:CapturedArguments | Should -Contain '--executor-plugin'
+                $script:CapturedArguments[[array]::IndexOf($script:CapturedArguments, '--executor') + 1] | Should -Be 'hve-agent-behavior'
+                $result.diagnostics.selectedAttempt | Should -Be 2
+                $result.mandatory.stimuli['gate'].status | Should -Be 'violated'
+                $result.mandatory.status | Should -Be 'failed'
+            }
+        }
+
+        It 'Keeps the stock executor and no mandatory outcome for other suites' {
+            InModuleScope VallyRunner -Parameters @{ Root = $script:WorkRoot } {
+                $script:CapturedArguments = $null
+                Mock Invoke-VallyProcess {
+                    $script:CapturedArguments = $Arguments
+                    @{ ExitCode = 0; Worker = 'synthetic'; ElapsedMilliseconds = 1; ExitCategory = 'success' }
+                }
+                Mock Resolve-VallyRunDir { $null }
+
+                $result = Invoke-VallySpec -SpecPath (Join-Path $Root 'other.yaml') -OutputDir (Join-Path $Root 'other-output') -Model 'm' -MaxErroredRetries 0
+
+                $script:CapturedArguments | Should -Not -Contain '--executor-plugin'
+                $result.mandatory | Should -BeNullOrEmpty
+            }
+        }
+    }
+
     Context 'Test-SpecInputModeration (exit-code classification)' {
         BeforeEach {
             $script:StubModeration = Join-Path $PSScriptRoot 'fixtures/stub-moderation.ps1'
@@ -3540,6 +3730,70 @@ stimuli:
         $summary.totals.specs | Should -Be 0
         $summary.perArtifact[0].status | Should -Be 'skipped'
         $summary.perArtifact[0].specCount | Should -Be 0
+    }
+}
+
+Describe 'Update-SpecMandatoryOutcome' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+        function New-MandatoryResult {
+            param([bool]$Gating, [string]$Status)
+            $failures = if ($Status -ne 'passed') { 1 } else { 0 }
+            return @{
+                status = 'pass'; isAdvisory = $false; toleratedFailed = 1; authoritativeFailed = 0; authoritativeStimuliFailed = 0
+                integrity = @{ contractValid = $true; integrityPassed = $true; allChecksPassed = $true; issues = @() }
+                perStimulus = [ordered]@{ guarded = @{ assertionsPassed = 4; assertionsFailed = 1; aggregatePassed = $true } }
+                mandatory = [ordered]@{ schemaVersion = '1.0.0'; status = 'passed'
+                    gatingFailures = if ($Gating) { $failures } else { 0 }; candidateFailures = if ($Gating) { 0 } else { $failures }
+                    stimuli = [ordered]@{ guarded = [ordered]@{ gating = $Gating; status = $Status } } }
+            }
+        }
+    }
+
+    It 'Promotes an aggregate-passing authoritative stimulus with a mandatory failure instead of tolerating it' {
+        $result = New-MandatoryResult -Gating $true -Status 'violated'
+
+        $update = Update-SpecMandatoryOutcome -Result $result -Required $true
+
+        $update.promote | Should -BeTrue
+        $update.level | Should -Be 'Error'
+        $result.status | Should -Be 'mandatory-failure'
+        $result.toleratedFailed | Should -Be 0
+        $result.authoritativeFailed | Should -Be 1
+        $result.authoritativeStimuliFailed | Should -Be 1
+    }
+
+    It 'Reports a candidate mandatory failure without gating' {
+        $result = New-MandatoryResult -Gating $false -Status 'integrity'
+
+        $update = Update-SpecMandatoryOutcome -Result $result -Required $true
+
+        $update.promote | Should -BeFalse
+        $update.level | Should -Be 'Warning'
+        $result.status | Should -Be 'pass'
+        $result.toleratedFailed | Should -Be 1
+    }
+
+    It 'Fails evidence integrity when the agent-behavior suite has no mandatory outcome' {
+        $result = New-MandatoryResult -Gating $true -Status 'passed'
+        $result.mandatory = $null
+
+        $update = Update-SpecMandatoryOutcome -Result $result -Required $true
+
+        $update.promote | Should -BeFalse
+        $result.integrity.integrityPassed | Should -BeFalse
+        $result.integrity.issues | Should -Contain 'invalid-mandatory-contract'
+    }
+
+    It 'Leaves unrelated suites unchanged' {
+        $result = New-MandatoryResult -Gating $true -Status 'passed'
+        $result.mandatory = $null
+
+        $update = Update-SpecMandatoryOutcome -Result $result -Required $false
+
+        $update.message | Should -BeNullOrEmpty
+        $result.integrity.integrityPassed | Should -BeTrue
+        $result.status | Should -Be 'pass'
     }
 }
 

@@ -1,0 +1,20 @@
+## Codebase Profile
+
+**Repository:** contoso-docs
+**Mode:** audit
+**Primary Languages:** TypeScript, Markdown
+**Frameworks:** Docusaurus 3, React 18
+
+### Key Directories
+
+* `site/` - Docusaurus documentation site
+
+### Accessibility Profile
+
+```yaml
+uiFrameworkFamily: web-static
+wcagVersionTarget: "2.2"
+assistiveTechnologyTargets: [screen-reader, keyboard-only]
+mobileTargetPlatforms: [none]
+componentLibrary: none
+```

@@ -1,0 +1,29 @@
+{
+  "task_id": "2628",
+  "task_slug": "synthetic-queue-selection",
+  "parent_task": null,
+  "mode": "manual",
+  "active_phase": "Research",
+  "status": "active",
+  "session_status": "stopped",
+  "artifact_paths": {
+    "research": ".copilot-tracking/research/2026-09-21/synthetic-queue-selection-research.md",
+    "plan": null,
+    "critique": null,
+    "changes": null,
+    "review": null
+  },
+  "confirmed_decisions": [
+    {
+      "decision": "Research disposition: executed. Planning Readiness: Ready; the queue option recommendation is supported by staged evidence E1.",
+      "status": "current",
+      "evidence": ".copilot-tracking/research/2026-09-21/synthetic-queue-selection-research.md, Recommendation and Alternatives"
+    }
+  ],
+  "blockers": [],
+  "next_action": {
+    "phase": "Research",
+    "action": "Walk the user through the completed research and wait for explicit direction"
+  },
+  "prioritized_follow_ups": []
+}

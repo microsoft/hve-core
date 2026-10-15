@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand FEFF
 stimuli:
   - name: brd-builder-class-recipe
     prompt: |
@@ -396,3 +397,107 @@ stimuli:
           path: .copilot-tracking/brd-sessions/atlas.state.json
           pattern: 'rpiInvocations'
           negate: true
+
+  # Advisory candidate for brd-builder-ordinary-request-no-proposal-extension:
+  # the agent, its skills and a staged Discover session are loaded, the reply
+  # must ground the refinement in staged state, and the persisted session state
+  # rather than reply wording shows the proposal-response extension stayed off.
+  - name: brd-builder-ordinary-request-no-proposal-extension-candidate
+    prompt: |
+      Resume the staged Atlas BRD session. Without editing files, briefly state
+      which BRD sections you would refine next for stakeholder roles and
+      measurable business goals, and whether the current phase gate can be
+      exited yet.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/brd-state.json
+          dest: .copilot-tracking/brd-sessions/atlas.state.json
+        - src: fixtures/rpi-depth/atlas-brd.md
+          dest: docs/project-planning/atlas-brd.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/project-planning/proposal-response
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: brd-proposal-negative
+    graders:
+      - type: output-matches
+        name: brd-ordinary-refinement-grounded-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\bDiscover\b)(?=[\s\S]*(?:\bREG-01\b|\bretention\b))(?=[\s\S]*(?:\b(?:not|cannot|can[\x27\u2019]t|isn[\x27\u2019]t|blocked|unmet)\b[^.\n]{0,80}\b(?:exit\w*|clear\w*|pass\w*|satisfy|satisfied|satisfies|met|ready|complete)\b|\b(?:exit|gate)\b[^.\n]{0,80}\b(?:not|cannot|can[\x27\u2019]t|isn[\x27\u2019]t|blocked|unmet)\b))(?![\s\S]*\b(?:Discover|gate)\b[^.\n]{0,60}\b(?:can|may)\s+(?:now\s+)?be\s+(?:exited|cleared|passed|satisfied)\b)(?![\s\S]*\bgate\s+(?:is|has\s+been)\s+(?:now\s+)?(?:met|satisfied|cleared|passed)\b)'
+      - type: program
+        name: brd-ordinary-state-no-extension-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const workspace = process.env.EVALUATE_WORKSPACE;
+                const text = fs.readFileSync(path.join(workspace, '.copilot-tracking/brd-sessions/atlas.state.json'), 'utf8');
+                if (text.length > 262144) process.exit(1);
+                const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+                const inactive = !('extensionsLoaded' in state) && !('proposalResponseArtifacts' in state) &&
+                  !fs.existsSync(path.join(workspace, '.copilot-tracking/proposal-responses'));
+                process.exit(inactive && state.brdFile === 'docs/project-planning/atlas-brd.md' && state.syntheticExtension?.preserve === true ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: brd-ordinary-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: brd-ordinary-context-cand
+        config:
+          required:
+            - hve.context.composed
+
+  # Advisory candidate for brd-builder-class-recipe: the agent and its
+  # requirements skill are loaded. The loaded file conventions, not the prompt,
+  # supply both paths, and the outline must carry a scope boundary and a
+  # measurable metric that the prompt does not provide. No file may change.
+  - name: brd-builder-class-recipe-candidate
+    prompt: |
+      Without editing files, briefly outline the business goals, scope, and
+      success metrics for a self-service password reset BRD. State the paths
+      where the BRD and its session state would be written.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: brd-class-recipe
+    graders:
+      - type: output-matches
+        name: brd-contract-paths-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\bdocs[/\\]project-planning[/\\][a-z0-9-]+-brd\.md\b)(?=[\s\S]*\.copilot-tracking[/\\]brd-sessions[/\\][a-z0-9-]+\.state\.json\b)'
+      - type: output-matches
+        name: brd-outline-measurable-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\b(?:in[- ]scope|out[- ]of[- ]scope|non-goals?)\b)(?=[\s\S]*(?:\b\d+(?:\.\d+)?\s*%|\b\d+\s*(?:seconds?|minutes?|hours?|days?|business\s+days?)\b))'
+      - type: system-event
+        name: brd-class-recipe-workspace-unchanged-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: brd-class-recipe-context-cand
+        config:
+          required:
+            - hve.context.composed

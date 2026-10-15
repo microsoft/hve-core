@@ -1,60 +1,158 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: whether each finding holds is decided only by the
+  # staged code (an f-string query, and a token read from the environment), and
+  # the verdict block format comes only from the loaded agent.
   - name: finding-deep-verifier-verdict-blocks
     prompt: |
-      You are the Finding Deep Verifier subagent. Verify the following two
-      candidate security findings against the codebase context provided, and
-      return one verdict block per finding in a single response:
+      Security Reviewer dispatch: verify these FAIL findings for skill
+      `owasp-top-10` in audit mode. Codebase profile: Python Flask service.
         - finding_id: SEC-001
           title: SQL injection in user lookup
+          status: FAIL
           severity: HIGH
-          location: src/db/users.py#L42
-          claim: Raw f-string interpolation of `user_id` into a SQL query.
+          location: src/db/users.py#L9
+          description: The user lookup builds its SQL query with an f-string.
+          recommendation: Use a parameterized query.
         - finding_id: SEC-002
           title: Hardcoded secret in config loader
+          status: FAIL
           severity: MEDIUM
-          location: src/config.py#L11
-          claim: A literal API token appears in source.
+          location: src/config.py#L3
+          description: A literal API token appears in source.
+          recommendation: Load the token from a secret store.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/finding-deep-verifier.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/users-query.txt
+          dest: src/db/users.py
+        - src: fixtures/security-assessors/env-config.txt
+          dest: src/config.py
+      skills:
+        - ../../.github/skills/security/owasp-top-10
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-confirm-and-disprove
     graders:
-      - type: output-matches
-        name: verdict-block-per-finding
-        config:
-          pattern: '(?i)##\s*finding:?\s*sec-00[12]'
-      - type: output-matches
+      - type: program
         name: finding-deep-verifier-verdict-blocks-verdict-vocabulary
         config:
-          pattern: '(?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)'
-      - type: output-matches
-        name: required-section-headings
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const blocks = output.split(/^(?=#{1,3}[ \t]*Finding:?[ \t]*SEC-\d{3}\b)/m).filter(text => /^#{1,3}[ \t]*Finding/.test(text)).map(text => ({ id: /SEC-\d{3}/.exec(text)[0], text }));
+                const ids = blocks.map(block => block.id).sort();
+                const verdict = id => {
+                  const values = [...blocks.find(block => block.id === id).text.matchAll(/^[ \t]*[-*]?[ \t]*Verdict:\s*(CONFIRMED|DISPROVED|DOWNGRADED)\b/gim)].map(match => match[1].toUpperCase());
+                  return values.length > 0 && values.every(value => value === values[0]) ? values[0] : null;
+                };
+                const shaped = ids.length === 2 && ids[0] === 'SEC-001' && ids[1] === 'SEC-002';
+                process.exit(shaped && verdict('SEC-001') === 'CONFIRMED' && verdict('SEC-002') === 'DISPROVED' ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: verifier-links-confirmed-location
         config:
-          pattern: '(?i)(original assessment|confirming evidence|updated remediation|example fix)'
-      - type: output-matches
-        name: location-link-format
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const block = output.split(/^(?=#{1,3}[ \t]*Finding:?[ \t]*SEC-\d{3}\b)/m).filter(text => /^#{1,3}[ \t]*Finding/.test(text)).find(text => /^#{1,3}[ \t]*Finding:?[ \t]*SEC-001\b/.test(text)) || '';
+                process.exit(/\[[^\]\n]*src\/db\/users\.py#L(?:9|10)\b[^\]\n]*\]\([^)\n]*src\/db\/users\.py#L(?:9|10)\b[^)\n]*\)/.test(block) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: verifier-verdict-blocks-read-only
         config:
-          pattern: '(?i)(\[[^\]]+#l\d+\]\([^)]+#l\d+\)|—)'
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: verifier-verdict-blocks-context
+        config:
+          required:
+            - hve.context.composed
 
+  # Re-measured in place: the staged app enables CSRF protection globally, so
+  # the finding does not survive adversarial verification, and the unrelated
+  # eval() in the same file must not become a new finding.
   - name: finding-deep-verifier-no-new-findings
     prompt: |
-      You are the Finding Deep Verifier subagent. Verify only this single
-      finding and do not introduce any additional findings:
+      Security Reviewer dispatch: verify this FAIL finding for skill
+      `owasp-top-10` in audit mode. Codebase profile: Python Flask service.
         - finding_id: SEC-010
           title: Missing CSRF protection on form POST
+          status: FAIL
           severity: MEDIUM
-          location: src/web/forms.py#L88
-      Return your verdict block.
+          location: src/web/forms.py#L6
+          description: The profile form accepts POST requests without a CSRF token check.
+          recommendation: Add CSRF protection to the form.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/finding-deep-verifier.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/csrf-app.txt
+          dest: src/web/app.py
+        - src: fixtures/security-assessors/profile-form.txt
+          dest: src/web/forms.py
+      skills:
+        - ../../.github/skills/security/owasp-top-10
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-global-csrf-mitigation
     graders:
-      - type: output-matches
-        name: target-finding-present
+      - type: program
+        name: verifier-single-verdict-block
         config:
-          pattern: '(?i)sec-010'
-      - type: output-matches
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const headings = [...output.matchAll(/^#{1,3}[ \t]*Finding:?[ \t]*([A-Z]+-\d+)/gim)].map(match => match[1].toUpperCase());
+                process.exit(headings.length === 1 && headings[0] === 'SEC-010' ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
         name: finding-deep-verifier-no-new-findings-verdict-vocabulary
         config:
-          pattern: '(?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const verdicts = [...output.matchAll(/^[ \t]*[-*]?[ \t]*Verdict:\s*(CONFIRMED|DISPROVED|DOWNGRADED)\b/gim)].map(match => match[1].toUpperCase());
+                const mitigated = verdicts.length > 0 && verdicts.every(value => value === 'DISPROVED' || value === 'DOWNGRADED');
+                process.exit(mitigated && /\bCSRFProtect\b/.test(output) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: verifier-single-finding-read-only
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: verifier-single-finding-context
+        config:
+          required:
+            - hve.context.composed

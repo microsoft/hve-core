@@ -1,0 +1,9 @@
+# Proposed Architecture: Inspection Portal
+
+* Runtime: a single Node.js monolith on one virtual machine.
+* Data: an SQLite database file on the same virtual machine's local disk.
+* Caching: none.
+* Deployment: engineers copy builds over SSH and restart the process by hand.
+* Expected load: 400 site managers today, growing to 6,000 across three regions within 18 months.
+* Team: four developers, no dedicated operations engineer.
+* Motivation for this review: an outage last quarter kept site managers offline for a full shift.

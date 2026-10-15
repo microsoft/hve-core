@@ -1,0 +1,8 @@
+---
+id: install
+title: Install the agent
+---
+
+# Install the agent
+
+Download the installer, then sign in with your organization account.

@@ -1,0 +1,16 @@
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -12,7 +12,7 @@
+   "dependencies": {
+-    "lodash": "^4.17.21"
++    "lodash": "^3.0.0"
+   }
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -18,7 +18,7 @@ jobs:
+     steps:
+-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
++      - uses: actions/checkout@v4
+       - run: npm ci

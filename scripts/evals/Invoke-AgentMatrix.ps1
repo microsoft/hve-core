@@ -12,10 +12,15 @@
 .DESCRIPTION
     Drives `npx vally eval --eval-spec evals/agent-behavior/eval.yaml --tag agent=<slug>` for either
     a curated set of slugs (`-Changed`) or the full inventory (`-All`).
+    Every run selects the `hve-agent-behavior` executor plugin, and host-owned
+    mandatory context and filesystem evidence is evaluated with the shared
+    `VallyRunner` parser. An enforced authoritative mandatory failure fails the
+    agent; candidate failures are reported in each agent's `mandatory` block.
     Emits one per-agent summary plus an aggregate `agent-matrix-summary.json`
     and applies a tier exit policy:
 
-      - `pr`      : exit 0 always (advisory).
+      - `pr`      : exit 0 always (advisory); the summary records
+                    `mandatory.acceptance = not-claimed`.
       - `nightly` : exit 1 when any agent's `overall` is `fail`; otherwise exit 0.
 
     `-WhatIf` (dry-run) enumerates the slugs that would be exercised, reports the
@@ -96,6 +101,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
 
 #region Helper Functions
 
@@ -211,7 +217,7 @@ function Get-PlannedCommand {
         [Parameter(Mandatory)] [string]$Slug,
         [Parameter(Mandatory)] [string]$Model
     )
-    return "npx vally eval --eval-spec evals/agent-behavior/eval.yaml --tag agent=$Slug --model $Model"
+    return "npx vally eval --eval-spec evals/agent-behavior/eval.yaml --tag agent=$Slug --model $Model --executor-plugin scripts/evals/agent-behavior-executor.mjs --executor hve-agent-behavior"
 }
 
 function Resolve-NpxExecutable {
@@ -238,11 +244,12 @@ function Invoke-VallyAgentRun {
     param(
         [Parameter(Mandatory)] [string]$Slug,
         [Parameter(Mandatory)] [string]$LogPath,
-        [Parameter(Mandatory)] [string]$Model
+        [Parameter(Mandatory)] [string]$Model,
+        [Parameter(Mandatory)] [System.Collections.IDictionary]$Runtime
     )
 
     $npx = Resolve-NpxExecutable
-    $vallyArgs = @('vally', 'eval', '--eval-spec', 'evals/agent-behavior/eval.yaml', '--tag', "agent=$Slug", '--model', $Model)
+    $vallyArgs = @('vally', 'eval', '--eval-spec', 'evals/agent-behavior/eval.yaml', '--tag', "agent=$Slug", '--model', $Model) + @($Runtime.arguments)
     $prev = [Console]::OutputEncoding
     try {
         [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -474,6 +481,27 @@ function Merge-GraderDetails {
     return $merged
 }
 
+function Get-AgentMandatoryOutcome {
+    <#
+    .SYNOPSIS
+        Evaluates host-owned mandatory evidence for one agent run with the shared runner parser.
+    .DESCRIPTION
+        A run whose output directory cannot be located yields no trials, so every
+        in-scope mandatory stimulus reports incomplete evidence instead of passing.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)] [System.Collections.IDictionary]$Runtime,
+        [Parameter(Mandatory)] [string]$SpecPath,
+        [Parameter(Mandatory)] [string]$Slug,
+        [Parameter(Mandatory)] [AllowEmptyString()] [string]$OutputDir
+    )
+
+    $configuration = Get-VallyDiagnosticConfiguration -SpecPath $SpecPath -Tag "agent=$Slug"
+    $trials = @(Read-VallyMandatoryTrials -RunDir $OutputDir -Runtime $Runtime -Attempt 1)
+    return Get-VallyMandatoryOutcome -Runtime $Runtime -Trials $trials -SelectedAttempt 1 -ExpectedStimuli $configuration.stimuli
+}
+
 function New-AgentSummary {
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -484,7 +512,8 @@ function New-AgentSummary {
         [Parameter(Mandatory)] [string]$LogPath,
         [string]$OutputDir = '',
         [string]$StimulusPrompt = '',
-        [string]$Output = ''
+        [string]$Output = '',
+        [AllowNull()] [System.Collections.IDictionary]$Mandatory
     )
 
     $overall = if ($ExitCode -eq 0) { 'pass' } else { 'fail' }
@@ -493,6 +522,7 @@ function New-AgentSummary {
             if ($g['status'] -eq 'fail') { $overall = 'fail'; break }
         }
     }
+    if ($null -ne $Mandatory -and [string]$Mandatory['status'] -ceq 'failed') { $overall = 'fail' }
 
     $graderObjects = @($Graders | ForEach-Object {
         [ordered]@{
@@ -517,6 +547,7 @@ function New-AgentSummary {
         vallyOutputDir = $OutputDir
         stimulusPrompt = $StimulusPrompt
         output         = $Output
+        mandatory      = $Mandatory
     }
 }
 
@@ -533,6 +564,14 @@ function New-MatrixSummary {
 
     $failures = @($Results | Where-Object { $_['overall'] -eq 'fail' } | ForEach-Object { [string]$_['slug'] })
     $overall = if ($Verdict) { $Verdict } elseif ($failures.Count -gt 0) { 'fail' } else { 'pass' }
+    $outcomes = @($Results | Where-Object { $_.Contains('mandatory') -and $null -ne $_['mandatory'] } | ForEach-Object { $_['mandatory'] })
+    $gatingFailures = [int](@($outcomes | ForEach-Object { [int]$_['gatingFailures'] }) | Measure-Object -Sum).Sum
+    $candidateFailures = [int](@($outcomes | ForEach-Object { [int]$_['candidateFailures'] }) | Measure-Object -Sum).Sum
+    # The PR tier always exits 0, so its summary never claims mandatory acceptance.
+    $acceptance = if ($Verdict -eq 'dry-run' -or $outcomes.Count -eq 0) { 'not-run' }
+    elseif ($Tier -eq 'pr') { 'not-claimed' }
+    elseif ($gatingFailures -gt 0) { 'failed' }
+    else { 'passed' }
 
     return [ordered]@{
         generatedAt     = (Get-Date -AsUTC).ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -543,6 +582,11 @@ function New-MatrixSummary {
         failures        = $failures
         results         = @($Results)
         plannedCommands = @($PlannedCommands)
+        mandatory       = [ordered]@{
+            gatingFailures    = $gatingFailures
+            candidateFailures = $candidateFailures
+            acceptance        = $acceptance
+        }
     }
 }
 
@@ -629,13 +673,15 @@ if ($MyInvocation.InvocationName -ne '.') {
 
         $logsRoot = Join-Path $resolvedRoot 'logs/agent-matrix'
         $runId = (Get-Date -AsUTC).ToString('yyyyMMddTHHmmssfffZ')
+        $specPath = Join-Path $resolvedRoot 'evals/agent-behavior/eval.yaml'
+        $runtime = Get-VallyAgentBehaviorRuntime -SpecPath $specPath -RepoRoot $resolvedRoot
 
         $results = [System.Collections.Generic.List[hashtable]]::new()
         foreach ($slug in $slugs) {
             $entry = $inventoryBySlug[$slug]
             $logPath = Join-Path $logsRoot "$slug-$runId.log"
             Write-Host "[$slug] running agent-behavior eval" -ForegroundColor Cyan
-            $run = Invoke-VallyAgentRun -Slug $slug -LogPath $logPath -Model $Model
+            $run = Invoke-VallyAgentRun -Slug $slug -LogPath $logPath -Model $Model -Runtime $runtime
             $graders = Get-GraderStatusesFromLog -Lines $run['Lines']
             if ($null -eq $graders) { $graders = [System.Collections.Generic.List[hashtable]]::new() }
 
@@ -645,9 +691,10 @@ if ($MyInvocation.InvocationName -ne '.') {
                 $graders = Merge-GraderDetails -LogGraders $graders -RichGraders $details['richGraders']
             }
 
+            $mandatory = Get-AgentMandatoryOutcome -Runtime $runtime -SpecPath $specPath -Slug $slug -OutputDir $vallyOutDir
             $summary = New-AgentSummary -AgentEntry $entry -ExitCode $run['ExitCode'] -Graders $graders `
                 -LogPath $logPath -OutputDir $vallyOutDir `
-                -StimulusPrompt $details['stimulusPrompt'] -Output $details['output']
+                -StimulusPrompt $details['stimulusPrompt'] -Output $details['output'] -Mandatory $mandatory
 
             $perAgentPath = Join-Path $OutputDir "$slug.json"
             Write-SummaryJson -Summary $summary -Path $perAgentPath

@@ -12,10 +12,13 @@
     and validates required keys, executor whitelist, and stimulus backlink tags
     using the EvalSpecSchema module. After schema validation, enumerates every
     parent (user-invocable) agent under .github/agents/ and verifies a matching
-    stimulus partial exists in evals/agent-behavior/stimuli/<slug>.yml. Writes a
-    combined JSON report (schema + coverage) to the requested output path and
-    exits 1 when any spec fails schema validation or any parent agent lacks a
-    stimulus partial.
+    stimulus partial exists in evals/agent-behavior/stimuli/<slug>.yml, then
+    validates the reviewed measurement policy: every compiled agent-behavior
+    stimulus must carry an evidence class that matches what it stages, and
+    recorded authority must match the spec. Writes a combined JSON report
+    (schema + coverage + policy) to the requested output path and exits 1 when
+    any spec fails schema validation, any parent agent lacks a stimulus
+    partial, or the policy reports an error.
 
 .PARAMETER Root
     Repository-relative path to the eval spec root. Defaults to 'evals'.
@@ -45,6 +48,11 @@
 .PARAMETER BaseRef
     Git ref used for new-agent detection when -NewAgentsOnly is set. Defaults to
     'origin/main'.
+
+.PARAMETER PolicyPath
+    Repository-relative path to the agent-behavior measurement policy that classifies
+    each stimulus's evidence. Defaults to 'evals/agent-behavior/measurement-policy.json'.
+    Skipped with -SkipAgentCoverage.
 
 .EXAMPLE
     pwsh -File scripts/evals/Test-EvalSpec.ps1
@@ -76,7 +84,10 @@ param(
     [switch]$NewAgentsOnly,
 
     [Parameter(Mandatory = $false)]
-    [string]$BaseRef = 'origin/main'
+    [string]$BaseRef = 'origin/main',
+
+    [Parameter(Mandatory = $false)]
+    [string]$PolicyPath = 'evals/agent-behavior/measurement-policy.json'
 )
 
 Set-StrictMode -Version Latest
@@ -1094,6 +1105,501 @@ function Write-AgentCoverageAnnotations {
     }
 }
 
+$script:AgentBehaviorEvidenceClasses = @('agent-contract', 'artifact-reference', 'fixture-contract', 'base-model')
+$script:AgentBehaviorMeasurementStates = @('legacy', 'candidate', 'enforced')
+$script:AgentBehaviorInstructionsDestination = '.github/copilot-instructions.md'
+$script:AgentBehaviorImportPattern = '#file:(?<target>\S+?\.md)(?=[\s.,;:)\]''"`]|$)'
+
+function Get-AgentBehaviorImportGraph {
+    <#
+    .SYNOPSIS
+        Resolves an agent's source-relative instruction imports.
+
+    .DESCRIPTION
+        Follows `#file:` references relative to each containing file, depth first.
+        Every target must exist under the repository `.github` directory and the
+        graph must be acyclic. Mirrors the trial-context composition performed by
+        scripts/evals/agent-behavior-runtime.mts.
+
+    .OUTPUTS
+        [hashtable] @{ imports = repository-relative dependency paths in first-visit
+        order; errors = resolution problems }.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SourcePath
+    )
+
+    $repoFull = [System.IO.Path]::GetFullPath($RepoRoot)
+    $githubRoot = [System.IO.Path]::GetFullPath((Join-Path -Path $repoFull -ChildPath '.github')) + [System.IO.Path]::DirectorySeparatorChar
+    $imports = [System.Collections.Generic.List[string]]::new()
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $state = @{}
+
+    function ConvertTo-RepoRelative([string]$Full) {
+        return $Full.Substring($repoFull.Length).TrimStart('\', '/').Replace('\', '/')
+    }
+
+    function Resolve-ImportNode([string]$Full, [bool]$IsRoot) {
+        $key = $Full.ToLowerInvariant()
+        if ($state.ContainsKey($key)) {
+            if ($state[$key] -eq 'visiting') { $errors.Add("Import cycle reaches '$(ConvertTo-RepoRelative $Full)'") }
+            return
+        }
+        $state[$key] = 'visiting'
+        $text = [System.IO.File]::ReadAllText($Full)
+        foreach ($match in [regex]::Matches($text, $script:AgentBehaviorImportPattern)) {
+            $target = $match.Groups['target'].Value
+            if ([System.IO.Path]::IsPathRooted($target)) {
+                $errors.Add("Import '$target' in '$(ConvertTo-RepoRelative $Full)' must be relative")
+                continue
+            }
+            $resolved = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $Full -Parent) -ChildPath $target))
+            if (-not $resolved.StartsWith($githubRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $errors.Add("Import '$target' in '$(ConvertTo-RepoRelative $Full)' resolves outside .github")
+                continue
+            }
+            if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) {
+                $errors.Add("Import '$target' in '$(ConvertTo-RepoRelative $Full)' does not exist")
+                continue
+            }
+            Resolve-ImportNode -Full $resolved -IsRoot $false
+        }
+        $state[$key] = 'done'
+        if (-not $IsRoot) { $imports.Add((ConvertTo-RepoRelative $Full)) }
+    }
+
+    $rootFull = [System.IO.Path]::GetFullPath((Join-Path -Path $repoFull -ChildPath $SourcePath))
+    if (-not (Test-Path -LiteralPath $rootFull -PathType Leaf)) {
+        $errors.Add("Agent source '$SourcePath' does not exist")
+    }
+    else {
+        Resolve-ImportNode -Full $rootFull -IsRoot $true
+    }
+
+    return @{ imports = @($imports); errors = @($errors) }
+}
+
+function Get-AgentBehaviorStagedFiles {
+    <#
+    .SYNOPSIS
+        Returns the effective staged-file mappings for one stimulus.
+
+    .DESCRIPTION
+        Concatenates the root and stimulus environment file entries the same way
+        Vally merges them, resolving each source against the spec directory.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.IList])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Spec,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Stimulus,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SpecDirectory
+    )
+
+    $result = [System.Collections.Generic.List[hashtable]]::new()
+    foreach ($owner in @($Spec, $Stimulus)) {
+        $environment = $null
+        foreach ($key in @('agent_environment', 'environment')) {
+            if ($owner.Contains($key) -and $owner[$key] -is [System.Collections.IDictionary]) { $environment = $owner[$key]; break }
+        }
+        if ($null -eq $environment -or -not $environment.Contains('files')) { continue }
+        foreach ($entry in @($environment['files'])) {
+            $src = $null; $dest = $null
+            if ($entry -is [System.Collections.IDictionary]) { $src = [string]$entry['src']; $dest = [string]$entry['dest'] }
+            elseif ($null -ne $entry) { $src = [string]$entry; $dest = [string]$entry }
+            if ([string]::IsNullOrWhiteSpace($src)) { continue }
+            $result.Add(@{
+                    src      = $src
+                    dest     = $dest.Replace('\', '/')
+                    fullPath = [System.IO.Path]::GetFullPath($src, $SpecDirectory)
+                })
+        }
+    }
+    return , $result
+}
+
+function Get-AgentBehaviorStagedSkillNames {
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Spec,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Stimulus
+    )
+
+    $names = [System.Collections.Generic.List[string]]::new()
+    foreach ($owner in @($Spec, $Stimulus)) {
+        foreach ($key in @('agent_environment', 'environment')) {
+            if ($owner.Contains($key) -and $owner[$key] -is [System.Collections.IDictionary] -and $owner[$key].Contains('skills')) {
+                foreach ($skill in @($owner[$key]['skills'])) {
+                    if ($null -ne $skill) { $names.Add((Split-Path -Path ([string]$skill).TrimEnd('/', '\') -Leaf)) }
+                }
+            }
+        }
+    }
+    return @($names)
+}
+
+function Test-AgentBehaviorFilesystemBoundary {
+    <#
+    .SYNOPSIS
+        Validates one policy entry's filesystem boundary declaration.
+
+    .DESCRIPTION
+        A boundary is an object with an `allow` list. Each rule names `change`
+        (`create` or `modify`) and exactly one of an exact relative `path` or an
+        anchored `pattern`; `modify` requires `path`, and `max` (create only) must
+        be a positive integer. Rules may never target Git metadata or ignore files.
+
+    .OUTPUTS
+        [string[]] Validation errors; empty when the boundary is well formed.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        $Boundary
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    if ($Boundary -isnot [System.Collections.IDictionary] -or -not $Boundary.Contains('allow') -or $Boundary['allow'] -isnot [System.Collections.IList]) {
+        $errors.Add("Policy entry '$Name' filesystem must be an object with an 'allow' list")
+        return @($errors)
+    }
+    $index = -1
+    foreach ($rule in @($Boundary['allow'])) {
+        $index++
+        $label = "Policy entry '$Name' filesystem.allow[$index]"
+        if ($rule -isnot [System.Collections.IDictionary]) { $errors.Add("$label must be an object"); continue }
+        $change = [string]$rule['change']
+        if ($change -cnotin @('create', 'modify')) { $errors.Add("$label change must be 'create' or 'modify'") }
+        $hasPath = $rule.Contains('path')
+        $hasPattern = $rule.Contains('pattern')
+        if ($hasPath -eq $hasPattern) { $errors.Add("$label must declare exactly one of path or pattern"); continue }
+        if ($change -eq 'modify' -and -not $hasPath) { $errors.Add("$label modify rules require an exact path") }
+        if ($rule.Contains('max')) {
+            if ($change -ne 'create') { $errors.Add("$label max applies only to create rules") }
+            elseif ($rule['max'] -isnot [int] -and $rule['max'] -isnot [long] -or [long]$rule['max'] -lt 1) { $errors.Add("$label max must be a positive integer") }
+        }
+        if ($hasPath) {
+            $target = [string]$rule['path']
+            $segments = $target.Split('/')
+            if ([string]::IsNullOrWhiteSpace($target) -or $target.Contains('\') -or $target.StartsWith('/') -or $segments -contains '..' -or $segments -contains '.' -or $segments -contains '') {
+                $errors.Add("$label path '$target' must be a normalized relative path with '/' separators")
+            }
+            elseif (@($segments | Where-Object { $_.ToLowerInvariant() -eq '.git' }).Count -gt 0 -or $segments[-1].ToLowerInvariant() -eq '.gitignore') {
+                $errors.Add("$label path '$target' targets Git metadata or an ignore file, which is never authorized")
+            }
+        }
+        else {
+            $pattern = [string]$rule['pattern']
+            if (-not $pattern.StartsWith('^') -or -not $pattern.EndsWith('$')) { $errors.Add("$label pattern must be anchored with ^ and `$") }
+            else {
+                try { [void][regex]::new($pattern) } catch { $errors.Add("$label pattern does not compile: $($_.Exception.Message)") }
+            }
+        }
+    }
+    return @($errors)
+}
+
+function Test-AgentBehaviorSystemEventAssertion {
+    <#
+    .SYNOPSIS
+        Returns true when a stimulus asserts the given host verdict with a system-event grader.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [object[]]$Graders,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Required,
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$Disallowed = @()
+    )
+
+    foreach ($grader in $Graders) {
+        if ($grader -isnot [System.Collections.IDictionary] -or [string]$grader['type'] -ne 'system-event') { continue }
+        $config = $grader['config']
+        if ($config -isnot [System.Collections.IDictionary]) { continue }
+        $requiredList = @($config['required'] | ForEach-Object { [string]$_ })
+        $disallowedList = @($config['disallowed'] | ForEach-Object { [string]$_ })
+        if ($requiredList -ccontains $Required -and @($Disallowed | Where-Object { $disallowedList -cnotcontains $_ }).Count -eq 0) { return $true }
+    }
+    return $false
+}
+
+function Test-AgentBehaviorPolicy {
+    <#
+    .SYNOPSIS
+        Validates the reviewed agent-behavior measurement policy against the suite.
+
+    .DESCRIPTION
+        Checks that every compiled stimulus has exactly one policy entry, that each
+        entry's evidence class matches what the stimulus actually stages, that
+        recorded authority matches the spec, and that candidate or enforced
+        entries declare complete context. Reports per-agent authoritative loaded
+        coverage and per-stimulus context debt. Coverage and context debt are
+        reported during calibration and become errors once the policy is enforced.
+
+    .OUTPUTS
+        [hashtable] Policy report including errors, warnings, per-agent coverage,
+        coverage debt, context debt, and import debt.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$PolicyPath = 'evals/agent-behavior/measurement-policy.json',
+
+        [Parameter(Mandatory = $false)]
+        [string]$EvalSpecPath = 'evals/agent-behavior/eval.yaml',
+
+        [Parameter(Mandatory = $false)]
+        [string]$InventoryPath = 'evals/agent-behavior/AGENTS.yml'
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $warnings = [System.Collections.Generic.List[string]]::new()
+    $report = [ordered]@{
+        policyPath   = $PolicyPath
+        rolloutState = $null
+        errors       = $errors
+        warnings     = $warnings
+        agents       = [ordered]@{}
+        coverageDebt = @()
+        contextDebt  = @()
+        importDebt   = @()
+        classCounts  = [ordered]@{}
+    }
+
+    $resolve = { param([string]$Path) if ([System.IO.Path]::IsPathRooted($Path)) { $Path } else { Join-Path -Path $RepoRoot -ChildPath $Path } }
+    $policyFull = & $resolve $PolicyPath
+    $specFull = & $resolve $EvalSpecPath
+    $inventoryFull = & $resolve $InventoryPath
+
+    foreach ($required in @(@($policyFull, $PolicyPath), @($specFull, $EvalSpecPath), @($inventoryFull, $InventoryPath))) {
+        if (-not (Test-Path -LiteralPath $required[0] -PathType Leaf)) { $errors.Add("Required file '$($required[1])' not found") }
+    }
+    if ($errors.Count -gt 0) { return $report }
+
+    try { $policy = Get-Content -LiteralPath $policyFull -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop }
+    catch { $errors.Add("Policy '$PolicyPath' is not valid JSON: $($_.Exception.Message)"); return $report }
+
+    if ($policy -isnot [System.Collections.IDictionary]) { $errors.Add('Policy root must be an object'); return $report }
+    if ($policy['schemaVersion'] -ne 1) { $errors.Add("Policy schemaVersion must be 1") }
+    $rollout = [string]$policy['rolloutState']
+    $report.rolloutState = $rollout
+    if ($rollout -cnotin @('calibration', 'enforced')) { $errors.Add("Policy rolloutState must be 'calibration' or 'enforced'") }
+    $entries = $policy['stimuli']
+    if ($entries -isnot [System.Collections.IDictionary]) { $errors.Add('Policy stimuli must be an object keyed by stimulus name'); return $report }
+    $debtList = @()
+    if ($policy.Contains('contextDebt')) {
+        if ($policy['contextDebt'] -isnot [System.Collections.IList]) { $errors.Add('Policy contextDebt must be an array of stimulus names') }
+        else { $debtList = @($policy['contextDebt'] | ForEach-Object { [string]$_ }) }
+    }
+
+    $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $specFull -Raw)
+    $specDirectory = Split-Path -Path $specFull -Parent
+    $inventory = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $inventoryFull -Raw)
+    $agentPaths = [ordered]@{}
+    foreach ($record in @($inventory['agents'])) {
+        if ($record -is [System.Collections.IDictionary] -and $record.Contains('slug')) { $agentPaths[[string]$record['slug']] = [string]$record['path'] }
+    }
+    foreach ($slug in $agentPaths.Keys) {
+        $report.agents[$slug] = [ordered]@{ legacyAuthoritativeContract = 0; enforcedAuthoritativeContract = 0; candidates = 0 }
+    }
+
+    $stimuli = @($spec['stimuli'])
+    $specNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($stimulus in $stimuli) { [void]$specNames.Add([string]$stimulus['name']) }
+    foreach ($name in $entries.Keys) {
+        if (-not $specNames.Contains([string]$name)) { $errors.Add("Policy entry '$name' has no matching stimulus in '$EvalSpecPath'") }
+    }
+
+    $seenDebt = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($name in $debtList) {
+        if (-not $seenDebt.Add($name)) { $errors.Add("Context debt lists '$name' more than once") }
+    }
+
+    $importCache = @{}
+    $contextDebt = [System.Collections.Generic.List[string]]::new()
+    $importDebt = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($stimulus in $stimuli) {
+        $name = [string]$stimulus['name']
+        $tags = if ($stimulus.Contains('tags')) { $stimulus['tags'] } else { @{} }
+        $slug = if ($tags -is [System.Collections.IDictionary] -and $tags.Contains('agent')) { [string]$tags['agent'] } else { '' }
+        if (-not $entries.Contains($name)) { $errors.Add("Stimulus '$name' has no policy entry"); continue }
+        $entry = $entries[$name]
+        if ($entry -isnot [System.Collections.IDictionary]) { $errors.Add("Policy entry '$name' must be an object"); continue }
+        if (-not $agentPaths.Contains($slug)) { $errors.Add("Stimulus '$name' agent tag '$slug' is not enrolled in '$InventoryPath'"); continue }
+
+        $class = [string]$entry['class']
+        $measurement = [string]$entry['measurement']
+        if ($class -cnotin $script:AgentBehaviorEvidenceClasses) { $errors.Add("Policy entry '$name' has unknown class '$class'"); continue }
+        if ($measurement -cnotin $script:AgentBehaviorMeasurementStates) { $errors.Add("Policy entry '$name' has unknown measurement '$measurement'"); continue }
+        $report.classCounts[$class] = 1 + [int]($report.classCounts[$class])
+
+        $specAuthoritative = -not ($tags -is [System.Collections.IDictionary] -and $tags.Contains('advisory') -and [string]$tags['advisory'] -eq 'true')
+        if ($entry['authoritative'] -isnot [bool]) { $errors.Add("Policy entry '$name' must record authoritative as a boolean") }
+        elseif ($entry['authoritative'] -ne $specAuthoritative) {
+            $errors.Add("Stimulus '$name' authority changed without a policy update (spec authoritative=$specAuthoritative, policy authoritative=$($entry['authoritative']))")
+        }
+
+        $agentFull = [System.IO.Path]::GetFullPath((Join-Path -Path $RepoRoot -ChildPath $agentPaths[$slug]))
+        $staged = Get-AgentBehaviorStagedFiles -Spec $spec -Stimulus $stimulus -SpecDirectory $specDirectory
+        $ownMounts = @($staged | Where-Object { $_.fullPath -ieq $agentFull })
+        $instructionMounts = @($staged | Where-Object { $_.dest -eq $script:AgentBehaviorInstructionsDestination })
+        $ownInstructions = @($ownMounts | Where-Object { $_.dest -eq $script:AgentBehaviorInstructionsDestination })
+
+        switch ($class) {
+            'agent-contract' {
+                if ($ownInstructions.Count -eq 0) { $errors.Add("Stimulus '$name' is classed agent-contract but does not stage '$($agentPaths[$slug])' as $script:AgentBehaviorInstructionsDestination") }
+            }
+            'artifact-reference' {
+                if ($ownInstructions.Count -gt 0) { $errors.Add("Stimulus '$name' is classed artifact-reference but stages its agent as workspace instructions") }
+                elseif ($ownMounts.Count -eq 0) { $errors.Add("Stimulus '$name' is classed artifact-reference but does not stage '$($agentPaths[$slug])'") }
+            }
+            'fixture-contract' {
+                $fixture = [string]$entry['fixture']
+                if ([string]::IsNullOrWhiteSpace($fixture)) { $errors.Add("Policy entry '$name' is fixture-contract but names no fixture") }
+                else {
+                    $fixtureFull = [System.IO.Path]::GetFullPath($fixture, $specDirectory)
+                    if (@($instructionMounts | Where-Object { $_.fullPath -ieq $fixtureFull }).Count -eq 0) { $errors.Add("Stimulus '$name' does not stage fixture '$fixture' as $script:AgentBehaviorInstructionsDestination") }
+                }
+                if ($ownMounts.Count -gt 0) { $errors.Add("Stimulus '$name' is classed fixture-contract but stages its own agent source") }
+            }
+            'base-model' {
+                if ($ownMounts.Count -gt 0) { $errors.Add("Stimulus '$name' is classed base-model but stages its own agent source") }
+            }
+        }
+
+        if ($seenDebt.Contains($name)) {
+            if ($class -ne 'base-model') { $errors.Add("Context debt entry '$name' is resolved (class '$class'); remove it from contextDebt") }
+            else { $contextDebt.Add($name) }
+        }
+
+        if ($measurement -eq 'candidate') {
+            if ($specAuthoritative) { $errors.Add("Candidate '$name' must be advisory until promoted") }
+            $hasIncumbent = $entry.Contains('incumbent') -and -not [string]::IsNullOrWhiteSpace([string]$entry['incumbent'])
+            $hasGap = $entry.Contains('coverageGap') -and -not [string]::IsNullOrWhiteSpace([string]$entry['coverageGap'])
+            if ($hasIncumbent -eq $hasGap) { $errors.Add("Candidate '$name' must name exactly one of incumbent or coverageGap") }
+            elseif ($hasIncumbent) {
+                # An advisory stimulus gates nothing, so it may be re-measured in place by naming itself.
+                $incumbent = [string]$entry['incumbent']
+                if ($incumbent -cne $name) {
+                    if (-not $entries.Contains($incumbent)) { $errors.Add("Candidate '$name' names unknown incumbent '$incumbent'") }
+                    elseif ($entries[$incumbent]['authoritative'] -ne $true) { $errors.Add("Candidate '$name' incumbent '$incumbent' is not authoritative") }
+                }
+            }
+            elseif ([string]$entry['coverageGap'] -cne $slug) { $errors.Add("Candidate '$name' coverageGap must be its own agent '$slug'") }
+            $report.agents[$slug].candidates++
+        }
+
+        $graderList = @($stimulus['graders'] | Where-Object { $_ -is [System.Collections.IDictionary] })
+        if ($measurement -ne 'legacy') {
+            foreach ($grader in $graderList) {
+                if ([string]$grader['type'] -like 'diff-*') {
+                    $errors.Add("Stimulus '$name' is $measurement and must not use diff grader '$($grader['name'])'; host context and filesystem observation replace Git diffs")
+                }
+            }
+            if ($class -eq 'agent-contract' -and -not (Test-AgentBehaviorSystemEventAssertion -Graders $graderList -Required 'hve.context.composed')) {
+                $errors.Add("Stimulus '$name' must assert host context with a system-event grader requiring 'hve.context.composed'")
+            }
+        }
+        if ($entry.Contains('filesystem')) {
+            foreach ($problem in @(Test-AgentBehaviorFilesystemBoundary -Name $name -Boundary $entry['filesystem'])) { $errors.Add($problem) }
+            if ($measurement -ne 'legacy' -and -not (Test-AgentBehaviorSystemEventAssertion -Graders $graderList -Required 'hve.filesystem.passed' -Disallowed @('hve.filesystem.violated', 'hve.filesystem.unavailable'))) {
+                $errors.Add("Stimulus '$name' declares a filesystem boundary but no system-event grader requires 'hve.filesystem.passed' and disallows violated and unavailable verdicts")
+            }
+        }
+
+        if ($class -eq 'agent-contract') {
+            if (-not $importCache.ContainsKey($slug)) { $importCache[$slug] = Get-AgentBehaviorImportGraph -RepoRoot $RepoRoot -SourcePath $agentPaths[$slug] }
+            $graph = $importCache[$slug]
+            if ($measurement -eq 'legacy') {
+                if ($specAuthoritative) { $report.agents[$slug].legacyAuthoritativeContract++ }
+                if (@($graph.imports).Count -gt 0 -or @($graph.errors).Count -gt 0) { $importDebt.Add($name) }
+            }
+            else {
+                if ([string]$entry['agentSource'] -cne $agentPaths[$slug]) { $errors.Add("Policy entry '$name' agentSource must equal '$($agentPaths[$slug])'") }
+                foreach ($problem in $graph.errors) { $errors.Add("Stimulus '$name': $problem") }
+                $stagedSkills = Get-AgentBehaviorStagedSkillNames -Spec $spec -Stimulus $stimulus
+                if (-not $entry.Contains('requiredSkills') -or $entry['requiredSkills'] -isnot [System.Collections.IList]) {
+                    $errors.Add("Policy entry '$name' must declare requiredSkills (empty when none)")
+                }
+                else {
+                    foreach ($skill in @($entry['requiredSkills'])) {
+                        if ([string]$skill -cnotin $stagedSkills) { $errors.Add("Stimulus '$name' does not stage required skill '$skill'") }
+                    }
+                }
+                $graderNames = @($stimulus['graders'] | ForEach-Object { if ($_ -is [System.Collections.IDictionary] -and $_.Contains('name')) { [string]$_['name'] } })
+                $assertions = @(if ($entry.Contains('assertions') -and $entry['assertions'] -is [System.Collections.IList]) { $entry['assertions'] })
+                if ($assertions.Count -eq 0) { $errors.Add("Policy entry '$name' must list the behavior assertions it relies on") }
+                foreach ($assertion in $assertions) {
+                    if ([string]$assertion -cnotin $graderNames) { $errors.Add("Policy entry '$name' names unknown assertion '$assertion'") }
+                }
+                if ($measurement -eq 'enforced' -and $specAuthoritative) { $report.agents[$slug].enforcedAuthoritativeContract++ }
+            }
+        }
+        elseif ($measurement -eq 'enforced' -and $class -ne 'agent-contract' -and $specAuthoritative) {
+            $warnings.Add("Stimulus '$name' is enforced but class '$class' does not count toward loaded-agent coverage")
+        }
+    }
+
+    foreach ($name in $debtList) {
+        if (-not $specNames.Contains($name)) { $errors.Add("Context debt entry '$name' has no matching stimulus") }
+    }
+
+    $coverageDebt = @($report.agents.Keys | Where-Object { $report.agents[$_].enforcedAuthoritativeContract -eq 0 })
+    $report.coverageDebt = $coverageDebt
+    $report.contextDebt = @($contextDebt)
+    $report.importDebt = @($importDebt)
+
+    if ($rollout -eq 'enforced') {
+        foreach ($slug in $coverageDebt) { $errors.Add("Agent '$slug' has no authoritative enforced agent-contract stimulus") }
+        foreach ($name in $contextDebt) { $errors.Add("Stimulus '$name' still lacks the agent context its assertions depend on") }
+    }
+
+    return $report
+}
+
+function Write-AgentBehaviorPolicyAnnotations {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Report
+    )
+
+    foreach ($message in @($Report.errors)) {
+        Write-CIAnnotation -Level Error -File $Report.policyPath -Message "$message"
+    }
+}
+
 if ($MyInvocation.InvocationName -ne '.') {
     $resolvedRepoRoot = Resolve-RepoRoot -Hint $RepoRoot
 
@@ -1142,6 +1648,13 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
     }
 
+    $policyReport = $null
+    if (-not $SkipAgentCoverage) {
+        $policyReport = Test-AgentBehaviorPolicy -RepoRoot $resolvedRepoRoot -PolicyPath $PolicyPath
+        $loaded = @($policyReport.agents.Keys | Where-Object { $policyReport.agents[$_].legacyAuthoritativeContract -gt 0 -or $policyReport.agents[$_].enforcedAuthoritativeContract -gt 0 }).Count
+        Write-Host "Agent behavior policy ($($policyReport.rolloutState)): $($policyReport.errors.Count) error(s); $loaded of $($policyReport.agents.Count) agents have an authoritative mounted contract; $($policyReport.coverageDebt.Count) agents lack enforced coverage; $($policyReport.contextDebt.Count) stimuli carry context debt; $($policyReport.importDebt.Count) legacy contracts depend on relocated imports."
+    }
+
     if ($null -ne $coverageReport) {
         $merged = [ordered]@{
             root         = $report.root
@@ -1151,6 +1664,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             inventoryError = $orphanReport.inventoryError
             equivalenceSync = $equivalenceSyncReport
             coverage     = $coverageReport
+            policy       = $policyReport
         }
         $merged | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $resolvedOutput -Encoding UTF8
     }
@@ -1162,6 +1676,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             orphanedTags = $orphanReport.orphanedTags
             inventoryError = $orphanReport.inventoryError
             equivalenceSync = $equivalenceSyncReport
+            policy       = $policyReport
         }
         $merged | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $resolvedOutput -Encoding UTF8
     }
@@ -1173,6 +1688,10 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
     if ($null -ne $coverageReport -and $coverageReport.missing.Count -gt 0) {
         Write-AgentCoverageAnnotations -Missing $coverageReport.missing -StimuliRoot $StimuliRoot
+        $exitCode = 1
+    }
+    if ($null -ne $policyReport -and $policyReport.errors.Count -gt 0) {
+        Write-AgentBehaviorPolicyAnnotations -Report $policyReport
         $exitCode = 1
     }
     if ($orphanReport.inventoryError) {

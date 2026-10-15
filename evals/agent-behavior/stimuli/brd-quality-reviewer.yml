@@ -1,18 +1,72 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the parent's brief names a staged BRD whose seeded
+  # coverage gap and active phase exist only in the staged draft, and the
+  # graders read the two contracted payloads from the reply.
   - name: brd-quality-reviewer-mentions-quality-guidance
     prompt: |
-      You are reviewing a planning handoff for a business-requirements draft.
-      Briefly describe what the brd-quality-reviewer agent is meant to help with
-      and name one quality concern it should surface for the draft.
+      BRD Builder dispatch: review the BRD draft at
+      `docs/project-planning/inspection-sync-brd.md` with the default taxonomy
+      in force, and return your payloads to me.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/requirements-quality/inspection-sync-brd.txt
+          dest: docs/project-planning/inspection-sync-brd.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: brd-quality-seeded-coverage-gap
     graders:
-      - type: output-matches
+      - type: program
         name: brd-quality-reviewer-mentions-quality-guidance-agen-d7c2140c
         config:
-          pattern: '(?i)(brd|business|requirements|review|quality)'
-      - type: output-matches
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/[`*"']/g, '');
+                if (!/\bschema_version\s*:\s*BRD_STANDARD_FINDINGS_V1\b/.test(output)) process.exit(1);
+                const items = output.split(/\r?\n(?=[ \t]*-\s)/);
+                const cited = items.some(item => (item.match(/\brequirement_id\s*:/g) || []).length === 1 &&
+                  /\brequirement_id\s*:\s*FR-002\b/.test(item) && /\bstatus\s*:\s*(?:RISK|CAUTION)\b/.test(item));
+                process.exit(cited ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
         name: brd-quality-reviewer-mentions-quality-guidance-scop-e4da04f7
         config:
-          pattern: '(?i)(draft|review|quality|requirements)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/[`*"']/g, '');
+                if (!/\bschema_version\s*:\s*BRD_QUALITY_REPORT_V1\b/.test(output)) process.exit(1);
+                const govern = [...output.matchAll(/\bgovern_exit\s*:\s*([A-Z_]+)/g)].map(match => match[1]);
+                const define = [...output.matchAll(/\bdefine_exit\s*:\s*([A-Z_]+)/g)].map(match => match[1]);
+                const gated = govern.length > 0 && govern.every(value => value === 'NOT_EVALUATED') &&
+                  define.length > 0 && define.every(value => value === 'BLOCKED' || value === 'APPROVED_WITH_COMMENTS');
+                process.exit(gated && !/\boverall_status\s*:\s*PASS\b/.test(output) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: brd-quality-review-read-only
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: brd-quality-review-context
+        config:
+          required:
+            - hve.context.composed

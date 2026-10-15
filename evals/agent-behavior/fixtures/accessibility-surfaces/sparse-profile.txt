@@ -1,0 +1,20 @@
+## Codebase Profile
+
+**Repository:** field-console
+**Mode:** audit
+**Primary Languages:** JavaScript, HTML
+**Frameworks:** tessellate 0.3 (unrecognized)
+
+### Key Directories
+
+* `ui/` - browser console
+
+### Accessibility Profile
+
+```yaml
+uiFrameworkFamily: undetermined
+wcagVersionTarget: unspecified
+assistiveTechnologyTargets: [keyboard-only]
+mobileTargetPlatforms: [none]
+componentLibrary: unknown
+```

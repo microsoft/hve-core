@@ -299,6 +299,57 @@ function Get-SpecStimulusAdvisoryMap {
     return $map
 }
 
+function Update-SpecMandatoryOutcome {
+    <#
+    .SYNOPSIS
+    Applies host-owned mandatory evidence to one spec result.
+
+    .DESCRIPTION
+    An invalid or missing required outcome fails evidence integrity. An enforced
+    authoritative failure moves that stimulus's failed trials out of `toleratedFailed`,
+    counts the stimulus as an authoritative failure, and sets status `mandatory-failure`
+    regardless of the numerical aggregate. Candidate failures are reported without gating
+    because they only block promotion.
+
+    .OUTPUTS
+    [hashtable] `@{ promote; level; message }`; `level` and `message` are `$null` when no annotation is needed.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)][hashtable]$Result,
+        [Parameter(Mandatory = $true)][bool]$Required
+    )
+
+    $check = Test-VallyMandatoryEvidence -Mandatory $Result['mandatory'] -Required:$Required
+    $Result['mandatoryEvidence'] = $check
+    if (-not $check.contractValid) {
+        if ($null -eq $Result['integrity']) { $Result['integrity'] = @{ contractValid = $false; integrityPassed = $true; allChecksPassed = $false; issues = @() } }
+        $Result.integrity.integrityPassed = $false
+        $Result.integrity.issues = @(@($Result.integrity.issues) + 'invalid-mandatory-contract' | Sort-Object)
+        return @{ promote = $false; level = $null; message = $null }
+    }
+    if ($check.gatingFailures -gt 0) {
+        foreach ($name in @($Result.mandatory.stimuli.Keys)) {
+            $entry = $Result.mandatory.stimuli[$name]
+            if (-not $entry.gating -or $entry.status -ceq 'passed') { continue }
+            $bucket = if ($Result['perStimulus'] -and $Result.perStimulus.Contains($name)) { $Result.perStimulus[$name] } else { $null }
+            if ($null -ne $bucket -and $false -ne $bucket.aggregatePassed) {
+                $Result['toleratedFailed'] = [Math]::Max(0, [int]$Result['toleratedFailed'] - [int]$bucket.assertionsFailed)
+                $Result['authoritativeFailed'] = [int]$Result['authoritativeFailed'] + [int]$bucket.assertionsFailed
+                $Result['authoritativeStimuliFailed'] = [int]$Result['authoritativeStimuliFailed'] + 1
+            }
+        }
+        $Result['status'] = 'mandatory-failure'
+        $Result['isAdvisory'] = $false
+        return @{ promote = $true; level = 'Error'; message = "$($check.gatingFailures) enforced authoritative stimulus/stimuli failed mandatory context or filesystem evidence; promoting to CI failure" }
+    }
+    if ($check.candidateFailures -gt 0) {
+        return @{ promote = $false; level = 'Warning'; message = "$($check.candidateFailures) candidate stimulus/stimuli reported mandatory context or filesystem failures; promotion remains blocked" }
+    }
+    return @{ promote = $false; level = $null; message = $null }
+}
+
 function Resolve-RepoRoot {
     [CmdletBinding()]
     [OutputType([string])]
@@ -769,7 +820,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
     }
 
     $tagBanner = if (-not [string]::IsNullOrWhiteSpace($tag)) { " --tag $tag" } else { '' }
-    Write-Host "Running: vally eval --eval-spec $specRel --model $Model$tagBanner" -ForegroundColor Cyan
+    $agentBehaviorRuntime = Get-VallyAgentBehaviorRuntime -SpecPath $specAbs
+    $executorBanner = if ($agentBehaviorRuntime) { " --executor-plugin $($agentBehaviorRuntime.pluginPath) --executor $($agentBehaviorRuntime.executor)" } else { '' }
+    Write-Host "Running: vally eval --eval-spec $specRel --model $Model$tagBanner$executorBanner" -ForegroundColor Cyan
     $result = Invoke-VallySpec `
         -SpecPath $specAbs `
         -OutputDir $specOut `
@@ -991,6 +1044,12 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             }
         }
     }
+    $mandatoryUpdate = Update-SpecMandatoryOutcome -Result $result -Required ([bool]$agentBehaviorRuntime)
+    if ($mandatoryUpdate.promote -and -not $promotedRunKeys.ContainsKey($runKey)) {
+        $failedSpecs++
+        $promotedRunKeys[$runKey] = $true
+    }
+    if ($mandatoryUpdate.message) { Write-CIAnnotation -Level $mandatoryUpdate.level -File $specRel -Message $mandatoryUpdate.message }
     if (-not $result.integrity.integrityPassed) {
         $result['status'] = 'integrity-failure'
         $result['isAdvisory'] = $false
@@ -1219,6 +1278,7 @@ $hardFailStatuses = @(
     'evaluator-error',
     'invalid-spec-source',
     'integrity-failure',
+    'mandatory-failure',
     'content-moderation-input',
     'content-moderation-error-input',
     'content-moderation-output',
@@ -1317,6 +1377,7 @@ foreach ($plan in $artifactPlan) {
             failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
             diagnostics      = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
             integrity        = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
+            mandatory        = if ($r.ContainsKey('mandatory')) { $r.mandatory } else { $null }
         })
     }
 
@@ -1403,6 +1464,7 @@ foreach ($runKey in $specResults.Keys) {
     if ($r.ContainsKey('isAdvisory')) { $record['isAdvisory'] = [bool]$r.isAdvisory }
     $record['diagnostics'] = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
     $record['integrity'] = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
+    $record['mandatory'] = if ($r.ContainsKey('mandatory')) { $r.mandatory } else { $null }
     if ($r.ContainsKey('failedOrErroredTrials')) { $record['failedOrErroredTrials'] = @($r.failedOrErroredTrials) }
     foreach ($field in @('advisoryFailed', 'authoritativeFailed', 'advisoryStimuliFailed', 'authoritativeStimuliFailed', 'toleratedFailed')) {
         if ($r.ContainsKey($field)) { $record[$field] = [int]$r[$field] }

@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore couldn
+# cspell:ignore couldn cand FEFF
 stimuli:
   - name: security-planner-class-recipe
     prompt: |
@@ -289,3 +289,65 @@ stimuli:
         name: security-planner-from-prd-no-artifact-fallback
         config:
           pattern: '(?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(PRD|BRD|artifact|requirement)[\s\S]{0,500}(capture|file path|path)'
+
+  # Advisory candidate for security-planner-class-recipe: the agent and the
+  # security-planning skill are loaded and the request is unchanged. The
+  # disclaimer wording, phase names and state schema come only from the agent.
+  - name: security-planner-class-recipe-candidate
+    prompt: |
+      Start a security planning session for a public REST API. List the six phases the planner will walk through. Write the planning state under `.copilot-tracking/security-plans/` and report the path.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/security-planner.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/security-planning
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: security-session-bootstrap
+    graders:
+      - type: output-matches
+        name: security-disclaimer-shown-cand
+        config:
+          pattern: '(?is)\bpenetration\s+testing\s+teams\b.{0,600}\bsecurity\s+approval\b'
+      - type: output-matches
+        name: security-six-phases-named-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\bbucket\s+analysis\b)(?=[\s\S]*\bsecurity\s+model\b)(?=[\s\S]*\bbacklog\s+generation\b)'
+      - type: output-matches
+        name: security-reports-state-path-cand
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]security-plans[/\\][\w.-]+[/\\]state\.json'
+      - type: program
+        name: security-state-initialized-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const root = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/security-plans');
+                const slugs = fs.readdirSync(root, { withFileTypes: true }).filter(entry => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'state.json'))).map(entry => entry.name);
+                if (slugs.length !== 1) process.exit(1);
+                const text = fs.readFileSync(path.join(root, slugs[0], 'state.json'), 'utf8');
+                if (text.length > 262144) process.exit(1);
+                const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+                const stamped = typeof state.disclaimerShownAt === 'string' && !Number.isNaN(Date.parse(state.disclaimerShownAt));
+                process.exit(stamped && state.projectSlug === slugs[0] && state.entryMode === 'capture' && state.currentPhase === 1 ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: security-bootstrap-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: security-bootstrap-context-cand
+        config:
+          required:
+            - hve.context.composed

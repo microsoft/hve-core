@@ -1,0 +1,6 @@
+# Mobile app data practices
+
+* Precise location is collected every five minutes, including while the app runs in the background.
+* The device advertising identifier is sent to three third-party analytics SDKs.
+* No consent screen is shown before collection starts.
+* Location history is kept with no deletion schedule.

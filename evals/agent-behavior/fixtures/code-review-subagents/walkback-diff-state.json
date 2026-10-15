@@ -1,0 +1,41 @@
+{
+  "branch": "feature/refund-helpers",
+  "base": "main",
+  "files": [
+    "src/billing/refunds.py",
+    "web/refund-button.html",
+    "docs/refunds.md"
+  ],
+  "findingsFolder": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/",
+  "boardItem": "board-2",
+  "question": "Can a crafted charge identifier change the query that find_charge runs?",
+  "investigationId": "board-2-001",
+  "researchTopic": "Query construction in find_charge",
+  "researchPurpose": "Decide whether board item board-2 needs a security finding before the perspective sweep.",
+  "researchAudienceUse": "Code Review parent merging Register 2 evidence onto the dispatch board.",
+  "researchQuestions": [
+    "Does find_charge build its SQL text from caller-controlled input?"
+  ],
+  "evidenceCriteria": [
+    "Cite the changed lines in src/billing/refunds.py that construct and execute the query."
+  ],
+  "researchScope": [
+    "src/billing/refunds.py",
+    ".copilot-tracking/pr/feature-refund-helpers.diff"
+  ],
+  "researchNonGoals": [
+    "Database driver internals"
+  ],
+  "researchConstraints": [
+    "Workspace evidence only; no external sources."
+  ],
+  "suppliedEvidence": [
+    ".copilot-tracking/pr/feature-refund-helpers.diff"
+  ],
+  "researchRequestedOutputs": [
+    "Evidence-backed answer with file and line references"
+  ],
+  "researchOutputMode": "analysis",
+  "trustedEvidenceRoot": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/",
+  "register2ArtifactPath": ".copilot-tracking/reviews/code-reviews/feature-refund-helpers/board-2-001-register-2.md"
+}

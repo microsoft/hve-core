@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand
 stimuli:
   - name: issue-triage-class-recipe
     prompt: |
@@ -91,3 +92,77 @@ stimuli:
         config:
           pattern: '(?i)(?<!\b(?:do not|don\x27t|never|must not|cannot|should not)\s)(?:recommend|suggest|advise|propose).{0,80}\bdismiss'
           negate: true
+
+  # Advisory candidate for issue-triage-class-recipe: the agent and the
+  # backlog-management skill are loaded and the thin report is staged as a
+  # file. The loaded label rubric, not the prompt, decides the default
+  # priority and the details to request, and no GitHub call may run.
+  - name: issue-triage-class-recipe-candidate
+    prompt: |
+      This is a synthetic scenario, not a native tracker operation. Triage the
+      issue staged at `issues/2715.md`; it is not on GitHub. Suggest labels,
+      priority and an assignee role, and identify information still needed.
+      Return the triage decision in chat with an intended record path under
+      `.copilot-tracking/github-issues/`. Do not invent a real person's
+      identity, write files, call GitHub or claim that an issue was assigned.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/issue-triage.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/planning-intake/issue-2715.txt
+          dest: issues/2715.md
+      skills:
+        - ../../.github/skills/project-planning/backlog-management
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: issue-triage-thin-report
+    graders:
+      - type: program
+        name: triage-default-priority-label-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/[`*]/g, '');
+                const negation = /(?:\b(?:not|never|no|without|avoid\w*|rather\s+than|instead\s+of|over)|n['\u2019]t)\b[^.,;\n]{0,15}$/i;
+                const affirmed = pattern => [...output.matchAll(pattern)].some(match => {
+                  const line = output.slice(output.lastIndexOf('\n', match.index) + 1, match.index);
+                  return !negation.test(line);
+                });
+                const labeled = affirmed(/\bpriority-3\b/g) && affirmed(/\bbug\b/g) &&
+                  !affirmed(/\bpriority-[124]\b/g) && !affirmed(/\bagent-ready\b/g);
+                process.exit(labeled ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: output-matches
+        name: triage-requests-missing-details-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*\b(?:reproduc\w*|repro|steps|iOS|iPadOS|device\s+model|app\s+version|build\s+number|component|which\s+(?:app|product|tool|extension))\b)(?=[\s\S]*\b(?:please|could\s+you|can\s+you|provide|share|clarify|missing|needs?\s+more|more\s+(?:information|details?)|unclear)\b)'
+      - type: output-matches
+        name: triage-record-path-cand
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]github-issues[/\\][\w.-]+'
+      - type: tool-calls
+        name: triage-makes-no-github-call-cand
+        config:
+          disallowed:
+            - name: '(?i)(?:^|[-_/.])github[-_/.]|issue_write|add_issue_comment|label'
+            - name: '^(?:bash|shell|powershell|pwsh|run_in_terminal)$'
+              command: '(?i)\bgh\s+(?:issue|pr|api|label)\b|api\.github\.com'
+      - type: system-event
+        name: triage-workspace-unchanged-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: triage-context-cand
+        config:
+          required:
+            - hve.context.composed

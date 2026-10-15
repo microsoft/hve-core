@@ -1,0 +1,30 @@
+---
+title: Field Inspection Sync BRD
+description: Synthetic BRD for quality-review evaluation
+brd-id: BRD-FIS-001
+version: 0.3.0
+phase: Define
+---
+
+# Field Inspection Sync BRD
+
+## Business Goals
+
+* `BG-001`: Reduce inspection rework caused by lost paper checklists from 12% to 4% of completed inspections by 2027-06-30.
+
+## Functional Requirements
+
+* `FR-001`: The service records each completed inspection checklist against its site identifier. Traces to `BG-001`.
+* `FR-002`: The service notifies the site manager when an inspection records a failed safety item. Traces to `BG-001`.
+
+## Acceptance Criteria
+
+* `AC-001` (for `FR-001`): Given a technician completes a checklist for site `S-104`, when the checklist is submitted, then the record is retrievable by site identifier within 5 seconds.
+
+## Non-Functional Requirements
+
+* `NFR-001`: The service retains inspection records for 7 years.
+
+## Constraints
+
+* `CON-001`: The regional safety regulator requires inspection records to stay within the EU data boundary.

@@ -1,0 +1,25 @@
+---
+title: Field Ops Sync PRD
+description: Synthetic PRD for functional planning evaluation
+prd-id: PRD-FOS-001
+version: 1.0.0
+phase: Finalize
+---
+
+# Field Ops Sync PRD
+
+## Product Goals
+
+* `GOAL-001`: Dispatchers see completed inspections without manual uploads.
+
+## Functional Requirements
+
+* `FR-001`: Technicians record inspections offline on the mobile app. Traces to `GOAL-001`.
+* `FR-002`: The dispatcher dashboard lists synchronized inspections by site. Traces to `GOAL-001`.
+* `FR-003`: The mobile app synchronizes completed inspections to the dispatch service daily. Traces to `GOAL-001`.
+
+## Acceptance Criteria
+
+* `AC-001` (for `FR-001`): Given no network, when a technician completes an inspection, then it is saved on the device.
+* `AC-002` (for `FR-002`): Given synchronized inspections, when a dispatcher filters by site, then only that site's inspections are listed.
+* `AC-003` (for `FR-003`): Given completed inspections on the device, when the weekly batch runs on Sunday, then the inspections are synchronized once per week.

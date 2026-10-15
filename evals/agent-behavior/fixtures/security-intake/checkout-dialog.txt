@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Checkout</title>
+  </head>
+  <body>
+    <main>
+      <h1>Checkout</h1>
+      <button class="icon-button" onclick="openPromo()">
+        <svg viewBox="0 0 16 16"><path d="M2 8h12M8 2v12"></path></svg>
+      </button>
+      <div class="modal" id="promo" hidden>
+        <h2>Apply a promo code</h2>
+        <input type="text" placeholder="Code">
+        <span class="close" onclick="closePromo()">x</span>
+      </div>
+    </main>
+    <script>
+      function openPromo() { document.getElementById("promo").hidden = false; }
+      function closePromo() { document.getElementById("promo").hidden = true; }
+    </script>
+  </body>
+</html>

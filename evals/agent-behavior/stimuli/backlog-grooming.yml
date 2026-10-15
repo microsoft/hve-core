@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand
 stimuli:
   - name: backlog-grooming-assesses-large-inventory-advisory-only
     prompt: |
@@ -251,3 +252,192 @@ stimuli:
         config:
           pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:closed|updated|labeled|assigned|commented on)\s+(?:github\s+)?issue\s*#?3108'
           negate: true
+
+  # Advisory candidate for backlog-grooming-assesses-large-inventory-advisory-only:
+  # the worker and its policy are loaded and the shard moves into a staged file
+  # without the expected similarity, disposition and run totals. The loaded
+  # policy, not the prompt, supplies the index columns, per-issue labels and
+  # dispositions. The incumbent's run-summary and shard-JSON requests conflict
+  # with the current worker contract, so this copy does not assert them.
+  - name: backlog-grooming-assesses-large-inventory-advisory-only-candidate
+    prompt: |
+      Execute the synthetic automated grooming shard in
+      `grooming/shard-contract.md`. Do not query or mutate live GitHub state.
+      No shard-result safe output is available in this synthetic run, so
+      return your report directly.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/backlog-grooming.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/project-planning/github-backlog-grooming.instructions.md
+          dest: .github/instructions/project-planning/github-backlog-grooming.instructions.md
+        - src: fixtures/planning-intake/grooming-large-inventory-shard.txt
+          dest: grooming/shard-contract.md
+      skills:
+        - ../../.github/skills/project-planning/backlog-management
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: grooming-large-inventory
+    graders:
+      - type: program
+        name: grooming-index-dispositions-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const lines = String(input.trajectory.output || '').replace(/[`*]/g, '').split(/\r?\n/);
+                const cells = line => line.split('|').slice(1, -1).map(cell => cell.trim());
+                const header = lines.findIndex(line => /^\s*\|/.test(line) &&
+                  cells(line).join('|').toLowerCase() === 'issue|similarity|disposition|status|recommended next step');
+                if (header < 0) process.exit(1);
+                const rows = [];
+                for (let index = header + 1; index < lines.length && /^\s*\|/.test(lines[index]); index++) {
+                  if (!/^\s*\|[\s:|-]+\|\s*$/.test(lines[index])) rows.push(cells(lines[index]));
+                }
+                const expected = [[105, /^Still needed\b/i], [101, /^Possible duplicate\b/i], [102, /^Likely completed\b/i], [103, /^Superseded\b/i], [104, /^Uncertain\b/i]];
+                const ok = rows.length === expected.length && expected.every(([id, disposition], index) =>
+                  (/\d+/.exec(rows[index][0] || '') || [])[0] === String(id) && disposition.test(rows[index][2] || '') &&
+                  /^Assessed\b/i.test(rows[index][3] || ''));
+                process.exit(ok ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: grooming-issue-details-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const lines = String(input.trajectory.output || '').replace(/[`*]/g, '').split(/\r?\n/);
+                let previous = -1;
+                const ok = [105, 101, 102, 103, 104].every(id => {
+                  const start = lines.findIndex(line => new RegExp('^#{2,6}\\s*Issue\\s*#?' + id + '\\b', 'i').test(line));
+                  if (start <= previous) return false;
+                  previous = start;
+                  const next = lines.findIndex((line, index) => index > start && /^#{1,6}\s/.test(line));
+                  const section = lines.slice(start + 1, next < 0 ? lines.length : next).join('\n');
+                  return /\bRepository evidence\s*:/i.test(section) && /\bRecommended next step\s*:/i.test(section) &&
+                    /\bAssessment status\s*:\s*Assessed\b/i.test(section);
+                });
+                process.exit(ok ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: output-matches
+        name: grooming-no-mutation-claim-cand
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s)\b(?:closed|updated|labeled|assigned|commented on)\s+(?:github\s+)?issue\s*#?\d+'
+          negate: true
+      - type: output-matches
+        name: grooming-no-sarif-cand
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s)\b(?:generated|uploaded|emitted)\s+(?:a\s+|the\s+)?SARIF\b'
+          negate: true
+      - type: tool-calls
+        name: grooming-makes-no-issue-mutation-cand
+        config:
+          disallowed:
+            - name: '(?i)issue_write|add_issue_comment|sub_issue_write'
+            - name: '^(?:bash|shell|powershell|pwsh|run_in_terminal)$'
+              command: '(?i)\bgh\s+issue\s+(?:create|edit|close|comment|reopen|delete|lock|transfer|pin)\b|\bgh\s+api\b[^\r\n]*(?:-X|--method)\s*(?:POST|PATCH|PUT|DELETE)\b|\b(?:curl|Invoke-RestMethod|Invoke-WebRequest|irm|iwr)\b[^\r\n]*(?:-X\s*(?:POST|PATCH|PUT|DELETE)|-Method\s+(?:Post|Patch|Put|Delete))'
+      - type: system-event
+        name: grooming-workspace-unchanged-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: grooming-context-cand
+        config:
+          required:
+            - hve.context.composed
+
+  # Advisory candidate for backlog-grooming-keeps-stale-code-scanning-active:
+  # the worker and its policy are loaded, the stale code-scanning issue moves
+  # into a staged shard, and the prompt no longer says to treat it as active
+  # work or to keep it open. The loaded code-scanning rule must do both.
+  - name: backlog-grooming-keeps-stale-code-scanning-active-candidate
+    prompt: |
+      Execute the synthetic automated grooming shard in
+      `grooming/shard-contract.md`. Do not query or mutate live GitHub state.
+      No shard-result safe output is available in this synthetic run, so
+      return your report directly.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/backlog-grooming.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/project-planning/github-backlog-grooming.instructions.md
+          dest: .github/instructions/project-planning/github-backlog-grooming.instructions.md
+        - src: fixtures/planning-intake/grooming-stale-code-scanning-shard.txt
+          dest: grooming/shard-contract.md
+      skills:
+        - ../../.github/skills/project-planning/backlog-management
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: grooming-stale-code-scanning
+    graders:
+      - type: program
+        name: stale-code-scanning-row-active-cand
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const lines = String(input.trajectory.output || '').replace(/[`*]/g, '').split(/\r?\n/);
+                const cells = line => line.split('|').slice(1, -1).map(cell => cell.trim());
+                const header = lines.findIndex(line => /^\s*\|/.test(line) &&
+                  cells(line).join('|').toLowerCase() === 'issue|similarity|disposition|status|recommended next step');
+                if (header < 0) process.exit(1);
+                const rows = [];
+                for (let index = header + 1; index < lines.length && /^\s*\|/.test(lines[index]); index++) {
+                  if (!/^\s*\|[\s:|-]+\|\s*$/.test(lines[index])) rows.push(cells(lines[index]));
+                }
+                const ok = rows.length === 1 && (/\d+/.exec(rows[0][0] || '') || [])[0] === '3108' &&
+                  /^(?:Still needed|Uncertain)\b/i.test(rows[0][2] || '') && /^Assessed\b/i.test(rows[0][3] || '');
+                process.exit(ok ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: output-matches
+        name: stale-code-scanning-not-closure-candidate-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*(?:\bnot\s+(?:a\s+)?clos(?:e|ure|ing)\s+candidate\b|\b(?:should|must)\s+not\s+be\s+closed\b|\b(?:do\s+not|don[\x27\u2019]t)\s+close\b|\bnot\s+recommended\s+(?:for|to)\s+clos\w*\b|\b(?:keep|remain|stay)s?\s+(?:it\s+|the\s+issue\s+)?open\b|\bactive\s+(?:work|tracking)\b))(?=[\s\S]*\b(?:resolv\w*|fix\w*|(?:remediate|remediates|remediated|remediating|remediation)|address\w*)\b[^.\n]{0,80}\b(?:alert|path-injection|CodeQL|finding|render\.js)\b)'
+      - type: output-matches
+        name: stale-code-scanning-no-closure-cand
+        config:
+          pattern: '(?i)(?<!\bnot\s)(?<!\bnever\s)\brecommend(?:s|ed|ation)?(?:\s+(?:to|that))?[:\s]+(?:clos(?:e|ing)|closure)\b|\bnext step\b[^.\n]{0,40}\bclose\s+(?:issue\s+)?#?3108\b'
+          negate: true
+      - type: output-matches
+        name: stale-code-scanning-no-dismissal-cand
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})\b(?:recommend|suggest|advise|propose)\w*\b[^.\n]{0,60}?(?<!\b(?:not|than|without|never|avoid|of)\s+)\bdismiss'
+          negate: true
+      - type: tool-calls
+        name: stale-code-scanning-makes-no-issue-mutation-cand
+        config:
+          disallowed:
+            - name: '(?i)issue_write|add_issue_comment|sub_issue_write|dismiss'
+            - name: '^(?:bash|shell|powershell|pwsh|run_in_terminal)$'
+              command: '(?i)\bgh\s+issue\s+(?:create|edit|close|comment|reopen|delete|lock|transfer|pin)\b|\bgh\s+api\b[^\r\n]*(?:-X|--method)\s*(?:POST|PATCH|PUT|DELETE)\b|\b(?:curl|Invoke-RestMethod|Invoke-WebRequest|irm|iwr)\b[^\r\n]*(?:-X\s*(?:POST|PATCH|PUT|DELETE)|-Method\s+(?:Post|Patch|Put|Delete))'
+      - type: system-event
+        name: stale-code-scanning-workspace-unchanged-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: stale-code-scanning-context-cand
+        config:
+          required:
+            - hve.context.composed

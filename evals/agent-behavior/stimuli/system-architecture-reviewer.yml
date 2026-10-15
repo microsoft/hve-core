@@ -1,3 +1,4 @@
+# cspell:ignore cand
 stimuli:
   - name: system-architecture-reviewer-class-recipe
     prompt: |
@@ -179,3 +180,45 @@ stimuli:
         name: architecture-handoffs-use-record-path
         config:
           pattern: '(?is)(ADR Creation|Create ADR).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md.*(RPI Plan|Create Plan).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md'
+
+  # Advisory candidate for system-architecture-reviewer-class-recipe: the
+  # agent and its review skill are loaded, the proposal lives in a staged file,
+  # and the loaded contract's scope gate replaces the reply-path check. A
+  # correct reviewer proposes focus areas grounded in the staged proposal and
+  # waits for confirmation instead of writing a review record.
+  - name: system-architecture-reviewer-class-recipe-candidate
+    prompt: |
+      Review the proposed architecture in
+      `docs/architecture/inspection-portal.md`. Produce a written assessment
+      with strengths and risks. Write the assessment under `.copilot-tracking/`
+      and report the path.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/planning-intake/architecture-proposal.txt
+          dest: docs/architecture/inspection-portal.md
+      skills:
+        - ../../.github/skills/project-planning/architecture-review
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: architecture-scope-gate
+    graders:
+      - type: output-matches
+        name: arch-scope-confirmed-before-review-cand
+        config:
+          pattern: '(?is)^(?=[\s\S]*(?:\bSQLite\b|\bsingle\s+(?:VM|virtual\s+machine|server|node)\b|\bone\s+(?:VM|virtual\s+machine)\b|\bSSH\b))(?=[\s\S]*\b(?:reliability|availability|resilience|resilient|resiliency|operational\s+excellence|performance|scalability|scalable|cost|security)\b)(?=[\s\S]*(?:\b(?:scope|focus|pillars?|priority|priorities|prioritize|prioritized|prioritization)\b[^?\n]{0,160}\?|\b(?:confirm|agree|align\w*|proceed|adjust)\b[^?\n]{0,160}\?|\b(?:awaiting|waiting\s+for|pending)\s+(?:your\s+)?confirmation\b))'
+      - type: system-event
+        name: arch-scope-gate-workspace-bounded-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: arch-scope-gate-context-cand
+        config:
+          required:
+            - hve.context.composed

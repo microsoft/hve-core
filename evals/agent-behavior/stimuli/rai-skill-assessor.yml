@@ -1,25 +1,73 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the requirement IDs exist only in the staged
+  # rai-standards Map reference, and the unconfirmed refund action exists only
+  # in the staged plan, so the agent must read both before assessing.
   - name: rai-skill-assessor-reference-first-plan-mode
     prompt: |
-      You are the RAI Skill Assessor subagent. Assess only the
-      `nist-ai-rmf-map` framework in plan mode for a proposed AI assistant.
-      Explain the required analysis order, the status vocabulary in the
-      returned report, and whether you may modify repository files.
+      RAI Planner dispatch:
+        - framework: nist-ai-rmf-map
+        - mode: plan
+        - plan document: docs/plans/support-chatbot-design.md
+        - codebase profile: proposed Python service that calls a hosted LLM
+          for customer support.
+      Return your findings.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/support-chatbot-design.txt
+          dest: docs/plans/support-chatbot-design.md
+      skills:
+        - ../../.github/skills/rai/rai-standards
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-chatbot-plan-map
     graders:
-      - type: output-matches
-        name: rai-assessor-reference-first
+      - type: program
+        name: rai-assessor-map-ids-from-reference
         config:
-          pattern: '(?is)(read|load).{0,100}(rai-standards|reference).{0,160}(before|prior).{0,80}(analysis|analyse|analyze|evaluat)'
-      - type: output-matches
-        name: rai-assessor-plan-statuses
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                const mapped = rows.filter(cells => /^MP-\d(?:\.\d)?$/.test(cells[0] || ''));
+                const statuses = mapped.map(cells => cells.find(cell => /^(?:RISK|CAUTION|COVERED|NOT_APPLICABLE|PASS|FAIL|PARTIAL|NOT_ASSESSED)$/.test(cell)));
+                const planOnly = statuses.every(status => /^(?:RISK|CAUTION|COVERED|NOT_APPLICABLE)$/.test(status || ''));
+                process.exit(new Set(mapped.map(cells => cells[0])).size >= 5 && planOnly ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: rai-assessor-flags-unconfirmed-refunds
         config:
-          pattern: '(?is)(RISK).*(CAUTION).*(COVERED).*(NOT_APPLICABLE)'
-      - type: output-matches
-        name: rai-assessor-single-framework-read-only
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                const flagged = rows.some(cells => /^MP-\d(?:\.\d)?$/.test(cells[0] || '') && cells.some(cell => /^(?:RISK|CAUTION)$/.test(cell)));
+                process.exit(flagged && /\brefund/i.test(output) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: rai-assessor-read-only
         config:
-          pattern: '(?is)(exactly|only|single).{0,80}(framework).{0,200}(do not modify|read-only|must not modify)'
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: rai-assessor-context
+        config:
+          required:
+            - hve.context.composed

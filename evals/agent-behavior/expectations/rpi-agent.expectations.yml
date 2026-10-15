@@ -143,13 +143,16 @@ expectations:
 
   - expectation_id: sufficient-evidence-planning-route
     summary: Planning-ready evidence routes directly to planning.
-    signal: The response names only the `rpi-plan` skill.
+    signal: The response names `/rpi-plan` as the next eligible command without advancing the phase.
     pass_criteria: |
-      For the `rpi-agent-class-recipe` stimulus, the response is `rpi-plan`
-      with only harmless surrounding whitespace, quotes, or terminal punctuation.
+      For the `rpi-agent-class-recipe` stimulus, resuming the staged manual-mode
+      task whose state records planning-ready Research names `/rpi-plan` as the
+      next eligible command, keeps the state in manual mode at Research, and
+      creates no plan.
     failure_modes:
       - Routes planning-ready evidence back to `rpi-research`.
-      - Names an alternative skill or adds workflow prose.
+      - Starts planning in manual mode without an explicit request.
+      - Changes the recorded task identity, mode, or active phase.
     priority: medium
     stimulus_scoped: true
     contract_ref: "RPI Agent conditional research-readiness contract"

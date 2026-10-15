@@ -111,6 +111,8 @@ stimuli:
       files:
         - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
           dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/shared/content-policy-citation.instructions.md
+          dest: .github/instructions/shared/content-policy-citation.instructions.md
       skills:
         - ../../.github/skills/hve-core/vally-tests
     tags:
@@ -150,3 +152,8 @@ stimuli:
         config:
           pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:appended|wrote|written)\b.{0,100}\beval'
           negate: true
+      - type: system-event
+        name: vta-probes-regex-context
+        config:
+          required:
+            - hve.context.composed

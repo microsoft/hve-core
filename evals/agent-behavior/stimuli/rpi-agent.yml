@@ -1,19 +1,68 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore ning FEFF doesn brpi resum continu
 stimuli:
+  # Re-measured in place: the staged manual-mode state records completed,
+  # planning-ready Research, so the next eligible command comes from state
+  # and the agent contract rather than from the prompt.
   - name: rpi-agent-class-recipe
     prompt: |
-      Research evidence for this task is sufficient. The current lifecycle
-      routes planning through the `rpi-plan` skill. Do not call tools. Return
-      exactly `rpi-plan`.
+      Resume the `synthetic-queue-selection` task where we left off and tell me
+      what to run next.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-agent/research-ready-state.json
+          dest: .copilot-tracking/rpi-sessions/2026-09-21/synthetic-queue-selection-state.json
+        - src: fixtures/rpi-depth/architecture-research.md
+          dest: .copilot-tracking/research/2026-09-21/synthetic-queue-selection-research.md
+        - src: fixtures/rpi-depth/architecture-options.md
+          dest: evidence/architecture-options.md
+      skills:
+        - ../../.github/skills/rpi/rpi-research
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: manual-research-closeout-routing
     graders:
       - type: output-matches
-        name: planning-route
+        name: rpi-names-plan-as-next-command
         config:
-          pattern: '(?i)^\s*[''"]?rpi-plan[''"]?[.!]?\s*$'
+          pattern: '(?is)^(?=[\s\S]*(?<![\w-])/rpi-plan(?![\w-]))(?![\s\S]*\b(?:not|don[\x27\u2019]t|do\s+not|never)\s+(?:yet\s+)?(?:run|start|use|invoke|begin)\s+[`*]*/rpi-plan(?![\w-]))(?![\s\S]*\bplanning\b[^.\n]{0,30}\b(?:is\s+)?not\s+(?:yet\s+)?(?:ready|eligible)\b)(?![\s\S]*\b(?:I\s+(?:have\s+)?|I[\x27\u2019]ve\s+)(?:started|began|begun|activated|run|ran)\s+(?:the\s+)?(?:Plan(?:ning)?\s+phase|[`*]*/?rpi-plan)\b)'
+      - type: program
+        name: rpi-manual-research-phase-preserved
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const workspace = process.env.EVALUATE_WORKSPACE;
+                const text = fs.readFileSync(path.join(workspace, '.copilot-tracking/rpi-sessions/2026-09-21/synthetic-queue-selection-state.json'), 'utf8');
+                if (text.length > 262144) process.exit(1);
+                const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+                const preserved = state !== null && typeof state === 'object' &&
+                  state.task_id === '2628' && state.task_slug === 'synthetic-queue-selection' &&
+                  state.mode === 'manual' && state.active_phase === 'Research' && state.status !== 'completed';
+                const planned = fs.existsSync(path.join(workspace, '.copilot-tracking/plans'));
+                process.exit(preserved && !planned ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: rpi-resume-workspace-bounded
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: rpi-resume-context
+        config:
+          required:
+            - hve.context.composed
   - name: rpi-agent-conformance-3eb62554
     prompt: |
       Close out this session. The existing session-state artifact is `.copilot-tracking/rpi-sessions/2026-07-22/demo-state.json`.
@@ -23,21 +72,91 @@ stimuli:
       target_artifact: ".github/agents/hve-core/rpi-agent.agent.md"
       advisory: "true"
       prompt_sha256: 3eb62554be5f1feed44fb65188c7863cbc0aa6dfa0c6a23c99e8f2e1babae210
+    # Re-measured in place with the prompt unchanged: the named state is now
+    # staged and records an unresolved blocker the closeout must report.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-agent/blocked-closeout-state.json
+          dest: .copilot-tracking/rpi-sessions/2026-07-22/demo-state.json
+      skills:
+        - ../../.github/skills/rpi/rpi-research
     graders:
       - type: output-matches
-        name: mentions-session-artifact
+        name: rpi-closeout-reports-recorded-blocker
         config:
-          pattern: '(?i)demo-state\.json'
+          pattern: '(?is)^(?=[\s\S]*\b(?:BLK-01|retention)\b)(?=[\s\S]*\b(?:block\w*|await\w*|pending|unresolved|choose|choice|decide|decision)\b)(?![\s\S]*\bretention\b[^.\n]{0,60}\b(?:was|has\s+been|is\s+now)\s+(?:chosen|selected|resolved|decided)\b)(?![\s\S]*\b(?:no|zero)\s+(?:open\s+|remaining\s+)?blockers?\b)(?![\s\S]*\btask\b[^.\n]{0,30}\b(?:is|was|marked)\s+(?:now\s+)?completed?\b)'
+      - type: program
+        name: rpi-closeout-keeps-blocker-unresolved
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const text = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/rpi-sessions/2026-07-22/demo-state.json'), 'utf8');
+                if (text.length > 262144) process.exit(1);
+                const state = JSON.parse(text.replace(/^\uFEFF/, ''));
+                const blockers = state !== null && typeof state === 'object' && Array.isArray(state.blockers) ? state.blockers : [];
+                const open = blockers.some(blocker => blocker !== null && typeof blocker === 'object' && blocker.id === 'BLK-01' &&
+                  (blocker.resolution === null || blocker.resolution === undefined || blocker.resolution === ''));
+                process.exit(state.task_id === 'demo-retention-policy' && state.status !== 'completed' && open ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: rpi-closeout-workspace-bounded
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: rpi-closeout-context
+        config:
+          required:
+            - hve.context.composed
+  # Re-measured in place: the only staged state belongs to another task, so
+  # the agent must keep that state untouched and treat issue 2607 as new work
+  # without an approved plan. Neither the other task nor the answer is in the
+  # prompt.
   - name: rpi-agent-task-recovery-class-recipe
     prompt: |
-      Start `/rpi-implement` for issue 2607. The available saved state belongs
-      to issue 2628. Do not call tools. Return only the issue number you would
-      act on.
+      Start `/rpi-implement` for issue 2607.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-agent/research-ready-state.json
+          dest: .copilot-tracking/rpi-sessions/2026-09-21/synthetic-queue-selection-state.json
+        - src: fixtures/rpi-depth/architecture-research.md
+          dest: .copilot-tracking/research/2026-09-21/synthetic-queue-selection-research.md
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: explicit-anchor-outranks-saved-state
     graders:
       - type: output-matches
-        name: requested-task-selected
+        name: rpi-requested-task-starts-without-plan
         config:
-          pattern: '^\s*2607\s*$'
+          pattern: '(?is)^(?=[\s\S]*\b2607\b)(?=[\s\S]*(?:\bno\s+(?:approved\s+|existing\s+)?plan\b|\bplan\b[^.\n]{0,40}\b(?:does\s+not|doesn[\x27\u2019]t)\s+exist\b|\b(?:missing|without\s+an?)\s+(?:approved\s+)?plan\b|\bstart(?:ing)?\b[^.\n]{0,40}\bResearch\b|\bResearch\b[^.\n]{0,40}\b(?:first|phase)\b|\bHow would you like us to work on this\b|\brpi-research\b))'
+      - type: output-matches
+        name: rpi-does-not-resume-other-task
+        config:
+          pattern: '(?i)(?<!\b(?:not|never|won[\x27\u2019]t|cannot|can[\x27\u2019]t)\s+(?:\w+\s+){0,2})\b(?:resum\w*|continu\w*|load\w*|pick\w*\s+up)\s+(?:(?:the|its|work\s+on|with)\s+)*(?:saved\s+)?(?:state\s+(?:for|of)\s+)?(?:issue\s+|task\s+)?#?2628\b'
+          negate: true
+      - type: system-event
+        name: rpi-recovery-workspace-bounded
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: rpi-recovery-context
+        config:
+          required:
+            - hve.context.composed

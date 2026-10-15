@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-10-12
+ms.date: 2026-10-14
 ---
 
 ## Purpose
@@ -91,6 +91,45 @@ for agent execution and 360 seconds total so it reaches the scan gate rather
 than stopping on missing domain inputs. The clean-scan grader accepts both raw
 JSON and JSON escaped inside a tool-result envelope, while still requiring
 `status: completed` from the scanner command.
+
+### Loaded Subagent and Coverage-Repair Candidates
+
+Advisory candidates that close loaded-coverage gaps follow the same rules as
+the Data Science Coach candidates: the agent's own source is staged as
+workspace instructions, the host composes its instruction imports, a
+`system-event` grader requires `hve.context.composed`, and the
+[measurement policy](measurement-policy.json) records the candidate's
+`coverageGap` or `incumbent`, required skills, and behavior assertions.
+
+* Subagent prompts are written as the parent's bounded brief. Code Review
+  perspective, orientation, explainer, and walk-back candidates stage a
+  serialized `diff-state.json` and a synthetic diff from
+  [fixtures/code-review-subagents/](fixtures/code-review-subagents/), and their
+  program graders read the structured artifact the subagent is contracted to
+  write rather than its reply.
+* Advisory cases whose graders accepted a prompt-supplied answer are
+  re-measured in place under the same identity. The RPI Agent cases stage
+  manual-mode state from [fixtures/rpi-agent/](fixtures/rpi-agent/), so the
+  next command, the unrelated task, and the recorded blocker come from staged
+  state instead of the prompt.
+* Authoritative incumbents stay unchanged during calibration. A material
+  measurement change goes into an advisory `<incumbent>-candidate` copy with
+  suffixed grader names.
+* Read-only and bounded-write scenarios declare a filesystem boundary instead
+  of relying on a reply-only no-write regex.
+* Tracker scenarios stay tracker-free. Executor, planner, triage, and grooming
+  candidates stage a synthetic handoff, issue, PRD, or shard under the
+  tracking root, stage no credentials, and pair the behavior grader with a
+  `tool-calls` grader that forbids tracker CLI, MCP, and REST calls.
+* Each agent's loaded candidate also repairs that agent's context debt. An
+  authoritative debt case gets an `<incumbent>-candidate` copy that keeps the
+  incumbent's task, moves deciding facts into staged files, and stays in
+  `contextDebt` until promotion. An advisory debt case is re-measured in
+  place and leaves `contextDebt`. A separate coverage-gap case is used only
+  when the agent has no debt case to repair.
+
+These are configuration and grader checks; they do not establish that a model
+run passes.
 
 ### SSSC Reviewer Smoke Scenario
 

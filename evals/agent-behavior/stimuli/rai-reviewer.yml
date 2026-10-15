@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand disclos transparen
 stimuli:
   - name: rai-reviewer-class-recipe
     prompt: |
@@ -92,3 +93,56 @@ stimuli:
         config:
           pattern: '(?i)\b(?:I|we)\s+(?!(?:(?:have|had)\s+)?not\b)(?:(?:have|had)\s+)?(?:invoked|ran|executed)\s+(?:(?:the\s+)?(?:child|sub)[- ]?agents?|(?:the\s+)?native orchestration)\b|\bnative orchestration\s+(?:was|has been|had been)\s+(?!not\b)(?:run|executed|completed)\b|(?<!No )\b(?:child|sub)[- ]?agents?\s+(?:(?:were|have been|had been)\s+)?(?:invoked|run|executed|completed)\b|\b(?:I|we)\s+(?!(?:(?:have|had)\s+)?not\b)(?:(?:have|had)\s+)?(?:created|saved|generated|wrote)\s+(?:the\s+|a\s+)?(?:RAI\s+)?report\b|\b(?:the\s+|a\s+)?(?:RAI\s+)?report\s+(?!(?:was not|has not been|had not been)\b)(?:was|has been|had been)\s+(?:written|created|saved|generated)\b'
           negate: true
+
+  # Advisory candidate for rai-reviewer-class-recipe: the agent and the
+  # rai-standards skill are loaded, and the system description moves from the
+  # prompt into a staged file. The disclaimer and dated report path come only
+  # from the agent; the transparency gap comes only from the staged file.
+  - name: rai-reviewer-class-recipe-candidate
+    prompt: |
+      This is a prompt-visible smoke scenario, not a native Responsible AI audit.
+      The system under review is described in `docs/billing-assistant.md`.
+      Summarize candidate RAI findings with severity in chat, citing relevant
+      frameworks (NIST AI RMF, the AI STRIDE overlay, or the EU AI Act).
+      Distinguish risks inferred from the supplied description from verified
+      findings. Show the intended report path under
+      `.copilot-tracking/rai-reviews/`; do not write files, invoke subagents or
+      claim a completed audit.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/rai-planning/rai-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-intake/billing-assistant.txt
+          dest: docs/billing-assistant.md
+      skills:
+        - ../../.github/skills/rai/rai-standards
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: rai-review-staged-description
+    graders:
+      - type: output-matches
+        name: rai-review-disclaimer-cand
+        config:
+          pattern: '(?is)\bResponsible\s+AI\s+review\s+boards\b.{0,40}\bethics\s+committees\b'
+      - type: output-matches
+        name: rai-review-report-path-cand
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]rai-reviews[/\\]\d{4}-\d{2}-\d{2}[/\\]rai-(?:report|report-diff|plan-assessment)-[\w.-]+\.md'
+      - type: output-matches
+        name: rai-review-flags-undisclosed-ai-cand
+        config:
+          pattern: '(?is)\b(?:transparen\w*|disclos\w*|machine-generated|AI-generated|not\s+(?:told|informed))\b[\s\S]{0,300}\b(?:critical|high|medium|low)\b|\b(?:critical|high|medium|low)\b[\s\S]{0,300}\b(?:transparen\w*|disclos\w*|machine-generated|AI-generated|not\s+(?:told|informed))\b'
+      - type: system-event
+        name: rai-review-workspace-unchanged-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: rai-review-context-cand
+        config:
+          required:
+            - hve.context.composed

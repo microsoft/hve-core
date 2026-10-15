@@ -1,0 +1,53 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+"""Evaluation stand-in for the sensitive-content scanner.
+
+A setup command fills REPORT_JSON with a controlled scanner report, or leaves
+it empty to simulate a scan that produced no JSON report, and stages the
+result over the skill's scanner inside an eval workspace. Mirrors the real CLI
+surface and exit-code contract; it never scans content.
+"""
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+REPORT_JSON = r'''__EVAL_REPORT__'''
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+EXIT_ERROR = 2
+
+
+def create_parser() -> argparse.ArgumentParser:
+    """Create the argument parser."""
+    parser = argparse.ArgumentParser(
+        prog="scan_sensitive_content",
+        description=("Scan ADR/handoff content for high-confidence PII and public-repository internal URLs."),
+    )
+    parser.add_argument("paths", nargs="*", type=Path, help="File paths to scan; reads stdin when no paths are given.")
+    parser.add_argument("--allow-root", type=Path, action="append", default=[], help="Additional directory under which scanned paths may live.")
+    parser.add_argument("--public", action="store_true", help="Treat the target repository as public.")
+    parser.add_argument("--data", action="store_true", help="Enable structured data-artifact detection.")
+    parser.add_argument("--denylist", type=Path, help="UTF-8 text file of literal customer-specific terms.")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Emit the controlled report for every scan request."""
+    args, _ = create_parser().parse_known_args(argv)
+    if not REPORT_JSON:
+        return EXIT_SUCCESS
+    report = json.loads(REPORT_JSON)
+    report["modes"] = {"public": bool(args.public), "data": bool(args.data), "denylist": args.denylist is not None}
+    source = str(args.paths[0]) if args.paths else "<stdin>"
+    for finding in report.get("findings", []):
+        finding["source"] = source
+    print(json.dumps(report, indent=2))
+    if report.get("status") != "completed":
+        return EXIT_ERROR
+    return EXIT_FAILURE if report.get("summary", {}).get("high") else EXIT_SUCCESS
+
+
+if __name__ == "__main__":
+    sys.exit(main())

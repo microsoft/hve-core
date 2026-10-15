@@ -1,0 +1,7 @@
+# Billing assistant
+
+* Purpose: a customer-facing chatbot that answers billing questions.
+* Model: a hosted large language model generates every reply without human review.
+* Presentation: replies appear under the name "Billing Team"; customers are not told the replies are machine-generated.
+* Escalation: there is no route to a human agent.
+* Data: full conversation transcripts, including the last four digits of payment cards, are kept for seven years.

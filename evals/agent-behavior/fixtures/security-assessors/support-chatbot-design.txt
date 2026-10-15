@@ -1,0 +1,21 @@
+# Support Chatbot Design
+
+## Overview
+
+Customers type free-text questions into the help widget. The chat service
+forwards each message unmodified, together with the customer's order history,
+to a tool-calling agent built on a hosted large language model.
+
+## Agent tools
+
+The agent can call `issue_refund(order_id, amount)` and `send_email(to, body)`
+without human confirmation. Refund amounts are not capped.
+
+## Output
+
+Agent replies are rendered in the help widget as HTML.
+
+## Controls
+
+All tool calls are logged with the conversation ID. The service rejects
+messages longer than 4,000 characters.

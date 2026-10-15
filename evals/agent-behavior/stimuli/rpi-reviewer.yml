@@ -1,14 +1,57 @@
+# cspell:ignore brpi
 stimuli:
+  # Re-measured in place: the parent's bounded assignment names staged
+  # evidence whose changes record claims PRD content the staged PRD lacks.
   - name: rpi-reviewer-return-only-suggestions
     prompt: |
-      RPI Reviewer returns candidate findings for the review parent to verify
-      and never assigns review IDs itself. Which agent assigns every `RV-xxx`
-      ID? Do not call tools. Return exactly `parent`.
+      Review assignment from the RPI review parent: compare the Completed Work
+      claims in the changes record against the staged PRD and the plan's
+      `P01-T01` requirements.
+      Evidence: plan
+      `.copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md`,
+      changes record
+      `.copilot-tracking/changes/2026-09-21/atlas-product-prd-build-01-changes.md`,
+      and PRD `docs/project-planning/atlas-product.md`.
+      Acceptance basis: the plan's `P01-T01` requirements. Scope: those three
+      files only. The parent owns the review record.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/subagents/rpi-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/authoring-plan.md
+          dest: .copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md
+        - src: fixtures/rpi-depth/prd-authoring-changes.md
+          dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-01-changes.md
+        - src: fixtures/rpi-depth/atlas-prd.md
+          dest: docs/project-planning/atlas-product.md
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: bounded-evidence-comparison
     graders:
       - type: output-matches
-        name: parent-owns-ids
+        name: reviewer-flags-unbacked-prd-claim
         config:
-          pattern: '(?i)^\s*[''"`]?(?:the\s+)?(?:review\s+)?parent[''"`]?[.!]?\s*$'
+          pattern: '(?is)^(?=[\s\S]*\b(?:FR-001|AC-001)\b)(?=[\s\S]*(?:\bpending\b|\b(?:absent|missing)\b|\bnot\s+(?:yet\s+)?(?:present|found|drafted|added|contain\w*|include\w*)\b|\bdoes(?:\s+not|n[\x27\u2019]t)\s+(?:contain|include|show|have)\b|\bno\s+(?:FR-001|AC-001|functional\s+requirements?|acceptance\s+criteri\w*)\b))(?![\s\S]*\b(?:nothing|none)\s+(?:is\s+|are\s+)?(?:missing|absent|pending)\b)(?![\s\S]*\bCandidate findings\W{0,6}None\b)'
+      - type: output-matches
+        name: reviewer-suggests-route
+        config:
+          pattern: '(?is)^(?=[\s\S]*\broute\b)(?=[\s\S]*\brpi-(?:implement|plan|research)\b)'
+      - type: output-matches
+        name: reviewer-assigns-no-review-ids
+        config:
+          pattern: '(?i)(?<!(?:\b(?:not|never|no|without)|n[\x27\u2019]t)\s+(?:(?:assign|create|use|issue)\w*\s+)?(?:(?:an?|any)\s+)?)\bRV-\d{2,}\b'
+          negate: true
+      - type: system-event
+        name: reviewer-workspace-unchanged
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: reviewer-context
+        config:
+          required:
+            - hve.context.composed

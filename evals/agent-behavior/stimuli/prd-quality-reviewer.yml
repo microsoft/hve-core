@@ -1,18 +1,72 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the parent's brief names a staged PRD whose seeded
+  # traceability gap and active phase exist only in the staged draft, and the
+  # graders read the two contracted payloads from the reply.
   - name: prd-quality-reviewer-mentions-quality-guidance
     prompt: |
-      You are reviewing a product-requirements draft for a planning workflow.
-      Briefly describe what the prd-quality-reviewer agent is meant to help with
-      and name one quality concern it should surface for the draft.
+      PRD Builder dispatch: review the PRD draft at
+      `docs/project-planning/inspection-sync-prd.md` with the default taxonomy
+      in force, and return your payloads to me.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/requirements-quality/inspection-sync-prd.txt
+          dest: docs/project-planning/inspection-sync-prd.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: prd-quality-seeded-traceability-gap
     graders:
-      - type: output-matches
+      - type: program
         name: prd-quality-reviewer-mentions-quality-guidance-agen-98b66cc9
         config:
-          pattern: '(?i)(prd|product|requirements|review|quality)'
-      - type: output-matches
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/[`*"']/g, '');
+                if (!/\bschema_version\s*:\s*PRD_STANDARD_FINDINGS_V1\b/.test(output)) process.exit(1);
+                const items = output.split(/\r?\n(?=[ \t]*-\s)/);
+                const cited = items.some(item => (item.match(/\brequirement_id\s*:/g) || []).length === 1 &&
+                  /\brequirement_id\s*:\s*(?:FR-002|GOAL-004)\b/.test(item) && /\bstatus\s*:\s*(?:RISK|CAUTION)\b/.test(item));
+                process.exit(cited ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
         name: prd-quality-reviewer-mentions-quality-guidance-scop-f3aff469
         config:
-          pattern: '(?i)(draft|review|quality|requirements)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/[`*"']/g, '');
+                if (!/\bschema_version\s*:\s*PRD_QUALITY_REPORT_V1\b/.test(output)) process.exit(1);
+                const finalize = [...output.matchAll(/\bfinalize_exit\s*:\s*([A-Z_]+)/g)].map(match => match[1]);
+                const validate = [...output.matchAll(/\bvalidate_exit\s*:\s*([A-Z_]+)/g)].map(match => match[1]);
+                const gated = finalize.length > 0 && finalize.every(value => value === 'NOT_EVALUATED') &&
+                  validate.length > 0 && validate.every(value => value === 'BLOCKED' || value === 'APPROVED_WITH_COMMENTS');
+                process.exit(gated && !/\boverall_status\s*:\s*PASS\b/.test(output) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: prd-quality-review-read-only
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: prd-quality-review-context
+        config:
+          required:
+            - hve.context.composed

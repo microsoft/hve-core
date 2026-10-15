@@ -1,0 +1,35 @@
+# Maintainer-Selected Open Issues
+
+* Repository: contoso-synthetic/widgets
+* Inventory scope: the open issues a maintainer selected for this review
+* Snapshot: 2026-09-21T09:00:00Z
+
+## Issue #2558: Add a workflow-neutral backlog review policy
+
+* State: open; updated 2026-09-12T10:00:00Z; unassigned; label enhancement
+* Body: Interactive backlog reviews should not depend on the automated
+  shard worker. Define a reusable, evidence-backed advisory policy that
+  Backlog Manager applies directly to ordinary issue inventory.
+* Linked development: pull request #2580, merged 2026-09-15 as commit
+  2580f3e
+* Repository evidence:
+  * Default branch: `.github/instructions/project-planning/github-backlog-grooming.instructions.md`
+    defines evidence-backed advisory assessment of ordinary issue inventory.
+  * Default branch: `.github/agents/project-planning/backlog-manager.agent.md`
+    applies that policy directly without invoking the automated worker.
+  * Pull request #2580 added both changes and references this issue.
+
+## Issue #2601: Automatically close inactive issues
+
+* State: open; updated 2026-09-10T08:30:00Z; unassigned; label enhancement
+* Body: Close any issue that has had no activity for 60 days.
+* Linked development: none
+* Repository evidence:
+  * Default branch: no workflow, script, or configuration closes issues for
+    inactivity; searched `.github/workflows/` and `scripts/` for "inactive",
+    "stale", and "auto-close".
+  * Pull requests (open, merged, closed): no match for automatic inactivity
+    closure.
+  * Issues (open, closed): no related request.
+  * Default branch: the backlog review policy keeps every closure decision
+    advisory and maintainer-owned.

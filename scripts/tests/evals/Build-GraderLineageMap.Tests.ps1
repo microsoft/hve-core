@@ -39,6 +39,7 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
         @{ GraderType = 'output-matches'; ExpectedKind = 'code' }
         @{ GraderType = 'output-contains'; ExpectedKind = 'code' }
         @{ GraderType = 'program'; ExpectedKind = 'code' }
+        @{ GraderType = 'system-event'; ExpectedKind = 'code' }
         @{ GraderType = 'tool-calls'; ExpectedKind = 'code' }
         @{ GraderType = 'transcript-matches'; ExpectedKind = 'code' }
         @{ GraderType = 'wall-time'; ExpectedKind = 'code' }

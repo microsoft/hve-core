@@ -1,0 +1,10 @@
+# Packaging Line 3 Intake Notes
+
+* Site profile: brownfield, a 2014 bottling and packaging line.
+* ISA-95 levels in scope: L2 (line PLCs and HMIs), L3 (MES and historian), and L4 (ERP integration).
+* Edge Kubernetes: K3s on two industrial PCs, connected to Azure Arc and managed by the central platform team through GitOps.
+* Azure connectivity: site-to-site VPN to the regional hub.
+* Segmentation maturity: partial; L2 and L3 share a VLAN behind one firewall.
+* Critical cloud dependencies: Azure Container Registry, Microsoft Entra ID, Azure Key Vault, and Azure Monitor.
+* Operational constraints: one 4-hour change window per month; line downtime outside it is not tolerated.
+* Reusable components: an existing reverse proxy in the plant DMZ and the VPN edge appliance.

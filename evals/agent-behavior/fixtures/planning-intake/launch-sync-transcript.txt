@@ -1,0 +1,11 @@
+# Transcript: Launch Readiness Sync
+
+* Date: 2026-09-18
+* Meeting: Contoso Portal relaunch readiness sync
+* Participants: Alex Morgan (Product Owner, Contoso Portal), Sam Ortiz (Data engineer, Contoso Portal team), Jordan Lee (Marketing lead, Contoso Portal launch)
+
+[00:01:30] Alex Morgan: We agreed to ship login by Friday.
+[00:02:45] Jordan Lee: Marketing will publish the blog Monday.
+[00:04:10] Alex Morgan: And Sam will own analytics.
+[00:04:20] Sam Ortiz: Works for me.
+[00:05:00] Alex Morgan: Thanks, everyone.

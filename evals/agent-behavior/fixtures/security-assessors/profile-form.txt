@@ -1,0 +1,10 @@
+from flask import Blueprint, request
+
+bp = Blueprint("forms", __name__)
+
+
+@bp.post("/profile")
+def update_profile():
+    display_name = request.form["display_name"]
+    score = eval(request.form["score"])
+    return {"display_name": display_name, "score": score}

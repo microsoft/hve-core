@@ -1,0 +1,11 @@
+import os
+
+from flask import Flask
+from flask_wtf.csrf import CSRFProtect
+
+from .forms import bp as forms_bp
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
+csrf = CSRFProtect(app)
+app.register_blueprint(forms_bp)

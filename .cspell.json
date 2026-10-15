@@ -236,6 +236,15 @@
     "ˈpræksɪs",
     "πρᾶξις"
   ],
+  "overrides": [
+    {
+      "filename": "evals/agent-behavior/measurement-policy.json",
+      "words": [
+        "cand",
+        "expdes"
+      ]
+    }
+  ],
   "reporters": [
     "default",
     [

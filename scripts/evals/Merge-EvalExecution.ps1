@@ -128,6 +128,15 @@ function Merge-EvalSummaryValue {
                     $spec | Add-Member -NotePropertyName status -NotePropertyValue 'integrity-failure' -Force
                     $spec | Add-Member -NotePropertyName isAdvisory -NotePropertyValue $false -Force
                 }
+                $mandatory = if ($spec.PSObject.Properties['mandatory']) { $spec.mandatory } else { $null }
+                $mandatoryCheck = Test-VallyMandatoryEvidence -Mandatory $mandatory -Required:([string]$spec.specPath -match '(^|/)evals/agent-behavior/eval\.yaml$')
+                $spec | Add-Member -NotePropertyName mandatoryEvidence -NotePropertyValue $mandatoryCheck -Force
+                if ($evidence.integrityPassed -and (-not $mandatoryCheck.contractValid -or $mandatoryCheck.gatingFailures -gt 0)) {
+                    $integrityFailures++
+                    $failureStatus = if ($mandatoryCheck.contractValid) { 'mandatory-failure' } else { 'integrity-failure' }
+                    $spec | Add-Member -NotePropertyName status -NotePropertyValue $failureStatus -Force
+                    $spec | Add-Member -NotePropertyName isAdvisory -NotePropertyValue $false -Force
+                }
             }
         }
         foreach ($name in @($totals.Keys)) { $totals[$name] += [int]$summaryItem.totals.$name }

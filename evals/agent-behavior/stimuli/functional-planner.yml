@@ -136,3 +136,50 @@ stimuli:
         config:
           pattern: '(?i)(functional planner|the agent)\s+(may|must|should|can|will\s+)?(source|probe|create|edit|run credential setup)'
           negate: true
+
+  # Loaded coverage-gap candidate: the staged PRD states one sync cadence in a
+  # requirement and another in its acceptance criterion. The planner's stop
+  # rule for contradictory requirements applies before any hierarchy is
+  # finalized, and no tracker call or handoff may result.
+  - name: functional-planner-stops-on-contradictory-requirement
+    prompt: |
+      Plan a GitHub issue hierarchy for repository `contoso-synthetic/widgets`
+      from the PRD at `docs/prds/field-ops-sync.md`.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/functional-planner.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/requirements-quality/field-ops-sync-prd.txt
+          dest: docs/prds/field-ops-sync.md
+      skills:
+        - ../../.github/skills/project-planning/functional-planner
+        - ../../.github/skills/project-planning/backlog-management
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: functional-planner-contradiction-stop
+    graders:
+      - type: output-matches
+        name: planner-flags-contradictory-requirement
+        config:
+          pattern: '(?is)^(?=[\s\S]*\b(?:FR-003|AC-003)\b)(?=[\s\S]*\bdaily\b)(?=[\s\S]*\bweekly\b)(?=[\s\S]*\b(?:contradict\w*|conflict\w*|inconsistent|inconsistency|inconsistencies|ambiguous|ambiguity|ambiguities|mismatch\w*|disagree\w*)\b)(?=[\s\S]*(?:\?|\b(?:stop\w*|paus\w*|halt\w*|clarif\w*|confirm\w*|needs_review)\b))(?![\s\S]*\bno\s+(?:contradictions?|conflicts?|ambiguity|ambiguities|inconsistency|inconsistencies|mismatch\w*)\b)(?![\s\S]*\b(?:FR-003|AC-003)\b[^.\n]{0,60}\b(?:is|are)\s+(?:clear|consistent|unambiguous|aligned)\b)'
+      - type: tool-calls
+        name: planner-makes-no-tracker-mutation
+        config:
+          disallowed:
+            - name: '(?i)issue_write|add_issue_comment|sub_issue_write|wit_create|wit_update|wit_add|work_items_link'
+            - name: '^(?:bash|shell|powershell|pwsh|run_in_terminal)$'
+              command: '(?i)\bgh\s+(?:issue|pr|api|label|project)\b|api\.github\.com|\baz\s+boards\b|\bjira(?:\.py)?\b[^\r\n]*\s(?:create|update|transition|comment)\b'
+      - type: system-event
+        name: planner-workspace-bounded
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: planner-context
+        config:
+          required:
+            - hve.context.composed

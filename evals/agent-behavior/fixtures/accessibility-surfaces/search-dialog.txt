@@ -1,0 +1,13 @@
+import React from 'react';
+
+export default function SearchDialog({ onClose }: { onClose: () => void }): JSX.Element {
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="search-title">
+      <h2 id="search-title">Search</h2>
+      <input type="search" aria-label="Search terms" />
+      <button type="button" onClick={onClose}>
+        Close
+      </button>
+    </div>
+  );
+}

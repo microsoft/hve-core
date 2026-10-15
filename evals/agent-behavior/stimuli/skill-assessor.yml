@@ -1,55 +1,147 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the vulnerability IDs and reference URL come only from
+  # the staged owasp-top-10 skill, and the injection sink and its line exist
+  # only in the staged source.
   - name: skill-assessor-audit-mode-format
     prompt: |
-      You are the Skill Assessor subagent. The Security Reviewer orchestrator
-      hands you this input:
+      Security Reviewer dispatch:
         - mode: audit
         - skill: owasp-top-10
         - scope: src/web/
-      Assess exactly this one skill against the scope and return findings in the
-      audit format with skill metadata and a findings table.
+        - codebase profile: Python Flask web API with SQLite storage.
+      Return your findings.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/skill-assessor.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/users-query.txt
+          dest: src/web/users.py
+      skills:
+        - ../../.github/skills/security/owasp-top-10
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-flask-injection-audit
     graders:
-      - type: output-matches
-        name: skill-metadata-fields
-        config:
-          pattern: '(?i)(skill|framework|version|reference)\s*:'
-      - type: output-matches
+      - type: program
         name: skill-assessor-audit-mode-format-findings-table-present
         config:
-          pattern: '(?i)(\|.*status.*\||findings table|severity)'
-      - type: output-matches
-        name: audit-status-vocabulary
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                const ids = rows.map(cells => /^A(0[1-9]|10)(?::2025)?$/.exec(cells[0] || '')?.[1]).filter(Boolean);
+                const hasStatus = rows.filter(cells => /^A(?:0[1-9]|10)(?::2025)?$/.test(cells[0] || '')).every(cells => cells.some(cell => /^(?:PASS|FAIL|PARTIAL|NOT_ASSESSED)$/.test(cell)));
+                const expected = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
+                const once = expected.every(id => ids.filter(value => value === id).length === 1);
+                const metadata = /Reference:[^\n]*owasp\.org\/Top10\/2025/i.test(output);
+                process.exit(once && hasStatus && metadata ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: assessor-fails-injection-at-source-line
         config:
-          pattern: '(?i)\b(pass|fail|partial|not[_ ]assessed)\b'
-      - type: output-matches
-        name: location-link-or-sentinel
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                const injection = rows.filter(cells => /^A05(?::2025)?$/.test(cells[0] || ''));
+                const failed = injection.length === 1 && injection[0].includes('FAIL') && injection[0].some(cell => /^(?:CRITICAL|HIGH|MEDIUM|LOW)$/.test(cell));
+                process.exit(failed && /src\/web\/users\.py#L(?:9|10)\b/.test(injection[0].join('|')) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: assessor-audit-read-only
         config:
-          pattern: '(?i)(\[[^\]]+#l\d+\]\([^)]+#l\d+\)|—)'
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: assessor-audit-context
+        config:
+          required:
+            - hve.context.composed
 
+  # Re-measured in place: the unfiltered forwarding and unconfirmed refund tool
+  # exist only in the staged plan, and the LLM IDs and plan-mode statuses come
+  # only from the staged owasp-llm skill and the loaded agent.
   - name: skill-assessor-plan-mode-vocabulary
     prompt: |
-      You are the Skill Assessor subagent. The Security Planner orchestrator
-      hands you this input:
+      Security Planner dispatch:
         - mode: plan
         - skill: owasp-llm
-        - plan_text: A design doc describing an LLM chatbot that accepts
-          untrusted user input and forwards it to a tool-calling agent.
-      Assess exactly this one skill against the plan text and return findings in
-      the plan-mode format.
+        - plan document: docs/plans/support-chatbot-design.md
+        - codebase profile: proposed Python service that calls a hosted LLM.
+      Return your findings.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/subagents/skill-assessor.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-assessors/support-chatbot-design.txt
+          dest: docs/plans/support-chatbot-design.md
+      skills:
+        - ../../.github/skills/security/owasp-llm
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-chatbot-plan-llm
     graders:
-      - type: output-matches
+      - type: program
         name: skill-assessor-plan-mode-vocabulary-plan-status-vocabulary
         config:
-          pattern: '(?i)\b(risk|caution|covered|not[_ ]applicable)\b'
-      - type: output-matches
-        name: mitigation-guidance
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                const listed = rows.filter(cells => /^LLM(?:0[1-9]|10)(?::2025)?$/.test(cells[0] || ''));
+                const ids = listed.map(cells => cells[0].slice(3, 5));
+                const expected = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
+                const once = expected.every(id => ids.filter(value => value === id).length === 1);
+                const planOnly = listed.every(cells => cells.some(cell => /^(?:RISK|CAUTION|COVERED|NOT_APPLICABLE)$/.test(cell)) && !cells.some(cell => /^(?:PASS|FAIL|PARTIAL|NOT_ASSESSED)$/.test(cell)) && !/#L\d/.test(cells.join('|')));
+                process.exit(once && planOnly ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: plan-assessor-flags-injection-and-agency
         config:
-          pattern: '(?i)(mitigation|guidance|recommend)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const rows = output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+                const flagged = id => rows.some(cells => new RegExp('^LLM' + id + '(?::2025)?$').test(cells[0] || '') && cells.some(cell => /^(?:RISK|CAUTION)$/.test(cell)));
+                process.exit(flagged('01') && flagged('06') && /#{2,4}[ \t]*Mitigation Guidance/i.test(output) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: assessor-plan-read-only
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: assessor-plan-context
+        config:
+          required:
+            - hve.context.composed

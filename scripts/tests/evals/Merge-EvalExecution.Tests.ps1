@@ -115,6 +115,42 @@ Describe 'Merge-EvalExecution.ps1' -Tag 'Unit' {
         $spec.integrity.integrityPassed | Should -BeFalse
         $spec.integrity.issues | Should -Contain 'duplicate-trial'
     }
+    It 'applies persisted mandatory evidence at fan-in for <Case>' -ForEach @(
+        @{ Case = 'an enforced authoritative failure'; Gating = $true; Status = 'violated'; Claimed = 1; ExpectedStatus = 'mandatory-failure'; ExpectedFailed = 1 }
+        @{ Case = 'tampered gate counts'; Gating = $true; Status = 'violated'; Claimed = 0; ExpectedStatus = 'integrity-failure'; ExpectedFailed = 1 }
+        @{ Case = 'a candidate failure'; Gating = $false; Status = 'integrity'; Claimed = 0; ExpectedStatus = $null; ExpectedFailed = 0 }
+        @{ Case = 'all mandatory evidence passing'; Gating = $true; Status = 'passed'; Claimed = 0; ExpectedStatus = $null; ExpectedFailed = 0 }
+    ) {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $candidateFailures = if (-not $Gating -and $Status -ne 'passed') { 1 } else { 0 }
+        $mandatory = [ordered]@{ schemaVersion = '1.0.0'; status = 'passed'; gatingFailures = $Claimed; candidateFailures = $candidateFailures
+            stimuli = [ordered]@{ synthetic = [ordered]@{ gating = $Gating; status = $Status } } } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+        $summaries[0].perSpec[0] | Add-Member -NotePropertyName mandatory -NotePropertyValue $mandatory
+
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+
+        $result.totals.failedSpecs | Should -Be $ExpectedFailed
+        $spec = @($result.perSpec | Where-Object specPath -eq 'alpha.yaml')[0]
+        if ($ExpectedStatus) { $spec.status | Should -Be $ExpectedStatus }
+        else { $spec.PSObject.Properties['status'] | Should -BeNullOrEmpty }
+    }
+    It 'treats missing mandatory evidence on the agent-behavior suite as an integrity failure' {
+        $plan = New-FanInPlan
+        $runKey = 'evals/agent-behavior/eval.yaml|agent=alpha'
+        $plan.ordinaryShards[0].runKeys = @($runKey)
+        $payload = [ordered]@{ schemaVersion = $plan.schemaVersion; manifestDigests = [ordered]@{ changedArtifacts = $plan.manifestDigests.changedArtifacts; changedSpecs = $plan.manifestDigests.changedSpecs }; baseline = [ordered]@{ required = $false; reason = $plan.baseline.reason; models = @() }; ordinaryShards = @($plan.ordinaryShards); expectedProducers = @($plan.expectedProducers) }
+        $plan.planDigest = Get-AgentEvalValueDigest -Value $payload
+        $summaries = New-ValidFanInSummary $plan
+        $summaries[0].perSpec = @([pscustomobject]@{ specPath = 'evals/agent-behavior/eval.yaml'; tag = 'agent=alpha'; diagnostics = (New-FanInDiagnostics $runKey 2) })
+
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+
+        $result.totals.failedSpecs | Should -Be 1
+        $spec = @($result.perSpec | Where-Object tag -eq 'agent=alpha')[0]
+        $spec.status | Should -Be 'integrity-failure'
+        $spec.mandatoryEvidence.contractValid | Should -BeFalse
+    }
     It 'preserves bounded completion evidence through authoritative fan-in' {
         $plan = New-FanInPlan
         $result = Merge-EvalSummaryValue -Plan $plan -Summary (New-ValidFanInSummary $plan)

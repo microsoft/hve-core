@@ -1,0 +1,22 @@
+# Handoff - Inspection Sync Epic
+
+* **Organization**: contoso-synthetic
+* **Project**: [PROJECT]
+* **Autonomy**: partial
+
+## Planned Operations
+
+### Create
+
+* [ ] WI001 - Create - `{{TEMP-1}}` - Epic: Field inspection sync
+* [ ] WI002 - Create - `{{TEMP-2}}` - User Story: Save in-progress checklists offline (parent `{{TEMP-1}}`)
+
+### Update
+
+* [ ] WI003 - Update - `4120` - Set `System.Tags` to `inspection-sync`
+
+## Planning Files
+
+* `artifact-analysis.md`
+* `work-items.md`
+* `planning-log.md`

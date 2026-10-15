@@ -1,0 +1,29 @@
+{
+  "task_id": "demo-retention-policy",
+  "task_slug": "retention-policy",
+  "parent_task": null,
+  "mode": "manual",
+  "active_phase": "Research",
+  "status": "blocked",
+  "session_status": "stopped",
+  "artifact_paths": {
+    "research": null,
+    "plan": null,
+    "critique": null,
+    "changes": null,
+    "review": null
+  },
+  "confirmed_decisions": [],
+  "blockers": [
+    {
+      "id": "BLK-01",
+      "summary": "Research cannot conclude until the user chooses between the 30-day and 90-day log retention options.",
+      "resolution": null
+    }
+  ],
+  "next_action": {
+    "phase": "Research",
+    "action": "Ask the user to choose a log retention option"
+  },
+  "prioritized_follow_ups": []
+}

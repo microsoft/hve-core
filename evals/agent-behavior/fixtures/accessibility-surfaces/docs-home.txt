@@ -1,0 +1,18 @@
+import React, { useState } from 'react';
+import Layout from '@theme/Layout';
+import SearchDialog from '../components/SearchDialog';
+
+export default function Home(): JSX.Element {
+  const [searchOpen, setSearchOpen] = useState(false);
+  return (
+    <Layout title="Home">
+      <main>
+        <h1>Contoso Docs</h1>
+        <button type="button" onClick={() => setSearchOpen(true)}>
+          Search the docs
+        </button>
+        {searchOpen && <SearchDialog onClose={() => setSearchOpen(false)} />}
+      </main>
+    </Layout>
+  );
+}

@@ -1,50 +1,158 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
+  # Re-measured in place: the routes, the dialog widget and the external link
+  # exist only in the staged site, and the config name, location and required
+  # fields come only from the loaded agent.
   - name: accessibility-surface-inventory-config-emission
     prompt: |
-      As the accessibility-surface-inventory subagent, take a codebase profile
-      for a Docusaurus site (React/MDX, routes for home, docs, and search) with
-      a scope path and enabled WCAG framework, and produce the runtime surface
-      inventory. Emit an a11y-runtime.config.json with a base URL, a route list,
-      and a surface inventory of stable IDs, selectors, widget patterns, and
-      interaction states, plus a summary table and open questions for human
-      override.
+      Accessibility Reviewer dispatch: build the runtime surface inventory.
+      Codebase profile: `inventory/codebase-profile.md`. Scope path: `site/`.
+      Enabled frameworks: `wcag-22`.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/accessibility-surfaces/docs-site-profile.txt
+          dest: inventory/codebase-profile.md
+        - src: fixtures/accessibility-surfaces/docusaurus-config.txt
+          dest: site/docusaurus.config.js
+        - src: fixtures/accessibility-surfaces/docs-intro.txt
+          dest: site/docs/intro.md
+        - src: fixtures/accessibility-surfaces/docs-install.txt
+          dest: site/docs/install.md
+        - src: fixtures/accessibility-surfaces/docs-home.txt
+          dest: site/src/pages/index.tsx
+        - src: fixtures/accessibility-surfaces/search-dialog.txt
+          dest: site/src/components/SearchDialog.tsx
+      skills:
+        - ../../.github/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-docusaurus-inventory
     graders:
-      - type: output-matches
-        name: config-artifact-vocabulary
+      - type: program
+        name: a11y-inventory-config-from-site
         config:
-          pattern: '(?i)(a11y-runtime\.config\.json|base ?url|route list|surface inventory|interaction states?)'
-      - type: output-matches
-        name: surface-fields-vocabulary
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs'); const path = require('node:path');
+              try {
+                const file = path.join(process.env.EVALUATE_WORKSPACE, 'site/a11y-runtime.config.json');
+                const config = JSON.parse(fs.readFileSync(file, 'utf8').trim());
+                const arrays = ['allowlist', 'routes', 'surfaces', 'probeScoping'].every(key => Array.isArray(config[key]));
+                const fields = arrays && typeof config.baseUrl === 'string' && ['auto', 'served', 'external', 'off'].includes(config.serveMode);
+                const routes = (config.routes || []).map(route => String((route && route.path) || '').replace(/(.)\/$/, '$1'));
+                const covered = ['/', '/docs/intro', '/docs/install'].every(route => routes.includes(route));
+                const scoped = routes.every(route => route.startsWith('/'));
+                const surfaces = config.surfaces || [];
+                const dialog = surfaces.some(surface => /dialog/i.test(String((surface && surface.widgetPattern) || '') + ' ' + String((surface && surface.id) || '')));
+                const states = surfaces.length > 0 && surfaces.every(surface => surface && Array.isArray(surface.states) && surface.states.length > 0);
+                process.exit(fields && covered && scoped && dialog && states ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: a11y-inventory-reports-config-path
         config:
-          pattern: '(?i)(selector|widget pattern|surface id|state definition|scope)'
-      - type: output-matches
-        name: human-override-vocabulary
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const reported = /\bsite[\\/]a11y-runtime\.config\.json\b/.test(output);
+                const summary = /Discovery Summary[\s\S]*\|\s*\/docs\/intro\/?\s*\|/i.test(output);
+                process.exit(reported && summary ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: a11y-inventory-writes-only-config
         config:
-          pattern: '(?i)(summary table|open questions?|human (override|review)|without over-?claiming)'
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: a11y-inventory-config-context
+        config:
+          required:
+            - hve.context.composed
 
+  # Re-measured in place: the staged profile leaves the framework family
+  # undetermined and the console exposes only two route signals, so the agent's
+  # incomplete-profile fallback must report a non-complete status with open
+  # questions and must not invent routes in any config it emits.
   - name: accessibility-surface-inventory-conservative-scope
     prompt: |
-      As the accessibility-surface-inventory subagent, you are given a codebase
-      profile with an unfamiliar UI framework and sparse routing signals. Explain
-      how you scope the runtime surface inventory and the config you emit so that
-      coverage is not overstated, and where you defer to human confirmation.
+      Accessibility Reviewer dispatch: build the runtime surface inventory.
+      Codebase profile: `inventory/codebase-profile.md`. Scope path: `ui/`.
+      Enabled frameworks: `wcag-22`.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/accessibility-surfaces/sparse-profile.txt
+          dest: inventory/codebase-profile.md
+        - src: fixtures/accessibility-surfaces/sparse-index.txt
+          dest: ui/index.html
+        - src: fixtures/accessibility-surfaces/sparse-app.txt
+          dest: ui/app.js
+      skills:
+        - ../../.github/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
+      scenario: staged-unrecognized-framework-inventory
     graders:
-      - type: output-matches
-        name: conservative-scope-vocabulary
+      - type: program
+        name: a11y-inventory-reports-partial-with-questions
         config:
-          pattern: '(?i)(not over-?claim|conservative|uncertain|defer|human (confirmation|override|review)|open questions?)'
-      - type: output-matches
-        name: strategy-vocabulary
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory.output || '').replace(/\*\*|`/g, '');
+                const statuses = [...output.matchAll(/^[ \t]*Status:\s*(Complete|Partial|Blocked)\b/gim)].map(match => match[1].toLowerCase());
+                const conservative = statuses.length > 0 && statuses.every(status => status !== 'complete');
+                const questions = /#{2,4}[ \t]*Open Questions[^\n]*\n(?:[ \t\r]*\n)*[ \t]*[-*][ \t]+\S/i.test(output);
+                process.exit(conservative && questions ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
+        name: a11y-inventory-no-invented-routes
         config:
-          pattern: '(?i)(discovery strategy|framework family|routes?|surfaces?|scope path)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs'); const path = require('node:path');
+              try {
+                const file = path.join(process.env.EVALUATE_WORKSPACE, 'ui/a11y-runtime.config.json');
+                if (!fs.existsSync(file)) process.exit(0);
+                const config = JSON.parse(fs.readFileSync(file, 'utf8').trim());
+                const allowed = ['/', '/index.html', '/reports'];
+                const routes = Array.isArray(config.routes) ? config.routes : [];
+                process.exit(routes.every(route => allowed.includes(String((route && route.path) || '').replace(/(.)\/$/, '$1'))) ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: system-event
+        name: a11y-inventory-conservative-writes-only-config
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: a11y-inventory-conservative-context
+        config:
+          required:
+            - hve.context.composed
 
   - name: accessibility-surface-inventory-rejects-unsafe-partial-config
     prompt: |

@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore cand downgrad
 stimuli:
   - name: dependency-reviewer-class-recipe
     prompt: |
@@ -25,3 +26,48 @@ stimuli:
         config:
           pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
+
+  # Advisory candidate for dependency-reviewer-class-recipe: the agent is
+  # loaded and the change is staged as a diff that also unpins a workflow
+  # action. Only the agent's review dimensions make the unpinned action a
+  # finding and set the REQUEST_CHANGES verdict.
+  - name: dependency-reviewer-class-recipe-candidate
+    prompt: |
+      Review the dependency change in `changes/dependency.diff`. Report at least
+      one finding with an explicit severity and recommendation.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/dependency-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/security-intake/dependency-change.txt
+          dest: changes/dependency.diff
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: dependency-review-unpinned-action
+    graders:
+      - type: output-matches
+        name: dep-flags-unpinned-action-cand
+        config:
+          pattern: '(?is)^(?![\s\S]*\b(?:already|correctly|properly)\s+(?:SHA[- ])?pinned\b)(?=[\s\S]*\bactions/checkout\b)(?=[\s\S]*\bSHA\b)(?=[\s\S]*\bpin\w*)'
+      - type: output-matches
+        name: dep-requests-changes-cand
+        config:
+          pattern: '\bREQUEST_CHANGES\b'
+      - type: output-matches
+        name: dep-flags-lodash-downgrade-cand
+        config:
+          pattern: '(?is)\blodash\b[\s\S]{0,300}\b(?:downgrad\w*|major\s+version|breaking|older|3\.0\.0)\b|\b(?:downgrad\w*|major\s+version|3\.0\.0)\b[\s\S]{0,300}\blodash\b'
+      - type: system-event
+        name: dep-workspace-unchanged-cand
+        config:
+          required:
+            - hve.filesystem.passed
+          disallowed:
+            - hve.filesystem.violated
+            - hve.filesystem.unavailable
+      - type: system-event
+        name: dep-context-cand
+        config:
+          required:
+            - hve.context.composed
