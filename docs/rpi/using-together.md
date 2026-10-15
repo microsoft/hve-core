@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-09
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -260,6 +260,7 @@ Ready for review.
    * Assesses implementation-time plan updates, critique dispositions, and plan follow-up items
    * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and proposed routing
    * Keeps final outcome and route decisions in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route
+   * Checks delivered work against any cited BRD, PRD, or ADR, routes needed source updates to their owners, and, when you accept, drafts a copy-ready note to the source owner
 
 4. Review the findings:
 

@@ -366,6 +366,24 @@ Describe 'Invoke-PluginManifestSync write mode' -Tag 'Unit' {
         $second.Changed | Should -BeFalse
         (Get-FileHash (Join-Path $script:WriteRoot 'plugin.json') -Algorithm SHA256).Hash | Should -BeExactly $before
     }
+
+    It 'Rewrites manifest when a committed component differs only in case' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'case-write')
+        $manifestPath = Join-Path $root 'plugin.json'
+        $expected = (Invoke-PluginManifestSync -RepoRoot $root).Manifest
+        $expectedAgent = $expected['agents'][0]
+        $casedAgent = $expectedAgent.ToUpperInvariant()
+        Set-FixtureManifest -Root $root -Transform {
+            param($m)
+            $m['agents'] = @($casedAgent) + @($expected['agents'] | Select-Object -Skip 1)
+            $m
+        }
+        $result = Invoke-PluginManifestSync -RepoRoot $root
+        $result.Changed | Should -BeTrue
+        $synced = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+        (@($synced['agents']) -ccontains $expectedAgent) | Should -BeTrue
+        (@($synced['agents']) -ccontains $casedAgent) | Should -BeFalse
+    }
 }
 
 Describe 'Invoke-PluginManifestSync failure atomicity' -Tag 'Unit' {
@@ -479,6 +497,31 @@ Describe 'Invoke-PluginManifestSync check mode' -Tag 'Unit' {
         }
         (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations -join "`n" |
             Should -Match 'no supported drift detail is available'
+    }
+
+    It 'Detects drift when a committed component path differs only in case' {
+        $expectedAgent = $script:CheckExpected['agents'][0]
+        $casedAgent = $expectedAgent.ToUpperInvariant()
+        $casedAgents = @($casedAgent) + @($script:CheckExpected['agents'] | Select-Object -Skip 1)
+        $committed = New-CommittedManifest -Override @{ agents = $casedAgents }
+        $differences = @(Compare-PluginManifest -Committed $committed -Expected $script:CheckExpected)
+        $differences -join "`n" | Should -Match "agents missing 1: $([regex]::Escape($expectedAgent))"
+        $differences -join "`n" | Should -Match "agents unexpected 1: $([regex]::Escape($casedAgent))"
+    }
+
+    It 'Fails check mode when a committed component path differs only in case' {
+        $expectedAgent = $script:CheckExpected['agents'][0]
+        $casedAgent = $expectedAgent.ToUpperInvariant()
+        Set-FixtureManifest -Root $script:CheckRoot -Transform {
+            param($m)
+            $m['agents'] = @($casedAgent) + @($script:CheckExpected['agents'] | Select-Object -Skip 1)
+            $m
+        }
+        $result = Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check
+        $result.Changed | Should -BeTrue
+        $result.Violations -join "`n" | Should -Match 'plugin.json is out of sync with the derived manifest'
+        $result.Violations -join "`n" | Should -Match "agents missing 1: $([regex]::Escape($expectedAgent))"
+        $result.Violations -join "`n" | Should -Match "agents unexpected 1: $([regex]::Escape($casedAgent))"
     }
 
     AfterEach {
