@@ -154,6 +154,7 @@ cscf
 cse
 cse's
 cspell
+cairosvg
 cspm
 csps
 cte's
@@ -195,6 +196,7 @@ explainability
 Fairlearn
 Falco
 filesystem
+fsspec
 Flink
 frontmatter
 fullstack

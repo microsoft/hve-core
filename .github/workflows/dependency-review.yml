@@ -262,12 +262,18 @@ jobs:
           # does not relicense separately authored repository code. This
           # package-scoped exception requires organizational approval before
           # merge and does not allow EPL-2.0 repository-wide.
+          # pkg:pypi/cairosvg is LGPL-3.0-or-later. The PowerPoint skill
+          # installs the unmodified wheel into its uv environment at use time;
+          # plugin and extension artifacts do not redistribute it. This
+          # package-scoped exception requires organizational approval before
+          # merge and does not allow LGPL-3.0-or-later repository-wide.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:pypi/certifi,
             pkg:pypi/charset-normalizer,
             pkg:pypi/shapely,
+            pkg:pypi/cairosvg,
             pkg:pypi/backports-tarfile,
             pkg:pypi/cryptography,
             pkg:pypi/jaraco-classes,
