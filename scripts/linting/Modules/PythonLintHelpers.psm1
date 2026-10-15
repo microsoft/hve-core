@@ -17,9 +17,10 @@ function Get-PythonSkill {
 
     .DESCRIPTION
     Recursively scans the repository for pyproject.toml files, excluding
-    node_modules, the repository-root plugins/ generated-output tree, and the
-    heavyweight scripts/evals/moderation project. Returns the parent directory
-    of each eligible match.
+    node_modules, the repository-root plugins/ generated-output tree, the
+    heavyweight scripts/evals/moderation project, and the scripts/tools/ locked
+    tool environments, which hold no Python sources. Returns the parent
+    directory of each eligible match.
 
     .PARAMETER RepoRoot
     Repository root to scan.
@@ -45,7 +46,8 @@ function Get-PythonSkill {
                 $relativePath = [System.IO.Path]::GetRelativePath($scanRoot, $_.FullName)
                 $rootDirectory = ($relativePath -split '[\\/]')[0]
                 $rootDirectory -ne 'plugins' -and
-                    $relativePath -notmatch '^scripts[\\/]evals[\\/]moderation[\\/]'
+                    $relativePath -notmatch '^scripts[\\/]evals[\\/]moderation[\\/]' -and
+                    $relativePath -notmatch '^scripts[\\/]tools[\\/]'
             } |
             ForEach-Object { $_.Directory.FullName }
         return @($skills)

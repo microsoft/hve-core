@@ -37,7 +37,7 @@ permissions:
 jobs:
   permissions-check:
     name: Workflow Permissions Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -52,7 +52,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       - name: Run Workflow Permissions Validation
         id: permissions
@@ -64,7 +64,7 @@ jobs:
             Format          = 'sarif'
             OutputPath      = 'logs/workflow-permissions-results.sarif'
           }
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnViolation'] = $true
           }
           ./scripts/security/Test-WorkflowPermissions.ps1 @params
@@ -89,10 +89,12 @@ jobs:
             "violation-count=$violationCount" >> $env:GITHUB_OUTPUT
             "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
           }
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
 
       - name: Upload SARIF results
         if: always() && inputs.upload-sarif
-        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: logs/workflow-permissions-results.sarif
           category: workflow-permissions

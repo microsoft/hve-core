@@ -34,7 +34,8 @@ sync_python_environments() {
       -type d \( \
         -name node_modules -o \
         -path "${repo_root}/plugins" -o \
-        -path "${repo_root}/scripts/evals/moderation" \
+        -path "${repo_root}/scripts/evals/moderation" -o \
+        -path "${repo_root}/scripts/tools" \
       \) -prune -o \
       -type f -name pyproject.toml -print0
   )
@@ -49,34 +50,62 @@ main() {
   PSGALLERY_SOURCE="${HVE_PSGALLERY_SOURCE_URL:-}"
 
   echo "Installing system dependencies..."
-  
-  sudo apt update
-  sudo apt install -y shellcheck
+
+  # The pinned shellcheck release is a .tar.xz archive; only xz comes from the distribution.
+  if ! command -v xz >/dev/null 2>&1; then
+    sudo apt update
+    sudo apt install -y xz-utils
+  fi
   
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
-  echo "Installing actionlint..."
-  ACTIONLINT_VERSION="1.7.10"
   ARCH=$(uname -m)
-  if [[ "${ARCH}" == "x86_64" ]]; then
-    ACTIONLINT_ARCH="amd64"
-    ACTIONLINT_SHA256="f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f"
-  elif [[ "${ARCH}" == "aarch64" ]]; then
-    ACTIONLINT_ARCH="arm64"
-    ACTIONLINT_SHA256="cd3dfe5f66887ec6b987752d8d9614e59fd22f39415c5ad9f28374623f41773a"
-  else
-    echo "ERROR: Unsupported architecture: ${ARCH}" >&2
-    exit 1
-  fi
-  curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
 
-  echo "Checking actionlint tarball integrity..."
-  if ! echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c --quiet -; then
-    echo "ERROR: SHA256 checksum verification failed for actionlint tarball" >&2
-    rm /tmp/actionlint.tar.gz
+  echo "Installing shellcheck..."
+  # The workflow validator requires this exact version; the distribution
+  # package is older and unpinned.
+  SHELLCHECK_VERSION="0.11.0"
+  if [[ "${ARCH}" == "x86_64" ]]; then
+    SHELLCHECK_ARCH="x86_64"
+    SHELLCHECK_SHA256="8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198"
+  elif [[ "${ARCH}" == "aarch64" ]]; then
+    SHELLCHECK_ARCH="aarch64"
+    SHELLCHECK_SHA256="12b331c1d2db6b9eb13cfca64306b1b157a86eb69db83023e261eaa7e7c14588"
+  else
+    echo "ERROR: Unsupported architecture for shellcheck: ${ARCH}" >&2
     exit 1
   fi
-  sudo tar -xzf /tmp/actionlint.tar.gz -C /usr/local/bin actionlint
-  rm /tmp/actionlint.tar.gz
+  curl -sSfL "${GITHUB_RELEASES_URL}/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.${SHELLCHECK_ARCH}.tar.xz" -o /tmp/shellcheck.tar.xz
+
+  echo "Checking shellcheck tarball integrity..."
+  if ! echo "${SHELLCHECK_SHA256}  /tmp/shellcheck.tar.xz" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for shellcheck tarball" >&2
+    rm /tmp/shellcheck.tar.xz
+    exit 1
+  fi
+  sudo tar -xJf /tmp/shellcheck.tar.xz -C /usr/local/bin --strip-components=1 "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+  rm /tmp/shellcheck.tar.xz
+
+  echo "Installing zizmor..."
+  # GitHub Actions static analysis at the version PR validation gates on.
+  ZIZMOR_VERSION="1.30.1"
+  if [[ "${ARCH}" == "x86_64" ]]; then
+    ZIZMOR_SHA256="e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a"
+  elif [[ "${ARCH}" == "aarch64" ]]; then
+    ZIZMOR_SHA256="7ff1dce33bdd18fd2a4affe63bdd47efcccca97b2cec1c1863ec26e9e2647540"
+  else
+    echo "ERROR: Unsupported architecture for zizmor: ${ARCH}" >&2
+    exit 1
+  fi
+  curl -sSfL "${GITHUB_RELEASES_URL}/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ARCH}-unknown-linux-gnu.tar.gz" -o /tmp/zizmor.tar.gz
+
+  echo "Checking zizmor tarball integrity..."
+  if ! echo "${ZIZMOR_SHA256}  /tmp/zizmor.tar.gz" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for zizmor tarball" >&2
+    rm /tmp/zizmor.tar.gz
+    exit 1
+  fi
+  sudo tar -xzf /tmp/zizmor.tar.gz -C /usr/local/bin zizmor
+  rm /tmp/zizmor.tar.gz
 
   echo "Installing PowerShell modules..."
   if [[ -n "${PSGALLERY_SOURCE}" ]]; then
@@ -88,13 +117,13 @@ main() {
 
   echo "Installing gitleaks..."
   # Download gitleaks tarball and verify checksum before extracting
-  GITLEAKS_VERSION="8.18.2"
+  GITLEAKS_VERSION="8.30.0"
   if [[ "${ARCH}" == "x86_64" ]]; then
     GITLEAKS_ARCH="x64"
-    GITLEAKS_SHA256="6298c9235dfc9278c14b28afd9b7fa4e6f4a289cb1974bd27949fc1e9122bdee"
+    GITLEAKS_SHA256="79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e"
   elif [[ "${ARCH}" == "aarch64" ]]; then
     GITLEAKS_ARCH="arm64"
-    GITLEAKS_SHA256="4df25683f95b9e1dbb8cc71dac74d10067b8aba221e7f991e01cafa05bcbd030"
+    GITLEAKS_SHA256="b4cbbb6ddf7d1b2a603088cd03a4e3f7ce48ee7fd449b51f7de6ee2906f5fa2f"
   else
     echo "ERROR: Unsupported architecture for gitleaks: ${ARCH}" >&2
     exit 1
@@ -158,13 +187,13 @@ main() {
 
   echo "Installing uv package manager..."
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
-  UV_VERSION="0.10.8"
+  UV_VERSION="0.10.9"
   if [[ "${ARCH}" == "x86_64" ]]; then
     UV_ARCH="x86_64-unknown-linux-gnu"
-    UV_SHA256="f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f"
+    UV_SHA256="20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594"
   elif [[ "${ARCH}" == "aarch64" ]]; then
     UV_ARCH="aarch64-unknown-linux-gnu"
-    UV_SHA256="661860e954f87dcd823251191866af3486484d1a9df60eed56f4586ed7559e3d"
+    UV_SHA256="cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a"
   else
     echo "ERROR: Unsupported architecture for uv: ${ARCH}" >&2
     exit 1

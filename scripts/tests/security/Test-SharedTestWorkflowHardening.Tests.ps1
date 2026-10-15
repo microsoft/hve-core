@@ -16,8 +16,8 @@
       * Caller input must not be interpolated into a run body, where its
         contents can terminate a shell word and inject commands.
 
-    actionlint and yaml-lint validate syntax, not either property, so a future
-    edit could reintroduce them while CI stays green. These tests assert the
+    The workflow validator checks syntax and references, not either property, so a
+    future edit could reintroduce them while CI stays green. These tests assert the
     properties directly.
 #>
 

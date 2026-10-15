@@ -56,10 +56,13 @@ def _bundle(run_id, expired=False, prefix="demo-material-site"):
 
 
 class TestRenderEventRouting:
-    @pytest.mark.parametrize("event", ["workflow_run", "workflow_dispatch"])
+    @pytest.mark.parametrize(
+        "author_run_id,expected", [("7", "render"), ("", "refresh")]
+    )
     def test_given_usable_bundle_and_absent_index_when_resolved_then_skips_retry_fetch(
-        self, event
+        self, author_run_id, expected
     ):
+        import os
         import shutil
         import subprocess
         from pathlib import Path
@@ -90,25 +93,22 @@ class TestRenderEventRouting:
         script = next(
             step["with"]["script"] for step in steps if step.get("id") == "resolve"
         )
-        context = {
-            "eventName": event,
-            "repo": {},
-            "payload": {
-                "workflow_run": {
-                    "id": 7,
-                    "conclusion": "success",
-                    "path": ".github/workflows/demo-material-author.lock.yml",
-                    "head_branch": "main",
-                    "head_sha": "a" * 40,
-                }
-            },
+        author_run = {
+            "id": 7,
+            "status": "completed",
+            "conclusion": "success",
+            "path": ".github/workflows/demo-material-author.lock.yml",
+            "head_branch": "main",
+            "head_sha": "a" * 40,
         }
+        context = {"eventName": "workflow_dispatch", "repo": {}, "payload": {}}
         harness = (
             "const output = {}; const core = {"
             "setOutput:(key,value)=>output[key]=value,notice:()=>{}};"
             f"const context={json.dumps(context)};"
             'const github={rest:{repos:{get:async()=>({data:{default_branch:"main"}})},'
-            "actions:{listWorkflowRunArtifacts:()=>{}}},"
+            "actions:{listWorkflowRunArtifacts:()=>{},"
+            f"getWorkflowRun:async()=>({{data:{json.dumps(author_run)}}})}}}},"
             'paginate:async()=>[{id:9,name:"demo-material-content-7",expired:false}]};'
             "const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;"
             f'new AsyncFunction("github","context","core",{json.dumps(script)})'
@@ -121,16 +121,16 @@ class TestRenderEventRouting:
             text=True,
             check=True,
             env={
-                "DISPATCH_AUTHOR_RUN_ID": "",
+                # Node cannot initialize on Windows without SYSTEMROOT.
+                **{k: os.environ[k] for k in ("SYSTEMROOT",) if k in os.environ},
+                "DISPATCH_AUTHOR_RUN_ID": author_run_id,
                 "RETRY_LEVELS": "",
                 "REFRESH_AFTER_DAYS": "60",
                 "PREVIOUS_CREATED_AT": datetime.now(timezone.utc).isoformat(),
                 "PUBLISHED_STATUS": "",
             },
         )
-        assert json.loads(result.stdout)["mode"] == (
-            "render" if event == "workflow_run" else "refresh"
-        )
+        assert json.loads(result.stdout)["mode"] == expected
 
 
 class TestFindArtifact:

@@ -2,7 +2,7 @@
 title: HVE Core Installer Skill Security Model
 description: STRIDE threat model for the hve-core-installer skill organized by assets, adversaries, and trust buckets (source clone and plugin manifest, target repository writes, tracking manifest and eject, caller process and local tools) with in-code mitigations, verified platform coverage, and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-09-26
+ms.date: 2026-10-04
 ms.topic: reference
 estimated_reading_time: 11
 keywords:
@@ -326,7 +326,7 @@ The following are known limitations recorded so operators can make informed depl
 | G-SPF-1 | The upstream-origin check is advisory. A fork or substituted local clone is accepted after explicit confirmation, and the content of its declared components is installed without signature or content verification.                          | Spoofing-Med    | Accepted; install from a trusted source and review components before committing them |
 | G-TAM-1 | Target containment is re-verified immediately before each write, which narrows but does not eliminate the check-to-write race. A local process able to swap a directory for a link in that window could still redirect a write.               | Tampering-Low   | Accepted; the window requires concurrent local write access to the target            |
 | G-TAM-2 | Containment has not been exercised on macOS. The Bash implementation avoids the GNU-only `realpath -m` and uses a POSIX-portable ancestor `-L` walk, so no known GNU-specific dependency exists. That is a design argument, not verification. | Tampering-Low   | Open; verify by running the installer Pester suite on macOS                          |
-| G-TAM-3 | Windows containment, including the directory-junction case, was verified on a developer machine only. CI runs on `ubuntu-latest`, where the junction case skips permanently. Bash under Git for Windows was not exercised.                    | Tampering-Low   | Open; add a Windows CI job for the installer Pester suite                            |
+| G-TAM-3 | Windows containment, including the directory-junction case, was verified on a developer machine only. CI runs on `ubuntu-24.04`, where the junction case skips permanently. Bash under Git for Windows was not exercised.                     | Tampering-Low   | Open; add a Windows CI job for the installer Pester suite                            |
 | G-TAM-4 | `.hve-tracking.json` is not integrity-protected. SHA-256 status detects local modification of tracked files, but anyone who can edit those files can also edit the manifest.                                                                  | Tampering-Low   | Accepted; the manifest is operator bookkeeping, not a security control               |
 | G-DOS-1 | `component-copy` rewrites `.hve-tracking.json` in place. An interrupted run can leave a manifest that later runs reject, and recovery by reinstall discards recorded ejections. `eject` uses a temporary file and replace.                    | DoS-Low         | Accepted                                                                             |
 | G-SUP-1 | `jq`, `git`, and the VS Code CLI are external, unpinned dependencies resolved from `PATH`.                                                                                                                                                    | SupplyChain-Low | Accepted (operator keeps local tools trusted)                                        |

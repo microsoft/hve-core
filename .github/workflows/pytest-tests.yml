@@ -71,7 +71,7 @@ permissions:
 jobs:
   pytest:
     name: Python Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write  # Required for Codecov OIDC
@@ -81,13 +81,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: Verify resolved head commit
-        if: inputs.change-mode == 'range'
         shell: bash
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}
         run: |
           actual_head_sha="$(git rev-parse HEAD)"
           if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
@@ -144,15 +142,13 @@ jobs:
 
       - name: Install uv
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-        with:
-          version: "0.10.9"
+        uses: $/.github/actions/setup-uv
 
       - name: Set up Python
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
 
       - name: Install dependencies
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
@@ -174,7 +170,7 @@ jobs:
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version-file: .node-version
 
       - name: Install skill-local Node dependencies
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
