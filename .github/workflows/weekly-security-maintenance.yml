@@ -158,7 +158,7 @@ jobs:
             if ($stalenessReport -and $stalenessReport.Dependencies) {
               foreach ($staleDep in $stalenessReport.Dependencies) {
                 if ($staleDep.DaysOld -gt $staleThreshold) {
-                  $staleDetails += "- **$($staleDep.File)**: $($staleDep.Action)@$($staleDep.CurrentVersion) ($($staleDep.DaysOld) days old, latest: $($staleDep.LatestVersion))`n"
+                  $staleDetails += "- **$($staleDep.File)**: $($staleDep.Name)@$($staleDep.CurrentVersion) ($($staleDep.DaysOld) days old, latest: $($staleDep.LatestVersion))`n"
                 }
               }
             }
@@ -279,7 +279,7 @@ jobs:
             $report = Get-Content $resultsPath | ConvertFrom-Json
             foreach ($dep in $report.Dependencies) {
               if ($dep.DaysOld -gt [int]$thresholdDays) {
-                $staleDetails += "- **$($dep.File):** ``$($dep.Action)@$($dep.CurrentVersion)`` — $($dep.DaysOld) days old (latest: ``$($dep.LatestVersion)``)`n"
+                $staleDetails += "- **$($dep.File):** ``$($dep.Name)@$($dep.CurrentVersion)`` — $($dep.DaysOld) days old (latest: ``$($dep.LatestVersion)``)`n"
               }
             }
           }
@@ -301,7 +301,7 @@ jobs:
 
           ### Action Required
 
-          - [ ] Run ``npm run sha-staleness`` to review current state
+          - [ ] Run ``pwsh scripts/security/Test-SHAStaleness.ps1`` to review current state
           - [ ] Update outdated SHAs: ``scripts/security/Update-ActionSHAPinning.ps1 -Path .github/workflows -UpdateStale``
           - [ ] Close this issue manually after fixes are merged
 

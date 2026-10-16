@@ -1300,3 +1300,148 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
         }
     }
 }
+
+Describe 'Staleness report consumers' -Tag 'Unit' {
+    BeforeAll {
+        Save-CIEnvironment
+        $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+
+        function Invoke-HostOutput {
+            param([Parameter(Mandatory)][scriptblock]$ScriptBlock)
+
+            return @(& $ScriptBlock 6>&1 | ForEach-Object { [string]$_ })
+        }
+
+        # Derive the loop variable each consumer iterates the report with, and
+        # match member access in any form, so neither renaming the variable nor
+        # dropping the $(...) wrapper hides a read of a property the report lacks.
+        function Get-ReportPropertyRead {
+            param([Parameter(Mandatory)][string]$WorkflowText)
+
+            $loopVariables = [regex]::Matches(
+                $WorkflowText, '(?i)foreach\s*\(\s*\$(\w+)\s+in\s+\$[\w.]*dependencies\b') |
+                ForEach-Object { $_.Groups[1].Value } |
+                Sort-Object -Unique
+            $properties = foreach ($variable in $loopVariables) {
+                [regex]::Matches($WorkflowText, '\$' + [regex]::Escape($variable) + '\.(\w+)') |
+                    ForEach-Object { $_.Groups[1].Value }
+            }
+
+            return [pscustomobject]@{
+                LoopVariables = @($loopVariables)
+                Properties    = @($properties | Sort-Object -Unique)
+            }
+        }
+
+        # Produce a report entry the way the script does, then round-trip it
+        # through the JSON file the workflows read.
+        $workflowDir = Join-Path $TestDrive 'consumer-project/.github/workflows'
+        New-Item -ItemType Directory -Path $workflowDir -Force | Out-Null
+        $sha = 'b' * 40
+        Set-Content (Join-Path $workflowDir 'pinned.yml') -Value @"
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@$sha
+"@
+        $jsonPath = Join-Path $TestDrive 'consumer-report.json'
+        Push-Location (Join-Path $TestDrive 'consumer-project')
+        try {
+            Mock Write-SecurityLog { }
+            Mock Get-BulkGitHubActionsStaleness {
+                return @(@{
+                        ActionRepo = 'actions/checkout'
+                        CurrentSHA = $sha
+                        LatestSHA  = 'c' * 40
+                        DaysOld    = 45
+                        IsStale    = $true
+                        File       = '.github/workflows/pinned.yml'
+                    })
+            }
+            $script:StaleDependencies = [System.Collections.Generic.List[PSCustomObject]]::new()
+            Test-GitHubActionsForStaleness
+            Write-SecurityOutput -Dependencies $script:StaleDependencies -OutputFormat 'json' -OutputPath $jsonPath
+        }
+        finally {
+            Pop-Location
+        }
+        $script:ReportEntry = (Get-Content $jsonPath -Raw | ConvertFrom-Json).Dependencies | Select-Object -First 1
+    }
+
+    AfterAll {
+        Restore-CIEnvironment
+    }
+
+    It 'Reports the action repository as Name' {
+        $script:ReportEntry.Name | Should -Be 'actions/checkout'
+    }
+
+    It 'Only reads report properties that exist: <_>' -ForEach @('.github/workflows/sha-staleness-check.yml', '.github/workflows/weekly-security-maintenance.yml') {
+        $text = Get-Content -LiteralPath (Join-Path $script:RepoRoot $_) -Raw
+        $read = Get-ReportPropertyRead -WorkflowText $text
+        $read.LoopVariables | Should -Not -BeNullOrEmpty -Because "$_ must iterate the staleness report"
+        $read.Properties | Should -Not -BeNullOrEmpty
+        $available = $script:ReportEntry.PSObject.Properties.Name
+        foreach ($property in $read.Properties) {
+            $available | Should -Contain $property -Because "$_ reads '$property' from the staleness report"
+        }
+    }
+
+    It 'Follows a renamed loop variable instead of a fixed name' {
+        $renamed = @'
+              foreach ($entry in $report.Dependencies) {
+                if ($entry.DaysOld -gt $thresholdDays) {
+                  Write-CIAnnotation -Level Warning -File $entry.File -Message "Stale: $($entry.Action)@$($entry.CurrentVersion)"
+                }
+              }
+'@
+        $read = Get-ReportPropertyRead -WorkflowText $renamed
+        $read.LoopVariables | Should -Be @('entry')
+        $read.Properties | Should -Contain 'Action'
+        $read.Properties |
+            Should -Contain 'DaysOld' -Because 'the sample reads $entry.DaysOld bare in its if condition, so member access outside $(...) must be matched too'
+        $script:ReportEntry.PSObject.Properties.Name |
+            Should -Not -Contain 'Action' -Because 'the report exposes Name, so an $entry.Action read is the regression this contract catches'
+    }
+
+    It 'Routes report-derived annotations through Write-CIAnnotation' {
+        $path = '.github/workflows/sha-staleness-check.yml'
+        $text = Get-Content -LiteralPath (Join-Path $script:RepoRoot $path) -Raw
+        $read = Get-ReportPropertyRead -WorkflowText $text
+        $read.LoopVariables | Should -Not -BeNullOrEmpty -Because "$path must iterate the staleness report"
+        $text | Should -Match 'Write-CIAnnotation'
+        $text | Should -Not -Match '::warning file='
+        foreach ($variable in $read.LoopVariables) {
+            $raw = [regex]::Matches(
+                $text, '(?m)^(?!\s*Write-CIAnnotation\b).*"?::(?:warning|error|notice)[:\s].*\$' +
+                    [regex]::Escape($variable) + '\.')
+            $raw.Count |
+                Should -Be 0 -Because "$path must emit report-derived annotations through Write-CIAnnotation"
+        }
+    }
+
+    It 'Keeps report-derived text inert in the annotation it emits' {
+        Initialize-MockCIEnvironment | Out-Null
+        try {
+            $output = Invoke-HostOutput {
+                Write-CIAnnotation -Level Warning -File '.github/workflows/a,b.yml' -Message "Stale SHA detected: actions/checkout%0A::error::injected`r`nsecond"
+            }
+            $output | Should -Be '::warning file=.github/workflows/a%2Cb.yml::Stale SHA detected: actions/checkout%250A%3A%3Aerror%3A%3Ainjected%0D%0Asecond'
+        }
+        finally {
+            Clear-MockCIEnvironment
+        }
+    }
+
+    It 'Points maintainers at a staleness script that exists' {
+        $text = Get-Content -LiteralPath (Join-Path $script:RepoRoot '.github/workflows/weekly-security-maintenance.yml') -Raw
+        $text | Should -Not -Match 'npm run sha-staleness'
+        $guidance = [regex]::Match($text, 'pwsh (?<path>scripts/security/[\w.-]+\.ps1)')
+        $guidance.Success | Should -BeTrue -Because 'the issue body must name a pwsh staleness script'
+        $guidance.Groups['path'].Value | Should -BeExactly 'scripts/security/Test-SHAStaleness.ps1'
+        Join-Path $script:RepoRoot $guidance.Groups['path'].Value | Should -Exist
+    }
+}
