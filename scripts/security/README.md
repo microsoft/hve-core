@@ -103,6 +103,11 @@ releases.
 #### Features
 
 * Queries GitHub API for latest releases of pinned actions
+* Checks pinned PowerShell modules (the `psModules` array in `tool-checksums.json`)
+  against the PowerShell Gallery OData v2 API using `Get-PSModuleStaleness`, and
+  reports stale modules alongside stale actions
+* Honors `HVE_PSGALLERY_REPOSITORY` to query a PowerShell Gallery mirror or test
+  double instead of the public Gallery
 * Supports multiple output formats (JSON, Azure DevOps, GitHub, console)
 * Configurable maximum age threshold
 * Batch GraphQL queries for efficient API usage
@@ -609,9 +614,10 @@ Shared class definitions imported using `using module` syntax:
 
 Shared utility functions used across security scripts:
 
-| Function            | Purpose                                                                   |
-|---------------------|---------------------------------------------------------------------------|
-| `Write-SecurityLog` | Outputs timestamped, color-coded log entries with optional CI annotations |
+| Function               | Purpose                                                                                               |
+|------------------------|-------------------------------------------------------------------------------------------------------|
+| `Write-SecurityLog`    | Outputs timestamped, color-coded log entries with optional CI annotations                             |
+| `Get-PSGalleryApiBase` | Returns the PowerShell Gallery OData v2 base URL, or the `HVE_PSGALLERY_REPOSITORY` override when set |
 
 ## tool-checksums.json schema
 
