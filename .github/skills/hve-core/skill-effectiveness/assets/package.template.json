@@ -1,0 +1,26 @@
+{
+  "name": "<experiment-package-name>",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "study:dry-run": "node node_modules/@microsoft/vally-cli/dist/index.js experiment run --dry-run",
+    "study:run": "node --import ./scripts/native-inventory.mjs node_modules/@microsoft/vally-cli/dist/index.js experiment run",
+    "review:images": "node scripts/review-images.mjs",
+    "vally": "node node_modules/@microsoft/vally-cli/dist/index.js"
+  },
+  "devDependencies": {
+    "@github/copilot": "1.0.85",
+    "@github/copilot-sdk": "1.0.14",
+    "@microsoft/vally": "0.17.0",
+    "@microsoft/vally-cli": "0.17.0",
+    "yaml": "2.9.1"
+  },
+  "overrides": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "@azure/monitor-opentelemetry-exporter": "1.0.0-beta.46"
+  }
+}

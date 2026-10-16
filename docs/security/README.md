@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Security Documentation"
 pagination_label: Security Documentation
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-13
 ms.topic: overview
 keywords:
   - security
@@ -36,6 +36,10 @@ This directory contains security documentation for HVE Core, demonstrating defen
 
 ## Skill Security Models
 
+The [Skill Effectiveness security model](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/skill-effectiveness/SECURITY.md)
+covers native inventory capture, Copilot SDK image review, model data disclosure,
+and the absence of enforced isolation or hard spending limits.
+
 Skills whose shipped scripts make network requests, handle credentials, parse content from outside the operator's control, write outside `.copilot-tracking/` or their declared output location, or run an external program with input derived from those surfaces carry a per-skill STRIDE threat model in a `SECURITY.md` alongside their `SKILL.md`. Skills that meet none of those triggers are declared exempt, with a reason, in the skill security classification file described in the [security model](security-model.md#skill-security-models).
 
 | Skill                                   | Runtime surface                                                                                                                                                   | Security model                                                                                                               |
@@ -54,6 +58,7 @@ Skills whose shipped scripts make network requests, handle credentials, parse co
 | **vex**                                 | Local Python gate; untrusted issue-body + OpenVEX doc parsing                                                                                                     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SECURITY.md)                       |
 | **hve-core-installer**                  | Local PowerShell + Bash file copy into a target repository; `jq`, `git`, VS Code CLI subprocesses                                                                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/installer/hve-core-installer/SECURITY.md)       |
 | **hve-demo-material** (experimental)    | GitHub REST and Pages client with `GITHUB_TOKEN`; deck and video render writes; `node`, `npm`, `ffmpeg`, `git` subprocesses                                       | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/SECURITY.md)     |
+| skill-effectiveness                     | Native inventory capture; Copilot SDK image review; local evidence and model requests                                                                             | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/skill-effectiveness/SECURITY.md)       |
 
 ## Security Posture
 

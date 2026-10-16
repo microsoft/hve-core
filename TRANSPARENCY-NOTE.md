@@ -2,7 +2,7 @@
 title: "Transparency Note for HVE Core"
 description: "What HVE Core does, how we test it, its limitations, and what you should know before using it with GitHub Copilot."
 author: HVE Core Maintainers
-ms.date: 2026-10-07
+ms.date: 2026-10-13
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -126,6 +126,16 @@ for GitHub Copilot's terms.
 
 Keep credentials out of prompts, source files, saved working notes, and logs.
 Use the credential storage and permissions documented for each tool.
+
+The [Skill Effectiveness](docs/reference/skills/hve-core/skill-effectiveness.md)
+skill authors supervised baseline-versus-with-skill comparisons. Its optional
+execution paths use Vally and the Copilot SDK. Native prompt grading sends
+selected text evidence to a model; image review sends the supplied prompt and
+PNG/JPEG bytes. Both require separate authorization and adequate spending
+controls. The pinned runtime does not expose the required hard credit cap.
+Local inventory snapshots, prompts, images, assessments, and runtime records may
+contain sensitive project content. They are not automatically safe to publish.
+Ordinary package tests use mock execution and do not establish skill value.
 
 ### Telemetry and saved data
 

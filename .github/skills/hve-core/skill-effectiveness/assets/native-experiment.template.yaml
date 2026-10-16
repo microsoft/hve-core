@@ -1,0 +1,33 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Copy to experiments/<task>.experiment.yaml. Paths are relative to this file.
+name: <experiment-name>
+evals:
+  - ../evals/<task>.eval.yaml
+
+vary:
+  - /environment/skills
+
+baseline: a-baseline
+variants:
+  a-baseline:
+    environment:
+      # Arrays replace the eval value. Include every shared skill in both arms.
+      skills: []
+  b-treatment:
+    environment:
+      skills:
+        - ../skills/<candidate-skill>
+
+# Vally runs variants lexically. For the opposite order, rename the variants
+# a-treatment and b-baseline and set baseline: b-baseline, keeping their skills.
+# Use separate native experiment files for alternating pairs; no extra schedule.
+execution:
+  workers: 1
+overrides:
+  # Initial pair by default. For an agreed fixed-evaluation repeat batch, use N.
+  # One task, two variants and runs=N means 2*N candidate sessions in this file.
+  # Increasing runs does not alternate order; use reversed files when needed.
+  # Record the total budget across files and retain every trial, not just wins.
+  runs: 1

@@ -1,0 +1,75 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Copy to evals/<task>.eval.yaml and replace every angle-bracket value.
+name: <task-name>
+description: <ordinary user task being compared>
+version: "1.0.0"
+type: capability
+# Vally also supports regression. This classification does not select graders.
+
+defaults:
+  runs: 1
+  timeout: 60m
+  executor: copilot-sdk
+  model: "${AGENT_MODEL=MUST-SET-AGENT-MODEL}"
+  judge_model: "${JUDGE_MODEL=MUST-SET-JUDGE-MODEL}"
+
+agent_environment:
+  skills: []
+  files:
+    - src: ../fixtures/<task>
+      dest: task-fixture
+
+# This example combines executable and semantic assessment. Adapt the task checks
+# and rubric, removing methods that do not fit. Prompt grading adds paid calls.
+# Delivery, execution and judged quality remain separately interpretable.
+# No aggregate threshold: native trial success requires every grader to pass.
+# Otherwise a mean score could hide a failed test or require a perfect judge score.
+scoring: {}
+
+stimuli:
+  - name: <task-name>
+    constraints:
+      max_agent_duration: 45m
+      max_duration: 60m
+    artifacts:
+      include:
+        - "deliverable/**"
+    prompt: |
+      <real user request; disclose required interfaces without prescribing a method>
+      Save the required output to deliverable/<artifact>.
+      Public checks run: node task-fixture/check.mjs deliverable/<artifact>.
+    rubric:
+      - <observable task-quality criterion grounded in the original inputs>
+      - <important limitation or valid-alternative criterion, not a formatting preference>
+    graders:
+      - type: completed
+      - type: file-exists
+        name: delivery
+        config:
+          path: deliverable/<artifact>
+      - type: run-command
+        name: behavior
+        config:
+          command: node
+          args: ["task-fixture/check.mjs", "deliverable/<artifact>"]
+          expected_exit_code: 0
+          timeout: 3m
+      - type: prompt
+        name: task-quality
+        config:
+          evidence: ["repo"]
+          scoring: scale_1_5
+          threshold: 0.5
+          prompt: |
+            Assess the actual deliverable against the task and original source
+            evidence, not the candidate's claims of success. Cite concrete
+            supporting or contradicting evidence and accept valid alternatives.
+            Explain important omissions and unavailable evidence.
+            Do not infer executed behavior or visual quality from text alone.
+            Do not favor an implementation because it resembles a skill.
+          # repo is a bounded text snapshot of the workspace, not an image input.
+          # Inspect coverage and role leakage. It does not automatically contain
+          # results of another grader: graders need not run in sequence.
+          # Explain task-specific score anchors/thresholds in EVALS.md.
