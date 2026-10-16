@@ -102,8 +102,16 @@ function Get-FileChanges {
     $content = Get-Content -LiteralPath $XmlPath -Raw
     $changes = @()
 
-    # Match diff headers and analyze change type
-    $diffPattern = '(?ms)diff --git a/(.+?) b/(.+?)(?=\n)(.*?)(?=diff --git|</full_diff>)'
+    # Commit bodies sit at the same indent as diff headers, so match only inside the
+    # <full_diff> block that follows </commits>.
+    $section = [regex]::Match($content, '(?ms)^\s*</commits>\s*$.*?^\s*<full_diff>\s*$(.*)^\s*</full_diff>\s*$')
+    if ($section.Success) { $content = $section.Groups[1].Value + '</full_diff>' }
+
+    # Match diff headers and analyze change type. Headers start a line: at column 0
+    # from generate.sh, or indented two spaces by generate.ps1. Anchoring there keeps
+    # 'diff --git' text inside diff content from being read as a header.
+    $indent = if ($content -cmatch '(?m)^diff --git ') { '' } else { '  ' }
+    $diffPattern = "(?ms)^${indent}diff --git a/(.+?) b/(.+?)(?=\n)(.*?)(?=^${indent}diff --git|</full_diff>)"
     $regexMatches = [regex]::Matches($content, $diffPattern)
 
     foreach ($match in $regexMatches) {
@@ -111,14 +119,15 @@ function Get-FileChanges {
         $newPath = $match.Groups[2].Value.Trim()
         $diffBlock = $match.Groups[3].Value
 
+        # Mode lines are header lines at the same indent; hunk lines start with ' ', '+', '-' or '\'
         $changeType = 'Modified'
-        if ($diffBlock -match 'new file mode') {
+        if ($diffBlock -cmatch "(?m)^${indent}new file mode") {
             $changeType = 'Added'
         }
-        elseif ($diffBlock -match 'deleted file mode') {
+        elseif ($diffBlock -cmatch "(?m)^${indent}deleted file mode") {
             $changeType = 'Deleted'
         }
-        elseif ($diffBlock -match 'rename from' -or $oldPath -ne $newPath) {
+        elseif ($diffBlock -cmatch "(?m)^${indent}rename from" -or $oldPath -ne $newPath) {
             $changeType = 'Renamed'
         }
 
