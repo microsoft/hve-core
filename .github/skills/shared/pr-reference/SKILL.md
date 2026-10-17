@@ -12,6 +12,11 @@ metadata:
 
 # PR Reference Generation Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Overview
 
 Queries git for commit metadata and diff output, then produces a structured XML document. Both bash and PowerShell implementations are provided.

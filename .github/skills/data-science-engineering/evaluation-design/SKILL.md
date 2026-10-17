@@ -11,6 +11,11 @@ metadata:
 
 # AI Evaluation Dataset Design
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce an evaluation dataset and its supporting documentation that measure whether an AI system does its job, refuses what it should refuse, and behaves acceptably under pressure. The dataset is a durable customer artifact, so its scope, balance, and rationale are recorded rather than implied.

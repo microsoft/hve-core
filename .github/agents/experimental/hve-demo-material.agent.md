@@ -7,6 +7,10 @@ agents:
 
 # HVE Demo Material Builder
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Role
 
 Coordinate the production of L100-L400 demo material at the requested autonomy

@@ -8,6 +8,11 @@ user-invocable: true
 
 # RPI Implement
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Deliver the approved outcome by following the current task-centered plan. Keep the plan current as new information comes to light, check off work as it completes, and keep a condensed changes log of the behavioral and functional changes made, so the caller can trust what was done and what remains.

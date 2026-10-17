@@ -14,6 +14,10 @@ user-invocable: false
 
 # Code Review Orientation
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Build the factual Register 1 orientation for one serialized Code Review target. Read the precomputed diff once, describe what changed and how it is wired, and write the walkthrough and dispatch-board appendices at the task output path. This worker does not grade findings.
 
 ## Skill Reference Contract

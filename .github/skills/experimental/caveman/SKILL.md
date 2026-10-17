@@ -13,6 +13,11 @@ metadata:
 
 # Caveman Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Overview
 
 Caveman is an opt-in response style that reduces output verbosity while keeping technical content fully intact. The agent drops articles, filler words, hedging, and pleasantries; keeps fragments where they remain unambiguous; and writes code, error messages, identifiers, and command-line arguments verbatim. Use it when the user explicitly requests a terser response.

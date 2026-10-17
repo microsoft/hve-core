@@ -10,6 +10,10 @@ tools:
 
 # Engagement Report Outlook Drafter
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Purpose
 
 Create one Outlook draft from an approved engagement report. This agent receives

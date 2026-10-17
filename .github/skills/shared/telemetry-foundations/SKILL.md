@@ -5,6 +5,11 @@ description: 'Declarative OpenTelemetry-aligned telemetry vocabulary and instrum
 
 # Telemetry Foundations
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Overview
 
 A shared vocabulary for observability across HVE Core agents. This skill describes *what* telemetry data exists and *how it is named*, not which SDK or vendor to use. Agents producing planning artifacts (ADRs, PRDs, security/RAI plans, code-review reports) and agents producing user-facing application code reference this skill so that downstream pipelines (traces, metrics, logs) speak a consistent OpenTelemetry-aligned language.

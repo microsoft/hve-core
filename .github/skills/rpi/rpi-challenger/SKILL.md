@@ -8,6 +8,11 @@ user-invocable: true
 
 # RPI Challenger
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Use [references/challenge.md](references/challenge.md) for challenge posture, adaptive questioning guidance, and record-update detail.
 
 ## Goal

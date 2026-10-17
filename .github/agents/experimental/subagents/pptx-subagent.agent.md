@@ -6,6 +6,10 @@ user-invocable: false
 
 # PowerPoint Subagent
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Executes PowerPoint skill operations delegated by the PowerPoint Builder orchestrator. Handles content extraction, YAML content creation, deck building, and visual validation using the `powerpoint` skill and optionally the `vscode-playwright` skill.
 
 ## Purpose

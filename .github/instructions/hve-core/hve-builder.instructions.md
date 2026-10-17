@@ -65,6 +65,7 @@ Select every type that has a distinct responsibility. Prefer the simplest viable
 
 ## Writing
 
+* Give agents and skills a brief plain-language direction plus access to the shared `Plain Language` instruction. Use relative instruction imports for agents and stable-name discovery for skills; preserve exact output contracts.
 * Use clear professional language and imperative voice for action steps.
 * Prefer concise paragraphs and lists. Avoid all-caps emphasis, manual chain-of-thought requests, repeated directives, exhaustive edge-case lists, and invented numeric limits.
 * Follow the repository Markdown and writing-style instructions. Keep workflow tracking paths out of generated production code, code comments, and documentation strings.

@@ -8,6 +8,11 @@ user-invocable: true
 
 # RPI Walkthrough
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Use [references/walkthrough.md](references/walkthrough.md) for the full walkthrough protocol, segment loop, reference-table format, decisions-and-changes ledger format, and deep review.
 
 Follow the shared conventions in `copilot-tracking.instructions.md`.

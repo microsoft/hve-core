@@ -5,6 +5,10 @@ disable-model-invocation: true
 
 # GitHub Agentic Workflows Agent
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 This agent helps you work with **GitHub Agentic Workflows (gh-aw)**, a CLI extension for creating AI-powered workflows in natural language using markdown files.
 
 ## What This Agent Does

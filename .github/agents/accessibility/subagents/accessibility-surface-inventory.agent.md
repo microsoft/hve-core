@@ -13,6 +13,10 @@ user-invocable: false
 
 # Accessibility Surface Inventory
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Discover runtime accessibility surfaces, routes, and interaction states for the accessibility runtime-probe harness, then emit a reviewable configuration file that downstream probes can execute.
 
 ## Purpose

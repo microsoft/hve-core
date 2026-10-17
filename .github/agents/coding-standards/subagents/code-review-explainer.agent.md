@@ -14,6 +14,10 @@ user-invocable: false
 
 # Code Review Explainer
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Thin explainer subagent for the Code Review orchestrator. It answers factual "what does this symbol or function do" questions for a selected board item. The explanation is written in Register 1 prose, anchored to the code and the selected board item, and persisted as an explanation artifact. All review logic comes from the `code-review` skill; this file only binds the explainer preset.
 
 ## Skill Reference Contract

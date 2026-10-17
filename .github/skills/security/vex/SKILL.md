@@ -13,6 +13,11 @@ metadata:
 
 # VEX skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 This skill is the entrypoint for VEX operations in hve-core. It combines the OpenVEX v0.2.0
 specification reference with reusable management playbooks for implementing, reviewing, and
 validating VEX documents. The normative reference material below remains the authoritative

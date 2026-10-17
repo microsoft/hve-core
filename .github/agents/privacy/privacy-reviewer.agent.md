@@ -17,6 +17,10 @@ tools:
 
 # Privacy Reviewer
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Orchestrate privacy review by coordinating planning, evidence gathering, and report generation for privacy assessments. The reviewer is intentionally lightweight and focuses on guiding the privacy planning workflow, validating plan completeness, and producing a concise review summary.
 
 ## Purpose

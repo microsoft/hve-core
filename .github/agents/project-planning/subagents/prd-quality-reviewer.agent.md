@@ -11,6 +11,10 @@ user-invocable: false
 
 # PRD Quality Reviewer
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Assess a PRD draft against the requirements taxonomy and standards rubric in a single read-only pass, then emit both the per-standard findings payload and the aggregated quality report. Never modify repository files.
 
 ## Purpose

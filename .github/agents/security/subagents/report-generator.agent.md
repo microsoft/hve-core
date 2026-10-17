@@ -12,6 +12,10 @@ model: GPT-6 Sol (copilot)
 
 # Report Generator
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Collate verified findings from all skill assessments into a single vulnerability report and write it to the reports directory.
 
 ## Purpose

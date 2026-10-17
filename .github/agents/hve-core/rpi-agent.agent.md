@@ -36,6 +36,10 @@ handoffs:
 
 # RPI Agent
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Goal
 
 Coordinate a resumable RPI session through Research, Plan, Implement, Review, and Follow-up. Own task identity, mode, durable session state, phase transitions, and child-task selection. Activate the matching phase skill for its work rather than reproducing its procedure.

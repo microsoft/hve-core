@@ -12,6 +12,11 @@ metadata:
 
 # Architecture Diagrams Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Turn infrastructure source files or a declared `DS_CATALOG_V1` data model into a readable architecture diagram for reviews, ADRs, and design discussions. Preserve the caller's selected output format and the source's authority boundaries.

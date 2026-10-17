@@ -8,6 +8,11 @@ user-invocable: true
 
 # Performance & SLO/SRE Planner
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Turn vague "it should be fast and reliable" expectations into measurable **SLIs, SLOs, a load model, a test matrix, and a reliability backlog** for production readiness. Pairs with Azure Load Testing tooling for execution. This skill plans; it does not run the tests.
 
 ## When to Use

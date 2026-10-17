@@ -9,6 +9,11 @@ disable-model-invocation: true
 
 # Git Merge and Rebase
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Run a merge, rebase, or `rebase --onto` sequence from the current branch with explicit inputs, optional review pauses, and a completion summary. Follow every step even when the repository appears clean so results stay consistent and traceable.

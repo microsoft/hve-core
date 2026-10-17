@@ -11,6 +11,11 @@ metadata:
 
 # Analysis Authoring Conventions
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce exploratory notebooks and analytical dashboards whose structure, visualization choices, and scale handling are deliberate rather than incidental. This skill supplies the editorial judgment that generic file, notebook, terminal, and browser tooling does not carry.

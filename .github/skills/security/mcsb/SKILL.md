@@ -13,6 +13,11 @@ metadata:
 
 # Microsoft Cloud Security Benchmark — Skill Entry
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 This `SKILL.md` is the entrypoint for the Microsoft Cloud Security Benchmark (MCSB) skill.
 
 The skill encodes the durable, structurally stable layer of MCSB — the control-domain taxonomy and a domain-grain crosswalk to NIST SP 800-53 and CIS Controls — so the Security Planner and Security Reviewer can map and assess Azure cloud resources against a consistent control vocabulary.

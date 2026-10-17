@@ -14,6 +14,10 @@ tools:
 
 # Vally Test Author
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Authors Vally conformance test stimuli for prompts, instructions, agents, and skills in two modes: `from-artifact` and `corpus-import`. Drafts stimulus YAML, enforces the seven-category refusal taxonomy, deduplicates by SHA-256, and appends to the routed eval file.
 
 Search for and apply `content-policy-citation.instructions.md` when drafting or importing eval stimuli. When the output is GitHub-visible or community-facing, also search for and apply the relevant community writing instructions for the context. Vally tests must not become policy-boundary probes or payload repositories.

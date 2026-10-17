@@ -11,6 +11,11 @@ metadata:
 
 # Customer Card Render Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Converts canonical Design Thinking markdown artifacts into PowerPoint skill `content.yaml` slide definitions and builds the final deck through the shared PowerPoint build pipeline.
 
 ## Overview

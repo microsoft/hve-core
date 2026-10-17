@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-12
+ms.date: 2026-10-16
 ms.topic: how-to
 keywords:
   - evals
@@ -322,12 +322,31 @@ Steps to add coverage:
    pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json
    ```
 
-5. Run the eval locally (requires `COPILOT_GITHUB_TOKEN` in your shell environment):
+5. Build the canonical execution plan without running a model. This checks
+   the actual changed-artifact selection, including existing skills changed
+   only to update shared guidance. Syntax lint and reachable tags do not
+   establish that every changed artifact has a covering stimulus.
 
    ```pwsh
    pwsh scripts/evals/Get-ChangedSpecStimulus.ps1 `
      -ChangeSetPath logs/eval-change-set.json `
      -OutFile logs/changed-spec-stimuli.json
+   pwsh scripts/evals/New-AgentEvalPlan.ps1 `
+     -ManifestPath logs/changed-ai-artifacts.json `
+     -ChangedSpecManifestPath logs/changed-spec-stimuli.json `
+     -OutputPath logs/agent-eval-plan.json
+   ```
+
+   These selectors compare committed Git revisions. After a repair changes
+   an eval spec, commit the reviewed repair and regenerate the change set,
+   artifact manifest, changed-spec manifest, and plan against that commit.
+   A working-tree-only edit is not part of the immutable comparison. Do not
+   bypass a missing-spec error by dropping the artifact from selection.
+
+6. Run the eval locally only when model execution is intended and its
+   prerequisites are available (requires `COPILOT_GITHUB_TOKEN`):
+
+   ```pwsh
    pwsh scripts/evals/Test-CopilotToken.ps1 -SmokeTest
    pwsh scripts/evals/Invoke-VallyEvals.ps1 `
      -ManifestPath logs/changed-ai-artifacts.json `

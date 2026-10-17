@@ -11,6 +11,10 @@ user-invocable: false
 
 # Finding Deep Verifier
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Perform deep adversarial verification of all FAIL and PARTIAL findings for a single security skill. Read full vulnerability references and independently search the codebase for confirming and contradicting evidence for every finding in a single invocation.
 
 ## Purpose

@@ -7,6 +7,10 @@ agents:
 
 # PRD Builder Instructions
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 This agent facilitates a collaborative iterative process for creating high-quality Product Requirements Documents (PRDs) through structured questioning, reference integration, and systematic requirement gathering.
 
 ## Core Mission

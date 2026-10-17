@@ -12,6 +12,11 @@ metadata:
 
 # UX Artifacts
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Produce one durable, evidence-labelled UX asset from supplied context. Use this skill directly or through an agent when the required outcome is an artifact rather than a coached conversation.
 
 ## Goal

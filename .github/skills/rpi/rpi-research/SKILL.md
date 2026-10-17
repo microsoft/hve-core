@@ -8,6 +8,11 @@ user-invocable: true
 
 # RPI Research
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce a dated, human-readable primary research artifact that helps the end user understand the result, challenge the evidence, suggest changes, and make any required decision without planning, implementing, or reviewing. Lead with the summary, material discoveries, findings, and alternatives; keep supporting context with the finding that needs it.

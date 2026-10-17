@@ -12,6 +12,11 @@ metadata:
 
 # Experiment Design Reference Pack
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Support experiment work end to end: turning unknowns into testable hypotheses, screening out work that is not a real experiment, and scoping it so the result is comparable and decision-ready.

@@ -9,6 +9,11 @@ metadata:
 
 # Design Thinking Methods Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Entrypoint for Design Thinking method coaching knowledge. The `dt-coach` agent loads the method reference matching the active method in coaching state, the matching deep reference when advanced technique is needed, and the industry reference when an industry context applies.
 
 ## How to use this skill

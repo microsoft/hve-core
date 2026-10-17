@@ -12,6 +12,11 @@ metadata:
 
 # DataOps Reference Pack
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Ground pipeline and test generation in the Microsoft CSE engineering playbook so that data tier semantics, validation placement, recovery invariants, and DS/MLOps test technique are applied consistently and attributed accurately.

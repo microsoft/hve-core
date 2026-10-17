@@ -13,6 +13,11 @@ metadata:
 
 # C4 Architecture Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce audience-appropriate C4 diagrams for existing systems from code or planned systems from requirements. Create new diagrams with the selected [renderer](#supported-renderers), or update existing diagrams when their renderer is supported.

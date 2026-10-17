@@ -8,6 +8,11 @@ disable-model-invocation: true
 
 # Update cspell Configuration with Project-Specific Words and Ignores
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Context
 
 * Goal: Add commonly used project-specific words to the cspell configuration, alphabetize the words list, and add useful `ignorePaths` aligned with the project's ignore files.

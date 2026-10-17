@@ -8,6 +8,11 @@ user-invocable: true
 
 # RPI Review
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce one complete, human-readable, evidence-based review record after implementation finishes. Lead with the scoped assessment and material findings, keep evidence and resolution conditions with each finding, and make the final decisions easy to distinguish from the assessment.

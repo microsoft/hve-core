@@ -14,6 +14,10 @@ user-invocable: false
 
 # Code Review Readiness
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Thin perspective subagent for the Code Review orchestrator. It reviews the change as a deliverable rather than as code: pull-request packaging and scope hygiene, description accuracy, validation evidence, follow-up items, linked-issue alignment, checkbox completion, mergeable state, and changed non-code documentation. All review logic comes from the `code-review` skill; this file binds the readiness preset and the non-code lane rule.
 
 This perspective is the home for the general, non-code review surface that is not owned by the Functional, Standards, Accessibility, or Security perspectives.

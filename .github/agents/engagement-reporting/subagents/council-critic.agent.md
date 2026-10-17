@@ -10,6 +10,10 @@ tools:
 
 # Engagement Report Council Critic
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Purpose
 
 Produce one independent, evidence-backed critique for Council validation. Review

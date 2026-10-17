@@ -26,6 +26,10 @@ user-invocable: false
 
 # ADO Backlog Executor
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Purpose
 
 Apply one dispatched set of Azure DevOps work-item operations and return a structured result. `Backlog Manager` resolves the platform, confirms the destination, sanitizes content, and establishes the autonomy tier before dispatch. This agent executes; it does not re-decide any of that.

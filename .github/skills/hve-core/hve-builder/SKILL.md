@@ -8,6 +8,11 @@ user-invocable: true
 
 # HVE Builder Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Deliver a usable prompt, instruction, agent, subagent, or skill that meets the requirements catalog, or a credible read-only report, with the fewest lifecycle turns that preserve an independent review pass and final-state evidence.

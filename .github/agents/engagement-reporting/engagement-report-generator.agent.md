@@ -35,6 +35,10 @@ disable-model-invocation: true
 
 # Engagement Report Generator
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Goal
 
 Coordinate the `engagement-reporting` skill from intake through an approved,

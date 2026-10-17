@@ -11,6 +11,11 @@ metadata:
 
 # RAI Planner
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Overview
 
 Use this skill as an on-demand reference pack for the RAI Planner. The main skill body stays compact, and the detailed phase guidance lives in the reference files under this folder so the agent can load only the material needed for the current phase.

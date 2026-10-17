@@ -10,6 +10,10 @@ tools:
 
 # Engagement Report Council Arbiter
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Purpose
 
 Reconcile independent critiques into evidence-backed proposed changes. The

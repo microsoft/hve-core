@@ -13,6 +13,11 @@ metadata:
 
 # Backlog Plan
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Read-only backlog planning for Azure DevOps, GitHub, and Jira. This command resolves the backing tracker at runtime, selects a planning mode, and executes it through the shared conventions and reference structure of the `backlog-management` skill. It produces planning files that a separate execution pass acts on.
 
 This command never mutates a tracker. It creates, updates, and reads files under the platform tracking root, and it reads from the tracker. Every create, update, transition, link, close, and comment belongs to `backlog-execute`.

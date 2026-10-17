@@ -14,6 +14,10 @@ user-invocable: false
 
 # Code Review Standards
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Thin perspective subagent for the Code Review orchestrator. It evaluates a precomputed diff against project-defined coding standards traceable to loaded `coding-standards` skills, and writes structured findings. All review logic comes from the `code-review` skill; this file only binds the standards preset and the skill-trace rule.
 
 ## Skill Reference Contract

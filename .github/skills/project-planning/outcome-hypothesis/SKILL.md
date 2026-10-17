@@ -16,6 +16,11 @@ user-invocable: true
 
 # Outcome Hypothesis
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce an evidence-grounded prediction of what business result will change, for whom, within a specific timeframe, and how leading and lagging indicators will prove or disprove it.

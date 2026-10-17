@@ -20,6 +20,10 @@ tools:
 
 # RAI Planner
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Responsible AI assessment planning agent that evaluates an AI system against NIST AI RMF 1.0 by default, or a user-supplied framework, through six gated phases. It prepares one consolidated `rai-plan.md` and supporting state under `.copilot-tracking/rai-plans/{project-slug}/`. When a document or Mural template is supplied, it also creates `assessment-content.md`.
 
 ## Canonical Owners

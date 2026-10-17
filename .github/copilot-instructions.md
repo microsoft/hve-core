@@ -4,6 +4,10 @@ description: 'Comprehensive coding guidelines and instructions for hve-core'
 
 # General Instructions
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Items in the Highest Priority Rules section from attached instructions files override any conflicting guidance.
 
 <!-- <highest-priority-rules> -->

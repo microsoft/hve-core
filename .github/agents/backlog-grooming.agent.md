@@ -7,6 +7,10 @@ agents: []
 
 # Backlog Grooming
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 ## Purpose
 
 Assess a selected cohort of open GitHub issues against current repository state.

@@ -9,6 +9,11 @@ metadata:
 
 # Design Thinking → RPI Integration — Skill Entry
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 This skill is the entry point for Design Thinking to RPI integration knowledge.
 
 The DT coach loads these references when Design Thinking coaching graduates into the RPI workflow. Every DT exit produces research-ready input for `rpi-research`. The retained downstream phases, `rpi-plan`, `rpi-implement`, and `rpi-review`, consume the resulting context. `RPI Agent` is the lifecycle wrapper when end-to-end coordination is needed; it does not replace `rpi-research` as the handoff target.

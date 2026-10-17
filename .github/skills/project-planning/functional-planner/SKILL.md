@@ -13,6 +13,11 @@ metadata:
 
 # Functional Planner
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Read-only, platform-agnostic conventions for turning a Product Requirements Document (PRD) into a validated work-item hierarchy that a separate execution pass creates. This skill owns the decomposition core: how a PRD is analyzed across phases, how a candidate hierarchy is validated against a target platform's supported types, which open planning-framework lens shapes the decomposition, and how the plan is handed off. It never creates, updates, transitions, comments on, or links a work item on any platform.
 
 ## When to Use

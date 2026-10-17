@@ -19,6 +19,10 @@ disable-model-invocation: true
 
 # Security Reviewer
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Orchestrate vulnerability assessment by delegating to subagents. Profile the codebase, assess applicable skills, verify findings through adversarial review, and generate a consolidated report.
 
 ## Purpose

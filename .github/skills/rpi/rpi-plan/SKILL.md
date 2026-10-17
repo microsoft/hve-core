@@ -8,6 +8,11 @@ user-invocable: true
 
 # RPI Plan
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce one implementation-ready, human-readable Markdown plan. Lead with the executive summary and the Phase Checklist so a reader sees what will change and how it is sequenced first; put user direction, pending decisions, readiness, goals, scope, requirements, risks, sources, and critique records after the checklist. Keep implementation context under the task that consumes it. The primary planner authors the plan and owns orchestration, revisions, critique timing, and the final readiness decision.

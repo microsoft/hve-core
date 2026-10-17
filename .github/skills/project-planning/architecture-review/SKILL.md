@@ -11,6 +11,11 @@ metadata:
 
 # Architecture Review
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Persist one repository-original Architecture Review Record that preserves confirmed scope, evidence, assumptions, Well-Architected pillar analysis, trade-offs, recommendations, reviewer dispositions, escalations, ADR links, and limits without becoming the architecture decision authority.

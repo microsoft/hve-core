@@ -6,6 +6,10 @@ disable-model-invocation: true
 
 # Documentation
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 This agent coordinates documentation work through the documentation skill. It stays thin and delegates the actual workflow to the skill and to subagents.
 
 ## Purpose

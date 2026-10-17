@@ -8,6 +8,11 @@ disable-model-invocation: true
 
 # Git Setup
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Help the user configure Git consistently for everyday work (`add`, `commit`, `fetch`, `pull`, `push`) without overwriting preferred settings. Verify current values before suggesting changes, and never modify configuration without explicit confirmation.

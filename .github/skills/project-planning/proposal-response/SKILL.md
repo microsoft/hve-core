@@ -8,6 +8,11 @@ user-invocable: true
 
 # Proposal Response
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Convert supplied response questions and approved source artifacts into a traceable internal-review draft without inventing evidence or representing approval, authorization, submission, or release.

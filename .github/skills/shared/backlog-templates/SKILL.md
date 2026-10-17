@@ -12,6 +12,11 @@ metadata:
 
 # Backlog Templates
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Shared reference for ADO and GitHub work-item template generation, content sanitization, autonomy-tier vocabulary, disclaimer-block placement, and work-item ID conventions used by every planner that emits a backlog handoff.
 
 ## Overview

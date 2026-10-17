@@ -11,6 +11,11 @@ metadata:
 
 # Requirements Author Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Overview
 
 This skill defines how to produce and evolve requirements documents across the project lifecycle for two document types: the Business Requirements Document (BRD) and the Product Requirements Document (PRD). Shared requirements-engineering knowledge lives in `references/_shared/`, while BRD-specific and PRD-specific knowledge live in `references/brd/` and `references/prd/` so each consuming agent loads only what its document needs.

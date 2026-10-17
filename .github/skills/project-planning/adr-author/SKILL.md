@@ -5,6 +5,11 @@ description: Authoring skill for Architecture Decision Records (ADRs) supporting
 
 # adr-author
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Overview
 
 This skill encodes the per-phase authoring conventions for Architecture Decision Records consumed by the ADR Creator agent. It also supports direct invocation when no ADR Creator state file exists. Direct callers first run the session recovery and bootstrap protocol from `adr-identity.instructions.md`: resolve or create `.copilot-tracking/adr-plans/{projectSlug}/state.json`, confirm `entryMode`, `projectSlug`, and `outputTemplate`, then continue at the phase recorded in state. It supports three entry modes and two output templates and converges all of them at the Govern phase, where the final ADR file is written and lineage is updated atomically.

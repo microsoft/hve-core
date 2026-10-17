@@ -11,6 +11,10 @@ user-invocable: false
 
 # Accessibility Framework Assessor
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Assess the requested accessibility framework or reference scope per invocation. Read all success-criterion references for that scope, then analyze the codebase or plan document against those references and return structured findings.
 
 ## Purpose

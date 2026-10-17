@@ -1,8 +1,8 @@
 ---
 title: GitHub Copilot Instructions
-description: Repository-specific coding guidelines and conventions for GitHub Copilot
+description: Repository-specific coding and communication guidelines for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-07
+ms.date: 2026-10-15
 ms.topic: reference
 keywords:
   - copilot
@@ -14,9 +14,9 @@ estimated_reading_time: 5
 
 ## GitHub Copilot Instructions
 
-Repository-specific guidelines that GitHub Copilot automatically applies when
-editing files. Instructions ensure consistent code style and conventions across
-the codebase.
+Repository-specific guidance for code changes and user-facing communication.
+File patterns select editing guidance; active agents and skills also carry
+direct communication reminders and load shared instructions.
 
 ## How Instructions Work
 
@@ -51,12 +51,19 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 ### Documentation and Content
 
-| File                                                                             | Applies To                                                         | Purpose                               |
-|----------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------|
-| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)           | `**/*.md`                                                          | Markdown formatting standards         |
-| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md) | `**/*.md`                                                          | Voice, tone, and language conventions |
-| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards      |
-| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)             | `docs/**`                                                          | Docusaurus documentation authoring    |
+| File                                                                             | Applies To                                                         | Purpose                                    |
+|----------------------------------------------------------------------------------|--------------------------------------------------------------------|--------------------------------------------|
+| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)           | `**/*.md`                                                          | Markdown formatting standards              |
+| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md) | `**/*.md`                                                          | Voice, tone, and language conventions      |
+| [shared/plain-language.instructions.md](shared/plain-language.instructions.md)   | `**`                                                               | Plain-language replies and generated prose |
+| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards           |
+| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)             | `docs/**`                                                          | Docusaurus documentation authoring         |
+
+The short Plain Language rule covers questions, progress updates, explanations,
+summaries, and generated prose while preserving necessary technical terms and
+exact output formats. Agents use relative imports and skills read it by name;
+both also include a direct reminder. A matching file pattern or an installed
+plugin alone does not prove the rule was included in a particular chat request.
 
 ### Git and Workflow
 
@@ -248,6 +255,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── coaching-patterns.instructions.md
 │   ├── content-policy-citation.instructions.md
 │   ├── disclaimer-language.instructions.md
+│   ├── plain-language.instructions.md
 │   ├── planner-identity-base.instructions.md
 │   ├── telemetry-overlay.instructions.md
 │   └── untrusted-content-boundary.instructions.md

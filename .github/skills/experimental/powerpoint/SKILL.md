@@ -11,6 +11,11 @@ metadata:
 
 # PowerPoint Skill
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 Generates, updates, and manages PowerPoint slide decks using `python-pptx` with YAML-driven content and styling definitions.
 
 ## Overview

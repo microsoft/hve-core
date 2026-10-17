@@ -15,6 +15,10 @@ user-invocable: false
 
 # Code Review Walkback
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
+when composing replies.
+
 Thin walk-back subagent for the Code Review orchestrator. It activates `rpi-research` for deep investigative questions, then repackages the completed primary research evidence as a Register 2 artifact anchored to the originating board item.
 
 ## Skill Reference Contract
