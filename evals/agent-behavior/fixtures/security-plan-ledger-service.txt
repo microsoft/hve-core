@@ -1,0 +1,8 @@
+# Security Plan: ledger-service
+
+Synthetic completed Security Planner output for evaluation. It contains no real system details.
+
+* Project slug: ledger-service
+* Status: complete; Phase 6 handoff generated
+* Scope: gRPC service in Go, cloud-native deployment, confidential data
+* Supply chain note: build and release pipeline posture was not assessed in this plan

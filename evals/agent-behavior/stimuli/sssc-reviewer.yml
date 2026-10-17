@@ -253,6 +253,8 @@ stimuli:
           dest: .github/copilot-instructions.md
         - src: ../../.github/instructions/security/vex-generation.instructions.md
           dest: .github/instructions/security/vex-generation.instructions.md
+        - src: ../../.github/instructions/security/vex-standards.instructions.md
+          dest: .github/instructions/security/vex-standards.instructions.md
       skills:
         - ../../.github/skills/security/vex
     tags:
@@ -271,7 +273,7 @@ stimuli:
       - type: output-matches
         name: sssc-reviewer-vex-full-scan-human-review
         config:
-          pattern: '(?is)not_affected[\s\S]{0,300}(human|qualified)[\s\S]{0,60}review|(human|qualified)[\s\S]{0,60}review[\s\S]{0,300}not_affected'
+          pattern: '(?is)not_affected[\s\S]{0,300}(human|qualified)[\s\S]{0,60}(review|approv\w*|sign-?off)|(human|qualified)[\s\S]{0,60}(review|approv\w*|sign-?off)[\s\S]{0,300}not_affected'
 
   - name: sssc-reviewer-vex-triage-from-report
     prompt: |
@@ -282,6 +284,8 @@ stimuli:
           dest: .github/copilot-instructions.md
         - src: ../../.github/instructions/security/vex-generation.instructions.md
           dest: .github/instructions/security/vex-generation.instructions.md
+        - src: ../../.github/instructions/security/vex-standards.instructions.md
+          dest: .github/instructions/security/vex-standards.instructions.md
       skills:
         - ../../.github/skills/security/vex
     tags:
@@ -300,4 +304,4 @@ stimuli:
       - type: output-matches
         name: sssc-reviewer-vex-triage-trivy-precedence
         config:
-          pattern: '(?is)trivy[^.]{0,120}(precedence|prefer\w*|first|over|before|priority)|(precedence|prefer\w*|priority)[^.]{0,120}trivy'
+          pattern: '(?is)\btrivy\b(?:[^.;,]|\.(?=\w)){0,120}?\b(?:precedence|preferred|first|over|before|priority|authoritative|primary|wins)\b|\bprefer\w*\s+(?:the\s+)?trivy\b|\b(?:precedence|priority)\b\s*(?::|goes to|is given to|belongs to)\s*[*_\x60]*(?:the\s+)?trivy\b'
