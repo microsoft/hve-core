@@ -2365,7 +2365,7 @@ When a new skill meets a trigger, or a change alters a triggered surface or a ci
 | pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks                           |
 | release-stable.yml              | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
 | codeql-analysis.yml             | Push, PR, weekly   | Static analysis                                                |
-| dependency-review.yml           | PR to main/develop | Vulnerability scanning                                         |
+| dependency-review.yml           | Push & PR to main/develop | Vulnerability scanning                                         |
 | weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL, advisory workflow/Poutine scans    |
 
 Weekly Poutine coverage reuses the PR scanner with findings retained in the `poutine`
