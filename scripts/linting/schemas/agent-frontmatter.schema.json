@@ -50,6 +50,11 @@
       "type": "string",
       "description": "The AI model to use when running the agent. Must be a single scalar string; array/fallback-list values are a VS Code Copilot Chat-only extension not supported by the Copilot CLI. If not specified, the currently selected model in model picker is used."
     },
+    "reasoning-effort": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "xhigh", "max"],
+      "description": "Reasoning effort for this agent's model. Omit it to let a per-call value from the dispatcher, the session, or the model default apply. The Copilot harness and Copilot CLI apply it; VS Code's Local harness ignores it."
+    },
     "target": {
       "type": "string",
       "enum": [

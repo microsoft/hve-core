@@ -26,9 +26,7 @@ Move on when the answer has sufficiently clarified the current issue, the user r
 
 ## Record update protocol
 
-After scope confirmation, create or resume `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md` by copying [../templates/challenge-session.md](../templates/challenge-session.md).
-
-Update the record throughout the session:
+Create the record after scope confirmation, as the skill's Flow step 3 defines, and update it throughout the session:
 
 * Capture the confirmed scope, source of scope facts, related artifacts, and evidence basis.
 * Maintain a flexible challenge coverage section that reflects the angles actually examined.
@@ -39,11 +37,3 @@ Update the record throughout the session:
 ## Read-only boundary
 
 The challenge record is the skill's only writable artifact. Do not edit product sources, plans, research, reviews, or implementation evidence. Do not invoke an agent, subagent, or another RPI skill. A final response may name an RPI skill as an advisory next option under user control.
-
-## Conversation and closeout
-
-Use concise updates only at material boundaries such as scope confirmation, a material record update, a blocker, or closeout. Explain the action and reason, what changed or was learned, important artifact links, and one point the user might otherwise miss. Do not dilute an active turn: it contains one focused, open-ended, non-leading challenge question without advice or an embedded answer.
-
-Before a scope or closeout question, give the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links. At closeout, report session status separately from the unresolved-item or decision state. Include coverage and unresolved items. Advise `/compact` only when stale output or completed questioning detail outweighs current context and the challenge record is current. When advising it, name the retained record. Otherwise omit compaction guidance.
-
-For standalone use, advise an exact `/rpi-*` command only when an unresolved item needs a downstream stage. Do not invoke that stage. Otherwise state the no-handoff reason. When a confirmed automatic RPI Agent session owns continuation, return the challenge record to its parent instead. For the challenge record and every other relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
