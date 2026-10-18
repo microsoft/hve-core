@@ -3,9 +3,9 @@ title: "Method 4: Brainstorming"
 description: "Generate diverse solution ideas through structured divergent thinking and converge on promising directions through evidence-informed clustering."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-18
 ms.topic: tutorial
-keywords: [design thinking, method-04, brainstorming]
+keywords: [design thinking, method-04, brainstorming, AI ideation]
 estimated_reading_time: 5
 ---
 
@@ -34,6 +34,11 @@ Method 4 is the **entry point to the Solution Space**. The Solution Space spans 
 * Divergent ideation: Generate a high volume of ideas without evaluation. Target 15 or more ideas across 4 to 6 categories. Quantity and variety matter more than polish at this stage.
 * Constraint-informed generation: Use frozen constraints from Method 1 as creative boundaries that shape ideas rather than block them. Fluid constraints can be challenged or redesigned as part of the solution.
 * AI collaboration: Use AI as a brainstorming partner through three patterns: Prep and Synthesis (AI prepares stimulus material and organizes outputs), Backup Generator (AI generates additional ideas when team momentum stalls), and Silent Observer (AI captures and categorizes ideas during team sessions).
+* AI Discovery Cards workshop: After validating the problem statement, persona, and user needs, use the official
+  [Microsoft AI Discovery Cards Workshop Facilitation Guide](https://aka.ms/aidiscoverycards) to spark AI-specific ideas.
+  Apply card capabilities to a validated user journey and record promising ideas with links to the user need and relevant constraints.
+  Treat the cards as ideation prompts, not evidence that AI is needed, that a capability is feasible or currently available,
+  or that an agentic architecture is required. Defer feasibility and risk evaluation until convergence and concept development.
 * Philosophy-based clustering: Group ideas not by surface similarity but by their underlying approach or philosophy. Ideas that look different but share the same theory of change belong together.
 * Convergent evaluation: Assess clusters against the problem statement, validated constraints, and stakeholder needs. Identify 3 to 5 themes that represent distinct solution directions worth developing further.
 
