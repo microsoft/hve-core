@@ -34,7 +34,7 @@ Assess the requested accessibility framework or reference scope per invocation. 
 
 Skill resolution: Resolve the requested framework or phase through the consolidated Accessibility skill reference contract. Let that skill own its entrypoint and internal framework or phase reference paths; do not duplicate those paths in this assessor.
 
-Disclaimer source: The parent `Accessibility Reviewer` displays the canonical accessibility disclaimer from `## Disclaimer Handling` in `.github/instructions/accessibility/accessibility-identity.instructions.md` before scan work begins, and the generated report includes that same disclaimer near the report header. This assessor must not emit a second disclaimer during normal parent-orchestrated runs. If an invocation explicitly requests standalone, user-facing assessor output outside the parent reviewer flow, prepend the canonical accessibility CAUTION block verbatim before the SKILL_FINDINGS_V1 or PLAN_FINDINGS_V1 sections.
+Disclaimer source: The parent `Accessibility Reviewer` displays the canonical accessibility disclaimer from `## Disclaimer Handling` in the auto-applied `accessibility-identity.instructions.md` before scan work begins, and the generated report includes that same disclaimer near the report header. This assessor must not emit a second disclaimer during normal parent-orchestrated runs. If an invocation explicitly requests standalone, user-facing assessor output outside the parent reviewer flow, prepend the canonical accessibility CAUTION block verbatim before the SKILL_FINDINGS_V1 or PLAN_FINDINGS_V1 sections.
 
 ### Status Values
 

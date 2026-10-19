@@ -8,7 +8,7 @@ The quality standard the `hve-builder` skill applies when it creates, improves, 
 
 ## Provenance
 
-The requirements distill first-party model-provider guidance retrieved on 2026-07-25 from OpenAI, Anthropic, and Google, together with the Agent Skills specification, the AGENTS.md convention, and VS Code and GitHub Copilot customization documentation. That evidence is research-supported, not runtime-validated. Treat the catalog as a strong default and settle a disputed choice with target-model evaluation. Where providers disagree, the entry names the disagreement.
+The requirements distill first-party model-provider guidance retrieved on 2026-07-25 from OpenAI, Anthropic, and Google, together with the Agent Skills specification, the AGENTS.md convention, and VS Code and GitHub Copilot customization documentation. That evidence is research-supported, not runtime-validated. Treat the catalog as a strong default and settle a disputed choice with target-model evaluation. Where providers disagree, the entry names the disagreement. The "Lead with the result the user asked for" entry also draws on OpenAI's GPT-5.6 Sol prompting guidance, retrieved on 2026-10-02.
 
 ## How to use this catalog
 
@@ -30,7 +30,7 @@ For an existing artifact, capture its current purpose, activation, inputs, outpu
 * Replace when wording changes cannot fix an unsuitable responsibility, activation mechanism, interface, or control-flow design. Confirm the replacement and migration boundary, preserve required capabilities in the new owner, and update callers and references before retiring the old owner.
 * Delete a rule when it is obsolete, contradicted by current evidence, redundant with an applicable canonical rule, or no longer serves a requirement. Identify what replaces it or why nothing must replace it. Check references, activation, and downstream consumers before deleting an artifact. Removing required behavior or changing architecture needs explicit approval; a cleanup request alone does not grant it.
 
-These decisions can apply together to different rules or targets. Deletion is an operation within an approved mutating boundary, not a separate lifecycle mode. In read-only review, recommend dispositions without changing source. The workflow contract owns the inferred `create,improve,refactor` default, explicit mode limits, write authority, delta classification, validation, and the final behavior gate.
+These decisions can apply together to different rules or targets. Deletion is an operation within an approved mutating boundary, not a separate lifecycle mode. In read-only review, recommend dispositions without changing source. The workflow contract owns the inferred `create,improve,refactor` default, explicit mode limits, write authority, validation, and the review pass.
 
 Before tuning wording, define the cheapest check that could reject the proposed change: a structure check for metadata, a consumer check for relocated guidance, or a representative behavioral scenario for a changed decision. Record the requirement, disposition, rationale, and evidence in the existing author or review record. Do not add process logs to the production artifact.
 
@@ -61,6 +61,7 @@ Write the artifact outcome-first. Role and process serve the outcome; they never
 * Depth and length belong to runtime controls: use reasoning effort and verbosity controls when the target host exposes them; otherwise state task-specific completeness and output requirements without inventing settings. Example: require cited findings and skipped-check disclosure rather than "think harder" or "be thorough."
 * Re-evaluate on model migration: move the model unchanged, pin effort to match prior depth, baseline evaluations, trim inherited emphasis that newer models over-trigger on, then re-evaluate. Example: migrate with the old prompt, baseline, then remove legacy persistence reminders that no longer help.
 * Output shape matches need: add heavier formatting only when it improves comprehension or interface stability. Example: "Return JSON for the API payload; use prose for the user explanation."
+* Lead with the result the user asked for: a user-facing response contract requires the outcome of the request in plain language, such as the bottom line for a topic or task or a direct answer to each question asked, followed only by the evidence, caveats, and next action that support or qualify it. Keep workflow state, run metadata, and self-checks in durable artifacts, and surface them only when they change the user's next action. A list of status fields to report does not deliver a result. Example: a verification closeout says "Yes, all named assets are absent and nothing replaced them" and links the record, rather than reporting "Disposition: retired; Readiness: not applicable."
 * Execution status is not a verdict: use distinct vocabularies for whether work ran and whether it passed. Example: record execution as Deferred and the verdict as unavailable rather than a partial pass.
 
 ## 3. Instruction-file architecture
@@ -110,7 +111,7 @@ Treat delegation as an architecture decision. Delegate isolated, high-volume, or
 
 Canonical statement; other hve-builder surfaces reference it by name.
 
-Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use it in authoring, review, validation, change-classification, or behavior-testing decisions. When the caller supplies an exact configuration, reproduce it verbatim without assessing it.
+Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use it in authoring, review, or validation decisions. When the caller supplies an exact configuration, reproduce it verbatim without assessing it.
 
 The boundary covers only selection of an agent tool set. Generic tool API and schema design, structured output, native registration, untrusted-output handling, secret handling, and risky-action confirmation remain in scope.
 
@@ -194,7 +195,7 @@ Review these against the current host, target model, required behavior, and main
 * Kitchen-sink instruction files, copied style guides, copied templates, and exhaustive edge-case lists.
 * Singular AGENT.md where the target host expects AGENTS.md. Migrate references; add compatibility support only when the caller requests it.
 * Unsourced length ceilings and invented universal caps.
-* Fixed iteration counts as quality theater; use evidence-backed completion and progress gates. Keep each test tied to a frozen candidate without forbidding parent-owned correction of demonstrated defects.
+* Fixed iteration counts as quality theater; use evidence-backed completion and progress gates. Tie each review to an identified candidate revision without forbidding parent-owned correction of demonstrated defects.
 * Model names pinned for a High responsibility, copied from another artifact, or chosen without first selecting a responsibility-based profile.
 * Calling simulation or emulation native runtime validation.
 
@@ -202,7 +203,7 @@ Review these against the current host, target model, required behavior, and main
 
 These are the upstream guidance families named in Provenance, not evidence of a new retrieval or native validation. The maintenance decisions and HVE lifecycle rules are repository conventions. Verify current host or model documentation when a decision depends on version-specific behavior.
 
-* OpenAI: [Prompt engineering](https://platform.openai.com/docs/guides/prompt-engineering) and [Reasoning best practices](https://platform.openai.com/docs/guides/reasoning-best-practices)
+* OpenAI: [Prompt engineering](https://platform.openai.com/docs/guides/prompt-engineering), [Reasoning best practices](https://platform.openai.com/docs/guides/reasoning-best-practices), and [Prompting guidance for GPT-5.6 Sol](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6)
 * Anthropic: [Prompt engineering overview](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview) and [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)
 * Google: [Prompt design strategies](https://ai.google.dev/gemini-api/docs/prompting-strategies)
 * Agent Skills: [Specification](https://agentskills.io/specification)

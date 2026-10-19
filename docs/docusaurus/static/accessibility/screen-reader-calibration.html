@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Screen reader calibration</title>
+  <style>
+    body { max-width: 48rem; margin: 3rem auto; padding: 0 1.5rem; font: 1.125rem/1.5 sans-serif; }
+    label { display: flex; gap: .75rem; align-items: center; padding: 1rem 0; }
+    input { width: 1.5rem; height: 1.5rem; }
+    :focus-visible { outline: 3px solid CanvasText; outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 data-a11y-positive-control="headings">Screen reader calibration</h1>
+    <h2>Interaction control</h2>
+    <label>
+      <input type="checkbox" data-a11y-positive-control="checkbox">
+      Accept terms
+    </label>
+  </main>
+</body>
+</html>

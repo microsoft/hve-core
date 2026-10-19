@@ -1,0 +1,14 @@
+stimuli:
+  - name: rpi-reviewer-return-only-suggestions
+    prompt: |
+      RPI Reviewer returns candidate findings for the review parent to verify
+      and never assigns review IDs itself. Which agent assigns every `RV-xxx`
+      ID? Do not call tools. Return exactly `parent`.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: parent-owns-ids
+        config:
+          pattern: '(?i)^\s*[''"`]?(?:the\s+)?(?:review\s+)?parent[''"`]?[.!]?\s*$'

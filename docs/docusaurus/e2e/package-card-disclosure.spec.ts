@@ -28,6 +28,35 @@ const hasNoHorizontalScroll = () =>
   document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1;
 
 test.describe('Package card disclosure', () => {
+  test('exposes and dismisses the maturity tooltip accessibly', async ({ page }) => {
+    await page.goto(HOME);
+    await waitForHydration(page);
+
+    const card = page.locator('article[data-name="hve-core"]');
+    const badge = card.getByRole('link', { name: 'Stable', exact: true });
+    const tooltip = card.getByRole('tooltip');
+    const glossary =
+      'Production-ready, fully supported, and generally available (GA) for everyday use.';
+
+    await expect(badge).toHaveAccessibleDescription(glossary);
+    await expect(tooltip).toBeHidden();
+
+    await badge.focus();
+    await expect(badge).toBeFocused();
+    await expect(tooltip).toBeVisible();
+    await expect(badge).toHaveCSS('outline-style', 'solid');
+
+    await page.keyboard.press('Escape');
+    await expect(badge).toBeFocused();
+    await expect(tooltip).toBeHidden();
+
+    await badge.evaluate((element) => (element as HTMLElement).blur());
+    await badge.hover();
+    await expect(tooltip).toBeVisible();
+    await tooltip.hover();
+    await expect(tooltip).toBeVisible();
+  });
+
   test('supports keyboard interaction without following the stretched title link', async ({ page }) => {
     await page.goto(HOME);
     await waitForHydration(page);
@@ -82,9 +111,13 @@ test.describe('Package card disclosure', () => {
       await expect(panel.getByRole('link', { name: 'View package overview' })).toBeVisible();
       expect(await page.evaluate(hasNoHorizontalScroll)).toBeTruthy();
 
-      const geometry = await card.evaluate((element) => {
+      const panelId = await button.getAttribute('aria-controls');
+      expect(panelId).toBeTruthy();
+      const geometry = await card.evaluate((element, controlledPanelId) => {
         const buttonElement = element.querySelector('button');
-        const panelElement = element.querySelector('[id][class]');
+        const panelElement = element.querySelector(
+          `#${CSS.escape(controlledPanelId)}`,
+        );
         if (!buttonElement || !panelElement) {
           return null;
         }
@@ -99,13 +132,27 @@ test.describe('Package card disclosure', () => {
           panelDoesNotClip: panelElement.scrollWidth <= panelElement.clientWidth + 1
             && panelElement.scrollHeight <= panelElement.clientHeight + 1,
         };
-      });
+      }, panelId as string);
 
       expect(geometry).toEqual({
         panelWithinCard: true,
         controlsDoNotOverlap: true,
         panelDoesNotClip: true,
       });
+
+      if (scenario.width === 320 || scenario.textScale) {
+        const badge = card.getByRole('link', { name: 'Stable', exact: true });
+        const tooltip = card.getByRole('tooltip');
+        await badge.focus();
+        await expect(tooltip).toBeVisible();
+
+        const tooltipBox = await tooltip.boundingBox();
+        expect(tooltipBox).not.toBeNull();
+        expect(tooltipBox?.x).toBeGreaterThanOrEqual(0);
+        expect((tooltipBox?.x ?? 0) + (tooltipBox?.width ?? 0))
+          .toBeLessThanOrEqual(scenario.width + 1);
+        expect(await page.evaluate(hasNoHorizontalScroll)).toBeTruthy();
+      }
 
       if (scenario.screenshot) {
         const screenshotPath = testInfo.outputPath(

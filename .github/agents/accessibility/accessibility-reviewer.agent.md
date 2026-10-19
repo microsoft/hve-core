@@ -27,7 +27,7 @@ Orchestrate accessibility assessment by delegating to subagents. Profile the cod
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
 * Display the canonical accessibility disclaimer from the Accessibility Planner identity instructions at scan start and require the generated report to include it near the report header.
-* Route any real-screen-reader validation effort to the shared [real screen reader testing runbook](../../../docs/planning/runbooks/accessibility/real-screen-reader-testing.md) so the review workflow uses one canonical human-AT procedure.
+* Route any real-screen-reader validation effort to the shared [real screen reader testing runbook](https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md) so the review workflow uses one canonical human-AT procedure.
 * Include a review artifact inventory in the generated report so users can see what was scanned or reviewed.
 
 ## Inputs
@@ -71,7 +71,7 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 3. Resolve mode-specific inputs:
    * For `diff`, resolve changed files and exclude non-assessable files.
    * For `plan`, resolve and read the plan document.
-4. Read `## Disclaimer Handling` from `.github/instructions/accessibility/accessibility-identity.instructions.md` and display the canonical accessibility CAUTION block verbatim before scan work begins, using the same disclaimer source as the Accessibility Planner.
+4. Read `## Disclaimer Handling` from the auto-applied `accessibility-identity.instructions.md` and display the canonical accessibility CAUTION block verbatim before scan work begins, using the same disclaimer source as the Accessibility Planner.
 5. Initialize a review artifact inventory with the scanning mode, scope or path focus, changed files for diff mode, plan document reference for plan mode, prior scan report when supplied, and any excluded non-assessable files.
 
 ### Step 1: Profile Codebase

@@ -1,12 +1,17 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { describe, test } from 'node:test';
 import {
+  buildGraphicsReviewTemplate,
   extractMermaidFences,
   groupRouteCases,
   isDeployedDocumentationFile,
   validateSourceMetadata,
+  writeGraphicsReviewTemplate,
 } from './validate-mermaid-accessibility.mjs';
 
 describe('Mermaid source inventory', () => {
@@ -181,5 +186,56 @@ describe('Mermaid source metadata controls', () => {
         A --> B`),
       /authored text on the directive line/,
     );
+  });
+});
+
+describe('Mermaid graphics review template', () => {
+  const fences = [
+    {
+      file: 'docs/example.md',
+      startLine: 4,
+      source: 'flowchart LR\n  accTitle: First diagram\n  accDescr: A reaches B.\n  A --> B',
+      title: 'First diagram',
+      description: 'A reaches B.',
+    },
+    {
+      file: 'docs/example.md',
+      startLine: 10,
+      source: 'journey\n  accTitle: Second diagram\n  accDescr: A journey advances.\n  section Work',
+      title: 'Second diagram',
+      description: 'A journey advances.',
+    },
+  ];
+  const documents = [{ source: '@site/../example.md', permalink: '/hve-core/docs/example' }];
+  const source = '# Example\n\n## First context\n```mermaid\n...\n```\n\n## Second context\n```mermaid\n...\n```\n';
+
+  test('renders stable source-order rows with observable and not-verified fields', () => {
+    const first = buildGraphicsReviewTemplate(fences, documents, () => source);
+    const second = buildGraphicsReviewTemplate(fences, documents, () => source);
+
+    assert.equal(first, second);
+    assert.match(first, /\| 1 \| docs\/example\.md \| Mermaid fence 1 \|/);
+    assert.match(first, /\| 2 \| docs\/example\.md \| Mermaid fence 2 \|/);
+    assert.match(first, /\| flowchart \| First diagram \| A reaches B\. \| First context \|/);
+    assert.match(first, /\| journey \| Second diagram \| A journey advances\. \| Second context \|/);
+    assert.equal((first.match(/\| not verified/g) ?? []).length, 18);
+  });
+
+  test('reports no drift and refuses to overwrite a verified disposition', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'mermaid-review-'));
+    const outputPath = path.join(root, 'review.md');
+    const content = buildGraphicsReviewTemplate(fences, documents, () => source);
+
+    try {
+      assert.equal(writeGraphicsReviewTemplate(outputPath, content), 'Wrote');
+      assert.equal(writeGraphicsReviewTemplate(outputPath, content, true), 'NoDrift');
+      writeFileSync(outputPath, `${readFileSync(outputPath, 'utf8')}\n| verified pass |\n`, 'utf8');
+      assert.throws(
+        () => writeGraphicsReviewTemplate(outputPath, content),
+        /Refusing to overwrite completed human dispositions/,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

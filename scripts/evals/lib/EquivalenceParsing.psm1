@@ -16,13 +16,91 @@
 
 Set-StrictMode -Version Latest
 
+# Two-sided 95% Student-t critical values for df 1 to 20, matching `vally compare`.
+$script:StudentT95 = @{
+    1 = 12.706; 2 = 4.303; 3 = 3.182; 4 = 2.776; 5 = 2.571; 6 = 2.447; 7 = 2.365
+    8 = 2.306; 9 = 2.262; 10 = 2.228; 11 = 2.201; 12 = 2.179; 13 = 2.16; 14 = 2.145
+    15 = 2.131; 16 = 2.12; 17 = 2.11; 18 = 2.101; 19 = 2.093; 20 = 2.086
+}
+
+function Get-StudentT95CriticalValue {
+    <#
+    .SYNOPSIS
+        Returns the two-sided 95% critical value `vally compare` uses for a degree of freedom.
+    .DESCRIPTION
+        Uses the exact table for df 20 and below and a Cornish-Fisher expansion of the t
+        quantile around the normal above it, so recomputed intervals match the intervals
+        vally reports for the same scores.
+    .PARAMETER DegreesOfFreedom
+        Degrees of freedom, one less than the sample size.
+    .OUTPUTS
+        [double] The critical value.
+    #>
+    [CmdletBinding()]
+    [OutputType([double])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
+        [int]$DegreesOfFreedom
+    )
+
+    if ($script:StudentT95.ContainsKey($DegreesOfFreedom)) { return [double]$script:StudentT95[$DegreesOfFreedom] }
+    $z = 1.959963984540054
+    $z2 = $z * $z
+    $g1 = ($z * ($z2 + 1)) / 4
+    $g2 = ($z * (5 * $z2 * $z2 + 16 * $z2 + 3)) / 96
+    $g3 = ($z * (3 * $z2 * $z2 * $z2 + 19 * $z2 * $z2 + 17 * $z2 - 15)) / 384
+    $df = [double]$DegreesOfFreedom
+    return $z + $g1 / $df + $g2 / ($df * $df) + $g3 / ($df * $df * $df)
+}
+
+function Measure-MeanWithConfidenceInterval {
+    <#
+    .SYNOPSIS
+        Computes a sample mean with the 95% Student-t interval `vally compare` reports.
+    .PARAMETER Value
+        Sample values.
+    .OUTPUTS
+        [hashtable] Count, Mean, CiLow, and CiHigh. A single value yields a zero-width interval.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [double[]]$Value
+    )
+
+    $count = $Value.Count
+    if ($count -eq 0) { return @{ Count = 0; Mean = 0.0; CiLow = 0.0; CiHigh = 0.0 } }
+    $mean = ($Value | Measure-Object -Average).Average
+    if ($count -lt 2) { return @{ Count = $count; Mean = $mean; CiLow = $mean; CiHigh = $mean } }
+    $variance = ($Value | ForEach-Object { [math]::Pow($_ - $mean, 2) } | Measure-Object -Sum).Sum / ($count - 1)
+    $margin = (Get-StudentT95CriticalValue -DegreesOfFreedom ($count - 1)) * ([math]::Sqrt($variance) / [math]::Sqrt($count))
+    return @{ Count = $count; Mean = $mean; CiLow = $mean - $margin; CiHigh = $mean + $margin }
+}
+
 function Measure-CompareTrials {
     <#
     .SYNOPSIS
         Aggregates comparison trials, summary statistics, and data-quality signals.
     .DESCRIPTION
-        Tallies recognized winners and combines complete confidence-interval pairs
-        conservatively by taking the maximum lower and minimum upper bounds.
+        Tallies recognized winners and reports the comparison's mean score, 95% confidence
+        interval, and win rate.
+
+        A single comparison record carries those statistics in its `summary`, computed by
+        vally over every non-errored trial in the comparison. A sharded comparison
+        concatenates one record per shard, and each shard's summary covers only its own
+        trials. Combining per-shard intervals or averaging per-shard means would not
+        describe the full population and would not be comparable with an unsharded run,
+        so when more than one record is present and every non-errored trial carries a
+        numeric score, the statistics are recomputed from those scores using vally's own
+        formula: the arithmetic mean, a two-sided 95% Student-t interval, and the share of
+        trials with a positive score. The scores of every stimulus count regardless of
+        policy, as they do in vally. When any non-errored trial lacks a numeric score,
+        complete summary pairs are combined conservatively instead by taking the maximum
+        lower and minimum upper bounds. The statistics always describe the trials that
+        were observed; a run with missing trials is flagged through MissingTrials.
 
         Records that cannot be scored are counted rather than skipped. A trial marked
         `errored` is a judge error, an unparseable line is a malformed record, and a
@@ -91,6 +169,8 @@ function Measure-CompareTrials {
     $winRates = [System.Collections.Generic.List[double]]::new()
     $ciLows = [System.Collections.Generic.List[double]]::new()
     $ciHighs = [System.Collections.Generic.List[double]]::new()
+    $populationScores = [System.Collections.Generic.List[double]]::new()
+    $populationTrials = 0
     $diagnostics = [System.Collections.Generic.List[string]]::new()
 
     foreach ($line in $Lines) {
@@ -148,6 +228,13 @@ function Measure-CompareTrials {
                     $perStimulus[$name].JudgeErrors += 1
                     $diagnostics.Add("Judge error on stimulus '$name'.")
                     continue
+                }
+
+                $populationTrials++
+                $rawScore = if ($trial.PSObject.Properties['score']) { $trial.score } else { $null }
+                if (($rawScore -is [int] -or $rawScore -is [long] -or $rawScore -is [double] -or $rawScore -is [decimal]) -and
+                    [double]::IsFinite([double]$rawScore)) {
+                    $populationScores.Add([double]$rawScore)
                 }
 
                 $winner = if ($trial.PSObject.Properties['winner']) { [string]$trial.winner } else { '' }
@@ -213,9 +300,6 @@ function Measure-CompareTrials {
         if ($summary.PSObject.Properties['winRate'] -and $null -ne $summary.winRate) { $winRates.Add([double]$summary.winRate) }
     }
 
-    $meanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
-    $winRate = if ($winRates.Count -gt 0) { ($winRates | Measure-Object -Average).Average } else { 0.0 }
-
     # Reconcile the observed population against the expected Cartesian set. A stimulus
     # that produced no record at all is invisible to every structural counter above,
     # so absence is only detectable by comparing against what was supposed to run.
@@ -247,8 +331,20 @@ function Measure-CompareTrials {
             }
         }
     }
-    $ciLow = if ($ciLows.Count -gt 0) { ($ciLows | Measure-Object -Maximum).Maximum } else { 0.0 }
-    $ciHigh = if ($ciHighs.Count -gt 0) { ($ciHighs | Measure-Object -Minimum).Minimum } else { 0.0 }
+    $hasCompletePopulation = $populationScores.Count -gt 0 -and $populationScores.Count -eq $populationTrials
+    if ($comparisonRecords -gt 1 -and $hasCompletePopulation) {
+        $population = Measure-MeanWithConfidenceInterval -Value $populationScores.ToArray()
+        $meanScore = $population.Mean
+        $ciLow = $population.CiLow
+        $ciHigh = $population.CiHigh
+        $winRate = @($populationScores | Where-Object { $_ -gt 0 }).Count / $populationScores.Count
+    }
+    else {
+        $meanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
+        $winRate = if ($winRates.Count -gt 0) { ($winRates | Measure-Object -Average).Average } else { 0.0 }
+        $ciLow = if ($ciLows.Count -gt 0) { ($ciLows | Measure-Object -Maximum).Maximum } else { 0.0 }
+        $ciHigh = if ($ciHighs.Count -gt 0) { ($ciHighs | Measure-Object -Minimum).Minimum } else { 0.0 }
+    }
 
     # The judge-error rate is computed from every trial that was attempted, including
     # the ones that failed, so the denominator is not silently reduced by the failures
@@ -1144,6 +1240,72 @@ function Get-EquivalenceGateResults {
     }
 }
 
+function Merge-BaselineModelSummary {
+    <#
+    .SYNOPSIS
+    Combines fixed-model baseline summaries using the serial aggregation contract.
+    #>
+    [CmdletBinding()]
+    [OutputType([ordered])]
+    param(
+        [Parameter(Mandatory = $true)][psobject[]]$Summary,
+        [string[]]$DriverRunId = @()
+    )
+
+    if ($Summary.Count -eq 0) { throw 'At least one baseline model summary is required.' }
+    $summaries = @($Summary)
+    $sum = { param([string]$Name) [double](($summaries | Measure-Object -Property $Name -Sum).Sum) }
+    $runs = [int](& $sum 'runs')
+    $weighted = {
+        param([string]$Name)
+        if ($runs -le 0) { return 0.0 }
+        $total = 0.0
+        foreach ($item in $summaries) { $total += [double]$item.$Name * [int]$item.runs }
+        return $total / $runs
+    }
+    $invariantFailures = [int](& $sum 'invariantFailures')
+    $runHealthFailures = [int](& $sum 'runHealthFailures')
+    $dataQualityViolations = [int](& $sum 'dataQualityViolations')
+    $equivalentTrials = [int](& $sum 'equivalentTrials')
+    $equivalentTies = [int](& $sum 'equivalentTies')
+    $divergenceGuardFailures = [int](& $sum 'divergenceGuardFailures')
+    $judgeErrors = [int](& $sum 'judgeErrors')
+    $divergenceGuardsEvaluated = [int](& $sum 'divergenceGuardsEvaluated')
+    $gates = Get-EquivalenceGateResults `
+        -Runs $runs -InvariantFailures $invariantFailures -Tier ([string]$summaries[0].tier) `
+        -EquivalentTotal $equivalentTrials `
+        -TieRatio $(if ($equivalentTrials -gt 0) { $equivalentTies / $equivalentTrials } else { 0.0 }) `
+        -DataQualityViolations $dataQualityViolations `
+        -DivergenceGuardFailures $divergenceGuardFailures `
+        -DivergenceHasSignal ($divergenceGuardsEvaluated -gt 0) `
+        -RunHealthFailures $runHealthFailures
+
+    return [ordered]@{
+        schemaVersion = '2.1.0'; agent = [string]$summaries[0].agent; tier = [string]$summaries[0].tier
+        model = 'gpt-6-luna'; models = @($summaries.model); driverRunIds = @($DriverRunId)
+        runs = $runs; ties = [int](& $sum 'ties'); baselineWins = [int](& $sum 'baselineWins')
+        treatmentWins = [int](& $sum 'treatmentWins'); meanScore = [math]::Round((& $weighted 'meanScore'), 4)
+        ciLow = [math]::Round([double](($summaries | Measure-Object -Property ciLow -Maximum).Maximum), 4)
+        ciHigh = [math]::Round([double](($summaries | Measure-Object -Property ciHigh -Minimum).Minimum), 4)
+        winRate = [math]::Round((& $weighted 'winRate'), 4); invariantFailures = $invariantFailures
+        runHealthFailures = $runHealthFailures; executionDiagnostics = @($summaries.executionDiagnostics)
+        invocationEvidence = @($summaries.invocationEvidence); invocationFailures = [int](& $sum 'invocationFailures')
+        divergenceGuardFailures = $divergenceGuardFailures; divergenceGuardsEvaluated = $divergenceGuardsEvaluated
+        failedDivergenceGuards = @($summaries.failedDivergenceGuards); dataQualityViolations = $dataQualityViolations
+        judgeErrors = $judgeErrors; judgeErrorRate = if (($runs + $judgeErrors) -gt 0) { [math]::Round($judgeErrors / ($runs + $judgeErrors), 6) } else { 0.0 }
+        equivalentTrials = $equivalentTrials; equivalentTies = $equivalentTies
+        divergenceTrials = [int](& $sum 'divergenceTrials')
+        tieRatio = if ($equivalentTrials -gt 0) { [math]::Round($equivalentTies / $equivalentTrials, 4) } else { 0.0 }
+        comparisonCalibration = @($summaries.comparisonCalibration); comparisonStatus = 'report-only'
+        dataQualityDiagnostics = @($summaries.dataQualityDiagnostics); equivalenceGate = $gates.EquivalenceGate
+        documentedDivergenceGate = $gates.DocumentedDivergenceGate; verdict = $gates.Verdict
+        variants = $summaries[0].variants; compareLogs = @($summaries.compareLogs)
+        phaseTimings = @($summaries | ForEach-Object {
+                if ($_.PSObject.Properties['phaseTimings']) { @($_.phaseTimings) }
+            })
+    }
+}
+
 function Get-OutputHash {
     [CmdletBinding()]
     [OutputType([string])]
@@ -1157,11 +1319,115 @@ function Get-OutputHash {
     finally { $sha.Dispose() }
 }
 
+function Resolve-GraderLineageDetails {
+    <#
+    .SYNOPSIS
+        Resolves historical Vally grader details to current configured names.
+    .DESCRIPTION
+        Uses the authentic historical eval, stimulus, detail name, and detail kind
+        as a fail-closed composite key. A historical alias resolves to its current
+        name; an already-current name passes through only when exactly one current
+        composite matches. Result evidence is preserved without reinterpretation.
+    .PARAMETER Record
+        One authentic Vally trial-result record.
+    .PARAMETER GraderLineageMap
+        Parsed revision-bound grader lineage map.
+    .OUTPUTS
+        System.Object[]
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [psobject]$Record,
+
+        [Parameter(Mandatory = $true)]
+        [psobject]$GraderLineageMap
+    )
+
+    if (-not $Record.PSObject.Properties['evalName'] -or
+        [string]::IsNullOrWhiteSpace([string]$Record.evalName)) {
+        throw 'Historical grader record is missing top-level evalName.'
+    }
+    if (-not $Record.PSObject.Properties['stimulus'] -or
+        [string]::IsNullOrWhiteSpace([string]$Record.stimulus)) {
+        throw "Historical grader record for eval '$($Record.evalName)' is missing top-level stimulus."
+    }
+    if (-not $Record.PSObject.Properties['gradeResult'] -or -not $Record.gradeResult -or
+        -not $Record.gradeResult.PSObject.Properties['details']) {
+        throw "Historical grader record for eval '$($Record.evalName)' has no gradeResult details."
+    }
+    if (-not $GraderLineageMap.PSObject.Properties['aliases'] -or $null -eq $GraderLineageMap.aliases) {
+        throw 'Grader lineage map has no aliases collection.'
+    }
+
+    $evalName = [string]$Record.evalName
+    $stimulusName = [string]$Record.stimulus
+    if ($Record.gradeResult.PSObject.Properties['stimulusName'] -and
+        -not [string]::IsNullOrWhiteSpace([string]$Record.gradeResult.stimulusName) -and
+        [string]$Record.gradeResult.stimulusName -ne $stimulusName) {
+        throw "Historical stimulus mismatch for eval '$evalName': top-level '$stimulusName' does not equal gradeResult '$($Record.gradeResult.stimulusName)'."
+    }
+
+    $resolved = [System.Collections.Generic.List[object]]::new()
+    foreach ($detail in @($Record.gradeResult.details)) {
+        if (-not $detail.PSObject.Properties['name'] -or
+            [string]::IsNullOrWhiteSpace([string]$detail.name)) {
+            throw "Historical grader detail for eval '$evalName' stimulus '$stimulusName' is missing name."
+        }
+        if (-not $detail.PSObject.Properties['kind'] -or
+            [string]::IsNullOrWhiteSpace([string]$detail.kind)) {
+            throw "Historical grader '$($detail.name)' for eval '$evalName' stimulus '$stimulusName' is missing kind."
+        }
+
+        $historicalName = [string]$detail.name
+        $resultKind = [string]$detail.kind
+        $historicalMatches = @($GraderLineageMap.aliases | Where-Object {
+                [string]$_.evalName -eq $evalName -and
+                [string]$_.stimulus -eq $stimulusName -and
+                [string]$_.resultKind -eq $resultKind -and
+                [string]$_.oldName -eq $historicalName
+            })
+        $currentMatches = @($GraderLineageMap.aliases | Where-Object {
+                [string]$_.evalName -eq $evalName -and
+                [string]$_.stimulus -eq $stimulusName -and
+                [string]$_.resultKind -eq $resultKind -and
+                [string]$_.newName -eq $historicalName
+            })
+
+        $candidateCount = $historicalMatches.Count + $currentMatches.Count
+        if ($candidateCount -eq 0) {
+            throw "Unknown grader lineage identity for eval '$evalName' stimulus '$stimulusName' kind '$resultKind' name '$historicalName'."
+        }
+        if ($candidateCount -ne 1) {
+            throw "Ambiguous grader lineage identity for eval '$evalName' stimulus '$stimulusName' kind '$resultKind' name '$historicalName'."
+        }
+
+        $alias = if ($historicalMatches.Count -eq 1) { $historicalMatches[0] } else { $currentMatches[0] }
+        $resolved.Add([pscustomobject]@{
+                evalName                 = $evalName
+                stimulusName             = $stimulusName
+                historicalConfiguredName = $historicalName
+                currentConfiguredName    = [string]$alias.newName
+                graderType               = [string]$alias.graderType
+                resultKind               = $resultKind
+                passed                  = if ($detail.PSObject.Properties['passed']) { $detail.passed } else { $null }
+                score                   = if ($detail.PSObject.Properties['score']) { $detail.score } else { $null }
+                evidence                = if ($detail.PSObject.Properties['evidence']) { $detail.evidence } else { $null }
+                label                   = if ($detail.PSObject.Properties['label']) { $detail.label } else { $null }
+            })
+    }
+
+    return @($resolved)
+}
 function ConvertFrom-EquivalenceResults {
     [CmdletBinding()]
     [OutputType([System.Collections.IList])]
     param(
-        [Parameter(Mandatory)][string]$RunDir
+        [Parameter(Mandatory)][string]$RunDir,
+
+        [Parameter(Mandatory = $false)]
+        [string]$GraderLineageMapPath
     )
 
     if (-not (Test-Path -LiteralPath $RunDir)) {
@@ -1171,6 +1437,14 @@ function ConvertFrom-EquivalenceResults {
     $jsonlFiles = @(Get-ChildItem -LiteralPath $RunDir -Filter 'results.jsonl' -Recurse -File)
     if ($jsonlFiles.Count -eq 0) {
         throw "No results.jsonl found under $RunDir"
+    }
+
+    $lineageMap = $null
+    if (-not [string]::IsNullOrWhiteSpace($GraderLineageMapPath)) {
+        if (-not (Test-Path -LiteralPath $GraderLineageMapPath -PathType Leaf)) {
+            throw "Grader lineage map not found: $GraderLineageMapPath"
+        }
+        $lineageMap = Get-Content -Raw -LiteralPath $GraderLineageMapPath | ConvertFrom-Json -Depth 100
     }
 
     $records = New-Object 'System.Collections.Generic.List[object]'
@@ -1234,17 +1508,23 @@ function ConvertFrom-EquivalenceResults {
                 }
             }
 
-            $records.Add([pscustomobject]@{
-                    stimulusName = $stim
-                    trial        = $trial
-                    output       = $output
-                    outputHash   = Get-OutputHash -Text $output
-                    passed       = $passed
-                    score        = $score
-                    wallTimeMs   = $wallMs
-                    totalTokens  = $totalTokens
-                    details      = $details
-                }) | Out-Null
+            $recordData = [ordered]@{
+                stimulusName = $stim
+                trial        = $trial
+                output       = $output
+                outputHash   = Get-OutputHash -Text $output
+                passed       = $passed
+                score        = $score
+                wallTimeMs   = $wallMs
+                totalTokens  = $totalTokens
+                details      = $details
+            }
+            if ($lineageMap) {
+                $recordData['lineageDetails'] = @(
+                    Resolve-GraderLineageDetails -Record $obj -GraderLineageMap $lineageMap
+                )
+            }
+            $records.Add([pscustomobject]$recordData) | Out-Null
         }
     }
 
@@ -1702,8 +1982,10 @@ Export-ModuleMember -Function `
     Measure-InvariantFailures, `
     Measure-DeclaredInvariantFailures, `
     Get-EquivalenceGateResults, `
+    Merge-BaselineModelSummary, `
     Measure-DivergenceGuardResults, `
     Get-OutputHash, `
+    Resolve-GraderLineageDetails, `
     ConvertFrom-EquivalenceResults, `
     Merge-EquivalenceStimuli, `
     Edit-HtmlEscape, `

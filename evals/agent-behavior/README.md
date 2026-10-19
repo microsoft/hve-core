@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-08-27
+ms.date: 2026-10-12
 ---
 
 ## Purpose
@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 61 enrolled agents, including 30 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 64 enrolled agents, including 32 subagents.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-  └── <agent-slug>.yml  # one partial per inventoried agent (61 files)
+  └── <agent-slug>.yml  # one partial per inventoried agent (64 files)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -51,7 +51,7 @@ Each parent agent belongs to exactly one class. The class selects the stimulus s
 | research-writer  | 7       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)`                     |
 | code-reviewer    | 8       | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`                       |
 | workitem-manager | 8       | Convert a raw request into a backlog draft                      | `(title\|summary\|description\|acceptance\|priority\|severity\|repro\|steps)` |
-| planner-coach    | 13      | Plan, sequence, or coach the user through a non-trivial task    | `(plan\|step \d+\|next\|approach\|consider\|recommend\|phase)`                |
+| planner-coach    | 14      | Plan, sequence, or coach the user through a non-trivial task    | `(plan\|step \d+\|next\|approach\|consider\|recommend\|phase)`                |
 
 The grader counts a stimulus as passing when the regex matches the agent's response at least once. Class-recipe stimuli are a behavioral smoke gate: they assert the agent produced an output shaped like its job, not that the output is correct.
 
@@ -60,12 +60,65 @@ The grader counts a stimulus as passing when the regex matches the agent's respo
 Three coverage kinds are distinct and do not overlap:
 
 * Class-recipe stimuli in this suite provide smoke coverage of output shape.
-* Selected isolated functional stimuli in this suite provide direct contract correctness. They declare a per-stimulus `environment` that stages the agent under test as `.github/copilot-instructions.md` in the trial workspace and names the skills that agent's contract requires, so the assertion tests the declared agent behavior rather than general model knowledge. `experiment-designer-conditional-ml-route` is the current example.
+* Selected isolated functional stimuli in this suite provide direct contract correctness. They declare a per-stimulus `agent_environment` that stages the agent under test as `.github/copilot-instructions.md` in the trial workspace and names the skills that agent's contract requires, so the assertion tests the declared agent behavior rather than general model knowledge. `experiment-designer-conditional-ml-route` is the current example.
 * The [baseline-equivalence](../baseline-equivalence/README.md) harness provides A/B regression detection between the empty baseline and the customized environment.
 
-A per-stimulus `environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
+A per-stimulus `agent_environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
 
 Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
+
+### Data Science Coach RPI Scenarios
+
+The [Data Science Coach partial](stimuli/data-science-engineering-coach.yml) keeps
+its Research and RPI delivery scenarios authoritative. Prose graders check
+semantic obligations without requiring a particular sentence order, Markdown
+emphasis, or refusal contraction. File and tool-call graders independently
+verify produced artifacts, preserved state, and the durable-write scan.
+
+The reconciliation scenario stages task-consistent synthetic pipeline
+[Plan](fixtures/rpi-depth/ds-pipeline-plan.md),
+[Changes](fixtures/rpi-depth/ds-pipeline-changes.md), and
+[Review](fixtures/rpi-depth/ds-pipeline-review.md) evidence. These fixtures
+describe completed synthetic work; they are not claims of live validation.
+The production scenario actually executes the segments, including the required
+`rpi-plan-critique` skill, and has an explicit
+900-second agent budget and 960-second total budget, rather than the shorter
+budget used for a single conversational response. Execution remains bounded;
+the scoring threshold and required scan, artifact, and state assertions are
+unchanged. The scanner-unavailable scenario supplies an exact candidate and
+the accepted design, loads the pipeline-owning skill, and allows 300 seconds
+for agent execution and 360 seconds total so it reaches the scan gate rather
+than stopping on missing domain inputs. The clean-scan grader accepts both raw
+JSON and JSON escaped inside a tool-result envelope, while still requiring
+`status: completed` from the scanner command.
+
+### SSSC Reviewer Smoke Scenario
+
+The `sssc-reviewer-class-recipe` stimulus in the [SSSC Reviewer partial](stimuli/sssc-reviewer.yml) is an artifact-backed smoke test rather than a reply-shape check. It stages the SSSC Reviewer contract as workspace instructions, the shared disclaimer file the contract references, the `supply-chain-security` and `security-reviewer-formats` skills, and a three-file synthetic release repository from [fixtures/sssc-smoke/](fixtures/sssc-smoke/). Suite-level skills still load alongside these skills.
+
+The subject publishes an npm package and a container image from a workflow that uses mutable action tags. It supplies no SBOM, provenance, or signing evidence, so a correct review records those controls as limitations instead of passes. The prompt asks for an inline audit with no network, install, build, publish, or scanner commands.
+
+The five graders keep their names and equal weights, but observe the workspace:
+
+| Grader                                      | Evidence                                                                                                  |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `report-path-present`                       | Exactly one regular audit report exists under the SSSC report root, and the reply names that same file    |
+| `supply-chain-scope-present`                | The report covers the supplied release files and a supply-chain framework basis                           |
+| `review-completion-stated`                  | The report has the contract sections, disclaimer, unchecked human-review boxes, and an actionable finding |
+| `no-contradictory-findings`                 | The reply and report make no unsupported verification or certification claims and record evidence limits  |
+| `sssc-reviewer-class-recipe-no-source-edit` | The workspace diff against the pre-execution baseline contains only the new report                        |
+
+A reply that claims a report without writing one, or that denies editing a file it changed, fails the corresponding graders. These checks are deterministic; they do not establish that a model run will pass.
+
+The source-edit check sees only what Git sees. A new file hidden by an agent-written `.gitignore` or written inside a `.git` directory does not appear in the diff; edits to or deletions of staged files are still caught. [#3214](https://github.com/microsoft/hve-core/issues/3214) tracks closing that gap for every diff-based write check in the suite.
+
+### Program Grader Failure Codes
+
+Program graders that emit `metadata.failureCodes` publish them only through a fixed per-grader vocabulary in [VallyRunner.psm1](../../scripts/evals/Modules/VallyRunner.psm1). Unknown codes, unsorted lists, and codes on passing graders are rejected or normalized to null, so no model text reaches published artifacts.
+
+`experiment-outcome-separates-status-and-verdict` reports one code family per outcome field: `missing-*`, `conflicting-*`, and a field mismatch for the H1 verdict, downstream decision, Review execution, Review outcome, latency reduction, sample size, and error rate. A missing or conflicting staged Review value reports `invalid-review-record`.
+
+Codes appear under `perSpec[].diagnostics.attempts[].trials[].graders[].failureCodes` in `eval-summary.json`; the coarse `failedOrErroredTrials` list does not repeat them.
 
 ### Path Separators in Tracking-File Graders
 
@@ -222,7 +275,7 @@ stimuli:
 
 Agents that sequence work, plan tasks, coach the user through a process, or orchestrate multi-phase workflows.
 
-**Members (13):** accessibility-planner, agentic-workflows, data-science-engineering-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, pptx, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
+**Members (14):** accessibility-planner, agentic-workflows, data-science-engineering-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, hve-demo-material, pptx, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
 
 **Required Graders:**
 
@@ -264,6 +317,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | dt-learning-tutor              | planner-coach    | light     | [.github/agents/design-thinking/dt-learning-tutor.agent.md](../../.github/agents/design-thinking/dt-learning-tutor.agent.md)                                             |
 | engagement-report-generator    | research-writer  | light     | [.github/agents/engagement-reporting/engagement-report-generator.agent.md](../../.github/agents/engagement-reporting/engagement-report-generator.agent.md)               |
 | experiment-designer            | planner-coach    | light     | [.github/agents/experimental/experiment-designer.agent.md](../../.github/agents/experimental/experiment-designer.agent.md)                                               |
+| hve-demo-material              | planner-coach    | light     | [.github/agents/experimental/hve-demo-material.agent.md](../../.github/agents/experimental/hve-demo-material.agent.md)                                                   |
 | functional-planner             | workitem-manager | light     | [.github/agents/project-planning/functional-planner.agent.md](../../.github/agents/project-planning/functional-planner.agent.md)                                         |
 | issue-triage                   | workitem-manager | light     | [.github/agents/issue-triage.agent.md](../../.github/agents/issue-triage.agent.md)                                                                                       |
 | meeting-analyst                | research-writer  | light     | [.github/agents/project-planning/meeting-analyst.agent.md](../../.github/agents/project-planning/meeting-analyst.agent.md)                                               |
@@ -282,7 +336,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | system-architecture-reviewer   | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md)                     |
 | ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
-The maintained stimulus inventory totals 61 agents: 31 parent agents plus 30
+The maintained stimulus inventory totals 64 agents: 32 parent agents plus 32
 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/).
 Subagents without a matching stimulus partial remain excluded from the matrix
 run set and are documented separately in the inventory generator and related

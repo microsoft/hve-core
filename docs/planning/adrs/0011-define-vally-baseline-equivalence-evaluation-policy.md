@@ -3,7 +3,7 @@ id: "0011"
 title: "Define the Vally baseline-equivalence evaluation policy"
 description: "Define launch-based agent invocation, authoritative evidence, report-only comparison calibration, model scope, and trial posture for the baseline-equivalence suite."
 author: "HVE Core Maintainers"
-ms.date: "2026-09-11"
+ms.date: "2026-10-10"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-08-01"
@@ -123,14 +123,14 @@ Copying an agent file into a workspace is not invocation. Every customized `mode
 **3. Comparison is report-only calibration until valid post-launch evidence supports a non-inferiority policy.** The 35 stimuli all carry the `equivalent` policy. Signed scores, mean, standard deviation, 95% confidence bounds, and per-stimulus dispersion are computed separately for each model. Complete-delivery evidence resolved the boundary-stimulus decision by showing that five removed guards measured lifecycle phase behavior rather than nominal model non-degradation.
 Tie ratio and Vally's all-policy aggregate fields remain diagnostics. No comparative pass or fail state exists until a later human-owned decision defines score direction, hypotheses, numeric degradation margin, confidence level, boundary inequality, missing-bound behavior, and a rule forbidding pass-seeking recalibration. Historical values from before launch-based invocation are not comparable to the first valid calibration.
 
-**4. Tiers separate local iteration from two-model calibration while preserving authoritative evidence.** `devloop` runs one selected model and remains advisory. `calibration` and `ci` run the fixed pair `gpt-5.6-luna` and `claude-sonnet-5`. Comparison and persona-bleed guards are report-only at every current tier.
+**4. Tiers separate local iteration from two-model calibration while preserving authoritative evidence.** `devloop` runs one selected model and remains advisory. `calibration` and `ci` run the fixed pair `gpt-6-luna` and `claude-sonnet-5`. Comparison and persona-bleed guards are report-only at every current tier.
 Deterministic invariants, successful agent invocation, run health, and structural data quality remain authoritative in `calibration` and `ci`; structural failures fail closed even in `devloop`.
 The former `pr` and `nightly` names remain rejected rather than aliased.
 
 **5. Judge errors are counted and structural exclusions fail closed.** `judgeErrors` and `judgeErrorRate` appear in every summary. Any missing or judge-excluded comparison population is a data-quality violation and invalidates calibration rather than silently reducing the denominator.
 Their acceptable bar is unresolved pending the calibration work, and a gate that enforces an uncalibrated threshold asserts a standard no one has validated.
 A judge failure is not silently tolerated: a comparison that yields no records the judge could score is a run-health failure, so an unusable judge already fails closed without a numeric budget.
-Model scope follows cost: `devloop` resolves an explicit `-Model` override, then the agent's frontmatter `model:` hint, then the low-cost default `gpt-5.6-luna`; `calibration` and `ci` sweep the fixed pair. No floating alias such as `latest` is used.
+Model scope follows cost: `devloop` resolves an explicit `-Model` override, then the agent's frontmatter `model:` hint, then the low-cost default `gpt-6-luna`; `calibration` and `ci` sweep the fixed pair. No floating alias such as `latest` is used.
 
 **6. Stage 1 measures one subject; the multi-agent sweep is staged behind it.** The executable Launch turn targets the RPI Agent, while backlinks identify related artifacts rather than authorize equivalence subjects. The corpus is excluded from generic tag-filtered dispatch, which previously produced partial and zero-stimulus runs that reported success without evidencing anything.
 Expanding to per-subject conditional guards across all nine agents is deferred until one clean run under the restored comparison contract exists, so the expansion multiplies a measurement that has been shown to work rather than one that has not.
@@ -202,7 +202,7 @@ The authoritative/report-only separation, fail-closed rules, population reconcil
 ## More Information
 
 * [package.json](../../../package.json) pins the Vally CLI version whose executor timeout and cleanup semantics the suite relies on.
-* [evals/baseline-equivalence/](pathname://../../../evals/baseline-equivalence/) holds the stimulus corpus and the paired baseline and customized specs this policy governs; its [README.md](pathname://../../../evals/baseline-equivalence/README.md) documents the runtime behavior, the summary field contract, and the pass and fail interpretation rules.
+* [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/tree/main/evals/baseline-equivalence/) holds the stimulus corpus and the paired baseline and customized specs this policy governs; its [README.md](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) documents the runtime behavior, the summary field contract, and the pass and fail interpretation rules.
 * [.github/workflows/eval-validation.yml](../../../.github/workflows/eval-validation.yml) owns the outer eval-shard timeout and credentialed calibration dispatch.
 * [scripts/evals/Invoke-BaselineEquivalence.ps1](../../../scripts/evals/Invoke-BaselineEquivalence.ps1) is the single entry point that owns tier validation, model resolution, the pinned judge invocation, and the exit policy in parts 1, 3, and 4.
 * [scripts/evals/lib/EquivalenceParsing.psm1](../../../scripts/evals/lib/EquivalenceParsing.psm1) computes both gates and the verdict described in parts 2 and 4, and reads comparison and guard results.

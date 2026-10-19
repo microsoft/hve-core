@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "assets": [{ "assetId": "asset-docs" }],
+  "fixtures": [{ "fixtureId": "fixture-docs" }],
+  "journeys": [
+    {
+      "journeyId": "journey-read",
+      "assetId": "asset-docs",
+      "fixtureId": "fixture-docs",
+      "state": "default",
+      "role": "reader",
+      "requiredMethods": ["playwright", "screen-reader"]
+    }
+  ]
+}

@@ -3,6 +3,8 @@ title: Code Review
 description: Human-gated code review for pull requests, branch diffs, and local changes across five skill-backed findings perspectives
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Code Review"
 keywords:
   - code review
   - pre-PR review
@@ -17,14 +19,14 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-09
 ms.topic: concept
 estimated_reading_time: 10
 ---
 
 The code review system is a single human-gated agent for pull requests, branch diffs, and local changes. It resolves the review target, applies a recommended profile, bootstraps change context once, confirms scope with you, lets you adjust which findings perspectives run and how deeply, and merges their results into one report.
 
-Use the **PR Review** prompt when a pull request is open, or select the **Code Review** agent directly for branch and working-tree reviews. Both entry points use the same target-aware workflow and human-gated emission controls.
+Select the **Code Review** agent for an open pull request, a branch diff, or working-tree changes. It resolves the target itself and applies the same human-gated emission controls to every target.
 
 ## Why Pre-PR Code Review?
 
@@ -197,15 +199,30 @@ In non-interactive (workflow) mode, Steps 2, 3, and 5 are skipped and the board 
 
 Depth controls how deeply each selected perspective verifies the confirmed scope. It does not add or remove perspectives.
 
-| Tier | Depth           | When to use                                               |
-|------|-----------------|-----------------------------------------------------------|
-| 1    | `basic`         | Quick pass on small or low-risk changes                   |
-| 2    | `standard`      | Default rigor for most reviews                            |
-| 3    | `comprehensive` | Deep verification for high-risk surfaces or large changes |
+Before you select a tier, the agent presents an advisory recommendation derived from the [Change-Risk Evidence Checklist source on GitHub](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/change-risk-model.md).
+The checklist covers six categories: change scope, path criticality, history, test presence, coverage, and rollback.
+
+For each category, the checklist records one of three evidence states:
+
+* `observed`: directly supported by the diff, repository, test results, coverage report, or version history.
+* `unavailable`: the required source is absent, inaccessible, or too shallow to support a claim.
+* `qualitative`: interpretation-dependent evidence from available context rather than a reproducible measurement.
+
+The checklist is advisory only.
+In interactive reviews, you confirm the final depth tier, and any difference from the recommendation is recorded with your rationale.
+In non-interactive (workflow) mode, the review records the selected depth as `automation-derived`, meaning automation chose it rather than a person.
+
+| Tier | Depth           | When to use                                                                                                                                                                                                                             |
+|------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1    | `basic`         | Recommended only when evidence consistently supports a narrow, reversible, well-tested change with no critical-path concern                                                                                                             |
+| 2    | `standard`      | Default; recommended for most reviews, including whenever evidence is incomplete, unavailable in a material category, or inconclusive                                                                                                   |
+| 3    | `comprehensive` | Recommended when observed or qualitative evidence identifies critical paths, broad behavioral spread, weak detection for important logic, hard rollback, or material ambiguity; unavailable history or coverage alone does not escalate |
+
+See the [Depth Tiers skill reference on GitHub](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/depth-tiers.md) for the full per-tier verification focus.
 
 ## Usage
 
-For an open pull request or merge request, invoke the **PR Review** prompt and optionally provide its number or URL. The prompt resolves the PR target and routes to Code Review with the target-independent `standard` profile. For branch diffs or local changes, select **Code Review** from the agent picker. Then confirm the target and scope, adjust the recommended perspectives, and choose a depth tier.
+Select **Code Review** from the agent picker. For an open pull request or merge request, optionally provide its number or URL; the agent resolves the target and applies the target-independent `standard` profile unless you choose another. Then confirm the target and scope, adjust the recommended perspectives, and choose a depth tier.
 
 ### Story Reference
 
@@ -213,7 +230,7 @@ Pass a work item reference (for example, `AB#456` or `AIAA-123`) when you start 
 
 ### Pull Request and Base Branch
 
-The PR Review prompt accepts an explicit PR or MR number or URL. Without one, the agent first looks for an open PR or MR mapped from the current branch. If none exists, it compares the current branch against the resolved default base. Supply a different base branch (for example, `baseBranch=origin/develop`) when your branch targets another base.
+The agent accepts an explicit PR or MR number or URL. Without one, it first looks for an open PR or MR mapped from the current branch. If none exists, it compares the current branch against the resolved default base. Supply a different base branch (for example, `baseBranch=origin/develop`) when your branch targets another base.
 
 Check out the PR or branch head before starting the review. The agent compares checked-out `HEAD` with the resolved target head SHA and stops on mismatch instead of reviewing another checkout under the requested target's metadata. Before native emission, it verifies again that the target is open and its base, head, and head SHA are unchanged.
 

@@ -3,6 +3,8 @@ title: SSSC Planning
 description: Supply chain security assessment agent that guides teams through capability inventory, OpenSSF standards mapping, gap analysis, and backlog generation using a structured six-phase workflow
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: SSSC Planning"
 keywords:
   - supply chain security
   - OpenSSF Scorecard
@@ -14,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-13
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -97,14 +99,14 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 ## Entry Modes
 
-The SSSC Planner supports four entry modes, each matched to a prompt file.
+The SSSC Planner supports four entry modes. Select the SSSC Planner agent and describe your starting point, or use the SSSC Planner handoff from a Security Planner session; the agent resolves the mode from your request, supplied artifacts, or the handoff.
 
-| Mode               | Prompt                    | Starting point                                             |
-|--------------------|---------------------------|------------------------------------------------------------|
-| Capture            | `sssc-capture`            | Starts a blank Phase 1 interview to gather scope directly  |
-| From-PRD           | `sssc-from-prd`           | Seeds Phase 1 from PRD artifacts found in the workspace    |
-| From-BRD           | `sssc-from-brd`           | Seeds Phase 1 from BRD artifacts found in the workspace    |
-| From-Security-Plan | `sssc-from-security-plan` | Seeds Phase 1 from an existing Security Planner state file |
+| Mode               | How to start                                         | Starting point                                             |
+|--------------------|------------------------------------------------------|------------------------------------------------------------|
+| Capture            | Describe the repository, optionally with prior notes | Starts a blank Phase 1 interview to gather scope directly  |
+| From-PRD           | Ask to start from your product requirements          | Seeds Phase 1 from PRD artifacts found in the workspace    |
+| From-BRD           | Ask to start from your business requirements         | Seeds Phase 1 from BRD artifacts found in the workspace    |
+| From-Security-Plan | Ask to extend a completed security plan              | Seeds Phase 1 from an existing Security Planner state file |
 
 ## When to Use
 
@@ -128,10 +130,16 @@ The SSSC Planner supports four entry modes, each matched to a prompt file.
 
 ## Prerequisites
 
-* The SSSC Planner agent installed and enabled in your VS Code workspace.
-* The `rpi-research` skill available for WAF and CAF runtime lookups.
+* HVE Core installed in one of these hosts:
+  * VS Code with GitHub Copilot Chat and the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD/From-BRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 * For From-Security-Plan mode: A completed Security Planner state file.
+
+Either install delivers the SSSC Planner with the skills it uses, including `supply-chain-security` for assessment references and `rpi-research` for WAF and CAF runtime lookups.
+There is no separate security extension.
+In Copilot CLI, plugin instructions are not auto-applied, and the SSSC Planner relies on its auto-applied instructions; see [Instructions are not auto-applied from plugins](../../getting-started/methods/cli-plugins.md#instructions-are-not-auto-applied-from-plugins).
+To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the SSSC Planner agent, the `supply-chain-security` and `rpi-research` skills (plus `vex` for VEX planning), the security `sssc-planner` instructions, and the shared `coaching-patterns` and `disclaimer-language` instructions.
 
 ## Next Steps
 

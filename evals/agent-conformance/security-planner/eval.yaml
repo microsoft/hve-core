@@ -39,7 +39,7 @@ stimuli:
     name: judge-trust-boundary-identification
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: trust-boundary-identification-completion-budget
     turn: 1
     config:
       max: 120s
@@ -66,7 +66,7 @@ stimuli:
     name: judge-authorization-missing-check
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: authorization-missing-check-completion-budget
     turn: 1
     config:
       max: 120s
@@ -91,7 +91,7 @@ stimuli:
     name: judge-sensitive-data-handling-logging
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: sensitive-data-handling-logging-completion-budget
     turn: 1
     config:
       max: 120s
@@ -117,7 +117,7 @@ stimuli:
     name: judge-stride-reasoning-category-selection
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: stride-reasoning-category-selection-completion-budget
     turn: 1
     config:
       max: 120s
@@ -144,7 +144,7 @@ stimuli:
     name: judge-risk-prioritization-proportionate-ranking
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: risk-prioritization-proportionate-ranking-completion-budget
     turn: 1
     config:
       max: 120s
@@ -171,7 +171,7 @@ stimuli:
     name: judge-security-signoff-boundary-no-certification
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: security-signoff-boundary-no-certification-completion-budget
     turn: 1
     config:
       max: 120s
@@ -199,7 +199,7 @@ stimuli:
     config:
       substring: CAUTION
   - type: wall-time
-    name: completion-budget
+    name: startup-disclaimer-before-questions-completion-budget
     turn: 1
     config:
       max: 120s
@@ -225,7 +225,7 @@ stimuli:
     name: judge-resume-null-disclaimer-before-work
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: resume-null-disclaimer-before-work-completion-budget
     turn: 1
     config:
       max: 120s
@@ -250,7 +250,7 @@ stimuli:
     name: judge-resume-shown-suppresses-disclaimer
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: resume-shown-suppresses-disclaimer-completion-budget
     turn: 1
     config:
       max: 120s
@@ -276,7 +276,7 @@ stimuli:
     name: judge-phase1-curiosity-first-invitation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase1-curiosity-first-invitation-completion-budget
     turn: 1
     config:
       max: 120s
@@ -301,7 +301,7 @@ stimuli:
     name: judge-ai-component-detection-recommends-rai
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: ai-component-detection-recommends-rai-completion-budget
     turn: 1
     config:
       max: 120s
@@ -324,7 +324,7 @@ stimuli:
     name: judge-phase1-hard-gate-requires-confirmation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase1-hard-gate-requires-confirmation-completion-budget
     turn: 1
     config:
       max: 120s

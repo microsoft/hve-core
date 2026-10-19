@@ -6,7 +6,7 @@ compatibility: 'Requires FFmpeg on PATH'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-03-18"
+  last_updated: "2026-09-27"
 ---
 
 # Video-to-GIF Conversion Skill
@@ -104,18 +104,23 @@ Use `--tonemap` to select the tonemapping algorithm:
 
 ## Parameters Reference
 
-| Parameter    | Flag (bash)      | Flag (PowerShell) | Default      | Description                    |
-|--------------|------------------|-------------------|--------------|--------------------------------|
-| Input file   | `--input`        | `-InputPath`      | (required)   | Source video file path         |
-| Output file  | `--output`       | `-OutputPath`     | `input.gif`  | Destination GIF file path      |
-| Frame rate   | `--fps`          | `-Fps`            | 10           | Frames per second              |
-| Width        | `--width`        | `-Width`          | 1280         | Output width in pixels         |
-| Dithering    | `--dither`       | `-Dither`         | sierra2_4a   | Dithering algorithm            |
-| Tonemapping  | `--tonemap`      | `-Tonemap`        | hable        | HDR tonemapping algorithm      |
-| Skip palette | `--skip-palette` | `-SkipPalette`    | false        | Use single-pass mode           |
-| Start time   | `--start`        | `-Start`          | 0            | Start time in seconds          |
-| Duration     | `--duration`     | `-Duration`       | (full video) | Duration to convert in seconds |
-| Loop count   | `--loop`         | `-Loop`           | 0            | GIF loop count (0 = infinite)  |
+| Parameter    | Flag (bash)                  | Flag (PowerShell) | Default      | Description                                 |
+|--------------|------------------------------|-------------------|--------------|---------------------------------------------|
+| Input file   | `--input`                    | `-InputPath`      | (required)   | Source video file path                      |
+| Output file  | `--output`                   | `-OutputPath`     | `input.gif`  | Destination GIF file path                   |
+| Frame rate   | `--fps`                      | `-Fps`            | 10           | Frames per second                           |
+| Width        | `--width`                    | `-Width`          | 1280         | Output width in pixels                      |
+| Dithering    | `--dither`                   | `-Dither`         | sierra2_4a   | Dithering algorithm                         |
+| Tonemapping  | `--tonemap`                  | `-Tonemap`        | hable        | HDR tonemapping algorithm                   |
+| Skip palette | `--skip-palette`             | `-SkipPalette`    | false        | Use single-pass mode                        |
+| Start time   | `--start`                    | `-Start`          | 0            | Start time in seconds                       |
+| Duration     | `--duration`                 | `-Duration`       | (full video) | Duration to convert in seconds              |
+| Loop count   | `--loop`                     | `-Loop`           | 0            | GIF loop count (0 = infinite)               |
+| Timeout      | `VIDEO_TO_GIF_TIMEOUT` (env) | `-TimeoutSeconds` | 600          | Seconds allowed for each ffprobe/ffmpeg run |
+
+The output path must differ from the input path. Both scripts refuse to run when the output resolves to the input, which includes the default output for a `.gif` input, so pass an explicit output path in that case. An existing file at a different output path is overwritten.
+
+Each ffprobe and ffmpeg invocation is stopped when it exceeds the timeout. When the HDR probe fails or times out, the input is treated as SDR and conversion continues.
 
 ### Frame Rate (FPS)
 

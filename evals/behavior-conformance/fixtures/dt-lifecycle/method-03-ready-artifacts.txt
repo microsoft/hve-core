@@ -1,0 +1,9 @@
+# Synthetic Method 3 Artifact Inventory
+
+Evidence classification: observed synthetic session output
+
+* Persona: synthetic maintenance coordinator
+* Journey map: synthetic request-to-handoff flow
+* Point of view: the synthetic coordinator needs visible handoff state because status ambiguity causes avoidable rework
+
+No participant, customer, credential, or live-system data is present.

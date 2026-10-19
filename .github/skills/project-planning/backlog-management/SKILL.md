@@ -1,13 +1,13 @@
 ---
 name: backlog-management
-description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality."
+description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality, and for Azure DevOps pull request creation and build status or log retrieval."
 license: MIT
 user-invocable: false
 compatibility: "Hosts: vscode, github-coding-agent. Reference-only conventions; the consuming skill supplies tracker access."
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-08-01"
+  last_updated: "2026-10-02"
 ---
 
 # Backlog Management

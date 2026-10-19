@@ -692,7 +692,7 @@ def _evaluate_containment_geometry(
             f"widget (x={x}, y={y}) is outside parent area "
             + f"(width={width}, height={height}); parentId is correct but "
             + "the widget will render off-area — see geometry rules in "
-            + "mural-seeding-patterns.instructions.md"
+            + "the Mural skill references/seeding-patterns.md"
         ),
     )
 
@@ -753,7 +753,7 @@ def _verify_parent_containment(
                 f"{chain_ids} do not contain expected area "
                 f"{expected_parent_id!r}; the Mural API may have ignored "
                 "parentId for this widget type — see probe-before-bulk in "
-                "mural-seeding-patterns.instructions.md"
+                "the Mural skill references/seeding-patterns.md"
             ),
         }
     geometry_verdict, geometry_detail = _evaluate_containment_geometry(
@@ -1356,7 +1356,7 @@ def _bulk_update_widgets(
     updates: list[dict[str, Any]],
     *,
     atomic: bool = False,
-    require_author_tag: bool = False,
+    require_author_tag: bool = True,
     force_human: bool = False,
 ) -> dict[str, Any]:
     """PATCH a batch of widgets concurrently and return a result envelope.
@@ -1417,7 +1417,7 @@ def _cmd_widget_update_bulk(args: argparse.Namespace) -> int:
         mural_id,
         updates,
         atomic=bool(getattr(args, "atomic", False)),
-        require_author_tag=bool(getattr(args, "require_author_tag", False)),
+        require_author_tag=True,
         force_human=bool(getattr(args, "force_human", False)),
     )
     return _pkg()._emit_record(result, args)

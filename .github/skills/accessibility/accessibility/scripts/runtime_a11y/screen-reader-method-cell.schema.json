@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/accessibility/screen-reader-method-cell.schema.json",
+  "title": "Capability-to-evidence method cell mapping",
+  "description": "Closed mapping from a product-neutral case capability and state to the one execution and evidence family that can decide it. Deterministic browser and representative assistive-technology methods occupy separate cells and cannot substitute for each other.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "catalogId", "bindingProfileId", "cells", "uncovered"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1.0.0" },
+    "catalogId": { "$ref": "#/$defs/id" },
+    "bindingProfileId": { "$ref": "#/$defs/id" },
+    "cells": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cell" }
+    },
+    "uncovered": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/obligation" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "method": { "enum": ["playwright", "real-at"] },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caseId", "executionId", "state", "capability", "method", "probe", "resultSource", "stateProof"],
+      "properties": {
+        "caseId": { "$ref": "#/$defs/id" },
+        "executionId": { "$ref": "#/$defs/id" },
+        "state": { "$ref": "#/$defs/id" },
+        "capability": { "$ref": "#/$defs/id" },
+        "method": { "$ref": "#/$defs/method" },
+        "probe": { "$ref": "#/$defs/id" },
+        "resultSource": { "enum": ["browser-state", "accessibility-tree", "action-speech", "cumulative-speech"] },
+        "stateProof": { "enum": ["required", "not-required"] }
+      }
+    },
+    "obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caseId", "state", "capability", "method", "reason"],
+      "properties": {
+        "caseId": { "$ref": "#/$defs/id" },
+        "state": { "$ref": "#/$defs/id" },
+        "capability": { "$ref": "#/$defs/id" },
+        "method": { "$ref": "#/$defs/method" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -28,15 +28,17 @@ Orchestrates documentation audit, drift, authoring, and validation work through 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use Documentation to audit coverage, inspect code-to-documentation drift, author a guide or reference page, or validate documentation. It routes the selected mode through the documentation skill. Formal accessibility, security, and responsible-AI assessments belong with their specialist planners.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `Documentation` and name `audit`, `drift`, `author`, or `validate`, together with target paths and the focus area.
+2. For authoring, specify a guide or reference template and output path. For drift or validation, state whether changes are prohibited.
+3. Review the resulting evidence, draft, or validation results and any unresolved discovery needs. Drift mode stays read-only.
+4. Treat unavailable CI-owned checks separately from local results; a generic validation request does not authorize browser installation, services, or credentials.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Use drift mode to compare `src/importer` with `docs/importing.md`. Report outdated behavior and missing examples without editing either path."
+
+Expect a focused code-to-documentation comparison with evidence and recommended corrections. Success means each proposed change follows the current source contract and any missing evidence is recorded instead of converted into invented documentation.

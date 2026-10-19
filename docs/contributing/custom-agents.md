@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-09-23
 ms.topic: how-to
 keywords:
   - contributing
@@ -111,12 +111,12 @@ When a stable model is needed, select a responsibility profile first (High, Medi
 
 ```yaml
 # Low profile: bounded, literal, mechanical execution
-model: GPT-5.6 Luna (copilot)
+model: GPT-6 Luna (copilot)
 ```
 
 ```yaml
 # Medium profile: semantic discovery, authoring, or calibrated review
-model: GPT-5.6 Terra (copilot)
+model: GPT-6 Sol (copilot)
 ```
 
 ```yaml

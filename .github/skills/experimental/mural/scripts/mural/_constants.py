@@ -119,9 +119,15 @@ ENV_XDG_CONFIG_HOME = "XDG_CONFIG_HOME"
 # refresh token is stored persistently per-profile alongside client_id and
 # client_secret so keyring-backed deployments can retain authentication
 # state across processes without an env file.
+#
+# Entries are literal key names rather than references to ENV_CLIENT_ID and
+# ENV_CLIENT_SECRET. CodeQL classifies values read from a secret-named variable
+# as sensitive, so referencing ENV_CLIENT_SECRET would flag the bare key name
+# reported in logout's ``removed_keys`` as clear-text secret logging. Tests pin
+# these literals to the ENV_* constants.
 _KNOWN_CREDENTIAL_KEYS: tuple[str, ...] = (
-    ENV_CLIENT_ID,
-    ENV_CLIENT_SECRET,
+    "MURAL_CLIENT_ID",
+    "MURAL_CLIENT_SECRET",
     "MURAL_REFRESH_TOKEN",
 )
 

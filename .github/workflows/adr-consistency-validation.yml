@@ -5,6 +5,21 @@ name: ADR Consistency Validation
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or run full validation'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       soft-fail:
         description: 'Whether to continue on ADR consistency violations'
         required: false
@@ -43,18 +58,38 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Check ADR changes
         id: detect
         shell: pwsh
+        env:
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+          INPUT_HEAD_SHA: ${{ inputs.head-sha }}
         run: |
-          if ('${{ inputs.changed-files-only }}' -ne 'true') {
+          if ('${{ inputs.changed-files-only }}' -ne 'true' -or $env:INPUT_CHANGE_MODE -eq 'full') {
             'has-adr-changes=true' >> $env:GITHUB_OUTPUT
             Write-Output 'ADR validation requested for all configured ADR files.'
           } else {
-            $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
-            $changed = @(git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- docs/planning/adrs |
+            if ($env:INPUT_CHANGE_MODE -ne 'range' -or -not $env:INPUT_BASE_SHA -or -not $env:INPUT_HEAD_SHA) {
+              throw 'Range mode requires immutable base and head commit IDs.'
+            }
+            $changed = @(git diff --name-only --diff-filter=ACMR "$env:INPUT_BASE_SHA..$env:INPUT_HEAD_SHA" -- docs/planning/adrs |
               Where-Object { $_ -match '^docs/planning/adrs/.+\.md$' })
+            if ($LASTEXITCODE -ne 0) { throw 'Unable to compute the immutable workflow range.' }
 
             if ($changed.Count -gt 0) {
               'has-adr-changes=true' >> $env:GITHUB_OUTPUT
@@ -96,6 +131,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
@@ -103,17 +151,19 @@ jobs:
       - name: Run ADR consistency validation
         shell: pwsh
         continue-on-error: ${{ inputs.soft-fail }}
+        env:
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
-          $baseBranch = if ($env:GITHUB_BASE_REF) { "origin/$env:GITHUB_BASE_REF" } else { 'origin/main' }
           $params = @{
             Paths = @('docs/planning/adrs')
-            BaseBranch = $baseBranch
             OutputPath = 'logs/adr-consistency-results.json'
           }
 
-          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+          if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'range') {
             $params['ChangedFilesOnly'] = $true
+            $params['BaseBranch'] = $env:INPUT_BASE_SHA
           }
 
           if ('${{ inputs.upload-sarif }}' -eq 'true') {

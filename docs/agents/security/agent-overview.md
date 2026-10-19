@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-02
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -79,8 +79,8 @@ The state file tracks 21 fields across scoping, analysis, and handoff concerns.
 | `context`                | object   | Tech stack, deployment model, data classification, compliance |
 | `referencesProcessed`    | string[] | Paths to PRD/BRD artifacts that were consumed                 |
 | `nextActions`            | string[] | Pending actions for the current or next phase                 |
-| `disclaimerShownAt`      | string   | ISO 8601 timestamp when the disclaimer was shown, or null     |
-| `noticeLog`              | object[] | Audit log of disclaimers, attributions, and review reminders  |
+| `disclaimerShownAt`      | string   | ISO 8601 time the full disclaimer was last shown, or null     |
+| `noticeLog`              | object[] | Immutable record of every disclaimer/attribution display      |
 | `userPreferences`        | object   | Autonomy preference: `guided`, `partial`, or `full`           |
 | `raiEnabled`             | boolean  | Whether AI/ML components were detected                        |
 | `raiScope`               | string   | `none`, `embedded`, or `delegated`                            |
@@ -122,7 +122,6 @@ A five-step post-summarization recovery handles cases where conversation context
 | File type    | Location                                                     |
 |--------------|--------------------------------------------------------------|
 | Agent        | `.github/agents/security/security-planner.agent.md`          |
-| Prompts      | `.github/prompts/security/`                                  |
 | Instructions | `.github/instructions/security/`                             |
 | State        | `.copilot-tracking/security-plans/{project-slug}/state.json` |
 

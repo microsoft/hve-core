@@ -50,7 +50,7 @@
           "id": { "$ref": "#/$defs/artifactId" },
           "type": {
             "type": "string",
-            "enum": ["page", "component", "widget", "content-type", "global-chrome"]
+            "enum": ["page", "component", "widget", "content-type", "global-chrome", "presentation"]
           },
           "route": { "type": "string" },
           "selector": { "$ref": "#/$defs/selector" },
@@ -87,7 +87,8 @@
         "expectedAnnouncements": {
           "type": "array",
           "items": { "$ref": "#/$defs/expectedAnnouncement" }
-        }
+        },
+        "lifecycle": { "$ref": "#/$defs/screenReaderLifecycle" }
       },
       "additionalProperties": true
     },
@@ -142,6 +143,10 @@
                 "items": { "$ref": "#/$defs/trigger" }
               },
               "triggerAfterDriverStart": { "type": "boolean" },
+              "captureMode": {
+                "type": "string",
+                "enum": ["single", "clear-and-capture", "action"]
+              },
               "commands": {
                 "type": "array",
                 "items": { "$ref": "#/$defs/screenReaderAction" }
@@ -246,6 +251,7 @@
         },
         "value": { "type": "string" },
         "waitFor": { "$ref": "#/$defs/selector" },
+        "scope": { "type": "string", "enum": ["document"] },
         "description": { "type": "string" }
       },
       "additionalProperties": true
@@ -267,7 +273,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["command", "pause", "keyboard", "key", "perform", "type", "waitFor"]
+          "enum": ["command", "navigate", "pause", "keyboard", "key", "perform", "type", "waitFor"]
         },
         "value": { "type": "string", "minLength": 1 },
         "durationMs": { "type": "integer", "minimum": 0 }
@@ -283,12 +289,26 @@
     },
     "expectedAnnouncement": {
       "type": "object",
-      "required": ["type", "value"],
+      "required": ["type"],
       "properties": {
         "id": { "type": "string" },
-        "type": { "type": "string", "enum": ["contains", "matches", "orderedContains"] },
-        "value": { "type": "string" }
+        "type": { "type": "string", "enum": ["contains", "notContains", "matches", "orderedContains", "nodeMatches", "nodeAbsent"] },
+        "value": { "type": "string" },
+        "expected": { "type": "object", "minProperties": 1 },
+        "minCount": { "type": "integer", "minimum": 0 },
+        "maxCount": { "type": "integer", "minimum": 0 },
+        "evidenceType": {
+          "type": "string",
+          "enum": ["speech", "normalizedSpeech", "browserState", "accessibilityTree", "actionSpeech", "actionNormalizedSpeech"]
+        }
       },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "enum": ["nodeMatches", "nodeAbsent"] } } },
+          "then": { "required": ["expected"] },
+          "else": { "required": ["value"] }
+        }
+      ],
       "additionalProperties": true
     },
     "ariaAtOverride": {
@@ -305,6 +325,20 @@
       },
       "additionalProperties": true
     },
+    "screenReaderLifecycle": {
+      "type": "object",
+      "properties": {
+        "startAttempts": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "startRetryDelayMs": { "type": "integer", "minimum": 0, "maximum": 30000 },
+        "startTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 120000 },
+        "stopTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "stopSettleDelayMs": { "type": "integer", "minimum": 0, "maximum": 30000 },
+        "commandTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "captureTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "logTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 30000 }
+      },
+      "additionalProperties": false
+    },
     "realScreenReader": {
       "type": "object",
       "properties": {
@@ -315,7 +349,8 @@
         "expectedAnnouncements": {
           "type": "array",
           "items": { "$ref": "#/$defs/expectedAnnouncement" }
-        }
+        },
+        "lifecycle": { "$ref": "#/$defs/screenReaderLifecycle" }
       },
       "additionalProperties": true
     }

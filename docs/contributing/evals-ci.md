@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-05
+ms.date: 2026-10-12
 ms.topic: how-to
 keywords:
   - evals
@@ -66,21 +66,227 @@ env:
 
 This pattern keeps each eval job hermetic, prevents credential bleed-through between matrix legs, and avoids the deprecated `--config-dir` CLI flag.
 
+## Bounded Eval Execution
+
+Eval Validation creates `logs/agent-eval-plan.json` once before any model-backed
+work. The digest-covered plan records both changed-artifact manifest hashes,
+conditional baseline applicability, planned shards, artifact and run-key ownership,
+expected trial weights, and the complete producer set.
+
+Agent, instruction, and skill artifacts stay cohesive. Artifacts connected through one
+deduplicated run key remain in the same shard, and deterministic longest-first
+assignment balances each kind by selected stimuli multiplied by declared runs. Agent
+work uses at most four `ordinary-##` shards. Instruction and skill each use at most two
+`instruction-##` and `skill-##` shards. Prompt work retains one producer.
+
+The execution matrix therefore contains one prompt row plus the planned agent,
+instruction, and skill rows. `max-parallel: 6` bounds that matrix. Baseline equivalence
+runs only when the canonical plan marks `baseline.required: true`; its fixed GPT and
+Claude producers use separate runner filesystems and a configurable maximum
+parallelism of two.
+
+At default shard counts the matrix holds more rows than the cap allows to start at
+once, so some rows wait for a free slot. To keep the longest producers from waiting
+behind short ones, the planned rows are emitted heaviest first, ordered by the
+`expectedTrialWeight` the canonical plan already computes, with an ascending shard-id
+tie-break that keeps the emitted matrix reproducible. The static prompt row stays
+first. This ordering is workload-adaptive: whichever kind carries the most trial weight
+for a given change is dispatched first, without hardcoding a kind order.
+
+Treat that ordering as a scheduling heuristic rather than a guarantee. Matrix order
+determines the order in which jobs are *created*, but GitHub does not guarantee the
+order in which matrix jobs run, and expected trial weight predicts runtime only
+loosely because retries and per-trial variance are not modeled. Judge the benefit from
+the queue phase described under [Hosted Measurement](#hosted-measurement) rather than
+assuming a fixed speedup.
+
+Every producer validates the plan identity it consumes. Ordinary shards verify exact
+kind, plan and manifest digests, artifact ownership, and run-key ownership before
+invoking Vally. Baseline producers verify their model is present in the signed plan and
+stamp its digest into their evidence envelope.
+
+## Authoritative Fan-In
+
+The baseline fan-in validates one current-run envelope for each required fixed model
+and computes the combined verdict through the shared baseline aggregation function.
+The global fan-in then requires every planned ordinary producer, the prompt producer,
+and the combined baseline summary when applicable. Missing, duplicate, unexpected,
+unparseable, wrong-kind, digest-mismatched, artifact-incomplete, or run-key-incomplete
+evidence fails closed.
+
+`eval-report` is presentation-only. It downloads the single `eval-authoritative`
+artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
+or decide whether evidence is complete.
+
+The per-artifact table includes `Input tokens / trial` and `Cache-read tokens / trial`
+columns. Each value is the artifact's summed token count divided by the trials that
+reported usage, taken from Vally's native `trajectory.metrics.tokenUsage` for the
+selected attempt of each spec. The columns are advisory and never gate a pull request.
+Model-backed trials vary from run to run, so compare a value against several runs
+rather than one. A dash means no trial reported usable token counts, or the summary
+predates token reporting.
+
+The token columns never fail a pull request. Cold-start growth is enforced statically
+instead: `npm run lint:cold-start` and its Pester suite sum each planning-chain agent's
+file, recursive `#file:` imports, and always-on instructions against the budgets in
+`scripts/linting/agent-cold-start-budgets.json`, and fail when a set exceeds its ceiling.
+This replaces the retired activation harness, which gated only the ADR Creator.
+
+## Advisory Model Lanes
+
+The `equivalence-advisory` job reports how additional models behave on the
+baseline-equivalence suite without gating the pull request. It currently runs Microsoft
+`mai-code-1.1-flash`.
+
+* When it runs: under the same conditions as the gating baseline model lanes, and in
+  parallel with them.
+* What it runs: the equivalence driver in the advisory `devloop` tier with
+  `-Model mai-code-1.1-flash`, `-NoBaselineCache`, and the shared `compare-shard-count`.
+  The model runs at its default reasoning and context settings because GitHub does not
+  list it among models with configurable reasoning or the extended context window.
+* Why it never gates: the job is `continue-on-error`, no fan-in lists it in `needs`, and
+  its artifact name matches no fan-in download pattern. MAI models also receive new
+  checkpoints over time, so their behavior can change independently of this repository.
+* Where results appear: the job's step summary lists the verdict, gate, and key counts,
+  and the `advisory-equivalence-mai` artifact holds only the summary JSON.
+
+To add a model, add a matrix entry to `equivalence-advisory` and confirm the model is listed
+in `scripts/linting/model-catalog.json`; the workflow contract tests reject an uncatalogued
+model. If a parallel advisory lane causes judge errors in the gating lanes, add
+`equivalence-execute` to the advisory job's `needs` so it runs after them. To stop the advisory
+lanes without a workflow edit, set the reusable workflow input `advisory-equivalence` to
+`false`; see Rollback Controls.
+
+## Trusted Progress
+
+Vally stdout and stderr can contain prompts, responses, trajectories, arbitrary errors,
+or environment content. The process wrapper drains both streams asynchronously to
+withheld runner-local files and never replays raw lines to public workflow output.
+
+While a phase is active, logs expose only these bounded fields:
+
+* Event: `phase-start`, `heartbeat`, or `phase-complete`
+* Phase: one declared eval phase such as `ordinary-eval`, `baseline-eval`, or `compare`
+* Sanitized worker identifier. A baseline compare shard reports `<model>:compare-NN`.
+* Attempt number
+* Elapsed seconds
+* Fixed exit category
+
+The default heartbeat interval is 60 seconds. Aggregate summaries carry diagnostic
+`phaseTimings`, with one compare entry per shard attempt; timing does not affect
+evaluation verdicts. A compare shard worker that fails before a process result exists
+records the fixed category `worker-error`.
+
+## Rollback Controls
+
+The reusable workflow inputs change scheduling without changing evidence semantics:
+
+| Input                     | Normal value | Rollback value | Effect                                                      |
+|---------------------------|--------------|----------------|-------------------------------------------------------------|
+| `ordinary-shard-count`    | `4`          | `1`            | Uses the same planner and runner with one agent shard       |
+| `instruction-shard-count` | `2`          | `1`            | Uses the same planner and runner with one instruction shard |
+| `skill-shard-count`       | `2`          | `1`            | Uses the same planner and runner with one skill shard       |
+| `baseline-max-parallel`   | `2`          | `1`            | Serializes the same isolated baseline model producers       |
+| `compare-shard-count`     | `7`          | `1`            | Runs one serial `vally compare` per baseline model producer |
+| `advisory-equivalence`    | `true`       | `false`        | Skips the non-gating advisory model lanes                   |
+
+Each baseline model producer splits its comparison into `compare-shard-count`
+stimulus-disjoint `vally compare` shards that run concurrently and are merged into one
+comparison file before tallying. A shard that exits nonzero without any comparison
+record is retried once. The rollback value keeps that retry and runs a single compare
+over the run directories.
+
+The single-process fixed-pair baseline driver remains a deterministic aggregation
+oracle for local tests. It is not a second production rollback path.
+
+Run the deterministic and policy checks before changing the scheduling defaults:
+
+```pwsh
+npm run test:ps -- -TestPath scripts/tests/evals/
+npm run lint:ps
+npm run lint:yaml
+npm run lint:permissions
+npm run lint:workflow-runner
+npm run lint:dangerous-workflow
+npm run lint:dependency-pinning
+npm run lint:pr-gate
+```
+
+Model-backed canaries additionally require `COPILOT_GITHUB_TOKEN` and the CI-owned
+moderation environment. Record unavailable credential-backed checks as pending CI.
+
+### Hosted Measurement
+
+Compare one-shard control and two-shard treatment runs only when their plan manifest
+digests, target artifact and run-key sets, model, declared trials, and policy version
+match. Separate these intervals rather than inferring improvement from job duration:
+
+* Queue: job creation to runner start
+* Setup: runner start to `Execute evals`
+* Execution: `Execute evals` start to completion
+* Post-execution: execution completion to producer job completion
+* Fan-in: authoritative fan-in queue and execution
+* Reporting: report queue and execution
+
+Use aggregate `phaseTimings` to attribute worker attempts and moderation, not as a
+substitute for GitHub job timestamps. Sum-of-trial `durationMs` can exceed elapsed job
+time when Vally runs trials concurrently.
+
+Across the first ten qualifying treatment runs and a comparable one-shard control
+cohort, the target is at least a 25 percent reduction in median queue-excluded target
+producer critical interval and at least a 10 percent reduction in median run-creation-
+to-report time. Fan-in plus reporting should remain within 15 seconds of the control
+median, and per-shard setup should remain within 15 seconds of its control-kind median.
+
+Roll back instruction and skill shard counts to `1` when fan-in reports a contract
+failure, merge behavior changes advisory or authoritative outcomes, aggregate-only
+output boundaries are violated, queue or unknown-attempt rates repeatedly regress, or
+the treatment misses either performance target after ten qualifying runs. Keep the
+generalized planner and fan-in active during rollback so evidence semantics do not
+change with scheduling.
+
 ## Fork PR Policy
 
 GitHub Actions does not expose repository secrets to workflows triggered by pull requests from forks. Without `COPILOT_GITHUB_TOKEN`, the `eval-execute` job cannot succeed.
 
-The pipeline clean-skips eval execution for fork PRs rather than failing the check:
+The credential boundary uses an allowlist at two layers. The `pr-validation.yml` caller passes the token only for manual dispatch and same-repository pull requests, and passes an empty value for merge groups, fork pull requests, and every other event:
+
+```yaml
+secrets:
+  copilot-github-token: ${{ (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) && secrets.COPILOT_GITHUB_TOKEN || '' }}
+```
+
+Each job in `eval-validation.yml` that uses the token, or needs a job that does, repeats the same-repository check in its condition, so the pipeline clean-skips eval execution for fork PRs rather than failing the check:
 
 ```yaml
 jobs:
   eval-execute:
-    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
+    if: >-
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch')
 ```
+
+Compare the head repository's `full_name` with `github.repository` instead of using a `fork == false` check. GitHub expressions coerce both `null` and `false` to `0` before comparing, so a `fork == false` check passes when the head repository is missing, for example after a fork is deleted. The `full_name` comparison fails closed in that case.
+
+The `Eval credential boundary` tests in `scripts/tests/security/Test-MergeQueueWorkflowContract.Tests.ps1` evaluate both layers for trusted and untrusted events and fail when a token job lacks the check.
 
 The `eval-execute` job is also skipped for non-eval-relevant PRs (those that change only documentation or other non-AI-artifact paths) through the `eval-relevant` output gate, independent of the fork policy.
 
 The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require no secrets. Structural problems with eval specs (missing coverage, schema violations, profanity in stimulus text) surface immediately. Eval execution itself runs only after a maintainer merges the fork branch into a trusted topic branch on the upstream repository.
+
+## Merge Groups and Full-Mode Validation
+
+The eval lane receives one change-range decision from `pr-validation.yml`. In range mode, it validates the exact resolved commits. Full mode occurs when the resolver cannot prove a range, so the lane validates everything it can without the token, and fails instead of skipping the steps that need a proven range.
+
+| Run                             | Content moderation                             | Agent-eval selection and execution                                                        |
+|---------------------------------|------------------------------------------------|-------------------------------------------------------------------------------------------|
+| Pull request or manual dispatch | Changed artifacts plus every eval spec         | Runs for eligible changes; dispatch resolves against `main` and needs commits ahead of it |
+| Merge group                     | Changed artifacts plus every eval spec         | Skipped; merge groups never receive `COPILOT_GITHUB_TOKEN`                                |
+| Any run in full mode            | Every tracked AI artifact plus every eval spec | Fails for eligible pull requests and manual dispatch; merge groups and forks still skip   |
+
+Merge groups run relevance, lint, and content moderation unprivileged. A full-mode failure in agent-eval selection means the change-range job could not verify a non-empty range. A manual dispatch from the `main` tip, or from a branch with no commits ahead of `main`, has no range to verify and always takes this path; dispatch from a branch with changes instead. Otherwise, investigate the change-range job before rerunning.
 
 ## Published Artifacts and the Transcript Boundary
 
@@ -94,6 +300,8 @@ Eval artifacts therefore publish aggregate results only. These paths are deliber
 | `logs/vally-compare-*.log`       | Raw judge-run output                               |
 
 What is still published covers the summaries that drive the gate and the per-artifact debugging payloads: `logs/eval-summary.json`, `logs/eval-results-*.json`, `logs/baseline-equivalence-*.json`, and the changed-artifact and stimulus-presence manifests. None of these embed model output.
+
+To narrow a failed program grader without a transcript, read its bounded `failureCodes` under `perSpec[].diagnostics.attempts[].trials[].graders[]` in `eval-summary.json`. Only codes from a fixed per-grader vocabulary are published; the [agent-behavior suite guide](https://github.com/microsoft/hve-core/blob/main/evals/agent-behavior/README.md#program-grader-failure-codes) lists the outcome grader's field codes.
 
 The cost is that inspecting what an agent actually said during a failed run means re-running it rather than downloading the artifact. Do not re-add the withheld paths to make debugging easier.
 
@@ -109,7 +317,8 @@ Steps to add coverage:
 4. Run the presence check locally to confirm the artifact is covered:
 
    ```pwsh
-   pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
+   pwsh scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/eval-change-set.json
+   pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
    pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json
    ```
 
@@ -117,8 +326,7 @@ Steps to add coverage:
 
    ```pwsh
    pwsh scripts/evals/Get-ChangedSpecStimulus.ps1 `
-     -BaseRef origin/main `
-     -HeadRef HEAD `
+     -ChangeSetPath logs/eval-change-set.json `
      -OutFile logs/changed-spec-stimuli.json
    pwsh scripts/evals/Test-CopilotToken.ps1 -SmokeTest
    pwsh scripts/evals/Invoke-VallyEvals.ps1 `
@@ -164,7 +372,8 @@ The `-FailOnSpecError` switch promotes recoverable YAML parse failures to a hard
 Run the linter locally before pushing artifact changes:
 
 ```pwsh
-pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
+pwsh scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/eval-change-set.json
+pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
 pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json -FailOnSpecError
 ```
 
@@ -187,22 +396,24 @@ The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeri
 
 Content moderation runs in two complementary CI lanes, each scoped to a different surface.
 
-| Lane              | Job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                  | Surface                                                                   |
-|-------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
-| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)             | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
-| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](../../scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`)   | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
+| Lane                   | Job in [`eval-validation.yml`](../../.github/workflows/eval-validation.yml) | Script                                                                                           | Toolchain                                  | Surface                                                                   |
+|------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
+| Markdown corpus        | `eval-validation`                                                           | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)                 | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
+| Eval specs + artifacts | `content-moderation`                                                        | [scripts/evals/Invoke-ArtifactModeration.ps1](../../scripts/evals/Invoke-ArtifactModeration.ps1) | Python + Detoxify (`unbiased` by default)  | Every eval spec under `evals/` plus the AI artifacts changed in the PR    |
 
-The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
+The two lanes use different checkers: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the moderation lane scores every eval spec, plus the AI artifacts changed in the PR, against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
-The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
+The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), generates the changed-artifact manifest, then runs `npm run ci:eval:moderate:artifacts`.
 
-`Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
+`Invoke-ArtifactModeration.ps1` enumerates every eval spec under `evals/`, adds the changed AI artifacts from the changed-artifact manifest, and passes the de-duplicated file list to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for whole-file moderation.
+
+This lane applies one Detoxify threshold to every file (default `0.5`, set with `-Threshold`); the per-spec `moderation.threshold` field documented above is read by `Invoke-VallyEvals.ps1` for its pre-eval input moderation.
 
 Local opt-in for the Detoxify lane:
 
 ```pwsh
 uv sync --locked --project scripts/evals/moderation
-pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
+npm run ci:eval:moderate:artifacts
 ```
 
 Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs as the CI-owned `ci:eval:lint:text` lane without any moderation-environment opt-in.
@@ -213,12 +424,21 @@ The CI-owned eval-validation workflow runs the static eval-lint lanes. They are
 not part of `validate:local`; see [Validation Commands and CI-Owned Lanes](validation)
 for local reproduction prerequisites and output handling.
 
-| Script                | Tool                            | Purpose                                                             |
-|-----------------------|---------------------------------|---------------------------------------------------------------------|
-| `ci:eval:lint:vally`  | `vally lint --eval-spec evals/` | Spec validation via the upstream CLI                                |
-| `ci:eval:lint:schema` | `Test-EvalSpec.ps1`             | Schema lint, agent-behavior coverage, and orphaned-tag reachability |
-| `ci:eval:lint:text`   | `Test-EvalSpecText.ps1`         | retext-profanities + retext-equality gate on the AI-artifact corpus |
-| `ci:eval:lint:safety` | `Test-VallyTestSafety.ps1`      | Safety validation for eval stimuli                                  |
+| Script                     | Tool                                                                                                       | Purpose                                                                        |
+|----------------------------|------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `ci:eval:lint:vally`       | `Build-AgentBehaviorSpec.ps1 -WhatIf && npm run lint:eval-grader-lineage && vally lint --eval-spec evals/` | Spec validation via upstream CLI, chained with spec drift and grader lineage   |
+| `lint:eval-grader-lineage` | `Build-GraderLineageMap.ps1 -Check`                                                                        | Grader-name lineage across Vally migrations; chained into `ci:eval:lint:vally` |
+| `ci:eval:lint:schema`      | `Test-EvalSpec.ps1`                                                                                        | Schema lint, agent-behavior coverage, and orphaned-tag reachability            |
+| `ci:eval:lint:text`        | `Test-EvalSpecText.ps1`                                                                                    | retext-profanities + retext-equality gate on the AI-artifact corpus            |
+| `ci:eval:lint:safety`      | `Test-VallyTestSafety.ps1`                                                                                 | Safety validation for eval stimuli                                             |
+
+`lint:eval-grader-lineage` is not a standalone lane. `ci:eval:lint:vally` runs it between
+`Build-AgentBehaviorSpec.ps1 -WhatIf` (the agent-behavior spec drift check) and the
+vally CLI, so a drift or lineage failure fails that lane. With `-Check` it verifies the committed lineage
+JSON without changing it; given `-SourceRevision` and `-TargetRevision` it rebuilds the map
+between two reachable revisions. It pairs graders by source, stimulus, and a name-free behavior
+digest, and fails closed on unreachable history, provenance drift, ambiguous pairs, semantic
+changes, count drift, kind mismatches, duplicate result keys, or output drift.
 
 `ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` using separate `retext-equality` and `retext-profanities` processors. The `alex` package is no longer a dependency. Equality findings retain `source: alex` in the JSON report and emit `::warning` annotations by default; the source alias and `-FailOnAlex` name are retained for existing consumers.
 
@@ -232,7 +452,7 @@ Pass `-FailOnAlex` to promote only emitted equality findings to errors. It does 
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
 ```
 
-Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mjs` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
+Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mts` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
 
 `Test-EvalSpecText.ps1` exit codes:
 
@@ -277,7 +497,13 @@ When the lane reports an orphaned tag, either the tag is misspelled or the agent
 
 ### Baseline-equivalence specs
 
-`ci:eval:lint:vally` runs `vally lint --eval-spec evals/`, which scans recursively to a maximum depth of ten directory levels. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) ships its paired specs one level down (`baseline/eval.yaml` and `customized/eval.yaml`), so both are discovered by that sweep. Lint either one on its own when iterating on a single spec:
+`ci:eval:lint:vally` runs a three-step composition: it checks agent-behavior spec drift
+(`Build-AgentBehaviorSpec.ps1 -WhatIf`), verifies grader lineage mapping across migrations
+(`npm run lint:eval-grader-lineage` via `Build-GraderLineageMap.ps1 -Check`), and then runs
+`vally lint --eval-spec evals/`, which scans recursively to a maximum depth of ten directory
+levels. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md)
+ships its paired specs one level down (`baseline/eval.yaml` and `customized/eval.yaml`), so both
+are discovered by that sweep. Lint either one on its own when iterating on a single spec:
 
 ```pwsh
 vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml
@@ -299,7 +525,7 @@ Beyond the lint lanes, `scripts/evals/` holds the scripts that scope runs, moder
 | `Get-AgentDependencyMap.ps1`              | Run directly                                      | Builds a JSON map of agent dependencies for the baseline-equivalence dispatcher             |
 | `Update-AgentMatrixSummariesFromLogs.ps1` | Run directly                                      | Rebuilds per-agent matrix summaries from existing vally logs without re-running `npx vally` |
 
-`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest. Corpus moderation scores stimulus text inside eval specs; artifact moderation covers the specs plus the changed AI artifacts themselves, writing to a separate output file.
+`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest, each writing to its own output file. Artifact moderation covers every eval spec plus the changed AI artifacts and is the lane the `content-moderation` job runs; corpus moderation (`ci:eval:moderate:corpus`) strips frontmatter from the changed `.github/{agents,prompts,instructions,skills}/**/*.md` files and scores only their bodies.
 
 `ci:eval:agent:report` is the end-to-end convenience command: it runs `ci:eval:agent:matrix` and then `ci:eval:agent:dashboard`.
 

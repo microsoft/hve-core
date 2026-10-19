@@ -1,0 +1,72 @@
+{
+  "schema_version": "ev06-assurance/v1",
+  "fidelity": "LOCAL_TEST_DOUBLE",
+  "required_findings": [
+    {
+      "finding_id": "RAI-P08-G02-A081-C01",
+      "scenario_id": "EV06-A081-DOCTOR-GATE",
+      "families": ["NORMAL", "AUTHORITY_CONSENT", "FAIL_CLOSED", "EXTERNAL_WRITE", "RECOVERY_RESUME"],
+      "surfaces": ["doctor", "credential-backend", "oauth-callback"],
+      "assertions": ["verdict-precedence", "no-refresh", "zero-follow-on-calls"],
+      "baseline": "ABSENT"
+    },
+    {
+      "finding_id": "RAI-P08-G02-A082-C01",
+      "scenario_id": "EV06-A082-DESTINATION-ROUTING",
+      "families": ["NORMAL", "AUTHORITY_CONSENT", "FAIL_CLOSED", "EXTERNAL_WRITE", "RECOVERY_RESUME"],
+      "surfaces": ["registry", "dispatcher", "lifecycle"],
+      "assertions": ["explicit-destination", "explicit-action-intent", "single-adapter"],
+      "baseline": "ABSENT"
+    },
+    {
+      "finding_id": "RAI-P08-G02-A083-C01",
+      "scenario_id": "EV06-A083-HUMAN-GUARD",
+      "families": ["NORMAL", "AUTHORITY_CONSENT", "FAIL_CLOSED", "EXTERNAL_WRITE", "RECOVERY_RESUME"],
+      "surfaces": ["widget-update", "widget-delete", "widget-update-bulk"],
+      "assertions": ["default-denial", "explicit-override", "human-text-preserved"],
+      "baseline": "CONTRADICTED"
+    },
+    {
+      "finding_id": "RAI-P08-G02-A084-C01",
+      "scenario_id": "EV06-A084-REDACTION",
+      "families": ["NORMAL", "AUTHORITY_CONSENT", "FAIL_CLOSED", "EXTERNAL_WRITE", "RECOVERY_RESUME"],
+      "surfaces": ["stdout", "stderr", "log", "evidence"],
+      "assertions": ["credential-markers-redacted", "human-record-preserved"],
+      "baseline": "CONTRADICTED"
+    },
+    {
+      "finding_id": "RAI-P08-G02-A085-C01",
+      "scenario_id": "EV06-A085-SEEDING-RECOVERY",
+      "families": ["NORMAL", "AUTHORITY_CONSENT", "FAIL_CLOSED", "EXTERNAL_WRITE", "RECOVERY_RESUME"],
+      "surfaces": ["probe", "bulk", "occlusion", "recovery"],
+      "callers": ["dt-coach", "rai-planner", "ux-ui-designer"],
+      "assertions": ["parent-intent", "probe-short-circuit", "normalized-ledger"],
+      "baseline": "CONTRADICTED"
+    },
+    {
+      "finding_id": "RAI-P08-G02-A086-C01",
+      "scenario_id": "EV06-A086-WRITEBACK-GUARD",
+      "families": ["NORMAL", "AUTHORITY_CONSENT", "FAIL_CLOSED", "EXTERNAL_WRITE", "RECOVERY_RESUME"],
+      "surfaces": ["tags", "hyperlink", "parentId", "partial-failure"],
+      "assertions": ["metadata-only", "reserved-tags", "recovery-ledger"],
+      "baseline": "CONTRADICTED"
+    },
+    {
+      "finding_id": "RAI-P08-G02-A087-C01",
+      "scenario_id": "EV06-A087-HYDRATION-ROUTING",
+      "families": ["NORMAL", "ROUTING"],
+      "surfaces": ["hierarchy", "tags", "spatial", "lineage", "authorship"],
+      "destinations": ["backlog-item", "instructions-file", "adr", "living-document", "powerpoint-deck", "next-workshop-seed", "unactioned"],
+      "assertions": ["destination-fields", "source-text-unchanged", "partial-explicit"],
+      "baseline": "CONTRADICTED"
+    },
+    {
+      "finding_id": "RAI-P08-G04-A191-C01",
+      "scenario_id": "EV06-A191-SCOPE-DISPATCH",
+      "families": ["NORMAL", "AUTHORITY_CONSENT", "FAIL_CLOSED", "EXTERNAL_WRITE", "RECOVERY_RESUME"],
+      "surfaces": ["command-dispatch", "azure-blob-sas-upload"],
+      "assertions": ["all-required-scopes", "zero-handler-calls", "redirect-refusal"],
+      "baseline": "CONTRADICTED"
+    }
+  ]
+}

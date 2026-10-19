@@ -60,7 +60,6 @@ from ._constants import (
     DEFAULT_PROFILE_NAME,
     DEFAULT_REDIRECT_URI,
     ENV_CLIENT_ID,
-    ENV_CLIENT_SECRET,
     ENV_NONINTERACTIVE,
     ENV_PROFILE,
     ENV_SCOPES,
@@ -88,6 +87,82 @@ from ._exceptions import (
 def _pkg() -> Any:
     """Return the live ``mural`` package module for facade-routed patching."""
     return sys.modules[__package__]
+
+
+# Backend key that holds a long-lived OAuth refresh token. Client ID and client
+# secret share the backend but are app configuration, not a session.
+_SESSION_BACKEND_KEY = "MURAL_REFRESH_TOKEN"
+
+
+def _backend_has_refresh_token(profile_name: str) -> bool:
+    """Return True when the keyring or credential file holds a refresh token.
+
+    Both persistent backends are probed regardless of the selected backend so a
+    stale copy in the non-selected backend still counts. An unavailable keyring
+    contributes False. Raises :class:`MuralError` when the credential file
+    exists but cannot be read.
+    """
+    keyring_available, _backend_name, _error = _pkg()._probe_keyring_availability()
+    if keyring_available:
+        # A keyring that fails at read time holds no readable session, so the
+        # probe falls through to the credential file instead of failing.
+        with contextlib.suppress(_KeyringUnavailable):
+            keyring = _pkg().KeyringBackend()
+            if keyring.get(_service_name_for(profile_name), _SESSION_BACKEND_KEY):
+                return True
+    cred_path = _resolve_credential_file(profile_name, os.environ)
+    if not cred_path.exists():
+        return False
+    try:
+        entries = FileBackend(cred_path)._read_all()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise MuralError(f"cannot read credential file at {cred_path}: {exc}") from exc
+    return bool(entries.get(_SESSION_BACKEND_KEY))
+
+
+def _profile_has_session(profile_name: str, store: dict[str, Any] | None) -> bool:
+    """Return True when ``profile_name`` already has an authenticated session.
+
+    A session is an access or refresh token on the token-store profile, or a
+    refresh token in the keyring or credential file. Client ID and client
+    secret never count. Raises :class:`MuralError` when the credential file
+    exists but cannot be read.
+    """
+    profiles = store.get("profiles") if isinstance(store, dict) else None
+    record = profiles.get(profile_name) if isinstance(profiles, dict) else None
+    if isinstance(record, dict) and (
+        record.get("access_token") or record.get("refresh_token")
+    ):
+        return True
+    return _backend_has_refresh_token(profile_name)
+
+
+def _profile_has_usable_session(
+    profile_name: str, store: dict[str, Any] | None
+) -> bool:
+    """Return True when the request path can authenticate as ``profile_name``.
+
+    Unlike :func:`_profile_has_session`, which also counts a backend refresh
+    token so login never overwrites stored credentials, this check reads only
+    the token store because authenticated requests refresh solely from the
+    validated token-store record. Never reads a credential backend and never
+    raises.
+    """
+    if not isinstance(store, dict):
+        return False
+    try:
+        record = _select_profile(store, profile_name)
+    except MuralError:
+        return False
+    return bool(record.get("access_token") or record.get("refresh_token"))
+
+
+def _emit_existing_session(profile_name: str) -> None:
+    _emit(
+        f"profile {profile_name!r} already has stored credentials; "
+        "rerun with --force to overwrite",
+        level=logging.INFO,
+    )
 
 
 def _load_token_store_locked(path: pathlib.Path) -> dict[str, Any] | None:
@@ -300,7 +375,9 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                     f"{ENV_CLIENT_ID} is not set.",
                     "",
                     "Looked for credentials in this order:",
-                    f"  1. Process environment ({ENV_CLIENT_ID}, {ENV_CLIENT_SECRET})",
+                    # Literal name: CodeQL flags interpolated ENV_CLIENT_SECRET
+                    # as clear-text secret logging.
+                    f"  1. Process environment ({ENV_CLIENT_ID}, MURAL_CLIENT_SECRET)",
                     (
                         "  2. Active credential backend "
                         + "(MURAL_CREDENTIAL_BACKEND={auto|keyring|file|env-only})"
@@ -312,7 +389,7 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                         + " credentials interactively,"
                     ),
                     (
-                        f"or set {ENV_CLIENT_ID} and {ENV_CLIENT_SECRET} in your"
+                        f"or set {ENV_CLIENT_ID} and MURAL_CLIENT_SECRET in your"
                         + " environment."
                     ),
                 ]
@@ -321,46 +398,20 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
         )
         return EXIT_FAILURE
     try:
-        profile_name = _validate_profile_name(
-            getattr(args, "profile", None) or DEFAULT_PROFILE_NAME
+        profile_name = _resolve_active_profile(
+            None, os.environ, getattr(args, "profile", None)
         )
     except MuralError as exc:
         _emit(str(exc), level=logging.ERROR)
         return EXIT_USAGE
     _maybe_promote_file_credentials_to_keyring(profile_name)
     force = bool(getattr(args, "force", False))
-    service = _service_name_for(profile_name)
     try:
-        backend = _pkg().resolve_backend(profile_name)
+        _pkg().resolve_backend(profile_name)
     except MuralError as exc:
         _emit(str(exc), level=logging.ERROR)
         return EXIT_FAILURE
-    existing: dict[str, str] = {}
-    try:
-        for key in _KNOWN_CREDENTIAL_KEYS:
-            value = backend.get(service, key)
-            if value:
-                existing[key] = value
-    except _KeyringUnavailable:
-        existing = {}
-    refresh_present = False
-    try:
-        store = _pkg()._load_token_store(_resolve_token_store_path())
-        if isinstance(store, dict):
-            profiles = store.get("profiles")
-            if isinstance(profiles, dict):
-                profile_record = profiles.get(profile_name)
-                if isinstance(profile_record, dict):
-                    refresh_present = bool(profile_record.get("refresh_token"))
-    except Exception:  # noqa: BLE001 - probe must never raise
-        refresh_present = False
-    if (existing or refresh_present) and not force:
-        _emit(
-            f"profile {profile_name!r} already has stored credentials; "
-            "rerun with --force to overwrite",
-            level=logging.INFO,
-        )
-        return EXIT_SUCCESS
+    path = _resolve_token_store_path()
     # Scope resolution precedence:
     #   1. ``--scopes`` (explicit CLI flag).
     #   2. ``MURAL_SCOPES`` env var (split on whitespace or commas).
@@ -400,6 +451,22 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
         granted = READ_SCOPES
         scopes = None
         scope_source = "default"
+    if not force:
+        try:
+            authenticated = _profile_has_session(
+                profile_name, _pkg()._load_token_store(path)
+            )
+        except MuralError as exc:
+            _emit(
+                f"cannot verify existing credentials for profile {profile_name!r} "
+                f"({exc}); no changes were made. Repair or remove the token store "
+                f"at {path}, or rerun with --force to replace it",
+                level=logging.ERROR,
+            )
+            return EXIT_FAILURE
+        if authenticated:
+            _emit_existing_session(profile_name)
+            return EXIT_SUCCESS
     _emit(
         f"requesting OAuth scopes ({scope_source}): {' '.join(granted)}",
         level=logging.INFO,
@@ -415,14 +482,15 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
     # invocations (Step 3.6 client_id mismatch check).
     client_id = os.environ.get(ENV_CLIENT_ID)
     record["client_id"] = client_id
-    path = _resolve_token_store_path()
-    # Login is the recovery path for a corrupt or incompatible store, so a
-    # load failure here is downgraded to "start fresh" rather than blocking
-    # the user from re-authenticating. The recovery write happens in its own
-    # lock acquisition; the happy path uses ``_token_store_session`` to close
-    # the read/modify/write TOCTOU window (IV-001).
+    # The profile is re-checked under the same lock as the write so a session
+    # created by a concurrent login is never overwritten without --force.
+    # Replacing an unreadable or incompatible store discards every profile in
+    # it, so that recovery path also requires --force.
     try:
         with _token_store_session(path) as (existing, commit):
+            if not force and _profile_has_session(profile_name, existing):
+                _emit_existing_session(profile_name)
+                return EXIT_SUCCESS
             if not existing:
                 existing = {
                     "schema_version": TOKEN_STORE_SCHEMA_VERSION,
@@ -435,6 +503,14 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
             envelope["profiles"] = profiles
             commit(envelope)
     except MuralError as exc:
+        if not force:
+            _emit(
+                f"cannot save credentials for profile {profile_name!r} ({exc}); "
+                f"no changes were made. Repair or remove the token store at "
+                f"{path}, or rerun with --force to replace it",
+                level=logging.ERROR,
+            )
+            return EXIT_FAILURE
         _emit(
             f"existing token store at {path} could not be read ({exc}); "
             "starting a new envelope",
@@ -505,7 +581,7 @@ _LOGOUT_TRANSPARENCY_LINES: tuple[str, ...] = (
 
 def _cmd_auth_setup(args: argparse.Namespace) -> int:
     """Provision a new profile non-interactively from env or CLI args."""
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     if not json_mode:
         redacted = _pkg()._redact(_OAUTH_SETUP_WALKTHROUGH)
         print(redacted)
@@ -535,6 +611,7 @@ def _cmd_auth_setup(args: argparse.Namespace) -> int:
         "access_token": "",
         "token_type": "Bearer",
         "obtained_at": int(time.time()),
+        "expires_at": 0,
         "granted_scopes": list(granted),
     }
     path = _resolve_token_store_path()
@@ -838,7 +915,7 @@ def _cmd_auth_list(_args: argparse.Namespace) -> int:
                 "active": name == active,
             }
         )
-    if _state._CLI_FORCE_JSON or getattr(_args, "format", "json") != "table":
+    if _state.cli_force_json() or getattr(_args, "format", "json") != "table":
         print(
             json.dumps(
                 {"token_store": str(path), "active_profile": active, "profiles": rows},
@@ -877,7 +954,7 @@ def _cmd_auth_list(_args: argparse.Namespace) -> int:
 
 def _cmd_auth_use(args: argparse.Namespace) -> int:
     """Set the active profile in the v2 envelope."""
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     try:
         name = _validate_profile_name(args.name)
     except MuralError as exc:
@@ -1001,7 +1078,7 @@ def _cmd_auth_logout(args: argparse.Namespace) -> int:
     state untouched. ``--force`` is required to delete from the
     :class:`FileBackend` (since it removes the on-disk credential file).
     """
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     keep_credentials = bool(getattr(args, "keep_credentials", False))
     force = bool(getattr(args, "force", False))
     path = _resolve_token_store_path()
@@ -1227,6 +1304,7 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
     }
     backends_have_creds = keyring_populated or file_populated
     cred_keys = {
+        "credential_profile": cred_profile,
         "credential_file": str(cred_path),
         "credential_file_exists": cred_path.exists(),
         "backend": backend_name,
@@ -1239,11 +1317,23 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
         cred_keys["backend_error"] = backend_error
     if keyring_error is not None and not keyring_available:
         cred_keys["keyring_error"] = keyring_error
+    # A backend refresh token blocks an unforced login but is never used by
+    # authenticated requests, so it is reported apart from ``authenticated``.
+    # Status is diagnostic, so an unreadable credential file reports False.
+    try:
+        cred_keys["backend_refresh_token"] = _backend_has_refresh_token(cred_profile)
+    except MuralError:
+        cred_keys["backend_refresh_token"] = False
+
     store = _pkg()._load_token_store(path)
     if not store:
         print(
             json.dumps(
-                {"authenticated": False, "token_store": str(path), **cred_keys},
+                {
+                    "authenticated": False,
+                    "token_store": str(path),
+                    **cred_keys,
+                },
                 indent=2,
             )
         )
@@ -1256,13 +1346,17 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
     except MuralError:
         print(
             json.dumps(
-                {"authenticated": False, "token_store": str(path), **cred_keys},
+                {
+                    "authenticated": False,
+                    "token_store": str(path),
+                    **cred_keys,
+                },
                 indent=2,
             )
         )
         return EXIT_SUCCESS if backends_have_creds else EXIT_FAILURE
     info = {
-        "authenticated": True,
+        "authenticated": _profile_has_usable_session(profile_name, store),
         "token_store": str(path),
         "profile": profile_name,
         "granted_scopes": list(_token_granted_scopes(store, profile_name)),
@@ -1288,7 +1382,7 @@ def _cmd_auth_migrate(args: argparse.Namespace) -> int:
     successful round-trip; ``--yes`` skips the confirmation prompt
     (required when ``MURAL_NONINTERACTIVE=1``).
     """
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     direction = getattr(args, "to", None)
     if direction not in {"keyring", "file"}:
         _emit("--to must be one of 'keyring' or 'file'", level=logging.ERROR)

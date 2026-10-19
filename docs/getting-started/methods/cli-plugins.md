@@ -1,9 +1,9 @@
 ---
 title: Copilot CLI Plugin
-description: Register an HVE Core catalog ref and install the complete hve-core plugin
+description: Register the HVE Core marketplace and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - copilot cli
@@ -17,44 +17,29 @@ Install the complete HVE Core component set as a Copilot CLI plugin for terminal
 
 * GitHub Copilot CLI installed and authenticated
 
-## Register hve-core as a Plugin Marketplace
+## Register the HVE Core Marketplace
 
-Choose a registration that matches the content you need.
-
-Register the ref-less development tip:
+Register the repository as a plugin marketplace:
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-Register a moving reviewed release channel:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#release/prerelease
-copilot plugin marketplace add microsoft/hve-core#release/stable
-```
-
-Register an immutable channel tag:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
-copilot plugin marketplace add microsoft/hve-core#v<version>
-```
-
-`main` is the development tip. `release/prerelease` and `release/stable` are moving registrations that resolve the current reviewed branch catalog and repository-root plugin package. Exact-tag registrations freeze the catalog, root manifest, README, LICENSE, and plugin source together.
-
-A published channel release provides release assurance for its exact tag,
-including release gates, SBOMs, attestations, provenance verification, and the
-configured publication path. The development tip does not provide that
-published-release assurance.
+The registration tracks the `main` branch, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../contributing/release-process.md#continuous-main-sbom). PreRelease and Stable are VS Code extension channels, so the plugin has no channel to select.
 
 ## Browse Available Plugins
 
-Type `/plugin` in a Copilot CLI chat session to browse available plugins.
+List the plugins in the registered marketplace:
 
-## Install a Plugin
+```bash
+copilot plugin marketplace browse hve-core
+```
 
-Install `hve-core` from the registered marketplace through `/plugin`. The plugin includes the complete active HVE Core component set, including the Research, Plan, Implement, Review lifecycle.
+You can also type `/plugin` in a Copilot CLI chat session to browse available plugins.
+
+## Install the Plugin
+
+Install `hve-core` from the registered marketplace. The plugin includes the complete HVE Core component set, including the Research, Plan, Implement, Review lifecycle.
 
 ```bash
 copilot plugin install hve-core@hve-core
@@ -62,17 +47,24 @@ copilot plugin install hve-core@hve-core
 
 ## Update an Installed Plugin
 
-Marketplace refresh and installed-plugin update are distinct actions. For a
-moving registration, refresh the catalog before requesting a plugin update:
+Refreshing the marketplace catalog and updating the installed plugin are separate actions. Because the registration tracks `main`, refresh the catalog before updating the plugin:
 
 ```bash
 copilot plugin marketplace update hve-core
 copilot plugin update hve-core@hve-core
 ```
 
-Switching registrations can require removing and re-adding the marketplace.
-Do not assume how the client handles duplicate same-name registrations; use
-the behavior supported by your Copilot CLI version.
+## Replace an Earlier Registration
+
+If you registered a release-channel or tag ref, such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#hve-core-v<version>`, remove that registration and register the repository again to follow `main`. The repository does not publish `release/prerelease` or `release/stable` branches, so those refs no longer resolve, and a tag ref stays fixed at that tag:
+
+```bash
+copilot plugin marketplace remove hve-core --force
+copilot plugin marketplace add microsoft/hve-core
+copilot plugin install hve-core@hve-core
+```
+
+In some Copilot CLI versions, `--force` also uninstalls plugins installed from that marketplace. Check `copilot plugin marketplace remove --help` for your version.
 
 If you previously registered or installed a retired package identity, the
 [retired package identities](../package-migration#retired-package-identities)
@@ -81,16 +73,15 @@ agent to its replacement.
 
 ## Plugin Contents
 
-Each plugin includes:
+The plugin includes:
 
 | Component    | CLI Discovery | Description                                        |
 |--------------|---------------|----------------------------------------------------|
 | Agents       | Yes           | Custom chat agents for specialized workflows       |
-| Commands     | Yes           | Task prompts accessible via the CLI                |
 | Skills       | Yes           | Self-contained skill packages                      |
 | Instructions | No            | Included for `#file:` references, not auto-applied |
 
-The one marketplace entry resolves the repository root. Root `plugin.json` declares the complete agents, commands, rules, skills, and hook membership as repository-relative `.github/...` paths. The client resolves the root README and LICENSE; no generated plugin tree or plugin ZIP participates in Git-source installation.
+The marketplace has one entry, which resolves to the repository root. Root `plugin.json` lists the plugin's agents, commands, rules (instruction files), and skills as repository-relative `.github/...` paths. The client also reads the root README and LICENSE; no generated plugin tree or plugin ZIP is involved.
 
 ## Limitations
 
@@ -106,8 +97,8 @@ The CLI loads path-specific instructions exclusively from
 Instruction files in plugin directories are **not** auto-applied via `applyTo`
 pattern matching.
 
-Instruction files are still included in plugin output because agents and
-prompts reference them via `#file:` directives. Those cross-file references
+Instruction files are still included in the plugin because agents reference
+them via `#file:` directives and skills link to them. Those cross-file references
 resolve correctly within the plugin directory tree. The difference is between
 explicit inclusion (an agent pulls in instruction content at execution time)
 and automatic application (the CLI matches `applyTo` patterns against the
@@ -122,23 +113,22 @@ project's `.github/instructions/` directory.
 
 ## Using Agents After Installation
 
-After installing a plugin, agents and named commands are available in your CLI session.
+After installing a plugin, agents and skills are available in your CLI session.
 
-### Named Commands vs Agent Mode
+### Skills vs Agent Mode
 
 CLI plugins provide two distinct interaction patterns:
 
-| Mode          | Command                     | Behavior                                                     |
-|---------------|-----------------------------|--------------------------------------------------------------|
-| Named Command | `/git-commit`               | Executes a predefined workflow, then returns to default mode |
-| Skill         | `/rpi-research`             | Activates one reusable RPI phase capability                  |
-| Agent Mode    | `/agent hve-core:rpi-agent` | Switches to the coordinated RPI lifecycle                    |
+| Mode       | Command                     | Behavior                                                |
+|------------|-----------------------------|---------------------------------------------------------|
+| Skill      | `/rpi-research`             | Activates one reusable capability from the default mode |
+| Agent Mode | `/agent hve-core:rpi-agent` | Switches to the coordinated RPI lifecycle               |
 
-Named commands (prompts) run a specific workflow and produce structured output. Agent mode enables freeform conversation with a specialized agent until you exit.
+Skills run a specific workflow and produce structured output. Agent mode enables freeform conversation with a specialized agent until you exit.
 
 > [!IMPORTANT]
-> The CLI does not switch to a custom agent on behalf of an agent-bound
-> prompt. Select `hve-core:rpi-agent` when you want lifecycle coordination, or invoke a
+> The CLI does not switch to a custom agent on behalf of a skill. Select
+> `hve-core:rpi-agent` when you want lifecycle coordination, or invoke a
 > direct phase skill such as `/rpi-research`:
 >
 > ```text
@@ -146,8 +136,13 @@ Named commands (prompts) run a specific workflow and produce structured output. 
 > Research API authentication patterns before deciding whether planning is ready.
 > ```
 >
-> Prompts that do not require an agent context (e.g., `/git-commit`,
-> `/git-merge`) work directly from the default mode.
+> Skills that do not require an agent context work directly from the default mode.
+
+Manual-only skills such as `git-commit`, `git-merge`, and `git-setup` set
+`disable-model-invocation: true`. Copilot CLI does not currently run skills
+with that setting
+([github/copilot-cli#4438](https://github.com/github/copilot-cli/issues/4438)),
+so use them from VS Code until that issue is resolved.
 
 ### Example: Research Workflow
 
@@ -184,10 +179,9 @@ For the complete list, run `/help` in a CLI session to see all available command
 
 ### When to Use Each Mode
 
-* Use **named commands** (`/git-commit-message`, `/git-merge`) directly from default mode for workflows that do not require a custom agent.
-* Use direct skills (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`) for one bounded RPI responsibility.
+* Use direct skills (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`) from default mode for one bounded responsibility that does not require a custom agent.
 * Use **agent mode** with `/agent hve-core:rpi-agent` for lifecycle coordination.
-* Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined prompt.
+* Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined skill.
 
 ---
 

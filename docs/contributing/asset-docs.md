@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-09-19
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -77,7 +77,7 @@ Use this sequence whenever you add, change, move, or remove a documentable asset
    removed pages match the source change.
 4. Update the authored tail of the paired page. Remove `<!-- asset-docs:stub -->`
    from each section you author after replacing its placeholder text. A Required
-   section cannot retain the sentinel once enforcement is active for its kind;
+   section cannot retain the sentinel for any documentable kind;
    an Optional section may remain a scaffold.
 5. Run `npm run docs:generate:check` to confirm a second generation pass reports
    no drift.
@@ -116,8 +116,8 @@ prerequisites, and any confirmation or human-review boundary.
 For user-invocable agents and skills, use the
 [hve-builder](../reference/skills/hve-core/hve-builder.md) authoring path to
 develop and review a representative example while creating or improving the source
-artifact. HVE Builder applies an independent static review, a route-specific
-behavior gate, and host validation, so the example can reflect reviewed behavior
+artifact. HVE Builder applies a review pass against its requirements catalog and
+host validation, so the example can reflect reviewed behavior
 rather than an invented happy path.
 
 Invoke `hve-builder` from Copilot Chat with the target path, the paired reference
@@ -137,25 +137,29 @@ another model to rewrite generated regions.
 
 Local and pull request validation use the same validator at different scopes:
 
-| Context                   | Scope                | Enforcement                                                                                                                                             |
-|---------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction, prompt, and skill guidance                                               |
-| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction, prompt, and skill guidance is blocking for this scope |
+| Context                   | Scope                | Enforcement                                                                                            |
+|---------------------------|----------------------|--------------------------------------------------------------------------------------------------------|
+| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required authored guidance for all four kinds |
+| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base                             |
 
 The changed-files scope prevents unrelated pre-existing findings from blocking a
 pull request. It still catches a changed source with a missing or stale page, a
 changed page with no source, and renames or deletions that leave an orphan.
 
-The generator and CI gate do not author human judgment. Both paths select
-`instruction,prompt,skill` for authored-content enforcement. Required guidance for
-these kinds is blocking. Agent stubs and Optional instruction examples remain
-warnings.
+The generator and CI gate do not author human judgment. Required authored stubs
+are errors for agents, prompts, instructions, and skills in every validator
+invocation, including direct script calls. There is no per-kind opt-in selector
+or warning-first tier. Optional instruction examples remain advisory, and
+NotApplicable sections are excluded from authored-content checks.
 
-## Follow the completeness rollout
+The authored check detects the `asset-docs:stub` sentinel; it is not a prose-quality
+assessment or a detector for blank bodies. Review the content against the source
+artifact rather than removing the marker alone.
 
-Authored-content enforcement is promoted incrementally so contributors can backfill
-the catalog without making unrelated pull requests repair every existing stub at
-once:
+## Apply the completed completeness rollout
+
+The four increments established the current Required, Optional, and NotApplicable
+section rules. All four kinds now enforce Required authored content:
 
 1. [Instructions (#2361)](https://github.com/microsoft/hve-core/issues/2361),
    enforced: require `When to use it`; `How to use it` is not applicable and
@@ -165,14 +169,14 @@ once:
 3. [Skills (#2363)](https://github.com/microsoft/hve-core/issues/2363), enforced:
    require `When to use it` and `Example usage`, with richer multi-mode examples
    where needed; `How to use it` is not applicable.
-4. [Agents (#2364)](https://github.com/microsoft/hve-core/issues/2364): require all
+4. [Agents (#2364)](https://github.com/microsoft/hve-core/issues/2364), enforced: require all
    applicable authored sections, including orchestration, delegation, and handoff
    behavior where relevant.
 
-Until enforcement is enabled for agents, the validator reports their
-authored stubs as warnings. New and materially changed assets should still receive
-complete authored sections now; the rollout changes enforcement timing, not the
-documentation quality target.
+Interactive agent pages require `How to use it`; delegated subagents omit that
+section and describe parent dispatch, expected returns, and authority limits in
+their examples. Curated companion links belong in the authored tail, not a new
+generated convention.
 
 ## Resolve common failures
 

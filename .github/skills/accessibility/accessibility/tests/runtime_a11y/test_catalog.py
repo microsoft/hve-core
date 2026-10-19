@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from runtime_a11y._errors import ScriptError
 from runtime_a11y.matrix._catalog import (
     catalog_provenance,

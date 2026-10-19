@@ -3,7 +3,7 @@ title: Announcements
 description: Release announcements and notable updates for HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-10-13
 ms.topic: overview
 keywords:
   - announcements

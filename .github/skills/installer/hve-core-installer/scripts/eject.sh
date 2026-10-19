@@ -11,6 +11,14 @@
 
 set -euo pipefail
 
+temp_path=""
+
+cleanup() {
+  [[ -n "$temp_path" ]] && rm -f "$temp_path"
+  return 0
+}
+trap cleanup EXIT
+
 fail() {
   echo "❌ $1" >&2
   exit 1
@@ -27,6 +35,9 @@ main() {
 
   local manifest_path
   manifest_path="$(cd "$target_root" && pwd)/.hve-tracking.json"
+  if [[ -L "$manifest_path" ]]; then
+    fail "Tracking manifest '$manifest_path' is a link, which may redirect writes outside the target root."
+  fi
   [[ -f "$manifest_path" ]] || fail "No .hve-tracking.json found."
 
   local schema_version
@@ -44,10 +55,15 @@ main() {
 
   local ejected_at
   ejected_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  # mktemp creates a new, randomly named file and refuses an existing path, so a
+  # link planted at a predictable temporary name cannot redirect this write.
+  temp_path=$(mktemp "${manifest_path}.XXXXXXXX")
   jq --arg component "$component" --arg ejectedAt "$ejected_at" \
     '.files |= with_entries(if .value.component == $component
        then .value += {status: "ejected", ejectedAt: $ejectedAt} else . end)' \
-    "$manifest_path" >"${manifest_path}.tmp" && mv "${manifest_path}.tmp" "$manifest_path"
+    "$manifest_path" >"$temp_path"
+  mv "$temp_path" "$manifest_path"
+  temp_path=""
   echo "✅ Ejected: $component"
   echo "   HVE-Core will never update this component."
 }

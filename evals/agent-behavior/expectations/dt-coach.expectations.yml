@@ -173,3 +173,20 @@ expectations:
     priority: low
     stimulus_scoped: true
     contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"
+
+  - expectation_id: mural-board-gates
+    summary: Mural board work stays gated by the team's decision and the Mural readiness verdict, and coaching continues without a board.
+    signal: Declined or denied board intent makes no Mural call or board file; a `needs_scope_upgrade` verdict stops seeding with its remediation.
+    pass_criteria: |
+      `dt-coach-denied-board-intent` and `dt-coach-mural-declined-write-keeps-coaching`
+      make no Mural or Figma tool call, write no board artifact, report no
+      publication, and continue coaching. `dt-coach-mural-scope-upgrade-stops-seeding`
+      names `needs_scope_upgrade` or reauthorization, states that no further
+      Mural command runs until the user retries, and runs no Mural command.
+    failure_modes:
+      - A declined board decision is overridden or re-offered as a write.
+      - Seeding continues after a non-ready readiness verdict.
+      - Publication or a board change is reported without a committed write.
+    priority: high
+    applies_when: "stimulus involves a Mural board decision or readiness verdict"
+    contract_ref: "agent §Mural board export; mural skill references/bootstrap.md and references/seeding-patterns.md"

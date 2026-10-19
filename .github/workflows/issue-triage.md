@@ -57,6 +57,7 @@ safe-outputs:
       - maintenance
       - enhancement
       - security
+      - code-scanning
       - breaking-change
       - agents
       - prompts
@@ -154,8 +155,18 @@ Follow the triage workflow defined in your imported agent instructions:
 3. Classify the area(s) from bug report dropdowns or body content analysis.
 4. Search for duplicate or related issues among open issues.
 5. Assess issue quality: check for missing required fields, vague descriptions, semantic coherence, and scope relevance.
-6. Remove `needs-triage` and apply determined type, area, and priority labels.
-7. Evaluate whether the issue qualifies for `agent-ready` using conservative criteria.
+6. Detect human-filed security scanning reports. If the issue references a
+   code-scanning alert, CodeQL alert, Scorecard finding, tracked exception, or
+   `security/code-scanning-exceptions.yml`, classify it as security work. Apply
+   `security` and, because it is present in the safe-output allow-list,
+   `code-scanning`. Link the alert lifecycle policy:
+   <https://github.com/microsoft/hve-core/blob/main/docs/security/code-scanning-alert-lifecycle.md>.
+   Never recommend dismissing an alert. If the issue asks maintainers to dismiss
+   or suppress an alert, state that dismissal is contrary to repository policy
+   and that the alert must be resolved in code, configuration, or through a
+   human-reviewed tracked exception.
+7. Remove `needs-triage` and apply determined type, area, and priority labels.
+8. Evaluate whether the issue qualifies for `agent-ready` using conservative criteria.
 
 For each step, follow the detailed guidance in the Issue Triage Agent instructions.
 

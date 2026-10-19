@@ -13,8 +13,6 @@ concurrency:
 
 permissions:
   contents: read
-  issues: write
-  security-events: read
 
 jobs:
   gh-code-scanning:
@@ -30,5 +28,3 @@ jobs:
     uses: ./.github/workflows/create-gh-code-scanning-issues.yml
     permissions:
       issues: write
-      actions: read
-      security-events: read

@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover - older shapely or shapely absent
     _SHAPELY_GEOS_VERSION = None  # type: ignore[assignment]
 
 
-_GEOS_PROBE_DONE = False
+_GEOS_PROBE_STATE: dict[str, bool] = {"started": False}
 
 
 class Rect(TypedDict):
@@ -253,7 +253,7 @@ def _area_probe_verdict(
                 "to the operator. Do not re-run the probe, destroy and "
                 "recreate the widget, or hand-tune (x, y) offsets — see "
                 "the Z-Order Visibility section of "
-                "mural-seeding-patterns.instructions.md."
+                "the Mural skill references/seeding-patterns.md."
             ),
         }
 
@@ -712,11 +712,14 @@ def _probe_geos_version() -> tuple[int, int, int]:
 
 
 def _ensure_geos_ready() -> None:
-    """Run the GEOS version probe at most once per process."""
-    global _GEOS_PROBE_DONE
-    if _GEOS_PROBE_DONE:
+    """Run the GEOS version probe at most once per process.
+
+    The probe is marked started before it runs, so a failing probe is not
+    retried. ``_GEOS_PROBE_STATE`` is mutated in place rather than rebound.
+    """
+    if _GEOS_PROBE_STATE["started"]:
         return
-    _GEOS_PROBE_DONE = True
+    _GEOS_PROBE_STATE["started"] = True
     if os.environ.get("MURAL_SUPPRESS_GEOS_PROBE"):
         return
     _probe_geos_version()

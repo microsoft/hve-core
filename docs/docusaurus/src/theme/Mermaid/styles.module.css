@@ -1,0 +1,12 @@
+/* Copyright (c) 2026 Microsoft Corporation. All rights reserved. */
+/* SPDX-License-Identifier: MIT */
+.container {
+  max-width: 100%;
+}
+
+.container > svg {
+  max-width: 100%;
+}
+:global(html[data-theme='dark']) .container :global(foreignObject .task .label) {
+  color: #1f2328 !important;
+}

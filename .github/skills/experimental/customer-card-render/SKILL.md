@@ -6,7 +6,7 @@ compatibility: 'Requires Python 3.11+, uv, and the experimental powerpoint skill
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-10"
+  last_updated: "2026-10-02"
 ---
 
 # Customer Card Render Skill
@@ -95,10 +95,12 @@ Cards are ordered by artifact type (Vision → Problem → Scenario → Use Case
 ### Step 1: Generate slide YAML from canonical markdown
 
 ```bash
-python .github/skills/experimental/customer-card-render/scripts/generate_cards.py \
+python "<customer-card-render-skill-root>/scripts/generate_cards.py" \
   --canonical-dir .copilot-tracking/dt/<project-slug>/canonical \
   --output-dir .copilot-tracking/dt/<project-slug>/render/content
 ```
+
+Resolve `<customer-card-render-skill-root>` from the loaded skill location before running the command.
 
 #### generate_cards.py CLI Reference
 
@@ -124,14 +126,14 @@ The `powerpoint` skill owns the `Invoke-PptxPipeline.ps1` orchestrator, its para
 
 ## DT Coach Integration
 
-The `dt-canonical-deck` prompt and the `dt-coaching-foundation` skill's `canonical-deck` reference provide opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to build customer cards at method exit points. The two-command flow above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
+The `dt-coaching-foundation` skill's `canonical-deck` reference provides opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to build customer cards at method exit points. The two-command flow above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
 
 Canonical artifacts are produced by the DT coach and live under `.copilot-tracking/dt/<project-slug>/canonical/`.
 
 ## Running Tests
 
 ```bash
-cd .github/skills/experimental/customer-card-render
+cd "<customer-card-render-skill-root>"
 uv sync --group dev
 uv run pytest tests/
 ```

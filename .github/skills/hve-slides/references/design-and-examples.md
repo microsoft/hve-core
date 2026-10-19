@@ -40,8 +40,31 @@ comparison or question/answer. Avoid making every section an equal-sized card gr
 
 Align repeated elements with layout primitives rather than manual offsets. Connect ordered
 phases visibly, keep historical and current flows distinct, and align command/citation rows.
-Separate headings from their examples more than labels from their values. Give the bottom
-controls and notes sufficient clearance.
+Separate headings from their examples more than labels from their values.
+
+### Bottom Chrome
+
+HVE decks share one treatment for the bottom of the screen. The starter implements it, and
+[RPI with HVE Core](../../../../slides/rpi-with-hve/README.md) shows it in a finished talk:
+
+* The presenter bar is a dark band close to the canvas tone. It starts with the HVE Core
+  mark and current chapter, then the utility buttons, then slide navigation. Its ends stay
+  `--presenter-inset` from the window corners, where viewer overlays such as the Copilot
+  button SharePoint places at the bottom right can sit. Keep chapter labels short so the bar
+  stays on one row at desktop widths; the starter's test allows 28 characters.
+* `--presenter-height` sizes both the bar and the slide area above it. Change that variable,
+  including at the stacked breakpoint, instead of adding a second hard-coded height.
+* Opening and closing slides put repository and fidelity labels in `.slide-bottom`: muted
+  body text above a divider.
+* A walkthrough frames its example. The step title and count form the header, the content
+  follows, and Back, Next step and Reset sit in the footer with Next step as the primary
+  button. The frame keeps one height, so the controls stay in place between steps. Fit every
+  step inside it without internal scrolling and leave clear space above the footer.
+
+Keep this treatment when adding layouts or restyling a deck. A presentation that needs a
+different bottom design should change it deliberately and update that deck's bottom-chrome
+test in the same edit. Controls moved outside the walkthrough frame, or a bar without the
+deck mark and chapter, are regressions.
 
 The reference deck uses a 1600 by 900 design canvas. Treat these as presentation design
 targets, not host limits: at a 1280 by 720 viewport, main text should render at least 18 CSS
@@ -93,8 +116,12 @@ Keep real local controls distinct from decorative client chrome:
 * Reset affects only its own example. No automatic typing or unattended agent loop.
 * Make local source/preview toggles or install-walkthrough buttons work as labelled.
   Render other fictional controls passively rather than as dead focusable buttons.
-* Do not take slide shortcuts while focus belongs to a button, link, input or dialog.
-  Escape closes the local overlay and restores useful focus.
+* Let Left / Right and Page Up / Page Down change slides from the slide surface and from
+  buttons or links, which do not use those keys, so paging continues after a click on a
+  control. Leave them to text entry, dialogs, components that claim them on their own
+  element, and selected text while no button or link has focus. Take no other slide
+  shortcut while focus belongs to a control or dialog. Escape closes the local overlay
+  and restores useful focus.
 * Keep source and diagram, diff and counts, question and answer, and plan and changes evidence
   consistent through one shared data model where practical.
 
@@ -119,6 +146,35 @@ use need their own evidence.
 All notes, embedded code, captions and data ship to recipients. A hidden dialog is not
 private storage. Source links may open separately; the presentation itself should not make
 unnecessary remote requests.
+
+### Accessible slide content and controls
+
+Target [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/) for the deck and its entry page.
+These are authoring checks, not a certification:
+
+* Provide an unscaled reading layout that preserves all content and walkthrough actions.
+  At 320 CSS pixels, 200% zoom and increased text spacing, text wraps and controls remain
+  reachable without overlap. A scaled-down canvas is not a readable mobile alternative.
+* Keep one main landmark, logical heading levels, native controls and descriptive link names.
+  Passive editor reconstructions remain text or images, not fake interactive roles.
+  Preserve document reading semantics instead of wrapping the deck in `role="application"`.
+* Restrict single-character shortcuts to a focused presentation surface, or provide an
+  off/remap control. Native editing and control activation always take precedence.
+* Remove inactive slides from the accessibility tree and Tab order. When navigation hides
+  the focused element, move focus to a visible destination. Dialogs need a name, initial
+  focus, keyboard containment, Escape dismissal and focus restoration.
+* Use one concise live announcement for slide or step changes. Disable competing library
+  announcements and redundant live counters; do not announce an entire slide automatically.
+* Give diagrams a descriptive name and a text equivalent containing node labels, meanings
+  and relationships. Do not substitute internal IDs for the information in the picture.
+  Decorative icons stay hidden from assistive technology. Selected and diff states need
+  text or signs in addition to color.
+* Check 4.5:1 text contrast (3:1 for qualifying large text), 3:1 meaningful control/focus
+  contrast and at least 24 by 24 CSS-pixel targets or qualifying spacing. Measure rendered
+  sizes after scaling. Keep focus indicators visible and unobscured by presenter controls.
+
+Keep these contracts in the starter runtime and component templates as well as deck source.
+New layout classes need reading-view rules; copying a fragment does not validate its reflow.
 
 ## Official UI Sources
 

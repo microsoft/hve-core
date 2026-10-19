@@ -342,7 +342,7 @@ A `security` issue follows the same resolution but is expedited: it ships in the
 
 #### Step 5: Low-confidence fallback and repository override
 
-When confidence is low — a mixed naming pattern, no discovered milestones, or an unresolvable role classification — read `.github/milestone-strategy.yml` in the target repository. When the file exists, its declared strategy is authoritative and overrides the discovered classification. When the file does not exist, treat its absence as expected: present the discovered milestones to the user and request classification. With no user input available, assign `unclassified` and flag the issue for human review rather than guessing.
+When confidence is low — a mixed naming pattern, no discovered milestones, or an unresolvable role classification — read `<repository-root>/.github/milestone-strategy.yml` in the target repository. When the file exists, its declared strategy is authoritative and overrides the discovered classification. When the file does not exist, treat its absence as expected: present the discovered milestones to the user and request classification. With no user input available, assign `unclassified` and flag the issue for human review rather than guessing.
 
 Record the detected naming pattern, per-milestone role classification, the resolved recommendation, the confidence level, and whether the override file was used in `planning-log.md`.
 

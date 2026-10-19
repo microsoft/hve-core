@@ -28,15 +28,17 @@ Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies, p
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use Backlog Manager to discover, triage, groom, or plan work in a confirmed Azure DevOps, GitHub, or Jira destination, or to coordinate execution of a reviewed handoff. It stays read-only with respect to trackers and dispatches mutations to one platform-specific executor. Use Functional Planner for PRD-to-hierarchy planning.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `Backlog Manager` and identify the platform, destination, and requested workflow.
+2. Supply the issue scope, requirements brief, or reviewed handoff. Resolve ambiguous destinations before any execution dispatch.
+3. Review proposed operations and the applicable autonomy tier. Payload sanitization and required human review precede tracker writes.
+4. Read the summary and retained handoff logs. Missing platform capabilities stop the dependent action rather than triggering an alternate write path.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Triage the open import-related issues in my confirmed GitHub repository. Identify duplicates and priority gaps, and prepare recommendations only. Do not update labels or post comments."
+
+Expect a scoped advisory summary with evidence and proposed next actions. Success means planning remains read-only and any later write requires a confirmed, sanitized operation set for the correct executor.

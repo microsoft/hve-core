@@ -1,0 +1,15 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "proofId": "proof-1",
+    "runId": "run-1",
+    "journeyId": "journey-read",
+    "fixtureId": "fixture-docs",
+    "state": "default",
+    "status": "PROVED",
+    "expected": "Page loaded",
+    "observed": "Page loaded",
+    "steps": [{ "action": "navigate" }, { "action": "assert" }],
+    "artifactIds": ["proof-record"]
+  }
+]

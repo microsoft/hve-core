@@ -122,6 +122,8 @@ Text contract: markdown-like list lines in `textbox.text` and `shape.text` are i
 
 See the [content.yaml template](content-yaml-template.md) for the full template, supported element types, supported shape types, and usage instructions.
 
+Accessibility: each slide's `title` becomes the slide title that screen readers announce and navigate by, `alt` or `decorative` on an image sets its alternative text, and `metadata.language` in `style.yaml` sets the document and text language.
+
 ## Complex Drawings (`content-extra.py`)
 
 When a slide requires complex drawings that cannot be expressed through `content.yaml` element definitions, create a `content-extra.py` file in the slide folder. The `render()` function signature is fixed. The build script calls it after placing standard `content.yaml` elements.
@@ -250,10 +252,12 @@ Re-check [NVD](https://nvd.nist.gov) and [OSV](https://osv.dev) advisories for M
 When scripts fail due to missing modules, import errors, or a corrupt virtual environment, recover with:
 
 ```bash
-cd .github/skills/experimental/powerpoint
+cd "<powerpoint-skill-root>"
 rm -rf .venv
 uv sync
 ```
+
+Resolve `<powerpoint-skill-root>` from the loaded skill location before running the command.
 
 This recreates the virtual environment from scratch using `pyproject.toml` as the single source of truth. The `Invoke-PptxPipeline.ps1` orchestrator runs `uv sync` automatically on each invocation unless `-SkipVenvSetup` is passed.
 

@@ -2,7 +2,7 @@
 title: SSSC Planner Security Governance BRD
 description: Business requirements for an SSSC Planner that helps HVE-Core and downstream projects keep supply chain security planning consistent, auditable, and actionable.
 author: GitHub Copilot
-ms.date: 2026-06-13
+ms.date: 2026-09-16
 ms.topic: concept
 sidebar_position: 1
 keywords: [brd, sssc, supply chain security, planner, governance]

@@ -3,10 +3,15 @@
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import json
+import threading
 from pathlib import Path
 
-from runtime_a11y.matrix._artifacts import artifact_paths, render_artifact_bundle
+import pytest
+
+import runtime_a11y.matrix._artifacts as artifact_module
 from runtime_a11y.matrix._coverage import compute_coverage
 from runtime_a11y.matrix._model import Cell, Criterion, Matrix, Surface
 from runtime_a11y.matrix._render_test_plan import (
@@ -84,6 +89,29 @@ def _matrix() -> Matrix:
             ),
         ],
     )
+
+
+def _bundle_digests(paths: artifact_module.ArtifactPaths) -> dict[str, str]:
+    return {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in (
+            paths.coverage_json,
+            paths.coverage_markdown,
+            paths.earl_jsonld,
+            paths.manual_plan_markdown,
+            paths.manual_plan_yaml,
+            paths.manifest_json,
+        )
+    }
+
+
+def _staging_directories(output_dir: Path) -> list[Path]:
+    prefix = f".{output_dir.name}-"
+    return [
+        path
+        for path in output_dir.parent.iterdir()
+        if path.is_dir() and path.name.startswith(prefix)
+    ]
 
 
 def test_given_rendered_payload_when_deserialized_then_matrix_round_trips() -> None:
@@ -275,8 +303,8 @@ def test_given_repository_slug_when_resolving_paths_then_names_are_portable(
     tmp_path: Path,
 ) -> None:
     # Act
-    paths = artifact_paths(tmp_path, "Microsoft/HVE Core")
-    fallback = artifact_paths(tmp_path, "///")
+    paths = artifact_module.artifact_paths(tmp_path, "Microsoft/HVE Core")
+    fallback = artifact_module.artifact_paths(tmp_path, "///")
 
     # Assert
     assert (
@@ -292,9 +320,12 @@ def test_given_matrix_when_rendering_bundle_then_manifest_lists_all_artifacts(
     # Arrange
     matrix = _matrix()
     coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
 
     # Act
-    paths = render_artifact_bundle(matrix, coverage, tmp_path, "octo/repo")
+    paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
 
     # Assert
     manifest = json.loads(paths.manifest_json.read_text(encoding="utf-8"))
@@ -317,6 +348,207 @@ def test_given_matrix_when_rendering_bundle_then_manifest_lists_all_artifacts(
         "manualTestPlanMarkdown",
         "manualTestPlanYaml",
     }
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_renderer_failure_when_replacing_bundle_then_destination_is_unchanged(
+    tmp_path: Path,
+    mocker,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
+    existing_paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    existing_digests = _bundle_digests(existing_paths)
+    mocker.patch.object(
+        artifact_module, "render_earl", side_effect=RuntimeError("render failed")
+    )
+
+    # Act and Assert
+    with pytest.raises(RuntimeError, match="render failed"):
+        artifact_module.render_artifact_bundle(
+            matrix, coverage, output_dir, "octo/repo"
+        )
+
+    assert _bundle_digests(existing_paths) == existing_digests
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_manifest_invalidation_failure_when_rendering_then_promotion_stops(
+    tmp_path: Path,
+    mocker,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
+    existing_paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    existing_digests = _bundle_digests(existing_paths)
+    original_unlink = Path.unlink
+
+    def fail_manifest_unlink(path: Path, *args, **kwargs) -> None:
+        if path == existing_paths.manifest_json:
+            raise OSError("manifest invalidation failed")
+        original_unlink(path, *args, **kwargs)
+
+    mocker.patch.object(Path, "unlink", autospec=True, side_effect=fail_manifest_unlink)
+    replace = mocker.patch.object(artifact_module.os, "replace")
+
+    # Act and Assert
+    with pytest.raises(OSError, match="manifest invalidation failed"):
+        artifact_module.render_artifact_bundle(
+            matrix, coverage, output_dir, "octo/repo"
+        )
+
+    replace.assert_not_called()
+    assert _bundle_digests(existing_paths) == existing_digests
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_child_promotion_failure_when_rerun_then_bundle_recovers(
+    tmp_path: Path,
+    mocker,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
+    paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    original_replace = artifact_module.os.replace
+    failure_pending = True
+
+    def fail_one_child_promotion(source: Path, destination: Path) -> None:
+        nonlocal failure_pending
+        assert not paths.manifest_json.exists()
+        if Path(destination) == paths.coverage_markdown and failure_pending:
+            failure_pending = False
+            raise OSError("child promotion failed")
+        original_replace(source, destination)
+
+    mocker.patch.object(
+        artifact_module.os, "replace", side_effect=fail_one_child_promotion
+    )
+
+    # Act and Assert
+    with pytest.raises(OSError, match="child promotion failed"):
+        artifact_module.render_artifact_bundle(
+            matrix, coverage, output_dir, "octo/repo"
+        )
+
+    assert not paths.manifest_json.exists()
+    assert _staging_directories(output_dir) == []
+
+    recovered_paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    manifest = json.loads(recovered_paths.manifest_json.read_text(encoding="utf-8"))
+    assert len(_bundle_digests(recovered_paths)) == 6
+    assert len(manifest["artifacts"]) == 5
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_two_writers_when_publication_overlaps_then_bundle_is_one_generation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Arrange
+    first_matrix = _matrix()
+    second_matrix = _matrix()
+    second_matrix.cells[2].status = "fail"
+    first_coverage = compute_coverage(first_matrix)
+    second_coverage = compute_coverage(second_matrix)
+    output_dir = tmp_path / "artifacts"
+    metadata = artifact_module.build_artifact_metadata(
+        repository="octo/repo", generated_at="2026-09-18T00:00:00+00:00"
+    )
+    expected_paths = artifact_module.render_artifact_bundle(
+        second_matrix,
+        second_coverage,
+        tmp_path / "expected",
+        "octo/repo",
+        metadata=metadata,
+    )
+    expected_digests = _bundle_digests(expected_paths)
+    first_child_promoted = threading.Event()
+    release_first_writer = threading.Event()
+    second_writer_waiting = threading.Event()
+    second_writer_entered = threading.Event()
+    failures: list[Exception] = []
+    original_lock = artifact_module._artifact_publication_lock
+    original_replace = artifact_module.os.replace
+
+    @contextlib.contextmanager
+    def observed_lock(destination: Path):
+        if threading.current_thread().name == "second-writer":
+            second_writer_waiting.set()
+        with original_lock(destination):
+            if threading.current_thread().name == "second-writer":
+                second_writer_entered.set()
+            yield
+
+    def coordinated_replace(source: Path, destination: Path) -> None:
+        original_replace(source, destination)
+        if (
+            threading.current_thread().name == "first-writer"
+            and Path(destination).parent == output_dir
+            and Path(destination).suffix != ".json"
+            and not first_child_promoted.is_set()
+        ):
+            first_child_promoted.set()
+            assert release_first_writer.wait(timeout=5)
+
+    def render(matrix: Matrix, coverage: dict[str, object]) -> None:
+        try:
+            artifact_module.render_artifact_bundle(
+                matrix,
+                coverage,
+                output_dir,
+                "octo/repo",
+                metadata=metadata,
+            )
+        except Exception as error:
+            failures.append(error)
+
+    monkeypatch.setattr(artifact_module, "_artifact_publication_lock", observed_lock)
+    monkeypatch.setattr(artifact_module.os, "replace", coordinated_replace)
+    first_writer = threading.Thread(
+        target=render,
+        args=(first_matrix, first_coverage),
+        name="first-writer",
+    )
+    second_writer = threading.Thread(
+        target=render,
+        args=(second_matrix, second_coverage),
+        name="second-writer",
+    )
+
+    # Act
+    first_writer.start()
+    assert first_child_promoted.wait(timeout=5)
+    second_writer.start()
+    assert second_writer_waiting.wait(timeout=5)
+    assert not second_writer_entered.is_set()
+    release_first_writer.set()
+    first_writer.join(timeout=5)
+    second_writer.join(timeout=5)
+
+    # Assert
+    assert not first_writer.is_alive()
+    assert not second_writer.is_alive()
+    assert failures == []
+    assert second_writer_entered.is_set()
+    assert (
+        _bundle_digests(artifact_module.artifact_paths(output_dir, "octo/repo"))
+        == expected_digests
+    )
+    assert _staging_directories(output_dir) == []
 
 
 def test_given_scalar_types_when_rendering_yaml_then_values_are_valid() -> None:

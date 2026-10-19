@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/ns/accessibility/evidence-bundle.schema.json",
+  "title": "Accessibility evidence bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "composedAt", "catalogs", "runManifest", "bundleManifest", "expectedCells", "deferredCells", "stateProofs", "evidenceResults", "supplements", "conflicts", "scopeCompleteness", "nonAttestation", "bundleDigest"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "composedAt": { "type": "string", "format": "date-time" },
+    "catalogs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["assetJourney", "requirementMethod", "assetJourneyDigest", "requirementMethodDigest"],
+      "properties": {
+        "assetJourney": { "$ref": "#/$defs/assetJourneyCatalogInput" },
+        "requirementMethod": { "$ref": "#/$defs/requirementMethodCatalogInput" },
+        "assetJourneyDigest": { "$ref": "#/$defs/digest" },
+        "requirementMethodDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "runManifest": { "$ref": "#/$defs/runContextInput" },
+    "bundleManifest": { "$ref": "#/$defs/bundleManifest" },
+    "expectedCells": { "type": "array", "items": { "$ref": "#/$defs/cell" } },
+    "deferredCells": { "type": "array", "items": { "$ref": "#/$defs/deferredCell" } },
+    "stateProofs": { "type": "array", "items": { "$ref": "#/$defs/stateProofInput" } },
+    "evidenceResults": { "type": "array", "items": { "$ref": "#/$defs/evidenceResult" } },
+    "supplements": { "type": "array", "items": { "type": "object" } },
+    "priorBundleDigest": { "$ref": "#/$defs/digest" },
+    "historyState": { "enum": ["genesis", "continued", "invalid"] },
+    "conflicts": { "type": "array", "items": { "$ref": "#/$defs/conflict" } },
+    "scopeCompleteness": { "$ref": "#/$defs/completeness" },
+    "nonAttestation": { "$ref": "#/$defs/nonAttestation" },
+    "bundleDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "stringList": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "assetJourneyCatalogInput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "assets", "fixtures", "journeys"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "assets": { "type": "array", "items": { "type": "object", "required": ["assetId"], "properties": { "assetId": { "$ref": "#/$defs/id" } }, "additionalProperties": true } },
+        "fixtures": { "type": "array", "items": { "type": "object", "required": ["fixtureId"], "properties": { "fixtureId": { "$ref": "#/$defs/id" } }, "additionalProperties": true } },
+        "journeys": { "type": "array", "items": { "$ref": "#/$defs/journey" } }
+      }
+    },
+    "journey": {
+      "type": "object", "additionalProperties": true,
+      "required": ["journeyId", "assetId", "fixtureId", "state", "role", "requiredMethods"],
+      "properties": {
+        "journeyId": { "$ref": "#/$defs/id" }, "assetId": { "$ref": "#/$defs/id" }, "fixtureId": { "$ref": "#/$defs/id" },
+        "state": { "type": "string", "minLength": 1 }, "role": { "type": "string", "minLength": 1 }, "requiredMethods": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "requirementMethodCatalogInput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "requirements"],
+      "properties": { "schemaVersion": { "const": "1.0.0" }, "requirements": { "type": "array", "items": { "$ref": "#/$defs/requirement" } } }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["requirementId", "framework", "journeyIds", "methods", "freshnessRule"],
+      "properties": {
+        "requirementId": { "$ref": "#/$defs/id" },
+        "framework": { "type": "string", "minLength": 1 },
+        "journeyIds": { "$ref": "#/$defs/stringList" },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["method", "disposition", "proposition"],
+            "properties": {
+              "method": { "type": "string", "minLength": 1 },
+              "disposition": { "enum": ["decides", "informs"] },
+              "proposition": { "type": "string", "minLength": 1 },
+              "probe": { "type": "string", "minLength": 1 },
+              "human": { "type": "boolean" }
+            }
+          }
+        },
+        "freshnessRule": { "type": "string", "minLength": 1 }
+      }
+    },
+    "runContextInput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "runId", "campaignId", "composedAt", "sourceRevision", "buildDigest", "configDigest", "fixtureDigest", "lockfileDigest", "toolDigest", "harnessDigest", "mappingDigest", "environment"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" }, "runId": { "$ref": "#/$defs/id" }, "campaignId": { "$ref": "#/$defs/id" }, "composedAt": { "type": "string", "format": "date-time" },
+        "sourceRevision": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+        "buildDigest": { "$ref": "#/$defs/digest" }, "configDigest": { "$ref": "#/$defs/digest" }, "fixtureDigest": { "$ref": "#/$defs/digest" }, "lockfileDigest": { "$ref": "#/$defs/digest" }, "toolDigest": { "$ref": "#/$defs/digest" }, "harnessDigest": { "$ref": "#/$defs/digest" }, "mappingDigest": { "$ref": "#/$defs/digest" },
+        "environment": { "type": "object", "additionalProperties": false, "required": ["class", "operatingSystem", "locale", "inputModes"], "properties": { "class": { "type": "string", "minLength": 1 }, "operatingSystem": { "type": "string", "minLength": 1 }, "browser": { "type": "string", "minLength": 1 }, "assistiveTechnology": { "type": "string", "minLength": 1 }, "locale": { "type": "string", "minLength": 1 }, "viewport": { "type": "string", "minLength": 1 }, "inputModes": { "$ref": "#/$defs/stringList" } } }
+      }
+    },
+    "stateProofInput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "proofId", "runId", "journeyId", "fixtureId", "state", "status", "expected", "observed", "steps", "artifactIds"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" }, "proofId": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/id" }, "journeyId": { "$ref": "#/$defs/id" }, "fixtureId": { "$ref": "#/$defs/id" }, "state": { "type": "string", "minLength": 1 }, "status": { "enum": ["PROVED", "FAILED", "UNRESOLVED"] }, "expected": { "type": "string", "minLength": 1 }, "observed": { "type": "string", "minLength": 1 }, "steps": { "type": "array", "minItems": 2, "items": { "type": "object" } }, "artifactIds": { "$ref": "#/$defs/stringList" }, "errors": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cellId", "requirementId", "journeyId", "state", "method", "probe", "disposition", "expected"],
+      "properties": {
+        "cellId": { "$ref": "#/$defs/id" },
+        "requirementId": { "$ref": "#/$defs/id" },
+        "journeyId": { "$ref": "#/$defs/id" },
+        "state": { "type": "string" },
+        "method": { "type": "string" },
+        "probe": { "type": "string" },
+        "disposition": { "enum": ["decides", "informs"] },
+        "expected": { "type": "string" },
+        "human": { "type": "boolean" }
+      }
+    },
+    "deferredCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cellId", "requirementId", "journeyId", "state", "method", "probe", "disposition", "expected", "targetCadence", "reason"],
+      "properties": {
+        "cellId": { "$ref": "#/$defs/id" },
+        "requirementId": { "$ref": "#/$defs/id" },
+        "journeyId": { "$ref": "#/$defs/id" },
+        "state": { "type": "string" },
+        "method": { "type": "string" },
+        "probe": { "type": "string" },
+        "disposition": { "enum": ["decides", "informs"] },
+        "expected": { "type": "string" },
+        "human": { "type": "boolean" },
+        "targetCadence": { "enum": ["pull-request", "scheduled", "release"] },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidenceResult": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["resultId", "cellId", "status", "observed"],
+      "properties": {
+        "resultId": { "$ref": "#/$defs/id" },
+        "cellId": { "$ref": "#/$defs/id" },
+        "status": { "enum": ["PASS", "FAIL", "CANT_TELL", "NOT_ASSESSED", "INAPPLICABLE"] },
+        "observed": { "type": "string" },
+        "quarantined": { "type": "boolean" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "path", "mediaType", "sizeBytes", "sha256"],
+      "properties": {
+        "artifactId": { "$ref": "#/$defs/id" },
+        "path": { "type": "string" },
+        "mediaType": { "type": "string" },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "bundleManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundleId", "runId", "runManifestDigest", "scopeDigest", "artifacts", "quarantineState", "quarantineReasons"],
+      "properties": {
+        "bundleId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" },
+        "runManifestDigest": { "$ref": "#/$defs/digest" },
+        "scopeDigest": { "$ref": "#/$defs/digest" },
+        "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+        "quarantineState": { "enum": ["clear", "quarantined"] },
+        "quarantineReasons": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conflictId", "cellId", "resultIds", "state"],
+      "properties": {
+        "conflictId": { "$ref": "#/$defs/id" },
+        "cellId": { "$ref": "#/$defs/id" },
+        "resultIds": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "state": { "enum": ["unresolved", "resolved"] },
+        "resolution": { "type": "string" }
+      }
+    },
+    "completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["automatedCollection", "reviewerEvidence", "releaseEvidence", "reasons"],
+      "properties": {
+        "automatedCollection": { "enum": ["complete", "incomplete"] },
+        "reviewerEvidence": { "enum": ["not-required", "pending", "complete", "invalid"] },
+        "releaseEvidence": { "enum": ["not-applicable", "incomplete", "complete"] },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "nonAttestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attestation", "statement", "evidenceLimits"],
+      "properties": {
+        "attestation": { "const": false },
+        "statement": { "type": "string", "minLength": 1 },
+        "evidenceLimits": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/ns/accessibility/evidence-source.schema.json",
+  "title": "Accessibility evidence source envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceKind", "producer", "sourceRunId", "observedAt", "sourceDigest", "boundTo", "results"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "sourceKind": { "enum": ["hve-probe", "playwright", "axe", "visual", "source", "state-proof"] },
+    "producer": { "type": "string", "minLength": 1 },
+    "sourceRunId": { "$ref": "#/$defs/id" },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "boundTo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceRevision", "buildDigest", "configDigest", "fixtureDigest"],
+      "properties": {
+        "sourceRevision": { "type": "string", "minLength": 1 },
+        "buildDigest": { "$ref": "#/$defs/digest" },
+        "configDigest": { "$ref": "#/$defs/digest" },
+        "fixtureDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "quarantined": { "type": "boolean", "default": false },
+    "quarantineReasons": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "transcript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phraseCount", "sha256", "retained"],
+      "properties": {
+        "phraseCount": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/digest" },
+        "retained": { "type": "boolean" },
+        "classification": { "const": "restricted" }
+      }
+    },
+    "results": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "path", "mediaType", "sizeBytes", "sha256"],
+      "properties": {
+        "artifactId": { "$ref": "#/$defs/id" },
+        "path": { "type": "string", "minLength": 1 },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resultId", "requirementId", "journeyId", "state", "method", "probe", "disposition", "status", "expected", "observed"],
+      "properties": {
+        "resultId": { "$ref": "#/$defs/id" },
+        "requirementId": { "$ref": "#/$defs/id" },
+        "journeyId": { "$ref": "#/$defs/id" },
+        "state": { "type": "string", "minLength": 1 },
+        "method": { "type": "string", "minLength": 1 },
+        "probe": { "type": "string", "minLength": 1 },
+        "disposition": { "enum": ["decides", "informs"] },
+        "status": { "enum": ["PASS", "FAIL", "CANT_TELL", "NOT_ASSESSED", "INAPPLICABLE"] },
+        "expected": { "type": "string", "minLength": 1 },
+        "observed": { "type": "string", "minLength": 1 },
+        "stateProofId": { "$ref": "#/$defs/id" },
+        "artifactIds": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "limitation": { "type": "string", "minLength": 1 },
+        "validUntil": { "type": "string", "format": "date-time" },
+        "invalidated": { "type": "boolean" },
+        "invalidationReasons": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "supersedesResultId": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/accessibility/validation-manifest.schema.json",
+  "title": "Accessibility validation manifest",
+  "description": "Deterministic record binding a validation run to one exact source revision, including generated and untracked deliverables. The manifest never contains its own digest and never contains timestamps, so recomposition from the same bytes is reproducible.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "revision",
+    "environment",
+    "commands",
+    "generatedInventory",
+    "untrackedDeliverables",
+    "assistiveTechnologySample",
+    "manifestDigest"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1.0.0" },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceRevision", "diffDigest", "tracked"],
+      "properties": {
+        "sourceRevision": { "type": "string", "minLength": 1 },
+        "diffDigest": { "$ref": "#/$defs/digest" },
+        "tracked": { "type": "boolean" },
+        "branch": { "type": "string", "minLength": 1 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operatingSystem", "toolVersions"],
+      "properties": {
+        "operatingSystem": { "type": "string", "minLength": 1 },
+        "toolVersions": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/command" }
+    },
+    "generatedInventory": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/inventoryEntry" }
+    },
+    "untrackedDeliverables": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/inventoryEntry" }
+    },
+    "assistiveTechnologySample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["advisory", "journeys", "boundary"],
+      "properties": {
+        "advisory": { "const": true },
+        "journeys": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "boundary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "manifestDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commandId", "command", "workingDirectory", "status"],
+      "properties": {
+        "commandId": { "$ref": "#/$defs/id" },
+        "command": { "type": "string", "minLength": 1 },
+        "workingDirectory": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["passed", "failed", "skipped", "unavailable"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "resultArtifactDigest": { "$ref": "#/$defs/digest" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "enum": ["passed", "failed"] } },
+            "required": ["status"]
+          },
+          "then": { "required": ["resultArtifactDigest"] }
+        },
+        {
+          "if": {
+            "properties": { "status": { "enum": ["skipped", "unavailable"] } },
+            "required": ["status"]
+          },
+          "then": { "required": ["reason"] }
+        }
+      ]
+    },
+    "inventoryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    }
+  }
+}

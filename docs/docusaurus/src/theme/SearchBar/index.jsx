@@ -211,6 +211,22 @@ export default function SearchBarWrapper(props) {
       blurGuardedInput = input;
     };
 
+    const restoreUnexpectedInputFocus = (event) => {
+      const previousInput = event.target;
+      if (previousInput !== currentInput || event.relatedTarget
+        || isUserGestureInFlight()) {
+        return;
+      }
+      const query = previousInput.value.trim();
+      queueMicrotask(() => {
+        const replacement = getSearchInput();
+        if (query && replacement && document.activeElement === document.body) {
+          HTMLElement.prototype.focus.call(replacement);
+        }
+      });
+    };
+    document.addEventListener('focusout', restoreUnexpectedInputFocus, true);
+
     // Returns focusable elements in document order starting after (or before,
     // when going backwards) the given element.
     //
@@ -609,6 +625,7 @@ export default function SearchBarWrapper(props) {
       }
       releaseRefocusGuard();
       releaseBlurGuard();
+      document.removeEventListener('focusout', restoreUnexpectedInputFocus, true);
       document.removeEventListener('keydown', rememberUserGesture, true);
       document.removeEventListener('pointerdown', rememberUserGesture, true);
       observer.disconnect();

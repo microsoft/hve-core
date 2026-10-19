@@ -7,8 +7,11 @@ from __future__ import annotations
 import io
 import os
 import pathlib
+import socket
 import sys
 import urllib.error
+import urllib.request
+import webbrowser
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from email.message import Message
@@ -27,6 +30,30 @@ from test_constants import (
     TEST_CLIENT_SECRET,
     TEST_REDIRECT_URI,
 )
+
+_EV06_MODULES = {"test_doctor", "test_destinations", "test_ev06_assurance"}
+
+
+@pytest.fixture(autouse=True)
+def ev06_offline_guard(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Deny ambient network, browser, and keyring access in EV-06 tests."""
+    if request.module.__name__.split(".")[-1] not in _EV06_MODULES:
+        return
+
+    def blocked(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("EV-06 test attempted an unregistered external call")
+
+    monkeypatch.setattr(socket, "create_connection", blocked)
+    monkeypatch.setattr(urllib.request, "urlopen", blocked)
+    monkeypatch.setattr(webbrowser, "open", blocked)
+
+    import keyring
+
+    monkeypatch.setattr(keyring, "get_password", blocked)
+    monkeypatch.setattr(keyring, "set_password", blocked)
+    monkeypatch.setattr(keyring, "delete_password", blocked)
 
 
 class FakeHttpResponse:

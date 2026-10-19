@@ -1,0 +1,44 @@
+project:
+  name: "Synthetic Solution Ready"
+  slug: "synthetic-solution-ready"
+  created: "2026-09-11"
+  initial_request: "Evaluate a synthetic maintenance concept without real participants."
+  initial_classification: "frozen"
+
+current:
+  method: 6
+  space: "solution"
+  phase: "prototype evidence review"
+  disclaimerShownAt: "2026-09-11T00:00:00Z"
+
+methods_completed:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+
+transition_log:
+  - from_method: 5
+    to_method: 6
+    rationale: "The synthetic concept was selected for bounded prototype testing."
+    date: "2026-09-12"
+
+hint_calibration:
+  level: 2
+  pattern_notes: "Keep observed and simulated evidence distinct."
+
+session_log:
+  - date: "2026-09-12"
+    method: 6
+    summary: "Observed synthetic constraints and simulated feedback were recorded without claiming stakeholder outcomes."
+
+artifacts:
+  - path: ".copilot-tracking/dt/synthetic-solution-ready/method-06-solution-evidence.md"
+    method: 6
+    type: "prototype-evidence"
+
+synthetic_extension:
+  optional_ux_route: "declined"
+  preserve_on_update: true

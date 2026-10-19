@@ -1,0 +1,65 @@
+project:
+  name: "Synthetic Lifecycle Conflict"
+  slug: "synthetic-lifecycle-conflict"
+  created: "2026-09-05"
+  initial_request: "Preserve conflicting synthetic evidence for review."
+  initial_classification: "fluid"
+
+current:
+  method: 5
+  space: "solution"
+  phase: "concept evaluation"
+  disclaimerShownAt: "2026-09-05T00:00:00Z"
+
+methods_completed:
+  - 1
+  - 2
+  - 3
+  - 4
+
+transition_log:
+  - from_method: 3
+    to_method: 5
+    rationale: "Synthetic concepts were selected for evaluation."
+    date: "2026-09-01"
+  - from_method: 5
+    to_method: 3
+    rationale: "Conflicting synthetic evidence required re-synthesis."
+    date: "2026-09-02"
+  - from_method: 3
+    to_method: 5
+    rationale: "Revised synthetic themes returned to evaluation."
+    date: "2026-09-03"
+  - from_method: 5
+    to_method: 3
+    rationale: "A second conflict required another re-synthesis."
+    date: "2026-09-04"
+  - from_method: 3
+    to_method: 5
+    rationale: "The current synthetic evaluation resumed with conflicts preserved."
+    date: "2026-09-06"
+
+hint_calibration:
+  level: 2
+  pattern_notes: "Conflicting evidence must remain visible."
+
+session_log:
+  - date: "2026-09-06"
+    method: 5
+    summary: "Observed and simulated evidence disagreed; no convergence decision was recorded."
+
+artifacts:
+  - path: ".copilot-tracking/dt/synthetic-lifecycle-conflict/method-05-conflicting-evidence.md"
+    method: 5
+    type: "concept-evidence"
+
+evidence_register:
+  - claim: "The synthetic concept reduces handoff delay."
+    label: "observed"
+    result: "supported"
+  - claim: "The synthetic concept reduces handoff delay."
+    label: "simulated"
+    result: "not-supported"
+  - claim: "Stakeholders prefer the synthetic concept."
+    label: "assumed"
+    result: "unknown"

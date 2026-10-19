@@ -8,8 +8,12 @@ description: 'Create new decks safely and adapt reusable fragments without repla
 
 The [deck starter](../templates/deck/README.md) is a runnable, neutral reveal.js presentation
 with four example slides and a four-step scripted walkthrough. It includes local
-navigation, source/notes dialogs, keyboard and focus handling, reduced motion, build/bundle
-scripts, a pinned lockfile and Node tests.
+navigation, source/notes dialogs, keyboard and focus handling, unscaled reading view,
+reduced motion, build/bundle
+scripts, a pinned lockfile and Node tests. It also carries the shared
+[bottom chrome](design-and-examples.md#bottom-chrome): a presenter bar with the HVE Core
+mark and chapter, a divided slide footer and a framed walkthrough with its step controls
+in the frame footer.
 
 From the repository root:
 
@@ -115,6 +119,9 @@ The fragments use the starter's `data-example` and `data-demo` conventions:
 * Component data, not the fragment, owns requests, options, answers, tasks and diff rows.
 * The starter styles live in `theme.css` and `components.css`. Copy the required rules
   only when the destination has no suitable owner.
+* Preserve heading order, passive reconstruction semantics, text alternatives and the
+  reading-view rules when adapting fragments. Validate the resulting slide at 320px and
+  with enlarged or spaced text, not only on the presentation canvas.
 
 HVE Updates uses different globals and initialization. Adapt a fragment to that existing
 data/renderer contract; pasting a starter mount alone will not initialize it there.
@@ -126,6 +133,12 @@ The canonical bundler lives in `templates/deck/bundle.mjs`. New decks copy it. H
 has a thin wrapper passing its own build function, so there is no second maintained parser.
 Keep imported modules free of build side effects. Do not introduce cross-deck browser
 imports, automatic template upgrades or an overwrite option to the scaffold script.
+
+Keep the starter's bottom chrome in step with the finished HVE decks. When that shared
+treatment changes, update the starter in the same change. Its `deck.test.cjs` checks the
+contract and is copied into every new deck, so a later layout edit that drops the deck
+mark, desynchronizes the bar height or moves walkthrough controls out of their frame fails
+that deck's tests.
 
 The skill's `scripts/` and `tests/` are maintenance tooling, not copied into a new deck.
 Run the bounded checks after changing the starter, scaffold script or build-all script:

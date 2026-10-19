@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Solutions for common HVE Core extension, plugin, and selective clone installation problems
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-10-07
 ms.topic: troubleshooting
 keywords: [troubleshooting, FAQ, installation, hve-core, selective clone, registry, proxy]
 estimated_reading_time: 6
@@ -15,7 +15,7 @@ This page covers common installation problems and answers frequently asked quest
 
 ### Extension Not Loading After Install
 
-The extension appears in the Extensions sidebar but HVE Core agents and prompts are not available in Copilot Chat.
+The extension appears in the Extensions sidebar but HVE Core agents and skills are not available in Copilot Chat.
 
 #### Solutions
 
@@ -24,16 +24,16 @@ The extension appears in the Extensions sidebar but HVE Core agents and prompts 
 3. Open the Output panel (`Ctrl+Shift+U`) and select the HVE Core channel. Look for error messages during extension activation.
 4. Confirm your VS Code version is 1.99 or later under Help > About.
 
-### Agent or Prompt Not Appearing in Copilot
+### Agent or Skill Not Appearing in Copilot
 
-Some agents or prompts are missing from the `@` mention list or `/` command list in Copilot Chat.
+Some agents or skills are missing from the agent picker or `/` command list in Copilot Chat.
 
 #### Solutions
 
-1. Agents and prompts load from `.github/` directories in the open workspace. Verify that `.github/agents/` and `.github/prompts/` folders exist and contain `.agent.md` or `.prompt.md` files.
+1. Agents and skills load from `.github/` directories in the open workspace. Verify that `.github/agents/` and `.github/skills/` folders exist and contain `.agent.md` files or skill folders with a `SKILL.md`.
 2. Copilot Chat loads workspace-scoped agents only when a folder or workspace is open. Opening a single file does not activate workspace agents.
-3. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, prompts, instructions, and complete skills were copied.
-4. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/prompts/` directories.
+3. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, instructions, and complete skills were copied.
+4. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/skills/` directories.
 
 ### Duplicate Components from Managed and Copied Installations
 
@@ -41,7 +41,7 @@ Duplicate agents appear in Copilot Chat, or agents behave unexpectedly after ins
 
 #### Solutions
 
-1. The HVE Core extension contributes the complete managed component set. Selective clone adoption copies chosen components into your repository. Using both can expose duplicate agents, prompts, or instructions.
+1. The HVE Core extension contributes the complete managed component set. Selective clone adoption copies chosen components into your repository. Using both can expose duplicate agents, instructions, or skills.
 2. Keep the extension when you want managed complete content. Keep the copied selection when you want repository-owned files and version control.
 3. Before deleting copied `.github/` files, compare them with `.hve-tracking.json` and preserve local modifications. Uninstalling the extension does not remove repository files.
 
@@ -83,7 +83,7 @@ Follow [Migrate to the HVE Core Identity](package-migration). Copilot marketplac
 
 ### Can I Use Both Extensions Simultaneously?
 
-Using the managed extension and copied HVE Core components in the same workspace can result in duplicate agents and prompts. Choose one source of components for each workspace. See [Duplicate Components](#duplicate-components-from-managed-and-copied-installations) above.
+Using the managed extension and copied HVE Core components in the same workspace can result in duplicate agents, instructions, and skills. Choose one source of components for each workspace. See [Duplicate Components](#duplicate-components-from-managed-and-copied-installations) above.
 
 ### How Do I Update to the Latest Version?
 

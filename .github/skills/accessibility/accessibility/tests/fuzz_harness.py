@@ -32,6 +32,8 @@ assessor_module = importlib.import_module("runtime_a11y.matrix._ingest_assessor"
 planner_module = importlib.import_module("runtime_a11y.matrix._ingest_planner")
 report_module = importlib.import_module("runtime_a11y.matrix._ingest_reports")
 merge_module = importlib.import_module("runtime_a11y.matrix._merge")
+canonical_module = importlib.import_module("runtime_a11y.evidence_bundle._canonical")
+validate_module = importlib.import_module("runtime_a11y.evidence_bundle._validate")
 
 
 def fuzz_normalize_results(data: bytes) -> None:
@@ -90,6 +92,9 @@ def fuzz_runtime_a11y_parsers(data: bytes) -> None:
             ),
             [],
         )
+        fuzzed_text = provider.ConsumeUnicodeNoSurrogates(128)
+        canonical_module.canonical_json({"value": fuzzed_text, "items": [fuzzed_text]})
+        validate_module.reject_prohibited_content({"metadata": fuzzed_text})
 
 
 FUZZ_TARGETS = [fuzz_normalize_results, fuzz_runtime_a11y_parsers]

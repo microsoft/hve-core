@@ -16,6 +16,15 @@ import {
 import { createScreenReaderDriver, validateScreenReaderConfig } from '../../../scripts/runtime_a11y/runner/drivers/driver-contract.mjs';
 import { createGuidepupDriverAdapter } from '../../../scripts/runtime_a11y/runner/drivers/guidepup-adapter.mjs';
 
+// Mirrors the adapter's approved NVDA profile so lifecycle tests exercise
+// start and stop behavior rather than profile rejection.
+const APPROVED_SETTINGS = Object.freeze({
+  general: { language: 'Windows', saveConfigurationOnExit: false },
+  presentation: { reportDynamicContentChanges: true },
+  virtualBuffers: { autoSayAllOnPageLoad: false },
+  vision: { NVDAHighlighter: { enabled: false } },
+});
+
 test('validateScreenReaderConfig accepts generic commands and functional assertions', () => {
   const result = validateScreenReaderConfig({
     commands: [{ kind: 'command', value: 'next' }, { kind: 'pause', durationMs: 200 }],
@@ -303,6 +312,7 @@ test('createGuidepupDriverAdapter resolves allowlisted perform commands through 
       keyboardCommands: {
         moveToNextFormField: { id: 'moveToNextFormField' },
         performDefaultActionForItem: { id: 'performDefaultActionForItem' },
+        moveToNextRow: { id: 'moveToNextRow' },
       },
       spokenPhraseLog: async () => [],
     },
@@ -310,9 +320,14 @@ test('createGuidepupDriverAdapter resolves allowlisted perform commands through 
 
   await adapter.executeCommand({ kind: 'perform', value: 'moveToNextFormField' });
   await adapter.executeCommand({ kind: 'perform', value: 'performDefaultActionForItem' });
+  await adapter.executeCommand({ kind: 'perform', value: 'moveToNextRow' });
 
   assert.equal(adapter.supported, true);
-  assert.deepEqual(performed, [{ id: 'moveToNextFormField' }, { id: 'performDefaultActionForItem' }]);
+  assert.deepEqual(performed, [
+    { id: 'moveToNextFormField' },
+    { id: 'performDefaultActionForItem' },
+    { id: 'moveToNextRow' },
+  ]);
 });
 
 test('createGuidepupDriverAdapter rejects unknown perform commands before dispatch', async () => {
@@ -331,6 +346,7 @@ test('createGuidepupDriverAdapter rejects unknown perform commands before dispat
   });
 
   await assert.rejects(adapter.executeCommand({ kind: 'perform', value: 'notARealNvdaCommand' }), /Unsupported perform/);
+  await assert.rejects(adapter.executeCommand({ kind: 'perform', value: 'moveToNextRow' }), /does not expose keyboard command/);
 });
 
 test('createGuidepupDriverAdapter dispatches type commands through the NVDA target', async () => {
@@ -353,16 +369,218 @@ test('createGuidepupDriverAdapter dispatches type commands through the NVDA targ
   assert.deepEqual(typed, ['agent']);
 });
 
-test('createGuidepupDriverAdapter tracks ownership and cleanup state for start/stop lifecycle', async () => {
-  const stopCalls = [];
+test('createGuidepupDriverAdapter dispatches allowlisted semantic navigation and rejects unknown navigation', async () => {
+  const navigated = [];
   const adapter = await createGuidepupDriverAdapter({
     platform: 'win32',
     target: {
       start: async () => undefined,
+      stop: async () => undefined,
+      nextHeading: async (options) => navigated.push({ value: 'nextHeading', options }),
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await adapter.executeCommand({ kind: 'navigate', value: 'nextHeading' });
+
+  assert.deepEqual(navigated, [{ value: 'nextHeading', options: { capture: true } }]);
+  await assert.rejects(
+    adapter.executeCommand({ kind: 'navigate', value: 'openPreferences' }),
+    /Unsupported navigate/,
+  );
+});
+
+test('createGuidepupDriverAdapter captures a trusted external action without changing cumulative capture', async () => {
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    target: {
+      start: async () => undefined,
+      stop: async () => undefined,
+      capture: async (action, options) => ({ result: await action(), spokenPhrase: 'Added to cart', itemText: 'Added to cart', options }),
+      spokenPhraseLog: async () => ['cumulative phrase'],
+    },
+  });
+
+  const captured = await adapter.captureAction(async () => 'clicked');
+  const cumulative = await adapter.captureLog();
+
+  assert.deepEqual(captured, { result: 'clicked', spokenPhrase: 'Added to cart', itemText: 'Added to cart', options: { capture: true } });
+  assert.deepEqual(cumulative.phrases, ['cumulative phrase']);
+});
+
+test('createGuidepupDriverAdapter bounds commands and speech capture operations', async () => {
+  const pending = () => new Promise(() => {});
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    config: {
+      lifecycle: {
+        commandTimeoutMs: 5,
+        captureTimeoutMs: 5,
+        logTimeoutMs: 5,
+      },
+    },
+    target: {
+      start: async () => undefined,
+      stop: async () => undefined,
+      next: pending,
+      capture: pending,
+      clearSpokenPhraseLog: pending,
+      spokenPhraseLog: pending,
+    },
+  });
+
+  await assert.rejects(adapter.executeCommand({ kind: 'command', value: 'next' }), /next command timed out after 5ms/);
+  await assert.rejects(adapter.captureAction(async () => undefined), /action capture timed out after 5ms/);
+  await assert.rejects(adapter.clearLog(), /clear speech log timed out after 5ms/);
+  await assert.rejects(adapter.captureLog(), /speech log capture timed out after 5ms/);
+  assert.deepEqual(adapter.metadata.operationTimeouts, {
+    commandTimeoutMs: 5,
+    captureTimeoutMs: 5,
+    logTimeoutMs: 5,
+  });
+});
+
+test('createGuidepupDriverAdapter rejects action capture when the runtime target lacks capture support', async () => {
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    target: {
+      start: async () => undefined,
+      stop: async () => undefined,
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await assert.rejects(adapter.captureAction(async () => undefined), /does not support action-scoped capture/);
+});
+
+test('createScreenReaderDriver rejects action capture for a synthetic driver', async () => {
+  const driver = await createScreenReaderDriver({
+    platform: 'win32',
+    driverName: 'synthetic',
+    config: {
+      captureMode: 'action',
+      triggerAfterDriverStart: true,
+      hasActionTrigger: true,
+      commands: [{ kind: 'navigate', value: 'nextHeading' }],
+      expectedAnnouncements: [{ type: 'contains', value: 'heading', evidenceType: 'actionSpeech' }],
+    },
+  });
+
+  assert.equal(driver.supported, false);
+  assert.equal(driver.status, 'invalid-config');
+  assert.match(driver.errors[0], /requires a real Guidepup/);
+});
+
+test('createGuidepupDriverAdapter derives profile identity from effective settings', async () => {
+  const createAdapterForSettings = async (settings) => createGuidepupDriverAdapter({
+    platform: 'win32',
+    libraryVersion: '0.34.0',
+    target: {
+      version: '0.2.1-2026.2',
+      start: async () => undefined,
+      stop: async () => undefined,
+      getSettings: () => settings,
+      spokenPhraseLog: async () => [],
+    },
+  });
+  const approved = await createAdapterForSettings(APPROVED_SETTINGS);
+  // A setting outside the approved projection must not change identity.
+  const withIgnoredSetting = await createAdapterForSettings({
+    ...APPROVED_SETTINGS,
+    speech: { rate: 42 },
+  });
+
+  await approved.start();
+  await withIgnoredSetting.start();
+
+  assert.equal(approved.metadata.guidepupLibraryVersion, '0.34.0');
+  assert.equal(approved.metadata.nvdaAssetVersion, '0.2.1-2026.2');
+  assert.notEqual(approved.metadata.guidepupLibraryVersion, approved.metadata.nvdaAssetVersion);
+  assert.equal(approved.metadata.profileVerified, true);
+  assert.equal(
+    approved.metadata.profileFingerprint.digest,
+    withIgnoredSetting.metadata.profileFingerprint.digest,
+  );
+  assert.deepEqual(Object.keys(approved.metadata.profileFingerprint).sort(), [
+    'addOnPosture',
+    'approvedSettings',
+    'digest',
+    'effectiveSettings',
+    'mismatchedSettings',
+    'profileId',
+    'verified',
+  ]);
+  assert.equal(approved.metadata.profileFingerprint.addOnPosture, 'not-observable');
+
+  await approved.stop();
+  await withIgnoredSetting.stop();
+});
+
+test('createGuidepupDriverAdapter refuses to start when effective settings differ', async () => {
+  let stopCalls = 0;
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    config: { lifecycle: { startAttempts: 3, startRetryDelayMs: 0, stopSettleDelayMs: 0 } },
+    sleep: async () => undefined,
+    target: {
+      version: '0.2.1-2026.2',
+      start: async () => undefined,
+      stop: async () => {
+        stopCalls += 1;
+      },
+      getSettings: () => ({
+        ...APPROVED_SETTINGS,
+        virtualBuffers: { autoSayAllOnPageLoad: true },
+      }),
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await assert.rejects(adapter.start(), /virtualBuffers.autoSayAllOnPageLoad/);
+
+  assert.equal(adapter.metadata.profileVerified, false);
+  assert.deepEqual(
+    adapter.metadata.profileFingerprint.mismatchedSettings,
+    ['virtualBuffers.autoSayAllOnPageLoad'],
+  );
+  // A deterministic mismatch is not retried, and bounded cleanup released the
+  // partial start.
+  assert.equal(stopCalls, 1);
+  assert.deepEqual(adapter.cleanupState(), { startedByAdapter: false, started: false });
+});
+
+test('createGuidepupDriverAdapter rejects a target that cannot report effective settings', async () => {
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    config: { lifecycle: { startAttempts: 1, stopSettleDelayMs: 0 } },
+    target: {
+      version: '0.2.1-2026.2',
+      start: async () => undefined,
+      stop: async () => undefined,
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await assert.rejects(adapter.start(), /does not expose effective settings/);
+  assert.equal(adapter.metadata.profileVerified, false);
+});
+
+test('createGuidepupDriverAdapter tracks ownership and cleanup state for start/stop lifecycle', async () => {
+  const stopCalls = [];
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    libraryVersion: '0.34.0',
+    target: {
+      start: async (options) => {
+        assert.equal(options.capture, true);
+        assert.equal(options.settings.presentation.reportDynamicContentChanges, true);
+      },
       stop: async () => {
         stopCalls.push('stopped');
       },
       press: async () => undefined,
+      version: '0.2.1-2026.2',
+      getSettings: () => APPROVED_SETTINGS,
       spokenPhraseLog: async () => [],
     },
   });
@@ -373,6 +591,11 @@ test('createGuidepupDriverAdapter tracks ownership and cleanup state for start/s
   await adapter.start();
   assert.equal(adapter.cleanupState().startedByAdapter, true);
   assert.equal(adapter.cleanupState().started, true);
+  assert.equal(adapter.metadata.guidepupLibraryVersion, '0.34.0');
+  assert.equal(adapter.metadata.nvdaAssetVersion, '0.2.1-2026.2');
+  assert.equal(adapter.metadata.profileFingerprint.profileId, 'guidepup-nvda-isolated-v1');
+  assert.equal(adapter.metadata.profileFingerprint.digest.length, 64);
+  assert.equal('path' in adapter.metadata.profileFingerprint, false);
 
   await adapter.stop();
   assert.equal(stopCalls.length, 1);
@@ -406,6 +629,7 @@ test('createGuidepupDriverAdapter retries startup and settles after stop', async
           throw new Error('Timed out waiting for NVDA to be running');
         }
       },
+      getSettings: () => APPROVED_SETTINGS,
       stop: async () => {
         stopCalls += 1;
       },
@@ -448,6 +672,7 @@ test('createGuidepupDriverAdapter times out a hung startup attempt and retries',
           return new Promise(() => {});
         }
       },
+      getSettings: () => APPROVED_SETTINGS,
       stop: async () => {
         stopCalls += 1;
       },
@@ -464,6 +689,70 @@ test('createGuidepupDriverAdapter times out a hung startup attempt and retries',
   assert.equal(sleeps.includes(3), true);
 });
 
+test('createGuidepupDriverAdapter retains partial-start ownership when cleanup is unproven', async () => {
+  let stopCalls = 0;
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    config: {
+      lifecycle: {
+        startAttempts: 2,
+        startTimeoutMs: 5,
+        stopTimeoutMs: 5,
+        stopSettleDelayMs: 0,
+      },
+    },
+    target: {
+      start: async () => new Promise(() => {}),
+      stop: async () => {
+        stopCalls += 1;
+        if (stopCalls === 1) {
+          throw new Error('NVDA exit not proven');
+        }
+      },
+      press: async () => undefined,
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await assert.rejects(adapter.start(), /failed-start cleanup was not proven/);
+  assert.deepEqual(adapter.cleanupState(), { startedByAdapter: true, started: false });
+
+  await adapter.stop();
+  assert.equal(stopCalls, 2);
+  assert.deepEqual(adapter.cleanupState(), { startedByAdapter: false, started: false });
+});
+
+test('createGuidepupDriverAdapter treats already-stopped cleanup as proven before retry', async () => {
+  let startCalls = 0;
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    config: {
+      lifecycle: {
+        startAttempts: 2,
+        startRetryDelayMs: 0,
+        stopSettleDelayMs: 0,
+      },
+    },
+    target: {
+      start: async () => {
+        startCalls += 1;
+        if (startCalls === 1) throw new Error('Timed out waiting for NVDA');
+      },
+      getSettings: () => APPROVED_SETTINGS,
+      stop: async () => {
+        if (startCalls === 1) throw new Error('NVDA is not running');
+      },
+      press: async () => undefined,
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await adapter.start();
+  assert.equal(startCalls, 2);
+  assert.deepEqual(adapter.cleanupState(), { startedByAdapter: true, started: true });
+  await adapter.stop();
+});
+
 test('createGuidepupDriverAdapter keeps ownership state when the stop fails and re-attempts it on retry', async () => {
   let stopCalls = 0;
   const adapter = await createGuidepupDriverAdapter({
@@ -477,6 +766,7 @@ test('createGuidepupDriverAdapter keeps ownership state when the stop fails and 
     sleep: async () => undefined,
     target: {
       start: async () => undefined,
+      getSettings: () => APPROVED_SETTINGS,
       stop: async () => {
         stopCalls += 1;
         if (stopCalls === 1) {

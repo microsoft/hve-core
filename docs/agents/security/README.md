@@ -3,6 +3,8 @@ title: Security Planning
 description: Automated security analysis agent that guides teams through threat modeling, standards mapping, and backlog generation using a structured six-phase workflow
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Security Planning"
 keywords:
   - security planning
   - threat modeling
@@ -14,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-13
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -97,12 +99,12 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 ## Entry Modes
 
-The Security Planner supports two entry modes, each matched to a prompt file.
+The Security Planner supports two entry modes. Select the Security Planner agent and describe your starting point; the agent resolves the mode from your request and any artifacts you supply.
 
-| Mode     | Prompt                   | Starting point                                              |
-|----------|--------------------------|-------------------------------------------------------------|
-| From-PRD | `security-plan-from-prd` | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
-| Capture  | `security-capture`       | Starts a blank Phase 1 interview to gather scope directly   |
+| Mode     | How to start                                      | Starting point                                              |
+|----------|---------------------------------------------------|-------------------------------------------------------------|
+| From-PRD | Ask to start from your product requirements       | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
+| Capture  | Describe the project, optionally with prior notes | Starts a blank Phase 1 interview to gather scope directly   |
 
 ## When to Use
 
@@ -126,9 +128,15 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 
 ## Prerequisites
 
-* The Security Planner agent installed and enabled in your VS Code workspace.
-* The `rpi-research` skill available for standards lookups in Phase 3.
+* HVE Core installed in one of these hosts:
+  * VS Code with GitHub Copilot Chat and the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
+
+Either install delivers the Security Planner with the skills it uses, including `rpi-research` for Phase 3 standards lookups, and the RAI Planner and SSSC Planner it hands off to.
+There is no separate security extension.
+In Copilot CLI, plugin instructions are not auto-applied; see [Instructions are not auto-applied from plugins](../../getting-started/methods/cli-plugins.md#instructions-are-not-auto-applied-from-plugins).
+To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the Security Planner agent, the `security-planning`, `owasp-top-10`, `owasp-llm`, `rpi-research`, and `backlog-templates` skills, the security `identity` and `standards-mapping` instructions, and the shared `coaching-patterns` and `disclaimer-language` instructions.
 
 ## Next Steps
 

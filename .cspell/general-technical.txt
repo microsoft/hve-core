@@ -77,6 +77,7 @@ backlink
 backlinks
 backticked
 bargauge
+basehead
 beforeall
 blockchain
 chatbot
@@ -153,6 +154,7 @@ cscf
 cse
 cse's
 cspell
+cairosvg
 cspm
 csps
 cte's
@@ -194,6 +196,7 @@ explainability
 Fairlearn
 Falco
 filesystem
+fsspec
 Flink
 frontmatter
 fullstack
@@ -545,6 +548,7 @@ iscsi
 isfile
 isilon
 iskg
+isnot
 isnotempty
 ispf
 isql
@@ -827,6 +831,7 @@ purescale
 pyodbc
 pypackages
 pydantic
+pyjwt
 pypi
 pytest
 Pythonic
@@ -852,6 +857,7 @@ rbsc
 rcnn
 rdbms
 rdma
+readback
 readonly
 rearchitect
 rearchitected
@@ -1298,6 +1304,7 @@ ipykernel
 ipywidgets
 iterdir
 langword
+nargs
 nums
 returncode
 rglob
@@ -1448,6 +1455,7 @@ deprioritizes
 experim
 kata
 katas
+katex
 lofi
 miscategorized
 myactivity

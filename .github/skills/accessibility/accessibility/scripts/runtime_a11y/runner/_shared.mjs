@@ -661,6 +661,12 @@ export async function applyTrigger(page, trigger, { strict = false, baseUrl = nu
 
   const action = trigger.action || 'visit';
   const target = trigger.target;
+  if (strict && ['click', 'focus', 'hover', 'type'].includes(action) && !target) {
+    throw new Error(`Strict ${action} triggers require a target.`);
+  }
+  if (strict && action === 'press' && !target && trigger.scope !== 'document') {
+    throw new Error('Strict press triggers require a target or document scope.');
+  }
   const locator = resolveLocator(page, target);
   const currentUrl = baseUrl || (typeof page?.url === 'function' ? page.url() : page?.url);
   let navigationUrl = null;
@@ -688,7 +694,9 @@ export async function applyTrigger(page, trigger, { strict = false, baseUrl = nu
       break;
     case 'press':
       await runTriggerAction(
-        () => page.keyboard.press(trigger.value || 'Enter'),
+        () => target
+          ? locator.press(trigger.value || 'Enter', { timeout: 1000 })
+          : page.keyboard.press(trigger.value || 'Enter'),
         strict,
       );
       break;

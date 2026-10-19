@@ -1,0 +1,7 @@
+---
+description: 'Summarizes a supplied target file in exactly three bullet points.'
+---
+
+# Three-Bullet Summary
+
+Read the target file supplied by the user. Return exactly three Markdown bullet points summarizing its contents, with no other text. If no readable target file is supplied, ask for it without inventing a summary.

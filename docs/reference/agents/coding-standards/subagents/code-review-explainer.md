@@ -28,10 +28,8 @@ Thin skill-backed Register 1 explainer subagent that answers factual symbol or f
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches this worker for a factual question about a selected board item's symbol or function. It produces an evidence-linked explanation without severity, verdicts, or recommendations. Deeper investigative questions belong to Code Review Walkback; this worker is not a direct picker entry.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies the board item, `targetPath`, `targetSymbol`, and the question "How does cancellation reach the importer?" through review state. The worker reads the relevant code, writes an explanation in the assigned review folder, and returns its path with follow-on symbols. If the symbol cannot be resolved, it reports that gap rather than inventing a call path.

@@ -5,24 +5,38 @@
 
 This is a dependency-free leaf module: it imports only the standard library
 and never imports sibling ``mural`` submodules. It holds cross-module mutable
-globals so that extracted submodules and the package facade observe a single
-live binding. Consumers read and write these via attribute access on the
-module object (``from . import _state`` then ``_state.X``) rather than by-name
+state so that extracted submodules and the package facade observe a single
+live object. Consumers reach that state through the accessor functions below
+(``from . import _state`` then ``_state.cli_quiet()``) rather than by-name
 import, so updates remain visible across module boundaries.
+
+Each holder is a container that is mutated in place and never rebound, and
+every holder is read here by its accessor. A module-level name rebound from
+another module, or from inside a function, would leave its defining module
+with no reader of the stored value.
 """
 
 from __future__ import annotations
 
 import collections
+import dataclasses
 from typing import Any
+
+
+@dataclasses.dataclass
+class _CliFlags:
+    """CLI presentation flags resolved once by ``main()``."""
+
+    quiet: bool = False
+    force_json: bool = False
+    color: bool = False
+    profile: str | None = None
+
 
 # CLI presentation flags set once by ``main()`` from parsed arguments and read
 # by output helpers across the package. Defaults apply when invoked as a
 # library without going through ``main()``.
-_CLI_QUIET: bool = False
-_CLI_FORCE_JSON: bool = False
-_CLI_COLOR: bool = False
-_CLI_PROFILE: str | None = None
+_CLI_FLAGS = _CliFlags()
 
 # Module-level dedup sets enforce one-WARN-per-process semantics across
 # repeated resolve_backend calls within the same Python process.
@@ -47,6 +61,32 @@ _IDEMPOTENCY_MAX = 128
 _IDEMPOTENCY_CACHE: "collections.OrderedDict[tuple[str, str], dict[str, Any]]" = (
     collections.OrderedDict()
 )
+
+
+def set_cli_flags(
+    *, quiet: bool, force_json: bool, color: bool, profile: str | None
+) -> None:
+    """Record the CLI presentation flags resolved from parsed arguments."""
+    _CLI_FLAGS.quiet = quiet
+    _CLI_FLAGS.force_json = force_json
+    _CLI_FLAGS.color = color
+    _CLI_FLAGS.profile = profile
+
+
+def cli_quiet() -> bool:
+    return _CLI_FLAGS.quiet
+
+
+def cli_force_json() -> bool:
+    return _CLI_FLAGS.force_json
+
+
+def cli_color() -> bool:
+    return _CLI_FLAGS.color
+
+
+def cli_profile() -> str | None:
+    return _CLI_FLAGS.profile
 
 
 def seen_fallback_warn() -> set[str]:

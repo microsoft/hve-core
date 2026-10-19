@@ -1,7 +1,7 @@
 ---
 title: TM7 Generation Format Contract
 description: OTM-aligned input schema, mapping reference, template profile contract, and current native feedback workflow for TM7 generation.
-ms.date: 2026-08-11
+ms.date: 2026-09-21
 ms.topic: reference
 ---
 
@@ -109,8 +109,8 @@ Because the five fingerprints are hashes over spec bytes and sorted model identi
 ### Windows-local example
 
 ```bash
-uv run --project .github/skills/project-planning/security-planning --group windows \
-  python scripts/validate_tm7_with_tmt.py model.tm7 \
+uv run --project "<security-planning-skill-root>" --group windows \
+  python "<security-planning-skill-root>/scripts/validate_tm7_with_tmt.py" model.tm7 \
   --evidence-dir ./artifacts/feedback \
   --feedback-loop \
   --spec ./specs/model.yaml \
@@ -118,6 +118,8 @@ uv run --project .github/skills/project-planning/security-planning --group windo
   --max-iterations 3 \
   --require-feedback-evidence
 ```
+
+Resolve `<security-planning-skill-root>` from the loaded skill location before running the command.
 
 The automation writes pending overlays only and keeps the canonical baseline unchanged. Promotion is an external action; the agent-facing rule is owned by `tm7-generation-workflow.instructions.md`.
 

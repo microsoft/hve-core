@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: rai-skill-assessor-reference-first-plan-mode
+    prompt: |
+      You are the RAI Skill Assessor subagent. Assess only the
+      `nist-ai-rmf-map` framework in plan mode for a proposed AI assistant.
+      Explain the required analysis order, the status vocabulary in the
+      returned report, and whether you may modify repository files.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: rai-assessor-reference-first
+        config:
+          pattern: '(?is)(read|load).{0,100}(rai-standards|reference).{0,160}(before|prior).{0,80}(analysis|analyse|analyze|evaluat)'
+      - type: output-matches
+        name: rai-assessor-plan-statuses
+        config:
+          pattern: '(?is)(RISK).*(CAUTION).*(COVERED).*(NOT_APPLICABLE)'
+      - type: output-matches
+        name: rai-assessor-single-framework-read-only
+        config:
+          pattern: '(?is)(exactly|only|single).{0,80}(framework).{0,200}(do not modify|read-only|must not modify)'

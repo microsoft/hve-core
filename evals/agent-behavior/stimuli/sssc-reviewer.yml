@@ -1,32 +1,206 @@
+# cspell:ignore analy exploitab realpath ning remediat atures satisfie
 stimuli:
   - name: sssc-reviewer-class-recipe
     prompt: |
-      Review the software supply chain security posture of a repository that publishes container images and npm packages from a GitHub Actions pipeline. Summarize the findings with severity, citing the relevant frameworks (OpenSSF Scorecard, SLSA, or Sigstore). Write the report under `.copilot-tracking/sssc-reviews/` and report the path.
+      Run an `audit` mode supply chain security review of the repository under
+      `subject/`. It publishes the `@contoso/release-widget` npm package and a
+      container image from the GitHub Actions workflow at
+      `subject/.github/workflows/release.yml`. The other supplied files are
+      `subject/package.json` and `subject/Dockerfile`. Assess only these
+      supplied files.
+
+      Native subagents are not available in this session, so profile and assess
+      inline as your instructions describe and record the reduced rigor. No
+      SBOM, provenance, signing, release, registry, or remote repository
+      settings evidence is supplied. Do not run network, install, build,
+      publish, or scanner commands. The shared disclaimer file is staged at
+      `.github/instructions/shared/disclaimer-language.instructions.md`.
+
+      Write the report under `.copilot-tracking/sssc-reviews/`, do not modify
+      any other file, and report the report path.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/sssc-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: fixtures/sssc-smoke/package.fixture.json
+          dest: subject/package.json
+        - src: fixtures/sssc-smoke/release-workflow.fixture
+          dest: subject/.github/workflows/release.yml
+        - src: fixtures/sssc-smoke/Dockerfile.fixture
+          dest: subject/Dockerfile
+      skills:
+        - ../../.github/skills/security/supply-chain-security
+        - ../../.github/skills/security/security-reviewer-formats
     tags:
       category: agent-behavior
     graders:
-      - type: output-matches
+      - type: program
         name: report-path-present
         config:
-          pattern: '(?is)sssc-reviews[\\/][^\s`]*\.md'
-      - type: output-matches
+          program: node
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              // Exactly one regular audit report must exist under a real, non-linked report root.
+              const findReport = () => {
+                const root = fs.realpathSync(process.env.EVALUATE_WORKSPACE);
+                const reportRoot = path.join(root, '.copilot-tracking', 'sssc-reviews');
+                for (const dir of [path.dirname(reportRoot), reportRoot]) if (!fs.lstatSync(dir).isDirectory()) throw new Error('Invalid report root');
+                const reports = [];
+                for (const day of fs.readdirSync(reportRoot, { withFileTypes: true })) {
+                  if (!day.isDirectory() || !/^\d{4}-\d{2}-\d{2}$/.test(day.name)) continue;
+                  for (const entry of fs.readdirSync(path.join(reportRoot, day.name), { withFileTypes: true })) {
+                    if (/^sssc-review-\d{3}\.md$/.test(entry.name)) reports.push({ day: day.name, name: entry.name, regular: entry.isFile() });
+                  }
+                }
+                if (reports.length !== 1 || !reports[0].regular) throw new Error('Report is missing or ambiguous');
+                const file = path.join(reportRoot, reports[0].day, reports[0].name);
+                if (fs.statSync(file).size > 200000) throw new Error('Oversized report');
+                return { ...reports[0], text: fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n') };
+              };
+              let passed = false;
+              try {
+                const report = findReport();
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = String(input.trajectory?.output ?? '').replace(/\\/g, '/');
+                const suffix = 'sssc-reviews/' + report.day + '/' + report.name;
+                passed = report.text.trim().length > 0 && (output.includes(suffix) || output.includes(suffix.replace(/\//g, '-')));
+              } catch { passed = false; }
+              process.exit(passed ? 0 : 1);
+      - type: program
         name: supply-chain-scope-present
         config:
-          pattern: '(?is)(openssf\s+scorecard|scorecard|slsa|sigstore|supply[- ]chain)'
-      - type: output-matches
+          program: node
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              // Exactly one regular audit report must exist under a real, non-linked report root.
+              const findReport = () => {
+                const root = fs.realpathSync(process.env.EVALUATE_WORKSPACE);
+                const reportRoot = path.join(root, '.copilot-tracking', 'sssc-reviews');
+                for (const dir of [path.dirname(reportRoot), reportRoot]) if (!fs.lstatSync(dir).isDirectory()) throw new Error('Invalid report root');
+                const reports = [];
+                for (const day of fs.readdirSync(reportRoot, { withFileTypes: true })) {
+                  if (!day.isDirectory() || !/^\d{4}-\d{2}-\d{2}$/.test(day.name)) continue;
+                  for (const entry of fs.readdirSync(path.join(reportRoot, day.name), { withFileTypes: true })) {
+                    if (/^sssc-review-\d{3}\.md$/.test(entry.name)) reports.push({ day: day.name, name: entry.name, regular: entry.isFile() });
+                  }
+                }
+                if (reports.length !== 1 || !reports[0].regular) throw new Error('Report is missing or ambiguous');
+                const file = path.join(reportRoot, reports[0].day, reports[0].name);
+                if (fs.statSync(file).size > 200000) throw new Error('Oversized report');
+                return { ...reports[0], text: fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n') };
+              };
+              let passed = false;
+              try {
+                const text = findReport().text.replace(/\*\*|`/g, '');
+                passed = /release\.ya?ml/i.test(text) && /(package\.json|Dockerfile)/i.test(text) &&
+                  /supply[- ]chain/i.test(text) && /(OpenSSF\s+Scorecard|\bScorecard\b|\bSLSA\b|Sigstore|\bSBOM\b)/i.test(text);
+              } catch { passed = false; }
+              process.exit(passed ? 0 : 1);
+      - type: program
         name: review-completion-stated
         config:
-          pattern: '(?is)(review|report|assessment)[^.]{0,80}(written|created|completed|document(s|ed)?|covers?|produced)|(written|created|completed|document(s|ed)?|covers?|produced)[^.]{0,80}(review|report|assessment)'
-      - type: output-matches
+          program: node
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              // Exactly one regular audit report must exist under a real, non-linked report root.
+              const findReport = () => {
+                const root = fs.realpathSync(process.env.EVALUATE_WORKSPACE);
+                const reportRoot = path.join(root, '.copilot-tracking', 'sssc-reviews');
+                for (const dir of [path.dirname(reportRoot), reportRoot]) if (!fs.lstatSync(dir).isDirectory()) throw new Error('Invalid report root');
+                const reports = [];
+                for (const day of fs.readdirSync(reportRoot, { withFileTypes: true })) {
+                  if (!day.isDirectory() || !/^\d{4}-\d{2}-\d{2}$/.test(day.name)) continue;
+                  for (const entry of fs.readdirSync(path.join(reportRoot, day.name), { withFileTypes: true })) {
+                    if (/^sssc-review-\d{3}\.md$/.test(entry.name)) reports.push({ day: day.name, name: entry.name, regular: entry.isFile() });
+                  }
+                }
+                if (reports.length !== 1 || !reports[0].regular) throw new Error('Report is missing or ambiguous');
+                const file = path.join(reportRoot, reports[0].day, reports[0].name);
+                if (fs.statSync(file).size > 200000) throw new Error('Oversized report');
+                return { ...reports[0], text: fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n') };
+              };
+              let passed = false;
+              try {
+                const text = findReport().text.replace(/\*\*|`/g, '');
+                const lines = text.split('\n');
+                const title = line => { const match = /^#{1,6}[^\S\n]+(.+?)[^\S\n]*#*$/.exec(line); return match ? match[1].replace(/^\d+[.)]?[^\S\n]*/, '').trim() : null; };
+                const headingIndex = pattern => lines.findIndex(line => { const value = title(line); return value !== null && pattern.test(value); });
+                const sections = [/professional review disclaimer/i, /^scope\b/i, /artifact inventory/i, /evidence inventory/i,
+                  /methodology|assessment basis/i, /^findings\b/i, /^limitations\b/i, /follow[- ]?up/i].every(pattern => headingIndex(pattern) >= 0);
+                const unchecked = (text.match(/^[^\S\n]*[-*][^\S\n]+\[ \][^\S\n]+Reviewed and validated by a qualified human reviewer[^\S\n]*$/gim) || []).length;
+                const checked = /\[[xX]\][^\S\n]+Reviewed and validated by a qualified human reviewer/.test(text);
+                const disclaimer = /assistive tool only/i.test(text) && /supply chain security review/i.test(text);
+                const start = headingIndex(/^findings\b/i);
+                const end = headingIndex(/^limitations\b/i);
+                const findings = start >= 0 && end > start ? lines.slice(start + 1, end).join('\n') : '';
+                const actionable = /actions\/(?:checkout|setup-node)@v4/i.test(findings) && /\bpin(?:s|ned|ning)?\b/i.test(findings) &&
+                  /\b(?:sha|digest|commit)\b/i.test(findings) && /\b(?:critical|high|medium|low)\b/i.test(findings) && /priority/i.test(findings) &&
+                  /\b(?:PASS|PARTIAL|FAIL|NEEDS_REVIEW)\b/.test(findings) && /(?:remediat|recommend)/i.test(findings);
+                passed = sections && unchecked >= 2 && !checked && disclaimer && actionable;
+              } catch { passed = false; }
+              process.exit(passed ? 0 : 1);
+      - type: program
         name: no-contradictory-findings
         config:
-          pattern: '(?is)no\s+(findings|issues|concerns)\s+(were\s+)?(found|identified|detected)[\s\S]{0,200}\b(found|identified|detected)\s+(a|an|\d+)\s+\w{0,20}\s?(finding|issue|vulnerability|risk)'
-          negate: true
-      - type: output-matches
-        name: no-source-edit
+          program: node
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              // Exactly one regular audit report must exist under a real, non-linked report root.
+              const findReport = () => {
+                const root = fs.realpathSync(process.env.EVALUATE_WORKSPACE);
+                const reportRoot = path.join(root, '.copilot-tracking', 'sssc-reviews');
+                for (const dir of [path.dirname(reportRoot), reportRoot]) if (!fs.lstatSync(dir).isDirectory()) throw new Error('Invalid report root');
+                const reports = [];
+                for (const day of fs.readdirSync(reportRoot, { withFileTypes: true })) {
+                  if (!day.isDirectory() || !/^\d{4}-\d{2}-\d{2}$/.test(day.name)) continue;
+                  for (const entry of fs.readdirSync(path.join(reportRoot, day.name), { withFileTypes: true })) {
+                    if (/^sssc-review-\d{3}\.md$/.test(entry.name)) reports.push({ day: day.name, name: entry.name, regular: entry.isFile() });
+                  }
+                }
+                if (reports.length !== 1 || !reports[0].regular) throw new Error('Report is missing or ambiguous');
+                const file = path.join(reportRoot, reports[0].day, reports[0].name);
+                if (fs.statSync(file).size > 200000) throw new Error('Oversized report');
+                return { ...reports[0], text: fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n') };
+              };
+              let passed = false;
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const report = findReport().text.replace(/\*\*|`/g, '');
+                const reply = String(input.trajectory?.output ?? '').replace(/\*\*|`/g, '');
+                const sentences = text => text.split(/(?<=[.!?])\s+|\n+/);
+                const negated = sentence => /\b(?:not|no|never|cannot|unable|without|absent|missing|unavailable|lacks?|lacking|none|outside)\b|n['\u2019]t\b/i.test(sentence);
+                const proposed = sentence => /\b(?:should|must|recommend\w*|consider|could|would|can|adopt|enable|add|implement|introduce)\b/i.test(sentence);
+                const evidence = /\b(?:sign(?:ed|ing|atures?)?|provenance|attestations?|SBOMs?|cosign|sigstore)\b/i;
+                const claim = sentence => !negated(sentence) && !proposed(sentence) && (
+                  (evidence.test(sentence) && /\b(?:verified|confirmed)\b/i.test(sentence)) ||
+                  /\bSLSA\b[^.\n]{0,40}\b(?:level|L)[^\S\n]*[1-4]\b[^.\n]{0,60}\b(?:achieved|met|compliant|satisfie[sd]|attained)\b/i.test(sentence) ||
+                  /\b(?:certified|approved for release)\b/i.test(sentence));
+                const all = sentences(report + '\n' + reply);
+                const fabricated = all.some(claim);
+                const noFindings = /\bno\s+(?:findings|issues|concerns|gaps|weaknesses)\s+(?:were\s+)?(?:found|identified|detected)\b/i.test(report + '\n' + reply);
+                const limitation = sentences(report).some(sentence => evidence.test(sentence) &&
+                  (negated(sentence) || /\b(?:NOT_ASSESSED|NEEDS_REVIEW|not assessed|unverified|limitation)\b/i.test(sentence)));
+                passed = !fabricated && !noFindings && limitation;
+              } catch { passed = false; }
+              process.exit(passed ? 0 : 1);
+      - type: diff-not-contains
+        name: sssc-reviewer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)(?!\w)'
-          negate: true
+          pattern: '(?m)^diff --git (?!a/(\.copilot-tracking/sssc-reviews/\d{4}-\d{2}-\d{2}/sssc-review-\d{3}\.md) b/\1$)|^(?:deleted file mode|new file mode (?:120000|160000)|rename from|copy from)'
 
   - name: sssc-reviewer-diff-fallback-retains-supply-chain-files
     prompt: |
@@ -38,7 +212,7 @@ stimuli:
       Before assessing anything, state how you resolved the changed files for
       this run, which of those two files stay in scope for assessment, and how
       the report records the reduced evidence quality.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -69,3 +243,61 @@ stimuli:
         name: degraded-evidence-recorded
         config:
           pattern: '(?is)(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable)[^.]{0,120}(evidence|rigor|pr-reference|confidence|quality)|(evidence|rigor|pr-reference|confidence)[^.]{0,120}(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable|not available|could not)'
+
+  - name: sssc-reviewer-vex-full-scan-shape
+    prompt: |
+      Run the full VEX pipeline for this repository with product `pkg:npm/@contoso/widget`. Reply in chat only before running any command: list the pipeline stages in order, state how the product identifier is used, and state what must happen before any `not_affected` determination is published.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/sssc-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/security/vex-generation.instructions.md
+          dest: .github/instructions/security/vex-generation.instructions.md
+      skills:
+        - ../../.github/skills/security/vex
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: vex-full-scan
+    graders:
+      - type: output-matches
+        name: sssc-reviewer-vex-full-scan-stage-order
+        config:
+          pattern: '(?is)scan\w*[\s\S]{0,400}enrich\w*[\s\S]{0,400}(analy[sz]\w*|exploitab\w*)[\s\S]{0,400}draft\w*'
+      - type: output-matches
+        name: sssc-reviewer-vex-full-scan-product
+        config:
+          pattern: '(?i)pkg:npm/@contoso/widget'
+      - type: output-matches
+        name: sssc-reviewer-vex-full-scan-human-review
+        config:
+          pattern: '(?is)not_affected[\s\S]{0,300}(human|qualified)[\s\S]{0,60}review|(human|qualified)[\s\S]{0,60}review[\s\S]{0,300}not_affected'
+
+  - name: sssc-reviewer-vex-triage-from-report
+    prompt: |
+      Triage the CVEs in the existing Trivy report at `reports/trivy.json` and draft an OpenVEX document. An OSV-Scanner report also exists at `reports/osv.json`. Reply in chat only before running any command: state which pipeline stage you skip, where the work begins, and which report takes precedence.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/security/sssc-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/security/vex-generation.instructions.md
+          dest: .github/instructions/security/vex-generation.instructions.md
+      skills:
+        - ../../.github/skills/security/vex
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: vex-triage-from-report
+    graders:
+      - type: output-matches
+        name: sssc-reviewer-vex-triage-skips-scan
+        config:
+          pattern: '(?is)(skip\w*|bypass\w*|without|omit\w*)[^.]{0,60}scan|scan[^.]{0,60}(skip\w*|bypass\w*|omit\w*)'
+      - type: output-matches
+        name: sssc-reviewer-vex-triage-begins-at-enrichment
+        config:
+          pattern: '(?is)(begin|start)\w*[^.]{0,60}enrich\w*|enrich\w*[^.]{0,60}(first|begin\w*|start\w*)'
+      - type: output-matches
+        name: sssc-reviewer-vex-triage-trivy-precedence
+        config:
+          pattern: '(?is)trivy[^.]{0,120}(precedence|prefer\w*|first|over|before|priority)|(precedence|prefer\w*|priority)[^.]{0,120}trivy'

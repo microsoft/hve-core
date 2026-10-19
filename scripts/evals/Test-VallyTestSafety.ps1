@@ -67,6 +67,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+
 function Resolve-RepoRoot {
     [CmdletBinding()]
     [OutputType([string])]
@@ -271,7 +273,7 @@ function Write-VallyTestSafetyAnnotation {
         }
         $snippet = $snippet -replace "[\r\n]+", ' '
         $msg = "vally-test-safety: $($entry.category) (pattern #$($entry.patternIndex)) match -> $snippet"
-        Write-Host "::error file=$($entry.path),line=$($entry.lineNumber)::$msg"
+        Write-CIAnnotation -Level Error -File $entry.path -Line $entry.lineNumber -Message "$msg"
     }
 }
 

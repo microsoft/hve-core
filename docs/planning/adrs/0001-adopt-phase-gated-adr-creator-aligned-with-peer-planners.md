@@ -165,7 +165,7 @@ Compliance with this decision is confirmed by four mechanisms:
 
 1. Static validation: at the time of this decision, `npm run lint:all` was the validation aggregate name. Its current replacement is `npm run validate:local`, which runs frontmatter, schema, applyTo-glob, and copyright checks across the agent body, four instruction files, the skill, templates, and scripts.
 2. Skill test suite: `npm run test:py -- adr-author` runs the 40-test pytest suite covering Frame/Decide/Govern phase contracts, lineage allocation, supersession atomicity, and frontmatter validation.
-3. Plugin generation: `npm run plugin:generate` regenerates the `project-planning` plugin from `collections/project-planning.collection.yml`; drift between the agent body and the collection manifest fails this step.
+3. Plugin generation: at the time of this decision, `npm run plugin:generate` regenerated the `project-planning` plugin from `collections/project-planning.collection.yml`. Its current replacement is `npm run plugin:sync`, which derives the sole root `plugin.json` from git-tracked `.github` paths; `npm run lint:plugin-manifest` reports drift without writing.
 4. Self-validation: this ADR itself was produced by the ADR Creator under `entryMode: capture`, `outputTemplate: madr-v4`, `diagramFormat: mermaid`, and `autonomyTier: full`, exercising every Frame and Decide gate plus the Govern allocator and frontmatter validator end-to-end.
 
 ## Pros and Cons of the Options
@@ -259,7 +259,7 @@ If this decision is reversed, the rollback path is:
 1. Restore the prior single-prompt ADR generator from git history (last commit before this ADR's `accepted_date`).
 2. Remove `.github/agents/project-planning/adr-creation.agent.md`, the four `adr-*.instructions.md` files, and `.github/skills/project-planning/adr-author/`.
 3. Delete `.copilot-tracking/adr-plans/` session state directories; preserve all `docs/planning/adrs/` ADR files (decisions remain valid even when the authoring agent is retired).
-4. Update `collections/project-planning.collection.yml` to drop the planner artifacts and re-run `npm run plugin:generate`.
+4. Re-run `npm run plugin:sync` so the root `plugin.json` no longer lists the planner artifacts. At the time of this decision this step edited `collections/project-planning.collection.yml` and ran `npm run plugin:generate`.
 5. Document the deprecation in a superseding ADR that links back to this one and sets `superseded-by` here.
 
 No data migration is required: ADRs are markdown files with stable frontmatter and survive removal of the authoring agent.

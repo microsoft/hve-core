@@ -7,9 +7,7 @@ description: "Canonical markdown section-to-field mapping for customer-card gene
 
 This spec defines only canonical section extraction and field mapping.
 
-Layout, sizing, theming, rendering, export, and validation behavior are owned by the shared PowerPoint skill:
-
-- `.github/skills/experimental/powerpoint/SKILL.md`
+Layout, sizing, theming, rendering, export, and validation behavior are owned by the `powerpoint` skill.
 
 ## Canonical Source Structure
 

@@ -1,0 +1,52 @@
+fixture:
+  id: synthetic-dt-telemetry-observable
+  fictional: true
+  evidence_ceiling: >-
+    This record tests telemetry decision behavior only. It does not contain
+    production observations, real personal data, emitted telemetry, or proof
+    that a control is effective.
+
+artifact:
+  project: synthetic-renewal-lab
+  path: .copilot-tracking/dt/synthetic-renewal-lab/observable-behavior.md
+  behavior: A fictional service records completion of a renewal review.
+  production_observable: true
+  crosses_service_boundary: true
+  measurable:
+    measure: review duration
+    unit: s
+
+candidate_fields:
+  bounded:
+    - name: deployment.environment
+      value: synthetic-test
+    - name: review.outcome
+      values: [completed, abandoned]
+  unbounded:
+    - name: review.free_text
+      value: synthetic narrative with no real customer content
+    - name: renewal.request_id
+      value: synthetic-request-0001
+  pii_shaped_sentinels:
+    - name: user.email
+      value: synthetic.user@example.invalid
+    - name: user.phone
+      value: +1-555-0100
+    - name: auth.token
+      value: synthetic-token-do-not-use
+
+expected_handling:
+  trace_required: true
+  metric:
+    instrument: histogram
+    unit: s
+  drop:
+    - user.phone
+    - auth.token
+  hash_or_drop:
+    - user.email
+  demote_to_log:
+    - review.free_text
+    - renewal.request_id
+  prohibit_raw_pii: true
+  prohibit_unbounded_metric_attributes: true

@@ -1,9 +1,9 @@
 ---
 title: rpi-implement
-description: "Execute an approved RPI plan, maintain current planning state, and record implementation evidence. Use when implementation is ready to begin or resume."
+description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-24
 ms.topic: reference
 keywords:
   - skill
@@ -23,19 +23,39 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Execute an approved RPI plan, maintain current planning state, and record implementation evidence. Use when implementation is ready to begin or resume.
+Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use `rpi-implement` to execute an approved plan. Declare the scope as the full plan, one `Pxx` phase, or one `Pxx-Txx` task; the skill starts at the first unchecked dependency-ready item in that scope and works in plan order. It records evidence under descriptive headings in `.copilot-tracking/changes/`, checks each `Pxx-Txx` marker as soon as its `Requirements:` hold, and runs the checks the task names plus whatever the changed behavior warrants.
+Use `rpi-implement` to work through an approved plan. Declare the scope as the full plan, one `Pxx` phase, or one `Pxx-Txx` task; the skill starts at the first unchecked dependency-ready item in that scope and works in plan order. It checks each `Pxx-Txx` marker as soon as its `Requirements:` hold, runs the checks the plan names, and keeps a condensed changes log in `.copilot-tracking/changes/` that describes the behavior or functionality each completed item changed rather than the edits made.
 
-Implementation also keeps the plan current. It may clarify task wording or references, add a `Guidance:` block to a later task when earlier work created something that task needs, record out-of-scope work under `## Follow-Up Items`, and pause only affected dependent work when a discovery requires a new user decision. The original critique is not repeated.
+Implementation also keeps the plan current. Checked task markers, implementation-only
+`Guidance:` pointers and out-of-scope `## Follow-Up Items` are annotations, so normal progress
+continues. When evidence changes task wording, references, requirements, architecture, capability,
+safety or dependencies, the implementer updates the affected plan sections directly. An unresolved
+significant or divergent choice needs your decision before affected work resumes; an evidence-backed
+clarification does not. A change that needs replanning beyond the affected tasks returns to
+[rpi-plan](rpi-plan).
+
+Implementation does not require a plan critique. If you skipped the critique, implementation proceeds
+normally. When the plan is marked not ready or has unresolved blocking critique findings, the
+implementer names them and confirms with you before implementing affected tasks.
+
+When a plan update changes, or completed behavior differs from, a requirement that cites a BRD,
+PRD, or ADR, the implementer adds a `## Business Alignment` entry to the changes log. The entry
+names the source, the cited IDs, the owner from the source's frontmatter, what changed and why, your
+decision, and whether the change is a `clarification`, a `divergence-confirmed`, a `source-gap`, or
+a `pending-decision` awaiting your answer. Before handing off to review, the implementer compares
+the finished work with every cited requirement so a quiet divergence still gets an entry, and a
+`pending-decision` entry holds review until you decide. The closeout lists the entries. Review uses
+them to check alignment and to offer a note to the source owner. Implementation never edits the
+source document or contacts anyone.
 
 Reach for a different asset when:
 
 * No approved plan exists. Run [rpi-plan](rpi-plan) first; do not implement from research alone.
-* The implementation is finished and needs acceptance. Run [rpi-review](rpi-review).
+* The implementation is finished and you want an acceptance review. Run [rpi-review](rpi-review); review is optional.
 * The change is small and isolated. Edit directly instead of creating lifecycle artifacts.
 
 ## Example usage

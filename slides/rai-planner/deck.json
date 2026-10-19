@@ -1,0 +1,5 @@
+{
+  "title": "RAI Planner with HVE Core",
+  "description": "Use RAI Planner on a support chatbot, then use hve-builder to add your team's policy and plan conventions.",
+  "sourceNote": "Product details reflect the October 1, 2026 snapshot: HVE Core 7e2de1a and the linked VS Code documentation. Both walkthroughs are scripted illustrations, not recorded agent runs. Contoso, its policies and its systems are fictional. SR 26-2 is real interagency guidance, paraphrased with links to the official text."
+}

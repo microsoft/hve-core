@@ -3,7 +3,7 @@ title: Testing Architecture
 description: PowerShell Pester test infrastructure and conventions
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-10-09
 ms.topic: concept
 keywords:
   - testing
@@ -79,6 +79,11 @@ percentage (`CoveragePercent`) and the target (`CoverageTarget`) from `logs/pest
 summary written by [Invoke-PesterTests.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/Invoke-PesterTests.ps1).
 The target originates in [pester.config.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/pester.config.ps1)
 as the single source of truth. The job fails when the measured coverage falls below the 80% target, unless soft-fail mode is enabled.
+
+The unit lane excludes `Integration`-tagged tests, so the workflow's **PowerShell Integration Tests** job also collects
+coverage when code coverage is enabled. It uploads that report to Codecov under the same `pester` flag, and Codecov merges
+both reports, so code exercised only by `Integration`-tagged tests still counts as covered. The integration job applies no
+threshold check because it runs only a small slice of the suite.
 
 ### Test Output
 

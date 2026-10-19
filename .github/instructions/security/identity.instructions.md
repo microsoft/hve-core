@@ -45,7 +45,7 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 ### Phase 1: Scoping
 
-* Entry: agent invoked via entry prompt (capture or from-prd mode)
+* Entry: session started in an entry mode (capture or from-prd)
 * Activities: identify project scope, technology stack, deployment model, and stakeholders; classify components into operational buckets; confirm bucket list with the user
 * Exit: all buckets identified and confirmed by the user
 * Artifacts: populated `state.json`, initial bucket list in the security plan
@@ -110,7 +110,7 @@ After the standard scoping questionnaire, assess for AI/ML components:
 When `raiEnabled` is `true` and `raiRecommendationShown` is `false`:
 
 * Include an RAI assessment recommendation in the handoff summary.
-* Provide the RAI Planner agent path: `.github/agents/rai-planning/rai-planner.agent.md`
+* Name the `RAI Planner` as the target agent.
 * Suggest entry mode: `from-security-plan`, and set `securityPlanRef` to the Security Planner `state.json` path. The RAI `from-security-plan` flow reads `state.json` fields such as `aiComponents` from `securityPlanRef`, so it must point at the state file rather than the markdown plan stored in `securityPlanFile`.
 * Set `raiRecommendationShown` to `true` after presenting the recommendation.
 * Set `raiPlannerDispatched` to `true` only once the user actually starts the RAI Planner handoff. Presenting the recommendation alone does not mark RAI as dispatched, so a later resume still surfaces the RAI handoff for an AI-enabled system the user has not yet acted on.
@@ -122,11 +122,15 @@ Two entry modes determine Phase 1 initialization. Both modes converge at Phase 2
 
 ### `capture`
 
-Fresh assessment. Initialize blank `state.json` with `entryMode: "capture"`. Conduct a scoping interview to discover project scope, technology stack, deployment model, stakeholders, compliance requirements, and AI/ML component usage.
+Fresh assessment, selected when the user starts without product definition artifacts or chooses to begin from scratch. Initialize blank `state.json` with `entryMode: "capture"`. When the user supplies existing security notes, threat assessments, or documentation, extract relevant details and pre-populate Phase 1 fields before asking clarifying questions. Conduct a scoping interview to discover project scope, technology stack, deployment model, stakeholders, compliance requirements, and AI/ML component usage.
 
 ### `from-prd`
 
-PRD/BRD-seeded assessment. Scan `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` for planning artifacts. Secondary scan for `prd-*.md`, `*-prd.md`, `brd-*.md`, `*-brd.md`, and `product-definition*.md`. Extract project scope, technology stack, deployment targets, data classification levels, compliance requirements, and stakeholder roles. Pre-populate Phase 1 state fields. Add processed file paths to `referencesProcessed`. Set `entryMode` to `"from-prd"`. Present extracted information to the user for confirmation or refinement before advancing.
+PRD/BRD-seeded assessment, selected when the user asks to start from product or business requirements or supplies a PRD or BRD. Scan `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` for planning artifacts. When those paths yield no matches, run a secondary scan of `.copilot-tracking/` for `prd-*.md`, `*-prd.md`, `brd-*.md`, `*-brd.md`, and `product-definition*.md`, excluding generic matches such as `requirements.txt` and files outside product-scoping contexts.
+
+Present every discovered candidate and wait for the user to confirm which artifacts to use, discarding false positives, before extracting scope. When both scans find nothing, say so and offer capture mode or ask the user for a file path; do not extract scope without at least one confirmed artifact.
+
+Extract project scope, technology stack, deployment targets, data classification levels, compliance requirements, and stakeholder roles. Derive the project slug from the confirmed artifacts, or ask for one when they do not name the project. Pre-populate Phase 1 state fields. Add processed file paths to `referencesProcessed`. Set `entryMode` to `"from-prd"`. Present extracted information to the user for confirmation or refinement before advancing.
 
 ## State Management
 
@@ -182,7 +186,7 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 
 * `projectSlug` derived from the project name provided by the user
 * `currentPhase` set to `1`
-* `entryMode` set based on the invoking prompt (capture or from-prd)
+* `entryMode` set to the resolved entry mode (capture or from-prd)
 * All arrays empty, booleans `false`
 * `raiScope` and `raiTier` set to `"none"`
 * `noticeLog` initialised to an empty array and appended when the planner displays a disclaimer, professional-review reminder, or cross-planner handoff notice
@@ -236,7 +240,7 @@ The planner inherits the 3-5 per turn cadence, emoji checklist, and seven rules 
 
 Activate `rpi-research` only for bounded standards, framework, CVE, verification, or threat-intelligence questions not covered by a loaded security skill. Supply the topic and security-decision purpose; security authors, reviewers, control owners, and downstream consumers as the audience and intended use; explicit questions and evidence criteria; technology, cloud, framework, jurisdiction, version, date, and source scope plus non-goals; risk, licensing, privacy, deadline, phase-gate, and write-boundary constraints; supplied state, component, bucket, data-flow, standards, threat, and user evidence; requested outputs; and output mode (`analysis`, `audit`, or `comparison`).
 
-Explicitly identify `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root and require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill owns the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and synthesis.
+Explicitly identify `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root.
 
 The Security Planner reads the completed primary research artifact and synthesizes applicable findings into standards mappings, threat tables, plan state, and phase outputs. Preserve all gates. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop evidence-dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain standards or threat claims from training data.
 

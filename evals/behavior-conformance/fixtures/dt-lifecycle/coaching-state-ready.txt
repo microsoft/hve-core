@@ -1,0 +1,58 @@
+project:
+  name: "Synthetic Lifecycle Ready"
+  slug: "synthetic-lifecycle"
+  created: "2026-09-01"
+  initial_request: "Explore a synthetic maintenance handoff without external systems."
+  initial_classification: "frozen"
+
+current:
+  method: 3
+  space: "problem"
+  phase: "synthesis complete"
+  disclaimerShownAt: "2026-09-01T00:00:00Z"
+
+methods_completed:
+  - 1
+  - 2
+  - 3
+
+transition_log:
+  - from_method: null
+    to_method: 1
+    rationale: "Synthetic project initialized."
+    date: "2026-09-01"
+  - from_method: 2
+    to_method: 3
+    rationale: "Synthetic interview evidence was ready for synthesis."
+    date: "2026-09-02"
+
+hint_calibration:
+  level: 2
+  pattern_notes: "The synthetic team requested contextual prompts."
+
+session_log:
+  - date: "2026-09-02"
+    method: 3
+    summary: "Synthetic personas, journey, and point of view were reviewed."
+
+artifacts:
+  - path: ".copilot-tracking/dt/synthetic-lifecycle/method-03-ready-artifacts.md"
+    method: 3
+    type: "synthesis"
+
+canonical_deck:
+  snapshots: []
+  last_offered_at: null
+  last_offered_response: null
+  last_generated_at: null
+
+customer_card_render:
+  last_offered_at: null
+  last_offered_response: null
+  last_generated_at: null
+  decline_final: false
+  output_path: null
+
+synthetic_extension:
+  preserve_on_update: true
+  marker: "EV03-READY"

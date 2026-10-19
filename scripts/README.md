@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-09-05
+ms.date: 2026-10-12
 ms.topic: reference
 keywords:
   - powershell
@@ -19,9 +19,10 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
+├── agentic-workflows/ Runtime support for compiled Agentic Workflows
 ├── lib/             Shared artifact and CI helpers
-├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
+├── ci/              Workflow helper scripts for CI jobs
 ├── release/         Release version normalization and assurance helpers
 ├── devcontainer/    Devcontainer lockfile and change log validation
 ├── docs/            Asset documentation generator, helper modules, and templates
@@ -50,17 +51,70 @@ Shared utility modules used across scripts.
 |----------------------------|--------------------------------------|
 | `Get-VerifiedDownload.ps1` | Download files with SHA verification |
 
-## Agents
+## Agentic Workflows
 
-The `agents/` directory contains the activation harness for Copilot agent cold-start validation.
+The `agentic-workflows/` directory contains trusted runtime support invoked by
+compiled Agentic Workflows. Backlog grooming uses these scripts to reconstruct
+candidate-addressed scalar calls, produce canonical shard results, and validate
+unchanged v2 artifacts before deterministic fan-in.
 
-| Script                                                   | Purpose                                                                              |
-|----------------------------------------------------------|--------------------------------------------------------------------------------------|
-| `activation-harness/Get-AgentActivationFingerprint.psm1` | Compute deterministic activation fingerprints for custom agents across scenarios     |
-| `activation-harness/Update-AgentActivationBaseline.ps1`  | Regenerate baseline.json for the activation harness and support dry-run drift checks |
-| `activation-harness/baseline.json`                       | Snapshot of the current activation fingerprint baseline for the ADR creation agent   |
+| Script                                                    | Purpose                                                        |
+|-----------------------------------------------------------|----------------------------------------------------------------|
+| `backlog-grooming/Invoke-BacklogGroomResultCollector.ps1` | Collect scalar candidate calls into one canonical shard result |
+| `backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`   | Validate shard artifacts and produce an ordered wave aggregate |
+| `backlog-grooming/Modules/BacklogGrooming.psm1`           | Reconstruct, validate, normalize, and digest shard results     |
 
-See [activation-harness/README.md](agents/activation-harness/README.md) for the full harness contract and baseline workflow.
+The agent supplies semantic fields and up to five contiguous categorized
+evidence citations. After parsing and binding the call to a planned issue, the
+collector owns its structural encoding:
+
+* Derive evidence cardinality from complete contiguous category-text pairs
+* Include every evidence citation in repository evidence
+* Partition original-delivery and replacement-or-removal lineage by category
+* Construct an empty deferral reason for `Assessed` and require a non-empty reason for `Deferred`
+* Construct canonical rows, counts, cursors, provenance, timestamps, envelopes, and digests
+
+The defensive superseded-similarity conversion remains an explicit `{ issue,
+code }` record in `normalizations`, but the worker contract does not advertise
+that invalid similarity value. Malformed JSON, missing semantic fields,
+incomplete or noncontiguous evidence pairs, unsupported enum values, duplicate
+candidate calls, and missing deferred reasons remain candidate-local contract
+errors.
+
+## CI
+
+The `ci/` directory contains helper scripts that GitHub Actions workflows call directly.
+
+| Script                            | Purpose                                                                            |
+|-----------------------------------|------------------------------------------------------------------------------------|
+| `Resolve-WorkflowChangeRange.ps1` | Resolve a verified immutable change range, or select full validation               |
+| `install-skill-node-deps.sh`      | Install committed Node lockfiles under a skill directory without lifecycle scripts |
+
+`Resolve-WorkflowChangeRange.ps1` is called by the `pr-validation.yml` change-range job.
+It derives the range base from commit structure for the triggering event and checks it
+before any lane trusts it:
+
+* `pull_request`: the base is the first parent of the checked-out test-merge commit, which
+  must have exactly two parents with the second equal to the pull request head.
+* `merge_group`: the base and head come from the merge-group payload.
+* `workflow_dispatch`: the base is the merge base of the checked-out commit and
+  `origin/<default branch>`.
+
+An unknown event or any failed check returns `full` mode with empty commit IDs. The script
+writes `mode`, `base-sha`, and `head-sha` as GitHub Actions step outputs.
+
+| Parameter             | Purpose                                                         |
+|-----------------------|-----------------------------------------------------------------|
+| `-EventName`          | GitHub Actions event that triggered the calling workflow        |
+| `-BaseSha`            | Candidate base commit ID, used for `merge_group` events         |
+| `-HeadSha`            | Candidate head commit ID, which must equal the checked-out HEAD |
+| `-PullRequestHeadSha` | Pull request head commit ID, used for `pull_request` events     |
+| `-DefaultBranch`      | Repository default branch name, used for `workflow_dispatch`    |
+| `-RepoRoot`           | Repository directory containing the checked-out head commit     |
+
+`install-skill-node-deps.sh` reads `SEARCH_ROOT` from the environment, runs `npm ci --ignore-scripts --omit=optional`
+for each `package-lock.json` beneath it, and refuses to run more than `MAX_INSTALLS` (default 5) installs. Set `INCLUDE_OPTIONAL=1` to keep optional dependencies.
+It runs in reusable workflows that grant `id-token: write`, so it never executes dependency lifecycle scripts.
 
 ## Release
 
@@ -105,15 +159,21 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 |-------------------------------------------|-------------------------------------------------------------------------------------|
 | `Build-AgentBehaviorSpec.ps1`             | Regenerate the agent-behavior eval spec from per-agent stimulus partials            |
 | `Build-AgentInventory.ps1`                | Generate the authoritative agent inventory used by eval suites                      |
+| `Build-GraderLineageMap.ps1`              | Build or check the Vally grader-name lineage map                                    |
 | `Get-AgentDependencyMap.ps1`              | Build a JSON map of agent dependencies for the baseline-equivalence dispatcher      |
-| `Get-ChangedAIArtifact.ps1`               | Emit a JSON manifest of AI customization artifacts changed between two git refs     |
-| `Get-ChangedSpecStimulus.ps1`             | Emit a JSON manifest of synthetic artifacts derived from changed eval specs         |
+| `Get-EvalChangeSet.ps1`                   | Freeze explicit base/head commits, their merge base, and changed paths              |
+| `Get-ChangedAIArtifact.ps1`               | Classify AI customization artifacts from the canonical eval change set              |
+| `Get-ChangedSpecStimulus.ps1`             | Resolve changed stimuli from canonical comparison-base and head content             |
 | `Invoke-AgentMatrix.ps1`                  | Run the agent-behavior matrix and aggregate per-agent summaries                     |
 | `Invoke-ArtifactModeration.ps1`           | Moderate all eval specs plus changed AI artifacts as a pre-job gate                 |
 | `Invoke-BaselineEquivalence.ps1`          | Run baseline-vs-customized equivalence evals for a target agent                     |
 | `Invoke-ContentModeration.ps1`            | Invoke the content moderation CLI over prompt or output content                     |
 | `Invoke-CorpusModeration.ps1`             | Moderate changed AI corpus content from the changed-artifact manifest               |
+| `Invoke-RustUnitTestNetworkTrace.ps1`     | Run a prepared Rust crate under network-denied containment                          |
 | `Invoke-VallyEvals.ps1`                   | Execute vally evals for changed AI artifacts                                        |
+| `Merge-BaselineEquivalence.ps1`           | Merge isolated baseline-equivalence model summaries                                 |
+| `Merge-EvalExecution.ps1`                 | Merge all planned eval producer summaries into one authoritative result             |
+| `New-AgentEvalPlan.ps1`                   | Build a deterministic execution plan for PR agent evaluations                       |
 | `New-AgentMatrixDashboard.ps1`            | Render a self-contained HTML dashboard for the per-agent behavior matrix            |
 | `New-EquivalenceDashboard.ps1`            | Render a self-contained HTML dashboard for a local baseline-equivalence run         |
 | `Test-CopilotToken.ps1`                   | Pre-flight probe for the `COPILOT_GITHUB_TOKEN` secret used by vally evals          |
@@ -128,10 +188,38 @@ Most of these run through CI-owned `ci:eval:*` package scripts. See
 taxonomy and prerequisites, and [../evals/README.md](../evals/README.md) for the broader
 eval framework documentation.
 
-`Get-AgentDependencyMap.ps1`, `Get-ChangedAIArtifact.ps1`, `Get-ChangedSpecStimulus.ps1`,
+`Get-AgentDependencyMap.ps1`, `Get-EvalChangeSet.ps1`, `Get-ChangedAIArtifact.ps1`, `Get-ChangedSpecStimulus.ps1`,
 `Test-CopilotToken.ps1`, and `Update-AgentMatrixSummariesFromLogs.ps1` have no
 package-script wrapper and are invoked directly by workflows or run ad hoc with
 `pwsh -NoProfile -File`.
+
+### Immutable change selection
+
+Generate the comparison once, then pass its manifest to both selectors:
+
+```powershell
+pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef feature-branch
+pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json
+pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 -ChangeSetPath logs/eval-change-set.json
+```
+
+The eval lane passes the change-range resolver's verified base and head
+commits for every event as `-BaseRef` and `-HeadRef`. For pull requests the
+base is the first parent of GitHub's test-merge commit and the head is the
+test-merge commit itself, so the selection contains only the pull request's
+changes and cannot pick up newer `main` changes. The resolver, not the
+generator, verifies the merge shape and selects full validation when it cannot
+prove a range. In full mode the lane skips the generator and validates every
+tracked artifact.
+`eval-change-set.json` records resolved `baseRef`, `headRef`, `comparisonBase`,
+and ordered `changes`. Changed-spec content and package patches use
+`comparisonBase` and `headRef`, never the working tree. Renamed and copied
+specs are treated as additions, so every backlinked stimulus runs.
+
+The selectors require this manifest; their former `BaseRef` and `HeadRef`
+parameters are removed. An empty comparison succeeds with `changes: []`.
+Invalid revisions, malformed manifests, and unexpected Git content failures
+terminate explicitly rather than triggering a full evaluation as a fallback.
 
 ## Devcontainer Scripts
 
@@ -220,16 +308,18 @@ Copilot CLI plugin manifest synchronization and validation.
 
 Pester test organization matching the scripts structure.
 
-| Directory       | Tests For                     |
-|-----------------|-------------------------------|
-| `lib/`          | Shared helper tests           |
-| `devcontainer/` | Devcontainer validation tests |
-| `extension/`    | Extension packaging tests     |
-| `plugins/`      | Plugin manifest sync tests    |
-| `linting/`      | Linting script tests          |
-| `security/`     | Security validation tests     |
-| `Fixtures/`     | Shared test fixtures          |
-| `Mocks/`        | Shared mock data              |
+| Directory            | Tests For                                 |
+|----------------------|-------------------------------------------|
+| `agentic-workflows/` | Compiled Agentic Workflow runtime support |
+| `ci/`                | CI helper tests                           |
+| `lib/`               | Shared helper tests                       |
+| `devcontainer/`      | Devcontainer validation tests             |
+| `extension/`         | Extension packaging tests                 |
+| `plugins/`           | Plugin manifest sync tests                |
+| `linting/`           | Linting script tests                      |
+| `security/`          | Security validation tests                 |
+| `Fixtures/`          | Shared test fixtures                      |
+| `Mocks/`             | Shared mock data                          |
 
 Run all tests:
 
@@ -350,7 +440,6 @@ Key rules:
 * [Linting Scripts Documentation](linting/README.md)
 * [Security Scripts Documentation](security/README.md)
 * [Test Organization Documentation](tests/README.md)
-* [Agent Activation Harness Documentation](agents/activation-harness/README.md)
 * [Evaluation Framework Documentation](../evals/README.md)
 * [GitHub Workflows Documentation](../.github/workflows/README.md)
 * [Contributing Guidelines](../CONTRIBUTING.md)

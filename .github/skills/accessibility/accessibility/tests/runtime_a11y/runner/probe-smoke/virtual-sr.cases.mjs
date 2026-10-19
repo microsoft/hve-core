@@ -3,8 +3,7 @@
 
 // Fixture cases for the probe-virtual-sr smoke tests. Each case is
 // framework-agnostic HTML paired with the expected WCAG 4.1.2 (Name, Role,
-// Value) verdict. The negative case guards the shipped nameless-control defect
-// (a clear/close control announced by role with no accessible name).
+// Value) verdict. Interactive controls require an accessible name and role.
 export const CASES = [
   {
     name: 'nameless icon controls fail (WCAG 4.1.2)',

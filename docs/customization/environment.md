@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-09-10
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -147,9 +147,6 @@ Each entry maps a directory path to `true` to enable scanning:
   "chat.agentFilesLocations": {
     ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true
-  },
-  "chat.promptFilesLocations": {
-    ".github/prompts/hve-core": true
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,

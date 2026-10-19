@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-07-28
+ms.date: 2026-10-13
 ms.topic: reference
 keywords:
   - powershell
@@ -41,6 +41,7 @@ The security scripts share common modules and follow a consistent pattern:
 * [`Test-WorkflowPermissions.ps1`](#test-workflowpermissionsps1): workflow permissions validation
 * [`Test-DangerousWorkflow.ps1`](#test-dangerousworkflowps1): workflow template-injection detection
 * [`Test-PrValidationGate.ps1`](#test-prvalidationgateps1): PR-validation gate completeness
+* [`Test-CodeQLSarifThreshold.ps1`](#test-codeqlsarifthresholdps1): CodeQL SARIF threshold gate with tracked exceptions
 * [`Install-PSModules.ps1`](#install-psmodulesps1): centralized PS module install with retry
 * [`Test-PSModulePins.ps1`](#test-psmodulepinsps1): PS module version pin enforcement
 * [`Sign-PlannerArtifacts.ps1`](#sign-plannerartifactsps1): planner artifact manifest and signing
@@ -279,9 +280,15 @@ scope it holds rather than inheriting the workflow grant implicitly.
 | Workflow-level block | Job-level block | Effective scopes                   | Verdict   |
 |----------------------|-----------------|------------------------------------|-----------|
 | absent               | absent          | repository or organization default | violation |
+| absent               | present         | job-declared                       | violation |
 | `permissions: {}`    | absent          | none                               | pass      |
 | populated            | absent          | inherits the workflow grant        | violation |
-| any                  | present         | job-declared                       | pass      |
+| `{}` or populated    | present         | job-declared                       | pass      |
+
+A workflow with no workflow-level block is reported once at the file level
+(`MissingPermissions`) whatever its jobs declare, because a job added later
+without its own block would still inherit the repository or organization
+default.
 
 A job beneath an empty workflow-level block that declares no block of its own
 inherits an empty set and therefore holds no scope, so that case passes. An empty
@@ -289,12 +296,24 @@ workflow-level block is a default, not a ceiling: a job that does declare its ow
 block still receives what it declares, because job-level permissions replace the
 workflow-level set rather than being capped by it.
 
+#### Breadth rules
+
+Two further rules apply regardless of the classification above:
+
+| Violation type                 | SARIF rule                       | Fires when                                                                                                  |
+|--------------------------------|----------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `ExcessiveWorkflowPermissions` | `excessive-workflow-permissions` | The workflow-level block grants anything beyond `contents: read`; entries set to `none` are allowed         |
+| `BroadPermissionsScalar`       | `broad-permissions-scalar`       | The workflow-level block or any job's block is `read-all` or `write-all`, whatever the workflow-level state |
+
+A workflow-level `read-all` or `write-all` is reported only as
+`BroadPermissionsScalar`. Additional scopes belong on the jobs that use them.
+
 #### Features
 
 * Scans `.github/workflows/*.yml` and `.yaml` files
 * Parses each workflow with `ConvertFrom-Yaml`, so job indentation and the
   `permissions` value shape do not affect detection
-* Reports workflow-level and job-level compliance as separate metrics
+* Reports workflow-level, job-level, and breadth violations as separate metrics
 * Outputs results in JSON, SARIF, or console format
 * Configurable workflow exclusions
 * Integrates with `npm run lint:permissions`
@@ -304,7 +323,7 @@ workflow-level set rather than being capped by it.
 * `-Path` - Directory containing workflow YAML files (default: `.github/workflows`)
 * `-Format` - Output format: `json`, `sarif`, or `console` (default: `json`)
 * `-OutputPath` - Path for result output file (default: `logs/workflow-permissions-results.json`)
-* `-FailOnViolation` (switch) - Exit with non-zero code if any workflow or job is missing permissions
+* `-FailOnViolation` (switch) - Exit with non-zero code if any violation is found
 * `-ExcludePaths` - Workflow filenames to exclude (default: `copilot-setup-steps.yml`)
 
 #### Usage
@@ -388,6 +407,51 @@ the gate job never waits on it.
 
 This validator requires the `PowerShell-Yaml` module at the version pinned in
 `ps-module-versions.json`.
+
+### `Test-CodeQLSarifThreshold.ps1`
+
+Fails a CodeQL analysis job when its SARIF contains a finding at the repository's
+code-scanning threshold.
+
+Purpose: Block new findings at merge time in pull requests and merge-queue groups,
+where ruleset code-scanning protection does not apply, without dismissing or
+hiding any alert. See the
+[code-scanning alert lifecycle](../../docs/security/code-scanning-alert-lifecycle.md).
+
+#### Features
+
+* Fails a result whose rule has `security-severity` of 4.0 or higher, or whose
+  rule has no security severity and whose effective level is `error` or `warning`
+* Resolves the effective level from the result, then the rule's default, then the
+  SARIF default of `warning`
+* Resolves rules through `ruleId`, `ruleIndex`, and `toolComponent` across the
+  driver and extensions; inline SARIF suppressions do not exempt a result
+* Fails closed on a missing, unreadable, or run-less SARIF input
+* Excuses a result only through a matching entry in
+  `security/code-scanning-exceptions.yml`, lists every excused result, and fails
+  on expired, malformed, over-90-day, or stale entries
+* Writes a Markdown summary to `$GITHUB_STEP_SUMMARY` or `-SummaryPath`
+* Integrates with `npm run security:codeql-gate`
+
+#### Parameters
+
+* `-SarifPath` - SARIF files or directories containing `*.sarif` files
+* `-ExceptionsPath` - Tracked exceptions file (default: `security/code-scanning-exceptions.yml`)
+* `-CheckDate` - Date used for expiry checks (default: current UTC date)
+* `-SummaryPath` - Markdown summary destination (default: `$env:GITHUB_STEP_SUMMARY`)
+
+#### Usage
+
+```powershell
+# Gate a downloaded analysis
+./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath ./python.sarif
+
+# Gate every SARIF file the CodeQL action wrote
+npm run security:codeql-gate -- -SarifPath ../results
+```
+
+This gate requires the `PowerShell-Yaml` module at the version pinned in
+`ps-module-versions.json` when the exceptions file is present.
 
 ### `Install-PSModules.ps1`
 

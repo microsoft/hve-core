@@ -1,9 +1,9 @@
 ---
 title: engagement-reporting
 description: Creates source-grounded internal or external weekly engagement status reports with optional Outlook draft creation.
-sidebar_position: 1
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-01
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

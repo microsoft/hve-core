@@ -66,6 +66,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+
 function Resolve-RepoRoot {
     [CmdletBinding()]
     [OutputType([string])]
@@ -111,7 +113,7 @@ $resolvedEvalRoot = Resolve-PathFromRoot -Path $EvalRoot     -RepoRoot $resolved
 $resolvedOutFile  = Resolve-PathFromRoot -Path $OutFile      -RepoRoot $resolvedRoot
 
 if (-not (Test-Path -LiteralPath $resolvedEvalRoot -PathType Container)) {
-    Write-Host "::error::Eval root not found: $resolvedEvalRoot"
+    Write-CIAnnotation -Level Error -Message "Eval root not found: $resolvedEvalRoot"
     exit 2
 }
 
@@ -144,7 +146,7 @@ if (Test-Path -LiteralPath $resolvedManifest -PathType Leaf) {
             $null = $fileSet.Add(((Resolve-Path -LiteralPath $absolute).ProviderPath))
         }
         else {
-            Write-Warning "Artifact file not found: $artifactPath"
+            Write-CIAnnotation -Level Warning -Message "Artifact file not found: $artifactPath"
         }
     }
 }

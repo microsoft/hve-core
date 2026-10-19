@@ -85,8 +85,8 @@ if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 }
 
-# Pre-write placeholder outputs so tests that assert these files exist during
-# the run (activation harness) see them even before Invoke-Pester completes.
+# Reset outputs so a run that fails before Invoke-Pester completes never leaves
+# results from an earlier run in place.
 '{}' | Out-File -FilePath $summaryPath -Encoding utf8
 '[]' | Out-File -FilePath $failuresPath -Encoding utf8
 
@@ -133,7 +133,8 @@ if ($PSBoundParameters.ContainsKey('ExcludeTag')) {
 
 $configuration = & $configScript @configArgs
 
-# Ensure PassThru and file output are enabled regardless of CI flag
+# The wrapper must write authoritative reports before choosing its exit code.
+$configuration.Run.Exit = $false
 $configuration.Run.PassThru = $true
 
 Write-Host "🧪 Running Pester tests..." -ForegroundColor Cyan
@@ -213,7 +214,7 @@ if ($failures.Count -eq 0 -and $result.FailedCount -gt 0) {
     $failures = @(Get-FailedTests -Blocks $result.Containers)
 }
 
-$failures | ConvertTo-Json -Depth 5 | Out-File -FilePath $failuresPath -Encoding utf8
+ConvertTo-Json -InputObject @($failures) -Depth 5 | Out-File -FilePath $failuresPath -Encoding utf8
 
 # Report
 if ($result.FailedCount -gt 0) {

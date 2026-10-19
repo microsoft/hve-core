@@ -28,10 +28,8 @@ Thin skill-backed perspective subagent that reviews a precomputed diff for acces
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches this perspective after the user selects accessibility review. It assesses the supplied diff against loaded accessibility guidance and applicable criteria, not a standalone whole-system audit. Users select Code Review rather than this delegated worker.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a `perspective_batch` task, the serialized diff, changed files, depth, exclusions, and `task.outputs.accessibility` for a dialog change. The worker returns structured accessibility findings traceable to the loaded skill and criterion, or clarification when evidence is insufficient. It does not publish a review, alter source, or replace missing runtime evidence with a conformance claim.

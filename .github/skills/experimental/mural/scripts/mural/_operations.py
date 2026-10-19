@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import pathlib
 import re
 import secrets
@@ -39,7 +38,6 @@ from typing import Any, Callable
 from . import (  # noqa: E402 - package siblings defined before this import runs
     LOGGER,
     _area_probe,
-    _assert_widget_has_author_tag,
     _create_tag,
     _ensure_geos_ready,
     _get_area_with_widget_fallback,
@@ -49,10 +47,7 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _list_kwargs,
     _list_widgets_with_context,
     _maybe_apply_author_tag,
-    _resolve_active_profile,
-    _select_profile,
     _state,
-    _token_granted_scopes,
     _widget_tag_ids,
 )
 from ._commands import (
@@ -61,24 +56,17 @@ from ._commands import (
     _bulk_apply_author_tag,
     _evaluate_poll,
     _parse_poll_condition,
-    _patch_widget_or_disambiguate_404,
     _poll_mural,
     _read_tag_manifest,
     _set_mural_status,
     _template_target_body,
 )
 from ._constants import (
-    DEFAULT_PROFILE_NAME,
-    ENV_PROFILE,
     MAX_BULK_WIDGETS,
     POLL_DEFAULT_INTERVAL_S,
     POLL_DEFAULT_TIMEOUT_S,
     POLL_MAX_INTERVAL_S,
     POLL_MAX_TIMEOUT_S,
-)
-from ._credentials import (
-    _resolve_credential_file,
-    _resolve_token_store_path,
 )
 from ._exceptions import (
     MCPInvalidParamsError,
@@ -1440,15 +1428,15 @@ def _op_widget_update(arguments: dict[str, Any]) -> Any:
     body = arguments["body"]
     if not isinstance(body, dict):
         raise MuralValidationError("body must be a JSON object")
-    if arguments.get("require_author_tag") and not arguments.get("force_human"):
-        _assert_widget_has_author_tag(mural_id, arguments["widget"])
-    return _patch_widget_or_disambiguate_404(mural_id, arguments["widget"], body)
+    if not arguments.get("force_human"):
+        _pkg()._assert_widget_has_author_tag(mural_id, arguments["widget"])
+    return _pkg()._patch_widget_or_disambiguate_404(mural_id, arguments["widget"], body)
 
 
 def _op_widget_delete(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
-    if arguments.get("require_author_tag") and not arguments.get("force_human"):
-        _assert_widget_has_author_tag(mural_id, arguments["widget"])
+    if not arguments.get("force_human"):
+        _pkg()._assert_widget_has_author_tag(mural_id, arguments["widget"])
     _pkg()._authenticated_request(
         "DELETE", f"/murals/{mural_id}/widgets/{arguments['widget']}"
     )
@@ -1620,34 +1608,6 @@ def _op_widget_list_with_context(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _op_auth_status(arguments: dict[str, Any]) -> Any:
-    path = _resolve_token_store_path()
-    profile_arg = arguments.get("profile") if isinstance(arguments, dict) else None
-    cred_profile = profile_arg or os.environ.get(ENV_PROFILE) or DEFAULT_PROFILE_NAME
-    cred_path = _resolve_credential_file(cred_profile, os.environ)
-    cred_keys = {
-        "credential_file": str(cred_path),
-        "credential_file_exists": cred_path.exists(),
-    }
-    store = _pkg()._load_token_store(path)
-    if not store:
-        return {"authenticated": False, "token_store": str(path), **cred_keys}
-    profile_name = _resolve_active_profile(store, os.environ, profile_arg)
-    try:
-        profile = _select_profile(store, profile_name)
-    except MuralError:
-        return {"authenticated": False, "token_store": str(path), **cred_keys}
-    return {
-        "authenticated": True,
-        "token_store": str(path),
-        "profile": profile_name,
-        "granted_scopes": list(_token_granted_scopes(store, profile_name)),
-        "expires_at": profile.get("expires_at"),
-        "has_refresh_token": bool(profile.get("refresh_token")),
-        **cred_keys,
-    }
-
-
 def _op_spatial_widgets_in_shape(arguments: dict[str, Any]) -> Any:
     _ensure_geos_ready()
     mural_id = _validate_mural_id(arguments["mural_id"])
@@ -1816,7 +1776,7 @@ def _op_widget_update_bulk(arguments: dict[str, Any]) -> Any:
         mural_id,
         updates,
         atomic=bool(arguments.get("atomic")),
-        require_author_tag=bool(arguments.get("require_author_tag")),
+        require_author_tag=True,
         force_human=bool(arguments.get("force_human")),
     )
 

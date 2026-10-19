@@ -46,6 +46,7 @@ from . import (
     _cmd_compose_parking_lot_sweep,
     _cmd_compose_populate_dt_section,
     _cmd_compose_workspace_summary,
+    _cmd_doctor,
     _cmd_layout_cluster,
     _cmd_layout_column,
     _cmd_layout_grid,
@@ -146,6 +147,18 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
+    doctor = sub.add_parser(
+        "doctor", help="Check local Mural readiness without authenticating"
+    )
+    doctor.add_argument(
+        "--require-scope",
+        action="append",
+        default=[],
+        help="Required OAuth scope for the intended operation (repeatable)",
+    )
+    _add_output_flags(doctor)
+    doctor.set_defaults(func=_cmd_doctor)
+
     auth = sub.add_parser("auth", help="OAuth 2.0 + PKCE authentication helpers")
     auth_sub = auth.add_subparsers(dest="auth_command", required=True)
 
@@ -180,8 +193,9 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="force",
         action="store_true",
         help=(
-            "Continue even when the active credential backend already "
-            "holds tokens for this profile."
+            "Continue even when this profile already has an authenticated "
+            "session: an access or refresh token in the token store, or a "
+            "refresh token in the keyring or credential file."
         ),
     )
     login.set_defaults(func=_cmd_auth_login)
@@ -427,19 +441,10 @@ def _add_no_author_tag_flag(parser: argparse.ArgumentParser) -> None:
 
 def _add_author_guard_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "--require-author-tag",
-        dest="require_author_tag",
-        action="store_true",
-        help=(
-            "Refuse to mutate widgets unless they carry the reserved "
-            "'authored-by-ai' tag (use --force-human to override)"
-        ),
-    )
-    parser.add_argument(
         "--force-human",
         dest="force_human",
         action="store_true",
-        help="Override --require-author-tag and act on human-authored widgets",
+        help="Explicitly allow mutation of a human-authored widget",
     )
 
 

@@ -38,6 +38,7 @@ export const labelRegistry = {
   customAiAgents: 'Custom AI agents',
   systemDesign: 'System design',
   reusablePatterns: 'Reusable patterns',
+  presentationDecks: 'Presentation decks',
   quickStart: 'Quick Start',
   buildWithAi: 'Build with AI',
   planAndArchitect: 'Plan & Architect',

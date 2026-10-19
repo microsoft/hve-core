@@ -1,0 +1,442 @@
+<!doctype html>
+<!-- Copyright (c) Microsoft Corporation. Licensed under the MIT License. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="How to manage context and carry evidence between Research, Plan, Implement and Review in HVE Core.">
+  <title>RPI with HVE Core / September 2026</title>
+  <link rel="stylesheet" href="vendor/reveal.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="components.css">
+  <script defer src="vendor/reveal.js"></script>
+  <script defer src="config.js"></script>
+  <script defer src="content.js"></script>
+  <script defer src="components.js"></script>
+  <script defer src="deck.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#presenter-controls">Skip to presentation controls</a>
+  <div id="startup" role="status">Loading the presentation. If this remains visible, run <code>npm ci &amp;&amp; npm run build</code> in <code>slides/rpi-with-hve/</code>, then open <code>dist/index.html</code>.</div>
+  <noscript>Enable JavaScript to use the presentation controls. The examples run locally without an agent or service.</noscript>
+  <div class="reveal">
+    <main class="slides" tabindex="0" aria-label="RPI with HVE Core presentation">
+
+      <section id="opening" data-title="RPI with HVE Core" data-chapter="Opening" data-sources="snapshot,rpi-overview,gpt6-astra,opus-55">
+        <div class="eyebrow">MICROSOFT / HVE CORE <span class="separator">/</span> SEPTEMBER 2026</div>
+        <div class="hero-grid">
+          <div>
+            <h1>RPI with<br><em>HVE Core</em></h1>
+            <p class="lead">Help your coding agent keep track<br>of a multi-file change.</p>
+            <div class="date-pill">SOURCE SNAPSHOT <span>/</span> SEPTEMBER 23, 2026</div>
+          </div>
+          <ol class="opening-workflow" aria-label="RPI phases and their written results">
+            <li><span class="phase-order">01</span><div><strong>Research</strong><span>Findings and open questions</span></div><code>research.md</code></li>
+            <li><span class="phase-order">02</span><div><strong>Plan</strong><span>Tasks and required checks</span></div><code>plan.md</code></li>
+            <li><span class="phase-order">03</span><div><strong>Implement</strong><span>Code changes and results</span></div><code>changes.md</code></li>
+            <li><span class="phase-order">04</span><div><strong>Review</strong><span>Findings and follow-up</span></div><code>review.md</code></li>
+          </ol>
+        </div>
+        <div class="slide-bottom"><span>microsoft/hve-core</span><span>Includes scripted examples</span></div>
+        <aside class="notes">A coding agent can read a lot and still miss the detail that matters. On a multi-file change, that might be a naming exception, a decision buried in chat or a check that ran against only one module. RPI gives the work separate research, planning, implementation and review steps, with files that let you inspect the reasoning and continue in a new chat. We'll follow one log-retention change through those steps. Product details reflect the September 23, 2026 source snapshot.</aside>
+      </section>
+
+      <section id="frontier-models" data-title="Larger windows still need good context" data-chapter="Context" data-sources="gpt6-astra,gpt6-release,codex-practices,opus-55,claude-context,copilot-models">
+        <div class="eyebrow">01 / CONTEXT</div>
+        <h2>Larger windows still need good context</h2>
+        <div class="model-grid">
+          <article class="model-card">
+            <span class="label">OPENAI / SEPTEMBER 3, 2026</span>
+            <h3>GPT-6 Astra</h3>
+            <p class="stat"><strong>1,050,000</strong><span>token context window</span></p>
+            <p>A larger window doesn't ensure the agent has read the right files. OpenAI's Codex guidance recommends supplying task-relevant files and examples.</p>
+          </article>
+          <article class="model-card">
+            <span class="label">ANTHROPIC / SEPTEMBER 22, 2026</span>
+            <h3>Claude Opus 5.5</h3>
+            <p class="stat"><strong>1M</strong><span>token context window</span></p>
+            <p>Anthropic describes Opus 5.5 as a model for long coding sessions. Its context guidance still warns that longer inputs can reduce recall.</p>
+          </article>
+        </div>
+        <div class="gate-banner"><p>A model can hold more information and still <strong>miss the detail your task depends on.</strong></p></div>
+        <p class="footnote">Provider API limits. Effective limits depend on the client and configuration. GitHub lists both models as generally available in Copilot as of September 23.</p>
+        <aside class="notes">There are two separate questions here: did the evidence reach the model, and can it use that evidence reliably? A large window answers neither by itself. OpenAI's Codex guidance addresses the first by asking for task-relevant files and examples. Anthropic warns about the second: recall can fall as inputs grow. The OpenAI source is general workflow guidance, not a measured recall limit for Astra. These figures are provider API limits; Copilot may expose a different effective limit.</aside>
+      </section>
+
+      <section id="running-log" data-title="Your prompt shares space with the session" data-chapter="Context" data-sources="claude-context,claude-code-practices,vscode-sessions">
+        <div class="eyebrow">CONTEXT / WHAT THE MODEL RECEIVES</div>
+        <h2>Your prompt shares space with the session</h2>
+        <div class="log-layout">
+          <div class="talk-track">
+            <h3>The prompt is only part of the input</h3>
+            <p>The next response uses the context the client sends. That can include earlier messages, file reads and tool results, or summaries of older turns.</p>
+            <ul>
+              <li>Old instructions can remain after the task changes.</li>
+              <li>Large tool outputs can take up much more space than your request.</li>
+              <li>When the window fills, VS Code summarizes older conversation history.</li>
+            </ul>
+          </div>
+          <figure class="log-model">
+            <figcaption>What can be in the context</figcaption>
+            <ul class="log-stack" aria-label="Information a coding agent may receive">
+              <li>System prompt and tool definitions</li>
+              <li>Your request and attached files</li>
+              <li>Instructions and skills</li>
+              <li>Files the agent read</li>
+              <li>Search and tool results</li>
+              <li>Terminal output</li>
+              <li>Results from connected tools and subagents</li>
+              <li>Summaries of older turns</li>
+            </ul>
+            <div class="log-arrow" aria-hidden="true">&#8595;</div>
+            <div class="next-action">Input for the <strong>next action</strong></div>
+          </figure>
+        </div>
+        <aside class="notes">The right-hand list shows possible inputs, not a guarantee that every earlier message arrives unchanged. Clients can select, truncate or summarize history. The practical point is that your latest request shares space with material gathered along the way, including work that may no longer be relevant. VS Code shows context usage in the Chat input and compacts older history when the window fills. A summary saves space, but it may leave out a detail you still need.</aside>
+      </section>
+
+      <section id="three-failures" data-title="How useful context gets lost" data-chapter="Context" data-sources="vscode-search-tool,vscode-read-tool,claude-code-practices,gpt6-guide,distracted,context-rot">
+        <div class="eyebrow">CONTEXT / FAILURE MODES</div>
+        <h2>How useful context gets lost</h2>
+        <div class="failure-grid">
+          <article class="failure-card">
+            <span class="label">01 / MISSING</span>
+            <h3>Some evidence is missing</h3>
+            <p>A search returns 100 matches. The relevant module is in the results that weren't shown.</p>
+            <p class="consequence"><span>Risk</span>The agent misses an exception</p>
+          </article>
+          <article class="failure-card">
+            <span class="label">02 / NOISE</span>
+            <h3>The chat fills with old work</h3>
+            <p>Failed attempts and long logs remain after they've stopped helping with the task.</p>
+            <p class="consequence"><span>Risk</span>Important details are harder to use</p>
+          </article>
+          <article class="failure-card">
+            <span class="label">03 / DISTRACTION</span>
+            <h3>An old pattern looks reusable</h3>
+            <p>A nearby module uses a legacy convention. The agent copies it without checking whether it still applies.</p>
+            <p class="consequence"><span>Risk</span>The change follows the wrong convention</p>
+          </article>
+        </div>
+        <div class="gate-banner"><p>When an answer is wrong, check <strong>what the agent saw</strong> as well as what it did.</p></div>
+        <aside class="notes">These problems call for different responses. Missing evidence needs another search or file read. Old session history may call for a fresh chat. A misleading example needs a check against the current requirement. A legacy module isn't automatically wrong, but copying it without understanding the exception is risky. Context is one place to investigate a bad result; it isn't an explanation for every model error.</aside>
+      </section>
+
+      <section id="bounded-tools" data-title="A search result may be incomplete" data-chapter="Context" data-sources="vscode-search-tool,vscode-read-tool,vscode-release,vscode-best-practices">
+        <div class="eyebrow">MISSING EVIDENCE <span class="separator">/</span> VS CODE 1.139.0</div>
+        <h2>A search result may be incomplete</h2>
+        <div class="split">
+          <div class="editor tool-trace">
+            <div class="editor-bar"><span class="terminal-dot" aria-hidden="true"></span> Agent tool calls <span class="surface-tag">Reconstructed from source</span></div>
+            <div class="trace-call"><span class="trace-label">grep_search</span><code>query: "variable"  includePattern: "modules/**"</code></div>
+            <pre class="trace-result"><code>Found 312 matches in 14 files for "variable"
+<span class="tok-highlight">(showing 100 matches in 14 files)</span>
+
+modules/blob/variables.tf
+3:variable "resource_prefix" {
+<span class="tok-muted">... (19 more matches in this file)</span></code></pre>
+            <div class="trace-call"><span class="trace-label">read_file</span><code>modules/legacy-table/main.tf</code></div>
+            <pre class="trace-result"><code><span class="tok-highlight">[File content truncated at line 2000. Use read_file
+with offset/limit parameters to view more.]</span></code></pre>
+          </div>
+          <div class="talk-track">
+            <h3>Read the limits with the result</h3>
+            <ol>
+              <li>Only 100 of the 312 matches are shown.</li>
+              <li>The file read ends at line 2,000.</li>
+              <li>The agent needs another call to read the rest.</li>
+            </ol>
+            <p class="callout">Search each module or read the next range before treating this as complete coverage.</p>
+          </div>
+        </div>
+        <p class="footnote">Fictional repository; VS Code 1.139.0 behavior. Search defaults to 100 results with a 200-result cap, both experiment-based settings. Other hosts use different limits.</p>
+        <aside class="notes">The warning is part of the evidence. In this example, 212 matches haven't been shown, so the first search cannot establish a repo-wide naming convention. Narrowing the search to each module makes coverage easier to track. In VS Code 1.139.0, grep_search reports found and shown counts. read_file stops at 2,000 lines and truncates lines longer than 2,000 characters, with guidance to continue using offset and limit. These limits keep a single call manageable; the agent still has to follow up.</aside>
+      </section>
+
+      <section id="context-budget" data-title="A longer chat can make details harder to find" data-chapter="Context" data-sources="context-rot,distracted,lost-middle,anthropic-context-eng,claude-context">
+        <div class="eyebrow">NOISE AND DISTRACTION</div>
+        <h2>A longer chat can make details harder to find</h2>
+        <figure class="budget" aria-labelledby="budget-caption">
+          <figcaption id="budget-caption" class="sr-only">Illustration of context use, not measured proportions. The first bar has room for more evidence. In the second, old reads, failed attempts and logs use much of that space, leaving less room for new information.</figcaption>
+          <div class="budget-row">
+            <span class="budget-label">Start of a task</span>
+            <ul class="budget-bar" aria-label="Start of a task">
+              <li class="seg-overhead"><span>Instructions and tools</span></li>
+              <li class="seg-evidence seg-evidence-start"><span>Relevant evidence</span></li>
+              <li class="seg-free seg-free-start"><span>Free space</span></li>
+            </ul>
+          </div>
+          <div class="budget-row">
+            <span class="budget-label">Later in the session</span>
+            <ul class="budget-bar" aria-label="Later in the session">
+              <li class="seg-overhead"><span>Instructions and tools</span></li>
+              <li class="seg-evidence seg-evidence-late"><span>Relevant evidence</span></li>
+              <li class="seg-noise"><span>Stale reads, failed attempts, logs</span></li>
+              <li class="seg-free seg-free-late"><span>Free</span></li>
+            </ul>
+          </div>
+          <p class="budget-delta">Old reads and logs can compete with the details needed for the next step.</p>
+        </figure>
+        <div class="research-strip">
+          <article><span class="label">CHROMA / 2025</span><p>Across 18 models, longer inputs often reduced accuracy on controlled tasks.</p></article>
+          <article><span class="label">SHI ET AL. / 2023</span><p>Irrelevant sentences reduced accuracy on the math problems tested.</p></article>
+          <article><span class="label">LIU ET AL. / 2023</span><p>Models used facts in the middle of long inputs less reliably.</p></article>
+        </div>
+        <p class="footnote">Bars are conceptual, not measurements. The studies tested earlier models, not the two models shown earlier in this talk.</p>
+        <aside class="notes">The bars illustrate what can accumulate; they don't measure how quickly noise grows. The studies below them show several ways long or distracting inputs affected earlier models. Chroma found that the effect varied by model and task. More context can also help when it contains evidence the task needs. The goal is to keep useful information available and remove material that no longer helps, rather than make every prompt as short as possible.</aside>
+      </section>
+
+      <section id="observed-session" class="demo-slide" data-title="How a simple repo question goes wrong" data-chapter="Context" data-sources="vscode-search-tool,vscode-dir-tool,vscode-read-tool,vscode-sessions,vscode-debug,vscode-flow-layout,vscode-flow-view,vscode-debug-types,anthropic-context-eng,research">
+        <div class="eyebrow">CONTEXT / SCRIPTED VS CODE WALKTHROUGH</div>
+        <h2>How a simple repo question goes wrong</h2>
+        <div class="demo tracking-demo" data-demo="tracking"></div>
+        <aside class="notes">Use Next step to follow eight stages. This is a fictional repository and an authored failure sequence, not a recorded session or a benchmark. After the question, the Agent Flow Chart shows focused excerpts: blue model turns, green tool calls, a purple Explore subagent group and grey response or generic-event nodes. Select a node to inspect its Event details. Missed context shows presenter evidence that was not necessarily sent to the model. On read_file, compare the requested lines 1-40 with the unread section at 84-90. Explore's summary drops the investigation's limits. The compaction step jumps ahead over further exploration and shows a summary that also omits those limits; it does not erase the original Chat history or debug logs. Compaction is an illustrative generic event, not a dedicated native node type. The final response completes but makes unsupported claims, so it is not drawn as a failed tool call. The last step compares the three uses of tracking records. Node selection inspects the trace without advancing the story. Timings, token counts and intermediate turns are omitted. Real Agent Debug Logs require logging to be enabled before the session.</aside>
+      </section>
+
+      <section id="rpi-chapter" class="chapter-slide" data-title="Carry the findings into the next phase" data-chapter="RPI" data-sources="context-term,anthropic-context-eng,rpi-overview">
+        <div class="eyebrow">02 / RPI</div>
+        <div class="chapter-mark" aria-hidden="true">R<span>&#8594;</span>P<span>&#8594;</span>I<span>&#8594;</span>R</div>
+        <h2>Carry the findings<br><em>into the next phase</em></h2>
+        <p class="lead">RPI records what you've learned and decided.<br>A new chat can pick up from those files.</p>
+        <div class="chapter-quote"><p>Context engineering means choosing the information an agent needs for its next step.</p><cite>Summary of the idea discussed by Andrej Karpathy and Tobi Lutke, June 2025</cite></div>
+        <aside class="notes">The useful idea behind context engineering is to choose the information needed for the next step. Tobi Lutke and Andrej Karpathy helped popularize that framing. RPI applies it to a software change: investigate first where evidence is missing, write a plan, make the change and compare the result with the requirements. The written records let another chat or another person continue without reconstructing the entire conversation.</aside>
+      </section>
+
+      <section id="start-rpi" data-title="Start with RPI Agent or a phase skill" data-chapter="RPI" data-sources="agent,research,plan,implement,review,rpi-overview">
+        <div class="eyebrow">RPI / CHAT SETUP</div>
+        <h2>Start with RPI Agent or a phase skill</h2>
+        <div class="agent-setup-layout">
+          <div data-example="request"></div>
+          <div class="agent-setup-instructions">
+            <h3>Let RPI Agent coordinate the work</h3>
+            <ol>
+              <li>Open the agent dropdown below the Chat input.</li>
+              <li>Select <strong>RPI Agent</strong>.</li>
+              <li>Describe the task, its constraints and how you'll check the result.</li>
+            </ol>
+            <p>If you only need one phase, run its skill directly:</p>
+            <div class="skill-row"><code>/rpi-research</code><code>/rpi-plan</code><code>/rpi-implement</code><code>/rpi-review</code></div>
+          </div>
+        </div>
+        <p class="footnote">RPI Agent is optional and uses the same phase skills. This Chat example doesn't send a request.</p>
+        <aside class="notes">In VS Code Chat, select RPI Agent from the agent dropdown before entering the task. It checks whether enough evidence already exists and coordinates the phases according to the participation mode you choose. You can also use the phase skills without the agent. If you already have adequate research, for example, ask /rpi-plan to work from it. The input shown here is a reconstruction, not a connected Chat session.</aside>
+      </section>
+
+      <section id="phase-contract" data-title="Each phase has a job and a written result" data-chapter="RPI" data-sources="research,plan,critique,implement,review,rpi-overview">
+        <div class="eyebrow">RPI / WHAT EACH PHASE READS AND WRITES</div>
+        <h2>Each phase has a job and a written result</h2>
+        <div class="phase-spine">
+          <article>
+            <b>01</b><h3>Research</h3>
+            <dl><dt>Reads</dt><dd>Task, code and sources</dd><dt>Writes</dt><dd><code>research.md</code></dd></dl>
+            <p>Investigates without changing source code.</p>
+          </article>
+          <article>
+            <b>02</b><h3>Plan</h3>
+            <dl><dt>Reads</dt><dd>Research findings and decisions</dd><dt>Writes</dt><dd><code>plan.md</code> + critique</dd></dl>
+            <p>Defines tasks and checks; gets one critique.</p>
+          </article>
+          <article>
+            <b>03</b><h3>Implement</h3>
+            <dl><dt>Reads</dt><dd>Plan tasks and their references</dd><dt>Writes</dt><dd>Source + <code>changes.md</code></dd></dl>
+            <p>Changes the code and records check results.</p>
+          </article>
+          <article>
+            <b>04</b><h3>Review</h3>
+            <dl><dt>Reads</dt><dd>Plan, critique, changes and checks</dd><dt>Writes</dt><dd><code>review.md</code></dd></dl>
+            <p>Compares the result with the requirements.</p>
+          </article>
+        </div>
+        <div class="gate-banner"><p><strong>Use the files to carry decisions forward.</strong> Research runs when evidence is missing; adequate existing evidence can be reused.</p></div>
+        <aside class="notes">Read-only research means it doesn't change project source. It does write findings and a Planning Readiness record. Planning turns the evidence and decisions into tasks, then gets one critique of the final candidate. Implementation changes the code and records the checks it ran. Review compares those results with the plan and decides what still needs work. The filenames are shortened here; the actual records use dated folders and task names under .copilot-tracking. A file handoff makes a fresh chat possible, but doesn't start one automatically.</aside>
+      </section>
+
+      <section id="research-coverage" data-title="Record what you checked and what is missing" data-chapter="RPI" data-sources="research,research-template,advisory-helpers,why-rpi">
+        <div class="eyebrow">RESEARCH</div>
+        <h2>Record what you checked and what is missing</h2>
+        <div class="split">
+          <div class="editor">
+            <div class="editor-bar"><span class="file-icon" aria-hidden="true">M</span> log-retention-research.md <span class="surface-tag">Illustrative excerpt</span></div>
+            <pre><code><span class="tok-heading">### Variable names differ across modules</span>
+12 of 14 modules use resource_prefix.
+2 legacy modules use prefix.
+<span class="tok-key">Evidence:</span> C1, C2
+<span class="tok-key">Coverage:</span> all 14 variables.tf files read.
+  First search: 100 of 312 matches shown.
+  Follow-up: searched each module.
+<span class="tok-key">Limits:</span> only variable declarations checked.
+
+<span class="tok-heading">## Planning Readiness and Next Step</span>
+Not ready: decide whether to keep legacy names.</code></pre>
+          </div>
+          <div class="talk-track">
+            <h3>Make the evidence easy to check</h3>
+            <ul>
+              <li>Record which files and sources you examined.</li>
+              <li>Link findings to <strong>C#</strong> codebase or <strong>W#</strong> external evidence. State what remains unknown.</li>
+              <li>Check a helper's suggestions against the original source before using them.</li>
+            </ul>
+            <div class="micro-flow" aria-label="Research waves in order"><span>Wider</span><i aria-hidden="true">&#8594;</i><span>Deeper</span><i aria-hidden="true">&#8594;</i><span>Contrarian</span></div>
+          </div>
+        </div>
+        <p class="footnote">Illustrative findings and evidence IDs. Subagents are optional in every RPI phase as of September 18 (#2902).</p>
+        <aside class="notes">Notice the difference between an exception and a limit. The two legacy names are a finding. The fact that only variable declarations were checked is a limit on the investigation. Planning is not ready while the naming decision remains unresolved. Each research cycle goes Wider to find relevant areas, Deeper to inspect the details, then Contrarian to look for evidence against the emerging answer. C and W IDs let the reader trace findings to code or external sources. A helper can suggest where to look; the researcher still verifies the source.</aside>
+      </section>
+
+      <section id="plan-critique" data-title="Write tasks you can verify" data-chapter="RPI" data-sources="plan,plan-template,critique">
+        <div class="eyebrow">PLAN <span class="separator">/</span> CRITIQUE</div>
+        <h2>Write tasks you can verify</h2>
+        <div class="split">
+          <div class="editor">
+            <div class="editor-bar"><span class="file-icon" aria-hidden="true">M</span> log-retention-plan.md <span class="surface-tag">Illustrative excerpt</span></div>
+            <pre><code><span class="tok-heading">#### [ ] P01-T01: Add log retention</span>
+<span class="tok-key">Goals:</span>
+* All 14 modules accept log_retention_days.
+<span class="tok-key">Requirements:</span>
+* FR-001: Default to 30 days.
+* FR-002: Accept only 1 to 365 days.
+* FR-003: Keep prefix in legacy modules (D1).
+<span class="tok-key">Details:</span>
+* Follow the pattern in modules/blob.
+<span class="tok-key">References:</span>
+* Research C1, C2; decision D1
+<span class="tok-key">Dependencies:</span>
+* None</code></pre>
+          </div>
+          <div class="talk-track">
+            <h3>Keep the details with the task</h3>
+            <p>Put the goal, requirements and source references together, so the implementer can find them without retracing the investigation.</p>
+            <p>Here, a value of <strong>0 must fail in every module</strong>, including the two legacy modules.</p>
+            <p class="callout">rpi-plan-critique assesses the final plan once: Pass, Revise or Blocked.</p>
+          </div>
+        </div>
+        <aside class="notes">A useful task says what must hold when it's done. Here, adding a variable isn't enough: the default and range must be correct in all 14 modules, and the existing prefix names must remain. P01-T01 gives feedback a specific task to refer to. The full plan also includes a summary and before-and-after diagrams. The critique checks the final candidate against the evidence. The planner resolves the findings rather than rerunning the critique in search of a pass.</aside>
+      </section>
+
+      <section id="fresh-context" data-title="Start a fresh chat without starting over" data-chapter="RPI" data-sources="context-doc,vscode-sessions,vscode-context-guide,claude-code-practices,anthropic-context-eng">
+        <div class="eyebrow">CONTEXT BETWEEN PHASES</div>
+        <h2>Start a fresh chat without starting over</h2>
+        <ol class="session-flow" aria-label="Phases in separate chats, connected by files">
+          <li><span class="session">Research chat</span><span class="starts">Starts from the task</span><code>research.md</code></li>
+          <li><span class="session">Plan chat</span><span class="starts">Starts from research.md</span><code>plan.md + critique</code></li>
+          <li><span class="session">Implement chat</span><span class="starts">Starts from the plan</span><code>changes.md</code></li>
+          <li><span class="session">Review chat</span><span class="starts">Reads plan, critique and results</span><code>review.md</code></li>
+        </ol>
+        <div class="three-points">
+          <article><h3>Leave unhelpful history behind</h3><p>Use <code>/clear</code> or a new chat when old work or repeated corrections get in the way.</p></article>
+          <article><h3>Bring the relevant files</h3><p>Reference the current plan and supporting files. Name the task, such as <code>P01-T01</code>.</p></article>
+          <article><h3>Check the summary</h3><p><code>/compact</code> summarizes the chat and can omit details. Save important decisions in the files first.</p></article>
+        </div>
+        <p class="footnote">An optional way to work. RPI records live in dated folders under <code>.copilot-tracking/</code>, which is gitignored in HVE Core.</p>
+        <aside class="notes">You don't have to clear the chat at every phase. Do it when the history is making the next step harder. Before leaving, check that the files include the decisions and evidence the next phase needs. Then reference those files in the new chat. VS Code's context-engineering guide recommends this for implementation and review. Compaction is another option when you want to continue the same chat, but a summary is not a complete copy of the conversation.</aside>
+      </section>
+
+      <section id="review-routing" data-title="Check the change against the plan" data-chapter="RPI" data-sources="implement,changes-template,review,review-template,claude-code-practices">
+        <div class="eyebrow">IMPLEMENT <span class="separator">/</span> REVIEW</div>
+        <h2>Check the change against the plan</h2>
+        <div class="compare">
+          <article class="panel">
+            <span class="label">IMPLEMENT</span>
+            <ul class="check-list">
+              <li>Follow approved tasks in dependency order.</li>
+              <li>Mark a task done only when its requirements hold.</li>
+              <li>Record the changes and check results in <code>changes.md</code>.</li>
+              <li>Update the plan when a discovery changes the work. Pause tasks that depend on it.</li>
+            </ul>
+          </article>
+          <article class="panel current">
+            <span class="label">REVIEW / ONE RECORD PER RPI TASK</span>
+            <ul class="route-map" aria-label="Where review sends each kind of gap">
+              <li><span>Code misses a requirement</span><b aria-hidden="true">&#8594;</b><code>rpi-implement</code></li>
+              <li><span>A decision is missing</span><b aria-hidden="true">&#8594;</b><code>rpi-plan</code></li>
+              <li><span>Evidence is missing</span><b aria-hidden="true">&#8594;</b><code>rpi-research</code></li>
+              <li><span>Work remains outside scope</span><b aria-hidden="true">&#8594;</b><code>follow-up item</code></li>
+            </ul>
+            <div class="status-pair"><span>Execution: <strong>Complete</strong></span><span>Outcome: <strong>Defects found</strong></span></div>
+          </article>
+        </div>
+        <p class="footnote">Example statuses. Complete means the review finished. The outcome tells you whether the result meets the plan.</p>
+        <aside class="notes">Implementation records what changed, which checks ran and what remains unverified. Review then compares that evidence with the requirements. A code defect goes back to implementation; a missing decision belongs in planning; missing evidence calls for research. Work beyond the agreed scope becomes a separate follow-up. The review's execution can be Complete while its outcome is Defects found. That distinction prevents a finished review from being mistaken for an accepted change. A later fix does not require another Review of the same RPI task.</aside>
+      </section>
+
+      <section id="participation" data-title="Decide how involved you want to be" data-chapter="RPI" data-sources="agent,loops">
+        <div class="eyebrow">OPTIONAL RPI AGENT <span class="separator">/</span> PARTICIPATION</div>
+        <h2>Decide how involved you want to be</h2>
+        <div class="participation-popup" data-example="participation"></div>
+        <p class="footnote">Example selection. Safety confirmations, required gates and human review apply in every mode.</p>
+        <aside class="notes">These are the RPI Agent's actual choices and descriptions. The first lets the agent make ordinary decisions and continue through the work. The second keeps that automatic progression but brings unresolved decisions back to you. The selected option researches and plans with you, then stops before implementation. The fourth waits for you to advance each phase. If your request already establishes a mode, the agent doesn't need to ask again. Every mode keeps the required safety and human-review boundaries.</aside>
+      </section>
+
+      <section id="walkthrough" class="demo-slide" data-title="Walkthrough: add a retention setting" data-chapter="In practice" data-sources="agent,research,plan,critique,implement,review,vscode-search-tool">
+        <div class="eyebrow">RPI / SCRIPTED WALKTHROUGH</div>
+        <h2>Walkthrough: add a retention setting</h2>
+        <div class="demo" data-demo="rpi"></div>
+        <aside class="notes">Use Next step to follow the change, and Back or Reset to revisit it. Everything in the example is scripted. The first search is incomplete, a naming exception needs a decision, and the critique catches a missing range check. Implementation then reports success, but its log doesn't say which modules the tests covered. Review finds that two modules still lack validation. Pause there: passing checks only tell us about what was checked. In a real session, select RPI Agent in the Chat dropdown before submitting the request.</aside>
+      </section>
+
+      <section id="when-to-use" data-title="Use RPI when the work needs investigation" data-chapter="In practice" data-sources="rpi-overview,claude-code-practices,codex-practices,anthropic-context-eng,gpt6-guide">
+        <div class="eyebrow">TRADE-OFFS</div>
+        <h2>Use RPI when the work needs investigation</h2>
+        <div class="compare">
+          <article class="panel current">
+            <span class="label">USE RPI</span>
+            <ul>
+              <li>The change spans files or modules you don't know well.</li>
+              <li>Different modules follow different conventions.</li>
+              <li>You need a record of decisions or dependencies.</li>
+              <li>Someone else will continue or review the work.</li>
+            </ul>
+          </article>
+          <article class="panel">
+            <span class="label">USE A DIRECT EDIT</span>
+            <ul>
+              <li>The change is clear and isolated.</li>
+              <li>You could describe the diff in one sentence.</li>
+              <li>Existing evidence and checks are enough.</li>
+            </ul>
+            <p class="panel-note">You can also use one phase skill, such as <code>/rpi-research</code>, without the full workflow.</p>
+          </article>
+        </div>
+        <div class="three-points limits">
+          <article><h3>Check the assumptions</h3><p>A written requirement can still be wrong.</p></article>
+          <article><h3>Allow for the extra work</h3><p>Research and review take time. Use them where they help.</p></article>
+          <article><h3>Human review still matters</h3><p>Read the findings and plan before approving the change.</p></article>
+        </div>
+        <aside class="notes">RPI adds work, so use it where the investigation and written decisions are worth that effort. A change across unfamiliar modules is a good candidate. A clear, isolated edit may need only the edit and its checks. Both HVE and provider guidance leave room for that smaller path. You can also use research or planning on its own. If you choose the coordinated workflow, its required checks and safety boundaries still apply; a shorter task is not permission to bypass them.</aside>
+      </section>
+
+      <section id="closing" class="closing-slide" data-title="Try RPI on your project" data-chapter="In practice" data-sources="agent,research,rpi-overview,snapshot">
+        <div class="eyebrow">GETTING STARTED</div>
+        <h2>Try RPI on<br><em>your project</em></h2>
+        <div class="closing-commands"><code>RPI Agent</code><code>/rpi-research</code></div>
+        <p class="lead">Give it the task and the constraints.<br>Read the findings before you approve the plan.</p>
+        <div class="closing-footer"><span>microsoft/hve-core</span><span>Source snapshot / 23 SEP 2026</span></div>
+        <aside class="notes">Choose a real change where you need to understand several files before editing. Select RPI Agent to coordinate the work, or use /rpi-research for the investigation alone. Tell it the constraints and how you'll check success. Then read the findings, especially the limits and unresolved decisions, before agreeing to a plan. You can open Sources for any slide if you want to check a claim or explore the workflow further.</aside>
+      </section>
+    </main>
+  </div>
+
+  <nav id="presenter-controls" aria-label="Presentation controls">
+    <div class="brand"><span class="brand-dot" aria-hidden="true"></span> HVE CORE <span id="chapter-label">Opening</span></div>
+    <div class="utility-controls">
+      <button type="button" id="overview-button">Slides</button>
+      <button type="button" data-dialog="sources">Sources</button>
+      <button type="button" data-dialog="notes">Notes</button>
+      <button type="button" data-dialog="help">Keys</button>
+      <button type="button" id="motion-button" aria-pressed="false">Motion off</button>
+      <button type="button" id="fullscreen-button" aria-pressed="false">Full screen</button>
+    </div>
+    <div class="slide-controls">
+      <button type="button" id="previous-slide" aria-label="Previous slide">&#8592;</button>
+      <output id="slide-count" aria-label="Current slide"></output>
+      <button type="button" id="next-slide" aria-label="Next slide">&#8594;</button>
+    </div>
+  </nav>
+  <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-header"><h2 id="dialog-title"></h2><button type="button" id="close-dialog">Close <kbd>Esc</kbd></button></div>
+    <div id="dialog-content" tabindex="0"></div>
+  </dialog>
+</body>
+</html>

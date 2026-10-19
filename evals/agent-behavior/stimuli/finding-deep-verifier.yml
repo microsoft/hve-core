@@ -25,7 +25,7 @@ stimuli:
         config:
           pattern: '(?i)##\s*finding:?\s*sec-00[12]'
       - type: output-matches
-        name: verdict-vocabulary
+        name: finding-deep-verifier-verdict-blocks-verdict-vocabulary
         config:
           pattern: '(?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)'
       - type: output-matches
@@ -55,6 +55,6 @@ stimuli:
         config:
           pattern: '(?i)sec-010'
       - type: output-matches
-        name: verdict-vocabulary
+        name: finding-deep-verifier-no-new-findings-verdict-vocabulary
         config:
           pattern: '(?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)'

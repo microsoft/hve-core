@@ -8,7 +8,8 @@ import {
   WorkflowsIcon,
   DesignThinkingIcon,
   TemplatesExamplesIcon,
-  VsCodeExtensionIcon
+  VsCodeExtensionIcon,
+  SlidesIcon
 } from '../components/Icons/index.tsx';
 import { labelRegistry } from '../data/labelRegistry.ts';
 
@@ -78,6 +79,13 @@ export const iconCards: IconCardData[] = [
     title: labelRegistry.reusablePatterns,
     href: '/docs/templates/',
     description: 'Ready-to-use templates for ADRs, BRDs, agents, and instructions',
+  },
+  {
+    icon: <SlidesIcon />,
+    supertitle: labelRegistry.slides,
+    title: labelRegistry.presentationDecks,
+    href: '/slides/',
+    description: 'Browse and download standalone HVE Core presentations',
   },
 ];
 

@@ -24,6 +24,13 @@ from runtime_a11y._errors import ScriptError as RuntimeScriptError
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USAGE = 2
+NPM_REGISTRY = "https://registry.npmjs.org/"
+# Separator-normalized prefixes that reach the network: UNC and protocol-relative
+# ("//"), and the Windows NT object namespace ("/??/"), which includes \??\UNC\.
+NETWORK_PATH_PREFIXES = ("//", "/??/")
+# Cap on each target-derived violation string copied into normalized output.
+MAX_VIOLATION_TEXT_CHARS = 1024
+SCANNER_NPM_ROOT = Path(__file__).resolve().parent / "scanner_npm"
 
 
 class ScriptError(Exception):
@@ -59,6 +66,13 @@ def create_parser() -> argparse.ArgumentParser:
         help="Confirm intentional access to any non-loopback HTTP(S) host",
     )
     return parser
+
+
+def _bounded_text(value: Any) -> str:
+    """Return a string field capped at MAX_VIOLATION_TEXT_CHARS, or "" otherwise."""
+    if not isinstance(value, str):
+        return ""
+    return value[:MAX_VIOLATION_TEXT_CHARS]
 
 
 def normalize_results(raw_results: dict[str, Any], target: str) -> dict[str, Any]:
@@ -99,12 +113,13 @@ def normalize_results(raw_results: dict[str, Any], target: str) -> dict[str, Any
     if isinstance(violations_payload, list):
         for violation in violations_payload:
             if isinstance(violation, dict):
+                nodes = violation.get("nodes")
                 violations.append(
                     {
-                        "id": violation.get("id", ""),
-                        "impact": violation.get("impact", ""),
-                        "description": violation.get("description", ""),
-                        "nodes": len(violation.get("nodes", []) or []),
+                        "id": _bounded_text(violation.get("id")),
+                        "impact": _bounded_text(violation.get("impact")),
+                        "description": _bounded_text(violation.get("description")),
+                        "nodes": len(nodes) if isinstance(nodes, list) else 0,
                     }
                 )
 
@@ -129,7 +144,7 @@ def normalize_results(raw_results: dict[str, Any], target: str) -> dict[str, Any
 
 def _is_network_path(path: Path) -> bool:
     """Return True for UNC or protocol-relative paths that would reach the network."""
-    return str(path).replace("\\", "/").startswith("//")
+    return str(path).replace("\\", "/").startswith(NETWORK_PATH_PREFIXES)
 
 
 def _canonical_local_file(path: Path) -> str:
@@ -157,13 +172,18 @@ def resolve_scan_target(
         raise ScriptError("Scan target must not be empty", EXIT_USAGE)
     if target.startswith("-"):
         raise ScriptError("Scan target must not begin with '-'", EXIT_USAGE)
-    if target.startswith(("\\\\", "//")):
+    local_path = Path(target).expanduser()
+    # Checked before any filesystem probe. Windows treats mixed separators such as
+    # "/\" as a UNC prefix, passes "\??\" paths to the NT namespace unchanged, and
+    # a home directory can expand onto a network share.
+    if target.replace("\\", "/").startswith(NETWORK_PATH_PREFIXES) or (
+        _is_network_path(local_path)
+    ):
         raise ScriptError(
             "Network-share and protocol-relative scan targets are not supported",
             EXIT_USAGE,
         )
 
-    local_path = Path(target).expanduser()
     if local_path.exists() or (
         len(target) >= 3 and target[0].isalpha() and target[1:3] in {":\\", ":/"}
     ):
@@ -232,18 +252,27 @@ def run_scan(
         allow_hosts=allow_hosts,
         allow_external=allow_external,
     )
-    command = ["npx", "--yes", "@axe-core/cli@4.12.1", "--", resolved_target]
+    command = [
+        "npx",
+        "--yes",
+        f"--registry={NPM_REGISTRY}",
+        "@axe-core/cli@4.12.1",
+        "--stdout",
+        "--",
+        resolved_target,
+    ]
     try:
         completed = subprocess.run(
             command,
             capture_output=True,
             text=True,
             check=True,
+            cwd=SCANNER_NPM_ROOT,
         )
     except FileNotFoundError as exc:
         raise ScriptError(
             "Node-based axe scanner is unavailable. "
-            "Install Node.js and run 'npx --yes @axe-core/cli@4.12.1'.",
+            "Install Node.js and re-run the scanner.",
             EXIT_USAGE,
         ) from exc
     except subprocess.CalledProcessError as exc:
@@ -254,6 +283,10 @@ def run_scan(
         raw_payload = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
         raise ScriptError("Scanner returned invalid JSON output", EXIT_FAILURE) from exc
+
+    # axe --stdout prints a JSON array with one result object per scanned URL.
+    if isinstance(raw_payload, list) and len(raw_payload) == 1:
+        raw_payload = raw_payload[0]
 
     if not isinstance(raw_payload, dict):
         raise ScriptError("Scanner returned unexpected payload format", EXIT_FAILURE)

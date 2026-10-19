@@ -30,6 +30,7 @@ when a blocking expectation was not evaluated.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -57,18 +58,28 @@ from runtime_a11y._config import (
     load_validated_config,
 )
 from runtime_a11y._errors import (
+    EXIT_AUTOMATED_INCOMPLETE,
     EXIT_FAILURE,
     EXIT_INTENT_DRIFT,
     EXIT_INTENT_UNCOVERED,
+    EXIT_RELEASE_INCOMPLETE,
+    EXIT_REVIEWER_INCOMPLETE,
     EXIT_SUCCESS,
     EXIT_USAGE,
     ScriptError,
 )
+from runtime_a11y.evidence_bundle import canonical_json, compose_evidence
+from runtime_a11y.evidence_bundle._validate import verify_artifacts
 from runtime_a11y.matrix import compute_coverage, render_artifact_bundle
 from runtime_a11y.matrix._catalog import apply_criteria_catalog, catalog_provenance
 from runtime_a11y.matrix._model import Matrix
 from runtime_a11y.matrix._provenance import build_artifact_metadata
 from runtime_a11y.matrix._render_test_plan import build_manual_test_cases
+from runtime_a11y.validation_manifest import (
+    build_schema_validation_report,
+    build_validation_manifest,
+    verify_validation_manifest,
+)
 from runtime_a11y.visual_review import (
     build_visual_review_manifest,
     resolve_run_root,
@@ -90,6 +101,7 @@ _REPO_ROOT = _PACKAGE_DIR.parents[5]
 # request timeout rather than waiting for a build.
 _VISUAL_REVIEW_SERVER_BUILD_TIMEOUT_SECONDS = 900.0
 _VISUAL_REVIEW_SERVER_POLL_INTERVAL_SECONDS = 0.5
+_PROBE_TIMEOUT_SECONDS = 300.0
 _LIVE_TEST_START_NOTICE = (
     "LIVE ACCESSIBILITY TESTING WILL CONTROL NVDA, CHROME, KEYBOARD FOCUS, "
     "AND PAGE INPUT. DO NOT INTERACT WITH THIS COMPUTER UNTIL THE TEST "
@@ -302,6 +314,28 @@ def _normalize_probe_id(name: str, known: set[str]) -> str | None:
     return matches[0] if len(matches) == 1 else None
 
 
+def _resolve_probe_filter(name: str) -> str:
+    """Resolve an explicit probe selection to one canonical probe id.
+
+    A caller-supplied filter is an authorization, so an unknown or ambiguous
+    value is a usage failure rather than a silently empty run.
+    """
+    known = set(_all_probe_ids())
+    resolved = _normalize_probe_id(name, known)
+    if resolved is not None:
+        return resolved
+    matches = sorted(pid for pid in known if name in pid)
+    if matches:
+        raise ScriptError(
+            f"Ambiguous probe id: {name}. Matches: " + ", ".join(matches),
+            EXIT_USAGE,
+        )
+    raise ScriptError(
+        f"Unknown probe id: {name}. Known probe ids: " + ", ".join(sorted(known)),
+        EXIT_USAGE,
+    )
+
+
 def _iter_runs(
     config: dict[str, Any],
     probe_filter: str | None = None,
@@ -373,6 +407,7 @@ def _run_probe(
             capture_output=True,
             text=True,
             check=False,
+            timeout=_PROBE_TIMEOUT_SECONDS,
             env=env,
             cwd=str(_PACKAGE_DIR),
         )
@@ -381,6 +416,11 @@ def _run_probe(
             "Node is unavailable. Install Node.js and system Google Chrome, then "
             f"run 'npm ci' in {_PACKAGE_DIR}, to run runtime probes.",
             EXIT_USAGE,
+        ) from exc
+    except subprocess.TimeoutExpired as exc:
+        raise ScriptError(
+            f"Probe '{probe_id}' timed out after {_PROBE_TIMEOUT_SECONDS:g} "
+            f"seconds for surface '{surface_id}' state '{state}'."
         ) from exc
 
     # A probe may produce valid accessibility findings and still report an
@@ -473,6 +513,7 @@ def _run_calibration_session(
     base_url: str,
     run_root: str | None,
     trace: bool = False,
+    journey_ids: list[str] | None = None,
 ) -> dict[str, Any]:
     """Invoke the Node calibration executor and parse its JSON payload."""
     if not _NODE_MODULES.exists():
@@ -490,6 +531,7 @@ def _run_calibration_session(
         "RUNTIME_A11Y_BASE_URL": base_url,
         "RUNTIME_A11Y_TRACE": "1" if trace else "0",
         "RUNTIME_A11Y_RUN_ROOT": run_root or "",
+        "RUNTIME_A11Y_JOURNEYS": json.dumps(journey_ids or []),
     }
     try:
         completed = subprocess.run(
@@ -804,14 +846,17 @@ def _emit_runtime_notice(message: str) -> None:
 
 
 def _emit_live_test_start_notice(
-    run_root: str | Path | None, journey_count: int
+    run_root: str | Path | None, journey_ids: list[str]
 ) -> None:
     """Emit the safety start notice before live accessibility control begins."""
     _emit_runtime_notice(_LIVE_TEST_START_NOTICE)
     safe_run_root = _public_path(run_root) if run_root is not None else "."
     if not safe_run_root:
         safe_run_root = "."
-    _emit_runtime_notice(f"Run root: {safe_run_root} | Journey count: {journey_count}")
+    _emit_runtime_notice(
+        f"Run root: {safe_run_root} | Journey count: {len(journey_ids)}"
+    )
+    _emit_runtime_notice(f"Journeys: {', '.join(journey_ids)}")
 
 
 def _emit_live_test_finish_notice() -> None:
@@ -1158,12 +1203,30 @@ def run(
     runs: list[dict[str, Any]] = []
     results: list[dict[str, Any]] = []
     operational_failure: dict[str, Any] | None = None
-    for probe_id, surface_id, state in _iter_runs(
-        config,
-        probe_filter,
-        surface_filter=surface_filter,
-        state_filter=state_filter,
-    ):
+    scoped_runs = list(
+        _iter_runs(
+            config,
+            probe_filter,
+            surface_filter=surface_filter,
+            state_filter=state_filter,
+        )
+    )
+    requested_scope = {
+        "probe": probe_filter,
+        "surface": surface_filter,
+        "state": state_filter,
+    }
+    if not scoped_runs and any(value is not None for value in requested_scope.values()):
+        selection = ", ".join(
+            f"{label}={value}"
+            for label, value in requested_scope.items()
+            if value is not None
+        )
+        raise ScriptError(
+            f"No probe runs match the requested scope ({selection}).",
+            EXIT_USAGE,
+        )
+    for probe_id, surface_id, state in scoped_runs:
         payload = _run_probe(config, probe_id, surface_id, state, base_url, trace)
         emitting_probe = payload.get("probeId", probe_id)
         runs.append(
@@ -1554,6 +1617,12 @@ def create_parser() -> argparse.ArgumentParser:
 
     run_all = subparsers.add_parser("run-all", help="Run every scoped probe")
     _add_common(run_all)
+    run_all.add_argument(
+        "--probe",
+        dest="probe_id",
+        default=None,
+        help="Limit run-all output to one probe id",
+    )
 
     probe = subparsers.add_parser("probe", help="Run a single probe by id")
     probe.add_argument("probe_id", help="Probe id, e.g. probe-axe")
@@ -1643,6 +1712,12 @@ def create_parser() -> argparse.ArgumentParser:
     _add_common(run_calibration)
     _add_run_root(run_calibration)
     run_calibration.add_argument(
+        "--journey",
+        action="append",
+        default=[],
+        help="Limit calibration to an exact journey id; repeat to select multiple",
+    )
+    run_calibration.add_argument(
         "--prerequisite-only",
         action="store_true",
         help=(
@@ -1664,7 +1739,151 @@ def create_parser() -> argparse.ArgumentParser:
     run_at_plan.add_argument("--allow-external", action="store_true")
     run_at_plan.add_argument("--list", action="store_true")
 
+    compose = subparsers.add_parser(
+        "compose-evidence",
+        help="Compose product-neutral accessibility evidence",
+    )
+    compose.add_argument("--asset-catalog", type=Path, required=True)
+    compose.add_argument("--requirement-catalog", type=Path, required=True)
+    compose.add_argument("--scope", type=Path, required=True)
+    compose.add_argument("--run-context", type=Path, required=True)
+    compose.add_argument("--source", type=Path, action="append", default=[])
+    compose.add_argument("--state-proofs", type=Path, required=True)
+    compose.add_argument("--review-registry", type=Path)
+    compose.add_argument(
+        "--expected-review-registry-digest",
+        help=(
+            "Registry digest supplied from a separate caller-controlled "
+            "configuration or secret boundary; without it reviewer records "
+            "remain diagnostic only"
+        ),
+    )
+    compose.add_argument("--supplement", type=Path, action="append", default=[])
+    compose.add_argument("--prior-bundle", type=Path)
+    compose.add_argument("--prior-bundle-digest")
+    compose.add_argument("--artifact-root", type=Path, default=Path("."))
+    compose.add_argument("--out", type=Path, required=True)
+    compose.add_argument(
+        "--require-completeness",
+        choices=("automated", "reviewer", "release"),
+    )
+
+    emit_manifest = subparsers.add_parser(
+        "emit-validation-manifest",
+        help="Emit and schema-validate one deterministic validation manifest",
+    )
+    emit_manifest.add_argument("--input", type=Path, required=True)
+    emit_manifest.add_argument("--out", type=Path, required=True)
+    emit_manifest.add_argument("--schema-report", type=Path, required=True)
+
     return parser
+
+
+def _read_evidence_json(path: Path, *, kind: str) -> Any:
+    """Read one repository-contained JSON evidence input."""
+    resolved = _resolve_repo_path(path, kind=kind)
+    try:
+        return json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ScriptError(f"Unable to read {kind}: {exc}", EXIT_USAGE) from exc
+
+
+def _write_canonical_json_atomic(path: Path, document: dict[str, Any]) -> Path:
+    """Write canonical JSON through an adjacent temporary file."""
+    destination = _resolve_repo_path(path, kind="--out")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(canonical_json(document), encoding="utf-8", newline="")
+        os.replace(temporary, destination)
+    except Exception:
+        with contextlib.suppress(FileNotFoundError):
+            temporary.unlink()
+        raise
+    return destination
+
+
+def _cmd_compose_evidence(args: argparse.Namespace) -> int:
+    """Load explicit evidence inputs and atomically write a composed bundle."""
+    state_proofs = _read_evidence_json(args.state_proofs, kind="--state-proofs")
+    if not isinstance(state_proofs, list):
+        raise ScriptError("--state-proofs must contain a JSON array", EXIT_USAGE)
+    bundle = compose_evidence(
+        asset_catalog=_read_evidence_json(args.asset_catalog, kind="--asset-catalog"),
+        requirement_catalog=_read_evidence_json(
+            args.requirement_catalog, kind="--requirement-catalog"
+        ),
+        scope=_read_evidence_json(args.scope, kind="--scope"),
+        run_context=_read_evidence_json(args.run_context, kind="--run-context"),
+        sources=[_read_evidence_json(path, kind="--source") for path in args.source],
+        state_proofs=state_proofs,
+        registry=(
+            _read_evidence_json(args.review_registry, kind="--review-registry")
+            if args.review_registry
+            else None
+        ),
+        supplements=[
+            _read_evidence_json(path, kind="--supplement") for path in args.supplement
+        ],
+        prior_bundle=(
+            _read_evidence_json(args.prior_bundle, kind="--prior-bundle")
+            if args.prior_bundle
+            else None
+        ),
+        expected_prior_bundle_digest=args.prior_bundle_digest,
+        expected_registry_digest=args.expected_review_registry_digest,
+    )
+    artifact_root = _resolve_repo_path(args.artifact_root, kind="--artifact-root")
+    if not artifact_root.is_dir():
+        raise ScriptError("--artifact-root must be an existing directory", EXIT_USAGE)
+    verify_artifacts(bundle["bundleManifest"]["artifacts"], artifact_root)
+    _write_canonical_json_atomic(args.out, bundle)
+    completeness = bundle["scopeCompleteness"]
+    if (
+        args.require_completeness == "automated"
+        and completeness["automatedCollection"] != "complete"
+    ):
+        return EXIT_AUTOMATED_INCOMPLETE
+    if args.require_completeness == "reviewer" and completeness[
+        "reviewerEvidence"
+    ] not in {"not-required", "complete"}:
+        return EXIT_REVIEWER_INCOMPLETE
+    if (
+        args.require_completeness == "release"
+        and completeness["releaseEvidence"] != "complete"
+    ):
+        return EXIT_RELEASE_INCOMPLETE
+    return EXIT_SUCCESS
+
+
+def _cmd_emit_validation_manifest(args: argparse.Namespace) -> int:
+    """Build, verify, and atomically write a manifest plus schema report."""
+    payload = _read_evidence_json(args.input, kind="--input")
+    try:
+        manifest = build_validation_manifest(
+            revision=payload["revision"],
+            environment=payload["environment"],
+            commands=payload["commands"],
+            generated_inventory=payload["generatedInventory"],
+            untracked_deliverables=payload["untrackedDeliverables"],
+            assistive_technology_sample=payload["assistiveTechnologySample"],
+        )
+    except (KeyError, TypeError) as exc:
+        raise ScriptError(
+            f"Validation manifest input is missing or invalid: {exc}", EXIT_USAGE
+        ) from exc
+    verify_validation_manifest(manifest)
+    destination = _write_canonical_json_atomic(args.out, manifest)
+    report = build_schema_validation_report(
+        [
+            {
+                "path": _public_path(destination),
+                "schema": "validation-manifest.schema.json",
+            }
+        ]
+    )
+    _write_canonical_json_atomic(args.schema_report, report)
+    return EXIT_SUCCESS
 
 
 def _project_intent(args: argparse.Namespace) -> int:
@@ -1966,15 +2185,131 @@ def _normalize_calibration_aggregate(payload: dict[str, Any]) -> dict[str, Any]:
     return aggregate
 
 
+def _resolve_calibration_journey_ids(
+    config: dict[str, Any], requested: list[str]
+) -> list[str]:
+    """Resolve the one authorized journey list shared by notice, child, and evidence.
+
+    An omitted filter authorizes only the operator's authored calibration
+    journeys. Bound catalog executions take live desktop control, so they are
+    opt-in by explicit id and are never added to an unfiltered selection.
+    """
+    calibration = config.get("calibration") or {}
+    authored: list[str] = []
+    for item in calibration.get("journeys") or []:
+        if not isinstance(item, dict):
+            continue
+        journey_id = str(item.get("id") or "").strip()
+        if journey_id:
+            authored.append(journey_id)
+
+    authored_ids = set(authored)
+    catalog = config.get("resolvedCaseCatalog") or {}
+    case_bindings = (config.get("resolvedBindingProfile") or {}).get(
+        "caseBindings"
+    ) or {}
+    bound: list[str] = []
+    for entry in catalog.get("cases") or []:
+        if not isinstance(entry, dict):
+            continue
+        case_binding = case_bindings.get(str(entry.get("caseId") or ""))
+        if not isinstance(case_binding, dict):
+            continue
+        for execution in case_binding.get("executions") or []:
+            if not isinstance(execution, dict):
+                continue
+            execution_id = str(execution.get("id") or "").strip()
+            if execution_id and execution_id not in authored_ids:
+                bound.append(execution_id)
+
+    resolved = authored + bound
+    duplicates = sorted({item for item in resolved if resolved.count(item) > 1})
+    if duplicates:
+        raise ScriptError(
+            "Calibration journey IDs must be unique: " + ", ".join(duplicates),
+            EXIT_USAGE,
+        )
+
+    normalized = [str(value or "").strip() for value in requested]
+    if requested and not all(normalized):
+        raise ScriptError("--journey values must be non-empty.", EXIT_USAGE)
+
+    if not normalized:
+        if authored:
+            return list(authored)
+        if bound:
+            raise ScriptError(
+                "Live calibration needs an explicit --journey selection because no "
+                "calibration.journeys are authored. Bound case executions are "
+                "opt-in: " + ", ".join(bound),
+                EXIT_USAGE,
+            )
+        raise ScriptError(
+            "No calibration journeys are configured or bound. Author "
+            "calibration.journeys or bind a case execution recipe before "
+            "running calibration.",
+            EXIT_USAGE,
+        )
+
+    if len(normalized) != len(set(normalized)):
+        raise ScriptError("--journey values must be unique.", EXIT_USAGE)
+    unknown = [item for item in normalized if item not in set(resolved)]
+    if unknown:
+        raise ScriptError(
+            "Unknown calibration journey ID: " + ", ".join(unknown),
+            EXIT_USAGE,
+        )
+    return normalized
+
+
+def _assert_executed_journey_identity(
+    payload: dict[str, Any], journey_ids: list[str]
+) -> list[str]:
+    """Reject child output whose journey identity differs from authorization."""
+    authorized = ", ".join(journey_ids)
+    executed = payload.get("journeys")
+    if not isinstance(executed, list) or not executed:
+        raise ScriptError(
+            "Calibration returned no executed journey identity. "
+            f"Authorized: {authorized}."
+        )
+    if any(not isinstance(item, str) or not item.strip() for item in executed):
+        raise ScriptError(
+            "Calibration returned an empty or non-string journey identity. "
+            f"Authorized: {authorized}."
+        )
+
+    executed_ids = [item.strip() for item in executed]
+    duplicates = sorted({item for item in executed_ids if executed_ids.count(item) > 1})
+    if duplicates:
+        raise ScriptError(
+            "Calibration returned duplicate executed journey identities: "
+            + ", ".join(duplicates)
+            + f". Authorized: {authorized}."
+        )
+    if executed_ids != journey_ids:
+        missing = [item for item in journey_ids if item not in executed_ids]
+        unexpected = [item for item in executed_ids if item not in journey_ids]
+        detail = ""
+        if missing:
+            detail += " Missing: " + ", ".join(missing) + "."
+        if unexpected:
+            detail += " Unexpected: " + ", ".join(unexpected) + "."
+        if not detail:
+            detail = " The executed order does not match the authorized order."
+        raise ScriptError(
+            "Calibration executed journeys that differ from the authorized set. "
+            f"Authorized: {authorized}. "
+            f"Executed: {', '.join(executed_ids)}.{detail}"
+        )
+    return executed_ids
+
+
 def _cmd_run_calibration(args: argparse.Namespace) -> int:
     """Runs a calibration session, or only its prerequisite probe."""
     config = load_validated_config(args.config, allow_external=args.allow_external)
     calibration = config.get("calibration") or {}
-    journey_ids = [
-        str(item.get("id"))
-        for item in calibration.get("journeys", [])
-        if str(item.get("id"))
-    ]
+    journey_ids = _resolve_calibration_journey_ids(config, list(args.journey))
     base_url = _resolve_guarded_base_url(
         config, args.base_url, allow_external=args.allow_external
     )
@@ -2028,7 +2363,7 @@ def _cmd_run_calibration(args: argparse.Namespace) -> int:
 
     server_process = None
     server_owned = False
-    _emit_live_test_start_notice(run_root, len(journey_ids))
+    _emit_live_test_start_notice(run_root, journey_ids)
     try:
         if (config.get("visualReview") or {}).get("enabled") is True:
             server_process, server_owned = _ensure_visual_review_server(
@@ -2039,18 +2374,21 @@ def _cmd_run_calibration(args: argparse.Namespace) -> int:
             base_url,
             str(run_root) if run_root is not None else None,
             args.trace,
+            journey_ids=journey_ids,
         )
     finally:
         if server_owned:
             _stop_visual_review_server(server_process)
         _emit_live_test_finish_notice()
 
+    _assert_executed_journey_identity(payload, journey_ids)
+
     document = {
         "tool": "runtime_a11y",
         "command": "run-calibration",
         "runAt": datetime.now(timezone.utc).isoformat(),
         "baseUrl": base_url,
-        "journeys": payload.get("journeys", journey_ids),
+        "journeys": journey_ids,
         "visualStates": calibration.get("visualStates") or [],
         "runRoot": _public_path(
             payload.get("runRoot") or (run_root if run_root is not None else None)
@@ -2059,6 +2397,8 @@ def _cmd_run_calibration(args: argparse.Namespace) -> int:
         "checkpoints": payload.get("checkpoints", []),
         "state": payload.get("state", {}),
     }
+    if payload.get("methodCells") is not None:
+        document["methodCells"] = payload["methodCells"]
     _write_output(document, out_path)
     return EXIT_SUCCESS
 
@@ -2081,11 +2421,17 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_run_calibration(args)
         if args.command == "run-at-plan":
             return _cmd_run_at_plan(args)
+        if args.command == "compose-evidence":
+            return _cmd_compose_evidence(args)
+        if args.command == "emit-validation-manifest":
+            return _cmd_emit_validation_manifest(args)
         config = load_validated_config(args.config, allow_external=args.allow_external)
         base_url = _resolve_guarded_base_url(
             config, args.base_url, allow_external=args.allow_external
         )
         probe_filter = getattr(args, "probe_id", None)
+        if probe_filter is not None:
+            probe_filter = _resolve_probe_filter(str(probe_filter))
         document = run(
             config,
             probe_filter,

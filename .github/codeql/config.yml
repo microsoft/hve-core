@@ -3,6 +3,8 @@
 name: HVE Core source analysis
 
 # Authored slide sources remain in scope. The workflow verifies generated HTML
-# against those sources before analysis; embedded third-party copies are excluded.
+# against those sources before analysis. Generated decks embed third-party
+# reveal.js and are analyzed separately with generated-slides.yml under the
+# /language:javascript-typescript/generated-slides category.
 paths-ignore:
   - 'docs/slides/*.html'

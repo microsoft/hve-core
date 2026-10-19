@@ -129,6 +129,127 @@ Describe 'Measure-CompareTrials' -Tag 'Unit' {
     }
 }
 
+Describe 'Measure-CompareTrials population statistics across comparison records' -Tag 'Unit' {
+    BeforeAll {
+        function New-ScoredRecord {
+            param(
+                [hashtable[]]$Stimulus,
+                [hashtable]$Summary = @{ meanScore = 0.9; ciLow = 0.8; ciHigh = 1.0; winRate = 1.0 }
+            )
+            $stimuli = foreach ($entry in $Stimulus) {
+                $index = 0
+                $trials = foreach ($score in @($entry.Scores)) {
+                    $trial = [ordered]@{ trialIndex = $index; errored = $false }
+                    if ($null -ne $score) {
+                        $trial.score = $score
+                        $trial.winner = if ($score -gt 0) { 'treatment' } elseif ($score -lt 0) { 'baseline' } else { 'tie' }
+                    }
+                    else {
+                        $trial.winner = 'tie'
+                    }
+                    $index++
+                    $trial
+                }
+                [ordered]@{ stimulusName = $entry.Name; trials = @($trials) }
+            }
+            return ([ordered]@{ type = 'comparison'; summary = $Summary; stimuli = @($stimuli) } | ConvertTo-Json -Depth 10 -Compress)
+        }
+    }
+
+    # Expected values come from vally-cli 0.17.0 `meanWithCi` over the same scores.
+    It 'Recomputes the mean, Student-t interval, and win rate over every shard trial' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = @(1, 1, 0) }))
+        )
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.SummaryCount | Should -Be 2
+        $result.MeanScore | Should -Be 0.3333
+        $result.CiLow | Should -Be -0.5237
+        $result.CiHigh | Should -Be 1.1903
+        $result.WinRate | Should -Be 0.5
+    }
+
+    It 'Uses the Cornish-Fisher critical value above twenty degrees of freedom' {
+        $scores = @(for ($index = 0; $index -lt 24; $index++) { @(-1, 0, 0.5, 1)[$index % 4] })
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = $scores[0..11] })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = $scores[12..23] }))
+        )
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.MeanScore | Should -Be 0.125
+        $result.CiLow | Should -Be -0.194
+        $result.CiHigh | Should -Be 0.444
+        $result.WinRate | Should -Be 0.5
+    }
+
+    It 'Counts every stimulus regardless of policy, as vally does' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'equivalent-stimulus'; Scores = @(0, -0.4, 0.4) })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'expected-divergence'; Scores = @(1, 1, 1) }))
+        )
+        $policies = @{ 'equivalent-stimulus' = 'equivalent'; 'expected-divergence' = 'documented-divergence' }
+        $result = Measure-CompareTrials -Lines $records -StimulusPolicy $policies
+
+        $result.MeanScore | Should -Be 0.5
+        $result.CiLow | Should -Be -0.1333
+        $result.CiHigh | Should -Be 1.1333
+        $result.WinRate | Should -Be 0.6667
+        $result.EquivalentMeanScore | Should -Be 0.0
+    }
+
+    It 'Excludes errored trials from the population' {
+        $erroredRecord = [ordered]@{
+            type    = 'comparison'
+            summary = [ordered]@{ meanScore = 0.9; ciLow = 0.8; ciHigh = 1.0; winRate = 1.0 }
+            stimuli = @([ordered]@{
+                    stimulusName = 'b'
+                    trials       = @(
+                        [ordered]@{ trialIndex = 0; winner = 'treatment'; score = 1; errored = $false },
+                        [ordered]@{ trialIndex = 1; winner = 'treatment'; score = 1; errored = $false },
+                        [ordered]@{ trialIndex = 2; winner = 'tie'; score = 0; errored = $false },
+                        [ordered]@{ trialIndex = 3; errored = $true }
+                    )
+                })
+        } | ConvertTo-Json -Depth 10 -Compress
+        $records = @((New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) })), $erroredRecord)
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.JudgeErrors | Should -Be 1
+        $result.MeanScore | Should -Be 0.3333
+        $result.CiLow | Should -Be -0.5237
+        $result.CiHigh | Should -Be 1.1903
+    }
+
+    It 'Falls back to the conservative combination rather than recomputing a scored subset' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) }) -Summary @{ meanScore = -0.1; ciLow = -0.4; ciHigh = 0.2; winRate = 0.4 }),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = @(1, $null) }) -Summary @{ meanScore = 0.1; ciLow = -0.1; ciHigh = 0.5; winRate = 0.6 })
+        )
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.MeanScore | Should -Be 0.0
+        $result.WinRate | Should -Be 0.5
+        $result.CiLow | Should -Be -0.1
+        $result.CiHigh | Should -Be 0.2
+    }
+
+    It 'Describes only the observed trials when a shard record is missing' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = @(1, 1, 0) }))
+        )
+        $result = Measure-CompareTrials -Lines $records -ExpectedStimulusName @('a', 'b', 'c') -ExpectedTrialCount 3
+
+        $result.MissingTrials | Should -Be 3
+        $result.MeanScore | Should -Be 0.3333
+        $result.CiLow | Should -Be -0.5237
+        $result.CiHigh | Should -Be 1.1903
+    }
+}
+
 Describe 'Measure-CompareTrials against captured Vally 0.10 output' -Tag 'Unit' {
     # Fixture provenance: captured from Vally CLI 0.10.0 by running two temporary
     # eval specs (benign arithmetic and geography prompts, executor copilot-sdk,
@@ -525,7 +646,7 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
             return [ordered]@{
                 type       = 'trial-result'
                 stimulus   = $Stimulus
-                model      = 'gpt-5.6-luna'
+                model      = 'gpt-6-luna'
                 trialIndex = $Trial
                 trajectory = [ordered]@{
                     events = @(
@@ -568,7 +689,7 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
         )
         $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1') -ExpectedTrials 2
 
-        $result.Model | Should -Be 'gpt-5.6-luna'
+        $result.Model | Should -Be 'gpt-6-luna'
         $result.Expected | Should -Be 2
         $result.Observed | Should -Be 2
         $result.HasCompleteEvidence | Should -BeTrue
@@ -577,7 +698,7 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
     It 'Falls back to the Vally itemId trial suffix when trialIndex is absent' {
         $record = New-InvocationRecord
         $record.Remove('trialIndex')
-        $record['itemId'] = 'spec::main::gpt-5.6-luna::stim-1::trial-0'
+        $record['itemId'] = 'spec::main::gpt-6-luna::stim-1::trial-0'
         $root = Write-InvocationRun -Records @($record)
         $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1')
 
@@ -1658,5 +1779,64 @@ Describe 'Measure-DivergenceGuardResults' -Tag 'Unit' {
         $r.Duplicate | Should -Be 0
         $r.Unexpected | Should -Be 0
         $r.MalformedRecords | Should -Be 0
+    }
+}
+
+Describe 'Grader lineage resolution' -Tag 'Unit' {
+    BeforeAll {
+        $script:LineageFixturePath = Join-Path $script:FixturesRoot 'vally-grader-lineage-history.jsonl'
+        $script:LineageMapPath = Join-Path $PSScriptRoot '../../../evals/migrations/vally-0.16-grader-name-aliases.json'
+        $script:LineageMap = Get-Content -Raw -LiteralPath $script:LineageMapPath | ConvertFrom-Json -Depth 100
+    }
+
+    It 'Resolves unchanged, ordinary-renamed, and hash-truncated historical details through the parser' {
+        $runDir = Join-Path $TestDrive ('lineage-' + [Guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+        Copy-Item -LiteralPath $script:LineageFixturePath -Destination (Join-Path $runDir 'results.jsonl')
+
+        $raw = [System.IO.File]::ReadAllText($script:LineageFixturePath)
+        $raw | Should -Not -Match 'configuredName|graderType'
+        $records = ConvertFrom-EquivalenceResults -RunDir $runDir -GraderLineageMapPath $script:LineageMapPath
+        $lineage = @($records | ForEach-Object { @($_.lineageDetails) })
+
+        $records.Count | Should -Be 3
+        $lineage | Should -HaveCount 3
+        $lineage[0].historicalConfiguredName | Should -Be 'accessibility-planner-class-recipe-tracking-file-write'
+        $lineage[0].currentConfiguredName | Should -Be 'accessibility-planner-class-recipe-tracking-file-write'
+        $lineage[1].historicalConfiguredName | Should -Be 'tracking-file-write'
+        $lineage[1].currentConfiguredName | Should -Be 'accessibility-planner-class-recipe-tracking-file-write'
+        $lineage[1].passed | Should -BeFalse
+        $lineage[1].score | Should -Be 0.5
+        $lineage[1].evidence | Should -Be 'Sanitized renamed evidence.'
+        $lineage[1].label | Should -Be 'incorrect'
+        $lineage[2].currentConfiguredName | Should -Be 'startup-disclaimer-and-framework-attribution-comple-2ac17d44'
+        $records[0].details.code | Should -HaveCount 1
+    }
+
+    It 'Rejects authentic old-shaped <Case> records' -ForEach @(
+        @{ Case = 'unknown-name'; Expected = '*Unknown grader lineage identity*' }
+        @{ Case = 'wrong-kind'; Expected = '*Unknown grader lineage identity*' }
+        @{ Case = 'mismatched-stimulus'; Expected = '*Historical stimulus mismatch*' }
+        @{ Case = 'ambiguous-name'; Expected = '*Ambiguous grader lineage identity*' }
+    ) {
+        $record = (Get-Content -LiteralPath $script:LineageFixturePath -First 1) | ConvertFrom-Json -Depth 100
+        $map = ($script:LineageMap | ConvertTo-Json -Depth 100) | ConvertFrom-Json -Depth 100
+
+        switch ($Case) {
+            'unknown-name' { $record.gradeResult.details[0].name = 'unknown-historical-name' }
+            'wrong-kind' { $record.gradeResult.details[0].kind = 'human' }
+            'mismatched-stimulus' { $record.gradeResult.stimulusName = 'different-stimulus' }
+            'ambiguous-name' {
+                $matching = $map.aliases | Where-Object {
+                    $_.evalName -eq $record.evalName -and
+                    $_.stimulus -eq $record.stimulus -and
+                    $_.newName -eq $record.gradeResult.details[0].name
+                } | Select-Object -First 1
+                $map.aliases = @($map.aliases) + @($matching)
+            }
+        }
+
+        { Resolve-GraderLineageDetails -Record $record -GraderLineageMap $map } |
+            Should -Throw -ExpectedMessage $Expected
     }
 }

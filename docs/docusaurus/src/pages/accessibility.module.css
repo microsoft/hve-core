@@ -19,6 +19,7 @@
 }
 
 .main {
+  width: 100%;
   max-width: 60rem;
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
@@ -60,4 +61,12 @@
 .section p,
 .section li {
   line-height: 1.7;
+}
+
+@media (max-width: 30rem) {
+  .section table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
 }

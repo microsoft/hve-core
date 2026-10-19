@@ -225,6 +225,18 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
         Split-Path -Path $Callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
     }
 
+    It 'Excludes the pinned signer from Dependabot updates' {
+        $Config = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot '.github/dependabot.yml') -Raw -Encoding utf8 |
+            ConvertFrom-Yaml
+        $ActionsUpdates = @($Config['updates'] | Where-Object { $_['package-ecosystem'] -eq 'github-actions' })
+        $ActionsUpdates | Should -HaveCount 1
+        $Ignored = @($ActionsUpdates[0]['ignore'] | Where-Object {
+                $_['dependency-name'] -ceq 'microsoft/hve-core/.github/workflows/extension-provenance-signer.yml'
+            })
+        $Ignored | Should -HaveCount 1
+        $Ignored[0].Keys | Should -Be @('dependency-name')
+    }
+
     It 'Limits the scanner acknowledgment to the read-only package job' {
         $Config = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot '.poutine.yml') -Raw -Encoding utf8 |
             ConvertFrom-Yaml

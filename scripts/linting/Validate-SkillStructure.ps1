@@ -9,6 +9,10 @@
 # .PARAMETER OutputPath
 # Output file path for validation results (default: logs/skill-validation-results.json)
 #
+# .PARAMETER SecurityClassificationPath
+# Repository-relative path to the skill security classification file that declares exempt skills
+# and pending security models (default: scripts/linting/skill-security-classification.json)
+#
 # .EXAMPLE
 # pwsh -File scripts/linting/Validate-SkillStructure.ps1 -OutputPath "custom-dir/custom-results.json"
 
@@ -29,7 +33,10 @@ param(
     [string]$BaseBranch = 'origin/main',
 
     [Parameter(Mandatory = $false)]
-    [string]$OutputPath = "logs/skill-validation-results.json"
+    [string]$OutputPath = "logs/skill-validation-results.json",
+
+    [Parameter(Mandatory = $false)]
+    [string]$SecurityClassificationPath = 'scripts/linting/skill-security-classification.json'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,6 +52,9 @@ $script:PythonEnvironmentDirs = @('.hypothesis', '.pytest_cache', '.ruff_cache',
 
 # Build artifact directories excluded from unrecognized-subdirectory warnings in any skill (always gitignored)
 $script:BuildArtifactDirs = @('node_modules')
+
+# Script extensions that count as shipped runtime when deciding whether a skill needs a security model
+$script:SkillScriptExtensions = @('.ps1', '.psm1', '.sh', '.py', '.js', '.mjs', '.cjs', '.ts')
 
 function Get-SkillFrontmatter {
     <#
@@ -278,6 +288,272 @@ function Test-SecurityModelStructure {
     return [string[]]$errors.ToArray()
 }
 
+function Get-SkillScriptFile {
+    <#
+    .SYNOPSIS
+    Lists the shipped, non-test script files in a skill directory.
+
+    .DESCRIPTION
+    Returns files with a script extension anywhere in the skill, excluding files
+    under a tests/ directory, *.test.* and *.spec.* files, and installed
+    dependency or environment trees. These are the files the skill security
+    model rule evaluates.
+
+    .PARAMETER Directory
+    DirectoryInfo object for the skill directory.
+
+    .OUTPUTS
+    [System.IO.FileInfo[]] Shipped non-test script files.
+
+    .EXAMPLE
+    $scripts = Get-SkillScriptFile -Directory (Get-Item '.github/skills/rpi/rpi-plan')
+    #>
+    [CmdletBinding()]
+    [OutputType([System.IO.FileInfo[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.DirectoryInfo]$Directory
+    )
+
+    $files = Get-ChildItem -LiteralPath $Directory.FullName -File -Recurse -Force -ErrorAction SilentlyContinue |
+        Where-Object {
+            $relative = [System.IO.Path]::GetRelativePath($Directory.FullName, $_.FullName) -replace '\\', '/'
+            $_.Extension -in $script:SkillScriptExtensions -and
+            $relative -notmatch '(^|/)tests/' -and
+            $_.Name -notmatch '\.(test|spec)\.' -and
+            $relative -notmatch '(^|/)(node_modules|\.venv|__pycache__)/'
+        }
+    return [System.IO.FileInfo[]]@($files)
+}
+
+function Get-SkillSecurityClassification {
+    <#
+    .SYNOPSIS
+    Loads and validates the skill security classification file.
+
+    .DESCRIPTION
+    Requires strictly valid JSON with schemaVersion 1 and a skills object whose
+    entries are either exempt with a non-empty reason or pending with a positive
+    integer issue number. Returns the valid entries keyed by skill path relative
+    to the skills root, plus every file-level error.
+
+    .PARAMETER Path
+    Absolute path to the classification file.
+
+    .OUTPUTS
+    [PSCustomObject] With Skills (hashtable) and Errors (string[]).
+
+    .EXAMPLE
+    $classification = Get-SkillSecurityClassification -Path '/repo/scripts/linting/skill-security-classification.json'
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $skills = @{}
+    $fileName = Split-Path -Leaf $Path
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        $errors.Add("Skill security classification file not found at '$Path'")
+        return [PSCustomObject]@{ Skills = $skills; Errors = [string[]]$errors.ToArray() }
+    }
+
+    $text = Get-Content -LiteralPath $Path -Raw -Encoding utf8
+    # System.Text.Json rejects comments, trailing commas, and other input that ConvertFrom-Json tolerates.
+    try {
+        $document = [System.Text.Json.JsonDocument]::Parse($text)
+        $document.Dispose()
+    }
+    catch {
+        $errors.Add("$fileName is not strictly valid JSON: $($_.Exception.Message)")
+        return [PSCustomObject]@{ Skills = $skills; Errors = [string[]]$errors.ToArray() }
+    }
+
+    $data = $text | ConvertFrom-Json -AsHashtable
+    if ($data -isnot [System.Collections.IDictionary]) {
+        $errors.Add("$fileName must contain a JSON object")
+        return [PSCustomObject]@{ Skills = $skills; Errors = [string[]]$errors.ToArray() }
+    }
+
+    $schemaVersion = $data['schemaVersion']
+    if (-not (($schemaVersion -is [int] -or $schemaVersion -is [long]) -and $schemaVersion -eq 1)) {
+        $errors.Add("$fileName schemaVersion must be the integer 1")
+    }
+
+    if ($data['skills'] -isnot [System.Collections.IDictionary]) {
+        $errors.Add("$fileName must contain a 'skills' object")
+        return [PSCustomObject]@{ Skills = $skills; Errors = [string[]]$errors.ToArray() }
+    }
+
+    foreach ($key in $data['skills'].Keys) {
+        $entry = $data['skills'][$key]
+        if ($entry -isnot [System.Collections.IDictionary]) {
+            $errors.Add("$fileName entry '$key' must be an object")
+            continue
+        }
+        $status = $entry['status']
+        if ($status -eq 'exempt') {
+            if ($entry['reason'] -isnot [string] -or [string]::IsNullOrWhiteSpace($entry['reason'])) {
+                $errors.Add("$fileName entry '$key' is exempt but has no reason")
+                continue
+            }
+        }
+        elseif ($status -eq 'pending') {
+            $issue = $entry['issue']
+            if (-not (($issue -is [int] -or $issue -is [long]) -and $issue -gt 0)) {
+                $errors.Add("$fileName entry '$key' is pending but has no positive integer issue number")
+                continue
+            }
+        }
+        else {
+            $errors.Add("$fileName entry '$key' has status '$status'; expected 'exempt' or 'pending'")
+            continue
+        }
+        $skills[[string]$key] = $entry
+    }
+
+    return [PSCustomObject]@{ Skills = $skills; Errors = [string[]]$errors.ToArray() }
+}
+
+function Test-SkillSecurityClassification {
+    <#
+    .SYNOPSIS
+    Checks one skill against the skill security classification.
+
+    .DESCRIPTION
+    A skill that ships non-test scripts must have a SECURITY.md or a
+    classification entry. A skill that has a SECURITY.md must not also carry an
+    entry, so the classification cannot go stale after a model is added.
+
+    .PARAMETER Directory
+    DirectoryInfo object for the skill directory.
+
+    .PARAMETER SkillKey
+    Skill path relative to the skills root, using forward slashes.
+
+    .PARAMETER Classification
+    Valid classification entries keyed by skill path.
+
+    .PARAMETER RelativePath
+    Repository-relative path to the skill directory, used in messages.
+
+    .OUTPUTS
+    [string[]] Classification errors (empty when the skill conforms).
+
+    .EXAMPLE
+    $errs = Test-SkillSecurityClassification -Directory $dir -SkillKey 'rpi/rpi-plan' -Classification $entries -RelativePath '.github/skills/rpi/rpi-plan'
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.DirectoryInfo]$Directory,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SkillKey,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [hashtable]$Classification,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $hasModel = Test-Path -LiteralPath (Join-Path $Directory.FullName 'SECURITY.md') -PathType Leaf
+    $hasEntry = $Classification.ContainsKey($SkillKey)
+
+    if ($hasModel -and $hasEntry) {
+        $errors.Add("'$RelativePath' has a SECURITY.md but is still listed as '$($Classification[$SkillKey]['status'])' in the skill security classification; remove the entry")
+    }
+    elseif (-not $hasModel -and -not $hasEntry -and @(Get-SkillScriptFile -Directory $Directory).Count -gt 0) {
+        $errors.Add("'$RelativePath' ships scripts but has neither a SECURITY.md nor a skill security classification entry; classify it under the skill security model conventions")
+    }
+
+    return [string[]]$errors.ToArray()
+}
+
+function Get-SkillClassificationCoverageError {
+    <#
+    .SYNOPSIS
+    Checks skill security classification coverage across every skill directory.
+
+    .DESCRIPTION
+    Runs Test-SkillSecurityClassification for each skill directory under the
+    skills root, skipping directories that were already validated in this run
+    and installed dependency or virtual-environment trees. Changed-files-only
+    validation uses this so a classification change cannot pass by leaving
+    unchanged skills unchecked.
+
+    .PARAMETER SkillsRoot
+    Absolute path to the skills root directory.
+
+    .PARAMETER Classification
+    Valid classification entries keyed by skill path.
+
+    .PARAMETER RepoRoot
+    Repository root used to build repository-relative paths in messages.
+
+    .PARAMETER ExcludeDirectory
+    Full paths of skill directories already validated in this run.
+
+    .OUTPUTS
+    [string[]] Classification coverage errors (empty when every skill conforms).
+
+    .EXAMPLE
+    $errs = Get-SkillClassificationCoverageError -SkillsRoot '/repo/.github/skills' -Classification $entries -RepoRoot '/repo'
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SkillsRoot,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [hashtable]$Classification,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$ExcludeDirectory = @()
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    if (-not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) {
+        return [string[]]$errors.ToArray()
+    }
+
+    $skillFiles = Get-ChildItem -LiteralPath $SkillsRoot -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
+    foreach ($skillFile in $skillFiles) {
+        $directory = $skillFile.Directory
+        if ($directory.FullName -in $ExcludeDirectory) {
+            continue
+        }
+        $skillKey = [System.IO.Path]::GetRelativePath($SkillsRoot, $directory.FullName) -replace '\\', '/'
+        $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $directory.FullName) -replace '\\', '/'
+        foreach ($err in (Test-SkillSecurityClassification -Directory $directory -SkillKey $skillKey `
+                    -Classification $Classification -RelativePath $relativePath)) {
+            $errors.Add($err)
+        }
+    }
+
+    return [string[]]$errors.ToArray()
+}
+
 function Test-NodeSkillConfig {
     <#
     .SYNOPSIS
@@ -362,6 +638,14 @@ function Test-SkillDirectory {
     .PARAMETER RepoRoot
     Repository root path for computing relative paths.
 
+    .PARAMETER SecurityClassification
+    Optional valid skill security classification entries keyed by skill path.
+    When supplied, the skill is checked against the classification.
+
+    .PARAMETER SkillsRoot
+    Absolute skills root used to derive the classification key. Required when
+    SecurityClassification is supplied.
+
     .OUTPUTS
     [PSCustomObject] Validation result with SkillName, SkillPath, IsValid, Errors, and Warnings.
 
@@ -377,7 +661,14 @@ function Test-SkillDirectory {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [hashtable]$SecurityClassification,
+
+        [Parameter(Mandatory = $false)]
+        [string]$SkillsRoot
     )
 
     $errors = [System.Collections.Generic.List[string]]::new()
@@ -481,6 +772,14 @@ function Test-SkillDirectory {
     if (Test-Path $securityMdPath -PathType Leaf) {
         $secErrors = Test-SecurityModelStructure -Path $securityMdPath -RelativePath $relativePath
         foreach ($err in $secErrors) { $errors.Add($err) }
+    }
+
+    # Require a model or a classification entry for skills that ship scripts
+    if ($null -ne $SecurityClassification -and -not [string]::IsNullOrEmpty($SkillsRoot)) {
+        $skillKey = [System.IO.Path]::GetRelativePath($SkillsRoot, $Directory.FullName) -replace '\\', '/'
+        $classificationErrors = Test-SkillSecurityClassification -Directory $Directory -SkillKey $skillKey `
+            -Classification $SecurityClassification -RelativePath $relativePath
+        foreach ($err in $classificationErrors) { $errors.Add($err) }
     }
 
     # Validate Node unit-test presence for skills that ship .mjs modules
@@ -631,8 +930,8 @@ function Write-SkillValidationResults {
         foreach ($err in $result.Errors) {
             Write-Host "     ERROR: $err" -ForegroundColor Red
             if ($isCI) {
-                $skillMdRelative = "$($result.SkillPath)/SKILL.md"
-                Write-CIAnnotation -Message $err -Level Error -File $skillMdRelative
+                $annotationFile = if ($result.SkillPath -like '*.json') { $result.SkillPath } else { "$($result.SkillPath)/SKILL.md" }
+                Write-CIAnnotation -Message $err -Level Error -File $annotationFile
             }
         }
         foreach ($warn in $result.Warnings) {
@@ -707,6 +1006,14 @@ function Invoke-SkillStructureValidation {
     .PARAMETER OutputPath
     Output file path for validation results (default: logs/skill-validation-results.json)
 
+    .PARAMETER SecurityClassificationPath
+    Optional repository-relative path to the skill security classification file.
+    When supplied, the file must exist and be valid, every entry must name an
+    existing skill, and every skill that ships scripts must have a SECURITY.md
+    or an entry. File-level errors and skill coverage are checked across the
+    whole skills tree in both full and changed-files-only modes, so a
+    classification change cannot pass by leaving unchanged skills unchecked.
+
     .OUTPUTS
     [int] Exit code: 0 for success, 1 for failure.
 
@@ -729,7 +1036,10 @@ function Invoke-SkillStructureValidation {
         [string]$BaseBranch = 'origin/main',
 
         [Parameter(Mandatory = $false)]
-        [string]$OutputPath = "logs/skill-validation-results.json"
+        [string]$OutputPath = "logs/skill-validation-results.json",
+
+        [Parameter(Mandatory = $false)]
+        [string]$SecurityClassificationPath = ''
     )
 
     try {
@@ -741,18 +1051,38 @@ function Invoke-SkillStructureValidation {
 
         $fullSkillsPath = Join-Path -Path $repoRoot -ChildPath $SkillsPath
 
-        if ($ChangedFilesOnly) {
-            Write-Host "🔍 Detecting changed skill directories..." -ForegroundColor Cyan
-            $changedSkills = Get-ChangedSkillDirectories -BaseBranch $BaseBranch -SkillsPath $SkillsPath
-
-            if (@($changedSkills).Count -eq 0) {
-                Write-Host "✅ No changed skill directories found - validation complete" -ForegroundColor Green
-                return 0
+        # Load the security classification first so file-level errors surface even when no skill changed
+        $classificationEntries = $null
+        $classificationErrors = [System.Collections.Generic.List[string]]::new()
+        $classificationRelativePath = $null
+        if (-not [string]::IsNullOrWhiteSpace($SecurityClassificationPath)) {
+            $classificationFullPath = if ([System.IO.Path]::IsPathRooted($SecurityClassificationPath)) {
+                $SecurityClassificationPath
+            }
+            else {
+                Join-Path -Path $repoRoot -ChildPath $SecurityClassificationPath
+            }
+            $classificationRelativePath = [System.IO.Path]::GetRelativePath($repoRoot, $classificationFullPath) -replace '\\', '/'
+            $classification = Get-SkillSecurityClassification -Path $classificationFullPath
+            foreach ($err in $classification.Errors) { $classificationErrors.Add($err) }
+            foreach ($key in $classification.Skills.Keys) {
+                if (-not (Test-Path -LiteralPath (Join-Path (Join-Path $fullSkillsPath $key) 'SKILL.md') -PathType Leaf)) {
+                    $classificationErrors.Add("Skill security classification lists '$key', which is not a skill directory under '$SkillsPath'")
+                }
+            }
+            if (Test-Path -LiteralPath $classificationFullPath -PathType Leaf) {
+                $classificationEntries = $classification.Skills
             }
         }
+        $resolvedSkillsRoot = [System.IO.Path]::GetFullPath($fullSkillsPath)
 
         if ($ChangedFilesOnly) {
-            Write-Host "Found $($changedSkills.Count) changed skill path(s) to validate" -ForegroundColor Cyan
+            Write-Host "🔍 Detecting changed skill directories..." -ForegroundColor Cyan
+            $changedSkills = @(Get-ChangedSkillDirectories -BaseBranch $BaseBranch -SkillsPath $SkillsPath)
+
+            if ($changedSkills.Count -gt 0) {
+                Write-Host "Found $($changedSkills.Count) changed skill path(s) to validate" -ForegroundColor Cyan
+            }
 
             $results = @()
             $validatedDirs = @{}
@@ -782,13 +1112,26 @@ function Invoke-SkillStructureValidation {
                     $dirKey = $skillMdFile.Directory.FullName
                     if (-not $validatedDirs.ContainsKey($dirKey)) {
                         $validatedDirs[$dirKey] = $true
-                        $results += Test-SkillDirectory -Directory $skillMdFile.Directory -RepoRoot $repoRoot
+                        $results += Test-SkillDirectory -Directory $skillMdFile.Directory -RepoRoot $repoRoot `
+                            -SecurityClassification $classificationEntries -SkillsRoot $resolvedSkillsRoot
                     }
                 }
             }
 
-            if ($results.Count -eq 0) {
-                Write-Host "✅ No skill directories to validate after filtering - success" -ForegroundColor Green
+            # Changed collections may not include every classified skill, so check coverage for the rest
+            if ($null -ne $classificationEntries) {
+                $coverageErrors = Get-SkillClassificationCoverageError -SkillsRoot $resolvedSkillsRoot `
+                    -Classification $classificationEntries -RepoRoot $repoRoot -ExcludeDirectory @($validatedDirs.Keys)
+                foreach ($err in $coverageErrors) { $classificationErrors.Add($err) }
+            }
+
+            if ($results.Count -eq 0 -and $classificationErrors.Count -eq 0) {
+                if ($changedSkills.Count -eq 0) {
+                    Write-Host "✅ No changed skill directories found - validation complete" -ForegroundColor Green
+                }
+                else {
+                    Write-Host "✅ No skill directories to validate after filtering - success" -ForegroundColor Green
+                }
                 return 0
             }
         }
@@ -809,8 +1152,20 @@ function Invoke-SkillStructureValidation {
 
             $results = @()
             foreach ($skillFile in $skillFiles) {
-                $results += Test-SkillDirectory -Directory $skillFile.Directory -RepoRoot $repoRoot
+                $results += Test-SkillDirectory -Directory $skillFile.Directory -RepoRoot $repoRoot `
+                    -SecurityClassification $classificationEntries -SkillsRoot $resolvedSkillsRoot
             }
+        }
+
+        if ($classificationErrors.Count -gt 0) {
+            $classificationResult = [PSCustomObject]@{
+                SkillName = 'skill-security-classification'
+                SkillPath = $classificationRelativePath
+                IsValid   = $false
+                Errors    = [string[]]$classificationErrors.ToArray()
+                Warnings  = [string[]]@()
+            }
+            $results = @($classificationResult) + @($results)
         }
 
         Write-SkillValidationResults -Results $results -RepoRoot $repoRoot -OutputPath $OutputPath
@@ -844,7 +1199,8 @@ if ($MyInvocation.InvocationName -ne '.') {
         -WarningsAsErrors:$WarningsAsErrors `
         -ChangedFilesOnly:$ChangedFilesOnly `
         -BaseBranch $BaseBranch `
-        -OutputPath $OutputPath
+        -OutputPath $OutputPath `
+        -SecurityClassificationPath $SecurityClassificationPath
     exit $exitCode
 }
 #endregion Main Execution

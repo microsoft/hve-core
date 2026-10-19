@@ -38,6 +38,48 @@ test('every walkthrough can advance, reverse, clamp and reset without affecting 
   assert.equal(moveStep(3, 'next', demos.builder.steps.length), 4);
 });
 
+test('walkthrough step announcements coalesce after focus settles', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // A step announcement written in the same task as the focus move is superseded
+  // before it is spoken, and a superseded step must not announce at all.
+  assert.match(source, /if \(pendingAnnouncement\) clearTimeout\(pendingAnnouncement\)/);
+  assert.match(source, /if \(states\.get\(name\) !== index\) return/);
+  assert.doesNotMatch(source, /if \(speak\) announce\(/);
+});
+
+test('fullscreen state and forced-colors behavior remain explicit', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(html, /id="fullscreen-button" aria-pressed="false"/);
+  assert.match(source, /addEventListener\('fullscreenchange'/);
+  assert.match(source, /setAttribute\('aria-pressed', String\(active\)\)/);
+  assert.match(source, /fullscreenInitiator \|\| fullscreenButton/);
+  assert.match(theme, /@media \(forced-colors: active\)/);
+  assert.match(theme, /ButtonFace/);
+  assert.match(theme, /Highlight/);
+});
+
+test('arrow and Page keys page from focused controls but not from text entry or a slide selection', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Paging is decided before the focused-control guard, so a clicked presenter button does not end keyboard paging.
+  const selectionGuard = source.indexOf('if (globalThis.getSelection()?.toString() && !onButtonOrLink) return;');
+  const textEntryGuard = source.search(/if \(target\?\.closest\('input, textarea, select, \[contenteditable[^'\]]*\]'\)\) return;/);
+  const paging = source.indexOf('if (Object.hasOwn(pagingKeys, key))');
+  const controlGuard = source.indexOf("if (target?.closest('button, a, summary')) return;");
+  assert.ok(selectionGuard > -1 && textEntryGuard > selectionGuard && paging > textEntryGuard && controlGuard > paging);
+  assert.match(source, /const pagingKeys = \{ arrowright: 1, pagedown: 1, arrowleft: -1, pageup: -1 \}/);
+  // Only a focused button or link overrides a text selection; other shortcuts also wait on a summary.
+  assert.match(source, /const onButtonOrLink = Boolean\(target\?\.closest\('button, a'\)\);/);
+  assert.match(source, /if \(!ready \|\| dialog\.open \|\| event\.defaultPrevented/);
+});
+
+test('presenter bar ends stay clear of viewer overlays', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /--presenter-inset: clamp\(96px, 8vw, 128px\);/);
+  assert.match(theme, /#presenter-controls \{[^}]*padding: \S+ var\(--presenter-inset\);/);
+  assert.match(theme, /\[data-reading-view="true"\] body \{[^}]*padding-bottom: var\(--presenter-inset\);/);
+});
+
 test('invalid state and unknown actions are surfaced', () => {
   for (const args of [[-1, 'next', 4], [0, 'next', 0], [4, 'next', 4], [0.5, 'next', 4]]) {
     assert.throws(() => moveStep(...args), RangeError);
@@ -103,6 +145,13 @@ test('diagram source and preview share valid declared nodes and edges', () => {
   for (const [from, to] of graphs.plan.edges) assert.ok(source.includes(`${from} --> ${to}`));
   assert.ok(graphs.research.nodes.some(node => node.kind === 'tool'));
   assert.ok(graphs.research.nodes.some(node => node.kind === 'subagent'));
+});
+
+test('custom diagrams expose a named graphics-document role with image fallback', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'components.js'), 'utf8');
+  assert.match(source, /role: 'graphics-document img'/);
+  assert.match(source, /'aria-labelledby': titleId/);
+  assert.match(source, /svg\.append\(svgElement\('title', \{ id: titleId \}, graph\.title\)\)/);
 });
 
 test('implementation includes completion evidence and accurate diff counts', () => {
@@ -214,15 +263,17 @@ test('critique and review distinguish missing plan evidence from observed defect
   assert.match(review, /Primary assistant's decision/);
 });
 
-test('built bundle is complete and has no remote runtime assets', () => {
-  const built = fs.readFileSync(path.join(__dirname, 'dist/index.html'), 'utf8');
+test('built bundle is complete and has no remote runtime assets', async () => {
+  const { buildDeck } = await import('./build.mjs');
+  const dist = await buildDeck();
+  const built = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
   for (const match of built.matchAll(/<(?:link|script)\b[^>]*(?:src|href)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(match[1]), match[1]);
-    assert.ok(fs.existsSync(path.join(__dirname, 'dist', match[1])), match[1]);
+    assert.ok(fs.existsSync(path.join(dist, match[1])), match[1]);
   }
-  assert.ok(fs.existsSync(path.join(__dirname, 'dist/vendor/reveal-LICENSE.txt')));
+  assert.ok(fs.existsSync(path.join(dist, 'vendor/reveal-LICENSE.txt')));
   for (const name of ['index.html', 'theme.css', 'components.css', 'content.js', 'components.js', 'deck.js']) {
-    assert.equal(fs.readFileSync(path.join(__dirname, name), 'utf8'), fs.readFileSync(path.join(__dirname, 'dist', name), 'utf8'));
+    assert.equal(fs.readFileSync(path.join(__dirname, name), 'utf8'), fs.readFileSync(path.join(dist, name), 'utf8'));
   }
 });
 
@@ -266,7 +317,7 @@ test('standalone renderer rejects nonembedded resources and paths outside the de
 });
 
 test('standalone output contains the full current deck, vendor code and license', async () => {
-  const { bundleDeck, createStandaloneHtml } = await standaloneModule;
+  const { bundleDeck, createStandaloneHtml, neutralizeRevealSinks, readRevealVersion } = await standaloneModule;
   const destination = await bundleDeck();
   assert.equal(destination, path.join(__dirname, '../../docs/slides/hve-updates.html'));
   const bundled = fs.readFileSync(destination, 'utf8');
@@ -275,9 +326,11 @@ test('standalone output contains the full current deck, vendor code and license'
   const assets = new Map([...styles, ...scripts].map(name => [name, fs.readFileSync(path.join(__dirname, 'dist', name), 'utf8')]));
   const license = fs.readFileSync(path.join(__dirname, 'dist/vendor/reveal-LICENSE.txt'), 'utf8');
   const metadata = JSON.parse(fs.readFileSync(path.join(__dirname, 'deck.json'), 'utf8'));
-  assert.equal(bundled, createStandaloneHtml(html, assets, license, metadata));
+  const revealVersion = await readRevealVersion(__dirname);
+  assert.equal(bundled, createStandaloneHtml(html, assets, license, metadata, { revealVersion }));
   const catalog = bundled.match(/<script type="application\/json" id="hve-slide-metadata">([\s\S]*?)<\/script>/)[1];
   assert.deepEqual(JSON.parse(catalog), { title: metadata.title, description: metadata.description });
+  assets.set('vendor/reveal.js', neutralizeRevealSinks(assets.get('vendor/reveal.js'), revealVersion));
   for (const name of [...styles, ...scripts]) assert.ok(bundled.includes(assets.get(name)), name);
   assert.equal((bundled.match(/<section\b/g) || []).length, 26);
   assert.equal((bundled.match(/<style data-bundled-source=/g) || []).length, 3);

@@ -9,6 +9,7 @@ BeforeAll {
     $script:StubPath = Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1'
 
     Import-Module $script:ModulePath -Force
+    Import-Module (Join-Path $PSScriptRoot '../../evals/Modules/EvalChangeSet.psm1') -Force
     if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
         throw "Tests require the 'powershell-yaml' module to be installed."
     }
@@ -180,14 +181,14 @@ stimuli:
     }
 }
 
-Describe 'Get-ChangedSpecStimulusArtifact (git integration)' -Tag 'Integration' {
+Describe 'Get-ChangedSpecStimulusArtifact (local Git)' -Tag 'Unit' {
     BeforeEach {
         $script:Repo = Join-Path $TestDrive ('repo-' + [Guid]::NewGuid())
         New-Item -ItemType Directory -Path $script:Repo -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:Repo 'evals/behavior-conformance') -Force | Out-Null
 
         Push-Location $script:Repo
-        git init --quiet 2>&1 | Out-Null
+        git init --quiet --initial-branch=main 2>&1 | Out-Null
         git config user.email 'test@example.com' 2>&1 | Out-Null
         git config user.name 'Test' 2>&1 | Out-Null
         git config commit.gpgsign false 2>&1 | Out-Null
@@ -196,6 +197,7 @@ Describe 'Get-ChangedSpecStimulusArtifact (git integration)' -Tag 'Integration' 
 
     AfterEach {
         if (Test-Path -LiteralPath $script:Repo) {
+            Get-ChildItem -LiteralPath $script:Repo -Recurse -Force -File | ForEach-Object { $_.IsReadOnly = $false }
             Remove-Item -LiteralPath $script:Repo -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
@@ -213,7 +215,6 @@ Describe 'Get-ChangedSpecStimulusArtifact (git integration)' -Tag 'Integration' 
             git commit -m 'base' --quiet 2>&1 | Out-Null
             $baseSha = (git rev-parse HEAD).Trim()
 
-            # Head: add a new stimulus and commit it (PR head is always committed).
             $head = New-StimulusSpec -Stimuli @(
                 (New-PromptStimulus -Name 'prompt-existing-conformance' -Slug 'existing'),
                 (New-PromptStimulus -Name 'prompt-vex-scan-conformance' -Slug 'vex-scan')
@@ -222,7 +223,10 @@ Describe 'Get-ChangedSpecStimulusArtifact (git integration)' -Tag 'Integration' 
             git add -A 2>&1 | Out-Null
             git commit -m 'add stimulus' --quiet 2>&1 | Out-Null
 
-            $artifacts = Get-ChangedSpecStimulusArtifact -BaseRef $baseSha -HeadRef 'HEAD' -RepoRoot $script:Repo -EvalRoot 'evals'
+            $changeSetPath = Join-Path $TestDrive 'selection.json'
+            New-EvalChangeSet -BaseRef $baseSha -HeadRef 'HEAD' -RepoRoot $script:Repo |
+                ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
+            $artifacts = Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo -EvalRoot 'evals'
         }
         finally {
             Pop-Location
@@ -248,19 +252,137 @@ Describe 'Get-ChangedSpecStimulusArtifact (git integration)' -Tag 'Integration' 
             git commit -m 'base' --quiet 2>&1 | Out-Null
             $baseSha = (git rev-parse HEAD).Trim()
 
-            # Head: change only the top-level description, not any stimulus.
             $head = $base -replace 'type: capability', "type: capability`ndescription: tweaked"
             Set-Content -LiteralPath $specAbs -Value $head -Encoding utf8
             git add -A 2>&1 | Out-Null
             git commit -m 'tweak description' --quiet 2>&1 | Out-Null
 
-            $artifacts = Get-ChangedSpecStimulusArtifact -BaseRef $baseSha -HeadRef 'HEAD' -RepoRoot $script:Repo -EvalRoot 'evals'
+            $changeSetPath = Join-Path $TestDrive 'selection.json'
+            New-EvalChangeSet -BaseRef $baseSha -HeadRef 'HEAD' -RepoRoot $script:Repo |
+                ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
+            $artifacts = Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo -EvalRoot 'evals'
         }
         finally {
             Pop-Location
         }
 
         @($artifacts).Count | Should -Be 0
+    }
+
+    It 'uses the merge-base and PR content when both tips modify the same spec' {
+        $spec = 'evals/behavior-conformance/prompts.eval.yaml'
+        $path = Join-Path $script:Repo $spec
+        $baseYaml = New-StimulusSpec -Stimuli @((New-PromptStimulus -Name 's' -Slug 'prompt' -Pattern 'old'))
+        $newYaml = New-StimulusSpec -Stimuli @((New-PromptStimulus -Name 's' -Slug 'prompt' -Pattern 'new'))
+        $git = @{ RepoRoot = $script:Repo }
+        Set-Content $path $baseYaml
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'base')
+        $baseSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+        $null = Invoke-EvalGit @git -Arguments @('checkout', '-b', 'pr')
+        Set-Content $path $newYaml
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'PR spec')
+        $headSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+        $null = Invoke-EvalGit @git -Arguments @('checkout', 'main')
+        Set-Content $path $newYaml
+        Set-Content (Join-Path $script:Repo 'main.md') 'main advancement'
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'main spec')
+        $mainSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+        $null = Invoke-EvalGit @git -Arguments @('merge', '--no-ff', '--no-edit', 'pr')
+        # A working-tree read would miss the changed stimulus, while a base-tip read
+        # would compare identical tips rather than the original baseline.
+        Set-Content $path $baseYaml
+        $changeSetPath = Join-Path $TestDrive 'selection.json'
+        $set = New-EvalChangeSet -BaseRef $mainSha -HeadRef $headSha -RepoRoot $script:Repo
+        $set.comparisonBase | Should -Be $baseSha
+        $set | ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
+        $artifacts = Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo
+        $artifacts | Should -HaveCount 1
+        $artifacts[0].stimulusName | Should -Be 's'
+    }
+
+    It 'returns no derived manifests for a docs PR merged with advanced-main AI and spec changes' {
+        $git = @{ RepoRoot = $script:Repo }
+        Set-Content (Join-Path $script:Repo 'CONTRIBUTING.md') 'base'
+        Set-Content (Join-Path $script:Repo 'TRANSPARENCY-NOTE.md') 'base'
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'base')
+        $baseSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+        $null = Invoke-EvalGit @git -Arguments @('checkout', '-b', 'pr')
+        Set-Content (Join-Path $script:Repo 'CONTRIBUTING.md') 'PR'
+        Set-Content (Join-Path $script:Repo 'TRANSPARENCY-NOTE.md') 'PR'
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'docs')
+        $headSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+        $null = Invoke-EvalGit @git -Arguments @('checkout', 'main')
+        $agentDir = Join-Path $script:Repo '.github/agents/core'
+        $null = New-Item -ItemType Directory -Path $agentDir -Force
+        Set-Content (Join-Path $agentDir 'upstream.agent.md') 'upstream'
+        Set-Content (Join-Path $script:Repo 'evals/behavior-conformance/new.yaml') (New-StimulusSpec -Stimuli @((New-PromptStimulus -Name 's' -Slug 'upstream')))
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'main AI')
+        $null = Invoke-EvalGit @git -Arguments @('merge', '--no-ff', '--no-edit', 'pr')
+        $changeSetPath = Join-Path $TestDrive 'selection.json'
+        $set = New-EvalChangeSet -BaseRef $baseSha -HeadRef $headSha -RepoRoot $script:Repo
+        $set | ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
+        Test-EvalChangeSetRelevance -ChangeSet $set -RepoRoot $script:Repo | Should -BeFalse
+        . (Join-Path $PSScriptRoot '../../evals/Get-ChangedAIArtifact.ps1') -ChangeSetPath $changeSetPath
+        $ai = Invoke-ChangedArtifactScan -ChangeSetPath $changeSetPath -RepoRoot $script:Repo
+        $ai.artifacts | Should -HaveCount 0
+        $ai.affectedAgents | Should -HaveCount 0
+        $derived = Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo
+        $derived | Should -HaveCount 0
+        $outputPath = Join-Path $TestDrive 'spec-manifest.json'
+        & pwsh -NoProfile -File $script:ResolverScript -RepoRoot $script:Repo -ChangeSetPath $changeSetPath -OutFile $outputPath
+        $LASTEXITCODE | Should -Be 0
+        $manifest = Get-Content $outputPath -Raw | ConvertFrom-Json
+        $manifest.artifacts | Should -HaveCount 0
+        $manifest.headRef | Should -Be $headSha
+    }
+
+    It 'handles committed spec <Operation> without hiding unexpected missing objects' -ForEach @(
+        @{ Operation = 'addition' }
+        @{ Operation = 'deletion' }
+        @{ Operation = 'rename' }
+        @{ Operation = 'copy' }
+    ) {
+        $git = @{ RepoRoot = $script:Repo }
+        $spec = 'evals/behavior-conformance/prompt.yaml'
+        $yaml = New-StimulusSpec -Stimuli @((New-PromptStimulus -Name 's' -Slug 'prompt'))
+        Set-Content (Join-Path $script:Repo 'README.md') 'seed'
+        if ($Operation -ne 'addition') { Set-Content (Join-Path $script:Repo $spec) $yaml }
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'base')
+        $baseSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+        switch ($Operation) {
+            'addition' { Set-Content (Join-Path $script:Repo $spec) $yaml }
+            'deletion' { Remove-Item -LiteralPath (Join-Path $script:Repo $spec) }
+            'rename' { $null = Invoke-EvalGit @git -Arguments @('mv', $spec, 'evals/behavior-conformance/renamed.yaml') }
+            'copy' { Copy-Item -LiteralPath (Join-Path $script:Repo $spec) -Destination (Join-Path $script:Repo 'evals/behavior-conformance/copied.yaml') }
+        }
+        $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+        $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'spec change')
+        $changeSetPath = Join-Path $TestDrive 'selection.json'
+        $set = New-EvalChangeSet -BaseRef $baseSha -HeadRef HEAD -RepoRoot $script:Repo
+        if ($Operation -eq 'copy') {
+            # The generator does not enable copy detection, so simulate a C record for the copied path.
+            $set.changes[0].status = 'C'
+            $set.changes[0].previousPath = $spec
+        }
+        $set | ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
+        $artifacts = Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo
+        $artifacts.Count | Should -Be $(if ($Operation -eq 'deletion') { 0 } else { 1 })
+        if ($Operation -eq 'addition') {
+            $set.changes[0].status = 'M'
+            $set | ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
+            { Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo } | Should -Throw '*git show*failed*'
+            $set.changes[0].status = 'A'
+            $set.headRef = 'a' * 40
+            $set | ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
+            { Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo } | Should -Throw '*git show*failed*'
+        }
     }
 }
 

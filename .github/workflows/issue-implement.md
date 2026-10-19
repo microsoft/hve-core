@@ -82,6 +82,21 @@ workflow is self-contained and does not import another agent protocol.
    a clear description of what changed and why. The PR title should start
    with the issue number.
 
+## Security Scanning Policy
+
+Follow the repository code-scanning alert lifecycle:
+<https://github.com/microsoft/hve-core/blob/main/docs/security/code-scanning-alert-lifecycle.md>.
+
+* Never dismiss Code Scanning, CodeQL, Scorecard, or dependency alerts.
+* Never add CodeQL configuration exclusions, query filters, inline suppressions,
+  or `__all__` exports to satisfy a query.
+* Never add allowlist entries, including `audit-ci.json` advisories or
+  allowed-advisory entries in `dependency-review.yml`.
+* Never add or extend an entry in `security/code-scanning-exceptions.yml`.
+* If no code or configuration fix exists, comment with the evidence, explain
+  that a human must decide whether a tracked exception is appropriate, and
+  stop without opening a pull request.
+
 ## Constraints
 
 * Do not modify files unrelated to the issue.

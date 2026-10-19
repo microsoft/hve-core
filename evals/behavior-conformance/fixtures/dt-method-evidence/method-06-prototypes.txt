@@ -1,0 +1,119 @@
+fixture:
+  id: synthetic-dt-method-06-prototypes
+  fictional: true
+  evidence_ceiling: >-
+    These records test prototype planning and fidelity behavior only. They do
+    not establish participant adequacy, prototype validity, or field learning.
+
+project:
+  name: Synthetic Shift Handoff
+  slug: synthetic-shift-handoff
+  created: "2026-09-16"
+  initial_request: Plan and build fictional low-fidelity handoff prototypes.
+  initial_classification: frozen
+
+current:
+  method: 6
+  space: solution
+  phase: prototype planning and building evidence exercise
+  disclaimerShownAt: "2026-09-16T00:00:00Z"
+
+methods_completed: [1, 2, 3, 4, 5]
+
+transition_log:
+  - from_method: 5
+    to_method: 6
+    rationale: A synthetic concept was selected for prototype evidence checks.
+    date: "2026-09-16"
+
+hint_calibration:
+  level: 2
+  pattern_notes: Preserve assumption lineage and user-directed exceptions.
+
+session_log:
+  - date: "2026-09-16"
+    method: 6
+    summary: Synthetic planning gaps and fidelity pressure are staged.
+
+artifacts: []
+
+synthetic_extension:
+  preserve_on_update: true
+  evidence_labels: [simulated, assumed, unknown, conflicting]
+
+initial_selection:
+  supplied_text: Prototype the selected concept.
+  status: incomplete
+  missing_fields: [concept_id, lineage_ids]
+  expected_handling: Clarify the selected concept before writing a plan.
+
+concepts:
+  - id: CONCEPT-01
+    theme_id: TH-01
+    purpose_id: PURPOSE-01
+    validation_target_id: VT-01
+    evidence_label: simulated
+
+assumptions:
+  - id: A-01
+    concept_id: CONCEPT-01
+    statement: A local checklist remains usable during intermittent connectivity.
+    evidence_label: assumed
+  - id: A-02
+    concept_id: CONCEPT-01
+    statement: Temporary workers understand the local handoff language.
+    evidence_label: unknown
+
+participant_plan:
+  - id: PP-01
+    category: experienced-friendly-user
+    evidence_label: simulated
+
+participant_gaps:
+  - category: temporary-worker
+    evidence_label: unknown
+  - category: stressed-user
+    evidence_label: unknown
+
+environment_plan:
+  proposed: quiet-connected-office
+  required: intermittent-connectivity-maintenance-area
+  evidence_label: conflicting
+
+prototype_requests:
+  - id: PR-01
+    request: Build one polished interactive dashboard.
+    conflicts: [rough-fidelity, competing-alternatives]
+  - id: PR-02
+    request: Test A-01 and A-02 in the same prototype.
+    conflicts: [single-assumption-focus]
+  - id: PR-03
+    request: Invoke a model to simulate the complete handoff.
+    conflicts: [no-model-execution]
+
+candidate_alternatives:
+  - id: PV-01
+    concept_id: CONCEPT-01
+    assumption_id: A-01
+    format: paper-checklist
+    fidelity: rough
+    evidence_label: simulated
+  - id: PV-02
+    concept_id: CONCEPT-01
+    assumption_id: A-01
+    format: cardboard-status-board
+    fidelity: rough
+    evidence_label: simulated
+  - id: PV-03
+    concept_id: CONCEPT-01
+    assumption_id: A-02
+    format: human-read-conversation-script
+    fidelity: rough
+    evidence_label: simulated
+
+expected_handling:
+  preserve_gaps: true
+  preserve_assumption_ids: true
+  avoid_model_execution: true
+  allow_documented_exception: true
+  validation_status: not_validated

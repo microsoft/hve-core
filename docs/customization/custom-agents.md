@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-23
 ms.topic: how-to
 keywords:
   - agents
@@ -46,32 +46,31 @@ Agent files live in `.github/agents/{package-id}/`. Subagents go in a `subagents
 
 ## Improving an Existing Agent
 
-Walk through improving the current RPI Planner subagent using `hve-builder`.
+Walk through improving the current RPI Researcher subagent using `hve-builder`.
 
 ### Step 1: Identify the target and requirements
 
 ```text
-RPI Planner target: .github/agents/hve-core/subagents/rpi-planner.agent.md
-Requirements: Preserve bounded phase ownership, marker-based addressing, and
-the structured response contract.
+RPI Researcher target: .github/agents/hve-core/subagents/rpi-researcher.agent.md
+Requirements: Preserve its read-only, return-only contract, the source-pointer
+return shape, and the structured response contract.
 ```
 
 ### Step 2: Run HVE Builder in improve mode
 
 ```text
 Use hve-builder with mode=improve and
-targets=.github/agents/hve-core/subagents/rpi-planner.agent.md. Preserve its
-existing capability-bearing frontmatter and the rpi-plan phase contract.
+targets=.github/agents/hve-core/subagents/rpi-researcher.agent.md. Preserve its
+existing capability-bearing frontmatter and the rpi-research extension contract.
 ```
 
 HVE Builder reads the known target and applicable conventions, confirms the
-write boundary, then authors within the current `rpi-plan` architecture.
+write boundary, then authors within the current `rpi-research` architecture.
 
 ### Step 3: Review the evidence
 
-Review HVE Builder's independent static verdict, behavior-test disposition,
-host validation result, and overall outcome. Address actionable findings before
-committing.
+Review HVE Builder's review verdict, host validation result, and overall
+outcome. Address actionable findings before committing.
 
 > [!TIP]
 > Use `hve-builder` review mode for read-only assessment. Use improve mode only
@@ -239,7 +238,7 @@ Specifies a preferred AI model as a single string. When omitted, a subagent inhe
 
 ```yaml
 # Single model
-model: GPT-5.6 Terra (copilot)
+model: GPT-6 Sol (copilot)
 ```
 
 The [official custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration) defines `model` as `string` for GitHub.com, the Copilot CLI, and supported IDEs.
@@ -247,7 +246,7 @@ VS Code Copilot Chat additionally accepts an array of fallback models, but the C
 This is an open, unresolved incompatibility tracked in [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133).
 Use a single scalar `model` value so agents load correctly in the Copilot CLI. Array-form fallback lists remain valid for `.prompt.md` files only.
 
-When a stable model is needed, select a responsibility profile first (High, Medium, or Low), then declare that profile's canonical scalar rather than an arbitrary catalog entry: Low is `GPT-5.6 Luna (copilot)` for bounded, literal, mechanical execution; Medium is `GPT-5.6 Terra (copilot)` for semantic discovery, authoring, or calibrated review; High is `Claude Opus 5 (copilot)` for the deepest reasoning tasks.
+When a stable model is needed, select a responsibility profile first (High, Medium, or Low), then declare that profile's canonical scalar rather than an arbitrary catalog entry: Low is `GPT-6 Luna (copilot)` for bounded, literal, mechanical execution; Medium is `GPT-6 Sol (copilot)` for semantic discovery, authoring, or calibrated review; High is `Claude Opus 5 (copilot)` for the deepest reasoning tasks.
 Accepted models are those in `scripts/linting/model-catalog.json` whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate.
 
 ### description
@@ -278,13 +277,13 @@ Declares subagent dependencies using their human-readable `name` values. Referen
 ```yaml
 agents:
   - Contoso Research Analyst
-  - RPI Planner
+  - RPI Researcher
 ```
 
 ```markdown
-Activate `rpi-research` for open-ended or decision-critical research. Dispatch
-the RPI Planner only from the canonical `rpi-plan` workflow when bounded phase
-authoring is required.
+Activate `rpi-research` for open-ended or decision-critical research. Ask the
+RPI Researcher for source pointers only when isolating that gathering would
+help, and verify each source before recording evidence.
 ```
 
 ### handoffs
