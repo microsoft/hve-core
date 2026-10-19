@@ -2,7 +2,7 @@
 title: Enterprise Artifact Hub
 description: Configure HVE Core to download tools, modules, and packages from internal mirrors or artifact proxies
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-19
 ms.topic: how-to
 keywords:
   - enterprise
@@ -149,14 +149,29 @@ DevContainer and for Codespaces, follow
 
 Set `UV_DEFAULT_INDEX` to redirect DevContainer Python provisioning and direct
 uv commands. `PIP_INDEX_URL` controls pip-compatible commands. Set both
-variables when your workflows use both command families.
+variables when your workflows use both command families. The provisioning
+helpers prefer non-empty `UV_DEFAULT_INDEX`, then the deprecated `UV_INDEX_URL`,
+then public PyPI. Empty values are treated as unset.
 
 The DevContainer preserves the canonical public source identity in each
 committed `uv.lock`. With a custom `UV_DEFAULT_INDEX`, setup validates the lock
 offline, exports its exact versions and hashes, and installs those requirements
-through the mirror. Project-declared indexes remain available after the mirror
-for packages such as CPU-specific PyTorch builds. Every selected artifact must
-match a hash in the canonical lock.
+through the mirror. Every selected artifact must match a hash in the canonical
+lock. The Python test runner uses the same restore sequence before executing
+pytest with `uv run --no-sync`, including when `.venv` is missing.
+
+Mirrored restore does not support projects declaring uv indexes, sources, or
+workspace policies: exported requirements cannot preserve those restrictions.
+Such projects fail before export or installation rather than flattening their
+indexes. If moderation's explicit PyTorch source cannot be provisioned behind
+the mirror, DevContainer setup warns and leaves moderation unavailable while
+continuing setup. The Python test runner reports that project as a sync failure
+and does not run its tests. Provision it from a network that can reach its
+canonical sources instead.
+
+Controlled Ubuntu index checks cover successful mirror downloads, missing
+environments, explicit-source rejection without package requests, and an
+intentional hash mismatch with uv `0.10.8` and `0.11.15`.
 
 Direct uv commands behave differently. `uv sync --locked` treats a custom
 default index as a changed lock input, while `uv sync --frozen` follows the
@@ -186,8 +201,9 @@ After configuring the variables, confirm the setup works:
 2. Run `npm config get registry` inside the container and confirm it returns the
   internal npm registry.
 3. From the repository root, run
-  `source .devcontainer/scripts/on-create.sh && sync_python_project <project>`
-  for one Python project and confirm package downloads use the internal index.
+  `source .devcontainer/scripts/on-create.sh && sync_python_project path/to/project`.
+  Replace `path/to/project` with a Python project directory without a custom uv
+  source policy and confirm package downloads use the internal index.
 4. Run the required security scripts and confirm GitHub API calls complete
   without connection errors.
 5. When `HVE_PSGALLERY_SOURCE_URL` is set, check that `Register-PSRepository`

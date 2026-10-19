@@ -9,44 +9,37 @@ set -euo pipefail
 
 sync_python_project() {
   local project_dir="$1"
-  local default_index="${UV_DEFAULT_INDEX:-https://pypi.org/simple}"
+  local default_index="${UV_DEFAULT_INDEX:-${UV_INDEX_URL:-https://pypi.org/simple}}"
 
   if [[ "${default_index%/}" == "https://pypi.org/simple" ]]; then
-    (cd "${project_dir}" && uv sync --locked)
+    (cd "${project_dir}" && uv sync --locked) || return 1
     return
   fi
 
   (
-    local -a index_args=(--default-index "${default_index}")
-    local -a project_index_args=()
-    local index_url
     local requirements_file
 
-    cd "${project_dir}"
-    requirements_file="$(mktemp)"
-    trap 'rm -f "${requirements_file}"' EXIT
-
-    while IFS= read -r index_url; do
-      project_index_args+=(--index "${index_url}")
-    done < <(
-      python3 - <<'PY'
+    cd "${project_dir}" || exit 1
+    if python3 - <<'PY'
+import sys
 import tomllib
 
 with open("pyproject.toml", "rb") as project_file:
-    project = tomllib.load(project_file)
+    uv_config = tomllib.load(project_file).get("tool", {}).get("uv", {})
 
-for index in project.get("tool", {}).get("uv", {}).get("index", []):
-    if url := index.get("url"):
-        print(url)
+if any(key in uv_config for key in ("index", "sources", "workspace")):
+    print("ERROR: Mirrored restore cannot preserve this project's uv source policy; "
+          "use a network that can reach its canonical sources.", file=sys.stderr)
+    sys.exit(2)
 PY
-    )
-
-    if (( ${#project_index_args[@]} > 0 )); then
-      # Required hashes constrain candidates when searching project indexes.
-      index_args+=(--index "${default_index}")
-      index_args+=("${project_index_args[@]}")
-      index_args+=(--index-strategy unsafe-first-match)
+    then
+      :
+    else
+      exit "$?"
     fi
+
+    requirements_file="$(mktemp)" || exit 1
+    trap 'rm -f "${requirements_file}"' EXIT
 
     env -u UV_DEFAULT_INDEX -u UV_INDEX_URL \
       uv export \
@@ -54,17 +47,17 @@ PY
         --offline \
         --no-emit-project \
         --quiet \
-        --output-file "${requirements_file}"
+        --output-file "${requirements_file}" || exit 1
 
     if [[ ! -x .venv/bin/python ]]; then
-      uv venv .venv
+      uv venv .venv || exit 1
     fi
 
     uv pip sync \
       --python .venv/bin/python \
       --require-hashes \
-      "${index_args[@]}" \
-      "${requirements_file}"
+      --default-index "${default_index}" \
+      "${requirements_file}" || exit 1
   )
 }
 
@@ -248,7 +241,16 @@ main() {
   fi
 
   echo "Syncing Python environment for moderation eval..."
-  sync_python_project "scripts/evals/moderation"
+  if sync_python_project "scripts/evals/moderation"; then
+    :
+  else
+    local sync_status=$?
+    if (( sync_status == 2 )); then
+      echo "WARNING: Moderation is unavailable: its explicit source policy cannot be preserved behind this mirror." >&2
+    else
+      return "${sync_status}"
+    fi
+  fi
 
   echo "System dependencies installed successfully"
 }

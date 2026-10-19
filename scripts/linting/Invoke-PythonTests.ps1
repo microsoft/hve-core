@@ -26,7 +26,24 @@ $ErrorActionPreference = 'Stop'
 #region Functions
 
 function Invoke-UvEnvironmentSync {
+    <#
+    .SYNOPSIS
+        Provisions the current Python project before test execution.
+    .DESCRIPTION
+        Uses locked project sync for public sources and hash-verified mirrored
+        restore for projects without custom uv source policy. Restores index
+        variables on every exit. Successful callers run pytest with --no-sync.
+    .PARAMETER Locked
+        Whether the project has a committed uv.lock.
+    .OUTPUTS
+        Hashtable with exitCode and output. A nonzero exitCode prevents pytest.
+    .EXAMPLE
+        Invoke-UvEnvironmentSync -Locked $true
+    .NOTES
+        Unsupported mirrored source policies fail before export or installation.
+    #>
     [CmdletBinding()]
+    [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
         [bool]$Locked
@@ -37,18 +54,37 @@ function Invoke-UvEnvironmentSync {
         return @{
             exitCode = $LASTEXITCODE
             output = $output
-            useOfflineRun = $false
         }
     }
 
-    $defaultIndex = $env:UV_DEFAULT_INDEX ?? 'https://pypi.org/simple'
+    $defaultIndex = if ($env:UV_DEFAULT_INDEX) {
+        $env:UV_DEFAULT_INDEX
+    } elseif ($env:UV_INDEX_URL) {
+        $env:UV_INDEX_URL
+    } else {
+        'https://pypi.org/simple'
+    }
     if ($defaultIndex.TrimEnd('/') -eq 'https://pypi.org/simple') {
         $output = & uv sync --locked --dev 2>&1
         return @{
             exitCode = $LASTEXITCODE
             output = $output
-            useOfflineRun = $false
         }
+    }
+
+    $sourceCheck = @'
+import sys
+import tomllib
+with open("pyproject.toml", "rb") as project_file:
+    uv_config = tomllib.load(project_file).get("tool", {}).get("uv", {})
+if any(key in uv_config for key in ("index", "sources", "workspace")):
+    print("ERROR: Mirrored restore cannot preserve this project's uv source policy; "
+          "use a network that can reach its canonical sources.", file=sys.stderr)
+    sys.exit(2)
+'@
+    $output = & uv run --no-project --offline python -c $sourceCheck 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        return @{ exitCode = $LASTEXITCODE; output = $output }
     }
 
     $requirementsFile = New-TemporaryFile
@@ -58,21 +94,22 @@ function Invoke-UvEnvironmentSync {
         Remove-Item Env:UV_DEFAULT_INDEX -ErrorAction SilentlyContinue
         Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
         $output = & uv export --locked --offline --no-emit-project --quiet --output-file $requirementsFile 2>&1
-        $exitCode = $LASTEXITCODE
-    } finally {
-        $env:UV_DEFAULT_INDEX = $originalDefaultIndex
-        if ($null -eq $originalIndexUrl) {
-            Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
-        } else {
-            $env:UV_INDEX_URL = $originalIndexUrl
+        if ($LASTEXITCODE -ne 0) {
+            return @{ exitCode = $LASTEXITCODE; output = $output }
         }
+        $pythonPath = if ($IsWindows) { '.venv/Scripts/python.exe' } else { '.venv/bin/python' }
+        if (-not (Test-Path $pythonPath)) {
+            $output = & uv venv .venv 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                return @{ exitCode = $LASTEXITCODE; output = $output }
+            }
+        }
+        $output = & uv pip sync --python $pythonPath --require-hashes --default-index $defaultIndex $requirementsFile 2>&1
+        return @{ exitCode = $LASTEXITCODE; output = $output }
+    } finally {
+        [Environment]::SetEnvironmentVariable('UV_DEFAULT_INDEX', $originalDefaultIndex)
+        [Environment]::SetEnvironmentVariable('UV_INDEX_URL', $originalIndexUrl)
         Remove-Item $requirementsFile -Force -ErrorAction SilentlyContinue
-    }
-
-    return @{
-        exitCode = $exitCode
-        output = $output
-        useOfflineRun = $true
     }
 }
 
@@ -167,11 +204,7 @@ function Invoke-PythonTests {
                         continue
                     }
 
-                    if ($syncResult.useOfflineRun) {
-                        $output = & uv run --frozen --offline pytest tests/ $Verbosity --tb=short 2>&1
-                    } else {
-                        $output = & uv run pytest tests/ $Verbosity --tb=short 2>&1
-                    }
+                    $output = & uv run --no-sync pytest tests/ $Verbosity --tb=short 2>&1
                     $exitCode = $LASTEXITCODE
                 } else {
                     # Resolve pytest: prefer skill venv, fall back to global

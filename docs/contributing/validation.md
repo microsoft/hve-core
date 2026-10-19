@@ -259,9 +259,23 @@ the committed `sha512` integrity value.
 Use restore commands for proxied installs. `npm ci` verifies downloads against
 the committed integrity values. DevContainer setup validates each canonical uv
 lock offline, exports its exact versions and hashes, and installs those
-requirements through `UV_DEFAULT_INDEX`. Project-declared indexes remain
-available after the mirror, and every selected artifact must match a hash in the
-canonical lock.
+requirements through the configured mirror. Non-empty `UV_DEFAULT_INDEX` takes
+precedence over the deprecated `UV_INDEX_URL`; empty values are treated as
+unset, and public PyPI is the default. Every selected artifact must match a
+hash in the canonical lock. The Python test runner provisions the environment
+the same way before `uv run --no-sync`, so a missing `.venv` does not trigger
+an implicit offline restore from public lock URLs.
+
+Projects with uv index, source, or workspace policies are unsupported by this
+mirrored export path. They fail before export or installation because exported
+requirements cannot preserve package-specific source authorization. An
+unsupported moderation project emits a warning without aborting DevContainer
+creation; the test runner records a sync failure and skips pytest for that
+project. Use a network that can reach its canonical sources to provision it.
+
+Controlled Ubuntu checks with uv `0.10.8` and `0.11.15` verify successful mirror
+retrieval into a missing environment, no requests for an unsupported explicit
+source, and rejection of an artifact that does not match its locked hash.
 
 Outside DevContainer setup, `uv sync --locked` treats a custom default index as
 a changed lock input, while `uv sync --frozen` follows artifact URLs already

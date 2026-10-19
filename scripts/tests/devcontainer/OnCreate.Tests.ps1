@@ -67,18 +67,28 @@ BeforeAll {
             [string]$FailDirectory,
 
             [Parameter(Mandatory = $false)]
-            [string]$DefaultIndex = 'https://pypi.org/simple'
+            [string]$DefaultIndex = 'https://pypi.org/simple',
+
+            [Parameter(Mandatory = $false)]
+            [string]$IndexUrl,
+
+            [Parameter(Mandatory = $false)]
+            [string]$FailCommand
         )
 
         $originalPath = $env:PATH
         $originalCallLog = $env:UV_CALL_LOG
         $originalFailDirectory = $env:UV_FAIL_DIR
         $originalDefaultIndex = $env:UV_DEFAULT_INDEX
+        $originalIndexUrl = $env:UV_INDEX_URL
+        $originalFailCommand = $env:UV_FAIL_COMMAND
         try {
             $env:PATH = "$StubDirectory$([System.IO.Path]::PathSeparator)$originalPath"
             $env:UV_CALL_LOG = $CallLog
             $env:UV_FAIL_DIR = $FailDirectory
             $env:UV_DEFAULT_INDEX = $DefaultIndex
+            $env:UV_INDEX_URL = $IndexUrl
+            $env:UV_FAIL_COMMAND = $FailCommand
             $command = "source $(ConvertTo-BashLiteral $script:OnCreatePath); sync_python_environments $(ConvertTo-BashLiteral $TestRepo)"
             & $script:BashCommand.Source -c $command | Out-Null
             $exitCode = $LASTEXITCODE
@@ -89,6 +99,8 @@ BeforeAll {
             $env:UV_CALL_LOG = $originalCallLog
             $env:UV_FAIL_DIR = $originalFailDirectory
             $env:UV_DEFAULT_INDEX = $originalDefaultIndex
+            $env:UV_INDEX_URL = $originalIndexUrl
+            $env:UV_FAIL_COMMAND = $originalFailCommand
         }
     }
 
@@ -107,6 +119,9 @@ BeforeAll {
             'printf ''%s|%s\n'' "${PWD}" "$*" >> "${UV_CALL_LOG}"'
             'if [[ -n "${UV_FAIL_DIR:-}" && "${PWD}" == *"${UV_FAIL_DIR}" ]]; then'
             '  exit 42'
+            'fi'
+            'if [[ -n "${UV_FAIL_COMMAND:-}" && "$1" == "${UV_FAIL_COMMAND}" ]]; then'
+            '  exit 43'
             'fi'
         ) -join "`n"
         [System.IO.File]::WriteAllText(
@@ -181,8 +196,7 @@ Describe 'on-create Python environment sync contract' -Tag 'Unit' {
             }
 
             New-TestPythonProject `
-                -Path (Join-Path $script:TestRepo '.github/skills/mirrored-project') `
-                -IndexUrl 'https://project.example.com/simple'
+                -Path (Join-Path $script:TestRepo '.github/skills/mirrored-project')
 
             $exitCode = Invoke-TestPythonSync `
                 -TestRepo $script:TestRepo `
@@ -195,8 +209,48 @@ Describe 'on-create Python environment sync contract' -Tag 'Unit' {
             $calls | Should -HaveCount 3
             $calls[0] | Should -Match 'mirrored-project\|export --locked --offline --no-emit-project --quiet --output-file '
             $calls[1] | Should -Match 'mirrored-project\|venv \.venv'
-            $calls[2] | Should -Match 'mirrored-project\|pip sync --python \.venv/bin/python --require-hashes --default-index https://mirror\.example\.com/pypi/simple --index https://mirror\.example\.com/pypi/simple --index https://project\.example\.com/simple --index-strategy unsafe-first-match '
+            $calls[2] | Should -Match 'mirrored-project\|pip sync --python \.venv/bin/python --require-hashes --default-index https://mirror\.example\.com/pypi/simple '
             ($calls -join "`n") | Should -Not -Match 'sync --locked'
+        }
+
+        It 'Rejects project indexes before export or install' {
+            if ($IsWindows -or -not $script:BashCommand) {
+                Set-ItResult -Skipped -Because 'authoritative Bash execution runs on Ubuntu'
+                return
+            }
+            New-TestPythonProject -Path (Join-Path $script:TestRepo 'explicit-project') -IndexUrl 'https://project.example.com/simple'
+            $exitCode = Invoke-TestPythonSync -TestRepo $script:TestRepo -StubDirectory $script:StubDirectory -CallLog $script:CallLog -DefaultIndex 'https://mirror.example.com/simple'
+            $exitCode | Should -Be 1
+            Test-Path $script:CallLog | Should -BeFalse
+        }
+
+        It 'Stops after the failed prerequisite <Command>' -ForEach @(
+            @{ Command = 'export'; Count = 1 }
+            @{ Command = 'venv'; Count = 2 }
+            @{ Command = 'pip'; Count = 3 }
+        ) {
+            if ($IsWindows -or -not $script:BashCommand) {
+                Set-ItResult -Skipped -Because 'authoritative Bash execution runs on Ubuntu'
+                return
+            }
+            New-TestPythonProject -Path (Join-Path $script:TestRepo 'failed-prerequisite')
+            $exitCode = Invoke-TestPythonSync -TestRepo $script:TestRepo -StubDirectory $script:StubDirectory -CallLog $script:CallLog -DefaultIndex 'https://mirror.example.com/simple' -FailCommand $Command
+            $exitCode | Should -Be 1
+            @(Get-Content $script:CallLog) | Should -HaveCount $Count
+        }
+
+        It 'Selects the non-empty default before the deprecated fallback: <DefaultIndex>' -ForEach @(
+            @{ DefaultIndex = ''; IndexUrl = 'https://fallback.example.com/simple'; Selected = 'fallback' }
+            @{ DefaultIndex = 'https://preferred.example.com/simple'; IndexUrl = 'https://fallback.example.com/simple'; Selected = 'preferred' }
+        ) {
+            if ($IsWindows -or -not $script:BashCommand) {
+                Set-ItResult -Skipped -Because 'authoritative Bash execution runs on Ubuntu'
+                return
+            }
+            New-TestPythonProject -Path (Join-Path $script:TestRepo 'fallback-project')
+            $exitCode = Invoke-TestPythonSync -TestRepo $script:TestRepo -StubDirectory $script:StubDirectory -CallLog $script:CallLog -DefaultIndex $DefaultIndex -IndexUrl $IndexUrl
+            $exitCode | Should -Be 0
+            (Get-Content $script:CallLog -Raw) | Should -Match "--default-index https://$Selected\.example\.com/simple"
         }
 
         It 'Returns nonzero after a child sync fails and still processes other projects' {
@@ -228,5 +282,29 @@ Describe 'on-create Python environment sync contract' -Tag 'Unit' {
             $exitCode | Should -Be 1
             Test-Path $script:CallLog | Should -BeFalse
         }
+    }
+}
+
+Describe 'on-create controlled mirror restore' -Tag 'Unit', 'Integration' {
+    It 'Restores verified bytes and isolates unsupported sources with uv <Version>' -ForEach @(
+        @{ Version = '0.10.8'; Compatibility = $false }
+        @{ Version = '0.11.15'; Compatibility = $true }
+    ) {
+        if (-not $IsLinux) {
+            Set-ItResult -Skipped -Because 'controlled-index evidence requires Ubuntu'
+            return
+        }
+        $fixture = Join-Path $PSScriptRoot 'fixtures/controlled_uv_index.py'
+        if ($Compatibility) {
+            $output = & uvx --from uv==0.11.15 uv run --no-project $fixture --mode bash
+        } else {
+            $output = & uv run --no-project $fixture --mode bash
+        }
+        $LASTEXITCODE | Should -Be 0
+        $evidence = $output | ConvertFrom-Json
+        $evidence.version | Should -Match ([regex]::Escape($Version))
+        $evidence.hash_rejected | Should -BeTrue
+        $evidence.clean_environment | Should -BeTrue
+        $evidence.explicit_requests | Should -HaveCount 0
     }
 }
