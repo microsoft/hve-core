@@ -574,6 +574,11 @@ Describe 'PowerShell controlled mirror restore' -Tag 'Unit', 'Integration' {
             Set-ItResult -Skipped -Because 'controlled-index evidence requires Ubuntu'
             return
         }
+        if (-not (Get-Command uv -CommandType Application -ErrorAction SilentlyContinue) -or
+            -not (Get-Command uvx -CommandType Application -ErrorAction SilentlyContinue)) {
+            Set-ItResult -Skipped -Because 'local controlled-index evidence requires uv and uvx'
+            return
+        }
         $fixture = Join-Path $PSScriptRoot '../devcontainer/fixtures/controlled_uv_index.py'
         if ($Compatibility) {
             $output = & uvx --from uv==0.11.15 uv run --no-project $fixture --mode powershell
