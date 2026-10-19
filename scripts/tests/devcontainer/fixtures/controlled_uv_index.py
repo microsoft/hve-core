@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 """Exercise uv restore behavior using synthetic wheels and loopback-only indexes."""
 
 import argparse
