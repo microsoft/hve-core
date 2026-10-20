@@ -5878,13 +5878,13 @@ stimuli:
   - name: skill-rpi-plan-critique-follow-up-interruption-allowance
     prompt: |
       Using rpi-plan, the first critique was interrupted by a session timeout, rerun
-      once on resume, and completed. After corrections, a follow-up critique writing
-      to the next numbered output path was interrupted by its first session timeout
-      before saving a result, and nothing about scope or session capacity has changed.
-      A: Choose the next action for the follow-up critique now. B: Instead, the
-      follow-up critique was already rerun once after a session timeout and timed out
-      again. Return exactly two lines, A and B, each with rerun-critique or
-      stop-not-ready.
+      once on resume, and completed. After corrections, the user asked for a follow-up
+      critique. Writing to the next numbered output path, it was interrupted by its
+      first session timeout before saving a result, and nothing about scope or session
+      capacity has changed. A: Choose the next action for the follow-up critique now.
+      B: Instead, the follow-up critique was already rerun once after a session
+      timeout and timed out again. Return exactly two lines, A and B, each with
+      rerun-critique or stop-not-ready.
     environment:
       skills:
         - ../../.github/skills/rpi/rpi-plan
@@ -5893,7 +5893,7 @@ stimuli:
       skill: rpi-plan
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 4e9009c36a564fe88abbcf271ea2def58a11969e946c0c5af935507a8f24a0ed
+      prompt_sha256: de58862b1ca362d9e2ec1e05c5e54e36ca5add605d64ee5f2333e9fcb57e40cc
     graders:
       - type: output-matches
         name: skill-rpi-plan-critique-follow-up-interruption-per-output

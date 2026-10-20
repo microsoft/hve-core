@@ -13,7 +13,7 @@ Review one task set using these paths:
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-The plan critique is present only when one ran. A new review of the same task adds a numbered suffix to the review path, such as `{{task_slug}}-review-2.md`. Read research when it is relevant to an evidence or decision gap. Use markers and stable IDs rather than line references.
+The plan critique is present only when one ran. Read research when it is relevant to an evidence or decision gap. Use markers and stable IDs rather than line references.
 
 ## Review document contract
 
@@ -27,15 +27,9 @@ Use `templates/review-log.md` for one record that a person can review and a late
 * Use prose and short lists for explanation, tables for compact coverage and decisions, and backticks for code, commands, and symbols. Keep paths plain-text and workspace-relative under the shared tracking convention. Include a Mermaid diagram only when it clarifies a material relationship or drift, distinguishing intended from observed behavior.
 * When no substantive findings exist, say so within the assessed boundary. Retain validation limits and residual work without inventing `RV-xxx` entries or implying unassessed scope passed.
 
-The parent maintains Current Disposition inside Parent Decision Record as a readable projection of the latest Decision History events. Show final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the assessed proposal.
-
-Append events first, then refresh the projection before closeout or handoff. On recovery, events govern any stale projection. Parent Decision Record holds only decisions; the evidence body is never rewritten to fit a decision.
-
 ## Review method
 
-The review parent resolves scope, acceptance basis, depth, and artifact readiness, initializes the canonical review record, and performs one marker-driven comparison pass itself. It owns the evidence body, the findings, every decision in `## Parent Decision Record`, parent state, conversation, and continuation.
-
-The comparison pass:
+The skill's Flow step 6 runs one comparison pass. The parent compares the portions it keeps itself and reconciles lane returns for the rest. The comparison pass:
 
 1. Compare plan requirements and each task's `Requirements:` block with completed `Pxx` and `Pxx-Txx` evidence.
 2. Reconcile implementation-time plan updates with current phase and task Goals, Requirements, Details, Guidance, References, triggering evidence, user decisions, and critique state.
@@ -44,28 +38,28 @@ The comparison pass:
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift. When business sources are cited or Business Alignment entries exist, include the comparison in `business-alignment.md`.
 6. Write one complete substantive `RV-xxx` finding set, assessed outcome, and proposed routes in the review record.
 
-Inspect existing review state first. Continue a `started` review from its saved record, and reuse a finished review unless the user asks for a new one. An existing record uses its latest participation event.
-
-For a new Review, activate skills whose descriptions say they are used during review and fit the task as scoped review criteria. Exclude `rpi-review` itself and other RPI lifecycle phase entrypoints. Initialize the record, persist opening state with review execution `started`, and append the participation event before comparing. When parent state exists, record the review path.
-
 ## Optional helpers
 
-The review parent compares the evidence itself. A subagent is never required, and no review gate depends on one.
+The review parent owns the comparison. A subagent is never required, and no review gate depends on one. Use subagents only under the subagent-use rule in the skill's Flow; otherwise do the whole comparison yourself.
 
-Use a subagent when a context-heavy portion of the review would crowd out the parent's working context, for example comparing each in-scope `Requirements:` block against a large changes record, tracing one requirement through source and validation output, or checking a long critique's dispositions against the current plan. Prefer a helper whose description says it is used during review, such as `RPI Reviewer`; a general-purpose subagent given the same instructions also works. Assign it one bounded question or comparison in your own words, the evidence paths to read, the acceptance basis to compare against when the assignment needs one, and the scope. It does not need an `RV-xxx` ID, a `Pxx` or `Pxx-Txx` boundary, or the full review context. Expect candidate findings with expected behavior, observed evidence and location, why each may matter, and suggested severity and route, plus what it found consistent and what it could not assess.
+Use subagents to keep the review fast and your context focused. Give each context-heavy, independent portion of the comparison its own narrow lane, such as one task's requirements, scoped from the plan's phase, task, and requirement IDs and the changed-file list; a lane's time grows with how much it reads. Dispatch the lanes in one parallel batch right after you initialize the record, before you read the evidence they cover, and compare the portions you keep while they run, so their work does not repeat yours. Good lanes include comparing one phase's `Requirements:` blocks against the changes record and diff, tracing one requirement through source and validation output, checking a long critique's dispositions against the current plan, and, for a large review, the tool checks below. Keep tightly coupled or low-volume comparison yourself, including a check that takes only a few tool calls.
 
-Treat the return as suggestions. Read the cited evidence yourself, go deeper on any candidate that needs it, record an `RV-xxx` finding only when you confirm it, and assign IDs, execution status, outcome, and routes yourself. Helpers do not write the review record, ask the user, or decide anything. Record helper use in Scope and Evidence with what was verified.
+Prefer a helper whose description says it is used during review, such as `RPI Reviewer`; a general-purpose subagent given the same instructions also works. Assign each lane one bounded question or comparison in your own words, its purpose (which acceptance decision depends on it), the evidence paths to read, the acceptance basis to compare against when the lane needs one, the scope, and what to exclude or ignore. Name the requirement, finding, or change to compare without stating the outcome you expect, so the lane compares rather than confirms. Tell a general-purpose helper not to dispatch other agents. It does not need an `RV-xxx` ID, a `Pxx` or `Pxx-Txx` boundary, or the full review context. Expect candidate findings with expected behavior, observed evidence and location, why each may matter, and suggested severity and route, plus the evidence location for each requirement it found consistent and what it could not assess. `RPI Reviewer` runs on `Claude Haiku 5.5 (copilot)` from its frontmatter; give a general-purpose helper the same model when the dispatch tool accepts it, and pass a different model only when the user names one.
 
-## Review depth
+### Lane reasoning effort
 
-| Depth      | Selection rule        | Behavior                                                                                                                                                                                                                    |
-|------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `standard` | Default               | Completely assess every material acceptance contract once as quickly as evidence permits, follow markers and direct evidence, and omit restatement, cosmetics, exhaustive strengths, low-impact suggestions, and narration. |
-| `deep`     | Explicit user request | Trace the same supplied boundary more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns without open-ended research or another pass.                                        |
+Select each lane's reasoning effort when you dispatch it, from what the lane must judge:
 
-Do not infer deep review from task size, complexity, uncertainty, or risk. Standard review minimizes elapsed work without reducing complete coverage of material acceptance evidence.
+* `low` when a tool answers the check completely: every checked `Pxx-Txx` marker has a changes-record entry, the recorded status of each validation check, the changed files against the plan's targets, or requirement-ID cross-references.
+* `high` when the lane compares work against a written acceptance basis, such as `Requirements:` blocks, implementation-time plan updates, follow-up items, or critique dispositions, or checks written guidance for consistency across files.
+* `max` when the lane must judge behavior that no written requirement states, such as runtime behavior, security, destructive or irreversible changes, or contracts across code files, such as callers, types, or data formats. When one lane does both kinds of judgment, use `max`. In `deep` depth, use `max` for every lane that is not a tool check.
+* When the user or caller sets an effort, for every lane or for lanes identified by kind or topic, use it instead.
 
-Before comparison, confirm plan markers and task-local context, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are current. Stop as Blocked when stale or missing evidence prevents a credible task boundary.
+Pass the level through the dispatch tool's reasoning-effort parameter, such as `reasoning_effort`. `RPI Reviewer` declares `max` in its frontmatter, so a dispatch that sets no effort runs at `max` where the host applies agent frontmatter; give a general-purpose helper its level explicitly. When the tool has no such parameter, dispatch without one and record the effort as host default. If a dispatch fails because its model does not support the selected effort, retry it once with `reasoning_effort` set to `medium`, and record the lane's effort as `medium` with that reason.
+
+### Using lane returns
+
+Treat each return as suggestions. Read the cited evidence yourself, go deeper on any candidate that needs it, record an `RV-xxx` finding only when you confirm it, and assign IDs, execution status, outcome, and routes yourself. Count a requirement as consistent only when the lane cites where it is met, and read that location yourself before a material requirement supports a conformant outcome. Treat a requirement reported consistent without a location as not assessed, and compare it yourself. Helpers do not write the review record, ask the user, or decide anything. Record each lane in Scope and Evidence with its question, its reasoning effort and that effort's source (selected, user- or caller-set, frontmatter default, or host default), and what was verified.
 
 ## Separate execution from outcome
 
@@ -94,7 +88,7 @@ Each `RV-xxx` finding names severity, the binding requirement or accepted direct
 * Route material evidence gaps to `rpi-research`.
 * Route non-blocking residual work to a distinct follow-up item with a clear owner or next action.
 
-Route an unresolved plan follow-up item to its distinct follow-up work owner or next action. It is not a defect or a new active plan task merely because review found it still open. Do not convert residual work into a defect merely to force implementation, and do not create a new active plan revision during review.
+Route an unresolved plan follow-up item to its distinct follow-up work owner or next action. It is not a defect or a new active plan task merely because review found it still open. Do not convert residual work into a defect merely to force implementation, and do not create a new active plan revision during review. When findings fall into more than one category, state each distinct destination rather than selecting one aggregate route.
 
 ## Validation evidence
 
@@ -102,7 +96,7 @@ Record relevant validation as passed, failed, skipped, or unavailable. Failed ch
 
 ## Conversation protocol
 
-Before comparison, initialize the one review record and persist its canonical opening state in Scope and Evidence plus Opening Review State. Record the interpreted review goal, scope, depth and provenance, evidence readiness, acceptance basis, comparison boundary, decision authority, and initial blockers. Then send one opening message:
+The opening state that the skill's Flow step 5 persists records the interpreted review goal, scope, depth and provenance, evidence readiness, acceptance basis, comparison boundary, decision authority, and initial blockers. After persisting it, send one opening message:
 
 ```markdown
 ## RPI Review: [Task] | [Full task, Pxx, or Pxx-Txx scope]
@@ -141,36 +135,15 @@ Next review action: [next comparison, validation assessment, focused question, r
 
 Use `✅` only for evidence-backed conformance, a completed comparison, or passed validation. Use `⚠️` for a substantive finding, residual work, failed, skipped, or unavailable validation, or a decision or evidence gap. Use `⛔` when review progress is blocked. Markers are optional and must be paired with text.
 
-Use the Review Item Walkthrough below when decision participation is user-owned or user-retained. Confirmed automatic RPI Agent uses agent-owned decisions by default and skips the walkthrough unless the user explicitly retains Review decisions.
-
-At closeout, report review execution status separately from outcome. Include results, material findings, decisions, blockers or open items, and anything the user might otherwise miss. Advise `/compact` only when stale output, superseded reasoning, or completed comparison detail outweighs current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-
-For standalone review, remain read-only and advise the exact `/rpi-implement`, `/rpi-plan`, or `/rpi-research` command only when an actionable finding needs that destination. Do not invoke it and do not require a second Review after later implementation. Otherwise state the no-handoff reason. In confirmed automatic RPI Agent mode, return the record to the parent as the task's one Review result. For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, follow-up choice, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
-
 ## Parent decision protocol
 
-After the evidence body is written, decide:
+Give each Decision History event a stable `RD-xxx` ID and subject; the latest event for a subject is current. Record each route's disposition as accepted, rejected, deferred, or changed. Do not redo the comparison or rewrite findings to fit a preferred outcome.
 
-* Final review execution status and outcome
-* Accepted, rejected, deferred, or changed disposition for every proposed route
-* Whether a significant decision returns to `rpi-plan`, an evidence gap returns to `rpi-research`, a defect becomes later `rpi-implement`, or residual work enters the follow-up queue
-* Standalone advisory or parent-orchestrated continuation
+Current Disposition shows final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the assessed proposal. Append events first, then refresh Current Disposition before closeout or handoff.
 
-Append those decisions only to Decision History within `## Parent Decision Record`, then refresh its Current Disposition from the latest events. Preserve the findings and comparison tables as written. When parent state exists, store the review path plus derived `next_action` and accepted follow-up projections.
-
-Do not duplicate decision payloads in state, redo the comparison, or rewrite findings to fit a preferred outcome.
-
-Parent Decision Record is the recovery authority. Give each event a stable `RD-xxx` ID and subject, and never rewrite or remove prior events. The latest event for a subject is current. On recovery, rebuild stale or missing state projections from the record; when state conflicts, the record governs and the corrected projection must persist before transition.
+Parent Decision Record is the recovery authority. On recovery, rebuild stale or missing state projections from its events; when state conflicts, the record governs and the corrected projection must persist before transition.
 
 ## Review Item Walkthrough
-
-Resolve decision participation before route disposition:
-
-| Context                                                     | Mode            | Behavior                                                                                                           |
-|-------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------|
-| Standalone or manual RPI Review                             | `user-owned`    | Walk through each actionable finding separately and persist the answer before the next item.                       |
-| Confirmed automatic RPI Agent                               | `agent-owned`   | Skip item questions and decide proposed routes from evidence before the separate post-Review follow-up checkpoint. |
-| Automatic RPI Agent with explicit retained Review decisions | `user-retained` | Keep the session automatic, walk through findings, then resume after decisions are recorded.                       |
 
 For each user-owned or user-retained `RV-xxx`, first persist the pending item. Then present the review record and cited evidence as Markdown links and explain in approachable language:
 
@@ -179,25 +152,17 @@ For each user-owned or user-retained `RV-xxx`, first persist the pending item. T
 * The proposed destination and the suggested answer
 * Material uncertainty and whether more evidence could change the decision
 
-Use `vscode_askQuestions` when available with one finding per turn. Configure freeform input and offer:
+Use the host's question tool, such as `vscode_askQuestions`, when available, with one finding per turn. Configure freeform input and offer:
 
 * `Use suggested action: [plain-language action]`, marked recommended
 * `Gather more information`
 * `Skip this item`
 * `Finish review decisions`
 
-The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the tool is unavailable, show the same options in chat and wait.
+The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the question tool is unavailable, present the same choices in chat and wait.
 
 For an alignment finding routed as residual work, offer to draft a note to the source owner only when the finding records meaningful drift or a confirmed divergence. Do not offer a note for a stale-source or source-gap alert without a separate demonstrated drift result. `business-alignment.md` defines the action text, how the user keeps the follow-up without the note, and what an accepted note contains.
 
-Append each response as an `RD-xxx` event before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision and assigns the smallest evidence action to the appropriate owner. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
+Append each response as an `RD-xxx` event with its finding, route, owner, rationale, evidence need, and outcome effect before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision, or changes the route to the appropriate evidence owner, and assigns the smallest evidence action. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
 
-Material skipped or deferred findings prevent `Conformant` and `Conformant with justified divergence`. A credible completed review may still use Defects found or Residual work; reserve Not accepted for blocked evidence or unresolved critical boundaries that prevent acceptance. Record whether the walkthrough completed, finished early, or was skipped automatically, including decided and remaining finding IDs.
-
-## Review Closeout Projection
-
-At closeout, project final review execution status, final outcome, validation coverage, blockers, and the disposition for every actionable finding. Keep Complete, Partial, or Blocked execution separate from Conformant, Conformant with justified divergence, Defects found, Residual work, or Not accepted outcome.
-
-Preserve the four-destination matrix: implementation defects go to `rpi-implement`; decision gaps and invalid assumptions go to `rpi-plan`; material evidence gaps go to `rpi-research`; and non-blocking residual work goes to a distinct follow-up owner. Do not describe residual work as a defect. When more than one category occurs, state each distinct destination rather than selecting one aggregate route. When the user accepted a stakeholder note, include its text as a copy-ready block.
-
-For standalone use, provide only the eligible advisory command or no-handoff reason. In parent contexts, return the same projection to the parent, which owns continuation. The linked-artifact table follows this projection, immediately before the final `## Next Steps` section.
+Record whether the walkthrough completed, finished early, or was skipped automatically, including decided and remaining finding IDs.

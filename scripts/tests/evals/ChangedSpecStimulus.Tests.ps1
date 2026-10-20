@@ -329,7 +329,7 @@ Describe 'Get-ChangedSpecStimulusArtifact (local Git)' -Tag 'Unit' {
         $set | ConvertTo-Json -Depth 6 | Set-Content $changeSetPath
         Test-EvalChangeSetRelevance -ChangeSet $set -RepoRoot $script:Repo | Should -BeFalse
         . (Join-Path $PSScriptRoot '../../evals/Get-ChangedAIArtifact.ps1') -ChangeSetPath $changeSetPath
-        $ai = Invoke-ChangedArtifactScan -ChangeSetPath $changeSetPath -RepoRoot $script:Repo
+        $ai = Invoke-ChangedArtifactScan -ChangeSetPath $changeSetPath -RepoRoot $script:Repo -EquivalenceSubject @()
         $ai.artifacts | Should -HaveCount 0
         $ai.affectedAgents | Should -HaveCount 0
         $derived = Get-ChangedSpecStimulusArtifact -ChangeSetPath $changeSetPath -RepoRoot $script:Repo
