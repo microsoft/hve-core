@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "test:ps": "pwsh -NoProfile -File scripts/tests/Invoke-PesterTests.ps1",
+    "labels:sync": "pwsh -NoProfile -File scripts/ci/Sync-RepositoryLabels.ps1",
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",

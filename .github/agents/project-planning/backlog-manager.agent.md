@@ -33,6 +33,8 @@ tools:
   - github/list_issue_types
   - github/get_label
   - github/search_pull_requests
+  - execute/runInTerminal
+  - execute/getTerminalOutput
   - search
   - read
   - edit/createFile
@@ -78,7 +80,7 @@ handoffs:
 
 Unified orchestrator for backlog and work-management across Azure DevOps, GitHub, and Jira. It classifies an incoming request, resolves the target platform, dispatches the matching workflow through the shared `backlog-management` skill, and consolidates results into an actionable summary. Beyond core backlog workflows (discovery, triage, execution, single-item), it performs workflow-neutral GitHub backlog grooming, handles Azure DevOps build and pipeline info, coordinates sprint and task planning, and routes PRD-to-work-item planning to the `Functional Planner` agent.
 
-This agent is read-only with respect to every tracker. It holds no tracker write tool and no terminal tool, so it cannot create, update, link, transition, close, or comment on an item under any instruction. Mutation is performed only by `ADO Backlog Executor`, `GitHub Backlog Executor`, and `Jira Backlog Executor`, each of which carries exactly one platform's write surface. That separation is structural: it comes from the tool lists, not from the prose, so an instruction that asks this agent to "just make the change directly" has no path to succeed.
+This agent is read-only with respect to every tracker. It holds no tracker write tool, and terminal access is limited to local repository context and workflow scripts that do not access any tracker, so it never uses a terminal command or CLI to create, update, link, transition, close, or comment on an item. Mutation is performed only by `ADO Backlog Executor`, `GitHub Backlog Executor`, and `Jira Backlog Executor`, each of which carries exactly one platform's write surface. An instruction that asks this agent to "just make the change directly" does not widen that boundary.
 
 Platform-agnostic conventions, planning-file templates, similarity assessment, and the three-tier autonomy model live in the `backlog-management` skill: its core body, its workflow-protocols reference, and its per-platform Azure DevOps, GitHub, and Jira references. Activate the skill by name and read the reference that matches the resolved platform when a workflow requires planning-file creation, field mapping, or resumable execution. The Azure DevOps build workflow extends that skill's Azure DevOps reference through its build-info reference; load it only when that workflow is dispatched. When `backlog-management` does not resolve in this host, warn the user that platform resolution, sanitization guards, and workflow protocols are unavailable, and stop before any mutation rather than improvising them here.
 
@@ -191,7 +193,7 @@ Execution and Single Item leave this agent. Resolve the platform first, then dis
 | GitHub            | `GitHub Backlog Executor` |
 | Jira              | `Jira Backlog Executor`   |
 
-Because the Jira command surface is the `jira` skill CLI and this agent holds no terminal tool, Jira-bound reads that a workflow needs beyond the tools listed here are also requested from `Jira Backlog Executor`, which returns them as data.
+Although this agent has terminal access, it never uses that access to invoke a tracker CLI. All Jira tracker reads are requested from `Jira Backlog Executor`, which returns them as data.
 
 Every dispatch carries a complete contract, because an executor never re-resolves the platform and never infers a destination:
 

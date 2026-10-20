@@ -799,6 +799,64 @@ console.log(JSON.stringify(results));
 '@
   }
 
+  It 'Grades RPI policy case <Name> without accepting wrong choices or prompt echoes' -Tag 'RpiReviewRemediation' -ForEach @(
+    @{ Name = 'rpi-agent-first-task-assessment-defaults'; Expected = "Critique: run`nReview: run"; Wrong = "Critique: skip`nReview: skip" }
+    @{ Name = 'rpi-agent-child-assessment-defaults'; Expected = "Critique: skip`nReview: skip"; Wrong = "Critique: run`nReview: run" }
+    @{ Name = 'rpi-agent-child-explicit-assessment-override'; Expected = "Critique: run`nReview: run"; Wrong = "Critique: skip`nReview: skip" }
+    @{ Name = 'rpi-agent-child-review-only-override'; Expected = "Critique: skip`nReview: run"; Wrong = "Critique: run`nReview: skip" }
+    @{ Name = 'rpi-agent-interrupted-critique-continuation'; Expected = "Recovery: resume-existing`nReadiness: not-ready"; Wrong = "Recovery: start-additional`nReadiness: ready" }
+    @{ Name = 'rpi-agent-interrupted-review-continuation'; Expected = "Recovery: resume-existing`nEvidence: canonical"; Wrong = "Recovery: start-additional`nEvidence: projection" }
+  ) {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/rpi-agent.yml'))
+    $cases = @($partial.stimuli | Where-Object name -eq $Name)
+    $cases | Should -HaveCount 1
+    $stimulus = $cases[0]
+    $stimulus.tags.advisory | Should -Be 'true'
+    $stimulus.graders | Should -HaveCount 1
+    $grader = $stimulus.graders[0]
+    $expectedLines = $Expected -split "`n"
+    $wrongLines = $Wrong -split "`n"
+    $outputs = @(
+      $Expected
+      $Expected.ToUpperInvariant()
+      $Wrong
+      "$($wrongLines[0])`n$($expectedLines[1])"
+      "$($expectedLines[0])`n$($wrongLines[1])"
+      $stimulus.prompt
+      'The policy file is unavailable.'
+    )
+    $payload = @{ type = $grader.type; config = $grader.config; outputs = $outputs } | ConvertTo-Json -Depth 10 -Compress
+    $output = $payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath
+    $LASTEXITCODE | Should -Be 0
+    $results = @($output | ConvertFrom-Json)
+    $results | Should -HaveCount $outputs.Count
+    for ($index = 0; $index -lt $results.Count; $index++) {
+      $results[$index].passed | Should -Be ($index -lt 2)
+    }
+  }
+
+  It 'Keeps parent-approved reads and fallback constraints explicit' -Tag 'RpiReviewRemediation' {
+    $root = (Resolve-Path (Join-Path $script:LexicalEvalRoot '../..')).Path
+    $critic = Get-Content -Raw (Join-Path $root '.github/agents/hve-core/subagents/rpi-plan-critic.agent.md')
+    $lenses = Get-Content -Raw (Join-Path $root '.github/skills/rpi/rpi-plan-critique/references/lens-assessment.md')
+    $critic | Should -Match ([regex]::Escape('Do not open anything the assignment does not supply, such as a file the plan names'))
+    $critic | Should -Not -Match 'Open a file outside the supplied set only when a statement'
+    $fallback = [regex]::Match($lenses, '(?s)When `RPI Plan Critic` is unavailable,(.*?)(?=\r?\n## )').Value
+    $fallback | Should -Match ([regex]::Escape('read only the plan and evidence the assignment supplies, change no files, run no validation, and dispatch no other agents'))
+    $lenses | Should -Match ([regex]::Escape('When a lens returns `Partial`, `Blocked`, `Needs clarification`, or nothing'))
+  }
+
+  It 'Qualifies both public effort fallbacks by host and dispatch support' -Tag 'RpiReviewRemediation' {
+    $root = (Resolve-Path (Join-Path $script:LexicalEvalRoot '../..')).Path
+    foreach ($name in @('rpi-researcher', 'rpi-reviewer')) {
+      $text = Get-Content -Raw (Join-Path $root "docs/reference/agents/hve-core/subagents/$name.md")
+      $text | Should -Match 'only on hosts that honor reasoning-effort frontmatter'
+      $text | Should -Match ([regex]::Escape("VS Code's Local harness ignores that field"))
+      $text | Should -Match 'dispatch tool supports that parameter'
+      $text | Should -Match 'model picker'
+    }
+  }
+
   It 'Projects document-owned BRD findings separately from pending user acceptance' -Tag 'ReceiptRepair' {
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/brd-builder.yml'))
     $stimulus = $specification.stimuli | Where-Object name -eq 'brd-builder-reconciles-completed-research-segment'

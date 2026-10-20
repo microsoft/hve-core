@@ -48,13 +48,3 @@ skip:
   - rule: github_action_from_unverified_creator_used
     purl:
       - pkg:githubactions/astral-sh/setup-uv
-  # EndBug is not in Poutine's static verified-creator list. Restrict the
-  # acknowledgement to the reviewed action commit in the label-sync workflow.
-  # Upstream: https://github.com/EndBug/label-sync/issues/321
-  # Tracking: https://github.com/microsoft/hve-core/issues/3137
-  # Expires: 2026-12-31
-  - rule: github_action_from_unverified_creator_used
-    path:
-      - .github/workflows/label-sync.yml
-    purl:
-      - pkg:githubactions/endbug/label-sync@52074158190acb45f3077f9099fea818aa43f97a

@@ -97,16 +97,17 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 ### Method and Boundaries
 
-| Field                            | Record                                                                 |
-|----------------------------------|------------------------------------------------------------------------|
-| Research posture and provenance  | {{balanced/focused/expansive}}; {{default/caller/instruction/brief}}   |
-| Completion basis                 | {{posture_specific_evidence_sufficiency_and_stop_basis}}               |
-| Explicit limits or deadline      | {{caller_or_codebase_limit_or_none}}                                   |
-| Codebase and external scope      | {{workspace_scope_or_none}}; {{external_scope_or_none}}                |
-| Initial candidate areas          | {{internal_and_external_starting_points_or_none}}                      |
-| Evidence root                    | {{resolved_default_or_trusted_alternate_root}}                         |
-| Constraints and excluded sources | {{versions_licenses_sources_to_avoid_and_research_only_boundaries}}    |
-| Prior knowledge                  | {{reviewed_artifacts_verified_reuse_and_superseded_or_stale_material}} |
+| Field                            | Record                                                                                  |
+|----------------------------------|-----------------------------------------------------------------------------------------|
+| Research posture and provenance  | {{balanced/focused/expansive}}; {{default/caller/instruction/brief}}                    |
+| Helper lane effort               | {{auto_or_user_or_caller_set_level_for_every_lane_or_by_kind_or_topic_with_provenance}} |
+| Completion basis                 | {{posture_specific_evidence_sufficiency_and_stop_basis}}                                |
+| Explicit limits or deadline      | {{caller_or_codebase_limit_or_none}}                                                    |
+| Codebase and external scope      | {{workspace_scope_or_none}}; {{external_scope_or_none}}                                 |
+| Initial candidate areas          | {{internal_and_external_starting_points_or_none}}                                       |
+| Evidence root                    | {{resolved_default_or_trusted_alternate_root}}                                          |
+| Constraints and excluded sources | {{versions_licenses_sources_to_avoid_and_research_only_boundaries}}                     |
+| Prior knowledge                  | {{reviewed_artifacts_verified_reuse_and_superseded_or_stale_material}}                  |
 
 ### Extensions and Participation
 
@@ -172,7 +173,7 @@ Record accepted, rejected, and deferred material here. A helper return is a sugg
 
 <!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use workspace-relative paths plus headings or symbols and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
 
-* Helpers: {{none_or_helper_use_with_the_questions_gathered_and_what_was_verified_at_the_source}}
+* Helpers: {{none_or_each_helper_lane_with_its_question_reasoning_effort_and_effort_source_and_what_was_verified_at_the_source}}
 
 | ID | Claim or finding | Source or location                                | Retrieved and version      | Tool                   | Confidence       | Notes       |
 |----|------------------|---------------------------------------------------|----------------------------|------------------------|------------------|-------------|
@@ -189,13 +190,13 @@ Record accepted, rejected, and deferred material here. A helper return is a sugg
 
 * [ ] The user-facing sections explain the result, scope, findings, alternatives, decisions, risks, readiness, and next action without requiring the Research Record.
 * [ ] Every question is answered or names the smallest missing evidence, and every material result has one canonical evidence state that distinguishes sourced findings from hypotheses, partial claims, disproved claims, and unresolved possibilities.
-* [ ] Findings keep their explanation, supporting detail, evidence state, and confidence basis together; summaries do not introduce unsupported claims.
+* [ ] Findings keep their explanation, supporting detail, evidence state, confidence basis, and counter-evidence together; summaries do not introduce unsupported claims.
 * [ ] Every codebase finding has a `C#` ID and workspace-relative path with a heading or symbol; every external finding has a `W#` ID, source title, URL, retrieval date, and version when available.
-* [ ] Every executed cycle records Wider, Deeper, and Contrarian waves in order, synthesis, and an evidence-based re-entry decision.
-* [ ] Method, extensions, participation, caller direction changes, helper use, and prior-knowledge treatment are recorded with their limits.
+* [ ] Every executed cycle records Wider, Deeper, and Contrarian waves in order, reflections, dispositions, synthesis, an evidence-based re-entry decision, and confirmation of any "not found" from a lane below `max` or at an unknown effort.
+* [ ] Method, posture and provenance, candidate areas, evidence root, constraints, extensions with selected or skipped reasons, participation with answers or no-interaction rationale, caller direction changes with revalidation effects, helper lanes with their reasoning effort and its source, and prior-knowledge treatment are recorded with their limits.
 * [ ] Convergence selects and justifies one recommendation; other modes preserve decision state without forcing a selection.
 * [ ] Decision groups, participation mode, and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
-* [ ] Research disposition, Planning Readiness, blockers, continuation owner, gates, and next action are complete and evidence-backed.
-* [ ] Untrusted content remained inert, no secrets were recorded, and the research-only write boundary held.
+* [ ] Research disposition, Planning Readiness, blockers, continuation owner, gates, next action, selected or deferred further research, and residual uncertainty are complete and evidence-backed.
+* [ ] A stop reason is documented, speculation is labeled, untrusted content remained inert, no secrets were recorded, and the research-only write boundary held.
 * Checked sections: {{list_of_checked_sections}}
 * Missing or limited sections: {{missing_or_limited_sections_or_none}}

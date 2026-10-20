@@ -1224,21 +1224,16 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         }
     }
 
-    It 'Scopes the EndBug creator acknowledgement to one workflow and commit' {
+    It 'Has no creator acknowledgement for the removed EndBug label sync action' {
         $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
                 @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
-                @($_['path']) -contains '.github/workflows/label-sync.yml'
+                @($_['purl']) -like 'pkg:githubactions/endbug/label-sync*'
             })
-        $exceptions | Should -HaveCount 1
-        @($exceptions[0].Keys | Sort-Object) | Should -Be @('path', 'purl', 'rule')
-        @($exceptions[0]['rule']) | Should -Be @('github_action_from_unverified_creator_used')
-        @($exceptions[0]['path']) | Should -Be @('.github/workflows/label-sync.yml')
-        @($exceptions[0]['purl']) | Should -Be @(
-            'pkg:githubactions/endbug/label-sync@52074158190acb45f3077f9099fea818aa43f97a'
-        )
+        $exceptions | Should -BeNullOrEmpty
 
         $labelSync = Get-WorkflowText -Name 'label-sync.yml'
-        $labelSync | Should -Match 'EndBug/label-sync@[0-9a-f]{40}'
+        $labelSync | Should -Not -Match 'EndBug/label-sync@'
+        $labelSync | Should -Match 'run: \./scripts/ci/Sync-RepositoryLabels\.ps1'
         $labelSync | Should -Not -Match 'poutine:ignore'
     }
 

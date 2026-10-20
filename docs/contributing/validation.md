@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-20
 ms.topic: how-to
 keywords:
   - validation
@@ -256,13 +256,37 @@ lockfile tarball host to the configured registry at fetch time only. `npm ci`
 never writes `package-lock.json`, and it still verifies every download against
 the committed `sha512` integrity value.
 
-Use restore commands for proxied installs. `npm ci` verifies downloads
-against the committed integrity values, and `uv sync --frozen` installs without
-updating the lockfile. A plain `pip install -r` verifies committed hashes only
-when the requirements file contains hashes and hash-checking mode is enabled,
-for example with `--require-hashes`. Dependency-resolution commands may update
-lockfiles with proxy-specific metadata. Review lockfile changes before
-committing, and run
+Use restore commands for proxied installs. `npm ci` verifies downloads against
+the committed integrity values. DevContainer setup validates each canonical uv
+lock offline, exports its exact versions and hashes, and installs those
+requirements through the configured mirror. Non-empty `UV_DEFAULT_INDEX` takes
+precedence over the deprecated `UV_INDEX_URL`; empty values are treated as
+unset, and public PyPI is the default. Every selected artifact must match a
+hash in the canonical lock. The Python test runner provisions the environment
+the same way before `uv run --no-sync`, so a missing `.venv` does not trigger
+an implicit offline restore from public lock URLs.
+
+Projects with uv index, source, or workspace policies are unsupported by this
+mirrored export path. They fail before export or installation because exported
+requirements cannot preserve package-specific source authorization. An
+unsupported moderation project emits a warning without aborting DevContainer
+creation; the test runner records a sync failure and skips pytest for that
+project. Use a network that can reach its canonical sources to provision it.
+
+Controlled Ubuntu checks with uv `0.10.8` and `0.11.15` verify successful mirror
+retrieval into a missing environment, no requests for an unsupported explicit
+source, and rejection of an artifact that does not match its locked hash.
+
+Outside DevContainer setup, `uv sync --locked` treats a custom default index as
+a changed lock input, while `uv sync --frozen` follows artifact URLs already
+recorded in the lock. Neither command reliably redirects a canonical public lock
+through an internal mirror. Do not run `uv lock` with an internal index and
+commit the result.
+
+A plain `pip install -r` verifies committed hashes only when the requirements
+file contains hashes and hash-checking mode is enabled, for example with
+`--require-hashes`. Dependency-resolution commands may update lockfiles with
+proxy-specific metadata. Review lockfile changes before committing, and run
 `npm run lint:public-dependency-feeds` if you suspect a lockfile picked up a
 non-public source.
 

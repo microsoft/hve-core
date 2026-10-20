@@ -3,7 +3,7 @@ title: rpi-review
 description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - skill
@@ -31,6 +31,9 @@ Compare RPI planning and implementation evidence, record review findings, and ro
 Use `rpi-review` after implementation finishes when you want an acceptance review; the review is optional. It compares the plan, the critique when one ran, the changes record, and validation evidence against the accepted requirements. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself. If a session ends mid-review, run it again and it continues from the saved record.
 
 A helper such as [RPI Reviewer](../../agents/hve-core/subagents/rpi-reviewer) is optional: the review parent may assign it one bounded, context-heavy comparison and receive candidate findings with evidence locations, then verifies each one, or investigates further itself, before recording an `RV-xxx`. The review parent owns the final outcome and every route in `## Parent Decision Record`.
+
+For a large review, the parent splits context-heavy comparisons into independent lanes and runs them in parallel, each at the effort its work needs: `low` for checks a tool answers completely, such as matching checked tasks to changes entries, `high` for comparing work against written requirements, and `max` for judging runtime behavior, security, or irreversible changes.
+A lane must name where each requirement it calls consistent is met, or the parent treats that requirement as not assessed. Set `effort=` for one level across lanes, or pass `subagents=none` to keep the whole comparison in the parent.
 
 The record keeps execution status (`Complete`, `Partial`, `Blocked`) separate from outcome (`Conformant`, `Conformant with justified divergence`, `Defects found`, `Residual work`, `Not accepted`). Each accepted finding routes once: defects to a later `rpi-implement`, decision gaps to `rpi-plan`, evidence gaps to `rpi-research`, residual work to a distinct follow-up. A later fix does not require another review; when you ask for a new review, it writes a separate record with a numbered suffix.
 
