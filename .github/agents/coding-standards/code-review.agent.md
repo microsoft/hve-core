@@ -86,6 +86,8 @@ The review workflow is defined by the `code-review` skill, not duplicated here. 
 
 Apply the procedures from these references verbatim. Do not invent severity levels, verdict rules, output fields, or review-loop mechanics that the skill does not define.
 
+Carry the output contract's no-confidence rule into every delegated request, including nested research and its artifacts.
+
 ## Inputs
 
 * Story reference (optional): a work item ID matching patterns like `AIAA-123` or `AB#456`. When provided, forward it to the Standards perspective so it can prompt for the story definition and include an Acceptance Criteria Coverage table.
@@ -289,6 +291,6 @@ If every selected subagent was skipped, inform the human that no review could be
 * If Step 1 diff computation fails, report the error and stop. Do not dispatch subagents without a valid diff.
 * If a subagent invocation fails or returns no output, apply the missing-output retry from Step 6 once with the complete original dispatch contract, exact failure, and expected output path. Treat the perspective as skipped only when that retry also fails or the subagent is unavailable.
 * For an orientation retry, state that exactly one retry is allowed and name `task.kind=orientation`, the `diff-state.json` state path, exact `task.outputPath` for `orientation-walkthrough.md`, and the failure detail.
-* If a subagent returns malformed output, re-invoke it once with the complete original dispatch contract, the exact schema or missing-file failure, and focus on files whose paths suggest elevated risk (`security`, `auth`, `cred`, `token`, `payment`, `secret`, `api`, `route`, `middleware`, `schema`, `migration`). If malformed output persists, present that perspective's findings file verbatim, prepend "⚠️ Merged report could not be produced — subagent output shown separately.", and note which merge rules were partially applied.
+* If a subagent returns malformed output, re-invoke it once with the complete original dispatch contract, the exact schema or missing-file failure, and focus on files whose paths suggest elevated risk (`security`, `auth`, `cred`, `token`, `payment`, `secret`, `api`, `route`, `middleware`, `schema`, `migration`). If malformed output persists, present supported findings under the output contract without prohibited confidence metadata, prepend "⚠️ Merged report could not be produced — subagent output shown separately.", and note which merge rules were partially applied. If valid repair is unavailable, disclose the incomplete result and block publication.
 * If artifact persistence fails, present the merged report in the conversation and note: "Artifact persistence failed; review was not saved to `.copilot-tracking/`."
 * If all selected subagents return only clarifying questions after two invocations each, stop and surface all outstanding questions to the human.
