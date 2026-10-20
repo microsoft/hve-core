@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-10-07
+ms.date: 2026-10-12
 ms.topic: overview
 keywords:
   - github actions
@@ -112,6 +112,7 @@ Individual validation workflows called by orchestration workflows:
 | `yaml-lint.yml`                       | YAML syntax validation                                        | `npm run lint:yaml`                                              |
 | `ps-script-analyzer.yml`              | PowerShell static analysis                                    | `npm run lint:ps`                                                |
 | `table-format.yml`                    | Markdown table formatting                                     | `npm run format:tables`                                          |
+| `typescript-check.yml`                | TypeScript type checking                                      | `npm run lint:ts`                                                |
 | `pester-tests.yml`                    | PowerShell unit tests                                         | `npm run test:ps`                                                |
 | `skill-validation.yml`                | Skill structure validation                                    | `npm run validate:skills`                                        |
 | `dependency-pinning-scan.yml`         | Dependency pinning validation                                 | N/A (PowerShell direct)                                          |
@@ -159,6 +160,7 @@ flowchart LR
         ML[markdown-lint]
         SC[spell-check]
         TF[table-format]
+        TSC[typescript-check]
         YL[yaml-lint]
         FV[frontmatter-validation]
         LLC[link-lang-check]
@@ -193,9 +195,11 @@ flowchart LR
 
 | Job                             | Reusable Workflow                     | Validates                                                    |
 |---------------------------------|---------------------------------------|--------------------------------------------------------------|
+| change-range                    | Inline                                | Immutable change range for changed-file lanes                |
 | spell-check                     | `spell-check.yml`                     | Spelling across all files                                    |
 | markdown-lint                   | `markdown-lint.yml`                   | Markdown formatting rules                                    |
 | table-format                    | `table-format.yml`                    | Markdown table structure                                     |
+| typescript-check                | `typescript-check.yml`                | TypeScript type checking                                     |
 | psscriptanalyzer                | `ps-script-analyzer.yml`              | PowerShell code quality                                      |
 | discover-python-projects        | Inline                                | Enumerates Python project directories                        |
 | discover-node-projects          | Inline                                | Enumerates Node project directories (skills and slide decks) |
