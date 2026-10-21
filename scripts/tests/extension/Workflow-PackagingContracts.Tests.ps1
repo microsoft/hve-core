@@ -2821,12 +2821,20 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
         @($steps | Where-Object { $_ -match '--narration none' }) | Should -HaveCount 1
     }
 
-    It 'Uses the verified create-github-app-token version comment consistently' {
-        $pinMatches = Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
-            Select-String -SimpleMatch 'actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1'
+    It 'Uses one full SHA and version comment for all create-github-app-token consumers' {
+        $pinMatches = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
+            Select-String -Pattern '^\s*uses:\s*actions/create-github-app-token@')
         $pinMatches | Should -HaveCount 11
-        @($pinMatches | Where-Object { $_.Line -notmatch '# v3\.2\.0\s*$' }) |
-            Should -BeNullOrEmpty
+        $pins = foreach ($pinMatch in $pinMatches) {
+            $parsedPin = [regex]::Match($pinMatch.Line, '^\s*uses:\s*actions/create-github-app-token@(?<sha>[a-fA-F0-9]{40})\s+# (?<version>v\d+\.\d+\.\d+)\s*$')
+            $parsedPin.Success | Should -BeTrue
+            [pscustomobject]@{
+                Sha = $parsedPin.Groups['sha'].Value.ToLowerInvariant()
+                Version = $parsedPin.Groups['version'].Value
+            }
+        }
+        @($pins.Sha | Sort-Object -Unique) | Should -HaveCount 1
+        @($pins.Version | Sort-Object -Unique) | Should -HaveCount 1
     }
 
     It 'Removes superseded current-state release workflow names from operational documents' {
