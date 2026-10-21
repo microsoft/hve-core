@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe undefined-step
+permissions: {}
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: real
+        run: echo hi
+      - run: echo "${{ steps.missing.outputs.value }}"

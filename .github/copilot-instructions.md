@@ -211,12 +211,12 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 
 ### Pre-installed Tools
 
-* Node.js 24 with npm dependencies from `package.json`
-* Python 3.11
+* Node.js (version from `.node-version`) with npm dependencies from `package.json`
+* Python (version from `.python-version`)
 * uv and uvx for Python package management and skill dependency sync
 * PowerShell 7 with PSScriptAnalyzer, PowerShell-Yaml, and Pester 5.7.1 modules
-* shellcheck for bash script validation (pre-installed on ubuntu-latest)
-* actionlint for GitHub Actions workflow validation
+* shellcheck for bash script validation, pinned and checksum-verified from `scripts/security/tool-checksums.json`
+* zizmor for GitHub Actions security auditing, pinned and checksum-verified from `scripts/security/tool-checksums.json`
 * cosign for artifact manifest signing
 
 ### Using npm Scripts
@@ -291,6 +291,8 @@ path the agent reads, so no caching or elevation is required.
 ### Environment Synchronization
 
 The `copilot-setup-steps.yml` and `.devcontainer/scripts/on-create.sh` share most tools but differ intentionally: gitleaks is devcontainer-only (not needed during agent-driven development). When adding or removing tools in either environment, evaluate whether both need the change and update accordingly.
+Every downloaded tool's version and checksums come from `scripts/security/tool-checksums.json`; register a new tool there first, because `scripts/security/Test-ToolVersionConsistency.ps1` fails PR validation when a hard-coded copy disagrees.
+Workflows install uv with the `.github/actions/setup-uv` composite action, which reads the manifest and verifies the checksum; do not use `astral-sh/setup-uv`.
 <!-- </coding-agent-environment> -->
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

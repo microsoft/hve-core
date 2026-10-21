@@ -37,7 +37,7 @@ permissions:
 jobs:
   detect-changes:
     name: Detect Docusaurus Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -48,13 +48,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: Verify resolved head commit
-        if: inputs.change-mode == 'range'
         shell: pwsh
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}
         run: |
           $actualHeadSha = (git rev-parse HEAD).Trim()
           if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
@@ -69,8 +67,9 @@ jobs:
           INPUT_BASE_SHA: ${{ inputs.base-sha }}
           INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
           INPUT_HEAD_SHA: ${{ inputs.head-sha }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
-          if ('${{ inputs.changed-files-only }}' -ne 'true' -or $env:INPUT_CHANGE_MODE -eq 'full') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -ne 'true' -or $env:INPUT_CHANGE_MODE -eq 'full') {
             'has-docs-changes=true' >> $env:GITHUB_OUTPUT
             Write-Output 'Docusaurus tests requested for all files.'
           } else {
@@ -103,7 +102,7 @@ jobs:
 
   docusaurus:
     name: Docusaurus Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: detect-changes
     if: needs.detect-changes.outputs.has-docs-changes == 'true'
     permissions:
@@ -114,13 +113,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
 
       - name: Verify resolved head commit
-        if: inputs.change-mode == 'range'
         shell: pwsh
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}
         run: |
           $actualHeadSha = (git rev-parse HEAD).Trim()
           if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
@@ -131,7 +128,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: docs/docusaurus/package-lock.json
 

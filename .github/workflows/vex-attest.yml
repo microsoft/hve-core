@@ -22,12 +22,12 @@ permissions:
 jobs:
   attest:
     name: Attest and Upload VEX
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
+      contents: write # upload the attested VEX document to the release
+      id-token: write # Sigstore OIDC identity for the VEX attestation
+      attestations: write # store the VEX attestation
+      artifact-metadata: write # record attestation artifact metadata
     steps:
       - name: Checkout VEX document
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

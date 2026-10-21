@@ -23,7 +23,8 @@ concurrency:
 jobs:
   # Job MUST be named 'copilot-setup-steps' to be recognized by Copilot
   copilot-setup-steps:
-    runs-on: ubuntu-latest
+    name: copilot-setup-steps
+    runs-on: ubuntu-24.04
 
     # Minimal permissions; Copilot receives its own token for operations
     permissions:
@@ -38,44 +39,70 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       # continue-on-error allows Copilot to start work even if dependencies fail,
       # so it can fix package.json/package-lock.json issues itself
       - name: Install JavaScript dependencies
         continue-on-error: true
-        run: npm ci
+        run: |
+          npm ci
+          npm ci --prefix scripts/linting/workflow-validator --ignore-scripts
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version-file: .python-version
 
-      - name: Install actionlint
+      # The workflow validator requires this exact version; the runner image's
+      # shellcheck is older and unpinned.
+      - name: Install shellcheck
         env:
-          ACTIONLINT_VERSION: '1.7.10'
-          ACTIONLINT_AMD64_SHA256: 'f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f'
-          ACTIONLINT_ARM64_SHA256: 'cd3dfe5f66887ec6b987752d8d9614e59fd22f39415c5ad9f28374623f41773a'
+          SHELLCHECK_VERSION: '0.11.0'
+          SHELLCHECK_X86_64_SHA256: '8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198'
+          SHELLCHECK_AARCH64_SHA256: '12b331c1d2db6b9eb13cfca64306b1b157a86eb69db83023e261eaa7e7c14588'
           GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
         run: |
           ARCH=$(uname -m)
           if [[ "${ARCH}" == "x86_64" ]]; then
-            ACTIONLINT_ARCH="amd64"
-            ACTIONLINT_SHA256="${ACTIONLINT_AMD64_SHA256}"
+            SHELLCHECK_SHA256="${SHELLCHECK_X86_64_SHA256}"
           elif [[ "${ARCH}" == "aarch64" ]]; then
-            ACTIONLINT_ARCH="arm64"
-            ACTIONLINT_SHA256="${ACTIONLINT_ARM64_SHA256}"
+            SHELLCHECK_SHA256="${SHELLCHECK_AARCH64_SHA256}"
           else
-            echo "ERROR: Unsupported architecture for actionlint: ${ARCH}" >&2
+            echo "ERROR: Unsupported architecture for shellcheck: ${ARCH}" >&2
             exit 1
           fi
-          curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
-          echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
-          sudo install /tmp/actionlint /usr/local/bin/actionlint
-          rm /tmp/actionlint.tar.gz /tmp/actionlint
-          actionlint --version
+          curl -sSfL "${GITHUB_RELEASES_URL}/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.${ARCH}.tar.xz" -o /tmp/shellcheck.tar.xz
+          echo "${SHELLCHECK_SHA256}  /tmp/shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/shellcheck.tar.xz -C /tmp --strip-components=1 "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+          sudo install /tmp/shellcheck /usr/local/bin/shellcheck
+          rm /tmp/shellcheck.tar.xz /tmp/shellcheck
+          shellcheck --version
+
+      # zizmor audits workflows at the version PR validation gates on.
+      - name: Install zizmor
+        env:
+          ZIZMOR_VERSION: '1.30.1'
+          ZIZMOR_X86_64_SHA256: 'e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a'
+          ZIZMOR_AARCH64_SHA256: '7ff1dce33bdd18fd2a4affe63bdd47efcccca97b2cec1c1863ec26e9e2647540'
+          GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
+        run: |
+          ARCH=$(uname -m)
+          if [[ "${ARCH}" == "x86_64" ]]; then
+            ZIZMOR_SHA256="${ZIZMOR_X86_64_SHA256}"
+          elif [[ "${ARCH}" == "aarch64" ]]; then
+            ZIZMOR_SHA256="${ZIZMOR_AARCH64_SHA256}"
+          else
+            echo "ERROR: Unsupported architecture for zizmor: ${ARCH}" >&2
+            exit 1
+          fi
+          curl -sSfL "${GITHUB_RELEASES_URL}/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ARCH}-unknown-linux-gnu.tar.gz" -o /tmp/zizmor.tar.gz
+          echo "${ZIZMOR_SHA256}  /tmp/zizmor.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/zizmor.tar.gz -C /tmp zizmor
+          sudo install /tmp/zizmor /usr/local/bin/zizmor
+          rm /tmp/zizmor.tar.gz /tmp/zizmor
+          zizmor --version
 
       - name: Install PowerShell modules
         shell: pwsh
@@ -93,9 +120,9 @@ jobs:
 
       - name: Install uv package manager
         env:
-          UV_VERSION: '0.10.8'
-          UV_X86_64_SHA256: 'f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f'
-          UV_AARCH64_SHA256: '661860e954f87dcd823251191866af3486484d1a9df60eed56f4586ed7559e3d'
+          UV_VERSION: '0.10.9'
+          UV_X86_64_SHA256: '20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594'
+          UV_AARCH64_SHA256: 'cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a'
           GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
         run: |
           ARCH=$(uname -m)
@@ -189,7 +216,7 @@ jobs:
           python3 --version
           pwsh --version
           shellcheck --version
-          actionlint --version
+          zizmor --version
           uv --version
           uvx --version
           cosign version
