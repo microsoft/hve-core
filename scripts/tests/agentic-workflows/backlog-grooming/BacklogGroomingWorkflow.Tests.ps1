@@ -1326,7 +1326,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:CorePublisher | Should -Match 'Inspect the \[source workflow run\]'
         $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read(?: #[^\n]*)?\s+contents: write'
         $script:HistoryPublisher | Should -Not -Match 'issues: write'
-        $script:HistoryPublisher | Should -Match 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
+        $script:HistoryPublisher | Should -Match '(?m)^\s+uses: actions/upload-artifact@[a-fA-F0-9]{40}\s+# v\d+\.\d+\.\d+\s*$'
     }
 
     It 'enables optional publication only for the exact lowercase value <Value>' -ForEach @(
