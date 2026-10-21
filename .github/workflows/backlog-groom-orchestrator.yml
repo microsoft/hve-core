@@ -689,7 +689,7 @@ jobs:
       - name: Upload immutable sweep snapshot
         id: snapshot
         if: ${{ steps.plan.outputs.mode == 'new' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: backlog-grooming-sweep-v1-${{ github.repository_id }}-snapshot-${{ steps.plan.outputs.sweep-id }}
           path: sweep-output/snapshot.json
@@ -698,7 +698,7 @@ jobs:
       - name: Upload immutable wave manifest
         id: manifest
         if: ${{ steps.plan.outputs.mode != 'complete-noop' && steps.plan.outputs.mode != 'calendar-noop' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: backlog-grooming-sweep-v1-${{ steps.plan.outputs.sweep-id }}-manifest-${{ steps.plan.outputs.wave-number }}-${{ github.run_id }}
           path: sweep-output/manifest.json
@@ -806,13 +806,13 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
       - name: Download wave manifest
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.plan.outputs.manifest-artifact-id }}
           path: wave-manifest
       - name: Download shard results
         if: ${{ needs.plan.outputs.shard-matrix != '[]' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: backlog-grooming-proof-${{ github.run_id }}-${{ github.run_attempt }}-shard-*
           path: wave-results
@@ -834,7 +834,7 @@ jobs:
             -ExpectedAttempt $env:EXPECTED_ATTEMPT
       - name: Upload immutable wave aggregate
         id: aggregate
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: backlog-grooming-sweep-v1-${{ needs.plan.outputs.sweep-id }}-aggregate-${{ needs.plan.outputs.wave-number }}-${{ github.run_id }}
           path: wave-aggregate/aggregate.json
@@ -856,25 +856,25 @@ jobs:
       artifact-id: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - name: Download sweep snapshot
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.plan.outputs.snapshot-artifact-id }}
           path: checkpoint-snapshot
           github-token: ${{ github.token }}
           run-id: ${{ needs.plan.outputs.snapshot-run-id }}
       - name: Download current aggregate
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.validate-wave.outputs.aggregate-artifact-id }}
           path: checkpoint-aggregate
       - name: Download current manifest
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.plan.outputs.manifest-artifact-id }}
           path: checkpoint-manifest
       - name: Download prior checkpoint
         if: ${{ needs.plan.outputs.prior-checkpoint-artifact-id != '' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.plan.outputs.prior-checkpoint-artifact-id }}
           path: prior-checkpoint
@@ -1011,7 +1011,7 @@ jobs:
             core.setOutput("sweep-complete", String(checkpoint.sweep_complete));
       - name: Upload accepted checkpoint
         id: upload
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: backlog-grooming-sweep-v1-${{ needs.plan.outputs.sweep-id }}-checkpoint-${{ needs.plan.outputs.wave-number }}-${{ github.run_id }}
           path: checkpoint-output/checkpoint.json
@@ -1086,14 +1086,14 @@ jobs:
       final-artifact-id: ${{ steps.final.outputs.artifact-id }}
     steps:
       - name: Download sweep snapshot
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.plan.outputs.snapshot-artifact-id }}
           path: reduction-snapshot
           github-token: ${{ github.token }}
           run-id: ${{ needs.plan.outputs.snapshot-run-id }}
       - name: Download terminal checkpoint
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.checkpoint.outputs.artifact-id }}
           path: reduction-terminal
@@ -1390,7 +1390,7 @@ jobs:
             core.setOutput("contract-errors", String(contractErrors.length));
       - name: Upload final detailed sweep evidence
         id: final
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: backlog-grooming-sweep-v1-${{ needs.plan.outputs.sweep-id }}-final-${{ github.run_id }}
           path: final-output
