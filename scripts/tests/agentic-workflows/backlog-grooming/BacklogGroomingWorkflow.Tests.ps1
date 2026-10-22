@@ -1963,7 +1963,28 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
     }
 
     It 'S10 narrows paginated discovery and resumes the first missing wave within a download limit' {
-        $script:Orchestrator | Should -Match 'github\.paginate\(\s+github\.rest\.actions\.listArtifactsForRepo'
+        $script:Orchestrator | Should -Not -Match 'listArtifactsForRepo'
+        $planWorkflow = ConvertFrom-Yaml -Yaml $script:Orchestrator
+        $planJob = $planWorkflow.jobs.plan
+        $planStep = @($planJob.steps | Where-Object { $_.id -eq 'plan' })[0]
+        $planStep.with.retries | Should -Be 3
+        $planStep.with.Keys | Should -Not -Contain 'retry-exempt-status-codes'
+        $planStep.uses | Should -Be 'actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3'
+        @($planJob.permissions.Keys | Sort-Object) | Should -Be @('actions', 'issues')
+        $planJob.permissions.actions | Should -Be 'read'
+        $planJob.permissions.issues | Should -Be 'read'
+        @($planJob.steps | Where-Object { $_.uses -match 'checkout|setup-' }).Count | Should -Be 0
+        @($planJob.steps | Where-Object { $_.run }).Count | Should -Be 0
+        $planJob.outputs.Keys.Count | Should -Be 18
+        foreach ($output in @(
+                'mode', 'sweep-id', 'wave-number', 'required-waves', 'snapshot-digest', 'source-sha',
+                'source-ref', 'snapshot-run-id', 'snapshot-artifact-id', 'prior-checkpoint-run-id',
+                'prior-checkpoint-artifact-id', 'prior-checkpoint-digest', 'shard-matrix', 'manifest-digest',
+                'manifest-artifact-id', 'planned-aic-per-wave', 'planned-sweep-aic', 'continuation-authenticated'
+            )) {
+            $planJob.outputs.Keys | Should -Contain $output
+        }
+        $planStep.Contains('continue-on-error') | Should -BeFalse
         $script:Orchestrator | Should -Match 'artifact\.name\.startsWith\(snapshotPrefix\)'
         [regex]::Matches($script:Orchestrator, 'github\.rest\.actions\.downloadArtifact\(').Count | Should -Be 2
         $script:Orchestrator | Should -Not -Match 'outStream: fs\.createWriteStream'
@@ -2238,6 +2259,123 @@ Describe 'Backlog grooming execution-tag github-script behavior' -Tag 'Unit' {
         $result.outputs.'wave-number' | Should -Be '2'
         $result.outputs.'prior-checkpoint-artifact-id' | Should -Be '2001'
         Test-Path -LiteralPath (Join-Path $TestDrive 'orchestrator-tag-resume/sweep-output/snapshot.json') | Should -BeFalse
+    }
+
+    It 'scoped discovery succeeds for <Scenario>' -ForEach @(
+        @{ Scenario = 'discovery-initial-pages'; Mode = 'new'; Metadata = 0; Downloads = 0 }
+        @{ Scenario = 'discovery-failed-tag-resume'; Mode = 'resume'; Metadata = 2; Downloads = 2 }
+        @{ Scenario = 'discovery-duplicate-continuation'; Mode = 'complete-noop'; Metadata = 3; Downloads = 3 }
+        @{ Scenario = 'discovery-metadata-500'; Mode = 'resume-wave-one'; Metadata = 500; Downloads = 1 }
+        @{ Scenario = 'discovery-download-50'; Mode = 'resume-wave-one'; Metadata = 50; Downloads = 50 }
+        @{ Scenario = 'discovery-calendar-noop'; Mode = 'calendar-noop'; Metadata = 0; Downloads = 0 }
+    ) {
+        $result = Invoke-StepScenario -ScriptPath $script:PlanScript -Scenario $Scenario
+        $result.error | Should -BeNullOrEmpty
+        $result.outputs.mode | Should -Be $Mode
+        $result.calls.broad | Should -Be 0
+        @($result.calls.metadata).Count | Should -Be $Metadata
+        @($result.calls.downloads).Count | Should -Be $Downloads
+        if ($Mode -eq 'calendar-noop') {
+            @($result.calls.runs).Count | Should -Be 0
+            @($result.calls.artifacts).Count | Should -Be 0
+            $result.calls.issues | Should -Be 0
+            $result.outputs.'continuation-authenticated' | Should -Be 'false'
+            @($result.outputs.PSObject.Properties).Count | Should -Be 3
+        }
+        else {
+            foreach ($request in $result.calls.runs) {
+                @($request.PSObject.Properties.Name | Sort-Object) |
+                    Should -Be @('owner', 'page', 'per_page', 'repo', 'workflow_id')
+                $request.workflow_id | Should -Be 'backlog-groom-orchestrator.yml'
+                $request.per_page | Should -Be 100
+            }
+            foreach ($request in $result.calls.artifacts) {
+                $request.per_page | Should -Be 100
+            }
+        }
+        if ($Mode -in @('complete-noop', 'calendar-noop')) {
+            $result.outputs.'shard-matrix' | Should -Be '[]'
+            $result.manifest | Should -BeNullOrEmpty
+            if ($Mode -eq 'complete-noop') {
+                @($result.outputs.PSObject.Properties).Count | Should -Be 2
+            }
+        }
+        else {
+            $snapshot = $result.snapshot
+            $manifest = $result.manifest
+            $wave = if ($Mode -eq 'resume') { '2' } else { '1' }
+            $priorRun = if ($Mode -eq 'resume') { '200' } else { '' }
+            $priorArtifact = if ($Mode -eq 'resume') { '2001' } else { '' }
+            $expected = @{
+                mode = $Mode; 'sweep-id' = $snapshot.sweep_id; 'wave-number' = $wave
+                'required-waves' = [string]$snapshot.required_waves; 'snapshot-digest' = $snapshot.snapshot_digest
+                'source-sha' = ('a' * 40); 'source-ref' = 'refs/heads/main'
+                'snapshot-run-id' = $(if ($Mode -eq 'new') { '300' } else { '100' })
+                'snapshot-artifact-id' = $(if ($Mode -eq 'new') { '' } else { '1001' })
+                'prior-checkpoint-run-id' = $priorRun; 'prior-checkpoint-artifact-id' = $priorArtifact
+                'prior-checkpoint-digest' = [string]$manifest.prior_checkpoint_digest
+                'manifest-digest' = $manifest.manifest_digest; 'planned-aic-per-wave' = '2000'
+                'planned-sweep-aic' = [string]$snapshot.planned_sweep_aic; 'continuation-authenticated' = 'false'
+            }
+            @($result.outputs.PSObject.Properties).Count | Should -Be ($expected.Count + 1)
+            foreach ($key in $expected.Keys) {
+                $result.outputs.$key | Should -Be $expected[$key] -Because $key
+            }
+            $matrix = ConvertFrom-Json -InputObject $result.outputs.'shard-matrix'
+            ConvertTo-Json -InputObject @($matrix) -Compress -Depth 10 |
+                Should -Be (ConvertTo-Json -InputObject @($manifest.shards) -Compress -Depth 10)
+            $snapshot.ordered_issue_ids | Should -Be @(1, 2, 3, 4)
+            $manifest.ordered_issue_ids | Should -Be $(if ($Mode -eq 'resume') { @(3, 4) } else { @(1, 2, 3, 4) })
+            if ($Mode -ne 'new') { $snapshot.sweep_id | Should -Be ('b' * 64) }
+        }
+        if ($Scenario -eq 'discovery-initial-pages') {
+            @($result.calls.runs).Count | Should -Be 2
+            @($result.calls.artifacts).Count | Should -Be 102
+            $result.calls.issues | Should -Be 1
+        }
+    }
+
+    It 'scoped discovery propagates exhausted transport failure for <Scenario>' -ForEach @(
+        @{ Scenario = 'discovery-run-http500'; Stage = 'Workflow-run discovery' }
+        @{ Scenario = 'discovery-artifact-http500'; Stage = 'Run-artifact discovery for run 100' }
+        @{ Scenario = 'discovery-snapshot-http500'; Stage = 'Artifact metadata 1001' }
+        @{ Scenario = 'discovery-checkpoint-http500'; Stage = 'Artifact metadata 2001' }
+    ) {
+        $result = Invoke-StepScenario -ScriptPath $script:PlanScript -Scenario $Scenario
+        $result.error | Should -Match ([regex]::Escape($Stage))
+        $result.error | Should -Match 'exhausted HTTP 500'
+        @($result.outputs.PSObject.Properties).Count | Should -Be 0
+        $result.calls.broad | Should -Be 0
+        $result.calls.issues | Should -Be 0
+        $result.manifest | Should -BeNullOrEmpty
+        @($result.messages | Where-Object { $_.level -eq 'warning' }).Count | Should -Be 0
+    }
+
+    It 'scoped discovery rejects incomplete or excessive state for <Scenario>' -ForEach @(
+        @{ Scenario = 'discovery-ambiguous-continuation'; Message = 'Multiple accepted checkpoints for one sweep wave are ambiguous' }
+        @{ Scenario = 'discovery-duplicate-run'; Message = 'Workflow-run discovery: missing or duplicate identity' }
+        @{ Scenario = 'discovery-duplicate-artifact'; Message = 'Run-artifact discovery for run 900: missing or duplicate identity' }
+        @{ Scenario = 'discovery-missing-page'; Message = 'Workflow-run discovery: incomplete final total count' }
+        @{ Scenario = 'discovery-malformed-page'; Message = 'Workflow-run discovery: malformed count or page response' }
+        @{ Scenario = 'discovery-page-bound'; Message = 'Workflow-run discovery: pagination link exceeds derived page bound' }
+        @{ Scenario = 'discovery-metadata-501'; Message = 'Active sweep discovery metadata candidate limit exceeded' }
+        @{ Scenario = 'discovery-download-51'; Message = 'Active sweep discovery candidate download limit exceeded' }
+    ) {
+        $result = Invoke-StepScenario -ScriptPath $script:PlanScript -Scenario $Scenario
+        $result.error | Should -Match ([regex]::Escape($Message))
+        @($result.outputs.PSObject.Properties).Count | Should -Be 0
+        $result.calls.broad | Should -Be 0
+        $result.calls.issues | Should -Be 0
+        $result.manifest | Should -BeNullOrEmpty
+        if ($Scenario -eq 'discovery-metadata-501') {
+            @($result.calls.metadata).Count | Should -Be 500
+            @($result.calls.downloads).Count | Should -Be 1
+        }
+        if ($Scenario -eq 'discovery-download-51') {
+            @($result.calls.metadata).Count | Should -Be 51
+            @($result.calls.downloads).Count | Should -Be 50
+        }
+        if ($Scenario -eq 'discovery-page-bound') { @($result.calls.runs).Count | Should -Be 1 }
     }
 }
 

@@ -115,6 +115,7 @@ jobs:
           INPUT_CHECKPOINT_ARTIFACT_ID: ${{ inputs.checkpoint-artifact-id }}
           INPUT_CHECKPOINT_DIGEST: ${{ inputs.checkpoint-digest }}
         with:
+          retries: 3
           script: |
             const crypto = require("crypto");
             const fs = require("fs");
@@ -146,20 +147,97 @@ jobs:
               }
             };
             const workflowPath = ".github/workflows/backlog-groom-orchestrator.yml";
-            const getArtifactMetadata = async (artifactId) => {
-              const { data: artifact } = await github.rest.actions.getArtifact({
-                ...context.repo,
-                artifact_id: parseInteger("artifact-id", artifactId, 1),
-              });
-              if (artifact.expired || !artifact.workflow_run?.id) {
-                throw new Error(`Artifact ${artifactId} is expired or lacks producing-run identity`);
+            const listCompleteCollection = async (stage, method, params, key) => {
+              const records = [];
+              const identities = new Set();
+              let totalCount;
+              let pageBound;
+              for (let page = 1; ; page += 1) {
+                let response;
+                try {
+                  response = await method({ ...context.repo, ...params, per_page: 100, page });
+                } catch (error) {
+                  throw new Error(`${stage}: ${error.message}`, { cause: error });
+                }
+                const count = response.data?.total_count;
+                const items = response.data?.[key];
+                if (!Number.isSafeInteger(count) || count < 0 || !Array.isArray(items)) {
+                  throw new Error(`${stage}: malformed count or page response`);
+                }
+                if (page === 1) {
+                  totalCount = count;
+                  pageBound = Math.max(1, Math.ceil(count / 100));
+                  core.info(`${stage}: ${count} records, at most ${pageBound} logical pages`);
+                }
+                if (count !== totalCount || items.length !== Math.min(100, totalCount - records.length)) {
+                  throw new Error(`${stage}: missing page or inconsistent total count`);
+                }
+                for (const item of items) {
+                  if (!Number.isSafeInteger(item?.id) || item.id <= 0 || identities.has(item.id)) {
+                    throw new Error(`${stage}: missing or duplicate identity`);
+                  }
+                  identities.add(item.id);
+                  records.push(item);
+                }
+                const nextLink = response.headers?.link?.match(/<([^>]+)>;\s*rel="next"/);
+                if (!nextLink) {
+                  if (records.length !== totalCount) throw new Error(`${stage}: incomplete final total count`);
+                  return records;
+                }
+                const nextPage = Number(new URL(nextLink[1]).searchParams.get("page"));
+                if (page >= pageBound || nextPage !== page + 1) {
+                  throw new Error(`${stage}: pagination link exceeds derived page bound or skips a page`);
+                }
               }
-              const { data: run } = await github.rest.actions.getWorkflowRun({
-                ...context.repo,
-                run_id: artifact.workflow_run.id,
-              });
+            };
+            const discoverArtifacts = async () => {
+              const runs = await listCompleteCollection(
+                "Workflow-run discovery", github.rest.actions.listWorkflowRuns,
+                { workflow_id: "backlog-groom-orchestrator.yml" }, "workflow_runs",
+              );
+              const artifacts = [];
+              const identities = new Set();
+              for (const run of runs) {
+                const runArtifacts = await listCompleteCollection(
+                  `Run-artifact discovery for run ${run.id}`, github.rest.actions.listWorkflowRunArtifacts,
+                  { run_id: run.id }, "artifacts",
+                );
+                for (const artifact of runArtifacts) {
+                  if (typeof artifact.name !== "string" || typeof artifact.expired !== "boolean" ||
+                      (artifact.workflow_run?.id !== undefined && artifact.workflow_run.id !== run.id) ||
+                      identities.has(artifact.id)) {
+                    throw new Error(`Run-artifact discovery for run ${run.id}: invalid artifact or producing-run identity`);
+                  }
+                  identities.add(artifact.id);
+                  artifacts.push({ ...artifact, workflow_run: { ...artifact.workflow_run, id: run.id } });
+                }
+              }
+              return artifacts;
+            };
+            class InvalidArtifactError extends Error {}
+            const getArtifactMetadata = async (artifactId) => {
+              let artifact;
+              let run;
+              try {
+                ({ data: artifact } = await github.rest.actions.getArtifact({
+                  ...context.repo,
+                  artifact_id: parseInteger("artifact-id", artifactId, 1),
+                }));
+                if (artifact.expired || !artifact.workflow_run?.id) {
+                  throw new InvalidArtifactError(`Artifact ${artifactId} is expired or lacks producing-run identity`);
+                }
+                ({ data: run } = await github.rest.actions.getWorkflowRun({
+                  ...context.repo,
+                  run_id: artifact.workflow_run.id,
+                }));
+              } catch (error) {
+                if (error.status === 404 || error.status === 410) {
+                  throw new InvalidArtifactError(`Artifact ${artifactId} or its producing run is no longer available`);
+                }
+                throw error;
+              }
               if (run.path !== workflowPath) {
-                throw new Error(`Artifact ${artifactId} was not produced by ${workflowPath}`);
+                throw new InvalidArtifactError(`Artifact ${artifactId} was not produced by ${workflowPath}`);
               }
               return { artifact, run };
             };
@@ -333,10 +411,7 @@ jobs:
               priorCheckpointArtifactId = process.env.INPUT_CHECKPOINT_ARTIFACT_ID;
               priorCheckpointRunId = process.env.INPUT_CHECKPOINT_RUN_ID;
               mode = "continuation";
-              const allArtifacts = await github.paginate(
-                github.rest.actions.listArtifactsForRepo,
-                { ...context.repo, per_page: 100 },
-              );
+              const allArtifacts = await discoverArtifacts();
               const acceptedPrefix = `backlog-grooming-sweep-v1-${snapshot.sweep_id}-checkpoint-${waveNumber}-`;
               const acceptedCandidates = allArtifacts.filter(
                 (artifact) => !artifact.expired && artifact.name.startsWith(acceptedPrefix),
@@ -368,10 +443,7 @@ jobs:
                 return;
               }
             } else {
-              const allArtifacts = await github.paginate(
-                github.rest.actions.listArtifactsForRepo,
-                { ...context.repo, per_page: 100 },
-              );
+              const allArtifacts = await discoverArtifacts();
               const snapshotPrefix = `backlog-grooming-sweep-v1-${context.payload.repository.id}-snapshot-`;
               const candidates = allArtifacts.filter(
                 (artifact) => !artifact.expired && (executionTagSweepId
@@ -406,7 +478,7 @@ jobs:
                 try {
                   snapshotMetadata = await getArtifactMetadata(artifact.id);
                 } catch (error) {
-                  if (executionTagSweepId) throw error;
+                  if (executionTagSweepId || !(error instanceof InvalidArtifactError)) throw error;
                   core.warning(`Ignoring untrusted narrowed snapshot artifact ${artifact.id}: ${error.message}`);
                   continue;
                 }
@@ -450,6 +522,7 @@ jobs:
                   try {
                     checkpointMetadata = await getArtifactMetadata(checkpointArtifact.id);
                   } catch (error) {
+                    if (executionTagSweepId || !(error instanceof InvalidArtifactError)) throw error;
                     core.warning(`Ignoring untrusted narrowed checkpoint artifact ${checkpointArtifact.id}: ${error.message}`);
                     continue;
                   }
