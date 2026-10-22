@@ -214,6 +214,56 @@ test('timeline shows the merged HVE Builder introduction', () => {
   assert.equal(sources['builder-introduction'].url, 'https://github.com/microsoft/hve-core/pull/2438');
 });
 
+test('timeline separates the earlier snapshot from changes since September 10', () => {
+  const timeline = html.match(/<section id="timeline"[\s\S]*?<\/section>/)[0];
+  const eras = [...timeline.matchAll(/<div class="timeline-era[^"]*">([\s\S]*?)<\/div>\s*<\/div>/g)].map(match => match[1]);
+  assert.equal(eras.length, 2);
+  assert.equal((eras[0].match(/<article>/g) || []).length, 5);
+  assert.equal((eras[1].match(/<article>/g) || []).length, 4);
+  for (const pr of ['#2902', '#3061', '#3111', '#3238']) assert.match(eras[1], new RegExp(`PR ${pr}<`));
+  assert.match(timeline, /aria-labelledby="era-before"/);
+  assert.match(timeline, /aria-labelledby="era-since"/);
+});
+
+test('HVE Builder slides describe the review pass, not the retired tester', () => {
+  const chapter = html.slice(html.indexOf('<section id="builder-opening"'), html.indexOf('<section id="plugins-opening"'));
+  assert.doesNotMatch(chapter, /<section id="frozen-evidence"/);
+  assert.doesNotMatch(chapter, /Refreeze|Assess this version/);
+  assert.match(chapter, /<s>Freeze<\/s> <small>removed<\/small>/);
+  assert.match(chapter, /<li class="emphasis"><b>04<\/b>Review pass<\/li>/);
+  const ledger = chapter.match(/<table class="ledger">[\s\S]*?<\/table>/)[0];
+  assert.match(ledger, /class="decision accepted">Accepted</);
+  assert.match(ledger, /class="decision rejected">Rejected</);
+  assert.match(chapter, /Recorded verdict: Pass/);
+  assert.deepEqual(demos.builder.phases, ['Scope', 'Author', 'Validate', 'Review', 'Correct', 'Handoff']);
+  const reviewSteps = demos.builder.steps.filter(step => step.phase === 'Review');
+  assert.match(reviewSteps[0].body, /Suggested verdict: Revise \(advisory\)/);
+  assert.match(reviewSteps[1].body, /R-001 {2}Accepted[\s\S]*R-002 {2}Rejected/);
+  for (const step of demos.builder.steps) assert.doesNotMatch(`${step.body} ${step.insight}`, /\b(?:[Tt]ester|[Ff]reeze|[Ff]rozen)\b/);
+  for (const key of ['builder-tester', 'builder-alias', 'builder-reassessment']) assert.equal(sources[key], undefined, key);
+  assert.ok(sources['builder-reviewer'] && sources['aliases-removed'] && sources['lead-with-result']);
+});
+
+test('RPI helper and settings slides use current subagent names and arguments', () => {
+  const helpers = html.match(/<section id="helpers"[\s\S]*?<\/section>/)[0];
+  assert.doesNotMatch(helpers, /RPI Planner revises|Review Builder writes/);
+  for (const lens of ['Coverage', 'Evidence', 'Executability', 'Risk']) assert.match(helpers, new RegExp(`<span>${lens}</span>`));
+  const settings = html.match(/<section id="rpi-settings"[\s\S]*?<\/section>/)[0];
+  for (const argument of ['posture=focused', 'critique=skip', 'effort=high', 'critique-effort=low', 'subagents=none']) {
+    assert.match(settings, new RegExp(`<th scope="row"><code>${argument}</code></th>`));
+  }
+  assert.match(settings, /recorded as skipped, never as a pass/);
+});
+
+test('repository citations share one pinned source revision', () => {
+  const revisions = new Set(Object.values(sources)
+    .map(source => source.url.match(/^https:\/\/github\.com\/microsoft\/hve-core\/blob\/([0-9a-f]{40})\//))
+    .filter(Boolean)
+    .map(match => match[1])
+    .filter(revision => revision !== '62c97a7447a914293c0bf2a94c72db2a4fd3599c'));
+  assert.deepEqual([...revisions], ['301cad63b340d92066c599b28ae85931982e461a']);
+});
+
 test('opening and historical handoffs have explicit ordered stages', () => {
   const opening = html.match(/<ol class="opening-workflow"[\s\S]*?<\/ol>/)[0];
   assert.deepEqual([...opening.matchAll(/<strong>([^<]+)<\/strong>/g)].map(match => match[1]), ['Research', 'Plan', 'Implement', 'Review']);
@@ -235,7 +285,7 @@ test('participation popup retains all modes and the example stop-before-code cho
 });
 
 test('RPI usage slides call out selecting RPI Agent without requiring it for standalone skills', () => {
-  const expected = ['then-now', 'select-rpi-agent', 'spine', 'research-evidence', 'plan-evidence', 'critique-changes', 'review-evidence', 'modes', 'bounded-loop', 'helpers', 'rpi-demo', 'extend-rpi', 'two-loops', 'one-plugin', 'closing'];
+  const expected = ['then-now', 'select-rpi-agent', 'spine', 'research-evidence', 'plan-evidence', 'critique-changes', 'review-evidence', 'modes', 'bounded-loop', 'helpers', 'rpi-settings', 'rpi-demo', 'extend-rpi', 'two-loops', 'one-plugin', 'closing'];
   const slides = [...html.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)];
   const guided = slides.filter(([, attributes]) => /\bdata-rpi-agent\b/.test(attributes));
   assert.deepEqual(guided.map(([, attributes]) => attributes.match(/\bid="([^"]+)"/)[1]), expected);
@@ -247,7 +297,7 @@ test('RPI usage slides call out selecting RPI Agent without requiring it for sta
   }
   const ids = slides.map(([, attributes]) => attributes.match(/\bid="([^"]+)"/)[1]);
   assert.equal(ids.indexOf('select-rpi-agent') + 1, ids.indexOf('spine'));
-  assert.equal(ids.length, 26);
+  assert.equal(ids.length, 28);
   assert.equal(rpiAgentSelection.kind, 'agent-picker');
   assert.match(rpiAgentSelection.body, /Select RPI Agent/);
   assert.equal(demos.rpi.steps.length, 15);
@@ -336,7 +386,7 @@ test('standalone output contains the full current deck, vendor code and license'
   assert.deepEqual(JSON.parse(catalog), { title: metadata.title, description: metadata.description });
   assets.set('vendor/reveal.js', neutralizeRevealSinks(assets.get('vendor/reveal.js'), revealVersion));
   for (const name of [...styles, ...scripts]) assert.ok(bundled.includes(assets.get(name)), name);
-  assert.equal((bundled.match(/<section\b/g) || []).length, 26);
+  assert.equal((bundled.match(/<section\b/g) || []).length, 28);
   assert.equal((bundled.match(/<style data-bundled-source=/g) || []).length, 3);
   assert.equal((bundled.match(/<script data-bundled-source=/g) || []).length, 4);
   assert.match(bundled, /Permission is hereby granted/);

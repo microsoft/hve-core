@@ -209,7 +209,7 @@
       dialogContent.append(element('p', 'source-note', 'RPI Agent coordinates the phases. The skills can also run on their own. This example does not change your Chat agent or permissions.'));
     } else if (kind === 'sources') {
       title.textContent = `Sources / ${current.dataset.title}`;
-      dialogContent.append(element('p', '', 'References checked September 10, 2026. HVE source uses commit 3e29a0b2 unless a historical version is named. Example transcripts and results are scripted.'));
+      dialogContent.append(element('p', '', 'HVE references checked October 21, 2026, against commit 301cad63 unless a historical version is named. VS Code and Copilot CLI references were checked September 10, 2026. Example transcripts and results are scripted.'));
       dialogContent.append(sourceList(current.dataset.sources.split(',')));
       if (current.dataset.chapter === 'Plugins') {
         dialogContent.append(element('p', 'source-note', 'VS Code can read plugins installed by CLI in the same user home. VS Code-managed installations use a separate path by default. Manual sharing, remote environments, profiles and policy can affect discovery. This walkthrough does not install plugins.'));
