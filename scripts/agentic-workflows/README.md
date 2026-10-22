@@ -2,7 +2,7 @@
 title: Agentic Workflow Runtime Scripts
 description: Trusted runtime support for compiled Agentic Workflows
 author: HVE Core Team
-ms.date: 2026-10-21
+ms.date: 2026-10-22
 ms.topic: reference
 keywords:
   - agentic workflows
@@ -49,7 +49,7 @@ with the available run inventory and has no fixed run-count or age cutoff.
 
 The planning github-script step enables three request retries, allowing at
 most four physical attempts per logical API request. The action's default
-nonretryable statuses (`400`, `401`, `403`, `404`, `422`) remain unchanged.
+statuses excluded from retries (`400`, `401`, `403`, `404`, `422`) remain unchanged.
 Retries do not enlarge the logical page bounds. Exhausted listing or
 snapshot/checkpoint metadata API and network errors fail planning rather
 than appearing as an empty inventory. Recognized missing, expired, or
