@@ -54,10 +54,14 @@ stimuli:
           dest: .github/instructions/shared/disclaimer-language.instructions.md
         - src: ../../.github/instructions/security/sssc-planner.instructions.md
           dest: .github/instructions/security/sssc-planner.instructions.md
-        - src: fixtures/security-planner-disclaimer-shown-state.json
+        - src: fixtures/security-plan-payments-api-state.json
           dest: .copilot-tracking/security-plans/payments-api/state.json
-        - src: fixtures/security-planner-disclaimer-shown-state.json
+        - src: fixtures/security-plan-payments-api.txt
+          dest: .copilot-tracking/security-plans/payments-api/security-plan.md
+        - src: fixtures/security-plan-ledger-service-state.json
           dest: .copilot-tracking/security-plans/ledger-service/state.json
+        - src: fixtures/security-plan-ledger-service.txt
+          dest: .copilot-tracking/security-plans/ledger-service/security-plan.md
     tags:
       category: agent-behavior
       advisory: "true"
