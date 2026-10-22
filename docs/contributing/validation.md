@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-10-22
 ms.topic: how-to
 keywords:
   - validation
@@ -127,6 +127,33 @@ The hosted Python test workflow runs on Ubuntu. A green hosted check therefore
 demonstrates Linux behavior, not a native-Windows full-suite pass; run the
 Windows commands above for that evidence. Screen-reader execution and browser
 installation are separate prerequisites for their own validation lanes.
+
+## Node test lane
+
+PR validation runs Node tests through one reusable lane. Discovery selects every
+directory that ships a `*.test.*` or `*.spec.*` module (`mjs`, `cjs`, or `js`)
+among these project kinds:
+
+* Skills: a directory that contains `SKILL.md`
+* Slide decks: a direct child of `slides/`
+* Copilot extensions and canvases: a directory under `.github/extensions/` that
+  contains `extension.mjs`
+* The workflow validator under `scripts/linting/workflow-validator/`
+
+Each project runs `node --test` with coverage from its own directory and
+uploads coverage under the Codecov `node` flag. A project runs only when its
+JavaScript files change, except where its tests read other inputs: slide decks
+and the `hve-slides` skill run on any change in their directory, and every
+extension runs on any change under `.github/extensions/`, because canvas tests
+also read UI assets and the repository project entries.
+
+Reproduce a project locally with `node --test` from its directory, or use a
+package command:
+
+| Project                         | Command                   |
+|---------------------------------|---------------------------|
+| Copilot extensions and canvases | `npm run test:extensions` |
+| HVE slides skill and decks      | `npm run test:slides`     |
 
 ## Install behind a restricted network
 
