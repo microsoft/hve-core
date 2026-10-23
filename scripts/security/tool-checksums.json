@@ -164,13 +164,13 @@
     {
       "name": "pip-audit",
       "repo": "pypa/pip-audit",
-      "version": "2.10.0",
+      "version": "2.10.1",
       "verification": "pypi",
       "registry": "pypi",
       "package": "pip-audit",
       "lockProject": "scripts/tools/pip-audit",
       "sha256ByArch": {
-        "linux_amd64": "16e02093872fac97580303f0848fa3ad64f7ecf600736ea7835a2b24de49613f"
+        "linux_amd64": "99ef3f600a317c1945f1e89e227ef26e1c2d618429b8bd3fa6f4f7c440c4611a"
       },
       "notes": "Python dependency audits in pip-audit.yml and Invoke-PipAudit.ps1, run with uv run --locked from lockProject. The digest is the PyPI py3-none-any wheel hash and must appear in that uv.lock."
     },
