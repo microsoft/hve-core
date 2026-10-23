@@ -1,0 +1,27 @@
+{
+  "name": "skill-effectiveness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT AND CC-BY-4.0",
+  "description": "Experimental native Vally skill-evaluation authoring; model-free asset tests",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "@github/copilot": "1.0.89",
+    "@github/copilot-sdk": "1.0.15",
+    "@microsoft/vally": "0.19.0",
+    "@microsoft/vally-cli": "0.19.0",
+    "sharp": "0.35.5",
+    "yaml": "2.9.1"
+  },
+  "overrides": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "@azure/monitor-opentelemetry-exporter": "1.0.0-beta.46",
+    "qs": "6.16.0"
+  }
+}

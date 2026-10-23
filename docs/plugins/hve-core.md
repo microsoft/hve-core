@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-16
 ms.topic: reference
 keywords:
   - package
@@ -54,6 +54,7 @@ The complete plugin includes:
 
 * RPI lifecycle coordination, research, planning, implementation, review, and walkthroughs
 * HVE Builder authoring, review, validation, and Vally conformance support
+* Supervised baseline-versus-with-skill evaluation authoring through skill-effectiveness, using existing skills or repository-derived candidates
 * Coding standards and code review for multiple languages and infrastructure formats, including contract-focused TypeScript documentation comments
 * Security, TM7 threat-model generation, supply-chain security, privacy, accessibility, and Responsible AI planning and review
 * Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, proposal and RFP responses, and backlog workflows

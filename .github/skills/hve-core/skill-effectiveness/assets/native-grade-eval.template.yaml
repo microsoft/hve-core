@@ -1,0 +1,93 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Copy to evals/<task>.grade.eval.yaml; never use for candidate execution.
+# Expected digest comes from the reviewed original, outside candidate authority.
+# Authorize/verify protected mounts and arm binding before invoking native grade.
+name: <task-name>
+description: Protected offline executable grading of one completed native trial.
+version: "1.0.0"
+type: capability
+scoring: {}
+stimuli:
+  - name: <task-name>
+    prompt: Saved-result grading only; no candidate or model invocation.
+    graders:
+      - type: program
+        name: behavior
+        config:
+          program: node
+          timeout: 3m
+          args:
+            - --input-type=module
+            - -e
+            - |
+              import { createHash } from "node:crypto";
+              import { lstatSync, readFileSync, realpathSync } from "node:fs";
+              import { isAbsolute, join, relative, sep } from "node:path";
+              import { pathToFileURL } from "node:url";
+              const report = (passed, evidence, status) => console.log(JSON.stringify({
+                name: "behavior", kind: "code", passed, score: passed ? 1 : 0,
+                evidence, ...(status ? { status } : {}),
+              }));
+              try {
+                const expected = process.argv[1];
+                if (process.argv.length !== 2 || !/^[a-f0-9]{64}$/i.test(expected ?? "")) {
+                  throw new Error("Invalid trusted checker digest");
+                }
+                const roots = ["EVALUATE_ASSETS", "EVALUATE_ARTIFACT_DIR", "EVALUATE_WORKSPACE"]
+                  .map(key => {
+                    const value = process.env[key];
+                    if (!value || !isAbsolute(value)) throw new Error("Missing/invalid " + key);
+                    const root = realpathSync(value);
+                    if (!lstatSync(root).isDirectory()) throw new Error("Invalid " + key);
+                    return root;
+                  });
+                const within = (root, file) => {
+                  const part = relative(root, file);
+                  return part === "" || (!isAbsolute(part) && part !== ".." && !part.startsWith(".." + sep));
+                };
+                for (const [index, root] of roots.entries()) {
+                  for (const other of roots.slice(index + 1)) {
+                    if (within(root, other) || within(other, root)) throw new Error("Overlapping native roots");
+                  }
+                }
+                const inputFile = (root, authored, optional = false) => {
+                  const parts = authored.split(/[\\/]/);
+                  if (!authored || isAbsolute(authored) || parts.some(part => !part || part === "." || part === "..")) {
+                    throw new Error("Invalid input-relative path");
+                  }
+                  let file = root;
+                  for (const [index, part] of parts.entries()) {
+                    file = join(file, part);
+                    let stat;
+                    try { stat = lstatSync(file); } catch (error) {
+                      if (optional && error.code === "ENOENT") return undefined;
+                      throw error;
+                    }
+                    if (stat.isSymbolicLink() || realpathSync(file) !== file) throw new Error("Untrusted input path");
+                    const valid = index === parts.length - 1 ? stat.isFile() : stat.isDirectory();
+                    if (!valid) {
+                      if (optional) return undefined;
+                      throw new Error("Invalid trusted checker path");
+                    }
+                  }
+                  return file;
+                };
+                const checker = inputFile(roots[0], "<checker-entry>");
+                const outputRelative = "deliverable/<artifact>";
+                const submission = inputFile(roots[1], outputRelative, true);
+                const actual = createHash("sha256").update(readFileSync(checker)).digest("hex");
+                if (actual !== expected.toLowerCase()) throw new Error("Trusted checker integrity mismatch");
+                if (!submission) {
+                  report(false, "Required deliverable missing/invalid; checker not executed");
+                } else {
+                  process.chdir(roots[1]);
+                  process.argv = [process.execPath, checker, outputRelative];
+                  await import(pathToFileURL(checker).href);
+                  report(true, "Authenticated task checker completed");
+                }
+              } catch (error) {
+                report(false, error.name + ": " + error.message, "error");
+              }
+            - "<checker-sha256>"

@@ -1,0 +1,31 @@
+Skill Effectiveness: license scope and attribution
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+Source: https://github.com/microsoft/hve-core/tree/main/.github/skills/hve-core/skill-effectiveness
+
+The authoring skill is a mixed-content package:
+
+* Skill/reference prose, SECURITY.md and assets/EVALS.template.md are licensed
+  under Creative Commons Attribution 4.0 International (CC-BY-4.0).
+  Terms: https://creativecommons.org/licenses/by/4.0/
+* JavaScript helpers/tests, YAML/JSON templates and package configuration are
+  licensed under MIT. The accompanying LICENSE contains the MIT terms for
+  those materials; it does not replace the CC-BY-4.0 allocation above.
+
+MIT AND CC-BY-4.0 describes redistribution of the complete authoring package,
+not a choice of license for each file.
+
+When assembling an evaluation package, retain LICENSE and this NOTICE with
+the copied materials. EVALS.md adapted from assets/EVALS.template.md retains
+its Microsoft attribution, source and CC-BY-4.0 license link. Indicate changes
+to copied CC-BY material and retain existing notices when redistributing it.
+
+These allocations apply to the copied HVE materials, not automatically to
+operator-authored tasks, datasets, submissions, findings or the complete
+generated evaluation package. The generated package manifest intentionally
+does not prescribe a license for that new combined work. Its author determines
+appropriate licensing and permissions for additional materials.
+
+Dependencies retain their own licenses and terms. Installing them does not
+make them MIT- or CC-BY-4.0-licensed by this notice. No dependency source or
+binary is vendored in the authoring package.

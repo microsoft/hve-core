@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-23
 ms.topic: reference
 keywords:
   - security
@@ -2333,6 +2333,53 @@ Those models follow a shared structure (assets, adversaries, trust buckets with 
 | vex                                 | Local Python gate (`vex_gate.py`); anchored-regex parse of untrusted detection-issue body; `json.loads` of local OpenVEX doc; exit code only                                                                                                                                                                                                                                                                                                                 | Gate-suppression by issue-edit access; forced-proceed AI-credit consumption                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SECURITY.md)                       |
 | hve-core-installer                  | Local PowerShell and Bash twins; file copy from a local HVE Core clone into a target repository; `jq`, `git rev-parse`, and VS Code CLI subprocesses; no network or credentials                                                                                                                                                                                                                                                                              | Source content trusted after an advisory origin check; check-to-write race narrowed, not eliminated; macOS and Git Bash unverified and Windows junction case not in CI; tracking manifest not integrity-protected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/installer/hve-core-installer/SECURITY.md)       |
 | hve-demo-material (experimental)    | REST and Pages client using `GITHUB_TOKEN`; local deck, frame, audio, and video writes; `node`, `npm`, `ffmpeg`, `uv`, and `git` subprocesses                                                                                                                                                                                                                                                                                                                | Token endpoint and redirect handling not validated; unconfined image paths embedded in the HTML deck; unguarded deck-directory deletion; caller-selected template executed by `node`; unpinned runtime dependencies and host binaries; sibling components not yet reviewed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/SECURITY.md)     |
+| skill-effectiveness                 | Tool-using intake; pinned stdio/context policy; optional empty client and Windows sandbox; Linux rendering regression; protected grading; descriptor-validated evidence reads; bounded saved review; durable startup backups                                                                                                                                                                                                                                 | Full task/grader containment remains profile-specific; generic provider environment remains; runtime state/evidence are private and unredacted; no independent host attestation or enforced spending cap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/skill-effectiveness/SECURITY.md)       |
+
+Primary residual gaps for skill-effectiveness remain open; its
+evidence and image readers validate an opened read-only descriptor before
+reading, retain canonical/link and size checks, and compare path identity before
+and after reads. This does not establish hostile same-user race immunity. Its
+saved-image reviewer separately bounds authenticated runtime startup to thirty
+seconds, other lifecycle operations to ten seconds and responses to two minutes.
+Deadline records and unconfirmed-shutdown stops remain; no retries or additional
+reviewer permissions are introduced. Its
+optional explicit empty client mode suppresses observed nested-repository
+instruction discovery with private state under the external audit root. The
+empty-source startup guard is unchanged; full-checkout tests are required and
+later context/isolation risks remain open. Controlled workspace/OS context
+prevents an empty-mode candidate from assuming a different path without
+restoring ambient instruction discovery. Its
+optional Linux renderer regression now checks actual Chromium/Mermaid output
+with a reviewed user-namespace/chroot seccomp policy, no host capabilities,
+no-new-privileges and denied egress. This does not qualify arbitrary images,
+native CLI export or immutable submission binding. Its
+[per-skill model](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/skill-effectiveness/SECURITY.md)
+owns the controls and eight-gap register. Explicit platform-runtime selection
+and durable external audit storage avoid ambient runtime selection and
+candidate-visible diagnostic names. Audit roots reject workspace overlap,
+including canonical redirects; retain the explicit operator audit root and native output logs separately from
+candidate workspaces. These controls and pre-prompt instruction/skill checks
+alone do not establish credential removal or OS isolation.
+The optional Windows-native candidate profile additionally strips inherited
+Copilot/GitHub tokens and Copilot provider variables and applies the native
+command sandbox with protected audit/authentication paths, no bypass or shell
+credentials, workspace-only writes and denied command networking. Its actual
+normal-login model-free regression checks Node execution and file/write/network
+denials without forwarding model prompts. This is an explicit session policy,
+not a managed-policy floor or offline-grader isolation.
+Generic provider authentication remains intentionally configured, and
+directory-listing grants can reveal names. Tested Linux-profile policy,
+synthetic containment, decoding and no-prompt retention checks do not qualify
+arbitrary task policies, authenticated model tasks or full Windows task/grader
+containment. Startup
+backups provide supervised consistency, not independent host attestation;
+checker/dependency protection and original-record/arm binding remain separate
+requirements. Omitted paid aliases do not enforce spending limits, and financial
+approval never waives security prerequisites. See the
+[execution evidence](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/skill-effectiveness/references/experiment-method.md#completed-model-free-evidence-and-limits)
+for scoped results; changed package revisions and profiles need affected
+validation. Saved evidence is not automatically redacted
+or safe to publish.
 
 Skills whose scripts meet none of those triggers, for example scripts that only read the local repository, run fixed-argument programs, and write to stdout or `.copilot-tracking/`, do not require a dedicated model; their risk is bounded by the repository-level controls.
 Each such skill is declared exempt, with its reason, in the [skill security classification file](https://github.com/microsoft/hve-core/blob/main/scripts/linting/skill-security-classification.json), which also lists required skills whose model is still pending along with their tracking issue.

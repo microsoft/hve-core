@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-12
+ms.date: 2026-10-23
 ms.topic: how-to
 keywords:
   - skills
@@ -42,12 +42,12 @@ Create a skill when you need to:
 
 The following skill types will likely be rejected:
 
-| Reason                     | Details                                                                                                                                                                                                |
-|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Duplicate Skills           | Skills that replicate functionality of existing tools or skills                                                                                                                                        |
-| Missing PowerShell Scripts | Skills that include a `scripts/` directory without a `.ps1` file when the skill targets PowerShell or cross-platform execution (Python skills can instead package executable modules under `scripts/`) |
-| Undocumented Utilities     | Scripts without comprehensive SKILL.md documentation                                                                                                                                                   |
-| Untested Skills            | Skills that lack unit tests or fail to achieve 80% code coverage                                                                                                                                       |
+| Reason                     | Details                                                                                                                                                                     |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Duplicate Skills           | Skills that replicate functionality of existing tools or skills                                                                                                             |
+| Missing PowerShell Scripts | PowerShell-based skills that include a `scripts/` directory without a `.ps1` file (Python and Node.js skills can instead package their executable modules under `scripts/`) |
+| Undocumented Utilities     | Scripts without comprehensive SKILL.md documentation                                                                                                                        |
+| Untested Skills            | Skills that lack unit tests or fail to achieve 80% code coverage                                                                                                            |
 
 ## File Structure Requirements
 
@@ -78,7 +78,14 @@ Skill files are typically organized in a package subdirectory by convention:
 > [!NOTE]
 > Tracked skills beneath a `.github/skills/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`, unless the skill's top-level license has a noncommercial qualifier.
 
-The `scripts/` directory is **optional**. When present, it **MUST** contain at least one PowerShell script for PowerShell or cross-platform skills, and it **SHOULD** contain at least one `.sh` file when a bash implementation is also provided. Python skills may instead package executable modules under `scripts/<package>/__init__.py` and still satisfy the scripts requirement. Skills without scripts are valid and function as documentation-driven knowledge packages.
+The `scripts/` directory is **optional**. When present, it **MUST** contain at
+least one PowerShell script for PowerShell-based skills, and it **SHOULD**
+contain at least one `.sh` file when a bash implementation is also provided.
+Python skills may instead package executable modules under
+`scripts/<package>/__init__.py`; Node.js skills may use `.mjs` entry points under
+`scripts/` with `node:test` suites under `tests/` and an npm test command.
+These satisfy the scripts requirement without shell wrappers. Skills without
+scripts are valid and function as documentation-driven knowledge packages.
 
 ### Skill Security Model
 
@@ -494,6 +501,7 @@ Skills may include scripts in any of these supported languages. Each language ha
 | Language   | Script Extension | Test Framework | Linter / Analyzer                           | CI Coverage        |
 |------------|------------------|----------------|---------------------------------------------|--------------------|
 | Bash       | `.sh`            | N/A            | shellcheck                                  | Lint only          |
+| Node.js    | `.mjs`           | `node:test`    | `node --check`                              | Syntax + tests     |
 | PowerShell | `.ps1`           | Pester 5.x     | PSScriptAnalyzer                            | Full (lint + test) |
 | Python     | `.py`            | pytest         | ruff (line-length=88, target-version=py311) | Full (lint + test) |
 

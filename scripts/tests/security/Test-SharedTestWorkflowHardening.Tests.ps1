@@ -229,4 +229,16 @@ Describe 'Skill dependency install script' -Tag 'Unit', 'Security' {
         # chain writes to the registry; Linux CI never drives a screen reader.
         $script:InstallScriptContent | Should -Match '--omit=optional'
     }
+
+    It 'Keeps optional platform dependencies an explicit reusable-workflow opt-in' {
+        $content = Get-Content (Join-Path $RepoRoot '.github/workflows/node-tests.yml') -Raw
+        $content | Should -Match '(?s)include-optional-dependencies:\s+description: [^\r\n]+\s+required: false\s+type: boolean\s+default: false'
+        $content | Should -Match 'INCLUDE_OPTIONAL:\s+\$\{\{\s*inputs\.include-optional-dependencies\s*&&\s*''1''\s*\|\|\s*''0''\s*\}\}'
+        $script:InstallScriptContent | Should -Match 'include_optional="\$\{INCLUDE_OPTIONAL:-0\}"'
+    }
+
+    It 'Enables optional packages only for the skill-effectiveness Node lane' {
+        $content = Get-Content (Join-Path $RepoRoot '.github/workflows/pr-validation.yml') -Raw
+        $content | Should -Match 'include-optional-dependencies:\s+\$\{\{\s*matrix\.directory\s*==\s*''\.github/skills/hve-core/skill-effectiveness''\s*\}\}'
+    }
 }
