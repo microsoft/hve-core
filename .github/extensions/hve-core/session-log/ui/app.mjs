@@ -431,7 +431,6 @@ function renderAgentCard(force = false) {
     }
     agentCardStamp = stamp;
     const ctx = headerContext();
-    const key = `${view.sessionId}:${view.agent}`;
     // Restore focus only within the regions re-rendered here, so controls below them keep focus.
     rerender(dom.agentHeader, () => renderAgentHeader({ head: dom.inspectorHead, body: dom.agentHeader }, agent, ctx));
     rerender(dom.promptVersionList, () => renderPromptVersions(dom.promptVersionList, dom.promptVersionCount, agent, ctx));

@@ -1477,7 +1477,7 @@ function sortChips(spec, sort, onChange) {
     const chips = [];
     const chip = (key, text, title, next) => {
         const button = el('button', { class: 'sort-chip', type: 'button', 'aria-pressed': String(sort.key === key), title }, text);
-        button.addEventListener('click', () => onChange(next, key));
+        button.addEventListener('click', () => onChange(next));
         chips.push(button);
     };
     if (spec.order) {
@@ -1668,7 +1668,6 @@ function latestCallView(call, ctx, key) {
 function toolView(def, item, ctx, key) {
     const live = def.live?.item ?? null;
     const recorded = def.recorded ?? {};
-    const calls = recorded.calls ?? { count: 0, failed: 0, lastCallId: null };
     const server = live?.mcpServerName ?? recorded.mcpServer ?? null;
     const nodes = [...liveNotes(def, 'tool')];
     const loading = live?.deferLoading === true
