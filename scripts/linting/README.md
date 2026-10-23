@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-06
+ms.date: 2026-10-22
 ms.topic: reference
 keywords:
   - powershell
@@ -591,6 +591,8 @@ The linting directory also contains these scripts that are not covered in the ea
 | `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                                                                                     |
 | `Validate-AssetDocs.ps1`           | Validate asset documentation coverage, orphans, sync, structure, and authored completeness                                                                            |
 | `Test-AgentColdStartBudget.ps1`    | Enforce cold-start byte budgets (agent file, recursive `#file:` imports, and always-on instructions) for the planning-chain agents in `agent-cold-start-budgets.json` |
+| `Validate-DesignIntent.ps1`        | Validate Design Intent Records and their generated verification artifacts                                                                                             |
+| `Sync-DesignIntentSchema.ps1`      | Copy the canonical Design Intent schema into the accessibility skill runtime package                                                                                  |
 
 #### `Validate-AssetDocs.ps1`
 
@@ -772,10 +774,12 @@ blockquote markers, so line wrapping does not affect matching.
 
 | npm Script                       | Description                                                                                                                                                                                                          |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `design-intent:schema:sync`      | Run `pwsh -NoProfile -File scripts/linting/Sync-DesignIntentSchema.ps1` to copy the canonical Design Intent schema into the accessibility skill runtime package                                                      |
 | `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                                                        |
 | `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                                                |
 | `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                                                 |
 | `lint:cold-start`                | Run `pwsh -NoProfile -File scripts/linting/Test-AgentColdStartBudget.ps1` to enforce planning-chain cold-start byte budgets; the Pester suite enforces the same budgets in pull requests                             |
+| `lint:design-intent`             | Run `pwsh -NoProfile -File scripts/linting/Validate-DesignIntent.ps1 -OutputPath logs/design-intent-validation-results.json` to validate Design Intent Records                                                       |
 | `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                                               |
 | `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                                             |
 | `lint:workflows`                 | Run `node scripts/linting/workflow-validator/validate-workflows.mjs --sarif logs/workflow-validation.sarif` to validate workflows and composite actions with GitHub's parser and pinned shellcheck                   |
