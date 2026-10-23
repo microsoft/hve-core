@@ -49,10 +49,6 @@
       "status": "exempt",
       "reason": "The assessment-hash helper reads one plan file and writes JSON to stdout; no network, credentials, or subprocess beyond the PowerShell forwarder."
     },
-    "session-log-canvas-update": {
-      "status": "exempt",
-      "reason": "Reads session-events JSON Schema files and their package.json from locally installed Copilot packages (size-capped, regular files only) and imports the repository's canvas indexer for its exported type lists; writes only to stdout or the skill's declared assets/event-shapes.json; never reads session logs; no network, credentials, or subprocess."
-    },
     "shared/pr-reference": {
       "status": "exempt",
       "reason": "Runs read-only local git and text tools on caller-supplied refs and writes only to .copilot-tracking/pr/ or stdout; no network or credentials."

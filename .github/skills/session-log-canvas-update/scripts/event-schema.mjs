@@ -6,9 +6,10 @@
  * Lists installed Copilot session event schemas, snapshots one into the Session Log canvas
  * baseline, or diffs one against that baseline with the event types the canvas handles flagged.
  *
- * Reads only `session-events.schema.json` files, their package versions, and the canvas indexer's
- * exported type lists. It never reads session logs. Output goes to stdout; `snapshot --write`
- * writes only the skill's `assets/event-shapes.json`.
+ * Reads the selected schema (an installed `session-events.schema.json` or a `--schema` path), its
+ * package version, the baseline, and the type lists exported by the canvas indexer, which it
+ * imports. It never reads session logs. Output goes to stdout; `snapshot --write` writes only the
+ * skill's `assets/event-shapes.json`, and only after the schema is confirmed to define event types.
  */
 
 import { constants as fsConstants } from 'node:fs';
@@ -25,6 +26,13 @@ const MAX_SCHEMA_BYTES = 16 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_DEPTH = 3;
 const MAX_ENUM = 12;
+// Bounds for crafted schemas: signature nesting, work units shared by one extractShapes call, and
+// characters per signature. The published schema uses a small fraction of each.
+const MAX_SIGNATURE_DEPTH = 16;
+const MAX_WORK = 200_000;
+const MAX_SIGNATURE_LENGTH = 4096;
+const MAX_REF_LENGTH = 256;
+const TRUNCATED = '…';
 const NAME_RE = /^[A-Za-z0-9_$.-]{1,96}$/;
 const SHAPES_FORMAT = 1;
 
@@ -32,6 +40,10 @@ const USAGE = `Usage:
   node event-schema.mjs list [--json]
   node event-schema.mjs snapshot [--schema <path | version | latest>] [--write]
   node event-schema.mjs diff [--schema <path | version | latest>] [--baseline <path>] [--indexer <path>] [--json]
+
+Options:
+  --indexer <path>  Module whose HANDLED_EVENT_TYPES export marks handled types; defaults to the
+                    canvas indexer. The module runs in this process, so pass only a trusted path.
 
 Environment:
   COPILOT_HOME  Copilot home folder; defaults to ~/.copilot. Installed schemas are read from
@@ -172,18 +184,72 @@ export async function findSchemas(home) {
 }
 
 function refName(ref) {
-    return typeof ref === 'string' && ref.startsWith('#/') ? ref.split('/').pop() : null;
+    return typeof ref === 'string' && ref.length <= MAX_REF_LENGTH && ref.startsWith('#/') ? ref.split('/').pop() : null;
+}
+
+/**
+ * Splits a signature into its top-level alternatives, ignoring ` | ` inside quoted strings,
+ * parentheses, and angle brackets.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+function topLevelAlternatives(text) {
+    const parts = [];
+    let depth = 0;
+    let quoted = false;
+    let start = 0;
+    for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        if (quoted) {
+            if (char === '\\') {
+                i += 1;
+            } else if (char === '"') {
+                quoted = false;
+            }
+        } else if (char === '"') {
+            quoted = true;
+        } else if (char === '(' || char === '<') {
+            depth += 1;
+        } else if (char === ')' || char === '>') {
+            depth -= 1;
+        } else if (depth === 0 && text.startsWith(' | ', i)) {
+            parts.push(text.slice(start, i));
+            start = i + 3;
+            i += 2;
+        }
+    }
+    parts.push(text.slice(start));
+    return parts;
+}
+
+/**
+ * Joins signature alternatives with ` | `, keeping each top-level alternative once in first-seen
+ * order, so merging `string` with `string | null` gives `string | null`.
+ *
+ * @param {string[]} list
+ * @returns {string}
+ */
+function joinAlternatives(list) {
+    return [...new Set(list.flatMap(topLevelAlternatives))].join(' | ');
 }
 
 /**
  * Summarizes a session events JSON Schema as event types with their `data` field paths and type
- * signatures. Follows local `$ref` links with cycle and depth guards.
+ * signatures. Follows local `$ref` links with cycle and depth guards. A field reached through more
+ * than one union alternative, or through more than one root variant of the same type, lists every
+ * signature it can have and is marked required only when every occurrence requires it. Signature
+ * depth, total work, and signature length are bounded; a signature cut short ends in `…`.
  *
  * @param {object} schema Parsed `session-events.schema.json`.
  * @returns {Record<string, { ephemeral: boolean, fields: Record<string, string> }>}
+ * @throws {Error} When the schema has no session event root or defines no event types.
  */
 export function extractShapes(schema) {
     const defs = schema?.definitions ?? schema?.$defs ?? {};
+    let work = MAX_WORK;
+    // Charges units of the shared work budget; false once it is spent.
+    const spend = (units) => (work -= units) >= 0;
     const resolve = (node) => {
         let current = node;
         for (let hops = 0; current && typeof current.$ref === 'string' && hops < 16; hops += 1) {
@@ -193,80 +259,151 @@ export function extractShapes(schema) {
         return current && typeof current === 'object' ? current : null;
     };
     const variantsOf = (node) => (Array.isArray(node?.anyOf) ? node.anyOf : Array.isArray(node?.oneOf) ? node.oneOf : null);
+    const clip = (text) => (text.length > MAX_SIGNATURE_LENGTH ? `${text.slice(0, MAX_SIGNATURE_LENGTH - 1)}${TRUNCATED}` : text);
+    // Charges a newly built string by its length.
+    const built = (text) => (spend(text.length >> 6) ? clip(text) : TRUNCATED);
+    // Const and enum signatures depend only on their node, so each is rendered once.
+    const leaves = new Map();
+    const leaf = (node, render) => {
+        if (!leaves.has(node)) {
+            leaves.set(node, clip(render()));
+        }
+        return leaves.get(node);
+    };
 
-    const signature = (node, seen = new Set()) => {
+    // Lists the sorted unique alternatives of a node's signature, flattening nested unions.
+    const alternatives = (node, seen, depth) => {
+        if (depth > MAX_SIGNATURE_DEPTH || !spend(1)) {
+            return [TRUNCATED];
+        }
         const name = refName(node?.$ref);
         if (name && seen.has(name)) {
-            return `ref(${name})`;
+            return [`ref(${name})`];
         }
         const next = name ? new Set([...seen, name]) : seen;
         const resolved = resolve(node);
         if (!resolved) {
-            return 'unknown';
+            return ['unknown'];
         }
         if (Object.hasOwn(resolved, 'const')) {
-            return `const(${JSON.stringify(resolved.const)})`;
+            return [leaf(resolved, () => `const(${JSON.stringify(resolved.const)})`)];
         }
         if (Array.isArray(resolved.enum)) {
-            const values = resolved.enum.slice(0, MAX_ENUM).map((value) => JSON.stringify(value));
-            return `enum(${values.join('|')}${resolved.enum.length > MAX_ENUM ? '|…' : ''})`;
+            return [leaf(resolved, () => {
+                const values = resolved.enum.slice(0, MAX_ENUM).map((value) => JSON.stringify(value));
+                return `enum(${values.join('|')}${resolved.enum.length > MAX_ENUM ? '|…' : ''})`;
+            })];
         }
         const variants = variantsOf(resolved);
         if (variants) {
-            return [...new Set(variants.map((variant) => signature(variant, next)))].sort().join(' | ');
+            const found = new Set();
+            let length = 0;
+            for (const variant of variants) {
+                for (const text of alternatives(variant, next, depth + 1)) {
+                    if (!found.has(text)) {
+                        found.add(text);
+                        length += text.length + 3;
+                    }
+                }
+                if (length > MAX_SIGNATURE_LENGTH || work < 0) {
+                    found.add(TRUNCATED);
+                    break;
+                }
+            }
+            return [...found].sort();
         }
         const types = Array.isArray(resolved.type) ? resolved.type : resolved.type ? [resolved.type] : resolved.properties ? ['object'] : ['any'];
-        return types.map((type) => (type === 'array' ? `array<${resolved.items ? signature(resolved.items, next) : 'any'}>` : type)).join(' | ');
+        if (!spend(types.length)) {
+            return [TRUNCATED];
+        }
+        return [built(types.map((type) => (type === 'array' ? `array<${resolved.items ? signature(resolved.items, next, depth + 1) : 'any'}>` : type)).join(' | '))];
+    };
+    const signature = (node, seen, depth) => built(joinAlternatives(alternatives(node, seen, depth)));
+
+    // Adds one occurrence of a field: its signature alternatives and whether it was required there.
+    const record = (fields, path, found, required) => {
+        const entry = fields.get(path) ?? { signatures: new Set(), length: 0, required };
+        entry.required &&= required;
+        for (const text of found) {
+            if (entry.length <= MAX_SIGNATURE_LENGTH && !entry.signatures.has(text)) {
+                entry.signatures.add(text);
+                entry.length += text.length + 3;
+            }
+        }
+        fields.set(path, entry);
     };
 
     const walk = (node, prefix, depth, seen, fields, required) => {
         const name = refName(node?.$ref);
-        if (name && seen.has(name)) {
-            fields[prefix] = `ref(${name})${required ? ' required' : ''}`;
+        const cycle = Boolean(name && seen.has(name));
+        const found = cycle ? [`ref(${name})`] : alternatives(node, seen, 0);
+        const size = found.reduce((total, text) => total + text.length, prefix.length);
+        record(fields, prefix, spend(1 + (size >> 6)) ? found : [TRUNCATED], required);
+        if (cycle || depth >= MAX_DEPTH || work < 0) {
             return;
         }
+        // Marks this field when the budget runs out before all of its children are walked.
+        const cut = () => record(fields, prefix, [TRUNCATED], required);
         const next = name ? new Set([...seen, name]) : seen;
-        fields[prefix] = `${signature(node, seen)}${required ? ' required' : ''}`;
-        if (depth >= MAX_DEPTH) {
+        const resolved = resolve(node);
+        const options = variantsOf(resolved) ?? [resolved];
+        if (!spend(options.length)) {
+            cut();
             return;
         }
-        const resolved = resolve(node);
-        const objects = (variantsOf(resolved) ?? [resolved]).map(resolve).filter(Boolean);
+        const objects = options.map(resolve).filter(Boolean);
         for (const object of objects) {
-            const requiredSet = new Set(Array.isArray(object.required) ? object.required : []);
-            for (const [key, child] of Object.entries(object.properties ?? {})) {
-                if (NAME_RE.test(key)) {
-                    walk(child, `${prefix}.${key}`, depth + 1, next, fields, requiredSet.has(key) && objects.length === 1);
-                }
+            const keys = Object.keys(object.properties ?? {});
+            const requiredKeys = Array.isArray(object.required) ? object.required : [];
+            if (!spend(keys.length + requiredKeys.length)) {
+                cut();
+                return;
             }
+            const requiredSet = new Set(requiredKeys);
+            const children = keys.filter((key) => NAME_RE.test(key)).map((key) => [object.properties[key], `${prefix}.${key}`, requiredSet.has(key) && objects.length === 1]);
             if (object.additionalProperties && typeof object.additionalProperties === 'object') {
-                walk(object.additionalProperties, `${prefix}.*`, depth + 1, next, fields, false);
+                children.push([object.additionalProperties, `${prefix}.*`, false]);
             }
             if (object.type === 'array' && object.items) {
                 const items = resolve(object.items);
                 if (items?.properties || variantsOf(items)) {
-                    walk(object.items, `${prefix}[]`, depth + 1, next, fields, false);
+                    children.push([object.items, `${prefix}[]`, false]);
+                }
+            }
+            for (const [child, path, childRequired] of children) {
+                walk(child, path, depth + 1, next, fields, childRequired);
+                if (work < 0) {
+                    cut();
+                    return;
                 }
             }
         }
     };
 
-    const root = resolve(schema?.$ref ? schema : defs.SessionEvent);
-    const types = {};
-    for (const variant of variantsOf(root) ?? []) {
+    const events = variantsOf(resolve(schema?.$ref ? schema : defs.SessionEvent));
+    if (!events) {
+        throw new Error('no session event root was found; expected a top-level $ref or a SessionEvent definition that lists the event variants in anyOf or oneOf');
+    }
+    const types = new Map();
+    for (const variant of events) {
         const event = resolve(variant);
         const type = event?.properties?.type?.const;
         if (typeof type !== 'string' || !NAME_RE.test(type)) {
             continue;
         }
-        const fields = {};
+        const entry = types.get(type) ?? { ephemeral: true, fields: new Map() };
+        entry.ephemeral &&= event.properties.ephemeral?.const === true;
         if (event.properties.data) {
-            walk(event.properties.data, 'data', 0, new Set(), fields, Array.isArray(event.required) && event.required.includes('data'));
+            const requiredKeys = Array.isArray(event.required) ? event.required : [];
+            walk(event.properties.data, 'data', 0, new Set(), entry.fields, spend(1 + requiredKeys.length) && requiredKeys.includes('data'));
         }
-        const entry = { ephemeral: event.properties.ephemeral?.const === true, fields };
-        types[type] = types[type] ? { ephemeral: types[type].ephemeral && entry.ephemeral, fields: { ...types[type].fields, ...fields } } : entry;
+        types.set(type, entry);
     }
-    return Object.fromEntries(Object.entries(types).sort(([a], [b]) => a.localeCompare(b)));
+    if (types.size === 0) {
+        throw new Error('no event types were found; no session event variant has a usable type constant');
+    }
+    const render = (fields) => Object.fromEntries([...fields].map(([path, entry]) => [path, `${clip(joinAlternatives([...entry.signatures].sort()))}${entry.required ? ' required' : ''}`]));
+    return Object.fromEntries([...types].sort(([a], [b]) => a.localeCompare(b)).map(([type, entry]) => [type, { ephemeral: entry.ephemeral, fields: render(entry.fields) }]));
 }
 
 /**
@@ -284,6 +421,7 @@ function localDate(date) {
  * @param {object} schema
  * @param {{ package?: string | null, version: string, platform?: string | null }} source
  * @param {Date} [now]
+ * @throws {Error} When the schema is not a session events schema; see `extractShapes`.
  */
 export function buildSnapshot(schema, source, now = new Date()) {
     return {
@@ -405,7 +543,8 @@ export function renderMarkdown(diff) {
 }
 
 /**
- * Loads the event types the canvas handles from its indexer module.
+ * Loads the event types the canvas handles from its indexer module. Importing runs the module, so
+ * the path must be trusted.
  *
  * @param {string} indexerPath
  */
@@ -461,6 +600,22 @@ async function resolveSchema(selector, env) {
 }
 
 /**
+ * Reads a schema file and builds its snapshot, naming the file when it is not a session events
+ * schema so callers fail before writing anything.
+ *
+ * @param {{ path: string, package?: string | null, version: string, platform?: string | null }} source
+ * @param {Date} [now]
+ */
+async function readSnapshot(source, now) {
+    const schema = await readJson(source.path, MAX_SCHEMA_BYTES);
+    try {
+        return buildSnapshot(schema, source, now);
+    } catch (error) {
+        throw new Error(`${source.path} is not a session events schema: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+/**
  * Runs a command and returns its exit code.
  *
  * @param {string[]} argv
@@ -484,7 +639,7 @@ export async function main(argv, io = {}) {
         }
         if (command === 'snapshot') {
             const source = await resolveSchema(options.schema, env);
-            const snapshot = buildSnapshot(await readJson(source.path, MAX_SCHEMA_BYTES), source, io.now);
+            const snapshot = await readSnapshot(source, io.now);
             const text = `${JSON.stringify(snapshot, null, 2)}\n`;
             if (options.write) {
                 const target = io.baselinePath ?? BASELINE_PATH;
@@ -502,7 +657,7 @@ export async function main(argv, io = {}) {
                 throw new Error('The baseline is not an event-shapes document; recreate it with snapshot --write.');
             }
             const source = await resolveSchema(options.schema, env);
-            const current = buildSnapshot(await readJson(source.path, MAX_SCHEMA_BYTES), source, io.now);
+            const current = await readSnapshot(source, io.now);
             const handled = await loadHandled(options.indexer ?? DEFAULT_INDEXER_PATH);
             const diff = diffShapes(baseline, current, handled);
             out(options.json ? `${JSON.stringify(diff, null, 2)}\n` : renderMarkdown(diff));

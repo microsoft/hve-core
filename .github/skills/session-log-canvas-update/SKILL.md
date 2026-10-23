@@ -32,7 +32,7 @@ This skill belongs to the HVE Core repository. Keep it directly under `.github/s
 ## Flow
 
 1. Find the versions in play. Run `node scripts/event-schema.mjs list` from the skill root (or `node .github/skills/session-log-canvas-update/scripts/event-schema.mjs list` from the repository root) to see installed Copilot CLI schemas. Read the baseline's `source` in [assets/event-shapes.json](assets/event-shapes.json). For a VS Code session, also locate the schema bundled with VS Code at `<VS Code app resources>/app/node_modules.asar.unpacked/@github/copilot-sdk-<platform>/schemas/session-events.schema.json`, because the VS Code harness can run a newer runtime than the installed CLI. The `copilotVersion` a session recorded comes from its `session.start` event; the canvas `get_session_summary` action returns it.
-2. Diff the schema. Run `node scripts/event-schema.mjs diff --schema <path|version|latest>` for each relevant schema. The report lists handled types that changed (field by field), new event types with whether they persist, removed types, other changed types, and handled types the schema no longer defines. Use `--json` when you need to process the result.
+2. Diff the schema. Run `node scripts/event-schema.mjs diff --schema <path|version|latest>` for each relevant schema. The report lists handled types that changed (field by field), new event types with whether they persist, removed types, other changed types, and handled types the schema no longer defines. A field that union alternatives share lists every signature it can take, and a signature cut short by the script's size limits ends in `…`. Use `--json` when you need to process the result.
 3. Check real sessions without reading content. Open the canvas on a session from the new version and call its `get_session_summary` action: `eventHealth.unknownTypes` lists persisted types the canvas does not handle, and `unreadableLines` counts lines it could not parse. The Details tab shows the same counts. Compare a few entries of each changed kind in the log against the expected rendering.
 4. Read the release notes. The CLI package's `changelog.json` (beside its `schemas/` folder) lists changes per version; scan the versions between the baseline and the new version for session events, compaction, hooks, subagents, system prompt, storage, and extension or canvas changes.
 5. Map each change to canvas code with [references/coupling-map.md](references/coupling-map.md), and classify it:
@@ -48,12 +48,12 @@ This skill belongs to the HVE Core repository. Keep it directly under `.github/s
    * Markdown lint, spelling, table format, and frontmatter checks on changed Markdown.
    * A browser check on synthetic fixtures only: confirm the page URL before each screenshot, and never capture the live canvas because it shows real session content.
    * A host reload (`extensions_reload`, then reopen the canvas) with the served `ui/` files matching disk.
-8. Refresh the baseline. Run `node scripts/event-schema.mjs snapshot --schema <the schema you verified against> --write`, rerun `diff` against it to confirm a clean report, and commit the baseline with the canvas changes.
+8. Refresh the baseline. Run `node scripts/event-schema.mjs snapshot --schema <the schema you verified against> --write`, rerun `diff` against it to confirm a clean report, and commit the baseline with the canvas changes. Both commands exit non-zero without writing anything when the file defines no session event types.
 
 ## Constraints
 
 * Read session logs only through the canvas or for event type names, field names, counts, and sizes. Do not print, paste, or persist message, prompt, tool, or summary text from real sessions.
-* The script reads schema files, their `package.json`, and the canvas indexer's exported type lists; it writes only to stdout or, with `snapshot --write`, to `assets/event-shapes.json`.
+* The script reads schema files, their `package.json`, and the baseline, and imports the canvas indexer, or the module passed with `--indexer`, to read its exported type lists. That module runs in the script's process, so pass `--indexer` only a module you trust. The script writes only to stdout or, with `snapshot --write`, to `assets/event-shapes.json`. [SECURITY.md](SECURITY.md) records its threat model.
 * The baseline keeps event and field identifiers and type signatures only, never schema descriptions.
 * Prefer a schema from a package whose license permits redistribution of derived identifiers for the committed baseline, such as the MIT-licensed `@github/copilot-sdk-<platform>` package bundled with VS Code.
 * Keep changes inside the canvas, its tests and docs, and this skill. Do not commit, push, or publish without the user's request.
