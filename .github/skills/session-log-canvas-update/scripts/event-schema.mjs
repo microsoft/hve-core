@@ -11,6 +11,7 @@
  * writes only the skill's `assets/event-shapes.json`.
  */
 
+import { constants as fsConstants } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -66,15 +67,53 @@ export function compareVersions(a, b) {
     return 0;
 }
 
+// Read-only, without following a final symbolic link or blocking on a FIFO where the platform
+// supports those flags.
+const OPEN_FLAGS = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0) | (fsConstants.O_NONBLOCK ?? 0);
+
+/**
+ * Parses a JSON file of at most `maxBytes`. The type check, size check, and read all use one open
+ * handle, so the file cannot be swapped between the check and the read.
+ *
+ * @param {string} file
+ * @param {number} maxBytes
+ * @returns {Promise<unknown>}
+ */
 async function readJson(file, maxBytes) {
-    const stat = await fs.lstat(file);
-    if (!stat.isFile()) {
-        throw new Error(`Not a regular file: ${file}`);
+    let handle;
+    try {
+        handle = await fs.open(file, OPEN_FLAGS);
+    } catch (error) {
+        if (error?.code === 'ELOOP') {
+            throw new Error(`Not a regular file: ${file}`);
+        }
+        throw error;
     }
-    if (stat.size > maxBytes) {
-        throw new Error(`File exceeds ${maxBytes} bytes: ${file}`);
+    try {
+        const stat = await handle.stat();
+        if (!stat.isFile()) {
+            throw new Error(`Not a regular file: ${file}`);
+        }
+        if (stat.size > maxBytes) {
+            throw new Error(`File exceeds ${maxBytes} bytes: ${file}`);
+        }
+        // One byte past the checked size detects a file that grew after the check.
+        const buffer = Buffer.alloc(stat.size + 1);
+        let length = 0;
+        while (length < buffer.length) {
+            const { bytesRead } = await handle.read(buffer, length, buffer.length - length, null);
+            if (bytesRead === 0) {
+                break;
+            }
+            length += bytesRead;
+        }
+        if (length > stat.size) {
+            throw new Error(`File changed while reading: ${file}`);
+        }
+        return JSON.parse(buffer.toString('utf8', 0, length));
+    } finally {
+        await handle.close();
     }
-    return JSON.parse(await fs.readFile(file, 'utf8'));
 }
 
 /**
