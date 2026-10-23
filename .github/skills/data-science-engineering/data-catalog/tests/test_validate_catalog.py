@@ -149,7 +149,7 @@ def test_given_unknown_and_self_lineage_when_validated_then_reports_errors() -> 
 @pytest.mark.parametrize(
     "location",
     [
-        "postgresql://analyst:synthetic-pass@example.invalid/database",
+        "fixture://test-user@fixture.invalid/source",
         "https://example.invalid/data?access_token=synthetic-token",
         "storage/path;AccountKey=synthetic-key",
         "queue/path?SharedAccessSignature=synthetic-signature",
