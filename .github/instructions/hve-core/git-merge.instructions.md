@@ -6,7 +6,8 @@ description: "Git integration and explicit ordinary-push authorization. Use when
 
 <!-- cspell:ignore refspec -->
 
-Execute the Git operations the user requests or approves; do not ask for the same approval again.
+Execute the Git operations the user requests or approves, within the limits below;
+do not ask for the same approval again.
 Authorization covers the agreed task and its expected result, not unrelated actions.
 
 Apply Prepare through Finish only to integration work. A push-only request does not start integration

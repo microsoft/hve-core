@@ -117,7 +117,7 @@ Resolve `action` before delegating, then carry this skill's inputs into that ref
    title, body path, target, draft state, repair commits, validation result, and upstream push state.
    Ask once for final PR-write approval and only any needed push not already explicitly authorized.
    A push request alone does not approve the PR write; `prepare` does not authorize either action.
-12. Execute any authorized needed push using the `git-merge` instructions' Push Authorization,
+12. Load the `git-merge` instructions by name, then execute any authorized needed push using their Push Authorization,
    Account Changes, and Execution Evidence rules, not their integration preparation. If the push
    fails or cannot run, report the actual result and stop before the dependent PR write.
    With the push satisfied and final PR-write approval held, create or update through the available
