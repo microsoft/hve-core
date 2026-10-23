@@ -3,7 +3,7 @@ title: Your First Interaction
 description: Talk to an HVE Core agent and see it respond in under 60 seconds
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-10-20
 ms.topic: tutorial
 keywords:
   - getting started
@@ -21,7 +21,8 @@ You need one agent interaction that produces a visible result.
 
 ## Talk to RPI Agent
 
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`).
+1. Open GitHub Copilot Chat (`Ctrl+Alt+I` on Windows and Linux or
+   `Control+Command+I` on macOS).
 2. Select **RPI Agent** from the agent picker.
 3. Type this prompt:
 
@@ -49,7 +50,7 @@ chat continue from recorded evidence rather than reconstructed chat history.
 ## Next Step
 
 Now that you know agents work, try using one for real work:
-[Your First Research](first-research.md).
+[Your First Research](first-research).
 
 ---
 

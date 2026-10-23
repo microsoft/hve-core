@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Getting Started with HVE Core"
 pagination_label: Getting Started with HVE Core
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-20
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -28,26 +28,26 @@ changes everything.
 
 This guide walks you through four steps, each building on the last:
 
-| Step                                                      | What You Do                                             | Time    |
-|-----------------------------------------------------------|---------------------------------------------------------|---------|
-| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                        | 1 min   |
-| [First Research](first-research.md)                       | Use /rpi-research on your own codebase                  | 5 min   |
-| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle          | 15 min  |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use | Ongoing |
+| Step                                                   | What You Do                                                | Time    |
+|--------------------------------------------------------|------------------------------------------------------------|---------|
+| [First Interaction](first-interaction)                 | Talk to an agent, see it respond                           | 1 min   |
+| [First Research](first-research)                       | Use `/rpi-research` on your own codebase                   | 5 min   |
+| [First Full Workflow](first-workflow)                  | Run a complete Research, Plan, Implement, and Review cycle | 20 min  |
+| [Growing with HVE](../hve-guide/roles/new-contributor) | Progress through four milestones toward independent use    | Ongoing |
 
 > [!TIP]
 > Already comfortable with AI-assisted development? Skip to
-> [First Full Workflow](first-workflow.md) or select
+> [First Full Workflow](first-workflow) or select
 > [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
 > for a coordinated lifecycle, or use `/rpi-research`, `/rpi-plan`,
 > `/rpi-implement`, and `/rpi-review` for direct phase work.
 
-Need installation help? See the [Installation Guide](install.md) for all
+Need installation help? See the [Installation Guide](install) for all
 methods, or install the
 [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 for the quickest path.
 
-Review [HVE Core Identity and Channels](packages.md) to choose a source channel or selective clone adoption.
+Review [HVE Core Identity and Channels](packages) to choose a source channel or selective clone adoption.
 
 ## Troubleshooting
 
@@ -56,20 +56,20 @@ Review [HVE Core Identity and Channels](packages.md) to choose a source channel 
 #### Agent not available
 
 * Ensure GitHub Copilot extension is installed and active
-* Reload VS Code window: `Ctrl+Shift+P` → "Developer: Reload Window"
-* Check that hve-core is accessible (cloned or configured correctly)
+* Run `Developer: Reload Window` from the Command Palette (`Ctrl+Shift+P` on Windows and Linux or `Cmd+Shift+P` on macOS)
+* Check that HVE Core is installed or that the selected clone-based method is configured correctly
 
 #### Copilot not discovering customizations
 
-* For Multi-Root: Ensure you opened the `.code-workspace` file, not just the folder
-* Verify `chat.agentFilesLocations` points to the correct path
+* For a multi-root installation, ensure you opened the `.code-workspace` file, not just one folder
+* For a clone-based installation, verify `chat.agentFilesLocations` points to the correct path
 * Check the window title shows the workspace name
 
 #### Git or clone errors
 
 * Verify Git is installed: run `git --version` in terminal
 * Check network connectivity to github.com
-* See the [installation guide](install.md) for method-specific troubleshooting
+* See the [installation guide](install) for method-specific troubleshooting
 
 ## Optional Scripts
 
@@ -85,7 +85,7 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 
 ## Next Steps
 
-* Start the journey: [Your First Interaction](first-interaction.md)
+* Start the journey: [Your First Interaction](first-interaction)
 * Learn the [RPI Workflow](../rpi/) for complex tasks
 * Browse [available agents](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) for the full catalog
 
@@ -93,14 +93,14 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 
 For projects requiring user-centered requirements discovery before implementation:
 
-* [Design Thinking Guide](../design-thinking/README.md): Start here for DT overview
-* [Using the DT Coach](../design-thinking/dt-coach.md): Learn to use the dt-coach agent
-* [DT to RPI Integration](../design-thinking/dt-rpi-integration.md): Transition from DT to implementation
+* [Design Thinking Guide](../design-thinking/): Start here for DT overview
+* [Using the DT Coach](../design-thinking/dt-coach): Learn to use the dt-coach agent
+* [DT to RPI Integration](../design-thinking/dt-rpi-integration): Transition from DT to implementation
 
 ## See Also
 
-* [Installation Guide](install.md) - Full decision matrix for all installation methods
-* [MCP Configuration](mcp-configuration.md) - Configure Model Context Protocol servers
+* [Installation Guide](install) - Full decision matrix for all installation methods
+* [MCP Configuration](mcp-configuration) - Configure Model Context Protocol servers
 * [Role Guides](../hve-guide/roles/) - Find your role-specific guide
 
 ---

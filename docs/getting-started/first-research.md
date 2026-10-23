@@ -3,7 +3,7 @@ title: Your First Research
 description: Use the rpi-research skill to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-20
 ms.topic: tutorial
 keywords:
   - getting started
@@ -34,13 +34,15 @@ teach methodology; real questions teach methodology and produce useful output.
 
 ## Run the Research
 
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`).
+1. Open GitHub Copilot Chat (`Ctrl+Alt+I` on Windows and Linux or
+  `Control+Command+I` on macOS).
 2. Invoke `/rpi-research` from the skill surface.
 3. Type your question as a prompt.
 
-The skill creates a research document in `.copilot-tracking/research/` with
-findings, source references, and evidence. This takes 2-5 minutes depending on
-the scope of the question.
+The skill creates a dated research document at
+`.copilot-tracking/research/<YYYY-MM-DD>/<task-slug>-research.md` with findings,
+source references, decisions, and planning readiness. Completion time depends
+on the scope and available evidence.
 
 ## Read the Output
 
@@ -50,8 +52,8 @@ Open the research document. You'll find:
 * Conclusions trace back to actual code through evidence-linked findings.
 * Areas where research was incomplete appear as remaining questions.
 
-This is what "verified truth" looks like in RPI. The agent did not guess or
-generate plausible answers. It searched, read, and cited.
+This is what evidence-led research looks like in RPI. Material conclusions
+should trace to sources, while incomplete findings remain explicit.
 
 > [!NOTE]
 > Your first research document may feel verbose. That's intentional. Research
@@ -69,7 +71,7 @@ generate plausible answers. It searched, read, and cited.
 
 You've installed HVE Core, talked to an agent, and run your first research.
 The next step is a full Research, Plan, Implement cycle:
-[Your First Full Workflow](first-workflow.md).
+[Your First Full Workflow](first-workflow).
 
 ---
 

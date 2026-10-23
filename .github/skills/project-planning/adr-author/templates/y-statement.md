@@ -3,7 +3,7 @@ Source: Olaf Zimmermann, Uwe Zdun, "Y-Statements" pattern
 Citation: Zimmermann, O., Wegmann, L., Koziolek, H., & Goldschmidt, T. (2015).
   "Architectural Decision Guidance Across Projects" — and Zimmermann/Zdun
   follow-up writings on sustainable architectural design decisions; see
-  https://medium.com/olzzio/y-statements-10eb07b5a177
+  https://ozimmer.ch/practices/2020/04/27/ArchitectureDecisionMaking.html#y-statements-and-other-templates
 Usage note: used by `adr-author` skill capture mode for compact decision capture
 -->
 
