@@ -6,6 +6,8 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { buildContextSections, contextCounts } from './context.mjs';
+import { DEFINITION_KINDS, LIVE_DEFINITION_KINDS } from './definitions.mjs';
 import { mergeInventory } from './inventory.mjs';
 import { IndexCache, parseFieldPath, ROOT_AGENT } from './indexer.mjs';
 import { AGENT_KEY_RE, isSessionId, sessionFolder } from './paths.mjs';
@@ -45,6 +47,11 @@ const BASE_HEADERS = Object.freeze({
 
 const TOOL_CALL_ID_RE = /^[A-Za-z0-9_.:-]{1,200}$/;
 const MAX_BODY_BYTES = 4096;
+const DEFINITION_NAME_RE = /^[^\u0000-\u001f\u007f]{1,400}$/;
+/** Kinds whose live definition may stand in, clearly labeled, for a session other than the live one. */
+/** Kinds whose live definition is worth showing, labeled, for a session other than the live one. */
+const FALLBACK_KINDS = new Set(['tool', 'agent', 'canvas']);
+const CATALOG_KINDS = Object.freeze({ tools: 'tool', canvases: 'canvas', subagents: 'subagent' });
 
 /** Error that maps to a JSON error response. */
 export class HttpError extends Error {
@@ -112,6 +119,8 @@ export function sharedResources(root) {
  * @param {string} [options.rootSource] How the root was resolved.
  * @param {() => string | null} options.getCurrentSessionId Session that opened the canvas.
  * @param {(() => Promise<object>) | null} [options.liveInventory] Live inventory for the current session.
+ * @param {{ sessionId: () => string | null, lookup: (kind: string, name: string) => Promise<object | null> } | null} [options.liveDefinitions]
+ *   Live definitions from the session the extension joined.
  * @param {string | null} [options.initialSessionId] Session to select first.
  * @param {(message: string, level?: 'info' | 'warning' | 'error') => void} [options.log] Diagnostics sink.
  * @param {string} [options.uiDir] Folder holding UI assets.
@@ -266,6 +275,16 @@ export function createSessionLogServer(options) {
             return prompt;
         },
 
+        'GET /api/agent-instructions': async (params) => {
+            const { index } = await requireSession(params);
+            const agent = requireAgent(params, index);
+            const instructions = await index.getAgentInstructions(agent);
+            if (!instructions) {
+                throw new HttpError(404, 'entry_not_found', 'No agent instructions are recorded for that agent');
+            }
+            return instructions;
+        },
+
         'GET /api/compaction': async (params) => {
             const { index } = await requireSession(params);
             const agent = requireAgent(params, index);
@@ -285,17 +304,92 @@ export function createSessionLogServer(options) {
         'GET /api/inventory': async (params) => {
             const { sessionId, index } = await requireSession(params);
             const agent = requireAgent(params, index);
+            const part = params.get('part');
+            if (part !== null && part !== 'counts') {
+                throw new HttpError(400, 'invalid_input', 'Parameter part must be counts when present');
+            }
             const recorded = index.getRecordedInventory(agent);
-            const isLive = agent === ROOT_AGENT && sessionId === currentSessionId() && typeof options.liveInventory === 'function';
+            const sessionLive = sessionId === currentSessionId();
             let live = null;
-            if (isLive) {
+            if (sessionLive && typeof options.liveInventory === 'function') {
                 try {
                     live = await options.liveInventory();
                 } catch (error) {
                     log(`Live inventory unavailable: ${error instanceof Error ? error.message : 'error'}`, 'warning');
                 }
             }
-            return { sessionId, agent, inventoryVersion: index.inventoryVersion, ...mergeInventory(recorded, live) };
+            const catalogs = {};
+            const provider = options.liveDefinitions;
+            if (sessionLive && typeof provider?.catalog === 'function' && provider.sessionId?.() === sessionId) {
+                await Promise.all(Object.entries(CATALOG_KINDS).map(async ([key, kind]) => {
+                    try {
+                        catalogs[key] = await provider.catalog(kind);
+                    } catch (error) {
+                        log(`Live ${kind} catalog unavailable: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                    }
+                }));
+            }
+            const sections = buildContextSections({
+                recorded,
+                live,
+                catalogs,
+                mainAgent: agent === ROOT_AGENT,
+                readCounts: (paths) => index.getReadCounts(agent, paths),
+            });
+            if (part === 'counts') {
+                return { sessionId, agent, inventoryVersion: index.inventoryVersion, counts: contextCounts(sections) };
+            }
+            // The page needs model facts and prompt sections besides the Context sections; the full
+            // lists already live in the sections, so the merged lists are not repeated.
+            const merged = mergeInventory(recorded, agent === ROOT_AGENT ? live : null);
+            return {
+                sessionId,
+                agent,
+                inventoryVersion: index.inventoryVersion,
+                isLive: merged.isLive,
+                model: merged.model,
+                currentAgent: merged.currentAgent,
+                recorded: recorded ? { agentKey: recorded.agentKey, customAgent: recorded.customAgent, systemPrompt: recorded.systemPrompt } : null,
+                sections,
+            };
+        },
+
+        'GET /api/definition': async (params) => {
+            const { sessionId, index } = await requireSession(params);
+            const agent = requireAgent(params, index);
+            const kind = params.get('kind');
+            if (!DEFINITION_KINDS.includes(kind)) {
+                throw new HttpError(400, 'invalid_input', `Parameter kind must be one of ${DEFINITION_KINDS.join(', ')}`);
+            }
+            const name = params.get('name') ?? '';
+            if (!DEFINITION_NAME_RE.test(name)) {
+                throw new HttpError(400, 'invalid_input', 'Parameter name must be 1 to 400 characters without control characters');
+            }
+            const provider = options.liveDefinitions ?? null;
+            const liveSessionId = provider?.sessionId?.() ?? null;
+            const sameSession = liveSessionId !== null && liveSessionId === sessionId;
+            let live = null;
+            if (provider && liveSessionId && LIVE_DEFINITION_KINDS.includes(kind) && (sameSession || FALLBACK_KINDS.has(kind))) {
+                try {
+                    live = await provider.lookup(kind, name);
+                } catch (error) {
+                    log(`Live definition unavailable: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                    live = { status: 'unavailable', item: null };
+                }
+            }
+            const aliases = kind === 'agent' && live?.item ? [live.item.id, live.item.name, live.item.displayName].filter((value) => typeof value === 'string') : [];
+            const recorded = await index.getDefinition(agent, kind, name, aliases);
+            return {
+                sessionId,
+                agent,
+                kind,
+                name,
+                inventoryVersion: index.inventoryVersion,
+                recorded,
+                live: live
+                    ? { ...live, scope: sameSession ? 'this-session' : 'live-session' }
+                    : { status: provider && liveSessionId ? 'not-applicable' : 'unavailable', item: null, scope: null },
+            };
         },
 
         'GET /api/entries': async (params) => {

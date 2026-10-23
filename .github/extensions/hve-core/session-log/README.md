@@ -22,11 +22,25 @@ The Session Log canvas (`hve-core-session-log`) shows how Copilot used a session
 * Hook runs per turn, with failures inline and each run's input, output, and error on request
 * Subagents as their own logs, reachable from the call that started them, with breadcrumbs for nesting and an agent tree showing each agent's start and end times, tokens, and context use
 * Context compactions as dashed bands in their own color, with tokens before and after, the request sent to the model when the session recorded it, and the summary that replaced the conversation
-* Model, reasoning effort, context usage, token totals, skills, instruction files, and other recorded details
+* Model, reasoning effort, context usage, and token totals
+* Everything the model is given: tools, skills, agents, subagents, canvases, instructions, MCP servers, hooks, plugins, and extensions, each with its use count and the definition the model receives
 
 The canvas opens on the current session, lets you switch to any recorded session, and refreshes while it is visible.
 
-The Outline panel holds the agent tree, a card for the shown agent with its facts, context meter, and System prompt versions, the prompts, and a Tools list that scrolls on its own, includes compactions, and sorts oldest or newest first.
+The canvas has three regions. The sidebar on the left has Sessions, an Outline (the agent tree and the prompts), and Details. The log fills the middle.
+
+The sidebar's Details tab lists facts about the session and its main agent.
+
+The inspector on the right covers the agent shown in the log, in two views:
+
+* **Activity** shows the agent's model, totals, context meter, and instructions. It also lists the agent's system prompt versions (why each was rebuilt and what changed), its compactions (tokens before and after), and its Tool calls list, which includes compactions and sorts oldest or newest first. Selecting a version, compaction, prompt, or tool call scrolls the log to it.
+* **Context** shows what the model is given, described in [Context](#context).
+
+Agent instructions appear when the agent has its own: a subagent's agent definition, or the selected custom agent's instructions in the main prompt. Expand shows their full text, and In prompt shows the prompt they came from.
+
+Each list scrolls inside its own bounded area, and section headings collapse their section. Sections take only the height their content needs, and long lists share the rest, so a panel scrolls only when it is too short for each list to keep a few rows.
+
+Drag the divider beside the sidebar or the inspector to resize it. A focused divider also takes the arrow keys, and a double-click or `Enter` restores the default width. The toggles at each end of the header (or `b` and `i`) hide and show the sidebar and the inspector; the log, its prompt bar, and its scroll buttons widen into the space. In narrower canvases the panels open as drawers over the log instead.
 
 A bar above the log always shows the previous prompt; select it to scroll there, and it then shows the one before. Argument and output boxes scroll only after you click into them, so the mouse wheel keeps scrolling the log. Buttons at the bottom right scroll to the first and the newest entry.
 
@@ -67,16 +81,19 @@ Results contain metadata only: identifiers, short titles, counts, model names, a
 
 ## Keyboard
 
-| Key         | Action                                      |
-|-------------|---------------------------------------------|
-| `j` and `k` | Next and previous entry                     |
-| `]` and `[` | Next and previous tool call                 |
-| `o`         | Open the subagent log for the focused entry |
-| `Escape`    | Return to the parent agent log              |
-| `/`         | Focus the filter in the active panel        |
-| `Home`      | Scroll to the first entry                   |
-| `End`       | Jump to the newest entry and follow         |
-| `?`         | Show all shortcuts                          |
+| Key                           | Action                                                                                                                     |
+|-------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `j` and `k`                   | Next and previous entry                                                                                                    |
+| `]` and `[`                   | Next and previous tool call                                                                                                |
+| `o`                           | Open the subagent log for the focused entry                                                                                |
+| `Escape`                      | Close a definition page or drawer, or return to the parent log                                                             |
+| `/`                           | Filter sessions, tool calls, or context                                                                                    |
+| `b`                           | Show or hide the sidebar                                                                                                   |
+| `i`                           | Show or hide the inspector                                                                                                 |
+| Arrow keys on a panel divider | Resize the panel (`Shift` for larger steps); `Home` and `End` go to the narrowest and widest; `Enter` restores the default |
+| `Home`                        | Scroll to the first entry                                                                                                  |
+| `End`                         | Jump to the newest entry and follow                                                                                        |
+| `?`                           | Show all shortcuts                                                                                                         |
 
 ## Where Sessions Come From
 
@@ -91,11 +108,55 @@ Setting `COPILOT_HOME` moves the Copilot home folder, and the canvas follows it.
 
 Each session folder holds `events.jsonl`, the append-only event log the canvas renders, and `workspace.yaml`, which supplies the title, repository, branch, and host shown in the session list. Folders without recorded events are not listed. A session is marked active while a host process holds it.
 
-## Inventories
+## Context
 
-For the current session, the Details panel asks the host for live lists of agents, skills, instruction sources, MCP servers, plugins, extensions, and the current model. Each list is labeled with its source.
+The inspector's Context view lists everything the model is given at session start or through the system prompt, in ten sections. Each heading shows how many items it holds. Each row shows how often the item was used, with failures in red. One filter covers every section. Each section sorts by use, most or fewest first, or by name, and remembers its choice while the view refreshes.
 
-Live lists are not saved in the session log. For other sessions, and whenever a live list is unavailable, the canvas reconstructs what the log recorded: skill names and instruction files from the system prompt, the selected custom agent, tools that were offered or called, and the subagent types that ran. The full agent catalog is not recorded, so it appears as "Not recorded in session".
+| Section      | Lists                                                                                | Counts                                     |
+|--------------|--------------------------------------------------------------------------------------|--------------------------------------------|
+| Tools        | Every tool offered, marking MCP tools and tools loaded on demand through tool search | Calls and failures by the agent in view    |
+| Skills       | Skills listed in the system prompt or loaded by the host                             | Loads                                      |
+| Agents       | Custom agents loaded for the session, plus agents selected to run it                 | Times selected as the main agent, and runs |
+| Subagents    | Agent types the `task` tool can launch, built-in and custom                          | Runs and failures                          |
+| Canvases     | Canvases declared to the session                                                     | Opens, action calls, and capability checks |
+| Instructions | Instruction files listed in the system prompt or found while the agent worked        | Reads with a file view                     |
+| MCP servers  | Configured servers with their status                                                 | Calls to the server's tools                |
+| Hooks        | Hook types that ran                                                                  | Runs, with failures by plugin              |
+| Plugins      | Installed plugins and the skills and MCP servers they add                            | Loads of their skills                      |
+| Extensions   | Loaded extensions and the canvases they provide                                      | Calls to their canvases                    |
+
+### What the model is given
+
+Select any row to open its definition page. Back or `Escape` returns to the list, or to the page you came from when one item links to another (an MCP server's tools, or a plugin's skills). JSON is indented and highlighted.
+
+| Item        | Shown                                                                                                                                                                                |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Tool        | Source and loading, the description, the arguments with types and descriptions, the definition JSON, and the latest call's arguments and response (or error) with a link to the call |
+| Agent       | Its `task` tool listing, the prompt it received (its latest run's opening or its main-agent instructions), its runs with log links, and the host's definition                        |
+| Skill       | Its `<skill>` entry in the system prompt and, when loaded, the text injected into context with its trigger                                                                           |
+| Canvas      | Its system prompt entry, open input, actions with their parameters and calls, the capabilities the model read, and its instances                                                     |
+| Instruction | Its row in the system prompt's instruction table, file reads, how it was discovered, and the file content                                                                            |
+| MCP server  | Status, source, address without credentials, error, the server instructions given to the model, and its tools                                                                        |
+| Hook        | What the hook type does, the latest run with a link to it, failures by plugin, the latest failure, and the latest context it added for the model                                     |
+| Plugin      | Version, marketplace, state, and the skills and MCP servers it adds                                                                                                                  |
+| Extension   | Its ID, source, status, and the canvases it provides                                                                                                                                 |
+
+Tools declare no result schema, so a tool's latest recorded response shows what it returns.
+
+### Where each list comes from
+
+For the session that opened the canvas, the host supplies live lists: offered tools with their definitions, declared canvases with their schemas and actions, custom agents, skills, instruction sources, MCP servers, plugins, and extensions. Use counts always come from the session log. Each section states its source.
+
+Live lists are not saved in the session log. For other sessions, the canvas reconstructs what the log recorded:
+
+* The canvas, skill, and instruction entries in the system prompt
+* `list_canvas_capabilities` results the model received
+* Canvas, MCP, and tool-search activity
+* Agent selections and subagent runs
+* The prompt each agent received
+* Hook runs and the context hooks added
+
+The log keeps only some tool names and no tool definitions, so those sections are marked partial. Copilot does not list configured hooks for a session, so hooks appear once they run, and a successful run does not name its plugin.
 
 ## Refresh and Resource Use
 
@@ -103,6 +164,7 @@ Live lists are not saved in the session log. For other sessions, and whenever a 
 * The index keeps short summaries and file offsets, not message text. Full content is read on demand when you expand an entry, in pages for very long fields.
 * At most three session indexes stay in memory. Hook events are counted per turn rather than listed, and model debug events are counted only.
 * The page polls about every 2 seconds for the open session and every 15 seconds for the session list, and only while it is visible. It keeps at most 400 entries rendered and loads earlier entries on request.
+* The Context view loads its lists only while it is shown, reloads them when the inventory changes or every 30 seconds, and otherwise refreshes counts at most every 5 seconds while the log grows.
 
 ## Security and Privacy
 
@@ -112,7 +174,10 @@ Session logs can contain prompts, file contents, command output, and secrets tha
 * Every request must name the loopback host, which blocks DNS rebinding. Data requests from other websites are rejected through browser Fetch Metadata, and no cross-origin access is granted.
 * A strict content security policy allows only the canvas's own scripts and styles, and all session text is inserted as text, never as HTML. Links open only for `http` and `https`.
 * The canvas reads session folders and writes no files. Its diagnostics are ephemeral, so they are not added to any session log.
-* Live inventories pass through field allowlists, so prompts, instruction content, launch arguments, and environment values are never returned.
+* Live inventories pass through field allowlists, so prompts, instruction content, launch arguments, and environment values are never returned in the lists.
+* Definitions load one item at a time when you open it, and the extension caches each live list for 30 seconds. Text from the host (an agent's authored prompt, an instruction file, MCP server instructions, tool descriptions) is returned only on that request, with URL credentials and well-known token formats removed. Text recorded in the session log (a skill's injected text, a delivered agent prompt, a hook's added context, a tool call) appears as recorded, as it does in the log.
+* MCP server addresses and plugin sources drop credentials and query strings. Agent MCP server settings are reduced to names, transports, commands, and URLs; arguments, environment variables, and headers are never returned.
+* The extension calls only read-only session methods, such as `tools.getCurrentMetadata`, `canvas.list`, `mcp.list`, `plugins.list`, and `extensions.list`. It never reloads or reconfigures the session.
 
 While the canvas is open, any local process that can reach the loopback port could request session content, much as a process running as you can already read the session files. Close the canvas on shared machines when you are not using it.
 

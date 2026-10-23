@@ -8,7 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 
 import { CONTENT_SECURITY_POLICY, createSessionLogServer } from '../lib/server.mjs';
-import { buildCompactionEvents, COMPACTION_REQUEST, OTHER_SESSION_ID, SESSION_ID, SUBAGENT_ID, writeSession } from './fixtures.mjs';
+import { AGENT_BODY, buildCompactionEvents, buildInventoryEvents, COMPACTION_REQUEST, NESTED_ID, OTHER_SESSION_ID, SESSION_ID, SUBAGENT_ID, writeSession } from './fixtures.mjs';
 import { request } from './helpers.mjs';
 
 async function listFiles(dir) {
@@ -154,7 +154,9 @@ test('summary, entries, outline, detail, and field reads return session data', a
 
     const inventory = (await request(url, `/api/inventory?session=${SESSION_ID}&agent=root`)).json();
     assert.equal(inventory.isLive, false);
-    assert.equal(inventory.skills.status, 'reconstructed');
+    assert.deepEqual(Object.keys(inventory).sort(), ['agent', 'currentAgent', 'inventoryVersion', 'isLive', 'model', 'recorded', 'sections', 'sessionId']);
+    assert.deepEqual(Object.keys(inventory.recorded).sort(), ['agentKey', 'customAgent', 'systemPrompt']);
+    assert.equal(inventory.sections.find((section) => section.id === 'skills').status, 'reconstructed');
 });
 
 test('poll reports unchanged, added, updated, and reset states', async (t) => {
@@ -200,17 +202,61 @@ test('selection follows the current session until a session is chosen', async (t
     assert.equal(server.select(undefined), '22222222-2222-4333-8444-555555555555');
 });
 
-test('uses live inventory only for the current session root agent', async (t) => {
+test('uses live inventory only for the current session, and agent-level lists only for its main agent', async (t) => {
     let calls = 0;
     const { url } = await startServer(t, { liveInventory: async () => { calls += 1; return { agents: { status: 'live', items: [{ name: 'live-agent' }] } }; } });
     const current = (await request(url, `/api/inventory?session=${SESSION_ID}&agent=root`)).json();
     assert.equal(current.isLive, true);
-    assert.equal(current.agents.items[0].name, 'live-agent');
+    assert.deepEqual(current.sections.map((section) => section.id), ['tools', 'skills', 'agents', 'subagents', 'canvases', 'instructions', 'mcp', 'hooks', 'plugins', 'extensions']);
+    assert.equal(current.sections.find((section) => section.id === 'agents').items[0].name, 'live-agent');
     const other = (await request(url, `/api/inventory?session=${OTHER_SESSION_ID}&agent=root`)).json();
     assert.equal(other.isLive, false);
+    assert.equal(other.sections.find((section) => section.id === 'agents').status, 'partial');
     const sub = (await request(url, `/api/inventory?session=${SESSION_ID}&agent=${SUBAGENT_ID}`)).json();
     assert.equal(sub.isLive, false);
-    assert.equal(calls, 1);
+    assert.equal(sub.sections.find((section) => section.id === 'agents').status, 'live');
+    assert.equal(sub.sections.find((section) => section.id === 'tools').status, 'partial');
+    assert.equal(calls, 2);
+});
+
+test('inventory counts part returns only counts and rejects other parts', async (t) => {
+    const { url } = await startServer(t);
+    const counts = (await request(url, `/api/inventory?session=${SESSION_ID}&agent=root&part=counts`)).json();
+    assert.deepEqual(Object.keys(counts).sort(), ['agent', 'counts', 'inventoryVersion', 'sessionId']);
+    const bash = counts.counts.tools.find((row) => row[0] === 'bash');
+    assert.deepEqual(bash, ['bash', 1, 1, '1 call']);
+    assert.equal((await request(url, `/api/inventory?session=${SESSION_ID}&agent=root&part=lists`)).status, 400);
+});
+
+test('inventory sections use live catalogs for the session that opened the canvas', async (t) => {
+    const catalogKinds = [];
+    const { url } = await startServer(t, { serverOptions: {
+        liveDefinitions: {
+            sessionId: () => SESSION_ID,
+            lookup: async () => ({ status: 'not-found', item: null }),
+            catalog: async (kind) => {
+                catalogKinds.push(kind);
+                if (kind === 'tool') {
+                    return { status: 'live', items: [{ name: 'bash', description: 'Runs commands', mcpServerName: null, deferLoading: false }, { name: 'web', description: 'Fetches', mcpServerName: 'net', deferLoading: true }] };
+                }
+                if (kind === 'canvas') {
+                    return { status: 'live', items: [{ canvasId: 'demo-board', displayName: 'Demo Board', description: 'Cards', extensionId: 'project:demo', extensionName: 'demo', actions: ['add'] }] };
+                }
+                return { status: 'live', items: [{ name: 'researcher', description: 'Finds docs', builtIn: false }] };
+            },
+        },
+    } });
+    const inventory = (await request(url, `/api/inventory?session=${SESSION_ID}&agent=root`)).json();
+    assert.deepEqual(catalogKinds.sort(), ['canvas', 'subagent', 'tool']);
+    const sections = Object.fromEntries(inventory.sections.map((section) => [section.id, section]));
+    assert.equal(sections.tools.status, 'live');
+    const web = sections.tools.items.find((row) => row.key === 'web');
+    assert.deepEqual(web.badges.map((badge) => badge.text), ['MCP · net', 'On demand']);
+    assert.ok(sections.tools.items.some((row) => row.key === 'view' && row.description === 'Called earlier; not offered now.'));
+    assert.equal(sections.canvases.items[0].name, 'Demo Board');
+    assert.deepEqual(sections.subagents.items.map((row) => [row.name, row.count]), [['researcher', 1], ['explore', 1]]);
+    const other = (await request(url, `/api/inventory?session=${OTHER_SESSION_ID}&agent=root`)).json();
+    assert.equal(other.sections.find((section) => section.id === 'tools').status === 'live', false);
 });
 
 test('reading session data creates no files under the session root', async (t) => {
@@ -263,4 +309,61 @@ test('system prompt versions and compaction text are served on request', async (
     assert.equal((await request(url, `/api/compaction?session=${SESSION_ID}&agent=root&seq=${earliest.seq}&which=request`)).status, 404);
     assert.equal((await request(url, `/api/compaction?session=${SESSION_ID}&agent=root&seq=${late.seq}&which=raw`)).status, 400);
     assert.equal((await request(url, `/api/compaction?session=${SESSION_ID}&agent=root&which=summary`)).status, 400);
+});
+
+test('definition route validates input and merges recorded and live definitions', async (t) => {
+    const lookups = [];
+    let liveSession = SESSION_ID;
+    const liveDefinitions = {
+        sessionId: () => liveSession,
+        lookup: async (kind, name) => {
+            lookups.push(`${kind}:${name}`);
+            if (kind === 'agent') {
+                return { status: 'live', item: { id: 'plugin:researcher', name: 'researcher', displayName: 'Researcher' }, listing: '- **researcher**: Finds docs' };
+            }
+            return { status: 'live', item: { name } };
+        },
+    };
+    const { url } = await startServer(t, { serverOptions: { liveDefinitions } });
+    const base = `/api/definition?session=${SESSION_ID}&agent=root`;
+    assert.equal((await request(url, `${base}&kind=widget&name=bash`)).status, 400);
+    assert.equal((await request(url, `${base}&kind=tool`)).status, 400);
+    assert.equal((await request(url, `${base}&kind=tool&name=${'x'.repeat(401)}`)).status, 400);
+    assert.equal((await request(url, `${base}&kind=tool&name=a%0Ab`)).status, 400);
+
+    const tool = (await request(url, `${base}&kind=tool&name=bash`)).json();
+    assert.equal(tool.live.scope, 'this-session');
+    assert.equal(tool.recorded.calls.count, 1);
+
+    const agent = (await request(url, `${base}&kind=agent&name=Researcher`)).json();
+    assert.equal(agent.live.listing, '- **researcher**: Finds docs');
+    assert.deepEqual(agent.recorded.runs.map((run) => run.key), [SUBAGENT_ID]);
+
+    const skill = (await request(url, `${base}&kind=skill&name=demo-skill`)).json();
+    assert.ok(skill.recorded.invocations.latest.content.includes('skill body'));
+
+    const other = `/api/definition?session=${OTHER_SESSION_ID}&agent=root`;
+    const fallback = (await request(url, `${other}&kind=tool&name=bash`)).json();
+    assert.equal(fallback.live.scope, 'live-session');
+    const otherSkill = (await request(url, `${other}&kind=skill&name=demo-skill`)).json();
+    assert.equal(otherSkill.live.status, 'not-applicable');
+    assert.equal(lookups.includes('skill:demo-skill'), true);
+    assert.equal(lookups.filter((item) => item === 'skill:demo-skill').length, 1);
+
+    liveSession = null;
+    const detached = (await request(url, `${base}&kind=tool&name=bash`)).json();
+    assert.deepEqual(detached.live, { status: 'unavailable', item: null, scope: null });
+});
+
+test('agent instructions route returns the shown agent\'s instructions or not found', async (t) => {
+    const { url } = await startServer(t, { events: buildInventoryEvents() });
+    const main = (await request(url, `/api/agent-instructions?session=${SESSION_ID}&agent=root`)).json();
+    assert.equal(main.form, 'main');
+    const sub = (await request(url, `/api/agent-instructions?session=${SESSION_ID}&agent=${SUBAGENT_ID}`)).json();
+    assert.equal(sub.form, 'subagent');
+    assert.equal(sub.text, AGENT_BODY);
+    const { url: plainUrl } = await startServer(t);
+    const none = await request(plainUrl, `/api/agent-instructions?session=${SESSION_ID}&agent=${NESTED_ID}`);
+    assert.equal(none.status, 404);
+    assert.equal((await request(url, `/api/agent-instructions?session=${SESSION_ID}&agent=not-an-agent`)).status, 400);
 });

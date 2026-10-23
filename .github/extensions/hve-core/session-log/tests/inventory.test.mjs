@@ -38,7 +38,7 @@ test('live inventory projects allowlisted fields only', async () => {
     const inventory = await createLiveInventoryProvider(session)();
     assert.equal(JSON.stringify(inventory).includes(SECRET), false);
     assert.equal(inventory.agents.status, 'live');
-    assert.deepEqual(inventory.agents.items[0], { name: 'a', displayName: 'Agent A', description: 'd', source: 'plugin', model: null, toolCount: 2, userInvocable: true });
+    assert.deepEqual(inventory.agents.items[0], { id: null, name: 'a', displayName: 'Agent A', description: 'd', source: 'plugin', model: null, toolCount: 2, userInvocable: true, disableModelInvocation: null });
     assert.equal(inventory.skills.items[0].source, 'plugin');
     assert.equal(inventory.mcpServers.items[0].status, 'connected');
     assert.deepEqual(inventory.model.item, { modelId: 'model-x', reasoningEffort: 'high', contextTier: 'long' });

@@ -7,8 +7,8 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { analyzeSystemPrompt, diffSections, HANDLED_EVENT_TYPES, IndexCache, messageText, parseFieldPath, plainSummary, ROOT_AGENT, SessionIndex, summarizeArguments } from '../lib/indexer.mjs';
-import { buildCompactionEvents, buildEvents, COMPACTION_REQUEST, COMPACTION_SUMMARY, NESTED_ID, SESSION_ID, SUBAGENT_ID, toJsonl } from './fixtures.mjs';
+import { agentInstructionsBlock, agentNameKey, analyzeSystemPrompt, canvasPromptEntry, diffSections, HANDLED_EVENT_TYPES, IndexCache, instructionPromptEntry, leadingPromptText, messageText, parseFieldPath, plainSummary, ROOT_AGENT, SessionIndex, skillPromptEntry, summarizeArguments } from '../lib/indexer.mjs';
+import { AGENT_BODY, buildCompactionEvents, buildEvents, buildInventoryEvents, CANVAS_CAPABILITIES, COMPACTION_REQUEST, COMPACTION_SUMMARY, NESTED_ID, SESSION_ID, SUBAGENT_ID, toJsonl } from './fixtures.mjs';
 
 async function indexFor(t, content, options) {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'session-log-index-'));
@@ -43,7 +43,7 @@ test('extracts session and per-agent metadata', async (t) => {
     assert.equal(root.compactions.length, 1);
     assert.equal(root.hooks.count, 2);
     assert.equal(root.hooks.failed, 1);
-    assert.deepEqual(root.tools.find((tool) => tool.name === 'bash'), { name: 'bash', count: 1, failed: 1 });
+    assert.deepEqual(root.tools.find((tool) => tool.name === 'bash'), { name: 'bash', count: 1, failed: 1, lastCallId: 'call-bash' });
     assert.equal(root.systemPrompt.skillCount, 4);
     assert.equal(root.systemPrompt.instructionCount, 2);
     assert.equal(root.systemPrompt.agentInstructions.title, 'Demo Agent');
@@ -492,4 +492,205 @@ test('HANDLED_EVENT_TYPES lists exactly the event types the indexer switch reads
     assert.ok(start > 0 && end > start);
     const cases = [...source.slice(start, end).matchAll(/case '([^']+)':/g)].map((match) => match[1]);
     assert.deepEqual([...cases].sort(), [...HANDLED_EVENT_TYPES].sort());
+});
+
+test('recorded definitions describe tools, skills, instructions, and agent runs', async (t) => {
+    const { index } = await indexFor(t, toJsonl(buildEvents()));
+    await index.refresh();
+
+    const tool = await index.getDefinition(ROOT_AGENT, 'tool', 'bash');
+    const { latestCall, ...toolStats } = tool;
+    assert.deepEqual(toolStats, { calls: { count: 1, failed: 1, lastCallId: 'call-bash' }, otherAgentCalls: 0, schemaHash: 'c0170aaae50c', offered: true, mcpServer: null, activatedBySearch: false });
+    assert.equal(latestCall.toolCallId, 'call-bash');
+    assert.equal(latestCall.status, 'failed');
+    assert.equal(latestCall.error.text, 'Permission denied');
+    assert.ok(latestCall.arguments.text.includes('"command"'));
+    const unused = await index.getDefinition(ROOT_AGENT, 'tool', 'never-called');
+    assert.deepEqual(unused, { calls: { count: 0, failed: 0, lastCallId: null }, otherAgentCalls: 0, schemaHash: null, offered: false, mcpServer: null, activatedBySearch: false, latestCall: null });
+
+    const skill = await index.getDefinition(ROOT_AGENT, 'skill', 'demo-skill');
+    assert.equal(skill.promptEntry.form, 'xml');
+    assert.ok(skill.promptEntry.text.startsWith('<skill>\n<name>demo-skill</name>'));
+    assert.ok(skill.promptEntry.text.endsWith('</skill>'));
+    assert.equal(skill.promptAgent, ROOT_AGENT);
+    assert.equal(skill.invocations.count, 2);
+    const latest = skill.invocations.latest;
+    assert.equal(latest.content, '<skill-context name="demo-skill">\nBase directory for this skill: /plugins/demo/skills/demo-skill\n\nskill body\n</skill-context>');
+    assert.equal(latest.resolvedFrom, 'earlier load');
+    assert.equal(latest.wrapped, true);
+    assert.equal(latest.trigger, 'agent-invoked');
+    assert.equal(latest.invokedAtTurn, 1);
+    assert.equal(latest.truncated, false);
+    const listed = await index.getDefinition(ROOT_AGENT, 'skill', 'extra-two');
+    assert.equal(listed.promptEntry.form, 'listed');
+    assert.deepEqual(listed.invocations, { count: 0, latest: null });
+    assert.equal((await index.getDefinition(ROOT_AGENT, 'skill', 'absent')).promptEntry, null);
+
+    const instruction = await index.getDefinition(ROOT_AGENT, 'instruction', '/workspace/demo/docs/ts.instructions.md');
+    assert.equal(instruction.promptEntry.applyTo, '**/*.ts');
+    assert.equal(instruction.promptEntry.text.split('\n').length, 3);
+
+    const runs = (await index.getDefinition(ROOT_AGENT, 'agent', 'researcher')).runs;
+    assert.deepEqual(runs.map((run) => run.key), [SUBAGENT_ID]);
+    assert.equal(runs[0].displayName, 'docs-lane');
+    assert.equal(runs[0].status, 'completed');
+    const aliased = (await index.getDefinition(ROOT_AGENT, 'agent', 'unknown', ['plugin:Explore'])).runs;
+    assert.deepEqual(aliased.map((run) => run.key), [NESTED_ID]);
+
+    assert.equal(await index.getDefinition('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'tool', 'bash'), null);
+    assert.equal(await index.getDefinition(ROOT_AGENT, 'other', 'bash'), null);
+});
+
+test('prompt entry helpers match exact entries and normalize agent names', () => {
+    const prompt = '<available_skills>\n<skill>\n<name>a&amp;b</name>\n<description>x</description>\n</skill>\n</available_skills>\nAdditional skills available (invoke by name): c, d';
+    assert.equal(skillPromptEntry(prompt, 'a&b').form, 'xml');
+    assert.equal(skillPromptEntry(prompt, 'd').form, 'listed');
+    assert.equal(skillPromptEntry(prompt, 'b'), null);
+    const table = "| Pattern | File Path | Description |\n| --- | --- | --- |\n| **/*.md | '.github/x.instructions.md' | X rules |";
+    assert.equal(instructionPromptEntry(table, '.github/x.instructions.md').description, 'X rules');
+    assert.equal(instructionPromptEntry(table, 'x.instructions.md').applyTo, '**/*.md');
+    assert.equal(instructionPromptEntry(table, 'y.instructions.md'), null);
+    assert.equal(instructionPromptEntry(table, ' '), null);
+    assert.equal(agentNameKey('hve-core:rpi-plan-critic'), agentNameKey('RPI Plan Critic'));
+    assert.equal(agentNameKey(null), '');
+});
+
+test('a skill load recorded only as a reference reports its length without text', async (t) => {
+    const events = [
+        { type: 'session.start', data: { sessionId: SESSION_ID, copilotVersion: '9.9.9', startTime: '2026-01-15T10:00:00.000Z' }, id: 'a', timestamp: '2026-01-15T10:00:00.000Z', parentId: null },
+        { type: 'skill.invoked_ref', data: { name: 'lost-skill', trigger: 'agent-invoked', contentId: 'sha256:00', contentLength: 4321 }, id: 'b', timestamp: '2026-01-15T10:00:01.000Z', parentId: null },
+    ];
+    const { index } = await indexFor(t, toJsonl(events));
+    await index.refresh();
+    const latest = (await index.getDefinition(ROOT_AGENT, 'skill', 'lost-skill')).invocations.latest;
+    assert.equal(latest.content, null);
+    assert.equal(latest.contentChars, 4321);
+    assert.equal(latest.resolvedFrom, null);
+});
+
+test('summary compaction and prompt version records carry what the inspector shows', async (t) => {
+    const { index } = await indexFor(t, toJsonl(buildCompactionEvents()));
+    await index.refresh();
+    const root = index.getSummary().agents.find((agent) => agent.key === ROOT_AGENT);
+    assert.equal(root.compactionTotal, root.compactions.length);
+    const done = root.compactions.find((record) => record.status === 'succeeded');
+    assert.ok(done);
+    for (const field of ['seq', 'ts', 'before', 'after', 'removed', 'trigger', 'durationMs', 'checkpointNumber', 'checkpointName']) {
+        assert.ok(Object.hasOwn(done, field), `missing ${field}`);
+    }
+    assert.ok(Number.isInteger(done.seq));
+    assert.equal(root.activeCompaction, null);
+    const versions = root.systemPromptVersions;
+    assert.equal(versions[0].changes, null);
+    assert.ok(versions.slice(1).every((version) => version.changes && Number.isInteger(version.changes.added) && Number.isInteger(version.sectionCount)));
+});
+
+test('recorded inventory covers canvases, hooks, MCP servers, reads, discoveries, tool search, and selections', async (t) => {
+    const { index } = await indexFor(t, toJsonl(buildInventoryEvents()));
+    await index.refresh();
+    const inventory = index.getRecordedInventory(ROOT_AGENT);
+
+    assert.deepEqual(inventory.canvases.prompt.map((canvas) => [canvas.id, canvas.name, canvas.description]), [
+        ['demo-board', 'Demo Board', 'Cards & lanes for planning.'],
+        ['notes', 'Notes', 'Scratch notes.'],
+    ]);
+    const board = inventory.canvases.activity.find((canvas) => canvas.canvasId === 'demo-board');
+    assert.deepEqual(board, { canvasId: 'demo-board', extensionId: 'project:demo-board', calls: 4, opens: 1, actionCalls: 2, capabilityCalls: 1, failed: 1, instances: 1, open: 0, hasCapabilities: true });
+
+    const hooks = Object.fromEntries(inventory.hooks.map((hook) => [hook.type, hook]));
+    assert.deepEqual(hooks.postToolUse, { type: 'postToolUse', count: 2, failed: 1, contextCount: 0, sources: [{ source: 'lint-plugin', failed: 1 }], lastTs: hooks.postToolUse.lastTs });
+    assert.equal(hooks.userPromptSubmitted.contextCount, 1);
+
+    assert.deepEqual(inventory.tools.mcpServers, [{ tool: 'browser-navigate', server: 'browser' }]);
+    assert.deepEqual(inventory.tools.activated, ['browser-navigate', 'browser-click']);
+    assert.ok(inventory.tools.calls.some((call) => call.name === 'invoke_canvas_action' && call.count === 2 && call.failed === 1));
+    assert.deepEqual(inventory.discoveredInstructions.map((item) => [item.sourcePath, item.triggerFile]), [['packages/api/AGENTS.md', 'packages/api/src/index.ts']]);
+    assert.deepEqual(inventory.selections.map((item) => [item.name, item.count]), [['planner', 1]]);
+    assert.deepEqual(inventory.subagentTypes.map((item) => [item.type, item.count]), [['reviewer', 1]]);
+
+    const reads = index.getReadCounts(ROOT_AGENT, ['.github/instructions/markdown.instructions.md', 'docs/other.md']);
+    assert.deepEqual([...reads], [['.github/instructions/markdown.instructions.md', 1]]);
+});
+
+test('recorded definitions cover canvases, hooks, MCP servers, delivered agent prompts, and tool calls', async (t) => {
+    const { index } = await indexFor(t, toJsonl(buildInventoryEvents()));
+    await index.refresh();
+
+    const canvas = await index.getDefinition(ROOT_AGENT, 'canvas', 'demo-board');
+    assert.ok(canvas.promptEntry.text.startsWith('<canvas>') && canvas.promptEntry.text.includes('<id>demo-board</id>'));
+    assert.deepEqual(JSON.parse(canvas.capabilities.text), CANVAS_CAPABILITIES);
+    assert.equal(canvas.capabilities.toolCallId, 'c-caps');
+    assert.deepEqual(canvas.activity.actions, [{ name: 'add_card', count: 2 }]);
+    assert.deepEqual(canvas.instances.map((item) => [item.instanceId, item.title, item.removed]), [['board-1', 'Demo Board', true]]);
+    const notes = await index.getDefinition(ROOT_AGENT, 'canvas', 'notes');
+    assert.equal(notes.activity, null);
+    assert.equal(notes.capabilities, null);
+
+    const hook = await index.getDefinition(ROOT_AGENT, 'hook', 'postToolUse');
+    assert.equal(hook.count, 2);
+    assert.deepEqual(hook.latestFailure && [hook.latestFailure.source, hook.latestFailure.message], ['lint-plugin', 'Permission denied']);
+    assert.equal(hook.lastRun.status, 'succeeded');
+    assert.equal(typeof hook.lastRun.seq, 'number');
+    const prompt = await index.getDefinition(ROOT_AGENT, 'hook', 'userPromptSubmitted');
+    assert.equal(prompt.latestContext.text, 'Remember the style guide.');
+    assert.deepEqual(await index.getDefinition(ROOT_AGENT, 'hook', 'sessionEnd'), { type: 'sessionEnd', count: 0, failed: 0, contextCount: 0, sources: [], lastRun: null, latestFailure: null, latestContext: null });
+
+    const mcp = await index.getDefinition(ROOT_AGENT, 'mcp', 'browser');
+    assert.deepEqual(mcp, { tools: [{ name: 'browser-navigate', count: 1, failed: 0, lastCallId: 'c-mcp' }], calls: 1, failed: 0 });
+
+    const tool = await index.getDefinition(ROOT_AGENT, 'tool', 'browser-navigate');
+    assert.equal(tool.mcpServer, 'browser');
+    assert.equal(tool.activatedBySearch, true);
+    assert.equal(tool.latestCall.result.text, '{"title":"Example","status":200}');
+    assert.equal(JSON.parse(tool.latestCall.arguments.text).url, 'https://example.com');
+
+    const reviewer = await index.getDefinition(ROOT_AGENT, 'agent', 'reviewer');
+    assert.equal(reviewer.delivered.form, 'subagent');
+    assert.equal(reviewer.delivered.text, AGENT_BODY);
+    assert.equal(reviewer.runs.length, 1);
+    const planner = await index.getDefinition(ROOT_AGENT, 'agent', 'Planner');
+    assert.equal(planner.current, true);
+    assert.deepEqual(planner.selections.map((item) => item.count), [1]);
+    assert.equal(planner.delivered.form, 'main');
+    assert.ok(planner.delivered.text.startsWith('<agent_instructions>') && planner.delivered.text.endsWith('</agent_instructions>'));
+
+    const instruction = await index.getDefinition(ROOT_AGENT, 'instruction', '.github/instructions/markdown.instructions.md');
+    assert.equal(instruction.reads, 1);
+    assert.equal(instruction.discovered, null);
+    const discovered = await index.getDefinition(ROOT_AGENT, 'instruction', 'packages/api/AGENTS.md');
+    assert.equal(discovered.discovered.description, 'AGENTS.md from packages/api/');
+});
+
+test('prompt helpers extract canvas entries, agent instructions, and leading agent text', () => {
+    const prompt = 'Lead text.\n<rules>\nx\n</rules>\n<agent_instructions>\n# A\n</agent_instructions>\n<canvases>\n<canvas>\n<id>a&amp;b</id>\n<name>A</name>\n<description>d</description>\n</canvas>\n</canvases>';
+    assert.equal(canvasPromptEntry(prompt, 'a&b').text, '<canvas>\n<id>a&amp;b</id>\n<name>A</name>\n<description>d</description>\n</canvas>');
+    assert.equal(canvasPromptEntry(prompt, 'missing'), null);
+    assert.deepEqual(agentInstructionsBlock(prompt), { text: '<agent_instructions>\n# A\n</agent_instructions>', chars: 46, truncated: false });
+    assert.equal(agentInstructionsBlock('none'), null);
+    assert.deepEqual(leadingPromptText(prompt), { text: 'Lead text.', chars: 10, truncated: false });
+    assert.equal(leadingPromptText('<rules>\nx\n</rules>'), null);
+    assert.equal(leadingPromptText('Body\n<example>\nnever closed').text, 'Body\n<example>\nnever closed');
+    assert.equal(leadingPromptText('x'.repeat(10), 4).truncated, true);
+    assert.deepEqual(analyzeSystemPrompt(prompt).canvases, [{ id: 'a&b', name: 'A', description: 'd' }]);
+});
+
+test('agent instructions come from each agent\'s own latest system prompt, and descriptions stay whole', async (t) => {
+    const events = buildInventoryEvents();
+    const longDescription = `Gathers candidate sources for one bounded research question. ${'Returns pointers and notes. '.repeat(12)}`.trim();
+    events.find((event) => event.type === 'subagent.started').data.agentDescription = longDescription;
+    const { index } = await indexFor(t, toJsonl(events));
+    await index.refresh();
+
+    const sub = await index.getAgentInstructions(SUBAGENT_ID);
+    assert.deepEqual({ ...sub, seq: typeof sub.seq }, { agent: SUBAGENT_ID, form: 'subagent', text: AGENT_BODY, chars: AGENT_BODY.length, truncated: false, seq: 'number', title: 'Reviewer' });
+    const main = await index.getAgentInstructions(ROOT_AGENT);
+    assert.equal(main.form, 'main');
+    assert.ok(main.text.startsWith('<agent_instructions>') && main.text.includes('# Planner'));
+    assert.equal(main.title, 'Planner');
+    assert.equal(await index.getAgentInstructions('missing-agent'), null);
+    assert.equal(index.getSummary().agents.find((agent) => agent.key === SUBAGENT_ID).description, longDescription);
+
+    const plain = await indexFor(t, toJsonl(buildEvents()));
+    await plain.index.refresh();
+    assert.equal((await plain.index.getAgentInstructions(SUBAGENT_ID)).text, 'You are a research helper.');
 });

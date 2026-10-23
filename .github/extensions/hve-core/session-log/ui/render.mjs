@@ -223,12 +223,15 @@ function codeBlock(text, mode, extraClass = '') {
  * @param {string} options.title
  * @param {string} options.text Preview text.
  * @param {number} options.chars Full length.
- * @param {boolean} options.json
+ * @param {boolean} [options.json]
+ * @param {'text' | 'json' | 'tags' | 'markdown'} [options.mode] How to show the text; `markdown` renders prose.
  * @param {'start' | 'end'} options.anchor
  * @param {'default' | 'error'} [options.tone]
  * @param {() => Promise<{ text: string, note?: string }>} [options.loadFull]
  * @param {{ get: (key: string) => boolean, set: (key: string, value: boolean) => void }} [options.state]
  * @param {string} [options.stateKey]
+ * @param {boolean} [options.watchSize] Re-check a short box for clipped text whenever it resizes; for
+ *   boxes that shrink with their panel.
  */
 export function ioBox(options) {
     const { title, chars, anchor, tone = 'default', loadFull, state, stateKey } = options;
@@ -247,10 +250,19 @@ export function ioBox(options) {
         });
     };
     const render = () => {
-        body.replaceChildren(codeBlock(text, mode, 'io-pre wrap'));
+        body.replaceChildren(mode === 'markdown' ? proseBlock(text) : codeBlock(text, mode, 'io-pre wrap'));
         const short = !cut && text.length <= 600 && text.split('\n', 9).length <= 8;
         box.classList.toggle('is-short', short);
         toggle.hidden = short;
+        if (short) {
+            // Wrapped lines in narrow panels can still overflow a short box; measure once rendered.
+            window.requestAnimationFrame(() => {
+                if (box.classList.contains('is-short') && body.scrollHeight > body.clientHeight + 2) {
+                    box.classList.remove('is-short');
+                    toggle.hidden = false;
+                }
+            });
+        }
     };
     render();
     let loaded = !cut || !loadFull;
@@ -284,6 +296,10 @@ export function ioBox(options) {
     };
     toggle.addEventListener('click', () => setExpanded(!box.classList.contains('is-expanded')));
     body.addEventListener('click', () => {
+        if (box.classList.contains('is-short') && body.scrollHeight > body.clientHeight + 2) {
+            box.classList.remove('is-short');
+            toggle.hidden = false;
+        }
         if (!box.classList.contains('is-expanded') && !box.classList.contains('is-short') && !String(window.getSelection?.() ?? '')) {
             setExpanded(true);
         }
@@ -291,6 +307,17 @@ export function ioBox(options) {
     box.append(el('div', { class: 'io-head' }, el('span', { class: 'io-title' }, title), size, note, hint, toggle), body);
     if (state?.get(stateKey)) {
         setExpanded(true);
+    }
+    if (options.watchSize && typeof ResizeObserver === 'function') {
+        const observer = new ResizeObserver(() => {
+            if (!box.isConnected) {
+                observer.disconnect();
+            } else if (box.classList.contains('is-short') && body.scrollHeight > body.clientHeight + 2) {
+                box.classList.remove('is-short');
+                toggle.hidden = false;
+            }
+        });
+        observer.observe(body);
     }
     return box;
 }
@@ -881,7 +908,9 @@ function subagentCard(entry, ctx) {
             el('span', { class: 'subagent-card-name' }, agentLabel(agent)),
             agent?.agentType && agent.agentType !== agentLabel(agent) ? el('span', { class: 'badge badge-agent' }, agent.agentType) : null,
             statusNode(status)),
-        agent?.description ? el('p', { class: 'meta' }, agent.description) : null,
+        agent?.description
+            ? clampedDescription(agent.description, { id: `desc-${ctx.agentKey}-${entry.seq}`, className: 'meta', state: ctx.ui, stateKey: `card-description:${entry.subagent}` })
+            : null,
         meta ? el('p', { class: 'meta' }, meta) : null,
         agent?.error ? el('p', { class: 'meta' }, `Error: ${agent.error}`) : null,
         el('div', { class: 'detail-actions' }, button));
@@ -1117,71 +1146,130 @@ export function renderEntry(entry, ctx) {
 }
 
 /**
- * Renders the agent header card with model, context, and totals.
+ * A description clamped to three lines. Show more appears only while the clamp cuts text off. The
+ * open choice and the last clipping measurement survive re-renders through `state`, so a re-rendered
+ * toggle is visible at once and keeps keyboard focus.
+ *
+ * @param {string} text
+ * @param {object} options
+ * @param {string} options.id Element ID for the text, unique in the page.
+ * @param {string} options.className Class for the text paragraph.
+ * @param {{ get: (key: string) => boolean, set: (key: string, value: boolean) => void } | undefined} options.state
+ * @param {string} options.stateKey
  */
-export function renderAgentHeader(container, agent, summary, ctx) {
-    container.replaceChildren();
+function clampedDescription(text, options) {
+    const { id, className, state, stateKey } = options;
+    const clippedKey = `${stateKey}:clipped`;
+    const wrap = el('div', { class: 'description-clamp' });
+    const para = el('p', { class: `clamp-text ${className}`, id }, text);
+    const toggle = el('button', { class: 'link-button description-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': id }, 'Show more');
+    const sync = () => {
+        if (wrap.classList.contains('is-open')) {
+            toggle.hidden = false;
+            return;
+        }
+        // A paragraph without a box (in a hidden panel) measures 0; keep the last answer until it has one.
+        if (para.clientHeight === 0) {
+            return;
+        }
+        const clipped = para.scrollHeight > para.clientHeight + 1;
+        toggle.hidden = !clipped;
+        state?.set(clippedKey, clipped);
+    };
+    const setOpen = (open) => {
+        wrap.classList.toggle('is-open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.textContent = open ? 'Show less' : 'Show more';
+        state?.set(stateKey, open);
+        sync();
+    };
+    toggle.addEventListener('click', () => setOpen(!wrap.classList.contains('is-open')));
+    toggle.hidden = !state?.get(clippedKey);
+    wrap.append(para, toggle);
+    if (state?.get(stateKey)) {
+        setOpen(true);
+    }
+    // Width changes (panel resizes) can start or stop the clamp cutting text off.
+    if (typeof ResizeObserver === 'function') {
+        const observer = new ResizeObserver(() => {
+            if (wrap.isConnected) {
+                sync();
+            } else {
+                observer.disconnect();
+            }
+        });
+        observer.observe(para);
+    } else {
+        window.requestAnimationFrame(sync);
+    }
+    return wrap;
+}
+
+/**
+ * Renders the inspector's agent title bar and overview: model, totals, and context use.
+ *
+ * @param {{ head: HTMLElement, body: HTMLElement }} targets Title bar and overview containers.
+ * @param {object | undefined} agent Summary agent.
+ * @param {object} ctx Header context.
+ */
+export function renderAgentHeader(targets, agent, ctx) {
+    const { head, body } = targets;
+    head.replaceChildren();
+    body.replaceChildren();
     if (!agent) {
+        head.append(el('h2', { id: 'agentHeading', class: 'inspector-title' }, 'Agent'));
+        body.append(el('p', { class: 'meta' }, 'Select a session to see its agents.'));
         return;
     }
     const isRoot = agent.key === 'root';
-    const title = isRoot ? (agent.customAgent?.displayName ? `${agent.customAgent.displayName} (main agent)` : 'Main agent') : agentLabel(agent);
-    const top = el('div', { class: 'agent-header-top' },
-        el('h2', { id: 'agentHeading' }, title),
-        !isRoot && agent.agentType ? el('span', { class: 'badge badge-agent' }, agent.agentType) : null,
+    const name = isRoot ? agent.customAgent?.displayName || 'Main agent' : agentLabel(agent);
+    head.append(...[
+        icon('i-agent', 'icon inspector-title-icon'),
+        el('h2', { id: 'agentHeading', class: 'inspector-title', title: name }, name),
+        isRoot && agent.customAgent?.displayName ? el('span', { class: 'inspector-role' }, 'main agent') : null,
+        !isRoot && agent.agentType && agent.agentType !== name ? el('span', { class: 'badge badge-agent' }, agent.agentType) : null,
         !isRoot ? statusNode(agent.status) : null,
-        isRoot && ctx.session?.active ? el('span', { class: 'badge badge-live' }, icon('i-dot'), 'Active') : null);
-    container.append(top);
-    if (!isRoot && agent.description) {
-        container.append(el('p', { class: 'meta' }, agent.description));
-    }
+        isRoot && ctx.session?.active ? el('span', { class: 'badge badge-live' }, icon('i-dot'), 'Active') : null,
+    ].filter(Boolean));
 
-    const facts = el('dl', { class: 'agent-header-facts' });
-    const fact = (label, value) => {
+    if (!isRoot && agent.description) {
+        body.append(clampedDescription(agent.description, { id: 'agentDescription', className: 'overview-description', state: ctx.ui, stateKey: `description:${ctx.sessionId}:${agent.key}` }));
+    }
+    const model = joinMeta([agent.model, agent.reasoningEffort ? `${agent.reasoningEffort} effort` : null, agent.contextTier]);
+    body.append(el('p', { class: 'overview-model' }, icon('i-cpu'), el('span', null, model || 'Model not recorded')));
+
+    const stats = el('dl', { class: 'stat-grid' });
+    const stat = (label, value, wide = false) => {
         if (value === null || value === undefined || value === '') {
             return;
         }
-        facts.append(el('div', { class: 'fact' }, el('dt', null, label), el('dd', null, value)));
+        stats.append(el('div', { class: `stat${wide ? ' stat-wide' : ''}` }, el('dt', null, label), el('dd', null, value)));
     };
-    fact('Model', joinMeta([agent.model, agent.reasoningEffort ? `${agent.reasoningEffort} effort` : null, agent.contextTier]) || 'Not recorded');
-    if (agent.models?.length > 1) {
-        fact('Model changes', String(agent.models.length - 1));
-    }
-    fact('Turns', String(agent.counts.turns));
-    fact('Tool calls', String(agent.counts.tools));
+    stat('Turns', String(agent.counts.turns));
+    stat('Tool calls', agent.counts.tools.toLocaleString());
     if (agent.children?.length) {
-        fact('Subagents', String(agent.children.length));
+        stat('Subagents', String(agent.children.length));
     }
     if (agent.usage?.requests) {
-        fact('Model requests', `${agent.usage.requests} · ${formatTokens(agent.usage.inputTokens)} in · ${formatTokens(agent.usage.outputTokens)} out`);
+        stat('Requests', agent.usage.requests.toLocaleString());
+        stat('Tokens', `${formatTokens(agent.usage.inputTokens)} in · ${formatTokens(agent.usage.outputTokens)} out`, true);
     }
     if (Number.isFinite(agent.durationMs)) {
-        fact('Duration', formatDuration(agent.durationMs));
+        stat('Duration', formatDuration(agent.durationMs));
     }
-    if (isRoot && summary?.session) {
-        const start = summary.session.start;
-        fact('Copilot', start?.copilotVersion ?? null);
-        const premium = summary.session.shutdown?.totalPremiumRequests ?? summary.session.checkpoint?.totalPremiumRequests;
-        if (Number.isFinite(premium)) {
-            fact('Premium requests', String(premium));
-        }
+    if (agent.models?.length > 1) {
+        stat('Models used', String(agent.models.length));
     }
-    container.append(facts);
+    body.append(stats);
 
     const context = agent.context ?? {};
     const meterRow = el('div', { class: 'meter-row' });
     const pct = percent(context.current, context.limit);
     const label = Number.isFinite(context.current)
-        ? `Context ${formatTokens(context.current)}${Number.isFinite(context.limit) ? ` of ${formatTokens(context.limit)} tokens` : ' tokens'}${pct !== null ? ` (${Math.round(pct)}%)` : ''}`
-        : 'Context usage not recorded';
-    const secondary = [];
-    if (Number.isFinite(context.peak) && context.peak !== context.current) {
-        secondary.push(`peak ${formatTokens(context.peak)}`);
-    }
-    if (agent.compactions?.length) {
-        secondary.push(`${agent.compactions.length} ${agent.compactions.length === 1 ? 'compaction' : 'compactions'}`);
-    }
-    meterRow.append(el('p', { class: 'meta' }, label, secondary.length ? el('span', { class: 'meter-secondary' }, ` · ${secondary.join(' · ')}`) : null));
+        ? `Context ${formatTokens(context.current)}${Number.isFinite(context.limit) ? ` of ${formatTokens(context.limit)}` : ' tokens'}${pct !== null ? ` (${Math.round(pct)}%)` : ''}`
+        : 'Context use not recorded';
+    const secondary = Number.isFinite(context.peak) && context.peak !== context.current ? `peak ${formatTokens(context.peak)}` : null;
+    meterRow.append(el('p', { class: 'meta' }, label, secondary ? el('span', { class: 'meter-secondary' }, ` · ${secondary}`) : null));
     if (pct !== null) {
         const meter = el('div', { class: 'meter', 'aria-hidden': 'true' });
         const fill = el('div', { class: 'meter-fill' });
@@ -1203,90 +1291,911 @@ export function renderAgentHeader(container, agent, summary, ctx) {
         }
         meterRow.append(meter);
     }
-    container.append(meterRow);
-    if (agent.systemPrompt && ctx.onShowSystemPrompt) {
-        container.append(systemPromptNav(agent, ctx));
-    }
+    body.append(meterRow);
 }
 
 /**
- * The System prompt control in the agent card: opens the latest version and lists every
- * recorded version with its time, size, change, and reason.
+ * @param {{ added: number, removed: number, resized: number } | null | undefined} changes
+ * @returns {string} Section changes in a short phrase, such as `2 sections added, 1 resized`.
  */
-function systemPromptNav(agent, ctx) {
-    const count = agent.systemPromptCount ?? 1;
-    const versions = agent.systemPromptVersions ?? [];
-    const nav = el('div', { class: 'sp-nav' });
-    const open = el('button', { class: 'btn btn-small', type: 'button', title: 'Show the latest system prompt in the log and open its structure' },
-        icon('i-book'), count > 1 ? `System prompt, version ${count}` : 'System prompt');
-    open.addEventListener('click', () => ctx.onShowSystemPrompt(agent.key, null));
-    nav.append(open);
-    if (count > 1) {
-        const list = el('details', { class: 'disclosure sp-versions' });
-        list.open = ctx.ui?.get(`sp-versions:${agent.key}`) === true;
-        list.addEventListener('toggle', () => ctx.ui?.set(`sp-versions:${agent.key}`, list.open));
-        list.append(el('summary', null, icon('i-chevron'), `All ${count} versions`));
-        const items = el('ol', { class: 'nav-list sp-version-list' });
-        for (const version of versions) {
-            const detail = version.version === 1 ? 'initial' : version.reasons?.length ? `after ${reasonText(version.reasons)}` : 'rebuilt';
-            const button = el('button', { class: 'nav-item sp-version', type: 'button' },
-                el('span', { class: 'nav-item-name' }, `v${version.version}`),
-                el('span', { class: 'nav-item-text' }, joinMeta([formatSize(version.chars), Number.isFinite(version.delta) ? signedSize(version.delta) : null, detail])),
-                el('span', { class: 'nav-item-time' }, formatTime(version.ts)));
-            button.title = `Version ${version.version} at ${version.ts ?? 'an unknown time'}: ${detail}`;
-            button.addEventListener('click', () => ctx.onShowSystemPrompt(agent.key, version.seq));
-            items.append(el('li', null, button));
-        }
-        const body = el('div', { class: 'disclosure-body' }, items);
-        if (count > versions.length) {
-            body.append(el('p', { class: 'meta' }, `${count - versions.length} earlier versions are not listed.`));
-        }
-        list.append(body);
-        nav.append(list);
+export function sectionChangeText(changes) {
+    if (!changes) {
+        return '';
     }
-    return nav;
+    const parts = [];
+    if (changes.added) {
+        parts.push(`${changes.added} added`);
+    }
+    if (changes.removed) {
+        parts.push(`${changes.removed} removed`);
+    }
+    if (changes.resized) {
+        parts.push(`${changes.resized} resized`);
+    }
+    if (parts.length === 0) {
+        return 'same sections';
+    }
+    const total = (changes.added ?? 0) + (changes.removed ?? 0) + (changes.resized ?? 0);
+    return `${total === 1 ? 'section' : 'sections'} ${parts.join(', ')}`;
 }
 
-function statusNote(status) {
-    switch (status) {
-        case 'live':
-            return 'Live from this session';
-        case 'reconstructed':
-            return 'Reconstructed from the session log';
-        case 'unavailable':
-            return 'Unavailable from the host; nothing recorded in the log';
+function listRow(button) {
+    return el('li', null, button);
+}
+
+function emptyRow(text) {
+    return el('li', { class: 'list-empty' }, text);
+}
+
+/**
+ * Renders the system prompt versions of an agent, oldest first, each opening its version in the log.
+ *
+ * @param {HTMLElement} list
+ * @param {HTMLElement} count Heading count.
+ * @param {object | undefined} agent Summary agent.
+ * @param {{ onShowSystemPrompt: (key: string, seq: number | null) => void }} ctx
+ */
+export function renderPromptVersions(list, count, agent, ctx) {
+    const versions = agent?.systemPromptVersions ?? [];
+    const total = agent?.systemPromptCount ?? versions.length;
+    count.textContent = total > 0 ? String(total) : '';
+    if (!agent?.systemPrompt) {
+        list.replaceChildren(emptyRow('No system prompt recorded for this agent.'));
+        return;
+    }
+    const latest = versions[versions.length - 1]?.seq;
+    const rows = versions.slice().reverse().map((version) => {
+        const why = version.version === 1 ? 'Initial prompt' : version.reasons?.length ? `After ${reasonText(version.reasons)}` : 'Rebuilt';
+        const size = joinMeta([formatSize(version.chars), Number.isFinite(version.delta) && version.version > 1 ? signedSize(version.delta) : null, sectionChangeText(version.changes)]);
+        const button = el('button', { class: 'nav-item rich-row', type: 'button', 'aria-current': version.seq === latest ? 'true' : null },
+            el('span', { class: 'rich-row-head' },
+                el('span', { class: 'rich-row-name' }, `Version ${version.version}`),
+                version.seq === latest ? el('span', { class: 'badge badge-current' }, 'Latest') : null,
+                el('span', { class: 'nav-item-time' }, formatTime(version.ts))),
+            el('span', { class: 'rich-row-text' }, why),
+            size ? el('span', { class: 'rich-row-meta' }, size) : null);
+        button.title = `Show version ${version.version} in the log`;
+        button.addEventListener('click', () => ctx.onShowSystemPrompt(agent.key, version.seq));
+        return listRow(button);
+    });
+    if (total > versions.length) {
+        rows.push(emptyRow(`${total - versions.length} earlier versions are not listed.`));
+    }
+    list.replaceChildren(...rows);
+}
+
+/**
+ * @param {object} compaction Summary compaction record.
+ * @returns {string} Tokens before and after with the reduction, such as `92k to 15k (−84%)`.
+ */
+export function compactionTokens(compaction) {
+    const { before, after } = compaction;
+    if (Number.isFinite(before) && Number.isFinite(after)) {
+        const kept = percent(after, before);
+        return `${formatTokens(before)} to ${formatTokens(after)} tokens${kept !== null ? ` (−${Math.round(100 - kept)}%)` : ''}`;
+    }
+    return Number.isFinite(before) ? `${formatTokens(before)} tokens` : '';
+}
+
+/**
+ * Renders an agent's compactions, oldest first, each revealing its entry in the log.
+ *
+ * @param {HTMLElement} list
+ * @param {HTMLElement} count Heading count.
+ * @param {object | undefined} agent Summary agent.
+ * @param {{ onRevealSeq: (seq: number) => void }} ctx
+ */
+export function renderCompactions(list, count, agent, ctx) {
+    const records = [...(agent?.compactions ?? [])];
+    if (agent?.activeCompaction) {
+        records.push(agent.activeCompaction);
+    }
+    const total = (agent?.compactionTotal ?? agent?.compactions?.length ?? 0) + (agent?.activeCompaction ? 1 : 0);
+    count.textContent = total > 0 ? String(total) : '';
+    if (records.length === 0) {
+        list.replaceChildren(emptyRow('No compactions yet. Copilot compacts the conversation when context nears its limit.'));
+        return;
+    }
+    const rows = records.slice().reverse().map((record) => {
+        const label = record.status === 'running' ? 'Compacting' : record.status === 'failed' ? 'Compaction failed' : 'Compacted';
+        const tokens = compactionTokens(record);
+        const meta = joinMeta([
+            Number.isFinite(record.removed) ? `${record.removed.toLocaleString()} ${record.removed === 1 ? 'message' : 'messages'} removed` : null,
+            record.trigger,
+            Number.isFinite(record.durationMs) ? formatDuration(record.durationMs) : null,
+            Number.isFinite(record.checkpointNumber) ? `checkpoint ${record.checkpointNumber}` : null,
+        ]);
+        const button = el('button', { class: `nav-item rich-row compaction-row status-${record.status}`, type: 'button' },
+            el('span', { class: 'rich-row-head' },
+                icon(record.status === 'failed' ? 'i-x-circle' : 'i-compress', 'icon compaction-icon'),
+                el('span', { class: 'rich-row-name' }, label),
+                el('span', { class: 'nav-item-time' }, formatTime(record.ts))),
+            tokens ? el('span', { class: 'rich-row-text' }, tokens) : null,
+            meta ? el('span', { class: 'rich-row-meta' }, meta) : null,
+            record.error ? el('span', { class: 'rich-row-meta rich-row-error' }, record.error) : null);
+        button.title = record.checkpointName ? `Show this compaction in the log. Checkpoint ${record.checkpointName}` : 'Show this compaction in the log';
+        button.addEventListener('click', () => ctx.onRevealSeq(record.seq));
+        return listRow(button);
+    });
+    if (total > records.length) {
+        rows.push(emptyRow(`${total - records.length} earlier compactions are not listed.`));
+    }
+    list.replaceChildren(...rows);
+}
+
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+/**
+ * Normalizes an agent name, ID, display name, or type for matching, so `hve-core:rpi-plan-critic`
+ * matches `RPI Plan Critic`.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function agentNameKey(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    return value.slice(value.lastIndexOf(':') + 1).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Returns a Details group's sort choice: the saved choice, else its default.
+ *
+ * @param {{ id: string, order?: string, count?: object, defaultSort?: { key: string, dir: string } }} spec
+ * @param {{ sort: Map<string, { key: string, dir: string }> }} state
+ */
+export function detailSort(spec, state) {
+    const saved = state.sort.get(spec.id);
+    if (saved && (saved.key === 'name' || (saved.key === 'count' && spec.count) || (saved.key === 'order' && spec.order))) {
+        return saved;
+    }
+    return spec.defaultSort ?? (spec.order ? { key: 'order', dir: 'asc' } : spec.count ? { key: 'count', dir: 'desc' } : { key: 'name', dir: 'asc' });
+}
+
+/**
+ * Sorts Details items without changing the source array. Count ties fall back to name order.
+ *
+ * @param {object[]} items
+ * @param {{ key: 'order' | 'count' | 'name', dir: 'asc' | 'desc' }} sort
+ * @param {{ nameOf: (item: object) => string, count?: { of: (item: object) => number } }} spec
+ * @returns {object[]}
+ */
+export function sortDetailItems(items, sort, spec) {
+    if (sort.key === 'order') {
+        return items.slice();
+    }
+    const byName = (a, b) => collator.compare(spec.nameOf(a) ?? '', spec.nameOf(b) ?? '');
+    const sign = sort.dir === 'desc' ? -1 : 1;
+    if (sort.key === 'count' && spec.count) {
+        return items.slice().sort((a, b) => sign * ((spec.count.of(a) ?? 0) - (spec.count.of(b) ?? 0)) || byName(a, b));
+    }
+    return items.slice().sort((a, b) => sign * byName(a, b));
+}
+
+function sortChips(spec, sort, onChange) {
+    const chips = [];
+    const chip = (key, text, title, next) => {
+        const button = el('button', { class: 'sort-chip', type: 'button', 'aria-pressed': String(sort.key === key), title }, text);
+        button.addEventListener('click', () => onChange(next, key));
+        chips.push(button);
+    };
+    if (spec.order) {
+        chip('order', spec.order, `Show in ${spec.order.toLowerCase()}`, { key: 'order', dir: 'asc' });
+    }
+    if (spec.count) {
+        const active = sort.key === 'count';
+        const dir = active ? sort.dir : 'desc';
+        const text = dir === 'desc' ? spec.count.most : spec.count.fewest;
+        const other = dir === 'desc' ? spec.count.fewest : spec.count.most;
+        chip('count', text, active ? `Sorted by ${text.toLowerCase()} first. Select to show ${other.toLowerCase()} first.` : `Sort by ${text.toLowerCase()} first`, { key: 'count', dir: active ? (dir === 'desc' ? 'asc' : 'desc') : 'desc' });
+    }
+    const nameActive = sort.key === 'name';
+    const nameDir = nameActive ? sort.dir : 'asc';
+    chip('name', nameDir === 'asc' ? 'A–Z' : 'Z–A', nameActive ? `Sorted by name, ${nameDir === 'asc' ? 'A to Z' : 'Z to A'}. Select to reverse.` : 'Sort by name, A to Z', { key: 'name', dir: nameActive ? (nameDir === 'asc' ? 'desc' : 'asc') : 'asc' });
+    return chips;
+}
+
+function defNote(text, tone = 'info') {
+    return el('p', { class: `def-note tone-${tone}` }, icon(tone === 'warning' ? 'i-alert' : 'i-info'), el('span', null, text));
+}
+
+function defHeading(text) {
+    return el('h3', { class: 'def-subhead' }, text);
+}
+
+const PRETTY_JSON_MAX = 256 * 1024;
+
+/**
+ * Indents JSON text for reading. Text that is not complete JSON, or is too large, is returned
+ * unchanged so it still highlights token by token.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function prettyJson(text) {
+    if (typeof text !== 'string' || !looksLikeJson(text) || text.length > PRETTY_JSON_MAX) {
+        return text;
+    }
+    try {
+        const value = JSON.parse(text);
+        return typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : text;
+    } catch {
+        return text;
+    }
+}
+
+/** JSON mode for text that looks like JSON, otherwise tagged text so prompt markup stands out. */
+function textMode(text) {
+    return looksLikeJson(text) ? 'json' : 'tags';
+}
+
+function defBox(ctx, key, title, text, mode = 'text', options = {}) {
+    const shown = mode === 'json' ? prettyJson(text) : text;
+    const chars = Math.max(options.chars ?? 0, shown.length);
+    return ioBox({ title, text: shown, chars, mode, anchor: 'start', tone: options.tone, state: ctx.ui, stateKey: `def:${key}:${title}` });
+}
+
+function liveNotes(def, kind) {
+    const live = def.live ?? {};
+    if (live.item && live.scope === 'live-session') {
+        return [defNote(`Not recorded for this session. Showing the ${kind} definition from the live session, which may differ.`, 'warning')];
+    }
+    if (live.item) {
+        return [];
+    }
+    switch (live.status) {
+        case 'not-initialized':
+            return [defNote('The live session has not loaded its tools yet.')];
+        case 'not-offered':
+            return [defNote('The live session does not offer this tool now.')];
+        case 'not-found':
+            return [defNote(kind === 'agent' && def.live?.listing
+                ? 'The host does not describe this agent beyond its task tool listing.'
+                : `The live session has no ${kind} by this name now.`)];
+        case 'not-applicable':
+            return [defNote(`Live ${kind} details are shown only for the session that opened this canvas.`)];
         default:
-            return 'Not recorded in session';
+            return [defNote(`The live ${kind} definition is unavailable.`)];
     }
 }
 
-function listGroup(title, list, renderItem, open = false) {
-    const items = list?.items ?? [];
-    const details = el('details', { class: 'disclosure details-group' });
-    if (open) {
-        details.open = true;
+function actionButton(label, iconId, onClick) {
+    const button = el('button', { class: 'btn btn-small', type: 'button' }, icon(iconId), label);
+    button.addEventListener('click', onClick);
+    return button;
+}
+
+function actions(...buttons) {
+    const present = buttons.filter(Boolean);
+    return present.length ? el('div', { class: 'detail-actions' }, ...present) : null;
+}
+
+function code(text) {
+    return el('code', null, text);
+}
+
+function plural(count, one, many = `${one}s`) {
+    return `${count.toLocaleString()} ${count === 1 ? one : many}`;
+}
+
+const TYPE_TEXT_MAX = 120;
+
+/**
+ * Describes a JSON Schema property type in a short line, such as `array of string`.
+ *
+ * @param {unknown} prop
+ * @param {number} [depth]
+ * @returns {string}
+ */
+export function schemaType(prop, depth = 0) {
+    if (!prop || typeof prop !== 'object' || depth > 4) {
+        return 'any';
     }
-    details.append(el('summary', null, icon('i-chevron'), `${title} (${items.length})`));
-    const body = el('div', { class: 'disclosure-body' });
-    body.append(el('p', { class: 'source-note' }, statusNote(list?.status)));
-    if (items.length > 0) {
-        const ul = el('ul', { class: 'details-list' });
-        for (const item of items.slice(0, 400)) {
-            ul.append(renderItem(item));
+    let text;
+    if (Array.isArray(prop.enum)) {
+        text = `one of ${prop.enum.slice(0, 6).map((value) => JSON.stringify(value)).join(', ')}${prop.enum.length > 6 ? ', …' : ''}`;
+    } else if (Object.hasOwn(prop, 'const')) {
+        text = `exactly ${JSON.stringify(prop.const)}`;
+    } else if (Array.isArray(prop.anyOf ?? prop.oneOf)) {
+        text = (prop.anyOf ?? prop.oneOf).slice(0, 4).map((variant) => schemaType(variant, depth + 1)).join(' | ');
+    } else {
+        const type = Array.isArray(prop.type) ? prop.type.join(' | ') : prop.type;
+        text = type === 'array' ? `array of ${schemaType(prop.items, depth + 1)}` : type ?? (prop.properties ? 'object' : 'any');
+    }
+    return text.length > TYPE_TEXT_MAX ? `${text.slice(0, TYPE_TEXT_MAX - 1)}…` : text;
+}
+
+function parameterList(schema, emptyText = 'Takes no parameters.') {
+    const props = schema && typeof schema.properties === 'object' && !Array.isArray(schema.properties) ? schema.properties : null;
+    if (!props || Object.keys(props).length === 0) {
+        return el('p', { class: 'meta' }, emptyText);
+    }
+    const required = new Set(Array.isArray(schema.required) ? schema.required : []);
+    const list = el('ul', { class: 'param-list' });
+    for (const [name, prop] of Object.entries(props).slice(0, 100)) {
+        list.append(el('li', null,
+            el('span', { class: 'param-head' },
+                el('code', { class: 'param-name' }, name),
+                el('span', { class: 'param-type' }, schemaType(prop)),
+                required.has(name) ? el('span', { class: 'badge' }, 'Required') : null),
+            typeof prop?.description === 'string' && prop.description ? el('span', { class: 'param-desc' }, prop.description) : null));
+    }
+    return list;
+}
+
+/** Links to related Context items, such as the tools of an MCP server or the skills of a plugin. */
+function relatedList(rows, ctx, emptyText) {
+    if (rows.length === 0) {
+        return el('p', { class: 'meta' }, emptyText);
+    }
+    const list = el('ul', { class: 'related-list' });
+    for (const { section, item } of rows.slice(0, 200)) {
+        const button = el('button', { class: 'related-item', type: 'button' },
+            el('span', { class: `related-name${item.mono ? ' mono' : ''}` }, item.name),
+            el('span', { class: 'meta' }, item.countText));
+        button.addEventListener('click', () => ctx.onOpenItem(section.id, item.key));
+        list.append(el('li', null, button));
+    }
+    if (rows.length > 200) {
+        list.append(el('li', { class: 'list-empty' }, `${(rows.length - 200).toLocaleString()} more`));
+    }
+    return list;
+}
+
+function latestCallView(call, ctx, key) {
+    const nodes = [defHeading('Latest call')];
+    nodes.push(kvList([
+        ['Status', STATUS_TEXT[call.status] ?? call.status],
+        ['Time', call.ts ? `${formatRelativeDate(call.ts)} ${formatTime(call.ts)}` : null],
+        ['Duration', Number.isFinite(call.durationMs) ? formatDuration(call.durationMs) : null],
+    ]));
+    nodes.push(actions(actionButton('Show in log', 'i-open', () => ctx.onRevealTool(call.toolCallId))));
+    if (call.arguments) {
+        nodes.push(defBox(ctx, key, 'Arguments', call.arguments.text, textMode(call.arguments.text) === 'json' ? 'json' : 'text', { chars: call.arguments.chars }));
+    }
+    if (call.error) {
+        nodes.push(defBox(ctx, key, 'Error', call.error.text, 'text', { chars: call.error.chars, tone: 'error' }));
+    }
+    if (call.result) {
+        nodes.push(defBox(ctx, key, 'Response', call.result.text, textMode(call.result.text), { chars: call.result.chars }));
+    } else if (!call.error && call.status !== 'running') {
+        nodes.push(el('p', { class: 'meta' }, 'The log recorded no response text for this call.'));
+    }
+    return nodes;
+}
+
+function toolView(def, item, ctx, key) {
+    const live = def.live?.item ?? null;
+    const recorded = def.recorded ?? {};
+    const calls = recorded.calls ?? { count: 0, failed: 0, lastCallId: null };
+    const server = live?.mcpServerName ?? recorded.mcpServer ?? null;
+    const nodes = [...liveNotes(def, 'tool')];
+    const loading = live?.deferLoading === true
+        ? recorded.activatedBySearch ? 'On demand; loaded by tool search in this session' : 'On demand through tool search'
+        : live?.deferLoading === false ? 'Always offered' : recorded.activatedBySearch ? 'Loaded by tool search' : null;
+    nodes.push(kvList([
+        ['Source', server ? `MCP server ${server}${live?.mcpToolName && live.mcpToolName !== live.name ? `, tool ${live.mcpToolName}` : ''}` : live ? 'Built-in or extension' : null],
+        ['Loading', loading],
+        ['Other agents', recorded.otherAgentCalls > 0 ? plural(recorded.otherAgentCalls, 'call') : null],
+        ['Schema hash', recorded.schemaHash ? code(recorded.schemaHash) : null],
+    ]));
+    if (live) {
+        if (live.definition.description) {
+            nodes.push(defBox(ctx, key, 'Description', live.definition.description, 'markdown'));
         }
-        body.append(ul);
-        if (items.length > 400) {
-            body.append(el('p', { class: 'meta' }, `${items.length - 400} more not shown`));
+        nodes.push(defHeading('Arguments'));
+        nodes.push(live.schemaTooLarge ? el('p', { class: 'meta' }, 'The input schema is too large to show.') : parameterList(live.definition.input_schema));
+        nodes.push(defHeading('Response'));
+        nodes.push(el('p', { class: 'meta' }, recorded.latestCall ? 'Tools declare no response schema; the latest response below shows what this tool returns.' : 'Tools declare no response schema; the model reads whatever the tool returns.'));
+        nodes.push(defBox(ctx, key, 'Definition the model is given', JSON.stringify(live.definition), 'json'));
+    } else {
+        nodes.push(el('p', { class: 'meta' }, 'The tool definition is not recorded in the log.'));
+    }
+    if (recorded.latestCall) {
+        nodes.push(...latestCallView(recorded.latestCall, ctx, key));
+    }
+    return nodes.filter(Boolean);
+}
+
+function runRow(run, ctx) {
+    const status = run.status === 'failed' ? 'badge-danger' : run.status === 'running' ? 'badge-live' : '';
+    const tokens = [run.usage?.inputTokens ? `${formatTokens(run.usage.inputTokens)} in` : null, run.usage?.outputTokens ? `${formatTokens(run.usage.outputTokens)} out` : null].filter(Boolean).join(' / ');
+    return el('li', null,
+        el('span', { class: 'run-head' },
+            el('span', { class: 'item-name' }, run.displayName || run.name || run.agentType || 'Subagent'),
+            run.status ? el('span', { class: `badge ${status}` }, STATUS_TEXT[run.status] ?? run.status) : null),
+        el('span', { class: 'meta' }, [run.model, Number.isFinite(run.durationMs) ? formatDuration(run.durationMs) : null, tokens || null, Number.isFinite(run.totalToolCalls) ? `${run.totalToolCalls} tool calls` : null].filter(Boolean).join(' · ')),
+        el('span', { class: 'detail-actions' }, actionButton('Open log', 'i-open', () => ctx.onOpenAgent(run.key))));
+}
+
+function agentView(def, item, ctx, key, role) {
+    const live = def.live?.item ?? null;
+    const recorded = def.recorded ?? {};
+    const runs = recorded.runs ?? [];
+    const selections = recorded.selections ?? [];
+    const selected = selections.reduce((sum, selection) => sum + (selection.count ?? 0), 0);
+    const nodes = [...liveNotes(def, 'agent')];
+    const listing = def.live?.listing ?? null;
+    if (role === 'subagents') {
+        nodes.push(listing ? defBox(ctx, key, 'What the task tool tells the model', listing, 'text') : el('p', { class: 'meta' }, 'The task tool listing is available only for the session that opened this canvas.'));
+    }
+    nodes.push(kvList([
+        ['ID', live?.id && live.id !== live.name ? code(live.id) : null],
+        ['Source', live?.source],
+        ['File', live?.path ? el('span', { class: 'mono' }, live.path) : null],
+        ['Main agent', selected ? `Selected ${selected.toLocaleString()}×${recorded.current ? ', current' : ''}` : recorded.current ? 'Current' : null],
+        ['Selectable', live ? (live.userInvocable === false ? 'Only as a subagent' : live.disableModelInvocation ? 'Only by the user' : 'By the user and as a subagent') : null],
+        ['Model', live?.models?.length ? live.models.join(', ') : live?.model ?? runs[0]?.model],
+        ['Reasoning effort', live?.reasoningEffort],
+        ['Tools', live ? (live.tools === null ? 'Default tool set' : live.tools.length === 0 ? 'None' : `${live.tools.length}: ${live.tools.join(', ')}`) : null],
+        ['Preloaded skills', live?.skills?.length ? live.skills.join(', ') : null],
+        ['MCP servers', live?.mcpServers?.length ? live.mcpServers.map((server) => `${server.name}${server.type ? ` (${server.type})` : ''}`).join(', ') : null],
+        ['Description', live?.description ?? runs[0]?.description ?? item?.description],
+    ]));
+    if (role !== 'subagents' && listing) {
+        nodes.push(defBox(ctx, key, 'What the task tool tells the model', listing, 'text'));
+    }
+    const delivered = recorded.delivered;
+    if (delivered) {
+        nodes.push(defBox(ctx, key, delivered.form === 'main' ? 'Instructions in the main system prompt' : 'Prompt its latest run received', delivered.text, 'tags', { chars: delivered.chars }));
+        nodes.push(actions(actionButton('Show that system prompt', 'i-book', () => ctx.onShowSystemPrompt(delivered.agentKey, delivered.seq))));
+    } else if (live?.prompt) {
+        nodes.push(defBox(ctx, key, 'Authored prompt', live.prompt, 'tags', { chars: live.promptChars }));
+    } else {
+        nodes.push(el('p', { class: 'meta' }, 'No prompt for this agent is recorded; it has not run or been selected in this session.'));
+    }
+    nodes.push(defHeading(`Runs in this session (${runs.length})`));
+    nodes.push(runs.length > 0 ? el('ul', { class: 'run-list' }, ...runs.map((run) => runRow(run, ctx))) : el('p', { class: 'meta' }, 'No runs recorded in this session.'));
+    if (live) {
+        const { prompt: _prompt, promptChars: _chars, promptTruncated: _cut, ...rest } = live;
+        nodes.push(defBox(ctx, key, 'Definition from the host', JSON.stringify(rest, (_key, value) => (value === null ? undefined : value)), 'json'));
+    }
+    return nodes.filter(Boolean);
+}
+
+function skillView(def, ctx, key) {
+    const live = def.live?.item ?? null;
+    const recorded = def.recorded ?? {};
+    const latest = recorded.invocations?.latest ?? null;
+    const nodes = def.live?.scope === 'this-session' || def.live?.status === 'not-applicable' ? [] : [...liveNotes(def, 'skill')];
+    nodes.push(kvList([
+        ['Command', live?.commandName ? code(`/${live.commandName}`) : null],
+        ['Arguments', live?.argumentHint],
+        ['Source', live?.pluginName ? `plugin ${live.pluginName}` : live?.source ?? (latest?.pluginName ? `plugin ${latest.pluginName}` : latest?.source)],
+        ['State', live?.enabled === false ? 'Disabled' : null],
+        ['Invocation', live?.userInvocable === false ? 'Model only' : null],
+        ['File', live?.path || latest?.path ? el('span', { class: 'mono' }, live?.path || latest.path) : null],
+        ['Uses', String(recorded.invocations?.count ?? 0)],
+    ]));
+    if (recorded.promptEntry) {
+        nodes.push(defBox(ctx, key, recorded.promptEntry.form === 'xml' ? 'System prompt entry' : 'System prompt listing', recorded.promptEntry.text, 'tags'));
+    } else {
+        nodes.push(el('p', { class: 'meta' }, 'Not listed in the latest system prompt.'));
+    }
+    if (latest) {
+        nodes.push(defHeading('Loaded into context'));
+        nodes.push(kvList([
+            ['Trigger', latest.trigger],
+            ['Turn', Number.isFinite(latest.invokedAtTurn) ? String(latest.invokedAtTurn) : null],
+            ['Loaded', latest.ts ? formatTime(latest.ts) : null],
+            ['Allowed tools', latest.allowedTools?.length ? latest.allowedTools.join(', ') : null],
+        ]));
+        nodes.push(el('div', { class: 'detail-actions' }, actionButton('Show in log', 'i-open', () => ctx.onRevealSeq(latest.seq))));
+        if (latest.content) {
+            nodes.push(defBox(ctx, key, 'Loaded text', latest.content, 'tags'));
+            if (latest.truncated) {
+                nodes.push(el('p', { class: 'meta' }, `Showing ${formatSize(latest.content.length)} of ${formatSize(latest.contentChars)}.`));
+            }
+            if (latest.resolvedFrom) {
+                nodes.push(el('p', { class: 'meta' }, 'The log recorded this load as a reference; the text comes from the earlier load with the same content.'));
+            }
+        } else if (latest.contentChars > 0) {
+            nodes.push(defNote(`The log recorded this load (${formatSize(latest.contentChars)}) as a reference to text it does not contain.`));
+        }
+    } else if ((recorded.invocations?.count ?? 0) === 0) {
+        nodes.push(el('p', { class: 'meta' }, 'Not loaded in this session.'));
+    }
+    return nodes.filter(Boolean);
+}
+
+function instructionView(def, item, ctx, key) {
+    const live = def.live?.item ?? null;
+    const recorded = def.recorded ?? {};
+    const entry = recorded.promptEntry ?? null;
+    const nodes = [];
+    nodes.push(kvList([
+        ['Applies to', live?.applyTo?.length ? live.applyTo.join(', ') : entry?.applyTo ?? null],
+        ['Type', live?.type],
+        ['Location', live?.location],
+        ['File', live?.sourcePath ? el('span', { class: 'mono' }, live.sourcePath) : null],
+        ['Reads', recorded.reads ? `Read ${recorded.reads.toLocaleString()}× with a file view` : 'Not read in this session'],
+        ['Discovered', recorded.discovered ? `${recorded.discovered.description ?? 'Found by the runtime'}${recorded.discovered.triggerFile ? ` while reading ${recorded.discovered.triggerFile}` : ''}` : null],
+        ['State', live?.defaultDisabled ? 'Off until enabled' : null],
+    ]));
+    if (recorded.discovered) {
+        nodes.push(actions(actionButton('Show in log', 'i-open', () => ctx.onRevealSeq(recorded.discovered.seq))));
+    }
+    nodes.push(entry ? defBox(ctx, key, 'System prompt entry', entry.text) : el('p', { class: 'meta' }, 'Not listed in the latest system prompt.'));
+    if (live?.content) {
+        nodes.push(defBox(ctx, key, 'File content', live.content, 'tags', { chars: live.contentChars }));
+    } else if (def.live?.status === 'not-applicable') {
+        nodes.push(defNote('File content is shown only for the session that opened this canvas.'));
+    }
+    return nodes.filter(Boolean);
+}
+
+function canvasView(def, item, ctx, key) {
+    const live = def.live?.item ?? null;
+    const recorded = def.recorded ?? {};
+    const activity = recorded.activity;
+    let captured = null;
+    if (recorded.capabilities?.text) {
+        try {
+            captured = JSON.parse(recorded.capabilities.text);
+        } catch {
+            captured = null;
         }
     }
-    details.append(body);
-    return details;
+    const source = live ?? captured;
+    const nodes = def.live?.status === 'not-found' && captured ? [] : [...liveNotes(def, 'canvas')];
+    const open = (recorded.instances ?? []).filter((instance) => !instance.removed).length;
+    nodes.push(kvList([
+        ['Canvas ID', code(item?.key ?? source?.canvasId ?? '')],
+        ['Extension', live?.extensionName ?? live?.extensionId ?? activity?.extensionId ?? source?.extensionId],
+        ['Calls', activity ? `${plural(activity.opens, 'open')}, ${plural(activity.actionCalls, 'action call')}, ${plural(activity.capabilityCalls, 'capability check')}` : null],
+        ['Open now', open ? plural(open, 'instance') : null],
+    ]));
+    if (activity?.lastCallId) {
+        nodes.push(actions(actionButton('Show latest call', 'i-open', () => ctx.onRevealTool(activity.lastCallId))));
+    }
+    const description = live?.description ?? item?.description;
+    if (description) {
+        nodes.push(el('p', { class: 'def-description' }, description));
+    }
+    if (recorded.promptEntry) {
+        nodes.push(defBox(ctx, key, 'System prompt entry', recorded.promptEntry.text, 'tags'));
+    }
+    if (source) {
+        nodes.push(defHeading('Open input'));
+        nodes.push(parameterList(source.inputSchema, 'Opens without input.'));
+        const counts = new Map((activity?.actions ?? []).map((action) => [action.name, action.count]));
+        const actionList = Array.isArray(source.actions) ? source.actions : [];
+        nodes.push(defHeading(`Actions (${actionList.length})`));
+        if (actionList.length === 0) {
+            nodes.push(el('p', { class: 'meta' }, 'This canvas offers no actions.'));
+        }
+        for (const action of actionList) {
+            nodes.push(el('div', { class: 'def-action' },
+                el('p', { class: 'def-action-head' }, code(action.name ?? ''), el('span', { class: 'meta' }, counts.get(action.name) ? plural(counts.get(action.name), 'call') : 'Not called')),
+                action.description ? el('p', { class: 'def-action-desc' }, action.description) : null,
+                parameterList(action.inputSchema, 'Takes no input.')));
+        }
+    } else {
+        nodes.push(el('p', { class: 'meta' }, 'The input schema and actions are not recorded; the model never asked for this canvas\'s capabilities.'));
+    }
+    if (recorded.capabilities?.text) {
+        nodes.push(defBox(ctx, key, 'Capabilities the model read', recorded.capabilities.text, 'json', { chars: recorded.capabilities.chars }));
+        nodes.push(actions(actionButton('Show that call', 'i-open', () => ctx.onRevealTool(recorded.capabilities.toolCallId))));
+    } else if (live) {
+        nodes.push(defBox(ctx, key, 'Declaration', JSON.stringify(live), 'json'));
+    }
+    const instances = recorded.instances ?? [];
+    if (instances.length) {
+        nodes.push(defHeading(`Instances (${instances.length})`));
+        nodes.push(el('ul', { class: 'run-list' }, ...instances.map((instance) => el('li', null,
+            el('span', { class: 'run-head' }, el('span', { class: 'item-name mono' }, instance.instanceId), el('span', { class: `badge${instance.removed ? '' : ' badge-live'}` }, instance.removed ? 'Closed' : 'Open')),
+            el('span', { class: 'meta' }, [instance.title, instance.ts ? `opened ${formatTime(instance.ts)}` : null, instance.removedTs ? `closed ${formatTime(instance.removedTs)}` : null].filter(Boolean).join(' · '))))));
+    }
+    return nodes.filter(Boolean);
+}
+
+function mcpView(def, item, ctx, key) {
+    const live = def.live?.item ?? null;
+    const recorded = def.recorded ?? {};
+    const nodes = [...liveNotes(def, 'MCP server')];
+    nodes.push(kvList([
+        ['Source', live?.source],
+        ['Plugin', live?.sourcePlugin ? `${live.sourcePlugin}${live.sourcePluginVersion ? ` ${live.sourcePluginVersion}` : ''}` : null],
+        ['Address', live?.url ? el('span', { class: 'mono' }, live.url) : null],
+    ]));
+    if (live?.error) {
+        nodes.push(defBox(ctx, key, 'Error', live.error, 'text', { tone: 'error' }));
+    }
+    if (live?.instructions) {
+        nodes.push(defBox(ctx, key, 'Server instructions given to the model', live.instructions, 'markdown', { chars: live.instructionsChars }));
+    }
+    const offered = ctx.findItems((section, row) => section.id === 'tools' && row.owner === `mcp:${item?.key}`);
+    const recordedOnly = (recorded.tools ?? []).filter((tool) => !offered.some(({ item: row }) => row.key === tool.name));
+    nodes.push(defHeading(`Tools (${offered.length + recordedOnly.length})`));
+    nodes.push(relatedList(offered, ctx, recordedOnly.length ? 'Tools seen only in recorded calls:' : 'No tools from this server are listed.'));
+    if (recordedOnly.length) {
+        nodes.push(el('ul', { class: 'related-list' }, ...recordedOnly.map((tool) => el('li', null,
+            el('span', { class: 'related-item is-static' }, el('span', { class: 'related-name mono' }, tool.name), el('span', { class: 'meta' }, plural(tool.count, 'call')))))));
+    }
+    return nodes.filter(Boolean);
+}
+
+function hookView(def, item, ctx, key) {
+    const recorded = def.recorded ?? {};
+    const nodes = [];
+    if (item?.description) {
+        nodes.push(el('p', { class: 'def-description' }, item.description));
+    }
+    nodes.push(kvList([
+        ['Added context', recorded.contextCount ? `${recorded.contextCount.toLocaleString()}×` : null],
+        ['Latest run', recorded.lastRun ? `${STATUS_TEXT[recorded.lastRun.status] ?? recorded.lastRun.status}, ${formatTime(recorded.lastRun.ts)}${recorded.lastRun.tool ? ` for ${recorded.lastRun.tool}` : ''}` : null],
+    ]));
+    nodes.push(actions(Number.isInteger(recorded.lastRun?.seq) ? actionButton('Show latest run', 'i-open', () => ctx.onRevealSeq(recorded.lastRun.seq)) : null));
+    nodes.push(defNote('Copilot does not list configured hooks for a session; this view comes from recorded runs. Successful runs do not name their plugin.'));
+    const sources = recorded.sources ?? [];
+    if (sources.length) {
+        nodes.push(defHeading('Failures by plugin'));
+        nodes.push(el('ul', { class: 'run-list' }, ...sources.map((source) => el('li', null,
+            el('span', { class: 'run-head' }, el('span', { class: 'item-name' }, source.source || 'Unknown source'), el('span', { class: 'badge badge-danger' }, `${source.failed.toLocaleString()} failed`)),
+            source.error ? el('span', { class: 'meta' }, source.error) : null))));
+    }
+    if (recorded.latestFailure?.message) {
+        nodes.push(defBox(ctx, key, 'Latest failure', recorded.latestFailure.message, 'text', { tone: 'error' }));
+    }
+    if (recorded.latestContext) {
+        nodes.push(defBox(ctx, key, 'Latest context added for the model', recorded.latestContext.text, 'tags', { chars: recorded.latestContext.chars }));
+    }
+    return nodes.filter(Boolean);
+}
+
+function pluginView(def, item, ctx) {
+    const live = def.live?.item ?? null;
+    const nodes = [...liveNotes(def, 'plugin')];
+    nodes.push(kvList([
+        ['Version', live?.version],
+        ['Marketplace', live?.marketplace],
+        ['State', live ? (live.enabled === false ? 'Disabled' : 'Enabled') : null],
+        ['Source', live?.source],
+        ['Installed from', live?.installedFrom ? el('span', { class: 'mono' }, live.installedFrom) : null],
+        ['Managed', live?.managed ? 'Yes' : null],
+    ]));
+    const owner = `plugin:${item?.key}`;
+    nodes.push(defHeading('Skills'));
+    nodes.push(relatedList(ctx.findItems((section, row) => section.id === 'skills' && row.owner === owner), ctx, 'No skills from this plugin are listed.'));
+    nodes.push(defHeading('MCP servers'));
+    nodes.push(relatedList(ctx.findItems((section, row) => section.id === 'mcp' && row.owner === owner), ctx, 'No MCP servers from this plugin are listed.'));
+    nodes.push(el('p', { class: 'meta' }, 'Agents, instructions, and hooks do not name their plugin in session data.'));
+    return nodes.filter(Boolean);
+}
+
+function extensionView(def, item, ctx) {
+    const live = def.live?.item ?? null;
+    const nodes = [...liveNotes(def, 'extension')];
+    nodes.push(kvList([
+        ['ID', live?.id ? code(live.id) : null],
+        ['Source', live?.source],
+        ['Status', live?.status],
+    ]));
+    nodes.push(defHeading('Canvases'));
+    nodes.push(relatedList(ctx.findItems((section, row) => section.id === 'canvases' && row.owner === `extension:${item?.key}`), ctx, 'No canvases from this extension are listed.'));
+    return nodes.filter(Boolean);
+}
+
+function definitionView(kind, def, item, ctx, key, role) {
+    switch (kind) {
+        case 'tool':
+            return toolView(def, item, ctx, key);
+        case 'agent':
+            return agentView(def, item, ctx, key, role);
+        case 'skill':
+            return skillView(def, ctx, key);
+        case 'canvas':
+            return canvasView(def, item, ctx, key);
+        case 'mcp':
+            return mcpView(def, item, ctx, key);
+        case 'hook':
+            return hookView(def, item, ctx, key);
+        case 'plugin':
+            return pluginView(def, item, ctx);
+        case 'extension':
+            return extensionView(def, item, ctx);
+        default:
+            return instructionView(def, item, ctx, key);
+    }
+}
+
+// Context sections
+
+/** Sort labels per Context section. */
+const CONTEXT_SORT = Object.freeze({
+    tools: ['Most calls', 'Fewest calls'],
+    skills: ['Most loads', 'Fewest loads'],
+    agents: ['Most used', 'Least used'],
+    subagents: ['Most runs', 'Fewest runs'],
+    canvases: ['Most calls', 'Fewest calls'],
+    instructions: ['Most reads', 'Fewest reads'],
+    mcp: ['Most calls', 'Fewest calls'],
+    hooks: ['Most runs', 'Fewest runs'],
+    plugins: ['Most used', 'Least used'],
+    extensions: ['Most used', 'Least used'],
+});
+
+const CONTEXT_RENDER_LIMIT = 400;
+
+/**
+ * Sort spec for one Context section, as used by {@link detailSort} and {@link sortDetailItems}.
+ *
+ * @param {{ id: string }} section
+ */
+export function contextSpec(section) {
+    const [most, fewest] = CONTEXT_SORT[section.id] ?? ['Most used', 'Least used'];
+    return { id: section.id, nameOf: (item) => item.name, count: { of: (item) => item.count, most, fewest } };
 }
 
 /**
- * Renders the Details panel: session metadata, counts, and inventories.
+ * Filters Context items by a case-insensitive query over name, key, description, count, and badges.
+ *
+ * @param {object[]} items
+ * @param {string} query
+ * @returns {object[]}
  */
-export function renderDetailsPanel(container, { summary, inventory, agent, session }) {
+export function filterContextItems(items, query) {
+    const needle = query.trim().toLowerCase();
+    if (!needle) {
+        return items;
+    }
+    return items.filter((item) => [item.name, item.key, item.description, item.countText, ...item.badges.map((badge) => badge.text)]
+        .some((value) => typeof value === 'string' && value.toLowerCase().includes(needle)));
+}
+
+const BADGE_TONES = { accent: 'badge-current', live: 'badge-live', success: 'badge-live', warning: 'badge-warning', danger: 'badge-danger' };
+
+function contextRow(section, item, ctx) {
+    const sub = item.badges.length || item.description
+        ? el('span', { class: 'context-item-sub' },
+            ...item.badges.map((badge) => el('span', { class: `badge${BADGE_TONES[badge.tone] ? ` ${BADGE_TONES[badge.tone]}` : ''}` }, badge.text)),
+            item.description ? el('span', { class: 'context-item-desc' }, item.description) : null)
+        : null;
+    const button = el('button', { class: 'context-item', type: 'button', 'data-key': item.key },
+        el('span', { class: 'context-item-head' },
+            el('span', { class: `context-item-name${item.mono ? ' mono' : ''}` }, item.name),
+            el('span', { class: `context-item-count${item.count ? '' : ' is-zero'}` }, item.countText, item.failed ? el('span', { class: 'context-item-failed' }, ` · ${item.failed.toLocaleString()} failed`) : null)),
+        sub);
+    button.title = item.description ? `${item.name}\n${item.description}` : item.name;
+    button.addEventListener('click', () => ctx.onOpenItem(section.id, item.key));
+    return el('li', null, button);
+}
+
+const sectionSignatures = new WeakMap();
+
+function renderContextSection(node, section, ctx, query) {
+    const { state } = ctx;
+    const spec = contextSpec(section);
+    const sort = detailSort(spec, state);
+    const matches = filterContextItems(section.items, query);
+    const filtering = query.trim().length > 0;
+    const collapsed = filtering ? matches.length === 0 || state.filterCollapsed.has(section.id) : state.collapsed.has(section.id);
+    const rows = sortDetailItems(matches, sort, spec);
+    const signature = JSON.stringify([section.status, section.note, section.total, collapsed, filtering, sort, rows.slice(0, CONTEXT_RENDER_LIMIT).map((row) => [row.key, row.name, row.countText, row.failed, row.description, row.badges])]);
+    if (sectionSignatures.get(node) === signature) {
+        return;
+    }
+    sectionSignatures.set(node, signature);
+    const listId = `ctx-list-${section.id}`;
+    const headingId = `ctx-heading-${section.id}`;
+    node.className = `inspector-section context-section${collapsed ? ' is-collapsed' : ''}${filtering && matches.length === 0 ? ' is-empty' : ''}`;
+    node.setAttribute('aria-labelledby', headingId);
+    const total = section.items.length;
+    const countText = filtering ? `${matches.length.toLocaleString()} of ${total.toLocaleString()}` : total.toLocaleString();
+    const toggle = el('button', { class: 'section-toggle', type: 'button', 'aria-expanded': String(!collapsed), 'aria-controls': listId },
+        icon('i-chevron'), section.title, ' ', el('span', { class: 'heading-count' }, countText));
+    toggle.addEventListener('click', () => ctx.onToggleSection(section.id, collapsed, filtering));
+    const heading = el('h2', { id: headingId, class: 'panel-heading' }, toggle);
+    const children = [];
+    if (!collapsed && rows.length > 1) {
+        children.push(el('div', { class: 'panel-heading-row' }, heading, el('div', { class: 'sort-bar', role: 'group', 'aria-label': `Sort ${section.title}` }, ...sortChips(spec, sort, (next) => ctx.onSort(section.id, next)))));
+    } else {
+        children.push(heading);
+    }
+    if (!collapsed) {
+        children.push(el('p', { class: 'source-note' }, section.note));
+        const list = el('ul', { id: listId, class: 'context-list scroll-well', 'aria-label': section.title });
+        list.append(...(rows.length
+            ? rows.slice(0, CONTEXT_RENDER_LIMIT).map((row) => contextRow(section, row, ctx))
+            : [el('li', { class: 'list-empty' }, filtering ? 'No matches.' : 'Nothing listed.')]));
+        if (rows.length > CONTEXT_RENDER_LIMIT) {
+            list.append(el('li', { class: 'list-empty' }, `${(rows.length - CONTEXT_RENDER_LIMIT).toLocaleString()} more; filter to narrow the list.`));
+        }
+        children.push(list);
+    }
+    const scroller = node.querySelector('.context-list');
+    const scrollTop = scroller?.scrollTop ?? 0;
+    const focusKey = node.contains(document.activeElement) ? document.activeElement?.dataset?.key ?? null : null;
+    const focusSort = node.contains(document.activeElement) && document.activeElement?.classList?.contains('sort-chip') ? [...node.querySelectorAll('.sort-chip')].indexOf(document.activeElement) : -1;
+    const focusToggle = node.contains(document.activeElement) && document.activeElement?.classList?.contains('section-toggle');
+    node.replaceChildren(...children);
+    const nextScroller = node.querySelector('.context-list');
+    if (nextScroller) {
+        nextScroller.scrollTop = scrollTop;
+    }
+    if (focusKey !== null) {
+        node.querySelector(`.context-item[data-key="${CSS.escape(focusKey)}"]`)?.focus({ preventScroll: true });
+    } else if (focusSort >= 0) {
+        node.querySelectorAll('.sort-chip')[focusSort]?.focus({ preventScroll: true });
+    } else if (focusToggle) {
+        node.querySelector('.section-toggle')?.focus({ preventScroll: true });
+    }
+}
+
+/**
+ * Renders the Context sections, re-rendering only sections whose rows, sort, filter, or collapse
+ * state changed so scroll positions and focus survive refreshes.
+ *
+ * @param {HTMLElement} container
+ * @param {object} data
+ * @param {object[]} data.sections Sections from the inventory route.
+ * @param {string} data.query Filter text.
+ * @param {object} data.ctx `state` (`collapsed`, `filterCollapsed`, `sort`), `onToggleSection(id, expand, filtering)`,
+ *   `onSort`, and `onOpenItem`.
+ */
+export function renderContextSections(container, { sections, query, ctx }) {
+    const existing = new Map([...container.children].map((node) => [node.dataset.section, node]));
+    const nodes = sections.map((section) => {
+        const node = existing.get(section.id) ?? el('section', { 'data-section': section.id });
+        renderContextSection(node, section, ctx, query);
+        return node;
+    });
+    if (nodes.length !== container.children.length || nodes.some((node, index) => container.children[index] !== node)) {
+        container.replaceChildren(...nodes);
+    }
+}
+
+const KIND_LABEL = { tool: 'Tool', agent: 'Agent', skill: 'Skill', instruction: 'Instruction', canvas: 'Canvas', mcp: 'MCP server', hook: 'Hook', plugin: 'Plugin', extension: 'Extension' };
+
+/**
+ * Renders a definition page: Back, the item's name, kind, and use, then what the model receives.
+ *
+ * @param {HTMLElement} container
+ * @param {object} data
+ * @param {{ id: string, title: string }} data.section
+ * @param {object} data.item Context item.
+ * @param {object | null} data.def Definition route payload, or null while loading.
+ * @param {string | null} data.error Load error message.
+ * @param {string} data.backLabel Where Back returns to.
+ * @param {object} data.ctx Definition context.
+ */
+export function renderDefinitionPage(container, { section, item, def, error, backLabel, ctx }) {
+    const kind = item.definition?.kind ?? 'instruction';
+    const key = `${section.id}:${item.key}`;
+    const back = el('button', { class: 'btn btn-small def-back', type: 'button', 'aria-keyshortcuts': 'Escape' }, icon('i-arrow-left'), backLabel);
+    back.title = `Back to ${backLabel} (Escape)`;
+    back.addEventListener('click', () => ctx.onBack());
+    const head = el('div', { class: 'def-page-head' },
+        back,
+        el('span', { class: 'def-kind' }, KIND_LABEL[kind] ?? section.title));
+    const title = el('h2', { id: 'contextDetailTitle', class: `def-title${item.mono ? ' mono' : ''}`, tabindex: '-1' }, item.name);
+    const meta = el('p', { class: 'def-meta' },
+        el('span', { class: item.count ? '' : 'is-zero' }, item.countText),
+        item.failed ? el('span', { class: 'context-item-failed' }, ` · ${item.failed.toLocaleString()} failed`) : null,
+        ...item.badges.filter((badge) => !(kind === 'hook' && badge.tone === 'danger')).map((badge) => el('span', { class: `badge${BADGE_TONES[badge.tone] ? ` ${BADGE_TONES[badge.tone]}` : ''}` }, badge.text)));
+    const body = el('div', { class: 'def-body', 'aria-busy': String(!def && !error) });
+    if (error) {
+        body.append(el('p', { class: 'meta' }, `Could not load the definition: ${error}.`), actions(actionButton('Try again', 'i-refresh', () => ctx.onRetry())));
+    } else if (!def) {
+        body.append(el('div', { class: 'skeleton', 'aria-hidden': 'true' }, el('div', { class: 'skeleton-row mid' }), el('div', { class: 'skeleton-row' }), el('div', { class: 'skeleton-row short' })), el('p', { class: 'visually-hidden' }, 'Loading definition'));
+    } else {
+        body.append(...definitionView(kind, def, item, ctx, key, section.id));
+    }
+    container.replaceChildren(head, title, meta, body);
+}
+
+// Details panel
+
+/**
+ * Renders the Details panel: facts about the session and its main agent. What the model is given
+ * lives in the inspector's Context view.
+ *
+ * @param {HTMLElement} container
+ * @param {object} data
+ * @param {{ onOpenContext?: () => void }} [data.ctx]
+ */
+export function renderDetailsPanel(container, { summary, inventory, agent, session, ctx }) {
     container.replaceChildren();
     if (!summary) {
         container.append(el('p', { class: 'meta' }, 'Select a session to see its details.'));
@@ -1301,6 +2210,7 @@ export function renderDetailsPanel(container, { summary, inventory, agent, sessi
         ['Working folder', start.cwd ?? session?.cwd],
         ['Started', start.startTime ? `${formatRelativeDate(start.startTime)} ${formatTime(start.startTime)}` : null],
         ['Copilot version', start.copilotVersion],
+        ['Premium requests', Number.isFinite(summary.session?.shutdown?.totalPremiumRequests ?? summary.session?.checkpoint?.totalPremiumRequests) ? String(summary.session.shutdown?.totalPremiumRequests ?? summary.session.checkpoint.totalPremiumRequests) : null],
         ['Session ID', session?.sessionId],
         ['Log size', Number.isFinite(summary.fileBytes) ? formatSize(summary.fileBytes) : null],
         ['Events', summary.counts?.events?.toLocaleString()],
@@ -1328,51 +2238,9 @@ export function renderDetailsPanel(container, { summary, inventory, agent, sessi
         ['Custom agent', current ? current.displayName || current.name : 'None recorded'],
         ['Inventory source', inventory.isLive ? 'Live from this session, with recorded fallback' : 'Reconstructed from the session log'],
     ]));
-
-    const sp = inventory.recorded?.systemPrompt;
-    if (sp) {
-        container.append(listGroup('System prompt sections', { status: 'reconstructed', items: sp.sections }, (section) => el('li', null, el('span', { class: 'item-name' }, section.name), el('span', { class: 'meta' }, formatSize(section.chars)))));
+    if (ctx?.onOpenContext) {
+        const open = el('button', { class: 'btn btn-small', type: 'button' }, icon('i-layers'), 'Show what the model is given');
+        open.addEventListener('click', () => ctx.onOpenContext());
+        container.append(el('p', { class: 'source-note' }, 'Tools, skills, agents, canvases, instructions, MCP servers, hooks, plugins, and extensions are in the inspector\'s Context view.'), el('div', { class: 'detail-actions' }, open));
     }
-    const invoked = new Set((inventory.invokedSkills?.items ?? []).map((item) => item.name));
-    container.append(listGroup('Skills', inventory.skills, (skill) => el('li', null,
-        el('span', { class: 'item-name' }, skill.name ?? 'Unnamed', invoked.has(skill.name) ? ' ' : null, invoked.has(skill.name) ? el('span', { class: 'badge badge-current' }, 'Invoked') : null, skill.enabled === false ? el('span', { class: 'badge' }, 'Disabled') : null),
-        skill.description ? el('span', { class: 'meta' }, skill.description) : null,
-        skill.pluginName || skill.source ? el('span', { class: 'item-path' }, [skill.pluginName ? `plugin ${skill.pluginName}` : null, skill.source].filter(Boolean).join(' · ')) : null)));
-    container.append(listGroup('Skills invoked', inventory.invokedSkills, (skill) => el('li', null, el('span', { class: 'item-name' }, skill.name ?? 'Unnamed'))));
-    container.append(listGroup('Instructions and rules', inventory.instructions, (item) => el('li', null,
-        item.label ? el('span', { class: 'item-name' }, item.label) : null,
-        item.sourcePath ? el('span', { class: 'item-path' }, item.sourcePath) : null,
-        item.applyTo?.length ? el('span', { class: 'meta' }, `Applies to ${item.applyTo.join(', ')}`) : null,
-        item.description ? el('span', { class: 'meta' }, item.description) : null)));
-    container.append(listGroup('Available agents', inventory.agents, (item) => el('li', null,
-        el('span', { class: 'item-name' }, item.displayName || item.name || 'Unnamed'),
-        item.description ? el('span', { class: 'meta' }, item.description) : null,
-        el('span', { class: 'item-path' }, [item.source, item.model, Number.isFinite(item.toolCount) ? `${item.toolCount} tools` : null].filter(Boolean).join(' · ')))));
-    if (inventory.subagentTypes?.length) {
-        container.append(listGroup('Subagent types used', { status: 'reconstructed', items: inventory.subagentTypes }, (item) => el('li', null, el('span', { class: 'item-name' }, item.type), el('span', { class: 'meta' }, `${item.count} ${item.count === 1 ? 'run' : 'runs'}`))));
-    }
-    const tools = inventory.tools ?? { names: [] };
-    const toolNote = Number.isFinite(tools.declaredCount)
-        ? `${tools.declaredCount} tools were offered; ${tools.names.length} names were recorded`
-        : `${tools.names.length} tool names recorded`;
-    const used = Array.isArray(agent?.tools) ? agent.tools : [];
-    const usedNames = new Set(used.map((item) => item.name));
-    const toolItems = [...used, ...tools.names.filter((name) => !usedNames.has(name)).map((name) => ({ name, count: 0, failed: 0 }))];
-    const toolGroup = listGroup('Tools', { status: 'reconstructed', items: toolItems }, (item) => el('li', null,
-        el('span', { class: 'item-name mono' }, item.name),
-        el('span', { class: 'meta' }, item.count > 0
-            ? `${item.count.toLocaleString()} ${item.count === 1 ? 'call' : 'calls'}${item.failed > 0 ? `, ${item.failed.toLocaleString()} failed` : ''}`
-            : 'Not called')));
-    toolGroup.querySelector('.source-note').textContent = `Reconstructed from the session log: ${toolNote}.`;
-    container.append(toolGroup);
-    container.append(listGroup('MCP servers', inventory.mcpServers, (item) => el('li', null,
-        el('span', { class: 'item-name' }, item.displayName || item.name || 'Unnamed'),
-        el('span', { class: 'meta' }, [item.status, item.source, item.sourcePlugin ? `plugin ${item.sourcePlugin}` : null].filter(Boolean).join(' · ')),
-        item.error ? el('span', { class: 'meta' }, item.error) : null)));
-    container.append(listGroup('Plugins', inventory.plugins, (item) => el('li', null,
-        el('span', { class: 'item-name' }, item.name ?? 'Unnamed', item.enabled === false ? ' ' : null, item.enabled === false ? el('span', { class: 'badge' }, 'Disabled') : null),
-        el('span', { class: 'meta' }, [item.marketplace, item.version].filter(Boolean).join(' · ')))));
-    container.append(listGroup('Extensions', inventory.extensions, (item) => el('li', null,
-        el('span', { class: 'item-name' }, item.name ?? 'Unnamed'),
-        el('span', { class: 'meta' }, [item.source, item.status].filter(Boolean).join(' · ')))));
 }

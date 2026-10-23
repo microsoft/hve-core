@@ -24,6 +24,24 @@ export function redactCredentials(value) {
         .replace(SECRET_PAIR_RE, '$1$2[redacted]');
 }
 
+/**
+ * Removes URL credentials and well-known token formats from prose such as prompts and skill
+ * text. Unlike {@link redactCredentials}, ordinary phrases such as "token budget" stay intact.
+ *
+ * @param {unknown} value
+ * @param {number} [max] Maximum characters kept.
+ * @returns {unknown} The redacted string, or the value unchanged when it is not a string.
+ */
+export function redactProse(value, max = 256 * 1024) {
+    if (typeof value !== 'string') {
+        return value;
+    }
+    return value
+        .slice(0, max)
+        .replace(URL_USERINFO_RE, '$1[redacted]@')
+        .replace(TOKEN_RE, '[redacted]');
+}
+
 function text(value, max = TEXT_MAX) {
     if (typeof value !== 'string') {
         return null;
@@ -53,6 +71,7 @@ function sourceLabel(value) {
 export const project = Object.freeze({
     agent(agent) {
         return {
+            id: text(agent?.id, 200),
             name: text(agent?.name, 120),
             displayName: text(agent?.displayName, 120),
             description: text(agent?.description),
@@ -60,6 +79,7 @@ export const project = Object.freeze({
             model: text(agent?.model, 80),
             toolCount: Array.isArray(agent?.tools) ? agent.tools.length : null,
             userInvocable: bool(agent?.userInvocable),
+            disableModelInvocation: bool(agent?.disableModelInvocation),
         };
     },
     skill(skill) {
@@ -105,6 +125,7 @@ export const project = Object.freeze({
     },
     extension(extension) {
         return {
+            id: text(extension?.id, 200),
             name: text(extension?.name, 120),
             source: sourceLabel(extension?.source),
             status: sourceLabel(extension?.status),

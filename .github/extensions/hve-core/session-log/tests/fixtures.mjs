@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -8,6 +9,8 @@ export const SESSION_ID = '11111111-2222-4333-8444-555555555555';
 export const OTHER_SESSION_ID = '66666666-7777-4888-9999-aaaaaaaaaaaa';
 export const SUBAGENT_ID = 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff';
 export const NESTED_ID = 'cccccccc-dddd-4eee-8fff-000000000000';
+
+const SKILL_CONTENT_ID = `sha256:${createHash('sha256').update('skill body', 'utf8').digest('hex')}`;
 
 const SYSTEM_PROMPT = [
     'You are a helpful coding assistant.',
@@ -87,7 +90,7 @@ export function buildEvents(options = {}) {
             contentBlocks: [{ content: SYSTEM_PROMPT.slice(0, 200), isStatic: true }, { content: SYSTEM_PROMPT.slice(200), isStatic: false }],
             metadata: { promptVersion: 'test-v1' },
         }),
-        ev('skill.invoked', { name: 'demo-skill', source: 'plugin', pluginName: 'demo-plugin', trigger: 'user-invoked', content: 'skill body' }),
+        ev('skill.invoked', { name: 'demo-skill', source: 'plugin', pluginName: 'demo-plugin', trigger: 'user-invoked', content: 'skill body', path: '/plugins/demo/skills/demo-skill/SKILL.md', allowedTools: ['view'], invokedAtTurn: 0 }),
         ev('assistant.turn_start', { turnId: '0', interactionId: 'i1' }),
         ev('hook.start', { hookInvocationId: 'h1', hookType: 'preToolUse', input: {} }),
         ev('hook.end', { hookInvocationId: 'h1', hookType: 'preToolUse', success: false, error: { message: 'hook failed' } }),
@@ -136,9 +139,11 @@ export function buildEvents(options = {}) {
         ev('session.warning', { message: 'Rate limit approaching' }),
         ev('session.error', { message: 'Transient failure' }),
         ev('abort', { reason: 'user cancelled' }),
-        ev('session.usage_checkpoint', { totalPremiumRequests: 3, promptCacheBreakState: [{ models: { 'demo-model': { tool_count: 40, tools_truncated: 37, tools: [{ name: 'bash' }, { name: 'view' }, { name: 'grep' }] } } }] }),
+        ev('session.usage_checkpoint', { totalPremiumRequests: 3, promptCacheBreakState: [{ models: { 'demo-model': { tool_count: 40, tools_truncated: 37, tools: [{ name: 'bash', schema_hash: 'c0170aaae50c', safe: true }, { name: 'view' }, { name: 'grep' }] } } }] }),
         ev('model.messages_snapshot', { kind: 'messages_snapshot', messages: [] }),
         ev('custom.future_event', { anything: 1 }),
+        ev('skill.invoked_ref', { name: 'demo-skill', source: 'plugin', pluginName: 'demo-plugin', trigger: 'agent-invoked', path: '/plugins/demo/skills/demo-skill/SKILL.md', allowedTools: [], invokedAtTurn: 1, contentId: SKILL_CONTENT_ID, contentLength: 10 }),
+        ev('skill.context_delivered_ref', { source: 'skill-demo-skill', contentId: SKILL_CONTENT_ID, prefix: '<skill-context name="demo-skill">\nBase directory for this skill: /plugins/demo/skills/demo-skill\n\n', suffix: '\n</skill-context>' }),
         ev('assistant.turn_start', { turnId: '1' }),
         ev('tool.execution_start', { toolCallId: 'call-running', toolName: 'grep', arguments: { pattern: 'TODO' } }),
     ];
@@ -177,6 +182,96 @@ export function buildCompactionEvents() {
         ev('system.message', { role: 'system', content: `${base.data.content}\n<canvases>\nSession Log canvas.\n</canvases>`, contentBlocks: [] }),
     );
     return events;
+}
+
+export const CANVAS_CAPABILITIES = {
+    extensionId: 'project:demo-board',
+    canvasId: 'demo-board',
+    displayName: 'Demo Board',
+    inputSchema: { type: 'object', properties: { boardId: { type: 'string', description: 'Board to show.' } }, additionalProperties: false },
+    actions: [
+        { name: 'add_card', description: 'Add a card to the board.', inputSchema: { type: 'object', properties: { title: { type: 'string' } }, required: ['title'] } },
+        { name: 'clear', description: 'Remove every card.' },
+    ],
+};
+
+export const AGENT_BODY = '# Reviewer\n\nReview the change for defects.';
+
+/**
+ * Builds a stream that exercises every Context inventory: a system prompt listing canvases and
+ * selected-agent instructions, canvas tool calls and instance records, hook runs with a failing
+ * plugin and injected context, an MCP tool call, instruction reads and discoveries, tool search,
+ * and a subagent whose prompt opens with its agent definition.
+ *
+ * @returns {object[]} Events in file order.
+ */
+export function buildInventoryEvents() {
+    let clock = Date.parse('2026-02-01T09:00:00.000Z');
+    let id = 0;
+    const ev = (type, data, extra = {}) => ({ type, data, id: `n${(id += 1)}`, timestamp: new Date((clock += 1000)).toISOString(), parentId: null, ...extra });
+    const sub = (type, data) => ev(type, data, { agentId: SUBAGENT_ID });
+    const prompt = [
+        'You are a helpful coding assistant.',
+        '<custom_instruction>',
+        '| Pattern | File Path | Description |',
+        '| ------- | --------- | ----------- |',
+        "| **/*.md | '.github/instructions/markdown.instructions.md' | Markdown rules |",
+        '</custom_instruction>',
+        '<agent_instructions>',
+        'The following instructions come from the selected agent\'s configuration.',
+        '# Planner',
+        'Plan before acting.',
+        '</agent_instructions>',
+        '<canvases>',
+        'Canvas guidance.',
+        'Available canvases:',
+        '<canvas>',
+        '  <id>demo-board</id>',
+        '  <name>Demo Board</name>',
+        '  <description>Cards &amp; lanes for planning.</description>',
+        '</canvas>',
+        '<canvas>',
+        '  <id>notes</id>',
+        '  <name>Notes</name>',
+        '  <description>Scratch notes.</description>',
+        '</canvas>',
+        '</canvases>',
+    ].join('\n');
+    return [
+        ev('session.start', { sessionId: SESSION_ID, version: 1, producer: 'copilot-agent', copilotVersion: '9.9.9', selectedModel: 'demo-model', context: { cwd: '/workspace/demo' } }),
+        ev('subagent.selected', { agentName: 'planner', agentDisplayName: 'Planner', tools: null }),
+        ev('hook.start', { hookInvocationId: 'p1', hookType: 'userPromptSubmitted', input: { prompt: 'hi' } }),
+        ev('hook.end', { hookInvocationId: 'p1', hookType: 'userPromptSubmitted', success: true, output: { additionalContext: 'Remember the style guide.' } }),
+        ev('user.message', { content: 'Plan the board.' }),
+        ev('system.message', { role: 'system', content: prompt, contentBlocks: [] }),
+        ev('assistant.turn_start', { turnId: '0' }),
+        ev('tool.execution_start', { toolCallId: 'c-caps', toolName: 'list_canvas_capabilities', arguments: { canvasId: 'demo-board' } }),
+        ev('tool.execution_complete', { toolCallId: 'c-caps', success: true, result: { content: JSON.stringify(CANVAS_CAPABILITIES, null, 2) } }),
+        ev('tool.execution_start', { toolCallId: 'c-open', toolName: 'open_canvas', arguments: { canvasId: 'demo-board', instanceId: 'board-1', input: { boardId: 'b1' } } }),
+        ev('tool.execution_complete', { toolCallId: 'c-open', success: true, result: { content: 'Opened' } }),
+        ev('session.canvas.recorded', { instanceId: 'board-1', extensionId: 'project:demo-board', canvasId: 'demo-board', title: 'Demo Board', input: { boardId: 'b1' } }),
+        ev('tool.execution_start', { toolCallId: 'c-act', toolName: 'invoke_canvas_action', arguments: { instanceId: 'board-1', actionName: 'add_card', input: { title: 'One' } } }),
+        ev('tool.execution_complete', { toolCallId: 'c-act', success: true, result: { content: '{"ok":true}' } }),
+        ev('tool.execution_start', { toolCallId: 'c-act2', toolName: 'invoke_canvas_action', arguments: { instanceId: 'board-1', actionName: 'add_card', input: { title: 'Two' } } }),
+        ev('tool.execution_complete', { toolCallId: 'c-act2', success: false, error: { message: 'Board is full' } }),
+        ev('hook.start', { hookInvocationId: 'q1', hookType: 'postToolUse', input: {} }),
+        ev('hook.end', { hookInvocationId: 'q1', hookType: 'postToolUse', success: false, error: { message: 'Permission denied', source: 'lint-plugin' } }),
+        ev('hook.start', { hookInvocationId: 'q2', hookType: 'postToolUse', input: {} }),
+        ev('hook.end', { hookInvocationId: 'q2', hookType: 'postToolUse', success: true }),
+        ev('tool.execution_start', { toolCallId: 'c-mcp', toolName: 'browser-navigate', mcpServerName: 'browser', mcpToolName: 'navigate', arguments: { url: 'https://example.com' } }),
+        ev('tool.execution_complete', { toolCallId: 'c-mcp', success: true, result: { content: '{"title":"Example","status":200}' } }),
+        ev('tool.execution_start', { toolCallId: 'c-read', toolName: 'view', arguments: { path: '/workspace/demo/.github/instructions/markdown.instructions.md' } }),
+        ev('tool.execution_complete', { toolCallId: 'c-read', success: true, result: { content: '# Markdown rules' } }),
+        ev('system.notification', { content: 'Discovered instructions', kind: { type: 'instruction_discovered', sourcePath: 'packages/api/AGENTS.md', triggerFile: 'packages/api/src/index.ts', triggerTool: 'view', description: 'AGENTS.md from packages/api/' } }),
+        ev('tool_search.activated', { strategy: 'regex', toolNames: ['browser-navigate', 'browser-click'] }),
+        ev('tool.execution_start', { toolCallId: 'c-task', toolName: 'task', arguments: { agent_type: 'reviewer', description: 'Review' } }),
+        sub('subagent.started', { toolCallId: 'c-task', agentName: 'reviewer', agentDisplayName: 'Reviewer', agentDescription: 'Reviews changes', agentType: 'reviewer' }),
+        sub('system.message', { role: 'system', content: `${AGENT_BODY}\n<tools>\nUse tools.\n</tools>`, contentBlocks: [] }),
+        sub('subagent.completed', { toolCallId: 'c-task', agentName: 'reviewer', agentDisplayName: 'Reviewer', totalToolCalls: 0, durationMs: 1500 }),
+        ev('tool.execution_complete', { toolCallId: 'c-task', success: true, result: { content: 'Reviewed' } }),
+        ev('session.canvas.removed', { instanceId: 'board-1', extensionId: 'project:demo-board', canvasId: 'demo-board' }),
+        ev('assistant.turn_end', { turnId: '0' }),
+    ];
 }
 
 /**

@@ -4,6 +4,7 @@
 import { CanvasError, createCanvas, joinSession } from '@github/copilot-sdk/extension';
 
 import { ACTION_DEFINITIONS, createActionHandlers } from './lib/actions.mjs';
+import { createLiveDefinitionProvider } from './lib/definitions.mjs';
 import { createLiveInventoryProvider } from './lib/inventory.mjs';
 import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { isSessionId, resolveSessionStateRoot } from './lib/paths.mjs';
@@ -15,6 +16,7 @@ const STATUS_TITLE_MAX = 60;
 /** @type {import('@github/copilot-sdk/extension').CopilotSession | null} */
 let joined = null;
 let liveInventory = null;
+let liveDefinitions = null;
 
 function log(message, level = 'info') {
     joined?.log(`Session Log: ${message}`, { level, ephemeral: true }).catch(() => {});
@@ -66,6 +68,11 @@ const registry = createInstanceRegistry({
                 const joinedId = isSessionId(joined?.sessionId) ? joined.sessionId.toLowerCase() : null;
                 return record.currentSessionId && record.currentSessionId === joinedId && liveInventory ? liveInventory() : Promise.resolve(null);
             },
+            liveDefinitions: {
+                sessionId: () => (liveDefinitions && isSessionId(joined?.sessionId) ? joined.sessionId.toLowerCase() : null),
+                lookup: (kind, name) => (liveDefinitions ? liveDefinitions.lookup(kind, name) : Promise.resolve(null)),
+                catalog: (kind) => (liveDefinitions ? liveDefinitions.catalog(kind) : Promise.resolve({ status: 'unavailable', items: [] })),
+            },
             log,
         });
     },
@@ -103,3 +110,4 @@ const canvas = createCanvas({
 
 joined = await joinSession({ canvases: [canvas] });
 liveInventory = createLiveInventoryProvider(joined);
+liveDefinitions = createLiveDefinitionProvider(joined);

@@ -21,7 +21,8 @@
   <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4M8 4.75v.01"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></symbol>
   <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25l3.5 3.5"/></symbol>
-  <symbol id="i-panel" viewBox="0 0 16 16"><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5"/><path d="M6 2.75v10.5"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 16 16"><path d="M3.25 2.75H6v10.5H3.25a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5z" stroke="none"/><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5" fill="none"/><path d="M6 2.75v10.5" fill="none"/></symbol>
+  <symbol id="i-panel-right" viewBox="0 0 16 16"><path d="M10 2.75h2.75a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5H10z" stroke="none"/><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5" fill="none"/><path d="M10 2.75v10.5" fill="none"/></symbol>
   <symbol id="i-keyboard" viewBox="0 0 16 16"><rect x="1.25" y="3.75" width="13.5" height="8.5" rx="1.5"/><path d="M4 6.5h.01M6.5 6.5h.01M9 6.5h.01M11.5 6.5h.01M4.5 9.5h7"/></symbol>
   <symbol id="i-book" viewBox="0 0 16 16"><path d="M2.25 3.25c2-.75 4-.75 5.75.5 1.75-1.25 3.75-1.25 5.75-.5v9.5c-2-.75-4-.75-5.75.5-1.75-1.25-3.75-1.25-5.75-.5z"/><path d="M8 3.75v9.5"/></symbol>
   <symbol id="i-cpu" viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1"/><path d="M6 1.75V4M10 1.75V4M6 12v2.25M10 12v2.25M1.75 6H4M1.75 10H4M12 6h2.25M12 10h2.25"/></symbol>
@@ -46,8 +47,8 @@
 <a class="skip-link" href="#feed">Skip to the session log</a>
 
 <header class="topbar">
-  <button id="panelsToggle" class="btn btn-icon narrow-only" type="button" aria-controls="sidebar" aria-expanded="false">
-    <svg class="icon" aria-hidden="true"><use href="#i-panel"/></svg><span class="visually-hidden">Show panels</span>
+  <button id="sidebarToggle" class="btn btn-icon btn-compact panel-toggle" type="button" aria-controls="sidebar" aria-expanded="true" aria-keyshortcuts="b" title="Hide sidebar (b)">
+    <svg class="icon" aria-hidden="true"><use href="#i-panel"/></svg><span id="sidebarToggleText" class="visually-hidden">Hide sidebar</span>
   </button>
   <div class="topbar-title">
     <h1 id="sessionTitle">Session Log</h1>
@@ -58,14 +59,17 @@
     <span id="refreshText" class="meta refresh-text"></span>
     <button id="useCurrent" class="btn btn-icon btn-compact" type="button" title="Use current session"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span class="visually-hidden">Use current session</span></button>
     <button id="followToggle" class="btn btn-icon btn-compact" type="button" aria-pressed="true" title="Follow latest"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg><span class="visually-hidden">Follow latest</span></button>
-    <button id="shortcutsButton" class="btn btn-icon btn-compact" type="button" aria-haspopup="dialog" title="Keyboard shortcuts">
+    <button id="shortcutsButton" class="btn btn-icon btn-compact" type="button" aria-haspopup="dialog" title="Keyboard shortcuts (?)">
       <svg class="icon" aria-hidden="true"><use href="#i-keyboard"/></svg><span class="visually-hidden">Keyboard shortcuts</span>
+    </button>
+    <button id="inspectorToggle" class="btn btn-icon btn-compact panel-toggle" type="button" aria-controls="inspector" aria-expanded="true" aria-keyshortcuts="i" title="Hide inspector (i)">
+      <svg class="icon" aria-hidden="true"><use href="#i-panel-right"/></svg><span id="inspectorToggleText" class="visually-hidden">Hide inspector</span>
     </button>
   </div>
 </header>
 
 <div class="layout">
-  <aside id="sidebar" class="sidebar" aria-label="Panels">
+  <aside id="sidebar" class="sidebar" aria-label="Sidebar">
     <div class="tabs" role="tablist" aria-label="Panels">
       <button id="tab-sessions" class="tab" role="tab" type="button" aria-selected="false" aria-controls="panel-sessions" tabindex="-1">Sessions</button>
       <button id="tab-outline" class="tab" role="tab" type="button" aria-selected="true" aria-controls="panel-outline">Outline</button>
@@ -82,33 +86,13 @@
     </section>
 
     <section id="panel-outline" class="panel panel-outline" role="tabpanel" aria-labelledby="tab-outline" tabindex="0">
-      <h2 class="panel-heading">Agents</h2>
-      <ul id="agentTree" class="agent-tree" aria-label="Agents"></ul>
-      <section id="agentHeader" class="agent-header" aria-labelledby="agentHeading"></section>
-      <h2 class="panel-heading">Prompts</h2>
-      <ol id="interactionList" class="nav-list" aria-label="Prompts"></ol>
-      <section class="tools-section" aria-labelledby="toolsHeading">
-        <div class="panel-heading-row">
-          <h2 id="toolsHeading" class="panel-heading">Tools</h2>
-          <button id="toolSort" class="btn btn-small tool-sort" type="button" data-order="asc" title="Showing oldest first. Select to show newest first.">
-            <svg class="icon" aria-hidden="true"><use href="#i-sort"/></svg><span class="visually-hidden">Tool order: </span><span id="toolSortText">Oldest first</span>
-          </button>
-        </div>
-        <label class="field">
-          <span class="field-label">Filter tools</span>
-          <span class="field-control"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="toolFilter" type="search" autocomplete="off" spellcheck="false" placeholder="Name, intent, or compaction"></span>
-        </label>
-        <div class="segmented" role="radiogroup" aria-label="Tool status">
-          <label><input type="radio" name="toolStatus" value="all" checked><span>All</span></label>
-          <label><input type="radio" name="toolStatus" value="failed"><span>Failed</span></label>
-          <label><input type="radio" name="toolStatus" value="running"><span>Running</span></label>
-        </div>
-        <div class="tool-step" role="group" aria-label="Step through tool calls">
-          <button id="prevTool" class="btn" type="button" aria-keyshortcuts="[">Previous tool</button>
-          <button id="nextTool" class="btn" type="button" aria-keyshortcuts="]">Next tool</button>
-        </div>
-        <p id="toolCount" class="meta"></p>
-        <ol id="toolIndex" class="nav-list tool-index" aria-label="Tool calls and compactions" tabindex="-1"></ol>
+      <section class="outline-section outline-agents" aria-labelledby="agentsHeading">
+        <h2 id="agentsHeading" class="panel-heading"><button class="section-toggle" type="button" aria-expanded="true" aria-controls="agentTree"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>Agents <span id="agentCount" class="heading-count"></span></button></h2>
+        <ul id="agentTree" class="agent-tree scroll-well" aria-label="Agents"></ul>
+      </section>
+      <section class="outline-section outline-prompts" aria-labelledby="promptsHeading">
+        <h2 id="promptsHeading" class="panel-heading"><button class="section-toggle" type="button" aria-expanded="true" aria-controls="interactionList"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>Prompts <span id="promptCount" class="heading-count"></span></button></h2>
+        <ol id="interactionList" class="nav-list scroll-well" aria-label="Prompts"></ol>
       </section>
     </section>
 
@@ -117,6 +101,7 @@
     </section>
   </aside>
 
+  <div id="sidebarSplitter" class="splitter splitter-left" role="separator" aria-orientation="vertical" aria-controls="sidebar" aria-label="Resize sidebar" tabindex="0" title="Drag to resize the sidebar. Arrow keys adjust; Enter or double-click resets."></div>
   <div class="main-wrap">
     <button id="pinnedPrompt" class="pinned-prompt" type="button" hidden>
       <svg class="icon" aria-hidden="true"><use href="#i-person"/></svg>
@@ -134,10 +119,77 @@
       </div>
     </main>
     <div class="scroll-nav" role="group" aria-label="Scroll the log">
-      <button id="scrollTop" class="btn btn-icon" type="button" title="Scroll to top" aria-keyshortcuts="Home"><svg class="icon" aria-hidden="true"><use href="#i-arrow-up"/></svg><span class="visually-hidden">Scroll to top</span></button>
-      <button id="scrollBottom" class="btn btn-icon" type="button" title="Scroll to latest" aria-keyshortcuts="End"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg><span class="visually-hidden">Scroll to latest</span><span id="newerBadge" class="newer-badge" hidden></span></button>
+      <button id="scrollTop" class="btn btn-icon" type="button" title="Scroll to top (Home)" aria-keyshortcuts="Home"><svg class="icon" aria-hidden="true"><use href="#i-arrow-up"/></svg><span class="visually-hidden">Scroll to top</span></button>
+      <button id="scrollBottom" class="btn btn-icon" type="button" title="Scroll to latest (End)" aria-keyshortcuts="End"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg><span class="visually-hidden">Scroll to latest</span><span id="newerBadge" class="newer-badge" hidden></span></button>
     </div>
   </div>
+
+  <div id="inspectorSplitter" class="splitter splitter-right" role="separator" aria-orientation="vertical" aria-controls="inspector" aria-label="Resize inspector" tabindex="0" title="Drag to resize the inspector. Arrow keys adjust; Enter or double-click resets."></div>
+  <aside id="inspector" class="inspector" aria-labelledby="agentHeading">
+    <div id="inspectorHead" class="inspector-head"></div>
+    <div class="tabs inspector-tabs" role="tablist" aria-label="Inspector views">
+      <button id="tab-activity" class="tab" role="tab" type="button" aria-selected="true" aria-controls="inspectorActivity">Activity</button>
+      <button id="tab-context" class="tab" role="tab" type="button" aria-selected="false" aria-controls="inspectorContext" tabindex="-1" title="What the model is given: tools, skills, agents, canvases, and more">Context</button>
+    </div>
+    <div id="inspectorActivity" class="panel inspector-body" role="tabpanel" aria-labelledby="tab-activity" tabindex="0">
+      <section id="agentHeader" class="agent-overview" aria-labelledby="agentHeading"></section>
+      <section id="instructionsSection" class="inspector-section instructions-section" aria-labelledby="instructionsHeading" hidden>
+        <div class="panel-heading-row">
+          <h2 id="instructionsHeading" class="panel-heading"><button class="section-toggle" type="button" aria-expanded="true" aria-controls="agentInstructions"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>Agent instructions</button></h2>
+          <button id="showInstructionsPrompt" class="btn btn-small" type="button" title="Show the system prompt these instructions came from"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>In prompt</button>
+        </div>
+        <div id="agentInstructions" class="agent-instructions"></div>
+      </section>
+      <section class="inspector-section" aria-labelledby="promptVersionsHeading">
+        <div class="panel-heading-row">
+          <h2 id="promptVersionsHeading" class="panel-heading"><button class="section-toggle" type="button" aria-expanded="true" aria-controls="promptVersionList"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>System prompt <span id="promptVersionCount" class="heading-count"></span></button></h2>
+          <button id="showSystemPrompt" class="btn btn-small" type="button" title="Show the latest system prompt in the log and open its structure"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Show latest</button>
+        </div>
+        <ol id="promptVersionList" class="nav-list scroll-well short-well" aria-label="System prompt versions"></ol>
+      </section>
+      <section class="inspector-section" aria-labelledby="compactionsHeading">
+        <h2 id="compactionsHeading" class="panel-heading"><button class="section-toggle" type="button" aria-expanded="true" aria-controls="compactionList"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>Compactions <span id="compactionCount" class="heading-count"></span></button></h2>
+        <ol id="compactionList" class="nav-list scroll-well short-well" aria-label="Compactions"></ol>
+      </section>
+      <section class="inspector-section tools-section" aria-labelledby="toolsHeading">
+        <div class="panel-heading-row">
+          <h2 id="toolsHeading" class="panel-heading"><button class="section-toggle" type="button" aria-expanded="true" aria-controls="toolIndex"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>Tool calls <span id="toolHeadingCount" class="heading-count"></span></button></h2>
+          <button id="toolSort" class="btn btn-small tool-sort" type="button" data-order="asc" title="Showing oldest first. Select to show newest first.">
+            <svg class="icon" aria-hidden="true"><use href="#i-sort"/></svg><span class="visually-hidden">Tool order: </span><span id="toolSortText">Oldest first</span>
+          </button>
+        </div>
+        <label class="field">
+          <span class="visually-hidden">Filter tools</span>
+          <span class="field-control"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="toolFilter" type="search" autocomplete="off" spellcheck="false" placeholder="Filter by name, intent, or compaction" aria-keyshortcuts="/"></span>
+        </label>
+        <div class="tool-controls">
+          <div class="segmented" role="radiogroup" aria-label="Tool status">
+            <label><input type="radio" name="toolStatus" value="all" checked><span>All</span></label>
+            <label><input type="radio" name="toolStatus" value="failed"><span>Failed</span></label>
+            <label><input type="radio" name="toolStatus" value="running"><span>Running</span></label>
+          </div>
+          <div class="tool-step" role="group" aria-label="Step through tool calls">
+            <button id="prevTool" class="btn btn-icon btn-compact" type="button" aria-keyshortcuts="[" title="Previous tool call ([)"><svg class="icon" aria-hidden="true"><use href="#i-arrow-up"/></svg><span class="visually-hidden">Previous tool call</span></button>
+            <button id="nextTool" class="btn btn-icon btn-compact" type="button" aria-keyshortcuts="]" title="Next tool call (])"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg><span class="visually-hidden">Next tool call</span></button>
+          </div>
+        </div>
+        <p id="toolCount" class="meta tool-count"></p>
+        <ol id="toolIndex" class="nav-list tool-index" aria-label="Tool calls and compactions" tabindex="-1"></ol>
+      </section>
+    </div>
+    <div id="inspectorContext" class="panel inspector-body context-panel" role="tabpanel" aria-labelledby="tab-context" tabindex="0" hidden>
+      <div id="contextHome" class="context-home">
+        <label class="field context-filter">
+          <span class="visually-hidden">Filter context</span>
+          <span class="field-control"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="contextFilter" type="search" autocomplete="off" spellcheck="false" placeholder="Filter tools, skills, agents, and more" aria-keyshortcuts="/"></span>
+        </label>
+        <p id="contextStatus" class="meta context-status" role="status"></p>
+        <div id="contextSections" class="context-sections"></div>
+      </div>
+      <section id="contextDetail" class="context-detail" aria-labelledby="contextDetailTitle" hidden></section>
+    </div>
+  </aside>
+  <div id="scrim" class="scrim" hidden></div>
 </div>
 
 <div id="statusRegion" class="visually-hidden" role="status" aria-live="polite"></div>
@@ -151,8 +203,10 @@
       <tr><th scope="row"><kbd>]</kbd> and <kbd>[</kbd></th><td>Next and previous tool call</td></tr>
       <tr><th scope="row"><kbd>Enter</kbd> or <kbd>Space</kbd></th><td>Expand or collapse the focused summary</td></tr>
       <tr><th scope="row"><kbd>o</kbd></th><td>Open the subagent log for the focused entry</td></tr>
-      <tr><th scope="row"><kbd>Escape</kbd></th><td>Return to the parent agent log</td></tr>
-      <tr><th scope="row"><kbd>/</kbd></th><td>Focus the filter in the active panel</td></tr>
+      <tr><th scope="row"><kbd>Escape</kbd></th><td>Close a definition, a drawer, or return to the parent agent log</td></tr>
+      <tr><th scope="row"><kbd>/</kbd></th><td>Filter sessions, tool calls, or context</td></tr>
+      <tr><th scope="row"><kbd>b</kbd></th><td>Show or hide the sidebar</td></tr>
+      <tr><th scope="row"><kbd>i</kbd></th><td>Show or hide the inspector</td></tr>
       <tr><th scope="row"><kbd>Home</kbd></th><td>Scroll to the first entry</td></tr>
       <tr><th scope="row"><kbd>End</kbd></th><td>Jump to the newest entry and follow</td></tr>
       <tr><th scope="row"><kbd>?</kbd></th><td>Show this list</td></tr>

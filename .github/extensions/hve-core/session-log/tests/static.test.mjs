@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -85,5 +86,47 @@ test('the page shell defines every element ID and icon the UI uses', async () =>
         assert.ok(symbols.has(name), `missing icon ${name}`);
     }
     const outline = html.slice(html.indexOf('id="panel-outline"'), html.indexOf('id="panel-details"'));
-    assert.match(outline, /id="agentTree"[\s\S]*id="agentHeader"[\s\S]*id="interactionList"[\s\S]*class="tools-section"[\s\S]*id="toolSort"[\s\S]*id="toolIndex"/);
+    assert.match(outline, /id="agentTree"[\s\S]*id="interactionList"/);
+    assert.doesNotMatch(outline, /id="agentHeader"|id="toolIndex"/);
+    const inspector = html.slice(html.indexOf('<aside id="inspector"'), html.indexOf('</aside>', html.indexOf('<aside id="inspector"')));
+    assert.match(inspector, /id="inspectorHead"[\s\S]*id="agentHeader"[\s\S]*id="promptVersionList"[\s\S]*id="compactionList"[\s\S]*class="inspector-section tools-section"[\s\S]*id="toolSort"[\s\S]*id="toolIndex"/);
+    assert.match(html, /id="sidebarToggle"[^>]*aria-controls="sidebar"/);
+    assert.match(html, /id="inspectorToggle"[^>]*aria-controls="inspector"/);
+});
+
+test('the inspector switches between Activity and Context tab panels', async () => {
+    const html = await fs.readFile(path.join(EXTENSION_DIR, 'ui', 'index.html'), 'utf8');
+    const inspector = html.slice(html.indexOf('<aside id="inspector"'), html.indexOf('</aside>', html.indexOf('<aside id="inspector"')));
+    assert.match(inspector, /id="inspectorHead"[\s\S]*role="tablist"[\s\S]*id="inspectorActivity"[\s\S]*id="inspectorContext"/);
+    const tabs = [...inspector.matchAll(/<button id="(tab-[a-z]+)"[^>]*role="tab"[^>]*aria-selected="(true|false)"[^>]*aria-controls="([A-Za-z]+)"/g)].map((match) => match.slice(1));
+    assert.deepEqual(tabs, [['tab-activity', 'true', 'inspectorActivity'], ['tab-context', 'false', 'inspectorContext']]);
+    assert.match(inspector, /id="inspectorActivity"[^>]*role="tabpanel"[^>]*aria-labelledby="tab-activity"/);
+    assert.match(inspector, /id="inspectorContext"[^>]*role="tabpanel"[^>]*aria-labelledby="tab-context"[^>]*hidden/);
+    assert.match(inspector, />Tool calls <span id="toolHeadingCount"/);
+    const context = inspector.slice(inspector.indexOf('id="inspectorContext"'));
+    assert.match(context, /id="contextFilter"[\s\S]*id="contextStatus"[^>]*role="status"[\s\S]*id="contextSections"[\s\S]*id="contextDetail"[^>]*hidden/);
+    const sidebarTabs = html.slice(html.indexOf('<aside id="sidebar"'), html.indexOf('</aside>'));
+    assert.equal((sidebarTabs.match(/role="tab"/g) ?? []).length, 3);
+});
+
+test('every page module parses as an ES module', async () => {
+    const dir = path.join(EXTENSION_DIR, 'ui');
+    for (const name of (await fs.readdir(dir)).filter((file) => file.endsWith('.mjs'))) {
+        assert.doesNotThrow(() => execFileSync(process.execPath, ['--check', path.join(dir, name)], { stdio: 'pipe' }), `${name} has a syntax error`);
+    }
+});
+
+test('each side panel has a keyboard-focusable resize separator beside it', async () => {
+    const html = await fs.readFile(path.join(EXTENSION_DIR, 'ui', 'index.html'), 'utf8');
+    for (const [id, panel] of [['sidebarSplitter', 'sidebar'], ['inspectorSplitter', 'inspector']]) {
+        const tag = new RegExp(`<div id="${id}"[^>]*>`).exec(html)?.[0] ?? '';
+        assert.match(tag, /role="separator"/);
+        assert.match(tag, /aria-orientation="vertical"/);
+        assert.match(tag, new RegExp(`aria-controls="${panel}"`));
+        assert.match(tag, /tabindex="0"/);
+        assert.match(tag, /aria-label="Resize /);
+    }
+    assert.ok(html.indexOf('id="sidebarSplitter"') > html.indexOf('</aside>'), 'sidebar separator follows the sidebar');
+    assert.ok(html.indexOf('id="inspectorSplitter"') < html.indexOf('<aside id="inspector"'), 'inspector separator precedes the inspector');
+    assert.match(html, /id="instructionsSection"[^>]*hidden[\s\S]*id="agentInstructions"/);
 });

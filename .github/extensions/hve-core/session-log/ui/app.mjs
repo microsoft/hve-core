@@ -1,14 +1,19 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { formatRelativeDate, formatSize, formatTime, formatTokens, percent } from './format.mjs';
-import { el, icon, renderAgentHeader, renderDetailsPanel, renderEntry, STATUS_TEXT } from './render.mjs';
+import { formatRelativeDate, formatTime, formatTokens, percent } from './format.mjs';
+import { el, filterContextItems, icon, ioBox, renderAgentHeader, renderCompactions, renderContextSections, renderDefinitionPage, renderDetailsPanel, renderEntry, renderPromptVersions, STATUS_TEXT } from './render.mjs';
 
 const POLL_MS = 2000;
 const SESSIONS_MS = 15000;
 const ERROR_MS = 10000;
 const SUMMARY_MIN_MS = 3000;
 const OUTLINE_MIN_MS = 4000;
+/** Context counts refresh at most this often while the Context view is shown and the log grows. */
+const CONTEXT_COUNTS_MS = 5000;
+/** Context lists, which include live host lists, reload at most this often. */
+const CONTEXT_LISTS_MS = 30000;
+const DEFINITION_STACK_MAX = 6;
 const PAGE = 200;
 const MAX_RENDERED = 400;
 const ROOT = 'root';
@@ -26,9 +31,36 @@ const dom = {
     shortcutsButton: $('shortcutsButton'),
     shortcutsDialog: /** @type {HTMLDialogElement} */ ($('shortcutsDialog')),
     shortcutsClose: $('shortcutsClose'),
-    panelsToggle: $('panelsToggle'),
+    sidebarToggle: $('sidebarToggle'),
+    sidebarToggleText: $('sidebarToggleText'),
+    inspectorToggle: $('inspectorToggle'),
+    inspectorToggleText: $('inspectorToggleText'),
     sidebar: $('sidebar'),
-    tabs: [...document.querySelectorAll('[role="tab"]')],
+    inspector: $('inspector'),
+    inspectorHead: $('inspectorHead'),
+    scrim: $('scrim'),
+    sidebarSplitter: $('sidebarSplitter'),
+    inspectorSplitter: $('inspectorSplitter'),
+    agentCount: $('agentCount'),
+    promptCount: $('promptCount'),
+    promptVersionCount: $('promptVersionCount'),
+    promptVersionList: $('promptVersionList'),
+    showSystemPromptButton: /** @type {HTMLButtonElement} */ ($('showSystemPrompt')),
+    compactionCount: $('compactionCount'),
+    instructionsSection: $('instructionsSection'),
+    agentInstructions: $('agentInstructions'),
+    showInstructionsPrompt: /** @type {HTMLButtonElement} */ ($('showInstructionsPrompt')),
+    compactionList: $('compactionList'),
+    toolHeadingCount: $('toolHeadingCount'),
+    tabs: [...document.querySelectorAll('#sidebar [role="tab"]')],
+    inspectorTabs: [...document.querySelectorAll('#inspector [role="tab"]')],
+    inspectorActivity: $('inspectorActivity'),
+    inspectorContext: $('inspectorContext'),
+    contextHome: $('contextHome'),
+    contextFilter: /** @type {HTMLInputElement} */ ($('contextFilter')),
+    contextStatus: $('contextStatus'),
+    contextSections: $('contextSections'),
+    contextDetail: $('contextDetail'),
     sessionFilter: /** @type {HTMLInputElement} */ ($('sessionFilter')),
     sessionCount: $('sessionCount'),
     sessionList: $('sessionList'),
@@ -95,8 +127,29 @@ const view = {
     prompts: [],
     /** @type {'asc' | 'desc'} Order of the Tools list. */
     toolSort: 'asc',
+    /** @type {Map<string, { stamp: number, value: object }>} Loaded definitions, most recently used last. */
+    definitions: new Map(),
+    /** @type {Map<string, Promise<object>>} Definition requests in flight. */
+    definitionRequests: new Map(),
     /** @type {Array<object>} Last outline tool and compaction rows, oldest first. */
     toolRows: [],
+    /** @type {'activity' | 'context'} The inspector view. */
+    inspectorTab: 'activity',
+    /** Context view data and choices that survive refreshes. */
+    context: {
+        key: null,
+        sections: null,
+        inventoryVersion: -1,
+        listsAt: 0,
+        countsAt: 0,
+        countsVersion: -1,
+        loading: null,
+        error: null,
+        state: { collapsed: new Set(['skills', 'agents', 'subagents', 'canvases', 'instructions', 'mcp', 'hooks', 'plugins', 'extensions']), filterCollapsed: new Set(), sort: new Map() },
+        /** @type {Array<{ sectionId: string, key: string, def: object | null, error: string | null, scrollTop: number, refreshedAt: number }>} Open definition pages, newest last. */
+        stack: [],
+        listScroll: 0,
+    },
     loading: false,
     generation: 0,
 };
@@ -300,6 +353,7 @@ function renderAgentTree() {
     };
     const root = build(ROOT, 0);
     dom.agentTree.replaceChildren(...(root ? [root] : []));
+    dom.agentCount.textContent = view.agents.size > 1 ? String(view.agents.size) : '';
 }
 
 // Feed
@@ -329,30 +383,118 @@ function renderContext() {
 function headerContext() {
     return {
         session: view.session,
-        onShowSystemPrompt: (key, seq) => showSystemPrompt(key, seq),
+        sessionId: view.sessionId,
         ui: { get: (key) => view.ui.get(key) === true, set: (key, value) => view.ui.set(key, value) },
+        onShowSystemPrompt: (key, seq) => showSystemPrompt(key, seq),
+        onRevealSeq: (seq) => {
+            closeOverlays();
+            revealSeq(seq, 'start');
+        },
     };
+}
+
+/**
+ * Re-renders a region and keeps keyboard focus on the same control and the list scrolled where it was.
+ * A list rendered for a different agent scrolls to its newest row.
+ *
+ * @param {HTMLElement} region
+ * @param {() => void} render
+ * @param {string} key Identity of the rendered content, such as session and agent.
+ */
+function rerender(region, render, key = null) {
+    const controls = () => [...region.querySelectorAll('button, summary')];
+    const focused = region.contains(document.activeElement) ? controls().indexOf(/** @type {HTMLElement} */ (document.activeElement)) : -1;
+    const sameKey = region.dataset.key === key;
+    const atEnd = region.scrollHeight - region.scrollTop - region.clientHeight < 8;
+    const scrollTop = region.scrollTop;
+    render();
+    if (key !== null) {
+        region.dataset.key = key;
+        region.scrollTop = !sameKey || atEnd ? region.scrollHeight : scrollTop;
+    }
+    if (focused >= 0) {
+        controls()[focused]?.focus({ preventScroll: true });
+    }
 }
 
 let agentCardStamp = '';
 
 /**
- * Renders the agent card in the Outline panel when its data changed, keeping keyboard focus on
- * the same control.
+ * Renders the inspector's agent overview, system prompt versions, and compactions when their data
+ * changed, keeping focus and scroll position.
  */
 function renderAgentCard(force = false) {
     const agent = view.agents.get(view.agent);
-    const session = view.summary?.session;
-    const stamp = JSON.stringify([view.sessionId, view.agent, agent ?? null, view.session?.active ?? null, session?.start?.copilotVersion ?? null, session?.shutdown?.totalPremiumRequests ?? null, session?.checkpoint?.totalPremiumRequests ?? null]);
+    const stamp = JSON.stringify([view.sessionId, view.agent, agent ?? null, view.session?.active ?? null]);
     if (!force && stamp === agentCardStamp) {
         return;
     }
     agentCardStamp = stamp;
-    const controls = () => [...dom.agentHeader.querySelectorAll('button, summary')];
-    const focused = dom.agentHeader.contains(document.activeElement) ? controls().indexOf(/** @type {HTMLElement} */ (document.activeElement)) : -1;
-    renderAgentHeader(dom.agentHeader, agent, view.summary, headerContext());
-    if (focused >= 0) {
-        controls()[focused]?.focus({ preventScroll: true });
+    const ctx = headerContext();
+    const key = `${view.sessionId}:${view.agent}`;
+    // Restore focus only within the regions re-rendered here, so controls below them keep focus.
+    rerender(dom.agentHeader, () => renderAgentHeader({ head: dom.inspectorHead, body: dom.agentHeader }, agent, ctx));
+    rerender(dom.promptVersionList, () => renderPromptVersions(dom.promptVersionList, dom.promptVersionCount, agent, ctx));
+    rerender(dom.compactionList, () => renderCompactions(dom.compactionList, dom.compactionCount, agent, ctx));
+    dom.showSystemPromptButton.disabled = !agent?.systemPrompt;
+    renderInstructions(agent);
+}
+
+let instructionsKey = '';
+let instructionsSeq = null;
+
+/**
+ * Shows the shown agent's own instructions: a subagent's agent definition, or the selected custom
+ * agent's instructions in the main prompt. Loads once per agent and prompt version.
+ *
+ * @param {object | undefined} agent Summary agent.
+ */
+async function renderInstructions(agent) {
+    const seq = agent?.systemPrompt?.seq;
+    const available = Number.isInteger(seq) && (agent.key !== ROOT || Boolean(agent.systemPrompt.agentInstructions));
+    if (!available) {
+        instructionsKey = '';
+        instructionsSeq = null;
+        dom.instructionsSection.hidden = true;
+        dom.agentInstructions.replaceChildren();
+        return;
+    }
+    const key = `${view.sessionId}:${agent.key}:${seq}`;
+    if (key === instructionsKey) {
+        return;
+    }
+    instructionsKey = key;
+    // Until this load succeeds, In prompt falls back to the agent's latest prompt.
+    instructionsSeq = null;
+    dom.instructionsSection.hidden = false;
+    dom.agentInstructions.replaceChildren(el('p', { class: 'meta' }, 'Loading the agent instructions'));
+    try {
+        const data = await api('/api/agent-instructions', { session: view.sessionId, agent: agent.key });
+        if (instructionsKey !== key) {
+            return;
+        }
+        instructionsSeq = data.seq;
+        // The box head shows the size, including "first N of M" when the server shortened the text.
+        dom.agentInstructions.replaceChildren(ioBox({
+            title: data.form === 'main' ? `${data.title || 'Selected agent'} instructions` : 'Agent definition',
+            text: data.text,
+            chars: data.chars,
+            mode: 'markdown',
+            anchor: 'start',
+            state: { get: (stateKey) => view.ui.get(stateKey) === true, set: (stateKey, value) => view.ui.set(stateKey, value) },
+            stateKey: `instructions:${key}`,
+            watchSize: true,
+        }));
+    } catch (error) {
+        if (instructionsKey !== key) {
+            return;
+        }
+        if (error.code === 'entry_not_found') {
+            dom.instructionsSection.hidden = true;
+            return;
+        }
+        instructionsKey = '';
+        dom.agentInstructions.replaceChildren(el('p', { class: 'meta' }, `Could not load the agent instructions: ${error.message}`));
     }
 }
 
@@ -679,7 +821,7 @@ async function showSystemPrompt(agentKey, seq = null) {
     if (!Number.isInteger(target) || agentKey !== view.agent) {
         return;
     }
-    openPanels(false);
+    closeOverlays();
     setFollow(false);
     if (!view.elements.has(target)) {
         await loadAgent(view.agent, { anchorSeq: target, block: 'start' });
@@ -856,6 +998,7 @@ async function openSession(sessionId, anchor = {}) {
     view.inventory = null;
     view.inventoryKey = null;
     view.outlineKey = null;
+    resetContext();
     view.details.clear();
     view.ui.clear();
     view.prompts = [];
@@ -865,8 +1008,16 @@ async function openSession(sessionId, anchor = {}) {
     view.elements.clear();
     setFollow(!Number.isInteger(anchor.anchorSeq));
     renderHeader();
-    dom.agentHeader.replaceChildren();
+    for (const region of [dom.inspectorHead, dom.agentHeader, dom.promptVersionList, dom.compactionList]) {
+        region.replaceChildren();
+    }
+    for (const count of [dom.promptVersionCount, dom.compactionCount, dom.promptCount, dom.toolHeadingCount]) {
+        count.textContent = '';
+    }
     agentCardStamp = '';
+    instructionsKey = '';
+    instructionsSeq = null;
+    dom.instructionsSection.hidden = true;
     dom.breadcrumb.replaceChildren();
     showFeedNotice(null);
     if (!sessionId) {
@@ -901,8 +1052,8 @@ async function openSession(sessionId, anchor = {}) {
 function openSessionsButton() {
     const button = el('button', { class: 'btn', type: 'button' }, icon('i-list'), 'Show sessions');
     button.addEventListener('click', () => {
-        selectTab('tab-sessions', true);
-        openPanels(true);
+        selectTab('tab-sessions');
+        setPanel('left', true, { focus: true });
     });
     return button;
 }
@@ -999,7 +1150,7 @@ function renderSessionList() {
 async function selectSession(sessionId) {
     try {
         const state = await api('/api/select', {}, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId }) });
-        openPanels(false);
+        closeOverlays();
         await applyState(state, true);
     } catch (error) {
         showFeedNotice(retryNotice(`Could not switch sessions: ${error.message}`, () => selectSession(sessionId)), 'error');
@@ -1045,7 +1196,7 @@ async function openAgent(agentKey, anchor = {}) {
     if (!view.sessionId) {
         return;
     }
-    openPanels(false);
+    closeOverlays();
     if (agentKey === view.agent && !anchor.anchorTool && !Number.isInteger(anchor.anchorSeq)) {
         dom.feed.focus({ preventScroll: true });
         return;
@@ -1087,7 +1238,7 @@ function selectTab(tabId, focus = false) {
 }
 
 function panelsVisible() {
-    return window.getComputedStyle(dom.sidebar).visibility !== 'hidden';
+    return panelShown('left');
 }
 
 async function ensureInventory(force = false) {
@@ -1138,12 +1289,16 @@ async function refreshOutline(force = false) {
             el('span', { class: 'nav-item-text' }, item.summary || 'Empty prompt'));
         button.title = item.summary;
         button.addEventListener('click', () => {
-            openPanels(false);
+            closeOverlays();
             revealSeq(item.seq);
         });
         return el('li', null, button);
     });
-    dom.interactionList.replaceChildren(...(interactions.length ? interactions : [el('li', null, el('p', { class: 'meta' }, 'No prompts recorded for this agent.'))]));
+    rerender(dom.interactionList, () => {
+        dom.interactionList.replaceChildren(...(interactions.length ? interactions : [el('li', { class: 'list-empty' }, 'No prompts recorded for this agent.')]));
+    }, `${sessionId}:${agent}`);
+    dom.promptCount.textContent = outline.interactionTotal > 0 ? String(outline.interactionTotal) : '';
+    dom.toolHeadingCount.textContent = outline.toolTotal > 0 ? outline.toolTotal.toLocaleString() : '';
     const countText = outline.toolMatches === outline.toolTotal
         ? `${outline.toolTotal} tool ${outline.toolTotal === 1 ? 'call' : 'calls'}`
         : `${outline.toolMatches} of ${outline.toolTotal} tool calls`;
@@ -1177,7 +1332,7 @@ function renderToolRows() {
                 el('span', { class: 'nav-item-time' }, formatTime(item.ts)));
             button.title = `${item.name}${detail ? `: ${detail} tokens` : ''}`;
             button.addEventListener('click', () => {
-                openPanels(false);
+                closeOverlays();
                 revealSeq(item.seq, 'start');
             });
             return el('li', null, button);
@@ -1190,7 +1345,7 @@ function renderToolRows() {
             el('span', { class: 'nav-item-time' }, formatTime(item.ts)));
         button.title = `${item.name}: ${item.status}${item.summary ? `, ${item.summary}` : ''}`;
         button.addEventListener('click', () => {
-            openPanels(false);
+            closeOverlays();
             revealSeq(item.seq);
             window.setTimeout(() => {
                 const node = view.elements.get(item.seq);
@@ -1218,6 +1373,66 @@ function setToolSort(order) {
     dom.toolIndex.scrollTop = asc ? dom.toolIndex.scrollHeight : 0;
 }
 
+const DEFINITION_CACHE_MAX = 40;
+
+function definitionKey(kind, name) {
+    return `${view.sessionId}:${view.agent}:${kind}:${name}`;
+}
+
+/**
+ * Returns a loaded definition and whether it reflects the current inventory version.
+ *
+ * @param {string} kind
+ * @param {string} name
+ * @returns {{ value: object, fresh: boolean } | null}
+ */
+function peekDefinition(kind, name) {
+    const key = definitionKey(kind, name);
+    const hit = view.definitions.get(key);
+    if (!hit) {
+        return null;
+    }
+    view.definitions.delete(key);
+    view.definitions.set(key, hit);
+    return { value: hit.value, fresh: hit.stamp === (view.summary?.inventoryVersion ?? -1) };
+}
+
+/**
+ * Loads one definition, sharing a request already in flight and keeping a bounded cache.
+ *
+ * @param {string} kind
+ * @param {string} name
+ * @returns {Promise<object>}
+ */
+function loadDefinition(kind, name) {
+    const key = definitionKey(kind, name);
+    let request = view.definitionRequests.get(key);
+    if (!request) {
+        const stamp = view.summary?.inventoryVersion ?? -1;
+        request = api('/api/definition', { session: view.sessionId, agent: view.agent, kind, name })
+            .then((value) => {
+                view.definitions.delete(key);
+                view.definitions.set(key, { stamp, value });
+                while (view.definitions.size > DEFINITION_CACHE_MAX) {
+                    view.definitions.delete(view.definitions.keys().next().value);
+                }
+                return value;
+            })
+            .finally(() => view.definitionRequests.delete(key));
+        view.definitionRequests.set(key, request);
+    }
+    return request;
+}
+
+function detailsContext() {
+    return {
+        onOpenContext: () => {
+            selectInspectorTab('tab-context');
+            setPanel('right', true, { focus: true });
+        },
+    };
+}
+
 async function refreshDetailsPanel(force = false) {
     if (!view.sessionId) {
         renderDetailsPanel(dom.detailsContent, {});
@@ -1225,12 +1440,13 @@ async function refreshDetailsPanel(force = false) {
     }
     const agent = view.agents.get(view.agent);
     const key = `${view.sessionId}:${view.agent}`;
-    if (force || view.inventoryKey !== key) {
-        renderDetailsPanel(dom.detailsContent, { summary: view.summary, inventory: null, agent, session: view.session });
+    const ctx = detailsContext();
+    if (view.inventoryKey !== key || !view.inventory) {
+        renderDetailsPanel(dom.detailsContent, { summary: view.summary, inventory: null, agent, session: view.session, ctx });
     }
     const inventory = await ensureInventory(force);
     if (inventory) {
-        renderDetailsPanel(dom.detailsContent, { summary: view.summary, inventory, agent, session: view.session });
+        renderDetailsPanel(dom.detailsContent, { summary: view.summary, inventory, agent, session: view.session, ctx });
     }
 }
 
@@ -1239,6 +1455,7 @@ let lastDetailsRender = '';
 function refreshSidePanels(force = false) {
     // The outline also feeds the pinned prompt, so it refreshes even while panels are hidden.
     refreshOutline(force).catch(() => {});
+    refreshContext().catch(() => {});
     if (!panelsVisible() && !force) {
         return;
     }
@@ -1256,12 +1473,545 @@ function refreshSidePanels(force = false) {
     }
 }
 
-function openPanels(open) {
-    document.body.classList.toggle('panels-open', open);
-    dom.panelsToggle.setAttribute('aria-expanded', String(open));
-    if (open) {
-        document.getElementById(activeTabId())?.focus();
+// Context view: what the model is given, with use counts and definition pages.
+
+function contextKey() {
+    return `${view.sessionId}:${view.agent}`;
+}
+
+function showContextHome() {
+    dom.contextDetail.hidden = true;
+    dom.contextDetail.replaceChildren();
+    dom.contextHome.hidden = false;
+    detailSignature = '';
+}
+
+function showContextDetail() {
+    dom.contextHome.hidden = true;
+    dom.contextDetail.hidden = false;
+}
+
+function resetContext() {
+    const context = view.context;
+    Object.assign(context, { key: null, sections: null, inventoryVersion: -1, listsAt: 0, countsAt: 0, countsVersion: -1, error: null, stack: [], listScroll: 0 });
+    dom.contextSections.replaceChildren();
+    dom.contextStatus.textContent = '';
+    showContextHome();
+}
+
+function contextVisible() {
+    return panelShown('right') && view.inspectorTab === 'context' && !document.hidden;
+}
+
+/**
+ * Switches the inspector between Activity and Context.
+ *
+ * @param {string} tabId
+ * @param {boolean} [focus]
+ */
+function selectInspectorTab(tabId, focus = false) {
+    view.inspectorTab = tabId === 'tab-context' ? 'context' : 'activity';
+    for (const tab of dom.inspectorTabs) {
+        const selected = tab.id === tabId;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+        if (selected && focus) {
+            tab.focus();
+        }
     }
+    if (view.inspectorTab === 'context') {
+        renderContextView();
+        refreshContext(true).catch(() => {});
+    }
+}
+
+function applyContextCounts(counts) {
+    for (const section of view.context.sections ?? []) {
+        const rows = counts?.[section.id];
+        if (!Array.isArray(rows)) {
+            continue;
+        }
+        const byKey = new Map(rows.map((row) => [row[0], row]));
+        for (const item of section.items) {
+            const row = byKey.get(item.key);
+            if (row) {
+                [, item.count, item.failed, item.countText] = row;
+            }
+        }
+    }
+}
+
+/**
+ * Loads the Context view while it is shown: full lists when the session, agent, or inventory
+ * changed or the lists aged; otherwise only counts, and only after the log grew.
+ *
+ * @param {boolean} [force] Reload lists that are older than the counts interval.
+ */
+async function refreshContext(force = false) {
+    if (!view.sessionId || !contextVisible()) {
+        return;
+    }
+    const context = view.context;
+    const key = contextKey();
+    if (context.key !== key) {
+        resetContext();
+        context.key = key;
+    }
+    if (context.loading) {
+        return context.loading;
+    }
+    const now = Date.now();
+    const inventoryVersion = view.summary?.inventoryVersion ?? -1;
+    const needLists = !context.sections || inventoryVersion !== context.inventoryVersion || now - context.listsAt > CONTEXT_LISTS_MS || (force && now - context.listsAt > CONTEXT_COUNTS_MS);
+    const needCounts = !needLists && view.version !== context.countsVersion && now - context.countsAt > CONTEXT_COUNTS_MS;
+    if (!needLists && !needCounts) {
+        refreshDefinitionPage();
+        return;
+    }
+    const sessionId = view.sessionId;
+    const agent = view.agent;
+    const version = view.version;
+    if (!context.sections) {
+        renderContextView();
+    }
+    context.loading = (async () => {
+        try {
+            if (needLists) {
+                const inventory = await api('/api/inventory', { session: sessionId, agent });
+                if (contextKey() !== key) {
+                    return;
+                }
+                context.sections = inventory.sections ?? [];
+                context.inventoryVersion = inventoryVersion;
+                context.listsAt = Date.now();
+                // The Details tab reads the same payload.
+                view.inventory = inventory;
+                view.inventoryKey = key;
+                view.inventoryVersion = inventoryVersion;
+            } else {
+                const result = await api('/api/inventory', { session: sessionId, agent, part: 'counts' });
+                if (contextKey() !== key || !context.sections) {
+                    return;
+                }
+                applyContextCounts(result.counts);
+            }
+            context.countsAt = Date.now();
+            context.countsVersion = version;
+            context.error = null;
+        } catch (error) {
+            if (contextKey() === key) {
+                context.error = error.message;
+            }
+        } finally {
+            context.loading = null;
+        }
+        if (contextKey() === key) {
+            renderContextView();
+            refreshDefinitionPage();
+        }
+    })();
+    return context.loading;
+}
+
+function contextCtx() {
+    const { state } = view.context;
+    return {
+        state,
+        onToggleSection: (id, expand, filtering) => {
+            const set = filtering ? state.filterCollapsed : state.collapsed;
+            if (expand) {
+                set.delete(id);
+            } else {
+                set.add(id);
+            }
+            renderContextView();
+        },
+        onSort: (id, sort) => {
+            state.sort.set(id, sort);
+            renderContextView();
+        },
+        onOpenItem: (sectionId, key) => openContextItem(sectionId, key),
+    };
+}
+
+function renderContextView() {
+    const context = view.context;
+    if (!context.sections) {
+        dom.contextStatus.textContent = context.error
+            ? `Could not load what the model is given: ${context.error}`
+            : view.sessionId ? 'Loading what the model is given' : 'Select a session to see what its model was given.';
+        return;
+    }
+    const query = dom.contextFilter.value;
+    renderContextSections(dom.contextSections, { sections: context.sections, query, ctx: contextCtx() });
+    const live = context.sections.some((section) => section.status === 'live');
+    const matches = query.trim() ? context.sections.reduce((sum, section) => sum + filterContextItems(section.items, query).length, 0) : null;
+    const base = matches !== null
+        ? `${matches.toLocaleString()} ${matches === 1 ? 'match' : 'matches'}`
+        : live ? 'What the model is given, live from this session.' : 'What the model was given, from the session log.';
+    dom.contextStatus.textContent = context.error ? `${base} Refresh failed: ${context.error}` : base;
+}
+
+function findContextItem(sectionId, key) {
+    const section = view.context.sections?.find((candidate) => candidate.id === sectionId);
+    const item = section?.items.find((candidate) => candidate.key === key);
+    return section && item ? { section, item } : null;
+}
+
+function currentPage() {
+    const { stack } = view.context;
+    return stack[stack.length - 1] ?? null;
+}
+
+function openContextItem(sectionId, key) {
+    const found = findContextItem(sectionId, key);
+    if (!found?.item.definition) {
+        return;
+    }
+    const context = view.context;
+    const page = currentPage();
+    if (page) {
+        page.scrollTop = dom.inspectorContext.scrollTop;
+    } else {
+        context.listScroll = dom.inspectorContext.scrollTop;
+    }
+    if (context.stack.length >= DEFINITION_STACK_MAX) {
+        context.stack.shift();
+    }
+    context.stack.push({ sectionId, key, def: null, error: null, scrollTop: 0, version: -1, refreshedAt: 0 });
+    showContextDetail();
+    loadContextDefinition({ focus: true });
+}
+
+/**
+ * Loads the open definition page, showing a cached copy first.
+ *
+ * @param {{ focus?: boolean, reload?: boolean, scrollTop?: number }} [options]
+ */
+async function loadContextDefinition(options = {}) {
+    const page = currentPage();
+    if (!page) {
+        return;
+    }
+    const found = findContextItem(page.sectionId, page.key);
+    if (!found) {
+        contextBack();
+        return;
+    }
+    const { kind, name } = found.item.definition;
+    const cached = options.reload ? null : peekDefinition(kind, name);
+    if (cached) {
+        page.def = cached.value;
+    }
+    renderContextDetail(options);
+    if (cached?.fresh) {
+        return;
+    }
+    const version = view.version;
+    try {
+        const def = await loadDefinition(kind, name);
+        if (currentPage() !== page) {
+            return;
+        }
+        page.def = def;
+        page.error = null;
+    } catch (error) {
+        if (currentPage() !== page) {
+            return;
+        }
+        page.error = page.def ? null : error.message;
+    }
+    page.version = version;
+    page.refreshedAt = Date.now();
+    renderContextDetail();
+}
+
+/** Reloads the open definition page after the log grew, at most every few seconds. */
+function refreshDefinitionPage() {
+    const page = currentPage();
+    if (page && page.def && page.version !== view.version && Date.now() - page.refreshedAt > CONTEXT_COUNTS_MS) {
+        loadContextDefinition({ reload: true });
+    } else if (page) {
+        renderContextDetail();
+    }
+}
+
+function definitionCtx() {
+    return {
+        ui: { get: (key) => view.ui.get(key) === true, set: (key, value) => view.ui.set(key, value) },
+        onRevealTool: (toolCallId) => {
+            closeOverlays();
+            revealTool(toolCallId);
+        },
+        onRevealSeq: (seq) => {
+            closeOverlays();
+            revealSeq(seq, 'start');
+        },
+        onOpenAgent: (key) => openAgent(key),
+        onShowSystemPrompt: (key, seq) => {
+            closeOverlays();
+            showSystemPrompt(key, seq);
+        },
+        onOpenItem: (sectionId, key) => openContextItem(sectionId, key),
+        findItems: (predicate) => (view.context.sections ?? []).flatMap((section) => section.items.filter((item) => predicate(section, item)).map((item) => ({ section, item }))),
+        onBack: () => contextBack(),
+        onRetry: () => loadContextDefinition({ reload: true }),
+    };
+}
+
+let detailSignature = '';
+
+/**
+ * Renders the open definition page when its data changed, keeping focus and scroll.
+ *
+ * @param {{ focus?: boolean, scrollTop?: number }} [options]
+ */
+function renderContextDetail(options = {}) {
+    const page = currentPage();
+    const found = page ? findContextItem(page.sectionId, page.key) : null;
+    if (!found) {
+        return;
+    }
+    const { stack } = view.context;
+    const previous = stack.length > 1 ? stack[stack.length - 2] : null;
+    const backLabel = previous ? findContextItem(previous.sectionId, previous.key)?.item.name ?? 'Back' : 'Context';
+    const signature = JSON.stringify([stack.length, page.sectionId, page.key, found.item.countText, found.item.failed, found.item.badges, page.def, page.error, backLabel]);
+    if (!options.focus && options.scrollTop === undefined && signature === detailSignature) {
+        return;
+    }
+    detailSignature = signature;
+    const scrollTop = options.scrollTop ?? dom.inspectorContext.scrollTop;
+    const titleFocused = document.activeElement?.id === 'contextDetailTitle';
+    rerender(dom.contextDetail, () => renderDefinitionPage(dom.contextDetail, { section: found.section, item: found.item, def: page.def, error: page.error, backLabel, ctx: definitionCtx() }));
+    if (titleFocused && !options.focus) {
+        dom.contextDetail.querySelector('#contextDetailTitle')?.focus({ preventScroll: true });
+    }
+    if (options.focus) {
+        dom.inspectorContext.scrollTop = 0;
+        dom.contextDetail.querySelector('#contextDetailTitle')?.focus({ preventScroll: true });
+    } else {
+        dom.inspectorContext.scrollTop = scrollTop;
+    }
+}
+
+/** Closes the open definition page, returning to the previous page or the Context lists. */
+function contextBack() {
+    const context = view.context;
+    const closed = context.stack.pop();
+    if (!closed) {
+        return false;
+    }
+    const page = currentPage();
+    if (page) {
+        detailSignature = '';
+        loadContextDefinition({ scrollTop: page.scrollTop });
+        dom.contextDetail.querySelector('.def-back')?.focus({ preventScroll: true });
+        return true;
+    }
+    showContextHome();
+    renderContextView();
+    dom.inspectorContext.scrollTop = context.listScroll;
+    const row = dom.contextSections.querySelector(`[data-section="${CSS.escape(closed.sectionId)}"] .context-item[data-key="${CSS.escape(closed.key)}"]`);
+    if (row) {
+        row.focus({ preventScroll: true });
+        row.scrollIntoView({ block: 'nearest' });
+    } else {
+        dom.contextFilter.focus({ preventScroll: true });
+    }
+    return true;
+}
+
+// Side panels dock beside the log when there is room and swing over it as drawers when there is not.
+const DOCKED = { left: window.matchMedia('(min-width: 900px)'), right: window.matchMedia('(min-width: 1180px)') };
+const PANEL_NAMES = { left: 'sidebar', right: 'inspector' };
+/** Docked panels remember a collapse choice; drawers remember whether they are open. */
+const panels = { left: { collapsed: false, open: false }, right: { collapsed: false, open: false } };
+
+function isDocked(side) {
+    return DOCKED[side].matches;
+}
+
+function panelShown(side) {
+    return isDocked(side) ? !panels[side].collapsed : panels[side].open;
+}
+
+function panelElement(side) {
+    return side === 'left' ? dom.sidebar : dom.inspector;
+}
+
+function panelToggle(side) {
+    return side === 'left' ? dom.sidebarToggle : dom.inspectorToggle;
+}
+
+function applyPanels() {
+    const body = document.body.classList;
+    for (const side of ['left', 'right']) {
+        const name = PANEL_NAMES[side];
+        const docked = isDocked(side);
+        if (docked) {
+            panels[side].open = false;
+        }
+        body.toggle(`${name}-collapsed`, docked && panels[side].collapsed);
+        body.toggle(`${name}-open`, !docked && panels[side].open);
+        const shown = panelShown(side);
+        const element = panelElement(side);
+        element.inert = !shown;
+        const toggle = panelToggle(side);
+        const label = `${shown ? 'Hide' : 'Show'} ${name}`;
+        toggle.setAttribute('aria-expanded', String(shown));
+        toggle.title = `${label} (${side === 'left' ? 'b' : 'i'})`;
+        (side === 'left' ? dom.sidebarToggleText : dom.inspectorToggleText).textContent = label;
+    }
+    const overlay = (!isDocked('left') && panels.left.open) || (!isDocked('right') && panels.right.open);
+    dom.scrim.hidden = !overlay;
+    setPanelWidth('left', panelWidths.left);
+    setPanelWidth('right', panelWidths.right);
+    body.toggle('drawer-open', overlay);
+}
+
+/**
+ * Shows or hides one side panel: collapses or expands it when docked, opens or closes its drawer otherwise.
+ *
+ * @param {'left' | 'right'} side
+ * @param {boolean} show
+ * @param {{ focus?: boolean }} [options] Move focus into the panel when it opens.
+ */
+function setPanel(side, show, options = {}) {
+    const element = panelElement(side);
+    // A panel's divider sits beside it and hides with it, so its focus counts as the panel's.
+    const hadFocus = element.contains(document.activeElement) || splitterFor(side) === document.activeElement;
+    if (isDocked(side)) {
+        panels[side].collapsed = !show;
+    } else {
+        panels[side].open = show;
+        if (show) {
+            const other = side === 'left' ? 'right' : 'left';
+            if (!isDocked(other)) {
+                panels[other].open = false;
+            }
+        }
+    }
+    applyPanels();
+    if (!show && hadFocus) {
+        panelToggle(side).focus();
+    } else if (show && options.focus) {
+        const target = side === 'left' ? document.getElementById(activeTabId()) : document.getElementById(view.inspectorTab === 'context' ? 'tab-context' : 'tab-activity');
+        target?.focus({ preventScroll: true });
+    }
+    if (show && side === 'left') {
+        refreshSidePanels(true);
+    }
+    if (show && side === 'right') {
+        refreshContext().catch(() => {});
+    }
+}
+
+function togglePanel(side, options = {}) {
+    setPanel(side, !panelShown(side), options);
+}
+
+// Panel widths: each docked panel's divider drags or steps its width, keeping room for the log.
+
+const PANEL_WIDTH = Object.freeze({
+    left: { min: 220, initial: 280, variable: '--sl-sidebar-w', label: 'sidebar' },
+    right: { min: 260, initial: 304, variable: '--sl-inspector-w', label: 'inspector' },
+});
+const PANEL_WIDTH_MAX = 760;
+const LOG_MIN_WIDTH = 400;
+const panelWidths = { left: PANEL_WIDTH.left.initial, right: PANEL_WIDTH.right.initial };
+
+function splitterFor(side) {
+    return side === 'left' ? dom.sidebarSplitter : dom.inspectorSplitter;
+}
+
+function maxPanelWidth(side) {
+    const other = side === 'left' ? 'right' : 'left';
+    const otherWidth = isDocked(other) && panelShown(other) ? panelWidths[other] : 0;
+    return Math.max(PANEL_WIDTH[side].min, Math.min(PANEL_WIDTH_MAX, window.innerWidth - otherWidth - LOG_MIN_WIDTH));
+}
+
+/**
+ * Sets a side panel's width within its minimum and the room the log needs.
+ *
+ * @param {'left' | 'right'} side
+ * @param {number} value Width in CSS pixels.
+ */
+function setPanelWidth(side, value) {
+    const spec = PANEL_WIDTH[side];
+    const max = maxPanelWidth(side);
+    const width = Math.round(Math.min(Math.max(value, spec.min), max));
+    panelWidths[side] = width;
+    document.documentElement.style.setProperty(spec.variable, `${width}px`);
+    const splitter = splitterFor(side);
+    splitter.setAttribute('aria-valuenow', String(width));
+    splitter.setAttribute('aria-valuemin', String(spec.min));
+    splitter.setAttribute('aria-valuemax', String(max));
+    splitter.setAttribute('aria-valuetext', `${spec.label} ${width} pixels wide`);
+}
+
+function startPanelResize(side, event) {
+    if (event.button !== 0) {
+        return;
+    }
+    event.preventDefault();
+    const splitter = splitterFor(side);
+    const layout = splitter.parentElement.getBoundingClientRect();
+    splitter.setPointerCapture?.(event.pointerId);
+    splitter.classList.add('is-active');
+    document.body.classList.add('is-resizing');
+    const move = (moveEvent) => setPanelWidth(side, side === 'left' ? moveEvent.clientX - layout.left : layout.right - moveEvent.clientX);
+    const end = () => {
+        splitter.classList.remove('is-active');
+        document.body.classList.remove('is-resizing');
+        splitter.removeEventListener('pointermove', move);
+        splitter.removeEventListener('pointerup', end);
+        splitter.removeEventListener('pointercancel', end);
+        schedulePinned();
+    };
+    splitter.addEventListener('pointermove', move);
+    splitter.addEventListener('pointerup', end);
+    splitter.addEventListener('pointercancel', end);
+}
+
+function panelResizeKey(side, event) {
+    const step = event.shiftKey ? 64 : 16;
+    // Arrow keys move the divider; the right panel grows as its divider moves left.
+    const direction = side === 'left' ? 1 : -1;
+    let next = null;
+    if (event.key === 'ArrowRight') {
+        next = panelWidths[side] + step * direction;
+    } else if (event.key === 'ArrowLeft') {
+        next = panelWidths[side] - step * direction;
+    } else if (event.key === 'Home') {
+        next = PANEL_WIDTH[side].min;
+    } else if (event.key === 'End') {
+        next = maxPanelWidth(side);
+    } else if (event.key === 'Enter') {
+        next = PANEL_WIDTH[side].initial;
+    }
+    if (next !== null) {
+        event.preventDefault();
+        event.stopPropagation();
+        setPanelWidth(side, next);
+    }
+}
+
+/** Closes any open drawer; docked panels stay as they are. */
+function closeOverlays() {
+    const open = ['left', 'right'].filter((side) => !isDocked(side) && panels[side].open);
+    if (open.length === 0) {
+        return false;
+    }
+    const focusInside = open.some((side) => panelElement(side).contains(document.activeElement));
+    for (const side of open) {
+        panels[side].open = false;
+    }
+    applyPanels();
+    if (focusInside) {
+        panelToggle(open[0]).focus();
+    }
+    return true;
 }
 
 // Polling
@@ -1442,9 +2192,11 @@ document.addEventListener('keydown', (event) => {
         if (dom.shortcutsDialog.open) {
             return;
         }
-        if (document.body.classList.contains('panels-open')) {
-            openPanels(false);
-            dom.panelsToggle.focus();
+        if (view.context.stack.length > 0 && dom.inspectorContext.contains(/** @type {Node} */ (event.target)) && contextBack()) {
+            event.preventDefault();
+            return;
+        }
+        if (closeOverlays()) {
             event.preventDefault();
             return;
         }
@@ -1478,15 +2230,29 @@ document.addEventListener('keydown', (event) => {
             break;
         }
         case '/': {
-            const tab = activeTabId();
-            const field = tab === 'tab-sessions' ? dom.sessionFilter : dom.toolFilter;
-            if (tab === 'tab-details') {
-                selectTab('tab-outline');
+            if (activeTabId() === 'tab-sessions' && panelShown('left')) {
+                dom.sessionFilter.focus();
+            } else {
+                setPanel('right', true);
+                if (view.inspectorTab === 'context') {
+                    if (view.context.stack.length > 0) {
+                        view.context.stack = [];
+                        showContextHome();
+                        renderContextView();
+                    }
+                    dom.contextFilter.focus();
+                } else {
+                    dom.toolFilter.focus();
+                }
             }
-            openPanels(true);
-            field.focus();
             break;
         }
+        case 'b':
+            togglePanel('left', { focus: !isDocked('left') });
+            break;
+        case 'i':
+            togglePanel('right', { focus: !isDocked('right') });
+            break;
         case 'End':
             jumpToLatest();
             break;
@@ -1526,6 +2292,30 @@ for (const tab of dom.tabs) {
     });
 }
 
+for (const tab of dom.inspectorTabs) {
+    tab.addEventListener('click', () => selectInspectorTab(tab.id));
+    tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        const index = dom.inspectorTabs.indexOf(tab);
+        const count = dom.inspectorTabs.length;
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? count - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + count) % count;
+        selectInspectorTab(dom.inspectorTabs[next].id, true);
+    });
+}
+
+let contextFilterTimer = 0;
+dom.contextFilter.addEventListener('input', () => {
+    window.clearTimeout(contextFilterTimer);
+    contextFilterTimer = window.setTimeout(() => {
+        view.context.state.filterCollapsed.clear();
+        renderContextView();
+    }, 120);
+});
+
 let filterTimer = 0;
 dom.sessionFilter.addEventListener('input', () => {
     window.clearTimeout(filterTimer);
@@ -1555,11 +2345,11 @@ dom.feed.addEventListener('focusin', (event) => {
     }
 });
 dom.prevTool.addEventListener('click', () => {
-    openPanels(false);
+    closeOverlays();
     moveFocus(-1, 'tool');
 });
 dom.nextTool.addEventListener('click', () => {
-    openPanels(false);
+    closeOverlays();
     moveFocus(1, 'tool');
 });
 dom.loadEarlier.addEventListener('click', loadEarlier);
@@ -1581,12 +2371,34 @@ for (const dialog of [dom.shortcutsDialog]) {
 }
 dom.shortcutsButton.addEventListener('click', () => dom.shortcutsDialog.showModal());
 dom.shortcutsClose.addEventListener('click', () => dom.shortcutsDialog.close());
-dom.panelsToggle.addEventListener('click', () => openPanels(!document.body.classList.contains('panels-open')));
-dom.main.addEventListener('click', () => {
-    if (document.body.classList.contains('panels-open')) {
-        openPanels(false);
-    }
+dom.sidebarToggle.addEventListener('click', () => togglePanel('left', { focus: !isDocked('left') }));
+dom.inspectorToggle.addEventListener('click', () => togglePanel('right', { focus: !isDocked('right') }));
+dom.scrim.addEventListener('click', () => closeOverlays());
+for (const side of ['left', 'right']) {
+    DOCKED[side].addEventListener('change', applyPanels);
+    const splitter = splitterFor(side);
+    splitter.addEventListener('pointerdown', (event) => startPanelResize(side, event));
+    splitter.addEventListener('keydown', (event) => panelResizeKey(side, event));
+    splitter.addEventListener('dblclick', () => setPanelWidth(side, PANEL_WIDTH[side].initial));
+}
+let resizeFrame = 0;
+window.addEventListener('resize', () => {
+    window.cancelAnimationFrame(resizeFrame);
+    resizeFrame = window.requestAnimationFrame(() => {
+        setPanelWidth('left', panelWidths.left);
+        setPanelWidth('right', panelWidths.right);
+    });
 });
+dom.showSystemPromptButton.addEventListener('click', () => showSystemPrompt(view.agent, null));
+dom.showInstructionsPrompt.addEventListener('click', () => showSystemPrompt(view.agent, instructionsSeq));
+for (const toggle of document.querySelectorAll('.section-toggle')) {
+    toggle.addEventListener('click', () => {
+        const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.closest('section')?.classList.toggle('is-collapsed', !expanded);
+    });
+}
+applyPanels();
 dom.main.addEventListener('scroll', () => {
     schedulePinned();
     if (suppressScroll || !view.follow) {
