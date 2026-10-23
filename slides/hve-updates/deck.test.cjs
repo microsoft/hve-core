@@ -47,6 +47,10 @@ test('walkthrough step announcements coalesce after focus settles', () => {
   assert.doesNotMatch(source, /if \(speak\) announce\(/);
 });
 
+test('dialog close button uses its visible text as its accessible name', () => {
+  assert.match(html, /<button type="button" id="close-dialog">Close <kbd>Esc<\/kbd><\/button>/);
+});
+
 test('fullscreen state and forced-colors behavior remain explicit', () => {
   const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
   const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');

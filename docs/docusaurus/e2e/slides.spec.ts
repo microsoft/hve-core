@@ -127,7 +127,7 @@ test('deck keeps document semantics, scoped shortcuts and dialog focus', async (
   await page.getByRole('main').focus();
   await page.keyboard.press('s');
   await expect(page.getByRole('dialog')).toHaveAccessibleName('Sources / HVE Core updates');
-  await expect(page.getByRole('button', { name: 'Close dialog' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Close Esc', exact: true })).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   expect(await page.locator('dialog').evaluate(node => node.contains(document.activeElement))).toBe(true);
   await page.keyboard.press('Escape');
@@ -201,7 +201,7 @@ test('presentation controls follow a reversible order without keyboard traps', a
   const sources = page.locator('[data-dialog="sources"]');
   await sources.press('Enter');
   const dialog = page.getByRole('dialog');
-  const close = page.getByRole('button', { name: 'Close dialog' });
+  const close = page.getByRole('button', { name: 'Close Esc', exact: true });
   const lastDialogControl = dialog.locator('button:visible, a[href]:visible, summary:visible, [tabindex]:not([tabindex="-1"]):visible').last();
   await expect(close).toBeFocused();
   await page.keyboard.press('Shift+Tab');

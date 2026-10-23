@@ -7,7 +7,7 @@ version = "0.0.0"
 description = "Locked pip-audit environment for hve-core dependency audits"
 requires-python = ">=3.12"
 dependencies = [
-    "pip-audit==2.10.0",
+    "pip-audit==2.10.1",
 ]
 
 [tool.uv]
