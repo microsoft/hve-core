@@ -37,8 +37,14 @@
 
   document.querySelector('#participation-example').append(renderExample(participationQuestion, { headingLevel: 3 }));
   document.querySelector('#agent-selection-example').append(renderExample(rpiAgentSelection));
+  // RPI slides carry the agent reminder in the top-right meta band, after any fidelity tag.
   document.querySelectorAll('section[data-rpi-agent]').forEach(section => {
-    section.querySelector(':scope > .eyebrow').replaceWith(renderAgentCue(opener => showDialog('agent', opener)));
+    let meta = section.querySelector(':scope > .slide-meta');
+    if (!meta) {
+      meta = element('div', 'slide-meta');
+      section.prepend(meta);
+    }
+    meta.append(renderAgentCue(opener => showDialog('agent', opener)));
   });
 
   function announce(text) {

@@ -11,14 +11,14 @@
     'one-plugin': { title: 'Consolidate HVE Core into one plugin / PR #2712', url: 'https://github.com/microsoft/hve-core/pull/2712', note: 'August 16, 2026. Earlier plugin support already existed.' },
     loops: { title: 'Automatic RPI loops and phase walkthroughs / PR #2859', url: 'https://github.com/microsoft/hve-core/pull/2859', note: 'September 8, 2026. Explicit participation, progression and stop rules.' },
     advisory: { title: 'Optional, advisory subagents and the HVE Builder review pass / PR #2902', url: 'https://github.com/microsoft/hve-core/pull/2902', note: 'September 18, 2026. RPI helpers become read-only; RPI Planner and rpi-quick are removed. HVE Builder drops hve-builder-tester, freeze, sandbox and the behavior gate, and adds the optional HVE Builder Reviewer.' },
-    'portable-paths': { title: 'Portable paths in distributed artifacts / PR #2957', url: 'https://github.com/microsoft/hve-core/pull/2957', note: 'September 21, 2026. Distributable artifacts stop using workspace-root .github/ paths for runtime reads.' },
     'optional-steps': { title: 'Optional plan critique and Review; no RPI scripts / PR #3061', url: 'https://github.com/microsoft/hve-core/pull/3061', note: 'September 28 Pacific / September 29 UTC, 2026. Removes the plan hash helper; adds critique=skip and the RPI Agent Review step setting.' },
     'aliases-removed': { title: 'Prompt Builder aliases removed / PR #3113', url: 'https://github.com/microsoft/hve-core/pull/3113', note: 'October 5, 2026. Breaking: prompt-builder, prompt-analyze and prompt-refactor are removed. Also documents that the CLI registration tracks main.' },
     'prompts-retired': { title: 'Remaining prompts move into skills and agents / PR #3111', url: 'https://github.com/microsoft/hve-core/pull/3111', note: 'October 7, 2026. Breaking: all 48 .prompt.md files are retired; 10 new skills cover prompts that had no other owner.' },
-    'lead-with-result': { title: 'Closeouts lead with the result / PR #3107', url: 'https://github.com/microsoft/hve-core/pull/3107', note: 'October 7 Pacific / October 8 UTC, 2026. Adds the Lead with the result the user asked for rule to the HVE Builder requirements catalog.' },
     lanes: { title: 'Parallel RPI lanes; one critique and one Review / PR #3238', url: 'https://github.com/microsoft/hve-core/pull/3238', note: 'October 19, 2026. Adds RPI Plan Critic lenses, per-lane effort, subagents=none and child loops that skip critique and Review by default.' },
     research: { title: 'rpi-research: evidence gathering and optional helpers', url: hve + skill + 'rpi/rpi-research/SKILL.md', note: 'Standalone skill. Starts at the balanced posture; accepts posture=, effort= and subagents=. Optional RPI Researcher lanes return suggestions only.' },
     'research-template': { title: 'Current research artifact structure', url: hve + skill + 'rpi/rpi-research/templates/research.md', note: 'Reader-first findings, alternatives, decisions and readiness; supporting Research Record.' },
+    'research-lanes': { title: 'rpi-research: optional helpers and lane effort', url: hve + skill + 'rpi/rpi-research/references/research.md', note: 'Each independent question gets its own narrow lane, and lanes go out in one parallel batch. Effort is low when a tool returns a complete result, such as a search that lists every match, and max when a lane reads for meaning. RPI Researcher declares max in its frontmatter.' },
+    'review-lanes': { title: 'rpi-review: lane reasoning effort', url: hve + skill + 'rpi/rpi-review/references/review.md', note: 'Low for tool checks such as task markers against the changes record, high when comparing against written requirements, max for behavior no requirement states. RPI Reviewer declares max in its frontmatter.' },
     plan: { title: 'rpi-plan: plan drafting and the default critique', url: hve + skill + 'rpi/rpi-plan/SKILL.md', note: 'Runs at most one critique per plan; critique=standard, deep or skip; critique-effort= and subagents=.' },
     'plan-template': { title: 'Current single implementation-plan structure', url: hve + skill + 'rpi/rpi-plan/templates/implementation-plan.md', note: 'Pxx and Pxx-Txx; Goals, Requirements, Details, References, Dependencies.' },
     critique: { title: 'rpi-plan-critique: plan assessment', url: hve + skill + 'rpi/rpi-plan-critique/SKILL.md', note: 'Execution status (Complete, Partial, Blocked, Not produced) is separate from the Pass, Revise or Blocked verdict. The parent assigns PC-xxx IDs.' },
@@ -34,8 +34,6 @@
     'builder-dispatch': { title: 'HVE Builder stage dispatch', url: hve + skill + 'hve-core/hve-builder/references/stage-dispatch.md', note: 'The rpi-research bridge and when to dispatch HVE Builder Reviewer. Closure checks only the named finding IDs.' },
     'builder-reviewer': { title: 'HVE Builder Reviewer subagent', url: hve + '.github/agents/hve-core/subagents/hve-builder-review.agent.md', note: 'Read-only, fresh context. Returns severity-graded findings and an advisory verdict. GPT-6 Luna since PR #2992 (September 23).' },
     'builder-rubric': { title: 'HVE Builder review rubric', url: hve + skill + 'hve-core/hve-builder/references/review-rubric.md', note: 'Review dimensions, the Critical to Low severity scale and the Pass, Revise or Blocked verdict.' },
-    'builder-catalog': { title: 'HVE Builder requirements catalog', url: hve + skill + 'hve-core/hve-builder/references/requirements-catalog.md', note: 'Includes the Lead with the result the user asked for rule.' },
-    'builder-instructions': { title: 'HVE Builder authoring instructions', url: hve + '.github/instructions/hve-core/hve-builder.instructions.md', note: 'Portable paths: no workspace-root .github/ paths for runtime reads in distributable artifacts.' },
     'builder-extensions': { title: 'Extending HVE Builder and other HVE workflows', url: hve + skill + 'hve-core/hve-builder/references/extending-hve-builder.md', note: 'RPI phase extensions: the description is the contract. Helper subagents return suggestions and write nothing.' },
     'builder-introduction': { title: 'HVE Builder introduction / PR #2438', url: 'https://github.com/microsoft/hve-core/pull/2438', note: 'Merged July 11, 2026 at 19:38 UTC. Commit d293ea35 adds hve-builder/SKILL.md, absent in its parent. PR title: Align HVE Builder artifact workflows.' },
     manifest: { title: 'HVE Core root plugin manifest', url: hve + 'plugin.json', note: 'Version 3.2.2 in the October 21 source snapshot; 61 agents, 85 skills, 53 instructions; no prompts or hooks.' },
@@ -82,19 +80,21 @@
 
   const graphs = {
     research: {
-      title: 'Research the snack queue',
+      title: 'Research the snack queue with two parallel lanes',
+      batch: { label: 'ONE PARALLEL BATCH', members: ['lane-search', 'lane-docs'], x: 330, y: 136, width: 784, height: 196, labelX: 722, labelY: 244 },
       nodes: [
-        { id: 'request', kind: 'user', label: 'User request', detail: 'Snack Mission Control', x: 28, y: 18, width: 270, height: 68 },
-        { id: 'model', kind: 'model', label: 'Model turn', detail: 'rpi-research', x: 390, y: 18, width: 290, height: 68 },
-        { id: 'read', kind: 'tool', label: 'read_file', detail: 'Current queue source', x: 28, y: 140, width: 270, height: 70 },
-        { id: 'search', kind: 'tool', label: 'grep_search', detail: 'State and reset paths', x: 345, y: 140, width: 290, height: 70 },
-        { id: 'worker', kind: 'subagent', label: 'RPI Researcher', detail: 'Optional evidence lane', x: 755, y: 140, width: 310, height: 70 },
-        { id: 'web', kind: 'tool', label: 'fetch_webpage', detail: 'Browser-state evidence', x: 755, y: 248, width: 310, height: 70 },
-        { id: 'response', kind: 'response', label: 'Research synthesis', detail: 'Parent owns findings and decisions', x: 65, y: 254, width: 560, height: 70 }
+        { id: 'request', kind: 'user', label: 'User request', detail: 'Snack Mission Control', x: 28, y: 18, width: 262, height: 68 },
+        { id: 'model', kind: 'model', label: 'Model turn', detail: 'rpi-research', x: 340, y: 18, width: 300, height: 68 },
+        { id: 'response', kind: 'response', label: 'Research synthesis', detail: 'Parent verifies before citing', x: 760, y: 18, width: 342, height: 68 },
+        { id: 'read', kind: 'tool', label: 'read_file', detail: 'Current queue source', x: 28, y: 158, width: 262, height: 66 },
+        { id: 'lane-search', kind: 'subagent', label: 'RPI Researcher', detail: 'Reset paths, low effort', x: 348, y: 158, width: 360, height: 66 },
+        { id: 'lane-docs', kind: 'subagent', label: 'RPI Researcher', detail: 'Storage docs, max effort', x: 736, y: 158, width: 360, height: 66 },
+        { id: 'search', kind: 'tool', label: 'grep_search', detail: 'Every reset call', x: 348, y: 254, width: 360, height: 66 },
+        { id: 'web', kind: 'tool', label: 'fetch_webpage', detail: 'localStorage behavior', x: 736, y: 254, width: 360, height: 66 }
       ],
       edges: [
-        ['request', 'model'], ['model', 'read'], ['model', 'search'],
-        ['model', 'worker'], ['worker', 'web'], ['read', 'response'], ['search', 'response']
+        ['request', 'model'], ['model', 'response'], ['model', 'read'],
+        ['model', 'lane-search'], ['model', 'lane-docs'], ['lane-search', 'search'], ['lane-docs', 'web']
       ]
     },
     plan: {
@@ -129,6 +129,9 @@
     { type: 'context', old: 3, next: 4, text: '}' }
   ];
 
+  // Model shown in reconstructed Chat composers. Display only; nothing is sent.
+  const chatModel = 'GPT-6.1 Sol';
+
   const rpiAgentSelection = {
     kind: 'agent-picker',
     body: 'Select RPI Agent in the dropdown below the Chat input.'
@@ -140,7 +143,7 @@
       steps: [
         { phase: 'Intake', title: 'Describe the app and its limits', state: 'Request drafted', context: 'GitHub Copilot Chat', kind: 'composer', mode: 'RPI Agent', attachments: ['app.js', 'README.md'], body: 'Build Snack Mission Control, a small voting app.\nKeep it local, without accounts or a backend.\nResearch and plan with me before changing code.', insight: 'The request includes source files and a stop before coding.' },
         { phase: 'Intake', title: 'Choose the planning-only mode', state: 'Before implementation', context: 'GitHub Copilot Chat', kind: 'answer', body: 'How would you like us to work on this?', answer: 'Research and plan with me', detail: 'Discuss Research and Planning decisions, then stop before Implementation.', insight: 'A later resume keeps this stop condition unless the user changes it.' },
-        { phase: 'Research', title: 'Inspect the research calls', state: 'Gathering evidence', context: 'Agent Debug Logs', kind: 'graph', graph: 'research', body: 'Example model, tool and optional subagent calls.', insight: 'The Agent Flow Chart shows a scripted research trace.' },
+        { phase: 'Research', title: 'Inspect the research calls', state: 'Gathering evidence', context: 'Agent Debug Logs', kind: 'graph', graph: 'research', body: 'Example model turn, tool call and two helper lanes.', insight: 'Both lanes run in one batch. The parent checks their sources before citing them.' },
         { phase: 'Research', title: 'Read the findings and recommendation', state: 'Research ready', context: 'snack-queue-research.md', kind: 'code', body: '## Executive Summary\nUse session-only state for this app.\n\n## Findings\nC1: current state is in memory.\nW1: localStorage persists on the device.\n\n## Recommendation and Alternatives\nKeep votes in memory; defer persistence.', insight: 'The research document explains how the sources support the recommendation.' },
         { phase: 'Research', title: 'Decide whether votes should persist', state: 'Awaiting an answer', context: 'GitHub Copilot Chat', kind: 'question', body: 'Should votes survive a page reload?', options: [{ label: 'This session only', detail: 'Clear on reload; keep no voting history.', recommended: true }, { label: 'Keep on this device', detail: 'Persist locally between sessions.' }], insight: 'The answer determines how the app stores votes.' },
         { phase: 'Research', title: 'Record the storage decision', state: 'Decision recorded', context: 'GitHub Copilot Chat', kind: 'answer', body: 'Should votes survive a page reload?', answer: 'This session only', detail: 'Add a visible Reset. Do not retain names or voting history.', insight: 'The assistant records the answer before writing the plan.' },
@@ -190,7 +193,7 @@
     throw new TypeError(`Unknown demo action: ${action}`);
   }
 
-  const content = { sources, demos, rpiAgentSelection, participationQuestion, graphs, mermaidSource, diffStats, moveStep };
+  const content = { sources, demos, chatModel, rpiAgentSelection, participationQuestion, graphs, mermaidSource, diffStats, moveStep };
   if (typeof module !== 'undefined' && module.exports) module.exports = content;
   else globalThis.HVEContent = content;
 }());

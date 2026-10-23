@@ -199,8 +199,10 @@ test('core historical, fidelity and installation distinctions remain explicit', 
   assert.match(html, /copilot plugin marketplace add microsoft\/hve-core/);
   assert.match(html, /copilot plugin install hve-core@hve-core/);
   assert.match(html, /Manual path sharing can differ/);
-  assert.match(html, /RPI \/ SCRIPTED WALKTHROUGH/);
-  assert.match(html, /HVE BUILDER \/ SCRIPTED WALKTHROUGH/);
+  for (const id of ['rpi-demo', 'builder-demo']) {
+    assert.match(html.match(new RegExp(`<section id="${id}"[\\s\\S]*?<\\/section>`))[0], /<div class="slide-meta"><span class="tag">Scripted walkthrough<\/span><\/div>/);
+  }
+  assert.match(html.match(/<section id="vscode-install"[\s\S]*?<\/section>/)[0], /<span class="tag">Reconstructed UI<\/span>/);
   assert.match(demos.builder.steps.at(-1).body, /\[ \] Reviewed by a qualified human/);
   assert.ok(demos.rpi.steps.some(step => step.state === 'Paused at Plan'));
 });
@@ -214,15 +216,16 @@ test('timeline shows the merged HVE Builder introduction', () => {
   assert.equal(sources['builder-introduction'].url, 'https://github.com/microsoft/hve-core/pull/2438');
 });
 
-test('timeline separates the earlier snapshot from changes since September 10', () => {
+test('timeline places every change on one axis and marks changes since September 10', () => {
   const timeline = html.match(/<section id="timeline"[\s\S]*?<\/section>/)[0];
-  const eras = [...timeline.matchAll(/<div class="timeline-era[^"]*">([\s\S]*?)<\/div>\s*<\/div>/g)].map(match => match[1]);
-  assert.equal(eras.length, 2);
-  assert.equal((eras[0].match(/<article>/g) || []).length, 5);
-  assert.equal((eras[1].match(/<article>/g) || []).length, 4);
-  for (const pr of ['#2902', '#3061', '#3111', '#3238']) assert.match(eras[1], new RegExp(`PR ${pr}<`));
-  assert.match(timeline, /aria-labelledby="era-before"/);
-  assert.match(timeline, /aria-labelledby="era-since"/);
+  const events = [...timeline.matchAll(/<li( class="recent")?>([\s\S]*?)<\/li>/g)];
+  assert.equal(events.length, 9);
+  assert.deepEqual(events.map(([, recent]) => Boolean(recent)), [false, false, false, false, false, true, true, true, true]);
+  for (const pr of ['#2902', '#3061', '#3111', '#3238']) assert.ok(events.slice(5).some(([, , body]) => body.includes(`PR ${pr}<`)), pr);
+  assert.match(events[5][2], /<span class="era-note sr-only">Since September 10<\/span>/);
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /\.timeline::after \{ content: "Since Sep 10"; content: "Since Sep 10" \/ "";/);
+  for (let child = 1; child <= 9; child++) assert.match(theme, new RegExp(`\\.timeline > li:nth-child\\(${child}\\) \\{ grid-column: ${child} \\/ span 2; \\}`));
 });
 
 test('HVE Builder slides describe the review pass, not the retired tester', () => {
@@ -241,7 +244,9 @@ test('HVE Builder slides describe the review pass, not the retired tester', () =
   assert.match(reviewSteps[1].body, /R-001 {2}Accepted[\s\S]*R-002 {2}Rejected/);
   for (const step of demos.builder.steps) assert.doesNotMatch(`${step.body} ${step.insight}`, /\b(?:[Tt]ester|[Ff]reeze|[Ff]rozen)\b/);
   for (const key of ['builder-tester', 'builder-alias', 'builder-reassessment']) assert.equal(sources[key], undefined, key);
-  assert.ok(sources['builder-reviewer'] && sources['aliases-removed'] && sources['lead-with-result']);
+  assert.ok(sources['builder-reviewer'] && sources['aliases-removed']);
+  assert.doesNotMatch(html, /<section id="authoring-rules"/);
+  for (const key of ['lead-with-result', 'builder-catalog', 'portable-paths', 'builder-instructions']) assert.equal(sources[key], undefined, key);
 });
 
 test('RPI helper and settings slides use current subagent names and arguments', () => {
@@ -285,7 +290,7 @@ test('participation popup retains all modes and the example stop-before-code cho
 });
 
 test('RPI usage slides call out selecting RPI Agent without requiring it for standalone skills', () => {
-  const expected = ['then-now', 'select-rpi-agent', 'spine', 'research-evidence', 'plan-evidence', 'critique-changes', 'review-evidence', 'modes', 'bounded-loop', 'helpers', 'rpi-settings', 'rpi-demo', 'extend-rpi', 'two-loops', 'one-plugin', 'closing'];
+  const expected = ['then-now', 'rpi-opening', 'select-rpi-agent', 'spine', 'research-evidence', 'plan-evidence', 'critique-changes', 'review-evidence', 'modes', 'bounded-loop', 'helpers', 'rpi-settings', 'rpi-demo', 'extend-rpi', 'two-loops', 'one-plugin', 'closing'];
   const slides = [...html.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)];
   const guided = slides.filter(([, attributes]) => /\bdata-rpi-agent\b/.test(attributes));
   assert.deepEqual(guided.map(([, attributes]) => attributes.match(/\bid="([^"]+)"/)[1]), expected);
@@ -305,6 +310,66 @@ test('RPI usage slides call out selecting RPI Agent without requiring it for sta
   assert.ok(!demos.rpi.steps.some(step => step.kind === 'agent-picker'));
   assert.match(html, /id="agent-selection-example"/);
   assert.match(html, /skills can also run independently/);
+});
+
+test('slides share one skeleton: no eyebrows, a body after each content title, cues in the meta band', () => {
+  assert.doesNotMatch(html, /class="eyebrow"/);
+  const slides = [...html.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)];
+  for (const [, attributes, body] of slides) {
+    if (/class="(?:cover-slide|chapter-slide|closing-slide)"/.test(attributes)) continue;
+    assert.match(body, /^\s*(?:<div class="slide-meta">[\s\S]*?<\/div>\s*)?<h2>[\s\S]*?<\/h2>\s*<div class="slide-body">/, attributes.match(/\bid="([^"]+)"/)[1]);
+  }
+  const deck = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  assert.match(deck, /section\.querySelector\(':scope > \.slide-meta'\)/);
+  assert.match(deck, /meta\.append\(renderAgentCue\(/);
+  const components = fs.readFileSync(path.join(__dirname, 'components.js'), 'utf8');
+  assert.match(components, /'Switch the agent dropdown to'/);
+});
+
+test('chapter dividers open RPI, HVE Builder and Plugins with the same chapter list', () => {
+  const dividers = [...html.matchAll(/<section id="([^"]+)" class="chapter-slide" data-state="chapter"[^>]*data-chapter="([^"]+)"[^>]*>([\s\S]*?)<\/section>/g)];
+  assert.deepEqual(dividers.map(([, id]) => id), ['rpi-opening', 'builder-opening', 'plugins-opening']);
+  for (const [, , chapter, body] of dividers) {
+    const items = [...body.matchAll(/<li( aria-current="true")?><span>(\d\d)<\/span>([^<]+)<\/li>/g)];
+    assert.deepEqual(items.map(([, , number, name]) => `${number} ${name}`), ['01 Evolution', '02 RPI', '03 HVE Builder', '04 Plugins']);
+    assert.deepEqual(items.filter(([, current]) => current).map(([, , , name]) => name), [chapter]);
+  }
+  assert.doesNotMatch(html, /chapter-mark|package-mark/);
+});
+
+test('ambient glow fills the viewport instead of stopping at the slide edge', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.doesNotMatch(theme, /section::before \{[^}]*radial-gradient/);
+  assert.match(theme, /body\.reveal-viewport \{[^}]*radial-gradient\([^}]*var\(--glow\)/);
+  assert.match(theme, /body\.reveal-viewport\.chapter \{[^}]*var\(--glow-chapter\)/);
+  assert.match(theme, /\.reveal \.slides > section \{[^}]*background: transparent;/);
+});
+
+test('reconstructed composers show GPT-6.1 Sol as the model', () => {
+  const { chatModel } = require('./content.js');
+  assert.equal(chatModel, 'GPT-6.1 Sol');
+  const components = fs.readFileSync(path.join(__dirname, 'components.js'), 'utf8');
+  assert.match(components, /element\('span', 'composer-picker', chatModel\)/);
+  assert.doesNotMatch(components, /'Auto'/);
+});
+
+test('research and review helpers run as parallel lanes with a stated effort', () => {
+  const { batch, nodes } = graphs.research;
+  const members = batch.members.map(id => nodes.find(node => node.id === id));
+  assert.deepEqual(members.map(node => node.kind), ['subagent', 'subagent']);
+  assert.deepEqual(members.map(node => node.detail.match(/(\w+) effort$/)[1]), ['low', 'max']);
+  const research = html.match(/<section id="research-evidence"[\s\S]*?<\/section>/)[0];
+  assert.match(research, /<ol class="wave-strip"[^>]*><li>Wider<\/li><li>Deeper<\/li><li>Contrarian<\/li><\/ol>/);
+  assert.match(research, /<code>low<\/code> effort[\s\S]*<code>max<\/code>/);
+  const helpers = html.match(/<section id="helpers"[\s\S]*?<\/section>/)[0];
+  const lanes = [...helpers.matchAll(/<ul class="lanes" aria-label="([^"]+)">([\s\S]*?)<\/ul>/g)];
+  assert.equal(lanes.length, 3);
+  for (const [, label, list] of lanes) {
+    const efforts = [...list.matchAll(/<small>(\w+)<\/small>/g)].map(match => match[1]);
+    assert.ok(efforts.length >= 2, label);
+    for (const effort of efforts) assert.ok(['low', 'medium', 'high', 'max'].includes(effort), `${label}: ${effort}`);
+  }
+  for (const key of ['research-lanes', 'review-lanes']) assert.ok(sources[key], key);
 });
 
 test('critique and review distinguish missing plan evidence from observed defects', () => {
