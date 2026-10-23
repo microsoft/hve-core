@@ -6,6 +6,8 @@ import { appendJson, appendTagged, looksLikeJson } from './highlight.mjs';
 import { renderMarkdown } from './markdown.mjs';
 
 const MARKDOWN_LIMIT = 64 * 1024;
+/** Disclosure under a tool's preview boxes: telemetry, full pages of truncated fields, and raw events. */
+const TOOL_DETAIL_LABEL = 'Telemetry and raw events';
 
 const KIND_ICON = {
     session: 'i-gear',
@@ -347,6 +349,7 @@ function renderDetail(entry, detail, ctx) {
     const byType = (type) => events.findIndex((event) => event.type === type);
 
     if (entry.kind === 'tool' && entry.preview) {
+        // The argument and output boxes show previews; truncated fields still page in below.
         const completeIndex = byType('tool.execution_complete');
         const metrics = completeIndex >= 0 ? events[completeIndex].data?.toolTelemetry?.metrics : null;
         if (metrics && typeof metrics === 'object') {
@@ -355,9 +358,6 @@ function renderDetail(entry, detail, ctx) {
             if (list) {
                 body.append(el('div', { class: 'detail-block' }, el('p', { class: 'detail-block-title' }, 'Telemetry'), list));
             }
-        }
-        for (const item of detail.truncated) {
-            handled.add(`${item.part}:${item.path}`);
         }
     } else if (entry.kind === 'tool') {
         const startIndex = byType('tool.execution_start') >= 0 ? byType('tool.execution_start') : byType('external_tool.requested');
@@ -776,7 +776,7 @@ function toolBoxes(entry, preview, ctx) {
                 const cutValues = detail.truncated.filter((item) => item.path.startsWith('data.arguments'));
                 return {
                     text: typeof args === 'string' ? args : JSON.stringify(args ?? {}, null, 2),
-                    note: cutValues.length ? `${cutValues.length} long ${cutValues.length === 1 ? 'value is' : 'values are'} cut at ${formatSize(detail.pageChars)}; see raw events` : '',
+                    note: cutValues.length ? `${cutValues.length} long ${cutValues.length === 1 ? 'value is' : 'values are'} cut at ${formatSize(detail.pageChars)}; load the rest under ${TOOL_DETAIL_LABEL}` : '',
                 };
             },
         }));
@@ -796,7 +796,7 @@ function toolBoxes(entry, preview, ctx) {
             loadFull: async () => {
                 const page = Math.max(0, preview.outputChars - 128 * 1024);
                 const field = await ctx.loadField(entry, preview.outputPart, preview.outputPath, page);
-                return { text: field.text, note: page > 0 ? `Showing the last ${formatSize(field.text.length)}` : '' };
+                return { text: field.text, note: page > 0 ? `Showing the last ${formatSize(field.text.length)}; page through all of it under ${TOOL_DETAIL_LABEL}` : '' };
             },
         }));
     } else if (entry.status === 'running') {
@@ -1077,7 +1077,7 @@ export function renderEntry(entry, ctx) {
             } else if (entry.result && !isSubagentTool) {
                 bodyWrap.append(el('p', { class: 'entry-summary muted mono' }, entry.result));
             }
-            bodyWrap.append(lazyDisclosure(preview ? 'Telemetry and raw events' : isSubagentTool ? 'Task arguments and final result' : 'Arguments and result', entry, ctx));
+            bodyWrap.append(lazyDisclosure(preview ? TOOL_DETAIL_LABEL : isSubagentTool ? 'Task arguments and final result' : 'Arguments and result', entry, ctx));
             content.append(bodyWrap);
             article.classList.toggle('is-collapsed', collapsed);
             collapse.addEventListener('click', () => {
@@ -1744,7 +1744,11 @@ function agentView(def, item, ctx, key, role) {
     } else {
         nodes.push(el('p', { class: 'meta' }, 'No prompt for this agent is recorded; it has not run or been selected in this session.'));
     }
-    nodes.push(defHeading(`Runs in this session (${runs.length})`));
+    const runTotal = Math.max(recorded.runTotal ?? 0, runs.length);
+    nodes.push(defHeading(`Runs in this session (${runTotal.toLocaleString()})`));
+    if (runTotal > runs.length) {
+        nodes.push(el('p', { class: 'meta' }, `Showing the latest ${runs.length}.`));
+    }
     nodes.push(runs.length > 0 ? el('ul', { class: 'run-list' }, ...runs.map((run) => runRow(run, ctx))) : el('p', { class: 'meta' }, 'No runs recorded in this session.'));
     if (live) {
         const { prompt: _prompt, promptChars: _chars, promptTruncated: _cut, ...rest } = live;
@@ -1824,31 +1828,48 @@ function instructionView(def, item, ctx, key) {
     return nodes.filter(Boolean);
 }
 
-function canvasView(def, item, ctx, key) {
+/**
+ * Chooses the capabilities a canvas definition shows: the live definition when it belongs to this
+ * session, then capabilities this session recorded, then another session's live definition.
+ *
+ * @param {{ live?: { item?: object | null, scope?: string | null }, recorded?: { capabilities?: { text?: string } } }} def
+ * @returns {{ live: object | null, captured: object | null, useLive: boolean, source: object | null }}
+ */
+export function canvasSource(def) {
     const live = def.live?.item ?? null;
-    const recorded = def.recorded ?? {};
-    const activity = recorded.activity;
     let captured = null;
-    if (recorded.capabilities?.text) {
+    if (def.recorded?.capabilities?.text) {
         try {
-            captured = JSON.parse(recorded.capabilities.text);
+            captured = JSON.parse(def.recorded.capabilities.text);
         } catch {
             captured = null;
         }
     }
-    const source = live ?? captured;
-    const nodes = def.live?.status === 'not-found' && captured ? [] : [...liveNotes(def, 'canvas')];
+    const useLive = Boolean(live) && (def.live?.scope === 'this-session' || !captured);
+    return { live, captured, useLive, source: useLive ? live : captured };
+}
+
+function canvasView(def, item, ctx, key) {
+    const recorded = def.recorded ?? {};
+    const activity = recorded.activity;
+    const { live, captured, useLive, source } = canvasSource(def);
+    const nodes = [];
+    if (useLive || !captured) {
+        nodes.push(...liveNotes(def, 'canvas'));
+    } else if (live) {
+        nodes.push(defNote('Showing the capabilities recorded in this session. The live session may offer a different version.'));
+    }
     const open = (recorded.instances ?? []).filter((instance) => !instance.removed).length;
     nodes.push(kvList([
         ['Canvas ID', code(item?.key ?? source?.canvasId ?? '')],
-        ['Extension', live?.extensionName ?? live?.extensionId ?? activity?.extensionId ?? source?.extensionId],
+        ['Extension', (useLive ? live.extensionName ?? live.extensionId : null) ?? activity?.extensionId ?? source?.extensionId],
         ['Calls', activity ? `${plural(activity.opens, 'open')}, ${plural(activity.actionCalls, 'action call')}, ${plural(activity.capabilityCalls, 'capability check')}` : null],
         ['Open now', open ? plural(open, 'instance') : null],
     ]));
     if (activity?.lastCallId) {
         nodes.push(actions(actionButton('Show latest call', 'i-open', () => ctx.onRevealTool(activity.lastCallId))));
     }
-    const description = live?.description ?? item?.description;
+    const description = source?.description ?? item?.description;
     if (description) {
         nodes.push(el('p', { class: 'def-description' }, description));
     }

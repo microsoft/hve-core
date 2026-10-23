@@ -466,15 +466,39 @@ a {
   line-height: 18px;
   border-radius: 999px;
   border: 1px solid var(--sl-border);
+  background: transparent;
+  font: inherit;
   font-size: 12px;
   font-weight: 600;
   color: var(--sl-fg);
+  cursor: pointer;
+  transition: background-color 150ms var(--sl-ease), border-color 150ms var(--sl-ease);
+}
+
+/* The chip is the pause control: hovering hints at the action, pressing holds the log still. */
+.status-chip:hover {
+  background: var(--sl-bg-hover);
+}
+
+.status-chip[aria-pressed="true"] {
+  background: var(--sl-bg-selected);
+  border-color: color-mix(in srgb, var(--sl-accent) 45%, var(--sl-border));
 }
 
 .status-chip .icon {
   width: 12px;
   height: 12px;
   color: var(--sl-fg-muted);
+}
+
+.status-chip .status-paused-icon,
+.status-chip[aria-pressed="true"] .status-live-icon {
+  display: none;
+}
+
+.status-chip[aria-pressed="true"] .status-paused-icon {
+  display: block;
+  color: var(--sl-fg);
 }
 
 .status-chip[data-state="live"] .icon { color: var(--sl-success); }
@@ -614,6 +638,45 @@ body.inspector-collapsed .inspector {
   border-bottom: 1px solid var(--sl-border);
 }
 
+/* A panel's tab row and its width button share the bar; the tabs keep their own row semantics. */
+.panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding-right: 6px;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.panel-bar > .tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+/* Tighter sidebar tabs leave room for the width button at the sidebar's narrowest width. */
+.sidebar .panel-bar > .tabs {
+  padding-left: 8px;
+}
+
+.sidebar .tab {
+  padding-inline: 8px;
+}
+
+.panel-width {
+  flex: none;
+  min-height: 24px;
+  width: 24px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--sl-fg-muted);
+}
+
+.panel-width:hover {
+  border-color: var(--sl-border);
+  color: var(--sl-fg);
+}
+
 .tab {
   position: relative;
   border: 0;
@@ -727,12 +790,12 @@ body.inspector-collapsed .inspector {
   max-height: none;
 }
 
-.is-collapsed > :not(.panel-heading, .panel-heading-row) {
+/* A collapsed panel section keeps only its heading; a collapsed tool entry hides just its tool body. */
+:is(.outline-section, .inspector-section, .context-section).is-collapsed > :not(.panel-heading, .panel-heading-row) {
   display: none;
 }
 
-.is-collapsed > .panel-heading,
-.is-collapsed > .panel-heading-row {
+:is(.outline-section, .inspector-section, .context-section).is-collapsed > :is(.panel-heading, .panel-heading-row) {
   margin-bottom: 0;
 }
 
@@ -2787,6 +2850,23 @@ body.inspector-collapsed .inspector {
   margin: 0 0 4px;
   font-size: 15px;
   line-height: 22px;
+}
+
+.shortcut-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shortcut-switch input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--sl-accent);
 }
 
 .shortcut-table {

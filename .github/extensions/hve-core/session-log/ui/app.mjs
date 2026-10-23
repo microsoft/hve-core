@@ -3,6 +3,7 @@
 
 import { formatRelativeDate, formatTime, formatTokens, percent } from './format.mjs';
 import { el, filterContextItems, icon, ioBox, renderAgentHeader, renderCompactions, renderContextSections, renderDefinitionPage, renderDetailsPanel, renderEntry, renderPromptVersions, STATUS_TEXT } from './render.mjs';
+import { advanceCursor, retryDelay } from './sync.mjs';
 
 const POLL_MS = 2000;
 const SESSIONS_MS = 15000;
@@ -21,6 +22,8 @@ const ROOT = 'root';
 const $ = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
 
 const dom = {
+    topbar: $('topbar'),
+    mainWrap: $('mainWrap'),
     title: $('sessionTitle'),
     meta: $('sessionMeta'),
     liveStatus: $('liveStatus'),
@@ -31,10 +34,15 @@ const dom = {
     shortcutsButton: $('shortcutsButton'),
     shortcutsDialog: /** @type {HTMLDialogElement} */ ($('shortcutsDialog')),
     shortcutsClose: $('shortcutsClose'),
+    shortcutsEnabled: /** @type {HTMLInputElement} */ ($('shortcutsEnabled')),
     sidebarToggle: $('sidebarToggle'),
     sidebarToggleText: $('sidebarToggleText'),
+    sidebarWidth: $('sidebarWidth'),
+    sidebarWidthText: $('sidebarWidthText'),
     inspectorToggle: $('inspectorToggle'),
     inspectorToggleText: $('inspectorToggleText'),
+    inspectorWidth: $('inspectorWidth'),
+    inspectorWidthText: $('inspectorWidthText'),
     sidebar: $('sidebar'),
     inspector: $('inspector'),
     inspectorHead: $('inspectorHead'),
@@ -152,6 +160,10 @@ const view = {
     },
     loading: false,
     generation: 0,
+    /** @type {{ sessionId: string, anchor: object, attempt: number, at: number } | null} A failed session load the poll loop retries. */
+    initRetry: null,
+    /** The user paused live updates; nothing refreshes on its own until they resume. */
+    paused: false,
 };
 
 class ApiError extends Error {}
@@ -207,7 +219,7 @@ function setLiveStatus(state, text) {
 }
 
 function updateLiveStatus() {
-    if (document.hidden) {
+    if (view.paused || document.hidden) {
         setLiveStatus('paused', 'Paused');
     } else if (view.failures >= 3) {
         setLiveStatus('stale', 'Stale');
@@ -325,7 +337,7 @@ function renderAgentTree() {
             return null;
         }
         const statusIcon = agent.key !== ROOT && agent.status ? icon(agent.status === 'failed' ? 'i-x-circle' : agent.status === 'running' ? 'i-clock' : 'i-check', `icon status-icon-${agent.status === 'completed' ? 'succeeded' : agent.status}`) : null;
-        const button = el('button', { class: 'agent-node', type: 'button', 'aria-current': key === view.agent ? 'true' : null },
+        const button = el('button', { class: 'agent-node', type: 'button', 'data-row': key, 'aria-current': key === view.agent ? 'true' : null },
             icon('i-agent'),
             el('span', { class: 'nav-item-text' }, key === ROOT ? `Main agent${agent.customAgent?.displayName ? `: ${agent.customAgent.displayName}` : ''}` : agentTitle(agent)),
             statusIcon,
@@ -352,7 +364,7 @@ function renderAgentTree() {
         return li;
     };
     const root = build(ROOT, 0);
-    dom.agentTree.replaceChildren(...(root ? [root] : []));
+    keepFocus(dom.agentTree, () => dom.agentTree.replaceChildren(...(root ? [root] : [])));
     dom.agentCount.textContent = view.agents.size > 1 ? String(view.agents.size) : '';
 }
 
@@ -394,6 +406,28 @@ function headerContext() {
 }
 
 /**
+ * Re-renders a list and returns keyboard focus to the same row, matched by its `data-row` key, or to
+ * the control now at the same position when that row is gone.
+ *
+ * @param {HTMLElement} region
+ * @param {() => void} render
+ */
+function keepFocus(region, render) {
+    const active = document.activeElement;
+    const controls = () => [...region.querySelectorAll('button, summary')];
+    const inside = active instanceof HTMLElement && active !== region && region.contains(active);
+    const row = inside ? active.closest('[data-row]')?.getAttribute('data-row') ?? null : null;
+    const position = inside ? controls().indexOf(active) : -1;
+    render();
+    if (!inside || active.isConnected) {
+        return;
+    }
+    const after = controls();
+    const same = row === null ? null : after.find((control) => control.getAttribute('data-row') === row);
+    (same ?? (position >= 0 ? after[Math.min(position, after.length - 1)] : null))?.focus({ preventScroll: true });
+}
+
+/**
  * Re-renders a region and keeps keyboard focus on the same control and the list scrolled where it was.
  * A list rendered for a different agent scrolls to its newest row.
  *
@@ -402,18 +436,13 @@ function headerContext() {
  * @param {string} key Identity of the rendered content, such as session and agent.
  */
 function rerender(region, render, key = null) {
-    const controls = () => [...region.querySelectorAll('button, summary')];
-    const focused = region.contains(document.activeElement) ? controls().indexOf(/** @type {HTMLElement} */ (document.activeElement)) : -1;
     const sameKey = region.dataset.key === key;
     const atEnd = region.scrollHeight - region.scrollTop - region.clientHeight < 8;
     const scrollTop = region.scrollTop;
-    render();
+    keepFocus(region, render);
     if (key !== null) {
         region.dataset.key = key;
         region.scrollTop = !sameKey || atEnd ? region.scrollHeight : scrollTop;
-    }
-    if (focused >= 0) {
-        controls()[focused]?.focus({ preventScroll: true });
     }
 }
 
@@ -533,7 +562,8 @@ function loadHook(entry, hook) {
 }
 
 function loadDetail(entry) {
-    const key = `${view.sessionId}:${view.agent}:${entry.seq}:${entry.v}`;
+    // The epoch is part of the key: a rebuilt index can reuse a sequence number and version for other content.
+    const key = `${view.sessionId}:${view.epoch}:${view.agent}:${entry.seq}:${entry.v}`;
     if (!view.details.has(key)) {
         const promise = (async () => {
             if (entry.kind === 'system') {
@@ -817,13 +847,17 @@ function revealSeq(seq, block = 'center') {
  */
 async function showSystemPrompt(agentKey, seq = null) {
     const target = Number.isInteger(seq) ? seq : view.agents.get(agentKey)?.systemPrompt?.seq;
-    if (!Number.isInteger(target) || agentKey !== view.agent) {
+    if (!Number.isInteger(target) || !view.agents.has(agentKey)) {
         return;
     }
     closeOverlays();
     setFollow(false);
-    if (!view.elements.has(target)) {
-        await loadAgent(view.agent, { anchorSeq: target, block: 'start' });
+    // A definition can point at another agent's prompt, such as a subagent run's.
+    if (agentKey !== view.agent || !view.elements.has(target)) {
+        await loadAgent(agentKey, { anchorSeq: target, block: 'start' });
+    }
+    if (agentKey !== view.agent) {
+        return;
     }
     const node = view.elements.get(target);
     if (!node) {
@@ -989,7 +1023,10 @@ async function jumpToLatest() {
 // Sessions
 
 async function openSession(sessionId, anchor = {}) {
-    view.generation += 1;
+    const generation = ++view.generation;
+    // The new generation supersedes any log load in flight, which then returns without clearing the flag.
+    view.loading = false;
+    view.initRetry = null;
     view.sessionId = sessionId;
     view.session = null;
     view.summary = null;
@@ -1003,8 +1040,10 @@ async function openSession(sessionId, anchor = {}) {
     view.prompts = [];
     view.version = -1;
     view.total = 0;
+    view.windowFrom = 0;
     view.entries = [];
     view.elements.clear();
+    updateWindowControls();
     setFollow(!Number.isInteger(anchor.anchorSeq));
     renderHeader();
     for (const region of [dom.inspectorHead, dom.agentHeader, dom.promptVersionList, dom.compactionList]) {
@@ -1030,22 +1069,53 @@ async function openSession(sessionId, anchor = {}) {
         return;
     }
     dom.feed.replaceChildren(skeleton());
+    await initSession(sessionId, anchor, generation, 1);
+}
+
+/**
+ * Loads a session's summary and first log page. A failure shows why and leaves a retry for the poll
+ * loop, which tries again with backoff while the session stays selected.
+ *
+ * @param {string} sessionId
+ * @param {object} anchor
+ * @param {number} generation Navigation generation this load belongs to.
+ * @param {number} attempt
+ */
+async function initSession(sessionId, anchor, generation, attempt) {
+    const superseded = () => generation !== view.generation || sessionId !== view.sessionId;
     try {
         await refreshSummary(true);
     } catch (error) {
+        if (superseded()) {
+            return;
+        }
+        view.initRetry = { sessionId, anchor, attempt, at: Date.now() + retryDelay(attempt) };
         if (error.code === 'session_not_found') {
             dom.feed.replaceChildren(emptyState('No recorded events yet', `Session ${sessionId} has no recorded events. They appear here once the session writes its first event.`, openSessionsButton()));
         } else {
             dom.feed.replaceChildren();
-            showFeedNotice(retryNotice(`Could not read this session: ${error.message}`, () => openSession(sessionId, anchor)), 'error');
+            showFeedNotice(retryNotice(`Could not read this session: ${error.message}. Retrying automatically.`, () => openSession(sessionId, anchor)), 'error');
         }
         renderHeader();
         renderSessionList();
         return;
     }
+    if (superseded()) {
+        return;
+    }
     renderSessionList();
     const agentKey = anchor.agent && view.agents.has(anchor.agent) ? anchor.agent : ROOT;
     await loadAgent(agentKey, anchor);
+}
+
+/** Retries a failed session load once its backoff has passed. */
+async function retryInit() {
+    const pending = view.initRetry;
+    if (!pending || pending.sessionId !== view.sessionId || view.loading || Date.now() < pending.at) {
+        return;
+    }
+    view.initRetry = null;
+    await initSession(pending.sessionId, pending.anchor, view.generation, pending.attempt + 1);
 }
 
 function openSessionsButton() {
@@ -1123,10 +1193,10 @@ function renderSessionList() {
         : query ? `${sessions.length} of ${view.sessions.length} sessions` : `${view.sessions.length} sessions`;
     if (view.sessions.length === 0) {
         dom.sessionList.replaceChildren(el('li', null, emptyState('No recorded sessions', `No sessions with recorded events were found in ${view.root ?? 'the session-state folder'}. Sessions are read from the session-state folder under COPILOT_HOME, or under .copilot in your home folder when COPILOT_HOME is not set.`)));
-        return;
+        return 0;
     }
     const items = sessions.slice(0, 300).map((session) => {
-        const button = el('button', { class: 'session-item', type: 'button', 'aria-current': session.sessionId === view.sessionId ? 'true' : null },
+        const button = el('button', { class: 'session-item', type: 'button', 'data-row': session.sessionId, 'aria-current': session.sessionId === view.sessionId ? 'true' : null },
             el('span', { class: 'session-item-title' }, session.title),
             el('span', { class: 'meta' }, [session.repository, session.branch, session.clientLabel].filter(Boolean).join(' · ')),
             session.cwd ? el('span', { class: 'meta session-item-cwd', title: session.cwd }, el('span', { class: 'visually-hidden' }, 'Folder: '), shortPath(session.cwd)) : null,
@@ -1143,7 +1213,8 @@ function renderSessionList() {
     if (sessions.length === 0) {
         items.push(el('li', null, el('p', { class: 'meta' }, 'No sessions match the filter.')));
     }
-    dom.sessionList.replaceChildren(...items);
+    keepFocus(dom.sessionList, () => dom.sessionList.replaceChildren(...items));
+    return sessions.length;
 }
 
 async function selectSession(sessionId) {
@@ -1157,7 +1228,8 @@ async function selectSession(sessionId) {
 }
 
 async function applyState(state, force = false) {
-    if (!state) {
+    // A delayed answer can carry an older selection; applying it would undo a newer choice.
+    if (!state || state.stateVersion < view.stateVersion) {
         return;
     }
     const previousSelected = view.sessionId;
@@ -1251,8 +1323,9 @@ async function ensureInventory(force = false) {
     }
     const sessionId = view.sessionId;
     const agent = view.agent;
+    const epoch = view.epoch;
     const inventory = await api('/api/inventory', { session: sessionId, agent });
-    if (sessionId !== view.sessionId || agent !== view.agent) {
+    if (sessionId !== view.sessionId || agent !== view.agent || epoch !== view.epoch) {
         return null;
     }
     view.inventory = inventory;
@@ -1261,21 +1334,27 @@ async function ensureInventory(force = false) {
     return inventory;
 }
 
+/**
+ * Loads the prompt and tool navigation lists.
+ *
+ * @returns {Promise<object | null>} The outline applied, or null when nothing was loaded or it arrived stale.
+ */
 async function refreshOutline(force = false) {
     if (!view.sessionId) {
-        return;
+        return null;
     }
     const status = document.querySelector('input[name="toolStatus"]:checked')?.value ?? 'all';
     const query = dom.toolFilter.value.trim();
     const key = `${view.sessionId}:${view.agent}:${status}:${query}`;
     if (!force && view.outlineKey === key && (view.outlineVersion === view.version || Date.now() - view.outlineAt < OUTLINE_MIN_MS)) {
-        return;
+        return null;
     }
     const sessionId = view.sessionId;
     const agent = view.agent;
+    const epoch = view.epoch;
     const outline = await api('/api/outline', { session: sessionId, agent, status, q: query, limit: 300 });
-    if (sessionId !== view.sessionId || agent !== view.agent) {
-        return;
+    if (sessionId !== view.sessionId || agent !== view.agent || epoch !== view.epoch) {
+        return null;
     }
     view.outlineKey = key;
     view.outlineAt = Date.now();
@@ -1283,7 +1362,7 @@ async function refreshOutline(force = false) {
     view.prompts = outline.interactions.map((item) => ({ seq: item.seq, ts: item.ts, summary: item.summary }));
     schedulePinned();
     const interactions = outline.interactions.map((item) => {
-        const button = el('button', { class: 'nav-item', type: 'button' },
+        const button = el('button', { class: 'nav-item', type: 'button', 'data-row': String(item.seq) },
             el('span', { class: 'nav-item-time' }, formatTime(item.ts)),
             el('span', { class: 'nav-item-text' }, item.summary || 'Empty prompt'));
         button.title = item.summary;
@@ -1305,6 +1384,7 @@ async function refreshOutline(force = false) {
     dom.toolCount.textContent = `${countText}${compactionText}${outline.tools.length < outline.toolMatches + outline.compactionMatches ? `, latest ${outline.tools.length} shown` : ''}`;
     view.toolRows = outline.tools;
     renderToolRows();
+    return outline;
 }
 
 /**
@@ -1324,7 +1404,7 @@ function renderToolRows() {
             const detail = Number.isFinite(item.before) && Number.isFinite(item.after)
                 ? `${formatTokens(item.before)} to ${formatTokens(item.after)}${kept !== null ? ` (−${Math.round(100 - kept)}%)` : ''}`
                 : Number.isFinite(item.before) ? `${formatTokens(item.before)} tokens` : '';
-            const button = el('button', { class: 'nav-item nav-item-compaction', type: 'button' },
+            const button = el('button', { class: 'nav-item nav-item-compaction', type: 'button', 'data-row': String(item.seq) },
                 icon('i-compress', 'icon compaction-icon'),
                 el('span', { class: 'visually-hidden' }, `${STATUS_TEXT[item.status] ?? item.status}: `),
                 el('span', { class: 'nav-item-text' }, el('span', { class: 'nav-item-name' }, item.status === 'running' ? 'Compacting' : item.status === 'failed' ? 'Compaction failed' : 'Compacted'), detail ? ` ${detail}` : ''),
@@ -1337,7 +1417,7 @@ function renderToolRows() {
             return el('li', null, button);
         }
         const statusIcon = icon(item.status === 'failed' ? 'i-x-circle' : item.status === 'running' ? 'i-clock' : 'i-check', `icon status-icon-${item.status}`);
-        const button = el('button', { class: 'nav-item', type: 'button' },
+        const button = el('button', { class: 'nav-item', type: 'button', 'data-row': String(item.seq) },
             statusIcon,
             el('span', { class: 'visually-hidden' }, `${STATUS_TEXT[item.status] ?? item.status}: `),
             el('span', { class: 'nav-item-text' }, el('span', { class: 'nav-item-name' }, item.subagent ? `${item.name} (subagent)` : item.name), item.summary ? ` ${item.summary}` : ''),
@@ -1356,7 +1436,7 @@ function renderToolRows() {
         });
         return el('li', null, button);
     });
-    list.replaceChildren(...(items.length ? items : [el('li', null, el('p', { class: 'meta' }, 'No tool calls match.'))]));
+    keepFocus(list, () => list.replaceChildren(...(items.length ? items : [el('li', null, el('p', { class: 'meta' }, 'No tool calls match.'))])));
     if (view.toolSort === 'asc' && (atEnd || firstRender)) {
         list.scrollTop = list.scrollHeight;
     }
@@ -1375,7 +1455,7 @@ function setToolSort(order) {
 const DEFINITION_CACHE_MAX = 40;
 
 function definitionKey(kind, name) {
-    return `${view.sessionId}:${view.agent}:${kind}:${name}`;
+    return `${view.sessionId}:${view.epoch}:${view.agent}:${kind}:${name}`;
 }
 
 /**
@@ -1571,6 +1651,8 @@ async function refreshContext(force = false) {
     const sessionId = view.sessionId;
     const agent = view.agent;
     const version = view.version;
+    const epoch = view.epoch;
+    const current = () => contextKey() === key && epoch === view.epoch;
     if (!context.sections) {
         renderContextView();
     }
@@ -1578,7 +1660,7 @@ async function refreshContext(force = false) {
         try {
             if (needLists) {
                 const inventory = await api('/api/inventory', { session: sessionId, agent });
-                if (contextKey() !== key) {
+                if (!current()) {
                     return;
                 }
                 context.sections = inventory.sections ?? [];
@@ -1590,7 +1672,7 @@ async function refreshContext(force = false) {
                 view.inventoryVersion = inventoryVersion;
             } else {
                 const result = await api('/api/inventory', { session: sessionId, agent, part: 'counts' });
-                if (contextKey() !== key || !context.sections) {
+                if (!current() || !context.sections) {
                     return;
                 }
                 applyContextCounts(result.counts);
@@ -1599,13 +1681,13 @@ async function refreshContext(force = false) {
             context.countsVersion = version;
             context.error = null;
         } catch (error) {
-            if (contextKey() === key) {
+            if (current()) {
                 context.error = error.message;
             }
         } finally {
             context.loading = null;
         }
-        if (contextKey() === key) {
+        if (current()) {
             renderContextView();
             refreshDefinitionPage();
         }
@@ -1845,6 +1927,8 @@ function panelToggle(side) {
 
 function applyPanels() {
     const body = document.body.classList;
+    // An open drawer covers everything else behind its scrim, so the rest stays inert until it closes.
+    const drawer = ['left', 'right'].find((side) => !isDocked(side) && panels[side].open) ?? null;
     for (const side of ['left', 'right']) {
         const name = PANEL_NAMES[side];
         const docked = isDocked(side);
@@ -1855,18 +1939,34 @@ function applyPanels() {
         body.toggle(`${name}-open`, !docked && panels[side].open);
         const shown = panelShown(side);
         const element = panelElement(side);
-        element.inert = !shown;
+        element.inert = !shown || (drawer !== null && drawer !== side);
         const toggle = panelToggle(side);
         const label = `${shown ? 'Hide' : 'Show'} ${name}`;
         toggle.setAttribute('aria-expanded', String(shown));
-        toggle.title = `${label} (${side === 'left' ? 'b' : 'i'})`;
+        toggle.title = singleKeyShortcuts ? `${label} (${side === 'left' ? 'b' : 'i'})` : label;
         (side === 'left' ? dom.sidebarToggleText : dom.inspectorToggleText).textContent = label;
     }
-    const overlay = (!isDocked('left') && panels.left.open) || (!isDocked('right') && panels.right.open);
-    dom.scrim.hidden = !overlay;
+    for (const node of [dom.topbar, dom.mainWrap, dom.sidebarSplitter, dom.inspectorSplitter]) {
+        node.inert = drawer !== null;
+    }
+    dom.scrim.hidden = drawer === null;
     setPanelWidth('left', panelWidths.left);
     setPanelWidth('right', panelWidths.right);
-    body.toggle('drawer-open', overlay);
+    body.toggle('drawer-open', drawer !== null);
+}
+
+/**
+ * Applies a docking change from the viewport, such as a resize or zoom crossing a threshold. When
+ * the change hides the panel that held focus, focus moves to that panel's toggle.
+ *
+ * @param {'left' | 'right'} side
+ */
+function applyDocking(side) {
+    const hadFocus = panelElement(side).contains(document.activeElement) || splitterFor(side) === document.activeElement;
+    applyPanels();
+    if (hadFocus && !panelShown(side)) {
+        panelToggle(side).focus({ preventScroll: true });
+    }
 }
 
 /**
@@ -1913,7 +2013,7 @@ function togglePanel(side, options = {}) {
 // Panel widths: each docked panel's divider drags or steps its width, keeping room for the log.
 
 const PANEL_WIDTH = Object.freeze({
-    left: { min: 220, initial: 280, variable: '--sl-sidebar-w', label: 'sidebar' },
+    left: { min: 248, initial: 280, variable: '--sl-sidebar-w', label: 'sidebar' },
     right: { min: 260, initial: 304, variable: '--sl-inspector-w', label: 'inspector' },
 });
 const PANEL_WIDTH_MAX = 760;
@@ -1947,6 +2047,43 @@ function setPanelWidth(side, value) {
     splitter.setAttribute('aria-valuemin', String(spec.min));
     splitter.setAttribute('aria-valuemax', String(max));
     splitter.setAttribute('aria-valuetext', `${spec.label} ${width} pixels wide`);
+    updateWidthButton(side);
+}
+
+/** Named widths the width buttons step through: a pointer alternative to dragging a divider. */
+const WIDTH_STEPS = Object.freeze({
+    left: Object.freeze([['narrow', 248], ['default', 280], ['wide', 380], ['widest', 520]]),
+    right: Object.freeze([['narrow', 260], ['default', 304], ['wide', 440], ['widest', 600]]),
+});
+
+/** The width steps that fit beside the log now; steps past the room left collapse onto the widest that fits. */
+function widthSteps(side) {
+    const max = maxPanelWidth(side);
+    return WIDTH_STEPS[side].map(([name, value]) => [name, Math.min(value, max)]);
+}
+
+/** The step after the current width, wrapping from the widest back to the narrowest. */
+function nextWidthStep(side) {
+    const steps = widthSteps(side);
+    return steps.find(([, value]) => value > panelWidths[side] + 2) ?? steps[0];
+}
+
+function updateWidthButton(side) {
+    const button = side === 'left' ? dom.sidebarWidth : dom.inspectorWidth;
+    const text = side === 'left' ? dom.sidebarWidthText : dom.inspectorWidthText;
+    const width = panelWidths[side];
+    const current = widthSteps(side).find(([, value]) => Math.abs(value - width) <= 2)?.[0] ?? 'custom';
+    const name = side === 'left' ? 'Sidebar' : 'Inspector';
+    const next = nextWidthStep(side)[0];
+    text.textContent = `${name} width: ${current}. Select for ${next}.`;
+    button.title = `${name} width: ${current}, ${width} px. Select for ${next}.`;
+}
+
+function stepPanelWidth(side) {
+    const [name, value] = nextWidthStep(side);
+    setPanelWidth(side, value);
+    schedulePinned();
+    announce(`${side === 'left' ? 'Sidebar' : 'Inspector'} ${name}, ${panelWidths[side]} pixels wide.`);
 }
 
 function startPanelResize(side, event) {
@@ -2019,7 +2156,7 @@ let pollTimer = 0;
 
 function schedule(ms) {
     window.clearTimeout(pollTimer);
-    if (document.hidden) {
+    if (document.hidden || view.paused) {
         updateLiveStatus();
         return;
     }
@@ -2028,7 +2165,7 @@ function schedule(ms) {
 
 async function runPoll() {
     window.clearTimeout(pollTimer);
-    if (document.hidden) {
+    if (document.hidden || view.paused) {
         updateLiveStatus();
         return;
     }
@@ -2053,6 +2190,62 @@ async function runPoll() {
     }
 }
 
+/**
+ * Pauses or resumes live updates. While paused nothing refreshes on its own; resuming polls at once
+ * and catches the log up.
+ *
+ * @param {boolean} paused
+ */
+function setPaused(paused) {
+    view.paused = paused;
+    dom.liveStatus.setAttribute('aria-pressed', String(paused));
+    dom.liveStatus.title = paused ? 'Resume live updates' : 'Pause live updates';
+    if (paused) {
+        window.clearTimeout(pollTimer);
+        updateLiveStatus();
+        announce('Live updates paused. The log stays as it is until you resume.');
+    } else {
+        announce('Live updates resumed.');
+        runPoll();
+    }
+}
+
+/**
+ * Applies the session's activity from a poll answer. Activity comes from the session's lock files,
+ * so it can change while the log stays the same, for example when the host exits.
+ *
+ * @param {unknown} active
+ */
+function applyActivity(active) {
+    if (typeof active !== 'boolean' || !view.session || view.session.active === active) {
+        return;
+    }
+    view.session.active = active;
+    updateLiveStatus();
+    renderAgentTree();
+    renderAgentCard();
+}
+
+/**
+ * Drops content cached from an index that was rebuilt; sequence numbers and versions can repeat in
+ * the new index for other content. Open Context pages stay open and reload.
+ */
+function dropSessionContent() {
+    view.details.clear();
+    view.definitions.clear();
+    view.definitionRequests.clear();
+    view.inventory = null;
+    view.inventoryKey = null;
+    view.outlineKey = null;
+    Object.assign(view.context, { inventoryVersion: -1, listsAt: 0, countsVersion: -1, countsAt: 0 });
+    for (const page of view.context.stack) {
+        page.version = -1;
+        page.refreshedAt = 0;
+    }
+    instructionsKey = '';
+    agentCardStamp = '';
+}
+
 async function poll() {
     const params = { sv: view.stateVersion };
     const pollSession = view.sessionId && !view.loading && view.version >= 0;
@@ -2068,11 +2261,19 @@ async function poll() {
             return false;
         }
     }
+    if (!pollSession) {
+        await retryInit();
+    }
     if (!pollSession || generation !== view.generation || result.sessionId !== view.sessionId) {
         refreshSidePanels();
         return false;
     }
+    applyActivity(result.active);
     if (result.reset || result.resync || result.agentMissing) {
+        if (result.reset) {
+            dropSessionContent();
+            view.epoch = result.epoch;
+        }
         await refreshSummary(true).catch(() => {});
         await loadAgent(result.agentMissing ? ROOT : view.agent);
         return false;
@@ -2094,11 +2295,12 @@ async function poll() {
     if (generation !== view.generation) {
         return false;
     }
-    view.version = result.version;
+    const cursor = advanceCursor({ total: view.total, version: view.version }, result, wasAtTail);
+    view.version = cursor.version;
     view.epoch = result.epoch;
     patchEntries(result.updated);
     const previousTotal = view.total;
-    view.total = Math.max(result.total, view.total);
+    view.total = cursor.total;
     if (wasAtTail) {
         appendEntries(result.added);
     }
@@ -2139,6 +2341,49 @@ function writeHash(seq) {
 }
 
 // Keyboard
+
+const SHORTCUTS_KEY = 'hve-session-log:single-key-shortcuts';
+
+/** Reads the saved shortcut choice; storage can be unavailable to an embedded canvas. */
+function savedShortcutChoice() {
+    try {
+        return window.localStorage.getItem(SHORTCUTS_KEY) !== 'off';
+    } catch {
+        return true;
+    }
+}
+
+/** Whether letter and symbol keys act as shortcuts; Escape, Home, and End always do. */
+let singleKeyShortcuts = savedShortcutChoice();
+
+/**
+ * Turns single-key shortcuts on or off and keeps key hints in accessible names and tooltips in step.
+ *
+ * @param {boolean} enabled
+ * @param {{ save?: boolean }} [options]
+ */
+function setSingleKeyShortcuts(enabled, options = {}) {
+    singleKeyShortcuts = enabled;
+    dom.shortcutsEnabled.checked = enabled;
+    if (options.save) {
+        try {
+            window.localStorage.setItem(SHORTCUTS_KEY, enabled ? 'on' : 'off');
+        } catch {
+            // The choice still holds for this page.
+        }
+    }
+    for (const node of document.querySelectorAll('[data-shortcut]')) {
+        if (enabled) {
+            node.setAttribute('aria-keyshortcuts', node.dataset.shortcut);
+        } else {
+            node.removeAttribute('aria-keyshortcuts');
+        }
+    }
+    for (const node of document.querySelectorAll('[data-shortcut-title]')) {
+        node.title = enabled ? node.dataset.shortcutTitle : node.dataset.shortcutTitle.replace(/ \([^)]+\)$/, '');
+    }
+    applyPanels();
+}
 
 function isTyping(target) {
     return target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
@@ -2206,6 +2451,9 @@ document.addEventListener('keydown', (event) => {
         return;
     }
     if (isTyping(event.target) || dom.shortcutsDialog.open) {
+        return;
+    }
+    if (!singleKeyShortcuts && event.key.length === 1) {
         return;
     }
     switch (event.key) {
@@ -2318,18 +2566,31 @@ dom.contextFilter.addEventListener('input', () => {
 let filterTimer = 0;
 dom.sessionFilter.addEventListener('input', () => {
     window.clearTimeout(filterTimer);
-    filterTimer = window.setTimeout(renderSessionList, 120);
+    filterTimer = window.setTimeout(() => {
+        const matches = renderSessionList();
+        announce(matches === 0 && dom.sessionFilter.value.trim() ? 'No sessions match the filter.' : dom.sessionCount.textContent);
+    }, 120);
 });
+
+/** Refreshes the Tool calls list for a new filter and announces the result without moving focus. */
+async function filterTools() {
+    const outline = await refreshOutline(true).catch(() => null);
+    if (outline) {
+        announce(outline.toolMatches + outline.compactionMatches === 0 ? 'No tool calls match.' : dom.toolCount.textContent);
+    }
+}
+
 dom.toolFilter.addEventListener('input', () => {
     window.clearTimeout(filterTimer);
-    filterTimer = window.setTimeout(() => refreshOutline(true).catch(() => {}), 250);
+    filterTimer = window.setTimeout(filterTools, 250);
 });
 for (const radio of document.querySelectorAll('input[name="toolStatus"]')) {
-    radio.addEventListener('change', () => refreshOutline(true).catch(() => {}));
+    radio.addEventListener('change', filterTools);
 }
 dom.toolSort.addEventListener('click', () => setToolSort(view.toolSort === 'asc' ? 'desc' : 'asc'));
 
 dom.useCurrent.addEventListener('click', () => selectSession('current'));
+dom.liveStatus.addEventListener('click', () => setPaused(!view.paused));
 dom.followToggle.addEventListener('click', () => {
     if (view.follow) {
         setFollow(false);
@@ -2374,11 +2635,12 @@ dom.sidebarToggle.addEventListener('click', () => togglePanel('left', { focus: !
 dom.inspectorToggle.addEventListener('click', () => togglePanel('right', { focus: !isDocked('right') }));
 dom.scrim.addEventListener('click', () => closeOverlays());
 for (const side of ['left', 'right']) {
-    DOCKED[side].addEventListener('change', applyPanels);
+    DOCKED[side].addEventListener('change', () => applyDocking(side));
     const splitter = splitterFor(side);
     splitter.addEventListener('pointerdown', (event) => startPanelResize(side, event));
     splitter.addEventListener('keydown', (event) => panelResizeKey(side, event));
     splitter.addEventListener('dblclick', () => setPanelWidth(side, PANEL_WIDTH[side].initial));
+    (side === 'left' ? dom.sidebarWidth : dom.inspectorWidth).addEventListener('click', () => stepPanelWidth(side));
 }
 let resizeFrame = 0;
 window.addEventListener('resize', () => {
@@ -2397,6 +2659,19 @@ for (const toggle of document.querySelectorAll('.section-toggle')) {
         toggle.closest('section')?.classList.toggle('is-collapsed', !expanded);
     });
 }
+// Single-character shortcuts can be turned off, so their hints are kept to switch with them.
+for (const node of document.querySelectorAll('[aria-keyshortcuts]')) {
+    const keys = node.getAttribute('aria-keyshortcuts') ?? '';
+    if (keys.length === 1) {
+        node.dataset.shortcut = keys;
+        if (node.title && !node.classList.contains('panel-toggle')) {
+            node.dataset.shortcutTitle = node.title;
+        }
+    }
+}
+dom.shortcutsButton.dataset.shortcutTitle = dom.shortcutsButton.title;
+dom.shortcutsEnabled.addEventListener('change', () => setSingleKeyShortcuts(dom.shortcutsEnabled.checked, { save: true }));
+setSingleKeyShortcuts(singleKeyShortcuts);
 applyPanels();
 dom.main.addEventListener('scroll', () => {
     schedulePinned();

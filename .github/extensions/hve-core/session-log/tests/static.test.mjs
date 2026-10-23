@@ -11,6 +11,11 @@ import { fileURLToPath } from 'node:url';
 const EXTENSION_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const HEADER = '// Copyright (c) 2026 Microsoft Corporation. All rights reserved.\n// SPDX-License-Identifier: MIT\n';
 
+/** Reads a source file with LF line endings, as a Windows checkout may convert them to CRLF. */
+async function readSource(file) {
+    return (await fs.readFile(file, 'utf8')).replace(/\r\n/g, '\n');
+}
+
 async function moduleFiles() {
     const entries = await fs.readdir(EXTENSION_DIR, { withFileTypes: true, recursive: true });
     return entries
@@ -25,7 +30,7 @@ test('ships no package manifest', async () => {
 
 test('every module carries the repository copyright header', async () => {
     for (const file of await moduleFiles()) {
-        const text = await fs.readFile(file, 'utf8');
+        const text = await readSource(file);
         assert.ok(text.startsWith(HEADER), path.relative(EXTENSION_DIR, file));
     }
 });
@@ -56,7 +61,7 @@ test('contains no absolute user paths or stdout logging in runtime modules', asy
 
 test('the repository project entry only loads the packaged extension', async () => {
     const entry = path.join(EXTENSION_DIR, '..', '..', 'session-log', 'extension.mjs');
-    const text = await fs.readFile(entry, 'utf8');
+    const text = await readSource(entry);
     assert.ok(text.startsWith(HEADER));
     const code = text.split('\n').filter((line) => line.trim() && !line.trim().startsWith('//'));
     assert.deepEqual(code, ["import '../hve-core/session-log/extension.mjs';"]);

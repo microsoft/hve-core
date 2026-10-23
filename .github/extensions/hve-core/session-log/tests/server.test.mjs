@@ -367,3 +367,88 @@ test('agent instructions route returns the shown agent\'s instructions or not fo
     assert.equal(none.status, 404);
     assert.equal((await request(url, `/api/agent-instructions?session=${SESSION_ID}&agent=not-an-agent`)).status, 400);
 });
+
+const pollUrl = (cursor, extra = '') => `/api/poll?session=${SESSION_ID}&agent=root&since=${cursor.since}&v=${cursor.v}&epoch=${cursor.epoch}&sv=1${extra}`;
+
+test('a poll from before the session index was evicted resets instead of reporting unchanged', async (t) => {
+    const { url, root } = await startServer(t);
+    const page = (await request(url, `/api/entries?session=${SESSION_ID}`)).json();
+    // The index cache keeps three sessions, so three others evict this one.
+    const others = [OTHER_SESSION_ID, '77777777-8888-4999-8aaa-bbbbbbbbbbbb', '88888888-9999-4aaa-8bbb-cccccccccccc'];
+    for (const id of others) {
+        await writeSession(root, id);
+        assert.equal((await request(url, `/api/summary?session=${id}`)).status, 200);
+    }
+    await fs.appendFile(path.join(root, SESSION_ID, 'events.jsonl'), `${JSON.stringify({ type: 'assistant.message', data: { content: 'After eviction' }, timestamp: '2026-01-15T11:00:00.000Z' })}\n`);
+    const polled = (await request(url, pollUrl({ since: page.total, v: page.version, epoch: page.epoch }))).json();
+    assert.equal(polled.reset, true);
+    assert.notEqual(polled.epoch, page.epoch);
+});
+
+test('poll pages a large batch and the delivered cursor drains the rest', async (t) => {
+    const { url, root } = await startServer(t);
+    const page = (await request(url, `/api/entries?session=${SESSION_ID}`)).json();
+    const lines = Array.from({ length: 300 }, (_, i) => JSON.stringify({ type: 'user.message', data: { content: `bulk ${i}` }, timestamp: '2026-01-15T12:00:00.000Z' }));
+    await fs.appendFile(path.join(root, SESSION_ID, 'events.jsonl'), `${lines.join('\n')}\n`);
+    const cursor = { since: page.total, v: page.version, epoch: page.epoch };
+    const first = (await request(url, pollUrl(cursor))).json();
+    assert.equal(first.added.length, 200);
+    assert.equal(first.more, true);
+    assert.equal(first.next, page.total + 200);
+    assert.equal(first.total, page.total + 300);
+
+    // Acknowledging the advertised total and version would skip the undelivered entries.
+    const skipped = (await request(url, pollUrl({ ...cursor, since: first.total, v: first.version }))).json();
+    assert.equal(skipped.unchanged, true);
+    const second = (await request(url, pollUrl({ ...cursor, since: first.next }))).json();
+    assert.equal(second.added.length, 100);
+    assert.equal(second.added.at(-1).body, 'bulk 299');
+    assert.equal(second.more, false);
+    assert.equal(second.next, second.total);
+});
+
+test('responses keep recorded fields named parts and leave out index offsets', async (t) => {
+    const args = { parts: [{ text: 'hello' }], required: ['parts'] };
+    const events = [
+        { type: 'session.start', data: { sessionId: SESSION_ID }, timestamp: '2026-01-15T10:00:00.000Z' },
+        { type: 'assistant.turn_start', data: { turnId: '0' }, timestamp: '2026-01-15T10:00:01.000Z' },
+        { type: 'hook.start', data: { hookInvocationId: 'h1', hookType: 'preToolUse', input: {} }, timestamp: '2026-01-15T10:00:02.000Z' },
+        { type: 'hook.end', data: { hookInvocationId: 'h1', hookType: 'preToolUse', success: true }, timestamp: '2026-01-15T10:00:03.000Z' },
+        { type: 'tool.execution_start', data: { toolCallId: 'call-parts', toolName: 'compose', arguments: args }, timestamp: '2026-01-15T10:00:04.000Z' },
+        { type: 'tool.execution_complete', data: { toolCallId: 'call-parts', success: true, result: { content: 'ok' } }, timestamp: '2026-01-15T10:00:05.000Z' },
+    ];
+    const schema = { type: 'object', properties: { parts: { type: 'array' } }, required: ['parts'] };
+    const liveDefinitions = { sessionId: () => SESSION_ID, lookup: async (kind, name) => ({ status: 'live', item: { name, parameters: schema } }) };
+    const { url } = await startServer(t, { events, serverOptions: { liveDefinitions } });
+
+    const page = (await request(url, `/api/entries?session=${SESSION_ID}`)).json();
+    assert.ok(page.entries.length > 0);
+    for (const entry of page.entries) {
+        assert.equal(Object.hasOwn(entry, 'parts'), false, `${entry.kind} entry exposes offsets`);
+        for (const run of entry.hookRuns ?? []) {
+            assert.equal(Object.hasOwn(run, 'parts'), false, 'hook run exposes offsets');
+        }
+    }
+    assert.ok(page.entries.some((entry) => entry.hookRuns?.length));
+    const tool = page.entries.find((entry) => entry.kind === 'tool');
+    const detail = (await request(url, `/api/detail?session=${SESSION_ID}&agent=root&seq=${tool.seq}`)).json();
+    assert.equal(Object.hasOwn(detail.entry, 'parts'), false);
+    assert.deepEqual(detail.events[0].data.arguments, args);
+    const definition = (await request(url, `/api/definition?session=${SESSION_ID}&agent=root&kind=tool&name=compose`)).json();
+    assert.deepEqual(definition.live.item.parameters, schema);
+});
+
+test('every poll answer reports whether the session is active', async (t) => {
+    const { url, root } = await startServer(t);
+    const page = (await request(url, `/api/entries?session=${SESSION_ID}`)).json();
+    const cursor = { since: page.total, v: page.version, epoch: page.epoch };
+    assert.equal((await request(url, pollUrl(cursor))).json().active, false);
+    const lock = path.join(root, SESSION_ID, `inuse.${process.pid}.lock`);
+    await fs.writeFile(lock, String(process.pid));
+    const live = (await request(url, pollUrl(cursor))).json();
+    assert.equal(live.unchanged, true);
+    assert.equal(live.active, true);
+    await fs.rm(lock);
+    assert.equal((await request(url, pollUrl(cursor))).json().active, false);
+    assert.equal((await request(url, pollUrl({ ...cursor, epoch: 1 }))).json().active, false);
+});

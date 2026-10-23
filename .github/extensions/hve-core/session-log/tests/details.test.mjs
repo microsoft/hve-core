@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { agentNameKey as libAgentNameKey } from '../lib/indexer.mjs';
-import { agentNameKey, compactionTokens, contextSpec, detailSort, filterContextItems, prettyJson, schemaType, sectionChangeText, sortDetailItems } from '../ui/render.mjs';
+import { agentNameKey, canvasSource, compactionTokens, contextSpec, detailSort, filterContextItems, prettyJson, schemaType, sectionChangeText, sortDetailItems } from '../ui/render.mjs';
 
 const tools = [{ name: 'view', count: 3 }, { name: 'bash', count: 10 }, { name: 'grep', count: 3 }, { name: 'Edit2', count: 0 }, { name: 'edit10', count: 0 }];
 const spec = { id: 'tools', nameOf: (item) => item.name, count: { of: (item) => item.count, most: 'Most calls', fewest: 'Fewest calls' } };
@@ -90,4 +90,24 @@ test('context sections sort by uses first, with labels per section', () => {
     const items = [{ name: 'b', count: 1 }, { name: 'a', count: 1 }, { name: 'c', count: 5 }];
     assert.deepEqual(sortDetailItems(items, detailSort(spec, state), spec).map((item) => item.name), ['c', 'a', 'b']);
     assert.deepEqual(contextSpec({ id: 'unknown' }).count.most, 'Most used');
+});
+
+test('canvas definitions prefer this session\'s live definition, then its recorded capabilities', () => {
+    const recorded = { capabilities: { text: JSON.stringify({ canvasId: 'board', description: 'Recorded', actions: [{ name: 'old' }] }) } };
+    const liveItem = { canvasId: 'board', description: 'Live', actions: [{ name: 'new' }] };
+
+    const otherSession = canvasSource({ live: { item: liveItem, scope: 'live-session' }, recorded });
+    assert.equal(otherSession.useLive, false);
+    assert.equal(otherSession.source.description, 'Recorded');
+
+    const thisSession = canvasSource({ live: { item: liveItem, scope: 'this-session' }, recorded });
+    assert.equal(thisSession.useLive, true);
+    assert.equal(thisSession.source.description, 'Live');
+
+    const fallback = canvasSource({ live: { item: liveItem, scope: 'live-session' }, recorded: {} });
+    assert.equal(fallback.useLive, true);
+    assert.equal(fallback.source.description, 'Live');
+
+    const unreadable = canvasSource({ live: { item: null, scope: null }, recorded: { capabilities: { text: '{not json' } } });
+    assert.deepEqual(unreadable, { live: null, captured: null, useLive: false, source: null });
 });

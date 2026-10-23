@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { buildContextSections, contextCounts } from './context.mjs';
 import { DEFINITION_KINDS, LIVE_DEFINITION_KINDS } from './definitions.mjs';
 import { mergeInventory } from './inventory.mjs';
-import { IndexCache, parseFieldPath, ROOT_AGENT } from './indexer.mjs';
+import { IndexCache, parseFieldPath, publicEntry, ROOT_AGENT } from './indexer.mjs';
 import { AGENT_KEY_RE, isSessionId, sessionFolder } from './paths.mjs';
 import { SessionCatalog } from './sessions.mjs';
 
@@ -25,6 +25,7 @@ const STATIC_FILES = Object.freeze({
     '/ui/markdown.mjs': { file: 'markdown.mjs', type: 'text/javascript; charset=utf-8' },
     '/ui/format.mjs': { file: 'format.mjs', type: 'text/javascript; charset=utf-8' },
     '/ui/highlight.mjs': { file: 'highlight.mjs', type: 'text/javascript; charset=utf-8' },
+    '/ui/sync.mjs': { file: 'sync.mjs', type: 'text/javascript; charset=utf-8' },
 });
 
 export const CONTENT_SECURITY_POLICY = [
@@ -65,10 +66,6 @@ export class HttpError extends Error {
         this.status = status;
         this.code = code;
     }
-}
-
-function stripInternal(key, value) {
-    return key === 'parts' ? undefined : value;
 }
 
 function parseIntParam(params, name, { min = 0, max = Number.MAX_SAFE_INTEGER, fallback } = {}) {
@@ -415,7 +412,7 @@ export function createSessionLogServer(options) {
             const epoch = index.epoch;
             const page = index.getEntries(agent, { from, limit });
             const entries = await index.withBodies(page.entries);
-            return { sessionId, agent, version, epoch, total: page.total, from: page.from, anchorIndex: anchor?.index ?? null, entries };
+            return { sessionId, agent, version, epoch, total: page.total, from: page.from, anchorIndex: anchor?.index ?? null, entries: entries.map(publicEntry) };
         },
 
         'GET /api/poll': async (params) => {
@@ -424,7 +421,7 @@ export function createSessionLogServer(options) {
             if (!params.has('session')) {
                 return result;
             }
-            const { sessionId, index } = await requireSession(params);
+            const { sessionId, record, index } = await requireSession(params);
             const agentParam = params.get('agent') ?? ROOT_AGENT;
             if (!AGENT_KEY_RE.test(agentParam)) {
                 throw new HttpError(400, 'invalid_input', 'Parameter agent is not a valid agent key');
@@ -434,14 +431,16 @@ export function createSessionLogServer(options) {
             const sinceVersion = parseIntParam(params, 'v', { min: 0, fallback: 0 });
             const since = parseIntParam(params, 'since', { min: 0, fallback: 0 });
             const version = index.version;
+            // Activity comes from the session's lock files, not its log, so every answer carries it.
+            const active = record.active;
             if (epoch !== index.epoch) {
-                return { ...result, sessionId, reset: true, epoch: index.epoch, version };
+                return { ...result, sessionId, active, reset: true, epoch: index.epoch, version };
             }
             if (!index.agents.has(agent)) {
-                return { ...result, sessionId, agentMissing: true, epoch: index.epoch, version };
+                return { ...result, sessionId, active, agentMissing: true, epoch: index.epoch, version };
             }
             if (sinceVersion === version) {
-                return { ...result, sessionId, unchanged: true, epoch: index.epoch, version, inventoryVersion: index.inventoryVersion };
+                return { ...result, sessionId, active, unchanged: true, epoch: index.epoch, version, inventoryVersion: index.inventoryVersion };
             }
             const changes = index.getChanges(agent, since, sinceVersion);
             const added = await index.withBodies(changes.added);
@@ -450,15 +449,17 @@ export function createSessionLogServer(options) {
             return {
                 ...result,
                 sessionId,
+                active,
                 agent,
                 epoch: index.epoch,
                 version,
                 inventoryVersion: index.inventoryVersion,
                 total: changes.total,
                 resync: changes.resync,
+                next: changes.next,
                 more: changes.more,
-                added,
-                updated,
+                added: added.map(publicEntry),
+                updated: updated.map(publicEntry),
             };
         },
 
@@ -486,7 +487,7 @@ export function createSessionLogServer(options) {
             if (!detail) {
                 throw new HttpError(404, 'entry_not_found', 'That entry is not in this agent log');
             }
-            return detail;
+            return { ...detail, entry: publicEntry(detail.entry) };
         },
 
         'GET /api/field': async (params) => {
@@ -514,7 +515,7 @@ export function createSessionLogServer(options) {
     }
 
     function sendJson(res, status, value) {
-        send(res, status, JSON.stringify(value, stripInternal), {
+        send(res, status, JSON.stringify(value), {
             'Content-Type': 'application/json; charset=utf-8',
             'Cache-Control': 'no-store',
         });

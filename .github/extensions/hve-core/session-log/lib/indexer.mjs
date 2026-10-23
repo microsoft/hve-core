@@ -1,12 +1,20 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { createHash } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
 export const ROOT_AGENT = 'root';
+
+/** Epochs are unique across index instances and resets, so a cursor from an evicted or reset index never matches its replacement. */
+let lastEpoch = randomInt(1, 2 ** 31);
+
+function nextEpoch() {
+    lastEpoch += 1;
+    return lastEpoch;
+}
 
 /**
  * Event types the indexer reads, kept equal to the case labels in `SessionIndex#apply` by a test.
@@ -450,6 +458,14 @@ export function diffSections(before, after) {
     };
 }
 
+/**
+ * @param {unknown} text Skill context text or its prefix.
+ * @returns {string | null} The skill name from a leading `<skill-context name="...">` tag.
+ */
+function skillContextName(text) {
+    return typeof text === 'string' ? /<skill-context name="([^"]{1,200})"/.exec(text.slice(0, 1024))?.[1] ?? null : null;
+}
+
 function newAgent(key) {
     return {
         key,
@@ -474,8 +490,10 @@ function newAgent(key) {
         error: null,
         customAgent: null,
         systemPrompt: null,
-        /** Every recorded system prompt version, oldest first. */
+        /** The newest recorded system prompt versions, oldest first. */
         systemPrompts: [],
+        /** Every system prompt version recorded, including any no longer kept in `systemPrompts`. */
+        systemPromptTotal: 0,
         /** Events seen since the latest system prompt, which explain why the next one was rebuilt. */
         sinceSystem: new Set(),
         /** The compaction in progress, with snapshot candidates for its model call. */
@@ -527,7 +545,7 @@ export class SessionIndex {
         this.file = file;
         this.options = { ...DEFAULTS, ...options };
         this.#reset();
-        this.epoch = 0;
+        this.epoch = nextEpoch();
         /** @type {Promise<object> | null} */
         this.refreshing = null;
     }
@@ -587,6 +605,9 @@ export class SessionIndex {
     #reset() {
         this.fileSize = -1;
         this.mtimeMs = -1;
+        /** File identity, so a replaced or rotated log is reindexed. */
+        this.ino = null;
+        this.dev = null;
         this.readPos = 0;
         this.lineStart = 0;
         /** @type {Buffer[]} */
@@ -612,8 +633,10 @@ export class SessionIndex {
         this.compactionsById = new Map();
         /** Skill text by content ID, so repeat loads recorded as references resolve to the full text. */
         this.skillContents = new Map();
-        /** The latest context delivery (prefix and suffix around skill text) per skill name. */
+        /** The latest skill context delivery per receiving agent and skill name. */
         this.skillDeliveries = new Map();
+        /** Reference deliveries per receiving agent and content ID, to pair each with the load it wraps. */
+        this.skillDeliveriesByContent = new Map();
         /** @type {Map<string, [number, number]>} Byte range of each compaction's request snapshot, keyed by `agent:seq`. */
         this.compactionRequests = new Map();
         /** Canvas activity by canvas ID, across agents. */
@@ -664,16 +687,18 @@ export class SessionIndex {
             const hadData = this.fileSize > 0;
             if (hadData) {
                 this.#reset();
-                this.epoch += 1;
+                this.epoch = nextEpoch();
             }
             return { bytesRead, indexMs: performance.now() - started, changed: hadData, reset: hadData, missing: true };
         }
-        if (stat.size === this.fileSize && stat.mtimeMs === this.mtimeMs) {
+        const replaced = this.fileSize >= 0 && (stat.ino !== this.ino || stat.dev !== this.dev);
+        if (!replaced && stat.size === this.fileSize && stat.mtimeMs === this.mtimeMs) {
             return { bytesRead, indexMs: performance.now() - started, changed: false, reset: false };
         }
         const handle = await this.#openFile();
         try {
-            if (stat.size < this.readPos) {
+            // Logs only grow by appending: a replaced file, a shorter one, or one changed without growing is reindexed.
+            if (replaced || stat.size < this.readPos || stat.size === this.fileSize) {
                 reset = true;
             } else if (this.head && stat.size > 0) {
                 const probe = Buffer.alloc(Math.min(HEAD_BYTES, stat.size));
@@ -694,7 +719,7 @@ export class SessionIndex {
             }
             if (reset) {
                 this.#reset();
-                this.epoch += 1;
+                this.epoch = nextEpoch();
             }
             const before = this.version;
             this.version += 1;
@@ -721,13 +746,15 @@ export class SessionIndex {
             } catch (error) {
                 // Entries from this read are already applied; start over rather than re-ingest them.
                 this.#reset();
-                this.epoch += 1;
+                this.epoch = nextEpoch();
                 throw error;
             }
             this.tail = Buffer.from(rolling);
             this.readPos = position;
             this.fileSize = stat.size;
             this.mtimeMs = stat.mtimeMs;
+            this.ino = stat.ino;
+            this.dev = stat.dev;
             const changed = this.dirtyVersion === versionForThisRefresh || reset;
             if (!changed) {
                 this.version = before;
@@ -812,6 +839,13 @@ export class SessionIndex {
         return agent;
     }
 
+    /** Sets a bounded map entry: existing keys always update, new keys only below the cap. */
+    #remember(map, key, value) {
+        if (map.has(key) || map.size < MAX_SKILL_REFS) {
+            map.set(key, value);
+        }
+    }
+
     #add(agent, kind, event, seq, offset, length, fields = {}) {
         const entry = {
             seq,
@@ -875,6 +909,12 @@ export class SessionIndex {
             }
             case 'session.resume': {
                 this.session.resumes += 1;
+                if (agentKey === ROOT_AGENT) {
+                    // The session runs again; its earlier shutdown stays in the log as an entry.
+                    this.session.shutdown = null;
+                    agent.endTs = null;
+                    agent.durationMs = null;
+                }
                 agent.sinceSystem.add('session resumed');
                 this.#add(agent, 'session', event, seq, offset, length, { label: 'Session resumed', summary: '' });
                 return;
@@ -905,7 +945,8 @@ export class SessionIndex {
             case 'system.message': {
                 const previous = agent.systemPrompt;
                 const analysis = analyzeSystemPrompt(data.content, data.contentBlocks);
-                const version = agent.systemPrompts.length + 1;
+                agent.systemPromptTotal += 1;
+                const version = agent.systemPromptTotal;
                 const delta = previous ? analysis.chars - previous.chars : null;
                 const reasons = previous ? [...agent.sinceSystem] : [];
                 agent.sinceSystem.clear();
@@ -914,17 +955,18 @@ export class SessionIndex {
                     agent.agentPromptSeqs.set(agent.customAgent.name || agent.customAgent.displayName, seq);
                 }
                 const changed = previous ? diffSections(previous.sections, analysis.sections) : null;
-                if (agent.systemPrompts.length < MAX_PROMPT_VERSIONS) {
-                    agent.systemPrompts.push({
-                        seq,
-                        ts,
-                        version,
-                        chars: analysis.chars,
-                        delta,
-                        reasons,
-                        sectionCount: analysis.sections.length,
-                        changes: changed ? { added: changed.addedCount, removed: changed.removedCount, resized: changed.resizedCount } : null,
-                    });
+                agent.systemPrompts.push({
+                    seq,
+                    ts,
+                    version,
+                    chars: analysis.chars,
+                    delta,
+                    reasons,
+                    sectionCount: analysis.sections.length,
+                    changes: changed ? { added: changed.addedCount, removed: changed.removedCount, resized: changed.resizedCount } : null,
+                });
+                if (agent.systemPrompts.length > MAX_PROMPT_VERSIONS) {
+                    agent.systemPrompts.shift();
                 }
                 this.inventoryVersion += 1;
                 this.#add(agent, 'system', event, seq, offset, length, {
@@ -1282,11 +1324,17 @@ export class SessionIndex {
             case 'skill.context_delivered':
             case 'skill.context_delivered_ref': {
                 this.counts.contextRefs += 1;
-                const prefixName = typeof data.prefix === 'string' ? /<skill-context name="([^"]{1,200})"/.exec(data.prefix)?.[1] : null;
+                const full = typeof data.content === 'string' ? data.content : null;
                 const sourceName = typeof data.source === 'string' && data.source.startsWith('skill-') ? data.source.slice(6) : null;
-                const name = prefixName ?? sourceName;
-                if (name && offset >= 0 && (this.skillDeliveries.has(name) || this.skillDeliveries.size < MAX_SKILL_REFS)) {
-                    this.skillDeliveries.set(name, { ref: [offset, length], contentId: typeof data.contentId === 'string' ? data.contentId : null });
+                const name = skillContextName(data.prefix) ?? skillContextName(full) ?? sourceName;
+                if (!name || offset < 0) {
+                    return;
+                }
+                const delivery = { ref: [offset, length], contentId: typeof data.contentId === 'string' ? data.contentId : null, full: full !== null };
+                // A delivery belongs to the agent that received it, so another agent's load never stands in for it.
+                this.#remember(this.skillDeliveries, `${agentKey}\n${name}`, delivery);
+                if (delivery.contentId) {
+                    this.#remember(this.skillDeliveriesByContent, `${agentKey}\n${delivery.contentId}`, delivery);
                 }
                 return;
             }
@@ -1308,16 +1356,22 @@ export class SessionIndex {
                 if (typeof data.compactionAttemptId === 'string') {
                     this.compactionsById.set(data.compactionAttemptId, { agent: agentKey, entry });
                 }
-                agent.activeCompaction = { entry, candidates: [] };
+                agent.activeCompaction = { entry, candidates: [], attemptId: typeof data.compactionAttemptId === 'string' ? data.compactionAttemptId : null };
                 if (entry.before !== null) {
                     this.#context(agent, entry.before, entry.limit, 'compaction');
                 }
                 return;
             }
             case 'session.compaction_complete': {
-                const pending = typeof data.compactionAttemptId === 'string' ? this.compactionsById.get(data.compactionAttemptId) : null;
+                const attemptId = typeof data.compactionAttemptId === 'string' ? data.compactionAttemptId : null;
+                let pending = attemptId ? this.compactionsById.get(attemptId) : null;
+                const active = agent.activeCompaction;
+                if (!pending && active && (!attemptId || !active.attemptId)) {
+                    // The attempt ID is optional; without a match, the agent's running compaction is the one completing.
+                    pending = { agent: agentKey, entry: active.entry };
+                }
                 if (pending) {
-                    this.compactionsById.delete(data.compactionAttemptId);
+                    this.compactionsById.delete(attemptId ?? active?.attemptId);
                 }
                 const ownerKey = pending?.agent ?? agentKey;
                 const owner = this.agents.get(ownerKey) ?? agent;
@@ -1828,7 +1882,7 @@ export class SessionIndex {
                 }
                 : null,
             systemPromptVersions: agent.systemPrompts.slice(-100).map((item) => ({ ...item, reasons: [...item.reasons] })),
-            systemPromptCount: agent.systemPrompts.length,
+            systemPromptCount: agent.systemPromptTotal,
             children: [...agent.children],
             interactions: agent.interactions.length,
         }));
@@ -2016,7 +2070,8 @@ export class SessionIndex {
             }
         }
         const updated = [...updatedIndexes].sort((a, b) => a - b).map((index) => agent.entries[index]);
-        return { total, added, updated, resync, more: start + added.length < total };
+        const next = start + added.length;
+        return { total, added, updated, resync, next, more: next < total };
     }
 
     /**
@@ -2088,9 +2143,15 @@ export class SessionIndex {
             return null;
         }
         const versions = agent.systemPrompts;
-        const meta = Number.isInteger(seq) ? versions.find((item) => item.seq === seq) : versions[versions.length - 1];
+        let meta = Number.isInteger(seq) ? versions.find((item) => item.seq === seq) : versions[versions.length - 1];
         if (Number.isInteger(seq) && !meta) {
-            return null;
+            // A version older than the kept metadata still resolves from its own log entry.
+            const located = this.findEntry(agentKey, { seq });
+            const entry = located ? agent.entries[located.index] : null;
+            if (entry?.kind !== 'system') {
+                return null;
+            }
+            meta = { seq, version: entry.version ?? null };
         }
         let prompt = latest;
         if (meta && meta.seq !== latest.seq) {
@@ -2114,7 +2175,7 @@ export class SessionIndex {
         return {
             seq: prompt.seq,
             version: meta?.version ?? null,
-            versionCount: versions.length,
+            versionCount: agent.systemPromptTotal,
             chars: prompt.chars,
             staticChars: prompt.staticChars,
             promptVersion: prompt.promptVersion,
@@ -2341,19 +2402,23 @@ export class SessionIndex {
 
     /** Runs, main-agent selections, and the prompt an agent received, matched by any of its names. */
     async #agentDefinition(names) {
-        const runs = this.#agentRuns(names);
+        const candidates = this.#matchingRuns(names);
+        // The newest runs are listed; the delivered prompt comes from the newest run of all.
+        const runs = candidates.slice(-MAX_AGENT_RUNS).map((candidate) => this.#agentRun(candidate));
         const wanted = new Set(names.map(agentNameKey).filter(Boolean));
         const root = this.agents.get(ROOT_AGENT);
         const matches = (value) => wanted.has(agentNameKey(value));
         const selections = [...root.selections.values()].filter((item) => matches(item.name) || matches(item.displayName));
         const current = Boolean(root.customAgent && (matches(root.customAgent.name) || matches(root.customAgent.displayName)));
         let delivered = null;
-        const latestRun = runs.filter((run) => Number.isInteger(run.systemPromptSeq)).sort((a, b) => String(b.startTs ?? '').localeCompare(String(a.startTs ?? '')))[0];
+        const latestRun = candidates.filter((candidate) => Number.isInteger(candidate.systemPrompt?.seq))
+            .sort((a, b) => String(b.startTs ?? '').localeCompare(String(a.startTs ?? '')))[0];
         if (latestRun) {
-            const event = await this.#readEntryEvent(latestRun.key, latestRun.systemPromptSeq);
+            const seq = latestRun.systemPrompt.seq;
+            const event = await this.#readEntryEvent(latestRun.key, seq);
             const lead = typeof event?.data?.content === 'string' ? leadingPromptText(event.data.content) : null;
             if (lead) {
-                delivered = { ...lead, form: 'subagent', agentKey: latestRun.key, seq: latestRun.systemPromptSeq };
+                delivered = { ...lead, form: 'subagent', agentKey: latestRun.key, seq };
             }
         }
         if (!delivered) {
@@ -2369,7 +2434,7 @@ export class SessionIndex {
                 break;
             }
         }
-        return { runs, selections, current, delivered };
+        return { runs, runTotal: candidates.length, selections, current, delivered };
     }
 
     async #canvasDefinition(agentKey, canvasId) {
@@ -2451,39 +2516,34 @@ export class SessionIndex {
         };
     }
 
-    #agentRuns(names) {
+    /** Subagents that ran as any of the given agent names, oldest first. */
+    #matchingRuns(names) {
         const wanted = new Set(names.map(agentNameKey).filter(Boolean));
-        const runs = [];
         if (wanted.size === 0) {
-            return runs;
+            return [];
         }
-        for (const candidate of this.agents.values()) {
-            if (candidate.key === ROOT_AGENT || runs.length >= MAX_AGENT_RUNS) {
-                continue;
-            }
-            const keys = [candidate.agentType, candidate.name, candidate.displayName].map(agentNameKey);
-            if (!keys.some((key) => key && wanted.has(key))) {
-                continue;
-            }
-            runs.push({
-                key: candidate.key,
-                name: candidate.name,
-                displayName: candidate.displayName,
-                agentType: candidate.agentType,
-                description: candidate.description,
-                executionMode: candidate.executionMode,
-                model: candidate.model,
-                status: candidate.status,
-                startTs: candidate.startTs,
-                endTs: candidate.endTs,
-                durationMs: candidate.durationMs,
-                totalToolCalls: candidate.totalToolCalls,
-                totalTokens: candidate.totalTokens,
-                usage: { inputTokens: candidate.usage.inputTokens, outputTokens: candidate.usage.outputTokens },
-                systemPromptSeq: candidate.systemPrompt?.seq ?? null,
-            });
-        }
-        return runs;
+        return [...this.agents.values()].filter((candidate) => candidate.key !== ROOT_AGENT
+            && [candidate.agentType, candidate.name, candidate.displayName].map(agentNameKey).some((key) => key && wanted.has(key)));
+    }
+
+    #agentRun(candidate) {
+        return {
+            key: candidate.key,
+            name: candidate.name,
+            displayName: candidate.displayName,
+            agentType: candidate.agentType,
+            description: candidate.description,
+            executionMode: candidate.executionMode,
+            model: candidate.model,
+            status: candidate.status,
+            startTs: candidate.startTs,
+            endTs: candidate.endTs,
+            durationMs: candidate.durationMs,
+            totalToolCalls: candidate.totalToolCalls,
+            totalTokens: candidate.totalTokens,
+            usage: { inputTokens: candidate.usage.inputTokens, outputTokens: candidate.usage.outputTokens },
+            systemPromptSeq: candidate.systemPrompt?.seq ?? null,
+        };
     }
 
     /** Re-reads the latest system prompt of an agent, or of the main agent when it has none. */
@@ -2513,11 +2573,23 @@ export class SessionIndex {
                 resolvedFrom = 'earlier load';
             }
         }
-        const delivery = this.skillDeliveries.get(name);
+        const contentId = typeof data.contentId === 'string'
+            ? data.contentId
+            : content !== null ? `sha256:${createHash('sha256').update(content, 'utf8').digest('hex')}` : null;
+        const delivery = this.#skillDelivery(agentKey, name, contentId);
         const wrapper = delivery ? (await this.#readAt(delivery.ref))?.data : null;
-        const prefix = typeof wrapper?.prefix === 'string' ? wrapper.prefix.slice(0, PROMPT_ENTRY_MAX) : '';
-        const suffix = typeof wrapper?.suffix === 'string' ? wrapper.suffix.slice(0, PROMPT_ENTRY_MAX) : '';
-        const delivered = content === null ? null : `${prefix}${content}${suffix}`;
+        let delivered = null;
+        let wrapped = false;
+        if (delivery?.full && typeof wrapper?.content === 'string') {
+            // The complete text the agent received, wrapper included.
+            delivered = wrapper.content;
+            wrapped = true;
+        } else if (content !== null) {
+            const prefix = typeof wrapper?.prefix === 'string' ? wrapper.prefix.slice(0, PROMPT_ENTRY_MAX) : '';
+            const suffix = typeof wrapper?.suffix === 'string' ? wrapper.suffix.slice(0, PROMPT_ENTRY_MAX) : '';
+            delivered = `${prefix}${content}${suffix}`;
+            wrapped = Boolean(prefix || suffix);
+        }
         return {
             seq,
             ts: typeof event.timestamp === 'string' ? event.timestamp : null,
@@ -2531,9 +2603,22 @@ export class SessionIndex {
             content: delivered === null ? null : delivered.slice(0, DEFINITION_TEXT_MAX),
             contentChars: delivered?.length ?? numberOrNull(data.contentLength) ?? 0,
             truncated: delivered !== null && delivered.length > DEFINITION_TEXT_MAX,
-            wrapped: Boolean(prefix || suffix),
+            wrapped,
             resolvedFrom,
         };
+    }
+
+    /**
+     * Finds the context delivery an agent received for a skill load: the reference delivery that wraps
+     * the same content, else the agent's latest delivery of that skill unless it wraps other content.
+     */
+    #skillDelivery(agentKey, name, contentId) {
+        const matched = contentId ? this.skillDeliveriesByContent.get(`${agentKey}\n${contentId}`) : null;
+        if (matched) {
+            return matched;
+        }
+        const latest = this.skillDeliveries.get(`${agentKey}\n${name}`) ?? null;
+        return latest && latest.contentId && contentId && latest.contentId !== contentId ? null : latest;
     }
 
     async #readAt(ref) {
@@ -2956,6 +3041,27 @@ function partsFor(entry, hook) {
         return entry.parts;
     }
     return entry.kind === 'turn' && Array.isArray(entry.hookRuns) ? entry.hookRuns[hook]?.parts ?? null : null;
+}
+
+function withoutParts(value) {
+    const copy = { ...value };
+    delete copy.parts;
+    return copy;
+}
+
+/**
+ * Copies an index entry for an API response without the byte offsets of its events or hook runs.
+ * Recorded payloads are never passed through here, so their own `parts` fields stay intact.
+ *
+ * @param {object} entry Entry from this index, or a shallow copy of one.
+ * @returns {object}
+ */
+export function publicEntry(entry) {
+    const copy = withoutParts(entry);
+    if (Array.isArray(copy.hookRuns)) {
+        copy.hookRuns = copy.hookRuns.map(withoutParts);
+    }
+    return copy;
 }
 
 function elapsed(fromIso, toIso) {

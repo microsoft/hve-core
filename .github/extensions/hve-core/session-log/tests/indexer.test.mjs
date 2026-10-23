@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,6 +10,7 @@ import test from 'node:test';
 
 import { agentInstructionsBlock, agentNameKey, analyzeSystemPrompt, canvasPromptEntry, diffSections, HANDLED_EVENT_TYPES, IndexCache, instructionPromptEntry, leadingPromptText, messageText, parseFieldPath, plainSummary, ROOT_AGENT, SessionIndex, skillPromptEntry, summarizeArguments } from '../lib/indexer.mjs';
 import { AGENT_BODY, buildCompactionEvents, buildEvents, buildInventoryEvents, CANVAS_CAPABILITIES, COMPACTION_REQUEST, COMPACTION_SUMMARY, NESTED_ID, SESSION_ID, SUBAGENT_ID, toJsonl } from './fixtures.mjs';
+import { symlinkOrSkip } from './helpers.mjs';
 
 async function indexFor(t, content, options) {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'session-log-index-'));
@@ -157,7 +159,7 @@ test('reindexes from the start when the file shrinks or is rewritten', async (t)
     await fs.writeFile(file, toJsonl(events.slice(0, 3)));
     const result = await index.refresh();
     assert.equal(result.reset, true);
-    assert.equal(index.epoch, epoch + 1);
+    assert.notEqual(index.epoch, epoch);
     assert.equal(index.getSummary().counts.events, 3);
 
     const rewritten = events.slice(0, 3).map((event) => ({ ...event, id: `${event.id}-x` }));
@@ -171,13 +173,14 @@ test('does not reset on ordinary appends that span many small chunks', async (t)
     const events = buildEvents();
     const { file, index } = await indexFor(t, toJsonl(events.slice(0, 10)), { chunkSize: 64 });
     await index.refresh();
+    const epoch = index.epoch;
     for (let start = 10; start < events.length; start += 7) {
         await fs.appendFile(file, toJsonl(events.slice(start, start + 7)));
         const result = await index.refresh();
         assert.equal(result.reset, false, `append at ${start}`);
     }
     assert.equal(index.getSummary().counts.events, events.length);
-    assert.equal(index.epoch, 0);
+    assert.equal(index.epoch, epoch);
 });
 
 test('reports added and updated entries for incremental refresh', async (t) => {
@@ -343,7 +346,9 @@ test('a symlinked session folder or log is treated as missing', async (t) => {
         await fs.rm(root, { recursive: true, force: true });
     });
     await fs.writeFile(path.join(outside, 'events.jsonl'), toJsonl(buildEvents()));
-    await fs.symlink(outside, path.join(root, SESSION_ID), 'dir');
+    if (!(await symlinkOrSkip(t, outside, path.join(root, SESSION_ID), 'dir'))) {
+        return;
+    }
     const linkedFolder = new SessionIndex(path.join(root, SESSION_ID, 'events.jsonl'));
     assert.equal((await linkedFolder.refresh()).missing, true);
     assert.equal(linkedFolder.counts.events, 0);
@@ -693,4 +698,205 @@ test('agent instructions come from each agent\'s own latest system prompt, and d
     const plain = await indexFor(t, toJsonl(buildEvents()));
     await plain.index.refresh();
     assert.equal((await plain.index.getAgentInstructions(SUBAGENT_ID)).text, 'You are a research helper.');
+});
+
+/** Builds a small event stream with one-second timestamps. */
+function stream(build) {
+    let clock = Date.parse('2026-02-01T09:00:00.000Z');
+    let id = 0;
+    const ev = (type, data = {}, extra = {}) => {
+        clock += 1000;
+        return { type, data, id: `s${(id += 1)}`, timestamp: new Date(clock).toISOString(), parentId: null, ...extra };
+    };
+    return build(ev);
+}
+
+const contentId = (text) => `sha256:${createHash('sha256').update(text, 'utf8').digest('hex')}`;
+
+test('a rebuilt index never reuses the cursor of the index it replaced', async (t) => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'session-log-epoch-'));
+    t.after(() => fs.rm(dir, { recursive: true, force: true }));
+    const fileFor = (id) => path.join(dir, `${id}.jsonl`);
+    const events = buildEvents();
+    await fs.writeFile(fileFor('a'), toJsonl(events.slice(0, 5)));
+    await fs.writeFile(fileFor('b'), toJsonl(events.slice(0, 5)));
+    const cache = new IndexCache(fileFor, { max: 1 });
+    const first = cache.get('a');
+    await first.refresh();
+    const cursor = { epoch: first.epoch, version: first.version };
+
+    await cache.get('b').refresh();
+    assert.equal(cache.has('a'), false);
+    await fs.appendFile(fileFor('a'), toJsonl(events.slice(5, 7)));
+    const rebuilt = cache.get('a');
+    await rebuilt.refresh();
+    // The version matches the old cursor's, so only a new epoch tells the client to reload.
+    assert.equal(rebuilt.version, cursor.version);
+    assert.notEqual(rebuilt.epoch, cursor.epoch);
+    assert.notEqual(new SessionIndex(fileFor('a')).epoch, rebuilt.epoch);
+});
+
+test('a same-size rewrite or a replaced log reindexes the session', async (t) => {
+    const events = stream((ev) => [
+        ev('session.start', { sessionId: SESSION_ID }),
+        ...Array.from({ length: 12 }, (_, i) => ev('user.message', { content: `message ${i === 6 ? 'alpha' : 'other'} ${String(i).padStart(2, '0')}` })),
+    ]);
+    const { file, index } = await indexFor(t, toJsonl(events));
+    await index.refresh();
+    const summaries = () => index.getEntries(ROOT_AGENT, { from: 0, limit: 50 }).entries.filter((entry) => entry.kind === 'user').map((entry) => entry.summary);
+    assert.ok(summaries().includes('message alpha 06'));
+
+    const original = await fs.readFile(file, 'utf8');
+    const rewritten = original.replace('message alpha 06', 'message bravo 06');
+    assert.equal(rewritten.length, original.length);
+    assert.equal(rewritten.slice(0, 256), original.slice(0, 256), 'the head probe is unchanged');
+    assert.equal(rewritten.slice(-256), original.slice(-256), 'the tail probe is unchanged');
+    const epoch = index.epoch;
+    await fs.writeFile(file, rewritten);
+    const later = new Date(Date.now() + 5000);
+    await fs.utimes(file, later, later);
+    const result = await index.refresh();
+    assert.equal(result.reset, true);
+    assert.notEqual(index.epoch, epoch);
+    assert.ok(summaries().includes('message bravo 06'));
+    assert.equal(summaries().includes('message alpha 06'), false);
+
+    // A replacement that starts and ends like an append is still a different file.
+    const replacement = `${file}.next`;
+    await fs.writeFile(replacement, rewritten + toJsonl(stream((ev) => [ev('user.message', { content: 'appended' })])));
+    await fs.rename(replacement, file);
+    assert.equal((await index.refresh()).reset, true);
+    assert.ok(summaries().includes('appended'));
+});
+
+test('resuming a session clears its end time and shutdown totals but keeps the shutdown entry', async (t) => {
+    const events = stream((ev) => [
+        ev('session.start', { sessionId: SESSION_ID }),
+        ev('user.message', { content: 'first' }),
+        ev('session.shutdown', { shutdownType: 'routine', totalPremiumRequests: 3 }),
+        ev('session.resume', { resumeTime: '2026-02-01T10:00:00.000Z', eventCount: 3 }),
+        ev('user.message', { content: 'again' }),
+    ]);
+    const { file, index } = await indexFor(t, toJsonl(events.slice(0, 3)));
+    await index.refresh();
+    const root = () => index.getSummary().agents.find((agent) => agent.key === ROOT_AGENT);
+    assert.equal(index.getSummary().session.shutdown.totalPremiumRequests, 3);
+    assert.ok(root().endTs);
+
+    await fs.appendFile(file, toJsonl(events.slice(3)));
+    await index.refresh();
+    const summary = index.getSummary();
+    assert.equal(summary.session.shutdown, null);
+    assert.equal(summary.session.resumes, 1);
+    assert.equal(root().endTs, null);
+    assert.equal(root().durationMs, null);
+    assert.ok(index.getEntries(ROOT_AGENT, { from: 0 }).entries.some((entry) => entry.label === 'Session ended'));
+});
+
+test('system prompt versions past the kept metadata still number and resolve correctly', async (t) => {
+    const count = 502;
+    const events = stream((ev) => [
+        ev('session.start', { sessionId: SESSION_ID }),
+        ...Array.from({ length: count }, (_, i) => ev('system.message', { role: 'system', content: `<rules>\nVersion ${i + 1}\n</rules>` })),
+    ]);
+    const { index } = await indexFor(t, toJsonl(events));
+    await index.refresh();
+    const root = index.getSummary().agents.find((agent) => agent.key === ROOT_AGENT);
+    assert.equal(root.systemPromptCount, count);
+    assert.equal(root.systemPromptVersions.at(-1).version, count);
+    assert.equal(root.systemPromptVersions.at(-1).seq, root.systemPrompt.seq);
+
+    const latest = await index.getSystemPrompt(ROOT_AGENT);
+    assert.equal(latest.seq, root.systemPrompt.seq);
+    assert.equal(latest.version, count);
+    assert.equal(latest.versionCount, count);
+    assert.equal((await index.getSystemPrompt(ROOT_AGENT, root.systemPrompt.seq)).version, count);
+
+    const firstSeq = index.getEntries(ROOT_AGENT, { from: 0, limit: 5 }).entries.find((entry) => entry.kind === 'system').seq;
+    const first = await index.getSystemPrompt(ROOT_AGENT, firstSeq);
+    assert.equal(first.version, 1);
+    assert.equal(first.seq, firstSeq);
+    assert.equal(await index.getSystemPrompt(ROOT_AGENT, 0), null);
+});
+
+test('skill deliveries belong to the agent that received them and match the load they wrap', async (t) => {
+    const wrap = (name, marker) => ({ prefix: `<skill-context name="${name}">\n${marker}\n\n`, suffix: '\n</skill-context>' });
+    const events = stream((ev) => [
+        ev('session.start', { sessionId: SESSION_ID }),
+        ev('skill.invoked', { name: 'shared', path: '/skills/shared/SKILL.md', content: 'shared body', trigger: 'agent-invoked' }),
+        ev('skill.context_delivered_ref', { contentId: contentId('shared body'), source: 'skill-shared', ...wrap('shared', 'ROOT') }),
+        ev('subagent.started', { toolCallId: 'call-sub', agentName: 'helper', agentType: 'helper' }, { agentId: SUBAGENT_ID }),
+        ev('skill.invoked_ref', { name: 'shared', path: '/skills/shared/SKILL.md', contentId: contentId('shared body'), contentLength: 11 }, { agentId: SUBAGENT_ID }),
+        ev('skill.context_delivered_ref', { contentId: contentId('shared body'), source: 'skill-shared', ...wrap('shared', 'SUB') }, { agentId: SUBAGENT_ID }),
+        ev('skill.invoked', { name: 'whole', path: '/skills/whole/SKILL.md', content: 'whole body' }),
+        ev('skill.context_delivered', { source: 'skill-whole', content: '<skill-context name="whole">\nBase directory: /skills/whole\n\nwhole body\n</skill-context>' }),
+        ev('skill.invoked', { name: 'changed', path: '/skills/changed/SKILL.md', content: 'changed v1' }),
+        ev('skill.context_delivered_ref', { contentId: contentId('changed v1'), source: 'skill-changed', ...wrap('changed', 'V1') }),
+        ev('skill.invoked', { name: 'changed', path: '/skills/changed/SKILL.md', content: 'changed v2' }),
+    ]);
+    const { index } = await indexFor(t, toJsonl(events));
+    await index.refresh();
+    const latest = async (agent, name) => (await index.getDefinition(agent, 'skill', name)).invocations.latest;
+
+    const main = await latest(ROOT_AGENT, 'shared');
+    assert.equal(main.content, '<skill-context name="shared">\nROOT\n\nshared body\n</skill-context>');
+    const sub = await latest(SUBAGENT_ID, 'shared');
+    assert.equal(sub.content, '<skill-context name="shared">\nSUB\n\nshared body\n</skill-context>');
+    assert.equal(sub.resolvedFrom, 'earlier load');
+
+    const whole = await latest(ROOT_AGENT, 'whole');
+    assert.equal(whole.content, '<skill-context name="whole">\nBase directory: /skills/whole\n\nwhole body\n</skill-context>');
+    assert.equal(whole.wrapped, true);
+
+    // The only delivery wraps the first version, so the second load shows its own text unwrapped.
+    const changed = await latest(ROOT_AGENT, 'changed');
+    assert.equal(changed.content, 'changed v2');
+    assert.equal(changed.wrapped, false);
+});
+
+test('compactions without an attempt ID pair with the running compaction', async (t) => {
+    const events = stream((ev) => [
+        ev('session.start', { sessionId: SESSION_ID }),
+        ev('session.compaction_start', { currentTokens: 9000, tokenLimit: 10000, trigger: 'threshold' }),
+        ev('session.compaction_complete', { success: true, preCompactionTokens: 9000, postCompactionTokens: 2000 }),
+        ev('session.compaction_start', { currentTokens: 9500, tokenLimit: 10000, trigger: 'threshold' }),
+        ev('user.message', { content: 'while compacting' }),
+        ev('session.compaction_complete', { success: true, preCompactionTokens: 9500, postCompactionTokens: 2500 }),
+        ev('session.compaction_start', { compactionAttemptId: 'attempt-3', currentTokens: 9800, tokenLimit: 10000, trigger: 'threshold' }),
+        ev('user.message', { content: 'still compacting' }),
+        ev('session.compaction_complete', { success: true, preCompactionTokens: 9800, postCompactionTokens: 3000 }),
+    ]);
+    const { index } = await indexFor(t, toJsonl(events));
+    await index.refresh();
+    const compactions = index.getEntries(ROOT_AGENT, { from: 0 }).entries.filter((entry) => entry.kind === 'compaction');
+    assert.deepEqual(compactions.map((entry) => [entry.phase, entry.status]), [
+        ['single', 'succeeded'],
+        ['start', 'succeeded'], ['result', 'succeeded'],
+        ['start', 'succeeded'], ['result', 'succeeded'],
+    ]);
+    assert.deepEqual(compactions.map((entry) => entry.after), [2000, null, 2500, null, 3000]);
+    const root = index.getSummary().agents.find((agent) => agent.key === ROOT_AGENT);
+    assert.equal(root.activeCompaction, null);
+    assert.equal(root.compactionTotal, 3);
+});
+
+test('agent definitions list the newest runs and the newest delivered prompt', async (t) => {
+    const runs = 51;
+    const runId = (i) => `aaaaaaaa-bbbb-4ccc-8ddd-${String(i).padStart(12, '0')}`;
+    const events = stream((ev) => [
+        ev('session.start', { sessionId: SESSION_ID }),
+        ...Array.from({ length: runs }, (_, i) => [
+            ev('subagent.started', { toolCallId: `call-${i}`, agentName: 'helper', agentDisplayName: 'helper', agentType: 'helper' }, { agentId: runId(i) }),
+            ev('system.message', { role: 'system', content: `You are helper run ${i + 1}.` }, { agentId: runId(i) }),
+        ]).flat(),
+    ]);
+    const { index } = await indexFor(t, toJsonl(events));
+    await index.refresh();
+    const def = await index.getDefinition(ROOT_AGENT, 'agent', 'helper');
+    assert.equal(def.runs.length, 50);
+    assert.equal(def.runTotal, runs);
+    assert.equal(def.runs[0].key, runId(1));
+    assert.equal(def.runs.at(-1).key, runId(runs - 1));
+    assert.equal(def.delivered.agentKey, runId(runs - 1));
+    assert.ok(def.delivered.text.includes(`run ${runs}.`));
 });

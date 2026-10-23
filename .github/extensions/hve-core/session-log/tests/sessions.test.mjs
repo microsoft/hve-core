@@ -9,6 +9,7 @@ import test from 'node:test';
 
 import { SessionCatalog, toTitle } from '../lib/sessions.mjs';
 import { OTHER_SESSION_ID, SESSION_ID, writeSession } from './fixtures.mjs';
+import { symlinkOrSkip } from './helpers.mjs';
 
 async function tempRoot(t) {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'session-log-catalog-'));
@@ -30,7 +31,8 @@ test('lists sessions with events, newest first, and skips empty or invalid folde
     await fs.utimes(path.join(root, OTHER_SESSION_ID, 'events.jsonl'), new Date('2026-01-01'), new Date('2026-01-01'));
     await fs.utimes(path.join(root, SESSION_ID, 'events.jsonl'), new Date('2026-01-01'), new Date('2026-01-01'));
     await fs.mkdir(path.join(root, '99999999-2222-4333-8444-555555555555'));
-    await fs.mkdir(path.join(root, 'pending-session:draft:abc'));
+    // Not a session ID; a name Windows also accepts, unlike the host's colon-separated drafts.
+    await fs.mkdir(path.join(root, 'pending-session-draft-abc'));
     await fs.writeFile(path.join(root, `${SESSION_ID}.lock`), '');
 
     const catalog = new SessionCatalog(root, { isPidAlive: () => false });
@@ -87,11 +89,13 @@ test('returns an empty list when the root does not exist', async (t) => {
     assert.deepEqual(await new SessionCatalog(path.join(root, 'missing')).list(), []);
 });
 
-test('skips symlinked session folders and logs and keeps unknown client names literal', async (t) => {
+test('skips symlinked session folders and logs', async (t) => {
     const root = await tempRoot(t);
     const outside = await tempRoot(t);
     const outsideFolder = await writeSession(outside, SESSION_ID);
-    await fs.symlink(outsideFolder, path.join(root, SESSION_ID), 'dir');
+    if (!(await symlinkOrSkip(t, outsideFolder, path.join(root, SESSION_ID), 'dir'))) {
+        return;
+    }
     const folder = path.join(root, OTHER_SESSION_ID);
     await fs.mkdir(folder);
     await fs.symlink(path.join(outsideFolder, 'events.jsonl'), path.join(folder, 'events.jsonl'));
@@ -99,7 +103,9 @@ test('skips symlinked session folders and logs and keeps unknown client names li
     assert.equal(await catalog.get(SESSION_ID), null);
     assert.equal(await catalog.get(OTHER_SESSION_ID), null);
     assert.deepEqual(await catalog.list(), []);
+});
 
+test('keeps unknown client names literal', async (t) => {
     const plainRoot = await tempRoot(t);
     await writeSession(plainRoot, SESSION_ID, { yaml: 'client_name: constructor\nname: Odd client' });
     const record = await new SessionCatalog(plainRoot).get(SESSION_ID);

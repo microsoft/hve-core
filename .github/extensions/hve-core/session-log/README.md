@@ -2,7 +2,7 @@
 title: Session Log Canvas
 description: Canvas extension that renders Copilot sessions, tool calls, and subagents as a live, navigable log
 author: Microsoft
-ms.date: 2026-10-22
+ms.date: 2026-10-23
 ms.topic: reference
 keywords:
   - canvas
@@ -25,7 +25,7 @@ The Session Log canvas (`hve-core-session-log`) shows how Copilot used a session
 * Model, reasoning effort, context usage, and token totals
 * Everything the model is given: tools, skills, agents, subagents, canvases, instructions, MCP servers, hooks, plugins, and extensions, each with its use count and the definition the model receives
 
-The canvas opens on the current session, lets you switch to any recorded session, and refreshes while it is visible.
+The canvas opens on the current session, lets you switch to any recorded session, and refreshes while it is visible. Select the status chip in the header (Live or Up to date) to pause live updates, and select it again to catch up.
 
 The canvas has three regions. The sidebar on the left has Sessions, an Outline (the agent tree and the prompts), and Details. The log fills the middle.
 
@@ -40,9 +40,11 @@ Agent instructions appear when the agent has its own: a subagent's agent definit
 
 Each list scrolls inside its own bounded area, and section headings collapse their section. Sections take only the height their content needs, and long lists share the rest, so a panel scrolls only when it is too short for each list to keep a few rows.
 
-Drag the divider beside the sidebar or the inspector to resize it. A focused divider also takes the arrow keys, and a double-click or `Enter` restores the default width. The toggles at each end of the header (or `b` and `i`) hide and show the sidebar and the inspector; the log, its prompt bar, and its scroll buttons widen into the space. In narrower canvases the panels open as drawers over the log instead.
+Drag the divider beside the sidebar or the inspector to resize it, or select the width button at the right of the panel's tab bar to step through narrow, default, wide, and widest. A focused divider also takes the arrow keys, and a double-click or `Enter` restores the default width.
 
-A bar above the log always shows the previous prompt; select it to scroll there, and it then shows the one before. Argument and output boxes scroll only after you click into them, so the mouse wheel keeps scrolling the log. Buttons at the bottom right scroll to the first and the newest entry.
+The toggles at each end of the header (or `b` and `i`) hide and show the sidebar and the inspector; the log, its prompt bar, and its scroll buttons widen into the space. In narrower canvases the panels open as drawers over the log instead. An open drawer keeps focus until `Escape`, its shortcut, or a click outside closes it, and a resize or zoom that hides the panel you were in moves focus to its toggle.
+
+A bar above the log always shows the previous prompt; select it to scroll there, and it then shows the one before. Argument and output boxes scroll only after you click into them, so the mouse wheel keeps scrolling the log. Values longer than a page keep a Load more control under Telemetry and raw events. Buttons at the bottom right scroll to the first and the newest entry.
 
 ## Requirements
 
@@ -94,6 +96,8 @@ Results contain metadata only: identifiers, short titles, counts, model names, a
 | `Home`                        | Scroll to the first entry                                                                                                  |
 | `End`                         | Jump to the newest entry and follow                                                                                        |
 | `?`                           | Show all shortcuts                                                                                                         |
+
+Letter and symbol shortcuts act only while focus is outside a text field. The shortcut list (`?` or the keyboard button in the header) can turn them off; `Escape`, `Home`, `End`, and the arrow keys keep working.
 
 ## Where Sessions Come From
 
@@ -160,10 +164,11 @@ The log keeps only some tool names and no tool definitions, so those sections ar
 
 ## Refresh and Resource Use
 
-* The canvas indexes each session once and then reads only bytes appended since the last refresh. An unchanged refresh reads no file content.
+* The canvas indexes each session once and then reads only bytes appended since the last refresh. An unchanged refresh reads no file content. A log that is replaced, shortened, or changed without growing is indexed again from the start.
 * The index keeps short summaries and file offsets, not message text. Full content is read on demand when you expand an entry, in pages for very long fields.
-* At most three session indexes stay in memory. Hook events are counted per turn rather than listed, and model debug events are counted only.
-* The page polls about every 2 seconds for the open session and every 15 seconds for the session list, and only while it is visible. It keeps at most 400 entries rendered and loads earlier entries on request.
+* At most three session indexes stay in memory. Hook events are counted per turn rather than listed, and model debug events are counted only. A rebuilt index starts a new epoch, so the page reloads instead of reusing content cached from the old one.
+* The page polls about every 2 seconds for the open session and every 15 seconds for the session list, and only while it is visible and not paused. A burst of more than 200 new entries arrives in follow-up polls until the log catches up. Each poll also reports whether the session is still active, so Live clears when the host exits. It keeps at most 400 entries rendered and loads earlier entries on request.
+* A selected session with no events yet loads on its own once it writes them; the page retries with backoff from 2 to 30 seconds.
 * The Context view loads its lists only while it is shown, reloads them when the inventory changes or every 30 seconds, and otherwise refreshes counts at most every 5 seconds while the log grows.
 
 ## Security and Privacy
