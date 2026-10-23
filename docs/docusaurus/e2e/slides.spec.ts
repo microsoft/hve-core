@@ -120,7 +120,7 @@ test('deck keeps document semantics, scoped shortcuts and dialog focus', async (
   await expect(page.getByRole('main', { name: 'Presentation' })).toHaveAttribute('aria-roledescription', 'presentation');
   await expect(page.locator('section.present')).toHaveAttribute('role', 'group');
   await expect(page.locator('section.present')).toHaveAttribute('aria-roledescription', 'slide');
-  await expect(page.locator('section.present')).toHaveAttribute('aria-label', 'HVE Core updates, 1 of 26');
+  await expect(page.locator('section.present')).toHaveAttribute('aria-label', 'HVE Core updates, 1 of 28');
   await expect(page.locator('section.present')).toHaveAttribute('aria-current', 'page');
   await page.keyboard.press('s');
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -136,9 +136,9 @@ test('deck keeps document semantics, scoped shortcuts and dialog focus', async (
   await expect(page.locator('#opening')).toHaveAttribute('inert', '');
   await expect(page.locator('#opening')).toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('#opening')).not.toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('section.present')).toHaveAttribute('aria-label', 'Changes since April, 2 of 26');
+  await expect(page.locator('section.present')).toHaveAttribute('aria-label', 'Changes since April, 2 of 28');
   await expect(page.getByRole('heading', { name: 'HVE Core updates', exact: true })).toHaveCount(0);
-  await expect(page.locator('#announcement')).toHaveText('Slide 2 of 26. Changes since April');
+  await expect(page.locator('#announcement')).toHaveText('Slide 2 of 28. Changes since April');
   await expect(page.locator('#slide-count')).toHaveAttribute('aria-live', 'off');
   await page.getByRole('button', { name: 'Slides', exact: true }).press('Enter');
   await page.getByRole('button', { name: /Try a skill on your next task/ }).press('Enter');
@@ -284,7 +284,7 @@ test('every slide and walkthrough stays usable at 200 percent browser zoom', asy
     await expectFocusRingVisible(page, nextSlide);
     await expectFullyVisible(page, nextSlide);
     await nextSlide.press('Enter');
-    await expect(page.locator('#announcement')).toHaveText(/Slide 2 of 26/);
+    await expect(page.locator('#announcement')).toHaveText(/Slide 2 of 28/);
 
     // The slide index dialog is a distinct zoomed state, not an inference.
     const overview = page.getByRole('button', { name: 'Slides', exact: true });
