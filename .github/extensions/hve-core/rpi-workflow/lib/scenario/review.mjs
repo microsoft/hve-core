@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { checklistFor } from '../checklists.mjs';
+
 // Review and follow-up content for the sample scenario. `minutes` values are offsets before now.
 
 export const review = {
@@ -101,15 +103,4 @@ export const sections = {
     },
 };
 
-export const checklists = {
-    review: [
-        { id: 'V1', label: 'Each finding has a fair severity', checked: false },
-        { id: 'V2', label: 'The routes make sense', checked: false },
-        { id: 'V3', label: 'Nothing important is missing', checked: false },
-        { id: 'V4', label: 'Ready for follow-up', checked: false },
-    ],
-    followup: [
-        { id: 'U1', label: 'The selected follow-up is the right next step', checked: false },
-        { id: 'U2', label: 'The optional items can wait', checked: false },
-    ],
-};
+export const checklists = { review: checklistFor('review'), followup: checklistFor('followup') };

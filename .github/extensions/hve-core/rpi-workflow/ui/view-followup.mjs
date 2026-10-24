@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, h, icon } from './dom.mjs';
+import { badge, button, h, icon, known } from './dom.mjs';
 import { marginNote, md, row, rowActions, sectionBody } from './components.mjs';
 import { notesFor } from './view-research.mjs';
 
@@ -25,13 +25,18 @@ export function outline(ctx) {
 
 function lineage(ctx) {
     const items = ctx.data.session.followUps.lineage;
+    // Only a canvas reading real tracking files can show another task of the session.
+    const switchable = ctx.data.session.source?.kind === 'rpi';
     return h('ol', { class: 'lineage', 'aria-label': 'Loop lineage, parent first' }, items.map((item, index) => h('li', { class: ['lineage-step', item.relation === 'this' ? 'is-this' : null] },
         index > 0 ? icon('arrow-right', { className: 'lineage-arrow' }) : null,
         h('span', { class: 'lineage-card' },
             h('span', { class: 'meta', text: item.relation === 'this' ? 'This task' : item.relation === 'child' ? 'Child loop' : 'Parent task' }),
             h('strong', { text: item.title }),
             h('code', { class: 'lineage-id', text: item.id }),
-            badge(LINEAGE[item.status] ?? { icon: 'info', label: item.status, tone: 'muted' })))));
+            badge(LINEAGE[item.status] ?? (item.status ? { icon: 'info', label: item.status, tone: 'muted' } : null)),
+            switchable && item.relation !== 'this'
+                ? button('Show this task', { iconName: 'arrow-right', attrs: { 'aria-label': `Show this task: ${item.title}`, 'data-key': `show-task-${item.id}` }, onClick: () => ctx.act.showTask(item.id) })
+                : null))));
 }
 
 export function renderView(ctx) {
@@ -49,9 +54,9 @@ export function renderView(ctx) {
             h('ol', { class: 'followup-list' }, followUps.items.map((item) => h('li', { class: ['followup', item.required ? 'is-required' : null], dataset: { item: item.id }, tabindex: '-1' },
                 h('span', { class: 'rank', 'aria-hidden': 'true', text: String(item.rank) }),
                 h('div', { class: 'followup-body' },
-                    h('p', { class: 'followup-head' }, h('strong', { text: item.title }), badge(item.required ? { icon: 'flag', label: 'Required', tone: 'attention' } : { icon: 'info', label: 'Optional', tone: 'muted' }), badge(STATUS[item.status])),
-                    h('p', { text: item.rationale }),
-                    h('div', { class: 'meta followup-evidence' }, h('span', { class: 'followup-evidence-label', text: 'Evidence' }), md(ctx, item.evidence)),
+                    h('p', { class: 'followup-head' }, h('strong', { text: item.title }), badge(item.required ? { icon: 'flag', label: 'Required', tone: 'attention' } : { icon: 'info', label: 'Optional', tone: 'muted' }), badge(known(STATUS, item.status))),
+                    item.rationale ? h('p', { text: item.rationale }) : null,
+                    item.evidence ? h('div', { class: 'meta followup-evidence' }, h('span', { class: 'followup-evidence-label', text: 'Evidence' }), md(ctx, item.evidence)) : null,
                     item.status === 'proposed' ? h('div', { class: 'btn-row' },
                         button('Select as next loop', { iconName: 'check', onClick: () => ctx.act.requestTask(item.id, `Select ${item.id} (${item.title}) as the next child loop.`) }),
                         button('Skip', { iconName: 'dash-circle', onClick: () => ctx.act.requestTask(item.id, `Skip ${item.id} (${item.title}).`) })) : null))))],

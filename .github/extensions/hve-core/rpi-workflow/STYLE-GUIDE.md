@@ -129,6 +129,12 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 ```
 
 * Regions: header (48px), navigator (264px, `--rw-nav-w`), document (fluid), steering panel (336px, `--rw-steer-w`). The navigator and steering panel use `--rw-bg-subtle`.
+* Source label: the line under the task title says where the content comes from.
+  A real session shows a muted "RPI session" badge with the file icon, the task ID in monospace, and the repository and branch.
+  A child loop then adds "Child of" and its parent's title as a link button that shows the parent.
+  The sample shows its "Sample session" badge instead.
+  When space runs out, the repository and branch shorten first, then the task ID, and the parent link keeps at least 14 characters.
+  Each shortened part keeps its full text in a tooltip, and the header height never changes.
 * The steering panel docks at 1360px canvas width and wider; the navigator docks at 1024px and wider. Below those widths each opens as a modal drawer from its edge over a scrim, with the rest of the page inert.
 * Document rows show their margin column (272px, `--rw-margin-w`) when the document column is at least 800px wide (a container query on the document, not the window), so a 1440px canvas with both panels docked keeps its margins. Narrower, the margin's annotations follow the row text in reading order.
 * Only the navigator, the document, and the steering panel scroll; the page itself never scrolls. The sticky header and context bar reserve scroll padding so a focused element is never hidden beneath them.
@@ -151,6 +157,7 @@ Every document is a sequence of rows. A row is one section or item (a finding, t
 * Evidence chips (`C5`, `W2`) are buttons. Activating one expands an evidence detail directly below the chip row with the claim, source, confidence, and retrieval date; activating it again collapses it.
 * Trace strip: a labeled list ("Trace") of linked IDs joined by chevrons, such as `Q2` to `F3` to `D2` to `P02-T03` to a change to `RV-003`. Each item moves to its row in its phase. The strip is text first, so it reads correctly to assistive technology.
 * Trace sources: strips derive from the session's reference fields, so recorded work joins them. The fields are question findings, decision anchors, task, change, and discovery links, and review finding relations. A strip walks back to the earliest ancestor, then forward along the child with the longest path onward.
+* Record rows: for a real session, each phase ends with a record row ("Plan record", "Changes record", "Review record") that lists the file sections no other row shows. The research record adds them after the evidence log. Each section is a collapsed disclosure whose summary is an `h4` with the file's heading, built only when opened and rendered as written.
 * Section editing: rows that hold a document section offer Edit section. It replaces the row text with a Write and Preview pair, a Markdown text area, Save, and Cancel, plus a line naming the base revision. A saved edit shows "Edited by you" and a Queued chip until the agent takes it, and the agent receives the saved Markdown.
 * Edit conflicts: saving with a stale revision shows a conflict notice in place ("The agent changed this section while you were editing") with Compare, Keep my version, and Use the agent's version. Focus moves to the notice.
 * Unsaved drafts: Cancel, or `Escape` inside the editor, closes an unchanged editor at once. With changes, the Save row becomes an in-place question ("Discard your unsaved changes?") with Keep editing as the primary action and Discard changes. Starting another edit while a draft has changes keeps that draft, returns focus to it, and announces why.
@@ -163,7 +170,15 @@ Decision cards are the heart of the canvas. Each card states what is being decid
 * Answered: a "You" voice block (person icon, user hue label) quotes the chosen option and note, with the lifecycle chip and Edit answer while the answer is still queued.
 * Interpreted: an "Agent understood" voice block (sparkle icon, agent hue label) states the interpretation and its effect, with Looks right and Not what I meant. Not what I meant opens a correction field prefilled with the original note, so nothing is retyped.
 * Resolved: the card collapses to one line ("Resolved: Keep both photos · Changes P02-T03") with a How this was decided disclosure for its history.
-* Agent decided: an "Agent decided" voice block with the rationale and evidence, plus Override, which opens the options in place. An override is feedback like any other, and dismissing it while queued restores the agent's choice. Settled decisions have no Override. In Review, the agent's decision on a finding offers Question this decision, which anchors a comment to that finding.
+* Card header: the decision icon, the ID, and the status chip share the first line, and the title takes the line below, so a long title never squeezes between them.
+* Decisions rows: a real session's Research and Plan list the decisions their files record in a Decisions row, after the recommendation and before the requirements. The cards sit in a grid of columns at least 300px wide, labeled with the file's own IDs (`D1`, not `plan.D1`). An ID chip resolves to the viewed phase's decision first, so `D1` in the Plan view is the plan's D1. The row's count chip becomes "N needs you" in the attention hue while any decision waits on the person.
+* Answers in your own words: a decision that lists no options asks for "Your answer" in a text area instead of radio cards. An agent decision with no alternatives opens Override as "What should the agent do instead?". In both, the submit button turns on once the text is not blank. The person's words then appear in the "You" or "Your override" voice, and in the resolved line when no option was chosen.
+* Agent decided: an "Agent decided" voice block with the rationale and evidence, plus Override, which opens the options in place.
+  The voice names the chosen option only when it differs from the title.
+  While an override waits, the voice keeps the agent's original choice above the person's override.
+  An override is feedback like any other, and dismissing it while queued restores the agent's choice.
+  Settled decisions have no Override.
+  In Review, the agent's decision on a finding offers Question this decision, which anchors a comment to that finding.
 * Feedback items list their kind icon, target, an excerpt, the lifecycle chip, and the time. Actions follow state: Dismiss while a draft or queued; Looks right or Not what I meant once interpreted. Answers and overrides are edited from their decision card (Edit answer, Edit override) while queued, and Deliver acts on the whole queue from the delivery controls. While a delivery is under way, its items show Sending and offer no actions.
 * Delivery modes: Queue for the agent (default: the agent collects feedback at its next checkpoint), Attach to my next message (adds a pill to the chat composer; you decide when to send), and Send now (starts an agent turn when it is idle, otherwise waits behind the current one). Attach and Send now always show the exact text first and say "Nothing is sent until you choose Deliver."
 * Delivery integrity: Deliver sends only the previewed text. If the queue changed since the preview, it shows the new text, announces the change, and waits for another Deliver.
@@ -174,7 +189,7 @@ Decision cards are the heart of the canvas. Each card states what is being decid
 The panel is the person's control center. Its sections always appear in this order, so help and actions are found in the same place across phases:
 
 1. Needs your input: every decision awaiting the person, across phases, each a link to its card that names its phase, then a "Check how the agent read" link for each read-back waiting on the person.
-2. Decided by the agent: agent-owned decisions still open to override, each a link to its card.
+2. Decided by the agent: agent-owned decisions still open to override, each a link to its card. Decisions listed in a phase's Decisions row collapse to one link per phase, such as "10 recorded decisions" with the phase name.
 
 A decision whose anchor has no row in a started phase, or that has no anchor, appears in its section as a full decision card instead of a link, so it can be answered or overridden in place.
 3. Your feedback: items grouped by lifecycle state, the delivery mode selector, the exact-text preview, and Deliver.
@@ -188,7 +203,8 @@ A decision whose anchor has no row in a started phase, or that has no anchor, ap
 * Implement: a Now banner (current task, the agent's latest activity, progress), a board with Up next, In progress, Paused for you, Done, and Blocked columns, and a detail region for the selected card. Board cards move only through menu actions, never by dragging.
   * Below the board: changes grouped under a heading for each task (ID and title) in plan order, with files and validation and no repeated task chip; discoveries grouped under a heading for each kind (plan change, follow-up, implementation note, local judgment) with the kind's icon and word, omitting empty kinds; plan updates with before and after text; decisions that paused work; business alignment entries; blockers; and the validation record. Each group lists newest first.
 * Review: a summary band (execution, outcome, counts by severity), findings rows with expected and observed behavior side by side, resolution condition, and route; decision cards in the margin; the decision history as a timeline; and validation evidence.
-* Follow-up: ranked follow-ups with rationale, evidence, Select, and Skip, and the loop lineage from parent to child tasks.
+* Follow-up: ranked follow-ups with rationale, evidence, Select, and Skip, and the loop lineage from parent to child tasks. For a real session, each other task in the lineage offers Show this task. Its accessible name includes the task title, such as "Show this task: Offline trail maps".
+* Real sessions: the context bar adds Open in editor beside Copy for the phase's file, and "Updated" is when that file last changed. Changes render their behavior and validation text as Markdown, and changes recorded without a task group under "Not linked to a plan task".
 
 Empty states teach: they say what will appear, when, and who produces it ("The plan appears here when Research is ready").
 
@@ -214,6 +230,8 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 | Saving    | The save button shows busy text ("Saving") and is disabled until the server answers      |
 | Conflict  | In-place notice with Compare, Keep my version, and Use the agent's version               |
 | Delivered | The feedback item moves to Sent; a polite announcement names the count and mode          |
+| Warnings  | Collapsed attention notice above the phase: "N problems reading this task's files"       |
+| Switching | "Showing" and the task and phase are announced; focus moves to the title when you switch |
 
 ## Motion
 
@@ -247,14 +265,14 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 ## Accessibility
 
 * Conformance target: WCAG 2.2 AA in Light, Dark, and More contrast using the canvas palette alone, and usable in forced colors.
-* Landmarks: the header is a banner, the navigator a navigation region, the document the main region, and the steering panel a complementary region. Headings descend in order: the task title is the only `h1`; the phase title, outline, and Steer are `h2`; document rows and steering sections are `h3`; cards, board columns, and Markdown headings inside rows are `h4` and below. Scrollable regions and tables have names that differ from their row's name.
+* Landmarks: the header is a banner, the navigator a navigation region, the document the main region, and the steering panel a complementary region. Headings descend in order: the task title is the only `h1`; the phase title, outline, and Steer are `h2`; document rows and steering sections are `h3`; cards, board columns, record section summaries, and Markdown headings inside rows are `h4` and below. Scrollable regions and tables have names that differ from their row's name.
 * Focus: a 2px `--rw-accent` outline on every focusable element, never removed without a replacement. The offset is 2px by default, 0 on text fields, inset 2px on rail tabs and the scrolling document where an outer ring would be clipped, and 6px around document rows. Sticky regions reserve scroll padding so focus is never obscured.
 * Focus survives updates: after a re-render or an action, focus returns to the same control, else to its item or row, else to its steering section heading, never to the page body.
 * Targets are at least 24 by 24 CSS pixels; the default control size is 28px, and header icon buttons are 32px.
 * A polite live region announces material changes at most once per update: a new item needs you, an interpretation arrived, the agent moved to another phase, a save conflicted, a delivery finished, or the stream reconnected. Initial load stays silent.
 * Color is never the only cue: every status has an icon and a word, diff lines have plus and minus markers, and the trace strip uses words and chevrons.
 * Nothing requires dragging: board moves, task moves, and panel sizes have buttons or menus.
-* Corrections, edits, and overrides prefill what the person already entered, so nothing is retyped.
+* Corrections, edits, and overrides prefill what the person already entered, so nothing is retyped. Each task of a real session keeps its own drafts, open editor, and scroll position in the page, so moving to a parent or child and back loses nothing.
 * Diagrams are figures with a caption and a text alternative that lists nodes and relationships, plus Show as text.
 * Tabs follow the ARIA tabs pattern, and radio groups and menus follow their ARIA patterns. The shortcut list and the file preview are modal dialogs that return focus to their opener. Drawers are the navigation and complementary regions shown over a scrim: while one is open the rest of the page is inert, and closing it with `Escape` or its close button returns focus to its toggle.
 
@@ -265,7 +283,7 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 * Address the person as "you" and refer to the agent as "the agent".
 * IDs appear exactly as the artifacts write them, in monospace: `Q2`, `C5`, `W1`, `D3`, `P02-T01`, `FR-003`, `PC-002`, `RV-001`, `RD-004`.
 * Times show local `HH:MM` with the full ISO time in a `title`; relative times ("3 min ago") update with the data, not on a timer.
-* Never invent text. A missing value renders as "Not recorded".
+* Never invent text. A value the session never recorded is left out with its label: times, line counts, owners, clearing text, review execution and depth, critique verdict and setting, confidence, and the next action. A row whose section was never recorded is left out, and an unrecognized status shows its recorded word in a neutral chip.
 * All session text is untrusted. It renders through DOM text APIs and a restricted Markdown subset: headings, paragraphs, lists and task lists, emphasis, inline and fenced code, tables, block quotes (nested up to six levels), rules, and links limited to `http` and `https`, which open in a new browsing context with `rel="noopener noreferrer"`.
 * Every link the canvas renders, including evidence sources, passes the same check; any other address renders as text with the address in its tooltip. Open in editor is the one exception: a `vscode://file/` link built from an absolute POSIX or Windows path, shown only when the path is absolute.
 
@@ -305,6 +323,12 @@ Additions: phase icons (research magnifier, plan list, implement brackets, revie
 | 2026-10-23 | Change cards inside a task group omit the task chip and keep the time on the title line                  | The group heading already names the task; the repeated chip pushed the time onto a line of its own     |
 | 2026-10-23 | Trace strips derive from reference fields and follow the longest path onward                             | Static strips missed work the agent recorded during the session                                        |
 | 2026-10-23 | Links outside `http` and `https` render as text everywhere, with editor links built from absolute paths  | Evidence links bypassed the scheme check, and editor links were malformed on Windows                   |
+| 2026-10-23 | Real sessions get a source label, a parent link, Open in editor, warnings, and record rows               | The canvas now reads RPI files, so it says which task and files it shows and keeps unmodeled sections  |
+| 2026-10-23 | Decisions rows hold a phase's recorded decisions; the steering panel links one row per phase             | A real session records many decisions, which buried the rest of the panel as separate cards or links   |
+| 2026-10-23 | Answers and overrides can be written in the person's words when there are no options or alternatives     | Decisions read from files often list no options, so they could not be answered or overridden           |
+| 2026-10-23 | Decision titles take their own line; a pending override keeps the agent's original choice in view        | Long titles squeezed into narrow columns, and the card showed the override as the agent's choice       |
+| 2026-10-23 | Values never recorded are left out instead of showing "Not recorded"                                     | Files omit times, line counts, and depths, and placeholders crowded the views                          |
+| 2026-10-23 | Show this task switches tasks and keeps each task's drafts, editor, and scroll position                  | A child loop and its parent are one session, and moving between them should not lose work              |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

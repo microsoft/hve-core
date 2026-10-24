@@ -71,6 +71,12 @@ const STATUS_FOR = Object.freeze({
     storage_busy: 503,
     delivery_unavailable: 503,
     delivery_failed: 502,
+    source_unavailable: 404,
+    source_not_found: 404,
+    source_invalid: 400,
+    source_outside: 403,
+    source_too_large: 413,
+    source_managed: 409,
 });
 
 /** Error that maps to a JSON error response. */
@@ -134,6 +140,8 @@ export function clientInfoFrom(body) {
  *   deliver?: (request: { mode: 'attach' | 'send', prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
+ *   getSource?: () => { follower?: { start: () => void, stop: () => void } } | undefined,
+ *   switchTask?: (taskId: string) => Promise<{ sessionId: string }>,
  * }} deps
  */
 export function createCanvasServer(deps) {
@@ -317,6 +325,15 @@ export function createCanvasServer(deps) {
             }
         },
 
+        'POST /api/task': async (body) => {
+            if (!deps.switchTask) {
+                throw new HttpError(404, 'not_found', 'This canvas cannot switch tasks.');
+            }
+            const taskId = typeof body?.taskId === 'string' ? body.taskId : '';
+            const result = await deps.switchTask(taskId);
+            return { sessionId: result.sessionId };
+        },
+
         'POST /api/client-info': async (body) => {
             clientInfo = clientInfoFrom(body);
             return { ok: true };
@@ -334,6 +351,7 @@ export function createCanvasServer(deps) {
         clients.add(res);
         if (!unwatch) {
             unwatch = store.watch(getSessionId());
+            deps.getSource?.()?.follower?.start();
         }
         if (!heartbeat) {
             heartbeat = setInterval(() => {
@@ -357,6 +375,7 @@ export function createCanvasServer(deps) {
             if (clients.size === 0) {
                 unwatch?.();
                 unwatch = null;
+                deps.getSource?.()?.follower?.stop();
                 clearInterval(heartbeat);
                 heartbeat = null;
             }
@@ -465,6 +484,19 @@ export function createCanvasServer(deps) {
             broadcast('reload', { at: now() });
         },
 
+        /**
+         * Follows a new session after the instance switched documents: rebinds the store
+         * watcher and the source follower while a page is connected, then tells the page.
+         */
+        rebind() {
+            if (clients.size > 0) {
+                unwatch?.();
+                unwatch = store.watch(getSessionId());
+                deps.getSource?.()?.follower?.start();
+            }
+            broadcast('reload', { at: now() });
+        },
+
         start() {
             if (server?.listening) {
                 return Promise.resolve(`http://127.0.0.1:${port}/`);
@@ -520,6 +552,7 @@ export function createCanvasServer(deps) {
             clients.clear();
             unwatch?.();
             unwatch = null;
+            deps.getSource?.()?.follower?.stop();
             clearInterval(heartbeat);
             heartbeat = null;
             store.events.off('change', onChange);

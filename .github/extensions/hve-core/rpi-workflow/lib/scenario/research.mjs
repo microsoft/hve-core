@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { checklistFor } from '../checklists.mjs';
+
 // Research content for the sample scenario. Repository paths are fictional; external
 // claims cite public pages verified when the scenario was written.
 
@@ -143,11 +145,4 @@ export const sections = {
     'finding-f7': { title: 'Inspectors may want a manual Sync now on metered connections', markdown: 'A few support tickets ask for control over when photos upload on metered connections. This is a hypothesis from a small sample, not a requirement yet.' },
 };
 
-export const checklist = [
-    { id: 'R1', label: 'I understand the bottom line', checked: true },
-    { id: 'R2', label: 'The evidence behind each finding is convincing', checked: true },
-    { id: 'R3', label: 'The alternatives cover what I would consider', checked: false },
-    { id: 'R4', label: 'The decisions match my intent', checked: false },
-    { id: 'R5', label: 'The open risks are acceptable', checked: false },
-    { id: 'R6', label: 'Research is ready for planning', checked: false },
-];
+export const checklist = checklistFor('research', ['R1', 'R2']);

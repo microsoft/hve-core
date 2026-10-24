@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, chip, h, icon, idChip, SEVERITY, TASK_STATUS } from './dom.mjs';
-import { decisionCard, marginNote, row, rowActions, sectionBody, table } from './components.mjs';
+import { badge, button, chip, h, icon, idChip, known, plural, SEVERITY, TASK_STATUS } from './dom.mjs';
+import { decisionCard, decisionsRow, marginNote, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
 import { renderDiagram } from './diagram.mjs';
-import { anchoredDecisions, notesFor } from './view-research.mjs';
+import { anchoredDecisions, decisionsOutline, notesFor } from './view-research.mjs';
 
 /** Plan view: summary, change map, phases with expandable tasks, requirements, and critique. */
 
@@ -19,11 +19,13 @@ export function outline(ctx) {
     const plan = ctx.data.session.plan;
     return [
         { id: 'plan-summary', label: 'Summary' },
-        { id: 'change-map', label: 'Change map' },
+        plan.diagram ? { id: 'change-map', label: 'Change map' } : null,
         ...plan.phases.map((phase) => ({ id: phase.id, label: phase.title, prefix: phase.id, count: `${phase.tasks.filter((t) => t.status === 'done').length}/${phase.tasks.length}` })),
+        ...decisionsOutline(ctx, 'plan'),
         { id: 'requirements', label: 'Requirements', count: plan.requirements.length },
         { id: 'critique', label: 'Critique', count: plan.critique?.findings.length ?? 0 },
-    ];
+        ctx.data.session.records?.plan?.length ? { id: 'plan-record', label: 'Plan record', count: ctx.data.session.records.plan.length } : null,
+    ].filter(Boolean);
 }
 
 function taskBlock(ctx, task, index, siblings) {
@@ -39,8 +41,8 @@ function taskBlock(ctx, task, index, siblings) {
             badge(TASK_STATUS[task.status]),
             decision && decision.status === 'needs-input' ? h('button', { type: 'button', class: 'badge tone-attention is-link', onclick: () => ctx.act.navigate(decision.id) }, icon('hand'), `Waiting on ${decision.id}`) : null),
         h('div', { class: 'task-panel', id: panelId, hidden: !expanded },
-            h('p', { class: 'task-goal' }, h('strong', { text: 'Goal: ' }), task.goals),
-            h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Requirements' }), task.requirements.map((id) => idChip(id, ctx.act.navigate))),
+            task.goals ? h('p', { class: 'task-goal' }, h('strong', { text: 'Goal: ' }), task.goals) : null,
+            task.requirements.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Requirements' }), task.requirements.map((id) => idChip(id, ctx.act.navigate))) : null,
             h('div', { class: 'task-details' }, h('p', { class: 'meta', text: 'Details' }), sectionBody(ctx, task.sectionId)),
             task.guidance?.length ? h('div', { class: 'guidance' }, h('p', { class: 'meta' }, icon('pencil'), 'Guidance added during implementation'), h('ul', null, task.guidance.map((line) => h('li', { text: line })))) : null,
             h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Depends on' }), task.dependencies.length ? task.dependencies.map((id) => idChip(id, ctx.act.navigate)) : h('span', { class: 'meta', text: 'nothing' })),
@@ -61,19 +63,19 @@ export function renderView(ctx) {
         badges: [readiness ? badge(readiness.status === 'ready' ? { icon: 'check-circle', label: 'Ready to implement', tone: 'success' } : { icon: 'hand', label: 'Not ready', tone: 'attention' }) : null],
         actions: rowActions(ctx, { sectionId: 'plan-summary', rowId: 'plan-summary' }),
         body: [sectionBody(ctx, 'plan-summary'), readiness ? h('p', { class: 'readiness-line' }, icon(readiness.status === 'ready' ? 'check' : 'hand'), readiness.text) : null,
-            h('div', { class: 'callout' }, icon('bulb', { className: 'callout-icon' }), sectionBody(ctx, 'plan-unknowns'))],
+            ctx.data.session.sections['plan-unknowns'] ? h('div', { class: 'callout' }, icon('bulb', { className: 'callout-icon' }), sectionBody(ctx, 'plan-unknowns')) : null],
         margin: [critique ? h('article', { class: 'card' },
-            h('header', { class: 'card-head' }, icon('shield-check', { className: 'card-icon' }), h('h4', { class: 'card-title', text: 'Plan critique' }), badge(critique.verdict === 'Pass' ? { icon: 'check', label: 'Pass', tone: 'success' } : { icon: 'pencil', label: critique.verdict, tone: 'attention' })),
-            h('p', { text: `${critique.findings.length} findings, ${critique.findings.filter((f) => f.disposition === 'resolved').length} resolved in the plan. Setting: ${critique.setting}.` }),
+            h('header', { class: 'card-head' }, icon('shield-check', { className: 'card-icon' }), h('h4', { class: 'card-title', text: 'Plan critique' }), verdictBadge(critique.verdict)),
+            h('p', { text: `${plural(critique.findings.length, 'finding')}, ${critique.findings.filter((f) => f.disposition === 'resolved').length} resolved in the plan.${critique.setting ? ` Setting: ${critique.setting}.` : ''}` }),
             h('div', { class: 'btn-row' }, button('Review findings', { iconName: 'arrow-down', onClick: () => ctx.act.navigate('critique') }))) : null],
     }));
 
     const view = ctx.ui.diagramView;
     const phaseIds = plan.phases.map((phase) => phase.id);
     const highlight = view === 'after' && ctx.ui.diagramPhase ? plan.diagram?.phaseNodes?.[ctx.ui.diagramPhase] ?? [] : [];
-    rows.push(row(ctx, {
+    if (plan.diagram) rows.push(row(ctx, {
         id: 'change-map', idLabel: null, title: 'Change map', level: 2,
-        body: plan.diagram ? [
+        body: [
             h('div', { class: 'map-controls' },
                 h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'visually-hidden', text: 'Diagram' }),
                     ['before', 'after'].map((value) => h('label', { for: `map-${value}` }, h('input', { type: 'radio', name: 'map-view', id: `map-${value}`, value, checked: view === value, onchange: () => ctx.act.setDiagram({ view: value }) }), h('span', { text: value === 'before' ? 'Before' : 'After' })))),
@@ -81,7 +83,7 @@ export function renderView(ctx) {
                     ['none', ...phaseIds].map((value) => h('label', { for: `map-phase-${value}` }, h('input', { type: 'radio', name: 'map-phase', id: `map-phase-${value}`, value, checked: (ctx.ui.diagramPhase ?? 'none') === value, onchange: () => ctx.act.setDiagram({ phase: value === 'none' ? null : value }) }), h('span', { text: value === 'none' ? 'None' : value })))) : null),
             renderDiagram(view === 'before' ? plan.diagram.before : plan.diagram.after, { caption: view === 'before' ? 'Before: how the app saves today' : `After: the intended result${highlight.length ? `, ${ctx.ui.diagramPhase} highlighted` : ''}`, highlight, idPrefix: `map-${view}`, textOpen: ctx.ui.openDetails.has('map-text'), onTextToggle: (open) => ctx.act.setDetailsOpen('map-text', open) }),
             h('p', { class: 'meta legend' }, h('span', { class: 'legend-swatch is-new' }), ' Dashed border: added by this plan. ', h('span', { class: 'legend-swatch is-highlight' }), ' Filled: the highlighted phase.'),
-        ] : [h('p', { class: 'empty', text: 'Not recorded' })],
+        ],
     }));
 
     for (const phase of plan.phases) {
@@ -91,10 +93,13 @@ export function renderView(ctx) {
             id: phase.id, title: phase.title,
             badges: [chip(`${done} of ${phase.tasks.length} done`, done === phase.tasks.length ? 'success' : 'muted')],
             actions: rowActions(ctx, { rowId: phase.id }),
-            body: [h('p', { class: 'phase-goal', text: phase.goals }), h('ol', { class: 'task-list' }, phase.tasks.map((task, index) => taskBlock(ctx, task, index, phase.tasks)))],
+            body: [phase.goals ? h('p', { class: 'phase-goal', text: phase.goals }) : null, h('ol', { class: 'task-list' }, phase.tasks.map((task, index) => taskBlock(ctx, task, index, phase.tasks)))],
             margin: [...anchoredDecisions(ctx, [phase.id, ...taskIds]).map((decision) => decisionCard(ctx, decision)), ...notesFor(ctx, [phase.id, ...taskIds]).map((item) => marginNote(ctx, item))],
         }));
     }
+
+    const decisions = decisionsRow(ctx, 'plan');
+    if (decisions) rows.push(decisions);
 
     const coverage = new Map(plan.requirements.map((req) => [req.id, []]));
     for (const phase of plan.phases) {
@@ -112,10 +117,18 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'critique', idLabel: null, title: 'Critique', level: 2,
-        badges: critique ? [badge({ icon: 'pencil', label: `Verdict: ${critique.verdict}`, tone: critique.verdict === 'Pass' ? 'success' : 'attention' })] : [],
+        badges: critique?.verdict ? [badge({ icon: critique.verdict === 'Pass' ? 'check' : 'pencil', label: `Verdict: ${critique.verdict}`, tone: critique.verdict === 'Pass' ? 'success' : 'attention' })] : [],
         body: critique ? [h('ul', { class: 'finding-list' }, critique.findings.map((finding) => h('li', { class: 'mini-finding', dataset: { item: finding.id }, tabindex: '-1' },
-            h('p', { class: 'mini-head' }, badge(SEVERITY[finding.severity]), h('span', { class: 'id-chip', text: finding.id }), h('strong', { text: finding.title }), badge(DISPOSITION[finding.disposition])),
-            h('p', { class: 'meta' }, finding.response, ' ', finding.related.map((id) => idChip(id, ctx.act.navigate))))))] : [h('p', { class: 'empty', text: 'The critique has not run yet.' })],
+            h('p', { class: 'mini-head' }, badge(known(SEVERITY, finding.severity)), h('span', { class: 'id-chip', text: finding.id }), h('strong', { text: finding.title }), badge(known(DISPOSITION, finding.disposition))),
+            h('p', { class: 'meta' }, finding.response, ' ', finding.related.map((id) => idChip(id, ctx.act.navigate))))))] : [h('p', { class: 'empty', text: 'No critique has been recorded for this plan.' })],
     }));
+
+    const record = recordRow(ctx, 'plan', 'Plan record');
+    if (record) rows.push(record);
     return rows;
+}
+
+function verdictBadge(verdict) {
+    if (!verdict) return null;
+    return badge(verdict === 'Pass' ? { icon: 'check', label: 'Pass', tone: 'success' } : { icon: 'pencil', label: verdict, tone: 'attention' });
 }

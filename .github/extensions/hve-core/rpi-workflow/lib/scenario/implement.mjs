@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { checklistFor } from '../checklists.mjs';
+
 // Implementation content for the sample scenario. `minutes` values are offsets before now.
 
 export const activity = [
@@ -174,9 +176,4 @@ export const sections = {
     },
 };
 
-export const checklist = [
-    { id: 'I1', label: 'The current work matches the plan', checked: false },
-    { id: 'I2', label: 'Plan updates make sense', checked: false },
-    { id: 'I3', label: 'Discoveries are handled', checked: false },
-    { id: 'I4', label: 'Validation results look right', checked: false },
-];
+export const checklist = checklistFor('implement');

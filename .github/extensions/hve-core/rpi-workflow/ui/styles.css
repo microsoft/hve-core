@@ -934,9 +934,63 @@ details > summary:hover {
   white-space: nowrap;
 }
 
-.task-meta > span:first-child {
+.task-meta > * {
+  flex: none;
+}
+
+.task-meta > .task-id,
+.task-meta > .task-where,
+.task-meta > .task-parent {
+  flex: 0 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Repository and branch give way first, then the task ID; the parent link keeps a readable width. */
+.task-meta > .task-where {
+  flex-shrink: 8;
+}
+
+.task-meta > .task-id {
+  flex-shrink: 3;
+}
+
+.task-meta > .task-parent {
+  min-width: 14ch;
+}
+
+.task-id {
+  color: var(--rw-fg-muted);
+  font: 500 11.5px/18px var(--rw-mono);
+}
+
+.task-parent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.link-btn {
+  min-width: 0;
+  margin: -3px 0;
+  padding: 3px 2px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--rw-radius);
+  background: transparent;
+  color: var(--rw-accent);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-overflow: ellipsis;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration-thickness: 2px;
 }
 
 .task-meta .badge {
@@ -1804,6 +1858,21 @@ details > summary:hover {
   font: 600 13px/20px var(--rw-font);
 }
 
+/* Decision titles take their own line, so long titles never squeeze between ID and status. */
+.decision > .card-head {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+.decision > .card-head > .card-title {
+  grid-row: 2;
+  grid-column: 1 / -1;
+}
+
+.decision > .card-head > .badge {
+  justify-self: end;
+}
+
 .card-owner {
   margin-top: 2px;
 }
@@ -2596,6 +2665,56 @@ details > summary:hover {
   margin-top: 10px;
 }
 
+.record + .record {
+  margin-top: 2px;
+}
+
+.summary-heading {
+  font: inherit;
+}
+
+.record-body {
+  margin: 8px 0 12px;
+  padding-inline-start: 14px;
+  border-inline-start: 2px solid var(--rw-border-muted);
+}
+
+/* Decisions rows */
+
+.decision-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  align-items: start;
+  gap: 12px;
+  list-style: none;
+}
+
+.decision-grid > li {
+  min-width: 0;
+}
+
+.decision-notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+/* Source warnings */
+
+.source-warnings {
+  --tone: var(--rw-attention);
+  margin-top: 20px;
+}
+
+.source-warning-list {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 2px;
+  padding-inline-start: 22px;
+  font: var(--rw-t-meta);
+}
+
 /* Plan view */
 
 .phase-goal {
@@ -3102,6 +3221,29 @@ details > summary:hover {
   margin-top: 6px;
 }
 
+.change-validation {
+  max-width: 70ch;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: var(--rw-radius);
+  background: var(--rw-bg-subtle);
+}
+
+.change-validation > .meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.change-validation > .meta .icon {
+  color: var(--rw-success);
+}
+
+.change-validation .prose {
+  font: var(--rw-t-meta);
+}
+
 .discovery > p:not(.discovery-head):not(.chip-row) {
   max-width: 70ch;
   margin-top: 6px;
@@ -3387,6 +3529,11 @@ details > summary:hover {
 
 .lineage-id {
   font-size: 12px;
+}
+
+.lineage-card > .btn {
+  justify-self: start;
+  margin-top: 6px;
 }
 
 /* Dialogs and the file preview sheet */

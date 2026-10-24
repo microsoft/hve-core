@@ -19,6 +19,7 @@ import {
     upsertDecision,
 } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
+import { sourceSummary } from './sources.mjs';
 
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
 const ids = (description) => ({ type: 'array', items: { type: 'string' }, description });
@@ -37,8 +38,20 @@ export const ACTION_DEFINITIONS = Object.freeze([
         inputSchema: { type: 'object', properties: { stage: { type: 'string', enum: [...STAGES] }, replace: { type: 'boolean' } }, required: ['stage'], additionalProperties: false },
     },
     {
+        name: 'show_task',
+        description: 'Point this canvas at an RPI task read from the workspace .copilot-tracking folder, or back at the sample. task is "current" (the root task of the most recently active RPI session), a task ID from a state file, or "sample" with an optional stage. The canvas follows the task files while the page is open; your edits and the user\'s feedback stay in the canvas.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                task: str('"current", a task ID such as rpi-workflow-canvas, or "sample"'),
+                stage: { type: 'string', enum: [...STAGES], description: 'Sample stage, when task is "sample"' },
+            },
+            additionalProperties: false,
+        },
+    },
+    {
         name: 'update_session',
-        description: 'Update session-level state: the phase the agent is working in, task and session status, mode, next action, or individual phase statuses.',
+        description: 'Update session-level state: the phase the agent is working in, task and session status, mode, next action, or individual phase statuses. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -54,7 +67,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'upsert_decision',
-        description: 'Ask the user for a decision (owner user) or record a decision the agent made that the user can override (owner agent). Updates the decision when id exists. The card appears beside its anchor row when that row is a research finding (F1), plan phase or task (P02, P02-T03), implement discovery (DS-004), or review finding (RV-001) in a phase that has started; otherwise it appears as a full card in the steering panel.',
+        description: 'Ask the user for a decision (owner user) or record a decision the agent made that the user can override (owner agent). Updates the decision when id exists. The card appears beside its anchor row when that row is a research finding (F1), plan phase or task (P02, P02-T03), implement discovery (DS-004), or review finding (RV-001) in a phase that has started; otherwise it appears as a full card in the steering panel. Decisions read from RPI files cannot be edited here; new questions can be asked.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -87,12 +100,12 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'update_task',
-        description: 'Change a plan task status (todo, in-progress, paused, done, blocked), add a guidance note, or link the decision that paused it.',
+        description: 'Change a plan task status (todo, in-progress, paused, done, blocked), add a guidance note, or link the decision that paused it. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: { type: 'object', properties: { taskId: str('Task ID such as P02-T02'), status: { type: 'string', enum: ['todo', 'in-progress', 'paused', 'done', 'blocked'] }, note: str('Guidance for the task'), decisionId: { type: ['string', 'null'], description: 'Decision that paused the task, or null to clear' } }, required: ['taskId'], additionalProperties: false },
     },
     {
         name: 'record_change',
-        description: 'Record completed work for a task: what now behaves differently, the files, and validation results.',
+        description: 'Record completed work for a task: what now behaves differently, the files, and validation results. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -108,7 +121,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'record_discovery',
-        description: 'Record something learned during implementation: local judgment, an implementation note, follow-up work, or a plan change (optionally with before and after plan text and the decision it needs).',
+        description: 'Record something learned during implementation: local judgment, an implementation note, follow-up work, or a plan change (optionally with before and after plan text and the decision it needs). On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -130,7 +143,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'update_finding',
-        description: 'Create or update a review finding (RV-xxx): severity, expected and observed behavior, resolution condition, route, and decision.',
+        description: 'Create or update a review finding (RV-xxx): severity, expected and observed behavior, resolution condition, route, and decision. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -149,7 +162,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'update_section',
-        description: 'Replace the Markdown of one document section as the agent. A user editing the same section then sees a conflict notice when saving.',
+        description: 'Replace the Markdown of one document section as the agent. A user editing the same section then sees a conflict notice when saving. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
         inputSchema: { type: 'object', properties: { sectionId: str('Section ID such as research-summary or finding-f3'), markdown: str('New Markdown'), title: str('New title, optional') }, required: ['sectionId', 'markdown'], additionalProperties: false },
     },
     {
@@ -171,7 +184,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
 
 /** Groups used by validation to exercise every area of the action vocabulary. */
 export const ACTION_GROUPS = Object.freeze({
-    state: ['get_state', 'load_scenario'],
+    state: ['get_state', 'load_scenario', 'show_task'],
     session: ['update_session'],
     decisionsAndFeedback: ['upsert_decision', 'take_feedback', 'record_interpretation'],
     implementation: ['update_task', 'record_change', 'record_discovery', 'record_activity'],
@@ -209,10 +222,11 @@ export function summarize(session) {
 
 /**
  * @param {{
- *   getInstance: (instanceId: string) => { server: any, sessionId: string } | undefined,
+ *   getInstance: (instanceId: string) => { server: any, sessionId: string, source?: any } | undefined,
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   makeError: (code: string, message: string) => Error,
  *   now?: () => number,
+ *   switchSource?: (instance: any, request: { task?: string, stage?: string, replace?: boolean }, context: { workingDirectory?: string }) => Promise<{ session: any }>,
  * }} deps
  */
 export function createActionHandlers(deps) {
@@ -252,6 +266,42 @@ export function createActionHandlers(deps) {
 
     const agentUpdate = (instance, change) => store.update(instance.sessionId, change, { by: 'agent' });
 
+    /** The file an action would have to change on a canvas that follows RPI files. */
+    async function managedFile(instance, action, input) {
+        const session = await store.load(instance.sessionId);
+        const source = session?.source ?? {};
+        const artifacts = source.artifacts ?? {};
+        switch (action) {
+            case 'update_session': return source.statePath;
+            case 'update_task': return artifacts.plan;
+            case 'record_change':
+            case 'record_discovery': return artifacts.changes;
+            case 'update_finding': return artifacts.review;
+            case 'update_section': {
+                const doc = session?.sections?.[input.sectionId]?.doc;
+                return { research: artifacts.research, plan: artifacts.plan, implement: artifacts.changes, review: artifacts.review }[doc] ?? source.statePath;
+            }
+            case 'upsert_decision': {
+                const decision = input.id === undefined ? null : session?.decisions?.find((item) => item.id === input.id);
+                if (!decision || decision.origin !== 'artifact') return null;
+                return decision.phase === 'plan' ? artifacts.plan : artifacts.research;
+            }
+            default: return null;
+        }
+    }
+
+    /** Refuses document changes on a canvas that follows RPI files; the files stay the source of truth. */
+    const managed = (action, handler) => (ctx) => guard(async () => {
+        const instance = instanceOf(ctx);
+        if (instance.source?.kind === 'rpi') {
+            const file = await managedFile(instance, action, inputOf(ctx));
+            if (file !== null || action !== 'upsert_decision') {
+                throw makeError('source_managed', `This canvas follows the RPI files for ${instance.source.taskId}, so ${action} cannot change it. Update ${file ?? 'the task artifacts'} instead; the canvas refreshes when the file changes.`);
+            }
+        }
+        return handler(ctx);
+    });
+
     const mutation = (apply, shape) => (ctx) => guard(async () => {
         const instance = instanceOf(ctx);
         const input = inputOf(ctx);
@@ -267,7 +317,7 @@ export function createActionHandlers(deps) {
             if (!session) {
                 throw makeError('not_found', 'No session is loaded. Call load_scenario.');
             }
-            const base = { url: instance.server.url, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0 };
+            const base = { url: instance.server.url, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0, source: sourceSummary(instance, session) };
             return input.detail === 'full' ? { ...base, session } : { ...base, ...summarize(session) };
         }),
 
@@ -277,13 +327,40 @@ export function createActionHandlers(deps) {
             if (!STAGES.includes(input.stage)) {
                 throw makeError('invalid_input', `stage must be one of: ${STAGES.join(', ')}.`);
             }
+            if (instance.source?.kind === 'rpi' && deps.switchSource) {
+                const prepared = await deps.switchSource(instance, { stage: input.stage, replace: input.replace === true }, { workingDirectory: ctx?.session?.workingDirectory });
+                return summarize(prepared.session);
+            }
             const session = await store.create(buildScenario(input.stage, nowMs()), { replace: input.replace === true });
             instance.server.notifyReload?.();
             return summarize(session);
         }),
 
-        update_session: mutation((s, input, now) => updateSession(s, input, now), (_r, s) => summarize(s)),
-        upsert_decision: mutation((s, input, now) => upsertDecision(s, input, now), (decision, s) => ({ revision: s.revision, decision })),
+        show_task: (ctx) => guard(async () => {
+            const instance = instanceOf(ctx);
+            const input = inputOf(ctx);
+            if (!deps.switchSource) {
+                throw makeError('unavailable', 'This canvas cannot switch sources.');
+            }
+            if (input.task !== undefined && typeof input.task !== 'string') {
+                throw makeError('invalid_input', 'task must be "current", a task ID, or "sample".');
+            }
+            if (input.stage !== undefined && !STAGES.includes(input.stage)) {
+                throw makeError('invalid_input', `stage must be one of: ${STAGES.join(', ')}.`);
+            }
+            if (input.task === undefined && input.stage === undefined) {
+                throw makeError('invalid_input', 'Give task ("current", a task ID, or "sample") or a sample stage.');
+            }
+            if (input.task !== undefined && input.task !== 'sample' && input.stage !== undefined) {
+                throw makeError('invalid_input', 'stage applies only to the sample.');
+            }
+            const request = input.task === undefined || input.task === 'sample' ? { stage: input.stage } : { task: input.task };
+            const prepared = await deps.switchSource(instance, request, { workingDirectory: ctx?.session?.workingDirectory });
+            return { ...summarize(prepared.session), source: sourceSummary(instance, prepared.session) };
+        }),
+
+        update_session: managed('update_session', mutation((s, input, now) => updateSession(s, input, now), (_r, s) => summarize(s))),
+        upsert_decision: managed('upsert_decision', mutation((s, input, now) => upsertDecision(s, input, now), (decision, s) => ({ revision: s.revision, decision }))),
 
         take_feedback: (ctx) => guard(async () => {
             const instance = instanceOf(ctx);
@@ -296,15 +373,15 @@ export function createActionHandlers(deps) {
         }),
 
         record_interpretation: mutation((s, input, now) => recordInterpretation(s, input, now), (item, s) => ({ revision: s.revision, id: item.id, state: item.state })),
-        update_task: mutation((s, input, now) => updateTask(s, input, now), (task, s) => ({ revision: s.revision, task: { id: task.id, status: task.status } })),
-        record_change: mutation((s, input, now) => recordChange(s, input, now), (change, s) => ({ revision: s.revision, id: change.id })),
-        record_discovery: mutation((s, input, now) => recordDiscovery(s, input, now), (discovery, s) => ({ revision: s.revision, id: discovery.id })),
+        update_task: managed('update_task', mutation((s, input, now) => updateTask(s, input, now), (task, s) => ({ revision: s.revision, task: { id: task.id, status: task.status } }))),
+        record_change: managed('record_change', mutation((s, input, now) => recordChange(s, input, now), (change, s) => ({ revision: s.revision, id: change.id }))),
+        record_discovery: managed('record_discovery', mutation((s, input, now) => recordDiscovery(s, input, now), (discovery, s) => ({ revision: s.revision, id: discovery.id }))),
         record_activity: mutation((s, input, now) => recordActivity(s, input, now), (_line, s) => ({ revision: s.revision })),
-        update_finding: mutation((s, input, now) => updateFinding(s, input, now), (finding, s) => ({ revision: s.revision, finding: { id: finding.id, decision: finding.decision } })),
-        update_section: mutation((s, input, now) => {
+        update_finding: managed('update_finding', mutation((s, input, now) => updateFinding(s, input, now), (finding, s) => ({ revision: s.revision, finding: { id: finding.id, decision: finding.decision } }))),
+        update_section: managed('update_section', mutation((s, input, now) => {
             requireSection(s, input.sectionId);
             return agentEditSection(s, input, now);
-        }, (section, s) => ({ revision: s.revision, section: { id: section.id, revision: section.revision } })),
+        }, (section, s) => ({ revision: s.revision, section: { id: section.id, revision: section.revision } }))),
         track_research_lane: mutation((s, input, now) => trackResearchLane(s, input, now), (lane, s) => ({ revision: s.revision, lane: { id: lane.id, status: lane.status } })),
 
         focus_item: (ctx) => guard(async () => {

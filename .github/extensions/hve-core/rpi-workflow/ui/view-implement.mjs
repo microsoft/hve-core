@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
-import { decisionCard, marginNote, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
+import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
+import { decisionCard, marginNote, md, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
 
 /** Implement view: now banner, board, changes, discoveries and plan updates, alignment, and validation. */
@@ -23,6 +23,13 @@ const ALIGNMENT = {
 };
 
 const allTasks = (ctx) => ctx.data.session.plan.phases.flatMap((phase) => phase.tasks.map((task) => ({ ...task, phaseId: phase.id })));
+const TASK_ID_RE = /^P\d{2}(?:-T\d{2})?$/;
+
+/** Owner and clearing condition of a blocker, when recorded. */
+function blockerNote(blocker) {
+    const text = [blocker.owner ? `Owner: ${blocker.owner}.` : null, blocker.clear || null].filter(Boolean).join(' ');
+    return text ? [' ', h('span', { class: 'meta', text })] : null;
+}
 
 export function outline(ctx) {
     const impl = ctx.data.session.implementation;
@@ -33,7 +40,8 @@ export function outline(ctx) {
         { id: 'discoveries', label: 'Discoveries and plan updates', count: impl.discoveries.length },
         { id: 'alignment', label: 'Business alignment', count: impl.alignment.length },
         { id: 'validation', label: 'Validation and blockers', count: impl.validation.length },
-    ];
+        ctx.data.session.records?.implement?.length ? { id: 'implement-record', label: 'Changes record', count: ctx.data.session.records.implement.length } : null,
+    ].filter(Boolean);
 }
 
 function validationSummary(changes) {
@@ -97,8 +105,8 @@ export function renderView(ctx) {
         body: [
             h('progress', { class: 'progress', max: String(Math.max(progress.total, 1)), value: String(progress.done), 'aria-label': `${progress.done} of ${progress.total} tasks done` }),
             current
-                ? h('div', { class: 'now-task' }, icon('sparkle', { className: 'tone-agent-fg' }), h('span', null, 'The agent is working on ', idChip(current.id, ctx.act.navigate), ' ', h('strong', { text: current.title }), ' · started ', timeEl(impl.current.startedAt, ctx.now)))
-                : h('p', { class: 'now-task' }, icon('info'), session.session.nextAction),
+                ? h('div', { class: 'now-task' }, icon('sparkle', { className: 'tone-agent-fg' }), h('span', null, 'The agent is working on ', idChip(current.id, ctx.act.navigate), ' ', h('strong', { text: current.title }), timeEl(impl.current.startedAt, ctx.now) ? [' · started ', timeEl(impl.current.startedAt, ctx.now)] : null))
+                : session.session.nextAction ? h('p', { class: 'now-task' }, icon('info'), session.session.nextAction) : null,
             impl.activity.length ? h('ol', { class: 'activity', 'aria-label': 'Latest agent activity, newest first' }, impl.activity.slice(-6).reverse().map((line) => h('li', null, icon(ACTIVITY_ICON[line.kind] ?? 'info'), h('span', { class: 'activity-text', text: line.text }), timeEl(line.at, ctx.now)))) : null,
         ],
         margin: [
@@ -108,7 +116,7 @@ export function renderView(ctx) {
                 h('p', { class: 'meta', text: decision.impact }),
                 h('div', { class: 'btn-row' }, button('Answer now', { kind: 'primary', iconName: 'hand', onClick: () => ctx.act.navigate(decision.id) })))),
             impl.blockers.length ? h('article', { class: 'card' }, h('header', { class: 'card-head' }, icon('alert', { className: 'card-icon tone-danger-fg' }), h('h4', { class: 'card-title', text: plural(impl.blockers.length, 'blocker') })),
-                impl.blockers.map((blocker) => h('p', null, idChip(blocker.taskId, ctx.act.navigate), ` ${blocker.text} `, h('span', { class: 'meta', text: `Owner: ${blocker.owner}. ${blocker.clear}` })))) : null,
+                impl.blockers.map((blocker) => h('p', null, blocker.taskId ? [idChip(blocker.taskId, ctx.act.navigate), ' '] : null, blocker.text, blockerNote(blocker)))) : null,
         ],
     }));
 
@@ -127,13 +135,24 @@ export function renderView(ctx) {
         ],
     }));
 
-    const changeItem = (change) => h('li', { class: 'change', dataset: { item: change.id }, tabindex: '-1' },
+    const fileItem = (change, file) => {
+        const counted = Number.isFinite(file.additions) && Number.isFinite(file.deletions);
+        return h('li', null, h('button', { type: 'button', class: 'file-btn', onclick: () => ctx.act.openFile(change.id, file.path) },
+            icon(file.diff ? 'diff' : 'file'), h('code', { text: file.path }), file.kind ? h('span', { class: ['badge', `tone-${file.kind === 'added' ? 'success' : file.kind === 'deleted' ? 'danger' : 'accent'}`], text: file.kind }) : null,
+            counted ? h('span', { class: 'meta diffstat' }, h('span', { class: 'add', text: `+${file.additions}` }), ' ', h('span', { class: 'del', text: `−${file.deletions}` }), sr(` ${file.additions} lines added, ${file.deletions} removed`)) : null));
+    };
+    const changeItem = (change) => {
+        const checks = change.validation ?? [];
+        return h('li', { class: 'change', dataset: { item: change.id }, tabindex: '-1' },
             h('p', { class: 'change-head' }, h('span', { class: 'id-chip', text: change.id }), h('strong', { text: change.title }), timeEl(change.at, ctx.now)),
-            h('p', { class: 'change-behavior', text: change.behavior }),
-            h('ul', { class: 'file-list', 'aria-label': `Files in ${change.id}` }, change.files.map((file) => h('li', null, h('button', { type: 'button', class: 'file-btn', onclick: () => ctx.act.openFile(change.id, file.path) },
-                icon(file.diff ? 'diff' : 'file'), h('code', { text: file.path }), h('span', { class: ['badge', `tone-${file.kind === 'added' ? 'success' : file.kind === 'deleted' ? 'danger' : 'accent'}`], text: file.kind }),
-                h('span', { class: 'meta diffstat' }, h('span', { class: 'add', text: `+${file.additions}` }), ' ', h('span', { class: 'del', text: `−${file.deletions}` }), sr(` ${file.additions} lines added, ${file.deletions} removed`)))))),
-            h('p', { class: 'chip-row' }, change.validation.map((check) => h('span', { class: ['badge', `tone-${VALIDATION[check.status].tone}`], title: check.summary }, icon(VALIDATION[check.status].icon), h('code', { text: check.check }), ` ${VALIDATION[check.status].label}`))));
+            change.behavior ? h('div', { class: 'change-behavior prose' }, md(ctx, change.behavior)) : null,
+            change.files.length ? h('ul', { class: 'file-list', 'aria-label': `Files in ${change.id}` }, change.files.map((file) => fileItem(change, file))) : null,
+            checks.length ? h('p', { class: 'chip-row' }, checks.map((check) => {
+                const status = known(VALIDATION, check.status) ?? { icon: 'info', label: 'Not run', tone: 'muted' };
+                return h('span', { class: ['badge', `tone-${status.tone}`], title: check.summary || undefined }, icon(status.icon), h('code', { text: check.check }), ` ${status.label}`);
+            })) : null,
+            change.validationText ? h('div', { class: 'change-validation' }, h('p', { class: 'meta' }, icon('check-circle'), 'Validation'), h('div', { class: 'prose' }, md(ctx, change.validationText))) : null);
+    };
     const byTask = new Map();
     for (const change of impl.changes) {
         if (!byTask.has(change.taskId)) byTask.set(change.taskId, []);
@@ -144,8 +163,8 @@ export function renderView(ctx) {
         id: 'changes', idLabel: null, title: 'Changes', level: 2,
         actions: rowActions(ctx, { sectionId: 'changes-summary', rowId: 'changes' }),
         body: [sectionBody(ctx, 'changes-summary'), impl.changes.length
-            ? taskOrder.map((taskId) => h('section', { class: 'group', 'aria-labelledby': `changes-${taskId}` },
-                h('h4', { class: 'group-head', id: `changes-${taskId}` }, idChip(taskId, ctx.act.navigate), h('span', { text: ctx.find(taskId)?.title ?? 'Task not in the plan' }), h('span', { class: 'count', text: String(byTask.get(taskId).length) })),
+            ? taskOrder.map((taskId) => h('section', { class: 'group', 'aria-labelledby': `changes-${taskId ?? 'unlinked'}` },
+                h('h4', { class: 'group-head', id: `changes-${taskId ?? 'unlinked'}` }, taskId ? idChip(taskId, ctx.act.navigate) : null, h('span', { text: taskId ? ctx.find(taskId)?.title ?? 'Task not in the plan' : 'Not linked to a plan task' }), h('span', { class: 'count', text: String(byTask.get(taskId).length) })),
                 h('ol', { class: 'change-list' }, byTask.get(taskId).slice().reverse().map(changeItem))))
             : h('p', { class: 'empty', text: 'Completed work appears here under its task, with its files and validation, as the agent finishes each task.' })],
         margin: notesFor(ctx, ['changes', ...impl.changes.map((change) => change.id)]).map((item) => marginNote(ctx, item)),
@@ -154,7 +173,7 @@ export function renderView(ctx) {
     const discoveryItem = (item) => h('li', { class: 'discovery', dataset: { item: item.id }, tabindex: '-1' },
             h('p', { class: 'discovery-head' }, badge(DISCOVERY_KIND[item.kind]), h('span', { class: 'id-chip', text: item.id }), h('strong', { text: item.title })),
             h('p', { text: item.detail }),
-            h('p', { class: 'chip-row' }, item.taskId ? idChip(item.taskId, ctx.act.navigate) : null, item.decisionId ? idChip(item.decisionId, ctx.act.navigate) : null, timeEl(item.at, ctx.now)),
+            item.taskId || item.decisionId || timeEl(item.at, ctx.now) ? h('p', { class: 'chip-row' }, item.taskId ? idChip(item.taskId, ctx.act.navigate) : null, item.decisionId ? idChip(item.decisionId, ctx.act.navigate) : null, timeEl(item.at, ctx.now)) : null,
             item.planUpdate ? h('div', { class: 'plan-update' },
                 h('p', { class: 'meta' }, icon('signpost'), `Plan updated: ${item.planUpdate.area}`),
                 item.planUpdate.before ? h('p', { class: 'diff-line is-del' }, sr('Before: '), h('span', { class: 'diff-marker', 'aria-hidden': 'true', text: '−' }), h('span', { text: item.planUpdate.before })) : null,
@@ -185,8 +204,11 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'validation', idLabel: null, title: 'Validation and blockers', level: 2,
-        body: [table('Validation record', ['Check', 'Scope', 'Status', 'Result'], impl.validation.map((check) => [h('code', { text: check.check }), check.scope.match(/^P\d{2}/) ? idChip(check.scope, ctx.act.navigate) : check.scope, badge(VALIDATION[check.status]), check.summary])),
-            impl.blockers.length ? h('ul', { class: 'blockers' }, impl.blockers.map((blocker) => h('li', null, badge({ icon: 'alert', label: 'Blocked', tone: 'danger' }), ' ', idChip(blocker.taskId, ctx.act.navigate), ` ${blocker.text} Owner: ${blocker.owner}.`))) : h('p', { class: 'meta', text: 'No blockers.' })],
+        body: [table('Validation record', ['Check', 'Scope', 'Status', 'Result'], impl.validation.map((check) => [h('code', { text: check.check }), typeof check.scope === 'string' && TASK_ID_RE.test(check.scope) ? idChip(check.scope, ctx.act.navigate) : check.scope ?? '', badge(known(VALIDATION, check.status)), check.summary ?? ''])),
+            impl.blockers.length ? h('ul', { class: 'blockers' }, impl.blockers.map((blocker) => h('li', null, badge({ icon: 'alert', label: 'Blocked', tone: 'danger' }), ' ', blocker.taskId ? [idChip(blocker.taskId, ctx.act.navigate), ' '] : null, blocker.text, blockerNote(blocker)))) : h('p', { class: 'meta', text: 'No blockers.' })],
     }));
+
+    const record = recordRow(ctx, 'implement', 'Changes record');
+    if (record) rows.push(record);
     return rows;
 }

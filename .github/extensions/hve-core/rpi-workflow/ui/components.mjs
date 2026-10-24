@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, DECISION_STATUS, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, PHASE_META, sr, timeEl } from './dom.mjs';
+import { badge, button, chip, DECISION_STATUS, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, known, PHASE_META, plural, sr, timeEl } from './dom.mjs';
 import { editorUri, externalLink, renderMarkdown } from './markdown.mjs';
 
 /** Shared components: rows with margins, editing, evidence, traces, and decision cards. */
@@ -14,16 +14,20 @@ const DECISION_MARGIN_ROWS = Object.freeze({
     review: /^RV-\d{3}$/,
 });
 
-/** True when a decision margin row with this ID can render in a phase view that has started. */
+/** Rows that list the decisions a phase's artifact records, by phase. */
+export const DECISION_ROWS = Object.freeze({ research: 'research-decisions', plan: 'plan-decisions' });
+
+/** True when a decision margin or Decisions row with this ID can render in a phase view that has started. */
 export function rendersDecisionMargin(ctx, rowId) {
-    if (typeof rowId !== 'string' || !ctx.find(rowId)) return false;
+    if (typeof rowId !== 'string') return false;
     return Object.entries(DECISION_MARGIN_ROWS).some(([phase, pattern]) => {
         const status = ctx.data.session.phases[phase]?.status;
-        return pattern.test(rowId) && status !== 'upcoming' && status !== 'skipped';
+        if (status === 'upcoming' || status === 'skipped') return false;
+        return rowId === DECISION_ROWS[phase] || (pattern.test(rowId) && Boolean(ctx.find(rowId)));
     });
 }
 
-/** Decisions with no rendered margin are shown as full cards in the steering panel instead. */
+/** Decisions with no rendered margin or Decisions row are shown as full cards in the steering panel instead. */
 export const hasMarginHome = (ctx, decision) => rendersDecisionMargin(ctx, decision?.anchor?.rowId);
 
 /** Native disclosure whose open state survives re-renders. */
@@ -31,8 +35,84 @@ export function disclosure(ctx, key, className, summary, ...content) {
     return h('details', { class: className, open: ctx.ui.openDetails.has(key), ontoggle: (event) => ctx.act.setDetailsOpen(key, event.target.open) }, h('summary', { text: summary, dataset: { key: `summary-${key}` } }), content);
 }
 
+/**
+ * A disclosure that builds its content only while open, for long artifact text. Its summary
+ * is an h4, so the section is reachable by heading and its own headings nest below it.
+ */
+function lazyDisclosure(ctx, key, className, summary, build) {
+    const open = ctx.ui.openDetails.has(key);
+    return h('details', { class: className, open, ontoggle: (event) => {
+        const details = event.target;
+        ctx.act.setDetailsOpen(key, details.open);
+        if (details.open && details.children.length < 2) details.append(build());
+    } }, h('summary', { dataset: { key: `summary-${key}` } }, h('h4', { class: 'summary-heading', text: summary })), open ? build() : null);
+}
+
 /** Markdown with navigable IDs. */
 export const md = (ctx, text) => renderMarkdown(text ?? '', { resolveId: (id) => Boolean(ctx.resolve(id)), navigate: ctx.act.navigate });
+
+/** Feedback notes anchored to any of these rows, except dismissed ones. */
+export const notesFor = (ctx, rowIds) => ctx.data.session.feedback.filter((item) => item.target && rowIds.includes(item.target.id) && ['comment', 'context', 'research-request', 'correction', 'task-request'].includes(item.kind) && item.state !== 'dismissed');
+
+/**
+ * Editor link for a workspace-relative path when the canvas reads a real workspace, or null.
+ *
+ * @param {any} ctx
+ * @param {string | null | undefined} path
+ */
+export function workspaceEditorUri(ctx, path) {
+    const root = ctx.data.session.source?.root;
+    if (typeof root !== 'string' || !root || typeof path !== 'string' || !path || path.split(/[\\/]/).includes('..')) {
+        return null;
+    }
+    return editorUri(`${root.replace(/[\\/]+$/, '')}/${path.replace(/^\.?[\\/]/, '')}`);
+}
+
+const slug = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+
+/** Sections of a phase's files that no other row shows, each collapsed and rendered as written. */
+export function recordSections(ctx, phase) {
+    return (ctx.data.session.records?.[phase] ?? []).map((record) => lazyDisclosure(ctx, `record-${phase}-${slug(record.heading)}`, 'record', record.heading,
+        () => h('div', { class: 'prose record-body' }, md(ctx, record.markdown))));
+}
+
+/**
+ * A phase's record row for the sections its files hold beyond what the view shows, or null.
+ *
+ * @param {any} ctx
+ * @param {'plan' | 'implement' | 'review'} phase
+ * @param {string} title
+ */
+export function recordRow(ctx, phase, title) {
+    const sections = recordSections(ctx, phase);
+    if (!sections.length) return null;
+    return row(ctx, { id: `${phase}-record`, idLabel: null, title, level: 2, body: [h('p', { class: 'meta', text: "Other sections of this phase's files, as written." }), ...sections] });
+}
+
+/**
+ * A phase's Decisions row: the decisions its artifact records, as cards, or null when it
+ * records none.
+ *
+ * @param {any} ctx
+ * @param {'research' | 'plan'} phase
+ */
+export function decisionsRow(ctx, phase) {
+    const rowId = DECISION_ROWS[phase];
+    const decisions = ctx.data.session.decisions.filter((decision) => decision.anchor?.rowId === rowId);
+    if (!decisions.length) return null;
+    const waiting = decisions.filter((decision) => decision.status === 'needs-input').length;
+    const notes = notesFor(ctx, [rowId]);
+    return row(ctx, {
+        id: rowId, idLabel: null, title: 'Decisions', level: 2,
+        badges: [waiting ? badge({ icon: 'hand', label: `${waiting} ${waiting === 1 ? 'needs' : 'need'} you`, tone: 'attention' }) : chip(plural(decisions.length, 'decision'), 'muted')],
+        actions: rowActions(ctx, { rowId }),
+        body: [
+            h('p', { class: 'meta', text: `Recorded in the ${phase === 'plan' ? 'plan' : 'research'} file. Answer or override one here; the agent reads your input and updates the file.` }),
+            h('ul', { class: 'decision-grid', 'aria-label': `${PHASE_META[phase].label} decisions` }, decisions.map((decision) => h('li', null, decisionCard(ctx, decision)))),
+            notes.length ? h('div', { class: 'decision-notes' }, notes.map((item) => marginNote(ctx, item))) : null,
+        ],
+    });
+}
 
 /**
  * A document row: header, text column, and a margin for that row's annotations.
@@ -77,11 +157,11 @@ export function rowActions(ctx, { sectionId, rowId, research = false, ask = fals
     return items;
 }
 
-/** Section Markdown, or the editor when this section is being edited. */
+/** Section Markdown, the editor when this section is being edited, or null when the section was never recorded. */
 export function sectionBody(ctx, sectionId) {
     const section = ctx.data.session.sections[sectionId];
     if (!section) {
-        return h('p', { class: 'empty', text: 'Not recorded' });
+        return null;
     }
     if (ctx.ui.editing?.sectionId === sectionId) {
         return editor(ctx, section);
@@ -156,12 +236,12 @@ export function evidenceChips(ctx, rowKey, ids) {
     const details = h('div', { class: 'evidence-details', id: regionId, hidden: open.length === 0 },
         open.map((id) => {
             const item = ctx.find(id);
-            if (!item) return h('p', { class: 'meta', text: `${id}: Not recorded` });
+            if (!item) return h('p', { class: 'meta', text: `${id} is not in the evidence log.` });
             return h('div', { class: 'evidence-detail' },
                 h('p', null, h('span', { class: 'id-chip', text: id }), ' ', item.claim),
                 h('p', { class: 'meta' },
                     item.url ? externalLink(item.url, item.source) : h('code', { text: item.source }),
-                    ` · Confidence ${item.confidence}`, item.retrieved ? ` · Retrieved ${item.retrieved}` : ''));
+                    item.confidence ? ` · Confidence ${item.confidence}` : '', item.retrieved ? ` · Retrieved ${item.retrieved}` : ''));
         }));
     return h('div', { class: 'evidence' }, chips, details);
 }
@@ -203,7 +283,8 @@ function optionList(ctx, decision, name, selected, onChange, exclude) {
 
 /**
  * Decision card for every status: needs input, answered with read-back, agent decided
- * with override, and resolved.
+ * with override, and resolved. A decision without options takes an answer in the user's
+ * words; an agent decision without alternatives takes an override in the user's words.
  *
  * @param {any} ctx
  * @param {any} decision
@@ -211,55 +292,71 @@ function optionList(ctx, decision, name, selected, onChange, exclude) {
 export function decisionCard(ctx, decision) {
     const session = ctx.data.session;
     const feedback = decision.feedbackId ? session.feedback.find((item) => item.id === decision.feedbackId) : null;
-    const meta = DECISION_STATUS[decision.status];
     const chosen = decision.options.find((option) => option.id === decision.chosen);
-    const draft = ctx.ui.decisionDrafts.get(decision.id) ?? { optionId: decision.options.find((o) => o.recommended)?.id ?? null, note: '' };
+    const initial = { optionId: decision.options.find((o) => o.recommended)?.id ?? null, note: '' };
+    const draft = ctx.ui.decisionDrafts.get(decision.id) ?? initial;
+    // Handlers read the stored draft so a note typed before choosing an option is kept.
+    const update = (patch) => ctx.act.setDecisionDraft(decision.id, { ...(ctx.ui.decisionDrafts.get(decision.id) ?? initial), ...patch });
+    const current = () => ctx.ui.decisionDrafts.get(decision.id) ?? initial;
     const head = h('header', { class: 'card-head' },
         icon('signpost', { className: 'card-icon' }),
-        h('span', { class: 'id-chip', text: decision.id }),
+        h('span', { class: 'id-chip', text: decision.ref ?? decision.id }),
         h('h4', { class: 'card-title', text: decision.title }),
-        badge(meta));
+        badge(known(DECISION_STATUS, decision.status)));
     const owner = h('p', { class: 'card-owner meta' }, decision.owner === 'user' ? 'Your decision' : "The agent's decision", ` · ${PHASE_META[decision.phase]?.label ?? decision.phase}`);
     const parts = [head, owner];
     const evidence = evidenceChips(ctx, `dec-${decision.id}`, decision.evidence);
+    const submitKey = `submit-${decision.id}`;
 
     if (decision.status === 'needs-input') {
         const name = `decision-${decision.id}`;
         const noteId = `${name}-note`;
+        const ownWords = decision.options.length === 0;
         parts.push(
-            h('p', { class: 'card-question', text: decision.question }),
+            decision.question && decision.question !== decision.title ? h('p', { class: 'card-question', text: decision.question }) : null,
             decision.context ? h('div', { class: 'card-context prose' }, md(ctx, decision.context)) : null,
-            optionList(ctx, decision, name, draft.optionId, (optionId) => ctx.act.setDecisionDraft(decision.id, { ...draft, optionId })),
+            ownWords ? null : optionList(ctx, decision, name, draft.optionId, (optionId) => update({ optionId })),
             evidence,
             decision.impact ? h('p', { class: 'card-impact' }, icon('arrow-right'), h('span', null, h('strong', { text: 'If you answer: ' }), decision.impact)) : null,
-            h('label', { class: 'field-label', for: noteId, text: 'Add a note (optional)' }),
-            h('textarea', { id: noteId, class: 'note', rows: '2', oninput: (event) => ctx.act.setDecisionDraft(decision.id, { ...draft, note: event.target.value }) }, draft.note),
+            h('label', { class: 'field-label', for: noteId, text: ownWords ? 'Your answer' : 'Add a note (optional)' }),
+            h('textarea', { id: noteId, class: 'note', rows: ownWords ? '3' : '2', 'aria-required': ownWords ? 'true' : undefined, oninput: (event) => update({ note: event.target.value }) }, draft.note),
             h('div', { class: 'btn-row' },
-                button('Answer', { kind: 'primary', iconName: 'check', disabled: !draft.optionId, onClick: () => ctx.act.answer(decision.id, 'answer', draft) }),
+                button('Answer', { kind: 'primary', iconName: 'check', disabled: ownWords ? !draft.note.trim() : !draft.optionId, attrs: { 'data-key': submitKey, 'data-needs-text': ownWords ? 'true' : undefined }, onClick: () => ctx.act.answer(decision.id, 'answer', ownWords ? { optionId: null, note: current().note } : current()) }),
                 h('span', { class: 'meta' }, deliveryHint(ctx))));
     } else if (decision.status === 'decided' || decision.status === 'override-pending') {
         const overriding = ctx.ui.overrides.has(decision.id);
-        parts.push(voice('agent', 'Agent decided', [h('p', null, h('strong', { text: chosen?.label ?? 'Not recorded' })), decision.rationale ? h('p', { text: decision.rationale }) : null]), evidence);
-        if (decision.status === 'override-pending' && feedback) {
-            parts.push(readBack(ctx, decision, feedback, 'Your override'));
+        const pending = decision.status === 'override-pending' ? feedback : null;
+        // While an override waits, the agent's own choice stays on the card above it.
+        const agentChoice = pending?.previousChosen !== undefined && pending?.previousChosen !== null ? decision.options.find((option) => option.id === pending.previousChosen) : chosen;
+        const said = [
+            agentChoice && agentChoice.label !== decision.title ? h('p', null, h('strong', { text: agentChoice.label })) : null,
+            decision.rationale ? h('p', { text: decision.rationale }) : null,
+        ].filter(Boolean);
+        parts.push(said.length ? voice('agent', 'Agent decided', said) : null, evidence);
+        const alternatives = decision.options.filter((option) => option.id !== agentChoice?.id);
+        if (pending) {
+            parts.push(readBack(ctx, decision, pending, 'Your override'));
         } else if (overriding) {
             const name = `override-${decision.id}`;
+            const noteId = `${name}-note`;
+            const ownWords = alternatives.length === 0;
             parts.push(
-                h('p', { class: 'card-question', text: 'Choose a different option:' }),
-                optionList(ctx, decision, name, draft.optionId === decision.chosen ? null : draft.optionId, (optionId) => ctx.act.setDecisionDraft(decision.id, { ...draft, optionId }), decision.chosen),
-                h('label', { class: 'field-label', for: `${name}-note`, text: 'Why (optional)' }),
-                h('textarea', { id: `${name}-note`, class: 'note', rows: '2', oninput: (event) => ctx.act.setDecisionDraft(decision.id, { ...draft, note: event.target.value }) }, draft.note),
+                ownWords ? null : h('p', { class: 'card-question', text: 'Choose a different option:' }),
+                ownWords ? null : optionList(ctx, decision, name, draft.optionId === decision.chosen ? null : draft.optionId, (optionId) => update({ optionId }), decision.chosen),
+                h('label', { class: 'field-label', for: noteId, text: ownWords ? 'What should the agent do instead?' : 'Why (optional)' }),
+                h('textarea', { id: noteId, class: 'note', rows: ownWords ? '3' : '2', 'aria-required': ownWords ? 'true' : undefined, oninput: (event) => update({ note: event.target.value }) }, draft.note),
                 h('div', { class: 'btn-row' },
-                    button('Send override', { kind: 'primary', disabled: !draft.optionId || draft.optionId === decision.chosen, onClick: () => ctx.act.answer(decision.id, 'override', draft) }),
+                    button('Send override', { kind: 'primary', disabled: ownWords ? !draft.note.trim() : !draft.optionId || draft.optionId === decision.chosen, attrs: { 'data-key': submitKey, 'data-needs-text': ownWords ? 'true' : undefined }, onClick: () => ctx.act.answer(decision.id, 'override', ownWords ? { optionId: null, note: current().note } : current()) }),
                     button('Cancel', { onClick: () => ctx.act.toggleOverride(decision.id) })));
         } else {
-            parts.push(h('div', { class: 'btn-row' }, button('Override', { iconName: 'undo', onClick: () => ctx.act.toggleOverride(decision.id) })));
+            parts.push(h('div', { class: 'btn-row' }, button('Override', { iconName: 'undo', attrs: { 'data-key': `override-${decision.id}` }, onClick: () => ctx.act.toggleOverride(decision.id) })));
         }
     } else if (decision.status === 'answered' && feedback) {
         parts.push(readBack(ctx, decision, feedback, 'You'));
     } else {
         const history = feedback ? readBack(ctx, decision, feedback, 'You', { compact: true }) : null;
-        parts.push(h('p', { class: 'resolved-line' }, icon('check', { className: 'tone-success-fg' }), h('span', null, 'Resolved: ', h('strong', { text: chosen?.label ?? 'Not recorded' }), decision.impact ? ` · ${decision.impact}` : '')),
+        const outcome = chosen?.label ?? (feedback?.text ? `“${feedback.text}”` : null);
+        parts.push(h('p', { class: 'resolved-line' }, icon('check', { className: 'tone-success-fg' }), h('span', null, outcome ? ['Resolved: ', h('strong', { text: outcome })] : 'Resolved', decision.impact ? ` · ${decision.impact}` : '')),
             history ? disclosure(ctx, `history-${decision.id}`, 'history', 'How this was decided', history) : null);
     }
     return withLabel(h('article', { class: ['card', 'decision', `is-${decision.status}`], id: `card-${decision.id}`, dataset: { item: decision.id }, tabindex: '-1' }, parts), decision);
@@ -285,7 +382,7 @@ export function readBack(ctx, decision, feedback, youLabel, options = {}) {
     }
     parts.push(origin
         ? voice('user', 'Your correction', [chosen ? h('p', null, 'For ', h('strong', { text: chosen.label })) : null, h('p', { text: `“${feedback.text}”` })], { meta: FEEDBACK_STATE[feedback.state]?.label })
-        : voice('user', youLabel, [h('p', null, h('strong', { text: chosen?.label ?? feedback.optionLabel ?? '' })), feedback.text ? h('p', { text: `“${feedback.text}”` }) : null], { meta: FEEDBACK_STATE[feedback.state]?.label }));
+        : voice('user', youLabel, [chosen?.label ?? feedback.optionLabel ? h('p', null, h('strong', { text: chosen?.label ?? feedback.optionLabel })) : null, feedback.text ? h('p', { text: `“${feedback.text}”` }) : null], { meta: FEEDBACK_STATE[feedback.state]?.label }));
     if (feedback.interpretation) {
         parts.push(voice('agent', 'Agent understood', [h('p', { text: feedback.interpretation.text }), feedback.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), feedback.interpretation.effect) : null], { reveal: fresh }));
     } else if (!options.compact && (feedback.state === 'queued' || feedback.state === 'sent')) {
@@ -315,7 +412,7 @@ export function marginNote(ctx, item) {
         voice('user', 'You', h('p', { text: item.text }), { meta: null }),
         item.interpretation ? voice('agent', 'Agent understood', [h('p', { text: item.interpretation.text }), item.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), item.interpretation.effect) : null], { reveal: ctx.ui.revealed.has(item.id) }) : null,
         item.state === 'interpreted' ? readBackActions(ctx, item, 'card') : null,
-        h('p', { class: 'meta' }, timeEl(item.createdAt, ctx.now)));
+        item.createdAt ? h('p', { class: 'meta' }, timeEl(item.createdAt, ctx.now)) : null);
 }
 
 /**
@@ -362,7 +459,10 @@ const SENDING = Object.freeze({ icon: 'send', label: 'Sending', tone: 'accent' }
 
 function feedbackRow(ctx, item) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
-    const target = item.target ? h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate) : h('span', { class: 'id-chip', text: item.target.id })) : null;
+    const decision = item.target?.type === 'decision' ? ctx.data.session.decisions.find((candidate) => candidate.id === item.target.id) : null;
+    // A namespaced decision such as plan.D1 shows its artifact ID and phase.
+    const scoped = decision?.ref && decision.ref !== decision.id ? { label: decision.ref, title: `Go to ${decision.ref} in ${PHASE_META[decision.phase]?.label ?? decision.phase}` } : {};
+    const target = item.target ? h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null) : null;
     const actions = [];
     const sending = isSending(ctx, item);
     const dismiss = !sending && (item.state === 'queued' || item.state === 'draft')
@@ -405,18 +505,35 @@ export function steerPanel(ctx) {
     const waiting = view.interpretations.map((id) => session.feedback.find((item) => item.id === id)).filter(Boolean);
     const decisionOf = (id) => session.decisions.find((decision) => decision.id === id);
     const steerCard = (decision) => h('li', { class: 'steer-card' }, decisionCard(ctx, decision));
+    const refOf = (id) => decisionOf(id)?.ref ?? id;
     const needs = h('ul', { class: 'steer-list' },
         view.needsYou.map((item) => (hasMarginHome(ctx, decisionOf(item.id)) ? h('li', null,
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `needs-${item.id}` }, onclick: () => ctx.act.navigate(item.id) },
-                icon('hand', { className: 'tone-attention-fg' }), h('span', { class: 'steer-link-text' }, h('span', { class: 'id-chip', text: item.id }), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))),
+                icon('hand', { className: 'tone-attention-fg' }), h('span', { class: 'steer-link-text' }, h('span', { class: 'id-chip', text: refOf(item.id) }), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))),
         waiting.map((item) => h('li', null,
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `check-${item.id}` }, onclick: () => ctx.act.navigate(item.target?.type === 'decision' ? item.target.id : item.id) },
                 icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, 'Check how the agent read ', h('span', { class: 'id-chip', text: item.id })), h('span', { class: 'meta', text: phaseLabel(item.target?.phase) })))));
     const needsCount = view.needsYou.length + waiting.length;
+    // Agent decisions listed in a phase's Decisions row collapse to one link per row.
+    const rowGroups = new Map();
+    const decidedSingles = [];
+    for (const item of view.decidedByAgent) {
+        const decision = decisionOf(item.id);
+        const rowId = decision?.anchor?.rowId;
+        if (Object.values(DECISION_ROWS).includes(rowId) && hasMarginHome(ctx, decision)) {
+            if (!rowGroups.has(rowId)) rowGroups.set(rowId, { phase: decision.anchor.phase, count: 0 });
+            rowGroups.get(rowId).count += 1;
+        } else {
+            decidedSingles.push(item);
+        }
+    }
     const decided = h('ul', { class: 'steer-list' },
-        view.decidedByAgent.map((item) => (hasMarginHome(ctx, decisionOf(item.id)) ? h('li', null,
+        [...rowGroups].map(([rowId, group]) => h('li', null,
+            h('button', { type: 'button', class: 'steer-link', dataset: { key: `decided-${rowId}` }, onclick: () => ctx.act.navigate(rowId, group.phase) },
+                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text', text: `${plural(group.count, 'recorded decision')}` }), h('span', { class: 'meta', text: phaseLabel(group.phase) })))),
+        decidedSingles.map((item) => (hasMarginHome(ctx, decisionOf(item.id)) ? h('li', null,
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `decided-${item.id}` }, onclick: () => ctx.act.navigate(item.id) },
-                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, h('span', { class: 'id-chip', text: item.id }), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
+                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, h('span', { class: 'id-chip', text: refOf(item.id) }), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
 
     const queued = session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item));
     const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
@@ -517,13 +634,14 @@ export function filePreview(ctx, change, file) {
                     h('span', { class: 'diff-marker', 'aria-hidden': 'true', text: marker }),
                     h('span', { class: 'diff-code', text: type === 'hunk' ? line : line.slice(1) }));
             }))
-        : h('p', { class: 'empty', text: 'No diff was recorded for this file. The changes record lists it with its line counts.' });
-    const editorLink = editorUri(file.path);
+        : h('p', { class: 'empty', text: counted ? 'No diff was recorded for this file. The changes record lists it with its line counts.' : 'No diff was recorded for this file. Open it in the editor to see its current content.' });
+    const editorLink = workspaceEditorUri(ctx, file.path) ?? editorUri(file.path);
+    const counted = Number.isFinite(file.additions) && Number.isFinite(file.deletions);
     return [
         h('div', { class: 'dialog-head' },
             h('h2', { id: 'fileSheetTitle', class: 'sheet-title' }, icon('file'), h('code', { text: file.path })),
             h('button', { type: 'button', class: 'icon-btn', 'data-close': '' }, icon('x'), sr('Close'))),
-        h('p', { class: 'sheet-meta' }, h('span', { class: ['badge', `tone-${kindTone}`], text: file.kind }), ` +${file.additions} −${file.deletions} · `, h('span', { class: 'id-chip', text: change.id }), ` ${change.title} · `, h('span', { class: 'id-chip', text: change.taskId })),
+        h('p', { class: 'sheet-meta' }, h('span', { class: ['badge', `tone-${kindTone}`], text: file.kind }), counted ? ` +${file.additions} −${file.deletions}` : '', ' · ', h('span', { class: 'id-chip', text: change.id }), ` ${change.title}`, change.taskId ? [' · ', h('span', { class: 'id-chip', text: change.taskId })] : null),
         diff,
         h('div', { class: 'btn-row' },
             button('Copy path', { iconName: 'copy', onClick: () => ctx.act.copy(file.path) }),

@@ -335,21 +335,32 @@ export function createFeedback(session, input, now) {
                 fail('invalid_input', `${kind} feedback must target a decision.`);
             }
             const decision = byId(draft.decisions, target.id);
-            const optionId = identifier(input.optionId, 'optionId');
-            const option = byId(decision.options, optionId);
-            if (!option) {
-                fail('not_found', `Decision ${decision.id} has no option ${optionId}.`);
-            }
             if (kind === 'answer' && decision.owner !== 'user') {
                 fail('invalid_state', `Decision ${decision.id} is owned by the agent; use an override.`);
             }
-            item.optionId = optionId;
-            item.optionLabel = option.label;
             if (kind === 'override' && decision.chosen !== undefined) {
                 // Kept so withdrawing the override restores the agent's choice.
                 item.previousChosen = decision.chosen;
             }
-            decision.chosen = optionId;
+            if (input.optionId === undefined || input.optionId === null) {
+                // In the user's words: an answer to a decision that lists no options, or an override.
+                if (kind === 'answer' && decision.options.length > 0) {
+                    fail('invalid_input', `Choose one of the options for decision ${decision.id}.`);
+                }
+                if (!body) {
+                    fail('invalid_input', kind === 'answer' ? 'An answer without an option needs text.' : 'An override needs an option or text that says what to do instead.');
+                }
+                delete decision.chosen;
+            } else {
+                const optionId = identifier(input.optionId, 'optionId');
+                const option = byId(decision.options, optionId);
+                if (!option) {
+                    fail('not_found', `Decision ${decision.id} has no option ${optionId}.`);
+                }
+                item.optionId = optionId;
+                item.optionLabel = option.label;
+                decision.chosen = optionId;
+            }
             decision.status = kind === 'answer' ? 'answered' : 'override-pending';
             decision.feedbackId = item.id;
         }
@@ -605,9 +616,8 @@ export function composeDelivery(session, ids, now = new Date().toISOString()) {
             lines.push(`   Chose: ${item.optionLabel}`);
         }
         if (item.text) {
-            for (const line of item.text.split('\n')) {
-                lines.push(`   ${line}`);
-            }
+            const lead = item.optionLabel ? '' : item.kind === 'override' ? 'Do instead: ' : item.kind === 'answer' ? 'Answer: ' : '';
+            item.text.split('\n').forEach((line, index) => lines.push(`   ${index === 0 ? lead : ''}${line}`));
         }
         if (item.correctionOf) {
             lines.push(`   Corrects ${item.correctionOf}.`);

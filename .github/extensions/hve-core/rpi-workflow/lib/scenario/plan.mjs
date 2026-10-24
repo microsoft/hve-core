@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { checklistFor } from '../checklists.mjs';
+
 // Plan content for the sample scenario.
 
 const task = (id, title, goals, requirements, details, dependencies, references = []) => ({
@@ -148,10 +150,4 @@ for (const phase of phases) {
     }
 }
 
-export const checklist = [
-    { id: 'P1', label: 'The phases deliver the outcome I want', checked: false },
-    { id: 'P2', label: 'Each task is small enough to review', checked: false },
-    { id: 'P3', label: 'Every requirement has a task', checked: false },
-    { id: 'P4', label: 'Critique findings are resolved or accepted', checked: false },
-    { id: 'P5', label: 'The plan is ready to implement', checked: false },
-];
+export const checklist = checklistFor('plan');

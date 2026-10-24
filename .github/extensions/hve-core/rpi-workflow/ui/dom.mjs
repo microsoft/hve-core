@@ -107,9 +107,28 @@ export function relTime(iso, now) {
     return new Date(then).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-/** Local HH:MM with the full ISO time available as a title. */
+/** Relative time with the full ISO time as a title, or null when no valid time was recorded. */
 export function timeEl(iso, now) {
-    return h('time', { datetime: iso ?? undefined, title: iso ?? undefined, class: 'time', text: relTime(iso, now) });
+    if (!iso || Number.isNaN(Date.parse(iso))) {
+        return null;
+    }
+    return h('time', { datetime: iso, title: iso, class: 'time', text: relTime(iso, now) });
+}
+
+/**
+ * The decision a bare `D#` names while a phase is viewed: a decision of that phase whose
+ * artifact ID matches, such as the plan's D1 while viewing Plan, else the ID itself.
+ *
+ * @param {any} session
+ * @param {string} id
+ * @param {string | null | undefined} phase
+ */
+export function decisionAlias(session, id, phase) {
+    if (typeof id !== 'string' || !/^D\d{1,3}$/.test(id) || !phase) {
+        return id;
+    }
+    const local = session?.decisions?.find((decision) => decision.ref === id && decision.phase === phase);
+    return local ? local.id : id;
 }
 
 const vocab = (entries) => Object.freeze(Object.fromEntries(entries.map(([key, iconName, label, tone]) => [key, Object.freeze({ icon: iconName, label, tone })])));
@@ -199,6 +218,20 @@ export const PHASE_META = Object.freeze({
 });
 
 /**
+ * The vocabulary entry for a key, a neutral entry that names an unrecognized key, or null
+ * when no key was recorded.
+ *
+ * @param {Record<string, { icon: string, label: string, tone: string }>} vocabulary
+ * @param {unknown} key
+ */
+export function known(vocabulary, key) {
+    if (key === undefined || key === null || key === '') {
+        return null;
+    }
+    return Object.prototype.hasOwnProperty.call(vocabulary, key) ? vocabulary[key] : { icon: 'info', label: String(key), tone: 'muted' };
+}
+
+/**
  * Status chip: icon, word, and a tinted tone. Meaning never rides on color alone.
  *
  * @param {{ icon: string, label: string, tone: string } | undefined} meta
@@ -214,15 +247,22 @@ export function badge(meta, options = {}) {
 /** Plain chip for counts or labels. */
 export const chip = (text, tone = 'muted') => h('span', { class: ['badge', `tone-${tone}`], text });
 
-/** Monospace ID; a button when navigation is available. */
+/**
+ * Monospace ID; a button when navigation is available.
+ *
+ * @param {string} id the ID navigation goes to
+ * @param {((id: string) => void) | null} onNavigate
+ * @param {{ className?: string, title?: string, label?: string }} [options] `label` replaces the visible ID, such as an artifact's own `D1` for `plan.D1`.
+ */
 export function idChip(id, onNavigate, options = {}) {
+    const label = options.label ?? id;
     if (!onNavigate) {
-        return h('span', { class: 'id-chip', text: id });
+        return h('span', { class: 'id-chip', text: label });
     }
-    return h('button', { type: 'button', class: ['id-chip', 'is-link', options.className], title: options.title ?? `Go to ${id}`, onclick: (event) => {
+    return h('button', { type: 'button', class: ['id-chip', 'is-link', options.className], title: options.title ?? `Go to ${label}`, onclick: (event) => {
         event.stopPropagation();
         onNavigate(id);
-    } }, id);
+    } }, label);
 }
 
 /** A button with an icon and a visible or hidden label. */

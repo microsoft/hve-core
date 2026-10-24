@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, EVIDENCE_STATE, h, icon, idChip, timeEl } from './dom.mjs';
-import { decisionCard, evidenceChips, marginNote, md, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
+import { decisionCard, decisionsRow, DECISION_ROWS, evidenceChips, marginNote, md, notesFor, recordSections, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { externalLink } from './markdown.mjs';
 
 /** Research view: summary, unknowns, questions, findings with decision margins, alternatives, risks, and the record. */
 
 export const anchoredDecisions = (ctx, rowIds) => ctx.data.session.decisions.filter((decision) => decision.anchor && rowIds.includes(decision.anchor.rowId));
-export const notesFor = (ctx, rowIds) => ctx.data.session.feedback.filter((item) => item.target && rowIds.includes(item.target.id) && ['comment', 'context', 'research-request', 'correction', 'task-request'].includes(item.kind) && item.state !== 'dismissed');
+
+/** Outline entry for a phase's Decisions row, when it has decisions. */
+export function decisionsOutline(ctx, phase) {
+    const count = anchoredDecisions(ctx, [DECISION_ROWS[phase]]).length;
+    return count ? [{ id: DECISION_ROWS[phase], label: 'Decisions', count }] : [];
+}
 
 const researchNotes = (ctx, rowIds) => notesFor(ctx, rowIds).filter((item) => !(item.kind === 'research-request' && ['queued', 'sent'].includes(item.state)));
 
@@ -42,7 +47,7 @@ export function lanesCard(ctx, filter) {
                 h('p', { class: 'lane-head' }, badge(LANE_STATUS[lane.status]), h('span', { class: 'id-chip', text: lane.id }), lane.origin ? h('span', { class: 'meta' }, ' from ', idChip(lane.origin, null)) : null),
                 h('p', { class: 'lane-question', text: lane.question }),
                 lane.summary ? h('p', { class: 'lane-summary' }, icon('sparkle'), h('span', { text: lane.summary })) : null,
-                h('p', { class: 'meta' }, `Effort ${lane.effort} · `, timeEl(lane.updatedAt, ctx.now)))),
+                h('p', { class: 'meta' }, [lane.effort ? `Effort ${lane.effort}` : null, timeEl(lane.updatedAt, ctx.now)].filter(Boolean).flatMap((part, index) => (index ? [' · ', part] : [part]))))),
             requested.map((item) => h('li', { class: 'lane is-requested', dataset: { item: item.id } },
                 h('p', { class: 'lane-head' }, badge({ icon: 'person', label: item.state === 'queued' ? 'Requested by you · queued' : 'Requested by you · sent', tone: 'user' }), h('span', { class: 'id-chip', text: item.id })),
                 h('p', { class: 'lane-question', text: item.text })))),
@@ -50,16 +55,17 @@ export function lanesCard(ctx, filter) {
 }
 
 export function outline(ctx) {
-    const research = ctx.data.session.research;
+    const { research, sections } = ctx.data.session;
     return [
         { id: 'research-summary', label: 'Summary' },
-        { id: 'research-unknowns', label: 'What you may not know' },
+        sections['research-unknowns'] ? { id: 'research-unknowns', label: 'What you may not know' } : null,
         { id: 'questions', label: 'Questions', count: research.questions.length },
         ...research.findings.map((finding) => ({ id: finding.id, label: finding.title, prefix: finding.id, meta: EVIDENCE_STATE[finding.state] })),
         { id: 'research-recommendation', label: 'Recommendation and alternatives' },
+        ...decisionsOutline(ctx, 'research'),
         { id: 'risks', label: 'Risks and open questions' },
         { id: 'record', label: 'Research record' },
-    ];
+    ].filter(Boolean);
 }
 
 export function renderView(ctx) {
@@ -76,12 +82,14 @@ export function renderView(ctx) {
         margin: [lanesCard(ctx), ...researchNotes(ctx, ['research-summary']).map((item) => marginNote(ctx, item))],
     }));
 
-    rows.push(row(ctx, {
-        id: 'research-unknowns', idLabel: null, title: 'What you may not know', level: 2,
-        actions: rowActions(ctx, { sectionId: 'research-unknowns', rowId: 'research-unknowns' }),
-        body: [h('div', { class: 'callout' }, icon('bulb', { className: 'callout-icon' }), sectionBody(ctx, 'research-unknowns'))],
-        margin: researchNotes(ctx, ['research-unknowns']).map((item) => marginNote(ctx, item)),
-    }));
+    if (session.sections['research-unknowns']) {
+        rows.push(row(ctx, {
+            id: 'research-unknowns', idLabel: null, title: 'What you may not know', level: 2,
+            actions: rowActions(ctx, { sectionId: 'research-unknowns', rowId: 'research-unknowns' }),
+            body: [h('div', { class: 'callout' }, icon('bulb', { className: 'callout-icon' }), sectionBody(ctx, 'research-unknowns'))],
+            margin: researchNotes(ctx, ['research-unknowns']).map((item) => marginNote(ctx, item)),
+        }));
+    }
 
     rows.push(row(ctx, {
         id: 'questions', idLabel: null, title: 'Questions', level: 2, badges: [chip(`${research.questions.filter((q) => q.status === 'answered').length} of ${research.questions.length} answered`, 'muted')],
@@ -96,7 +104,7 @@ export function renderView(ctx) {
         const sectionId = `finding-${finding.id.toLowerCase()}`;
         rows.push(row(ctx, {
             id: finding.id, title: finding.title,
-            badges: [badge(EVIDENCE_STATE[finding.state]), chip(`Confidence ${finding.confidence}`, 'muted')],
+            badges: [badge(EVIDENCE_STATE[finding.state]), finding.confidence ? chip(`Confidence ${finding.confidence}`, 'muted') : null],
             actions: rowActions(ctx, { sectionId, rowId: finding.id, research: true }),
             body: [sectionBody(ctx, sectionId), h('p', { class: 'meta answers' }, 'Answers ', finding.questions.map((id) => idChip(id, ctx.act.navigate))), evidenceChips(ctx, finding.id, finding.evidence), traceStrip(ctx, finding.id)],
             margin: [...anchoredDecisions(ctx, [finding.id]).map((decision) => decisionCard(ctx, decision)), lanesCard(ctx, finding.id), ...researchNotes(ctx, [finding.id]).map((item) => marginNote(ctx, item))],
@@ -112,6 +120,9 @@ export function renderView(ctx) {
         margin: researchNotes(ctx, ['research-recommendation']).map((item) => marginNote(ctx, item)),
     }));
 
+    const decisions = decisionsRow(ctx, 'research');
+    if (decisions) rows.push(decisions);
+
     const priority = { H: { icon: 'alert', label: 'High', tone: 'danger' }, M: { icon: 'alert', label: 'Medium', tone: 'severe' }, L: { icon: 'info', label: 'Low', tone: 'muted' } };
     rows.push(row(ctx, {
         id: 'risks', idLabel: null, title: 'Risks and open questions', level: 2,
@@ -126,9 +137,9 @@ export function renderView(ctx) {
             item.url ? externalLink(item.url, item.source) : h('code', { text: item.source }),
             item.confidence,
         ])));
-    rows.push(row(ctx, { id: 'record', idLabel: null, title: 'Research record', level: 2, body: [h('p', { class: 'meta', text: 'Method, evidence, and sources behind the findings. Evidence chips open their row here.' }), record] }));
+    rows.push(row(ctx, { id: 'record', idLabel: null, title: 'Research record', level: 2, body: [h('p', { class: 'meta', text: 'Method, evidence, and sources behind the findings. Evidence chips open their row here.' }), record, ...recordSections(ctx, 'research')] }));
     return rows;
 }
 
-/** Re-exported so other views can render Markdown with navigable IDs. */
-export { md };
+/** Re-exported so other views can render Markdown and margin notes. */
+export { md, notesFor };

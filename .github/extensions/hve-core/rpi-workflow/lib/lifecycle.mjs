@@ -11,14 +11,14 @@
  */
 export function createInstanceRegistry(deps) {
     const { createServer, makeError } = deps;
-    /** @type {Map<string, { server: S, sessionId: string, instanceId: string, closed: boolean }>} */
+    /** @type {Map<string, { server: S, sessionId: string, instanceId: string, closed: boolean, source?: any }>} */
     const instances = new Map();
-    /** @type {Map<string, { record: { server: S, sessionId: string, instanceId: string, closed: boolean }, promise: Promise<any> }>} */
+    /** @type {Map<string, { record: { server: S, sessionId: string, instanceId: string, closed: boolean, source?: any }, promise: Promise<any> }>} */
     const pending = new Map();
     /** @type {Map<string, Set<{ closed: boolean }>>} */
     const preparing = new Map();
 
-    function ensure(instanceId, sessionId) {
+    function ensure(instanceId, sessionId, source) {
         const existing = instances.get(instanceId);
         if (existing?.server.listening) {
             return Promise.resolve(existing);
@@ -30,7 +30,7 @@ export function createInstanceRegistry(deps) {
         if (inFlight) {
             return inFlight.promise;
         }
-        const record = { server: /** @type {S} */ (/** @type {unknown} */ (null)), sessionId, instanceId, closed: false };
+        const record = { server: /** @type {S} */ (/** @type {unknown} */ (null)), sessionId, instanceId, closed: false, source };
         record.server = createServer(record);
         const promise = (async () => {
             try {
@@ -59,9 +59,10 @@ export function createInstanceRegistry(deps) {
     return {
         /**
          * Opens the instance. When `prepare` is given it runs first, and a close during it
-         * rejects the open with `instance_closed` before any server starts.
+         * rejects the open with `instance_closed` before any server starts. A new record
+         * takes the `sessionId` and `source` that `prepare` returns, when it returns them.
          *
-         * @param {{ instanceId: string, sessionId: string, prepare?: () => Promise<unknown> }} request
+         * @param {{ instanceId: string, sessionId: string, prepare?: () => Promise<{ sessionId?: string, source?: any } | void> }} request
          */
         open(request) {
             const { instanceId, sessionId, prepare } = request;
@@ -73,8 +74,9 @@ export function createInstanceRegistry(deps) {
             preparing.set(instanceId, intents);
             intents.add(intent);
             return (async () => {
+                let prepared;
                 try {
-                    await prepare();
+                    prepared = await prepare();
                 } finally {
                     intents.delete(intent);
                     if (intents.size === 0 && preparing.get(instanceId) === intents) {
@@ -84,7 +86,7 @@ export function createInstanceRegistry(deps) {
                 if (intent.closed) {
                     throw makeError('instance_closed', 'The canvas closed while it was opening.');
                 }
-                return ensure(instanceId, sessionId);
+                return ensure(instanceId, prepared?.sessionId ?? sessionId, prepared?.source);
             })();
         },
 

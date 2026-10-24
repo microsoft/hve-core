@@ -102,6 +102,20 @@ class FakeElement extends FakeNode {
     addEventListener(type, listener) {
         (this.listeners[type] ??= []).push(listener);
     }
+
+    /** Supports single simple selectors: `.class`, `#id`, or `tag`. */
+    querySelectorAll(selector) {
+        const test = selector.startsWith('.')
+            ? (el) => el.classList.contains(selector.slice(1))
+            : selector.startsWith('#')
+                ? (el) => el.getAttribute('id') === selector.slice(1)
+                : (el) => el.localName === selector;
+        return elements(this).filter(test);
+    }
+
+    querySelector(selector) {
+        return this.querySelectorAll(selector)[0] ?? null;
+    }
 }
 
 /** Installs the fake document and Node globals; returns a restore function. */

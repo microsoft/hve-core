@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, clear, h, icon, PHASE_META, PHASE_STATUS, plural, relTime } from './dom.mjs';
-import { filePreview, hasMarginHome, steerPanel } from './components.mjs';
+import { badge, button, clear, decisionAlias, h, icon, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
+import { disclosure, filePreview, hasMarginHome, steerPanel, workspaceEditorUri } from './components.mjs';
 import * as followupView from './view-followup.mjs';
 import * as implementView from './view-implement.mjs';
 import * as planView from './view-plan.mjs';
@@ -73,9 +73,13 @@ function announce(text) {
 
 // Lookup and navigation
 
-function find(id) {
+/** The ID a reference means in the viewed phase: a bare `D#` names that phase's decision first. */
+const aliasOf = (id) => decisionAlias(state.data?.session, id, state.ui.phase);
+
+function find(ref) {
     const session = state.data?.session;
-    if (!session || typeof id !== 'string') return null;
+    if (!session || typeof ref !== 'string') return null;
+    const id = aliasOf(ref);
     const pools = [session.research.questions, session.research.findings, session.research.evidence, session.research.lanes, session.decisions, session.plan.requirements, session.plan.critique?.findings ?? [], session.implementation.changes, session.implementation.discoveries, session.implementation.alignment, session.review.findings, session.review.history, session.followUps.items, session.feedback];
     for (const pool of pools) {
         const found = pool.find((item) => item?.id === id);
@@ -89,11 +93,12 @@ function find(id) {
     return Object.prototype.hasOwnProperty.call(session.sections, id) ? session.sections[id] : null;
 }
 
-function resolve(id) {
-    const item = find(id);
+function resolve(ref) {
+    const item = find(ref);
     if (!item) return null;
+    const id = aliasOf(ref);
     if (/^[QFCWL]\d{1,2}$/.test(id)) return { phase: 'research' };
-    if (/^D\d{1,2}$/.test(id)) return hasMarginHome(context(), item) ? { phase: item.anchor.phase } : { phase: state.ui.phase };
+    if (/^(?:plan\.)?D\d{1,3}$/.test(id)) return hasMarginHome(context(), item) ? { phase: item.anchor.phase } : { phase: state.ui.phase };
     if (/^P\d{2}(-T\d{2})?$/.test(id)) return { phase: state.ui.phase === 'implement' && /-T/.test(id) ? 'implement' : 'plan' };
     if (/^(FR|NFR|PC)-\d{3}$/.test(id)) return { phase: 'plan' };
     if (/^(CH|DS|AL)-\d{3}$/.test(id)) return { phase: 'implement' };
@@ -145,7 +150,8 @@ function targetElement(id) {
     return document.querySelector(`[data-item="${escaped}"]`) ?? document.querySelector(`[data-row="${escaped}"]`);
 }
 
-function navigate(id, phaseOverride, options = {}) {
+function navigate(ref, phaseOverride, options = {}) {
+    const id = aliasOf(ref);
     const target = resolve(id);
     const phase = phaseOverride ?? target?.phase ?? state.ui.phase;
     if (/^[CW]\d{1,2}$/.test(id)) state.ui.recordOpen = true;
@@ -161,7 +167,7 @@ function navigate(id, phaseOverride, options = {}) {
     window.requestAnimationFrame(() => {
         const element = targetElement(id);
         if (!element) {
-            announce(`${id} is not shown in ${PHASE_META[phase].label}.`);
+            announce(`${ref} is not shown in ${PHASE_META[phase].label}.`);
             return;
         }
         if ($('steer').contains(element) && $('steer').inert) openSteer();
@@ -173,7 +179,7 @@ function navigate(id, phaseOverride, options = {}) {
             element.classList.remove('is-highlight');
             if (state.ui.highlight === id) state.ui.highlight = null;
         }, 1200);
-        if (options.agent) announce(`The agent pointed you to ${id}${find(id)?.title ? `, ${find(id).title}` : ''}.`);
+        if (options.agent) announce(`The agent pointed you to ${ref}${find(id)?.title ? `, ${find(id).title}` : ''}.`);
     });
 }
 
@@ -199,20 +205,61 @@ function announceChanges(previous, next) {
     if (messages.length) announce(messages.join(' '));
 }
 
+/** Page state that belongs to one task, with its starting values. Appearance and panels are page-wide. */
+const taskUi = () => ({
+    phase: null,
+    highlight: null,
+    editing: null,
+    expanded: new Set(),
+    openEvidence: new Set(),
+    deliveryPreview: null,
+    composer: { kind: 'comment', text: '', anchor: null },
+    decisionDrafts: new Map(),
+    corrections: new Map(),
+    overrides: new Set(),
+    revealed: new Set(),
+    selectedTask: null,
+    diagramView: 'after',
+    diagramPhase: null,
+    recordOpen: false,
+    openDetails: new Set(),
+    navFilter: '',
+});
+const taskStash = new Map();
+
+/**
+ * Keeps the current task's drafts, open editor, and scroll position, and restores the next
+ * task's. Returns the document scroll position to apply after rendering.
+ */
+function switchTaskUi(previousId, next) {
+    taskStash.set(previousId, { ui: Object.fromEntries(Object.keys(taskUi()).map((key) => [key, state.ui[key]])), scroll: $('document').scrollTop });
+    const restored = taskStash.get(next.session.id);
+    taskStash.delete(next.session.id);
+    Object.assign(state.ui, restored?.ui ?? taskUi(), { highlight: null, revealed: new Set(), navFilter: '' });
+    state.ui.phase ??= next.session.session.activePhase;
+    $('navFilter').value = '';
+    return restored?.scroll ?? 0;
+}
+
 async function refresh() {
     try {
         const next = await api('/api/state');
         const previous = state.data;
+        const switched = Boolean(previous) && previous.session.id !== next.session.id;
+        const scroll = switched ? switchTaskUi(previous.session.id, next) : null;
         state.data = next;
         state.error = null;
         state.ui.phase ??= phaseFromHash() ?? next.session.session.activePhase;
+        if (switched) setHash();
         if (state.ui.editing) {
             const section = next.session.sections[state.ui.editing.sectionId];
             if (!section) state.ui.editing = null;
         }
         applyPreferences(next.preferences);
-        announceChanges(previous, next);
+        if (switched) announce(`Showing ${next.session.task.title}, ${PHASE_META[state.ui.phase].label}.`);
+        else announceChanges(previous, next);
         render();
+        if (switched) $('document').scrollTop = scroll;
         if (state.ui.revealed.size) window.setTimeout(() => state.ui.revealed.clear(), 900);
     } catch (error) {
         state.error = error;
@@ -273,7 +320,7 @@ const act = {
     setPhase,
     async answer(decisionId, kind, draft) {
         try {
-            await api('/api/feedback', { kind, target: { id: decisionId }, optionId: draft.optionId, text: draft.note?.trim() || undefined });
+            await api('/api/feedback', { kind, target: { id: decisionId }, optionId: draft.optionId ?? undefined, text: draft.note?.trim() || undefined });
             state.ui.decisionDrafts.delete(decisionId);
             state.ui.overrides.delete(decisionId);
             announce(`${kind === 'answer' ? 'Answer' : 'Override'} for ${decisionId} queued for the agent.`);
@@ -304,7 +351,24 @@ const act = {
     setDecisionDraft(id, draft) {
         const previous = state.ui.decisionDrafts.get(id);
         state.ui.decisionDrafts.set(id, draft);
-        if (previous?.optionId !== draft.optionId) render();
+        if (previous?.optionId !== draft.optionId) {
+            render();
+            return;
+        }
+        // An answer or override in the user's words is ready once it has text.
+        const submit = document.querySelector(`[data-key="submit-${CSS.escape(id)}"][data-needs-text="true"]`);
+        if (submit) submit.disabled = !draft.note?.trim();
+    },
+    /** Shows another task of this RPI session: its parent or one of its child loops. */
+    async showTask(taskId) {
+        const before = state.data?.session.id;
+        try {
+            await api('/api/task', { taskId });
+            await refresh();
+            if (state.data.session.id !== before) focusQuietly($('taskTitle'));
+        } catch (error) {
+            announce(error.message);
+        }
     },
     toggleOverride(id) {
         if (state.ui.overrides.has(id)) state.ui.overrides.delete(id);
@@ -554,11 +618,20 @@ function context() {
 
 function renderHeader() {
     const { session, view } = state.data;
-    $('taskTitle').textContent = session.task.title;
-    document.title = `RPI Workflow: ${session.task.title}`;
-    clear($('taskMeta')).append(
-        h('span', { text: `${session.task.repository} · ${session.task.branch}` }),
-        session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null);
+    const { task, source } = session;
+    const rpi = source?.kind === 'rpi';
+    $('taskTitle').textContent = task.title;
+    document.title = `RPI Workflow: ${task.title}`;
+    const where = [task.repository, task.branch].filter(Boolean).join(' · ');
+    const parent = rpi && task.parent ? session.followUps.lineage.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
+    clear($('taskMeta')).append(...[
+        rpi ? h('span', { class: 'badge tone-muted session-badge', title: `Read from ${source.statePath}` }, icon('file'), 'RPI session') : null,
+        rpi ? h('code', { class: 'task-id', title: `Task ID: ${task.id}`, text: task.id }) : null,
+        where ? h('span', { class: 'task-where', title: where, text: where }) : null,
+        parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask(parent.id) }, parent.title)) : null,
+        session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null,
+    ].filter(Boolean));
+    $('liveChip').title = rpi ? "The canvas follows this task's files while it is open." : 'The canvas shows changes as they happen.';
     const count = view.attentionCount;
     const needs = $('needsBtn');
     needs.classList.toggle('has-items', count > 0);
@@ -628,9 +701,10 @@ function renderContextBar() {
     const record = session.phases[phase];
     const meta = PHASE_STATUS[record.status] ?? PHASE_STATUS.upcoming;
     const active = session.session.activePhase;
+    const editorLink = record.artifact ? workspaceEditorUri(context(), record.artifact) : null;
     let side = null;
     if (active === phase) {
-        side = h('p', { class: 'next-action' }, icon('arrow-right'), h('span', { text: session.session.nextAction }));
+        side = session.session.nextAction ? h('p', { class: 'next-action' }, icon('arrow-right'), h('span', { text: session.session.nextAction })) : null;
     } else if (phaseReached(phase)) {
         side = button(`Go to ${PHASE_META[active].label}, where the agent is`, { iconName: 'sparkle', onClick: () => setPhase(active) });
     }
@@ -640,8 +714,9 @@ function renderContextBar() {
             badge(meta),
             record.artifact ? h('span', { class: 'context-artifact' },
                 h('code', { class: 'context-path', title: record.artifact, text: record.artifact }),
-                button('Copy artifact path', { iconName: 'copy', hideLabel: true, onClick: () => act.copy(record.artifact) })) : null,
-            record.updatedAt ? h('span', { class: 'meta' }, 'Updated ', relTime(record.updatedAt, context().now)) : null),
+                button('Copy artifact path', { iconName: 'copy', hideLabel: true, onClick: () => act.copy(record.artifact) }),
+                editorLink ? h('a', { class: 'btn btn-icon', href: editorLink, title: 'Open in editor', dataset: { key: 'open-artifact' } }, icon('external'), sr('Open in editor')) : null) : null,
+            record.updatedAt ? h('span', { class: 'meta', title: session.source?.kind === 'rpi' ? `The file last changed ${new Date(record.updatedAt).toLocaleString()}. The canvas reads it again whenever it changes.` : undefined }, 'Updated ', relTime(record.updatedAt, context().now)) : null),
         side ? h('div', { class: 'context-side' }, side) : null);
 }
 
@@ -651,6 +726,11 @@ function renderDocument() {
     if (state.error) {
         body.append(h('div', { class: 'notice tone-danger', role: 'alert' }, h('p', { class: 'notice-title' }, icon('alert'), state.error.message), h('div', { class: 'btn-row' }, button('Retry', { iconName: 'loop', onClick: refresh }))));
         if (!state.data) return;
+    }
+    const warnings = state.data.session.source?.warnings ?? [];
+    if (warnings.length) {
+        body.append(disclosure(context(), 'source-warnings', 'notice tone-attention source-warnings', `${plural(warnings.length, 'problem')} reading this task's files`,
+            h('ul', { class: 'source-warning-list' }, warnings.map((text) => h('li', { text })))));
     }
     const phase = state.ui.phase;
     if (!phaseReached(phase)) {

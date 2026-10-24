@@ -7,12 +7,12 @@ import { ACTION_DEFINITIONS, createActionHandlers } from './lib/actions.mjs';
 import { createDelivery } from './lib/delivery.mjs';
 import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
-import { buildScenario, SCENARIO_ID, STAGES } from './lib/scenario.mjs';
+import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
 import { createCanvasServer } from './lib/server.mjs';
+import { createSourceController, validateOpenInput } from './lib/sources.mjs';
 import { createStore } from './lib/store.mjs';
 
 const CANVAS_ID = 'hve-core-rpi-workflow';
-const DEFAULT_STAGE = 'implement';
 
 /** @type {import('@github/copilot-sdk/extension').CopilotSession | null} */
 let joined = null;
@@ -23,27 +23,12 @@ function log(message, level = 'info') {
 
 const makeError = (code, message) => new CanvasError(code, message);
 const store = createStore({ log: (message) => log(message, 'warning') });
+const sources = createSourceController({ store, log: (message) => log(message, 'warning') });
 
-function validateInput(input) {
-    if (input === undefined || input === null) {
-        return {};
-    }
-    if (typeof input !== 'object' || Array.isArray(input)) {
-        throw makeError('invalid_input', 'Canvas input must be an object.');
-    }
-    for (const key of Object.keys(input)) {
-        if (key !== 'scenario' && key !== 'stage') {
-            throw makeError('invalid_input', `Unknown input property: ${key}`);
-        }
-    }
-    if (input.scenario !== undefined && input.scenario !== SCENARIO_ID) {
-        throw makeError('invalid_input', `scenario must be ${SCENARIO_ID}; it is the only sample available.`);
-    }
-    if (input.stage !== undefined && !STAGES.includes(input.stage)) {
-        throw makeError('invalid_input', `stage must be one of: ${STAGES.join(', ')}.`);
-    }
-    return input;
-}
+/** Converts model and source errors into canvas errors the host shows. */
+const asCanvasError = (error) => (error instanceof ModelError
+    ? makeError(error.code, error.message)
+    : makeError('storage_failed', error instanceof Error ? error.message : 'The canvas could not load its session.'));
 
 const registry = createInstanceRegistry({
     makeError,
@@ -51,39 +36,31 @@ const registry = createInstanceRegistry({
         return createCanvasServer({
             store,
             getSessionId: () => record.sessionId,
+            getSource: () => record.source,
+            switchTask: (taskId) => sources.switchToTask(record, taskId),
             deliver: createDelivery({ getSession: () => joined, getInstanceId: () => record.instanceId }),
             log,
         });
     },
 });
 
-const handlers = createActionHandlers({ getInstance: (instanceId) => registry.get(instanceId), store, makeError });
-
-/**
- * Makes sure a session exists, loading the requested stage when asked without overwriting
- * changes the user made.
- *
- * @param {string | undefined} stage
- */
-async function ensureSession(stage) {
-    let existing;
-    try {
-        existing = await store.load(SCENARIO_ID);
-    } catch (error) {
-        throw makeError(error instanceof ModelError ? error.code : 'storage_failed', error instanceof Error ? error.message : 'Stored session could not be read.');
-    }
-    if (!existing || (stage && existing.scenario?.stage !== stage)) {
+const handlers = createActionHandlers({
+    getInstance: (instanceId) => registry.get(instanceId),
+    store,
+    makeError,
+    async switchSource(instance, request, context) {
         try {
-            return { session: await store.create(buildScenario(stage ?? DEFAULT_STAGE)), note: '' };
+            const prepared = await sources.prepare(request, {
+                workspace: request.task !== undefined && instance.source?.kind === 'rpi' ? instance.source.workspace : null,
+                candidates: [context.workingDirectory, process.cwd()],
+            });
+            sources.attach(instance, prepared);
+            return prepared;
         } catch (error) {
-            if (error instanceof ModelError && error.code === 'scenario_exists' && existing) {
-                return { session: existing, note: ' (kept your changes; load_scenario with replace: true starts over)' };
-            }
-            throw makeError(error instanceof ModelError ? error.code : 'storage_failed', error instanceof Error ? error.message : 'Session could not be saved.');
+            throw asCanvasError(error);
         }
-    }
-    return { session: existing, note: '' };
-}
+    },
+});
 
 const canvas = createCanvas({
     id: CANVAS_ID,
@@ -92,7 +69,8 @@ const canvas = createCanvas({
     inputSchema: {
         type: 'object',
         properties: {
-            scenario: { type: 'string', enum: [SCENARIO_ID], description: 'Sample session to show; the mockup ships one.' },
+            task: { type: 'string', description: 'RPI task to show from the workspace .copilot-tracking folder: "current" (the root task of the most recently active session) or a task ID. Omit to show the sample.' },
+            scenario: { type: 'string', enum: [SCENARIO_ID], description: 'Sample session to show; the canvas ships one.' },
             stage: { type: 'string', enum: [...STAGES], description: 'Stage of the sample session to show when opening.' },
         },
         additionalProperties: false,
@@ -100,22 +78,34 @@ const canvas = createCanvas({
     actions: ACTION_DEFINITIONS.map((definition) => ({ ...definition, handler: handlers[definition.name] })),
 
     async open(ctx) {
-        const input = validateInput(ctx.input);
-        /** @type {{ session: any, note: string } | undefined} */
+        const input = validateOpenInput(ctx.input, makeError);
+        /** @type {{ sessionId: string, source: any, session: any, note: string } | undefined} */
         let prepared;
         const instance = await registry.open({
             instanceId: ctx.instanceId,
             sessionId: SCENARIO_ID,
             prepare: async () => {
-                prepared = await ensureSession(input.stage);
+                try {
+                    prepared = await sources.prepare(input, { candidates: [ctx.session?.workingDirectory, process.cwd()] });
+                } catch (error) {
+                    throw asCanvasError(error);
+                }
+                return { sessionId: prepared.sessionId, source: prepared.source };
             },
         });
-        const { session, note } = /** @type {{ session: any, note: string }} */ (prepared);
+        const ready = /** @type {{ sessionId: string, source: any, session: any, note: string }} */ (prepared);
+        if (instance.sessionId !== ready.sessionId || instance.source !== ready.source) {
+            sources.attach(instance, ready);
+        }
+        const { session, note } = ready;
         const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
-        return { url: instance.server.url, title: 'RPI Workflow', status: `Sample session: ${phase}${note}` };
+        const status = ready.source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${note}` : `Sample session: ${phase}${note}`;
+        return { url: instance.server.url, title: 'RPI Workflow', status };
     },
 
     async onClose(ctx) {
+        const record = registry.get(ctx.instanceId);
+        if (record) sources.detach(record);
         await registry.close(ctx.instanceId);
     },
 });
