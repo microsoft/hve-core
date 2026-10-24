@@ -1,0 +1,279 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
+import {
+    buildTraces,
+    claimDelivery,
+    composeDelivery,
+    createFeedback,
+    deriveView,
+    editSection,
+    agentEditSection,
+    FEEDBACK_TRANSITIONS,
+    LIMITS,
+    markDelivered,
+    ModelError,
+    recordActivity,
+    recordChange,
+    recordInterpretation,
+    releaseDelivery,
+    takeFeedback,
+    toggleChecklist,
+    shareChecklist,
+    transitionFeedback,
+    updateSession,
+    updateTask,
+    upsertDecision,
+    validateSession,
+} from '../lib/model.mjs';
+import { buildScenario } from '../lib/scenario.mjs';
+
+const NOW = '2026-10-23T12:00:00.000Z';
+const base = () => buildScenario('research', Date.parse(NOW));
+
+function code(fn) {
+    try {
+        fn();
+    } catch (error) {
+        assert.ok(error instanceof ModelError, `expected ModelError, got ${error}`);
+        return error.code;
+    }
+    assert.fail('expected an error');
+}
+
+describe('feedback lifecycle', () => {
+    it('allows exactly the contract transitions', () => {
+        const states = Object.keys(FEEDBACK_TRANSITIONS);
+        let session = base();
+        for (const from of states) {
+            for (const to of states) {
+                const created = createFeedback(session, { kind: 'comment', text: `${from} to ${to}`, state: 'draft' }, NOW);
+                let s = created.session;
+                const id = created.result.id;
+                const path = { draft: [], queued: ['queued'], sent: ['queued', 'sent'], interpreted: ['queued', 'sent', 'interpreted'], applied: ['queued', 'sent', 'applied'], corrected: ['queued', 'sent', 'interpreted', 'corrected'], dismissed: ['dismissed'] }[from];
+                for (const step of path) {
+                    s = transitionFeedback(s, id, step, { interpretation: { text: 'read back' } }, NOW).session;
+                }
+                const allowed = FEEDBACK_TRANSITIONS[from].includes(to);
+                if (allowed) {
+                    assert.doesNotThrow(() => transitionFeedback(s, id, to, { interpretation: { text: 'read back' } }, NOW), `${from} -> ${to}`);
+                } else {
+                    assert.equal(code(() => transitionFeedback(s, id, to, { interpretation: { text: 'x' } }, NOW)), 'invalid_transition', `${from} -> ${to}`);
+                }
+            }
+        }
+        session = undefined;
+    });
+
+    it('answers a decision, reads back, and resolves on Looks right', () => {
+        let s = base();
+        const created = createFeedback(s, { kind: 'answer', target: { id: 'D2' }, optionId: 'a', text: 'Keep both photos.' }, NOW);
+        s = created.session;
+        assert.equal(s.decisions.find((d) => d.id === 'D2').status, 'answered');
+        const taken = takeFeedback(s, NOW);
+        assert.deepEqual(taken.result.map((item) => item.id), [created.result.id]);
+        s = recordInterpretation(taken.session, { feedbackId: created.result.id, text: 'Queue same-field conflicts.', effect: 'Adds P02-T03' }, NOW).session;
+        assert.ok(deriveView(s).interpretations.includes(created.result.id));
+        s = transitionFeedback(s, created.result.id, 'applied', {}, NOW).session;
+        assert.equal(s.decisions.find((d) => d.id === 'D2').status, 'resolved');
+    });
+
+    it('creates a prefilled correction linked to the original', () => {
+        let s = base();
+        const fb = s.feedback.find((item) => item.state === 'interpreted');
+        const corrected = transitionFeedback(s, fb.id, 'corrected', { correction: 'Only announce Synced once.' }, NOW);
+        s = corrected.session;
+        assert.equal(s.feedback.find((item) => item.id === fb.id).state, 'corrected');
+        assert.equal(corrected.result.kind, 'correction');
+        assert.equal(corrected.result.state, 'queued');
+        assert.equal(corrected.result.correctionOf, fb.id);
+        assert.equal(corrected.result.text, 'Only announce Synced once.');
+    });
+
+    it('reopens a decision when its queued correction is dismissed', () => {
+        let s = base();
+        const answer = createFeedback(s, { kind: 'answer', target: { id: 'D2' }, optionId: 'a', text: 'Keep both photos.' }, NOW);
+        s = takeFeedback(answer.session, NOW).session;
+        s = recordInterpretation(s, { feedbackId: answer.result.id, text: 'Keep both photos.' }, NOW).session;
+        const corrected = transitionFeedback(s, answer.result.id, 'corrected', { correction: 'Keep the newer photo.' }, NOW);
+        assert.equal(corrected.session.decisions.find((d) => d.id === 'D2').status, 'answered');
+        s = transitionFeedback(corrected.session, corrected.result.id, 'dismissed', {}, NOW).session;
+        const decision = s.decisions.find((d) => d.id === 'D2');
+        assert.equal(decision.status, 'needs-input');
+        assert.equal(decision.feedbackId, undefined);
+
+        let o = base();
+        const override = createFeedback(o, { kind: 'override', target: { id: 'D1' }, optionId: 'b' }, NOW);
+        o = takeFeedback(override.session, NOW).session;
+        o = recordInterpretation(o, { feedbackId: override.result.id, text: 'Use option b.' }, NOW).session;
+        const overrideCorrection = transitionFeedback(o, override.result.id, 'corrected', { correction: 'Only for new drafts.' }, NOW);
+        o = transitionFeedback(overrideCorrection.session, overrideCorrection.result.id, 'dismissed', {}, NOW).session;
+        const agentChoice = base().decisions.find((d) => d.id === 'D1').chosen;
+        assert.equal(o.decisions.find((d) => d.id === 'D1').status, 'decided');
+        assert.equal(o.decisions.find((d) => d.id === 'D1').chosen, agentChoice, 'withdrawing a corrected override restores the agent choice');
+
+        const queuedOverride = createFeedback(base(), { kind: 'override', target: { id: 'D1' }, optionId: 'b' }, NOW);
+        assert.equal(queuedOverride.session.decisions.find((d) => d.id === 'D1').chosen, 'b');
+        const withdrawn = transitionFeedback(queuedOverride.session, queuedOverride.result.id, 'dismissed', {}, NOW).session;
+        assert.equal(withdrawn.decisions.find((d) => d.id === 'D1').status, 'decided');
+        assert.equal(withdrawn.decisions.find((d) => d.id === 'D1').chosen, agentChoice, 'dismissing a queued override restores the agent choice');
+        assert.equal(s.decisions.find((d) => d.id === 'D2').chosen, undefined, 'a dismissed correction reopens an answer with no choice');
+    });
+
+    it('rejects answers to agent-owned decisions and unknown targets', () => {
+        const s = base();
+        assert.equal(code(() => createFeedback(s, { kind: 'answer', target: { id: 'D1' }, optionId: 'a' }, NOW)), 'invalid_state');
+        assert.equal(code(() => createFeedback(s, { kind: 'comment', text: 'x', target: { id: 'NOPE' } }, NOW)), 'not_found');
+        assert.equal(code(() => createFeedback(s, { kind: 'comment', text: 'x', target: { id: '__proto__' } }, NOW)), 'invalid_input');
+        assert.equal(code(() => createFeedback(s, { kind: 'comment', text: 'x', target: { id: 'constructor' } }, NOW)), 'not_found');
+        assert.doesNotThrow(() => createFeedback(s, { kind: 'override', target: { id: 'D1' }, optionId: 'b' }, NOW));
+    });
+
+    it('bounds text and item counts', () => {
+        const s = base();
+        assert.equal(code(() => createFeedback(s, { kind: 'comment', text: 'x'.repeat(LIMITS.text + 1) }, NOW)), 'invalid_input');
+        const full = structuredClone(s);
+        full.feedback = Array.from({ length: LIMITS.feedbackItems }, (_, i) => ({ id: `FB-${i + 900}`, kind: 'comment', state: 'applied', target: null, text: '', history: [] }));
+        assert.equal(code(() => createFeedback(full, { kind: 'comment', text: 'one more' }, NOW)), 'limit_reached');
+    });
+});
+
+describe('delivery composition', () => {
+    it('produces one string for preview and prompt, with a short display label', () => {
+        let s = base();
+        s = createFeedback(s, { kind: 'answer', target: { id: 'D2' }, optionId: 'a', text: 'Keep both photos.' }, NOW).session;
+        s = createFeedback(s, { kind: 'research-request', target: { id: 'F1' }, text: 'Check iOS quota.' }, NOW).session;
+        const ids = s.feedback.filter((item) => item.state === 'queued').map((item) => item.id);
+        const preview = composeDelivery(s, ids, NOW);
+        const again = composeDelivery(s, ids, NOW);
+        assert.equal(preview.prompt, again.prompt);
+        assert.equal(preview.digest, again.digest);
+        assert.doesNotMatch(preview.prompt, /revision/);
+        const claimed = claimDelivery(s, ids, NOW);
+        assert.equal(takeFeedback(claimed.session, NOW).result.length, 0);
+        assert.equal(code(() => composeDelivery(claimed.session, ids, NOW)), 'invalid_state');
+        assert.equal(code(() => claimDelivery(claimed.session, ids, NOW)), 'invalid_state');
+        const later = new Date(Date.parse(NOW) + 11 * 60 * 1000).toISOString();
+        assert.equal(takeFeedback(claimed.session, later).result.length, ids.length, 'a stale claim lapses');
+        assert.equal(releaseDelivery(claimed.session, ids, NOW).session.feedback.filter((item) => item.deliveringSince).length, 0);
+        assert.match(preview.prompt, /Chose: Merge per field/);
+        assert.match(preview.prompt, /record_interpretation/);
+        assert.equal(preview.displayPrompt, 'RPI canvas: 1 answer, 1 research request');
+        const delivered = markDelivered(s, ids, 'attach', NOW);
+        assert.deepEqual(delivered.result, ids);
+        assert.ok(delivered.session.feedback.filter((item) => ids.includes(item.id)).every((item) => item.state === 'sent' && item.delivery === 'attach'));
+        assert.equal(code(() => composeDelivery(delivered.session, ids)), 'invalid_state');
+    });
+});
+
+describe('sections', () => {
+    it('saves an edit, bumps the revision, and queues an edit event', () => {
+        const s = base();
+        const before = s.sections['research-summary'];
+        const saved = editSection(s, { sectionId: 'research-summary', markdown: 'New summary', baseRevision: before.revision }, NOW);
+        assert.equal(saved.result.conflict, false);
+        assert.equal(saved.session.sections['research-summary'].revision, before.revision + 1);
+        const event = saved.session.feedback.find((item) => item.id === saved.result.feedbackId);
+        assert.equal(event.kind, 'edit');
+        assert.equal(event.state, 'queued');
+        assert.deepEqual(event.section, { id: 'research-summary', title: before.title, revision: before.revision + 1, markdown: 'New summary', truncated: false });
+        const message = composeDelivery(saved.session, [event.id], NOW);
+        assert.match(message.prompt, /The section now reads:\n {3}~~~markdown\n {3}New summary\n {3}~~~/);
+        const taken = takeFeedback(saved.session, NOW).result.find((item) => item.id === event.id);
+        assert.equal(taken.section.markdown, 'New summary');
+        const long = editSection(s, { sectionId: 'research-summary', markdown: 'x'.repeat(9000), baseRevision: before.revision }, NOW);
+        const longEvent = long.session.feedback.find((item) => item.id === long.result.feedbackId);
+        assert.equal(longEvent.section.markdown.length, 8000);
+        assert.equal(longEvent.section.truncated, true);
+        assert.match(composeDelivery(long.session, [longEvent.id], NOW).prompt, /get_state detail "full"/);
+    });
+
+    it('reports a conflict when the agent changed the section meanwhile', () => {
+        const s = base();
+        const base0 = s.sections['finding-f3'].revision;
+        const agent = agentEditSection(s, { sectionId: 'finding-f3', markdown: 'Agent text' }, NOW).session;
+        const result = editSection(agent, { sectionId: 'finding-f3', markdown: 'Mine', baseRevision: base0 }, NOW);
+        assert.equal(result.result.conflict, true);
+        assert.equal(result.result.section.markdown, 'Agent text');
+        assert.equal(result.session, agent);
+    });
+});
+
+describe('decisions, tasks, and session', () => {
+    it('creates user and agent decisions and validates options', () => {
+        let s = base();
+        s = upsertDecision(s, { owner: 'user', phase: 'research', title: 'Pick one', question: 'Which?', options: [{ label: 'A' }, { label: 'B' }] }, NOW).session;
+        const added = s.decisions.at(-1);
+        assert.equal(added.id, 'D5');
+        assert.equal(added.status, 'needs-input');
+        assert.equal(code(() => upsertDecision(s, { owner: 'agent', title: 'No choice', options: [{ label: 'A' }] }, NOW)), 'invalid_input');
+        s = upsertDecision(s, { owner: 'agent', title: 'Chosen', chosen: 'a', options: [{ id: 'a', label: 'A' }] }, NOW).session;
+        assert.equal(s.decisions.at(-1).status, 'decided');
+        assert.ok(deriveView(s).decidedByAgent.some((d) => d.id === s.decisions.at(-1).id));
+    });
+
+    it('moves tasks and tracks the current task', () => {
+        let s = buildScenario('implement', Date.parse(NOW));
+        s = updateTask(s, { taskId: 'P02-T02', status: 'done' }, NOW).session;
+        assert.equal(s.implementation.current, null);
+        s = updateTask(s, { taskId: 'P02-T03', status: 'in-progress', note: 'Use the Review tab' }, NOW).session;
+        assert.equal(s.implementation.current.taskId, 'P02-T03');
+        assert.deepEqual(s.plan.phases[1].tasks[2].guidance, ['Use the Review tab']);
+        assert.equal(code(() => updateTask(s, { taskId: 'P99-T99', status: 'done' }, NOW)), 'not_found');
+    });
+
+    it('keeps the newest activity lines only', () => {
+        let s = buildScenario('implement', Date.parse(NOW));
+        for (let i = 0; i < LIMITS.activity + 5; i += 1) {
+            s = recordActivity(s, { text: `line ${i}`, kind: 'run' }, NOW).session;
+        }
+        assert.equal(s.implementation.activity.length, LIMITS.activity);
+        assert.equal(s.implementation.activity.at(-1).text, `line ${LIMITS.activity + 4}`);
+    });
+
+    it('updates phase and session state', () => {
+        const s = updateSession(base(), { activePhase: 'plan', phaseStatus: { research: 'done' }, nextAction: 'Plan it' }, NOW).session;
+        assert.equal(s.session.activePhase, 'plan');
+        assert.equal(s.phases.plan.status, 'active');
+        assert.equal(s.phases.research.status, 'done');
+        assert.equal(code(() => updateSession(base(), { activePhase: 'deploy' }, NOW)), 'invalid_input');
+    });
+
+    it('toggles and shares checklists', () => {
+        let s = toggleChecklist(base(), { phase: 'research', itemId: 'R3', checked: true }, NOW).session;
+        assert.equal(s.checklists.research.find((i) => i.id === 'R3').checked, true);
+        s = shareChecklist(s, 'research', NOW).session;
+        const item = s.feedback.at(-1);
+        assert.equal(item.kind, 'checklist');
+        assert.match(item.text, /3 of 6 items checked/);
+    });
+});
+
+describe('validation and traces', () => {
+    it('rejects foreign and future documents', () => {
+        assert.equal(code(() => validateSession({ format: 'other', version: 1 })), 'storage_corrupt');
+        const future = { ...base(), version: 2 };
+        assert.equal(code(() => validateSession(future)), 'storage_unsupported');
+    });
+
+    it('builds linear traces from explicit links', () => {
+        const traces = buildTraces({ links: [['Q1', 'F1'], ['F1', 'D1'], ['D1', 'P01-T01']] });
+        assert.deepEqual(traces['D1'], ['Q1', 'F1', 'D1', 'P01-T01']);
+        assert.deepEqual(buildTraces({ links: [['A', 'B'], ['B', 'A']] })['A'].length, 2);
+    });
+
+    it('derives traces from reference fields so recorded work joins them', () => {
+        const s = buildScenario('implement', Date.parse(NOW));
+        assert.deepEqual(buildTraces(s)['F3'], ['Q2', 'F3', 'D2', 'D5', 'P02-T03'], 'reference fields rebuild the sample chains');
+        const reviewed = buildTraces(buildScenario('review', Date.parse(NOW)));
+        assert.deepEqual(reviewed['Q1'], ['Q1', 'F1', 'D1', 'P01-T01', 'CH-001', 'RV-004']);
+        assert.deepEqual(reviewed['P03-T02'], ['P03-T02', 'CH-007', 'RV-005'], 'the strip follows the longest path onward');
+        const added = recordChange(s, { taskId: 'P04-T01', title: 'Status chip announces transitions', behavior: 'Announces Synced once.' }, NOW);
+        const traces = buildTraces(added.session);
+        assert.deepEqual(traces['P04-T01'].slice(-2), ['P04-T01', added.result.id]);
+        assert.ok(traces[added.result.id].includes('P04-T01'));
+    });
+});
