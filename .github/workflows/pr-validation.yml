@@ -165,14 +165,18 @@ jobs:
         shell: pwsh
         run: |
           # A Node project is any skill (dir containing SKILL.md), slide deck
-          # (direct child of slides/), or the workflow validator that ships at
-          # least one *.test.* / *.spec.* (mjs/cjs/js). The project root is the
-          # node --test working dir.
+          # (direct child of slides/), Copilot extension or canvas (dir under
+          # .github/extensions containing extension.mjs), or the workflow
+          # validator that ships at least one *.test.* / *.spec.* (mjs/cjs/js).
+          # The project root is the node --test working dir.
           $candidates = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { $_.DirectoryName }) +
             @(Get-ChildItem -Path slides -Directory -Force -ErrorAction SilentlyContinue |
             ForEach-Object { $_.FullName }) +
+            @(Get-ChildItem -Path .github/extensions -Recurse -Force -Filter extension.mjs -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            ForEach-Object { $_.DirectoryName }) +
             @(Get-Item -Path scripts/linting/workflow-validator -Force -ErrorAction SilentlyContinue |
             ForEach-Object { $_.FullName })
           $projects = @($candidates |
@@ -306,9 +310,13 @@ jobs:
       changed-files-only: true
       # Deck tests also read HTML, CSS and JSON sources, so each slide deck and
       # the hve-slides skill that carries the starter deck run on any change in
-      # their directory. Other projects receive '' and keep node-tests.yml's
-      # JS-family default.
-      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory) || '' }}
+      # their directory. Extension and canvas tests also read UI assets and the
+      # repository project entries beside them, so every extension runs on any
+      # change under .github/extensions/. The session-log-canvas-update skill
+      # tests its schema baseline against the canvas indexer, so it runs on
+      # changes in its directory or under .github/extensions/. Other projects
+      # receive '' and keep node-tests.yml's JS-family default.
+      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory) || startsWith(matrix.directory, '.github/extensions/') && '^\.github/extensions/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions)/' || '' }}
     strategy:
       fail-fast: false
       matrix:

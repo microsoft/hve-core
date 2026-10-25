@@ -2650,6 +2650,124 @@ Describe 'Copilot OTel static test selection' -Tag 'Unit' {
     }
 }
 
+Describe 'Node test discovery and selection for Copilot extensions' -Tag 'Unit' {
+    BeforeAll {
+        $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'
+        $script:NodeSelection = [string]$script:PrValidation['jobs']['node-tests']['with']['changed-paths-pattern']
+
+        function Get-NodeSelectionPattern {
+            <#
+            .SYNOPSIS
+            Returns the literal changed-paths pattern that one matrix condition selects.
+            .PARAMETER Condition
+            Exact condition text that precedes the pattern in the expression.
+            .OUTPUTS
+            [string] Extended regex for the matching lane.
+            #>
+            [CmdletBinding()]
+            [OutputType([string])]
+            param(
+                [Parameter(Mandatory = $true)]
+                [string]$Condition
+            )
+
+            $match = [regex]::Match($script:NodeSelection, [regex]::Escape($Condition) + " && '([^']+)'")
+            if (-not $match.Success) {
+                throw "Node changed-paths-pattern has no branch for $Condition"
+            }
+            return $match.Groups[1].Value
+        }
+
+        $script:ExtensionPattern = Get-NodeSelectionPattern -Condition "startsWith(matrix.directory, '.github/extensions/')"
+        $script:CanvasUpdatePattern = Get-NodeSelectionPattern -Condition "matrix.directory == '.github/skills/session-log-canvas-update'"
+
+        # Run the discovery step against a fixture tree with every candidate kind.
+        $fixture = Join-Path $TestDrive 'node-discovery'
+        foreach ($file in @(
+                '.github/skills/with-tests/SKILL.md'
+                '.github/skills/with-tests/tests/skill.test.mjs'
+                '.github/skills/no-tests/SKILL.md'
+                'slides/deck/tests/deck.test.mjs'
+                '.github/extensions/pkg/canvas/extension.mjs'
+                '.github/extensions/pkg/canvas/tests/canvas.test.mjs'
+                '.github/extensions/pkg/canvas/node_modules/dep/extension.mjs'
+                '.github/extensions/pkg/canvas/node_modules/dep/dep.test.mjs'
+                '.github/extensions/pkg/tool-only/extension.mjs'
+                '.github/extensions/canvas/extension.mjs'
+            )) {
+            $path = Join-Path $fixture $file
+            New-Item -ItemType Directory -Path (Split-Path -Parent $path) -Force | Out-Null
+            Set-Content -LiteralPath $path -Value '' -Encoding utf8
+        }
+        $securityDirectory = Join-Path $fixture 'scripts/security'
+        New-Item -ItemType Directory -Path $securityDirectory -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $script:RepositoryRoot 'scripts/security/Assert-WorkflowProjectDirectory.ps1') -Destination $securityDirectory
+
+        $step = Get-NamedJobStep -Document $script:PrValidation -JobName 'discover-node-projects' -StepName 'Find Node projects'
+        $outputPath = Join-Path $fixture 'github-output.txt'
+        $stepPath = Join-Path $fixture 'step.ps1'
+        Set-Content -LiteralPath $stepPath -Value ("`$env:GITHUB_OUTPUT = '$outputPath'`n" + [string]$step['run']) -Encoding utf8
+        Push-Location -LiteralPath $fixture
+        try {
+            & (Get-Process -Id $PID).Path -NoProfile -NonInteractive -File $stepPath | Out-Null
+            $script:DiscoveryExitCode = $LASTEXITCODE
+        } finally {
+            Pop-Location
+        }
+        $directoriesLine = @(Get-Content -LiteralPath $outputPath -Encoding utf8 | Where-Object { $_ -like 'directories=*' })[0]
+        $script:DiscoveredDirectories = [string[]]@(($directoriesLine -replace '^directories=', '') | ConvertFrom-Json)
+    }
+
+    It 'Discovers extensions that ship tests alongside skills and slide decks' {
+        $script:DiscoveryExitCode | Should -Be 0
+        $script:DiscoveredDirectories | Should -Be @('.github/extensions/pkg/canvas', '.github/skills/with-tests', 'slides/deck')
+    }
+
+    It 'Skips extension directories without tests, project entries, and dependencies' {
+        $script:DiscoveredDirectories | Should -Not -Contain '.github/extensions/pkg/tool-only'
+        $script:DiscoveredDirectories | Should -Not -Contain '.github/extensions/canvas'
+        $script:DiscoveredDirectories | Should -Not -Contain '.github/extensions/pkg/canvas/node_modules/dep'
+    }
+
+    It 'Selects every extension lane for <Path>' -ForEach @(
+        @{ Path = '.github/extensions/hve-core/session-log/lib/indexer.mjs' }
+        @{ Path = '.github/extensions/hve-core/session-log/ui/styles.css' }
+        @{ Path = '.github/extensions/hve-core/session-log/ui/index.html' }
+        @{ Path = '.github/extensions/hve-core/session-log/README.md' }
+        @{ Path = '.github/extensions/session-log/extension.mjs' }
+    ) {
+        $Path | Should -Match $script:ExtensionPattern
+    }
+
+    It 'Does not select extension lanes for <Path>' -ForEach @(
+        @{ Path = '.github/skills/session-log-canvas-update/scripts/event-schema.mjs' }
+        @{ Path = 'docs/plugins/hve-core.md' }
+        @{ Path = 'plugin.json' }
+    ) {
+        $Path | Should -Not -Match $script:ExtensionPattern
+    }
+
+    It 'Selects the canvas update skill lane for <Path>' -ForEach @(
+        @{ Path = '.github/skills/session-log-canvas-update/assets/event-shapes.json' }
+        @{ Path = '.github/skills/session-log-canvas-update/scripts/event-schema.mjs' }
+        @{ Path = '.github/extensions/hve-core/session-log/lib/indexer.mjs' }
+    ) {
+        $Path | Should -Match $script:CanvasUpdatePattern
+    }
+
+    It 'Does not select the canvas update skill lane for <Path>' -ForEach @(
+        @{ Path = '.github/skills/session-log-canvas-update-extra/SKILL.md' }
+        @{ Path = '.github/skills/hve-slides/scripts/build-decks.mjs' }
+    ) {
+        $Path | Should -Not -Match $script:CanvasUpdatePattern
+    }
+
+    It 'Keeps the slide deck branch and the JS-family default' {
+        $script:NodeSelection | Should -Match ([regex]::Escape("startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory)"))
+        $script:NodeSelection | Should -Match "\|\| '' \}\}$"
+    }
+}
+
 Describe 'PR validation hosted conformance boundary' -Tag 'Unit' {
     BeforeAll {
         $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'

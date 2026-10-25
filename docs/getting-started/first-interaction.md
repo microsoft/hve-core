@@ -3,12 +3,12 @@ title: Your First Interaction
 description: Talk to an HVE Core agent and see it respond in under 60 seconds
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-10-23
 ms.topic: tutorial
 keywords:
   - getting started
   - first interaction
-   - rpi agent
+  - rpi agent
   - github copilot
 estimated_reading_time: 2
 ---
@@ -38,7 +38,7 @@ and natural-language requests reach the intended workflow owner.
 ## How Workflow Context Persists
 
 HVE Core workflows produce durable artifacts when work needs to span phases
-or sessions. RPI uses research, plan, phase-detail, change, and review records.
+or sessions. RPI uses research, plan, critique, change, and review records.
 Backlog, planning, and documentation workflows use their own state and handoff
 files. Resume from those workflow-owned artifacts instead of relying on a
 generic conversation-memory or checkpoint command.

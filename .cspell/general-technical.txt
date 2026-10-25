@@ -1379,6 +1379,7 @@ windows
 gruntwork
 
 # File Formats & Extensions
+asar
 csv
 docx
 json
@@ -1415,6 +1416,7 @@ frontend
 haspopup
 hoverable
 hrefs
+inuse
 labelledby
 middleware
 microservice
@@ -1425,10 +1427,14 @@ webhooks
 
 # Proper Nouns & Company Names
 Berryiii
+Cascadia
 Chronograf
+Consolas
 Kapacitor
 Katello
+Menlo
 Metaverse
+Neue
 Newtonsoft
 rhysd
 Segoe

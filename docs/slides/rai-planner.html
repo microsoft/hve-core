@@ -42,7 +42,9 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--canvas); color: var(--ink); }
-body.reveal-viewport { background: var(--canvas); color: var(--ink); }
+/* The glow sits on the viewport so it reaches the window edges. */
+body.reveal-viewport { background: radial-gradient(ellipse 72% 78% at 100% 0%, #24324a50, transparent 72%) var(--canvas); color: var(--ink); }
+[data-reading-view="true"] body.reveal-viewport { background-attachment: fixed; }
 button { font: inherit; color: var(--ink); background: #242b35; border: 1px solid var(--line); border-radius: 6px; padding: 9px 14px; cursor: pointer; }
 button:hover:not(:disabled) { background: #354354; border-color: var(--cyan); }
 button:disabled { opacity: .5; cursor: default; }
@@ -53,8 +55,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* Slide canvas and type */
 .reveal { position: absolute; inset: 0 0 var(--presenter-height); height: calc(100% - var(--presenter-height)); color: var(--ink); font-family: inherit; font-size: 30px; }
 .reveal .slides { text-align: left; }
-.reveal .slides > section { height: 900px; padding: 50px 65px 36px; background: var(--canvas); }
-.reveal .slides > section::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 100% 0%, #24324a40, transparent 55%); }
+.reveal .slides > section { height: 900px; padding: 50px 65px 36px; background: transparent; }
 .reveal h1, .reveal h2, .reveal h3, .reveal p { margin: 0; color: inherit; text-transform: none; }
 /* The visible deck title is a slide heading; a visually hidden h1 in main titles every slide. */
 .reveal h2.deck-title { margin: 26px 0 0; font-size: 104px; line-height: 1.04; letter-spacing: -3.5px; font-weight: 580; }
@@ -231,7 +232,6 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .reveal :is(button, a, summary, input, [tabindex]) { scroll-margin-top: calc(var(--controls-height, 150px) + 16px); }
 [data-reading-view="true"] .reveal .slides { position: static; width: 100% !important; height: auto !important; transform: none !important; zoom: 1 !important; perspective: none; }
 [data-reading-view="true"] .reveal .slides > section { position: relative; inset: auto; height: auto; min-height: 0; padding: 24px; max-width: 960px; margin: 0 auto; transform: none !important; }
-[data-reading-view="true"] .reveal .slides > section::before { display: none; }
 .reveal .slides > section[aria-hidden="true"] { display: none !important; }
 [data-reading-view="true"] .reveal .slides section * { min-width: 0; max-width: 100%; font-size: inherit; letter-spacing: 0; overflow-wrap: anywhere; }
 [data-reading-view="true"] .reveal .slides section :is(h1, h2) { font-size: 2rem; line-height: 1.2; margin: 20px 0; }

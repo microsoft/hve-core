@@ -5,8 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="HVE Core updates from April to September 2026: RPI skills, HVE Builder, evidence and plugin installation.">
-  <title>HVE Core updates / September 2026</title>
+  <meta name="description" content="HVE Core updates from April to October 2026: RPI skills, HVE Builder, evidence and plugin installation.">
+  <title>HVE Core updates / October 2026</title>
   <link rel="stylesheet" href="vendor/reveal.css">
   <link rel="stylesheet" href="theme.css">
   <link rel="stylesheet" href="components.css">
@@ -22,99 +22,121 @@
   <div class="reveal">
     <main class="slides" tabindex="0" aria-label="HVE Core updates presentation">
 
-      <section id="opening" data-title="HVE Core updates" data-chapter="Evolution" data-sources="baseline,skills,builder-introduction,loops">
-        <div class="eyebrow">MICROSOFT / HVE CORE <span class="separator">/</span> SEPTEMBER 2026</div>
+      <section id="opening" class="cover-slide" data-title="HVE Core updates" data-chapter="Evolution" data-sources="baseline,skills,builder-introduction,loops,advisory,lanes">
         <div class="hero-grid">
           <div>
             <h1>HVE Core<br><em>updates</em></h1>
             <p class="lead">RPI skills, HVE Builder<br>and plugin installation.</p>
-            <div class="date-pill">APRIL 01 <span>&#8594;</span> SEPTEMBER 10, 2026</div>
+            <p class="date-range">April 1 to October 21, 2026</p>
           </div>
           <ol class="opening-workflow" aria-label="RPI phase order">
             <li><span class="phase-order">01</span><div><strong>Research</strong><span>Find evidence and compare approaches</span></div></li>
-            <li><span class="phase-order">02</span><div><strong>Plan</strong><span>Agree on tasks and resolve critique findings</span></div></li>
+            <li><span class="phase-order">02</span><div><strong>Plan</strong><span>Agree on tasks, then critique the plan</span></div></li>
             <li><span class="phase-order">03</span><div><strong>Implement</strong><span>Make changes and record the results</span></div></li>
             <li><span class="phase-order">04</span><div><strong>Review</strong><span>Compare the work with the plan</span></div></li>
           </ol>
         </div>
         <div class="slide-bottom"><span>microsoft/hve-core</span><span>Includes scripted examples</span></div>
-        <aside class="notes">Cover the move to reusable RPI skills, the introduction of HVE Builder and the current installation options. The dates span April 1 through September 10, 2026. April provides the starting snapshot; later slides cite specific changes.</aside>
+        <aside class="notes">This covers the move to reusable RPI skills, how HVE Builder now reviews its own work, and how to install HVE Core. The dates run from April 1 to October 21, 2026. April is the starting snapshot. Later slides cite the pull request behind each change.</aside>
       </section>
 
-      <section id="timeline" data-title="Changes since April" data-chapter="Evolution" data-sources="baseline,skills,builder-introduction,one-plugin,builder-reassessment,loops">
-        <div class="eyebrow">01 / EVOLUTION</div>
+      <section id="timeline" data-title="Changes since April" data-chapter="Evolution" data-sources="baseline,skills,builder-introduction,one-plugin,loops,advisory,optional-steps,prompts-retired,lanes">
         <h2>Changes since April</h2>
-        <p class="subhead">The starting snapshot and four changes from repository history.</p>
-        <div class="timeline">
-          <article><span class="time">APR 01</span><h3>Task agents</h3><p>Task prompts connect agents through handoffs. Research already uses a subagent.</p><small>Repository snapshot</small></article>
-          <article><span class="time">JUN 24</span><h3>RPI skills</h3><p>Phase workflows move into reusable skills.</p><small>PR #1953</small></article>
-          <article><span class="time">JUL 11</span><h3>HVE Builder</h3><p>A skill for creating, reviewing and testing Copilot customizations.</p><small>Introduced in PR #2438</small></article>
-          <article><span class="time">AUG 16</span><h3>One plugin</h3><p>Existing plugin packages are combined into a single HVE Core plugin.</p><small>PR #2712</small></article>
-          <article><span class="time">SEP 08</span><h3>Workflow controls</h3><p>RPI gains automatic loops. HVE Builder can reassess a corrected version.</p><small>PRs #2859 / #2858</small></article>
+        <div class="slide-body">
+          <ol class="timeline" aria-label="Merged changes from April to October 2026, oldest first">
+            <li><span class="time">APR 01</span><h3>Task agents</h3><p>Handoffs between task agents. Research already uses a subagent.</p><small>Repository snapshot</small></li>
+            <li><span class="time">JUN 24</span><h3>RPI skills</h3><p>Phase workflows move into reusable skills.</p><small>PR #1953</small></li>
+            <li><span class="time">JUL 11</span><h3>HVE Builder</h3><p>A skill for creating, reviewing and testing customizations.</p><small>Introduced in PR #2438</small></li>
+            <li><span class="time">AUG 16</span><h3>One plugin</h3><p>The packages combine into one HVE Core plugin.</p><small>PR #2712</small></li>
+            <li><span class="time">SEP 08</span><h3>Automatic RPI</h3><p>RPI Agent adds participation choices and automatic loops.</p><small>PR #2859</small></li>
+            <li class="recent"><span class="era-note sr-only">Since September 10</span><span class="time">SEP 18</span><h3>Advisory helpers</h3><p>Helpers only suggest. HVE Builder reviews instead of testing.</p><small>PR #2902</small></li>
+            <li class="recent"><span class="time">SEP 28</span><h3>Optional steps</h3><p>Skip the plan critique or Review if you want. No RPI step runs a script.</p><small>PR #3061</small></li>
+            <li class="recent"><span class="time">OCT 07</span><h3>No prompt files</h3><p>48 prompts retired. Their rules now live in skills and agents.</p><small>PR #3111</small></li>
+            <li class="recent"><span class="time">OCT 19</span><h3>Parallel lanes</h3><p>Helper lanes run side by side. One critique and one Review per request.</p><small>PR #3238</small></li>
+          </ol>
         </div>
-        <p class="footnote">Pacific dates. HVE Builder's first merged skill appears on July 11; plugin support predates August.</p>
-        <aside class="notes">The timeline uses merged repository history. PR #2438 adds the HVE Builder skill on July 11; the file is absent in the parent commit. June 24 Pacific is June 25 UTC. The separate retirement of legacy task entry points occurred in #2474 on July 26 Pacific and is covered on the next slide.</aside>
+        <p class="footnote">Pacific dates, spaced evenly rather than to scale. Earlier plugin support predates August.</p>
+        <aside class="notes">The timeline uses merged repository history in Pacific time, with events evenly spaced rather than to scale. PR #2438 adds the HVE Builder skill on July 11; the file is absent in its parent commit. June 24 Pacific is June 25 UTC, and September 28 Pacific is September 29 UTC. Everything after the September 10 marker merged after this deck's previous update. The July 26 retirement of the old task entry points (#2474) is on the next slide.</aside>
       </section>
 
       <section id="then-now" data-rpi-agent data-title="From handoffs to reusable phases" data-chapter="Evolution" data-sources="baseline,skills,consolidation,research,agent">
-        <div class="eyebrow">APRIL BASELINE / CURRENT CONTRACT</div>
         <h2>Task-agent handoffs became reusable skills</h2>
-        <div class="compare">
-          <article class="handoff-column historical">
-            <span class="label">APRIL / SEPARATE TASK AGENTS</span>
-            <ol class="legacy-flow" aria-label="Historical task-agent handoffs">
-              <li><div class="legacy-node"><strong>Task Researcher</strong><code>/task-research</code></div><div class="handoff-link"><span aria-hidden="true">&#8595;</span><span>Hand off to planning</span></div></li>
-              <li><div class="legacy-node"><strong>Task Planner</strong><code>/task-plan</code></div><div class="handoff-link"><span aria-hidden="true">&#8595;</span><span>Hand off to implementation</span></div></li>
-              <li><div class="legacy-node"><strong>Task Implementor</strong><code>/task-implement</code></div></li>
-            </ol>
-            <p class="small">Task Researcher used a named research subagent. Agent and prompt files carried the workflow.</p>
-          </article>
-          <article class="handoff-column current">
-            <span class="label">CURRENT / STANDALONE PHASE SKILLS</span>
-            <div class="skill-stack"><code>/rpi-research</code><code>/rpi-plan</code><code>/rpi-implement</code><code>/rpi-review</code></div>
-            <p class="small">Each skill defines its phase's work and evidence. The RPI Agent can coordinate the phases, but is optional.</p>
-          </article>
+        <div class="slide-body">
+          <div class="compare">
+            <article class="handoff-column historical">
+              <span class="label">April: separate task agents</span>
+              <ol class="legacy-flow" aria-label="Historical task-agent handoffs">
+                <li><div class="legacy-node"><strong>Task Researcher</strong><code>/task-research</code></div><div class="handoff-link"><i class="flow-arrow down" aria-hidden="true"></i><span>Hand off to planning</span></div></li>
+                <li><div class="legacy-node"><strong>Task Planner</strong><code>/task-plan</code></div><div class="handoff-link"><i class="flow-arrow down" aria-hidden="true"></i><span>Hand off to implementation</span></div></li>
+                <li><div class="legacy-node"><strong>Task Implementor</strong><code>/task-implement</code></div></li>
+              </ol>
+              <p class="small">Task Researcher used a named research subagent. Agent and prompt files carried the workflow.</p>
+            </article>
+            <article class="handoff-column current">
+              <span class="label">Now: standalone phase skills</span>
+              <div class="skill-stack"><code>/rpi-research</code><code>/rpi-plan</code><code>/rpi-implement</code><code>/rpi-review</code></div>
+              <p class="small">Each skill defines its phase's work and evidence. The RPI Agent can coordinate the phases, but is optional.</p>
+            </article>
+          </div>
         </div>
         <aside class="notes">The old flow shown here stops at implementation. Current RPI also has a review skill. Subagents existed in April; the change moved phase behavior into reusable skills and gave helpers narrower assignments. #2474 removed the old task-agent entry points.</aside>
       </section>
 
+      <section id="rpi-opening" class="chapter-slide" data-state="chapter" data-rpi-agent data-title="RPI: research, plan, implement, review" data-chapter="RPI" data-sources="skills,research,plan,implement,review,agent">
+        <div class="chapter-grid">
+          <div>
+            <h2>Research, plan,<br><em>implement, review</em></h2>
+            <p class="lead">Four phase skills. Each one leaves<br>a document the next phase reads.</p>
+          </div>
+          <ol class="chapter-list" aria-label="Chapters">
+            <li><span>01</span>Evolution</li>
+            <li aria-current="true"><span>02</span>RPI</li>
+            <li><span>03</span>HVE Builder</li>
+            <li><span>04</span>Plugins</li>
+          </ol>
+        </div>
+        <aside class="notes">This chapter covers the four RPI phase skills, the optional RPI Agent that coordinates them, and the helper lanes that work beside each phase. Research writes the research document, planning writes the plan, implementation writes the changes record, and review compares all of it. The chapter ends with a scripted walkthrough that builds a small app.</aside>
+      </section>
+
       <section id="select-rpi-agent" data-rpi-agent data-title="Switch Chat to RPI Agent" data-chapter="RPI" data-sources="agent,copilot-composer">
-        <div class="eyebrow">RPI / CHAT SETUP</div>
         <h2>Switch Chat to RPI Agent</h2>
-        <div class="agent-setup-layout">
-          <div id="agent-selection-example"></div>
-          <div class="agent-setup-instructions">
-            <h3>Before starting the coordinated workflow</h3>
-            <ol>
-              <li>Open the agent dropdown below the VS Code Copilot Chat input.</li>
-              <li>Select <strong>RPI Agent</strong>.</li>
-              <li>Describe your task or invoke a phase skill such as <code>/rpi-research</code>.</li>
-            </ol>
-            <p>The agent coordinates phase handoffs and asks how you want to participate.</p>
+        <div class="slide-body">
+          <div class="agent-setup-layout">
+            <div id="agent-selection-example"></div>
+            <div class="agent-setup-instructions">
+              <h3>Before starting the coordinated workflow</h3>
+              <ol>
+                <li>Open the agent dropdown below the VS Code Copilot Chat input.</li>
+                <li>Select <strong>RPI Agent</strong>.</li>
+                <li>Describe your task or invoke a phase skill such as <code>/rpi-research</code>.</li>
+              </ol>
+              <p>The agent coordinates phase handoffs and asks how you want to participate.</p>
+            </div>
           </div>
         </div>
         <p class="footnote">RPI Agent is optional. The phase skills can also run independently. This dropdown is a reconstruction.</p>
-        <aside class="notes">Show the agent dropdown before introducing the individual phase skills. Select RPI Agent in the real VS Code Chat input to use the coordinated workflow. The example shown here is display-only. Reminder buttons remain on the later usage slides and open the same reference. The app walkthrough begins with the request after this setup.</aside>
+        <aside class="notes">Show the agent dropdown before introducing the individual phase skills. Select RPI Agent in the real VS Code Chat input to use the coordinated workflow. The example shown here is display-only. The header on every RPI slide repeats this reminder and opens the same reference. The app walkthrough begins with the request after this setup.</aside>
       </section>
 
-      <section id="spine" data-rpi-agent data-title="What each RPI skill produces" data-chapter="RPI" data-sources="research,plan,implement,review,critique,agent">
-        <div class="eyebrow">02 / RPI</div>
+      <section id="spine" data-rpi-agent data-title="What each RPI skill produces" data-chapter="RPI" data-sources="research,plan,implement,review,critique,optional-steps,lanes,agent">
         <h2>What each RPI skill produces</h2>
-        <div class="phase-spine">
-          <article><b>01</b><h3>Research</h3><p>Evidence, alternatives,<br>readiness</p><code>/rpi-research</code></article>
-          <article><b>02</b><h3>Plan</h3><p>Goals, requirements,<br>dependencies</p><code>/rpi-plan</code></article>
-          <article><b>03</b><h3>Implement</h3><p>Source changes,<br>validation evidence</p><code>/rpi-implement</code></article>
-          <article><b>04</b><h3>Review</h3><p>Findings, decisions,<br>routed follow-up</p><code>/rpi-review</code></article>
+        <div class="slide-body">
+          <div class="phase-spine">
+            <article><b>01</b><h3>Research</h3><p>Evidence, alternatives,<br>readiness</p><code>/rpi-research</code></article>
+            <article><b>02</b><h3>Plan</h3><p>Goals, requirements,<br>dependencies</p><code>/rpi-plan</code></article>
+            <article><b>03</b><h3>Implement</h3><p>Source changes,<br>validation evidence</p><code>/rpi-implement</code></article>
+            <article><b>04</b><h3>Review</h3><p>Findings, decisions,<br>routed follow-up</p><code>/rpi-review</code></article>
+          </div>
+          <div class="gate-banner"><p><strong>Planning runs one critique by default.</strong> <code>rpi-plan-critique</code> checks the finished plan from four angles.<br>Pass <code>critique=skip</code> to leave it out. Fixing its findings does not start another critique.</p></div>
         </div>
-        <div class="gate-banner"><p><strong>Planning includes one critique.</strong> <code>rpi-plan-critique</code> checks the completed plan.<br>The planning assistant addresses its findings before implementation.</p></div>
-        <aside class="notes">Research uses Wider, Deeper and Contrarian waves. Standalone skills stop at their own phase and identify the next command. The optional RPI Agent can advance according to the participation mode the user selects.</aside>
+        <aside class="notes">Research runs Wider, Deeper and Contrarian waves, starting from a balanced posture. Standalone skills stop at their own phase and name the next command. The optional RPI Agent advances based on the participation choice. Since #3238, each request gets at most one critique and one Review unless the user asks for more. Since #3061, both steps can be skipped and recorded as skipped.</aside>
       </section>
 
-      <section id="research-evidence" data-rpi-agent data-title="Check the research recommendation" data-chapter="RPI" data-sources="research,research-template,agent">
-        <div class="eyebrow">RESEARCH</div>
+      <section id="research-evidence" data-rpi-agent data-title="Check the research recommendation" data-chapter="RPI" data-sources="research,research-template,research-lanes,lanes,agent">
         <h2>Check the research recommendation</h2>
-        <div class="split">
-          <div class="editor"><div class="editor-bar"><span class="file-icon">M</span> snack-queue-research.md <span class="surface-tag">Illustrative excerpt</span></div><pre><code><span class="tok-heading">## Executive Summary</span>
+        <div class="slide-body">
+          <div class="split">
+            <div class="editor"><div class="editor-bar"><span class="file-icon">M</span> snack-queue-research.md <span class="surface-tag">Illustrative excerpt</span></div><pre><code><span class="tok-heading">## Executive Summary</span>
 Use a local queue for the first demo.
 
 <span class="tok-heading">## Findings</span>
@@ -127,16 +149,23 @@ Session-only state / persistent storage
 
 <span class="tok-heading">## Planning Readiness and Next Step</span>
 Ready to plan a local-only demo</code></pre><div class="editor-status">Markdown <span>Example using the current template</span></div></div>
-          <div class="talk-track"><h3>Questions to ask</h3><ol><li>What evidence would change this recommendation?</li><li>Why was the alternative rejected?</li><li>What do we still need to learn before planning?</li></ol><div class="micro-flow"><span>Wider</span><i>&#8594;</i><span>Deeper</span><i>&#8594;</i><span>Contrarian</span></div><p class="small">C# identifies codebase evidence.<br>W# identifies an external source.</p></div>
+            <div class="talk-track">
+              <h3>Questions to ask</h3>
+              <ol><li>What evidence would change this recommendation?</li><li>Why was the alternative rejected?</li><li>What do we still need to learn before planning?</li></ol>
+              <ol class="wave-strip" aria-label="Research waves, in order"><li>Wider</li><li>Deeper</li><li>Contrarian</li></ol>
+              <p class="small">Each wave can hand its open questions to helper lanes that run in parallel. A search lane runs at <code>low</code> effort; a lane that reads docs or code runs at <code>max</code>.</p>
+            </div>
+          </div>
         </div>
-        <aside class="notes">The research template puts the summary, findings and alternatives before the detailed Research Record. Read the recommendation and its cited evidence together. C1 and W1 here are sample identifiers; no snack research was executed.</aside>
+        <p class="footnote">C# marks codebase evidence and W# an external source. Research starts <code>balanced</code>; set <code>posture=focused</code> or <code>expansive</code> to change it.</p>
+        <aside class="notes">The research template puts the summary, findings and alternatives ahead of the detailed Research Record. The excerpt skips a few sections, such as What You May Not Know and Risks and Open Questions. Read the recommendation and its cited evidence together. Each independent question gets its own narrow lane, and the lanes go out in one parallel batch. The parent picks each lane's effort from how it finds the answer: low when a search lists every match, max when it has to read documentation, issues or code paths. A "not found" from a lane below max gets confirmed before it's recorded, and the Research Record lists every lane with its effort. Focused stays inside a bounded task; expansive is for broad questions where the options are still unknown. C1 and W1 are sample identifiers; no snack research ran.</aside>
       </section>
 
       <section id="plan-evidence" data-rpi-agent data-title="Agree on what the plan will deliver" data-chapter="RPI" data-sources="plan,plan-template,agent">
-        <div class="eyebrow">PLAN</div>
         <h2>Agree on what the plan will deliver</h2>
-        <div class="split">
-          <div class="editor"><div class="editor-bar"><span class="file-icon">M</span> snack-queue-plan.md <span class="surface-tag">Illustrative excerpt</span></div><pre><code><span class="tok-heading">### [ ] P01: Make snack voting visible</span>
+        <div class="slide-body">
+          <div class="split">
+            <div class="editor"><div class="editor-bar"><span class="file-icon">M</span> snack-queue-plan.md <span class="surface-tag">Illustrative excerpt</span></div><pre><code><span class="tok-heading">### [ ] P01: Make snack voting visible</span>
 Goals:
 * Teammates can see the current queue.
 
@@ -152,226 +181,330 @@ References:
 * Research: local-scope finding
 Dependencies:
 * None</code></pre></div>
-          <div class="talk-track"><h3>Review the task before coding</h3><p><strong>Goals</strong> describe the result. <strong>Requirements</strong> make it checkable.</p><p><strong>Details</strong> and <strong>References</strong> give the implementer context.</p><p>Use the dependencies and before/after diagrams to spot missing work.</p><span class="callout">Refer to task IDs when requesting changes.</span></div>
+            <div class="talk-track"><h3>Review the task before coding</h3><p><strong>Goals</strong> describe the result. <strong>Requirements</strong> make it checkable.</p><p><strong>Details</strong> and <strong>References</strong> give the implementer context.</p><p>Use the dependencies and before/after diagrams to spot missing work.</p><p class="callout">Refer to task IDs when requesting changes.</p></div>
+          </div>
         </div>
         <aside class="notes">The current plan keeps the checklist, decisions, requirements and critique disposition in one document. Pxx identifies a phase; Pxx-Txx identifies a task. These IDs remain usable when the file's line numbers change.</aside>
       </section>
 
-      <section id="critique-changes" data-rpi-agent data-title="Resolve plan gaps before implementation" data-chapter="RPI" data-sources="critique,plan,implement,changes-template,agent">
-        <div class="eyebrow">CRITIQUE / CHANGES</div>
+      <section id="critique-changes" data-rpi-agent data-title="Resolve plan gaps before implementation" data-chapter="RPI" data-sources="critique,critique-lenses,plan,implement,changes-template,agent">
         <h2>Resolve plan gaps before implementation</h2>
-        <div class="evidence-columns">
-          <article class="evidence-document">
-            <div class="evidence-document-header"><code>plan-critique.md</code><span>Before coding</span></div>
-            <div class="evidence-document-body">
-              <h3>PC-001: missing reset check</h3>
-              <p>The plan requires Reset, but does not say how to check the displayed count.</p>
-              <dl><dt>Verdict</dt><dd>Revise</dd><dt>Planning assistant's action</dt><dd>Add a check that Reset clears votes and displays zero. Record PC-001 as resolved.</dd></dl>
-            </div>
-          </article>
-          <article class="evidence-document">
-            <div class="evidence-document-header"><code>changes.md</code><span>After coding</span></div>
-            <div class="evidence-document-body">
-              <h3>Record what was done</h3>
-              <pre><code>## Completed Work
+        <div class="slide-body">
+          <div class="evidence-columns">
+            <article class="evidence-document">
+              <div class="evidence-document-header"><code>plan-critique.md</code><span>Before coding</span></div>
+              <div class="evidence-document-body">
+                <h3>PC-001: missing reset check</h3>
+                <p>The Coverage lens found that the plan requires Reset but never says how to check the displayed count.</p>
+                <dl><dt>Verdict</dt><dd>Revise</dd><dt>Planning assistant's action</dt><dd>Add a check that Reset clears votes and displays zero. Record PC-001 as resolved.</dd></dl>
+              </div>
+            </article>
+            <article class="evidence-document">
+              <div class="evidence-document-header"><code>changes.md</code><span>After coding</span></div>
+              <div class="evidence-document-body">
+                <h3>Record what was done</h3>
+                <pre><code>## Completed Work
 P01-T02: reset and render added.
 
 ## Validation Record
 Reset clears votes: Passed
 Displayed count is zero: Passed</code></pre>
-              <p class="small">Include the check results, plan changes and any unfinished work.</p>
-            </div>
-          </article>
+                <p class="small">Include the check results, plan changes and any unfinished work.</p>
+              </div>
+            </article>
+          </div>
         </div>
         <p class="footnote">Example records. Critique examines the plan; the changes record documents implementation and its checks.</p>
-        <aside class="notes">A missing plan check is a planning gap, not an observed code defect. rpi-plan-critique returns execution status separately from Pass, Revise or Blocked. The planning assistant addresses the findings and records their disposition; it does not request another critique. The example check results are scripted.</aside>
+        <aside class="notes">A missing plan check is a planning gap, not an observed code defect. rpi-plan-critique looks at the plan through four lenses: Coverage, Evidence, Executability and Risk. They run in parallel through RPI Plan Critic when subagents are allowed, or directly in the planning assistant. The planning assistant verifies each candidate and assigns the PC IDs. Execution status (Complete, Partial, Blocked or Not produced) is separate from the Pass, Revise or Blocked verdict. Fixing the findings does not start another critique. The example check results are scripted.</aside>
       </section>
 
-      <section id="review-evidence" data-rpi-agent data-title="Review the work against the requirements" data-chapter="RPI" data-sources="review,review-template,agent">
-        <div class="eyebrow">REVIEW</div>
+      <section id="review-evidence" data-rpi-agent data-title="Review the work against the requirements" data-chapter="RPI" data-sources="review,review-template,rpi-reviewer,agent">
         <h2>Review the work against the requirements</h2>
-        <div class="review-inputs"><span>Plan</span><span>Critique dispositions</span><span>Changes and check results</span><b aria-hidden="true">&#8594;</b><strong>Review record</strong></div>
-        <div class="evidence-columns">
-          <article class="evidence-document">
-            <div class="evidence-document-header"><span>Review worker's finding</span><code>RV-001</code></div>
-            <div class="evidence-document-body">
-              <h3>Example: the count stays at 3</h3>
-              <dl><dt>Expected</dt><dd>Reset displays zero.</dd><dt>Observed</dt><dd>The check records a visible count of 3.</dd><dt>Resolution</dt><dd>Correct the reset display and record a passing check.</dd></dl>
-            </div>
-          </article>
-          <article class="evidence-document">
-            <div class="evidence-document-header"><span>Primary assistant's decision</span></div>
-            <div class="evidence-document-body">
-              <h3>Parent Decision Record</h3>
-              <dl><dt>Finding</dt><dd>Accepted</dd><dt>Next action</dt><dd>Return the defect to implementation.</dd><dt>Review execution / outcome</dt><dd><strong>Complete / Defects found</strong></dd></dl>
-            </div>
-          </article>
+        <div class="slide-body">
+          <div class="review-inputs"><span>Plan</span><span>Critique dispositions</span><span>Changes and check results</span><i class="flow-arrow" aria-hidden="true"></i><strong>Review record</strong></div>
+          <div class="evidence-columns">
+            <article class="evidence-document">
+              <div class="evidence-document-header"><span>RPI Reviewer's candidate</span><span>Suggestion</span></div>
+              <div class="evidence-document-body">
+                <h3>Example: the count stays at 3</h3>
+                <dl><dt>Expected</dt><dd>Reset displays zero.</dd><dt>Observed</dt><dd>The check records a visible count of 3.</dd><dt>Suggested route</dt><dd>Fix the reset display and record a passing check.</dd></dl>
+              </div>
+            </article>
+            <article class="evidence-document">
+              <div class="evidence-document-header"><span>Primary assistant's decision</span><code>RV-001</code></div>
+              <div class="evidence-document-body">
+                <h3>Parent Decision Record</h3>
+                <dl><dt>Finding</dt><dd>Accepted after reading the cited check</dd><dt>Next action</dt><dd>Return the defect to implementation.</dd><dt>Review execution / outcome</dt><dd><strong>Complete / Defects found</strong></dd></dl>
+              </div>
+            </article>
+          </div>
         </div>
-        <p class="footnote">Separate failure example: Review is Complete, but its outcome is Defects found. Retained decisions still require user input.</p>
-        <aside class="notes">This is a separate failed-check example, not the successful changes record on slide 7. The review worker compares supplied evidence and proposes findings and routes. The primary assistant records final decisions in an append-only Parent Decision Record. RPI allows one post-implementation Review per task; a later fix does not trigger another review of that same task.</aside>
+        <p class="footnote">In this failure example, the review ran to completion and found a defect. The reviewer is optional; the assistant can compare the evidence itself.</p>
+        <aside class="notes">This is a separate failed-check example, not the passing changes record on the previous slide. RPI Reviewer is an optional read-only helper. It gets one bounded slice of evidence and returns candidate findings with their locations. It must cite where each requirement it calls consistent is met. The primary assistant reads that evidence, assigns the RV IDs and appends decisions to the Parent Decision Record. Each task gets one Review; a later fix does not start another unless the user asks.</aside>
       </section>
 
       <section id="modes" data-rpi-agent data-title="Choose when the agent should ask you" data-chapter="RPI" data-sources="agent,loops,copilot-questions">
-        <div class="eyebrow">OPTIONAL RPI AGENT / LIFECYCLE COORDINATION</div>
         <h2>Choose when the agent should ask you</h2>
-        <div id="participation-example" class="participation-popup"></div>
+        <div class="slide-body">
+          <div id="participation-example" class="participation-popup"></div>
+        </div>
         <p class="footnote">Example selection. Safety confirmations, workflow gates and human-review requirements apply in every mode.</p>
         <aside class="notes">The four labels come from the RPI Agent. Their descriptions distinguish automatic phase progression from retained decisions and manual advancement. The third option is shown selected to match the later walkthrough. This is a display-only question card; it does not change the running session's mode. The custom-answer line and selected-row styling follow the supplied VS Code screenshot.</aside>
       </section>
 
-      <section id="bounded-loop" data-rpi-agent data-title="When automatic RPI continues or stops" data-chapter="RPI" data-sources="agent,review,critique">
-        <div class="eyebrow">AUTOMATIC RPI</div>
+      <section id="bounded-loop" data-rpi-agent data-title="When automatic RPI continues or stops" data-chapter="RPI" data-sources="agent,review,critique,lanes">
         <h2>When an automatic session continues or stops</h2>
-        <div class="loop-line"><span>Research</span><b>&#8594;</b><span>Plan <small>+ critique</small></span><b>&#8594;</b><span>Implement</span><b>&#8594;</b><span>Review</span></div>
-        <div class="loop-return"><span>&#8627; Required work remains within scope</span><strong>Start a new child task at Research</strong></div>
-        <div class="three-points"><article><h3>Continue</h3><p>The current phase's gates pass and the next action is authorized.</p></article><article><h3>Pause</h3><p>The agent needs a retained user decision, missing evidence or a safety confirmation.</p></article><article><h3>Stop</h3><p>The request is complete, the user stops, or repeated attempts cannot make progress.</p></article></div>
-        <p class="footnote">Follow-ups cover work required by the request. Optional cleanup stays separate.</p>
-        <aside class="notes">The wrapper tracks task completion separately from session completion. A new child cannot bypass unresolved gates or missing evidence. If a previous attempt made no progress, the agent needs new evidence or a materially different corrective approach before starting another loop.</aside>
-      </section>
-
-      <section id="helpers" data-rpi-agent data-title="Select helpers by task fit" data-chapter="RPI" data-sources="research,plan,implement,review,builder-extensions,agent">
-        <div class="eyebrow">RPI HELPERS</div>
-        <h2>Select helpers for the work at hand</h2>
-        <div class="split">
-          <div class="selection-flow"><span>Available skill or subagent</span><b>&#8595;</b><span>Name or description matches research</span><b>&#8595;</b><span>Expertise fits the question and scope</span><b>&#8595;</b><strong>Primary assistant combines the evidence</strong></div>
-          <div class="talk-track"><h3>You can supply an alternative</h3><p>A research skill can provide domain criteria. A registered research subagent can investigate an independent question.</p><ul><li>RPI Researcher writes one evidence file.</li><li>RPI Planner revises one assigned phase.</li><li>RPI Review Builder writes one review record.</li></ul><p class="small">The assignment does not expand permissions. The primary assistant keeps the decisions.</p></div>
+        <div class="slide-body">
+          <div class="loop">
+            <div class="loop-line"><span>Research</span><i class="flow-arrow" aria-hidden="true"></i><span>Plan <small>+ critique</small></span><i class="flow-arrow" aria-hidden="true"></i><span>Implement</span><i class="flow-arrow" aria-hidden="true"></i><span>Review</span></div>
+            <div class="loop-return"><span>Required work remains within scope</span><strong>Start a child task at Research, without critique or Review</strong></div>
+          </div>
+          <div class="three-points"><article><h3>Continue</h3><p>The current phase's gates pass and the next action is authorized.</p></article><article><h3>Pause</h3><p>The agent needs a retained user decision, missing evidence or a safety confirmation.</p></article><article><h3>Stop</h3><p>The request is complete, the user stops, or repeated attempts cannot make progress.</p></article></div>
         </div>
-        <aside class="notes">Research checks the helper's name or description as well as its relevance to the question. It can also run directly without a worker. Planning supports adaptive, never and always delegation; always blocks when a worker cannot be dispatched. Implementation delegates only ready, independent whole phases with nonoverlapping writes. Review uses one selected builder. User-provided helpers must be available in the host and respect the same limits.</aside>
+        <p class="footnote">Child tasks skip the critique and Review unless you ask for them. The closeout says which changes were validated but not reviewed.</p>
+        <aside class="notes">The wrapper tracks task completion separately from session completion. A new child cannot bypass unresolved gates or missing evidence. If a previous attempt made no progress, the agent needs new evidence or a materially different approach before starting another loop. The first task runs one critique and one Review by default. Child loops skip both unless the user asked for them on follow-up work (#3238). Optional cleanup stays a separate, unselected follow-up.</aside>
       </section>
 
-      <section id="rpi-demo" class="demo-slide" data-rpi-agent data-title="Example: build a snack-voting app" data-chapter="RPI" data-sources="research,plan,critique,implement,review,agent,copilot-composer,copilot-questions,agent-flow-chart,agent-flow-source,copilot-diff,edit-review">
-        <div class="eyebrow">RPI / SCRIPTED WALKTHROUGH</div>
+      <section id="helpers" data-rpi-agent data-title="Helpers work in parallel lanes" data-chapter="RPI" data-sources="lanes,advisory,research,research-lanes,critique-lenses,rpi-reviewer,review-lanes,agent">
+        <h2>Helpers work in parallel lanes</h2>
+        <div class="slide-body">
+          <div class="lane-board">
+            <article class="lane-phase">
+              <h3>Research</h3>
+              <code class="lane-skill">rpi-research</code>
+              <p class="lane-helper">RPI Researcher, one lane per question</p>
+              <ul class="lanes" aria-label="Research lanes, dispatched together">
+                <li><span>Search for reset code</span><small>low</small></li>
+                <li><span>Read storage docs</span><small>max</small></li>
+              </ul>
+              <p class="lane-merge">The parent reads the sources<br>and assigns <code>C#</code> and <code>W#</code>.</p>
+            </article>
+            <article class="lane-phase">
+              <h3>Plan critique</h3>
+              <code class="lane-skill">rpi-plan-critique</code>
+              <p class="lane-helper">RPI Plan Critic, one lane per lens</p>
+              <ul class="lanes" aria-label="Critique lenses, dispatched together">
+                <li><span>Coverage</span><small>low</small></li>
+                <li><span>Evidence</span><small>medium</small></li>
+                <li><span>Executability</span><small>medium</small></li>
+                <li><span>Risk</span><small>medium</small></li>
+              </ul>
+              <p class="lane-merge">The parent verifies each candidate<br>and assigns <code>PC-xxx</code>.</p>
+            </article>
+            <article class="lane-phase">
+              <h3>Review</h3>
+              <code class="lane-skill">rpi-review</code>
+              <p class="lane-helper">RPI Reviewer, one lane per comparison</p>
+              <ul class="lanes" aria-label="Review lanes, dispatched together">
+                <li><span>Check task markers</span><small>low</small></li>
+                <li><span>Compare P01 requirements</span><small>high</small></li>
+              </ul>
+              <p class="lane-merge">The parent checks the evidence<br>and assigns <code>RV-xxx</code>.</p>
+            </article>
+          </div>
+        </div>
+        <p class="footnote">Helpers only suggest and never write files. Tags show each lane's effort. With <code>subagents=none</code>, the main assistant does all of it.</p>
+        <aside class="notes">Since #2902, every RPI subagent is optional and read-only. RPI Planner is gone, and RPI Review Builder became RPI Reviewer. Since #3238, each phase sends its independent lanes in one parallel batch and picks each lane's effort from the work. Research uses low for a search that lists every match and max for reading. Review uses low for tool checks such as task markers, high for comparing against written requirements, and max for behavior no requirement states. Critique lenses start from their defaults. RPI subagents run on Claude Haiku 5.5. If a model rejects the requested effort, the dispatch retries once at medium. The lane topics are examples; the parent decides how to split the work. Implementation follows the plan and does not use helper lanes.</aside>
+      </section>
+
+      <section id="rpi-settings" data-rpi-agent data-title="Settings you can pass" data-chapter="RPI" data-sources="research,plan,critique,review,optional-steps,lanes,agent">
+        <h2>Settings you can pass</h2>
+        <div class="slide-body">
+          <table class="settings-table">
+            <caption class="sr-only">RPI settings, the skills that accept them and what they change</caption>
+            <thead><tr><th scope="col">Setting</th><th scope="col">Used by</th><th scope="col">What it changes</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><code>posture=focused</code></th><td>Research</td><td>Stays inside a bounded task. <code>expansive</code> widens the search.</td></tr>
+              <tr><th scope="row"><code>critique=skip</code></th><td>Plan</td><td>Skips the critique. <code>deep</code> asks for a deeper one.</td></tr>
+              <tr><th scope="row"><code>effort=high</code></th><td>Research, critique, Review</td><td>Sets the reasoning effort for every helper lane.</td></tr>
+              <tr><th scope="row"><code>critique-effort=low</code></th><td>Plan</td><td>Sets the effort the plan's critique lenses use.</td></tr>
+              <tr><th scope="row"><code>subagents=none</code></th><td>Every phase skill</td><td>Runs the work in the main assistant, with no helpers.</td></tr>
+              <tr><th scope="row">Ask to skip Review</th><td>RPI Agent</td><td>Moves on to Follow-up using validation evidence.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="footnote">A skipped critique or Review is recorded as skipped, never as a pass. Effort levels depend on what the host supports.</p>
+        <aside class="notes">Pass these as arguments, for example /rpi-research posture=focused, or say them in plain words. Effort accepts auto, low, medium, high, xhigh or max. The RPI Agent carries effort and subagent choices through every phase. Critique and Review skipping came in #3061; lanes and effort settings came in #3238.</aside>
+      </section>
+
+      <section id="rpi-demo" class="demo-slide" data-rpi-agent data-title="Example: build a snack-voting app" data-chapter="RPI" data-sources="research,research-lanes,plan,critique,critique-lenses,implement,review,rpi-reviewer,lanes,agent,copilot-composer,copilot-questions,agent-flow-chart,agent-flow-source,copilot-diff,edit-review">
+        <div class="slide-meta"><span class="tag">Scripted walkthrough</span></div>
         <h2>Example: build a snack-voting app</h2>
-        <div class="demo" data-demo="rpi"></div>
-        <aside class="notes">Start by selecting RPI Agent in the agent dropdown below the VS Code Chat input. This walkthrough uses that optional agent to coordinate the phases; the skills can also run independently. Use Next step, Back and Reset to continue. The transcript, tool calls, subagent and results are scripted. Research and Plan each include a question and answer. Implementation shows completed tasks, a changes excerpt and a diff. The plan source and preview share the same graph data; the renderer supports this fixed example only.</aside>
+        <div class="slide-body"><div class="demo" data-demo="rpi"></div></div>
+        <aside class="notes">Start by selecting RPI Agent in the agent dropdown below the VS Code Chat input. This walkthrough uses that optional agent to coordinate the phases; the skills can also run independently. Use Next step, Back and Reset to continue. The transcript, tool calls, helper lanes and results are scripted. The research trace shows two RPI Researcher lanes in one batch: a low-effort search and a max-effort docs read. Research and Plan each include a question and answer. Implementation shows completed tasks, a changes excerpt and a diff. The plan source and preview share the same graph data; the renderer supports this fixed example only.</aside>
       </section>
 
-      <section id="builder-opening" class="chapter-slide" data-title="HVE Builder: create reusable customizations" data-chapter="HVE Builder" data-sources="builder,builder-introduction,consolidation">
-        <div class="eyebrow">03 / HVE BUILDER</div>
-        <div class="chapter-mark" aria-hidden="true">{<span>+</span>}</div>
-        <h2>Create reusable<br><em>customizations</em></h2>
-        <p class="lead">HVE Builder helps author skills, instructions,<br>agents and prompts, then checks their quality.</p>
-        <aside class="notes">HVE Builder was introduced as a skill in #2438 on July 11. It supports multiple customization types and uses discovery, static review and behavior assessment. The next slides explain how that work can extend RPI.</aside>
-      </section>
-
-      <section id="builder-evolution" data-title="From Prompt Builder to HVE Builder" data-chapter="HVE Builder" data-sources="builder-introduction,consolidation,builder,builder-alias">
-        <div class="eyebrow">HVE BUILDER HISTORY</div>
-        <h2>From Prompt Builder to HVE Builder</h2>
-        <div class="compare">
-          <article class="panel historical"><span class="label">HISTORICAL ENTRY POINT</span><h3>Prompt Builder</h3><p>Prompt-engineering work used a dedicated agent, prompt and instruction file.</p><div class="date-pill">JUL 11 / #2438 <span>&#8594;</span> JUL 26 / #2474</div><p class="small">HVE Builder was introduced first. The old entry-point files were retired on July 26.</p></article>
-          <article class="panel current"><span class="label">CURRENT SKILL</span><h3>HVE Builder</h3><p>Create or improve a customization, refactor it, or request a read-only review.</p><div class="artifact-chips"><span>Skills</span><span>Agents</span><span>Subagents</span><span>Instructions</span><span>Prompts</span></div><p class="small">The <code>prompt-builder</code>, <code>prompt-refactor</code> and <code>prompt-analyze</code> skills now route to HVE Builder.</p></article>
+      <section id="builder-opening" class="chapter-slide" data-state="chapter" data-title="HVE Builder: create reusable customizations" data-chapter="HVE Builder" data-sources="builder,builder-introduction,advisory">
+        <div class="chapter-grid">
+          <div>
+            <h2>Create reusable<br><em>customizations</em></h2>
+            <p class="lead">HVE Builder writes and reviews skills,<br>instructions, agents and prompts.</p>
+          </div>
+          <ol class="chapter-list" aria-label="Chapters">
+            <li><span>01</span>Evolution</li>
+            <li><span>02</span>RPI</li>
+            <li aria-current="true"><span>03</span>HVE Builder</li>
+            <li><span>04</span>Plugins</li>
+          </ol>
         </div>
-        <aside class="notes">The full set of modes is create, improve, refactor, replace, review and validate. The compatibility aliases use the HVE Builder workflow. They do not maintain separate authoring or testing loops.</aside>
+        <aside class="notes">HVE Builder arrived as a skill in #2438 on July 11. It works on prompts, instructions, agents, subagents and skills. Since September 18 (#2902), it checks its own work with a review pass instead of behavior tests. The next slides cover that change and how a skill built this way can extend RPI.</aside>
       </section>
 
-      <section id="builder-flow" data-title="How HVE Builder checks a customization" data-chapter="HVE Builder" data-sources="builder,builder-contract,builder-tester">
-        <div class="eyebrow">HVE BUILDER WORKFLOW</div>
-        <h2>How HVE Builder checks a customization</h2>
-        <div class="builder-flow"><span><b>01</b>Discover</span><i>&#8594;</i><span><b>02</b>Author / revise</span><i>&#8594;</i><span><b>03</b>Validate +<br>static review</span><i>&#8594;</i><span><b>04</b>Freeze</span><i>&#8594;</i><span><b>05</b>Assess<br>behavior</span></div>
-        <div class="three-points"><article><h3>Gather requirements</h3><p>Read repository conventions and relevant extensions. Use <code>rpi-research</code> when a decision needs more evidence.</p></article><article><h3>Check the right version</h3><p>Major changes need behavior evidence for the version being delivered. Supported skips for smaller changes are recorded.</p></article><article><h3>Separate editing and testing</h3><p>The primary assistant changes the source. The tester assesses the frozen version without editing it.</p></article></div>
-        <aside class="notes">The exact work depends on the requested mode. Read-only review does not authorize edits. Mechanical checks precede independent static review; required behavior assessment covers the frozen candidate. The workflow-contract reference defines the applicable gates.</aside>
+      <section id="builder-evolution" data-title="From Prompt Builder to HVE Builder" data-chapter="HVE Builder" data-sources="builder-introduction,consolidation,aliases-removed,builder">
+        <h2>From Prompt Builder to HVE Builder</h2>
+        <div class="slide-body">
+          <div class="compare">
+            <article class="panel historical"><h3>Prompt Builder <span class="tag">Retired</span></h3><p>Prompt work had its own agent, prompt and instruction file. Three skills then kept the old names working.</p><p class="date-span"><span>Jul 26, #2474</span><i class="flow-arrow" aria-hidden="true"></i><span>Oct 5, #3113</span></p><p class="small">The agent files went first. The <code>prompt-builder</code>, <code>prompt-analyze</code> and <code>prompt-refactor</code> aliases were removed on October 5.</p></article>
+            <article class="panel current"><h3>HVE Builder <span class="tag accent">Current</span></h3><p>Create, improve, refactor, replace, review or validate a customization. Name the mode directly.</p><div class="artifact-chips"><span>Skills</span><span>Agents</span><span>Subagents</span><span>Instructions</span><span>Prompts</span></div><p class="small">With no mode, it creates, improves and refactors together. Review or validate on its own never edits source.</p></article>
+          </div>
+        </div>
+        <aside class="notes">HVE Builder came first, on July 11 (#2438). The Prompt Builder agent, prompt and instruction were retired on July 26 (#2474). Compatibility skills kept the old names working until #3113 removed them on October 5. That was a breaking change: use /hve-builder and name the mode, for example mode=review. HVE Builder still authors prompt files for repositories that use them, even though HVE Core no longer ships any.</aside>
       </section>
 
-      <section id="frozen-evidence" data-title="Keep test evidence tied to its version" data-chapter="HVE Builder" data-sources="builder-contract,builder-tester,builder-reassessment">
-        <div class="eyebrow">SEPTEMBER REFINEMENT / #2858</div>
-        <h2>Keep test evidence tied to its version</h2>
-        <div class="revision-flow"><div class="revision"><span>CANDIDATE A</span><strong>Freeze</strong><p>Assess this version<br>and report findings</p></div><div class="revision-link"><b>Assistant corrects the source</b><span>&#8594;</span><small>Using the reported findings</small></div><div class="revision"><span>CANDIDATE B</span><strong>Refreeze</strong><p>Repeat affected checks<br>and required assessment</p></div></div>
-        <div class="gate-banner"><p>Keep A's report with A. After a justified correction, assess B using evidence for that version.</p></div>
-        <p class="footnote">Behavior testing defaults to simulation. Native execution needs an explicit request and the required safety controls.</p>
-        <aside class="notes">#2858 added parent-owned behavior reassessment. The parent is the assistant managing HVE Builder. It may correct and refreeze a candidate within its authorized scope; the tester remains read-only. Repeating an unchanged assessment to obtain a different verdict is prohibited. Partial, Deferred or Blocked execution cannot establish a pass.</aside>
+      <section id="builder-flow" data-title="Review replaced behavior testing" data-chapter="HVE Builder" data-sources="advisory,builder,builder-contract">
+        <h2>Review replaced behavior testing</h2>
+        <div class="slide-body">
+          <div class="lifecycle-compare">
+            <div class="lifecycle historical" role="group" aria-labelledby="lifecycle-before">
+              <p class="lifecycle-label" id="lifecycle-before"><span>Before</span>A separate tester checked a frozen version</p>
+              <ol class="lifecycle-steps">
+                <li>Discover</li><li>Author</li><li>Static review</li><li class="removed"><s>Freeze</s> <small>removed</small></li><li class="removed"><s>Assess behavior</s> <small>removed</small></li>
+              </ol>
+            </div>
+            <div class="lifecycle current" role="group" aria-labelledby="lifecycle-now">
+              <p class="lifecycle-label" id="lifecycle-now"><span>Now</span>The assistant reviews its own candidate</p>
+              <ol class="lifecycle-steps">
+                <li><b>01</b>Scope</li><li><b>02</b>Author</li><li><b>03</b>Validate</li><li class="emphasis"><b>04</b>Review pass</li><li><b>05</b>Resolve</li>
+              </ol>
+            </div>
+          </div>
+          <div class="three-points"><article><h3>Modes combine</h3><p>Create, improve and refactor run together by default. Review or validate alone stays read-only.</p></article><article><h3>Checks come first</h3><p>Local checks pass before the review starts, so the review looks at a finished candidate.</p></article><article><h3>Stop when stuck</h3><p>Another correction cycle needs a clear purpose and evidence that it will make progress.</p></article></div>
+        </div>
+        <p class="footnote">Removed on September 18 in #2902: the hve-builder-tester skill, HVE Artifact Tester, freeze, sandbox, fidelity levels and the behavior gate.</p>
+        <aside class="notes">#2902 removed lifecycle machinery that had become a source of confusion. A run now scopes the work, captures the baseline for existing targets, authors the candidate, runs non-mutating local checks, runs one review pass and resolves the outcome as Pass, Revise, Deferred or Blocked. rpi-research comes in only for open-ended exploration or a decision-critical evidence gap. Repeated same-cause failures or oscillating edits are no-progress signals; the run stops and names the smallest next action. The September 8 reassessment rule (#2858) went away with the tester.</aside>
+      </section>
+
+      <section id="review-pass" data-title="The assistant decides what passes" data-chapter="HVE Builder" data-sources="advisory,builder-reviewer,builder-dispatch,builder-contract,builder-rubric">
+        <h2>The assistant decides what passes</h2>
+        <div class="slide-body">
+          <div class="reviewer-strip"><span><strong>HVE Builder Reviewer</strong>Optional and read-only, in fresh context</span><i class="flow-arrow" aria-hidden="true"></i><span><strong>Suggested verdict: Revise</strong>Advisory only</span></div>
+          <table class="ledger">
+            <caption class="sr-only">Reviewer findings and the assistant's decisions</caption>
+            <thead><tr><th scope="col">Finding</th><th scope="col">Reviewer suggestion</th><th scope="col">Assistant's decision</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><code>R-001</code><small>High / required</small></th><td>A stop rule in a reference file still contradicts the new skip-with-reason behavior.</td><td><span class="decision accepted">Accepted</span>Fixed in the reference file. A targeted re-review closed it.</td></tr>
+              <tr><th scope="row"><code>R-002</code><small>Low / advisory</small></th><td>One sentence reads as unclear.</td><td><span class="decision rejected">Rejected</span>The sentence fits the skill's purpose and repository conventions.</td></tr>
+            </tbody>
+          </table>
+          <p class="ledger-result"><strong>Recorded verdict: Pass</strong> for the revision after R-001 was closed.</p>
+        </div>
+        <p class="footnote">Adapted from the example in PR #2902, where HVE Builder updates a code-review skill.</p>
+        <aside class="notes">The reviewer never sees the author's reasoning, and its verdict and severities are suggestions. The assistant reads each cited location and accepts or rejects the finding with a reason. That includes rejecting a finding that calls an instruction unclear when the instruction fits its purpose. Accepted required findings get fixed in one batch, affected checks rerun, and a targeted closure checks just those IDs. Use the reviewer when the authoring context is long, when a change touches a decision rule, gate, write authority or safety behavior, or when someone asks for an isolated review. Otherwise the assistant reviews the candidate itself. The reviewer runs on GPT-6 Luna (#2992).</aside>
       </section>
 
       <section id="extend-rpi" data-rpi-agent data-title="Add domain criteria to RPI research" data-chapter="HVE Builder" data-sources="builder-extensions,research,builder,agent">
-        <div class="eyebrow">EXTENDING RPI</div>
         <h2>Add domain criteria to RPI research</h2>
-        <div class="split">
-          <div class="editor"><div class="editor-bar"><span class="file-icon">S</span> snack-evidence / SKILL.md <span class="surface-tag">Illustrative excerpt</span></div><pre><code><span class="tok-muted">---</span>
+        <div class="slide-body">
+          <div class="split">
+            <div class="editor"><div class="editor-bar"><span class="file-icon">S</span> snack-evidence / SKILL.md <span class="surface-tag">Illustrative excerpt</span></div><pre><code><span class="tok-muted">---</span>
 <span class="tok-key">name:</span> snack-evidence
-<span class="tok-key">description:</span> Use during research on
-  office snack queues to assess inventory
-  evidence, freshness and uncertainty.
+<span class="tok-key">description:</span> Use during research
+  when a task involves office snack stock.
+  Separates counted stock from estimates
+  and reports missing counts as unknown.
 <span class="tok-muted">---</span>
 <span class="tok-heading">## Evidence criteria</span>
-Separate counted stock from estimates.
 Record the source and observation time.
-Report missing counts as unknown.
+Report a missing count as unknown.
 
 <span class="tok-heading">## Boundary</span>
 Read-only; do not order snacks.
-The primary assistant recommends next steps.</code></pre></div>
-          <div class="talk-track"><h3>Describe when to use the skill</h3><p>The description should name the research task and the evidence it helps assess.</p><p>For a separate investigation, provide a research subagent with a stable name, host registration and a specific output file.</p><span class="callout">Instructions match paths.<br>Skills match tasks.<br>The assistant assigns work to subagents.</span></div>
+The research phase decides what to accept.</code></pre></div>
+            <div class="talk-track"><h3>The description is the contract</h3><p>Research, planning and review look for skills and subagents whose description names their phase. They decide from the description alone.</p><p>A helper subagent returns sources and suggestions. It writes nothing; the phase assigns the IDs and writes the artifact.</p><p class="callout">Name the phase and the trigger.<br>Say what goes in and what comes back.</p></div>
+          </div>
         </div>
-        <aside class="notes">Snack Evidence is an invented example. A real extension must satisfy current authoring and packaging conventions. Matching a description makes it eligible for use but does not grant tools or change the parent's scope.</aside>
+        <aside class="notes">Snack Evidence is invented. #2902 added this guidance to HVE Builder's extension reference. rpi-research, rpi-plan and rpi-review each look for extensions whose descriptions say they are used during that phase, then follow the description on when and how to use them. rpi-implement follows the plan and does not look for extensions. Matching a description makes an extension eligible, but it grants no tools and the phase still decides. A helper subagent declares agents: [] unless nested dispatch is intended.</aside>
       </section>
 
-      <section id="builder-demo" class="demo-slide" data-title="Example: create a research skill" data-chapter="HVE Builder" data-sources="builder,builder-contract,builder-tester,builder-extensions,copilot-composer">
-        <div class="eyebrow">HVE BUILDER / SCRIPTED WALKTHROUGH</div>
+      <section id="builder-demo" class="demo-slide" data-title="Example: create a research skill" data-chapter="HVE Builder" data-sources="builder,builder-contract,builder-reviewer,builder-dispatch,builder-extensions,copilot-composer">
+        <div class="slide-meta"><span class="tag">Scripted walkthrough</span></div>
         <h2>Example: create a research skill</h2>
-        <div class="demo" data-demo="builder"></div>
-        <aside class="notes">The example creates a research skill, finds a missing-data handling problem, then corrects and reassesses it. All transcripts, versions and results are scripted. The human-review checkbox remains unchecked.</aside>
+        <div class="slide-body"><div class="demo" data-demo="builder"></div></div>
+        <aside class="notes">The example creates a research skill, runs local checks, sends the candidate to HVE Builder Reviewer, accepts one finding and rejects the other, then fixes and closes the accepted one. All transcripts, findings and results are scripted. The human-review checkbox stays unchecked.</aside>
       </section>
 
-      <section id="two-loops" data-rpi-agent data-title="Use HVE Builder to extend your RPI work" data-chapter="HVE Builder" data-sources="agent,builder-contract,builder-tester">
-        <div class="eyebrow">USING BOTH WORKFLOWS</div>
+      <section id="two-loops" data-rpi-agent data-title="Use HVE Builder to extend your RPI work" data-chapter="HVE Builder" data-sources="agent,builder-contract,builder-extensions">
         <h2>Use HVE Builder to extend your RPI work</h2>
-        <div class="compare compact">
-          <article class="panel"><span class="label">RPI</span><h3>Build the application</h3><p>Investigate the task, agree on the plan, implement it and review the results.</p><strong>Example: the snack-voting app.</strong></article>
-          <article class="panel current"><span class="label">HVE BUILDER</span><h3>Create a reusable skill</h3><p>Write and assess the instructions that guide future research.</p><strong>Example: Snack Evidence.</strong></article>
+        <div class="slide-body">
+          <div class="compare compact">
+            <article class="panel"><span class="label">RPI</span><h3>Build the application</h3><p>Investigate the task, agree on the plan, implement it and review the results.</p><p class="panel-example">Example: the snack-voting app</p></article>
+            <article class="panel current"><span class="label">HVE Builder</span><h3>Create a reusable skill</h3><p>Write and review the instructions that guide future research.</p><p class="panel-example">Example: Snack Evidence</p></article>
+          </div>
+          <div class="bridge"><span>HVE Builder creates the research skill</span><i class="flow-arrow" aria-hidden="true"></i><span>RPI can use it on a matching task</span></div>
         </div>
-        <div class="bridge"><span>HVE Builder creates the research skill</span><b>&#8594;</b><span>RPI can use it on a matching task</span></div>
         <aside class="notes">Either workflow can be used independently. HVE Builder can call rpi-research without the optional RPI Agent. A skill created by HVE Builder can later provide research criteria to RPI.</aside>
       </section>
 
-      <section id="plugins-opening" class="chapter-slide" data-title="Install HVE Core as a plugin" data-chapter="Plugins" data-sources="one-plugin,manifest,marketplace">
-        <div class="eyebrow">04 / PLUGINS</div>
-        <div class="package-mark" aria-hidden="true"><span>hve-core</span><small>skills + agents + prompts + instructions</small></div>
-        <h2>Install HVE Core<br><em>as a plugin</em></h2>
-        <p class="lead">Use its customizations in VS Code<br>and Copilot CLI.</p>
-        <p class="footnote">August's change combined the existing packages into one plugin.</p>
-        <aside class="notes">The root plugin.json defines component membership. The marketplace file points to that root. The September 10 source snapshot declares HVE Core version 3.2.2 and no hooks. Client support and enablement determine which components are available.</aside>
+      <section id="plugins-opening" class="chapter-slide" data-state="chapter" data-title="Install HVE Core as a plugin" data-chapter="Plugins" data-sources="one-plugin,manifest,marketplace,prompts-retired">
+        <div class="chapter-grid">
+          <div>
+            <h2>Install HVE Core<br><em>as a plugin</em></h2>
+            <p class="lead">Use its customizations in VS Code<br>and Copilot CLI.</p>
+          </div>
+          <ol class="chapter-list" aria-label="Chapters">
+            <li><span>01</span>Evolution</li>
+            <li><span>02</span>RPI</li>
+            <li><span>03</span>HVE Builder</li>
+            <li aria-current="true"><span>04</span>Plugins</li>
+          </ol>
+        </div>
+        <p class="footnote">August's change combined the existing packages into one plugin. Prompt files were retired in October.</p>
+        <aside class="notes">The root plugin.json defines component membership, and the marketplace file points to that root. In the October 21 snapshot it declares HVE Core 3.2.2 with 61 agents, 85 skills and 53 instructions, and no prompts or hooks. #3111 retired the last 48 prompt files on October 7; the migration guide maps each old slash command to its replacement. Client support and enablement decide which components are available.</aside>
       </section>
 
       <section id="one-plugin" data-rpi-agent data-title="Add the marketplace, then install the plugin" data-chapter="Plugins" data-sources="manifest,marketplace,cli-guide,marketplace-clarity,agent">
-        <div class="eyebrow">PLUGIN PACKAGING</div>
         <h2>Add the marketplace, then install the plugin</h2>
-        <div class="plugin-route"><article><span class="label">REGISTER</span><code>microsoft/hve-core</code><p>Marketplace source</p></article><b>&#8594;</b><article><span class="label">INSTALL</span><code>hve-core@hve-core</code><p>Plugin @ marketplace</p></article><b>&#8594;</b><article><span class="label">INVOKE</span><code>/rpi-research</code><p>A skill in the enabled plugin</p></article></div>
-        <div class="compare compact"><article class="panel"><h3><code>plugin.json</code></h3><p>Lists the HVE Core components included in the plugin.</p></article><article class="panel"><h3><code>marketplace.json</code></h3><p>Points to the repository-root plugin. Registering the marketplace makes it discoverable; installation is a separate action.</p></article></div>
+        <div class="slide-body">
+          <div class="plugin-route"><article><span class="label">Register</span><code>microsoft/hve-core</code><p>Marketplace source</p></article><i class="flow-arrow" aria-hidden="true"></i><article><span class="label">Install</span><code>hve-core@hve-core</code><p>Plugin @ marketplace</p></article><i class="flow-arrow" aria-hidden="true"></i><article><span class="label">Invoke</span><code>/rpi-research</code><p>A skill in the enabled plugin</p></article></div>
+          <div class="compare compact"><article class="panel"><h3><code>plugin.json</code></h3><p>Lists the HVE Core components included in the plugin.</p></article><article class="panel"><h3><code>marketplace.json</code></h3><p>Points to the repository-root plugin. Registering the marketplace makes it discoverable; installation is a separate action.</p></article></div>
+        </div>
         <aside class="notes">This diagram describes the marketplace workflow. Direct source installation is another supported route. HVE uses a Copilot-format root manifest in this snapshot. Do not confuse it with the newer Agent Plugins 1.0 format.</aside>
       </section>
 
       <section id="vscode-install" class="demo-slide" data-title="VS Code: install from source" data-chapter="Plugins" data-sources="vscode-plugins,vscode-install,vscode-release,marketplace,customizations-editor,plugins-page,source-quick-input">
-        <div class="eyebrow">INSTALLATION WALKTHROUGH / RECONSTRUCTED UI</div>
+        <div class="slide-meta"><span class="tag">Reconstructed UI</span></div>
         <h2>VS Code: install from source</h2>
-        <div class="demo" data-demo="install"></div>
+        <div class="slide-body"><div class="demo" data-demo="install"></div></div>
         <aside class="notes">Start at the Chat panel header: click the gear labelled Open Customizations. The next step shows the Agent Customizations window with Plugins selected near the top of its sidebar, following the supplied screenshots. Featured is collapsed and unrelated inventory counts are omitted for readability; the workspace name and installed counts are illustrative. Click Install from Source, or use the presenter step controls. The top quick-input shows microsoft/hve-core, a supported owner/repo source. Its readonly input uses Enter for the next example step and Escape to return to Plugins. The trust checkpoint and installed result are illustrative: this deck does not install, enable, trust or register anything. The real flow and categories depend on host/harness support and policy.</aside>
       </section>
 
-      <section id="cli-install" data-title="CLI: add, then install" data-chapter="Plugins" data-sources="cli-guide,cli-release,marketplace,vscode-plugins">
-        <div class="eyebrow">COPILOT CLI / EXAMPLE COMMANDS</div>
+      <section id="cli-install" data-title="CLI: add, then install" data-chapter="Plugins" data-sources="cli-guide,cli-plugins-doc,aliases-removed,cli-release,marketplace,vscode-plugins">
         <h2>Install through Copilot CLI</h2>
-        <div class="terminal"><div class="editor-bar"><span class="terminal-dot"></span> Terminal <span class="surface-tag">Walkthrough only</span></div><div class="command-block"><span>01 / REGISTER THE MARKETPLACE</span><code>copilot plugin marketplace add microsoft/hve-core</code></div><div class="command-block"><span>02 / INSTALL THE PLUGIN</span><code>copilot plugin install hve-core@hve-core</code></div><div class="terminal-summary">Review source and trust prompts. Confirm installed/enabled status in your client.</div></div>
-        <div class="two-points"><p><strong>Use it in both clients</strong><br>VS Code discovers CLI-installed plugins when it can read the same user-home directory.</p><p><strong>Choose a version when needed</strong><br>These commands follow the current repository source. Use a supported ref or tag to pin a version.</p></div>
-        <p class="footnote">September 10, 2026 reference: Copilot CLI v1.0.83 and VS Code 1.137.0. Commands are shown only.</p>
-        <aside class="notes">The commands match GitHub Docs and HVE's current marketplace. Registering a marketplace does not install its plugin. These commands do not pin HVE 3.2.2. A real installation also requires supported clients, repository access and any applicable trust approval.</aside>
+        <div class="slide-body">
+          <div class="terminal"><div class="editor-bar"><span class="terminal-dot"></span> Terminal <span class="surface-tag">Walkthrough only</span></div><div class="command-block"><span># Register the marketplace</span><code>copilot plugin marketplace add microsoft/hve-core</code></div><div class="command-block"><span># Install the plugin</span><code>copilot plugin install hve-core@hve-core</code></div><div class="terminal-summary">Review source and trust prompts. Confirm installed/enabled status in your client.</div></div>
+          <div class="two-points"><article><h3>Use it in both clients</h3><p>VS Code discovers CLI-installed plugins when it can read the same user-home directory.</p></article><article><h3>Updates follow <code>main</code></h3><p>Refresh the marketplace, then update the plugin. Re-add an older tag or release-branch registration.</p></article></div>
+        </div>
+        <p class="footnote">Clients last checked September 10, 2026: Copilot CLI v1.0.83 and VS Code 1.137.0. The deck only shows these commands.</p>
+        <aside class="notes">The commands match GitHub Docs and HVE's current marketplace. Registering a marketplace does not install its plugin. The registration tracks main, so to update run copilot plugin marketplace update hve-core and then copilot plugin update hve-core@hve-core. #3113 documented this: the release/prerelease and release/stable refs no longer resolve, and a tag ref stays fixed at that tag. Remove that registration with copilot plugin marketplace remove hve-core --force and add microsoft/hve-core again. Copilot CLI cannot yet run manual-only skills such as git-commit (github/copilot-cli#4438). A real installation also needs supported clients, repository access and any trust approval.</aside>
       </section>
 
       <section id="discovery" data-title="Choose where you install" data-chapter="Plugins" data-sources="vscode-plugins,vscode-discovery,vscode-storage,cli-guide">
-        <div class="eyebrow">PLUGIN DISCOVERY</div>
         <h2>Where the installed plugin appears</h2>
-        <div class="discovery-grid">
-          <article class="panel current"><span class="label">INSTALL WITH COPILOT CLI</span><h3>CLI <span>+</span> VS Code</h3><code>~/.copilot/installed-plugins/</code><p>VS Code reads the CLI's installed-plugin directory in the same user home.</p><span class="status-chip">Supported by VS Code 1.137 source</span></article>
-          <article class="panel"><span class="label">INSTALL WITH VS CODE</span><h3>VS Code only*</h3><p>VS Code manages this installation separately. Its default flow does not register a CLI plugin.</p><span class="status-chip neutral">Default installation behavior</span></article>
+        <div class="slide-body">
+          <div class="discovery-grid">
+            <article class="panel current"><span class="label">Install with Copilot CLI</span><h3>CLI <span>+</span> VS Code</h3><code>~/.copilot/installed-plugins/</code><p>VS Code reads the CLI's installed-plugin directory in the same user home.</p><span class="status-chip">Supported by VS Code 1.137 source</span></article>
+            <article class="panel"><span class="label">Install with VS Code</span><h3>VS Code only*</h3><p>VS Code manages this installation separately. Its default flow does not register a CLI plugin.</p><span class="status-chip neutral">Default installation behavior</span></article>
+          </div>
         </div>
-        <p class="discovery-note">* Manual path sharing can differ. Discovery requires access to the same home directory, <code>chat.plugins.enabled</code>, an enabled plugin and policy permission. It does not sync installations across machines.</p>
+        <p class="footnote">* Manual path sharing can differ. Discovery requires access to the same home directory, <code>chat.plugins.enabled</code>, an enabled plugin and policy permission. It does not sync installations across machines.</p>
         <aside class="notes">Official documentation and the VS Code 1.137.0 tag establish CLI-to-VS-Code discovery. The separate VS Code installation path describes the default, not every possible manual sharing setup. Remote or web environments may use a different home directory. The Sources notes distinguish released code from development source.</aside>
       </section>
 
       <section id="closing" class="closing-slide" data-rpi-agent data-title="Try a skill on your next task" data-chapter="Plugins" data-sources="cli-guide,vscode-plugins,research,builder,agent">
-        <div class="eyebrow">GETTING STARTED</div>
         <h2>Try a skill<br>on <em>your next task</em></h2>
         <div class="closing-commands"><code>/rpi-research</code><code>/hve-builder</code></div>
         <p class="lead">Use RPI to investigate and implement a change,<br>or HVE Builder to create a reusable customization.</p>
-        <div class="closing-footer"><span>microsoft/hve-core</span><span>Source snapshot / 10 SEP 2026</span></div>
+        <div class="closing-footer"><span>microsoft/hve-core</span><span>Source snapshot, October 21, 2026</span></div>
         <aside class="notes">Choose one task with a clear scope. Review the evidence and decisions as you go. The preceding walkthrough explains installation; this presentation does not install plugins or run real agents. Sources and Notes remain available in the bottom bar.</aside>
       </section>
     </main>

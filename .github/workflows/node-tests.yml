@@ -21,7 +21,7 @@ on:
         type: string
         default: ''
       working-directory:
-        description: 'Directory containing the skill or slide deck whose Node tests to run'
+        description: 'Directory containing the skill, slide deck, or Copilot extension whose Node tests to run'
         required: true
         type: string
       soft-fail:
