@@ -114,6 +114,21 @@ Describe 'Get-PythonSkill' -Tag 'Unit' {
             ($result -join ';') | Should -Match '[\\/]hooks[\\/]shared[\\/]telemetry$'
             ($result -join ';') | Should -Not -Match '[\\/]evals[\\/]moderation$'
         }
+
+        It 'Excludes the locked tool environments under scripts/tools' {
+            $repo = Join-Path $TestDrive 'repo-with-tool-projects'
+            $tool = Join-Path $repo 'scripts/tools/pip-audit'
+            $skill = Join-Path $repo '.github/skills/sample'
+            New-Item -ItemType Directory -Path $tool -Force | Out-Null
+            New-Item -ItemType Directory -Path $skill -Force | Out-Null
+            Set-Content -Path (Join-Path $tool 'pyproject.toml') -Value ''
+            Set-Content -Path (Join-Path $skill 'pyproject.toml') -Value ''
+
+            $result = @(Get-PythonSkill -RepoRoot $repo)
+
+            $result.Count | Should -Be 1
+            ($result -join ';') | Should -Match '[\\/]skills[\\/]sample$'
+        }
     }
 
     Context 'When repository contains no pyproject.toml files' {

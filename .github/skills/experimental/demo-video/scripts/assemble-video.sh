@@ -18,7 +18,7 @@ err() {
 
 test_uv_availability() {
   if ! command -v uv &>/dev/null; then
-    err "uv is required but was not found on PATH. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    err "uv is required but was not found on PATH. Install a checksum-verified release: winget install --id astral-sh.uv -e, brew install uv, or an archive from https://github.com/astral-sh/uv/releases checked against its .sha256 file."
   fi
 }
 

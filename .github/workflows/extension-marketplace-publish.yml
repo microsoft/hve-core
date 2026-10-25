@@ -31,7 +31,7 @@ permissions:
 jobs:
   validate-inputs:
     name: Validate Release Publication Inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -128,10 +128,10 @@ jobs:
   verify:
     name: Verify hve-core
     needs: validate-inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-      attestations: read
+      attestations: read # verify the VSIX provenance attestations
     steps:
       - name: Checkout release commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -166,7 +166,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
           REPOSITORY: ${{ github.repository }}
-          SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          SIGNER_SHA: 3b36a825662603c0d564eb0f3b98ce5ba53857da
           SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance-signer.yml
         run: |
           set -euo pipefail
@@ -182,7 +182,7 @@ jobs:
 
       # No conditional override: this artifact exists only after verification.
       - name: Upload verified VSIX
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: extension-vsix-marketplace-${{ github.run_attempt }}
           path: ${{ steps.select.outputs.vsix-file }}
@@ -192,7 +192,7 @@ jobs:
   prepare-publisher:
     name: Prepare Publisher Toolchain
     needs: [validate-inputs, verify]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -215,9 +215,9 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
 
       # Lifecycle scripts run only in this unprivileged preparation job.
       - name: Install publisher toolchain
@@ -231,7 +231,7 @@ jobs:
             -C scripts/extension/marketplace-publisher node_modules package.json
 
       - name: Upload publisher toolchain
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: marketplace-publisher-toolchain-${{ github.run_attempt }}
           path: ${{ runner.temp }}/marketplace-publisher-toolchain.tar.gz
@@ -241,15 +241,15 @@ jobs:
   publish:
     name: Publish hve-core
     needs: [validate-inputs, verify, prepare-publisher]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: marketplace
     permissions:
       contents: read
-      attestations: read
-      id-token: write
+      attestations: read # re-verify provenance before publishing
+      id-token: write # Azure OIDC login for Marketplace publishing
     steps:
       - name: Download verified VSIX
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: extension-vsix-marketplace-${{ github.run_attempt }}
           path: ${{ runner.temp }}/vsix
@@ -287,7 +287,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
           REPOSITORY: ${{ github.repository }}
-          SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          SIGNER_SHA: 3b36a825662603c0d564eb0f3b98ce5ba53857da
           SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance-signer.yml
         run: |
           set -euo pipefail
@@ -297,16 +297,18 @@ jobs:
             --source-digest "$RELEASE_DIGEST"
 
       - name: Download publisher toolchain
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: marketplace-publisher-toolchain-${{ github.run_attempt }}
           path: ${{ runner.temp }}/toolchain
           digest-mismatch: error
 
+      # This job has no checkout, so the version is a literal that
+      # Test-ToolVersionConsistency.ps1 requires to equal .node-version.
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version: "24.21.0"
 
       - name: Extract publisher toolchain
         shell: bash

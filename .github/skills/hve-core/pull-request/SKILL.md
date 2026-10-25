@@ -1,6 +1,6 @@
 ---
 name: pull-request
-description: 'Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps.'
+description: 'Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management.'
 argument-hint: '[base=auto] [draft=false] [action=prepare|create|update]'
 license: MIT
 user-invocable: true
@@ -8,7 +8,7 @@ compatibility: 'Requires git on PATH, plus a GitHub integration for create or up
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-10-07"
+  last_updated: "2026-10-20"
 ---
 
 # Pull Request
@@ -22,7 +22,7 @@ default.
 Success means the title and body reflect the committed branch diff, the repository template is
 preserved when present, changed-area preflight checks pass, any authorized preflight repairs are
 committed under repository conventions, and an external pull request is created or updated only
-after one final approval.
+after final PR-write approval. Push consent is separate and is reused for the same action.
 
 ## Inputs
 
@@ -115,11 +115,14 @@ Resolve `action` before delegating, then carry this skill's inputs into that ref
    path, base and head branches, repair commits, divergence, and preflight result. For `create` or
    `update`, also search for an open pull request with the same head and base, then present the final
    title, body path, target, draft state, repair commits, validation result, and upstream push state.
-   Ask once for approval covering any needed push and the pull request write.
-12. After approval, push the current branch when needed and use the available GitHub integration to
-   create or update the pull request. Never force-push. If an open pull request already exists, update
-   it only when the requested action permits; otherwise return its URL instead of creating a
-   duplicate.
+   Ask once for final PR-write approval and only any needed push not already explicitly authorized.
+   A push request alone does not approve the PR write; `prepare` does not authorize either action.
+12. Load the `git-merge` instructions by name, then execute any authorized needed push using their Push Authorization,
+   Account Changes, and Execution Evidence rules, not their integration preparation. If the push
+   fails or cannot run, report the actual result and stop before the dependent PR write.
+   With the push satisfied and final PR-write approval held, create or update through the available
+   GitHub integration. Update an existing PR only when the action permits; otherwise return its URL
+   rather than create a duplicate.
 
 ## Template Rules
 

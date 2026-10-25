@@ -56,7 +56,7 @@ Describe 'setup-ps-modules composite action' -Tag 'Unit' {
             @{ Job = 'equivalence-execute'; NextStep = 'Create logs directory' }
         ) {
             $steps = @($script:EvalWorkflow.jobs[$Job].steps)
-            $setupSteps = @($steps | Where-Object { $_.uses -eq './.github/actions/setup-ps-modules' })
+            $setupSteps = @($steps | Where-Object { $_.uses -eq '$/.github/actions/setup-ps-modules' })
             $setupSteps | Should -HaveCount 1
             $setupStep = $setupSteps[0]
             $setupIndex = [array]::IndexOf($steps, $setupStep)

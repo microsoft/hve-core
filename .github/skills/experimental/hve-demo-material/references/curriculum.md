@@ -72,10 +72,6 @@ effect. Speaker notes written as YAML block scalars are synthesized with the
 wrap in a block scalar is otherwise spoken as a pause and inflates the duration
 without adding a single word.
 
-The same budget applies under `narration: piper`, but natural speaking rate
-varies by voice. Treat the word budget as a planning aid and keep the measured
-duration as the acceptance evidence.
-
 The narration is also the video's audio description. Write speaker notes that
 voice every claim a slide shows and describe every live capture in words, so a
 viewer who cannot see the screen loses nothing. Captions and the transcript are
@@ -85,8 +81,8 @@ in all three.
 ## Silent CI Delivery
 
 CI explicitly selects `narration: none`. Azure Speech remains the default for
-local narration and Piper remains an optional local choice; neither synthesizes
-speech in CI. Keep the notes budget above, but use it as a deterministic reading
+local narration and synthesizes no speech in CI. Keep the notes budget above,
+but use it as a deterministic reading
 timeline: each slide gets `max(2 seconds, note words / 2.8)` plus the assembler's
 transition handles. The two-second floor keeps short scenes longer than the
 half-second transitions. Internal zero-only WAVs are timing inputs, not narration.
