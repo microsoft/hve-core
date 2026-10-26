@@ -35,17 +35,17 @@
     "clsx": "2.1.1",
     "mermaid": "12.2.0",
     "prism-react-renderer": "2.4.1",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "remark-directive": "4.0.0",
     "remark-github-blockquote-alert": "2.1.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.13.0",
+    "@axe-core/playwright": "4.14.0",
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/types": "3.10.2",
-    "@happy-dom/jest-environment": "21.0.1",
-    "@playwright/test": "1.64.0",
+    "@happy-dom/jest-environment": "21.0.3",
+    "@playwright/test": "1.64.1",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@types/jest": "30.0.0",
@@ -61,7 +61,7 @@
     "identity-obj-proxy": "3.0.0",
     "jest": "30.5.2",
     "jest-axe": "11.0.0",
-    "ts-jest": "29.4.14",
+    "ts-jest": "29.4.15",
     "wait-on": "9.5.1"
   },
   "browserslist": {
