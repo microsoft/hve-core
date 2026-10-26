@@ -10,7 +10,7 @@ import { after, before, describe, it } from 'node:test';
 import { ACTION_DEFINITIONS, ACTION_GROUPS, createActionHandlers } from '../lib/actions.mjs';
 import { createDelivery } from '../lib/delivery.mjs';
 import { createInstanceRegistry } from '../lib/lifecycle.mjs';
-import { createFeedback, editSection, ModelError } from '../lib/model.mjs';
+import { createFeedback, markChecklist, ModelError, suggestEdit } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createStore } from '../lib/store.mjs';
 
@@ -35,7 +35,7 @@ async function setup(name, stage = 'research') {
     await store.create(buildScenario(stage));
     const focusCalls = [];
     const server = { url: 'http://127.0.0.1:1/', clientInfo: null, streamClients: 1, focus: (request) => { focusCalls.push(request); return { delivered: true }; }, notifyReload: () => {} };
-    const handlers = createActionHandlers({ getInstance: (id) => (id === 'i1' ? { server, sessionId: SCENARIO_ID } : undefined), store, makeError });
+    const handlers = createActionHandlers({ getInstance: (id) => (id === 'i1' ? { server, sessionId: SCENARIO_ID, instanceId: 'i1', handle: 'K7QF' } : undefined), store, makeError });
     const call = (name, input) => handlers[name]({ instanceId: 'i1', input });
     return { store, handlers, call, focusCalls };
 }
@@ -75,7 +75,10 @@ describe('handlers', () => {
     it('reports state, loads stages, and protects user changes', async () => {
         const { call, store } = await setup('state');
         const state = await call('get_state', {});
+        assert.deepEqual(state.canvas, { handle: 'K7QF', instanceId: 'i1' });
+        assert.deepEqual((await call('get_state', { detail: 'full' })).canvas, { handle: 'K7QF', instanceId: 'i1' });
         assert.equal(state.activePhase, 'research');
+        assert.ok(Array.isArray(state.pendingFeedback));
         assert.ok(state.needsUserInput.some((d) => d.id === 'D2'));
         await store.update(SCENARIO_ID, (s) => createFeedback(s, { kind: 'comment', text: 'mine' }, new Date().toISOString()), { by: 'user' });
         assert.equal(await code(call('load_scenario', { stage: 'plan' })), 'scenario_exists');
@@ -96,11 +99,16 @@ describe('handlers', () => {
         const state = await call('get_state', {});
         assert.ok(state.awaitingUserConfirmation.some((item) => item.id === taken.items[0].id));
         assert.equal(await code(call('record_interpretation', { feedbackId: 'FB-999', text: 'x' })), 'not_found');
-        await store.update(SCENARIO_ID, (s) => editSection(s, { sectionId: 'research-summary', markdown: 'Shorter summary', baseRevision: s.sections['research-summary'].revision }, new Date().toISOString()), { by: 'user' });
-        const edits = await call('take_feedback', {});
-        assert.equal(edits.items[0].kind, 'edit');
-        assert.equal(edits.items[0].section.markdown, 'Shorter summary');
-        assert.equal(edits.items[0].section.truncated, false);
+        await store.update(SCENARIO_ID, (s) => suggestEdit(s, { sectionId: 'research-summary', markdown: 'Shorter summary', baseRevision: s.sections['research-summary'].revision }, new Date().toISOString()), { by: 'user' });
+        await store.update(SCENARIO_ID, (s) => markChecklist(s, { phase: 'research', itemId: 'R5', verdict: 'needs-work', note: 'Name the storage risk.' }, new Date().toISOString()), { by: 'user' });
+        const pending = await call('take_feedback', {});
+        const edit = pending.items.find((item) => item.kind === 'edit');
+        assert.equal(edit.section.markdown, 'Shorter summary');
+        assert.match(edit.section.diff, /\+Shorter summary/);
+        assert.equal(edit.section.revision, (await store.load(SCENARIO_ID)).sections['research-summary'].revision, 'the section itself is unchanged');
+        const review = pending.items.find((item) => item.kind === 'checklist');
+        assert.equal(review.phase, 'research');
+        assert.match(review.text, /Needs work: The open risks are acceptable\. Note: Name the storage risk\./);
         store.close();
     });
 
@@ -128,25 +136,18 @@ describe('handlers', () => {
 });
 
 describe('delivery adapter', () => {
-    it('attaches a composer pill bound to the instance', async () => {
+    it('enqueues one message whose prompt is the reviewed text', async () => {
         const calls = [];
-        const deliver = createDelivery({ getSession: () => ({ rpc: { extensions: { sendAttachmentsToMessage: async (params) => calls.push(params) } } }), getInstanceId: () => 'i1' });
-        await deliver({ mode: 'attach', prompt: 'Full text', displayPrompt: 'RPI canvas: 1 comment', ids: ['FB-001'] });
-        assert.deepEqual(calls[0], { instanceId: 'i1', attachments: [{ type: 'extension_context', title: 'RPI canvas: 1 comment', payload: { text: 'Full text', feedbackIds: ['FB-001'] } }] });
+        const deliver = createDelivery({ getSession: () => ({ send: async (options) => calls.push(options) }) });
+        await deliver({ prompt: 'Full text', displayPrompt: 'RPI canvas K7QF sent 1 item: 1 comment.', ids: ['FB-001'] });
+        assert.deepEqual(calls, [{ prompt: 'Full text', displayPrompt: 'RPI canvas K7QF sent 1 item: 1 comment.', mode: 'enqueue' }]);
     });
 
-    it('enqueues a message whose prompt is the previewed text', async () => {
-        const calls = [];
-        const deliver = createDelivery({ getSession: () => ({ send: async (options) => calls.push(options) }), getInstanceId: () => null });
-        await deliver({ mode: 'send', prompt: 'Full text', displayPrompt: 'Label', ids: ['FB-001'] });
-        assert.deepEqual(calls[0], { prompt: 'Full text', displayPrompt: 'Label', mode: 'enqueue' });
-    });
-
-    it('reports unavailable hosts', async () => {
-        const none = createDelivery({ getSession: () => null, getInstanceId: () => null });
-        await assert.rejects(none({ mode: 'send', prompt: 'x', displayPrompt: 'x', ids: [] }), (error) => error instanceof ModelError && error.code === 'delivery_unavailable');
-        const noPills = createDelivery({ getSession: () => ({ send: async () => {} }), getInstanceId: () => 'i1' });
-        await assert.rejects(noPills({ mode: 'attach', prompt: 'x', displayPrompt: 'x', ids: [] }), (error) => error.code === 'delivery_unavailable');
+    it('reports hosts that cannot take messages, pointing to take_feedback', async () => {
+        const none = createDelivery({ getSession: () => null });
+        await assert.rejects(none({ prompt: 'x', displayPrompt: 'x', ids: [] }), (error) => error instanceof ModelError && error.code === 'delivery_unavailable' && /take_feedback/.test(error.message));
+        const noSend = createDelivery({ getSession: () => ({ rpc: {} }) });
+        await assert.rejects(noSend({ prompt: 'x', displayPrompt: 'x', ids: [] }), (error) => error.code === 'delivery_unavailable');
     });
 });
 

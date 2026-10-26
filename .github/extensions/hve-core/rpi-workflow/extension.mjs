@@ -36,9 +36,10 @@ const registry = createInstanceRegistry({
         return createCanvasServer({
             store,
             getSessionId: () => record.sessionId,
+            getCanvas: () => ({ handle: record.handle, instanceId: record.instanceId }),
             getSource: () => record.source,
             switchTask: (taskId) => sources.switchToTask(record, taskId),
-            deliver: createDelivery({ getSession: () => joined, getInstanceId: () => record.instanceId }),
+            deliver: createDelivery({ getSession: () => joined }),
             log,
         });
     },
@@ -100,7 +101,7 @@ const canvas = createCanvas({
         const { session, note } = ready;
         const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
         const status = ready.source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${note}` : `Sample session: ${phase}${note}`;
-        return { url: instance.server.url, title: 'RPI Workflow', status };
+        return { url: instance.server.url, title: 'RPI Workflow', status: `${status} · canvas ${instance.handle}` };
     },
 
     async onClose(ctx) {

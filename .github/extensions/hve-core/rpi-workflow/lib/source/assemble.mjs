@@ -3,7 +3,7 @@
 
 import { createHash } from 'node:crypto';
 
-import { checklistFor } from '../checklists.mjs';
+import { checklistFor, verdictOf } from '../checklists.mjs';
 import { PHASES, SESSION_FORMAT, SESSION_VERSION, validateSession } from '../model.mjs';
 import { idsIn, labelKey, linksIn, listItems, plainText } from './markdown.mjs';
 import { stateDecision } from './parse.mjs';
@@ -537,7 +537,8 @@ export function mergeImport(stored, imported, now) {
     const sections = {};
     for (const [id, fresh] of Object.entries(imported.sections)) {
         const previous = Object.prototype.hasOwnProperty.call(stored.sections, id) ? stored.sections[id] : null;
-        if (previous && previous.sourceHash === fresh.sourceHash) {
+        // Text a user edited before edits became suggestions gives way to the file.
+        if (previous && previous.sourceHash === fresh.sourceHash && previous.editedBy !== 'user') {
             sections[id] = previous;
         } else {
             sections[id] = previous ? { ...fresh, revision: (previous.revision ?? 0) + 1, updatedAt: now } : fresh;
@@ -550,7 +551,15 @@ export function mergeImport(stored, imported, now) {
     });
     const importedIds = new Set(imported.decisions.map((decision) => decision.id));
     decisions.push(...stored.decisions.filter((decision) => decision.origin !== 'artifact' && !importedIds.has(decision.id)));
-    const checklists = Object.fromEntries(Object.entries(imported.checklists).map(([phase, list]) => [phase, stored.checklists?.[phase]?.length ? stored.checklists[phase] : list]));
+    // Labels follow the current checklist; verdicts and notes the person gave carry over by item ID.
+    const checklists = Object.fromEntries(Object.entries(imported.checklists).map(([phase, list]) => {
+        const kept = new Map((stored.checklists?.[phase] ?? []).map((item) => [item.id, item]));
+        return [phase, list.map((item) => {
+            const verdict = verdictOf(kept.get(item.id));
+            const note = verdict === 'needs-work' ? kept.get(item.id).note : undefined;
+            return verdict ? { ...item, verdict, ...(note ? { note } : {}) } : item;
+        })];
+    }));
     const merged = {
         ...imported,
         ...(stored.scenario ? { scenario: stored.scenario } : {}),

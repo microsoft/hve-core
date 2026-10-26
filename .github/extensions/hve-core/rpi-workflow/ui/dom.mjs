@@ -152,12 +152,12 @@ export const TASK_STATUS = vocab([
 
 export const FEEDBACK_STATE = vocab([
     ['draft', 'pencil', 'Draft', 'muted'],
-    ['queued', 'inbox', 'Queued', 'accent'],
+    ['queued', 'inbox', 'Not sent', 'accent'],
     ['sent', 'send', 'Sent', 'accent'],
     ['interpreted', 'sparkle', 'Interpreted', 'agent'],
     ['applied', 'check', 'Applied', 'success'],
     ['corrected', 'undo', 'Corrected', 'attention'],
-    ['dismissed', 'x', 'Dismissed', 'muted'],
+    ['dismissed', 'x', 'Removed', 'muted'],
 ]);
 
 export const DECISION_STATUS = vocab([
@@ -203,7 +203,7 @@ export const FEEDBACK_KIND = Object.freeze({
     comment: { icon: 'message', label: 'Comment' },
     context: { icon: 'info', label: 'Context' },
     'research-request': { icon: 'search', label: 'Research request' },
-    edit: { icon: 'pencil', label: 'Section edit' },
+    edit: { icon: 'pencil', label: 'Suggested edit' },
     checklist: { icon: 'checklist', label: 'Review checklist' },
     correction: { icon: 'undo', label: 'Correction' },
     'task-request': { icon: 'list', label: 'Task request' },

@@ -929,6 +929,8 @@ details > summary:hover {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  overflow: clip;
+  overflow-clip-margin: 4px;
   color: var(--rw-fg-muted);
   font: var(--rw-t-meta);
   white-space: nowrap;
@@ -954,6 +956,7 @@ details > summary:hover {
 
 .task-meta > .task-id {
   flex-shrink: 3;
+  min-width: 9ch;
 }
 
 .task-meta > .task-parent {
@@ -1146,6 +1149,71 @@ details > summary:hover {
 
 .needs-btn.has-items:hover {
   background: color-mix(in srgb, var(--rw-attention) 22%, var(--rw-bg));
+}
+
+/* Send to agent: neutral while nothing waits, the primary accent with a count once something does. */
+.send-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--rw-control);
+  margin-inline-end: 4px;
+  padding: 0 10px;
+  border: 1px solid var(--rw-border-control);
+  border-radius: 999px;
+  background: var(--rw-bg);
+  color: var(--rw-fg);
+  font: 600 12.5px/18px var(--rw-font);
+  white-space: nowrap;
+  transition: background-color var(--rw-fast) var(--rw-ease);
+}
+
+.send-btn:hover {
+  background: var(--rw-bg-hover);
+}
+
+.send-btn .count {
+  display: none;
+}
+
+.send-btn.has-items {
+  padding-inline-end: 6px;
+  border-color: var(--rw-accent);
+  background: var(--rw-accent);
+  color: var(--rw-accent-fg);
+}
+
+.send-btn.has-items:hover {
+  background: color-mix(in srgb, var(--rw-accent) 86%, var(--rw-fg));
+}
+
+.send-btn.has-items .count {
+  display: inline-flex;
+  background: var(--rw-accent-fg);
+  color: var(--rw-accent);
+}
+
+.canvas-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.canvas-handle {
+  padding: 0 4px;
+  border: 1px solid var(--rw-border);
+  border-radius: 4px;
+  background: var(--rw-bg);
+  color: var(--rw-fg);
+  font: 600 11.5px/16px var(--rw-mono);
+  letter-spacing: 0.04em;
+}
+
+.badge .canvas-handle {
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: inherit;
 }
 
 .live-chip {
@@ -1594,18 +1662,52 @@ details > summary:hover {
   min-width: 0;
 }
 
-.edited-note {
+/* A suggested edit beside the text it would change; the text itself stays as its source has it. */
+.section-with-suggestions {
+  display: grid;
+  gap: 12px;
+}
+
+.suggestion {
+  display: grid;
+  gap: 8px;
+  max-width: 76ch;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--rw-user) 35%, var(--rw-border));
+  border-inline-start: 3px solid var(--rw-user);
+  border-radius: var(--rw-radius-lg);
+  background: color-mix(in srgb, var(--rw-user) 5%, var(--rw-bg));
+}
+
+.suggestion-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: 6px 8px;
+}
+
+.suggestion-title {
+  font: 600 13px/20px var(--rw-font);
+}
+
+.suggestion-moved {
+  display: flex;
+  align-items: flex-start;
   gap: 6px;
-  margin-top: 8px;
-  color: var(--rw-fg-muted);
   font: var(--rw-t-meta);
 }
 
-.edited-note > .icon {
-  color: var(--rw-user);
+.suggestion-moved > .icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+.suggestion .diff {
+  max-height: min(40dvh, 320px);
+}
+
+.suggestion .btn-row {
+  margin-top: 0;
 }
 
 /* Prose */
@@ -2424,54 +2526,16 @@ details > summary:hover {
   font-size: 12.5px;
 }
 
-.delivery {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--rw-border-muted);
-}
-
-.delivery-modes {
-  display: flex;
-  width: 100%;
-}
-
-.delivery-modes > legend:not(.visually-hidden) {
-  width: 100%;
-  margin: 0 0 6px;
-  color: var(--rw-fg-muted);
-  font: 600 12px/18px var(--rw-font);
-}
-
-.delivery-modes label {
-  flex: 1 1 auto;
-  justify-content: center;
-}
-
-.mode-hint {
-  margin-top: 6px;
-  color: var(--rw-fg-muted);
-  font: var(--rw-t-meta);
-}
-
-.mode-hint strong {
-  color: var(--rw-fg);
-  font-weight: 600;
-}
-
-.delivery-preview {
+.send-row {
   margin-top: 10px;
-  padding: 10px;
-  border: 1px solid var(--rw-border);
-  border-radius: var(--rw-radius-lg);
-  background: var(--rw-bg);
 }
 
-.delivery-preview > .btn:first-child {
-  width: 100%;
+.send-row > .btn {
+  flex: 1 1 auto;
 }
 
-.delivery-preview > .meta:last-child {
-  margin-top: 8px;
+.send-row + .meta {
+  margin-top: 6px;
 }
 
 .preview-text {
@@ -2537,33 +2601,196 @@ details > summary:hover {
   background: transparent;
 }
 
-.checklist ul {
+.checklist {
   display: grid;
-  gap: 2px;
-  margin: 8px -6px 0;
+  gap: 8px;
+}
+
+.checklist-intro {
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-meta);
+}
+
+.checklist-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--rw-border-muted);
+  border-radius: var(--rw-radius);
+  background: var(--rw-bg);
+  font: var(--rw-t-meta);
+}
+
+.checklist-status > .icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--rw-fg-muted);
+}
+
+.checklist-status.is-pending {
+  border-color: color-mix(in srgb, var(--rw-accent) 45%, var(--rw-border));
+  background: color-mix(in srgb, var(--rw-accent) 8%, var(--rw-bg));
+}
+
+.checklist-status.is-pending > .icon {
+  color: var(--rw-accent);
+}
+
+.check-list {
+  display: grid;
   list-style: none;
 }
 
-.checklist .check {
+.check-item {
+  display: grid;
+  gap: 6px;
+  padding: 8px 0;
+  border-top: 1px solid var(--rw-border-muted);
+}
+
+.check-item:first-child {
+  border-top: 0;
+}
+
+.check-label {
+  font: 500 13px/19px var(--rw-font);
+}
+
+.verdicts {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-height: 30px;
-  padding: 5px 6px;
-  border-radius: var(--rw-radius);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: var(--rw-control);
+  padding: 0 9px;
+  border: 1px solid var(--rw-border-control);
+  border-radius: 999px;
+  background: var(--rw-bg);
+  color: var(--rw-fg-muted);
+  font: 500 12.5px/18px var(--rw-font);
+}
+
+.verdict:hover {
+  background: var(--rw-bg-hover);
+  color: var(--rw-fg);
+}
+
+.verdict.is-ok[aria-pressed="true"] {
+  border-color: var(--rw-success);
+  background: color-mix(in srgb, var(--rw-success) 14%, var(--rw-bg));
+  color: var(--rw-fg);
+  font-weight: 600;
+}
+
+.verdict.is-ok[aria-pressed="true"] > .icon {
+  color: var(--rw-success);
+}
+
+.verdict.is-needs-work[aria-pressed="true"] {
+  border-color: var(--rw-attention);
+  background: color-mix(in srgb, var(--rw-attention) 16%, var(--rw-bg));
+  color: var(--rw-fg);
+  font-weight: 600;
+}
+
+.verdict.is-needs-work[aria-pressed="true"] > .icon {
+  color: var(--rw-attention);
+}
+
+.check-note {
+  display: grid;
+  gap: 4px;
+}
+
+/* Send to agent dialog */
+
+.send-sheet {
+  width: min(640px, calc(100vw - 32px));
+}
+
+.send-intro {
+  margin-bottom: 12px;
+}
+
+.send-list {
+  display: grid;
+  margin-bottom: 14px;
+  list-style: none;
+  border: 1px solid var(--rw-border);
+  border-radius: var(--rw-radius-lg);
+}
+
+.send-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 10px;
+  padding: 8px 8px 8px 12px;
+  border-top: 1px solid var(--rw-border-muted);
+}
+
+.send-item:first-child {
+  border-top: 0;
+}
+
+.send-item-icon {
+  margin-top: 3px;
+  color: var(--rw-user);
+}
+
+.send-item-kind {
+  font: 500 13px/20px var(--rw-font);
+}
+
+.send-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.send-howto {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 16px;
+  padding-inline-start: 20px;
+}
+
+.send-sheet .note {
+  width: 100%;
+}
+
+.send-exact {
+  margin-top: 12px;
+}
+
+.send-exact > summary {
+  color: var(--rw-fg-muted);
+  font: 600 12.5px/20px var(--rw-font);
   cursor: pointer;
 }
 
-.checklist .check:hover {
-  background: var(--rw-bg-hover);
+.send-exact .preview-text {
+  max-height: min(40dvh, 320px);
 }
 
-.checklist .check > input {
-  margin-top: 2px;
+.send-sheet .notice {
+  margin-top: 12px;
 }
 
-.checklist .check:has(input:checked) > span {
-  color: var(--rw-fg-muted);
+/* Send stays in view while the exact text is open. */
+.send-sheet > .send-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: 16px -20px -20px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--rw-border-muted);
+  background: var(--rw-bg);
 }
 
 /* Research view */
@@ -3684,7 +3911,8 @@ kbd {
 
 /* Responsive header and drawers */
 
-@media (max-width: 1199px) {
+/* Below 1400px the phase rail takes its own row, so the title and its meta line keep their width. */
+@media (max-width: 1399px) {
   .topbar {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
@@ -3706,7 +3934,8 @@ kbd {
 }
 
 @media (max-width: 720px) {
-  #needsLabel {
+  #needsLabel,
+  #sendLabel {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -3716,6 +3945,10 @@ kbd {
   }
 
   .needs-btn {
+    padding-inline-start: 8px;
+  }
+
+  .send-btn {
     padding-inline-start: 8px;
   }
 
@@ -3845,8 +4078,33 @@ kbd {
   .task-toggle,
   .file-btn,
   .edit-tab,
-  .rail-tab {
+  .rail-tab,
+  .send-btn,
+  .verdict {
     border: 1px solid ButtonText;
+  }
+
+  .verdict[aria-pressed="true"],
+  .send-btn.has-items {
+    forced-color-adjust: none;
+    border: 2px solid Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .verdict[aria-pressed="true"] .icon,
+  .send-btn.has-items .icon {
+    color: HighlightText;
+  }
+
+  .send-btn.has-items .count {
+    border: 1px solid HighlightText;
+  }
+
+  .suggestion,
+  .checklist-status,
+  .send-list {
+    border: 1px solid CanvasText;
   }
 
   .rail-tab {

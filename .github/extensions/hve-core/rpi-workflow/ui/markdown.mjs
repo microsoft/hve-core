@@ -134,7 +134,9 @@ const startsBlock = (line, next) => headingLevel(line) > 0 || fenceOf(line) !== 
 
 /**
  * @param {string} source
- * @param {{ resolveId?: (id: string) => boolean, navigate?: (id: string) => void }} [ctx]
+ * @param {{ resolveId?: (id: string) => boolean, navigate?: (id: string) => void, label?: string }} [ctx]
+ *   `label` names the text's section until a heading inside it does; table regions use it so
+ *   two tables with the same columns stay distinguishable.
  * @returns {DocumentFragment}
  */
 export function renderMarkdown(source, ctx = {}) {
@@ -144,7 +146,8 @@ export function renderMarkdown(source, ctx = {}) {
         text = text.slice(0, MAX_LENGTH);
         fragment.append(h('p', { class: 'md-note', text: 'Showing the first 60,000 characters.' }));
     }
-    renderBlocks(fragment, text.replace(/\r\n?/g, '\n').split('\n'), ctx, 0);
+    const section = { name: typeof ctx.label === 'string' && ctx.label.trim() ? ctx.label.trim() : null };
+    renderBlocks(fragment, text.replace(/\r\n?/g, '\n').split('\n'), { ...ctx, section }, 0);
     return fragment;
 }
 
@@ -187,6 +190,7 @@ function renderBlock(parent, lines, i, ctx, depth) {
         const heading = h(level <= 2 ? 'h4' : 'h5', { class: ['md-heading', level <= 2 ? 'is-major' : null] });
         inline(heading, headingText(line, level), ctx, 0);
         parent.append(heading);
+        if (ctx.section && heading.textContent.trim()) ctx.section.name = heading.textContent.trim();
         return i + 1;
     }
     if (isRule(line)) {
@@ -280,7 +284,8 @@ function renderTable(parent, lines, i, ctx) {
         j += 1;
     }
     table.append(body);
-    parent.append(h('div', { class: 'table-well', tabindex: '0', role: 'region', 'aria-label': `Table: ${header.join(', ').slice(0, 80)}` }, table));
+    const section = ctx.section?.name;
+    parent.append(h('div', { class: 'table-well', tabindex: '0', role: 'region', 'aria-label': `${section ? `${section.slice(0, 60)} table` : 'Table'}: ${header.join(', ').slice(0, 80)}` }, table));
     return j;
 }
 

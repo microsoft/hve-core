@@ -75,6 +75,7 @@
   <nav class="rail" aria-label="RPI phases"><div role="tablist" id="phaseRail" class="rail-list" aria-label="View phase"></div></nav>
   <div class="top-actions">
     <button type="button" class="needs-btn" id="needsBtn"><svg class="icon" aria-hidden="true"><use href="#i-hand"/></svg><span id="needsLabel">Needs you</span><span class="count" id="needsCount">0</span></button>
+    <button type="button" class="send-btn" id="sendBtn" aria-haspopup="dialog" aria-label="Send to agent, nothing waiting"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg><span id="sendLabel">Send to agent</span><span class="count" id="sendCount" aria-hidden="true">0</span></button>
     <span class="live-chip" id="liveChip"><svg class="icon" aria-hidden="true"><use href="#i-dot"/></svg><span id="liveLabel">Connecting</span></span>
     <button type="button" class="icon-btn" id="appearanceBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="appearanceMenu"><svg class="icon" aria-hidden="true"><use href="#i-contrast"/></svg><span class="visually-hidden">Appearance</span></button>
     <button type="button" class="icon-btn" id="shortcutsBtn" aria-keyshortcuts="?"><svg class="icon" aria-hidden="true"><use href="#i-keyboard"/></svg><span class="visually-hidden">Keyboard shortcuts</span></button>
@@ -113,6 +114,7 @@
   <label class="switch-row"><input type="checkbox" role="switch" id="shortcutSwitch" checked><span>Single-key shortcuts</span></label>
 </dialog>
 <dialog class="dialog sheet" id="fileSheet" aria-labelledby="fileSheetTitle"></dialog>
+<dialog class="dialog send-sheet" id="sendSheet" aria-labelledby="sendSheetTitle"></dialog>
 <div class="visually-hidden" id="announcer" role="status" aria-live="polite"></div>
 </body>
 </html>

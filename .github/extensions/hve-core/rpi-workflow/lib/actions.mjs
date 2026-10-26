@@ -3,6 +3,7 @@
 
 import {
     agentEditSection,
+    artifactFor,
     deriveView,
     ModelError,
     PHASES,
@@ -29,7 +30,7 @@ const PHASE = { type: 'string', enum: [...PHASES], description: 'research, plan,
 export const ACTION_DEFINITIONS = Object.freeze([
     {
         name: 'get_state',
-        description: 'Summarize the RPI session shown in this canvas: phase, decisions needing the user, agent decisions, queued and interpreted feedback, progress, appearance, and what the page reported about its environment.',
+        description: 'Summarize the RPI session shown in this canvas: the canvas handle and instance ID that its messages name, phase, decisions needing the user, agent decisions, pending and interpreted feedback, progress, appearance, and what the page reported about its environment.',
         inputSchema: { type: 'object', properties: { detail: { type: 'string', enum: ['summary', 'full'], description: 'summary (default) or full session data' } }, additionalProperties: false },
     },
     {
@@ -90,12 +91,12 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'take_feedback',
-        description: 'Collect every feedback item the user queued (answers, overrides, comments, context, research requests, edits, checklist reviews, corrections) and mark them sent. Items the user is delivering right now are skipped. Edit items include the section as the user saved it (section.markdown, up to 8,000 characters; section.truncated is true when longer, and get_state detail full returns the rest). Read back each one with record_interpretation.',
+        description: 'Collect every item the user has not sent yet (answers, overrides, comments, context, research requests, suggested edits, checklist reviews, corrections) and mark them sent. Use it when the user asks you to check the canvas; Send to agent delivers the same items as a chat message. Items being sent right now are skipped. A suggested edit includes section.markdown (the full suggested text) and section.diff (its line changes against section.revision); a checklist review includes its phase. Make each change in the task files, or with canvas actions on the sample, then read it back with record_interpretation.',
         inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     },
     {
         name: 'record_interpretation',
-        description: 'Tell the user how you understood a sent feedback item and what it changes. Set applied true to mark it applied without waiting for the user to confirm.',
+        description: 'Tell the user how you understood a sent feedback item and what it changes. Set applied true once the change is made: in the task files for a canvas that follows RPI files, or with canvas actions on the sample. Without applied, the user confirms the read-back or corrects it.',
         inputSchema: { type: 'object', properties: { feedbackId: str('Feedback ID such as FB-004'), text: str('Your interpretation in plain language'), effect: str('What changed, such as P02-T03 updated'), applied: { type: 'boolean' } }, required: ['feedbackId'], additionalProperties: false },
     },
     {
@@ -162,7 +163,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'update_section',
-        description: 'Replace the Markdown of one document section as the agent. A user editing the same section then sees a conflict notice when saving. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.',
+        description: "Replace the Markdown of one document section as the agent, for example to apply a user's suggested edit on the sample session. Suggestions made against an older revision then show that the section changed, and an open editor sees a conflict when saving. On a canvas that follows RPI files (show_task), this is refused with source_managed; update the file instead.",
         inputSchema: { type: 'object', properties: { sectionId: str('Section ID such as research-summary or finding-f3'), markdown: str('New Markdown'), title: str('New title, optional') }, required: ['sectionId', 'markdown'], additionalProperties: false },
     },
     {
@@ -212,7 +213,7 @@ export function summarize(session) {
         phases: Object.fromEntries(PHASES.map((phase) => [phase, session.phases[phase].status])),
         needsUserInput: view.needsYou,
         decidedByAgent: view.decidedByAgent,
-        queuedFeedback: byState('queued'),
+        pendingFeedback: byState('queued'),
         awaitingInterpretation: byState('sent'),
         awaitingUserConfirmation: byState('interpreted'),
         progress: view.progress,
@@ -222,7 +223,7 @@ export function summarize(session) {
 
 /**
  * @param {{
- *   getInstance: (instanceId: string) => { server: any, sessionId: string, source?: any } | undefined,
+ *   getInstance: (instanceId: string) => { server: any, sessionId: string, instanceId?: string, handle?: string, source?: any } | undefined,
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   makeError: (code: string, message: string) => Error,
  *   now?: () => number,
@@ -277,14 +278,11 @@ export function createActionHandlers(deps) {
             case 'record_change':
             case 'record_discovery': return artifacts.changes;
             case 'update_finding': return artifacts.review;
-            case 'update_section': {
-                const doc = session?.sections?.[input.sectionId]?.doc;
-                return { research: artifacts.research, plan: artifacts.plan, implement: artifacts.changes, review: artifacts.review }[doc] ?? source.statePath;
-            }
+            case 'update_section': return artifactFor(session, session?.sections?.[input.sectionId]?.doc) ?? source.statePath;
             case 'upsert_decision': {
                 const decision = input.id === undefined ? null : session?.decisions?.find((item) => item.id === input.id);
                 if (!decision || decision.origin !== 'artifact') return null;
-                return decision.phase === 'plan' ? artifacts.plan : artifacts.research;
+                return artifactFor(session, decision.phase);
             }
             default: return null;
         }
@@ -317,7 +315,7 @@ export function createActionHandlers(deps) {
             if (!session) {
                 throw makeError('not_found', 'No session is loaded. Call load_scenario.');
             }
-            const base = { url: instance.server.url, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0, source: sourceSummary(instance, session) };
+            const base = { url: instance.server.url, canvas: { handle: instance.handle ?? null, instanceId: instance.instanceId ?? ctx.instanceId }, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0, source: sourceSummary(instance, session) };
             return input.detail === 'full' ? { ...base, session } : { ...base, ...summarize(session) };
         }),
 
@@ -367,8 +365,8 @@ export function createActionHandlers(deps) {
             const { session, result } = await agentUpdate(instance, (current) => takeFeedback(current, iso()));
             return {
                 revision: session.revision,
-                items: result.map((item) => ({ id: item.id, kind: item.kind, target: item.target, optionId: item.optionId ?? null, optionLabel: item.optionLabel ?? null, text: item.text, correctionOf: item.correctionOf ?? null, ...(item.kind === 'edit' && item.section ? { section: item.section } : {}) })),
-                note: result.length === 0 ? 'No queued feedback.' : 'Read back each item with record_interpretation.',
+                items: result.map((item) => ({ id: item.id, kind: item.kind, target: item.target, optionId: item.optionId ?? null, optionLabel: item.optionLabel ?? null, text: item.text, correctionOf: item.correctionOf ?? null, ...(item.kind === 'edit' && item.section ? { section: item.section } : {}), ...(item.kind === 'checklist' ? { phase: item.phase ?? null } : {}) })),
+                note: result.length === 0 ? 'Nothing is waiting to be sent.' : 'Make each change, then read back each item with record_interpretation.',
             };
         }),
 

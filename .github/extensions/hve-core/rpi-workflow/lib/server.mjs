@@ -11,13 +11,11 @@ import {
     composeDelivery,
     createFeedback,
     deriveView,
-    editSection,
+    markChecklist,
     markDelivered,
     releaseDelivery,
     ModelError,
-    requireSection,
-    shareChecklist,
-    toggleChecklist,
+    suggestEdit,
     transitionFeedback,
 } from './model.mjs';
 import { preferencesPatch } from './store.mjs';
@@ -137,7 +135,8 @@ export function clientInfoFrom(body) {
  * @param {{
  *   store: ReturnType<import('./store.mjs').createStore>,
  *   getSessionId: () => string,
- *   deliver?: (request: { mode: 'attach' | 'send', prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
+ *   getCanvas?: () => { handle: string, instanceId: string } | null,
+ *   deliver?: (request: { prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
  *   getSource?: () => { follower?: { start: () => void, stop: () => void } } | undefined,
@@ -146,6 +145,7 @@ export function clientInfoFrom(body) {
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
+    const getCanvas = deps.getCanvas ?? (() => null);
     const deliver = deps.deliver ?? (async () => {
         throw new ModelError('delivery_unavailable', 'This canvas is not connected to a Copilot session.');
     });
@@ -232,7 +232,7 @@ export function createCanvasServer(deps) {
         if (!session) {
             throw new HttpError(404, 'not_found', 'No session is loaded yet. Ask the agent to load the sample scenario.');
         }
-        return { revision: session.revision, session, view: deriveView(session), preferences: await store.loadPreferences() };
+        return { revision: session.revision, session, view: deriveView(session), preferences: await store.loadPreferences(), canvas: getCanvas() };
     }
 
     const userUpdate = (change) => store.update(getSessionId(), change, { by: 'user' });
@@ -261,24 +261,16 @@ export function createCanvasServer(deps) {
             return { revision: session.revision, item: result };
         },
 
-        'POST /api/section': async (body) => {
-            const { session, result } = await userUpdate((current) => {
-                requireSection(current, body?.sectionId);
-                return editSection(current, body, now());
-            });
+        'POST /api/suggestion': async (body) => {
+            const { session, result } = await userUpdate((current) => suggestEdit(current, body, now()));
             if (result.conflict) {
-                throw Object.assign(new HttpError(409, 'conflict', 'The agent changed this section while you were editing.'), { detail: { section: result.section } });
+                throw Object.assign(new HttpError(409, 'conflict', 'This section changed while you were editing.'), { detail: { section: result.section } });
             }
-            return { revision: session.revision, section: result.section, feedbackId: result.feedbackId ?? null };
+            return { revision: session.revision, feedbackId: result.feedbackId ?? null, withdrawn: result.withdrawn ?? null, unchanged: result.unchanged === true };
         },
 
         'POST /api/checklist': async (body) => {
-            const { session, result } = await userUpdate((current) => toggleChecklist(current, body, now()));
-            return { revision: session.revision, item: result };
-        },
-
-        'POST /api/checklist/share': async (body) => {
-            const { session, result } = await userUpdate((current) => shareChecklist(current, body?.phase, now()));
+            const { session, result } = await userUpdate((current) => markChecklist(current, body, now()));
             return { revision: session.revision, item: result };
         },
 
@@ -289,39 +281,38 @@ export function createCanvasServer(deps) {
             if (!session) {
                 throw new HttpError(404, 'not_found', 'No session is loaded.');
             }
-            return composeDelivery(session, body?.ids, now());
+            return composeDelivery(session, body?.ids, now(), { canvas: getCanvas(), note: body?.note });
         },
 
-        // Delivers only the text the user previewed (matched by digest), holding the items so a
-        // concurrent take or delivery cannot send them again.
+        // Sends the items the user reviewed as one chat message, only when they still match the
+        // preview (by digest), and holds them so a concurrent take or send cannot repeat them.
         'POST /api/delivery': async (body) => {
-            const mode = body?.mode;
-            if (mode !== 'attach' && mode !== 'send') {
-                throw new HttpError(400, 'invalid_input', 'mode must be attach or send.');
+            if (body?.mode !== undefined && body.mode !== 'send') {
+                throw new HttpError(400, 'invalid_input', 'The canvas sends items as a chat message; mode can only be send.');
             }
             const digest = typeof body?.digest === 'string' ? body.digest : '';
             const claimed = await userUpdate((current) => {
-                const message = composeDelivery(current, body?.ids, now());
+                const message = composeDelivery(current, body?.ids, now(), { canvas: getCanvas(), note: body?.note });
                 if (message.digest !== digest) {
-                    throw Object.assign(new HttpError(409, 'preview_stale', 'The text changed since you previewed it. Review the new text, then deliver again.'), { detail: { preview: message } });
+                    throw Object.assign(new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.'), { detail: { preview: message } });
                 }
                 return { session: claimDelivery(current, message.ids, now()).session, result: message };
             });
             const message = claimed.result;
             try {
-                await deliver({ mode, prompt: message.prompt, displayPrompt: message.displayPrompt, ids: message.ids });
+                await deliver({ prompt: message.prompt, displayPrompt: message.displayPrompt, ids: message.ids });
             } catch (error) {
                 await userUpdate((current) => releaseDelivery(current, message.ids, now())).catch((releaseError) => log(`Could not release delivery claim: ${releaseError instanceof Error ? releaseError.message : 'error'}`, 'warning'));
                 const code = error instanceof ModelError ? error.code : 'delivery_failed';
-                log(`Delivery failed: ${error instanceof Error ? error.message : 'error'}`, 'warning');
-                throw new HttpError(STATUS_FOR[code] ?? 502, code, error instanceof Error ? error.message : 'Delivery failed.');
+                log(`Send failed: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                throw new HttpError(STATUS_FOR[code] ?? 502, code, error instanceof Error ? error.message : 'Sending failed.');
             }
             try {
-                const updated = await userUpdate((current) => markDelivered(current, message.ids, mode, now()));
-                return { revision: updated.session.revision, delivered: updated.result, mode };
+                const updated = await userUpdate((current) => markDelivered(current, message.ids, 'send', now()));
+                return { revision: updated.session.revision, delivered: updated.result };
             } catch (error) {
-                log(`Delivered, but the canvas could not record it: ${error instanceof Error ? error.message : 'error'}`, 'warning');
-                return { revision: null, delivered: message.ids, mode, warning: 'The message was sent, but the canvas could not record it yet. The items stay marked as sending, so they will not be sent again.' };
+                log(`Sent, but the canvas could not record it: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                return { revision: null, delivered: message.ids, warning: 'The message was sent, but the canvas could not record it yet. The items stay marked as sending, so they will not be sent again.' };
             }
         },
 
@@ -427,7 +418,7 @@ export function createCanvasServer(deps) {
                 return;
             }
             try {
-                const body = method === 'POST' ? await readJsonBody(req, url.pathname === '/api/section' ? MAX_SECTION_BODY : MAX_BODY) : undefined;
+                const body = method === 'POST' ? await readJsonBody(req, url.pathname === '/api/suggestion' ? MAX_SECTION_BODY : MAX_BODY) : undefined;
                 sendJson(res, 200, await handler(body));
             } catch (error) {
                 if (error instanceof HttpError) {

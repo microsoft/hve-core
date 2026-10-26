@@ -9,6 +9,9 @@
 
 import { createHash } from 'node:crypto';
 
+import { VERDICTS, verdictOf } from './checklists.mjs';
+import { unifiedDiff } from './textdiff.mjs';
+
 export const SESSION_FORMAT = 'hve-core-rpi-workflow.session';
 export const SESSION_VERSION = 1;
 export const PHASES = Object.freeze(['research', 'plan', 'implement', 'review', 'followup']);
@@ -452,14 +455,11 @@ export function transitionFeedback(session, feedbackId, to, extra = {}, now = ne
     });
 }
 
-/**
- * Marks every queued item as sent through the queue and returns them for the agent.
- *
- * @param {any} session
- * @param {string} now
- */
-/** Edited Markdown kept on an edit item and included in delivered text, in characters. */
+/** Line changes of a suggested edit included in delivered text, in characters. */
 export const EDIT_EXCERPT_MAX = 8000;
+
+/** Line changes kept on a suggested edit, in characters. */
+export const SUGGESTION_DIFF_MAX = 20000;
 
 /** A delivery in progress holds its items for this long before they become available again. */
 export const CLAIM_STALE_MS = 10 * 60 * 1000;
@@ -476,6 +476,12 @@ export function isClaimed(item, now) {
     return Number.isFinite(age) && age < CLAIM_STALE_MS;
 }
 
+/**
+ * Marks every pending item as sent through the queue and returns them for the agent.
+ *
+ * @param {any} session
+ * @param {string} now
+ */
 export function takeFeedback(session, now) {
     const queued = session.feedback.filter((item) => item.state === 'queued' && !isClaimed(item, now));
     if (queued.length === 0) {
@@ -498,15 +504,15 @@ export function takeFeedback(session, now) {
 }
 
 /**
- * Marks specific queued items as sent through attach or send.
+ * Marks specific pending items as sent in a message from the canvas.
  *
  * @param {any} session
  * @param {string[]} ids
- * @param {'attach' | 'send'} mode
+ * @param {'send'} mode
  * @param {string} now
  */
 export function markDelivered(session, ids, mode, now) {
-    const delivery = oneOf(mode, ['attach', 'send'], 'mode');
+    const delivery = oneOf(mode, ['send'], 'mode');
     const wanted = new Set(ids.map((id) => identifier(id, 'ids[]')));
     return mutate(session, now, (draft) => {
         const done = [];
@@ -570,29 +576,58 @@ export function releaseDelivery(session, ids, now) {
 }
 
 const KIND_LABELS = Object.freeze({
-    answer: 'Answer',
-    override: 'Override',
-    comment: 'Comment',
-    context: 'Context',
-    'research-request': 'Research request',
-    edit: 'Section edit',
-    checklist: 'Review checklist',
-    correction: 'Correction',
-    'task-request': 'Task request',
+    answer: ['Answer to', 'answer', 'answers'],
+    override: ['Override of', 'override', 'overrides'],
+    comment: ['Comment on', 'comment', 'comments'],
+    context: ['Context for', 'context note', 'context notes'],
+    'research-request': ['Research request about', 'research request', 'research requests'],
+    edit: ['Suggested edit to', 'suggested edit', 'suggested edits'],
+    checklist: ['Review checklist for', 'review checklist', 'review checklists'],
+    correction: ['Correction about', 'correction', 'corrections'],
+    'task-request': ['Task request for', 'task request', 'task requests'],
 });
 
+const ARTIFACT_OF_PHASE = Object.freeze({ research: 'research', plan: 'plan', implement: 'changes', review: 'review' });
+const FILE_LABELS = Object.freeze([['statePath', 'State'], ['research', 'Research'], ['plan', 'Plan'], ['critique', 'Plan critique'], ['changes', 'Changes'], ['review', 'Review']]);
+
 /**
- * Composes the exact text that Attach and Send now deliver. The preview and the sent
- * prompt both come from this function, so they are always the same string.
+ * The workspace-relative file that holds a phase's content in a session read from RPI
+ * files: the phase's artifact, or the state file when the phase has none. Null for the
+ * sample, which has no files.
+ *
+ * @param {any} session
+ * @param {string | null | undefined} phase
+ * @returns {string | null}
+ */
+export function artifactFor(session, phase) {
+    const source = session?.source;
+    if (source?.kind !== 'rpi') return null;
+    const key = phase ? ARTIFACT_OF_PHASE[phase] : undefined;
+    return (key ? source.artifacts?.[key] : null) ?? source.statePath ?? null;
+}
+
+const listOf = (parts) => (parts.length < 3 ? parts.join(' and ') : `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`);
+const indent = (text) => String(text).split('\n').map((line) => `   ${line}`);
+
+/**
+ * Composes the exact message that Send to agent delivers. The preview and the sent message
+ * both come from this function. `displayPrompt` is what the chat shows: the user's message,
+ * then a line naming the canvas. `prompt` is what the agent reads: the canvas handle and
+ * instance ID, how to handle the items, the task's files, and each item with what it
+ * targets. `digest` covers everything except the user's message, so typing one does not
+ * make a preview stale.
  *
  * @param {any} session
  * @param {string[]} ids
- * @returns {{ prompt: string, displayPrompt: string, ids: string[] }}
+ * @param {string} [now]
+ * @param {{ canvas?: { handle?: string | null, instanceId?: string | null } | null, note?: string }} [options]
+ * @returns {{ prompt: string, displayPrompt: string, ids: string[], digest: string }}
  */
-export function composeDelivery(session, ids, now = new Date().toISOString()) {
+export function composeDelivery(session, ids, now = new Date().toISOString(), options = {}) {
     if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) {
         fail('invalid_input', 'ids must list 1 to 50 feedback items.');
     }
+    const note = text(options.note, 'note', { optional: true });
     const items = [];
     for (const raw of ids) {
         const id = identifier(raw, 'ids[]');
@@ -601,47 +636,87 @@ export function composeDelivery(session, ids, now = new Date().toISOString()) {
             fail('not_found', `No feedback item ${id} exists.`);
         }
         if (item.state !== 'queued') {
-            fail('invalid_state', `Feedback ${id} is ${item.state}; only queued items can be delivered.`);
+            fail('invalid_state', `Feedback ${id} is ${item.state}; only items not yet sent can be sent.`);
         }
         if (isClaimed(item, now)) {
-            fail('invalid_state', `Feedback ${id} is already being delivered.`);
+            fail('invalid_state', `Feedback ${id} is already being sent.`);
         }
         items.push(item);
     }
-    const lines = [`RPI Workflow canvas feedback for task ${session.task.id}:`, ''];
+    const handle = typeof options.canvas?.handle === 'string' && options.canvas.handle ? options.canvas.handle : null;
+    const instanceId = typeof options.canvas?.instanceId === 'string' && options.canvas.instanceId ? options.canvas.instanceId : null;
+    const name = handle ? `RPI canvas ${handle}` : 'RPI canvas';
+    const counts = new Map();
+    for (const item of items) counts.set(item.kind, (counts.get(item.kind) ?? 0) + 1);
+    const tally = listOf([...counts].map(([kind, count]) => `${count} ${KIND_LABELS[kind][count === 1 ? 1 : 2]}`));
+    const sent = `${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+    const phase = PHASE_LABELS[session.session?.activePhase];
+    const rpi = session.source?.kind === 'rpi';
+
+    const head = [`${name} sent ${sent} from the user about task ${session.task.id}${phase ? ` (current phase: ${phase})` : ''}.`];
+    if (instanceId) head.push(`Canvas instance ID: ${instanceId}. Pass it as instanceId to invoke_canvas_action to act on this canvas.`);
+    const rest = ['', 'How to handle these items:'];
+    if (rpi) {
+        rest.push("- The canvas does not change the task's files. Make each change yourself in the file named for it; the canvas shows the change once the file is saved.");
+    } else {
+        rest.push('- This canvas shows its sample session, which has no files. Make each change with canvas actions on this instance, such as update_section for a suggested edit or upsert_decision for a decision.');
+    }
+    rest.push('- Then call record_interpretation on this canvas for each item: feedbackId, text saying how you understood it, and applied: true once the change is made.');
+    if (rpi) {
+        const files = FILE_LABELS.map(([key, label]) => [label, key === 'statePath' ? session.source.statePath : session.source.artifacts?.[key]]).filter(([, path]) => typeof path === 'string' && path);
+        if (files.length) rest.push('', 'Task files:', ...files.map(([label, path]) => `- ${label}: ${path}`));
+    }
+    rest.push('', 'Items:');
     items.forEach((item, index) => {
-        const target = item.target ? describeTarget(session, item.target) : 'the session';
-        lines.push(`${index + 1}. ${item.id} - ${KIND_LABELS[item.kind]} about ${target}`);
+        const [lead] = KIND_LABELS[item.kind];
+        const subject = item.kind === 'checklist'
+            ? `${lead} ${PHASE_LABELS[item.phase] ?? 'the session'}`
+            : `${lead} ${item.target ? describeTarget(session, item.target) : 'the session'}`;
+        rest.push(`${index + 1}. ${item.id}: ${subject}`);
+        const decision = item.target?.type === 'decision' ? byId(session.decisions, item.target.id) : null;
+        const file = rpi && (item.kind === 'edit' || decision) ? artifactFor(session, item.target?.phase) : null;
+        if (file) rest.push(`   File: ${file}`);
         if (item.optionLabel) {
-            lines.push(`   Chose: ${item.optionLabel}`);
+            rest.push(`   Chose: ${item.optionLabel}`);
         }
-        if (item.text) {
-            const lead = item.optionLabel ? '' : item.kind === 'override' ? 'Do instead: ' : item.kind === 'answer' ? 'Answer: ' : '';
-            item.text.split('\n').forEach((line, index) => lines.push(`   ${index === 0 ? lead : ''}${line}`));
+        if (item.text && item.kind !== 'edit') {
+            const prefix = item.optionLabel ? '' : item.kind === 'override' ? 'Do instead: ' : item.kind === 'answer' ? 'Answer: ' : '';
+            item.text.split('\n').forEach((line, at) => rest.push(`   ${at === 0 ? prefix : ''}${line}`));
         }
         if (item.correctionOf) {
-            lines.push(`   Corrects ${item.correctionOf}.`);
+            rest.push(`   Corrects ${item.correctionOf}.`);
         }
         if (item.kind === 'edit' && item.section) {
-            lines.push('   The section now reads:', '   ~~~markdown');
-            for (const line of item.section.markdown.split('\n')) {
-                lines.push(`   ${line}`);
-            }
-            lines.push('   ~~~');
-            if (item.section.truncated) {
-                lines.push(`   (First ${EDIT_EXCERPT_MAX} characters. Read the full section ${item.section.id} with get_state detail "full".)`);
-            }
+            rest.push(...editLines(session, item));
         }
     });
-    lines.push('', 'Read back how you interpreted each item with the canvas action record_interpretation.');
-    const counts = new Map();
-    for (const item of items) {
-        const label = KIND_LABELS[item.kind].toLowerCase();
-        counts.set(label, (counts.get(label) ?? 0) + 1);
+    const digest = createHash('sha256').update([...head, ...rest].join('\n')).digest('hex').slice(0, 32);
+    const prompt = [...head, ...(note ? ['', 'Message from the user:', ...indent(note)] : []), ...rest].join('\n');
+    const label = `${name} sent ${sent}: ${tally}.`;
+    return { prompt, displayPrompt: note ? `${note}\n\n${label}` : label, ids: items.map((item) => item.id), digest };
+}
+
+/** A suggested edit in delivered text: its base, then its line changes or, for edits saved before suggestions, its text. */
+function editLines(session, item) {
+    const { section } = item;
+    const current = session.sections?.[section.id];
+    const lines = [];
+    if (typeof section.diff === 'string') {
+        const changed = current && current.revision !== section.revision ? '; the section has changed since' : '';
+        lines.push(`   Made against revision ${section.revision} of the section${changed}. Change these lines:`, '   ~~~diff');
+        const cut = section.diff.lastIndexOf('\n', EDIT_EXCERPT_MAX);
+        const shown = section.diff.length > EDIT_EXCERPT_MAX ? section.diff.slice(0, cut > 0 ? cut : EDIT_EXCERPT_MAX) : section.diff;
+        lines.push(...indent(shown), '   ~~~');
+        if (shown.length < section.diff.length || section.diffTruncated) {
+            lines.push(`   (The change continues. get_state with detail "full" returns feedback item ${item.id} with the whole suggested text in section.markdown.)`);
+        }
+        return lines;
     }
-    const summary = [...counts].map(([label, count]) => `${count} ${label}${count === 1 ? '' : 's'}`).join(', ');
-    const prompt = lines.join('\n');
-    return { prompt, displayPrompt: `RPI canvas: ${summary}`, ids: items.map((item) => item.id), digest: createHash('sha256').update(prompt).digest('hex').slice(0, 32) };
+    lines.push("   The user's version of the section:", '   ~~~markdown', ...indent(section.markdown ?? ''), '   ~~~');
+    if (section.truncated) {
+        lines.push(`   (First ${EDIT_EXCERPT_MAX} characters.)`);
+    }
+    return lines;
 }
 
 function describeTarget(session, target) {
@@ -671,14 +746,18 @@ export function recordInterpretation(session, input, now) {
 }
 
 /**
- * Saves a user edit to one section, or reports a conflict with the current text.
+ * Records the user's suggested edit to one section. The section keeps its text: the
+ * suggestion is a pending feedback item, one per section, holding the suggested Markdown
+ * and its line changes against the revision the user saw, until the agent applies it.
+ * Suggesting the current text withdraws a pending suggestion.
  *
  * @param {any} session
  * @param {{ sectionId: string, markdown: string, baseRevision: number }} input
  * @param {string} now
+ * @returns {{ session: any, result: { conflict: boolean, section?: any, feedbackId?: string, withdrawn?: string, unchanged?: boolean } }}
  */
-export function editSection(session, input, now) {
-    const sectionId = sectionKey(input?.sectionId);
+export function suggestEdit(session, input, now) {
+    const sectionId = requireSection(session, input?.sectionId);
     const markdown = text(input?.markdown, 'markdown', { max: LIMITS.markdown, allowEmpty: true });
     if (!Number.isInteger(input?.baseRevision) || input.baseRevision < 0) {
         fail('invalid_input', 'baseRevision must be a non-negative integer.');
@@ -687,41 +766,64 @@ export function editSection(session, input, now) {
     if (current.revision !== input.baseRevision) {
         return { session, result: { conflict: true, section: clone(current) } };
     }
-    if (current.markdown === markdown) {
-        return { session, result: { conflict: false, unchanged: true, section: clone(current) } };
+    const pending = pendingSuggestion(session, sectionId);
+    if (pending && isClaimed(pending, now)) {
+        fail('invalid_state', 'This suggestion is being sent. Change it after it reaches the agent.');
     }
+    if (current.markdown === markdown) {
+        if (!pending) {
+            return { session, result: { conflict: false, unchanged: true } };
+        }
+        const withdrawn = transitionFeedback(session, pending.id, 'dismissed', { by: 'user' }, now);
+        return { session: withdrawn.session, result: { conflict: false, withdrawn: pending.id } };
+    }
+    const diff = unifiedDiff(current.markdown, markdown);
+    const cut = diff.text.length > SUGGESTION_DIFF_MAX ? diff.text.lastIndexOf('\n', SUGGESTION_DIFF_MAX) : -1;
+    const suggestion = {
+        id: sectionId,
+        title: current.title,
+        revision: current.revision,
+        markdown,
+        diff: diff.text.length > SUGGESTION_DIFF_MAX ? diff.text.slice(0, cut > 0 ? cut : SUGGESTION_DIFF_MAX) : diff.text,
+        diffTruncated: diff.text.length > SUGGESTION_DIFF_MAX,
+        added: diff.added,
+        removed: diff.removed,
+    };
+    const summary = `Suggested edit to "${current.title}": ${diff.added} ${diff.added === 1 ? 'line' : 'lines'} added, ${diff.removed} removed.`;
     return mutate(session, now, (draft) => {
-        const section = draft.sections[sectionId];
-        section.markdown = markdown;
-        section.revision += 1;
-        section.editedBy = 'user';
-        section.updatedAt = now;
-        capFeedback(draft);
-        const item = {
-            id: nextId(draft.feedback, 'FB'),
-            kind: 'edit',
-            state: 'queued',
-            target: { id: sectionId, type: 'section', phase: section.doc },
-            text: `Edited "${section.title}" (now revision ${section.revision}).`,
-            section: {
-                id: sectionId,
-                title: section.title,
-                revision: section.revision,
-                markdown: markdown.slice(0, EDIT_EXCERPT_MAX),
-                truncated: markdown.length > EDIT_EXCERPT_MAX,
-            },
-            createdAt: now,
-            updatedAt: now,
-            history: [],
-        };
-        pushHistory(item, 'queued', 'user', now);
-        draft.feedback.push(item);
-        return { conflict: false, section: clone(section), feedbackId: item.id };
+        let item = pending ? byId(draft.feedback, pending.id) : null;
+        if (item) {
+            item.section = suggestion;
+            item.text = summary;
+            item.updatedAt = now;
+        } else {
+            capFeedback(draft);
+            item = {
+                id: nextId(draft.feedback, 'FB'),
+                kind: 'edit',
+                state: 'queued',
+                target: { id: sectionId, type: 'section', phase: current.doc },
+                text: summary,
+                section: suggestion,
+                createdAt: now,
+                updatedAt: now,
+                history: [],
+            };
+            pushHistory(item, 'queued', 'user', now);
+            draft.feedback.push(item);
+        }
+        return { conflict: false, feedbackId: item.id };
     });
 }
 
+/** The section's suggestion that has not been sent, if any. */
+export function pendingSuggestion(session, sectionId) {
+    return session.feedback.find((item) => item.kind === 'edit' && item.state === 'queued' && item.target?.id === sectionId) ?? null;
+}
+
 /**
- * Agent edit of a section; bumps the revision so open user edits see a conflict.
+ * Agent edit of a section, such as applying a suggestion on the sample. Bumps the
+ * revision, so an open editor sees a conflict and older suggestions show the change.
  *
  * @param {any} session
  * @param {{ sectionId: string, markdown: string, title?: string }} input
@@ -761,50 +863,88 @@ export function requireSection(session, sectionId) {
 }
 
 /**
- * Toggles one checklist item.
+ * Marks one checklist item Looks good (`ok`) or Needs work, with an optional note for
+ * Needs work, or clears it with a `null` verdict. The phase's pending review follows.
  *
  * @param {any} session
- * @param {{ phase: string, itemId: string, checked: boolean }} input
+ * @param {{ phase: string, itemId: string, verdict: 'ok' | 'needs-work' | null, note?: string }} input
  * @param {string} now
  */
-export function toggleChecklist(session, input, now) {
+export function markChecklist(session, input, now) {
     const phase = oneOf(input?.phase, PHASES, 'phase');
     const itemId = identifier(input?.itemId, 'itemId');
-    if (typeof input.checked !== 'boolean') {
-        fail('invalid_input', 'checked must be true or false.');
-    }
+    const verdict = input?.verdict === null || input?.verdict === undefined ? null : oneOf(input.verdict, VERDICTS, 'verdict');
+    const note = verdict === 'needs-work' ? text(input?.note, 'note', { optional: true }) : undefined;
     const list = own(session.checklists, phase) ? session.checklists[phase] : [];
     if (!byId(list, itemId)) {
         fail('not_found', `No checklist item ${itemId} exists for ${phase}.`);
     }
     return mutate(session, now, (draft) => {
         const item = byId(draft.checklists[phase], itemId);
-        item.checked = input.checked;
-        return item;
+        delete item.checked;
+        if (verdict) item.verdict = verdict;
+        else delete item.verdict;
+        if (note) item.note = note;
+        else delete item.note;
+        syncChecklistReview(draft, phase, now);
+        return clone(item);
     });
 }
 
-/** Queues a summary of a phase checklist for the agent. */
-export function shareChecklist(session, phaseInput, now) {
-    const phase = oneOf(phaseInput, PHASES, 'phase');
-    const list = own(session.checklists, phase) ? session.checklists[phase] : [];
-    if (list.length === 0) {
-        fail('not_found', `There is no ${phase} checklist.`);
+/**
+ * What a phase checklist tells the agent, or null when it has nothing to send: the items
+ * that need work with their notes, or that every item looks good. Partial Looks good marks
+ * only track the person's progress.
+ *
+ * @param {any[]} list
+ * @param {string} phase
+ * @returns {{ text: string, digest: string } | null}
+ */
+export function checklistReview(list, phase) {
+    const work = list.filter((item) => verdictOf(item) === 'needs-work');
+    const good = list.filter((item) => verdictOf(item) === 'ok');
+    if (list.length === 0 || (work.length === 0 && good.length < list.length)) {
+        return null;
     }
-    const done = list.filter((item) => item.checked);
-    const open = list.filter((item) => !item.checked);
-    const body = [
-        `${PHASE_LABELS[phase]} review: ${done.length} of ${list.length} items checked.`,
-        ...done.map((item) => `Checked: ${item.label}`),
-        ...open.map((item) => `Not checked: ${item.label}`),
-    ].join('\n');
-    return mutate(session, now, (draft) => {
-        capFeedback(draft);
-        const item = { id: nextId(draft.feedback, 'FB'), kind: 'checklist', state: 'queued', target: null, text: body, phase, createdAt: now, updatedAt: now, history: [] };
-        pushHistory(item, 'queued', 'user', now);
-        draft.feedback.push(item);
-        return item;
-    });
+    const label = PHASE_LABELS[phase] ?? phase;
+    const lines = work.length === 0
+        ? [`${label} review: all ${list.length} items look good.`]
+        : [
+            `${label} review: ${work.length} of ${list.length} items ${work.length === 1 ? 'needs' : 'need'} work${good.length ? `, and ${good.length} ${good.length === 1 ? 'looks' : 'look'} good` : ''}.`,
+            ...work.map((item) => `Needs work: ${item.label}${item.note ? `. Note: ${item.note}` : ''}`),
+            ...good.map((item) => `Looks good: ${item.label}`),
+        ];
+    const body = lines.join('\n');
+    return { text: body, digest: createHash('sha256').update(body).digest('hex').slice(0, 16) };
+}
+
+/**
+ * Keeps the phase's pending review item in step with its checklist: created or updated
+ * while the checklist has something new to send, and removed, never having been sent,
+ * when it has nothing. An item being delivered is left alone.
+ */
+function syncChecklistReview(draft, phase, now) {
+    const review = checklistReview(draft.checklists[phase] ?? [], phase);
+    const pending = draft.feedback.find((item) => item.kind === 'checklist' && item.phase === phase && item.state === 'queued');
+    if (pending && isClaimed(pending, now)) {
+        return;
+    }
+    const lastSent = draft.feedback.findLast((item) => item.kind === 'checklist' && item.phase === phase && ['sent', 'interpreted', 'applied', 'corrected'].includes(item.state));
+    const wanted = review && review.digest !== lastSent?.digest ? review : null;
+    if (!wanted) {
+        if (pending) draft.feedback.splice(draft.feedback.indexOf(pending), 1);
+        return;
+    }
+    if (pending) {
+        pending.text = wanted.text;
+        pending.digest = wanted.digest;
+        pending.updatedAt = now;
+        return;
+    }
+    capFeedback(draft);
+    const item = { id: nextId(draft.feedback, 'FB'), kind: 'checklist', state: 'queued', target: null, phase, text: wanted.text, digest: wanted.digest, createdAt: now, updatedAt: now, history: [] };
+    pushHistory(item, 'queued', 'user', now);
+    draft.feedback.push(item);
 }
 
 /**

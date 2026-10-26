@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
-import { createFeedback, editSection, recordActivity, toggleChecklist, transitionFeedback, upsertDecision, validateSession } from '../lib/model.mjs';
+import { createFeedback, markChecklist, recordActivity, suggestEdit, transitionFeedback, upsertDecision, validateSession } from '../lib/model.mjs';
 import {
     alignmentOf,
     assembleSession,
@@ -137,7 +137,7 @@ describe('merging a re-import', () => {
     it('keeps what the person added in the canvas', () => {
         let stored = rootSession().session;
         stored = createFeedback(stored, { kind: 'comment', text: 'Mine', target: { id: 'F1', type: 'finding', phase: 'research' } }, NOW).session;
-        stored = toggleChecklist(stored, { phase: 'research', itemId: 'R1', checked: true }, NOW).session;
+        stored = markChecklist(stored, { phase: 'research', itemId: 'R1', verdict: 'needs-work', note: 'Say which region first.' }, NOW).session;
         stored = recordActivity(stored, { text: 'Reading the plan' }, NOW).session;
         stored = upsertDecision(stored, { owner: 'user', phase: 'plan', title: 'Ship the coast first?', question: 'Which region?', options: [{ label: 'Coast' }, { label: 'Park' }] }, NOW).session;
         const asked = stored.decisions.at(-1);
@@ -147,24 +147,34 @@ describe('merging a re-import', () => {
         assert.notEqual(merged, stored);
         assert.equal(merged.revision, stored.revision + 1);
         assert.deepEqual(merged.feedback, stored.feedback);
-        assert.equal(merged.checklists.research.find((item) => item.id === 'R1').checked, true);
+        const r1 = merged.checklists.research.find((item) => item.id === 'R1');
+        assert.equal(r1.verdict, 'needs-work');
+        assert.equal(r1.note, 'Say which region first.');
+        assert.equal(r1.label, 'The bottom line is clear');
         assert.equal(merged.implementation.activity.length, 1);
         assert.ok(merged.decisions.some((decision) => decision.id === 'D3'));
         assert.deepEqual(merged.scenario, { userChanges: 2 });
         assert.match(merged.sections['research-unknowns'].markdown, /Vendor licenses/);
     });
 
-    it('keeps a pending section edit until the agent changes that section', () => {
+    it('carries verdicts saved before verdicts existed onto the current checklist labels', () => {
+        const fresh = rootSession().session;
+        const stored = { ...fresh, checklists: { ...fresh.checklists, research: fresh.checklists.research.map((item) => (item.id === 'R2' ? { id: 'R2', label: 'Old wording', checked: true } : item)) } };
+        const merged = mergeImport(stored, withResearch(RESEARCH.replace('Tile licenses limit', 'Vendor licenses limit')), LATER);
+        assert.deepEqual(merged.checklists.research.find((item) => item.id === 'R2'), { id: 'R2', label: "Each finding's evidence is convincing", verdict: 'ok' });
+    });
+
+    it('never changes section text for a suggestion, and lets the file replace text edited before suggestions', () => {
         let stored = rootSession().session;
-        stored = editSection(stored, { sectionId: 'finding-f1', markdown: 'My clearer wording.', baseRevision: 1 }, NOW).session;
-        const edited = stored.sections['finding-f1'];
-        assert.equal(edited.editedBy, 'user');
-        const unrelated = mergeImport(stored, withResearch(RESEARCH.replace('Tile licenses limit', 'Vendor licenses limit')), LATER);
-        assert.equal(unrelated.sections['finding-f1'], edited, 'an unrelated change keeps the edit');
-        const changed = mergeImport(stored, withResearch(RESEARCH.replace('well within quota.', 'well within the quota.')), LATER);
-        assert.equal(changed.sections['finding-f1'].editedBy, 'agent');
-        assert.match(changed.sections['finding-f1'].markdown, /well within the quota/);
-        assert.ok(changed.sections['finding-f1'].revision > edited.revision, 'an open editor sees a conflict');
+        const original = stored.sections['finding-f1'];
+        stored = suggestEdit(stored, { sectionId: 'finding-f1', markdown: 'My clearer wording.', baseRevision: 1 }, NOW).session;
+        assert.deepEqual(stored.sections['finding-f1'], original, 'a suggestion leaves the section as the file has it');
+        const legacy = { ...stored, sections: { ...stored.sections, 'finding-f1': { ...original, markdown: 'Text typed into the old editor.', revision: 2, editedBy: 'user' } } };
+        const restored = mergeImport(legacy, withResearch(RESEARCH.replace('Tile licenses limit', 'Vendor licenses limit')), LATER);
+        assert.equal(restored.sections['finding-f1'].markdown, original.markdown, 'the file text shows again');
+        assert.equal(restored.sections['finding-f1'].editedBy, 'agent');
+        assert.ok(restored.sections['finding-f1'].revision > 2, 'an open editor sees a conflict');
+        assert.deepEqual(restored.feedback, stored.feedback, 'the suggestion stays pending');
     });
 
     it('keeps an answer to an imported decision while its content is unchanged', () => {

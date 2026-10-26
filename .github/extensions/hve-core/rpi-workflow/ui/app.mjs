@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, h, icon, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { disclosure, filePreview, hasMarginHome, steerPanel, workspaceEditorUri } from './components.mjs';
+import { disclosure, filePreview, hasMarginHome, pendingItems, sendSheet, steerPanel, workspaceEditorUri } from './components.mjs';
 import * as followupView from './view-followup.mjs';
 import * as implementView from './view-implement.mjs';
 import * as planView from './view-plan.mjs';
@@ -14,6 +14,11 @@ import * as reviewView from './view-review.mjs';
 const PHASES = ['research', 'plan', 'implement', 'review', 'followup'];
 const VIEWS = { research: researchView, plan: planView, implement: implementView, review: reviewView, followup: followupView };
 const $ = (id) => document.getElementById(id);
+
+/** The Send to agent dialog's state: the person's message, the previewed text, and progress. */
+function freshSend() {
+    return { note: '', preview: null, previewNote: null, sending: false, error: null };
+}
 
 const state = {
     data: null,
@@ -27,9 +32,7 @@ const state = {
         editing: null,
         expanded: new Set(),
         openEvidence: new Set(),
-        deliveryMode: 'queue',
-        deliveryPreview: null,
-        delivering: false,
+        send: freshSend(),
         composer: { kind: 'comment', text: '', anchor: null },
         decisionDrafts: new Map(),
         corrections: new Map(),
@@ -129,10 +132,13 @@ function setPhase(phase) {
     $('document').scrollTop = 0;
 }
 
-/** True when the open editor's draft differs from the stored section. */
+/** True when the open editor's draft differs from the text it started from. */
 function editChanged(editing) {
-    return Boolean(editing) && editing.draft !== (state.data?.session.sections[editing.sectionId]?.markdown ?? editing.draft);
+    return Boolean(editing) && editing.draft !== (editing.start ?? state.data?.session.sections[editing.sectionId]?.markdown ?? editing.draft);
 }
+
+/** The section's suggestion that has not been sent, if any. */
+const pendingSuggestionFor = (sectionId) => state.data?.session.feedback.find((item) => item.kind === 'edit' && item.state === 'queued' && item.target?.id === sectionId) ?? null;
 
 /** Shows and focuses the open editor, switching to its phase when needed. */
 function focusEditor(sectionId) {
@@ -212,7 +218,7 @@ const taskUi = () => ({
     editing: null,
     expanded: new Set(),
     openEvidence: new Set(),
-    deliveryPreview: null,
+    send: freshSend(),
     composer: { kind: 'comment', text: '', anchor: null },
     decisionDrafts: new Map(),
     corrections: new Map(),
@@ -323,7 +329,7 @@ const act = {
             await api('/api/feedback', { kind, target: { id: decisionId }, optionId: draft.optionId ?? undefined, text: draft.note?.trim() || undefined });
             state.ui.decisionDrafts.delete(decisionId);
             state.ui.overrides.delete(decisionId);
-            announce(`${kind === 'answer' ? 'Answer' : 'Override'} for ${decisionId} queued for the agent.`);
+            announce(`${kind === 'answer' ? 'Answer' : 'Override'} for ${state.data.session.decisions.find((decision) => decision.id === decisionId)?.ref ?? decisionId} saved. It waits for Send to agent.`);
             await refresh();
             targetElement(decisionId)?.focus({ preventScroll: true });
         } catch (error) {
@@ -334,7 +340,7 @@ const act = {
         try {
             await api('/api/feedback/transition', { id, to, ...extra });
             state.ui.corrections.delete(id);
-            announce(to === 'applied' ? 'Marked as understood.' : to === 'corrected' ? 'Correction queued for the agent.' : to === 'dismissed' ? 'Removed from the queue.' : 'Updated.');
+            announce(to === 'applied' ? 'Marked as understood.' : to === 'corrected' ? 'Correction saved. It waits for Send to agent.' : to === 'dismissed' ? 'Removed. It will not be sent.' : 'Updated.');
             await refresh();
         } catch (error) {
             announce(error.message);
@@ -392,16 +398,20 @@ const act = {
         navigate(item.target.id);
         window.setTimeout(() => $(`correct-${item.id}`)?.focus(), 60);
     },
+    /** Opens the editor on the section's pending suggestion when it has one, otherwise on the section text. */
     startEdit(sectionId) {
         const section = state.data.session.sections[sectionId];
         if (!section) return;
         const open = state.ui.editing;
         if (open && open.sectionId !== sectionId && editChanged(open)) {
-            announce(`Finish or cancel your edit of ${state.data.session.sections[open.sectionId]?.title ?? 'the open section'} first. Your changes are kept.`);
+            announce(`Finish or cancel your suggestion for ${state.data.session.sections[open.sectionId]?.title ?? 'the open section'} first. Your changes are kept.`);
             focusEditor(open.sectionId);
             return;
         }
-        state.ui.editing = { sectionId, draft: section.markdown, baseRevision: section.revision, mode: 'write', conflict: null, compare: false, saving: false };
+        const suggestion = pendingSuggestionFor(sectionId);
+        const draft = typeof suggestion?.section?.markdown === 'string' ? suggestion.section.markdown : section.markdown;
+        const baseRevision = Number.isInteger(suggestion?.section?.revision) && typeof suggestion.section.diff === 'string' ? suggestion.section.revision : section.revision;
+        state.ui.editing = { sectionId, draft, start: draft, baseRevision, suggestionId: suggestion?.id ?? null, mode: 'write', conflict: null, compare: false, saving: false };
         render();
         window.requestAnimationFrame(() => $(`edit-${sectionId}`)?.focus());
     },
@@ -418,9 +428,9 @@ const act = {
         editing.saving = true;
         render();
         try {
-            await api('/api/section', { sectionId: editing.sectionId, markdown: editing.draft, baseRevision: editing.baseRevision });
+            const result = await api('/api/suggestion', { sectionId: editing.sectionId, markdown: editing.draft, baseRevision: editing.baseRevision });
             state.ui.editing = null;
-            announce('Saved. Your edit is queued so the agent sees it.');
+            announce(result.withdrawn ? 'Your suggestion matched the current text, so it was removed.' : result.unchanged ? 'Nothing changed, so there is nothing to suggest.' : `Suggestion ${editing.suggestionId ? 'updated' : 'added'}. It waits for Send to agent, and the text changes when the agent applies it.`);
             await refresh();
             targetElement(state.data.session.sections[editing.sectionId]?.id)?.focus({ preventScroll: true });
         } catch (error) {
@@ -428,7 +438,7 @@ const act = {
             if (error.code === 'conflict') {
                 editing.conflict = error.detail.section;
                 render();
-                announce('The agent changed this section while you were editing. Choose which version to keep.');
+                announce('This section changed while you were editing. Compare, then keep your suggestion or start from the new text.');
                 window.requestAnimationFrame(() => $(`conflict-${editing.sectionId}`)?.focus());
             } else {
                 render();
@@ -443,10 +453,13 @@ const act = {
         editing.compare = false;
         act.saveEdit();
     },
+    /** Restarts the open suggestion from the section's new text, keeping the editor open. */
     useTheirs() {
-        state.ui.editing = null;
-        announce("Kept the agent's version.");
-        refresh();
+        const editing = state.ui.editing;
+        Object.assign(editing, { draft: editing.conflict.markdown, start: editing.conflict.markdown, baseRevision: editing.conflict.revision, conflict: null, compare: false, mode: 'write' });
+        render();
+        announce('The editor now holds the new text. Make your change again, or cancel.');
+        window.requestAnimationFrame(() => $(`edit-${editing.sectionId}`)?.focus());
     },
     toggleCompare() {
         state.ui.editing.compare = !state.ui.editing.compare;
@@ -521,7 +534,7 @@ const act = {
         const composer = state.ui.composer;
         try {
             await api('/api/feedback', { kind: composer.kind, text: composer.text, target: composer.anchor ? { id: composer.anchor } : undefined });
-            announce(composer.kind === 'research-request' ? 'Research request queued. A lane starts when the agent takes it.' : 'Added to your feedback, queued for the agent.');
+            announce(composer.kind === 'research-request' ? 'Research request added. It waits for Send to agent, and a research lane starts when the agent takes it.' : `${composer.kind === 'context' ? 'Context' : 'Comment'} added. It waits for Send to agent.`);
             state.ui.composer = { kind: composer.kind, text: '', anchor: null };
             await refresh();
             window.requestAnimationFrame(() => $('composer-text')?.focus());
@@ -532,63 +545,92 @@ const act = {
     async requestTask(id, text) {
         try {
             await api('/api/feedback', { kind: 'task-request', text, target: { id } });
-            announce('Request queued for the agent.');
+            announce('Request added. It waits for Send to agent.');
             await refresh();
         } catch (error) {
             announce(error.message);
         }
     },
-    async toggleChecklist(phase, itemId, checked) {
+    /** Sets one checklist verdict (null clears it), with a note for Needs work, and says when the review joins or leaves the next send. */
+    async markChecklist(phase, itemId, verdict, note) {
+        const waiting = () => state.data.session.feedback.some((item) => item.kind === 'checklist' && item.phase === phase && item.state === 'queued');
+        const before = waiting();
         try {
-            await api('/api/checklist', { phase, itemId, checked });
+            await api('/api/checklist', { phase, itemId, verdict, ...(note !== undefined ? { note } : {}) });
             await refresh();
+            const after = waiting();
+            if (after && !before) announce('Your review now goes with your next send.');
+            else if (!after && before) announce('Nothing from this checklist goes to the agent now.');
+            else if (verdict === 'needs-work' && note) announce('Note saved.');
         } catch (error) {
             announce(error.message);
         }
     },
-    async shareChecklist(phase) {
-        try {
-            await api('/api/checklist/share', { phase });
-            announce('Your review was queued for the agent.');
-            await refresh();
-        } catch (error) {
-            announce(error.message);
-        }
+    /** Opens Send to agent from the header or the steering panel and prepares the exact text. */
+    openSend() {
+        const sheet = $('sendSheet');
+        if (!state.data || sheet.open) return;
+        state.ui.send.error = null;
+        sendOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        renderSendSheet();
+        sheet.showModal();
+        focusQuietly($('sendSheetTitle'));
+        refreshSendPreview();
     },
-    setDeliveryMode(mode) {
-        state.ui.deliveryMode = mode;
-        state.ui.deliveryPreview = null;
-        render();
+    setSendNote(text) {
+        state.ui.send.note = text;
+        window.clearTimeout(sendNoteTimer);
+        sendNoteTimer = window.setTimeout(refreshSendPreview, 400);
     },
-    async preview(ids) {
-        try {
-            state.ui.deliveryPreview = await api('/api/delivery/preview', { ids });
-            render();
-            window.requestAnimationFrame(() => document.querySelector('.preview-text')?.focus());
-        } catch (error) {
-            announce(error.message);
-        }
-    },
-    async deliver(ids) {
-        state.ui.delivering = true;
-        render();
-        let stale = false;
-        try {
-            const result = await api('/api/delivery', { ids, mode: state.ui.deliveryMode, digest: state.ui.deliveryPreview?.digest ?? '' });
-            announce(result.warning ?? `Delivered ${plural(result.delivered.length, 'item')} ${result.mode === 'attach' ? 'as an attachment to your next message' : 'as a message to the agent'}.`);
-        } catch (error) {
-            stale = error.code === 'preview_stale' && Boolean(error.detail?.preview);
-            if (stale) {
-                state.ui.deliveryPreview = error.detail.preview;
-                announce('The text changed since your preview. Review the new text, then deliver again.');
-            } else {
-                announce(`Not delivered: ${error.message}`);
+    /** Sends the listed items as one chat message, after checking the list still matches the text prepared for it. */
+    async send() {
+        const send = state.ui.send;
+        const ids = pendingItems(context()).map((item) => item.id);
+        if (!send.preview || send.preview.ids.join() !== ids.join() || send.previewNote !== send.note) {
+            const listChanged = Boolean(send.preview) && send.preview.ids.join() !== ids.join();
+            await refreshSendPreview();
+            if (listChanged || !send.preview) {
+                announce('The list changed. Check it, then send.');
+                return;
             }
-        } finally {
-            state.ui.delivering = false;
-            if (!stale) state.ui.deliveryPreview = null;
+        }
+        send.sending = true;
+        send.error = null;
+        renderSendSheet();
+        try {
+            const result = await api('/api/delivery', { ids: send.preview.ids, digest: send.preview.digest, ...(send.note.trim() ? { note: send.note } : {}) });
+            const handle = state.data.canvas?.handle;
+            Object.assign(state.ui.send, freshSend());
+            $('sendSheet').close();
+            announce(result.warning ?? `Sent ${plural(result.delivered.length, 'item')} to the agent. Look for “RPI canvas${handle ? ` ${handle}` : ''} sent” in the chat.`);
             await refresh();
-            if (stale) window.requestAnimationFrame(() => document.querySelector('.preview-text')?.focus());
+        } catch (error) {
+            send.sending = false;
+            if (error.code === 'preview_stale' && error.detail?.preview) {
+                send.preview = error.detail.preview;
+                send.previewNote = send.note;
+                announce('Your items changed since this opened. Check the list, then send again.');
+            } else {
+                send.error = `Not sent: ${error.message}`;
+                announce(send.error);
+            }
+            renderSendSheet();
+        }
+    },
+    async removePending(id) {
+        await act.transition(id, 'dismissed');
+        renderSendSheet();
+    },
+    /** Closes Send to agent and moves to what an item is about. */
+    showPending(item) {
+        keepFocusOnClose = true;
+        $('sendSheet').close();
+        if (item.kind === 'checklist') {
+            if (item.phase && item.phase !== state.ui.phase) setPhase(item.phase);
+            openSteer();
+            window.requestAnimationFrame(() => focusQuietly($('steer-checklist')));
+        } else if (item.target?.id) {
+            navigate(item.target.id);
         }
     },
     openFile(changeId, path) {
@@ -624,12 +666,16 @@ function renderHeader() {
     document.title = `RPI Workflow: ${task.title}`;
     const where = [task.repository, task.branch].filter(Boolean).join(' · ');
     const parent = rpi && task.parent ? session.followUps.lineage.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
+    const handle = state.data.canvas?.handle ?? null;
+    const named = handle ? ` Messages this canvas sends to the agent start with “RPI canvas ${handle}”.` : '';
     clear($('taskMeta')).append(...[
-        rpi ? h('span', { class: 'badge tone-muted session-badge', title: `Read from ${source.statePath}` }, icon('file'), 'RPI session') : null,
+        // A real session's badge names the canvas the way its chat messages do.
+        rpi ? h('span', { class: 'badge tone-muted session-badge', title: `Shows the RPI files from ${source.statePath}.${named}` }, icon('file'), handle ? ['RPI canvas ', h('code', { class: 'canvas-handle', text: handle })] : 'RPI session') : null,
         rpi ? h('code', { class: 'task-id', title: `Task ID: ${task.id}`, text: task.id }) : null,
         where ? h('span', { class: 'task-where', title: where, text: where }) : null,
         parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask(parent.id) }, parent.title)) : null,
         session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null,
+        !rpi && handle ? h('span', { class: 'canvas-chip', title: named.trim() }, 'Canvas ', h('code', { class: 'canvas-handle', text: handle })) : null,
     ].filter(Boolean));
     $('liveChip').title = rpi ? "The canvas follows this task's files while it is open." : 'The canvas shows changes as they happen.';
     const count = view.attentionCount;
@@ -749,6 +795,95 @@ function renderSteer() {
     clear($('steerBody')).append(...steerPanel(context()));
 }
 
+// Send to agent
+
+/** The control that opened Send to agent, so closing returns focus there. */
+let sendOpener = null;
+let sendNoteTimer = 0;
+let previewRequest = 0;
+let keepFocusOnClose = false;
+
+/** Fetches the exact text for the current list and message, then shows it in the open dialog. */
+async function refreshSendPreview() {
+    const send = state.ui.send;
+    const ids = state.data ? pendingItems(context()).map((item) => item.id) : [];
+    const request = ++previewRequest;
+    if (!ids.length) {
+        send.preview = null;
+        renderSendSheet();
+        return;
+    }
+    const note = send.note;
+    try {
+        const preview = await api('/api/delivery/preview', { ids, ...(note.trim() ? { note } : {}) });
+        if (request !== previewRequest) return;
+        send.preview = preview;
+        send.previewNote = note;
+        send.error = null;
+    } catch (error) {
+        if (request !== previewRequest) return;
+        send.preview = null;
+        send.error = error.message;
+    }
+    updateSendPreview();
+}
+
+/** Updates the exact text and Send in place, so typing a message is never interrupted. */
+function updateSendPreview() {
+    const sheet = $('sendSheet');
+    if (!sheet.open) return;
+    const pre = $('send-preview');
+    const confirm = sheet.querySelector('[data-key="send-confirm"]');
+    const error = $('send-error');
+    if (!pre || !confirm || Boolean(error) !== Boolean(state.ui.send.error)) {
+        renderSendSheet();
+        return;
+    }
+    pre.textContent = state.ui.send.preview?.prompt ?? 'Preparing the message…';
+    confirm.disabled = state.ui.send.sending || !state.ui.send.preview;
+}
+
+/** Rebuilds the open dialog, keeping focus, selection, and the exact-text disclosure where they were. */
+function renderSendSheet() {
+    const sheet = $('sendSheet');
+    if (!state.data) return;
+    const active = sheet.contains(document.activeElement) ? document.activeElement : null;
+    const key = active ? { id: active.id || null, dataKey: active.dataset?.key ?? null, selection: typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd] : null } : null;
+    const exactOpen = sheet.querySelector('details.send-exact')?.open ?? false;
+    sheet.replaceChildren(...sendSheet(context()));
+    const details = sheet.querySelector('details.send-exact');
+    if (details) details.open = exactOpen;
+    if (!key) return;
+    const target = (key.id && $(key.id)) || (key.dataKey && sheet.querySelector(`[data-key="${CSS.escape(key.dataKey)}"]`));
+    if (target && !target.disabled) {
+        target.focus({ preventScroll: true });
+        if (key.selection && typeof target.setSelectionRange === 'function') target.setSelectionRange(key.selection[0], key.selection[1]);
+    } else {
+        focusQuietly($('sendSheetTitle'));
+    }
+}
+
+function onSendClose() {
+    window.clearTimeout(sendNoteTimer);
+    const opener = sendOpener;
+    sendOpener = null;
+    if (keepFocusOnClose) {
+        keepFocusOnClose = false;
+        return;
+    }
+    if (opener?.isConnected && usable(opener)) opener.focus({ preventScroll: true });
+    else $('sendBtn').focus({ preventScroll: true });
+}
+
+function renderSendButton() {
+    const waiting = pendingItems(context()).length;
+    const sendBtn = $('sendBtn');
+    sendBtn.classList.toggle('has-items', waiting > 0);
+    $('sendCount').textContent = String(waiting);
+    sendBtn.setAttribute('aria-label', waiting ? `Send to agent, ${plural(waiting, 'item')} waiting` : 'Send to agent, nothing waiting');
+    sendBtn.title = waiting ? `Review and send ${plural(waiting, 'item')} to the agent` : 'Nothing to send yet. Answer, comment, or suggest an edit first.';
+}
+
 /** Describes the focused control so a re-render can find it, or a sensible neighbor when it is gone. */
 function focusKey() {
     const element = document.activeElement;
@@ -804,6 +939,7 @@ function render() {
     const scroll = doc.scrollTop;
     const steerScroll = $('steer').scrollTop;
     renderHeader();
+    renderSendButton();
     renderRail();
     renderNavigator();
     renderContextBar();
@@ -813,6 +949,11 @@ function render() {
     $('steer').scrollTop = steerScroll;
     restoreFocus(key);
     applyPanels();
+    if ($('sendSheet').open) {
+        renderSendSheet();
+        const ids = pendingItems(context()).map((item) => item.id).join();
+        if (ids !== (state.ui.send.preview?.ids.join() ?? '')) refreshSendPreview();
+    }
 }
 
 // Panels and drawers
@@ -920,7 +1061,7 @@ const SHORTCUTS = [
     ['1 to 5', 'View Research, Plan, Implement, Review, or Follow-up'],
     ['n', 'Move to the next item that needs you'],
     ['[ and ]', 'Previous and next row'],
-    ['e', "Edit the focused row's section"],
+    ['e', "Suggest an edit to the focused row's section"],
     ['c', 'Comment on the focused row'],
     ['/', 'Open the navigator and filter it'],
     ['b', 'Show or hide the navigator'],
@@ -992,7 +1133,7 @@ function onKeydown(event) {
         } else {
             const editButton = row.querySelector(`[data-key="edit-section-${CSS.escape(row.dataset.row)}"]`);
             if (editButton) editButton.click();
-            else announce('This row has no section to edit. Use c to comment on it.');
+            else announce('This row has no section to suggest an edit to. Use c to comment on it.');
         }
     } else if (key === '/') {
         if (navDocks()) {
@@ -1036,6 +1177,8 @@ function wire() {
     $('navClose').addEventListener('click', () => closeDrawer(true));
     $('scrim').addEventListener('click', () => closeDrawer(true));
     $('shortcutsBtn').addEventListener('click', () => $('shortcutsDialog').showModal());
+    $('sendBtn').addEventListener('click', () => act.openSend());
+    $('sendSheet').addEventListener('close', onSendClose);
     $('needsBtn').addEventListener('click', () => {
         openSteer();
         window.requestAnimationFrame(() => {

@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-23
+ms.date: 2026-10-26
 ms.topic: reference
 keywords:
   - package
@@ -57,9 +57,9 @@ The `extensions` field lists package folders, such as `.github/extensions/hve-co
 The plugin ships the Session Log canvas (`hve-core-session-log`). It lists the Copilot sessions recorded on your machine and shows the selected session as a live, navigable log: system prompt, prompts, responses and reasoning, tool calls with their arguments and results, model and context usage, skills, instructions, and each subagent as its own log. It opens on the current session and refreshes while visible.
 
 The plugin also ships the RPI Workflow canvas (`hve-core-rpi-workflow`).
-It shows an RPI session from your workspace's `.copilot-tracking/` folder, or a sample session, phase by phase: you read and edit research and plans, answer the decisions the agent asks you, check how the agent understood your answers, request more research, watch implementation and its discoveries, and work through review findings and follow-ups.
-For a real session it follows the RPI files while open and moves between the session's parent and child tasks; the files stay the record, and what you add reaches the agent as feedback.
-Feedback waits in a queue until the agent collects it or you deliver it, and you see the exact text before anything is sent.
+It shows an RPI session from your workspace's `.copilot-tracking/` folder, or a sample session, phase by phase: you read research and plans and suggest edits to them, answer the decisions the agent asks you, check how the agent understood your answers, request more research, watch implementation and its discoveries, and work through review findings and follow-ups.
+For a real session it follows the RPI files while open and moves between the session's parent and child tasks.
+The canvas never changes the files: what you add waits until you choose Send to agent, which shows the exact message and sends it to your chat, and the agent updates the files.
 
 Canvases are an experimental Copilot feature. They render in the GitHub Copilot app, in the Copilot CLI with experimental extensions turned on, and in VS Code when `chat.canvases.enabled` is on for a Copilot harness session.
 Ask the agent to open a canvas by name, or open it from the host's canvas list.

@@ -102,6 +102,8 @@ describe('renderMarkdown', () => {
         const well = elements(fragment).find((el) => el.className === 'table-well');
         assert.equal(well.getAttribute('role'), 'region');
         assert.equal(well.getAttribute('aria-label'), 'Table: A, B');
+        const labeled = elements(renderMarkdown('| A | B |\n| --- | --- |\n| 1 | 2 |\n\n### Method\n\n| A | B |\n| --- | --- |\n| 3 | 4 |', { label: 'Research record' })).filter((el) => el.className === 'table-well');
+        assert.deepEqual(labeled.map((el) => el.getAttribute('aria-label')), ['Research record table: A, B', 'Method table: A, B'], 'tables with the same columns get distinct region names');
         assert.equal(tags(fragment, 'td').length, 2);
         assert.equal(tags(fragment, 'pre')[0].textContent, 'const a = 1;');
     });

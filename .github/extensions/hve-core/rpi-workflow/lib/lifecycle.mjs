@@ -1,22 +1,33 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { canvasHandle } from './handle.mjs';
+
 /**
  * Tracks one page server per canvas instance. Opens for the same instance share one
  * start. A close that arrives while an open prepares its session prevents the server, and
- * a close that arrives while a start is pending stops the server it produced.
+ * a close that arrives while a start is pending stops the server it produced. Each record
+ * carries a short handle that is unique among the instances this registry holds.
  *
  * @template {{ start: () => Promise<string>, stop: () => Promise<void>, listening: boolean }} S
- * @param {{ createServer: (record: { sessionId: string, instanceId: string }) => S, makeError: (code: string, message: string) => Error }} deps
+ * @param {{ createServer: (record: { sessionId: string, instanceId: string, handle: string }) => S, makeError: (code: string, message: string) => Error }} deps
  */
 export function createInstanceRegistry(deps) {
     const { createServer, makeError } = deps;
-    /** @type {Map<string, { server: S, sessionId: string, instanceId: string, closed: boolean, source?: any }>} */
+    /** @type {Map<string, { server: S, sessionId: string, instanceId: string, handle: string, closed: boolean, source?: any }>} */
     const instances = new Map();
-    /** @type {Map<string, { record: { server: S, sessionId: string, instanceId: string, closed: boolean, source?: any }, promise: Promise<any> }>} */
+    /** @type {Map<string, { record: { server: S, sessionId: string, instanceId: string, handle: string, closed: boolean, source?: any }, promise: Promise<any> }>} */
     const pending = new Map();
     /** @type {Map<string, Set<{ closed: boolean }>>} */
     const preparing = new Map();
+
+    /** Handles held by every other open or opening instance. */
+    function handlesBesides(instanceId) {
+        const held = [];
+        for (const [id, record] of instances) if (id !== instanceId) held.push(record.handle);
+        for (const [id, entry] of pending) if (id !== instanceId) held.push(entry.record.handle);
+        return held;
+    }
 
     function ensure(instanceId, sessionId, source) {
         const existing = instances.get(instanceId);
@@ -30,7 +41,7 @@ export function createInstanceRegistry(deps) {
         if (inFlight) {
             return inFlight.promise;
         }
-        const record = { server: /** @type {S} */ (/** @type {unknown} */ (null)), sessionId, instanceId, closed: false, source };
+        const record = { server: /** @type {S} */ (/** @type {unknown} */ (null)), sessionId, instanceId, handle: canvasHandle(instanceId, handlesBesides(instanceId)), closed: false, source };
         record.server = createServer(record);
         const promise = (async () => {
             try {

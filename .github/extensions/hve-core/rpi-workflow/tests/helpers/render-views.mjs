@@ -23,9 +23,7 @@ export function initialUi(phase) {
         editing: null,
         expanded: new Set(),
         openEvidence: new Set(),
-        deliveryMode: 'queue',
-        deliveryPreview: null,
-        delivering: false,
+        send: { note: '', preview: null, previewNote: null, sending: false, error: null },
         composer: { kind: 'comment', text: '', anchor: null },
         decisionDrafts: new Map(),
         corrections: new Map(),
@@ -45,13 +43,13 @@ export function initialUi(phase) {
 }
 
 /** A view context with no-op actions; a bare `D#` names the viewed phase's decision first, as in the page. */
-export function makeContext(session, phase, ui = initialUi(phase)) {
+export function makeContext(session, phase, ui = initialUi(phase), canvas = { handle: 'K7QF', instanceId: 'test-canvas' }) {
     const find = (ref) => {
         const id = decisionAlias(session, ref, phase);
         return findItem(session, id)?.item ?? (Object.prototype.hasOwnProperty.call(session.sections, id) ? session.sections[id] : null);
     };
     const act = new Proxy({}, { get: () => () => {} });
-    return { data: { session, view: deriveView(session) }, ui, act, find, resolve: (id) => (find(id) ? { phase } : null), now: Date.parse(session.updatedAt) || Date.now() };
+    return { data: { session, view: deriveView(session), canvas }, ui, act, find, resolve: (id) => (find(id) ? { phase } : null), now: Date.parse(session.updatedAt) || Date.now() };
 }
 
 const toArray = (value) => (Array.isArray(value) ? value : [value]).filter(Boolean);

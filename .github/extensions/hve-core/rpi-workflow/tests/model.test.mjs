@@ -5,24 +5,26 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+    agentEditSection,
+    artifactFor,
     buildTraces,
+    checklistReview,
     claimDelivery,
     composeDelivery,
     createFeedback,
     deriveView,
-    editSection,
-    agentEditSection,
     FEEDBACK_TRANSITIONS,
     LIMITS,
+    markChecklist,
     markDelivered,
     ModelError,
+    pendingSuggestion,
     recordActivity,
     recordChange,
     recordInterpretation,
     releaseDelivery,
+    suggestEdit,
     takeFeedback,
-    toggleChecklist,
-    shareChecklist,
     transitionFeedback,
     updateSession,
     updateTask,
@@ -142,16 +144,29 @@ describe('feedback lifecycle', () => {
 });
 
 describe('delivery composition', () => {
-    it('produces one string for preview and prompt, with a short display label', () => {
+    const canvas = { handle: '3WF0', instanceId: 'rpi-workflow-demo' };
+
+    it('produces one string for preview and prompt, naming the canvas in both texts', () => {
         let s = base();
         s = createFeedback(s, { kind: 'answer', target: { id: 'D2' }, optionId: 'a', text: 'Keep both photos.' }, NOW).session;
         s = createFeedback(s, { kind: 'research-request', target: { id: 'F1' }, text: 'Check iOS quota.' }, NOW).session;
         const ids = s.feedback.filter((item) => item.state === 'queued').map((item) => item.id);
-        const preview = composeDelivery(s, ids, NOW);
-        const again = composeDelivery(s, ids, NOW);
+        const preview = composeDelivery(s, ids, NOW, { canvas });
+        const again = composeDelivery(s, ids, NOW, { canvas });
         assert.equal(preview.prompt, again.prompt);
         assert.equal(preview.digest, again.digest);
-        assert.doesNotMatch(preview.prompt, /revision/);
+        assert.match(preview.prompt, /^RPI canvas 3WF0 sent 2 items from the user about task field-inspections-offline-sync \(current phase: Research\)\.\nCanvas instance ID: rpi-workflow-demo\. Pass it as instanceId to invoke_canvas_action/);
+        assert.match(preview.prompt, /sample session, which has no files/);
+        assert.doesNotMatch(preview.prompt, /Task files:/);
+        assert.match(preview.prompt, /1\. FB-\d{3}: Answer to D2 "[^"]+" \(Research\)\n {3}Chose: Merge per field/);
+        assert.match(preview.prompt, /record_interpretation on this canvas/);
+        assert.equal(preview.displayPrompt, 'RPI canvas 3WF0 sent 2 items: 1 answer and 1 research request.');
+        assert.equal(composeDelivery(s, ids, NOW).displayPrompt, 'RPI canvas sent 2 items: 1 answer and 1 research request.', 'a canvas without a handle still names itself');
+        const noted = composeDelivery(s, ids, NOW, { canvas, note: 'Please start with the quota.\nThanks.' });
+        assert.equal(noted.digest, preview.digest, 'the message does not change the digest');
+        assert.match(noted.prompt, /\n\nMessage from the user:\n {3}Please start with the quota\.\n {3}Thanks\.\n\nHow to handle/);
+        assert.equal(noted.displayPrompt, 'Please start with the quota.\nThanks.\n\nRPI canvas 3WF0 sent 2 items: 1 answer and 1 research request.');
+        assert.equal(code(() => composeDelivery(s, ids, NOW, { note: 'x'.repeat(LIMITS.text + 1) })), 'invalid_input');
         const claimed = claimDelivery(s, ids, NOW);
         assert.equal(takeFeedback(claimed.session, NOW).result.length, 0);
         assert.equal(code(() => composeDelivery(claimed.session, ids, NOW)), 'invalid_state');
@@ -159,46 +174,92 @@ describe('delivery composition', () => {
         const later = new Date(Date.parse(NOW) + 11 * 60 * 1000).toISOString();
         assert.equal(takeFeedback(claimed.session, later).result.length, ids.length, 'a stale claim lapses');
         assert.equal(releaseDelivery(claimed.session, ids, NOW).session.feedback.filter((item) => item.deliveringSince).length, 0);
-        assert.match(preview.prompt, /Chose: Merge per field/);
-        assert.match(preview.prompt, /record_interpretation/);
-        assert.equal(preview.displayPrompt, 'RPI canvas: 1 answer, 1 research request');
-        const delivered = markDelivered(s, ids, 'attach', NOW);
+        assert.equal(code(() => markDelivered(s, ids, 'attach', NOW)), 'invalid_input');
+        const delivered = markDelivered(s, ids, 'send', NOW);
         assert.deepEqual(delivered.result, ids);
-        assert.ok(delivered.session.feedback.filter((item) => ids.includes(item.id)).every((item) => item.state === 'sent' && item.delivery === 'attach'));
+        assert.ok(delivered.session.feedback.filter((item) => ids.includes(item.id)).every((item) => item.state === 'sent' && item.delivery === 'send'));
         assert.equal(code(() => composeDelivery(delivered.session, ids)), 'invalid_state');
+    });
+
+    it('names the task files for a real session and the file each item changes', () => {
+        let s = base();
+        s.source = { kind: 'rpi', statePath: '.copilot-tracking/rpi-sessions/2026-10-26/t-state.json', artifacts: { research: '.copilot-tracking/research/2026-10-26/t-research.md', plan: null, critique: null, changes: null, review: null } };
+        s = createFeedback(s, { kind: 'answer', target: { id: 'D2' }, optionId: 'a' }, NOW).session;
+        s = suggestEdit(s, { sectionId: 'research-summary', markdown: `${s.sections['research-summary'].markdown}\n\nOne more line.`, baseRevision: s.sections['research-summary'].revision }, NOW).session;
+        const ids = s.feedback.filter((item) => item.state === 'queued').map((item) => item.id);
+        const { prompt } = composeDelivery(s, ids, NOW, { canvas });
+        assert.match(prompt, /The canvas does not change the task's files/);
+        assert.match(prompt, /Task files:\n- State: \.copilot-tracking\/rpi-sessions\/2026-10-26\/t-state\.json\n- Research: \.copilot-tracking\/research\/2026-10-26\/t-research\.md\n\nItems:/);
+        assert.match(prompt, /Answer to D2 [^\n]+\n {3}File: \.copilot-tracking\/research\/2026-10-26\/t-research\.md\n {3}Chose:/);
+        assert.match(prompt, /Suggested edit to research-summary "Summary" \(Research\)\n {3}File: \.copilot-tracking\/research\/2026-10-26\/t-research\.md\n {3}Made against revision 1 of the section\. Change these lines:\n {3}~~~diff\n {3}@@ /);
+        assert.match(prompt, /\n {3}\+One more line\.\n {3}~~~/);
+        assert.equal(artifactFor(s, 'plan'), s.source.statePath, 'a phase without an artifact falls back to the state file');
+        assert.equal(artifactFor(base(), 'research'), null);
+    });
+
+    it('sends an edit saved before suggestions with its text', () => {
+        let s = base();
+        s = createFeedback(s, { kind: 'comment', text: 'placeholder' }, NOW).session;
+        const legacy = s.feedback.at(-1);
+        Object.assign(legacy, { kind: 'edit', target: { id: 'research-summary', type: 'section', phase: 'research' }, text: 'Edited "Summary".', section: { id: 'research-summary', title: 'Summary', revision: 2, markdown: 'Old-style text', truncated: false } });
+        const { prompt } = composeDelivery(s, [legacy.id], NOW);
+        assert.match(prompt, /The user's version of the section:\n {3}~~~markdown\n {3}Old-style text\n {3}~~~/);
     });
 });
 
-describe('sections', () => {
-    it('saves an edit, bumps the revision, and queues an edit event', () => {
+describe('suggested edits', () => {
+    it('records a suggestion without changing the section, and updates it in place', () => {
         const s = base();
         const before = s.sections['research-summary'];
-        const saved = editSection(s, { sectionId: 'research-summary', markdown: 'New summary', baseRevision: before.revision }, NOW);
-        assert.equal(saved.result.conflict, false);
-        assert.equal(saved.session.sections['research-summary'].revision, before.revision + 1);
-        const event = saved.session.feedback.find((item) => item.id === saved.result.feedbackId);
-        assert.equal(event.kind, 'edit');
-        assert.equal(event.state, 'queued');
-        assert.deepEqual(event.section, { id: 'research-summary', title: before.title, revision: before.revision + 1, markdown: 'New summary', truncated: false });
-        const message = composeDelivery(saved.session, [event.id], NOW);
-        assert.match(message.prompt, /The section now reads:\n {3}~~~markdown\n {3}New summary\n {3}~~~/);
-        const taken = takeFeedback(saved.session, NOW).result.find((item) => item.id === event.id);
-        assert.equal(taken.section.markdown, 'New summary');
-        const long = editSection(s, { sectionId: 'research-summary', markdown: 'x'.repeat(9000), baseRevision: before.revision }, NOW);
-        const longEvent = long.session.feedback.find((item) => item.id === long.result.feedbackId);
-        assert.equal(longEvent.section.markdown.length, 8000);
-        assert.equal(longEvent.section.truncated, true);
-        assert.match(composeDelivery(long.session, [longEvent.id], NOW).prompt, /get_state detail "full"/);
+        const first = suggestEdit(s, { sectionId: 'research-summary', markdown: 'New summary', baseRevision: before.revision }, NOW);
+        assert.equal(first.result.conflict, false);
+        assert.deepEqual(first.session.sections['research-summary'], before, 'the document keeps its text');
+        const item = first.session.feedback.find((entry) => entry.id === first.result.feedbackId);
+        assert.equal(item.kind, 'edit');
+        assert.equal(item.state, 'queued');
+        assert.equal(item.section.markdown, 'New summary');
+        assert.equal(item.section.revision, before.revision);
+        assert.match(item.section.diff, /^@@ -1,\d+ \+1,1 @@\n-/);
+        assert.equal(item.section.added, 1);
+        assert.match(item.text, /^Suggested edit to "Summary": 1 line added, \d+ removed\.$/);
+        assert.equal(pendingSuggestion(first.session, 'research-summary').id, item.id);
+        const second = suggestEdit(first.session, { sectionId: 'research-summary', markdown: 'Newer summary', baseRevision: before.revision }, NOW);
+        assert.equal(second.result.feedbackId, item.id, 'one pending suggestion per section');
+        assert.equal(second.session.feedback.filter((entry) => entry.kind === 'edit').length, 1);
+        assert.equal(second.session.feedback.find((entry) => entry.id === item.id).section.markdown, 'Newer summary');
+        const taken = takeFeedback(second.session, NOW).result.find((entry) => entry.id === item.id);
+        assert.equal(taken.section.markdown, 'Newer summary');
     });
 
-    it('reports a conflict when the agent changed the section meanwhile', () => {
+    it('withdraws a pending suggestion that matches the text again, and refuses one being sent', () => {
+        const s = base();
+        const before = s.sections['research-summary'];
+        assert.deepEqual(suggestEdit(s, { sectionId: 'research-summary', markdown: before.markdown, baseRevision: before.revision }, NOW).result, { conflict: false, unchanged: true });
+        const made = suggestEdit(s, { sectionId: 'research-summary', markdown: 'Changed', baseRevision: before.revision }, NOW);
+        const claimed = claimDelivery(made.session, [made.result.feedbackId], NOW).session;
+        assert.equal(code(() => suggestEdit(claimed, { sectionId: 'research-summary', markdown: 'Again', baseRevision: before.revision }, NOW)), 'invalid_state');
+        const back = suggestEdit(made.session, { sectionId: 'research-summary', markdown: before.markdown, baseRevision: before.revision }, NOW);
+        assert.equal(back.result.withdrawn, made.result.feedbackId);
+        assert.equal(back.session.feedback.find((entry) => entry.id === made.result.feedbackId).state, 'dismissed');
+        assert.equal(pendingSuggestion(back.session, 'research-summary'), null);
+        assert.equal(code(() => suggestEdit(s, { sectionId: 'nope', markdown: 'x', baseRevision: 1 }, NOW)), 'not_found');
+    });
+
+    it('caps stored line changes and reports a conflict when the agent changed the section meanwhile', () => {
         const s = base();
         const base0 = s.sections['finding-f3'].revision;
         const agent = agentEditSection(s, { sectionId: 'finding-f3', markdown: 'Agent text' }, NOW).session;
-        const result = editSection(agent, { sectionId: 'finding-f3', markdown: 'Mine', baseRevision: base0 }, NOW);
+        const result = suggestEdit(agent, { sectionId: 'finding-f3', markdown: 'Mine', baseRevision: base0 }, NOW);
         assert.equal(result.result.conflict, true);
         assert.equal(result.result.section.markdown, 'Agent text');
         assert.equal(result.session, agent);
+        const long = Array.from({ length: 1500 }, (_, i) => `line ${i} ${'x'.repeat(20)}`).join('\n');
+        const big = suggestEdit(s, { sectionId: 'research-summary', markdown: long, baseRevision: s.sections['research-summary'].revision }, NOW);
+        const item = big.session.feedback.find((entry) => entry.id === big.result.feedbackId);
+        assert.equal(item.section.diffTruncated, true);
+        assert.ok(item.section.diff.length <= 20000);
+        assert.equal(item.section.markdown, long);
+        assert.match(composeDelivery(big.session, [item.id], NOW).prompt, /The change continues\. get_state with detail "full"/);
     });
 });
 
@@ -242,13 +303,39 @@ describe('decisions, tasks, and session', () => {
         assert.equal(code(() => updateSession(base(), { activePhase: 'deploy' }, NOW)), 'invalid_input');
     });
 
-    it('toggles and shares checklists', () => {
-        let s = toggleChecklist(base(), { phase: 'research', itemId: 'R3', checked: true }, NOW).session;
-        assert.equal(s.checklists.research.find((i) => i.id === 'R3').checked, true);
-        s = shareChecklist(s, 'research', NOW).session;
-        const item = s.feedback.at(-1);
-        assert.equal(item.kind, 'checklist');
-        assert.match(item.text, /3 of 6 items checked/);
+    it('keeps one pending review per phase in step with its verdicts', () => {
+        const s0 = base();
+        assert.equal(s0.checklists.research.find((i) => i.id === 'R1').verdict, 'ok', 'the sample starts with R1 and R2 marked Looks good');
+        let s = markChecklist(s0, { phase: 'research', itemId: 'R3', verdict: 'ok' }, NOW).session;
+        assert.equal(s.feedback.filter((item) => item.kind === 'checklist').length, 0, 'partial Looks good marks stay private');
+        s = markChecklist(s, { phase: 'research', itemId: 'R4', verdict: 'needs-work', note: 'D2 should keep both photos.' }, NOW).session;
+        let pending = s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued');
+        assert.equal(pending.length, 1);
+        assert.equal(pending[0].phase, 'research');
+        assert.match(pending[0].text, /^Research review: 1 of 6 items needs work, and 3 look good\.\nNeeds work: The decisions match what I want\. Note: D2 should keep both photos\.\nLooks good: The bottom line is clear/);
+        s = markChecklist(s, { phase: 'research', itemId: 'R2', verdict: 'needs-work' }, NOW).session;
+        pending = s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued');
+        assert.equal(pending.length, 1, 'the same pending item is updated');
+        assert.match(pending[0].text, /2 of 6 items need work/);
+        s = markChecklist(s, { phase: 'research', itemId: 'R2', verdict: 'ok', note: 'ignored' }, NOW).session;
+        assert.equal(s.checklists.research.find((i) => i.id === 'R2').note, undefined, 'a note goes with Needs work only');
+        s = markChecklist(s, { phase: 'research', itemId: 'R4', verdict: null }, NOW).session;
+        assert.equal(s.feedback.filter((item) => item.kind === 'checklist').length, 0, 'nothing to send removes the unsent item');
+        for (const id of ['R4', 'R5', 'R6']) s = markChecklist(s, { phase: 'research', itemId: id, verdict: 'ok' }, NOW).session;
+        pending = s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued');
+        assert.equal(pending[0].text, 'Research review: all 6 items look good.');
+        s = markDelivered(s, [pending[0].id], 'send', NOW).session;
+        s = markChecklist(s, { phase: 'research', itemId: 'R6', verdict: null }, NOW).session;
+        s = markChecklist(s, { phase: 'research', itemId: 'R6', verdict: 'ok' }, NOW).session;
+        assert.equal(s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued').length, 0, 'a review equal to the one already sent is not sent again');
+        assert.equal(code(() => markChecklist(s, { phase: 'research', itemId: 'R9', verdict: 'ok' }, NOW)), 'not_found');
+        assert.equal(code(() => markChecklist(s, { phase: 'research', itemId: 'R1', verdict: 'yes' }, NOW)), 'invalid_input');
+    });
+
+    it('reads checklists saved before verdicts', () => {
+        const legacy = [{ id: 'R1', label: 'A', checked: true }, { id: 'R2', label: 'B', checked: true }];
+        assert.equal(checklistReview(legacy, 'research').text, 'Research review: all 2 items look good.');
+        assert.equal(checklistReview([{ id: 'R1', label: 'A', checked: false }, { id: 'R2', label: 'B', checked: true }], 'research'), null);
     });
 });
 

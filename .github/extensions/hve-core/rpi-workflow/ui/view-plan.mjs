@@ -47,7 +47,7 @@ function taskBlock(ctx, task, index, siblings) {
             task.guidance?.length ? h('div', { class: 'guidance' }, h('p', { class: 'meta' }, icon('pencil'), 'Guidance added during implementation'), h('ul', null, task.guidance.map((line) => h('li', { text: line })))) : null,
             h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Depends on' }), task.dependencies.length ? task.dependencies.map((id) => idChip(id, ctx.act.navigate)) : h('span', { class: 'meta', text: 'nothing' })),
             h('div', { class: 'btn-row' },
-                button('Edit details', { iconName: 'pencil', onClick: () => ctx.act.startEdit(task.sectionId) }),
+                button('Suggest an edit', { iconName: 'pencil', onClick: () => ctx.act.startEdit(task.sectionId) }),
                 button('Move up', { iconName: 'arrow-up', disabled: index === 0, onClick: () => ctx.act.requestTask(task.id, `Move ${task.id} before ${siblings[index - 1]?.id}.`) }),
                 button('Move down', { iconName: 'arrow-down', disabled: index === siblings.length - 1, onClick: () => ctx.act.requestTask(task.id, `Move ${task.id} after ${siblings[index + 1]?.id}.`) }),
                 button('Comment', { iconName: 'message', onClick: () => ctx.act.anchorComposer(task.id, 'comment') }))));

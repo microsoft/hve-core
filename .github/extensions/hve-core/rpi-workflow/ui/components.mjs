@@ -48,8 +48,8 @@ function lazyDisclosure(ctx, key, className, summary, build) {
     } }, h('summary', { dataset: { key: `summary-${key}` } }, h('h4', { class: 'summary-heading', text: summary })), open ? build() : null);
 }
 
-/** Markdown with navigable IDs. */
-export const md = (ctx, text) => renderMarkdown(text ?? '', { resolveId: (id) => Boolean(ctx.resolve(id)), navigate: ctx.act.navigate });
+/** Markdown with navigable IDs; `label` names the text's section for its table regions. */
+export const md = (ctx, text, label) => renderMarkdown(text ?? '', { resolveId: (id) => Boolean(ctx.resolve(id)), navigate: ctx.act.navigate, label });
 
 /** Feedback notes anchored to any of these rows, except dismissed ones. */
 export const notesFor = (ctx, rowIds) => ctx.data.session.feedback.filter((item) => item.target && rowIds.includes(item.target.id) && ['comment', 'context', 'research-request', 'correction', 'task-request'].includes(item.kind) && item.state !== 'dismissed');
@@ -73,7 +73,7 @@ const slug = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 /** Sections of a phase's files that no other row shows, each collapsed and rendered as written. */
 export function recordSections(ctx, phase) {
     return (ctx.data.session.records?.[phase] ?? []).map((record) => lazyDisclosure(ctx, `record-${phase}-${slug(record.heading)}`, 'record', record.heading,
-        () => h('div', { class: 'prose record-body' }, md(ctx, record.markdown))));
+        () => h('div', { class: 'prose record-body' }, md(ctx, record.markdown, record.heading))));
 }
 
 /**
@@ -141,11 +141,11 @@ export function row(ctx, spec) {
     return section;
 }
 
-/** Always-visible row actions: Edit section, Comment, and optional Research this. */
+/** Always-visible row actions: Suggest an edit, Comment, and optional Research this. */
 export function rowActions(ctx, { sectionId, rowId, research = false, ask = false }) {
     const items = [];
     if (sectionId && ctx.data.session.sections[sectionId]) {
-        items.push(button('Edit section', { iconName: 'pencil', hideLabel: true, onClick: () => ctx.act.startEdit(sectionId), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'e' : undefined, 'data-key': `edit-section-${rowId}` } }));
+        items.push(button('Suggest an edit', { iconName: 'pencil', hideLabel: true, onClick: () => ctx.act.startEdit(sectionId), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'e' : undefined, 'data-key': `edit-section-${rowId}` } }));
     }
     items.push(button('Comment', { iconName: 'message', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'comment'), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'c' : undefined, 'data-key': `comment-${rowId}` } }));
     if (research) {
@@ -157,7 +157,16 @@ export function rowActions(ctx, { sectionId, rowId, research = false, ask = fals
     return items;
 }
 
-/** Section Markdown, the editor when this section is being edited, or null when the section was never recorded. */
+/** Items the person has not sent yet, apart from any being sent right now. */
+export const pendingItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item));
+
+/** Suggestions for a section that are waiting to be sent, with the agent, or read back. */
+const openSuggestions = (ctx, sectionId) => ctx.data.session.feedback.filter((item) => item.kind === 'edit' && item.target?.id === sectionId && ['queued', 'sent', 'interpreted'].includes(item.state));
+
+/**
+ * Section Markdown as its source has it, any suggestions for it, the editor when this
+ * section is being edited, or null when the section was never recorded.
+ */
 export function sectionBody(ctx, sectionId) {
     const section = ctx.data.session.sections[sectionId];
     if (!section) {
@@ -166,19 +175,68 @@ export function sectionBody(ctx, sectionId) {
     if (ctx.ui.editing?.sectionId === sectionId) {
         return editor(ctx, section);
     }
+    const suggestions = openSuggestions(ctx, sectionId);
     const body = h('div', { class: 'prose' }, md(ctx, section.markdown));
-    if (section.editedBy === 'user') {
-        const event = [...ctx.data.session.feedback].reverse().find((item) => item.kind === 'edit' && item.target?.id === sectionId);
-        body.append(h('p', { class: 'edited-note' }, icon('person'), 'Edited by you', event ? [' ', badge(FEEDBACK_STATE[event.state])] : null));
-    }
-    return body;
+    return suggestions.length ? h('div', { class: 'section-with-suggestions' }, body, suggestions.map((item) => suggestionCallout(ctx, section, item))) : body;
+}
+
+/** One suggested edit beside the section it changes: its state, its line changes, and what the person can do with it. */
+function suggestionCallout(ctx, section, item) {
+    const sending = isSending(ctx, item);
+    const pending = item.state === 'queued' && !sending;
+    const moved = Number.isInteger(item.section?.revision) && item.section.revision !== section.revision;
+    const where = ctx.data.session.source?.kind === 'rpi' ? 'The file' : 'The document';
+    const status = pending
+        ? `Waits for Send to agent. ${where} changes when the agent applies it.`
+        : item.state === 'interpreted' ? 'The agent read it back. Check that it understood you.' : `${where} changes when the agent applies it.`;
+    const titleId = `suggestion-${item.id}-t`;
+    const changes = typeof item.section?.diff === 'string'
+        ? diffView(item.section.diff, `Your changes to ${section.title}`)
+        : h('div', { class: 'prose suggestion-text' }, md(ctx, item.section?.markdown ?? ''));
+    return h('section', { class: ['suggestion', `is-${item.state}`], 'aria-labelledby': titleId, dataset: { item: item.id } },
+        h('header', { class: 'suggestion-head' },
+            icon('pencil', { className: 'tone-user-fg' }),
+            h('h4', { class: 'suggestion-title', id: titleId, text: 'Your suggested edit' }),
+            badge(sending ? SENDING : FEEDBACK_STATE[item.state]),
+            Number.isFinite(item.section?.added) ? h('span', { class: 'meta', text: `+${item.section.added} −${item.section.removed}` }) : null),
+        h('p', { class: 'meta', text: status }),
+        moved ? h('p', { class: 'suggestion-moved' }, icon('alert', { className: 'tone-attention-fg' }), h('span', { text: 'This section changed after you made this suggestion. Check that it still fits.' })) : null,
+        changes,
+        item.section?.diffTruncated ? h('p', { class: 'meta', text: 'Showing the first part of a long change; the agent receives all of it.' }) : null,
+        item.interpretation ? voice('agent', 'Agent understood', [h('p', { text: item.interpretation.text }), item.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), item.interpretation.effect) : null], { reveal: ctx.ui.revealed.has(item.id) }) : null,
+        pending ? h('div', { class: 'btn-row' },
+            button('Edit suggestion', { iconName: 'pencil', attrs: { 'data-key': `edit-suggestion-${item.id}` }, onClick: () => ctx.act.startEdit(section.id) }),
+            button('Remove', { iconName: 'x', attrs: { 'data-key': `remove-suggestion-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'dismissed') })) : null,
+        item.state === 'interpreted' ? readBackActions(ctx, item, 'card') : null);
+}
+
+/**
+ * Unified diff lines with a marker and a spoken prefix on every added and removed line, or
+ * null when there are none.
+ *
+ * @param {string} text
+ * @param {string} label
+ */
+export function diffView(text, label) {
+    const lines = (text || '').split('\n').filter((line, index, all) => line !== '' || index < all.length - 1);
+    if (!lines.length) return null;
+    return h('div', { class: 'diff', role: 'region', tabindex: '0', 'aria-label': label },
+        lines.map((line) => {
+            const type = line.startsWith('@@') ? 'hunk' : line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : 'ctx';
+            const marker = type === 'add' ? '+' : type === 'del' ? '−' : type === 'hunk' ? '' : ' ';
+            return h('div', { class: ['diff-line', `is-${type}`] },
+                type === 'add' ? sr('Added: ') : type === 'del' ? sr('Removed: ') : null,
+                h('span', { class: 'diff-marker', 'aria-hidden': 'true', text: marker }),
+                h('span', { class: 'diff-code', text: type === 'hunk' ? line : line.slice(1) }));
+        }));
 }
 
 function editor(ctx, section) {
     const state = ctx.ui.editing;
     const textareaId = `edit-${section.id}`;
     const showPreview = state.mode === 'preview';
-    const tabs = h('div', { class: 'edit-tabs', role: 'tablist', 'aria-label': `Edit ${section.title}` },
+    const updating = Boolean(state.suggestionId);
+    const tabs = h('div', { class: 'edit-tabs', role: 'tablist', 'aria-label': `Suggest an edit to ${section.title}` },
         ['write', 'preview'].map((mode) => h('button', {
             type: 'button', role: 'tab', class: 'edit-tab', 'aria-selected': String(state.mode === mode), tabindex: state.mode === mode ? '0' : '-1',
             onclick: () => ctx.act.setEditMode(mode),
@@ -192,19 +250,19 @@ function editor(ctx, section) {
     area.value = state.draft;
     const conflict = state.conflict
         ? h('div', { class: 'notice tone-attention', role: 'alert', tabindex: '-1', id: `conflict-${section.id}` },
-            h('p', { class: 'notice-title' }, icon('alert'), 'The agent changed this section while you were editing.'),
+            h('p', { class: 'notice-title' }, icon('alert'), 'This section changed while you were editing.'),
             state.compare ? h('div', { class: 'compare' },
-                h('div', null, h('h4', { text: "The agent's version" }), h('div', { class: 'prose' }, md(ctx, state.conflict.markdown))),
-                h('div', null, h('h4', { text: 'Your version' }), h('div', { class: 'prose' }, md(ctx, state.draft)))) : null,
+                h('div', null, h('h4', { text: 'The section now' }), h('div', { class: 'prose' }, md(ctx, state.conflict.markdown))),
+                h('div', null, h('h4', { text: 'Your suggestion' }), h('div', { class: 'prose' }, md(ctx, state.draft)))) : null,
             h('div', { class: 'btn-row' },
                 button(state.compare ? 'Hide comparison' : 'Compare', { onClick: () => ctx.act.toggleCompare() }),
-                button('Keep my version', { kind: 'primary', onClick: () => ctx.act.keepMine() }),
-                button("Use the agent's version", { onClick: () => ctx.act.useTheirs() })))
+                button('Keep my suggestion', { kind: 'primary', onClick: () => ctx.act.keepMine() }),
+                button('Start from the new text', { onClick: () => ctx.act.useTheirs() })))
         : null;
     return h('div', { class: 'editor' },
         conflict,
         tabs,
-        showPreview ? h('div', { class: 'prose preview-pane', role: 'tabpanel', 'aria-label': 'Preview' }, md(ctx, state.draft)) : h('div', { role: 'tabpanel', 'aria-label': 'Write' }, h('label', { class: 'visually-hidden', for: textareaId, text: `${section.title} in Markdown` }), area),
+        showPreview ? h('div', { class: 'prose preview-pane', role: 'tabpanel', 'aria-label': 'Preview' }, md(ctx, state.draft)) : h('div', { role: 'tabpanel', 'aria-label': 'Write' }, h('label', { class: 'visually-hidden', for: textareaId, text: `Your version of ${section.title}, in Markdown` }), area),
         state.confirmDiscard
             ? h('div', { class: 'notice tone-attention discard-confirm', role: 'group', 'aria-labelledby': `discard-${section.id}` },
                 h('p', { class: 'notice-title', id: `discard-${section.id}` }, icon('alert'), 'Discard your unsaved changes?'),
@@ -212,9 +270,9 @@ function editor(ctx, section) {
                     button('Keep editing', { kind: 'primary', attrs: { 'data-key': 'keep-editing' }, onClick: () => ctx.act.keepEditing() }),
                     button('Discard changes', { attrs: { 'data-key': 'discard-changes' }, onClick: () => ctx.act.cancelEdit() })))
             : h('div', { class: 'btn-row' },
-                button(state.saving ? 'Saving' : 'Save', { kind: 'primary', iconName: 'check', disabled: state.saving, attrs: { 'data-key': 'save-edit' }, onClick: () => ctx.act.saveEdit() }),
+                button(state.saving ? 'Saving' : updating ? 'Update suggestion' : 'Add suggestion', { kind: 'primary', iconName: 'check', disabled: state.saving, attrs: { 'data-key': 'save-edit' }, onClick: () => ctx.act.saveEdit() }),
                 button('Cancel', { attrs: { 'data-key': 'cancel-edit' }, onClick: () => ctx.act.requestCancelEdit() }),
-                h('span', { class: 'meta', text: `Editing revision ${state.baseRevision}. Saving tells the agent.` })));
+                h('span', { class: 'meta', text: `Your suggestion waits for Send to agent. ${ctx.data.session.source?.kind === 'rpi' ? 'The file' : 'The document'} changes when the agent applies it.` })));
 }
 
 /** Evidence chips with an expandable detail list directly below them. */
@@ -322,7 +380,7 @@ export function decisionCard(ctx, decision) {
             h('textarea', { id: noteId, class: 'note', rows: ownWords ? '3' : '2', 'aria-required': ownWords ? 'true' : undefined, oninput: (event) => update({ note: event.target.value }) }, draft.note),
             h('div', { class: 'btn-row' },
                 button('Answer', { kind: 'primary', iconName: 'check', disabled: ownWords ? !draft.note.trim() : !draft.optionId, attrs: { 'data-key': submitKey, 'data-needs-text': ownWords ? 'true' : undefined }, onClick: () => ctx.act.answer(decision.id, 'answer', ownWords ? { optionId: null, note: current().note } : current()) }),
-                h('span', { class: 'meta' }, deliveryHint(ctx))));
+                h('span', { class: 'meta', text: 'Waits for Send to agent' })));
     } else if (decision.status === 'decided' || decision.status === 'override-pending') {
         const overriding = ctx.ui.overrides.has(decision.id);
         const pending = decision.status === 'override-pending' ? feedback : null;
@@ -346,7 +404,7 @@ export function decisionCard(ctx, decision) {
                 h('label', { class: 'field-label', for: noteId, text: ownWords ? 'What should the agent do instead?' : 'Why (optional)' }),
                 h('textarea', { id: noteId, class: 'note', rows: ownWords ? '3' : '2', 'aria-required': ownWords ? 'true' : undefined, oninput: (event) => update({ note: event.target.value }) }, draft.note),
                 h('div', { class: 'btn-row' },
-                    button('Send override', { kind: 'primary', disabled: ownWords ? !draft.note.trim() : !draft.optionId || draft.optionId === decision.chosen, attrs: { 'data-key': submitKey, 'data-needs-text': ownWords ? 'true' : undefined }, onClick: () => ctx.act.answer(decision.id, 'override', ownWords ? { optionId: null, note: current().note } : current()) }),
+                    button('Save override', { kind: 'primary', disabled: ownWords ? !draft.note.trim() : !draft.optionId || draft.optionId === decision.chosen, attrs: { 'data-key': submitKey, 'data-needs-text': ownWords ? 'true' : undefined }, onClick: () => ctx.act.answer(decision.id, 'override', ownWords ? { optionId: null, note: current().note } : current()) }),
                     button('Cancel', { onClick: () => ctx.act.toggleOverride(decision.id) })));
         } else {
             parts.push(h('div', { class: 'btn-row' }, button('Override', { iconName: 'undo', attrs: { 'data-key': `override-${decision.id}` }, onClick: () => ctx.act.toggleOverride(decision.id) })));
@@ -386,7 +444,7 @@ export function readBack(ctx, decision, feedback, youLabel, options = {}) {
     if (feedback.interpretation) {
         parts.push(voice('agent', 'Agent understood', [h('p', { text: feedback.interpretation.text }), feedback.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), feedback.interpretation.effect) : null], { reveal: fresh }));
     } else if (!options.compact && (feedback.state === 'queued' || feedback.state === 'sent')) {
-        parts.push(h('p', { class: 'waiting meta' }, icon(feedback.state === 'queued' ? 'inbox' : 'send'), feedback.state === 'queued' ? 'Queued for the agent. It reads feedback at its next checkpoint.' : 'Sent. The agent will read back how it understood this.'));
+        parts.push(h('p', { class: 'waiting meta' }, icon(feedback.state === 'queued' ? 'inbox' : 'send'), feedback.state === 'queued' ? 'Not sent yet. It goes to the agent when you choose Send to agent.' : 'Sent. The agent will read back how it understood this.'));
         if (feedback.state === 'queued') {
             const overriding = (origin ?? feedback).kind === 'override';
             parts.push(h('div', { class: 'btn-row' }, button(overriding ? 'Edit override' : 'Edit answer', { iconName: 'pencil', onClick: () => ctx.act.editAnswer(decision.id, feedback, origin) })));
@@ -396,12 +454,6 @@ export function readBack(ctx, decision, feedback, youLabel, options = {}) {
         parts.push(readBackActions(ctx, feedback, 'card'));
     }
     return h('div', { class: 'readback' }, parts);
-}
-
-/** Where an answer goes, in words. */
-export function deliveryHint(ctx) {
-    const mode = ctx.ui.deliveryMode;
-    return mode === 'queue' ? 'Queued for the agent' : mode === 'attach' ? 'Queued; attach it to your next message from Steer' : 'Queued; send it from Steer';
 }
 
 /** A comment or other feedback shown in a row margin. */
@@ -430,7 +482,7 @@ function readBackActions(ctx, item, where) {
             h('label', { class: 'field-label', for: fieldId, text: 'What did you mean?' }),
             h('textarea', { id: fieldId, class: 'note', rows: '3', oninput: (event) => ctx.act.setCorrection(item.id, event.target.value) }, open.text),
             h('div', { class: 'btn-row' },
-                button('Send correction', { kind: 'primary', iconName: 'send', attrs: { 'data-key': `send-correction-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'corrected', { correction: ctx.ui.corrections.get(item.id)?.text ?? '' }) }),
+                button('Save correction', { kind: 'primary', iconName: 'check', attrs: { 'data-key': `send-correction-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'corrected', { correction: ctx.ui.corrections.get(item.id)?.text ?? '' }) }),
                 button('Cancel', { attrs: { 'data-key': `cancel-correction-${item.id}` }, onClick: () => ctx.act.toggleCorrection(item.id, null) })));
     }
     return h('div', { class: 'btn-row' },
@@ -447,26 +499,33 @@ export function table(caption, headers, rows) {
             h('tbody', null, rows.map((cells) => h('tr', null, cells.map((cell) => h('td', null, cell)))))));
 }
 
-const DELIVERY_MODES = [
-    { id: 'queue', short: 'Queue', label: 'Queue for the agent', hint: 'The agent collects it at its next checkpoint.' },
-    { id: 'attach', short: 'Attach', label: 'Attach to my next message', hint: 'Adds a pill to your chat box; you decide when to send.' },
-    { id: 'send', short: 'Send now', label: 'Send now', hint: 'Starts an agent turn, or waits behind the current one.' },
-];
-
-/** Matches the model's claim window: a delivery holds queued items for up to 10 minutes. */
+/** Matches the model's claim window: a send holds its items for up to 10 minutes. */
 const isSending = (ctx, item) => item.state === 'queued' && Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000;
 const SENDING = Object.freeze({ icon: 'send', label: 'Sending', tone: 'accent' });
+const DELIVERY_WORDS = Object.freeze({ send: 'sent as a message', queue: 'collected by the agent', attach: 'attached to a message' });
+
+/** What a feedback item is about, as the steering panel and the send dialog name it. */
+function feedbackTarget(ctx, item) {
+    if (item.kind === 'checklist') {
+        return h('span', null, ` for ${PHASE_META[item.phase]?.label ?? 'this phase'}`);
+    }
+    if (!item.target) return null;
+    const decision = item.target.type === 'decision' ? ctx.data.session.decisions.find((candidate) => candidate.id === item.target.id) : null;
+    // A namespaced decision such as plan.D1 shows its artifact ID and phase.
+    const scoped = decision?.ref && decision.ref !== decision.id ? { label: decision.ref, title: `Go to ${decision.ref} in ${PHASE_META[decision.phase]?.label ?? decision.phase}` } : {};
+    const section = item.target.type === 'section' ? ctx.data.session.sections[item.target.id] : null;
+    if (section) {
+        return h('span', null, ' to ', h('strong', { text: section.title }), ` in ${PHASE_META[section.doc]?.label ?? section.doc}`);
+    }
+    return h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null);
+}
 
 function feedbackRow(ctx, item) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
-    const decision = item.target?.type === 'decision' ? ctx.data.session.decisions.find((candidate) => candidate.id === item.target.id) : null;
-    // A namespaced decision such as plan.D1 shows its artifact ID and phase.
-    const scoped = decision?.ref && decision.ref !== decision.id ? { label: decision.ref, title: `Go to ${decision.ref} in ${PHASE_META[decision.phase]?.label ?? decision.phase}` } : {};
-    const target = item.target ? h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null) : null;
     const actions = [];
     const sending = isSending(ctx, item);
-    const dismiss = !sending && (item.state === 'queued' || item.state === 'draft')
-        ? button(`Dismiss ${item.id}`, { iconName: 'x', hideLabel: true, attrs: { 'data-key': `dismiss-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'dismissed') })
+    const remove = !sending && (item.state === 'queued' || item.state === 'draft')
+        ? button(`Remove ${item.id}`, { iconName: 'x', hideLabel: true, attrs: { 'data-key': `dismiss-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'dismissed') })
         : null;
     let readBack = null;
     if (item.state === 'interpreted') {
@@ -477,15 +536,18 @@ function feedbackRow(ctx, item) {
             readBack = readBackActions(ctx, item, 'row');
         }
     }
+    const how = item.delivery && item.state !== 'queued' ? DELIVERY_WORDS[item.delivery] : null;
     return h('li', { class: 'fb-item', dataset: { item: item.id } },
-        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, target), badge(sending ? SENDING : FEEDBACK_STATE[item.state]), dismiss),
+        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(sending ? SENDING : FEEDBACK_STATE[item.state]), remove),
         item.optionLabel ? h('p', { class: 'fb-text' }, h('strong', { text: item.optionLabel })) : null,
-        item.text ? h('p', { class: 'fb-text', text: item.text.length > 160 ? `${item.text.slice(0, 159)}…` : item.text }) : null,
+        item.text ? h('p', { class: 'fb-text', text: excerpt(item.text, 160) }) : null,
         item.interpretation ? h('p', { class: 'fb-interp' }, icon('sparkle'), h('span', { text: item.interpretation.text })) : null,
-        h('p', { class: 'fb-meta meta' }, h('span', { class: 'id-chip', text: item.id }), ' ', timeEl(item.updatedAt ?? item.createdAt, ctx.now), item.delivery && item.state !== 'queued' ? ` · via ${item.delivery === 'queue' ? 'queue' : item.delivery === 'attach' ? 'attachment' : 'message'}` : ''),
+        h('p', { class: 'fb-meta meta' }, h('span', { class: 'id-chip', text: item.id }), ' ', timeEl(item.updatedAt ?? item.createdAt, ctx.now), how ? ` · ${how}` : ''),
         actions.length ? h('div', { class: 'btn-row' }, actions) : null,
         readBack);
 }
+
+const excerpt = (text, max) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
 function steerSection(id, title, count, content, options = {}) {
     return h('section', { class: ['steer-section', options.className], 'aria-labelledby': `steer-${id}` },
@@ -535,36 +597,22 @@ export function steerPanel(ctx) {
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `decided-${item.id}` }, onclick: () => ctx.act.navigate(item.id) },
                 icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, h('span', { class: 'id-chip', text: refOf(item.id) }), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
 
-    const queued = session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item));
+    const pending = pendingItems(ctx);
     const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
     const earlier = session.feedback.filter((item) => ['applied', 'corrected', 'dismissed'].includes(item.state));
-    const modeName = 'delivery-mode';
-    const preview = ctx.ui.deliveryPreview;
-    const selectedMode = DELIVERY_MODES.find((mode) => mode.id === ctx.ui.deliveryMode) ?? DELIVERY_MODES[0];
-    const deliveryControls = h('div', { class: 'delivery' },
-        h('fieldset', { class: 'segmented compact delivery-modes' }, h('legend', { text: 'Deliver feedback by' }),
-            DELIVERY_MODES.map((mode) => h('label', { for: `${modeName}-${mode.id}`, title: mode.label },
-                h('input', { type: 'radio', name: modeName, id: `${modeName}-${mode.id}`, value: mode.id, checked: ctx.ui.deliveryMode === mode.id, 'aria-describedby': 'delivery-mode-hint', onchange: () => ctx.act.setDeliveryMode(mode.id) }),
-                h('span', { text: mode.short })))),
-        h('p', { class: 'mode-hint', id: 'delivery-mode-hint' }, h('strong', { text: `${selectedMode.label}. ` }), selectedMode.hint),
-        ctx.ui.deliveryMode !== 'queue' && queued.length
-            ? h('div', { class: 'delivery-preview' },
-                preview && preview.ids.join() === queued.map((item) => item.id).join()
-                    ? [h('p', { class: 'meta', text: 'Exactly this text will be sent:' }), h('pre', { class: 'preview-text', tabindex: '0', text: preview.prompt }),
-                        h('div', { class: 'btn-row' }, button(`Deliver ${queued.length === 1 ? '1 item' : `${queued.length} items`}`, { kind: 'primary', iconName: ctx.ui.deliveryMode === 'send' ? 'send' : 'anchor', disabled: ctx.ui.delivering, attrs: { 'data-key': 'deliver' }, onClick: () => ctx.act.deliver(queued.map((item) => item.id)) }))]
-                    : button('Preview what will be sent', { iconName: 'eye', attrs: { 'data-key': 'preview-delivery' }, onClick: () => ctx.act.preview(queued.map((item) => item.id)) }),
-                h('p', { class: 'meta', text: 'Nothing is sent until you choose Deliver.' }))
-            : null);
     const feedback = h('div', null,
-        queued.length ? [h('h4', { class: 'group-title', text: `Queued (${queued.length})` }), h('ul', { class: 'fb-list' }, queued.map((item) => feedbackRow(ctx, item)))] : h('p', { class: 'empty', text: 'Nothing queued. Answers, comments, and edits you make appear here before the agent reads them.' }),
-        deliveryControls,
+        pending.length
+            ? [h('h4', { class: 'group-title', text: `Not sent yet (${pending.length})` }), h('ul', { class: 'fb-list' }, pending.map((item) => feedbackRow(ctx, item))),
+                h('div', { class: 'btn-row send-row' }, button('Review and send…', { kind: 'primary', iconName: 'send', attrs: { 'data-key': 'open-send', 'aria-haspopup': 'dialog' }, onClick: () => ctx.act.openSend() })),
+                h('p', { class: 'meta', text: 'Or use Send to agent at the top of the canvas.' })]
+            : h('p', { class: 'empty', text: 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you choose Send to agent at the top of the canvas.' }),
         inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item)))] : null,
         earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Earlier feedback (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item)))) : null);
 
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
         steerSection('decided', 'Decided by the agent', view.decidedByAgent.length, view.decidedByAgent.length ? decided : h('p', { class: 'empty', text: 'No agent decisions yet.' }), { iconName: 'sparkle' }),
-        steerSection('feedback', 'Your feedback', queued.length + inFlight.length, feedback, { iconName: 'inbox' }),
+        steerSection('feedback', 'Your feedback', pending.length + inFlight.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
         steerSection('checklist', ctx.ui.phase === 'review' ? 'Review checklist' : `${PHASE_META[ctx.ui.phase]?.label ?? ''} review checklist`, null, checklist(ctx), { iconName: 'checklist' }),
     ];
@@ -595,23 +643,115 @@ function composer(ctx) {
         : h('p', { class: 'meta', text: 'Tip: use Comment or Research this on a row to anchor your input to it.' }),
     h('label', { class: 'visually-hidden', for: textId, text: 'Your input' }),
     h('textarea', { id: textId, class: 'note', rows: '3', placeholder, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
-    h('div', { class: 'btn-row' }, h('button', { type: 'submit', class: 'btn btn-primary', disabled: !state.text.trim(), dataset: { key: 'composer-submit' } }, icon('plus'), h('span', { text: state.kind === 'research-request' ? 'Request research' : 'Add to feedback' }))));
+    h('div', { class: 'btn-row' }, h('button', { type: 'submit', class: 'btn btn-primary', disabled: !state.text.trim(), dataset: { key: 'composer-submit' } }, icon('plus'), h('span', { text: { comment: 'Add comment', context: 'Add context', 'research-request': 'Add research request' }[state.kind] ?? 'Add' }))),
+    h('p', { class: 'meta', text: 'What you add waits in Your feedback until you choose Send to agent.' }));
 }
 
+const PHASE_NOUNS = Object.freeze({ research: 'the research', plan: 'the plan', implement: 'the implementation', review: 'the review', followup: 'the follow-up' });
+
+/** A checklist item's verdict; items saved before verdicts read `checked` as Looks good. */
+const verdictOf = (item) => (item.verdict === 'ok' || item.verdict === 'needs-work' ? item.verdict : item.checked === true ? 'ok' : null);
+
+/**
+ * The phase's review checklist: why it exists and what reaches the agent, then each
+ * statement with Looks good and Needs work toggles and, for Needs work, a note.
+ */
 function checklist(ctx) {
     const phase = ctx.ui.phase;
     const items = ctx.data.session.checklists[phase] ?? [];
     if (!items.length) {
         return h('p', { class: 'empty', text: 'A checklist appears when this phase has content to review.' });
     }
-    const done = items.filter((item) => item.checked).length;
+    const reviewed = items.filter((item) => verdictOf(item)).length;
+    const work = items.filter((item) => verdictOf(item) === 'needs-work').length;
+    const review = ctx.data.session.feedback.filter((item) => item.kind === 'checklist' && item.phase === phase);
+    const pending = review.find((item) => item.state === 'queued');
+    const sent = review.findLast((item) => ['sent', 'interpreted', 'applied', 'corrected'].includes(item.state));
+    const status = pending ? 'Your review goes with your next send.' : sent ? 'The agent has your latest review.' : 'Nothing here goes to the agent yet.';
     return h('div', { class: 'checklist' },
-        h('p', { class: 'meta', text: `${done} of ${items.length} reviewed. Optional; share it when it helps the agent.` }),
-        h('ul', null, items.map((item) => {
-            const id = `check-${phase}-${item.id}`;
-            return h('li', null, h('label', { class: 'check', for: id }, h('input', { type: 'checkbox', id, checked: item.checked, onchange: (event) => ctx.act.toggleChecklist(phase, item.id, event.target.checked) }), h('span', { text: item.label })));
-        })),
-        h('div', { class: 'btn-row' }, button('Share review with the agent', { iconName: 'send', attrs: { 'data-key': 'share-checklist' }, onClick: () => ctx.act.shareChecklist(phase) })));
+        h('p', { class: 'checklist-intro', text: `Optional questions for reviewing ${PHASE_NOUNS[phase] ?? 'this phase'}. Mark each one as you read. Items that need work, with your notes, go to the agent with your next send, and so does an all-good list. Other marks only track your progress.` }),
+        h('p', { class: ['checklist-status', pending ? 'is-pending' : null], role: 'status' },
+            icon(pending ? 'send' : 'checklist'),
+            h('span', { text: `${reviewed} of ${items.length} reviewed${work ? `, ${work} ${work === 1 ? 'needs' : 'need'} work` : ''}. ${status}` })),
+        h('ul', { class: 'check-list' }, items.map((item) => checkItem(ctx, phase, item))));
+}
+
+function checkItem(ctx, phase, item) {
+    const verdict = verdictOf(item);
+    const labelId = `check-${phase}-${item.id}`;
+    const noteId = `check-note-${phase}-${item.id}`;
+    // Pressing the selected verdict clears it; the labels never change, so the pressed state carries the meaning.
+    const toggle = (value, iconName, text) => h('button', {
+        type: 'button', class: ['verdict', `is-${value}`], 'aria-pressed': String(verdict === value), dataset: { key: `verdict-${phase}-${item.id}-${value}` },
+        onclick: () => ctx.act.markChecklist(phase, item.id, verdict === value ? null : value, value === 'needs-work' ? item.note ?? '' : undefined),
+    }, icon(iconName), h('span', { text }));
+    return h('li', { class: ['check-item', verdict ? `is-${verdict}` : null] },
+        h('p', { class: 'check-label', id: labelId, text: item.label }),
+        h('div', { class: 'verdicts', role: 'group', 'aria-labelledby': labelId }, toggle('ok', 'check', 'Looks good'), toggle('needs-work', 'flag', 'Needs work')),
+        verdict === 'needs-work'
+            ? h('div', { class: 'check-note' },
+                h('label', { class: 'field-label', for: noteId, text: 'What needs work? (optional)' }),
+                h('textarea', { id: noteId, class: 'note', rows: '2', onchange: (event) => ctx.act.markChecklist(phase, item.id, 'needs-work', event.target.value) }, item.note ?? ''))
+            : null);
+}
+
+/**
+ * Content of the Send to agent dialog: what goes, from which canvas, an optional message,
+ * the exact text the agent reads, and Send. With nothing waiting it explains how to add
+ * something instead.
+ *
+ * @param {any} ctx
+ */
+export function sendSheet(ctx) {
+    const pending = pendingItems(ctx);
+    const send = ctx.ui.send;
+    const handle = ctx.data.canvas?.handle;
+    const rpi = ctx.data.session.source?.kind === 'rpi';
+    const head = h('div', { class: 'dialog-head' },
+        h('h2', { id: 'sendSheetTitle', tabindex: '-1' }, icon('send'), 'Send to the agent'),
+        h('button', { type: 'button', class: 'icon-btn', 'data-close': '', dataset: { key: 'send-close' } }, icon('x'), sr('Close')));
+    const from = handle ? ['Canvas ', h('code', { class: 'canvas-handle', text: handle })] : ['This canvas'];
+    if (!pending.length) {
+        return [head,
+            h('p', { class: 'send-intro' }, ...from, ' has nothing waiting to send.'),
+            h('p', { text: 'Add something first, then send it all here:' }),
+            h('ul', { class: 'send-howto' },
+                h('li', { text: 'Answer a decision the agent asks you, or override one it made.' }),
+                h('li', { text: 'Comment on a row, or suggest an edit to its text.' }),
+                h('li', { text: 'Add context or a research request under Add input.' }),
+                h('li', { text: 'Mark items in the review checklist.' })),
+            h('div', { class: 'btn-row' }, button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))];
+    }
+    const noun = plural(pending.length, 'item');
+    return [head,
+        h('p', { class: 'send-intro' }, ...from, ` sends ${pending.length === 1 ? 'this item' : `these ${pending.length} items`} to the agent in your chat as one message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”. The agent ${rpi ? "changes the task's files" : 'makes the changes'} and reads back how it understood each item.`),
+        h('ul', { class: 'send-list', 'aria-label': 'Items to send' }, pending.map((item) => sendRow(ctx, item))),
+        h('label', { class: 'field-label', for: 'send-note', text: 'Message to the agent (optional)' }),
+        h('textarea', { id: 'send-note', class: 'note', rows: '3', 'aria-describedby': 'send-note-hint', oninput: (event) => ctx.act.setSendNote(event.target.value) }, send.note),
+        h('p', { class: 'meta', id: 'send-note-hint', text: 'Shown in the chat above the line that names this canvas.' }),
+        h('details', { class: 'send-exact' },
+            h('summary', { text: 'Exact message the agent receives' }),
+            h('pre', { class: 'preview-text', id: 'send-preview', tabindex: '0', text: send.preview?.prompt ?? 'Preparing the message…' })),
+        send.error ? h('div', { class: 'notice tone-danger', role: 'alert', id: 'send-error' }, h('p', { class: 'notice-title' }, icon('alert'), send.error)) : null,
+        h('div', { class: 'btn-row send-actions' },
+            button(send.sending ? 'Sending' : `Send ${noun}`, { kind: 'primary', iconName: 'send', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-confirm', id: 'send-confirm' }, onClick: () => ctx.act.send() }),
+            button('Cancel', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))].filter(Boolean);
+}
+
+function sendRow(ctx, item) {
+    const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
+    const detail = item.kind === 'edit' && Number.isFinite(item.section?.added)
+        ? `${plural(item.section.added, 'line')} added, ${item.section.removed} removed`
+        : item.optionLabel ?? item.text ?? '';
+    const where = item.kind === 'checklist' ? { phase: item.phase } : item.target ? { id: item.target.id } : null;
+    return h('li', { class: 'send-item', dataset: { item: item.id } },
+        icon(kind.icon, { className: 'send-item-icon' }),
+        h('div', { class: 'send-item-text' },
+            h('p', { class: 'send-item-kind' }, kind.label, feedbackTarget(ctx, item)),
+            detail ? h('p', { class: 'meta', text: excerpt(detail.split('\n')[0], 140) }) : null),
+        h('div', { class: 'send-item-actions' },
+            where ? button(`Show ${item.id} in the canvas`, { iconName: 'eye', hideLabel: true, attrs: { 'data-key': `send-show-${item.id}` }, onClick: () => ctx.act.showPending(item) }) : null,
+            button(`Remove ${item.id}`, { iconName: 'x', hideLabel: true, attrs: { 'data-key': `send-remove-${item.id}` }, onClick: () => ctx.act.removePending(item.id) })));
 }
 
 /**
@@ -622,21 +762,11 @@ function checklist(ctx) {
  * @param {any} file
  */
 export function filePreview(ctx, change, file) {
-    const lines = (file.diff || '').split('\n').filter((line, index, all) => line !== '' || index < all.length - 1);
     const kindTone = { added: 'success', modified: 'accent', deleted: 'danger', renamed: 'muted' }[file.kind] ?? 'muted';
-    const diff = lines.length
-        ? h('div', { class: 'diff', role: 'region', tabindex: '0', 'aria-label': `Changes in ${file.path}` },
-            lines.map((line) => {
-                const type = line.startsWith('@@') ? 'hunk' : line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : 'ctx';
-                const marker = type === 'add' ? '+' : type === 'del' ? '−' : type === 'hunk' ? '' : ' ';
-                return h('div', { class: ['diff-line', `is-${type}`] },
-                    type === 'add' ? sr('Added: ') : type === 'del' ? sr('Removed: ') : null,
-                    h('span', { class: 'diff-marker', 'aria-hidden': 'true', text: marker }),
-                    h('span', { class: 'diff-code', text: type === 'hunk' ? line : line.slice(1) }));
-            }))
-        : h('p', { class: 'empty', text: counted ? 'No diff was recorded for this file. The changes record lists it with its line counts.' : 'No diff was recorded for this file. Open it in the editor to see its current content.' });
-    const editorLink = workspaceEditorUri(ctx, file.path) ?? editorUri(file.path);
     const counted = Number.isFinite(file.additions) && Number.isFinite(file.deletions);
+    const diff = diffView(file.diff, `Changes in ${file.path}`)
+        ?? h('p', { class: 'empty', text: counted ? 'No diff was recorded for this file. The changes record lists it with its line counts.' : 'No diff was recorded for this file. Open it in the editor to see its current content.' });
+    const editorLink = workspaceEditorUri(ctx, file.path) ?? editorUri(file.path);
     return [
         h('div', { class: 'dialog-head' },
             h('h2', { id: 'fileSheetTitle', class: 'sheet-title' }, icon('file'), h('code', { text: file.path })),

@@ -40,7 +40,7 @@ describe('answers and overrides in the user\'s words', () => {
         assert.equal(decisionOf(session, 'D2').status, 'answered');
         assert.equal(decisionOf(session, 'D2').chosen, undefined);
         assert.equal(answered.result.optionId, undefined);
-        assert.match(composeDelivery(session, [answered.result.id], NOW).prompt, /Answer about D2 [^\n]*\n {3}Answer: Ship the coast first\./);
+        assert.match(composeDelivery(session, [answered.result.id], NOW).prompt, /Answer to D2 [^\n]*\n {3}File: \.copilot-tracking\/research\/[^\n]+\n {3}Answer: Ship the coast first\./);
         const withdrawn = transitionFeedback(session, answered.result.id, 'dismissed', {}, NOW).session;
         assert.equal(decisionOf(withdrawn, 'D2').status, 'needs-input');
     });
@@ -60,7 +60,7 @@ describe('answers and overrides in the user\'s words', () => {
         assert.equal(decisionOf(session, 'plan.D2').status, 'override-pending');
         assert.equal(decisionOf(session, 'plan.D2').chosen, undefined);
         assert.equal(override.result.previousChosen, 'a');
-        assert.match(composeDelivery(session, [override.result.id], NOW).prompt, /Override about plan\.D2 [^\n]*\n {3}Do instead: Announce every 25 percent instead\./);
+        assert.match(composeDelivery(session, [override.result.id], NOW).prompt, /Override of plan\.D2 [^\n]*\n {3}File: \.copilot-tracking\/plans\/[^\n]+\n {3}Do instead: Announce every 25 percent instead\./);
 
         const withdrawn = transitionFeedback(session, override.result.id, 'dismissed', {}, NOW).session;
         assert.equal(decisionOf(withdrawn, 'plan.D2').status, 'decided');
