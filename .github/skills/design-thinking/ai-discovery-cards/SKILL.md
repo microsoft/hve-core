@@ -4,7 +4,7 @@ description: Workshop guidance for using Microsoft AI Discovery Cards to ideate 
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
-  last_updated: "2026-09-11"
+  last_updated: "2026-10-27"
 ---
 
 # Microsoft AI Discovery Cards
@@ -39,7 +39,7 @@ Invite participants to explore the cards, and apply them to their problem statem
 * Postpone evaluations of feasibility, desirability, viability, and Responsible AI during divergent brainstorming until the formal convergence or concept phase.
 * Avoid framing AI Discovery Cards as evidence that an AI capability is feasible, accurate, safe, or currently available.
 * Do not interpret a combination of AI capabilities as evidence that an autonomous or multi-agent architecture is necessary.
-* Treat the AI Discovery Cards Workshop Facilitation Guide as the official, authoritative source for card content and capabilities.
+* Treat the [AI Discovery Cards Workshop Facilitation Guide](https://aka.ms/aidiscoverycards) as the official, authoritative source for card content and capabilities.
 * Never fabricate or extrapolate card content if the facilitation guide is unavailable.
 
 ## Stop rules
