@@ -39,7 +39,6 @@ The `ai-discovery-cards` coverage checks workshop knowledge, skill routing after
 validated problem framing, deferral when framing is missing, and the prohibition
 on inventing card content when the authoritative facilitation guide is unavailable.
 
-
 ### Git publishing evidence boundary
 
 Source-backed Git decisions distinguish local-only integration, explicit ordinary-push consent,
