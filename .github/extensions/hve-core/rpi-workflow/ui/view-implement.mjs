@@ -3,10 +3,16 @@
 
 import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, idTag, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
 import { decisionCard, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
+import { renderDiagram } from './diagram.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
+import { taskBlock } from './view-plan.mjs';
 import { plainInline } from './markdown.mjs';
 
-/** Implement view: now banner, board, changes, discoveries and plan updates, alignment, and validation. */
+/**
+ * Implement view: the task board pinned under the context bar, phases and tasks with a
+ * filter, the change map with progress, changes, discoveries and plan updates, alignment,
+ * and validation. Now lives in the steering panel.
+ */
 
 const COLUMNS = [
     { status: 'todo', label: 'Up next' },
@@ -33,17 +39,70 @@ function blockerNote(blocker) {
 }
 
 export function outline(ctx) {
-    const impl = ctx.data.session.implementation;
+    const { session } = ctx.data;
+    const impl = session.implementation;
+    const tasks = allTasks(ctx);
     return [
-        { id: 'now', label: 'Now' },
         { id: 'board', label: 'Task board' },
+        tasks.length ? { id: 'implement-phases', label: 'Phases and tasks', count: `${tasks.filter((task) => task.status === 'done').length}/${tasks.length}` } : null,
+        session.plan.diagram ? { id: 'implement-map', label: 'Change map' } : null,
         { id: 'changes', label: 'Changes', count: impl.changes.length },
         { id: 'discoveries', label: 'Discoveries and plan updates', count: impl.discoveries.length },
         { id: 'alignment', label: 'Business alignment', count: impl.alignment.length },
         { id: 'validation', label: 'Validation and blockers', count: impl.validation.length },
-        ctx.data.session.records?.implement?.length ? { id: 'implement-record', label: 'Changes record', count: ctx.data.session.records.implement.length } : null,
+        session.records?.implement?.length ? { id: 'implement-record', label: 'Changes record', count: session.records.implement.length } : null,
     ].filter(Boolean);
 }
+
+/** The Phases and tasks filters; In progress also holds work paused for you or blocked. */
+export const TASK_FILTERS = Object.freeze([
+    { id: 'active', label: 'In progress', match: (task) => task.status === 'in-progress' || task.status === 'paused' || task.status === 'blocked' },
+    { id: 'remaining', label: 'Remaining', match: (task) => task.status === 'todo' },
+    { id: 'done', label: 'Done', match: (task) => task.status === 'done' },
+    { id: 'all', label: 'All', match: () => true },
+]);
+
+const filterOf = (id) => TASK_FILTERS.find((filter) => filter.id === id) ?? TASK_FILTERS[0];
+
+/** True when the filter shows a phase or task: a phase shows while any of its tasks match. */
+export function filterShows(session, filterId, id) {
+    const filter = filterOf(filterId);
+    for (const phase of session.plan.phases ?? []) {
+        if (phase.id === id) return phase.tasks.some(filter.match);
+        const task = phase.tasks.find((candidate) => candidate.id === id);
+        if (task) return filter.match(task);
+    }
+    return true;
+}
+
+/**
+ * Each change-map node's progress: in progress while any phase that changes it is, done once
+ * every such phase is. Nodes no phase changes have none.
+ *
+ * @param {any} plan
+ * @returns {Map<string, 'done' | 'active'>}
+ */
+export function nodeProgress(plan) {
+    const statuses = new Map();
+    for (const phase of plan.phases ?? []) {
+        for (const node of plan.diagram?.phaseNodes?.[phase.id] ?? []) {
+            if (!statuses.has(node)) statuses.set(node, []);
+            statuses.get(node).push(phase.status);
+        }
+    }
+    const progress = new Map();
+    for (const [node, list] of statuses) {
+        if (list.some((status) => status === 'in-progress')) progress.set(node, 'active');
+        else if (list.every((status) => status === 'done')) progress.set(node, 'done');
+    }
+    return progress;
+}
+
+const PHASE_PROGRESS = {
+    done: { icon: 'check-circle', label: 'done', tone: 'success' },
+    'in-progress': { icon: 'active', label: 'in progress', tone: 'agent' },
+    todo: { icon: 'circle', label: 'up next', tone: 'muted' },
+};
 
 function validationSummary(changes) {
     const checks = changes.flatMap((change) => change.validation);
@@ -91,50 +150,143 @@ function taskDetail(ctx, task) {
             button('Comment', { iconName: 'message', onClick: () => ctx.act.anchorComposer(task.id, 'comment') })));
 }
 
+/**
+ * The task board, pinned under the context bar in its own scrolling panel, with a summary
+ * line and Collapse.
+ */
+function boardDock(ctx, tasks) {
+    const collapsed = ctx.ui.boardCollapsed === true;
+    const done = tasks.filter((task) => task.status === 'done').length;
+    const active = tasks.filter(TASK_FILTERS[0].match).length;
+    const selected = tasks.find((task) => task.id === ctx.ui.selectedTask) ?? null;
+    return h('section', { class: ['board-dock', collapsed ? 'is-collapsed' : null], dataset: { row: 'board' }, tabindex: '-1', 'aria-labelledby': 'board-dock-title' },
+        h('header', { class: 'board-dock-head' },
+            h('h3', { class: 'board-dock-title', id: 'board-dock-title' }, icon('list'), 'Task board'),
+            h('span', { class: 'board-dock-summary', text: `${done} of ${plural(tasks.length, 'task')} done${active ? ` · ${active} in progress` : ''}` }),
+            button(collapsed ? 'Expand the task board' : 'Collapse the task board', { iconName: 'chevron', hideLabel: true, attrs: { class: ['btn', 'btn-neutral', 'btn-icon', 'board-dock-toggle'].join(' '), 'aria-expanded': String(!collapsed), 'aria-controls': 'board-dock-body', 'data-key': 'board-toggle' }, onClick: () => ctx.act.toggleBoard() })),
+        h('div', { class: 'board-dock-body', id: 'board-dock-body', hidden: collapsed, role: 'region', tabindex: '0', 'aria-label': 'Task board, scrollable' },
+            h('div', { class: 'board' }, COLUMNS.map((column) => {
+                const items = tasks.filter((task) => task.status === column.status);
+                const meta = TASK_STATUS[column.status];
+                return h('section', { class: ['board-col', `col-${column.status}`, items.length ? null : 'is-empty'], 'aria-labelledby': `col-${column.status}` },
+                    h('h4', { class: 'board-col-title', id: `col-${column.status}` }, icon(meta.icon, { className: `tone-${meta.tone}-fg` }), column.label, h('span', { class: 'count', text: String(items.length) })),
+                    items.length ? h('ul', { class: 'board-list' }, items.map((task) => boardCard(ctx, task))) : h('p', { class: 'empty small', text: 'None' }));
+            })),
+            taskDetail(ctx, selected)));
+}
+
+/** What an empty filter means, with Show all. */
+function emptyFilter(ctx, filter, tasks) {
+    const done = tasks.filter((task) => task.status === 'done').length;
+    const text = {
+        active: done === tasks.length ? `Nothing is in progress: all ${plural(tasks.length, 'task')} are done.` : done === 0 ? `Nothing is in progress yet; ${plural(tasks.length, 'task')} remain.` : `Nothing is in progress right now; ${done} of ${plural(tasks.length, 'task')} are done.`,
+        remaining: 'Nothing remains: every task is done or in progress.',
+        done: 'No task is done yet.',
+        all: 'The plan has no tasks.',
+    }[filter.id];
+    return h('div', { class: 'empty-filter' }, h('p', { class: 'empty', text }), filter.id === 'all' ? null : button('Show all', { attrs: { 'data-key': 'task-filter-show-all' }, onClick: () => ctx.act.setTaskFilter('all') }));
+}
+
+/** The plan's phases and tasks, filtered, with Plan's task blocks. */
+function phasesRow(ctx, tasks) {
+    const { session } = ctx.data;
+    const filter = filterOf(ctx.ui.taskFilter);
+    const done = tasks.filter((task) => task.status === 'done').length;
+    const phases = session.plan.phases.map((phase) => ({ phase, shown: phase.tasks.filter(filter.match) })).filter((entry) => entry.shown.length);
+    return row(ctx, {
+        id: 'implement-phases', idLabel: null, title: 'Phases and tasks', level: 2,
+        badges: [chip(`${done} of ${tasks.length} tasks done`, done === tasks.length ? 'success' : 'muted')],
+        actions: rowActions(ctx, { rowId: 'implement-phases' }),
+        body: [
+            h('fieldset', { class: 'segmented compact task-filter' }, h('legend', { class: 'visually-hidden', text: 'Show tasks' }),
+                TASK_FILTERS.map((option) => h('label', { for: `task-filter-${option.id}` },
+                    h('input', { type: 'radio', name: 'task-filter', id: `task-filter-${option.id}`, value: option.id, checked: filter.id === option.id, onchange: () => ctx.act.setTaskFilter(option.id) }),
+                    h('span', null, option.label, ' ', h('span', { class: 'count', text: String(tasks.filter(option.match).length) }))))),
+            phases.length
+                ? phases.map(({ phase, shown }) => {
+                    const meta = PHASE_PROGRESS[phase.status] ?? PHASE_PROGRESS.todo;
+                    const phaseDone = phase.tasks.filter((task) => task.status === 'done').length;
+                    return h('section', { class: 'impl-phase', dataset: { item: phase.id }, tabindex: '-1', 'aria-labelledby': `impl-phase-${phase.id}` },
+                        h('h4', { class: 'impl-phase-head', id: `impl-phase-${phase.id}` },
+                            h('span', { class: 'id-chip', text: phase.id }), h('span', { class: 'impl-phase-title', text: phase.title }),
+                            chip(`${phaseDone} of ${phase.tasks.length} done`, phaseDone === phase.tasks.length ? 'success' : 'muted'),
+                            badge({ icon: meta.icon, label: meta.label[0].toUpperCase() + meta.label.slice(1), tone: meta.tone })),
+                        h('ol', { class: 'task-list' }, shown.map((task) => taskBlock(ctx, task, phase.tasks.indexOf(task), phase.tasks))));
+                })
+                : emptyFilter(ctx, filter, tasks),
+        ],
+    });
+}
+
+/** The plan's change map with done and in-progress parts marked, and a tab per phase. */
+function mapRow(ctx) {
+    const { plan } = ctx.data.session;
+    const progress = nodeProgress(plan);
+    const working = plan.phases.find((phase) => phase.status === 'in-progress')?.id ?? null;
+    const chosen = ctx.ui.mapPhase === undefined ? working : ctx.ui.mapPhase;
+    const highlight = chosen ? plan.diagram.phaseNodes?.[chosen] ?? [] : [];
+    const tab = (value, phase) => {
+        const meta = phase ? PHASE_PROGRESS[phase.status] ?? PHASE_PROGRESS.todo : null;
+        return h('label', { for: `impl-map-phase-${value}` },
+            h('input', { type: 'radio', name: 'impl-map-phase', id: `impl-map-phase-${value}`, value, checked: (chosen ?? 'all') === value, onchange: () => ctx.act.setMapPhase(value === 'all' ? null : value) }),
+            h('span', null, meta ? icon(meta.icon, { className: `tone-${meta.tone}-fg` }) : null, value === 'all' ? 'All phases' : value, meta ? sr(`, ${meta.label}`) : null));
+    };
+    return row(ctx, {
+        id: 'implement-map', idLabel: null, title: 'Change map', level: 2,
+        actions: rowActions(ctx, { rowId: 'implement-map' }),
+        body: [
+            h('div', { class: 'map-controls' },
+                h('fieldset', { class: 'segmented compact map-phases' }, h('legend', { class: 'meta', text: 'Phase' }), tab('all', null), plan.phases.map((phase) => tab(phase.id, phase)))),
+            renderDiagram(plan.diagram.after, {
+                caption: `The intended result, with done and in-progress parts marked${highlight.length ? `, ${chosen} highlighted` : ''}`,
+                highlight,
+                progress,
+                idPrefix: 'impl-map',
+                textOpen: ctx.ui.openDetails.has('impl-map-text'),
+                onTextToggle: (open) => ctx.act.setDetailsOpen('impl-map-text', open),
+            }),
+            h('p', { class: 'meta legend' },
+                h('span', { class: 'legend-swatch is-done' }), ' Done. ',
+                h('span', { class: 'legend-swatch is-active' }), ' In progress. ',
+                h('span', { class: 'legend-swatch is-highlight' }), ' Filled: the chosen phase. ',
+                h('span', { class: 'legend-swatch is-new' }), ' Dashed border: added by the plan.'),
+        ],
+    });
+}
+
+/**
+ * Now, for the steering panel on Implement: progress, the tasks being worked on, what is
+ * paused for you, blockers, and the latest activity.
+ *
+ * @param {any} ctx
+ */
+export function nowSection(ctx) {
+    const { session } = ctx.data;
+    const impl = session.implementation;
+    const tasks = allTasks(ctx);
+    const progress = ctx.data.view.progress;
+    const current = impl.current ? tasks.find((task) => task.id === impl.current.taskId) : null;
+    const working = tasks.filter((task) => TASK_FILTERS[0].match(task) && task.id !== current?.id);
+    const paused = session.decisions.filter((decision) => decision.phase === 'implement' && decision.status === 'needs-input');
+    return h('div', { class: 'now-panel' },
+        h('p', { class: 'now-count' }, h('strong', { text: `${progress.done} of ${progress.total}` }), ' tasks done'),
+        h('progress', { class: 'progress', max: String(Math.max(progress.total, 1)), value: String(progress.done), 'aria-label': `${progress.done} of ${progress.total} tasks done` }),
+        current
+            ? h('p', { class: 'now-task' }, icon('sparkle', { className: 'tone-agent-fg' }), h('span', null, 'The agent is working on ', idChip(current.id, ctx.act.navigate), ' ', h('strong', { text: current.title }), timeEl(impl.current.startedAt, ctx.now) ? [' · started ', timeEl(impl.current.startedAt, ctx.now)] : null))
+            : session.session.nextAction ? h('p', { class: 'now-task' }, icon('info'), h('span', { text: session.session.nextAction })) : null,
+        working.length ? h('ul', { class: 'now-list', 'aria-label': 'Other tasks in progress' }, working.map((task) => h('li', null, badge(TASK_STATUS[task.status]), ' ', idChip(task.id, ctx.act.navigate), ' ', h('span', { text: task.title })))) : null,
+        paused.length ? h('ul', { class: 'now-list', 'aria-label': 'Paused for you' }, paused.map((decision) => h('li', null, icon('pause', { className: 'tone-attention-fg' }), ' Paused for you: ', idChip(decision.id, ctx.act.navigate), ' ', h('span', { text: decision.title })))) : null,
+        impl.blockers.length ? h('ul', { class: 'now-list', 'aria-label': 'Blockers' }, impl.blockers.map((blocker) => h('li', null, icon('alert', { className: 'tone-danger-fg' }), ' ', blocker.taskId ? [idChip(blocker.taskId, ctx.act.navigate), ' '] : null, blocker.text, blockerNote(blocker)))) : null,
+        impl.activity.length ? h('ol', { class: 'activity', 'aria-label': 'Latest agent activity, newest first' }, impl.activity.slice(-4).reverse().map((line) => h('li', null, icon(ACTIVITY_ICON[line.kind] ?? 'info'), h('span', { class: 'activity-text', text: line.text }), timeEl(line.at, ctx.now)))) : null);
+}
+
 export function renderView(ctx) {
     const { session } = ctx.data;
     const impl = session.implementation;
     const tasks = allTasks(ctx);
-    const current = impl.current ? tasks.find((task) => task.id === impl.current.taskId) : null;
-    const paused = session.decisions.filter((decision) => decision.phase === 'implement' && decision.status === 'needs-input');
-    const progress = ctx.data.view.progress;
-    const rows = [];
-
-    rows.push(row(ctx, {
-        id: 'now', idLabel: null, title: 'Now', level: 2,
-        badges: [chip(`${progress.done} of ${progress.total} tasks done`, progress.done === progress.total ? 'success' : 'muted')],
-        body: [
-            h('progress', { class: 'progress', max: String(Math.max(progress.total, 1)), value: String(progress.done), 'aria-label': `${progress.done} of ${progress.total} tasks done` }),
-            current
-                ? h('div', { class: 'now-task' }, icon('sparkle', { className: 'tone-agent-fg' }), h('span', null, 'The agent is working on ', idChip(current.id, ctx.act.navigate), ' ', h('strong', { text: current.title }), timeEl(impl.current.startedAt, ctx.now) ? [' · started ', timeEl(impl.current.startedAt, ctx.now)] : null))
-                : session.session.nextAction ? h('p', { class: 'now-task' }, icon('info'), session.session.nextAction) : null,
-            impl.activity.length ? h('ol', { class: 'activity', 'aria-label': 'Latest agent activity, newest first' }, impl.activity.slice(-6).reverse().map((line) => h('li', null, icon(ACTIVITY_ICON[line.kind] ?? 'info'), h('span', { class: 'activity-text', text: line.text }), timeEl(line.at, ctx.now)))) : null,
-        ],
-        margin: [
-            ...paused.map((decision) => h('article', { class: ['card', 'paused-card'] },
-                h('header', { class: 'card-head' }, icon('pause', { className: 'card-icon tone-attention-fg' }), h('h4', { class: 'card-title', text: 'Work is paused for you' })),
-                h('p', null, h('span', { class: 'id-chip', text: decision.id }), ` ${decision.title}`),
-                h('p', { class: 'meta' }, mdInline(ctx, decision.impact, { doc: decision.phase })),
-                h('div', { class: 'btn-row' }, button('Answer now', { kind: 'primary', iconName: 'hand', onClick: () => ctx.act.navigate(decision.id) })))),
-            impl.blockers.length ? h('article', { class: 'card' }, h('header', { class: 'card-head' }, icon('alert', { className: 'card-icon tone-danger-fg' }), h('h4', { class: 'card-title', text: plural(impl.blockers.length, 'blocker') })),
-                impl.blockers.map((blocker) => h('p', null, blocker.taskId ? [idChip(blocker.taskId, ctx.act.navigate), ' '] : null, blocker.text, blockerNote(blocker)))) : null,
-        ],
-    }));
-
-    const selected = tasks.find((task) => task.id === ctx.ui.selectedTask) ?? null;
-    rows.push(row(ctx, {
-        id: 'board', idLabel: null, title: 'Task board', level: 2,
-        body: [
-            h('div', { class: 'board' }, COLUMNS.map((column) => {
-                const items = tasks.filter((task) => task.status === column.status);
-                const meta = TASK_STATUS[column.status];
-                return h('section', { class: ['board-col', `col-${column.status}`], 'aria-labelledby': `col-${column.status}` },
-                    h('h4', { class: 'board-col-title', id: `col-${column.status}` }, icon(meta.icon, { className: `tone-${meta.tone}-fg` }), column.label, h('span', { class: 'count', text: String(items.length) })),
-                    items.length ? h('ul', { class: 'board-list' }, items.map((task) => boardCard(ctx, task))) : h('p', { class: 'empty small', text: 'None' }));
-            })),
-            taskDetail(ctx, selected),
-        ],
-    }));
+    const rows = [boardDock(ctx, tasks)];
+    if (tasks.length) rows.push(phasesRow(ctx, tasks));
+    if (session.plan.diagram) rows.push(mapRow(ctx));
 
     const fileItem = (change, file) => {
         const counted = Number.isFinite(file.additions) && Number.isFinite(file.deletions);

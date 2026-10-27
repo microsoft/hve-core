@@ -705,18 +705,19 @@ function feedbackRow(ctx, item, group) {
 const excerpt = (text, max) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
 function steerSection(id, title, count, content, options = {}) {
-    return h('section', { class: ['steer-section', options.className], 'aria-labelledby': `steer-${id}` },
+    return h('section', { class: ['steer-section', options.className], 'aria-labelledby': `steer-${id}`, dataset: options.row ? { row: options.row } : undefined, tabindex: options.row ? '-1' : undefined },
         h('h3', { class: 'steer-title', id: `steer-${id}` }, options.iconName ? icon(options.iconName) : null, title, count !== null ? h('span', { class: 'count', text: String(count) }) : null),
         content);
 }
 
 /**
- * The steering panel: needs your input, decided by the agent, your feedback with
- * delivery, add input, and the phase checklist, always in that order.
+ * The steering panel: needs your input, decided by the agent, Now when the phase view gives
+ * one, your feedback, add input, and the phase checklist, always in that order.
  *
  * @param {any} ctx
+ * @param {{ now?: HTMLElement | null }} [extra] `now`: Implement's progress, the work in hand, and blockers
  */
-export function steerPanel(ctx) {
+export function steerPanel(ctx, extra = {}) {
     const { session, view } = ctx.data;
     const phaseLabel = (phase) => PHASE_META[phase]?.label ?? phase;
     const waiting = view.interpretations.map((id) => session.feedback.find((item) => item.id === id)).filter(Boolean);
@@ -766,10 +767,11 @@ export function steerPanel(ctx) {
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
         steerSection('decided', 'Decided by the agent', view.decidedByAgent.length, view.decidedByAgent.length ? decided : h('p', { class: 'empty', text: 'No agent decisions yet.' }), { iconName: 'sparkle' }),
+        extra.now ? steerSection('now', 'Now', null, extra.now, { iconName: 'active', row: 'now', className: 'steer-now' }) : null,
         steerSection('feedback', 'Your feedback', pending.length + inFlight.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
         steerSection('checklist', ctx.ui.phase === 'review' ? 'Review checklist' : `${PHASE_META[ctx.ui.phase]?.label ?? ''} review checklist`, null, checklist(ctx), { iconName: 'checklist' }),
-    ];
+    ].filter(Boolean);
 }
 
 const COMPOSER_KINDS = [

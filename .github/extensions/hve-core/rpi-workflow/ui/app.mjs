@@ -63,6 +63,11 @@ const state = {
         recordOpen: false,
         openDetails: new Set(),
         navFilter: '',
+        feedbackEdit: null,
+        confirm: null,
+        taskFilter: 'active',
+        boardCollapsed: false,
+        mapPhase: undefined,
         /** The waiting item Needs you last moved to. */
         lastNeeds: null,
         shortcuts: true,
@@ -180,7 +185,7 @@ function resolve(ref) {
     const id = aliasOf(ref);
     if (/^[QFCWL]\d{1,2}$/.test(id)) return { phase: 'research' };
     if (/^(?:plan\.)?D\d{1,3}$/.test(id)) return hasMarginHome(context(), item) ? { phase: item.anchor.phase } : { phase: state.ui.phase };
-    if (/^P\d{2}(-T\d{2})?$/.test(id)) return { phase: state.ui.phase === 'implement' && /-T/.test(id) ? 'implement' : 'plan' };
+    if (/^P\d{2}(-T\d{2})?$/.test(id)) return { phase: state.ui.phase === 'implement' ? 'implement' : 'plan' };
     if (/^(FR|NFR|PC)-\d{3}$/.test(id)) return { phase: 'plan' };
     if (/^(CH|DS|AL)-\d{3}$/.test(id)) return { phase: 'implement' };
     if (/^(RV|RD)-\d{3}$/.test(id)) return { phase: 'review' };
@@ -276,8 +281,13 @@ function navigate(ref, phaseOverride, options = {}) {
     if (/^[CW]\d{1,3}$/.test(id)) state.ui.recordOpen = true;
     if (/^P\d{2}-T\d{2}$/.test(id)) {
         if (phase === 'plan') state.ui.expanded.add(id);
-        if (phase === 'implement') state.ui.selectedTask = id;
+        if (phase === 'implement') {
+            state.ui.selectedTask = id;
+            state.ui.boardCollapsed = false;
+        }
     }
+    // A phase lands in Phases and tasks, which shows all phases when its filter would hide this one.
+    if (/^P\d{2}$/.test(id) && phase === 'implement' && state.data && !implementView.filterShows(state.data.session, state.ui.taskFilter, id)) state.ui.taskFilter = 'all';
     closeDrawer(false);
     state.ui.phase = phase;
     state.ui.highlight = id;
@@ -291,8 +301,13 @@ function navigate(ref, phaseOverride, options = {}) {
             return;
         }
         if ($('steer').contains(element) && $('steer').inert) openSteer();
-        const tall = element.getBoundingClientRect().height > $('document').clientHeight * 0.5;
-        element.scrollIntoView({ block: tall ? 'start' : 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+        const dock = element.closest('.board-dock');
+        if (dock && window.getComputedStyle(dock).position === 'sticky') {
+            revealWithin(element.closest('.board-dock-body'), element);
+        } else {
+            const tall = element.getBoundingClientRect().height > $('document').clientHeight * 0.5;
+            element.scrollIntoView({ block: tall ? 'start' : 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+        }
         element.focus({ preventScroll: true });
         element.classList.add('is-highlight');
         window.setTimeout(() => {
@@ -301,6 +316,22 @@ function navigate(ref, phaseOverride, options = {}) {
         }, 1200);
         if (options.agent) announce(`The agent pointed you to ${ref}${find(id)?.title ? `, ${find(id).title}` : ''}.`);
     });
+}
+
+/**
+ * Scrolls only `frame` to bring `element` to its middle, so a card in the pinned task board is
+ * shown without moving the page under it.
+ *
+ * @param {HTMLElement | null} frame
+ * @param {HTMLElement} element
+ */
+function revealWithin(frame, element) {
+    if (!frame) return;
+    const box = element.getBoundingClientRect();
+    const bounds = frame.getBoundingClientRect();
+    const top = box.top < bounds.top || box.bottom > bounds.bottom ? box.top - bounds.top - Math.max(0, (bounds.height - box.height) / 2) : 0;
+    const left = box.left < bounds.left || box.right > bounds.right ? box.left - bounds.left - Math.max(0, (bounds.width - box.width) / 2) : 0;
+    if (top || left) frame.scrollBy({ top, left, behavior: reducedMotion() ? 'auto' : 'smooth' });
 }
 
 /** Shows a remembered place without recording the move. */
@@ -394,6 +425,10 @@ const taskUi = () => ({
     navFilter: '',
     feedbackEdit: null,
     confirm: null,
+    // Implement: which tasks Phases and tasks shows, whether the board is collapsed, and the map's phase (undefined: the one in progress).
+    taskFilter: 'active',
+    boardCollapsed: false,
+    mapPhase: undefined,
 });
 const taskStash = new Map();
 
@@ -799,6 +834,20 @@ const act = {
     setDiagram(patch) {
         if (patch.view) state.ui.diagramView = patch.view;
         if ('phase' in patch) state.ui.diagramPhase = patch.phase;
+        render();
+    },
+    toggleBoard() {
+        state.ui.boardCollapsed = !state.ui.boardCollapsed;
+        render();
+        announce(state.ui.boardCollapsed ? 'Task board collapsed.' : 'Task board expanded.');
+    },
+    setTaskFilter(id) {
+        state.ui.taskFilter = id;
+        render();
+        if (id === 'all') window.requestAnimationFrame(() => $('task-filter-all')?.focus({ preventScroll: true }));
+    },
+    setMapPhase(phase) {
+        state.ui.mapPhase = phase;
         render();
     },
     setRecordOpen(open) {
@@ -1368,7 +1417,8 @@ function renderDocument() {
 }
 
 function renderSteer() {
-    clear($('steerBody')).append(...steerPanel(context()));
+    const ctx = context();
+    clear($('steerBody')).append(...steerPanel(ctx, { now: state.ui.phase === 'implement' ? implementView.nowSection(ctx) : null }));
 }
 
 // Review and send
@@ -1655,6 +1705,27 @@ function showRenderFailure(error) {
     reportEnvironment();
 }
 
+/** Keeps the document's scroll offsets equal to what is pinned at its top: the context bar and, on Implement, the task board. */
+const offsets = typeof ResizeObserver === 'function' ? new ResizeObserver(() => syncOffsets()) : null;
+
+function syncOffsets() {
+    const doc = $('document');
+    const dock = doc.querySelector('.board-dock');
+    const pinned = dock && window.getComputedStyle(dock).position === 'sticky';
+    doc.style.setProperty('--rw-context-h', `${$('contextBar').offsetHeight}px`);
+    doc.style.setProperty('--rw-dock-h', `${pinned ? dock.offsetHeight : 0}px`);
+}
+
+function watchOffsets() {
+    if (!offsets) return;
+    offsets.disconnect();
+    offsets.observe($('document'));
+    offsets.observe($('contextBar'));
+    const dock = $('document').querySelector('.board-dock');
+    if (dock) offsets.observe(dock);
+    syncOffsets();
+}
+
 function renderPage() {
     if (state.notConnected) {
         renderNotConnected();
@@ -1675,6 +1746,7 @@ function renderPage() {
     renderContextBar();
     renderDocument();
     renderSteer();
+    watchOffsets();
     doc.scrollTop = scroll;
     $('steer').scrollTop = steerScroll;
     restoreFocus(key);

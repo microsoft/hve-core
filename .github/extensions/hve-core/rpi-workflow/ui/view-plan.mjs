@@ -75,7 +75,12 @@ export function outline(ctx) {
     ].filter(Boolean);
 }
 
-function taskBlock(ctx, task, index, siblings) {
+/**
+ * One task, expandable, with its goal, requirements, details, guidance, dependencies, and
+ * actions. `siblings` is the phase's full task list, so Move up and Move down follow plan
+ * order wherever the block appears.
+ */
+export function taskBlock(ctx, task, index, siblings) {
     const expanded = ctx.ui.expanded.has(task.id);
     const panelId = `task-panel-${task.id}`;
     const decision = task.decisionId ? ctx.data.session.decisions.find((d) => d.id === task.decisionId) : null;

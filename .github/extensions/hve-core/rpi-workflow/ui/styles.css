@@ -1678,7 +1678,13 @@ details > summary:hover {
   min-height: 0;
   overflow-y: auto;
   container: doc / inline-size;
-  scroll-padding-top: 72px;
+  /*
+   * The context bar and, on Implement, the pinned task board, measured by the page. Scroll padding
+   * alone keeps a landed row clear of them, so rows here add no scroll margin of their own.
+   */
+  --rw-pinned-h: calc(var(--rw-context-h, 52px) + var(--rw-dock-h, 0px) + 20px);
+  --rw-row-margin: 0px;
+  scroll-padding-top: var(--rw-pinned-h);
   scroll-padding-bottom: 24px;
 }
 
@@ -1929,9 +1935,10 @@ details > summary:hover {
 }
 
 .doc-body {
+  --rw-gutter: 32px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 4px 32px 80px;
+  padding: 4px var(--rw-gutter) 80px;
 }
 
 .doc-body > .notice {
@@ -1947,7 +1954,7 @@ details > summary:hover {
   padding: 28px 0;
   border-top: 1px solid var(--rw-border-muted);
   border-radius: 2px;
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .row:first-child {
@@ -2359,7 +2366,7 @@ details > summary:hover {
   border-radius: var(--rw-radius-lg);
   background: var(--rw-bg);
   font: var(--rw-t-ui);
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .card > * + * {
@@ -3314,7 +3321,7 @@ details > summary:hover {
   gap: 4px 10px;
   padding: 10px 12px;
   border-top: 1px solid var(--rw-border-muted);
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .question:first-child {
@@ -3354,7 +3361,7 @@ details > summary:hover {
   gap: 4px;
   padding: 10px 0;
   border-top: 1px solid var(--rw-border-muted);
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .lane:first-child {
@@ -3456,6 +3463,7 @@ details > summary:hover {
 
 .task-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   list-style: none;
   border: 1px solid var(--rw-border);
   border-radius: var(--rw-radius-lg);
@@ -3463,7 +3471,7 @@ details > summary:hover {
 
 .task {
   border-top: 1px solid var(--rw-border-muted);
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .task:first-child {
@@ -3611,6 +3619,50 @@ details > summary:hover {
   stroke-width: 1.5;
 }
 
+/* Implement's change map: done and in-progress parts, each with a corner mark. */
+.diagram-node.is-done rect {
+  fill: color-mix(in srgb, var(--rw-success) 14%, var(--rw-bg));
+  stroke: var(--rw-success);
+  stroke-width: 1.5;
+}
+
+.diagram-node.is-active rect {
+  fill: color-mix(in srgb, var(--rw-agent) 16%, var(--rw-bg));
+  stroke: var(--rw-agent);
+  stroke-width: 2;
+}
+
+.diagram-node.is-highlight.is-done rect,
+.diagram-node.is-highlight.is-active rect {
+  stroke-width: 3;
+}
+
+.diagram-mark > circle:first-child {
+  stroke: var(--rw-bg);
+  stroke-width: 1.5;
+}
+
+.diagram-mark.is-done > circle:first-child {
+  fill: var(--rw-success);
+}
+
+.diagram-mark.is-active > circle:first-child {
+  fill: var(--rw-agent);
+}
+
+.diagram-mark-glyph {
+  fill: none;
+  stroke: var(--rw-bg);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+circle.diagram-mark-glyph {
+  fill: var(--rw-bg);
+  stroke: none;
+}
+
 .diagram-edge {
   fill: none;
   stroke: var(--rw-fg-muted);
@@ -3665,6 +3717,16 @@ details > summary:hover {
 
 .legend-swatch.is-new {
   border: 1.5px dashed var(--rw-accent);
+}
+
+.legend-swatch.is-done {
+  border: 1.5px solid var(--rw-success);
+  background: color-mix(in srgb, var(--rw-success) 14%, var(--rw-bg));
+}
+
+.legend-swatch.is-active {
+  border: 2px solid var(--rw-agent);
+  background: color-mix(in srgb, var(--rw-agent) 16%, var(--rw-bg));
 }
 
 .legend-swatch.is-highlight {
@@ -3722,7 +3784,7 @@ details > summary:hover {
 .mini-finding {
   padding: 10px 0;
   border-top: 1px solid var(--rw-border-muted);
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .mini-finding:first-child {
@@ -3833,18 +3895,178 @@ details > summary:hover {
   background: color-mix(in srgb, var(--rw-attention) 6%, var(--rw-bg));
 }
 
-.board {
+/* Implement: the task board pinned under the context bar, in its own scrolling panel. */
+.board-dock {
+  position: sticky;
+  top: var(--rw-context-h, 52px);
+  z-index: 9;
+  margin: 0 calc(-1 * var(--rw-gutter, 32px));
+  padding: 12px var(--rw-gutter, 32px);
+  border-bottom: 1px solid var(--rw-border);
+  background: var(--rw-bg);
+  box-shadow: 0 10px 12px -12px color-mix(in srgb, var(--rw-fg) 35%, transparent);
+}
+
+.board-dock:focus-visible {
+  outline-offset: -2px;
+}
+
+.board-dock-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.board-dock-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--rw-t-h3);
+}
+
+.board-dock-title .icon {
+  color: var(--rw-fg-muted);
+}
+
+.board-dock-summary {
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-meta);
+}
+
+.board-dock-toggle {
+  margin-inline-start: auto;
+}
+
+.board-dock-toggle .icon {
+  transition: transform var(--rw-fast) var(--rw-ease);
+}
+
+.board-dock-toggle[aria-expanded="true"] .icon {
+  transform: rotate(90deg);
+}
+
+.board-dock-body {
+  max-height: min(40vh, 340px);
+  margin-top: 10px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.board-dock-body:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Narrow panels give the pinned board less height, leaving the rest to the page. */
+@media (max-width: 720px) {
+  .board-dock-body {
+    max-height: min(25vh, 220px);
+  }
+}
+
+/* Short panels keep the board in the page instead of pinning it. */
+@media (max-height: 560px) {
+  .board-dock {
+    position: static;
+    box-shadow: none;
+  }
+
+  .board-dock-body {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Implement: Phases and tasks, filtered to what is in progress by default. */
+.task-filter {
+  margin-bottom: 4px;
+}
+
+.task-filter .count {
+  min-width: 18px;
+  height: 16px;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.impl-phase {
+  margin-top: 18px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
+}
+
+.impl-phase-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+  font: 600 14px/22px var(--rw-font);
+}
+
+.empty-filter {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  justify-items: start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Implement's change map: each phase tab's status icon sits beside its ID. */
+.map-phases label > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Now, in the steering panel on Implement. */
+.now-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.now-count {
+  font: var(--rw-t-ui);
+}
+
+.now-panel .progress {
+  max-width: none;
+}
+
+.now-panel .now-task {
+  font: var(--rw-t-ui);
+}
+
+.now-list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  font: var(--rw-t-ui);
+}
+
+.now-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Columns with cards take most of the width; empty ones stay narrow. */
+.board {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .board-col {
+  flex: 3 1 140px;
   min-width: 0;
   padding: 10px 8px 8px;
   border-radius: var(--rw-radius-lg);
   background: var(--rw-bg-subtle);
+}
+
+.board-col.is-empty {
+  flex: 1 1 96px;
 }
 
 .board-col-title {
@@ -3877,7 +4099,7 @@ details > summary:hover {
   color: var(--rw-fg);
   font: var(--rw-t-ui);
   text-align: left;
-  scroll-margin-top: 72px;
+  scroll-margin: 8px;
   transition: border-color var(--rw-fast) var(--rw-ease), background-color var(--rw-fast) var(--rw-ease);
 }
 
@@ -3962,7 +4184,7 @@ details > summary:hover {
   padding: 12px 14px;
   border: 1px solid var(--rw-border);
   border-radius: var(--rw-radius-lg);
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .alignment + .alignment {
@@ -4171,7 +4393,7 @@ details > summary:hover {
 .timeline-item {
   position: relative;
   padding: 6px 0 8px 24px;
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .timeline-dot {
@@ -4214,7 +4436,7 @@ details > summary:hover {
   padding: 14px;
   border: 1px solid var(--rw-border);
   border-radius: var(--rw-radius-lg);
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
 .rank {
@@ -5001,7 +5223,8 @@ kbd {
   }
 
   .doc-body {
-    padding: 4px 16px 64px;
+    --rw-gutter: 16px;
+    padding: 4px var(--rw-gutter) 64px;
   }
 
   .context-path {

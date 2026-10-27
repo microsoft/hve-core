@@ -215,7 +215,8 @@ const svg = (tag, attrs = {}) => {
 
 /**
  * @param {string} source
- * @param {{ caption: string, highlight?: Iterable<string>, idPrefix: string }} options
+ * @param {{ caption: string, highlight?: Iterable<string>, progress?: Map<string, 'done' | 'active'>, idPrefix: string, textOpen?: boolean, onTextToggle?: (open: boolean) => void }} options
+ *   `progress` marks nodes done or in progress, with a corner mark so color is not the only cue.
  * @returns {HTMLElement}
  */
 export function renderDiagram(source, options) {
@@ -228,6 +229,7 @@ export function renderDiagram(source, options) {
             h('pre', { class: 'md-code', tabindex: '0' }, h('code', { text: source })));
     }
     const highlight = new Set(options.highlight ?? []);
+    const progress = options.progress ?? new Map();
     const { positions, layerOf, width, height, horizontal } = layout(graph);
     const pad = 12;
     const titleId = `${options.idPrefix}-title`;
@@ -262,7 +264,8 @@ export function renderDiagram(source, options) {
     }
     for (const [id, node] of graph.nodes) {
         const box = positions.get(id);
-        const classes = ['diagram-node', node.classes.has('new') ? 'is-new' : '', highlight.has(id) || node.classes.has('phase') ? 'is-highlight' : ''].filter(Boolean).join(' ');
+        const state = progress.get(id);
+        const classes = ['diagram-node', node.classes.has('new') ? 'is-new' : '', highlight.has(id) || node.classes.has('phase') ? 'is-highlight' : '', state ? `is-${state}` : ''].filter(Boolean).join(' ');
         const group = svg('g', { class: classes });
         group.append(svg('rect', { x: box.x, y: box.y, width: box.width, height: box.height, rx: 6 }));
         box.lines.forEach((line, index) => {
@@ -270,11 +273,20 @@ export function renderDiagram(source, options) {
             text.textContent = line;
             group.append(text);
         });
+        if (state) {
+            // A corner mark: a check for done, a dot for in progress.
+            const mark = svg('g', { class: `diagram-mark is-${state}` });
+            const cx = box.x + box.width - 2;
+            const cy = box.y + 2;
+            mark.append(svg('circle', { cx, cy, r: 7 }));
+            mark.append(state === 'done' ? svg('path', { d: `M${cx - 3} ${cy}l2 2 4-4`, class: 'diagram-mark-glyph' }) : svg('circle', { cx, cy, r: 2.5, class: 'diagram-mark-glyph' }));
+            group.append(mark);
+        }
         root.append(group);
     }
     const describe = (id) => graph.nodes.get(id).label;
     const list = h('ul', { class: 'diagram-text' },
-        [...graph.nodes.values()].map((node) => h('li', { text: `${node.label}${node.classes.has('new') ? ' (new)' : ''}${highlight.has(node.id) ? ' (highlighted)' : ''}` })),
+        [...graph.nodes.values()].map((node) => h('li', { text: `${node.label}${node.classes.has('new') ? ' (new)' : ''}${progress.get(node.id) === 'done' ? ' (done)' : progress.get(node.id) === 'active' ? ' (in progress)' : ''}${highlight.has(node.id) ? ' (highlighted)' : ''}` })),
         graph.edges.map((edge) => h('li', { text: `${describe(edge.from)} ${edge.label || 'connects to'} ${describe(edge.to)}` })));
     // Scales down to fit its column, then scrolls rather than shrinking text below 80 percent.
     root.style.minWidth = `${Math.round((width + pad * 2) * 0.8)}px`;

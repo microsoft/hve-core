@@ -256,6 +256,8 @@ export const VIEW_ROWS = Object.freeze({
     'plan-record': { phase: 'plan', title: 'Plan record' },
     now: { phase: 'implement', title: 'Now' },
     board: { phase: 'implement', title: 'Task board' },
+    'implement-phases': { phase: 'implement', title: 'Phases and tasks' },
+    'implement-map': { phase: 'implement', title: 'Change map' },
     changes: { phase: 'implement', title: 'Changes' },
     discoveries: { phase: 'implement', title: 'Discoveries and plan updates' },
     alignment: { phase: 'implement', title: 'Business alignment' },
