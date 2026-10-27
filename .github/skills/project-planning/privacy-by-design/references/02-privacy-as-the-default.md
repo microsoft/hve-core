@@ -14,11 +14,11 @@ Category: Default Settings
 - **GDPR Art. 25(2)** — Data protection by default
 - **APP 3** — Collection of solicited personal information (purpose limitation)
 - **APP 5** — Notification of collection of personal information
-- **CCPA §1798.100(b)** — Business shall not collect additional categories without notice
+- CCPA §1798.100(c): Collection, use, retention and sharing must be necessary and proportionate to disclosed purposes
 
 ## Description
 
-Privacy as the Default ensures that personal data is automatically protected in any IT system or business practice. If an individual does nothing, their privacy remains intact. No action is required on the part of the individual to protect their privacy — it is built into the system by default.
+Evaluate the system before a user changes any settings. Default collection, disclosure and retention should be limited to what the service needs, so optional processing does not start merely because a person has not found an opt-out control.
 
 This principle mandates that only data necessary for the specific purpose is collected, used, and retained. Default settings must be the most privacy-protective options, with users explicitly opting in to less private configurations rather than having to opt out of invasive ones.
 
@@ -55,15 +55,17 @@ This principle mandates that only data necessary for the specific purpose is col
 
 ## Regulatory cross-references
 
-| Regulation | Reference    | Relevance                                                                      |
-|------------|--------------|--------------------------------------------------------------------------------|
-| GDPR       | Art. 25(2)   | Only personal data necessary for each specific purpose is processed by default |
-| GDPR       | Art. 5(1)(c) | Data minimization principle                                                    |
-| APP        | APP 3.1–3.2  | Collection must be reasonably necessary for entity functions                   |
-| APP        | APP 5        | Notification obligations at time of collection                                 |
-| CCPA/CPRA  | §1798.100(b) | No collection of additional categories beyond disclosed purposes               |
-| CCPA/CPRA  | §1798.135    | Right to opt-out of sale; opt-out link required                                |
+| Regulation | Reference    | Relevance                                                                              |
+|------------|--------------|----------------------------------------------------------------------------------------|
+| GDPR       | Art. 25(2)   | Only personal data necessary for each specific purpose is processed by default         |
+| GDPR       | Art. 5(1)(c) | Data minimization principle                                                            |
+| APP        | APP 3.1–3.2  | Collection must be reasonably necessary for entity functions                           |
+| APP        | APP 5        | Notification obligations at time of collection                                         |
+| CCPA/CPRA  | §1798.100(c) | Collection, use, retention and sharing limited to necessary and proportionate purposes |
+| CCPA/CPRA  | §1798.135    | Right to opt-out of sale; opt-out link required                                        |
 
 ---
 
 Content paraphrased from Dr. Ann Cavoukian's 7 Foundation Principles of Privacy by Design (2009) with attribution. Regulatory mappings are planning references, not legal interpretations.
+
+Official sources: [IPC Ontario](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf), [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [APPs](https://www.oaic.gov.au/privacy/australian-privacy-principles/read-the-australian-privacy-principles), and [CCPA](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.100).

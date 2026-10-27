@@ -10,7 +10,7 @@ This reference maps the 7 PbD Foundation Principles to industry-specific context
 ## How to use industry profiles
 
 1. Identify the system's industry context (from `.pbd-config.yml` or package analysis).
-2. Load the matching profile to adjust assessment weighting.
+2. Load the matching profile to prioritize checks and escalate established deficiencies, not to change evidence counts.
 3. Apply industry-specific checks alongside the universal principle checklist.
 4. Flag industry-mandatory controls that go beyond the universal requirements.
 
@@ -190,14 +190,18 @@ Optional. Suppress checks that don't apply to this system.
 When the Privacy Reviewer assesses a system:
 
 1. Load `.pbd-config.yml` if present (or infer industry from codebase).
-2. Adjust principle checklist weighting based on industry priority.
+2. Resolve effective principle priorities from justified overrides, then the selected profile, then the base severity rules. Priority does not weight checklist counts or create a deficiency.
 3. Add industry-specific checks to the assessment protocol.
 4. Apply custom checks from the configuration.
-5. Skip suppressed checks.
+5. Match suppressions to specific checks in the effective universal, industry and custom checklist. Record the exact excluded check and applicability reason before scoring. A suppression that matches no active check has no scoring effect; an ambiguous match requires clarification rather than silently excluding multiple controls. Suppress only inapplicable checks, not known deficiencies or mandatory obligations that still apply.
 6. Report findings with industry context (which regulation triggers the requirement).
 
 A principle marked CRITICAL in the industry profile that receives a FAIL verdict produces a CRITICAL-severity finding (elevated from the default tier-based severity).
 
+Apply a custom check's configured severity only when that check establishes a deficiency. Never downgrade a justified severity. PASS and unknown-only results remain N/A regardless of industry priority or data sensitivity. Exclude justified suppressions from applicable counts, list them separately, and do not award PASS when every check is suppressed. See the [assessment protocol](assessment-protocol.md) and [finding schema](finding-schema.md) for verdict, completeness and aggregation rules.
+
 ---
 
 Industry profiles are original content (CC BY 4.0) synthesized from sector-specific privacy engineering practices. Regulatory references are paraphrased with attribution for planning use, not legal interpretation.
+
+Source principles: [IPC Ontario, Privacy by Design](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf). Verify sector applicability against the relevant regulator's current requirements; a profile priority is an assessment rule, not a legal conclusion.

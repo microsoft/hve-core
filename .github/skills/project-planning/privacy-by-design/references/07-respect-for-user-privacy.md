@@ -15,11 +15,11 @@ Category: User-Centricity
 - **APP 6** — Use or disclosure of personal information
 - **APP 12–13** — Access to and correction of personal information
 - **CCPA §1798.120** — Consumer right to opt-out of sale
-- **CCPA §1798.185** — Consumer right to limit use of sensitive personal information
+- CCPA §1798.121: Consumer right to limit use and disclosure of sensitive personal information
 
 ## Description
 
-Above all, Privacy by Design requires architects and operators to keep the interests of the individual uppermost by offering strong privacy defaults, appropriate notice, and empowering user-friendly options. Keep it user-centric — give individuals a strong role in the management of their own data.
+Evaluate privacy controls from the person's perspective: can they understand their choices, exercise applicable rights and obtain help without avoidable friction? Design evidence should address the usability and accessibility of those controls, not merely their presence in a settings page.
 
 This principle places the data subject at the center of system design. Individuals are not passive recipients of data processing; they are active participants with meaningful control over their personal information. Systems must empower users with choice, access, correction, and deletion capabilities.
 
@@ -72,8 +72,10 @@ This principle places the data subject at the center of system design. Individua
 | CCPA/CPRA  | §1798.105  | Right to deletion                                                           |
 | CCPA/CPRA  | §1798.106  | Right to correction                                                         |
 | CCPA/CPRA  | §1798.120  | Right to opt-out of sale or sharing                                         |
-| CCPA/CPRA  | §1798.185  | Right to limit use of sensitive personal information                        |
+| CCPA/CPRA  | §1798.121  | Right to limit use and disclosure of sensitive personal information         |
 
 ---
 
 Content paraphrased from Dr. Ann Cavoukian's 7 Foundation Principles of Privacy by Design (2009) with attribution. Regulatory mappings are planning references, not legal interpretations.
+
+Official sources: [IPC Ontario](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf), [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [APPs](https://www.oaic.gov.au/privacy/australian-privacy-principles/read-the-australian-privacy-principles), and [CCPA sensitive-use limits](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.121).

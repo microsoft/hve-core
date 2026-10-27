@@ -1,37 +1,38 @@
 ---
 name: privacy-by-design
 description: "Privacy by Design (PbD) knowledge base for assessing proactive privacy practices against the 7 Foundation Principles, with data retention and disposal lifecycle checks and cross-jurisdictional mappings (GDPR, CCPA, APP)."
-license: mixed
+license: CC-BY-4.0
 user-invocable: false
 metadata:
-  authors: "Ann Cavoukian (IPC Ontario — 7 Foundation Principles); GDPR Art. 25 (Data Protection by Design and by Default); OAIC (Australian Privacy Principles); Microsoft (planning synthesis)"
+  authors: "Ann Cavoukian (IPC Ontario, 7 Foundation Principles); GDPR Art. 25 (Data Protection by Design and by Default); OAIC (Australian Privacy Principles); Microsoft (planning synthesis)"
   spec_version: "1.0"
-  framework_revision: "1.0.0"
-  last_updated: "2026-08-09"
-  content_based_on: "https://www.ipc.on.ca/wp-content/uploads/resources/7foundationalprinciples.pdf; https://gdpr-info.eu/art-25-gdpr/; https://www.oaic.gov.au/privacy/australian-privacy-principles"
+  framework_revision: "1.1.0"
+  last_updated: "2026-10-27"
+  content_based_on: "https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf; https://eur-lex.europa.eu/eli/reg/2016/679/oj; https://www.oaic.gov.au/privacy/australian-privacy-principles"
 ---
 
-# Privacy by Design — Skill Entry
+# Privacy by Design
 
 This `SKILL.md` is the **entrypoint** for the Privacy by Design skill.
 
-The skill encodes the **7 Foundation Principles of Privacy by Design** (Cavoukian, 2009) as structured, machine-readable references that the Privacy Planner and Privacy Reviewer agents can query to identify, assess, and improve adherence to proactive privacy practices across the software lifecycle. It extends the existing `privacy-standards` skill with principle-level assessment criteria, data retention and disposal checklists, cross-jurisdictional regulatory mappings, a structured finding schema, and pragmatic implementation patterns for code-level verification.
+The skill provides structured assessment references for the 7 Foundation Principles of Privacy by Design (Cavoukian, 2009). Consumers that explicitly load it can assess privacy practices across the software lifecycle. It complements `privacy-standards` with principle-level criteria, retention and disposal checks, regulatory mappings, a finding schema and implementation patterns. Current agent wiring is described under Integration below.
 
 > [!NOTE]
 > This skill is a planning aid, not legal advice. Its standards summaries support privacy reasoning and review preparation; they do not substitute for qualified legal counsel or a formal regulatory interpretation.
 
 ## Goal
 
-Produce a structured, evidence-based assessment of a system, feature, or data flow against the 7 PbD Foundation Principles, yielding per-principle PASS/FAIL/PARTIAL verdicts, severity-rated findings, actionable remediation guidance, and a backlog-ready handoff.
+Produce an evidence-based assessment against the 7 PbD Foundation Principles, with per-principle verdicts, explicit evidence gaps, deficiency severity, and remediation for established deficiencies. Assessment labels describe this planning rubric, not legal certification.
 
 ## Success criteria
 
-- All 7 principles are assessed with a recorded verdict and severity.
+- All 7 principles have a verdict, evidence completeness, and severity (`N/A` when no deficiency is established).
 - Each FAIL or PARTIAL finding includes a specific, actionable remediation.
 - Findings use the structured schema defined in `finding-schema.md`.
 - Cross-jurisdictional obligations are identified for the applicable regulatory scope.
 - Retention and disposal are assessed for any system that stores personal data.
-- An overall compliance verdict (COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT) is determined.
+- An overall assessment verdict (COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT / INCOMPLETE) is determined without treating missing evidence as a failed control.
+- Finding, principle, checklist and severity counts reconcile under the [finding schema](references/finding-schema.md).
 
 ## When to use this skill
 
@@ -41,7 +42,7 @@ Use when you need to:
 - Verify that privacy is embedded proactively (not bolted on after incidents)
 - Check data retention schedules, disposal methods, and legal hold procedures
 - Map privacy requirements across GDPR Art. 25, CCPA/CPRA, and Australian Privacy Principles
-- Generate per-principle PASS/FAIL/PARTIAL findings with severity ratings
+- Generate per-principle PASS/PARTIAL/FAIL/INSUFFICIENT_EVIDENCE results with evidence-backed severity
 - Identify code-level and configuration-level privacy patterns or anti-patterns
 - Produce backlog items from privacy assessment findings
 
@@ -56,7 +57,7 @@ Do not use for:
 
 - Stop the assessment if the system boundary cannot be established.
 - Stop and escalate if processing occurs in a jurisdiction not covered by this skill's mappings.
-- Do not fabricate evidence; record INSUFFICIENT EVIDENCE and note what is needed.
+- Do not fabricate evidence; record `INSUFFICIENT_EVIDENCE` and the evidence needed. Continue supported checks without inventing deficiency remediation for unknowns.
 - Do not provide legal opinions; frame all findings as planning guidance requiring qualified review.
 - Do not duplicate security findings that the `security-planning` skill already covers; cross-reference them.
 
@@ -107,36 +108,46 @@ Use these fields when capturing a finding so the reviewer can assert a stable so
 
 ## Finding severity conventions
 
-| Severity | Meaning                                                                                |
-|----------|----------------------------------------------------------------------------------------|
-| HIGH     | Principle is violated with direct risk to data subjects                                |
-| MEDIUM   | Principle is partially met; gaps exist that could lead to non-compliance               |
-| LOW      | Minor gap; principle intent is largely met but documentation or controls could improve |
+| Severity | Meaning                                                                                               |
+|----------|-------------------------------------------------------------------------------------------------------|
+| CRITICAL | Established deficiency with severe direct risk, or FAIL under an effective CRITICAL industry priority |
+| HIGH     | Principle is violated with direct risk to data subjects                                               |
+| MEDIUM   | Principle is partially met; gaps exist that could lead to non-compliance                              |
+| LOW      | Minor gap; principle intent is largely met but documentation or controls could improve                |
+| N/A      | No deficiency established, including PASS and unknown-only results                                    |
+
+Data sensitivity informs the impact of a proven deficiency; it does not create one. Preserve CRITICAL in records and summaries. CRITICAL and HIGH map to P1, with CRITICAL ordered first; MEDIUM maps to P2 and LOW to P3. PASS and unknown-only results do not create remediation backlog items.
 
 ## Finding verdict conventions
 
-| Verdict | Meaning                                                |
-|---------|--------------------------------------------------------|
-| PASS    | Principle is fully satisfied with observable evidence  |
-| PARTIAL | Some indicators met but gaps remain                    |
-| FAIL    | Principle is not satisfied; corrective action required |
+| Verdict               | Meaning                                                                                                   |
+|-----------------------|-----------------------------------------------------------------------------------------------------------|
+| PASS                  | All applicable checks are MET, with no unresolved evidence or anti-patterns                               |
+| PARTIAL               | A deficiency is established but the FAIL threshold is not met                                             |
+| FAIL                  | More than half of applicable checks are NOT MET, or an uncompensated critical anti-pattern is established |
+| INSUFFICIENT_EVIDENCE | No deficiency established, but unknown evidence or zero applicable checks prevents PASS                   |
+
+Apply the ordered rules in the [assessment protocol](references/assessment-protocol.md). Record evidence completeness independently so a proven deficiency is not hidden by unknown checks. Suppressions require a documented applicability reason and do not count as MET.
 
 ## Overall assessment verdicts
 
-| Verdict             | Condition                                          |
-|---------------------|----------------------------------------------------|
-| COMPLIANT           | All 7 principles are PASS                          |
-| PARTIALLY_COMPLIANT | No principles are FAIL but one or more are PARTIAL |
-| NON_COMPLIANT       | One or more principles are FAIL                    |
+| Verdict             | Condition                                                                                     |
+|---------------------|-----------------------------------------------------------------------------------------------|
+| NON_COMPLIANT       | One or more principles are FAIL; retain any evidence gaps separately                          |
+| INCOMPLETE          | No FAIL, but any principle or applicable retention/jurisdiction check has incomplete evidence |
+| PARTIALLY_COMPLIANT | Complete evidence, no FAIL, and at least one PARTIAL                                          |
+| COMPLIANT           | Complete evidence and all 7 principles PASS                                                   |
+
+Evaluate these rows in order. Never use `null` for a verdict or interpret an unknown jurisdictional baseline as met or failed.
 
 ## Integration with Privacy Planner and Reviewer
 
-This skill complements `privacy-standards` (which provides NIST PF, GDPR, CCPA, OWASP backbone). The Privacy Reviewer agent loads both skills:
+This skill complements `privacy-standards` (which provides the NIST PF, GDPR, CCPA, OWASP backbone). A consumer performing PbD assessment should explicitly load both:
 
 - `privacy-standards` — standards mapping, data-flow reasoning, DPIA thresholds
 - `privacy-by-design` — principle-level assessment, retention/disposal checks, cross-jurisdictional equivalence, implementation pattern verification
 
-No agent modification is required; the agent loads this skill on demand when PbD assessment is invoked.
+The current Privacy Planner and Privacy Reviewer do not explicitly load `privacy-by-design`. This skill supplies assessment knowledge, not automatic integration; dedicated agent wiring is outside this skill change. It remains background-only (`user-invocable: false`).
 
 ## Interaction with other skills
 
@@ -149,16 +160,18 @@ No agent modification is required; the agent loads this skill on demand when PbD
 
 ## Attribution and licensing posture
 
+`SKILL.md` and `references/` contain original assessment guidance and paraphrased summaries under CC BY 4.0. The cited publications remain authoritative and retain their own rights; this license does not relicense upstream text. Principle names and legal identifiers are preserved for traceability. No upstream document is reproduced or bundled.
+
 ### Cavoukian PbD Foundation Principles
 
 - **Author**: Dr. Ann Cavoukian, Information and Privacy Commissioner of Ontario
-- **Source**: <https://www.ipc.on.ca/wp-content/uploads/resources/7foundationalprinciples.pdf>
+- Source: <https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf>
 - **Modifications**: Principles restructured into agent-consumable assessment checklists with cross-references to GDPR, CCPA, and APP; original principle text paraphrased with attribution
 - **Note**: The 7 Foundation Principles are widely referenced in academic and regulatory literature; content here is paraphrased for planning use
 
 ### GDPR Art. 25 (Data Protection by Design and by Default)
 
-- **Source**: <https://gdpr-info.eu/art-25-gdpr/>
+- Source: <https://eur-lex.europa.eu/eli/reg/2016/679/oj>
 - **Modifications**: Mapped to PbD principles as regulatory equivalence; paraphrased with attribution
 
 ### Australian Privacy Principles (APP)

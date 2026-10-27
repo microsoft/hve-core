@@ -5,7 +5,7 @@ description: Step-by-step protocol for agents assessing a system against PbD 7 F
 
 # Assessment Protocol
 
-This document defines the step-by-step protocol that the Privacy Reviewer or Privacy Planner follows when assessing a system, feature, or data flow against the 7 Foundation Principles of Privacy by Design.
+Consumers that explicitly load `privacy-by-design` use this protocol to assess a system, feature, or data flow against the 7 Foundation Principles. It defines intended assessment behavior, not an existing load step in the Privacy Reviewer or Privacy Planner.
 
 ## Assessment entry conditions
 
@@ -25,6 +25,7 @@ Begin a PbD assessment when any of these conditions hold:
 3. Identify applicable jurisdictions (use `cross-jurisdictional-mapping.md` triggers).
 4. Establish the assessment boundary: which components, services, and data stores are in scope.
 5. Document the processing purposes and lawful bases for each data category.
+6. Load the applicable [industry profile](industry-privacy-profiles.md), including justified overrides, custom checks and suppressions from `.pbd-config.yml`. Record the effective checklist before scoring.
 
 ### Phase 2: Principle-by-principle assessment
 
@@ -37,8 +38,8 @@ For each principle (PbD-01 through PbD-07):
    - **NOT MET** — evidence confirms the indicator is violated or absent.
    - **INSUFFICIENT EVIDENCE** — cannot determine from available information.
 4. Check for anti-patterns listed in the principle reference.
-5. Assign a principle-level verdict: PASS, PARTIAL, or FAIL (see verdict rules below).
-6. Assign a severity: HIGH, MEDIUM, or LOW (see severity rules below).
+5. Assign PASS, PARTIAL, FAIL, or INSUFFICIENT_EVIDENCE using the ordered verdict rules below. Record evidence completeness independently.
+6. Assign CRITICAL, HIGH, MEDIUM, or LOW only for an established deficiency; otherwise use N/A.
 7. Record the finding with citation fields from the principle reference.
 
 ### Phase 3: Retention and disposal assessment
@@ -58,35 +59,48 @@ When multiple jurisdictions apply:
 
 1. Use the jurisdictional scope triggers in `cross-jurisdictional-mapping.md`.
 2. Identify which regulations apply to each data flow.
-3. Verify that the implementation meets the highest applicable standard.
+3. Assess each applicable obligation against evidence; a shared baseline does not replace jurisdiction-specific requirements. Record the common baseline as MET, NOT_MET, INSUFFICIENT_EVIDENCE, or NOT_APPLICABLE rather than inferring a boolean from missing evidence.
 4. Flag any jurisdiction-specific obligations not met by the common baseline.
 5. Record cross-jurisdictional findings with the applicable regulation and article.
 
 ### Phase 5: Synthesis and handoff
 
 1. Aggregate findings into a summary with counts by verdict and severity.
-2. Identify the top-priority findings (FAIL with HIGH severity first).
+2. Order actionable findings by severity: CRITICAL, HIGH, MEDIUM, LOW; within a tier, FAIL before PARTIAL. CRITICAL and HIGH both map to P1 without downgrading CRITICAL or inventing P0.
 3. For each FAIL or PARTIAL finding, provide a specific, actionable remediation recommendation.
-4. If all principles are PASS, confirm compliance and note any conditions.
+4. Apply the [finding schema's overall verdict rules](finding-schema.md#overall-verdict-rules), preserving unknowns and evidence requests separately from remediation. COMPLIANT describes this rubric only, not legal sign-off.
 5. Hand off findings in the finding schema format (see `finding-schema.md`).
 
 ## Verdict rules
 
-| Verdict | Condition                                                                                                    |
-|---------|--------------------------------------------------------------------------------------------------------------|
-| PASS    | All checklist items are MET and no anti-patterns are detected                                                |
-| PARTIAL | Majority of checklist items are MET but gaps remain, OR anti-patterns are present with compensating controls |
-| FAIL    | Majority of checklist items are NOT MET, OR critical anti-patterns are present without compensating controls |
+Evaluate these rules in order for the effective applicable checklist:
+
+1. FAIL when more than half of applicable items are NOT MET, or a critical anti-pattern is established without effective compensating controls. Unknown items stay in the denominator, never in the NOT MET count.
+2. PARTIAL when at least one deficiency or compensated anti-pattern is established and the FAIL rule does not apply. This includes ties and mixed known deficiencies with missing evidence.
+3. INSUFFICIENT_EVIDENCE when no deficiency is established but any item is unknown, or no applicable items remain. Identify the evidence or scope needed; never emit a vacuous PASS.
+4. PASS only when at least one applicable item remains, all are MET, and no unresolved anti-pattern or contradiction remains.
+
+Use the same rules for a sub-check's scoped items. A confirmed anti-pattern is a deficiency even when checklist counts alone appear favorable. Record `evidence_status: INCOMPLETE` if any applicable item, anti-pattern investigation, retention obligation or jurisdictional check remains unknown; otherwise use COMPLETE. Missing artifacts are not proof that a control is absent.
+
+Fold retention, industry/custom checks and jurisdiction-specific deficiencies into the affected principle's assessment. Do not let a sub-finding disappear behind a principle PASS. Cross-jurisdictional findings identify the affected principles; include the corresponding obligation in each applicable checklist once, not duplicate evidence counts within a principle.
 
 ## Severity rules
 
-| Severity | Condition                                                                                                     |
-|----------|---------------------------------------------------------------------------------------------------------------|
-| HIGH     | Finding involves sensitive data, affects many data subjects, or creates direct regulatory non-compliance risk |
-| MEDIUM   | Finding involves standard personal data, affects limited data subjects, or creates indirect compliance risk   |
-| LOW      | Finding is a documentation or process gap with no direct impact on data subjects                              |
+| Severity | Condition                                                                                                       |
+|----------|-----------------------------------------------------------------------------------------------------------------|
+| CRITICAL | Established deficiency with severe direct impact, or FAIL under an effective CRITICAL profile/override priority |
+| HIGH     | Established deficiency with direct risk to data subjects or applicable obligations                              |
+| MEDIUM   | Established control gap with limited or indirect impact                                                         |
+| LOW      | Established documentation or process deficiency with no demonstrated direct impact                              |
+| N/A      | No established deficiency, including PASS and unknown-only results                                              |
+
+Determine the deficiency first, then its impact. Sensitive data alone cannot elevate PASS or unknown-only results. Apply a failed custom check's configured severity and the profile escalation rule without lowering an otherwise justified severity. A principle's severity is the highest severity of its established deficiencies; use N/A when none exist.
 
 ## Evidence expectations
+
+Record evidence source, scope and observation date where available. Distinguish intended policy from deployed behavior. When sources conflict, compare their scope, version and timing; retain both and explain which conclusion they support. If the conflict cannot be reconciled, mark the affected check unknown rather than assuming PASS. A verified operational contradiction is NOT MET, not merely missing evidence.
+
+For PbD-06, verify that notices accurately describe current practice. A promise to destroy eSIM profiles within 30 days contradicted by recoverability at day 120 establishes a transparency deficiency and a related PbD-05 retention issue unless an applicable, disclosed exception explains it. Preserve MET credit for independently verified notice accessibility, contact routes and other unaffected controls. Cross-reference the two issues rather than duplicating remediation for the same cause.
 
 Acceptable evidence for MET determinations:
 
@@ -117,3 +131,5 @@ Acceptable evidence for MET determinations:
 ---
 
 Protocol synthesized from the assessment patterns used by the Security Reviewer and RAI Planner within hve-core, adapted for privacy principle assessment.
+
+Source principles: [IPC Ontario, Privacy by Design](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf). Assessment rules and output conventions are repository-original planning guidance.

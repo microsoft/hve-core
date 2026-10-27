@@ -17,7 +17,7 @@ Category: Prevention
 
 ## Description
 
-Privacy by Design anticipates and prevents privacy-invasive events before they happen. It does not wait for privacy risks to materialize, nor does it offer remedies for resolving privacy infractions once they have occurred. The approach requires organizations to act before the fact — building privacy protections into systems, processes, and business practices from the outset.
+Identify privacy risks while requirements and designs can still change. Evidence for this principle includes early risk assessment, assigned mitigations and checks that detect emerging problems; an incident-response plan alone does not demonstrate prevention.
 
 This principle shifts the organizational mindset from reactive incident response to proactive privacy architecture. Privacy risks are identified, assessed, and mitigated during design rather than discovered during post-deployment audits or breach investigations.
 
@@ -62,3 +62,5 @@ This principle shifts the organizational mindset from reactive incident response
 ---
 
 Content paraphrased from Dr. Ann Cavoukian's 7 Foundation Principles of Privacy by Design (2009) with attribution. Regulatory mappings are planning references, not legal interpretations.
+
+Official sources: [IPC Ontario](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf), [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [APPs](https://www.oaic.gov.au/privacy/australian-privacy-principles/read-the-australian-privacy-principles), and [CCPA](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.100).

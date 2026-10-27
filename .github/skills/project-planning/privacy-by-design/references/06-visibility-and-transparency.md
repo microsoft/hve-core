@@ -18,13 +18,13 @@ Category: Openness
 
 ## Description
 
-Privacy by Design seeks to assure all stakeholders that whatever the business practice or technology involved, it is in fact operating according to the stated promises and objectives, subject to independent verification. Its component parts and operations remain visible and transparent to users and providers alike.
+People need understandable information about actual processing, and reviewers need evidence that can confirm or challenge those disclosures. Assess both the accessibility of notices and the accuracy of their claims against current operating records; publishing a policy is not proof that the system follows it.
 
 Transparency builds trust. Organizations must be able to demonstrate that their data handling practices match their stated policies, and data subjects must have visibility into how their data is used. Accountability and auditability are the mechanisms through which transparency is maintained.
 
 ## Principle checklist
 
-- A clear, accessible privacy notice describes what data is collected, why, and how it is used.
+- A clear, accessible privacy notice accurately describes collection, use, sharing and retention, consistent with current operational evidence.
 - Privacy notices are written in plain language appropriate for the target audience.
 - Data processing activities are documented in a processing register (records of processing activities).
 - Data subjects can request and receive information about what data is held about them.
@@ -32,6 +32,8 @@ Transparency builds trust. Organizations must be able to demonstrate that their 
 - Privacy practices are subject to independent verification or audit.
 - Changes to data practices are communicated to affected users before taking effect.
 - Complaint and inquiry mechanisms are accessible and responsive.
+
+Reconcile contradictory evidence before PASS. For example, a 30-day destruction promise with eSIM data still recoverable at day 120 establishes an accuracy gap unless an applicable, disclosed exception explains the difference. Record both sources and dates, assess the affected transparency check as NOT MET, and cross-reference PbD-05. Preserve MET credit for independently verified notice accessibility, contact routes and other unaffected controls. If the evidence cannot establish which account applies, use INSUFFICIENT EVIDENCE for that check, not an unqualified PASS.
 
 ## Controls and mitigations
 
@@ -53,6 +55,7 @@ Transparency builds trust. Organizations must be able to demonstrate that their 
 - Privacy practices cannot be independently verified.
 - Changes to data handling are made silently without notification to affected users.
 - Complaint mechanisms are non-functional or unresponsive.
+- Published retention or deletion promises conflict with verified operational behavior.
 
 ## Regulatory cross-references
 
@@ -72,3 +75,5 @@ Transparency builds trust. Organizations must be able to demonstrate that their 
 ---
 
 Content paraphrased from Dr. Ann Cavoukian's 7 Foundation Principles of Privacy by Design (2009) with attribution. Regulatory mappings are planning references, not legal interpretations.
+
+Official sources: [IPC Ontario](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf), [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [APPs](https://www.oaic.gov.au/privacy/australian-privacy-principles/read-the-australian-privacy-principles), and [CCPA](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.100).

@@ -259,3 +259,5 @@ FAIL: Application logs contain unmasked personal data
 ---
 
 Patterns synthesized from privacy engineering best practices, GDPR technical guidance (Article 29 Working Party), and architecture patterns observed in privacy-mature systems. Provided as planning reference material with attribution.
+
+Source principles: [IPC Ontario, Privacy by Design](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf); regulatory basis: [GDPR Article 25](https://eur-lex.europa.eu/eli/reg/2016/679/oj). Indicators are examples, not proof of a whole-principle PASS; apply the [assessment protocol](assessment-protocol.md) to all applicable evidence.

@@ -79,15 +79,15 @@ A legal hold suspends normal disposal when litigation, investigation, or regulat
 
 ## Regulatory mapping for retention and disposal
 
-| Regulation | Reference     | Requirement                                                  |
-|------------|---------------|--------------------------------------------------------------|
-| GDPR       | Art. 5(1)(e)  | Storage limitation — no longer than necessary for purposes   |
-| GDPR       | Art. 17       | Right to erasure on request (subject to exemptions)          |
-| GDPR       | Art. 28(3)(g) | Processor must delete or return data at end of service       |
-| APP        | APP 4.2       | Destroy unsolicited information not reasonably necessary     |
-| APP        | APP 11.2      | Destroy or de-identify when no longer needed for any purpose |
-| CCPA/CPRA  | §1798.100(e)  | Disclose retention period or criteria for determining it     |
-| CCPA/CPRA  | §1798.105     | Right to deletion (subject to exemptions)                    |
+| Regulation | Reference       | Requirement                                                                                 |
+|------------|-----------------|---------------------------------------------------------------------------------------------|
+| GDPR       | Art. 5(1)(e)    | Storage limitation — no longer than necessary for purposes                                  |
+| GDPR       | Art. 17         | Right to erasure on request (subject to exemptions)                                         |
+| GDPR       | Art. 28(3)(g)   | Processor must delete or return data at end of service                                      |
+| APP        | APP 4.3         | Destroy or de-identify unsolicited information where required, subject to stated conditions |
+| APP        | APP 11.2        | Destroy or de-identify when no longer needed for any purpose                                |
+| CCPA/CPRA  | §1798.100(a)(3) | Disclose retention period or criteria for determining it                                    |
+| CCPA/CPRA  | §1798.105       | Right to deletion (subject to exemptions)                                                   |
 
 ## Citation fields for findings
 
@@ -98,3 +98,5 @@ A legal hold suspends normal disposal when litigation, investigation, or regulat
 ---
 
 Content synthesized from GDPR storage limitation requirements, Australian Privacy Principles APP 4 and APP 11, and CCPA/CPRA disclosure and deletion rights. Paraphrased with attribution for planning use.
+
+Official sources: [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [APPs](https://www.oaic.gov.au/privacy/australian-privacy-principles/read-the-australian-privacy-principles), and [CCPA retention disclosure](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.100).

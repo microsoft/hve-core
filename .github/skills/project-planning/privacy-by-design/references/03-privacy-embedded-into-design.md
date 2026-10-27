@@ -13,11 +13,11 @@ Category: Architecture
 - **Cavoukian Principle 3** — Privacy Embedded into Design
 - **GDPR Art. 25(1)** — Implement appropriate technical and organisational measures designed to implement data-protection principles
 - **APP 1.2** — Take reasonable steps to implement practices, procedures, and systems for compliance
-- **CCPA §1798.100** — Implement reasonable security procedures
+- CCPA §1798.100(e): Implement reasonable security procedures
 
 ## Description
 
-Privacy is embedded into the design and architecture of IT systems and business practices. It is not bolted on as an add-on after the fact. Privacy is integral to the system without diminishing functionality. It is a core component of the system being delivered, not a trade-off or afterthought.
+Privacy requirements should shape data models, component boundaries and processing paths before implementation. Assess whether those requirements are enforced by the architecture and ordinary operating procedures, rather than relying on a policy notice or a late review to compensate for an unsuitable design.
 
 This principle requires that privacy considerations are woven into the technical architecture, data models, access control layers, and business process flows from the earliest design stage. Privacy is treated as a first-class architectural concern alongside security, performance, and reliability.
 
@@ -60,8 +60,10 @@ This principle requires that privacy considerations are woven into the technical
 | GDPR       | Art. 5(1)(f) | Integrity and confidentiality — appropriate security of personal data                     |
 | APP        | APP 1.2      | Reasonable steps to implement practices, procedures, and systems                          |
 | APP        | APP 11.1     | Reasonable steps to protect personal information from misuse, interference, and loss      |
-| CCPA/CPRA  | §1798.100    | Reasonable security procedures and practices                                              |
+| CCPA/CPRA  | §1798.100(e) | Reasonable security procedures and practices                                              |
 
 ---
 
 Content paraphrased from Dr. Ann Cavoukian's 7 Foundation Principles of Privacy by Design (2009) with attribution. Regulatory mappings are planning references, not legal interpretations.
+
+Official sources: [IPC Ontario](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf), [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [APPs](https://www.oaic.gov.au/privacy/australian-privacy-principles/read-the-australian-privacy-principles), and [CCPA](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.100).

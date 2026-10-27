@@ -13,11 +13,11 @@ Category: Positive-Sum
 - **Cavoukian Principle 4** — Full Functionality — Positive-Sum, Not Zero-Sum
 - **GDPR Art. 25(1)** — Implement measures in an effective manner (privacy without degrading functionality)
 - **APP 1.2** — Manage personal information in an open and transparent way (supporting both compliance and business functions)
-- **CCPA §1798.100** — Consumer rights exercised without penalty to service quality
+- CCPA §1798.125: Protections against discrimination for exercising consumer rights, subject to statutory exceptions
 
 ## Description
 
-Privacy by Design seeks to accommodate all legitimate interests and objectives in a positive-sum manner, not through a zero-sum approach where unnecessary trade-offs are made. Privacy by Design avoids the pretense of false dichotomies such as privacy vs. security, or privacy vs. functionality. It demonstrates that it is possible to have both — full functionality and full privacy.
+Compare designs that meet the service's legitimate needs while reducing personal-data exposure. A claimed conflict between privacy, security and utility needs evidence: evaluate less intrusive alternatives before accepting a trade-off, and record any remaining limitations rather than promising every objective can always be met.
 
 This principle rejects the notion that privacy must come at the cost of business utility, user experience, or security. Instead, it demands creative design solutions that satisfy multiple objectives simultaneously.
 
@@ -56,9 +56,11 @@ This principle rejects the notion that privacy must come at the cost of business
 |------------|------------|---------------------------------------------------------------------------------|
 | GDPR       | Art. 7(4)  | Consent must not be a condition for service where not necessary for performance |
 | GDPR       | Art. 25(1) | Effective implementation of principles without undermining processing purposes  |
-| APP        | APP 3.3    | Collection must be by lawful and fair means                                     |
+| APP        | APP 3.5    | Collection must be by lawful and fair means                                     |
 | CCPA/CPRA  | §1798.125  | No discrimination against consumers exercising their rights                     |
 
 ---
 
 Content paraphrased from Dr. Ann Cavoukian's 7 Foundation Principles of Privacy by Design (2009) with attribution. Regulatory mappings are planning references, not legal interpretations.
+
+Official sources: [IPC Ontario](https://www.ipc.on.ca/sites/default/files/legacy/2018/01/pbd.pdf), [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [APPs](https://www.oaic.gov.au/privacy/australian-privacy-principles/read-the-australian-privacy-principles), and [CCPA](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.125).

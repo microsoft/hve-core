@@ -1,9 +1,9 @@
 ---
 title: privacy-by-design
 description: "Privacy by Design (PbD) knowledge base for assessing proactive privacy practices against the 7 Foundation Principles, with data retention and disposal lifecycle checks and cross-jurisdictional mappings (GDPR, CCPA, APP)."
-sidebar_position: 11
+sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-06
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - skill
