@@ -1,6 +1,6 @@
 ---
 description: "Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence"
-applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/challenges/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**, .copilot-tracking/proposal-responses/**'
+applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/rpi-sessions/**, .copilot-tracking/challenges/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**, .copilot-tracking/proposal-responses/**'
 ---
 
 # Copilot Tracking Conventions
@@ -12,7 +12,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Default to `.copilot-tracking/` for every intermediate, working, or scratch file a skill produces. This file-based tracking takes precedence over memory: persist durable working state to the dated tracking artifact rather than relying on session, conversation, or working memory.
 * Resolve where `.copilot-tracking/` lives and search its gitignored files as `copilot-tracking-location.instructions.md` defines.
 * Persist research, planning, details, changes, and review outputs under `.copilot-tracking/` using the conventions below.
-* Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case.
+* Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case and at most 60 characters, because it names every tracking file; shorten a longer slug at the last hyphen within the cap, or at the cap when there is none.
 * Generated tracking Markdown starts with `<!-- markdownlint-disable-file -->` and never uses `#file:` directives or line-number references.
 * Plans under `.copilot-tracking/plans/` and changes records under `.copilot-tracking/changes/` are read by people in an editor. In those two artifacts, wrap code, commands, and symbols in backticks, and link an existing file or folder with the workspace-relative path as the link text and a path relative to the artifact file as the destination, for example `[scripts/plugins/Sync-PluginManifest.ps1](../../../scripts/plugins/Sync-PluginManifest.ps1)`. Keep a not-yet-created path in backticks.
 * Research, critique, review, and other tracking artifacts use plain-text workspace-relative paths without Markdown links or backticks around paths.
@@ -36,6 +36,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Plan critique evidence stays under `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`. A follow-up critique adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`.
 * Implementation evidence stays under `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
 * Review evidence stays under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`. A new review of the same task adds a numbered suffix, such as `{{task_slug}}-review-2.md`.
+* RPI Agent session state stays under `.copilot-tracking/rpi-sessions/{{YYYY-MM-DD}}/{{session_slug}}/{{task_slug}}-state.json`. One folder holds every task of one session and is dated by the session's first day, and `{{session_slug}}` is at most 40 characters. The RPI Agent's State contract defines how session folders and state file names are derived, shortened, and kept unique, and defines the state fields; research, plan, critique, changes, and review records keep their own dated folders.
 * Challenge session records stay under `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md`.
 * Walkthrough decisions-and-changes ledgers stay under `.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md`.
 * HVE Builder stage evidence stays under `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/{{artifact_slug}}-{{stage}}-{{attempt}}.md`. Scan existing files and increment `{{attempt}}` rather than overwriting another run.
