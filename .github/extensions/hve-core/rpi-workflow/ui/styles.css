@@ -3619,7 +3619,7 @@ details > summary:hover {
   stroke-width: 1.5;
 }
 
-/* Implement's change map: done and in-progress parts, each with a corner mark. */
+/* Implement's change map: done parts in the success tone and in-progress parts in the canvas's in-progress tone, each with a corner mark. */
 .diagram-node.is-done rect {
   fill: color-mix(in srgb, var(--rw-success) 14%, var(--rw-bg));
   stroke: var(--rw-success);
@@ -3627,14 +3627,24 @@ details > summary:hover {
 }
 
 .diagram-node.is-active rect {
-  fill: color-mix(in srgb, var(--rw-agent) 16%, var(--rw-bg));
-  stroke: var(--rw-agent);
+  fill: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
+  stroke: var(--rw-accent);
   stroke-width: 2;
 }
 
-.diagram-node.is-highlight.is-done rect,
-.diagram-node.is-highlight.is-active rect {
+/* On a map that shows progress, the chosen phase is an outline, so it shows over any progress fill. */
+.has-progress .diagram-node.is-highlight rect {
+  fill: var(--rw-bg);
+  stroke: var(--rw-fg);
   stroke-width: 3;
+}
+
+.has-progress .diagram-node.is-highlight.is-done rect {
+  fill: color-mix(in srgb, var(--rw-success) 14%, var(--rw-bg));
+}
+
+.has-progress .diagram-node.is-highlight.is-active rect {
+  fill: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
 }
 
 .diagram-mark > circle:first-child {
@@ -3647,7 +3657,7 @@ details > summary:hover {
 }
 
 .diagram-mark.is-active > circle:first-child {
-  fill: var(--rw-agent);
+  fill: var(--rw-accent);
 }
 
 .diagram-mark-glyph {
@@ -3725,13 +3735,17 @@ circle.diagram-mark-glyph {
 }
 
 .legend-swatch.is-active {
-  border: 2px solid var(--rw-agent);
-  background: color-mix(in srgb, var(--rw-agent) 16%, var(--rw-bg));
+  border: 2px solid var(--rw-accent);
+  background: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
 }
 
 .legend-swatch.is-highlight {
   border: 1.5px solid var(--rw-accent);
   background: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
+}
+
+.legend-swatch.is-chosen {
+  border: 3px solid var(--rw-fg);
 }
 
 .finding-list {
@@ -5499,6 +5513,13 @@ kbd {
 
   .diagram-node.is-highlight rect {
     fill: Highlight;
+  }
+
+  .has-progress .diagram-node.is-highlight rect,
+  .has-progress .diagram-node.is-highlight.is-done rect,
+  .has-progress .diagram-node.is-highlight.is-active rect {
+    fill: Highlight;
+    stroke: CanvasText;
   }
 
   .diagram-node.is-highlight text {

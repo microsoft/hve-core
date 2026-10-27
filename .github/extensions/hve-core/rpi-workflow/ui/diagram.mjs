@@ -233,7 +233,7 @@ export function renderDiagram(source, options) {
     const { positions, layerOf, width, height, horizontal } = layout(graph);
     const pad = 12;
     const titleId = `${options.idPrefix}-title`;
-    const root = svg('svg', { viewBox: `${-pad} ${-pad} ${width + pad * 2} ${height + pad * 2}`, width: width + pad * 2, height: height + pad * 2, role: 'img', 'aria-labelledby': titleId, class: 'diagram-svg' });
+    const root = svg('svg', { viewBox: `${-pad} ${-pad} ${width + pad * 2} ${height + pad * 2}`, width: width + pad * 2, height: height + pad * 2, role: 'img', 'aria-labelledby': titleId, class: options.progress ? 'diagram-svg has-progress' : 'diagram-svg' });
     const title = svg('title', { id: titleId });
     title.textContent = `${options.caption}: ${graph.nodes.size} parts and ${graph.edges.length} relationships. A text version follows.`;
     root.append(title);

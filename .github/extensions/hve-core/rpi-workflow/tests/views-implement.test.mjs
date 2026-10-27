@@ -104,8 +104,13 @@ describe('the change map with progress', () => {
         assert.match(out, /class="diagram-node[^"]*is-done"/);
         assert.match(out, /class="diagram-node[^"]*is-highlight is-active"/);
         assert.match(out, /<g class="diagram-mark is-done">/);
+        assert.match(out, /<label for="impl-map-phase-P02"><input[^>]*><\/input><span><svg class="icon tone-accent-fg"/, 'the in-progress tab\'s icon is in the in-progress tone');
+        assert.match(out, /<label for="impl-map-phase-P01"><input[^>]*><\/input><span><svg class="icon tone-success-fg"/, 'a done tab\'s icon stays in the success tone');
+        assert.match(out, /<h4 class="impl-phase-head" id="impl-phase-P02">(?:(?!<\/h4>).)*<span class="badge tone-accent[^"]*">(?:(?!<\/h4>).)*In progress/, 'the phase in progress is headed in the in-progress tone');
         assert.match(textOf(out), /\(done\)/);
         assert.match(textOf(out), /\(in progress\) \(highlighted\)/);
+        assert.match(textOf(out), /Done\. In progress\. Bold outline: the chosen phase\. Dashed border: added by the plan\./, 'the legend names what the map draws');
+        assert.match(out, /<span class="legend-swatch is-chosen">/);
         const ui = initialUi('implement');
         ui.mapPhase = null;
         assert.match(html(render(session, ui)), /id="impl-map-phase-all" value="all" checked=""/, 'All phases highlights nothing');

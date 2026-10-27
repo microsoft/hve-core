@@ -100,7 +100,7 @@ export function nodeProgress(plan) {
 
 const PHASE_PROGRESS = {
     done: { icon: 'check-circle', label: 'done', tone: 'success' },
-    'in-progress': { icon: 'active', label: 'in progress', tone: 'agent' },
+    'in-progress': { icon: 'active', label: 'in progress', tone: 'accent' },
     todo: { icon: 'circle', label: 'up next', tone: 'muted' },
 };
 
@@ -238,7 +238,7 @@ function mapRow(ctx) {
             h('div', { class: 'map-controls' },
                 h('fieldset', { class: 'segmented compact map-phases' }, h('legend', { class: 'meta', text: 'Phase' }), tab('all', null), plan.phases.map((phase) => tab(phase.id, phase)))),
             renderDiagram(plan.diagram.after, {
-                caption: `The intended result, with done and in-progress parts marked${highlight.length ? `, ${chosen} highlighted` : ''}`,
+                caption: `The intended result, with done and in-progress parts marked${highlight.length ? `, ${chosen} outlined` : ''}`,
                 highlight,
                 progress,
                 idPrefix: 'impl-map',
@@ -248,7 +248,7 @@ function mapRow(ctx) {
             h('p', { class: 'meta legend' },
                 h('span', { class: 'legend-swatch is-done' }), ' Done. ',
                 h('span', { class: 'legend-swatch is-active' }), ' In progress. ',
-                h('span', { class: 'legend-swatch is-highlight' }), ' Filled: the chosen phase. ',
+                h('span', { class: 'legend-swatch is-chosen' }), ' Bold outline: the chosen phase. ',
                 h('span', { class: 'legend-swatch is-new' }), ' Dashed border: added by the plan.'),
         ],
     });

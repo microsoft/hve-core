@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
 import { buildScenario } from '../lib/scenario.mjs';
-import { elements, installFakeDom } from './helpers/fake-dom.mjs';
+import { elements, installFakeDom, serialize } from './helpers/fake-dom.mjs';
 
 let restore;
 let diagram;
@@ -78,6 +78,14 @@ describe('layout', () => {
 });
 
 describe('renderDiagram', () => {
+    it('marks a map that shows progress, so its chosen phase is drawn as an outline', () => {
+        const withProgress = diagram.renderDiagram(AFTER, { caption: 'After', idPrefix: 'map', highlight: ['store'], progress: new Map([['store', 'done']]) });
+        const plain = diagram.renderDiagram(AFTER, { caption: 'After', idPrefix: 'plan', highlight: ['store'] });
+        assert.match(serialize(withProgress), /<svg [^>]*class="diagram-svg has-progress"/);
+        assert.match(serialize(plain), /<svg [^>]*class="diagram-svg"/);
+        assert.doesNotMatch(serialize(plain), /has-progress/, 'Plan\'s map keeps its fill for the chosen phase');
+    });
+
     it('draws a labeled SVG figure with a text alternative', () => {
         const figure = diagram.renderDiagram(AFTER, { caption: 'After', idPrefix: 'map', highlight: ['store'] });
         const svg = elements(figure).find((el) => el.localName === 'svg');
