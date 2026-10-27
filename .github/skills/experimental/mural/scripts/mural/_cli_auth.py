@@ -137,6 +137,26 @@ def _profile_has_session(profile_name: str, store: dict[str, Any] | None) -> boo
     return _backend_has_refresh_token(profile_name)
 
 
+def _profile_has_usable_session(
+    profile_name: str, store: dict[str, Any] | None
+) -> bool:
+    """Return True when the request path can authenticate as ``profile_name``.
+
+    Unlike :func:`_profile_has_session`, which also counts a backend refresh
+    token so login never overwrites stored credentials, this check reads only
+    the token store because authenticated requests refresh solely from the
+    validated token-store record. Never reads a credential backend and never
+    raises.
+    """
+    if not isinstance(store, dict):
+        return False
+    try:
+        record = _select_profile(store, profile_name)
+    except MuralError:
+        return False
+    return bool(record.get("access_token") or record.get("refresh_token"))
+
+
 def _emit_existing_session(profile_name: str) -> None:
     _emit(
         f"profile {profile_name!r} already has stored credentials; "
@@ -378,8 +398,8 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
         )
         return EXIT_FAILURE
     try:
-        profile_name = _validate_profile_name(
-            getattr(args, "profile", None) or DEFAULT_PROFILE_NAME
+        profile_name = _resolve_active_profile(
+            None, os.environ, getattr(args, "profile", None)
         )
     except MuralError as exc:
         _emit(str(exc), level=logging.ERROR)
@@ -1284,6 +1304,7 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
     }
     backends_have_creds = keyring_populated or file_populated
     cred_keys = {
+        "credential_profile": cred_profile,
         "credential_file": str(cred_path),
         "credential_file_exists": cred_path.exists(),
         "backend": backend_name,
@@ -1296,21 +1317,20 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
         cred_keys["backend_error"] = backend_error
     if keyring_error is not None and not keyring_available:
         cred_keys["keyring_error"] = keyring_error
-
-    def _status_has_session(name: str, envelope: dict[str, Any] | None) -> bool:
-        # Status is diagnostic, so an unreadable credential file reports
-        # unauthenticated instead of failing the probe.
-        try:
-            return _profile_has_session(name, envelope)
-        except MuralError:
-            return False
+    # A backend refresh token blocks an unforced login but is never used by
+    # authenticated requests, so it is reported apart from ``authenticated``.
+    # Status is diagnostic, so an unreadable credential file reports False.
+    try:
+        cred_keys["backend_refresh_token"] = _backend_has_refresh_token(cred_profile)
+    except MuralError:
+        cred_keys["backend_refresh_token"] = False
 
     store = _pkg()._load_token_store(path)
     if not store:
         print(
             json.dumps(
                 {
-                    "authenticated": _status_has_session(cred_profile, None),
+                    "authenticated": False,
                     "token_store": str(path),
                     **cred_keys,
                 },
@@ -1327,7 +1347,7 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
         print(
             json.dumps(
                 {
-                    "authenticated": _status_has_session(profile_name, store),
+                    "authenticated": False,
                     "token_store": str(path),
                     **cred_keys,
                 },
@@ -1336,7 +1356,7 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
         )
         return EXIT_SUCCESS if backends_have_creds else EXIT_FAILURE
     info = {
-        "authenticated": _status_has_session(profile_name, store),
+        "authenticated": _profile_has_usable_session(profile_name, store),
         "token_store": str(path),
         "profile": profile_name,
         "granted_scopes": list(_token_granted_scopes(store, profile_name)),

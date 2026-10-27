@@ -3,7 +3,7 @@ title: "Stage 8: Delivery"
 description: Merge approved changes, verify builds, and update tracking systems for release
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-20
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -32,11 +32,11 @@ You enter Delivery after [Stage 7: Review](review.md) with an approved pull requ
 
 ### Skills
 
-| Tool               | Type  | How to Invoke                         | Purpose                                      |
-|--------------------|-------|---------------------------------------|----------------------------------------------|
-| git-merge          | Skill | `/git-merge`                          | Merge approved PRs into the target branch    |
-| backlog-management | Skill | Ask for the Azure DevOps build status | Check build status for the current branch    |
-| backlog-execute    | Skill | `/backlog-execute`                    | Apply reviewed work item and backlog updates |
+| Tool               | Type  | How to Invoke                         | Purpose                                        |
+|--------------------|-------|---------------------------------------|------------------------------------------------|
+| git-merge          | Skill | `/git-merge`                          | Integrate local branches and resolve conflicts |
+| backlog-management | Skill | Ask for the Azure DevOps build status | Check build status for the current branch      |
+| backlog-execute    | Skill | `/backlog-execute`                    | Apply reviewed work item and backlog updates   |
 
 ### Auto-Activated Instructions
 
@@ -59,8 +59,15 @@ Engineers merge their approved PRs and verify builds. TPMs update work item stat
 ## Starter Prompts
 
 ```text
-/git-merge Merge the approved PR into main
+/git-merge operation=merge branch=origin/main
 ```
+
+This integrates `origin/main` into the current local branch; it does not merge a hosted PR or
+authorize publishing. To request publication too, explicitly name the intended ordinary push, for
+example: "After integrating, push this feature branch to its established origin upstream."
+That consent covers the requested integration result without repeated approval. A rejected normal
+push never authorizes force-pushing. Hosted PR merging remains a separate platform action subject
+to repository checks and approval.
 
 ```text
 Check the Azure DevOps build status for the current branch's pull request.

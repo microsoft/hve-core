@@ -58,16 +58,15 @@ WAVs. Use the resolved installed TTS skill root and caller-approved voices:
 
 ```bash
 uv run --directory "$TTS_SKILL_ROOT" python scripts/generate_voiceover.py \
-	--engine piper --collapse-newlines --content-dir "$LEVEL_DIR/content" \
+	--collapse-newlines --content-dir "$LEVEL_DIR/content" \
 	--output-dir "$LEVEL_DIR/audio" --slide 1 --voice "$CASEY_VOICE"
 uv run --directory "$TTS_SKILL_ROOT" python scripts/generate_voiceover.py \
-	--engine piper --collapse-newlines --content-dir "$LEVEL_DIR/content" \
+	--collapse-newlines --content-dir "$LEVEL_DIR/content" \
 	--output-dir "$LEVEL_DIR/audio" --slide 2 --voice "$MORGAN_VOICE"
 ```
 
 Repeat `--slide` for all scenes assigned to that voice, then measure every WAV.
-For Azure, select `--engine azure` with the approved Azure voices and region.
-The recipe never changes the caller's selected narration engine.
+Use the approved Azure AI Speech voices and region.
 
 ## Handoff Pattern
 

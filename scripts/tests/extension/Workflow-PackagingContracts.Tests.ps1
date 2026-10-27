@@ -972,13 +972,13 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             REPOSITORY        = 'microsoft/hve-core'
         }
         $script:RulesetList = '[{"id":101,"name":"release-tags-creation-by-release-app"},{"id":102,"name":"release-tags-immutable"}]'
-        $script:CreationRuleset = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'
-        $script:ImmutableRuleset = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'
+        $script:CreationRuleset = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"always","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'
+        $script:ImmutableRuleset = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"never","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'
     }
 
     It 'Limits the reusable signer to one protected release-tag push caller' {
         $callers = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
-            Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s+# PR #2823 squash\s*$')
+            Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da\s+# snapshot-20260908\s*$')
         $callers | Should -HaveCount 1
         Split-Path -Path $callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
 
@@ -994,27 +994,18 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         [string]$identity['run'] | Should -Match "EVENT_ACTOR_ID.*EXPECTED_ACTOR_ID"
     }
 
-    It 'Denies Actions cache access to the release producer and every job it runs' {
-        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
-        $document.Contains('cache-mode') | Should -BeTrue
-        [string]$document['cache-mode'] | Should -BeExactly 'none'
-        foreach ($jobName in @($document['jobs'].Keys)) {
-            $job = $document['jobs'][$jobName]
-            if ($job.Contains('cache-mode')) {
-                [string]$job['cache-mode'] | Should -BeExactly 'none' -Because "job '$jobName' must not widen cache access"
-            }
-        }
+    It 'Keeps the release producer free of Actions cache use' {
+        $text = Get-WorkflowText -Name 'release-vsix-publish.yml'
+        $text | Should -Not -Match 'actions/cache@|(?:astral-sh/setup-uv@|\$/.github/actions/setup-uv)'
     }
 
-    It 'Keeps every workflow the release producer calls within its cache-mode cap' {
-        # A called workflow that requests more cache access than the caller's
-        # explicit cap fails validation before the release starts. The pinned
-        # signer revision is a snapshot of the local signer file, so the local
-        # file stands in for the next snapshot.
+    It 'Keeps every workflow the release producer calls free of Actions cache use' {
+        # The pinned signer revision is a snapshot of the local signer file, so
+        # the local file stands in for the next snapshot.
         $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
         $calledNames = @(foreach ($jobName in @($document['jobs'].Keys)) {
                 $uses = [string]$document['jobs'][$jobName]['uses']
-                if ($uses -match '^(?:\./|microsoft/hve-core/)\.github/workflows/([^@/]+\.ya?ml)(?:@[0-9a-f]{40})?$') {
+                if ($uses -match '^(?:\$/|\./|microsoft/hve-core/)\.github/workflows/([^@/]+\.ya?ml)(?:@[0-9a-f]{40})?$') {
                     $Matches[1]
                 }
             })
@@ -1022,16 +1013,9 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         $calledNames | Should -Contain 'vex-attest.yml'
         $calledNames | Should -Contain 'release-close-milestone.yml'
         foreach ($calledName in ($calledNames | Sort-Object -Unique)) {
-            $called = Get-WorkflowDocument -Name $calledName
-            if ($called.Contains('cache-mode')) {
-                [string]$called['cache-mode'] | Should -BeExactly 'none' -Because "$calledName must not request cache access beyond the caller's cap"
-            }
-            foreach ($jobName in @($called['jobs'].Keys)) {
-                $job = $called['jobs'][$jobName]
-                if ($job.Contains('cache-mode')) {
-                    [string]$job['cache-mode'] | Should -BeExactly 'none' -Because "$calledName job '$jobName' must not request cache access beyond the caller's cap"
-                }
-            }
+            $text = Get-WorkflowText -Name $calledName
+            $text | Should -Not -Match 'actions/cache@|(?:astral-sh/setup-uv@|\$/.github/actions/setup-uv)' `
+                -Because "$calledName must not restore or save dependency caches during release production"
         }
     }
 
@@ -1046,7 +1030,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         $document['on']['workflow_call'].Contains('secrets') | Should -BeFalse
         $token = Get-NamedJobStep -Document $document -JobName 'authorize' `
             -StepName 'Generate governance-read Release App token'
-        [string]$token['with']['permission-administration'] | Should -BeExactly 'read'
+        $token['with'].Contains('permission-administration') | Should -BeFalse
         [string]$token['with']['private-key'] | Should -BeExactly '${{ secrets.RELEASE_APP_PRIVATE_KEY }}'
 
         $authorizeText = (Get-JobStepText -Document $document -JobName 'authorize') -join "`n"
@@ -1055,7 +1039,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             'source_type == "Repository"', 'conditions\.ref_name\.include',
             'conditions\.ref_name\.exclude', 'rules\[\]\.type', '/releases\?per_page=100',
             '/compare/\$EVENT_SHA\.\.\.\$BRANCH_SHA', 'Exact draft release identity',
-            'bypass_actors', 'actor_type', 'actor_id', 'bypass_mode')) {
+            'current_user_can_bypass', 'bypass_actors', 'actor_type', 'actor_id', 'bypass_mode')) {
             $authorizeText | Should -Match $contract
         }
 
@@ -1076,6 +1060,22 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             -Environment $script:AuthorizationEnvironment -RulesetList $script:RulesetList `
             -CreationRuleset $script:CreationRuleset -ImmutableRuleset $script:ImmutableRuleset
         $result.ExitCode | Should -Be 0
+        $result.Output | Should -Not -Match 'bypass list not visible'
+    }
+
+    It 'Accepts hidden bypass lists when the app reports its own bypass state' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance-signer.yml') `
+            -JobName 'authorize' -StepName 'Authenticate release principal and governance'
+        $creation = $script:CreationRuleset -replace ',"bypass_actors":\[[^\]]*\]', ''
+        $immutable = $script:ImmutableRuleset -replace ',"bypass_actors":\[[^\]]*\]', ''
+        $creation | Should -Not -Match 'bypass_actors'
+        $immutable | Should -Not -Match 'bypass_actors'
+        $result = Invoke-ReleaseAuthorizationShellStep -Body ([string]$step['run']) `
+            -Environment $script:AuthorizationEnvironment -RulesetList $script:RulesetList `
+            -CreationRuleset $creation -ImmutableRuleset $immutable
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -Match '::notice::release-tags-creation-by-release-app: bypass list not visible to this token'
+        $result.Output | Should -Match '::notice::release-tags-immutable: bypass list not visible to this token'
     }
 
     It 'Rejects an unexpected release actor before packaging' -Skip:$script:SkipShellFixtureTests {
@@ -1122,8 +1122,11 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         @{ Name = 'missing ruleset'; List = '[{"id":101,"name":"release-tags-creation-by-release-app"}]'; Creation = $null; Immutable = $null; Error = 'match count 0' }
         @{ Name = 'inactive creation'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","enforcement":"evaluate","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
         @{ Name = 'excluded tag'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","enforcement":"active","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":["refs/tags/v3.4.0"]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
-        @{ Name = 'missing creation bypass'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
-        @{ Name = 'immutable bypass'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
+        @{ Name = 'creation not bypassable by app'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"never","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
+        @{ Name = 'creation bypass state unreported'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
+        @{ Name = 'extra visible creation bypass actor'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"always","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"},{"actor_id":1,"actor_type":"User","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
+        @{ Name = 'immutable bypassable by app'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"always","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
+        @{ Name = 'visible immutable bypass actor'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"never","bypass_actors":[{"actor_id":1,"actor_type":"User","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
         @{ Name = 'mutable allocation'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","enforcement":"active","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
     ) {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance-signer.yml') `
@@ -1207,9 +1210,10 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         @($exceptions[0]['purl']) | Should -Be @('pkg:githubactions/googleapis/release-please-action')
     }
 
-    It 'Retains unrelated creator signal including EndBug' {
+    It 'Keeps package-only creator acknowledgements exact' {
         $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
-                @($_['rule']) -contains 'github_action_from_unverified_creator_used'
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
+                -not $_.Contains('path')
             })
         foreach ($exception in $exceptions) {
             @($exception.Keys | Sort-Object) | Should -Be @('purl', 'rule')
@@ -1218,9 +1222,40 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             @('pkg:githubactions/googleapis/release-please-action', 'pkg:githubactions/astral-sh/setup-uv') |
                 Should -Contain $exception['purl'][0]
         }
+    }
+
+    It 'Has no creator acknowledgement for the removed EndBug label sync action' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
+                @($_['purl']) -like 'pkg:githubactions/endbug/label-sync*'
+            })
+        $exceptions | Should -BeNullOrEmpty
+
         $labelSync = Get-WorkflowText -Name 'label-sync.yml'
-        $labelSync | Should -Match 'EndBug/label-sync@[0-9a-f]{40}'
+        $labelSync | Should -Not -Match 'EndBug/label-sync@'
+        $labelSync | Should -Match 'run: \./scripts/ci/Sync-RepositoryLabels\.ps1'
         $labelSync | Should -Not -Match 'poutine:ignore'
+    }
+
+    It 'Scopes the backlog grooming checkout acknowledgement to activation only' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'untrusted_checkout_exec' -and
+                @($_['path']) -contains '.github/workflows/backlog-groom.lock.yml'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('job', 'path', 'rule')
+        @($exceptions[0]['rule']) | Should -Be @('untrusted_checkout_exec')
+        @($exceptions[0]['path']) | Should -Be @('.github/workflows/backlog-groom.lock.yml')
+        @($exceptions[0]['job']) | Should -Be @('activation')
+    }
+
+    It 'Has no repository-wide Poutine rule suppression' {
+        @($script:PoutineConfig['skip'] | Where-Object {
+                $_.Contains('rule') -and
+                -not $_.Contains('path') -and
+                -not $_.Contains('purl') -and
+                -not $_.Contains('job')
+            }) | Should -BeNullOrEmpty
     }
 
     It 'Scopes the marketplace checkout acknowledgment to preparation only' {
@@ -1277,7 +1312,7 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         $document['on']['schedule'][0]['cron'] | Should -BeExactly '0 2 * * 0'
         $document['on'].Contains('workflow_dispatch') | Should -BeTrue
         $job = $document['jobs']['dangerous-workflow-scan']
-        $job['uses'] | Should -BeExactly './.github/workflows/dangerous-workflow-scan.yml'
+        $job['uses'] | Should -BeExactly '$/.github/workflows/dangerous-workflow-scan.yml'
         @($job['permissions'].Keys | Sort-Object) | Should -Be @('contents', 'security-events')
         $job['permissions']['contents'] | Should -BeExactly 'read'
         $job['permissions']['security-events'] | Should -BeExactly 'write'
@@ -1286,6 +1321,58 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         }
         $job.Contains('secrets') | Should -BeFalse
         @($document['jobs']['summary']['needs']) | Should -Contain 'dangerous-workflow-scan'
+
+        $pinningDocument = Get-WorkflowDocument -Name 'dependency-pinning-scan.yml'
+        $pinningDocument['on']['workflow_call']['outputs']['gate-error']['value'] |
+            Should -BeExactly '${{ jobs.scan.outputs.gate-error }}'
+        $pinningDocument['jobs']['scan']['outputs']['gate-error'] |
+            Should -BeExactly '${{ steps.gate.outputs.gate-error }}'
+        $summaryStep = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Generate summary'
+        $summaryStep['env']['GATE_ERROR'] | Should -BeExactly '${{ needs.validate-pinning.outputs.gate-error }}'
+        $conclusionStep = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Set workflow conclusion'
+        $conclusionStep['env']['GATE_ERROR'] | Should -BeExactly '${{ needs.validate-pinning.outputs.gate-error }}'
+    }
+
+    It 'Reports dependency gate failures without success-shaped counts' {
+        $document = Get-WorkflowDocument -Name 'weekly-security-maintenance.yml'
+        $step = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Generate summary'
+        $environment = @{
+            THRESHOLD_DAYS      = '30'
+            PINNING_SCORE       = '100'
+            UNPINNED_COUNT      = '7'
+            FAILING_COUNT       = ''
+            EXCEPTED_COUNT      = ''
+            EXCEPTION_ERROR_COUNT = ''
+            GATE_ERROR          = 'true'
+            STALE_COUNT         = '0'
+            CODEQL_RESULT       = 'success'
+            WORKFLOW_SCAN_RESULT = 'success'
+            EVENT_NAME          = 'schedule'
+            SERVER_URL          = 'https://github.com'
+            REPO                = 'example/repository'
+            RUN_ID              = '1'
+            GITHUB_STEP_SUMMARY = (Join-Path $TestDrive 'gate-error.md')
+        }
+        $savedEnvironment = @{}
+        try {
+            foreach ($key in $environment.Keys) {
+                $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key)
+                [Environment]::SetEnvironmentVariable($key, $environment[$key])
+            }
+
+            & ([scriptblock]::Create($step['run']))
+
+            $summary = Get-Content -LiteralPath $environment['GITHUB_STEP_SUMMARY'] -Raw
+            $summary | Should -Match 'Dependency Pinning Gate \| .+ Failed'
+            $summary | Should -Match 'Gate did not produce a trusted count'
+            $summary | Should -Match 'Dependency Gate Failure'
+            $summary | Should -Not -Match '0 excused|Dependency Checks Clear'
+        }
+        finally {
+            foreach ($key in $savedEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key])
+            }
+        }
     }
 
     It 'Reports CodeQL <CodeqlResult> and advisory scan <ScanResult> with targeted next steps' -ForEach @(
@@ -1306,6 +1393,7 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             THRESHOLD_DAYS = '30'
             PINNING_SCORE = '100'
             UNPINNED_COUNT = '0'
+            GATE_ERROR = ''
             STALE_COUNT = '0'
             CODEQL_RESULT = $CodeqlResult
             WORKFLOW_SCAN_RESULT = $ScanResult
@@ -1543,7 +1631,7 @@ Describe 'Retained provenance and SBOM assurance' -Tag 'Unit', 'SignerIsolation'
         $attestText = $script:ProvenanceSteps -join "`n"
         $attestText | Should -Not -Match 'npm ci'
         $attestText | Should -Not -Match 'Package-Extension\.ps1'
-        $attestText | Should -Not -Match 'actions/checkout@|\./scripts/|\./\.github/actions/'
+        $attestText | Should -Not -Match 'actions/checkout@|\./scripts/|(\./|\$/)\.github/actions/'
     }
 
     It 'Requires the attestation source ref to be this run commit' {
@@ -1698,7 +1786,7 @@ Describe 'Retained marketplace publication' -Tag 'Unit' {
     ) {
         $document = Get-WorkflowDocument -Name $Workflow
         $publish = $document['jobs']['publish']
-        [string]$publish['uses'] | Should -BeExactly './.github/workflows/extension-marketplace-publish.yml'
+        [string]$publish['uses'] | Should -BeExactly '$/.github/workflows/extension-marketplace-publish.yml'
         [string]$publish['with']['tag'] | Should -BeExactly "`${{ needs.$Source.outputs.tag }}"
         $publish['with']['pre-release'] | Should -Be $PreRelease
         $publish['with'].Contains('packages-matrix') | Should -BeFalse
@@ -1744,7 +1832,7 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
 
     It 'Attests and uploads the Stable OpenVEX document' {
         $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
-        [string]$document['jobs']['vex-attest']['uses'] | Should -BeExactly './.github/workflows/vex-attest.yml'
+        [string]$document['jobs']['vex-attest']['uses'] | Should -BeExactly '$/.github/workflows/vex-attest.yml'
         [string]$document['jobs']['vex-attest']['with']['sbom-artifact'] | Should -BeExactly 'sbom-dependencies'
         [string]$document['jobs']['vex-attest']['if'] | Should -Match "channel == 'Stable'"
 
@@ -1764,7 +1852,7 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
         @([regex]::Matches($notes, '--source-digest')) | Should -HaveCount 3
         @([regex]::Matches($notes, '--source-ref')) | Should -HaveCount 3
         $notes | Should -Match 'extension-provenance-signer\.yml'
-        $notes | Should -Match '3a09401536cef0c4559db1aa64b7d1010638fd67'
+        $notes | Should -Match '3b36a825662603c0d564eb0f3b98ce5ba53857da'
         $notes | Should -Match 'SBOMs are\s+predicate payloads'
         $notes | Should -Not -Match 'All release assets include.*build-provenance'
         $notes | Should -Not -Match '<file>\.zip'
@@ -1825,13 +1913,13 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
         }
     }
 
-    It 'Leaves both pull-request workflows with pre-tag jobs only' -ForEach @(
+    It 'Leaves both merged-pull-request workflows with pre-tag jobs only' -ForEach @(
         @{ Workflow = 'release-prerelease.yml' }
         @{ Workflow = 'release-stable-publish.yml' }
     ) {
         $document = Get-WorkflowDocument -Name $Workflow
         [string[]]@($document['jobs'].Keys) | Sort-Object |
-            Should -Be @('release-please', 'sync-release-pr', 'validate-trigger')
+            Should -Be @('release-please', 'resolve-merge', 'sync-release-pr', 'validate-trigger')
         (Get-WorkflowText -Name $Workflow) | Should -Not -Match 'extension-vsix|sbom-dependencies|attest-build-provenance|vex-attest|verify-provenance|publish-release|close-milestone'
     }
 }
@@ -2194,7 +2282,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
     It 'Calls the consolidated authorized signer with all validated inputs' {
         $builder = $script:ReleaseProducer['jobs']['extension-provenance']
         [string[]]@($builder['needs']) | Should -Be @('validate-release')
-        [string]$builder['uses'] | Should -BeExactly 'microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67'
+        [string]$builder['uses'] | Should -BeExactly 'microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da'
         [string]$builder['with']['source-ref'] | Should -BeExactly '${{ github.sha }}'
         [string]$builder['with']['version'] | Should -BeExactly '${{ needs.validate-release.outputs.version }}'
         [string]$builder['with']['channel'] | Should -BeExactly '${{ needs.validate-release.outputs.channel }}'
@@ -2213,7 +2301,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         [string]$publishedVerification['run'] | Should -Match 'gh release download.*\-p "\$asset"'
         [string]$publishedVerification['run'] | Should -Match 'Invoke-ProvenanceVerification\.ps1'
         [string]$publishedVerification['run'] | Should -Match 'ExpectedSourceSha.*EXPECTED_SHA'
-        [string]$publishedVerification['run'] | Should -Match 'ExpectedSignerSha.*3a09401536cef0c4559db1aa64b7d1010638fd67'
+        [string]$publishedVerification['run'] | Should -Match 'ExpectedSignerSha.*3b36a825662603c0d564eb0f3b98ce5ba53857da'
         [string]$publishedVerification['env']['EXPECTED_SHA'] | Should -BeExactly '${{ steps.identity.outputs.source-sha }}'
         [string]$script:ReleaseProducer['jobs']['validate-release']['permissions']['attestations'] | Should -BeExactly 'read'
     }
@@ -2234,7 +2322,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         ) -Environment @{
             CHANNEL         = 'Stable'
             EXPECTED_SHA    = $sourceSha
-            EXPECTED_SIGNER_SHA = '3a09401536cef0c4559db1aa64b7d1010638fd67'
+            EXPECTED_SIGNER_SHA = '3b36a825662603c0d564eb0f3b98ce5ba53857da'
             GH_TOKEN        = 'fixture-token'
             RELEASE_ID      = '123'
             RELEASE_TAG     = "v$version"
@@ -2243,7 +2331,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         }
         $result.ExitCode | Should -Be 0
         $result.Output | Should -Match "ExpectedSourceSha $sourceSha"
-        $result.Output | Should -Match 'ExpectedSignerSha 3a09401536cef0c4559db1aa64b7d1010638fd67'
+        $result.Output | Should -Match 'ExpectedSignerSha 3b36a825662603c0d564eb0f3b98ce5ba53857da'
     }
 
     It 'Fails published verification when the source SHA binding is absent' -Skip:$script:SkipShellFixtureTests {
@@ -2316,7 +2404,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         Test-Path -LiteralPath (Join-Path $script:WorkflowDirectory 'extension-package.yml') | Should -BeFalse
         foreach ($workflow in Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml') {
             (Get-Content -LiteralPath $workflow.FullName -Raw -Encoding utf8) |
-                Should -Not -Match 'uses:\s+\./\.github/workflows/extension-package\.yml'
+                Should -Not -Match 'uses:\s+(\./|\$/)\.github/workflows/extension-package\.yml'
         }
     }
 }
@@ -2562,11 +2650,129 @@ Describe 'Copilot OTel static test selection' -Tag 'Unit' {
     }
 }
 
+Describe 'Node test discovery and selection for Copilot extensions' -Tag 'Unit' {
+    BeforeAll {
+        $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'
+        $script:NodeSelection = [string]$script:PrValidation['jobs']['node-tests']['with']['changed-paths-pattern']
+
+        function Get-NodeSelectionPattern {
+            <#
+            .SYNOPSIS
+            Returns the literal changed-paths pattern that one matrix condition selects.
+            .PARAMETER Condition
+            Exact condition text that precedes the pattern in the expression.
+            .OUTPUTS
+            [string] Extended regex for the matching lane.
+            #>
+            [CmdletBinding()]
+            [OutputType([string])]
+            param(
+                [Parameter(Mandatory = $true)]
+                [string]$Condition
+            )
+
+            $match = [regex]::Match($script:NodeSelection, [regex]::Escape($Condition) + " && '([^']+)'")
+            if (-not $match.Success) {
+                throw "Node changed-paths-pattern has no branch for $Condition"
+            }
+            return $match.Groups[1].Value
+        }
+
+        $script:ExtensionPattern = Get-NodeSelectionPattern -Condition "startsWith(matrix.directory, '.github/extensions/')"
+        $script:CanvasUpdatePattern = Get-NodeSelectionPattern -Condition "matrix.directory == '.github/skills/session-log-canvas-update'"
+
+        # Run the discovery step against a fixture tree with every candidate kind.
+        $fixture = Join-Path $TestDrive 'node-discovery'
+        foreach ($file in @(
+                '.github/skills/with-tests/SKILL.md'
+                '.github/skills/with-tests/tests/skill.test.mjs'
+                '.github/skills/no-tests/SKILL.md'
+                'slides/deck/tests/deck.test.mjs'
+                '.github/extensions/pkg/canvas/extension.mjs'
+                '.github/extensions/pkg/canvas/tests/canvas.test.mjs'
+                '.github/extensions/pkg/canvas/node_modules/dep/extension.mjs'
+                '.github/extensions/pkg/canvas/node_modules/dep/dep.test.mjs'
+                '.github/extensions/pkg/tool-only/extension.mjs'
+                '.github/extensions/canvas/extension.mjs'
+            )) {
+            $path = Join-Path $fixture $file
+            New-Item -ItemType Directory -Path (Split-Path -Parent $path) -Force | Out-Null
+            Set-Content -LiteralPath $path -Value '' -Encoding utf8
+        }
+        $securityDirectory = Join-Path $fixture 'scripts/security'
+        New-Item -ItemType Directory -Path $securityDirectory -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $script:RepositoryRoot 'scripts/security/Assert-WorkflowProjectDirectory.ps1') -Destination $securityDirectory
+
+        $step = Get-NamedJobStep -Document $script:PrValidation -JobName 'discover-node-projects' -StepName 'Find Node projects'
+        $outputPath = Join-Path $fixture 'github-output.txt'
+        $stepPath = Join-Path $fixture 'step.ps1'
+        Set-Content -LiteralPath $stepPath -Value ("`$env:GITHUB_OUTPUT = '$outputPath'`n" + [string]$step['run']) -Encoding utf8
+        Push-Location -LiteralPath $fixture
+        try {
+            & (Get-Process -Id $PID).Path -NoProfile -NonInteractive -File $stepPath | Out-Null
+            $script:DiscoveryExitCode = $LASTEXITCODE
+        } finally {
+            Pop-Location
+        }
+        $directoriesLine = @(Get-Content -LiteralPath $outputPath -Encoding utf8 | Where-Object { $_ -like 'directories=*' })[0]
+        $script:DiscoveredDirectories = [string[]]@(($directoriesLine -replace '^directories=', '') | ConvertFrom-Json)
+    }
+
+    It 'Discovers extensions that ship tests alongside skills and slide decks' {
+        $script:DiscoveryExitCode | Should -Be 0
+        $script:DiscoveredDirectories | Should -Be @('.github/extensions/pkg/canvas', '.github/skills/with-tests', 'slides/deck')
+    }
+
+    It 'Skips extension directories without tests, project entries, and dependencies' {
+        $script:DiscoveredDirectories | Should -Not -Contain '.github/extensions/pkg/tool-only'
+        $script:DiscoveredDirectories | Should -Not -Contain '.github/extensions/canvas'
+        $script:DiscoveredDirectories | Should -Not -Contain '.github/extensions/pkg/canvas/node_modules/dep'
+    }
+
+    It 'Selects every extension lane for <Path>' -ForEach @(
+        @{ Path = '.github/extensions/hve-core/session-log/lib/indexer.mjs' }
+        @{ Path = '.github/extensions/hve-core/session-log/ui/styles.css' }
+        @{ Path = '.github/extensions/hve-core/session-log/ui/index.html' }
+        @{ Path = '.github/extensions/hve-core/session-log/README.md' }
+        @{ Path = '.github/extensions/session-log/extension.mjs' }
+    ) {
+        $Path | Should -Match $script:ExtensionPattern
+    }
+
+    It 'Does not select extension lanes for <Path>' -ForEach @(
+        @{ Path = '.github/skills/session-log-canvas-update/scripts/event-schema.mjs' }
+        @{ Path = 'docs/plugins/hve-core.md' }
+        @{ Path = 'plugin.json' }
+    ) {
+        $Path | Should -Not -Match $script:ExtensionPattern
+    }
+
+    It 'Selects the canvas update skill lane for <Path>' -ForEach @(
+        @{ Path = '.github/skills/session-log-canvas-update/assets/event-shapes.json' }
+        @{ Path = '.github/skills/session-log-canvas-update/scripts/event-schema.mjs' }
+        @{ Path = '.github/extensions/hve-core/session-log/lib/indexer.mjs' }
+    ) {
+        $Path | Should -Match $script:CanvasUpdatePattern
+    }
+
+    It 'Does not select the canvas update skill lane for <Path>' -ForEach @(
+        @{ Path = '.github/skills/session-log-canvas-update-extra/SKILL.md' }
+        @{ Path = '.github/skills/hve-slides/scripts/build-decks.mjs' }
+    ) {
+        $Path | Should -Not -Match $script:CanvasUpdatePattern
+    }
+
+    It 'Keeps the slide deck branch and the JS-family default' {
+        $script:NodeSelection | Should -Match ([regex]::Escape("startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory)"))
+        $script:NodeSelection | Should -Match "\|\| '' \}\}$"
+    }
+}
+
 Describe 'PR validation hosted conformance boundary' -Tag 'Unit' {
     BeforeAll {
         $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'
         $script:ConformanceJobs = @($script:PrValidation['jobs'].GetEnumerator() | Where-Object {
-                [string]$_.Value['uses'] -eq './.github/workflows/agent-conformance.yml'
+                [string]$_.Value['uses'] -eq '$/.github/workflows/agent-conformance.yml'
             })
     }
 
@@ -2650,18 +2856,103 @@ Describe 'AI artifact portability gate contract' -Tag 'Unit' {
 }
 
 Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
-    It 'Runs Scorecard after the consolidated post-tag producer' {
+    It 'Runs Scorecard on the default branch after the post-tag producer publishes' {
         $scorecard = Get-WorkflowDocument -Name 'scorecard.yml'
-        [string[]]@($scorecard['on']['workflow_run']['workflows']) |
-            Should -Be @('Release VSIX Publish')
+        $scorecard['on'].Contains('workflow_run') | Should -BeFalse
+        $scorecard['on'].Contains('workflow_dispatch') | Should -BeTrue
+
+        $producer = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        $refresh = $producer['jobs']['refresh-scorecard']
+        @($refresh['needs']) | Should -Be @('publish-release')
+        [string]$refresh['if'] | Should -Match "needs\.publish-release\.result == 'success'"
+        $refresh['permissions'].Keys | Should -Be @('actions')
+        [string]$refresh['permissions']['actions'] | Should -BeExactly 'write'
+        $step = @($refresh['steps'])[0]
+        [string]$step['env']['GH_TOKEN'] | Should -BeExactly '${{ github.token }}'
+        [string]$step['env']['DEFAULT_BRANCH'] | Should -BeExactly '${{ github.event.repository.default_branch }}'
+        [string]$step['run'] | Should -Match 'gh workflow run scorecard\.yml --ref "\$DEFAULT_BRANCH"'
     }
 
-    It 'Uses the verified create-github-app-token version comment consistently' {
-        $pinMatches = Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
-            Select-String -SimpleMatch 'actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1'
+    It 'Re-checks VEX status when a Stable release is published' {
+        $vex = Get-WorkflowDocument -Name 'vex-detect.yml'
+        $vex['on'].Contains('workflow_run') | Should -BeFalse
+        @($vex['on']['release']['types']) | Should -Be @('published')
+        [string]$vex['jobs']['vex-detect']['if'] | Should -Match "!github\.event\.release\.prerelease && startsWith\(github\.event\.release\.tag_name, 'v'\)"
+    }
+
+    It 'Hands successful default-branch VEX scans to VEX Draft by dispatch' {
+        $vex = Get-WorkflowDocument -Name 'vex-detect.yml'
+        $dispatch = $vex['jobs']['dispatch-draft']
+        @($dispatch['needs']) | Should -Be @('vex-detect')
+        [string]$dispatch['if'] | Should -Match "needs\.vex-detect\.result == 'success'"
+        [string[]]@($dispatch['permissions'].Keys) | Should -Be @('actions')
+        [string]$dispatch['permissions']['actions'] | Should -BeExactly 'write'
+        $script = [string]@($dispatch['steps'])[0]['with']['script']
+        $script | Should -Match 'context\.ref !== `refs/heads/\$\{repository\.default_branch\}`'
+        $script | Should -Match 'workflow_id: "vex-draft\.lock\.yml"'
+        $script | Should -Match 'ref: repository\.default_branch'
+
+        $draft = Get-WorkflowDocument -Name 'vex-draft.lock.yml'
+        $draft['on'].Contains('workflow_run') | Should -BeFalse
+        $draft['on'].Contains('workflow_dispatch') | Should -BeTrue
+        $source = Get-Content -LiteralPath (Join-Path $script:WorkflowDirectory 'vex-draft.md') -Raw
+        $source | Should -Match '(?m)^  bots: \["github-actions\[bot\]"\]\r?$'
+        $source | Should -Match '(?m)^  skip-bots: \["dependabot\[bot\]"\]\r?$'
+    }
+
+    It 'Hands authored demo content to the render through a filtered workflow_run' {
+        $render = Get-WorkflowDocument -Name 'demo-material-render.yml'
+        $render['on'].Contains('workflow_run') | Should -BeTrue
+        @($render['on']['workflow_run']['workflows']) | Should -Be @('Demo Material Author')
+        @($render['on']['workflow_run']['branches']) | Should -Be @('main')
+        @($render['on']['workflow_run']['types']) | Should -Be @('completed')
+        $render['on']['workflow_dispatch']['inputs'].Contains('author-run-id') | Should -BeTrue
+        $resolve = Get-NamedJobStep -Document $render -JobName 'resolve' -StepName 'Resolve author run and render mode'
+        $resolveScript = [string]$resolve['with']['script']
+        $resolveScript | Should -Match 'authorRun = context\.payload\.workflow_run'
+        $resolveScript | Should -Match 'authorRun\.path !== "\.github/workflows/demo-material-author\.lock\.yml"'
+        $resolveScript | Should -Match 'authorRun\.head_branch !== defaultBranch'
+        $resolveScript | Should -Match 'demo-material-content-\$\{authorRun\.id\}'
+
+        $author = Get-WorkflowDocument -Name 'demo-material-author.lock.yml'
+        $author['jobs'].Contains('dispatch-render') | Should -BeFalse
+    }
+
+    It 'Passes Pester coverage control through the environment' {
+        $pester = Get-WorkflowDocument -Name 'pester-tests.yml'
+        $step = Get-NamedJobStep -Document $pester -JobName 'pester-integration' -StepName 'Run Integration Tests'
+        [string]$step['env']['CODE_COVERAGE'] | Should -BeExactly '${{ inputs.code-coverage }}'
+        [string]$step['run'] | Should -Match '\$env:CODE_COVERAGE'
+        [string]$step['run'] | Should -Not -Match '\$\{\{\s*inputs\.code-coverage\s*\}\}'
+    }
+
+    It 'Renders silent demo videos without Azure sign-in' {
+        $render = Get-WorkflowDocument -Name 'demo-material-render.yml'
+        foreach ($name in @('resolve', 'render', 'bundle', 'dispatch-deploy')) {
+            $job = $render['jobs'][$name]
+            $job.Contains('environment') | Should -BeFalse
+            $job['permissions'].Contains('id-token') | Should -BeFalse
+        }
+
+        $steps = Get-JobStepText -Document $render -JobName 'render'
+        @($steps | Where-Object { $_ -match 'azure/login@|az logout|SPEECH_' }) | Should -HaveCount 0
+        @($steps | Where-Object { $_ -match '--narration none' }) | Should -HaveCount 1
+    }
+
+    It 'Uses one full SHA and version comment for all create-github-app-token consumers' {
+        $pinMatches = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
+            Select-String -Pattern '^\s*uses:\s*actions/create-github-app-token@')
         $pinMatches | Should -HaveCount 11
-        @($pinMatches | Where-Object { $_.Line -notmatch '# v3\.2\.0\s*$' }) |
-            Should -BeNullOrEmpty
+        $pins = foreach ($pinMatch in $pinMatches) {
+            $parsedPin = [regex]::Match($pinMatch.Line, '^\s*uses:\s*actions/create-github-app-token@(?<sha>[a-fA-F0-9]{40})\s+# (?<version>v\d+\.\d+\.\d+)\s*$')
+            $parsedPin.Success | Should -BeTrue
+            [pscustomobject]@{
+                Sha = $parsedPin.Groups['sha'].Value.ToLowerInvariant()
+                Version = $parsedPin.Groups['version'].Value
+            }
+        }
+        @($pins.Sha | Sort-Object -Unique) | Should -HaveCount 1
+        @($pins.Version | Sort-Object -Unique) | Should -HaveCount 1
     }
 
     It 'Removes superseded current-state release workflow names from operational documents' {

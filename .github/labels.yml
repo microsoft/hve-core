@@ -3,6 +3,8 @@
 # This file is the authoritative source for all repository labels.
 # The label-sync workflow (.github/workflows/label-sync.yml) applies changes
 # automatically on push to main or via workflow_dispatch.
+# Implementation: scripts/ci/Sync-RepositoryLabels.ps1.
+# Preview locally: npm run labels:sync -- -Repository owner/repo -WhatIf
 #
 # Adding a label:    Add a new entry with name, color (bare hex, no #), and description.
 # Updating a label:  Edit the existing entry's color or description.
@@ -10,7 +12,8 @@
 #                    old name. The sync workflow migrates existing assignments and
 #                    removes the alias label from the repository.
 # Removing a label:  Deleting an entry does NOT delete the label from GitHub.
-#                    The workflow runs with delete-other-labels: false (additive only).
+#                    Synchronization preserves labels not listed in this file.
+#                    Only explicitly configured aliases are removed after migration.
 #                    To delete a label, remove it manually in the GitHub Labels UI.
 
 # Type labels

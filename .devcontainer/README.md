@@ -2,7 +2,7 @@
 title: Dev Container
 description: Pre-configured development environment for HVE Core with all required tools and extensions
 author: HVE Core Team
-ms.date: 2026-08-11
+ms.date: 2026-10-08
 ms.topic: guide
 keywords:
   - devcontainer
@@ -66,8 +66,8 @@ endpoints and credentials out of repository files.
 
 ### Languages & Runtimes
 
-* Node.js 24
-* Python 3.11
+* Node.js (version from `.node-version`)
+* Python (version from `.python-version`)
 * PowerShell 7.x
 
 ### CLI Tools
@@ -76,13 +76,13 @@ endpoints and credentials out of repository files.
 * GitHub CLI (`gh`)
 * GitHub Copilot CLI (`copilot`)
 * Azure CLI (`az`)
-* actionlint (GitHub Actions workflow linter)
 
 ### Code Quality
 
 * Markdown: markdownlint, markdown-table-formatter
 * Spelling: Code Spell Checker (VS Code extension)
-* Shell: shellcheck
+* Shell: shellcheck, pinned and checksum-verified from `scripts/security/tool-checksums.json`
+* Workflows: zizmor, pinned and checksum-verified from `scripts/security/tool-checksums.json`
 
 ### Security
 

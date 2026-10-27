@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-06
 ms.topic: guide
 keywords:
   - contributing
@@ -95,7 +95,7 @@ lanes with browser, model, moderation, or credential prerequisites.
 npm run validate:local             # Run the local-safe validation aggregate
 npm run lint:md                   # Run markdownlint
 npm run lint:ps                   # Run PowerShell analyzer
-npm run lint:yaml                 # Run YAML linter
+npm run lint:workflows            # Validate workflows and composite actions
 npm run lint:frontmatter          # Validate markdown frontmatter
 npm run lint:links                # Check link language paths
 npm run lint:md-links             # Check markdown links
@@ -107,6 +107,15 @@ npm run spell-check               # Run cspell
 npm run format:tables             # Format markdown tables
 npm run test:ps                   # Run PowerShell tests
 ```
+
+`lint:workflows` and `lint:workflows:gated` (part of `validate:local`) need
+the validator's own npm dependencies and the exact ShellCheck version from
+`scripts/security/tool-checksums.json` on `PATH`. Run
+`npm ci --prefix scripts/linting/workflow-validator --ignore-scripts` once; the
+devcontainer installs ShellCheck. See
+[Workflow Validation](./scripts/linting/README.md#workflow-validation) for other
+environments. The validator exits 2 when ShellCheck is missing or a different
+version, and the gated variant then fails.
 
 `ci:*` names CI-owned lanes but does not prevent ordinary local npm execution.
 Generic validation does not select browser, model, moderation, service, or

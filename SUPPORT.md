@@ -2,7 +2,7 @@
 title: Support
 description: Community support commitments, response times, and escalation paths for the HVE Core project
 author: HVE Core Team
-ms.date: 2026-07-08
+ms.date: 2026-10-12
 ms.topic: reference
 keywords:
   - support

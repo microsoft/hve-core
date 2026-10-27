@@ -715,7 +715,6 @@ class TestSilentTiming:
         "engine,audio_check,published",
         [
             ("none", "pass", True),
-            ("piper", "pass", False),
             ("azure", "pass", False),
             ("none", "fail", False),
         ],
@@ -805,7 +804,7 @@ class TestSilentTiming:
         )
         assert args.narration == "azure"
 
-    @pytest.mark.parametrize("engine", ["azure", "piper"])
+    @pytest.mark.parametrize("engine", ["azure"])
     def test_given_ci_voice_selection_when_rendered_then_rejected_before_writes(
         self, tmp_path, monkeypatch, engine
     ):

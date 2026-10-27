@@ -2,7 +2,7 @@
 title: Customer Card Render Skill Security Model
 description: STRIDE threat model for the customer-card-render skill organized by assets, adversaries, and trust buckets (untrusted DT markdown parsing, YAML content emission, CLI caller with out-of-process PowerPoint handoff) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-08-09
+ms.date: 2026-10-06
 ms.topic: reference
 estimated_reading_time: 8
 keywords:
@@ -33,7 +33,7 @@ The customer-card-render skill converts untrusted Design Thinking markdown into 
 | Trust buckets      | B1 untrusted markdown parsing, B2 YAML content emission, B3 caller/filesystem + PPTX handoff                     |
 | Credentials        | None handled or persisted                                                                                        |
 | Network egress     | None                                                                                                             |
-| Open residual gaps | 2 (SupplyChain-Med: inherited powerpoint build toolchain and uv bootstrap)                                       |
+| Open residual gaps | 2 (SupplyChain-Med: inherited powerpoint build toolchain; InfoDisc-Low: unclassified DT content)                 |
 
 ## Contents
 
@@ -221,10 +221,10 @@ flowchart TD
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                                                                                                                                                                     | Severity        | Status                                                                                                                                                                                       |
-|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| G-SUP-1 | The deck build is delegated out-of-process to the experimental powerpoint skill (`Invoke-PptxPipeline.ps1`) and inherits that skill's residual risk (sandboxed `content-extra.py` execution, LibreOffice/MuPDF document parsing). The documented `uv` toolchain bootstrap uses a `curl \| sh` / `irm \| iex` installer. | SupplyChain-Med | Accepted; see the `SECURITY.md` bundled with the `powerpoint` skill and pin the `uv` installer to a vetted release. When that skill is unavailable, treat this inherited risk as unassessed. |
-| G-INF-1 | Canonical DT artifacts may contain confidential product or customer prose; that content flows verbatim (escaped) into the emitted `content.yaml` and any downstream deck. There is no data-classification gate.                                                                                                         | InfoDisc-Low    | By design; operators must avoid rendering regulated content and control the output directory.                                                                                                |
+| Id      | Gap                                                                                                                                                                                                                                                                                                                                                          | Severity        | Status                                                                                                                                        |
+|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| G-SUP-1 | The deck build is delegated out-of-process to the experimental powerpoint skill (`Invoke-PptxPipeline.ps1`) and inherits that skill's residual risk (sandboxed `content-extra.py` execution, LibreOffice/MuPDF document parsing). The documented `uv` install uses a hash-verifying package manager or a release archive checked against its `.sha256` file. | SupplyChain-Med | Accepted; see the `SECURITY.md` bundled with the `powerpoint` skill. When that skill is unavailable, treat this inherited risk as unassessed. |
+| G-INF-1 | Canonical DT artifacts may contain confidential product or customer prose; that content flows verbatim (escaped) into the emitted `content.yaml` and any downstream deck. There is no data-classification gate.                                                                                                                                              | InfoDisc-Low    | By design; operators must avoid rendering regulated content and control the output directory.                                                 |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

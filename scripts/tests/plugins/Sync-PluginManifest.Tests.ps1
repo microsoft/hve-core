@@ -366,6 +366,24 @@ Describe 'Invoke-PluginManifestSync write mode' -Tag 'Unit' {
         $second.Changed | Should -BeFalse
         (Get-FileHash (Join-Path $script:WriteRoot 'plugin.json') -Algorithm SHA256).Hash | Should -BeExactly $before
     }
+
+    It 'Rewrites manifest when a committed component differs only in case' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'case-write')
+        $manifestPath = Join-Path $root 'plugin.json'
+        $expected = (Invoke-PluginManifestSync -RepoRoot $root).Manifest
+        $expectedAgent = $expected['agents'][0]
+        $casedAgent = $expectedAgent.ToUpperInvariant()
+        Set-FixtureManifest -Root $root -Transform {
+            param($m)
+            $m['agents'] = @($casedAgent) + @($expected['agents'] | Select-Object -Skip 1)
+            $m
+        }
+        $result = Invoke-PluginManifestSync -RepoRoot $root
+        $result.Changed | Should -BeTrue
+        $synced = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+        (@($synced['agents']) -ccontains $expectedAgent) | Should -BeTrue
+        (@($synced['agents']) -ccontains $casedAgent) | Should -BeFalse
+    }
 }
 
 Describe 'Invoke-PluginManifestSync failure atomicity' -Tag 'Unit' {
@@ -481,6 +499,31 @@ Describe 'Invoke-PluginManifestSync check mode' -Tag 'Unit' {
             Should -Match 'no supported drift detail is available'
     }
 
+    It 'Detects drift when a committed component path differs only in case' {
+        $expectedAgent = $script:CheckExpected['agents'][0]
+        $casedAgent = $expectedAgent.ToUpperInvariant()
+        $casedAgents = @($casedAgent) + @($script:CheckExpected['agents'] | Select-Object -Skip 1)
+        $committed = New-CommittedManifest -Override @{ agents = $casedAgents }
+        $differences = @(Compare-PluginManifest -Committed $committed -Expected $script:CheckExpected)
+        $differences -join "`n" | Should -Match "agents missing 1: $([regex]::Escape($expectedAgent))"
+        $differences -join "`n" | Should -Match "agents unexpected 1: $([regex]::Escape($casedAgent))"
+    }
+
+    It 'Fails check mode when a committed component path differs only in case' {
+        $expectedAgent = $script:CheckExpected['agents'][0]
+        $casedAgent = $expectedAgent.ToUpperInvariant()
+        Set-FixtureManifest -Root $script:CheckRoot -Transform {
+            param($m)
+            $m['agents'] = @($casedAgent) + @($script:CheckExpected['agents'] | Select-Object -Skip 1)
+            $m
+        }
+        $result = Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check
+        $result.Changed | Should -BeTrue
+        $result.Violations -join "`n" | Should -Match 'plugin.json is out of sync with the derived manifest'
+        $result.Violations -join "`n" | Should -Match "agents missing 1: $([regex]::Escape($expectedAgent))"
+        $result.Violations -join "`n" | Should -Match "agents unexpected 1: $([regex]::Escape($casedAgent))"
+    }
+
     AfterEach {
         [System.IO.File]::WriteAllBytes($script:CheckManifestPath, $script:CheckManifestBytes)
     }
@@ -574,6 +617,7 @@ Describe 'Plugin catalog validation' -Tag 'Unit' {
         @{ Field = 'commands'; Value = @('prompts/alpha/one.prompt.md') }
         @{ Field = 'rules'; Value = @('instructions/beta/one.instructions.md') }
         @{ Field = 'skills'; Value = @('skills/alpha/open-skill') }
+        @{ Field = 'extensions'; Value = @('.github/extensions/alpha') }
         @{ Field = 'hooks'; Value = 'hooks/shared/telemetry.json' }
         @{ Field = 'x-hve'; Value = @{ displayName = 'HVE Core' } }
     ) {
@@ -690,6 +734,141 @@ Describe 'Retired hooks support' -Tag 'Unit' {
 
         $written = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
         $written.Contains('hooks') | Should -BeFalse
+    }
+}
+
+Describe 'Extension containers' -Tag 'Unit' {
+    BeforeAll {
+        function New-ExtensionFixture {
+            <#
+            .SYNOPSIS
+                Builds a plugin fixture with packaged, unpackaged, nested, and untracked extension files.
+            #>
+            param([string]$Root)
+
+            $root = New-PluginFixture -Root $Root
+            $github = Join-Path $root '.github'
+            foreach ($relative in @(
+                    'extensions/alpha/session-log/extension.mjs',
+                    'extensions/alpha/session-log/lib/nested/extension.mjs',
+                    'extensions/alpha/helper/lib.mjs',
+                    'extensions/beta/other/extension.mjs',
+                    'extensions/root-ext/extension.mjs'
+                )) {
+                $path = Join-Path $github $relative
+                New-Item -ItemType Directory -Path (Split-Path $path -Parent) -Force | Out-Null
+                Set-Content -LiteralPath $path -Value '// fixture' -Encoding UTF8
+            }
+            & git -C $root add --all
+            $untracked = Join-Path $github 'extensions/gamma/untracked/extension.mjs'
+            New-Item -ItemType Directory -Path (Split-Path $untracked -Parent) -Force | Out-Null
+            Set-Content -LiteralPath $untracked -Value '// untracked' -Encoding UTF8
+            return $root
+        }
+
+        $script:ExtensionRoot = New-ExtensionFixture -Root (Join-Path $TestDrive 'extensions')
+        $script:ExtensionComponents = Get-PluginComponentSet -RepoRoot $script:ExtensionRoot
+    }
+
+    It 'Declares one container per package that holds an extension entry file' {
+        $script:ExtensionComponents.extensions | Should -Be @('.github/extensions/alpha', '.github/extensions/beta')
+    }
+
+    It 'Excludes unpackaged, nested, and untracked entry files' {
+        $script:ExtensionComponents.extensions | Should -Not -Contain '.github/extensions'
+        $script:ExtensionComponents.extensions | Should -Not -Contain '.github/extensions/root-ext'
+        $script:ExtensionComponents.extensions | Should -Not -Contain '.github/extensions/gamma'
+        $script:ExtensionComponents.extensions | Should -Not -Contain '.github/extensions/alpha/session-log'
+    }
+
+    It 'Emits extensions after skills only when containers exist' {
+        $manifest = New-PluginManifest -RepoRoot $script:ExtensionRoot -Component $script:ExtensionComponents -Version '1.2.3'
+        @($manifest.Keys)[-2..-1] | Should -Be @('skills', 'extensions')
+
+        $empty = [ordered]@{ agents = @(); commands = @(); rules = @(); skills = @(); extensions = @() }
+        (New-PluginManifest -RepoRoot $script:ExtensionRoot -Component $empty -Version '1.2.3').Contains('extensions') | Should -BeFalse
+    }
+
+    It 'Writes extensions and then passes check mode without further changes' {
+        $root = New-ExtensionFixture -Root (Join-Path $TestDrive 'extensions-sync')
+        $first = Invoke-PluginManifestSync -RepoRoot $root
+        $first.Violations | Should -HaveCount 0
+        $first.Changed | Should -BeTrue
+
+        $written = Get-Content -LiteralPath (Join-Path $root 'plugin.json') -Raw | ConvertFrom-Json -AsHashtable
+        @($written['extensions']) | Should -Be @('.github/extensions/alpha', '.github/extensions/beta')
+
+        (Invoke-PluginManifestSync -RepoRoot $root -Check).Violations | Should -HaveCount 0
+        (Invoke-PluginManifestSync -RepoRoot $root).Changed | Should -BeFalse
+    }
+
+    It 'Names extension containers missing from or added to the committed manifest' {
+        $expected = [ordered]@{ version = '1.2.3'; agents = @(); commands = @(); rules = @(); skills = @(); extensions = @('.github/extensions/alpha') }
+        $missing = [ordered]@{ version = '1.2.3'; agents = @(); commands = @(); rules = @(); skills = @() }
+        (Compare-PluginManifest -Committed $missing -Expected $expected) -join "`n" |
+            Should -Match 'extensions missing 1: \.github/extensions/alpha'
+
+        $withoutExtensions = [ordered]@{ version = '1.2.3'; agents = @(); commands = @(); rules = @(); skills = @() }
+        $extra = [ordered]@{ version = '1.2.3'; agents = @(); commands = @(); rules = @(); skills = @(); extensions = @('.github/extensions/zeta') }
+        (Compare-PluginManifest -Committed $extra -Expected $withoutExtensions) -join "`n" |
+            Should -Match 'extensions unexpected 1: \.github/extensions/zeta'
+    }
+
+    It 'Reports no extension drift or coverage calls when neither manifest declares extensions' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'extensions-absent')
+        $expected = (Invoke-PluginManifestSync -RepoRoot $root).Manifest
+        $expected.Contains('extensions') | Should -BeFalse
+        (Compare-PluginManifest -Committed $expected -Expected $expected) -join "`n" | Should -Not -Match 'extensions'
+        Get-PluginComponentCoverageViolations -RepoRoot $root -SourcePath '.' -Manifest $expected | Should -HaveCount 0
+    }
+
+    It 'Reports a declared container without an extension entry file' {
+        $root = New-ExtensionFixture -Root (Join-Path $TestDrive 'extensions-empty-container')
+        $manifest = (Invoke-PluginManifestSync -RepoRoot $root).Manifest
+        $manifest['extensions'] = @('.github/extensions/alpha/helper')
+
+        Get-PluginComponentCoverageViolations -RepoRoot $root -SourcePath '.' -Manifest $manifest |
+            Should -Match 'extensions path holds no extension folder with extension\.mjs: \.github/extensions/alpha/helper'
+    }
+
+    It 'Reports a declared container that escapes the plugin root' {
+        $root = New-ExtensionFixture -Root (Join-Path $TestDrive 'extensions-escape')
+        $manifest = (Invoke-PluginManifestSync -RepoRoot $root).Manifest
+        $manifest['extensions'] = @('../outside')
+
+        Get-PluginComponentCoverageViolations -RepoRoot $root -SourcePath '.' -Manifest $manifest |
+            Should -Match 'extensions path escapes the plugin root'
+    }
+
+    Context 'Packages without a direct entry file' {
+        BeforeAll {
+            $root = New-PluginFixture -Root (Join-Path $TestDrive 'extensions-isolated')
+            $github = Join-Path $root '.github'
+            foreach ($relative in @(
+                    'extensions/delta/tool/lib.mjs',
+                    'extensions/epsilon/tool/lib/nested/extension.mjs',
+                    'extensions/zeta/one/extension.mjs',
+                    'extensions/zeta/two/extension.mjs'
+                )) {
+                $path = Join-Path $github $relative
+                New-Item -ItemType Directory -Path (Split-Path $path -Parent) -Force | Out-Null
+                Set-Content -LiteralPath $path -Value '// fixture' -Encoding UTF8
+            }
+            & git -C $root add --all
+            $script:IsolatedExtensions = @((Get-PluginComponentSet -RepoRoot $root).extensions)
+        }
+
+        It 'Yields no container for a package holding only a non-entry file' {
+            $script:IsolatedExtensions | Should -Not -Contain '.github/extensions/delta'
+        }
+
+        It 'Yields no container for a package holding only a nested entry file' {
+            $script:IsolatedExtensions | Should -Not -Contain '.github/extensions/epsilon'
+        }
+
+        It 'Yields one container for a package holding two extensions' {
+            $script:IsolatedExtensions | Should -BeExactly @('.github/extensions/zeta')
+        }
     }
 }
 

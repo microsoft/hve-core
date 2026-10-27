@@ -18,12 +18,8 @@
 .PARAMETER DryRun
     Print SSML templates without generating audio.
 
-.PARAMETER Engine
-    Synthesis engine: azure (default) or piper. Piper must be installed separately.
-
 .PARAMETER Voice
-    Voice name. Defaults to en-US-Andrew:DragonHDLatestNeural for azure and
-    en_US-norman-medium for piper.
+    Azure AI Speech voice name. Defaults to en-US-Andrew:DragonHDLatestNeural.
 
 .PARAMETER Rate
     Speech prosody rate. Defaults to +10%.
@@ -61,10 +57,6 @@
 param(
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateSet('azure', 'piper')]
-    [string]$Engine,
 
     [Parameter(Mandatory = $false)]
     [string]$Voice,
@@ -107,7 +99,6 @@ function Get-VoiceoverArgument {
     [OutputType([string[]])]
     param(
         [switch]$DryRun,
-        [string]$Engine,
         [string]$Voice,
         [string]$Rate,
         [string]$ContentDir,
@@ -119,7 +110,6 @@ function Get-VoiceoverArgument {
 
     $arguments = [System.Collections.Generic.List[string]]::new()
     if ($DryRun) { $arguments.Add('--dry-run') }
-    if ($Engine) { $arguments.AddRange([string[]]@('--engine', $Engine)) }
     if ($Voice) { $arguments.AddRange([string[]]@('--voice', $Voice)) }
     if ($Rate) { $arguments.AddRange([string[]]@('--rate', $Rate)) }
     if ($ContentDir) { $arguments.AddRange([string[]]@('--content-dir', $ContentDir)) }
@@ -146,7 +136,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 
     $script = Join-Path $ScriptDir 'generate_voiceover.py'
-    $PythonArgs = Get-VoiceoverArgument -DryRun:$DryRun -Engine $Engine -Voice $Voice `
+    $PythonArgs = Get-VoiceoverArgument -DryRun:$DryRun -Voice $Voice `
         -Rate $Rate -ContentDir $ContentDir -OutputDir $OutputDir -Lexicon $Lexicon `
         -CollapseNewlines:$CollapseNewlines `
         -VerboseOutput:($VerbosePreference -ne 'SilentlyContinue')
