@@ -55,6 +55,34 @@ describe('steering panel', () => {
     });
 });
 
+describe('the second press', () => {
+    it('arms on the first press, ignores a press inside the half-second guard, and confirms a deliberate one', () => {
+        const { confirmPress, CONFIRM_GUARD_MS } = components;
+        const key = 'review-discard-trail-maps-FB-001';
+        assert.equal(CONFIRM_GUARD_MS, 500);
+        assert.equal(confirmPress(null, key, 1000), 'arm', 'the first press arms');
+        const armed = { key, at: 1000 };
+        assert.equal(confirmPress(armed, key, 1000), 'ignore', 'the second click of a double click');
+        assert.equal(confirmPress(armed, key, 1499), 'ignore', 'a press just inside the guard');
+        assert.equal(confirmPress(armed, key, 1500), 'confirm', 'a deliberate second press');
+        assert.equal(confirmPress(armed, 'review-discard-trail-maps-FB-002', 1100), 'arm', 'a press on another button arms that one');
+    });
+
+    it('holds back a repeated Enter or Space, so a held key presses nothing', () => {
+        const pressed = [];
+        const ctx = { ui: { confirm: null }, act: { pressConfirm: (key) => pressed.push(key), disarmConfirm: () => {}, confirmBlurred: () => {} } };
+        const button = components.confirmButton(ctx, { key: 'k', label: 'Discard', armedLabel: 'Discard FB-001?', onConfirm: () => {} });
+        let prevented = 0;
+        for (const key of ['Enter', ' ']) {
+            for (const listener of button.listeners.keydown ?? []) listener({ key, repeat: true, preventDefault: () => { prevented += 1; }, stopPropagation: () => {} });
+        }
+        assert.equal(prevented, 2, 'each repeat is held back before the browser turns it into a click');
+        for (const listener of button.listeners.keydown ?? []) listener({ key: 'Enter', repeat: false, preventDefault: () => { prevented += 1; }, stopPropagation: () => {} });
+        assert.equal(prevented, 2, 'a single key press goes through');
+        assert.deepEqual(pressed, [], 'key presses reach the button only as clicks');
+    });
+});
+
 describe('suggested edits', () => {
     it('show beside the unchanged text with their line changes and actions', () => {
         const { session, id, original } = withSuggestion(sample());
@@ -155,6 +183,8 @@ describe('send dialog', () => {
         assert.match(textOf(out), /one message that starts with “RPI canvas K7QF”/);
         assert.match(textOf(out), /Review checklist for Research/);
         assert.match(textOf(out), /Suggested edit to Summary in Research/);
+        assert.match(textOf(out), /Comment about F1 \(Research\)/, 'a row about a plain ID names its phase, as other loops\' rows do');
+        assert.doesNotMatch(textOf(out), /in Research \(Research\)|for Research \(Research\)/, 'no row names its phase twice');
         assert.match(textOf(out), /2 lines added, 0 removed/);
         for (const item of pending) {
             assert.ok(keyed(sheet, `review-discard-${taskId}-${item.id}`), `Discard ${item.id}`);

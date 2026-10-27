@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionPending, sessionTree, steerPanel } from './components.mjs';
+import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionPending, sessionTree, steerPanel } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -1010,10 +1010,10 @@ const act = {
     },
     /** Arms a second-press button, or runs it when the second press is deliberate. */
     pressConfirm(key, onConfirm, armedLabel) {
-        const armed = state.ui.confirm;
-        if (armed?.key === key) {
-            // A double click or a quick repeat lands inside the guard; only a deliberate press counts.
-            if (Date.now() - armed.at < CONFIRM_GUARD_MS) return;
+        // A double click or a quick repeat lands inside the guard; only a deliberate press counts.
+        const step = confirmPress(state.ui.confirm, key, Date.now());
+        if (step === 'ignore') return;
+        if (step === 'confirm') {
             clearConfirm();
             onConfirm();
             return;
@@ -1429,8 +1429,6 @@ let sendOpener = null;
 /** True while a discard or edit is in flight, when a re-render must not prepare a message from half-changed loops. */
 let feedbackBusy = false;
 
-/** A second press within this time is a double click, not a decision. */
-const CONFIRM_GUARD_MS = 500;
 /** An armed second-press button goes back after this long. */
 const CONFIRM_TIMEOUT_MS = 4000;
 let confirmTimer = 0;

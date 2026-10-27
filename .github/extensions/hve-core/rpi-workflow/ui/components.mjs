@@ -589,11 +589,30 @@ function feedbackTarget(ctx, item) {
     if (section) {
         return h('span', null, ' to ', h('strong', { text: section.title }), ` in ${PHASE_META[section.doc]?.label ?? section.doc}`, item.target.part ? `, ${item.target.part}` : null);
     }
-    return h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null, item.target.part ? `, ${item.target.part}` : null);
+    // A plain ID names its phase in parentheses, as other loops' items do in Review and send.
+    const phase = scoped.label ? null : PHASE_META[item.target.phase]?.label ?? null;
+    return h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null, phase ? ` (${phase})` : null, item.target.part ? `, ${item.target.part}` : null);
 }
 
 /** Matches EDITABLE_KINDS in lib/model.mjs: kinds whose words change here; the rest change where they were made. */
 const EDITABLE_KINDS = new Set(['comment', 'context', 'research-request', 'task-request', 'correction', 'answer', 'override']);
+
+/** A second press within this time is a double click, not a decision. */
+export const CONFIRM_GUARD_MS = 500;
+
+/**
+ * What a press on a second-press button does: the first press arms it, a press inside the guard
+ * after arming is ignored, and a later press confirms.
+ *
+ * @param {{ key: string, at: number } | null | undefined} armed The button armed now, if any.
+ * @param {string} key The pressed button's key.
+ * @param {number} now The press time in milliseconds.
+ * @returns {'arm' | 'ignore' | 'confirm'}
+ */
+export function confirmPress(armed, key, now) {
+    if (armed?.key !== key) return 'arm';
+    return now - armed.at < CONFIRM_GUARD_MS ? 'ignore' : 'confirm';
+}
 
 /**
  * A button that acts on a deliberate second press. The first press arms it: it becomes a
