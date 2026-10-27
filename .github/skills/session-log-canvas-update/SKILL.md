@@ -9,6 +9,11 @@ disable-model-invocation: true
 
 # Session Log Canvas Update
 
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. Before composing any user-facing reply or generated prose,
+read the shared `Plain Language` instruction by name unless already loaded.
+Apply it throughout the task. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Keep the Session Log canvas accurate when a new Copilot version changes what a session records. Find what changed between the schema the canvas was built against and the current one, then update the canvas so new and changed data renders correctly while sessions recorded by earlier versions stay readable.

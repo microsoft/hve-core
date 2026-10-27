@@ -1,7 +1,6 @@
 ---
 name: Plain Language
 description: "Use when composing any user-facing reply or generated prose, including questions, progress updates, explanations, and summaries."
-applyTo: '**'
 ---
 
 # Plain Language
