@@ -730,13 +730,12 @@ function steerSection(id, title, count, content, options = {}) {
 }
 
 /**
- * The steering panel: needs your input, decided by the agent, Now when the phase view gives
- * one, your feedback, add input, and the phase checklist, always in that order.
+ * The steering panel: needs your input, decided by the agent, your feedback, add input, and
+ * the phase checklist, always in that order.
  *
  * @param {any} ctx
- * @param {{ now?: HTMLElement | null }} [extra] `now`: Implement's progress, the work in hand, and blockers
  */
-export function steerPanel(ctx, extra = {}) {
+export function steerPanel(ctx) {
     const { session, view } = ctx.data;
     const phaseLabel = (phase) => PHASE_META[phase]?.label ?? phase;
     const waiting = view.interpretations.map((id) => session.feedback.find((item) => item.id === id)).filter(Boolean);
@@ -786,7 +785,6 @@ export function steerPanel(ctx, extra = {}) {
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
         steerSection('decided', 'Decided by the agent', view.decidedByAgent.length, view.decidedByAgent.length ? decided : h('p', { class: 'empty', text: 'No agent decisions yet.' }), { iconName: 'sparkle' }),
-        extra.now ? steerSection('now', 'Now', null, extra.now, { iconName: 'active', row: 'now', className: 'steer-now' }) : null,
         steerSection('feedback', 'Your feedback', pending.length + inFlight.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
         steerSection('checklist', ctx.ui.phase === 'review' ? 'Review checklist' : `${PHASE_META[ctx.ui.phase]?.label ?? ''} review checklist`, null, checklist(ctx), { iconName: 'checklist' }),

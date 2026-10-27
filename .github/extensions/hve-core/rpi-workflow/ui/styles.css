@@ -3851,71 +3851,18 @@ circle.diagram-mark-glyph {
   background: var(--rw-success);
 }
 
-.now-task {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  font: 400 14px/22px var(--rw-font);
-}
-
-.now-task > span {
-  flex: 1 1 20rem;
-}
-
-.activity {
-  display: grid;
-  max-width: 70ch;
-  list-style: none;
-  border-inline-start: 1px solid var(--rw-border);
-  margin-inline-start: 7px;
-}
-
-.activity li {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 8px;
-  padding: 4px 0 4px 12px;
-  color: var(--rw-fg-muted);
-  font: var(--rw-t-ui);
-}
-
-.activity li > .icon {
-  position: relative;
-  margin-inline-start: -21px;
-  margin-top: 2px;
-  padding: 1px;
-  border-radius: 50%;
-  background: var(--rw-bg);
-  box-sizing: content-box;
-}
-
-.activity li:first-child {
-  color: var(--rw-fg);
-}
-
-.activity li:first-child > .icon {
-  color: var(--rw-agent);
-}
-
-.activity .time {
-  color: var(--rw-fg-muted);
-  font: var(--rw-t-meta);
-}
-
 .paused-card {
   border-color: color-mix(in srgb, var(--rw-attention) 55%, var(--rw-border));
   background: color-mix(in srgb, var(--rw-attention) 6%, var(--rw-bg));
 }
 
-/* Implement: the task board pinned under the context bar, in its own scrolling panel. */
+/* Implement: the task board pinned under the context bar. It does not scroll; a lane's dropdown does. */
 .board-dock {
   position: sticky;
   top: var(--rw-context-h, 52px);
   z-index: 9;
   margin: 0 calc(-1 * var(--rw-gutter, 32px));
-  padding: 12px var(--rw-gutter, 32px);
+  padding: 10px var(--rw-gutter, 32px);
   border-bottom: 1px solid var(--rw-border);
   background: var(--rw-bg);
   box-shadow: 0 10px 12px -12px color-mix(in srgb, var(--rw-fg) 35%, transparent);
@@ -3943,6 +3890,18 @@ circle.diagram-mark-glyph {
   color: var(--rw-fg-muted);
 }
 
+/* Progress sits beside the title: a short bar and its count. */
+.board-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.board-progress .progress {
+  width: clamp(64px, 14vw, 140px);
+}
+
 .board-dock-summary {
   color: var(--rw-fg-muted);
   font: var(--rw-t-meta);
@@ -3961,21 +3920,7 @@ circle.diagram-mark-glyph {
 }
 
 .board-dock-body {
-  max-height: min(40vh, 340px);
-  margin-top: 10px;
-  overflow: auto;
-  overscroll-behavior: contain;
-}
-
-.board-dock-body:focus-visible {
-  outline-offset: 2px;
-}
-
-/* Narrow panels give the pinned board less height, leaving the rest to the page. */
-@media (max-width: 720px) {
-  .board-dock-body {
-    max-height: min(25vh, 220px);
-  }
+  margin-top: 8px;
 }
 
 /* Short panels keep the board in the page instead of pinning it. */
@@ -3983,11 +3928,6 @@ circle.diagram-mark-glyph {
   .board-dock {
     position: static;
     box-shadow: none;
-  }
-
-  .board-dock-body {
-    max-height: none;
-    overflow: visible;
   }
 }
 
@@ -4031,70 +3971,112 @@ circle.diagram-mark-glyph {
   gap: 4px;
 }
 
-/* Now, in the steering panel on Implement. */
-.now-panel {
-  display: grid;
-  gap: 8px;
-}
-
-.now-count {
-  font: var(--rw-t-ui);
-}
-
-.now-panel .progress {
-  max-width: none;
-}
-
-.now-panel .now-task {
-  font: var(--rw-t-ui);
-}
-
-.now-list {
-  display: grid;
-  gap: 6px;
-  list-style: none;
-  font: var(--rw-t-ui);
-}
-
-.now-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Columns with cards take most of the width; empty ones stay narrow. */
+/*
+ * Three lanes side by side, each with its header and one card. Narrow documents stack the
+ * lanes and keep each card to one line.
+ */
 .board {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .board-col {
-  flex: 3 1 140px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  gap: 4px;
   min-width: 0;
-  padding: 10px 8px 8px;
+  padding: 4px 6px 6px;
   border-radius: var(--rw-radius-lg);
   background: var(--rw-bg-subtle);
 }
 
-.board-col.is-empty {
-  flex: 1 1 96px;
+/* The dropdown hangs from the lane's header and covers what is below it. */
+.board-lane-head {
+  position: relative;
 }
 
 .board-col-title {
+  margin: 0;
+  font: 600 12.5px/20px var(--rw-font);
+}
+
+.board-lane-toggle,
+.board-lane-label {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin: 0 4px 8px;
-  font: 600 12.5px/20px var(--rw-font);
+  width: 100%;
+  min-height: 28px;
+  padding: 2px 6px;
+  border-radius: var(--rw-radius);
+  font: inherit;
+  text-align: start;
+}
+
+.board-lane-toggle {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--rw-fg);
+  cursor: pointer;
+  transition: background-color var(--rw-fast) var(--rw-ease), border-color var(--rw-fast) var(--rw-ease);
+}
+
+.board-lane-toggle:hover,
+.board-lane-toggle[aria-expanded="true"] {
+  border-color: var(--rw-border-control);
+  background: var(--rw-bg);
+}
+
+.board-lane-toggle .chev {
+  margin-inline-start: auto;
+  color: var(--rw-fg-muted);
+  transition: transform var(--rw-fast) var(--rw-ease);
+}
+
+.board-lane-toggle[aria-expanded="true"] .chev {
+  transform: rotate(90deg);
 }
 
 .board-col-title .count {
-  margin-inline-start: auto;
   background: var(--rw-bg);
+}
+
+.lane-flag {
+  display: inline-flex;
+  align-items: center;
+}
+
+.lane-flag .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.board-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 3;
+  max-height: min(50vh, 360px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--rw-border-control);
+  border-radius: var(--rw-radius-lg);
+  background: var(--rw-bg);
+  box-shadow: 0 12px 28px -8px color-mix(in srgb, var(--rw-fg) 40%, transparent);
+}
+
+.board-drop[hidden] {
+  display: none;
+}
+
+/* The open lane's own card sits under its dropdown, so it leaves the tab order too. */
+.board-col.is-open .board-lane-card {
+  visibility: hidden;
 }
 
 .board-list {
@@ -4107,36 +4089,48 @@ circle.diagram-mark-glyph {
   display: grid;
   gap: 4px;
   width: 100%;
-  padding: 8px 10px;
+  min-width: 0;
+  padding: 7px 10px;
   border: 1px solid var(--rw-border);
   border-radius: var(--rw-radius);
   background: var(--rw-bg);
   color: var(--rw-fg);
   font: var(--rw-t-ui);
   text-align: left;
-  scroll-margin: 8px;
+  cursor: pointer;
   transition: border-color var(--rw-fast) var(--rw-ease), background-color var(--rw-fast) var(--rw-ease);
 }
 
 .board-card:hover {
   border-color: var(--rw-border-control);
+  background: var(--rw-bg-hover);
 }
 
-.board-card.is-selected {
-  border-color: var(--rw-accent);
-  background: var(--rw-bg-selected);
-}
-
-.board-card.is-current:not(.is-selected) {
+.board-card.is-current {
   border-color: color-mix(in srgb, var(--rw-agent) 55%, var(--rw-border));
+}
+
+/* A paused or blocked card carries a colored edge beside its words; blocked outranks paused. */
+.board-card.is-paused,
+.board-card.is-blocked {
+  border-inline-start-width: 4px;
+  padding-inline-start: 7px;
+}
+
+.board-card.is-paused {
+  border-inline-start-color: var(--rw-attention);
+}
+
+.board-card.is-blocked {
+  border-inline-start-color: var(--rw-danger);
 }
 
 .board-card-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  gap: 4px 6px;
+  min-width: 0;
 }
 
 .board-card-head .badge {
@@ -4146,44 +4140,108 @@ circle.diagram-mark-glyph {
 }
 
 .board-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   font-weight: 600;
 }
 
-.board-card-meta {
+.board-card-activity {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
+  gap: 6px;
+  min-width: 0;
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-meta);
 }
 
-.board-card-meta .meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.board-card-meta .icon {
+.board-card-activity .icon {
+  flex: none;
   width: 12px;
   height: 12px;
+  color: var(--rw-agent);
 }
 
-.task-detail {
-  margin-top: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--rw-border);
-  border-radius: var(--rw-radius-lg);
-  background: var(--rw-bg);
+.board-card-activity .activity-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.task-detail > * + * {
-  margin-top: 8px;
+.board-card-activity .time {
+  flex: none;
 }
 
-.detail-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
+@container doc (max-width: 600px) {
+  .board-dock {
+    padding-block: 8px;
+  }
+
+  .board-dock-body {
+    margin-top: 6px;
+  }
+
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .board-col {
+    gap: 3px;
+    padding: 3px 4px 4px;
+  }
+
+  .board-lane-toggle,
+  .board-lane-label {
+    min-height: 24px;
+    padding: 0 6px;
+  }
+
+  .board-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+  }
+
+  .board-card.is-paused,
+  .board-card.is-blocked {
+    padding-inline-start: 5px;
+  }
+
+  .board-card-head {
+    flex: none;
+    flex-wrap: nowrap;
+  }
+
+  .board-card-title {
+    flex: 1 1 auto;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    word-break: break-all;
+  }
+
+  .board-card-activity {
+    display: none;
+  }
+
+  /* Marker words stay for screen readers; the icon and edge show them. */
+  .board-flag {
+    padding: 0 4px;
+  }
+
+  .board-flag-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .change-list,
@@ -5438,7 +5496,6 @@ kbd {
   .segmented label:has(input:checked),
   .option:has(input:checked),
   .mode:has(input:checked),
-  .board-card.is-selected,
   .id-chip.is-current,
   .id-chip.is-open,
   .tree-task.is-shown > .tree-card {
@@ -5450,7 +5507,6 @@ kbd {
 
   .option:has(input:checked) *,
   .mode:has(input:checked) *,
-  .board-card.is-selected *,
   .segmented label:has(input:checked) *,
   .tree-task.is-shown > .tree-card * {
     color: HighlightText;

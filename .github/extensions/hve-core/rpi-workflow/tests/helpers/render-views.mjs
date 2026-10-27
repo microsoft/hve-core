@@ -29,7 +29,7 @@ export function initialUi(phase) {
         corrections: new Map(),
         overrides: new Set(),
         revealed: new Set(),
-        selectedTask: null,
+        boardLane: null,
         diagramView: 'after',
         diagramPhase: null,
         recordOpen: true,

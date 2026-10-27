@@ -60,7 +60,7 @@ describe('icon rule', () => {
             for (const node of [steerPanel(makeContext(session, stage))].flat(Infinity).filter(Boolean)) root.appendChild(node);
             for (const chip of elements(root).filter((node) => node.localName === 'span' && node.classList.contains('id-chip'))) {
                 const control = insideButton(chip);
-                const expected = !control ? [] : control.classList.contains('task-toggle') || control.classList.contains('board-card') ? ['#i-file'] : ['#i-go-to'];
+                const expected = !control ? [] : control.classList.contains('task-toggle') ? ['#i-file'] : ['#i-go-to'];
                 assert.deepEqual(iconsOf(chip), expected, `${stage}: ${chip.textContent} in ${control?.className ?? 'no control'}`);
             }
         }

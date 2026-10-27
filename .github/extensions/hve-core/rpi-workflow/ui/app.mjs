@@ -57,7 +57,6 @@ const state = {
         corrections: new Map(),
         overrides: new Set(),
         revealed: new Set(),
-        selectedTask: null,
         diagramView: 'after',
         diagramPhase: null,
         recordOpen: false,
@@ -67,6 +66,7 @@ const state = {
         confirm: null,
         taskFilter: 'active',
         boardCollapsed: false,
+        boardLane: null,
         mapPhase: undefined,
         /** The waiting item Needs you last moved to. */
         lastNeeds: null,
@@ -237,6 +237,7 @@ function setPhase(phase, options = {}) {
     state.ui.place = null;
     state.ui.phase = phase;
     state.ui.highlight = null;
+    state.ui.boardLane = null;
     state.ui.navFilter = '';
     $('navFilter').value = '';
     setHash();
@@ -279,15 +280,11 @@ function navigate(ref, phaseOverride, options = {}) {
     const label = kindOf(id) ? find(id)?.ref ?? ref : find(id)?.title ?? ref;
     remember(from, from && { ...from, phase, id, label });
     if (/^[CW]\d{1,3}$/.test(id)) state.ui.recordOpen = true;
-    if (/^P\d{2}-T\d{2}$/.test(id)) {
-        if (phase === 'plan') state.ui.expanded.add(id);
-        if (phase === 'implement') {
-            state.ui.selectedTask = id;
-            state.ui.boardCollapsed = false;
-        }
-    }
-    // A phase lands in Phases and tasks, which shows all phases when its filter would hide this one.
-    if (/^P\d{2}$/.test(id) && phase === 'implement' && state.data && !implementView.filterShows(state.data.session, state.ui.taskFilter, id)) state.ui.taskFilter = 'all';
+    if (/^P\d{2}-T\d{2}$/.test(id) && (phase === 'plan' || phase === 'implement')) state.ui.expanded.add(id);
+    // A phase or task lands in Phases and tasks, which shows all tasks when its filter would hide it.
+    const widened = /^P\d{2}(?:-T\d{2})?$/.test(id) && phase === 'implement' && Boolean(state.data) && !implementView.filterShows(state.data.session, state.ui.taskFilter, id);
+    if (widened) state.ui.taskFilter = 'all';
+    state.ui.boardLane = null;
     closeDrawer(false);
     state.ui.phase = phase;
     state.ui.highlight = id;
@@ -301,10 +298,10 @@ function navigate(ref, phaseOverride, options = {}) {
             return;
         }
         if ($('steer').contains(element) && $('steer').inert) openSteer();
+        if (widened) announce(`Showing all tasks to reach ${ref}.`);
+        // The pinned board is always in view; scrolling to it would move the page under it.
         const dock = element.closest('.board-dock');
-        if (dock && window.getComputedStyle(dock).position === 'sticky') {
-            revealWithin(element.closest('.board-dock-body'), element);
-        } else {
+        if (!(dock && window.getComputedStyle(dock).position === 'sticky')) {
             const tall = element.getBoundingClientRect().height > $('document').clientHeight * 0.5;
             element.scrollIntoView({ block: tall ? 'start' : 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
         }
@@ -316,22 +313,6 @@ function navigate(ref, phaseOverride, options = {}) {
         }, 1200);
         if (options.agent) announce(`The agent pointed you to ${ref}${find(id)?.title ? `, ${find(id).title}` : ''}.`);
     });
-}
-
-/**
- * Scrolls only `frame` to bring `element` to its middle, so a card in the pinned task board is
- * shown without moving the page under it.
- *
- * @param {HTMLElement | null} frame
- * @param {HTMLElement} element
- */
-function revealWithin(frame, element) {
-    if (!frame) return;
-    const box = element.getBoundingClientRect();
-    const bounds = frame.getBoundingClientRect();
-    const top = box.top < bounds.top || box.bottom > bounds.bottom ? box.top - bounds.top - Math.max(0, (bounds.height - box.height) / 2) : 0;
-    const left = box.left < bounds.left || box.right > bounds.right ? box.left - bounds.left - Math.max(0, (bounds.width - box.width) / 2) : 0;
-    if (top || left) frame.scrollBy({ top, left, behavior: reducedMotion() ? 'auto' : 'smooth' });
 }
 
 /** Shows a remembered place without recording the move. */
@@ -416,7 +397,6 @@ const taskUi = () => ({
     corrections: new Map(),
     overrides: new Set(),
     revealed: new Set(),
-    selectedTask: null,
     place: null,
     diagramView: 'after',
     diagramPhase: null,
@@ -425,9 +405,10 @@ const taskUi = () => ({
     navFilter: '',
     feedbackEdit: null,
     confirm: null,
-    // Implement: which tasks Phases and tasks shows, whether the board is collapsed, and the map's phase (undefined: the one in progress).
+    // Implement: which tasks Phases and tasks shows, whether the board is collapsed, its open lane, and the map's phase (undefined: the one in progress).
     taskFilter: 'active',
     boardCollapsed: false,
+    boardLane: null,
     mapPhase: undefined,
 });
 const taskStash = new Map();
@@ -827,10 +808,6 @@ const act = {
         else state.ui.expanded.add(id);
         render();
     },
-    selectTask(id) {
-        state.ui.selectedTask = state.ui.selectedTask === id ? null : id;
-        render();
-    },
     setDiagram(patch) {
         if (patch.view) state.ui.diagramView = patch.view;
         if ('phase' in patch) state.ui.diagramPhase = patch.phase;
@@ -838,8 +815,14 @@ const act = {
     },
     toggleBoard() {
         state.ui.boardCollapsed = !state.ui.boardCollapsed;
+        state.ui.boardLane = null;
         render();
         announce(state.ui.boardCollapsed ? 'Task board collapsed.' : 'Task board expanded.');
+    },
+    /** Opens a lane's dropdown, closing any other, or closes it when it is open. */
+    toggleLane(id) {
+        state.ui.boardLane = state.ui.boardLane === id ? null : id;
+        render();
     },
     setTaskFilter(id) {
         state.ui.taskFilter = id;
@@ -1418,7 +1401,7 @@ function renderDocument() {
 
 function renderSteer() {
     const ctx = context();
-    clear($('steerBody')).append(...steerPanel(ctx, { now: state.ui.phase === 'implement' ? implementView.nowSection(ctx) : null }));
+    clear($('steerBody')).append(...steerPanel(ctx));
 }
 
 // Review and send
@@ -1541,6 +1524,18 @@ function renderSendButton() {
     $('sendCount').textContent = String(waiting);
     sendBtn.setAttribute('aria-label', waiting ? `Review and send, ${plural(waiting, 'item')} waiting` : 'Review and send, nothing waiting');
     sendBtn.title = waiting ? `Review and send ${plural(waiting, 'item')} to the agent` : 'Nothing to send yet. Answer, comment, or suggest an edit first.';
+}
+
+/** The CSS selector for a board lane. */
+const laneSelector = (lane) => `[data-lane="${CSS.escape(lane)}"]`;
+
+/** Closes the open lane's dropdown, moving focus to its button when asked. */
+function closeLane(returnFocus) {
+    const lane = state.ui.boardLane;
+    if (!lane) return;
+    state.ui.boardLane = null;
+    render();
+    if (returnFocus) document.querySelector(`[data-key="board-lane-${CSS.escape(lane)}"]`)?.focus({ preventScroll: true });
 }
 
 /** Describes the focused control so a re-render can find it, or a sensible neighbor when it is gone. */
@@ -1737,6 +1732,8 @@ function renderPage() {
     const doc = $('document');
     const scroll = doc.scrollTop;
     const steerScroll = $('steer').scrollTop;
+    const lane = state.ui.boardLane;
+    const laneScroll = lane ? $(`board-drop-${lane}`)?.scrollTop ?? 0 : 0;
     renderHeader();
     renderSendButton();
     renderRail();
@@ -1747,6 +1744,7 @@ function renderPage() {
     watchOffsets();
     doc.scrollTop = scroll;
     $('steer').scrollTop = steerScroll;
+    if (lane && $(`board-drop-${lane}`)) $(`board-drop-${lane}`).scrollTop = laneScroll;
     restoreFocus(key);
     applyPanels();
     if ($('sendSheet').open) {
@@ -1918,6 +1916,9 @@ function onKeydown(event) {
         } else if (!$('sessionMenu').hidden) {
             toggleSessionMenu(false);
             $('sessionBtn').focus();
+        } else if (state.ui.boardLane) {
+            const active = document.activeElement;
+            closeLane(!active || active === document.body || Boolean(active.closest('[data-lane]')));
         } else if (state.ui.drawer) {
             closeDrawer(true);
         } else if (state.ui.editing && document.activeElement?.closest('.editor')) {
@@ -2112,6 +2113,18 @@ function wire() {
     document.addEventListener('click', (event) => {
         if (!$('appearanceMenu').hidden && !event.target.closest('#appearanceMenu, #appearanceBtn')) toggleAppearance(false);
         if (!$('sessionMenu').hidden && event.target.isConnected && !event.target.closest('#sessionMenu, #sessionBtn')) toggleSessionMenu(false);
+        if (state.ui.boardLane && event.target.isConnected && !event.target.closest(`${laneSelector(state.ui.boardLane)}, .preview`)) closeLane(false);
+    });
+    // Focus leaving the open lane for anything but a card's preview closes it, once focus has landed.
+    document.addEventListener('focusout', (event) => {
+        const lane = state.ui.boardLane;
+        if (!lane || !event.target.closest?.(laneSelector(lane))) return;
+        const next = event.relatedTarget;
+        if (!(next instanceof Element) || next.closest(`${laneSelector(lane)}, .preview`)) return;
+        window.setTimeout(() => {
+            if (state.ui.boardLane !== lane || document.activeElement?.closest?.(`${laneSelector(lane)}, .preview`)) return;
+            closeLane(false);
+        }, 0);
     });
     $('sessionBtn').addEventListener('click', () => toggleSessionMenu());
     $('sessionMenu').addEventListener('focusout', (event) => {
