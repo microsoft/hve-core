@@ -58,9 +58,32 @@ describe('parseFlowchart', () => {
         const many = ['flowchart LR', ...Array.from({ length: 130 }, (_, i) => `n${i}["Node ${i}"]`)].join('\n');
         assert.throws(() => diagram.parseFlowchart(many), /limited to 120 parts/);
     });
+
+    it('reads node labels up to 240 characters and edge labels up to 120, but not longer', () => {
+        const graph = diagram.parseFlowchart(`flowchart LR\n  a["${'n'.repeat(240)}"]\n  b["B"]\n  a -->|${'e'.repeat(120)}| b`);
+        assert.equal(graph.nodes.get('a').label.length, 240);
+        assert.equal(graph.edges[0].label.length, 120);
+        assert.throws(() => diagram.parseFlowchart(`flowchart LR\n  a["${'n'.repeat(241)}"]`), /Unsupported diagram line/);
+        assert.throws(() => diagram.parseFlowchart(`flowchart LR\n  a -->|${'e'.repeat(121)}| b`), /Unsupported diagram line/);
+    });
 });
 
 describe('layout', () => {
+    it('lays out a cycle that empties a layer with real sizes and no empty layer', () => {
+        // rpi-skills-cleanup's After: skills and refs point at each other, which once left layer 0 empty.
+        const graph = diagram.parseFlowchart([
+            'flowchart LR',
+            ...['agent', 'skills', 'refs', 'rtpl', 'briefs', 'subs', 'evals', 'docs'].map((id) => `    ${id}["${id}"]`),
+            '    agent --> skills', '    skills --> refs', '    refs --> skills', '    refs --> rtpl',
+            '    refs --> briefs', '    briefs --> subs', '    evals --> skills', '    docs --> briefs',
+        ].join('\n'));
+        const { width, height, layerOf, positions } = diagram.layout(graph);
+        assert.ok(Number.isFinite(width) && Number.isFinite(height), `${width} x ${height}`);
+        const layers = new Set(layerOf.values());
+        assert.deepEqual([...layers].sort((a, b) => a - b), Array.from({ length: layers.size }, (_, index) => index));
+        assert.ok([...positions.values()].every((box) => Number.isFinite(box.x) && Number.isFinite(box.y)));
+    });
+
     it('places every plan edge across one layer with no crossings or overlaps', () => {
         const graph = diagram.parseFlowchart(AFTER);
         const { positions, layerOf, horizontal } = diagram.layout(graph);

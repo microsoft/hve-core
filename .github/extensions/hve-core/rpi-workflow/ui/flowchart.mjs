@@ -6,11 +6,12 @@
  * the source reader can report a diagram it cannot draw: labeled nodes; solid (`-->`) and
  * dashed (`-.->`) edges, each with an optional label; `class` lines; and `subgraph` groups
  * closed by `end`. `%%` lines, `classDef` styles, and `direction` lines are ignored, and
- * anything else throws, naming the line.
+ * anything else throws, naming the line. Node labels may run to 240 characters, and edge and
+ * group labels to 120; the drawing wraps them without losing words.
  */
 
-const NODE_RE = /^([A-Za-z][\w-]{0,40})\["([^"\n]{1,120})"\]$/;
-const EDGE_RE = /^([A-Za-z][\w-]{0,40})\s*(-->|-\.->)\s*(?:\|([^|\n]{1,60})\|\s*)?([A-Za-z][\w-]{0,40})$/;
+const NODE_RE = /^([A-Za-z][\w-]{0,40})\["([^"\n]{1,240})"\]$/;
+const EDGE_RE = /^([A-Za-z][\w-]{0,40})\s*(-->|-\.->)\s*(?:\|([^|\n]{1,120})\|\s*)?([A-Za-z][\w-]{0,40})$/;
 const CLASS_RE = /^class\s+([\w,-]{1,400})\s+([A-Za-z][\w-]{0,30})$/;
 const GROUP_RE = /^subgraph\s+([A-Za-z][\w-]{0,40})(?:\s*\["([^"\n]{1,120})"\]|\s*\[([^\]\n]{1,120})\])?$/;
 const MAX_NODES = 120;

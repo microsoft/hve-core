@@ -102,6 +102,10 @@ export function layout(graph) {
             layer.set(id, Math.min(...next) - 1);
         }
     }
+    // Pulling nodes toward their successors can empty a layer, such as in a cycle; renumber so none is.
+    const used = [...new Set(layer.values())].sort((a, b) => a - b);
+    const dense = new Map(used.map((value, index) => [value, index]));
+    for (const id of ids) layer.set(id, dense.get(layer.get(id)));
     const layers = [];
     for (const id of ids) {
         (layers[layer.get(id)] ??= []).push(id);
