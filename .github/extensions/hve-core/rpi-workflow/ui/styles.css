@@ -4090,6 +4090,11 @@ circle.diagram-mark-glyph {
   list-style: none;
 }
 
+/* An empty lane says None on a line no taller than a one-line card. */
+.board-col > .empty {
+  padding: 6px 8px;
+}
+
 .board-card {
   display: grid;
   gap: 4px;
