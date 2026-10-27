@@ -84,6 +84,11 @@ pii_assessment:
     controls_present: <count>
     controls_absent: <count>
     controls_partial: <count>
+    controls_needs_review: <count>
+  review_items:
+    - kind: "detection | control"
+      ref: "<DET-id or control name with DET-id>"
+      reason: "<why confirmation is needed>"
   findings_summary:
     total_findings: <count>
     by_severity:
@@ -100,11 +105,13 @@ pii_assessment:
 
 ## Overall verdict rules
 
-| Verdict     | Condition                                                         |
-|-------------|-------------------------------------------------------------------|
-| PROTECTED   | All detected PII has all required controls present                |
-| GAPS_FOUND  | Some controls are missing but no CRITICAL findings                |
-| UNPROTECTED | One or more CRITICAL findings (T3 data without required controls) |
+| Verdict     | Condition                                                               |
+|-------------|-------------------------------------------------------------------------|
+| PROTECTED   | No ABSENT, PARTIAL, or NEEDS_REVIEW items remain                        |
+| GAPS_FOUND  | No CRITICAL findings, but ABSENT, PARTIAL, or NEEDS_REVIEW items remain |
+| UNPROTECTED | One or more CRITICAL findings (T3 data without required controls)       |
+
+NEEDS_REVIEW items never produce CRITICAL findings.
 
 ## Backlog item template
 
@@ -165,4 +172,4 @@ finding:
 
 ---
 
-Schema is original content (CC BY 4.0) following the finding and backlog patterns established by the security-reviewer and privacy-by-design skills within hve-core.
+Schema is original content (CC BY 4.0) following the finding and backlog patterns established by the security-reviewer agent and privacy-standards skill within hve-core.

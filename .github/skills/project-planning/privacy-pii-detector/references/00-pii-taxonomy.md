@@ -9,11 +9,11 @@ This reference defines the core Personal Information (PI) and Personally Identif
 
 ## Sensitivity tiers
 
-| Tier | Label            | Risk level | Example                          | Regulatory trigger                              |
-|------|------------------|------------|----------------------------------|-------------------------------------------------|
-| T1   | Identifier       | Medium     | Email, phone, name               | Standard GDPR/CCPA obligations                  |
-| T2   | Sensitive        | High       | Financial, health, biometric     | Enhanced protections; DPIA likely               |
-| T3   | Special Category | Critical   | Racial origin, genetic, criminal | Explicit consent required; maximum restrictions |
+| Tier | Label            | Risk level | Example                                   | Regulatory trigger                                                            |
+|------|------------------|------------|-------------------------------------------|-------------------------------------------------------------------------------|
+| T1   | Identifier       | Medium     | Email, phone, name                        | Standard GDPR/CCPA obligations                                                |
+| T2   | Sensitive        | High       | Financial, national ID, credential        | Enhanced protections; DPIA likely                                             |
+| T3   | Special Category | Critical   | Health, biometric, genetic, racial origin | Explicit consent or another documented lawful condition; maximum restrictions |
 
 ## Core PII catalog (all industries)
 
@@ -41,24 +41,26 @@ This reference defines the core Personal Information (PI) and Personally Identif
 | PII-022 | Financial account         | Bank account, IBAN, BSB                      | PCI DSS, CCPA                |
 | PII-023 | Payment card              | PAN, CVV, expiry                             | PCI DSS                      |
 | PII-024 | Income/salary             | Compensation data                            | Employment privacy laws      |
-| PII-025 | Health condition          | Diagnosis, symptoms, treatment               | HIPAA, GDPR Art. 9           |
 | PII-026 | Medication                | Prescriptions, medication names              | HIPAA                        |
 | PII-027 | Insurance ID              | Policy number, member ID                     | HIPAA, jurisdiction-specific |
-| PII-028 | Biometric data            | Fingerprint, iris, voiceprint                | GDPR Art. 9, BIPA            |
 | PII-029 | Authentication credential | Password hash, MFA secret, security question | NIST SP 800-63               |
 
 ### Tier 3: Special Category
 
-| ID      | PII Type               | Description                       | Regulatory anchor    |
-|---------|------------------------|-----------------------------------|----------------------|
-| PII-040 | Racial/ethnic origin   | Self-identified or inferred       | GDPR Art. 9(1)       |
-| PII-041 | Political opinion      | Party affiliation, voting record  | GDPR Art. 9(1)       |
-| PII-042 | Religious belief       | Faith, congregation membership    | GDPR Art. 9(1)       |
-| PII-043 | Trade union membership | Union affiliation                 | GDPR Art. 9(1)       |
-| PII-044 | Genetic data           | DNA sequence, genetic markers     | GDPR Art. 9(1), GINA |
-| PII-045 | Sexual orientation     | Orientation or gender identity    | GDPR Art. 9(1)       |
-| PII-046 | Criminal record        | Convictions, charges, proceedings | GDPR Art. 10         |
-| PII-047 | Child data             | Data of individuals under 13/16   | COPPA, GDPR Art. 8   |
+| ID      | PII Type               | Description                                  | Regulatory anchor     |
+|---------|------------------------|----------------------------------------------|-----------------------|
+| PII-025 | Health condition       | Diagnosis, symptoms, treatment               | GDPR Art. 9(1), HIPAA |
+| PII-028 | Biometric data         | Fingerprint, iris, voiceprint, face template | GDPR Art. 9(1), BIPA  |
+| PII-040 | Racial/ethnic origin   | Self-identified or inferred                  | GDPR Art. 9(1)        |
+| PII-041 | Political opinion      | Party affiliation, voting record             | GDPR Art. 9(1)        |
+| PII-042 | Religious belief       | Faith, congregation membership               | GDPR Art. 9(1)        |
+| PII-043 | Trade union membership | Union affiliation                            | GDPR Art. 9(1)        |
+| PII-044 | Genetic data           | DNA sequence, genetic markers                | GDPR Art. 9(1), GINA  |
+| PII-045 | Sexual orientation     | Orientation or gender identity               | GDPR Art. 9(1)        |
+| PII-046 | Criminal record        | Convictions, charges, proceedings            | GDPR Art. 10          |
+| PII-047 | Child data             | Data of individuals under 13/16              | COPPA, GDPR Art. 8    |
+
+GDPR Art. 9(1) covers biometric data processed to uniquely identify a person. Classify PII-028 as T3 by default, and as T2 only when code evidence shows the data is not used to identify anyone (for example, a stored image with no matching or template extraction).
 
 ## Derived and inferred PII
 
@@ -81,6 +83,20 @@ When classifying detected data:
 3. **Derived PII** — inferred from behavioral patterns. Flag with confidence LOW and mark as NEEDS_REVIEW.
 4. **Pseudonymized data** — data with identifiers replaced by tokens. Still PII under GDPR Art. 4(5); flag but note pseudonymization as a control.
 5. **Anonymized data** — data that cannot be re-identified. Not PII; do not flag.
+
+### Resolution order
+
+When more than one type could apply to a field, resolve in this order and report one type per field:
+
+1. **Suppressions** from `.pii-config.yml` — skip the field.
+2. **Custom types** from `.pii-config.yml`.
+3. **Industry overlay types** — whether the industry comes from `.pii-config.yml` or is inferred in Phase 1.
+4. **Core types** from this catalog.
+5. **Tier overrides** from `.pii-config.yml` apply to the resolved type, including overlay types.
+
+The first step with a match wins. Within a step, the most specific name match wins as defined in [Matching rules](01-detection-patterns.md#matching-rules). An overlay type that matches a field supersedes any core type that matches the same field, so report only the overlay type.
+
+Example: with the healthcare overlay active, `diagnosisCode` matches core PII-025 and healthcare PII-201; report only PII-201. With the financial overlay active, `cardNumber` reports PII-300, not PII-023; `creditScore` reports PII-306, not PII-064.
 
 ## Industry extension points
 

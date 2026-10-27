@@ -7,6 +7,18 @@ description: Language-agnostic and language-specific code patterns for identifyi
 
 This reference defines the patterns agents use to detect PII processing in codebases. Patterns are organized by detection method and map to PII taxonomy IDs.
 
+## Matching rules
+
+Name patterns in this file, in every industry overlay, and in `.pii-config.yml` custom types match identifier tokens, not raw substrings.
+
+1. Split each identifier into lowercase tokens on camelCase and PascalCase boundaries, `_`, `-`, `.`, and letter-digit boundaries. `icd10Code` becomes `icd`, `10`, `code`; `EMAIL_ADDRESS` becomes `email`, `address`.
+2. Split each pattern the same way after removing `*`. A pattern matches when its tokens equal a contiguous run of identifier tokens, or when its joined tokens equal the joined tokens of a contiguous run. `*firstName*` matches `user_first_name`; `*username*` matches `userName` and `user_name`.
+3. A pattern never matches part of a token. `*pan*` does not match `company` or `expand`, `*pin*` does not match `mapping`, `*tin*` does not match `setting`, `*sar*` does not match `necessary`, `*lac*` does not match `replace`, and `*condition*` does not match `conditional`.
+4. When several patterns match one identifier, report only the most specific match: the pattern with the most tokens, then the longest. `emailAddress` reports PII-002 only, not PII-004; `ipAddress` reports PII-006 only.
+5. Short or ambiguous tokens are capped at MEDIUM confidence unless surrounding context confirms the PII type (for example, a card-number format check next to `pan`, or a health resource next to `condition`): `pan`, `pin`, `tin`, `sar`, `lac`, `cgi`, `dna`, `mri`, `npi`, `ndc`, `snp`, `condition`.
+
+Industry and custom types then resolve against core types using the classification order in [00 PII Taxonomy](00-pii-taxonomy.md#classification-rules).
+
 ## Detection methods
 
 | Method                  | How it works                                                    | Confidence |
@@ -22,7 +34,7 @@ This reference defines the patterns agents use to detect PII processing in codeb
 
 ## Naming convention patterns
 
-### Field name indicators (case-insensitive, applies to variables, columns, JSON keys, model fields)
+### Field name indicators (case-insensitive, token-matched per [Matching rules](#matching-rules); applies to variables, columns, JSON keys, model fields)
 
 | Pattern (glob/regex)                                                    | Maps to PII type          | Confidence |
 |-------------------------------------------------------------------------|---------------------------|------------|
@@ -133,11 +145,13 @@ logger.info(f"Payment processed for user_id={user.id}")
 
 ## Detection confidence levels
 
-| Confidence | Meaning                                                    | Action                        |
-|------------|------------------------------------------------------------|-------------------------------|
-| HIGH       | Strong evidence of PII processing (naming + context match) | Report as confirmed detection |
-| MEDIUM     | Probable PII (naming match but ambiguous context)          | Report with NEEDS_REVIEW flag |
-| LOW        | Possible PII (indirect inference or weak signal)           | Report only in verbose mode   |
+| Confidence | Meaning                                                    | Action                                                         |
+|------------|------------------------------------------------------------|----------------------------------------------------------------|
+| HIGH       | Strong evidence of PII processing (naming + context match) | Report as confirmed detection; proceed to control verification |
+| MEDIUM     | Probable PII (naming match but ambiguous context)          | Report as NEEDS_REVIEW                                         |
+| LOW        | Possible PII (indirect inference or weak signal)           | Report as NEEDS_REVIEW                                         |
+
+NEEDS_REVIEW detections are listed for confirmation and do not produce control-gap findings until a reviewer or surrounding context confirms them.
 
 ## Language-specific hints
 

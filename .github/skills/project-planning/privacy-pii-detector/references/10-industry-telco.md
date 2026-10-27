@@ -92,20 +92,20 @@ Beyond core tier controls, telco PII requires:
 
 ## Telco regulatory context
 
-| Regulation                                | Jurisdiction | Key requirement                                                 |
-|-------------------------------------------|--------------|-----------------------------------------------------------------|
-| ePrivacy Directive (2002/58/EC)           | EU           | Consent for location data; confidentiality of communications    |
-| Telecommunications Act 1997               | Australia    | Metadata retention (2 years); interception warrant requirements |
-| CPNI rules (47 CFR § 64.2001)             | US           | Customer Proprietary Network Information protection             |
-| Telecommunications (Interception) Act     | Australia    | Lawful interception obligations                                 |
-| EU Data Retention Directive (invalidated) | EU           | Historical context; replaced by national implementations        |
+| Regulation                                            | Jurisdiction | Key requirement                                                             |
+|-------------------------------------------------------|--------------|-----------------------------------------------------------------------------|
+| ePrivacy Directive (2002/58/EC)                       | EU           | Consent for location data; confidentiality of communications                |
+| Telecommunications (Interception and Access) Act 1979 | Australia    | Metadata retention (2 years, s 187C); interception warrant requirements     |
+| CPNI rules (47 CFR § 64.2001)                         | US           | Customer Proprietary Network Information protection                         |
+| Telecommunications Act 1997                           | Australia    | Use and disclosure restrictions on telecommunications information (Part 13) |
+| EU Data Retention Directive (invalidated)             | EU           | Historical context; replaced by national implementations                    |
 
 ## Official sources
 
 * [General Data Protection Regulation](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
 * [ePrivacy Directive](https://eur-lex.europa.eu/eli/dir/2002/58/oj)
 * [Telecommunications Act 1997](https://www.legislation.gov.au/C2004A05145/latest/text)
-* [Telecommunications (Interception and Access) Act 1979](https://www.legislation.gov.au/C2004A00448/latest/text)
+* [Telecommunications (Interception and Access) Act 1979](https://www.legislation.gov.au/C2004A02124/latest/text)
 * [Customer proprietary network information rules](https://www.ecfr.gov/current/title-47/chapter-I/subchapter-B/part-64/subpart-U)
 * [Data Retention Directive](https://eur-lex.europa.eu/eli/dir/2006/24/oj)
 

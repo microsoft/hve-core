@@ -7,7 +7,7 @@ metadata:
   authors: "Microsoft (detection taxonomy and control framework); NIST (PII definition from SP 800-122); GDPR (personal data definition from Art. 4); OAIC (Australian PI definition from Privacy Act 1988)"
   spec_version: "1.0"
   framework_revision: "1.0.0"
-  last_updated: "2026-08-10"
+  last_updated: "2026-10-27"
   content_based_on: "https://doi.org/10.6028/NIST.SP.800-122; https://gdpr-info.eu/art-4-gdpr/; https://www.oaic.gov.au/privacy/your-privacy-rights/what-is-personal-information"
 ---
 
@@ -45,8 +45,7 @@ Use when you need to:
 
 Do not use for:
 
-- Principle-level privacy assessment (use `privacy-by-design`)
-- Standards mapping and DPIA thresholds (use `privacy-standards`)
+- Principle-level privacy assessment, standards mapping, and DPIA thresholds (use `privacy-standards`)
 - Security vulnerability detection (use OWASP skills)
 - RAI assessment (use `rai-planner`)
 
@@ -55,7 +54,7 @@ Do not use for:
 - Stop if the codebase contains no identifiable data processing (no models, APIs, databases, or data flows).
 - Do not fabricate PII detections; only report what is evidenced by code patterns.
 - Do not provide legal classification of data; frame findings as planning guidance.
-- When detection confidence is LOW, report as NEEDS_REVIEW rather than FAIL.
+- When detection confidence is MEDIUM or LOW, report as NEEDS_REVIEW rather than FAIL.
 
 ## Normative references
 
@@ -67,9 +66,9 @@ Do not use for:
 
 ## Industry overlays
 
-5. [10 Telco Overlay](references/10-industry-telco.md) — telecommunications-specific PII types and controls
-6. [11 Healthcare Overlay](references/11-industry-healthcare.md) — health data PII types and controls
-7. [12 Financial Services Overlay](references/12-industry-financial.md) — financial data PII types and controls
+6. [10 Telco Overlay](references/10-industry-telco.md) — telecommunications-specific PII types and controls
+7. [11 Healthcare Overlay](references/11-industry-healthcare.md) — health data PII types and controls
+8. [12 Financial Services Overlay](references/12-industry-financial.md) — financial data PII types and controls
 
 ## Skill layout
 
@@ -101,14 +100,17 @@ If no industry context is determinable, use only the core PII taxonomy.
 For each file in scope:
 1. Apply detection patterns from `01-detection-patterns.md`.
 2. Apply industry-specific patterns from the applicable overlay.
-3. Record each detection with location, PII type, confidence level, and evidence.
+3. Resolve each field to one PII type using the resolution order in `00-pii-taxonomy.md`.
+4. Record each detection with location, PII type, confidence level, and evidence.
+
+Only HIGH-confidence detections proceed to control verification. MEDIUM and LOW detections are reported as NEEDS_REVIEW for confirmation.
 
 ### Phase 3: Control verification
 
-For each detected PII type:
+For each confirmed PII type:
 1. Look up required controls from `02-control-expectations.md` based on sensitivity tier.
 2. Search the codebase for evidence that each required control is implemented.
-3. Record control status: PRESENT, ABSENT, or PARTIAL.
+3. Record control status: PRESENT, ABSENT, PARTIAL, or NEEDS_REVIEW, using the sufficiency rules in `02-control-expectations.md`.
 
 ### Phase 4: Finding generation
 
@@ -117,11 +119,12 @@ For each ABSENT or PARTIAL control:
 2. Include specific remediation guidance.
 3. Map to a backlog item with priority based on sensitivity tier.
 
+List NEEDS_REVIEW detections and controls as review items for confirmation. They do not generate control-gap findings.
+
 ## Integration with other skills
 
 | Skill               | Relationship                                                                         |
 |---------------------|--------------------------------------------------------------------------------------|
-| `privacy-by-design` | PII detector feeds into PbD assessment; detected PII informs principle evaluation    |
 | `privacy-standards` | Standards skill provides regulatory context for detected PII types                   |
 | `security-planning` | Security controls overlap with PII protection; cross-reference rather than duplicate |
 | `code-review`       | PII detector can run as a perspective within code review workflow                    |

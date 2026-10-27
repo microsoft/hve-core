@@ -104,8 +104,8 @@ catalog_import:
   # Microsoft Purview
   purview:
     enabled: false
-    # When enabled, the detector merges Purview sensitivity labels with its taxonomy
-    # Requires: PURVIEW_TENANT_ID and PURVIEW_CLIENT_ID environment variables
+    # Planned: live Purview label retrieval is not implemented yet.
+    # label_mapping is applied only to labels already present in code or config.
     label_mapping:
       "Highly Confidential": "T3"
       "Confidential": "T2"
@@ -126,7 +126,7 @@ retention_overrides:
 
   - pii_type: "PII-106"       # CDR (telco)
     retention_days: 730       # 2 years (Australian metadata retention)
-    justification: "Telecommunications (Interception and Access) Act 1979 s 187AA"
+    justification: "Telecommunications (Interception and Access) Act 1979 s 187C"
 ```
 
 ## Schema field reference
@@ -189,10 +189,12 @@ Optional. Import classification from external data catalogs.
 
 #### `purview`
 
-| Field           | Required         | Description                                  |
-|-----------------|------------------|----------------------------------------------|
-| `enabled`       | Yes              | Whether to import from Microsoft Purview     |
-| `label_mapping` | Yes (if enabled) | Maps Purview sensitivity labels to PII tiers |
+Live Purview label retrieval is planned but not implemented. The skill does not call Purview, and setting `enabled: true` does not fetch labels. The detector applies `label_mapping` only to sensitivity labels already present in code or configuration, and notes in the assessment scope when `enabled: true` is set.
+
+| Field           | Required         | Description                                       |
+|-----------------|------------------|---------------------------------------------------|
+| `enabled`       | Yes              | Reserved for planned Purview import; keep `false` |
+| `label_mapping` | Yes (if enabled) | Maps Purview sensitivity labels to PII tiers      |
 
 #### `file_import`
 
@@ -213,13 +215,15 @@ Optional. Override retention expectations for specific PII types.
 
 ## Resolution order
 
-When the detector classifies a field, it resolves in this order:
+The detector classifies each field with the resolution order in [00 PII Taxonomy](00-pii-taxonomy.md#resolution-order):
 
 1. **Suppressions** — if the field matches a suppression, skip it.
 2. **Custom types** — check project-defined types first.
-3. **Tier overrides** — apply org-specific tier changes to built-in types.
-4. **Industry overlay** — apply industry-specific types if configured.
-5. **Core taxonomy** — fall back to the built-in classification.
+3. **Industry overlay** — apply industry-specific types when the industry is configured or inferred.
+4. **Core taxonomy** — fall back to the built-in classification.
+5. **Tier overrides** — apply org-specific tier changes to the resolved type, including overlay types.
+
+An overlay type that matches a field supersedes any core type on the same field. Custom type `detection_patterns` follow the [Matching rules](01-detection-patterns.md#matching-rules).
 
 ## Control resolution
 

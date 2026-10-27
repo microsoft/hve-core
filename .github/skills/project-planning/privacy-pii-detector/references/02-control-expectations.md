@@ -9,7 +9,7 @@ For each detected PII type, this reference defines the controls that must be pre
 
 ## Control matrix by tier
 
-### Tier 1: Identifiers (PII-001 through PII-010)
+### Tier 1: Identifiers
 
 | Control                | Required    | Verification method                                                    |
 |------------------------|-------------|------------------------------------------------------------------------|
@@ -22,33 +22,33 @@ For each detected PII type, this reference defines the controls that must be pre
 | Purpose documentation  | Recommended | Collection point documents why PII is needed                           |
 | Consent mechanism      | Conditional | Required if lawful basis is consent (not contract/legitimate interest) |
 
-### Tier 2: Sensitive (PII-020 through PII-029)
+### Tier 2: Sensitive
 
 All Tier 1 controls plus:
 
-| Control                | Required    | Verification method                                                 |
-|------------------------|-------------|---------------------------------------------------------------------|
-| Field-level encryption | Yes         | Sensitive fields encrypted independently (not just disk encryption) |
-| Audit logging          | Yes         | Access to sensitive data produces audit trail entries               |
-| Consent gate           | Yes         | Explicit consent collected before processing sensitive data         |
-| Purpose binding        | Yes         | Data tagged with processing purpose; secondary use restricted       |
-| Data minimization      | Yes         | Only minimum necessary fields collected                             |
-| Pseudonymization       | Recommended | Identifiers replaced with tokens in analytics/reporting             |
-| Breach notification    | Yes         | Incident response plan covers this data category                    |
+| Control                | Required    | Verification method                                                            |
+|------------------------|-------------|--------------------------------------------------------------------------------|
+| Field-level encryption | Yes         | Sensitive fields encrypted independently (not just disk encryption)            |
+| Audit logging          | Yes         | Access to sensitive data produces audit trail entries                          |
+| Consent gate           | Conditional | Required when the lawful basis is consent; otherwise document the lawful basis |
+| Purpose binding        | Yes         | Data tagged with processing purpose; secondary use restricted                  |
+| Data minimization      | Yes         | Only minimum necessary fields collected                                        |
+| Pseudonymization       | Recommended | Identifiers replaced with tokens in analytics/reporting                        |
+| Breach notification    | Yes         | Incident response plan covers this data category                               |
 
-### Tier 3: Special Category (PII-040 through PII-047)
+### Tier 3: Special Category
 
 All Tier 1 and Tier 2 controls plus:
 
-| Control                       | Required    | Verification method                               |
-|-------------------------------|-------------|---------------------------------------------------|
-| Explicit consent              | Yes         | Granular, specific consent for this data category |
-| DPIA conducted                | Yes         | Data Protection Impact Assessment documented      |
-| Access restriction            | Yes         | Need-to-know access beyond standard RBAC          |
-| Processing register           | Yes         | Entry in Records of Processing Activities (ROPA)  |
-| DPO notification              | Recommended | Data Protection Officer aware of this processing  |
-| Cross-border restriction      | Conditional | Transfer mechanisms if data crosses jurisdictions |
-| Automated decision disclosure | Conditional | If used for profiling or automated decisions      |
+| Control                       | Required    | Verification method                                                                                                                                                                                          |
+|-------------------------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Explicit consent              | Yes         | Granular, specific consent for this data category, or a documented lawful condition other than consent (GDPR Art. 9(2), Art. 10 authorization for criminal data, verifiable parental consent for child data) |
+| DPIA conducted                | Yes         | Data Protection Impact Assessment documented                                                                                                                                                                 |
+| Access restriction            | Yes         | Need-to-know access beyond standard RBAC                                                                                                                                                                     |
+| Processing register           | Yes         | Entry in Records of Processing Activities (ROPA)                                                                                                                                                             |
+| DPO notification              | Recommended | Data Protection Officer aware of this processing                                                                                                                                                             |
+| Cross-border restriction      | Conditional | Transfer mechanisms if data crosses jurisdictions                                                                                                                                                            |
+| Automated decision disclosure | Conditional | If used for profiling or automated decisions                                                                                                                                                                 |
 
 ## Control verification patterns
 
@@ -159,15 +159,29 @@ When a required control is not found, the finding includes:
 
 ## Control sufficiency rules
 
+Documentation-acceptable controls can be satisfied by a referenced document as well as by code or configuration:
+
+- Retention policy, purpose documentation, and cross-border restriction
+- Consent mechanism, consent gate, and explicit consent, through a documented lawful basis or condition
+- Breach notification, DPIA conducted, processing register, DPO notification, and automated decision disclosure
+
+All other controls are technical controls and require code or configuration evidence.
+
 A control is considered PRESENT when:
-- Code evidence confirms implementation (not just documentation)
+- Code or configuration evidence confirms implementation; for documentation-acceptable controls (such as DPIA, processing register, breach notification, and DPO notification), a referenced document is sufficient
 - The control covers the specific PII type detected (not just generic security)
 - The control is active (not commented out, behind a disabled feature flag, or in dead code)
 
 A control is PARTIAL when:
 - Implementation exists but does not cover all instances of the PII type
-- Documentation claims the control but code does not implement it
+- Documentation claims a technical control but code does not implement it
 - The control exists in production config but not in all environments
+
+A control is NEEDS_REVIEW when:
+- It is documentation-acceptable and neither code nor a referenced document is found in the repository; these documents often live outside the codebase
+- It is a consent control and the lawful basis is not evidenced; consent controls are ABSENT only when consent is the evidenced lawful basis and no consent implementation exists
+
+NEEDS_REVIEW controls are listed for confirmation and do not produce control-gap findings.
 
 ## Official sources
 

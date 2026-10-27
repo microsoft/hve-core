@@ -17,21 +17,21 @@ Apply this overlay when the codebase contains:
 
 ## Healthcare-specific PII types
 
-| ID      | PII Type                      | Description                                           | Tier | Regulatory anchor                             |
-|---------|-------------------------------|-------------------------------------------------------|------|-----------------------------------------------|
-| PII-200 | Medical record number (MRN)   | Facility-assigned patient identifier                  | T2   | HIPAA §164.514, My Health Records Act         |
-| PII-201 | Diagnosis/condition           | ICD codes, SNOMED terms, clinical descriptions        | T3   | HIPAA, GDPR Art. 9 (health data)              |
-| PII-202 | Medication/prescription       | Medication names, dosages, prescribing provider       | T2   | HIPAA                                         |
-| PII-203 | Lab result                    | Test values, reference ranges, interpretations        | T2   | HIPAA                                         |
-| PII-204 | Clinical note                 | Free-text clinician documentation                     | T3   | HIPAA (may contain any PII)                   |
-| PII-205 | Medical image                 | X-ray, MRI, CT with embedded patient metadata (DICOM) | T2   | HIPAA, DICOM de-identification                |
-| PII-206 | Genetic/genomic data          | DNA sequences, variants, pharmacogenomics             | T3   | GDPR Art. 9, GINA, state genetic privacy laws |
-| PII-207 | Mental health record          | Psychiatric notes, therapy records                    | T3   | Enhanced confidentiality (42 CFR Part 2)      |
-| PII-208 | Substance use disorder record | Addiction treatment, rehabilitation                   | T3   | 42 CFR Part 2 (US), enhanced protections      |
-| PII-209 | Insurance/payer ID            | Health plan member ID, group number                   | T2   | HIPAA                                         |
-| PII-210 | Provider NPI                  | National Provider Identifier (treating clinician)     | T1   | Public data but links to patient context      |
-| PII-211 | Consent/advance directive     | Patient treatment preferences, DNR status             | T2   | Varies by jurisdiction                        |
-| PII-212 | Disability information        | Functional limitations, accommodation needs           | T2   | ADA, GDPR Art. 9                              |
+| ID      | PII Type                      | Description                                           | Tier | Regulatory anchor                                                     |
+|---------|-------------------------------|-------------------------------------------------------|------|-----------------------------------------------------------------------|
+| PII-200 | Medical record number (MRN)   | Facility-assigned patient identifier                  | T2   | HIPAA §164.514, My Health Records Act                                 |
+| PII-201 | Diagnosis/condition           | ICD codes, SNOMED terms, clinical descriptions        | T3   | HIPAA, GDPR Art. 9 (health data)                                      |
+| PII-202 | Medication/prescription       | Medication names, dosages, prescribing provider       | T2   | HIPAA                                                                 |
+| PII-203 | Lab result                    | Test values, reference ranges, interpretations        | T2   | HIPAA                                                                 |
+| PII-204 | Clinical note                 | Free-text clinician documentation                     | T3   | HIPAA (may contain any PII)                                           |
+| PII-205 | Medical image                 | X-ray, MRI, CT with embedded patient metadata (DICOM) | T2   | HIPAA, DICOM de-identification                                        |
+| PII-206 | Genetic/genomic data          | DNA sequences, variants, pharmacogenomics             | T3   | GDPR Art. 9, GINA, state genetic privacy laws                         |
+| PII-207 | Mental health record          | Psychiatric notes, therapy records                    | T3   | HIPAA psychotherapy notes (45 CFR 164.508(a)(2)), stricter state laws |
+| PII-208 | Substance use disorder record | Addiction treatment, rehabilitation                   | T3   | 42 CFR Part 2 (US), enhanced protections                              |
+| PII-209 | Insurance/payer ID            | Health plan member ID, group number                   | T2   | HIPAA                                                                 |
+| PII-210 | Provider NPI                  | National Provider Identifier (treating clinician)     | T1   | Public data but links to patient context                              |
+| PII-211 | Consent/advance directive     | Patient treatment preferences, DNR status             | T2   | Varies by jurisdiction                                                |
+| PII-212 | Disability information        | Functional limitations, accommodation needs           | T2   | ADA, GDPR Art. 9                                                      |
 
 ## Healthcare detection patterns
 
@@ -69,34 +69,35 @@ When FHIR resources are present, map to PII types:
 
 Beyond core tier controls:
 
-| Control                      | Applies to       | Rationale                                                                                     |
-|------------------------------|------------------|-----------------------------------------------------------------------------------------------|
-| Minimum necessary            | All health PII   | HIPAA minimum necessary standard — disclose only what is needed                               |
-| Break-the-glass audit        | PII-201–PII-208  | Emergency access override with mandatory post-access review                                   |
-| Segmentation (42 CFR Part 2) | PII-207, PII-208 | Substance use disorder and mental health records require explicit consent for each disclosure |
-| DICOM de-identification      | PII-205          | Medical images must strip patient metadata per DICOM PS3.15                                   |
-| Research de-identification   | All              | HIPAA Safe Harbor (18 identifiers removed) or Expert Determination                            |
-| Patient portal access        | PII-200–PII-204  | Patients must have electronic access to their records (21st Century Cures)                    |
-| Genetic non-discrimination   | PII-206          | GINA prohibits use in employment/insurance decisions                                          |
-| Cross-facility consent       | All              | Inter-organizational health information exchange requires patient consent                     |
+| Control                      | Applies to      | Rationale                                                                                                                                    |
+|------------------------------|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| Minimum necessary            | All health PII  | HIPAA minimum necessary standard — disclose only what is needed                                                                              |
+| Break-the-glass audit        | PII-201–PII-208 | Emergency access override with mandatory post-access review                                                                                  |
+| Segmentation (42 CFR Part 2) | PII-208         | Substance use disorder records require written patient consent before disclosure; a single consent may cover future TPO uses and disclosures |
+| DICOM de-identification      | PII-205         | Medical images must strip patient metadata per DICOM PS3.15                                                                                  |
+| Research de-identification   | All             | HIPAA Safe Harbor (18 identifiers removed) or Expert Determination                                                                           |
+| Patient portal access        | PII-200–PII-204 | Patients must have electronic access to their records (21st Century Cures)                                                                   |
+| Genetic non-discrimination   | PII-206         | GINA prohibits use in employment/insurance decisions                                                                                         |
+| Cross-facility consent       | All             | Inter-organizational health information exchange requires patient consent                                                                    |
 
 ## Healthcare regulatory context
 
-| Regulation                 | Jurisdiction    | Key requirement                                               |
-|----------------------------|-----------------|---------------------------------------------------------------|
-| HIPAA Privacy Rule         | US              | Minimum necessary, patient rights, covered entity obligations |
-| HIPAA Security Rule        | US              | Administrative, physical, and technical safeguards            |
-| 42 CFR Part 2              | US              | Enhanced consent for substance use disorder records           |
-| GINA                       | US              | Genetic non-discrimination in employment and insurance        |
-| My Health Records Act 2012 | Australia       | Digital health record controls, secondary use restrictions    |
-| Health Records Act 2001    | Australia (VIC) | State-level health privacy protections                        |
-| GDPR Art. 9                | EU              | Health data as special category requiring explicit consent    |
-| 21st Century Cures Act     | US              | Patient access, information blocking prohibition              |
+| Regulation                 | Jurisdiction    | Key requirement                                                                           |
+|----------------------------|-----------------|-------------------------------------------------------------------------------------------|
+| HIPAA Privacy Rule         | US              | Minimum necessary, patient rights, covered entity obligations                             |
+| HIPAA Security Rule        | US              | Administrative, physical, and technical safeguards                                        |
+| 42 CFR Part 2              | US              | Written consent for substance use disorder records from federally assisted programs       |
+| GINA                       | US              | Genetic non-discrimination in employment and insurance                                    |
+| My Health Records Act 2012 | Australia       | Digital health record controls, secondary use restrictions                                |
+| Health Records Act 2001    | Australia (VIC) | State-level health privacy protections                                                    |
+| GDPR Art. 9                | EU              | Health data as special category requiring explicit consent or another Art. 9(2) condition |
+| 21st Century Cures Act     | US              | Patient access, information blocking prohibition                                          |
 
 ## Official sources
 
 * [HIPAA Privacy Rule](https://www.hhs.gov/hipaa/for-professionals/privacy/index.html)
 * [HIPAA Security Rule](https://www.hhs.gov/hipaa/for-professionals/security/index.html)
+* [45 CFR 164.508 Uses and disclosures for which an authorization is required](https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-E/section-164.508)
 * [42 CFR Part 2](https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2)
 * [DICOM Standard](https://www.dicomstandard.org/current)
 * [Genetic Information Nondiscrimination Act](https://www.eeoc.gov/statutes/genetic-information-nondiscrimination-act-2008)
