@@ -4,6 +4,7 @@
 import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, idTag, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
 import { decisionCard, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { renderDiagram } from './diagram.mjs';
+import { laneOf } from './board.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
 import { taskBlock } from './view-plan.mjs';
 import { plainInline } from './markdown.mjs';
@@ -15,7 +16,7 @@ import { plainInline } from './markdown.mjs';
  */
 
 const COLUMNS = [
-    { status: 'todo', label: 'Up next' },
+    { status: 'todo', label: 'Backlog' },
     { status: 'in-progress', label: 'In progress' },
     { status: 'paused', label: 'Paused for you' },
     { status: 'done', label: 'Done' },
@@ -54,11 +55,11 @@ export function outline(ctx) {
     ].filter(Boolean);
 }
 
-/** The Phases and tasks filters; In progress also holds work paused for you or blocked. */
+/** The Phases and tasks filters, matching the board's lanes: In progress also holds work paused for you or blocked. */
 export const TASK_FILTERS = Object.freeze([
-    { id: 'active', label: 'In progress', match: (task) => task.status === 'in-progress' || task.status === 'paused' || task.status === 'blocked' },
-    { id: 'remaining', label: 'Remaining', match: (task) => task.status === 'todo' },
-    { id: 'done', label: 'Done', match: (task) => task.status === 'done' },
+    { id: 'active', label: 'In progress', match: (task) => laneOf(task) === 'active' },
+    { id: 'backlog', label: 'Backlog', match: (task) => laneOf(task) === 'backlog' },
+    { id: 'done', label: 'Done', match: (task) => laneOf(task) === 'done' },
     { id: 'all', label: 'All', match: () => true },
 ]);
 
@@ -101,7 +102,7 @@ export function nodeProgress(plan) {
 const PHASE_PROGRESS = {
     done: { icon: 'check-circle', label: 'done', tone: 'success' },
     'in-progress': { icon: 'active', label: 'in progress', tone: 'accent' },
-    todo: { icon: 'circle', label: 'up next', tone: 'muted' },
+    todo: { icon: 'circle', label: 'backlog', tone: 'muted' },
 };
 
 function validationSummary(changes) {
@@ -180,7 +181,7 @@ function emptyFilter(ctx, filter, tasks) {
     const done = tasks.filter((task) => task.status === 'done').length;
     const text = {
         active: done === tasks.length ? `Nothing is in progress: all ${plural(tasks.length, 'task')} are done.` : done === 0 ? `Nothing is in progress yet; ${plural(tasks.length, 'task')} remain.` : `Nothing is in progress right now; ${done} of ${plural(tasks.length, 'task')} are done.`,
-        remaining: 'Nothing remains: every task is done or in progress.',
+        backlog: 'Nothing is in the backlog: every task is done or in progress.',
         done: 'No task is done yet.',
         all: 'The plan has no tasks.',
     }[filter.id];

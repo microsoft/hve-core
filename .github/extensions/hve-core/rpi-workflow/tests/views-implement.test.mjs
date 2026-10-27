@@ -28,7 +28,7 @@ before(async () => {
 });
 after(() => restore());
 
-/** The sample at Implement: P02-T02 in progress, P03-T01 paused, P04-T02 blocked, and the rest done or up next. */
+/** The sample at Implement: P02-T02 in progress, P03-T01 paused, P04-T02 blocked, and the rest done or in the backlog. */
 const implementing = () => buildScenario('implement', Date.parse(NOW));
 const render = (session, ui = initialUi('implement')) => view.renderView(makeContext(session, 'implement', { ...ui, taskFilter: ui.taskFilter ?? 'active' }));
 
@@ -53,7 +53,7 @@ describe('the pinned task board', () => {
 describe('phases and tasks', () => {
     it('starts on In progress, which holds work paused for you or blocked, and counts each filter', () => {
         const out = html(render(implementing()));
-        assert.match(textOf(out), /In progress 3 Remaining 3 Done 3 All 9/);
+        assert.match(textOf(out), /In progress 3 Backlog 3 Done 3 All 9/);
         assert.match(out, /<input type="radio" name="task-filter" id="task-filter-active" value="active" checked=""/);
         const rows = render(implementing());
         const phases = all(rows).filter((element) => element.classList?.contains('impl-phase'));
@@ -69,7 +69,7 @@ describe('phases and tasks', () => {
             const out = html(render(implementing(), ui));
             return (out.slice(out.indexOf('impl-phase')).match(/class="task is-[a-z-]+"/g) ?? []).length;
         };
-        assert.deepEqual(['remaining', 'done', 'all'].map(count), [3, 3, 9]);
+        assert.deepEqual(['backlog', 'done', 'all'].map(count), [3, 3, 9]);
         assert.equal(view.filterShows(implementing(), 'done', 'P04'), false);
         assert.equal(view.filterShows(implementing(), 'active', 'P04'), true);
         assert.equal(view.filterShows(implementing(), 'done', 'P01-T01'), true);

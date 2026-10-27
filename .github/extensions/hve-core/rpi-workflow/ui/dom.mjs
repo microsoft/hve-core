@@ -157,7 +157,7 @@ export const PHASE_STATUS = vocab([
 export const TASK_STATUS = vocab([
     ['done', 'check-circle', 'Done', 'success'],
     ['in-progress', 'active', 'In progress', 'accent'],
-    ['todo', 'circle', 'Up next', 'muted'],
+    ['todo', 'circle', 'Backlog', 'muted'],
     ['paused', 'pause', 'Paused for you', 'attention'],
     ['blocked', 'alert', 'Blocked', 'danger'],
 ]);
