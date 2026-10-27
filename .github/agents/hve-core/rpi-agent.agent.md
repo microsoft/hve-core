@@ -163,7 +163,7 @@ Store preferences and gate state in `confirmed_decisions` without adding schema 
 
 ### Critique and Review records
 
-* Track the plan critique and Review through `active_phase`, `next_action`, and `artifact_paths`; the `Planning critique` and `Review step` decisions record a skipped step and its provenance. `rpi-plan` owns critique status and findings, and `rpi-review` owns its record and decisions; do not duplicate their payloads in state.
+* Track the plan critique and Review through `active_phase`, `next_action`, and `artifact_paths`; the `Planning critique` and `Review step` decisions record a skipped step and its provenance. Record a critique or review path in `artifact_paths` before its record is first written, so the canvas and other readers follow the record as it grows. `rpi-plan` owns critique status and findings, and `rpi-review` owns its record and decisions; do not duplicate their payloads in state.
 * Mirror only derived active routing in `next_action` and accepted follow-up work in `prioritized_follow_ups`. When a Review record exists, read its Parent Decision Record before rebuilding stale projections and use its latest participation event.
 
 ### Transition persistence
