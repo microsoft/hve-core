@@ -3,7 +3,7 @@ title: rpi-research
 description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-26
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - skill
@@ -32,6 +32,9 @@ Use `rpi-research` when a task needs evidence before anyone plans or edits: a co
 
 A helper such as [RPI Researcher](../../agents/hve-core/subagents/rpi-researcher) may be asked for source pointers when isolating a gathering task helps; its return is a suggestion the research verifies at the source.
 
+Independent questions get their own narrow helper lanes, dispatched in parallel. Research picks each lane's reasoning effort: `low` when a tool guarantees a complete answer, such as a search that lists every match, and `max` when the lane must read for meaning, especially to conclude that something is absent.
+A "not found" from a lane below `max` counts only after research confirms it. Set `effort=` to choose one level for every lane, or ask for a level for a kind of lane, such as documentation lanes.
+
 Each executed cycle runs Wider, Deeper, and Contrarian waves, then synthesizes findings, records Planning Readiness, and resolves material decisions according to the participation mode: `user-owned` when invoked directly, `agent-owned` or `user-retained` inside an automatic [RPI Agent](../../agents/hve-core/rpi-agent) session.
 
 The research posture controls how far it goes: `balanced` by default, `focused` to stay within the named targets, or `expansive` for a broad or materially unknown decision space. Pass `posture=` to change it. The output mode (`convergence`, `analysis`, `audit`, `comparison`, `research-only`, or `no-handoff`) controls whether a planning handoff is offered.
@@ -44,7 +47,7 @@ Reach for a different asset when:
 
 ## Example usage
 
-Invoke the skill with a topic. Add `chat` to let it refine scope from the current conversation, and `posture=focused` or `posture=expansive` to change the default `balanced` depth.
+Invoke the skill with a topic. Add `chat` to let it refine scope from the current conversation, `posture=focused` or `posture=expansive` to change the default `balanced` depth, `effort=` to set the reasoning effort of every helper lane, and `subagents=none` to gather all evidence without helpers.
 
 ```text
 /rpi-research topic="Streaming uploads to Azure Blob Storage from the Python pipeline"

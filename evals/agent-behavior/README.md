@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-10-12
+ms.date: 2026-10-17
 ---
 
 ## Purpose
@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 64 enrolled agents, including 32 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 65 enrolled agents, including 33 subagents.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-  └── <agent-slug>.yml  # one partial per inventoried agent (64 files)
+  └── <agent-slug>.yml  # one partial per inventoried agent (65 files)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -41,6 +41,20 @@ pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 When the drift check fails, a unified diff is written to [logs/agent-behavior-spec-drift.diff](../../logs/agent-behavior-spec-drift.diff). Inspect that file, re-run the generator with `-Force`, and commit the regenerated [eval.yaml](eval.yaml) alongside any stimulus partial change in the same commit.
 
 The drift check is wired into the repository's `ci:eval:lint:vally` npm script in [package.json](../../package.json) so vally lint cannot pass while [eval.yaml](eval.yaml) is out of sync with the partials.
+
+## RPI Assessment Policy Regressions
+
+The [RPI Agent partial](stimuli/rpi-agent.yml) includes six advisory,
+response-only policy regressions: first-task defaults, default child skips,
+explicit requests for both assessments or Review alone, and continuation of
+an interrupted critique or Review. Each case stages the policy files it asks
+the model to interpret.
+
+Focused offline tests exercise the installed Vally graders against correct
+choices, independently wrong fields, prompt echoes and unavailable-policy
+responses. These checks establish the declarative contract and grader
+behavior, not native dispatch, filesystem enforcement or full multi-phase
+execution. Report model-backed execution separately when it actually runs.
 
 ## Class Recipes
 
@@ -336,7 +350,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | system-architecture-reviewer   | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md)                     |
 | ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
-The maintained stimulus inventory totals 64 agents: 32 parent agents plus 32
+The maintained stimulus inventory totals 65 agents: 32 parent agents plus 33
 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/).
 Subagents without a matching stimulus partial remain excluded from the matrix
 run set and are documented separately in the inventory generator and related

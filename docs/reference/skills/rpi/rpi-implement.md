@@ -3,7 +3,7 @@ title: rpi-implement
 description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - skill
@@ -37,6 +37,10 @@ safety or dependencies, the implementer updates the affected plan sections direc
 significant or divergent choice needs your decision before affected work resumes; an evidence-backed
 clarification does not. A change that needs replanning beyond the affected tasks returns to
 [rpi-plan](rpi-plan).
+
+Implementation does not require subagents. When a dispatch tool is available and you have not said otherwise, it may run
+dependency-ready tasks that change different files in parallel subagents, and it verifies each result before checking the
+task. Pass `subagents=none` to implement every task in the conversation.
 
 Implementation does not require a plan critique. If you skipped the critique, implementation proceeds
 normally. When the plan is marked not ready or has unresolved blocking critique findings, the

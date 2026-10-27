@@ -46,6 +46,7 @@
     ".github/agents/hve-core/documentation.agent.md",
     ".github/agents/hve-core/rpi-agent.agent.md",
     ".github/agents/hve-core/subagents/hve-builder-review.agent.md",
+    ".github/agents/hve-core/subagents/rpi-plan-critic.agent.md",
     ".github/agents/hve-core/subagents/rpi-researcher.agent.md",
     ".github/agents/hve-core/subagents/rpi-reviewer.agent.md",
     ".github/agents/hve-core/subagents/vally-test-author.agent.md",
@@ -221,5 +222,8 @@
     ".github/skills/shared/backlog-templates",
     ".github/skills/shared/pr-reference",
     ".github/skills/shared/telemetry-foundations"
+  ],
+  "extensions": [
+    ".github/extensions/hve-core"
   ]
 }

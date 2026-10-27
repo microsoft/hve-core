@@ -6,7 +6,7 @@ description: Full walkthrough protocol for the rpi-walkthrough skill, covering t
 
 This reference expands the `rpi-walkthrough` SKILL with the operational detail for a guided, conversational walkthrough. Conversation context owns the target refinement, detail level, segment pacing, current position, and follow-up depth. Use [../templates/walkthrough.md](../templates/walkthrough.md) only when a material user decision or requested change requires the optional ledger at `.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md`.
 
-Follow the shared conventions in `copilot-tracking.instructions.md`. References inside `.copilot-tracking` artifacts use plain workspace-relative paths; references shown to the user in the conversation use markdown links with line numbers.
+References inside `.copilot-tracking` artifacts use plain workspace-relative paths; references shown to the user in the conversation use markdown links with line numbers.
 
 ## Target resolution
 
@@ -27,7 +27,7 @@ Resolve the walkthrough target before any review or explanation:
 Understand the target before narrating it so the explanation stays accurate and grounded. Keep review results in the active conversation.
 
 * Trace how the code, UI, UX, feature, or artifact actually works with the available search and read tools: entry points, call paths, data flow, connected files, and the decisions or evidence recorded inside `.copilot-tracking` artifacts.
-* A subagent is optional. Use one when isolating a large trace would protect the conversation context, give it the target and the questions to trace, and treat its return as leads to confirm by reading the target yourself.
+* A subagent is optional and follows the subagent-use rule in the skill's Execution section. Use one when isolating a large trace would protect the conversation context, give it the target and the questions to trace, and treat its return as leads to confirm by reading the target yourself.
 * Activate `rpi-research` when the explanation depends on an external library, framework, standard, or anything that benefits from web or repository research with citations. Supply the walkthrough topic, purpose, audience, questions, evidence criteria, scope and non-goals, constraints, existing evidence, requested outputs, and analysis output mode, then read the completed primary research artifact before explaining.
 * Scale the review to `detail`: a focused single pass for `brief`, a normal pass for `normal`, and a thorough multi-pass review with cross-references for `deep`.
 
@@ -39,17 +39,11 @@ Turn the reviewed target into an ordered list of segments that each cover one co
 * UI or UX: order along the user-facing flow, connecting each view or component to the state, events, and styles that drive them.
 * Artifact: follow the document's own section order, pairing each decision with its rationale and evidence.
 
-Keep the segment list, coverage, and current position in the conversation. Do not over-condense the walkthrough. When the target is large or nuanced, use more segments rather than forcing a compact summary, and 25 or more segments is acceptable when that is the clearest way to explain the material.
+Keep the segment list, coverage, and current position in the conversation, and size the segment count as the skill's Constraints describe.
 
 ## Conversation markdown format
 
-Use well-formatted markdown in every walkthrough turn.
-
-* Start each segment with a segment header such as `### Segment 1: ...` before any narrative explanation.
-* Before the first segment, render an overview Mermaid diagram when the target has meaningful architecture, control or data flow, section relationships, or a user journey. The diagram shows the target's actual structure or flow. Segment numbers may appear only as navigation cues.
-* During a segment, include a compact focus diagram only when it adds useful information beyond the overview and prose. Show the current component or section and its real inbound or outbound relationships. Omit a diagram rather than fabricate or repeat decorative boxes.
-* Keep labels short, add meaningful relationship labels when helpful, and follow every diagram with one sentence that states its takeaway. Classes describe target roles, not walkthrough progress; labels and prose carry the meaning independently of color.
-* Use a contrast-safe Mermaid pattern like this when a diagram is useful. Adapt the nodes and edges to the actual target rather than reusing it as a progress diagram:
+The skill's Conversation format requirements own the segment header, diagram, labeling, inline-link, and reference-table rules. When a diagram is useful, use a contrast-safe Mermaid pattern like this one, and adapt the nodes and edges to the actual target rather than reusing it as a progress diagram:
 
 ```mermaid
 flowchart LR
@@ -73,9 +67,6 @@ flowchart LR
 
 The handler is the focus because it receives the user action, coordinates data access, and produces the response.
 
-* Keep the prose scannable. Each sentence or paragraph that discusses a file, line range, block, or artifact must include a nearby markdown link to that reference, rather than relying only on the reference table.
-* Keep the reference table requirement. Render it near the bottom of each segment turn, immediately before the questions.
-
 ## Segment explanation loop
 
 Run this loop once per segment, and never advance more than one segment per turn:
@@ -84,9 +75,9 @@ Run this loop once per segment, and never advance more than one segment per turn
 2. Render an overview diagram before the first segment only when the target has meaningful structure or flow. Add a compact focus diagram only when it clarifies a real relationship beyond the overview and prose, then state the diagram's takeaway in one sentence.
 3. Add inline markdown links beside the explanatory prose for any file, block, or artifact being discussed. Do not rely only on the reference table for navigation.
 4. Render the reference table for the segment (see Reference table format) so the user can navigate to every place being discussed.
-5. Call `vscode_askQuestions` with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment.
+5. Call the question tool with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment.
 
-Write the full segment turn as visible chat text before this call: the segment header, diagrams, inline links, and reference table must already be in the response, and the questions come last in that same turn. Do not go straight from internal reasoning to the question tool with nothing rendered for the user; the failure mode is a bare `vscode_askQuestions` prompt that arrives before the explanation that sets it up. This gate holds before every `vscode_askQuestions` call and before any hand back of control, including mid-segment pauses.
+Write the full segment turn as visible chat text before this call: the segment header, diagrams, inline links, and reference table must already be in the response, and the questions come last in that same turn. Do not go straight from internal reasoning to the question tool with nothing rendered for the user; the failure mode is a bare question-tool prompt that arrives before the explanation that sets it up. This gate holds before every question-tool call and before any hand back of control, including mid-segment pauses.
 
 ## Writing the explanation for human eyes
 
@@ -123,7 +114,7 @@ Keep each turn easy to scan and small enough not to overwhelm:
 * Explain how it works and why it is this way at a depth that matches `detail`: about one short paragraph for `brief`, two short paragraphs or a short list plus one concrete example for `normal`, and up to three short paragraphs plus one evidence-backed point for `deep`.
 * Keep any single turn to roughly 200 words of prose or less, and move extra depth into a follow-up turn rather than one long message.
 * Place the reference table near the bottom, just before the questions, so the reader can jump to the exact lines.
-* Close with the one or two `vscode_askQuestions` prompts and nothing after them.
+* Close with the one or two question-tool prompts and nothing after them.
 
 ### A model segment message
 
@@ -136,7 +127,7 @@ The `withRetry` wrapper exists so one flaky network call does not fail the whole
 | [src/net/retry.ts](src/net/retry.ts#L12-L28) | The retry loop and the backoff calculation |
 | [src/net/client.ts](src/net/client.ts#L40)   | Where the import call is wrapped           |
 
-Then ask, through `vscode_askQuestions`, whether to go deeper on how the backoff delay is calculated or move on to how a final failure is handled.
+Then ask, through the question tool, whether to go deeper on how the backoff delay is calculated or move on to how a final failure is handled.
 
 ## Reference table format
 
@@ -151,7 +142,7 @@ For a `.copilot-tracking` artifact walkthrough, link the artifact section being 
 
 ## Handling feedback
 
-Interpret the user's `vscode_askQuestions` answer and respond in kind:
+Interpret the user's answer to the question tool and respond in kind:
 
 * More detail or why: repeat the deep review with the available tools, then re-explain the same segment at greater depth before offering to continue.
 * Less detail or a depth change: adjust `detail` and continue.
@@ -165,28 +156,5 @@ The walkthrough is read-only by default. Create the ledger lazily, from [../temp
 
 * Record the entry date, target, material decision or requested change, references, user rationale, reconciliation choice or status, and outcome or handoff evidence. The ledger stores only enough context to act on its entries later.
 * When capturing an entry during a segment, ask whether the user wants to reconcile it now or keep it open while continuing. Include that choice in an existing segment-boundary question when possible rather than forcing an extra question.
-* Reconcile each open entry with the user as one of: applied now, handed off to an RPI follow-on, deferred for later, or declined. Record the chosen disposition and any outcome or evidence pointer.
 * Apply a source change only after the user explicitly chooses immediate reconciliation and the change is safely scoped. Confirm or clarify unsafe, ambiguous, destructive, externally visible, or out-of-scope work before acting. Record what happened in the ledger.
 * A later request can read the ledger and reconcile open entries without treating it as walkthrough resumption state.
-
-## Closing the walkthrough
-
-When every planned segment is covered, or when the user declines another segment, asks for a summary, or ends the session:
-
-* If a ledger exists, review its open entries and ask whether to reconcile them now or leave them for later.
-* In a standalone walkthrough, recommend the exact applicable `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command only for entries handed off or still requiring downstream work. Do not invoke it.
-* State the no-handoff reason when no entry needs downstream work. In confirmed automatic RPI Agent mode, return the evidence to the parent and state that it selects eligible continuation.
-* Separate walkthrough session status from the ledger decision state. Include covered segments, important updates, and blockers or open entries. Advise `/compact` only when stale output, superseded reasoning, or completed-segment detail outweighs current context and the target and any ledger are current. When advising it, name retained state and artifact pointers. Otherwise omit compaction guidance.
-
-## Final response contract
-
-Close with a concise summary that contains:
-
-* The segments covered and the detail level used.
-* No ledger link when no material decision or requested change occurred. State that no decisions-and-changes artifact was needed.
-* When a ledger exists, its path, the counts of material decisions and requested changes, and any remaining open entries.
-* Markdown links to the ledger and its Reconciliation section when a ledger exists.
-* An RPI recommendation only for entries handed off or still requiring downstream work.
-* For the walked target and every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
-
-Do not use status emojis in walkthrough headings or bullets. Use the existing human-writing rules, headings, inline links, diagrams, and reference tables to make the message scannable. The final table includes a ledger row and its Reconciliation link only when a ledger exists. It does not invent a ledger link.

@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Understanding the RPI Workflow"
 pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-16
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -84,7 +84,7 @@ Implementation records material work and truthful validation in:
 .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 ```
 
-Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence; a follow-up critique is optional.
+Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence; a follow-up critique runs only when you ask for one.
 
 ### ✅ Review with rpi-review
 

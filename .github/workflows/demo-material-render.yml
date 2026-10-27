@@ -40,9 +40,9 @@ env:
 jobs:
   resolve:
     name: Resolve render inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # find author runs and their content artifacts
       contents: read
     outputs:
       mode: ${{ steps.resolve.outputs.mode }}
@@ -85,7 +85,7 @@ jobs:
 
       - name: Download the latest render index
         if: ${{ github.event_name == 'schedule' && steps.retry-index.outputs.artifact-id != '' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ steps.retry-index.outputs.artifact-id }}
           run-id: ${{ steps.retry-index.outputs.run-id }}
@@ -203,7 +203,7 @@ jobs:
 
       - name: Download authored content
         if: ${{ steps.resolve.outputs.mode == 'render' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ steps.resolve.outputs.content-artifact-id }}
           run-id: ${{ steps.resolve.outputs.author-run-id }}
@@ -253,9 +253,9 @@ jobs:
     name: Dispatch forced authoring for failed levels
     needs: resolve
     if: ${{ github.event_name == 'schedule' && needs.resolve.outputs.retry-levels != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      actions: write
+      actions: write # start Demo Material Author for failed or unpublished levels
     steps:
       - name: Dispatch forced authoring
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -275,10 +275,10 @@ jobs:
     name: Render ${{ matrix.level }}
     needs: resolve
     if: ${{ needs.resolve.outputs.mode == 'render' && needs.resolve.outputs.levels != '[]' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
-      actions: read
+      actions: read # download the author content artifact
       contents: read
     strategy:
       fail-fast: false
@@ -296,7 +296,7 @@ jobs:
           persist-credentials: false
 
       - name: Download authored content
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.resolve.outputs.content-artifact-id }}
           run-id: ${{ needs.resolve.outputs.author-run-id }}
@@ -310,15 +310,22 @@ jobs:
           mkdir -p "$(dirname "${LEVEL_DIR}")"
           cp -R "${RUNNER_TEMP}/content/${LEVEL}" "${LEVEL_DIR}"
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      # uv honors the root .python-version; install that exact interpreter
+      # rather than letting uv download a managed one.
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          enable-cache: false
+          python-version-file: .python-version
+
+      - name: Setup uv
+        uses: $/.github/actions/setup-uv
+        with:
+          enable-cache: 'false'
 
       - name: Setup Node.js for the HTML slide deck
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
 
       - name: Install LibreOffice and FFmpeg
         shell: bash
@@ -346,7 +353,11 @@ jobs:
             --output "${cli_dir}/cli.tar.gz" "${VSCODE_CLI_URL}"
           printf '%s  %s\n' "${VSCODE_CLI_SHA256}" "${cli_dir}/cli.tar.gz" | sha256sum --check
           tar -xzf "${cli_dir}/cli.tar.gz" -C "${cli_dir}"
-          echo "${cli_dir}" >> "${GITHUB_PATH}"
+          sudo install -m 0755 -t /usr/local/bin "${cli_dir}/code"
+          if [[ "$(command -v code || true)" != '/usr/local/bin/code' ]]; then
+            echo "::error::code does not resolve to the verified /usr/local/bin/code."
+            exit 1
+          fi
 
       - name: Render ${{ matrix.level }}
         shell: bash
@@ -385,7 +396,7 @@ jobs:
 
       - name: Upload render outputs
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: demo-material-level-${{ matrix.level }}-${{ github.run_id }}
           path: ${{ runner.temp }}/render-out
@@ -398,9 +409,9 @@ jobs:
       - resolve
       - render
     if: ${{ always() && (needs.resolve.outputs.mode == 'render' || needs.resolve.outputs.mode == 'refresh') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # download render outputs and the previous bundle
     steps:
       - name: Checkout the lookup script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -410,7 +421,7 @@ jobs:
 
       - name: Download the previous bundle
         if: ${{ needs.resolve.outputs.previous-artifact-id != '' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.resolve.outputs.previous-artifact-id }}
           run-id: ${{ needs.resolve.outputs.previous-run-id }}
@@ -426,7 +437,7 @@ jobs:
 
       - name: Download this run's renders
         if: ${{ needs.resolve.outputs.mode == 'render' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: demo-material-level-*-${{ github.run_id }}
           merge-multiple: true
@@ -513,7 +524,7 @@ jobs:
           cp "${SITE}/index.json" "${RUNNER_TEMP}/index/index.json"
 
       - name: Upload the site bundle
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: demo-material-site-${{ github.run_id }}
           path: ${{ runner.temp }}/site
@@ -521,9 +532,31 @@ jobs:
           if-no-files-found: error
 
       - name: Upload the site index
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: demo-material-index-${{ github.run_id }}
           path: ${{ runner.temp }}/index
           retention-days: 90
           if-no-files-found: error
+
+  # Hands the new bundle to the documentation deploy in a separate run, which
+  # waits for this run to finish before it looks up the newest bundle.
+  dispatch-deploy:
+    name: Start the documentation deploy
+    needs: bundle
+    if: ${{ needs.bundle.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start Deploy Documentation Site on the default branch
+    steps:
+      - name: Dispatch the documentation deploy for this run
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "deploy-docs.yml",
+              ref: repository.default_branch,
+              inputs: { "source-run-id": String(context.runId) },
+            });

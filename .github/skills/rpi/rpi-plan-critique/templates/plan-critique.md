@@ -6,7 +6,7 @@
 * Task ID: {{task_id}}
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Critique execution: {{Complete_Partial_Blocked_or_not_produced}}
+* Critique execution: {{Complete_Partial_Blocked_or_Not_produced}}
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
 * Critique type: {{initial_or_follow_up}}
@@ -20,6 +20,14 @@
 * Research and evidence considered: {{workspace_relative_evidence_paths}}
 * Decisions, dependencies, task Goals, and task Requirements considered: {{decision_dependency_goal_and_requirement_summary}}
 * Assessment boundary: {{supplied_plan_and_evidence_scope_and_what_the_critique_can_and_cannot_conclude}}
+
+## Lens Assessments
+
+<!-- One row per lens. Use "direct" as the status when the critique parent assessed the lens itself. -->
+
+| Lens     | Scope                        | Reasoning effort and source                          | Status                                 | Candidates                                                          |
+|----------|------------------------------|------------------------------------------------------|----------------------------------------|---------------------------------------------------------------------|
+| {{lens}} | {{phases_tasks_or_sections}} | {{effort}} ({{selected_caller_set_or_host_default}}) | {{Complete_Partial_Blocked_or_direct}} | {{adopted_count}} adopted; {{rejected_count}} rejected: {{reasons}} |
 
 ## Coverage Assessment
 

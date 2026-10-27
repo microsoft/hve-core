@@ -37,7 +37,7 @@ permissions:
 jobs:
   runner-check:
     name: Workflow Runner Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -52,7 +52,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       - name: Run Workflow Runner Validation
         id: runner
@@ -64,7 +64,7 @@ jobs:
             Format          = 'sarif'
             OutputPath      = 'logs/workflow-runner-results.sarif'
           }
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnViolation'] = $true
           }
           ./scripts/security/Test-WorkflowRunner.ps1 @params
@@ -89,10 +89,12 @@ jobs:
             "violation-count=$violationCount" >> $env:GITHUB_OUTPUT
             "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
           }
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
 
       - name: Upload SARIF results
         if: always() && inputs.upload-sarif
-        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: logs/workflow-runner-results.sarif
           category: workflow-runner
@@ -100,7 +102,7 @@ jobs:
 
       - name: Upload results artifact
         if: always() && inputs.upload-artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: workflow-runner-results
           path: logs/workflow-runner-results.*

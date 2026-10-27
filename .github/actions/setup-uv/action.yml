@@ -1,0 +1,143 @@
+name: Setup uv
+description: Installs the uv version pinned in scripts/security/tool-checksums.json, verifies its checksum, and caches the uv cache directory
+
+inputs:
+  enable-cache:
+    description: "Cache the uv cache directory. 'auto' caches on GitHub-hosted runners except for release, tag push, pull_request_target, and workflow_run events; merge_group runs restore but never save."
+    required: false
+    default: 'auto'
+
+outputs:
+  uv-version:
+    description: The installed uv version
+    value: ${{ steps.install.outputs.uv-version }}
+  cache-hit:
+    description: Whether the uv cache was restored from an exact key match
+    value: ${{ steps.cache-save.outputs.cache-hit || steps.cache-restore.outputs.cache-hit || 'false' }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install verified uv
+      id: install
+      shell: bash
+      env:
+        INPUT_ENABLE_CACHE: ${{ inputs.enable-cache }}
+        MANIFEST_PATH: ${{ github.action_path }}/../../../scripts/security/tool-checksums.json
+      run: |
+        set -euo pipefail
+
+        case "${INPUT_ENABLE_CACHE}" in
+          auto | true | false) ;;
+          *)
+            echo "::error::enable-cache must be auto, true, or false, not '${INPUT_ENABLE_CACHE}'."
+            exit 1
+            ;;
+        esac
+
+        case "${RUNNER_OS}/${RUNNER_ARCH}" in
+          Linux/X64) arch_key='linux_amd64' ;;
+          Linux/ARM64) arch_key='linux_arm64' ;;
+          *)
+            echo "::error::setup-uv supports Linux X64 and ARM64 runners, not ${RUNNER_OS}/${RUNNER_ARCH}."
+            exit 1
+            ;;
+        esac
+
+        uv_entry() {
+          jq -er --arg arch "${arch_key}" "first(.tools[] | select(.name == \"uv\")) | $1" "${MANIFEST_PATH}"
+        }
+        version="$(uv_entry '.version')"
+        sha256="$(uv_entry ".sha256ByArch[\$arch]")"
+        url_template="$(uv_entry ".assetTemplateByArch[\$arch]")"
+        url="${url_template//\{version\}/${version}}"
+
+        if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::The uv manifest version '${version}' is not an exact release version."
+          exit 1
+        fi
+        if [[ ! "${sha256}" =~ ^[0-9a-f]{64}$ ]]; then
+          echo "::error::The uv manifest checksum for ${arch_key} is not a SHA-256 digest."
+          exit 1
+        fi
+        if [[ "${url}" != "https://github.com/astral-sh/uv/releases/download/${version}/"*.tar.gz ]]; then
+          echo "::error::The uv manifest asset URL is not an astral-sh/uv release asset for ${version}."
+          exit 1
+        fi
+
+        asset="${url##*/}"
+        archive="${RUNNER_TEMP}/${asset}"
+        install_dir="${RUNNER_TEMP}/uv-${version}"
+        curl --proto '=https' --tlsv1.2 -sSfL --retry 3 --retry-all-errors -o "${archive}" "${url}"
+        if ! echo "${sha256}  ${archive}" | sha256sum -c --quiet -; then
+          echo "::error::uv ${version} checksum verification failed for ${asset}."
+          exit 1
+        fi
+        mkdir -p "${install_dir}"
+        tar -xzf "${archive}" -C "${install_dir}" --strip-components=1 "${asset%.tar.gz}/uv" "${asset%.tar.gz}/uvx"
+        rm -f "${archive}"
+
+        installed="$("${install_dir}/uv" --version | awk '{print $2}')"
+        if [[ "${installed}" != "${version}" ]]; then
+          echo "::error::Installed uv reports ${installed}, expected ${version}."
+          exit 1
+        fi
+        # Installing into /usr/local/bin avoids a GITHUB_PATH write, which every
+        # later step would trust; the check fails if another uv shadows it.
+        sudo install -m 0755 -t /usr/local/bin "${install_dir}/uv" "${install_dir}/uvx"
+        for tool in uv uvx; do
+          resolved="$(command -v "${tool}" || true)"
+          if [[ "${resolved}" != "/usr/local/bin/${tool}" ]]; then
+            echo "::error::${tool} resolves to '${resolved}', not the verified /usr/local/bin/${tool}."
+            exit 1
+          fi
+        done
+
+        # Mirrors astral-sh/setup-uv enable-cache: auto, which skips caching for
+        # events where a poisoned cache could reach a privileged context.
+        cache='false'
+        case "${INPUT_ENABLE_CACHE}" in
+          true) cache='true' ;;
+          auto)
+            if [[ "${RUNNER_ENVIRONMENT:-}" == 'github-hosted' ]]; then
+              cache='true'
+              case "${GITHUB_EVENT_NAME}" in
+                release | pull_request_target | workflow_run) cache='false' ;;
+                push)
+                  if [[ "${GITHUB_REF}" == refs/tags/* ]]; then cache='false'; fi
+                  ;;
+              esac
+            fi
+            ;;
+        esac
+        save='false'
+        if [[ "${cache}" == 'true' && "${GITHUB_EVENT_NAME}" != 'merge_group' ]]; then save='true'; fi
+
+        # uv's own default cache directory, so no GITHUB_ENV write is needed for
+        # later steps to use the restored cache.
+        cache_dir="${UV_CACHE_DIR:-${XDG_CACHE_HOME:-${HOME}/.cache}/uv}"
+
+        {
+          echo "uv-version=${version}"
+          echo "cache=${cache}"
+          echo "save=${save}"
+          echo "cache-dir=${cache_dir}"
+          echo "image-os=${ImageOS:-unknown}"
+        } >> "${GITHUB_OUTPUT}"
+        echo "Installed uv ${version} (${arch_key}); cache=${cache}, save=${save}"
+
+    - name: Restore and save uv cache
+      id: cache-save
+      if: steps.install.outputs.cache == 'true' && steps.install.outputs.save == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.install.outputs.cache-dir }}
+        key: hve-setup-uv-${{ steps.install.outputs.uv-version }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.install.outputs.image-os }}-${{ hashFiles('**/*requirements*.txt', '**/*requirements*.in', '**/*constraints*.txt', '**/*constraints*.in', '**/pyproject.toml', '**/uv.lock', '**/*.py.lock') }}
+
+    - name: Restore uv cache
+      id: cache-restore
+      if: steps.install.outputs.cache == 'true' && steps.install.outputs.save != 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.install.outputs.cache-dir }}
+        key: hve-setup-uv-${{ steps.install.outputs.uv-version }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.install.outputs.image-os }}-${{ hashFiles('**/*requirements*.txt', '**/*requirements*.in', '**/*constraints*.txt', '**/*constraints*.in', '**/pyproject.toml', '**/uv.lock', '**/*.py.lock') }}

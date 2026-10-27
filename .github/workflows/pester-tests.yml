@@ -27,7 +27,7 @@ permissions:
 jobs:
   pester:
     name: PowerShell Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write  # Required for Codecov OIDC when enable-code-coverage is true
@@ -39,16 +39,16 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install JavaScript dependencies
         run: npm ci
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
         with:
           import: 'true'
 
@@ -57,7 +57,7 @@ jobs:
         if: inputs.changed-files-only
         shell: pwsh
         run: |
-          & ./scripts/tests/Get-ChangedTestFiles.ps1 -BaseBranch '${{ github.base_ref }}'
+          & ./scripts/tests/Get-ChangedTestFiles.ps1 -BaseBranch $env:GITHUB_BASE_REF
 
       - name: Run Pester Tests
         id: pester
@@ -66,12 +66,12 @@ jobs:
         run: |
           $params = @{ CI = $true }
 
-          if ('${{ inputs.code-coverage }}' -eq 'true') {
+          if ($env:INPUT_CODE_COVERAGE -eq 'true') {
             $params['CodeCoverage'] = $true
           }
 
           # Use specific test paths if changed-files-only is enabled
-          if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:TEST_PATHS) {
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true' -and $env:TEST_PATHS) {
             $testPaths = $env:TEST_PATHS -split ';'
             $params['TestPath'] = $testPaths
           }
@@ -79,7 +79,7 @@ jobs:
           ./scripts/tests/Invoke-PesterTests.ps1 @params
 
           # Read coverage from summary JSON for downstream steps
-          if ('${{ inputs.code-coverage }}' -eq 'true' -and (Test-Path 'logs/pester-summary.json')) {
+          if ($env:INPUT_CODE_COVERAGE -eq 'true' -and (Test-Path 'logs/pester-summary.json')) {
             $summary = Get-Content 'logs/pester-summary.json' | ConvertFrom-Json
             if ($null -ne $summary.CoveragePercent) {
               Write-Host "Code coverage: $($summary.CoveragePercent)%"
@@ -99,10 +99,13 @@ jobs:
             }
           }
         continue-on-error: ${{ inputs.soft-fail }}
+        env:
+          INPUT_CODE_COVERAGE: ${{ inputs.code-coverage }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
 
       - name: Upload test results
         if: always() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pester-test-results
           path: |
@@ -114,7 +117,7 @@ jobs:
 
       - name: Upload Coverage Report
         if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-report
           path: logs/coverage.xml
@@ -136,7 +139,7 @@ jobs:
         if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
         shell: pwsh
         run: |
-          $softFail = '${{ inputs.soft-fail }}' -eq 'true'
+          $softFail = $env:INPUT_SOFT_FAIL -eq 'true'
 
           function Stop-Coverage([string] $message) {
             if ($softFail) {
@@ -173,6 +176,8 @@ jobs:
           }
 
           Write-Host "Coverage meets or exceeds the required threshold" -ForegroundColor Green
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
 
       - name: Check results
         if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"
@@ -188,7 +193,7 @@ jobs:
 
   pester-integration:
     name: PowerShell Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write  # Required for Codecov OIDC when code-coverage is true
@@ -200,22 +205,24 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install JavaScript dependencies
         run: npm ci
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
         with:
           import: 'true'
 
       - name: Run Integration Tests
         id: pester-integration
         shell: pwsh
+        env:
+          CODE_COVERAGE: ${{ inputs.code-coverage }}
         run: |
           # Run the full Integration-tagged suite. Slow remains excluded; passing
           # -ExcludeTag is required because it replaces (not appends to) the runner's
@@ -224,7 +231,7 @@ jobs:
 
           # The unit lane excludes Integration-tagged tests, so code those tests
           # exercise is measured only here.
-          if ('${{ inputs.code-coverage }}' -eq 'true') {
+          if ($env:CODE_COVERAGE -eq 'true') {
             $params['CodeCoverage'] = $true
           }
 
@@ -233,7 +240,7 @@ jobs:
 
       - name: Upload integration test results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pester-integration-test-results
           path: |

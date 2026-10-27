@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-12
+ms.date: 2026-10-14
 ms.topic: how-to
 keywords:
   - evals
@@ -83,7 +83,11 @@ The execution matrix therefore contains one prompt row plus the planned agent,
 instruction, and skill rows. `max-parallel: 6` bounds that matrix. Baseline equivalence
 runs only when the canonical plan marks `baseline.required: true`; its fixed GPT and
 Claude producers use separate runner filesystems and a configurable maximum
-parallelism of two.
+parallelism of two. The plan requires it when the changed-artifact manifest lists
+`rpi-agent` in `affectedAgents`. A change reaches that list through the agent
+dependency map, or by touching any file inside a skill directory that the
+equivalence harness materializes for `rpi-agent`, including the skills it names in
+backticks such as `rpi-research`.
 
 At default shard counts the matrix holds more rows than the cap allows to start at
 once, so some rows wait for a free slot. To keep the longest producers from waiting
@@ -204,7 +208,7 @@ Run the deterministic and policy checks before changing the scheduling defaults:
 ```pwsh
 npm run test:ps -- -TestPath scripts/tests/evals/
 npm run lint:ps
-npm run lint:yaml
+npm run lint:workflows
 npm run lint:permissions
 npm run lint:workflow-runner
 npm run lint:dangerous-workflow
