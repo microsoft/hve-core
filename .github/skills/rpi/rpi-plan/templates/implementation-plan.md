@@ -116,6 +116,17 @@ Keep this as a concise freeform list. Preserve the user's meaning and add source
 |--------|---------------------------|------------------------------------------------------------|-----------------------------------------------|------------------------------------|--------------------|------------------------------------------------|
 | {{D1}} | {{item}}                  | {{confirmed/proposed/deferred/unresolved/input requested}} | {{user/agent/evidence/constraint/downstream}} | {{rationale_or_specific_question}} | {{source_or_none}} | {{affected_Pxx_Txx_requirements_or_readiness}} |
 
+<!-- Optional: add this block after the table for each decision that needs the user's input, using the row's D number; the row stays the record of status, owner, evidence, and impact. Mark one option `(recommended)` only when evidence supports it. Delete the block, or its context line, when no decision needs the user's input; leave no placeholders. -->
+
+#### {{D1}}: {{short_decision_title}}
+
+{{one_line_question}}
+
+* A: {{option_and_its_consequence}}
+* B: {{option_and_its_consequence}}
+
+{{optional_context}}
+
 ## Planning Readiness and Next Step
 
 | Field                            | Record                                                                                                                                                                                            |

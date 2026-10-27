@@ -1,5 +1,5 @@
 <!-- markdownlint-disable-file -->
-# Task Research: {{task_slug}}
+# Task Research: {{task_name}}
 
 Fill every `{{placeholder}}`. Update this file continuously during research, not once at the end. Repeat the marked cycle block as needed. Delete optional sections that do not apply, and omit guidance comments in the completed artifact.
 
@@ -69,6 +69,17 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 | Group  | Decision or feedback item | Status                                                     | Owner                                         | Rationale or input needed          | Evidence  | Impact of answer                  |
 |--------|---------------------------|------------------------------------------------------------|-----------------------------------------------|------------------------------------|-----------|-----------------------------------|
 | {{D1}} | {{item}}                  | {{confirmed/proposed/deferred/unresolved/input requested}} | {{user/agent/evidence/constraint/downstream}} | {{rationale_or_specific_question}} | {{C1,W1}} | {{effect_on_result_or_readiness}} |
+
+<!-- Optional: add this block after the table for each decision that needs the user's input, using the row's D number; the row stays the record of status, owner, evidence, and impact. Mark one option `(recommended)` only when evidence supports it and the output mode allows a recommendation. Delete the block, or its context line, when not needed; leave no placeholders. -->
+
+### {{D1}}: {{short_decision_title}}
+
+{{one_line_question}}
+
+* A: {{option_and_its_consequence}}
+* B: {{option_and_its_consequence}}
+
+{{optional_context}}
 
 ## Risks and Open Questions
 
@@ -171,7 +182,7 @@ Record accepted, rejected, and deferred material here. A helper return is a sugg
 
 ### Evidence Log
 
-<!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use workspace-relative paths plus headings or symbols and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
+<!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows write each location as a workspace-relative path followed by its heading or symbol in backticks, separate several locations with semicolons, and use "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
 
 * Helpers: {{none_or_each_helper_lane_with_its_question_reasoning_effort_and_effort_source_and_what_was_verified_at_the_source}}
 
