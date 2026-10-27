@@ -10,7 +10,7 @@ import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
 import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
 import { createCanvasServer } from './lib/server.mjs';
-import { createSourceController, validateOpenInput } from './lib/sources.mjs';
+import { createSourceController, openPlan, validateOpenInput } from './lib/sources.mjs';
 import { createStore } from './lib/store.mjs';
 
 const CANVAS_ID = 'hve-core-rpi-workflow';
@@ -33,6 +33,13 @@ findEditor().then((found) => {
 }).catch(() => {
     editor = null;
 });
+
+/** The open result: the page address and a status naming what the canvas shows. */
+function openResult(instance, source, session, note) {
+    const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
+    const status = source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${note}` : `Sample session: ${phase}${note}`;
+    return { url: instance.server.url, title: 'RPI Workflow', status: `${status} · canvas ${instance.handle}` };
+}
 
 /** Converts model and source errors into canvas errors the host shows. */
 const asCanvasError = (error) => (error instanceof ModelError
@@ -95,14 +102,34 @@ const canvas = createCanvas({
 
     async open(ctx) {
         const input = validateOpenInput(ctx.input, makeError);
+        const current = registry.get(ctx.instanceId);
+        const bare = Object.keys(input).length === 0;
+        const plan = openPlan(input, {
+            open: Boolean(current?.source && current.server.listening),
+            remembered: bare && !current ? await store.loadInstance(ctx.instanceId).catch(() => null) : null,
+        });
+        if (plan.keep && current) {
+            const session = await store.load(current.sessionId).catch(() => null);
+            if (session) return openResult(current, current.source, session, '');
+        }
+        const candidates = [ctx.session?.workingDirectory, process.cwd()];
         /** @type {{ sessionId: string, source: any, session: any, note: string } | undefined} */
         let prepared;
         const instance = await registry.open({
             instanceId: ctx.instanceId,
             sessionId: SCENARIO_ID,
             prepare: async () => {
+                if (!plan.keep && plan.restore) {
+                    try {
+                        prepared = await sources.prepare(plan.restore, { candidates });
+                        prepared.note = `${prepared.note} (reopened where this canvas was)`;
+                        return { sessionId: prepared.sessionId, source: prepared.source };
+                    } catch (error) {
+                        log(`Could not reopen ${plan.restore.state}, so the canvas shows the sample: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                    }
+                }
                 try {
-                    prepared = await sources.prepare(input, { candidates: [ctx.session?.workingDirectory, process.cwd()] });
+                    prepared = await sources.prepare(input, { candidates });
                 } catch (error) {
                     throw asCanvasError(error);
                 }
@@ -111,10 +138,7 @@ const canvas = createCanvas({
         });
         const ready = /** @type {{ sessionId: string, source: any, session: any, note: string }} */ (prepared);
         sources.attach(instance, ready);
-        const { session, note } = ready;
-        const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
-        const status = ready.source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${note}` : `Sample session: ${phase}${note}`;
-        return { url: instance.server.url, title: 'RPI Workflow', status: `${status} · canvas ${instance.handle}` };
+        return openResult(instance, ready.source, ready.session, ready.note);
     },
 
     async onClose(ctx) {

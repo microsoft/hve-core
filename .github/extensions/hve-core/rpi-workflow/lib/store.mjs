@@ -12,6 +12,9 @@ import { ModelError, upgradeSession, validateSession } from './model.mjs';
 export const CANVAS_ID = 'hve-core-rpi-workflow';
 export const PREFERENCES_FORMAT = 'hve-core-rpi-workflow.preferences';
 export const PREFERENCES_VERSION = 1;
+export const INSTANCES_FORMAT = 'hve-core-rpi-workflow.instances';
+/** The instance memory keeps this many of the most recently updated instances. */
+export const MAX_INSTANCES = 50;
 export const DEFAULT_PREFERENCES = Object.freeze({ theme: 'system', contrast: 'standard' });
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
@@ -108,12 +111,19 @@ export function createStore(options = {}) {
 
     const sessionsDir = path.join(root, 'sessions');
     const preferencesFile = path.join(root, 'preferences.json');
+    const instancesFile = path.join(root, 'instances.json');
 
     function sessionFile(id) {
         if (typeof id !== 'string' || !SESSION_ID_RE.test(id)) {
             throw new StoreError('invalid_input', 'Session IDs use lowercase letters, digits, and dashes.');
         }
         return path.join(sessionsDir, `${id}.json`);
+    }
+
+    /** The instance entries of a parsed memory file, or none when it is missing or foreign. */
+    function instancesOf(doc) {
+        const instances = doc?.format === INSTANCES_FORMAT ? doc.instances : null;
+        return instances && typeof instances === 'object' && !Array.isArray(instances) ? instances : {};
     }
 
     async function writeAtomic(file, value) {
@@ -425,6 +435,39 @@ export function createStore(options = {}) {
                 await writeAtomic(preferencesFile, { format: PREFERENCES_FORMAT, version: PREFERENCES_VERSION, ...next });
                 events.emit('preferences', next);
                 return next;
+            }));
+        },
+
+        /**
+         * What a canvas instance showed last, or null: `{ kind: 'rpi', state, paused }` or
+         * `{ kind: 'sample' }`. A missing or unreadable memory reads as nothing remembered.
+         *
+         * @param {string} instanceId
+         */
+        async loadInstance(instanceId) {
+            const doc = await readJson(instancesFile).catch(() => undefined);
+            const entry = instancesOf(doc)[instanceId];
+            return entry && typeof entry === 'object' && !Array.isArray(entry) ? entry : null;
+        },
+
+        /**
+         * Remembers what a canvas instance shows, so the instance reopens there after the
+         * host restarts the extension. Keeps the most recently updated instances.
+         *
+         * @param {string} instanceId
+         * @param {{ kind: 'rpi', state: string, paused: boolean } | { kind: 'sample' }} shown
+         */
+        async rememberInstance(instanceId, shown) {
+            if (typeof instanceId !== 'string' || !instanceId) return;
+            await serialized(instancesFile, () => withLock(instancesFile, async () => {
+                const instances = { ...instancesOf(await readJson(instancesFile).catch(() => undefined)), [instanceId]: { ...shown, updatedAt: new Date().toISOString() } };
+                // Newest first; within one millisecond, the later write wins.
+                const kept = Object.entries(instances)
+                    .map((entry, index) => ({ entry, index, at: String(entry[1]?.updatedAt ?? ''), latest: entry[0] === instanceId }))
+                    .sort((a, b) => Number(b.latest) - Number(a.latest) || b.at.localeCompare(a.at) || b.index - a.index)
+                    .slice(0, MAX_INSTANCES)
+                    .map((item) => item.entry);
+                await writeAtomic(instancesFile, { format: INSTANCES_FORMAT, version: 1, instances: Object.fromEntries(kept) });
             }));
         },
 

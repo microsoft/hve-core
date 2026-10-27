@@ -54,6 +54,23 @@ export function validateOpenInput(input, makeError) {
     return /** @type {any} */ (value);
 }
 
+/**
+ * What a canvas open shows. An open with input shows that input. An open without input keeps
+ * an instance that is already open, and otherwise restores what the instance showed last:
+ * after the host restarts the extension, it reopens canvases without their input.
+ *
+ * @param {Record<string, unknown>} requested validated open input
+ * @param {{ open: boolean, remembered: any }} instance whether the instance is open here, and what it showed last
+ * @returns {{ keep: true } | { keep: false, restore: { state: string, paused: boolean } | null }}
+ */
+export function openPlan(requested, instance) {
+    if (Object.keys(requested).length > 0) return { keep: false, restore: null };
+    if (instance.open) return { keep: true };
+    const remembered = instance.remembered;
+    const restore = remembered?.kind === 'rpi' && validStatePath(remembered.state) ? { state: remembered.state.trim(), paused: remembered.paused === true } : null;
+    return { keep: false, restore };
+}
+
 /** A non-empty state path without control characters, within the length cap. */
 function validStatePath(value) {
     return typeof value === 'string' && value.trim() !== '' && value.length <= STATE_PATH_MAX && !/[\u0000-\u001f]/.test(value) && /-state\.json$/.test(value.trim());
@@ -188,6 +205,15 @@ export function createSourceController(deps) {
         if (prepared.source.kind === 'rpi') prepared.source.record = record;
         if (previous?.follower && previous.follower !== prepared.source.follower) previous.follower.stop();
         record.server?.rebind?.(detail);
+        remember(record);
+    }
+
+    /** Remembers what an instance shows, so it reopens there after the host restarts the extension. */
+    function remember(record) {
+        if (typeof record.instanceId !== 'string' || typeof store.rememberInstance !== 'function') return;
+        const source = record.source;
+        const shown = source?.kind === 'rpi' ? { kind: 'rpi', state: source.statePath, paused: source.follow?.paused === true } : { kind: 'sample' };
+        store.rememberInstance(record.instanceId, shown).catch((error) => log(`Could not remember what canvas ${record.instanceId} shows: ${error instanceof Error ? error.message : 'error'}`));
     }
 
     /** The tree of the task an instance shows. */
@@ -214,11 +240,11 @@ export function createSourceController(deps) {
          * Prepares a source without attaching it: `{ state }` or `{ task }` reads a task
          * from the workspace, anything else prepares the sample.
          *
-         * @param {{ task?: string, state?: string, stage?: string, replace?: boolean }} request
+         * @param {{ task?: string, state?: string, stage?: string, replace?: boolean, paused?: boolean }} request `paused` keeps following paused for `state`
          * @param {{ workspace?: { root: string, tracking: string } | null, candidates?: (string | null | undefined)[] }} [context]
          */
         prepare(request, context = {}) {
-            if (request.state !== undefined) return prepareTask({ state: request.state }, context.workspace ?? null, context.candidates);
+            if (request.state !== undefined) return prepareTask({ state: request.state }, context.workspace ?? null, context.candidates, { paused: request.paused === true });
             return request.task !== undefined && request.task !== 'sample'
                 ? prepareTask({ task: request.task }, context.workspace ?? null, context.candidates)
                 : prepareSample(request.stage, request.replace);
@@ -308,6 +334,7 @@ export function createSourceController(deps) {
             }
             record.source.follow.paused = false;
             record.server?.rebind?.({});
+            remember(record);
             await followRunning(record);
             return { sessionId: record.sessionId, source: record.source };
         },

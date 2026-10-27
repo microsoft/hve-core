@@ -12,8 +12,8 @@ import { createActionHandlers } from '../lib/actions.mjs';
 import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createCanvasServer } from '../lib/server.mjs';
-import { createSourceController, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
-import { createStore } from '../lib/store.mjs';
+import { createSourceController, openPlan, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
+import { createStore, MAX_INSTANCES } from '../lib/store.mjs';
 import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 const writeJson = async (dir, relative, value) => {
@@ -62,6 +62,74 @@ describe('open input', () => {
             { state: PATHS.plan }, { state: '' }, { state: 7 }, { state: PATHS.rootState, task: ROOT_TASK }, { state: PATHS.rootState, stage: 'plan' }, { state: `x\u0000-state.json` }]) {
             assert.equal(await codeOf(() => validateOpenInput(bad, makeError)), 'invalid_input', JSON.stringify(bad));
         }
+    });
+});
+
+describe('reopening an instance', () => {
+    const remembered = { kind: 'rpi', state: '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/trail-maps-state.json', paused: true };
+
+    it('shows the input when there is one, keeps an open instance, and restores a bare reopen', () => {
+        assert.deepEqual(openPlan({ stage: 'plan' }, { open: true, remembered }), { keep: false, restore: null });
+        assert.deepEqual(openPlan({ state: remembered.state }, { open: false, remembered: null }), { keep: false, restore: null });
+        assert.deepEqual(openPlan({}, { open: true, remembered }), { keep: true });
+        assert.deepEqual(openPlan({}, { open: false, remembered }), { keep: false, restore: { state: remembered.state, paused: true } });
+        assert.deepEqual(openPlan({}, { open: false, remembered: { ...remembered, paused: undefined } }).restore.paused, false);
+    });
+
+    it('opens the sample for a new instance, a sample memory, or a memory it cannot use', () => {
+        assert.deepEqual(openPlan({}, { open: false, remembered: null }), { keep: false, restore: null });
+        assert.deepEqual(openPlan({}, { open: false, remembered: { kind: 'sample' } }), { keep: false, restore: null });
+        assert.deepEqual(openPlan({}, { open: false, remembered: { kind: 'rpi', state: '../etc/passwd' } }), { keep: false, restore: null });
+        assert.deepEqual(openPlan({}, { open: false, remembered: { kind: 'rpi', state: 42 } }), { keep: false, restore: null });
+    });
+
+    it('remembers what each instance shows, including paused following, and reopens it there', async () => {
+        const dir = path.join(tmp, 'remember-session');
+        await writeFixtureWorkspace(dir);
+        await writeJson(dir, PATHS.childState, { ...CHILD_STATE, status: 'active', session_status: 'running' });
+        const store = createStore({ root: path.join(tmp, 'remember-store') });
+        const sources = createSourceController({ store });
+        const record = { instanceId: 'rpi-trail-maps', sessionId: '', source: null, server: { rebind: () => {} } };
+        sources.attach(record, await sources.prepare({ state: PATHS.rootState }, { candidates: [dir] }));
+        await sources.settled(record);
+        const waitFor = async (predicate) => {
+            for (let i = 0; i < 50 && !predicate(await store.loadInstance('rpi-trail-maps')); i += 1) await new Promise((resolve) => setTimeout(resolve, 20));
+            return store.loadInstance('rpi-trail-maps');
+        };
+        let shown = await waitFor((entry) => entry?.state === PATHS.childState);
+        assert.deepEqual([shown.kind, shown.state, shown.paused], ['rpi', PATHS.childState, false], 'following moved to the running child');
+        await sources.switchToTask(record, ROOT_TASK);
+        shown = await waitFor((entry) => entry?.paused === true);
+        assert.deepEqual([shown.state, shown.paused], [PATHS.rootState, true], 'a manual switch to a stopped loop is remembered as paused');
+        await sources.resumeFollowing(record);
+        await sources.settled(record);
+        shown = await waitFor((entry) => entry?.paused === false && entry.state === PATHS.childState);
+        assert.equal(shown.state, PATHS.childState);
+        sources.detach(record);
+
+        const plan = openPlan({}, { open: false, remembered: { ...shown, state: PATHS.rootState, paused: true } });
+        const reopened = { instanceId: 'rpi-trail-maps', sessionId: '', source: null, server: { rebind: () => {} } };
+        sources.attach(reopened, await sources.prepare(plan.restore, { candidates: [dir] }));
+        await sources.settled(reopened);
+        assert.deepEqual([reopened.source.taskId, reopened.source.follow.paused], [ROOT_TASK, true], 'a paused memory reopens paused, on the loop it showed');
+        sources.detach(reopened);
+        const sample = { instanceId: 'rpi-trail-maps', sessionId: '', source: null, server: { rebind: () => {} } };
+        sources.attach(sample, await sources.prepare({ stage: 'plan' }, {}));
+        assert.equal((await waitFor((entry) => entry?.kind === 'sample')).kind, 'sample', 'showing the sample on purpose is remembered too');
+        store.close();
+    });
+
+    it('keeps the most recent instances and treats an unreadable memory as empty', async () => {
+        const store = createStore({ root: path.join(tmp, 'instances-store') });
+        await fs.mkdir(store.root, { recursive: true });
+        await fs.writeFile(path.join(store.root, 'instances.json'), '{ not json');
+        assert.equal(await store.loadInstance('a'), null);
+        for (let i = 0; i < MAX_INSTANCES + 5; i += 1) await store.rememberInstance(`i-${i}`, { kind: 'sample' });
+        const doc = JSON.parse(await fs.readFile(path.join(store.root, 'instances.json'), 'utf8'));
+        assert.equal(Object.keys(doc.instances).length, MAX_INSTANCES);
+        assert.equal(await store.loadInstance('i-0'), null, 'the oldest instances are dropped');
+        assert.equal((await store.loadInstance(`i-${MAX_INSTANCES + 4}`)).kind, 'sample');
+        store.close();
     });
 });
 

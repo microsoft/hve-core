@@ -151,7 +151,8 @@ To show the workspace's most recent session instead, pass `task`:
 { "task": "current" }
 ```
 
-`current` is the most recently changed task whose session is running, or the most recently changed task when none runs. A task ID, such as `{ "task": "offline-drafts" }`, opens that task. Without `state` or `task`, the canvas shows the sample session. To start at a stage of the sample, pass it as input:
+`current` is the most recently changed task whose session is running, or the most recently changed task when none runs. A task ID, such as `{ "task": "offline-drafts" }`, opens that task.
+Opening a canvas without input keeps what it shows, and a canvas the host reopens after restarting the extension shows what it showed last, as the host does not pass the earlier input again. A new canvas opened without input shows the sample session. To start at a stage of the sample, pass it as input:
 
 ```json
 { "stage": "research" }
@@ -245,6 +246,7 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
 * `sessions/<id>.json` holds the session document. For a real session, `<id>` is `rpi-` and the task ID, and the document is a copy of the task's files plus what you added in the canvas. Writes are atomic, and a lock file serializes writers across processes. A write lands only when no other process wrote since it read the session; otherwise it is applied again to the newer session. A document saved by an earlier canvas version is brought up to date as it is read.
 * `sessions/<id>.previous.json` holds the session that the last replace discarded your changes from (`load_scenario` with `replace: true`), or an unreadable file it replaced. It stays until the next such replace.
 * `preferences.json` holds the theme and contrast choice.
+* `instances.json` remembers what each canvas instance shows, its state file and whether following is paused, so the instance reopens there after the host restarts the extension. It keeps the 50 most recently updated instances.
 
 ## Security and Privacy
 
