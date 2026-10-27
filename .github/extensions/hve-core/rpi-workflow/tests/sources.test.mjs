@@ -76,9 +76,19 @@ describe('reopening an instance', () => {
         assert.deepEqual(openPlan({}, { open: false, remembered: { ...remembered, paused: undefined } }).restore.paused, false);
     });
 
-    it('opens the sample for a new instance, a sample memory, or a memory it cannot use', () => {
+    it('restores a remembered instance whatever input the host repeats', () => {
+        const restored = { keep: false, restore: { state: remembered.state, paused: true } };
+        assert.deepEqual(openPlan({ stage: 'implement' }, { open: false, remembered }), restored, "a session restart repeats the first open's input");
+        assert.deepEqual(openPlan({ state: '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/trail-maps-fixes-state.json' }, { open: false, remembered }), restored, "a reload repeats the latest open's input");
+        assert.deepEqual(openPlan({ task: 'current' }, { open: false, remembered }), restored);
+        assert.deepEqual(openPlan({ stage: 'implement' }, { open: true, remembered }), { keep: false, restore: null }, 'an instance already showing obeys its input');
+        assert.deepEqual(openPlan({ state: remembered.state }, { open: false, remembered: { kind: 'sample' } }), { keep: false, restore: { task: 'sample' } }, 'a remembered sample comes back as it was');
+    });
+
+    it('opens the input for an instance this conversation never showed, or a memory it cannot use', () => {
         assert.deepEqual(openPlan({}, { open: false, remembered: null }), { keep: false, restore: null });
-        assert.deepEqual(openPlan({}, { open: false, remembered: { kind: 'sample' } }), { keep: false, restore: null });
+        assert.deepEqual(openPlan({ stage: 'plan' }, { open: false, remembered: null }), { keep: false, restore: null });
+        assert.deepEqual(openPlan({}, { open: false, remembered: { kind: 'sample' } }), { keep: false, restore: { task: 'sample' } });
         assert.deepEqual(openPlan({}, { open: false, remembered: { kind: 'rpi', state: '../etc/passwd' } }), { keep: false, restore: null });
         assert.deepEqual(openPlan({}, { open: false, remembered: { kind: 'rpi', state: 42 } }), { keep: false, restore: null });
     });
@@ -129,6 +139,66 @@ describe('reopening an instance', () => {
         assert.equal(Object.keys(doc.instances).length, MAX_INSTANCES);
         assert.equal(await store.loadInstance('i-0'), null, 'the oldest instances are dropped');
         assert.equal((await store.loadInstance(`i-${MAX_INSTANCES + 4}`)).kind, 'sample');
+        store.close();
+    });
+
+    it('keeps each conversation apart', async () => {
+        const store = createStore({ root: path.join(tmp, 'conversations-store') });
+        const shown = { kind: 'rpi', state: remembered.state, paused: false };
+        await store.rememberInstance('panel', shown, { hostSessionId: 'session-a' });
+        assert.deepEqual([(await store.loadInstance('panel', 'session-a')).state], [remembered.state]);
+        assert.equal(await store.loadInstance('panel', 'session-b'), null, 'another conversation remembers nothing');
+        assert.equal(await store.loadInstance('panel'), null, 'the instance alone is another key');
+        await store.rememberInstance('panel', { kind: 'sample' }, { hostSessionId: 'session-b' });
+        assert.equal((await store.loadInstance('panel', 'session-a')).kind, 'rpi', 'conversations do not overwrite each other');
+        assert.equal((await store.loadInstance('panel', 'session-b')).kind, 'sample');
+        await store.rememberInstance('loose', { kind: 'sample' }, { hostSessionId: '../escape' });
+        assert.equal((await store.loadInstance('loose')).kind, 'sample', 'an unusable conversation ID falls back to the instance alone');
+        store.close();
+    });
+
+    it('ignores memory saved in another version', async () => {
+        const store = createStore({ root: path.join(tmp, 'version-store') });
+        await fs.mkdir(store.root, { recursive: true });
+        const file = path.join(store.root, 'instances.json');
+        await fs.writeFile(file, JSON.stringify({ format: 'hve-core-rpi-workflow.instances', version: 1, instances: { panel: { kind: 'rpi', state: remembered.state, paused: false } } }));
+        assert.equal(await store.loadInstance('panel'), null, 'memory saved before version 2 is not carried over');
+        await store.rememberInstance('panel', { kind: 'sample' }, { hostSessionId: 'session-a' });
+        const doc = JSON.parse(await fs.readFile(file, 'utf8'));
+        assert.deepEqual([doc.version, Object.keys(doc.instances)], [2, ['session-a/panel']], 'the next write replaces it');
+        store.close();
+    });
+
+    it('brings a remembered task back when the host reopens with an earlier input', async () => {
+        const dir = path.join(tmp, 'replay-session');
+        await writeFixtureWorkspace(dir);
+        const store = createStore({ root: path.join(tmp, 'replay-store') });
+        const sources = createSourceController({ store });
+        const first = { stage: 'implement' };
+        const conversation = 'session-a';
+        const record = { instanceId: 'panel', sessionId: '', source: null, server: { rebind: () => {} }, hostSessionId: conversation };
+        sources.attach(record, await sources.prepare(first, {}));
+        sources.attach(record, await sources.prepare({ state: PATHS.rootState }, { candidates: [dir] }));
+        await sources.settled(record);
+        sources.detach(record);
+        let memory = null;
+        for (let i = 0; i < 50 && memory?.kind !== 'rpi'; i += 1) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            memory = await store.loadInstance('panel', conversation);
+        }
+        assert.equal(memory?.kind, 'rpi', 'the conversation remembers the task');
+
+        for (const repeated of [first, { state: PATHS.rootState }]) {
+            const plan = openPlan(repeated, { open: false, remembered: memory });
+            const reopened = { instanceId: 'panel', sessionId: '', source: null, server: { rebind: () => {} }, hostSessionId: conversation };
+            sources.attach(reopened, await sources.prepare(plan.restore, { candidates: [dir] }));
+            await sources.settled(reopened);
+            assert.deepEqual([reopened.source.kind, reopened.source.statePath], ['rpi', memory.state], `reopening with ${JSON.stringify(repeated)} returns to the task`);
+            sources.detach(reopened);
+        }
+
+        assert.equal(await store.loadInstance('panel', 'session-b'), null, 'another conversation has no memory of the panel');
+        assert.deepEqual(openPlan(first, { open: false, remembered: null }), { keep: false, restore: null }, 'so its first open obeys the input');
         store.close();
     });
 });
@@ -283,9 +353,7 @@ describe('actions on a canvas that follows RPI files', () => {
             store,
             makeError,
             async switchSource(target, request, context) {
-                const next = await sources.prepare(request, { workspace: request.task !== undefined && target.source?.kind === 'rpi' ? target.source.workspace : null, candidates: [context.workingDirectory, root] });
-                sources.attach(target, next);
-                return next;
+                return sources.show(target, request, { workspace: request.task !== undefined && target.source?.kind === 'rpi' ? target.source.workspace : null, candidates: [context.workingDirectory, root] });
             },
         });
         const call = (action, input, extra = {}) => handlers[action]({ instanceId: 'i1', input, ...extra });
@@ -358,10 +426,12 @@ describe('actions on a canvas that follows RPI files', () => {
         }
         const child = await call('show_task', { task: CHILD_TASK });
         assert.deepEqual([child.source.taskId, instance.sessionId], [CHILD_TASK, 'rpi-trail-maps-fixes']);
+        assert.equal(instance.source.follow.paused, true, 'a task the agent names that is not running stays shown');
         const sample = await call('show_task', { task: 'sample', stage: 'plan' });
         assert.deepEqual([sample.source, instance.sessionId], [{ kind: 'sample', stage: 'plan' }, SCENARIO_ID]);
         await call('show_task', { task: 'current' }, { session: { workingDirectory: root } });
         assert.equal(instance.sessionId, 'rpi-trail-maps');
+        assert.equal(instance.source.follow.paused, false, '"current" asks for where the work is, so following stays on');
         const loaded = await call('load_scenario', { stage: 'review' });
         assert.equal(loaded.activePhase, 'review');
         assert.equal(instance.sessionId, SCENARIO_ID, 'load_scenario returns the canvas to the sample');

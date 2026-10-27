@@ -55,20 +55,26 @@ export function validateOpenInput(input, makeError) {
 }
 
 /**
- * What a canvas open shows. An open with input shows that input. An open without input keeps
- * an instance that is already open, and otherwise restores what the instance showed last:
- * after the host restarts the extension, it reopens canvases without their input.
+ * What a canvas open shows. An instance already open here keeps what it shows when the open
+ * has no input, and shows the input otherwise.
+ *
+ * The host reopens an instance this process has not opened yet by repeating an input it was
+ * opened with: the latest open's after an extension reload, the first open's after a session
+ * restart. Neither tells a reopen apart, and both arrive before the agent can act, so any open
+ * of an instance that is not open here, and that this conversation remembers, restores what
+ * it showed last: the task, or `{ task: 'sample' }` for the sample as it was.
  *
  * @param {Record<string, unknown>} requested validated open input
- * @param {{ open: boolean, remembered: any }} instance whether the instance is open here, and what it showed last
- * @returns {{ keep: true } | { keep: false, restore: { state: string, paused: boolean } | null }}
+ * @param {{ open: boolean, remembered: any }} instance whether the instance is open here, and what it showed last in this conversation
+ * @returns {{ keep: true } | { keep: false, restore: { state: string, paused: boolean } | { task: 'sample' } | null }}
  */
 export function openPlan(requested, instance) {
-    if (Object.keys(requested).length > 0) return { keep: false, restore: null };
-    if (instance.open) return { keep: true };
+    if (instance.open) return Object.keys(requested).length === 0 ? { keep: true } : { keep: false, restore: null };
     const remembered = instance.remembered;
-    const restore = remembered?.kind === 'rpi' && validStatePath(remembered.state) ? { state: remembered.state.trim(), paused: remembered.paused === true } : null;
-    return { keep: false, restore };
+    if (remembered?.kind === 'rpi' && validStatePath(remembered.state)) {
+        return { keep: false, restore: { state: remembered.state.trim(), paused: remembered.paused === true } };
+    }
+    return { keep: false, restore: remembered?.kind === 'sample' ? { task: 'sample' } : null };
 }
 
 /** A non-empty state path without control characters, within the length cap. */
@@ -208,12 +214,12 @@ export function createSourceController(deps) {
         remember(record);
     }
 
-    /** Remembers what an instance shows, so it reopens there after the host restarts the extension. */
+    /** Remembers what an instance shows in its conversation, so it returns there when the host reopens it. */
     function remember(record) {
         if (typeof record.instanceId !== 'string' || typeof store.rememberInstance !== 'function') return;
         const source = record.source;
         const shown = source?.kind === 'rpi' ? { kind: 'rpi', state: source.statePath, paused: source.follow?.paused === true } : { kind: 'sample' };
-        store.rememberInstance(record.instanceId, shown).catch((error) => log(`Could not remember what canvas ${record.instanceId} shows: ${error instanceof Error ? error.message : 'error'}`));
+        store.rememberInstance(record.instanceId, shown, { hostSessionId: record.hostSessionId }).catch((error) => log(`Could not remember what canvas ${record.instanceId} shows: ${error instanceof Error ? error.message : 'error'}`));
     }
 
     /** The tree of the task an instance shows. */
@@ -260,6 +266,25 @@ export function createSourceController(deps) {
         attach(record, prepared) {
             attach(record, prepared);
             if (prepared.source.kind === 'rpi') void followRunning(record);
+        },
+
+        /**
+         * Shows what the agent asks for with `show_task` or `load_scenario`. A task it names that
+         * is not running stays shown, with following paused as when the user chooses it on the
+         * page; `task: "current"` keeps following, because it asks for where the work is.
+         *
+         * @param {{ sessionId: string, source?: any, server?: any }} record
+         * @param {{ task?: string, state?: string, stage?: string, replace?: boolean }} request
+         * @param {{ workspace?: any, candidates?: (string | null | undefined)[] }} [context]
+         */
+        async show(record, request, context = {}) {
+            const prepared = await this.prepare(request, context);
+            if (prepared.source.kind === 'rpi' && request.task !== 'current') {
+                const shown = prepared.source.tasks.find((task) => task.statePath === prepared.source.statePath);
+                if (shown?.status !== 'running') prepared.source.follow.paused = true;
+            }
+            this.attach(record, prepared);
+            return prepared;
         },
 
         /** Stops an instance's follower. */

@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-10-26
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - canvas
@@ -186,7 +186,8 @@ To show the workspace's most recent session instead, pass `task`:
 ```
 
 `current` is the most recently changed task whose session is running, or the most recently changed task when none runs. A task ID, such as `{ "task": "offline-drafts" }`, opens that task.
-Opening a canvas without input keeps what it shows, and a canvas the host reopens after restarting the extension shows what it showed last, as the host does not pass the earlier input again. A new canvas opened without input shows the sample session. To start at a stage of the sample, pass it as input:
+Opening a canvas without input keeps what it shows. When the host reopens a canvas, it repeats an input the canvas was opened with: after an extension reload, its latest open's input, and after a restart of the chat session, its first open's input. The canvas cannot tell that input from a new request, so any open of a canvas that is not open yet, in a conversation that has shown it, returns it to what it showed last.
+An open of a canvas that is already showing works as usual. When a reopen overrides an open's input, the open result says so; use `show_task` to show another task. A new canvas opened without input shows the sample session. To start at a stage of the sample, pass it as input:
 
 ```json
 { "stage": "research" }
@@ -282,7 +283,7 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
 * `sessions/<id>.json` holds the session document. For a real session, `<id>` is `rpi-` and the task ID, and the document is a copy of the task's files plus what you added in the canvas. Writes are atomic, and a lock file serializes writers across processes. A write lands only when no other process wrote since it read the session; otherwise it is applied again to the newer session. A document saved by an earlier canvas version is brought up to date as it is read.
 * `sessions/<id>.previous.json` holds the session that the last replace discarded your changes from (`load_scenario` with `replace: true`), or an unreadable file it replaced. It stays until the next such replace.
 * `preferences.json` holds the theme and contrast choice.
-* `instances.json` remembers what each canvas instance shows, its state file and whether following is paused, so the instance reopens there after the host restarts the extension. It keeps the 50 most recently updated instances.
+* `instances.json` remembers, for each conversation and canvas instance, what the instance shows (its state file and whether following is paused), so the instance returns there when the host reopens it. It keeps the 50 most recently updated instances.
 
 ## Security and Privacy
 

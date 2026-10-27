@@ -73,12 +73,10 @@ const handlers = createActionHandlers({
     async switchSource(instance, request, context) {
         try {
             const fromWorkspace = request.task !== undefined || request.state !== undefined;
-            const prepared = await sources.prepare(request, {
+            return await sources.show(instance, request, {
                 workspace: fromWorkspace && instance.source?.kind === 'rpi' ? instance.source.workspace : null,
                 candidates: [context.workingDirectory, process.cwd()],
             });
-            sources.attach(instance, prepared);
-            return prepared;
         } catch (error) {
             throw asCanvasError(error);
         }
@@ -104,10 +102,11 @@ const canvas = createCanvas({
     async open(ctx) {
         const input = validateOpenInput(ctx.input, makeError);
         const current = registry.get(ctx.instanceId);
-        const bare = Object.keys(input).length === 0;
+        const hostSessionId = typeof ctx.sessionId === 'string' ? ctx.sessionId : undefined;
+        const open = Boolean(current?.source && current.server.listening);
         const plan = openPlan(input, {
-            open: Boolean(current?.source && current.server.listening),
-            remembered: bare && !current ? await store.loadInstance(ctx.instanceId).catch(() => null) : null,
+            open,
+            remembered: open ? null : await store.loadInstance(ctx.instanceId, hostSessionId).catch(() => null),
         });
         if (plan.keep && current) {
             const session = await store.load(current.sessionId).catch(() => null);
@@ -123,7 +122,8 @@ const canvas = createCanvas({
                 if (!plan.keep && plan.restore) {
                     try {
                         prepared = await sources.prepare(plan.restore, { candidates });
-                        prepared.note = `${prepared.note} (reopened where this canvas was)`;
+                        // A reopen repeats an earlier input; when it carries one, the open result says the input did not apply.
+                        prepared.note = `${prepared.note} (reopened where this canvas was${Object.keys(input).length ? '; its input was not applied, so use show_task to show another task' : ''})`;
                         return { sessionId: prepared.sessionId, source: prepared.source };
                     } catch (error) {
                         log(`Could not reopen ${plan.restore.state}, so the canvas shows the sample: ${error instanceof Error ? error.message : 'error'}`, 'warning');
@@ -138,6 +138,8 @@ const canvas = createCanvas({
             },
         });
         const ready = /** @type {{ sessionId: string, source: any, session: any, note: string }} */ (prepared);
+        // The conversation keys the instance's memory.
+        instance.hostSessionId = hostSessionId;
         sources.attach(instance, ready);
         return openResult(instance, ready.source, ready.session, ready.note);
     },

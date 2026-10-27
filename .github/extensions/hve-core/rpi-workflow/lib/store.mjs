@@ -13,8 +13,11 @@ export const CANVAS_ID = 'hve-core-rpi-workflow';
 export const PREFERENCES_FORMAT = 'hve-core-rpi-workflow.preferences';
 export const PREFERENCES_VERSION = 1;
 export const INSTANCES_FORMAT = 'hve-core-rpi-workflow.instances';
+/** Version 2 keys each instance by the conversation that shows it. */
+export const INSTANCES_VERSION = 2;
 /** The instance memory keeps this many of the most recently updated instances. */
 export const MAX_INSTANCES = 50;
+const HOST_SESSION_RE = /^[A-Za-z0-9._-]{1,128}$/;
 export const DEFAULT_PREFERENCES = Object.freeze({ theme: 'system', contrast: 'standard' });
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
@@ -30,6 +33,17 @@ const SESSION_ID_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
 export function resolveCopilotHome(env = process.env, homedir = os.homedir()) {
     const value = env.COPILOT_HOME;
     return typeof value === 'string' && value.length > 0 ? value : path.join(homedir, '.copilot');
+}
+
+/**
+ * The memory key of an instance: its conversation and instance ID, or the instance ID alone
+ * when the conversation is unknown or its ID is not usable in a key.
+ *
+ * @param {string} instanceId
+ * @param {unknown} hostSessionId the Copilot session (conversation) that shows the instance
+ */
+function instanceKey(instanceId, hostSessionId) {
+    return typeof hostSessionId === 'string' && HOST_SESSION_RE.test(hostSessionId) ? `${hostSessionId}/${instanceId}` : instanceId;
 }
 
 /** Private data folder for this canvas, outside any repository. */
@@ -120,9 +134,9 @@ export function createStore(options = {}) {
         return path.join(sessionsDir, `${id}.json`);
     }
 
-    /** The instance entries of a parsed memory file, or none when it is missing or foreign. */
+    /** The instance entries of a parsed memory file, or none when it is missing, foreign, or another version. */
     function instancesOf(doc) {
-        const instances = doc?.format === INSTANCES_FORMAT ? doc.instances : null;
+        const instances = doc?.format === INSTANCES_FORMAT && doc.version === INSTANCES_VERSION ? doc.instances : null;
         return instances && typeof instances === 'object' && !Array.isArray(instances) ? instances : {};
     }
 
@@ -439,35 +453,39 @@ export function createStore(options = {}) {
         },
 
         /**
-         * What a canvas instance showed last, or null: `{ kind: 'rpi', state, paused }` or
-         * `{ kind: 'sample' }`. A missing or unreadable memory reads as nothing remembered.
+         * What a canvas instance showed last in a conversation, or null: `{ kind: 'rpi', state,
+         * paused }` or `{ kind: 'sample' }`. A missing or unreadable memory reads as nothing
+         * remembered.
          *
          * @param {string} instanceId
+         * @param {string} [hostSessionId] the Copilot session (conversation) that shows the instance
          */
-        async loadInstance(instanceId) {
+        async loadInstance(instanceId, hostSessionId) {
             const doc = await readJson(instancesFile).catch(() => undefined);
-            const entry = instancesOf(doc)[instanceId];
+            const entry = instancesOf(doc)[instanceKey(instanceId, hostSessionId)];
             return entry && typeof entry === 'object' && !Array.isArray(entry) ? entry : null;
         },
 
         /**
-         * Remembers what a canvas instance shows, so the instance reopens there after the
-         * host restarts the extension. Keeps the most recently updated instances.
+         * Remembers what a canvas instance shows in a conversation, so the instance returns
+         * there when the host reopens it. Keeps the most recently updated instances.
          *
          * @param {string} instanceId
          * @param {{ kind: 'rpi', state: string, paused: boolean } | { kind: 'sample' }} shown
+         * @param {{ hostSessionId?: string }} [options]
          */
-        async rememberInstance(instanceId, shown) {
+        async rememberInstance(instanceId, shown, options = {}) {
             if (typeof instanceId !== 'string' || !instanceId) return;
+            const key = instanceKey(instanceId, options.hostSessionId);
             await serialized(instancesFile, () => withLock(instancesFile, async () => {
-                const instances = { ...instancesOf(await readJson(instancesFile).catch(() => undefined)), [instanceId]: { ...shown, updatedAt: new Date().toISOString() } };
+                const instances = { ...instancesOf(await readJson(instancesFile).catch(() => undefined)), [key]: { ...shown, updatedAt: new Date().toISOString() } };
                 // Newest first; within one millisecond, the later write wins.
                 const kept = Object.entries(instances)
-                    .map((entry, index) => ({ entry, index, at: String(entry[1]?.updatedAt ?? ''), latest: entry[0] === instanceId }))
+                    .map((entry, index) => ({ entry, index, at: String(entry[1]?.updatedAt ?? ''), latest: entry[0] === key }))
                     .sort((a, b) => Number(b.latest) - Number(a.latest) || b.at.localeCompare(a.at) || b.index - a.index)
                     .slice(0, MAX_INSTANCES)
                     .map((item) => item.entry);
-                await writeAtomic(instancesFile, { format: INSTANCES_FORMAT, version: 1, instances: Object.fromEntries(kept) });
+                await writeAtomic(instancesFile, { format: INSTANCES_FORMAT, version: INSTANCES_VERSION, instances: Object.fromEntries(kept) });
             }));
         },
 
