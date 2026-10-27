@@ -147,6 +147,8 @@ Visualization prompts target M365 Copilot or modern GPT image models such as `gp
 * Single scenario or use case per concept
 * Environmental context when relevant to constraints
 * 15-second napkin sketch standard (what you'd draw in 15 seconds)
+* Describe people by role and action; leave out names, age, gender, ethnicity, and appearance from interviews or personas unless `Observed` or `Reported` evidence shows the trait matters, and then describe the need instead of the trait
+* After generation, review images for stereotyped depictions and regenerate when needed (see the representation safeguards in the `dt-rpi-integration` image prompt generation reference)
 
 **Coaching Patterns**:
 

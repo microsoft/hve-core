@@ -3,7 +3,7 @@ title: Code-Scanning Alert Lifecycle
 description: How HVE Core detects, blocks, tracks, and resolves code-scanning alerts without ever dismissing them
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-06
 ms.topic: concept
 keywords:
   - security
@@ -47,11 +47,19 @@ flowchart LR
 
 ## Detection
 
-| Source            | What it finds                                                                                                            | When it runs                                                  |
-|-------------------|--------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
-| CodeQL            | Security and quality findings in `actions`, `python`, and `javascript-typescript` source, plus the delivered slide decks | Pull requests, pushes to `main`, Sundays at 2 AM and 4 AM UTC |
-| OpenSSF Scorecard | Repository posture, including branch protection and known-vulnerable dependencies                                        | Sundays at 3 AM UTC and on pushes to `main`                   |
-| OSV-Scanner (VEX) | Dependency advisories not yet triaged in `security/vex/hve-core.openvex.json`                                            | Tuesdays at 8 AM UTC                                          |
+| Source                   | What it finds                                                                                                            | When it runs                                                                            |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| CodeQL                   | Security and quality findings in `actions`, `python`, and `javascript-typescript` source, plus the delivered slide decks | Pull requests, pushes to `main`, Sundays at 2 AM and 4 AM UTC                           |
+| OpenSSF Scorecard        | Repository posture, including branch protection and known-vulnerable dependencies                                        | Sundays at 3 AM UTC and on pushes to `main`                                             |
+| OSV-Scanner (VEX)        | Dependency advisories not yet triaged in `security/vex/hve-core.openvex.json`                                            | Tuesdays at 8 AM UTC                                                                    |
+| zizmor                   | GitHub Actions security audits at the `pedantic` persona, with `--no-ignores`                                            | Pull requests, pushes to `main` that touch workflows or actions, Mondays at 4:30 AM UTC |
+| Workflow validator       | GitHub workflow-parser errors, custom workflow checks, and ShellCheck results in `run:` scripts                          | Pull requests                                                                           |
+| Tool version consistency | Hard-coded tool versions, digests, and runtimes that differ from `scripts/security/tool-checksums.json`                  | Pull requests                                                                           |
+| Action pin provenance    | Action pins whose commit is not on an upstream tag or default branch, or whose comment names the wrong tag               | Pull requests                                                                           |
+| Dependency pinning       | Unpinned dependencies, one rule per dependency type                                                                      | Pull requests and the weekly security maintenance run                                   |
+| Poutine                  | Supply-chain risks in GitHub Actions workflows; advisory, not gated                                                      | Pull requests and the weekly security maintenance run                                   |
+
+The scanners that run only from pull requests have no analysis on `main`, so their alerts appear on pull-request branches, and the weekly exception status reports their tracked exceptions as not observed rather than closed.
 
 CodeQL runs the `security-extended` and `security-and-quality` suites. Generated slide decks have their own category because they inline third-party Reveal.js; fix their findings in the deck source or the slide bundler, never in the generated HTML.
 
@@ -67,6 +75,10 @@ After each CodeQL analysis uploads its results, `scripts/security/Test-CodeQLSar
 * a result from a rule without a security severity whose level is `error` or `warning`.
 
 Note-level quality results pass the gate but still appear as alerts, and you still resolve them. Inline SARIF suppressions do not exempt a result, and a missing or unreadable SARIF file fails the job.
+
+The gate accepts SARIF from any code-scanning tool and attributes each result to its tool name. Scanners gated at zero findings run it with `-Threshold All`, which fails every result regardless of level or severity: zizmor, the workflow validator, the tool version and action pin provenance checks, and dependency pinning. Each scanner writes its SARIF first, so a tracked exception applies to its results the same way.
+
+A newly adopted scanner's gate becomes blocking only once each of its findings is fixed or registered as a tracked exception with its upstream report. Until then its findings still upload and appear as alerts; nothing is suppressed while the gate waits.
 
 The gate runs inside the CodeQL job, which feeds `PR Validation Success`. That matters for the merge queue: GitHub's ruleset code-scanning protection does not evaluate merge-queue groups, but the gate does, because the queue runs the same validation. The gate counts every finding at the threshold, not only new ones, so a red gate on `main` means the baseline is no longer clean.
 
@@ -85,13 +97,22 @@ The rule has no exception concept. If a [tracked exception](#tracked-exceptions)
 
 The [Weekly GitHub Code Scanning](https://github.com/microsoft/hve-core/blob/main/.github/workflows/weekly-gh-code-scanning.yml) workflow runs Mondays at 3 AM UTC and files or updates one issue per rule. Every issue it files is labeled `security`, `automated`, and `code-scanning`, so no automated issue waits on a triage pass. A hidden body marker identifies the kind of issue and keeps reruns updating the same issue instead of filing duplicates.
 
-| Issue kind                   | Marker                                             | What it asks for                                                                                          |
-|------------------------------|----------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| Open alert                   | `automation:security-scan:<rule>`                  | Find the root cause and resolve it in code or configuration                                               |
-| Dismissed but still detected | `automation:security-scan-dismissed:<rule>`        | Reopen the alert, then resolve it; the earlier dismissal does not count as a resolution                   |
-| Tracked exception follow-up  | `automation:code-scanning-exception:<rule>:<path>` | The exception's issue was closed while the finding persists; fix it or renew the exception through review |
+| Issue kind                   | Marker                                                    | What it asks for                                                                                          |
+|------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Open alert                   | `automation:security-scan:<rule>`                         | Find the root cause and resolve it in code or configuration                                               |
+| Dismissed but still detected | `automation:security-scan-dismissed:<rule>`               | Reopen the alert, then resolve it; the earlier dismissal does not count as a resolution                   |
+| Tracked exception follow-up  | `automation:code-scanning-exception:<tool>:<rule>:<path>` | The exception's issue was closed while the finding persists; fix it or renew the exception through review |
+| Upstream watch triggered     | `automation:upstream-watch:<id>`                          | An upstream condition a workaround waits on is met; retire the workaround and remove the watch            |
 
-For each tracked exception, the same run also keeps one status comment current on the exception's issue, showing the rule, path, expiry, days left, and whether the alert is still open.
+For each tracked exception, the same run also keeps one status comment current on the exception's issue, showing the tool, rule, path, kind, pinned count, upstream report and whether it is still open, expiry, days left, and the alert state.
+The alert state is open (with the open count), closed when the tool analyzed `main` and the alert is gone, or not observed when the tool has no analysis on `main`. Only a closed alert prompts removing the exception. A closed upstream report is the cue to check whether the fix has shipped and retire the exception.
+
+### Upstream watches
+
+[`security/upstream-watches.yml`](https://github.com/microsoft/hve-core/blob/main/security/upstream-watches.yml) lists the upstream conditions that let a workaround or tracked exception retire: an upstream issue closing, a newer upstream release, a runner label reaching a minimum runner version, or a capability probe changing outcome.
+Add a watch in the same change that adds the workaround. The weekly run evaluates every watch and opens one issue per triggered watch. Issue and release watches query GitHub.
+Probe-outcome watches read the capability probes that `gh-code-scanning.yml` runs against the newest `@actions/workflow-parser` release; when the probe job fails, those watches report unknown.
+A `runner-version` watch needs a matching static `Runner probe (<label>)` job in `gh-code-scanning.yml`; none is configured today. A watch it cannot evaluate is reported as a warning, never as triggered.
 
 ## Agentic Workflows
 
@@ -114,19 +135,24 @@ Do not add paths to `.github/codeql/` ignore lists, add query filters, or restru
 
 ## Tracked Exceptions
 
-An exception is the only way to let the gate pass while a finding remains. It applies only to a demonstrated analyzer false positive or to third-party code this repository cannot patch, after the problem is reported upstream.
+An exception is the only way to let the gate pass while a finding remains. It applies to any tool the gate evaluates, and only to one of these kinds, after the problem is reported upstream:
 
-1. Open an issue that explains the evidence and links the upstream report.
-2. Add an entry to [`security/code-scanning-exceptions.yml`](https://github.com/microsoft/hve-core/blob/main/security/code-scanning-exceptions.yml) with the exact rule ID, the exact repository-relative path, the issue number, an owner, a one-line reason, and an `expires` date no more than 90 days out.
+* `false-positive`: the analyzer is demonstrably wrong.
+* `generated-code`: the finding is in output of a generator this repository does not author.
+* `third-party`: code or behavior this repository cannot patch.
+* `platform-limitation`: the platform cannot yet support the fix.
+
+1. File the upstream report, then open an issue that explains the evidence and links it.
+2. Add an entry to [`security/code-scanning-exceptions.yml`](https://github.com/microsoft/hve-core/blob/main/security/code-scanning-exceptions.yml) with the exact SARIF tool name, the exact rule ID, the exact repository-relative path, the exact number of matching results (`count`), the `kind`, the `upstream` report URL, the issue number, an owner, a one-line reason, and an `expires` date no more than 90 days out.
 3. Get the change reviewed like any other pull request.
 
 While the exception is active:
 
 * the alert stays open on GitHub;
-* the gate lists the result as excepted, with its issue and expiry;
+* the gate lists each result as excepted, with its kind, issue, upstream report, and expiry;
 * the weekly workflow keeps a status comment current on the issue, and files a new issue if the linked one is closed while the finding persists.
 
-The gate fails when an entry has expired, expires more than 90 days out, is missing a field, has an unknown field, or no longer matches a result. Renewing an exception is a new review, not an edit to the date alone; restate why the fix is still blocked.
+The gate fails when an entry has expired, expires more than 90 days out, is missing a field, has an unknown field or kind, matches a different number of results than its `count` in either direction, or no longer matches a result. Pinning the count means a new finding cannot hide under an existing entry. Renewing an exception is a new review, not an edit to the date alone; restate why the fix is still blocked.
 
 ## Unpatched Dependency Advisories
 

@@ -1,0 +1,20 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe needs-cycle
+permissions: {}
+on: push
+jobs:
+  start:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo start
+  a:
+    needs: [start, b]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo a
+  b:
+    needs: a
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo b

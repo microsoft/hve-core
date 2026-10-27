@@ -1,6 +1,6 @@
 ---
 name: git-merge
-description: 'Coordinate Git merge, rebase, and rebase --onto workflows with conflict resolution, optional review pauses, and a completion summary. Use when integrating a branch locally and resolving conflicts without pushing.'
+description: 'Integrate branches with merge or rebase, resolve conflicts, and execute an ordinary push when explicitly authorized. Use for guided integration with optional conflict-review pauses.'
 argument-hint: 'operation={merge|rebase|rebase-onto} branch=<ref> [onto=<ref>] [upstream=<ref>] [conflict-stop={true|false}]'
 license: MIT
 user-invocable: true
@@ -15,7 +15,8 @@ Run a merge, rebase, or `rebase --onto` sequence from the current branch with ex
 
 ## Conventions
 
-The `git-merge` instructions own workspace preparation, the operation commands, conflict resolution, finishing steps, and the no-push guardrail. Apply them at every step below.
+Load the `git-merge` instructions by name and follow their integration, authorization,
+account-change, and execution-evidence rules.
 
 ## Inputs
 
@@ -32,10 +33,13 @@ The `git-merge` instructions own workspace preparation, the operation commands, 
 3. Resolve conflicts as the instructions define, and keep each file's resolution and rationale for the summary.
 4. Honor review pauses. When `conflict-stop` is `true`, summarize the fixes with a checklist of touched files and wait for explicit user confirmation before continuing. Answer follow-up questions and adjust resolutions from user feedback.
 5. Continue or complete the operation as the instructions define, or abort when the user directs it.
-6. Summarize the operation, each conflict and how it was resolved with linked files, the stash state, and any remaining manual follow-up. Remind the user that nothing was pushed and that they publish the branch when ready.
+6. Execute an authorized ordinary push under those instructions; otherwise leave the result local
+   without soliciting publishing approval. Summarize the integration, linked conflict resolutions,
+   stash state, actual push/account-cleanup outcomes when applicable, and remaining follow-up.
 
 ## Success Criteria
 
 * The operation path completed with every conflict resolved, or was aborted at the user's direction.
 * `git status --short` reports no pending changes, or the summary names deliberate follow-up items.
-* The user received a conflict summary with linked files and a reminder that pushing remains their responsibility.
+* The summary links conflict resolutions and accurately reports integration and any authorized push
+  or account cleanup.

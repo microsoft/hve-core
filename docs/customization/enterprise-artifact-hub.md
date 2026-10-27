@@ -2,7 +2,7 @@
 title: Enterprise Artifact Hub
 description: Configure HVE Core to download tools, modules, and packages from internal mirrors or artifact proxies
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-10-19
 ms.topic: how-to
 keywords:
   - enterprise
@@ -147,16 +147,36 @@ DevContainer and for Codespaces, follow
 
 ### pip and uv
 
-HVE Core installs Python project dependencies with `uv sync`. Set
-`UV_DEFAULT_INDEX` to redirect those installs. `PIP_INDEX_URL` controls pip and uv's
-pip-compatible interface; it does not redirect `uv sync`. Set both variables
-when your workflows use both command families.
+Set `UV_DEFAULT_INDEX` to redirect DevContainer Python provisioning and direct
+uv commands. `PIP_INDEX_URL` controls pip-compatible commands. Set both
+variables when your workflows use both command families. The provisioning
+helpers prefer non-empty `UV_DEFAULT_INDEX`, then the deprecated `UV_INDEX_URL`,
+then public PyPI. Empty values are treated as unset.
 
-Write `UV_DEFAULT_INDEX` with the exact index URL recorded in the tracked
-`uv.lock` files. uv treats `https://pypi.org/simple` and
-`https://pypi.org/simple/` as different lock inputs, so a trailing-slash
-mismatch makes `uv sync --locked` fail even when the resolved dependencies are
-identical.
+The DevContainer preserves the canonical public source identity in each
+committed `uv.lock`. With a custom `UV_DEFAULT_INDEX`, setup validates the lock
+offline, exports its exact versions and hashes, and installs those requirements
+through the mirror. Every selected artifact must match a hash in the canonical
+lock. The Python test runner uses the same restore sequence before executing
+pytest with `uv run --no-sync`, including when `.venv` is missing.
+
+Mirrored restore does not support projects declaring uv indexes, sources, or
+workspace policies: exported requirements cannot preserve those restrictions.
+Such projects fail before export or installation rather than flattening their
+indexes. If moderation's explicit PyTorch source cannot be provisioned behind
+the mirror, DevContainer setup warns and leaves moderation unavailable while
+continuing setup. The Python test runner reports that project as a sync failure
+and does not run its tests. Provision it from a network that can reach its
+canonical sources instead.
+
+Controlled Ubuntu index checks cover successful mirror downloads, missing
+environments, explicit-source rejection without package requests, and an
+intentional hash mismatch with uv `0.10.8` and `0.11.15`.
+
+Direct uv commands behave differently. `uv sync --locked` treats a custom
+default index as a changed lock input, while `uv sync --frozen` follows the
+public artifact URLs already recorded in the lock. Do not run `uv lock` with an
+internal index and commit the result.
 
 Keep internal indexes out of tracked `pyproject.toml` and `uv.lock` files so
 committed dependency metadata remains reproducible for public contributors.
@@ -180,8 +200,10 @@ After configuring the variables, confirm the setup works:
   uv environment synchronization complete through the configured services.
 2. Run `npm config get registry` inside the container and confirm it returns the
   internal npm registry.
-3. Run `uv sync --frozen` from a skill directory and confirm package downloads
-  use the internal Python index.
+3. From the repository root, run
+  `source .devcontainer/scripts/on-create.sh && sync_python_project path/to/project`.
+  Replace `path/to/project` with a Python project directory without a custom uv
+  source policy and confirm package downloads use the internal index.
 4. Run the required security scripts and confirm GitHub API calls complete
   without connection errors.
 5. When `HVE_PSGALLERY_SOURCE_URL` is set, check that `Register-PSRepository`

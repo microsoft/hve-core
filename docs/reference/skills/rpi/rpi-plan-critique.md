@@ -3,7 +3,7 @@ title: rpi-plan-critique
 description: Independently assess an RPI plan without editing it. Use when an implementation-ready plan needs a credibility check or a revised plan needs its earlier findings reconciled.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - skill
@@ -38,10 +38,20 @@ needs no planning parent. A `Pass`, `Revise`, or `Blocked` verdict is advisory: 
 direction outranks critique advice, and a `Revise` verdict means the planner revises the plan or
 asks for a decision.
 
-After corrections, a follow-up critique is optional. When one runs, it receives the earlier
-critique, marks each earlier finding resolved, still open, or superseded, and adds findings only for
-new gaps. It writes to a numbered output path, such as `blob-storage-plan-critique-2.md`, so earlier
-critiques stay intact.
+The critique splits a multi-phase plan into coverage, evidence, executability, and risk lenses and
+runs them in parallel, each in an [RPI Plan Critic](../../agents/hve-core/subagents/rpi-plan-critic)
+subagent. It picks each lens's reasoning effort from the lens's work, starting at `low` or `medium`,
+and records the effort it used in the artifact. Set `effort=` to run every lens at one level, or
+name a level for specific lenses. A single-phase plan, a host without subagents, or `subagents=none` gets
+the same lens questions in one pass. The critique parent then verifies every candidate itself, so the total
+time also depends on the reasoning effort of the session that runs the critique.
+
+A plan gets at most one critique. Corrections, implementation-time updates, and replanning do not start
+another; a follow-up critique runs only when you ask for one. When a correction changes
+requirements, scope, or architecture, the planner says so at closeout so you can decide. When a
+follow-up runs, it receives the earlier critique and the changed plan sections, marks each earlier
+finding resolved, still open, or superseded, and checks the changed text for new gaps. It writes to a numbered output path, such as
+`blob-storage-plan-critique-2.md`, so earlier critiques stay intact.
 
 The critique considers requirements across the supplied plan. Tasks need not repeat established requirements solely for restatement, and an abbreviated excerpt does not prove the full plan omits a detail. Explicitly missing tests, conflicting task instructions and material evidence gaps still warrant findings; stating a requirement does not by itself prove implementation coverage.
 
@@ -53,7 +63,7 @@ The critique considers requirements across the supplied plan. Tasks need not rep
 Reach for a different asset when:
 
 * The plan does not exist yet. Run [rpi-plan](rpi-plan), which runs the critique for you unless you skip it.
-* A critique already exists for the task. Revise the plan from its findings through [rpi-plan](rpi-plan), which decides whether a follow-up critique is warranted.
+* A critique already exists for the task. Revise the plan from its findings through [rpi-plan](rpi-plan), and ask for a follow-up critique only if you want the revision checked again.
 * You want to assess implementation rather than the plan. Run [rpi-review](rpi-review).
 
 ## Example usage

@@ -38,6 +38,14 @@
 .PARAMETER RepoRoot
     Repository root. Defaults to the git toplevel or this script's parent directory.
 
+.PARAMETER EquivalenceSubject
+    Agents whose baseline-equivalence surface is checked against the changed paths.
+    A change inside a skill directory that the equivalence harness materializes for
+    one of these agents adds the agent to `affectedAgents`, even when the dependency
+    map does not record the skill. Deleted and renamed-away paths are checked against
+    the surface at the comparison base. Each nonblank subject must match exactly one
+    agent file, otherwise manifest generation fails. Defaults to `rpi-agent`.
+
 .EXAMPLE
     pwsh -File scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json
     Classify the frozen comparison and emit logs/changed-ai-artifacts.json.
@@ -62,7 +70,10 @@ param(
     [string]$OutFile,
 
     [Parameter(Mandatory = $false)]
-    [string]$RepoRoot
+    [string]$RepoRoot,
+
+    [Parameter(Mandatory = $false)]
+    [string[]]$EquivalenceSubject = @('rpi-agent')
 )
 
 Set-StrictMode -Version Latest
@@ -71,6 +82,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/AffectedAgents.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/EvalChangeSet.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'lib/EquivalenceEnvironment.psm1') -Force
 
 function Resolve-RepoRoot {
     [CmdletBinding()]
@@ -134,6 +146,211 @@ function Get-TrackedFileChangeSet {
     }
 }
 
+function Resolve-EquivalenceSubjectPath {
+    <#
+    .SYNOPSIS
+    Resolves an equivalence subject slug to its single agent file.
+
+    .DESCRIPTION
+    A subject that matches no agent file, or more than one, would produce a manifest
+    that looks valid while baseline equivalence is silently skipped, so both cases
+    throw. A subject can be absent from a comparison base that predates it, so
+    -AllowMissing returns $null for that case only. Duplicates always throw.
+
+    .PARAMETER Root
+    Repository root, or an exported comparison-base tree, to resolve against.
+
+    .PARAMETER Slug
+    Agent slug matched against `<Slug>.agent.md` beneath `.github/agents`.
+
+    .PARAMETER AllowMissing
+    Return $null instead of throwing when no agent file matches.
+
+    .OUTPUTS
+    [string] Root-relative agent path, or $null when missing and allowed.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Root,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Slug,
+
+        [switch]$AllowMissing
+    )
+
+    $AgentsRoot = Join-Path $Root '.github/agents'
+    $Candidates = @(
+        Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter "$Slug.agent.md" -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.FullName.Substring($Root.Length).TrimStart('\', '/').Replace('\', '/') } |
+            Sort-Object
+    )
+    if ($Candidates.Count -gt 1) {
+        throw "Equivalence subject '$Slug' matches $($Candidates.Count) agent files ($($Candidates -join ', ')); expected exactly one."
+    }
+    if ($Candidates.Count -eq 0) {
+        if ($AllowMissing) { return $null }
+        throw "Equivalence subject '$Slug' matches no agent file under .github/agents; expected exactly one."
+    }
+    return $Candidates[0]
+}
+
+function Export-ComparisonBaseSurfaceTree {
+    <#
+    .SYNOPSIS
+    Writes the agent and skill trees of the comparison base to a scratch directory.
+
+    .DESCRIPTION
+    Deleted and renamed-away skill paths exist only at the comparison base, so their
+    surface is resolved against the base tree rather than the checkout. Only
+    `.github/agents` and `.github/skills` are exported, which is everything
+    Get-AgentSurfaceSkill reads.
+
+    .PARAMETER RepoRoot
+    Repository root containing the commit.
+
+    .PARAMETER Commit
+    Comparison-base commit to export.
+
+    .PARAMETER Destination
+    Existing empty directory that receives the exported trees.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Commit,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Destination
+    )
+
+    $Listing = Invoke-EvalGit -RepoRoot $RepoRoot -Arguments @('ls-tree', '-z', '--name-only', $Commit, '--', '.github/agents', '.github/skills')
+    $Entries = @($Listing -split "`0" | Where-Object { -not [string]::IsNullOrEmpty($_) })
+    if ($Entries.Count -eq 0) { return }
+
+    $ArchivePath = Join-Path $Destination 'comparison-base.tar'
+    $null = Invoke-EvalGit -RepoRoot $RepoRoot -Arguments (@('archive', '--format=tar', "--output=$ArchivePath", $Commit, '--') + $Entries)
+    [System.Formats.Tar.TarFile]::ExtractToDirectory($ArchivePath, $Destination, $true)
+    Remove-Item -LiteralPath $ArchivePath -Force
+}
+
+function Get-EquivalenceSurfaceAgent {
+    <#
+    .SYNOPSIS
+    Returns the equivalence subjects whose materialized skill surface a change touches.
+
+    .DESCRIPTION
+    The dependency map behind Get-AffectedAgentSlugs records only skills referenced
+    by path. The baseline-equivalence harness also resolves skills an agent names in
+    backticks, which is how the RPI agent references `rpi-research` and its peers, and
+    copies those whole skill directories into the surface it measures. Checking the
+    changes against the directories the harness materializes keeps the equivalence
+    gate and the harness in agreement. The check covers only the equivalence
+    subjects, not every agent in the dependency map.
+
+    Paths that exist at HEAD are checked against the surface resolved from the
+    checkout. Deleted paths and the previous path of a rename or copy are checked
+    against the surface resolved at the comparison base, because a deleted or
+    renamed-away skill no longer exists at HEAD. Every subject must resolve to
+    exactly one agent file at HEAD.
+
+    .PARAMETER Change
+    Canonical change records with `status`, `path`, and `previousPath`.
+
+    .PARAMETER Subject
+    Agent slugs whose equivalence surface is checked.
+
+    .PARAMETER RepoRoot
+    Repository root.
+
+    .PARAMETER ComparisonBase
+    Commit the change records were computed from. Required when a deleted or previous
+    path falls under `.github/skills`.
+
+    .OUTPUTS
+    [string[]] Subjects with at least one changed path inside their skill surface.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [object[]]$Change,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [string[]]$Subject,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [string]$ComparisonBase
+    )
+
+    $HeadPaths = [System.Collections.Generic.List[string]]::new()
+    $BasePaths = [System.Collections.Generic.List[string]]::new()
+    foreach ($Record in $Change) {
+        if ([string]$Record.status -eq 'D') {
+            $BasePaths.Add(([string]$Record.path -replace '\\', '/').TrimStart('/'))
+            continue
+        }
+        if ($Record.path) { $HeadPaths.Add(([string]$Record.path -replace '\\', '/').TrimStart('/')) }
+        if ($Record.previousPath) { $BasePaths.Add(([string]$Record.previousPath -replace '\\', '/').TrimStart('/')) }
+    }
+    # The surface holds only skill directories, so base paths elsewhere can never match.
+    $BaseSkillPaths = @($BasePaths | Where-Object { $_ -like '.github/skills/*' })
+
+    $TestSurface = {
+        param([string[]]$Path, [string[]]$SkillDir)
+
+        foreach ($Candidate in $Path) {
+            foreach ($Dir in $SkillDir) {
+                if ($Candidate.StartsWith("$Dir/", [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
+            }
+        }
+        return $false
+    }
+
+    $Touched = [System.Collections.Generic.List[string]]::new()
+    $BaseRoot = $null
+    try {
+        foreach ($Slug in $Subject) {
+            if ([string]::IsNullOrWhiteSpace($Slug)) { continue }
+            $AgentRelative = Resolve-EquivalenceSubjectPath -Root $RepoRoot -Slug $Slug
+            $HeadSurface = @(Get-AgentSurfaceSkill -RepoRoot $RepoRoot -AgentRelativePath $AgentRelative)
+            $IsTouched = & $TestSurface -Path $HeadPaths.ToArray() -SkillDir $HeadSurface
+
+            if (-not $IsTouched -and $BaseSkillPaths.Count -gt 0) {
+                if ($null -eq $BaseRoot) {
+                    if ([string]::IsNullOrWhiteSpace($ComparisonBase)) {
+                        throw 'Deleted or renamed skill paths require a comparison base to resolve the equivalence surface.'
+                    }
+                    $BaseRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('eval-surface-base-' + [Guid]::NewGuid().ToString('N'))
+                    $null = New-Item -ItemType Directory -Path $BaseRoot -Force
+                    Export-ComparisonBaseSurfaceTree -RepoRoot $RepoRoot -Commit $ComparisonBase -Destination $BaseRoot
+                }
+                $BaseAgent = Resolve-EquivalenceSubjectPath -Root $BaseRoot -Slug $Slug -AllowMissing
+                if ($BaseAgent) {
+                    $BaseSurface = @(Get-AgentSurfaceSkill -RepoRoot $BaseRoot -AgentRelativePath $BaseAgent)
+                    $IsTouched = & $TestSurface -Path $BaseSkillPaths -SkillDir $BaseSurface
+                }
+            }
+
+            if ($IsTouched) { $Touched.Add($Slug) }
+        }
+    }
+    finally {
+        if ($BaseRoot) { Remove-Item -LiteralPath $BaseRoot -Recurse -Force -ErrorAction SilentlyContinue }
+    }
+
+    return , [string[]]$Touched.ToArray()
+}
+
 function Invoke-ChangedArtifactScan {
     <#
     .SYNOPSIS
@@ -148,6 +365,9 @@ function Invoke-ChangedArtifactScan {
     .PARAMETER RepoRoot
     Repository root.
 
+    .PARAMETER EquivalenceSubject
+    Agents whose baseline-equivalence skill surface is checked against the changes.
+
     .OUTPUTS
     [hashtable] `@{ baseRef; headRef; artifacts = @(...) }`.
     #>
@@ -161,7 +381,9 @@ function Invoke-ChangedArtifactScan {
         [switch]$AllTracked,
 
         [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [string[]]$EquivalenceSubject = @('rpi-agent')
     )
 
     if ($PSCmdlet.ParameterSetName -eq 'AllTracked') {
@@ -187,6 +409,8 @@ function Invoke-ChangedArtifactScan {
     $affectedAgents = [string[]]@()
     if ($changedPaths.Count -gt 0) {
         $affectedAgents = Get-AffectedAgentSlugs -ChangedFiles $changedPaths.ToArray() -RepoRoot $RepoRoot
+        $SurfaceAgents = Get-EquivalenceSurfaceAgent -Change @($changes) -Subject $EquivalenceSubject -RepoRoot $RepoRoot -ComparisonBase ([string]$changeSet['comparisonBase'])
+        $affectedAgents = [string[]]@(@($affectedAgents) + @($SurfaceAgents) | Sort-Object -Unique)
     }
 
     return @{
@@ -209,10 +433,10 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     try {
         $manifest = if ($AllTracked) {
-            Invoke-ChangedArtifactScan -AllTracked -RepoRoot $resolvedRepoRoot
+            Invoke-ChangedArtifactScan -AllTracked -RepoRoot $resolvedRepoRoot -EquivalenceSubject $EquivalenceSubject
         }
         else {
-            Invoke-ChangedArtifactScan -ChangeSetPath $ChangeSetPath -RepoRoot $resolvedRepoRoot
+            Invoke-ChangedArtifactScan -ChangeSetPath $ChangeSetPath -RepoRoot $resolvedRepoRoot -EquivalenceSubject $EquivalenceSubject
         }
     }
     catch {
