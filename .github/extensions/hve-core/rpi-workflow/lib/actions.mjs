@@ -146,7 +146,7 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'record_activity',
-        description: 'Add a line to the Implement view Now banner describing what the agent is doing.',
+        description: 'Add a line to Now, in the Implement steering panel, describing what the agent is doing.',
         inputSchema: { type: 'object', properties: { text: str('What the agent is doing'), kind: { type: 'string', enum: ['read', 'edit', 'run', 'test', 'think', 'note'] } }, required: ['text'], additionalProperties: false },
     },
     {

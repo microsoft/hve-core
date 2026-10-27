@@ -1421,7 +1421,7 @@ export function recordDiscovery(session, input, now) {
     });
 }
 
-/** Appends an activity line for the Now banner, keeping the newest entries. */
+/** Appends an activity line for Now in the Implement steering panel, keeping the newest entries. */
 export function recordActivity(session, input, now) {
     const line = {
         text: text(input?.text, 'text', { max: LIMITS.title * 2 }),
