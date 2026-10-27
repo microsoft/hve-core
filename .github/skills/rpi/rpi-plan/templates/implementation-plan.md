@@ -203,7 +203,7 @@ Record the critique setting, status, verdict, finding dispositions, and any expl
 * Earlier critiques: {{none_or_earlier_critique_paths}}
 * Limitations: {{none_or_run_limitation_interruption_kind_and_next_action}}
 
-<!-- Keep every finding row. A follow-up critique adds rows or updates dispositions without deleting earlier findings. -->
+<!-- When the critique result exists, add a row per finding as open, then update each row as its correction lands. Keep every finding row. A follow-up critique adds rows or updates dispositions without deleting earlier findings. -->
 
 | Critique run and finding | Disposition                                        | Action owner                   | Exact resolving evidence                | Decision route                                     | Plan response or residual risk |
 |--------------------------|----------------------------------------------------|--------------------------------|-----------------------------------------|----------------------------------------------------|--------------------------------|
