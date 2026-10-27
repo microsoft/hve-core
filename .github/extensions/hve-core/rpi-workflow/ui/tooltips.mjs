@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { h } from './dom.mjs';
+import { h, shownMain } from './dom.mjs';
 
 /**
  * The canvas's own tooltips. Hosts such as VS Code's canvas view do not show `title`
@@ -70,8 +70,8 @@ export function installTooltips() {
         }
         trigger = element;
         tip.textContent = text;
-        // The tooltip lives in the main landmark, or in the open dialog it serves; the top layer places it.
-        const host = element.closest('dialog[open]') ?? document.getElementById('document') ?? document.body;
+        // The tooltip lives in the main landmark on screen, or in the open dialog it serves; the top layer places it.
+        const host = element.closest('dialog[open]') ?? shownMain() ?? document.body;
         if (tip.parentElement !== host) host.appendChild(tip);
         if (tip.showPopover && !tip.matches(':popover-open')) tip.showPopover();
         tip.hidden = false;

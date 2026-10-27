@@ -30,7 +30,7 @@ Tables and lists show the files' formatting, such as code in backticks and links
 Evidence chips (`C5`, `W2`) open their claim and source in place, and each trace strip links a question through its finding, decision, task, change, and review finding. Strips follow the session's own references, so a change or discovery the agent records joins its task's strip.
 See [IDs, Previews, and History](#ids-previews-and-history) and [Sources](#sources).
 
-The canvas shows a real RPI session from the workspace's `.copilot-tracking/` folder, or a fictional sample session, "Offline drafts with background sync", that lets you try every phase and interaction.
+The canvas shows a real RPI session from the workspace's `.copilot-tracking/` folder, or a fictional sample session, "Offline drafts with background sync", that lets you try every phase and interaction. A canvas with neither says it is not connected and how to connect it; see [Open the Canvas](#open-the-canvas).
 A real session comes from its RPI files: the state file, research, plan, critique, changes record, and review log.
 The canvas follows those files while it is open and never changes them. What you add, suggested edits included, waits in the canvas until you send it to the agent, and the agent changes the files. See [Send to the Agent](#send-to-the-agent) and [Real RPI Sessions](#real-rpi-sessions).
 
@@ -187,7 +187,16 @@ To show the workspace's most recent session instead, pass `task`:
 
 `current` is the most recently changed task whose session is running, or the most recently changed task when none runs. A task ID, such as `{ "task": "offline-drafts" }`, opens that task.
 Opening a canvas without input keeps what it shows. When the host reopens a canvas, it repeats an input the canvas was opened with: after an extension reload, its latest open's input, and after a restart of the chat session, its first open's input. The canvas cannot tell that input from a new request, so any open of a canvas that is not open yet, in a conversation that has shown it, returns it to what it showed last.
-An open of a canvas that is already showing works as usual. When a reopen overrides an open's input, the open result says so; use `show_task` to show another task. A new canvas opened without input shows the sample session. To start at a stage of the sample, pass it as input:
+An open of a canvas that is already showing works as usual. When a reopen overrides an open's input, the open result says so; use `show_task` to show another task.
+
+A new canvas opened without input, or one whose remembered session is gone, shows Not connected instead of a session. The page says that the chat agent connects the canvas, which should rarely be needed, and offers:
+
+* Ask the agent, which sends `RPI canvas <handle>: connect this canvas to this conversation's RPI session.` to the chat, at most once every 30 seconds, when the host accepts messages from extensions;
+* Copy request, to paste the same line in the chat yourself;
+* Show the sample session;
+* Still seeing this?, with the reason, steps to try, a bug report on microsoft/hve-core with its title and details filled in, the contributing guide, and details to copy.
+
+The page changes by itself once the agent connects the canvas with `show_task`. The sample opens only when asked for: by the page's button, by `show_task` with `task: "sample"`, or with a stage as input:
 
 ```json
 { "stage": "research" }
@@ -245,6 +254,8 @@ When the page cannot render a task, it says why with Retry instead of staying bl
 
 On a canvas that shows a real session, `update_session`, `update_task`, `record_change`, `record_discovery`, `update_finding`, `update_section`, and `upsert_decision` for a decision from the files return `source_managed`; change the file instead, and the canvas follows. Questions for the user, read-backs, activity, research lanes, focus, and appearance work on both kinds of canvas.
 
+On a canvas that is not connected, `get_state` reports `connected: false`, the reason, and the next step, and every other action except `show_task`, `load_scenario`, and `set_appearance` returns `not_connected`. Connect it with `show_task` and the session's state file, or `task: "current"`.
+
 Feedback text, notes, and section Markdown come from the user, so agents treat them as data rather than instructions.
 
 ## Keyboard
@@ -283,7 +294,7 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
 * `sessions/<id>.json` holds the session document. For a real session, `<id>` is `rpi-` and the task ID, and the document is a copy of the task's files plus what you added in the canvas. Writes are atomic, and a lock file serializes writers across processes. A write lands only when no other process wrote since it read the session; otherwise it is applied again to the newer session. A document saved by an earlier canvas version is brought up to date as it is read.
 * `sessions/<id>.previous.json` holds the session that the last replace discarded your changes from (`load_scenario` with `replace: true`), or an unreadable file it replaced. It stays until the next such replace.
 * `preferences.json` holds the theme and contrast choice.
-* `instances.json` remembers, for each conversation and canvas instance, what the instance shows (its state file and whether following is paused), so the instance returns there when the host reopens it. It keeps the 50 most recently updated instances.
+* `instances.json` remembers, for each conversation and canvas instance, what the instance shows (its state file and whether following is paused), so the instance returns there when the host reopens it. It keeps the 50 most recently updated instances. A canvas that is not connected leaves its entry as it was.
 
 ## Security and Privacy
 
@@ -295,7 +306,8 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
   It must not look like it holds secrets: `.env*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `*.keystore`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.pypirc`, `.netrc`, and `.git-credentials` are refused. The sheet shows at most 5,000 lines.
 * Open in VS Code runs VS Code's own command-line tool, found from the extension's own process, with `--goto` and the file's path and line. It runs without a shell, one open at a time, and only for files the read rules allow. Where no VS Code is found, the button does not appear. It never opens a `.code-workspace` file, which VS Code would open as a workspace with its settings and tasks; the canvas shows such a file instead.
 * Request bodies are limited to 16 KB, and 64 KB for a suggested edit.
-* Nothing reaches the agent until you select Send in the Send to agent review. The canvas then sends one message, with the host's send method, into the session that opened it.
+* Nothing reaches the agent until you select Send in the Send to agent review, or Ask the agent on the Not connected page. The canvas then sends one message, with the host's send method, into the session that opened it. Ask the agent sends only its fixed line naming the canvas.
+* The Not connected page's bug report link opens GitHub with a title and details filled in. The details hold the reason, the canvas handle, the host's name, and the time, never a path or session content, and nothing is filed until you submit the form.
 
 The key keeps other local processes, such as other accounts or containers, from using the canvas. A process running as you can still read the extension's data folder and your workspace directly, as it always could. Close the canvas on shared machines when you are not using it.
 
@@ -304,7 +316,7 @@ The key keeps other local processes, such as other accounts or containers, from 
 * The canvas reads RPI files but never writes them. Changes to a real session reach the files only through the agent.
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
 * Following moves only to the one running child of a loop that has finished. A subagent that runs its own RPI loop in the session looks like any other child, so the canvas can follow into it; use the session menu to go back, which stops following.
-* Send to agent needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`. The canvas does not attach items to your next message, because VS Code does not show extension attachments.
+* Send to agent needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
 * Open in VS Code is verified with VS Code Insiders on macOS. Other hosts show the source in the canvas and Copy path.
 * VS Code may handle Alt+Left and Alt+Right before the canvas sees them; the Back and Forward buttons always work.
 * Previews follow the WAI-ARIA tooltip and dialog patterns, but nested previews have not been tested with screen readers.

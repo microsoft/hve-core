@@ -27,6 +27,11 @@ const str = (description, extra = {}) => ({ type: 'string', description, ...extr
 const ids = (description) => ({ type: 'array', items: { type: 'string' }, description });
 const PHASE = { type: 'string', enum: [...PHASES], description: 'research, plan, implement, review, or followup' };
 
+/** What the agent does with a canvas that shows no RPI session. */
+export const NOT_CONNECTED_NEXT_STEP = 'Connect the canvas with show_task, giving { "state": "<this conversation\'s RPI state file>" } or { "task": "current" }.';
+/** Actions that work on a canvas that shows no session: they read it, connect it, or change its look. */
+const WITHOUT_SESSION = new Set(['get_state', 'show_task', 'load_scenario', 'set_appearance']);
+
 /** Agent-facing action declarations. Handlers live in createActionHandlers. */
 export const ACTION_DEFINITIONS = Object.freeze([
     {
@@ -273,7 +278,7 @@ export function createActionHandlers(deps) {
     async function sessionDocsOf(instance) {
         const shown = await store.load(instance.sessionId);
         if (!shown) {
-            throw makeError('not_found', 'No session is loaded. Call load_scenario.');
+            throw makeError('not_found', `No session is loaded. ${NOT_CONNECTED_NEXT_STEP}`);
         }
         return loadSessionDocs(store, shown, instance.source);
     }
@@ -353,15 +358,19 @@ export function createActionHandlers(deps) {
         return shape ? shape(result, session) : { revision: session.revision, result };
     });
 
-    return {
+    const handlers = {
         get_state: (ctx) => guard(async () => {
             const instance = instanceOf(ctx);
             const input = inputOf(ctx);
+            const common = { url: instance.server.address ?? null, editor: instance.server.editor ?? null, canvas: { handle: instance.handle ?? null, instanceId: instance.instanceId ?? ctx.instanceId }, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0 };
+            if (instance.source?.kind === 'none') {
+                return { ...common, connected: false, source: sourceSummary(instance, null), nextStep: NOT_CONNECTED_NEXT_STEP };
+            }
             const session = await store.load(instance.sessionId);
             if (!session) {
-                throw makeError('not_found', 'No session is loaded. Call load_scenario.');
+                throw makeError('not_found', `No session is loaded. ${NOT_CONNECTED_NEXT_STEP}`);
             }
-            const base = { url: instance.server.address ?? null, editor: instance.server.editor ?? null, canvas: { handle: instance.handle ?? null, instanceId: instance.instanceId ?? ctx.instanceId }, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0, source: sourceSummary(instance, session) };
+            const base = { ...common, source: sourceSummary(instance, session) };
             const otherTasks = await otherTasksOf(instance);
             return input.detail === 'full' ? { ...base, session, otherTasks } : { ...base, ...summarize(session), otherTasks };
         }),
@@ -372,7 +381,7 @@ export function createActionHandlers(deps) {
             if (!STAGES.includes(input.stage)) {
                 throw makeError('invalid_input', `stage must be one of: ${STAGES.join(', ')}.`);
             }
-            if (instance.source?.kind === 'rpi' && deps.switchSource) {
+            if (instance.source?.kind !== 'sample' && deps.switchSource) {
                 const prepared = await deps.switchSource(instance, { stage: input.stage, replace: input.replace === true }, { workingDirectory: ctx?.session?.workingDirectory });
                 return summarize(prepared.session);
             }
@@ -405,7 +414,7 @@ export function createActionHandlers(deps) {
             if (((input.task !== undefined && input.task !== 'sample') || input.state !== undefined) && input.stage !== undefined) {
                 throw makeError('invalid_input', 'stage applies only to the sample.');
             }
-            const request = input.state !== undefined ? { state: input.state } : input.task === undefined || input.task === 'sample' ? { stage: input.stage } : { task: input.task };
+            const request = input.state !== undefined ? { state: input.state } : input.task === 'sample' ? { task: 'sample', stage: input.stage } : input.task === undefined ? { stage: input.stage } : { task: input.task };
             const prepared = await deps.switchSource(instance, request, { workingDirectory: ctx?.session?.workingDirectory });
             return { ...summarize(prepared.session), source: sourceSummary(instance, prepared.session) };
         }),
@@ -471,6 +480,15 @@ export function createActionHandlers(deps) {
             return { preferences: await store.savePreferences(inputOf(ctx)) };
         }),
     };
+
+    // A canvas that shows no session refuses everything that needs one, with the way to connect it.
+    for (const [name, handler] of Object.entries(handlers)) {
+        if (WITHOUT_SESSION.has(name)) continue;
+        handlers[name] = (ctx) => (getInstance(ctx?.instanceId)?.source?.kind === 'none'
+            ? Promise.reject(makeError('not_connected', `This canvas is not connected to an RPI session. ${NOT_CONNECTED_NEXT_STEP}`))
+            : handler(ctx));
+    }
+    return handlers;
 }
 
 export { SCENARIO_ID };

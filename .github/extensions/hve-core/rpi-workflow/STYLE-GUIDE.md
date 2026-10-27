@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas Style Guide
 description: Visual language, interaction grammar, and accessibility requirements for the hve-core RPI Workflow canvas
 author: Microsoft
-ms.date: 2026-10-26
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - canvas
@@ -276,23 +276,27 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
   A website source reads as written, each link labeled by its title or by host and page, with one globe. The source sheet scrolls only its file pane, has a 4.5em line-number gutter, colors code by language, and marks the cited line with a 3px attention bar on an 18 percent attention wash.
 * History: Back and Forward are 28px icon buttons before the phase title, transparent until hovered and 40 percent opacity when disabled. Their names say where they go.
 * Header meta line: the canvas badge never shrinks. The session label shortens first, then the task details clip, and they hide below 6ch. Below 560px the line wraps, and the badge may shorten rather than run under the actions.
+* Not connected screen: while the canvas shows no session, it replaces the workspace in its own `main`, and `#document` takes `hidden` so one `main` shows. A centered card of at most 640px holds the plug icon in a 44px circle tinted 14 percent attention, an `h2`, a lead paragraph, and three parts divided by muted rules.
+  The request is a quote with a 3px accent rule on its leading edge and no box, so it does not read as a field; Ask the agent (primary) and Copy request follow it. Then a row offers Show the sample session, and a Still seeing this? disclosure holds the reason, three steps, the bug report and contributing links, and the details in a code well with Copy details.
+  The header keeps the title, the canvas handle, a Not connected badge in the attention tone (shown at every width), and Appearance; the rail, the session controls, and the skip link hide. Ask the agent becomes Asked the agent with a check and stays `aria-disabled`, keeping focus, for 30 seconds. The canvas menu and tooltips mount in whichever `main` shows.
 
-| State     | Treatment                                                                                             |
-|-----------|-------------------------------------------------------------------------------------------------------|
-| Loading   | Static skeleton rows in `--rw-bg-subtle`; no shimmer                                                  |
-| Empty     | Explains what appears here, when, and who produces it                                                 |
-| Error     | Names the problem and the recovery, with Retry                                                        |
-| Live      | Header control "Live" with a pulsing success dot on a success tint while the canvas follows the agent |
-| Not live  | Header control "Follow agent" with a hollow dot, transparent until hovered, while it does not follow  |
-| Reconnect | Header control "Reconnecting" in the attention hue; the page polls until the stream returns           |
-| Hidden    | Nothing polls while the page is hidden; the stream reconnects when it shows again                     |
-| Saving    | The save button shows busy text ("Saving") and is disabled until the server answers                   |
-| Conflict  | In-place notice with Compare, Keep my suggestion, and Start from the new text                         |
-| Sent      | The feedback items move to Sent; a polite announcement names the count and the chat line              |
-| Warnings  | Collapsed attention notice above the phase: "N problems reading this task's files"                    |
-| Switching | "Showing" and the task and phase are announced; focus moves to the title when you switch              |
-| Following | A move to another loop adds an accent note in the status area                                         |
-| Failed    | Danger note in the status area, or a field error under its field; focus stays put                     |
+| State         | Treatment                                                                                                  |
+|---------------|------------------------------------------------------------------------------------------------------------|
+| Loading       | Static skeleton rows in `--rw-bg-subtle`; no shimmer                                                       |
+| Empty         | Explains what appears here, when, and who produces it                                                      |
+| Error         | Names the problem and the recovery, with Retry                                                             |
+| Live          | Header control "Live" with a pulsing success dot on a success tint while the canvas follows the agent      |
+| Not live      | Header control "Follow agent" with a hollow dot, transparent until hovered, while it does not follow       |
+| Reconnect     | Header control "Reconnecting" in the attention hue; the page polls until the stream returns                |
+| Hidden        | Nothing polls while the page is hidden; the stream reconnects when it shows again                          |
+| Saving        | The save button shows busy text ("Saving") and is disabled until the server answers                        |
+| Conflict      | In-place notice with Compare, Keep my suggestion, and Start from the new text                              |
+| Sent          | The feedback items move to Sent; a polite announcement names the count and the chat line                   |
+| Warnings      | Collapsed attention notice above the phase: "N problems reading this task's files"                         |
+| Switching     | "Showing" and the task and phase are announced; focus moves to the title when you switch                   |
+| Following     | A move to another loop adds an accent note in the status area                                              |
+| Failed        | Danger note in the status area, or a field error under its field; focus stays put                          |
+| Not connected | The Not connected screen in place of the workspace; it leaves by itself once the agent connects the canvas |
 
 ## Motion
 
@@ -359,7 +363,7 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 
 Icons are authored inline SVG symbols in one sprite, on a 16px grid with a 1.5px stroke, round caps and joins, and `currentColor`. They extend the Session Log sprite and keep its shapes for shared meanings (person, sparkle, check, alert, info, chevron, search, panel, keyboard).
 
-Additions: phase icons (research magnifier, plan list, implement brackets, review eye, follow-up loop), decision signpost, hand, inbox, send, undo, pencil, sun, moon, contrast, steer sliders, trace nodes, file, code file, diff, go-to, globe, left and right arrows, pin, legend, anchor, checklist, light bulb, shield check, half circle, and trend down.
+Additions: phase icons (research magnifier, plan list, implement brackets, review eye, follow-up loop), decision signpost, hand, inbox, send, undo, pencil, sun, moon, contrast, steer sliders, trace nodes, file, code file, diff, go-to, globe, left and right arrows, pin, legend, anchor, checklist, light bulb, shield check, half circle, trend down, and plug.
 Level and state icons: signal bars (three filled bars of rising height, unfilled bars at 28 percent opacity), priority marks (double chevron up, equals, chevron down), and the Live dot (filled with a ring) and its hollow form.
 Emoji and Unicode glyphs never stand in for icons. Decorative icons carry `aria-hidden="true"`.
 
@@ -416,6 +420,7 @@ Four icons keep one meaning wherever they mark a click: go-to (a box with an arr
 | 2026-10-26 | ID family hues, strong badges for confidence, priority, type, and severity, and syntax colors in the source sheet            | The person asked for color coding that works in light and dark, and highlighted code                                                    |
 | 2026-10-26 | One Live control replaces the connection chip, the Following label, Resume following, and Go to the agent's phase            | The person asked to follow the agent's loop and phase from one control that shows its state                                             |
 | 2026-10-26 | Canvas tooltips, part comments with a hover button and quotes, row actions shown on hover, and the canvas menu               | VS Code's canvas shows no title tooltips, and its right-click menu highlighted elements and commented in the chat instead of the canvas |
+| 2026-10-27 | A canvas with no session shows the Not connected screen; the sample opens only when asked for                                | A reopen that lost its session showed the sample, which looked like the person's own work and hid that the canvas needed connecting     |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

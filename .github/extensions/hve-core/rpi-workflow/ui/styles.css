@@ -5447,3 +5447,200 @@ tr.is-anchor-target > td {
     border: 1px solid CanvasText;
   }
 }
+
+/* Not connected: the canvas shows no session until the agent connects it. The screen takes the
+   workspace's place, and the header keeps only the title, the canvas handle, and Appearance. The
+   skip link goes too, since its target is hidden and one control is all it would skip. */
+
+.is-not-connected .skip-link,
+.is-not-connected #navToggle,
+.is-not-connected .rail,
+.is-not-connected #needsBtn,
+.is-not-connected #sendBtn,
+.is-not-connected #liveBtn,
+.is-not-connected #legendBtn,
+.is-not-connected #shortcutsBtn,
+.is-not-connected #steerToggle {
+  display: none;
+}
+
+.connect-view {
+  /* Positioned, so visually hidden text inside scrolls and clips with the screen. */
+  position: relative;
+  min-height: 0;
+  overflow: auto;
+  padding: 40px 16px 56px;
+  outline: none;
+}
+
+.connect-card {
+  display: grid;
+  gap: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 28px 32px 24px;
+  border: 1px solid var(--rw-border);
+  border-radius: var(--rw-radius-lg);
+  background: var(--rw-bg);
+  box-shadow: var(--rw-shadow-float);
+}
+
+.connect-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rw-attention) 14%, var(--rw-bg));
+  color: var(--rw-attention);
+}
+
+.connect-icon .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.connect-title {
+  margin: 0;
+  font: var(--rw-t-title);
+}
+
+.connect-lead {
+  margin: 0;
+  font: var(--rw-t-read);
+}
+
+.connect-step,
+.connect-sample,
+.connect-help {
+  padding-top: 16px;
+  border-top: 1px solid var(--rw-border-muted);
+}
+
+.connect-step {
+  display: grid;
+  gap: 8px;
+}
+
+.connect-step-title {
+  margin: 0;
+  font: var(--rw-t-h3);
+}
+
+.connect-hint,
+.connect-note,
+.connect-sample p {
+  margin: 0;
+  color: var(--rw-fg-muted);
+}
+
+.connect-request {
+  /* A quoted message, not a field: an accent rule on the leading edge and no box around it. */
+  margin: 0;
+  padding: 10px 14px;
+  border-inline-start: 3px solid var(--rw-accent);
+  border-radius: 0 var(--rw-radius) var(--rw-radius) 0;
+  background: var(--rw-bg-subtle);
+  font: var(--rw-t-read);
+}
+
+.connect-request p {
+  margin: 0;
+}
+
+.connect-step .btn-row {
+  margin-top: 4px;
+}
+
+.connect-error {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--rw-danger);
+}
+
+.connect-error .icon {
+  margin-top: 2px;
+}
+
+.connect-sample {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.connect-sample p {
+  flex: 1 1 18rem;
+}
+
+.connect-sample .btn {
+  flex: none;
+}
+
+.connect-help-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.connect-help-body p {
+  margin: 0;
+}
+
+.connect-steps {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.connect-path {
+  overflow-wrap: anywhere;
+}
+
+.connect-details {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--rw-border);
+  border-radius: var(--rw-radius);
+  background: var(--rw-bg-inset);
+  font: var(--rw-t-code);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.connect-help .btn-row {
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .connect-view {
+    padding: 16px 8px 32px;
+  }
+
+  .connect-card {
+    padding: 20px 18px;
+  }
+
+  /* With the workspace controls gone, a narrow header still has room for the state. */
+  .is-not-connected .task-meta {
+    display: flex;
+  }
+}
+
+@media (forced-colors: active) {
+  .connect-card,
+  .connect-request,
+  .connect-details {
+    border-color: CanvasText;
+  }
+
+  .connect-icon {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}

@@ -5,6 +5,7 @@ import { badge, button, clear, decisionAlias, h, icon, idTag, PHASE_META, PHASE_
 import { disclosure, filePreview, hasMarginHome, sendItems, sendSheet, sessionPending, sessionTree, steerPanel } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
+import { notConnectedView } from './connect-view.mjs';
 import { installContextMenu } from './context-menu.mjs';
 import { legendContent } from './legend.mjs';
 import { createHistory, placeLabel } from './history.mjs';
@@ -30,6 +31,8 @@ function freshSend() {
 
 const state = {
     data: null,
+    /** The state answer while the canvas shows no session, until the agent connects it. */
+    notConnected: null,
     error: null,
     /** Why the last render failed, until a render succeeds; every environment report carries it. */
     renderError: null,
@@ -66,6 +69,8 @@ const state = {
         navOpen: true,
         steerOpen: true,
         drawer: null,
+        /** The Not connected screen: Ask the agent's progress and whether its help is open. */
+        connect: { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: false },
     },
 };
 
@@ -402,6 +407,11 @@ function switchTaskUi(previousId, next) {
 async function refresh() {
     try {
         const next = await api('/api/state');
+        if (next.connected === false) {
+            showNotConnected(next);
+            return;
+        }
+        if (state.notConnected) leaveNotConnected();
         const previous = state.data;
         const switched = Boolean(previous) && previous.session.id !== next.session.id;
         const leaving = switched ? here() : null;
@@ -552,6 +562,7 @@ function connect() {
     });
     stream.addEventListener('preferences', (event) => applyPreferences(JSON.parse(event.data)));
     stream.addEventListener('focus', (event) => {
+        if (!state.data) return;
         const data = JSON.parse(event.data);
         if (data.itemId) navigate(data.itemId, data.phase ?? undefined, { agent: true });
         else if (data.phase) setPhase(data.phase, { agent: true });
@@ -1337,6 +1348,95 @@ function restoreFocus(key) {
     if (heading) focusQuietly(heading);
 }
 
+// Not connected
+
+/** Shows the Not connected screen: the canvas has no session until the agent connects it. */
+function showNotConnected(next) {
+    const entering = !state.notConnected;
+    state.notConnected = next;
+    state.data = null;
+    state.error = null;
+    applyPreferences(next.preferences);
+    render();
+    if (entering) announce('This canvas is not connected to an RPI session. Ask the agent to connect it.');
+}
+
+/** Leaves the screen once the agent connects the canvas; the next render shows the workspace. */
+function leaveNotConnected() {
+    state.notConnected = null;
+    state.ui.connect = { asking: false, askedAt: 0, retryAfterMs: 30000, error: null, helpOpen: false };
+    document.body.classList.remove('is-not-connected');
+    $('workspace').hidden = false;
+    $('document').hidden = false;
+    clear($('connectView')).hidden = true;
+}
+
+/** The screen's actions: ask the agent, copy the request or the details, or show the sample. */
+const connectScreen = {
+    async ask() {
+        const { asking, askedAt, retryAfterMs: wait } = state.ui.connect;
+        if (asking || (askedAt > 0 && Date.now() - askedAt < wait)) return;
+        state.ui.connect = { ...state.ui.connect, asking: true, error: null };
+        render();
+        try {
+            const result = await api('/api/connect-request', {});
+            const retryAfterMs = result.retryAfterMs ?? 30000;
+            state.ui.connect = { ...state.ui.connect, asking: false, askedAt: Date.now(), retryAfterMs };
+            announce('Asked the agent to connect this canvas. This page changes once it does.');
+            window.setTimeout(() => {
+                if (state.notConnected) render();
+            }, retryAfterMs + 50);
+        } catch (error) {
+            const message = error.code === 'too_soon'
+                ? 'The agent was just asked. Give it a moment, or copy the request and paste it in the chat.'
+                : `The request was not sent: ${error.message.replace(/\.$/, '')}. Copy it and paste it in the chat instead.`;
+            state.ui.connect = { ...state.ui.connect, asking: false, error: message };
+        }
+        render();
+    },
+    copyRequest() {
+        act.copy(state.notConnected?.notConnected.request ?? '', 'Request');
+    },
+    copyDetails(text) {
+        act.copy(text, 'Details');
+    },
+    async showSample() {
+        try {
+            await api('/api/sample', {});
+            announce('Showing the sample session, which uses made-up data.');
+            await refresh();
+        } catch (error) {
+            state.ui.connect = { ...state.ui.connect, error: `The sample could not open: ${error.message}` };
+            render();
+        }
+    },
+    toggleHelp(open) {
+        state.ui.connect.helpOpen = open;
+    },
+};
+
+/** Renders the screen in place of the workspace; the header keeps the title, the canvas handle, and Appearance. */
+function renderNotConnected() {
+    const answer = state.notConnected;
+    const focused = document.activeElement?.closest?.('#connectView [data-key]')?.dataset.key ?? null;
+    document.body.classList.add('is-not-connected');
+    $('workspace').hidden = true;
+    // A page may have only one main element without the hidden attribute.
+    $('document').hidden = true;
+    $('taskTitle').textContent = 'RPI Workflow';
+    document.title = 'RPI Workflow: not connected';
+    const handle = answer.canvas?.handle ?? null;
+    const slot = $('canvasBadge');
+    slot.hidden = !handle;
+    clear(slot).append(...(handle ? [h('span', { class: 'canvas-chip', title: `Messages this canvas sends to the agent start with “RPI canvas ${handle}”.` }, 'Canvas ', h('code', { class: 'canvas-handle', text: handle }))] : []));
+    clear($('taskMeta')).append(h('span', { class: 'badge tone-attention' }, icon('plug'), 'Not connected'));
+    $('sessionBtn').hidden = true;
+    const view = $('connectView');
+    view.hidden = false;
+    clear(view).append(notConnectedView({ ...answer.notConnected, handle, editor: answer.editor?.name ?? null, now: Date.now(), ui: state.ui.connect }, connectScreen));
+    if (focused) view.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus({ preventScroll: true });
+}
+
 /** Renders the page; a failure shows its reason with Retry instead of leaving the page blank. */
 function render() {
     try {
@@ -1364,6 +1464,10 @@ function showRenderFailure(error) {
 }
 
 function renderPage() {
+    if (state.notConnected) {
+        renderNotConnected();
+        return;
+    }
     if (!state.data) {
         renderDocument();
         return;
@@ -1683,6 +1787,11 @@ function menuItemsFor(target) {
     const link = target.closest('a.ext-link[href]');
     if (link) {
         items.push({ separatorBefore: true, label: 'Open the link', icon: 'globe', onSelect: () => link.click() }, { label: 'Copy the link', icon: 'copy', onSelect: () => act.copy(link.href, 'Link') });
+    }
+    if (state.notConnected) {
+        items.push({ separatorBefore: items.length > 0, label: 'Copy the request', icon: 'copy', onSelect: connectScreen.copyRequest },
+            { label: 'Show the sample session', icon: 'eye', onSelect: connectScreen.showSample });
+        return items;
     }
     if (ready) {
         const { back, forward } = places.peek();

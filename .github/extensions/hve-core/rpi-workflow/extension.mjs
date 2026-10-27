@@ -10,7 +10,7 @@ import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
 import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
 import { createCanvasServer } from './lib/server.mjs';
-import { createSourceController, openPlan, validateOpenInput } from './lib/sources.mjs';
+import { createSourceController, notConnected, openPlan, validateOpenInput } from './lib/sources.mjs';
 import { createStore } from './lib/store.mjs';
 
 const CANVAS_ID = 'hve-core-rpi-workflow';
@@ -36,6 +36,10 @@ findEditor().then((found) => {
 
 /** The open result: the page address and a status naming what the canvas shows. */
 function openResult(instance, source, session, note) {
+    if (source.kind === 'none') {
+        const why = source.reason === 'missing-session' ? '; the session it showed was not found' : '';
+        return { url: instance.server.url, title: 'RPI Workflow', status: `Not connected to an RPI session${why}. Connect it with show_task, giving this conversation's RPI state file or task "current" · canvas ${instance.handle}` };
+    }
     const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
     const status = source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${note}` : `Sample session: ${phase}${note}`;
     return { url: instance.server.url, title: 'RPI Workflow', status: `${status} · canvas ${instance.handle}` };
@@ -60,6 +64,7 @@ const registry = createInstanceRegistry({
             resumeFollowing: () => sources.resumeFollowing(record),
             pauseFollowing: () => sources.pauseFollowing(record),
             listSessions: () => sources.sessions(record),
+            showSample: () => sources.show(record, { task: 'sample' }, {}),
             deliver: createDelivery({ getSession: () => joined }),
             log,
         });
@@ -109,6 +114,7 @@ const canvas = createCanvas({
             remembered: open ? null : await store.loadInstance(ctx.instanceId, hostSessionId).catch(() => null),
         });
         if (plan.keep && current) {
+            if (current.source?.kind === 'none') return openResult(current, current.source, null, '');
             const session = await store.load(current.sessionId).catch(() => null);
             if (session) return openResult(current, current.source, session, '');
         }
@@ -126,7 +132,10 @@ const canvas = createCanvas({
                         prepared.note = `${prepared.note} (reopened where this canvas was${Object.keys(input).length ? '; its input was not applied, so use show_task to show another task' : ''})`;
                         return { sessionId: prepared.sessionId, source: prepared.source };
                     } catch (error) {
-                        log(`Could not reopen ${plan.restore.state}, so the canvas shows the sample: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                        // The reopen's input is a replay, not a request, so a session that is gone leaves the canvas not connected.
+                        log(`Could not reopen ${plan.restore.state ?? 'the sample'}, so the canvas is not connected: ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                        prepared = notConnected('missing-session', plan.restore.state ?? null);
+                        return { sessionId: prepared.sessionId, source: prepared.source };
                     }
                 }
                 try {

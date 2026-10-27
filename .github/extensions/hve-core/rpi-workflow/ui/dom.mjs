@@ -92,6 +92,11 @@ export function clear(element) {
     return element;
 }
 
+/** The main landmark on screen: the document, or the Not connected screen while it shows. */
+export function shownMain() {
+    return [...document.querySelectorAll('main')].find((element) => !element.closest('[hidden]')) ?? null;
+}
+
 /**
  * Relative time from the data's own clock, never a timer.
  *

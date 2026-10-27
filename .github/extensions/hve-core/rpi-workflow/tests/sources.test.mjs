@@ -12,7 +12,7 @@ import { createActionHandlers } from '../lib/actions.mjs';
 import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createCanvasServer } from '../lib/server.mjs';
-import { createSourceController, openPlan, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
+import { createSourceController, notConnected, openPlan, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
 import { createStore, MAX_INSTANCES } from '../lib/store.mjs';
 import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
@@ -129,6 +129,23 @@ describe('reopening an instance', () => {
         store.close();
     });
 
+    it('remembers nothing for a canvas that shows no session, so it keeps its last place', async () => {
+        const store = createStore({ root: path.join(tmp, 'none-memory') });
+        const sources = createSourceController({ store });
+        const record = { instanceId: 'panel', sessionId: '', source: null, server: { rebind: () => {} }, hostSessionId: 'session-a' };
+        sources.attach(record, await sources.prepare({ task: 'sample' }, {}));
+        let memory = null;
+        for (let i = 0; i < 50 && memory?.kind !== 'sample'; i += 1) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            memory = await store.loadInstance('panel', 'session-a');
+        }
+        sources.attach(record, notConnected('missing-session', PATHS.childState));
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        assert.equal((await store.loadInstance('panel', 'session-a')).kind, 'sample');
+        assert.deepEqual(sourceSummary(record, null), { kind: 'none', reason: 'missing-session', detail: PATHS.childState });
+        store.close();
+    });
+
     it('keeps the most recent instances and treats an unreadable memory as empty', async () => {
         const store = createStore({ root: path.join(tmp, 'instances-store') });
         await fs.mkdir(store.root, { recursive: true });
@@ -204,10 +221,12 @@ describe('reopening an instance', () => {
 });
 
 describe('source controller', () => {
-    it('prepares the sample as before and keeps changes the user made', async () => {
+    it('prepares the sample only when asked for and keeps changes the user made', async () => {
         const store = createStore({ root: path.join(tmp, 'sample-store') });
         const sources = createSourceController({ store });
-        const first = await sources.prepare({});
+        const nothing = await sources.prepare({});
+        assert.deepEqual([nothing.sessionId, nothing.source, nothing.session], ['', { kind: 'none', reason: 'no-input', detail: null }, null], 'nothing asked for is not connected, not the sample');
+        const first = await sources.prepare({ task: 'sample' });
         assert.deepEqual([first.sessionId, first.source], [SCENARIO_ID, { kind: 'sample', stage: 'implement' }]);
         assert.equal((await sources.prepare({ stage: 'plan' })).session.session.activePhase, 'plan');
         await store.update(SCENARIO_ID, (s) => createFeedback(s, { kind: 'comment', text: 'mine' }, NOW), { by: 'user' });
@@ -337,6 +356,8 @@ describe('source controller', () => {
         assert.equal(record.sessionId, SCENARIO_ID);
         assert.equal(await codeOf(() => sources.switchToTask(record, ROOT_TASK)), 'invalid_state');
         assert.deepEqual(sourceSummary(record, sample.session), { kind: 'sample', stage: 'research' });
+        sources.attach(record, notConnected('no-input'));
+        assert.equal(await codeOf(() => sources.switchToTask(record, ROOT_TASK)), 'not_connected', 'a canvas that shows no session says so');
         store.close();
     });
 });
@@ -359,6 +380,35 @@ describe('actions on a canvas that follows RPI files', () => {
         const call = (action, input, extra = {}) => handlers[action]({ instanceId: 'i1', input, ...extra });
         return { store, instance, call, reloads };
     }
+
+    it('tells the agent a canvas shows no session, refuses what needs one, and connects it with show_task', async () => {
+        const { call, store, instance } = await setup('not-connected');
+        const none = notConnected('missing-session', PATHS.childState);
+        Object.assign(instance, { sessionId: none.sessionId, source: none.source });
+        const state = await call('get_state', {});
+        assert.deepEqual([state.connected, state.source], [false, { kind: 'none', reason: 'missing-session', detail: PATHS.childState }]);
+        assert.match(state.nextStep, /show_task/);
+        for (const [action, input] of [['take_feedback', {}], ['update_section', { sectionId: 'x', markdown: 'y', baseRevision: 1 }], ['focus_item', { itemId: 'D1' }], ['record_interpretation', { feedbackId: 'FB-001', text: 'x' }]]) {
+            assert.equal(await codeOf(() => call(action, input)), 'not_connected', action);
+        }
+        assert.ok((await call('set_appearance', { theme: 'dark' })).preferences, 'appearance needs no session');
+        await call('show_task', { task: ROOT_TASK });
+        assert.deepEqual([instance.source.kind, instance.source.taskId], ['rpi', ROOT_TASK], 'show_task connects the canvas');
+        assert.equal((await call('get_state', {})).connected, undefined);
+        store.close();
+    });
+
+    it('moves a canvas that shows no session to the sample only when asked', async () => {
+        const { call, store, instance } = await setup('not-connected-sample');
+        const none = notConnected('no-input');
+        Object.assign(instance, { sessionId: none.sessionId, source: none.source });
+        await call('show_task', { task: 'sample' });
+        assert.deepEqual([instance.source.kind, instance.sessionId], ['sample', SCENARIO_ID], 'task "sample" without a stage asks for the sample');
+        Object.assign(instance, { sessionId: none.sessionId, source: none.source });
+        const loaded = await call('load_scenario', { stage: 'plan' });
+        assert.deepEqual([instance.source.kind, loaded.activePhase], ['sample', 'plan'], 'load_scenario switches the canvas, not only the stored sample');
+        store.close();
+    });
 
     it('refuses document changes and names the file to update', async () => {
         const { call, store } = await setup('managed');

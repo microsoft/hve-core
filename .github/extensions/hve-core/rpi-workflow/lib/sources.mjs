@@ -82,6 +82,20 @@ function validStatePath(value) {
     return typeof value === 'string' && value.trim() !== '' && value.length <= STATE_PATH_MAX && !/[\u0000-\u001f]/.test(value) && /-state\.json$/.test(value.trim());
 }
 
+/** Why a canvas shows no session: it opened without one, or the session it showed is gone. */
+export const NOT_CONNECTED_REASONS = Object.freeze(['no-input', 'missing-session']);
+
+/**
+ * The prepared source of a canvas that shows no session, until the agent connects it with
+ * `show_task`. Its session ID is empty, so nothing reads a session document for it.
+ *
+ * @param {'no-input' | 'missing-session'} reason
+ * @param {string | null} [detail] the remembered state path that could not be read
+ */
+export function notConnected(reason, detail = null) {
+    return { sessionId: '', source: { kind: 'none', reason, detail: typeof detail === 'string' ? detail : null }, session: null, note: '' };
+}
+
 /**
  * Decides what a canvas instance shows, the bundled sample at a stage or an RPI task read
  * from the workspace, and moves an instance between them. A task's follower polls only
@@ -218,6 +232,8 @@ export function createSourceController(deps) {
     function remember(record) {
         if (typeof record.instanceId !== 'string' || typeof store.rememberInstance !== 'function') return;
         const source = record.source;
+        // A canvas that shows no session keeps its last place, so a session that returns can still reopen.
+        if (source?.kind === 'none') return;
         const shown = source?.kind === 'rpi' ? { kind: 'rpi', state: source.statePath, paused: source.follow?.paused === true } : { kind: 'sample' };
         store.rememberInstance(record.instanceId, shown, { hostSessionId: record.hostSessionId }).catch((error) => log(`Could not remember what canvas ${record.instanceId} shows: ${error instanceof Error ? error.message : 'error'}`));
     }
@@ -236,6 +252,9 @@ export function createSourceController(deps) {
     }
 
     function requireRpi(record) {
+        if (record.source?.kind === 'none') {
+            throw new ModelError('not_connected', 'This canvas is not connected to an RPI session. Ask the agent to connect it.');
+        }
         if (record.source?.kind !== 'rpi') {
             throw new ModelError('invalid_state', 'This canvas shows the sample session, which has no other tasks.');
         }
@@ -243,17 +262,19 @@ export function createSourceController(deps) {
 
     return {
         /**
-         * Prepares a source without attaching it: `{ state }` or `{ task }` reads a task
-         * from the workspace, anything else prepares the sample.
+         * Prepares a source without attaching it: `{ state }` or `{ task }` reads a task from
+         * the workspace, `task: "sample"`, a stage, or a scenario prepares the sample, and a
+         * request with none of these is not connected.
          *
-         * @param {{ task?: string, state?: string, stage?: string, replace?: boolean, paused?: boolean }} request `paused` keeps following paused for `state`
+         * @param {{ task?: string, state?: string, stage?: string, scenario?: string, replace?: boolean, paused?: boolean }} request `paused` keeps following paused for `state`
          * @param {{ workspace?: { root: string, tracking: string } | null, candidates?: (string | null | undefined)[] }} [context]
          */
         prepare(request, context = {}) {
             if (request.state !== undefined) return prepareTask({ state: request.state }, context.workspace ?? null, context.candidates, { paused: request.paused === true });
-            return request.task !== undefined && request.task !== 'sample'
-                ? prepareTask({ task: request.task }, context.workspace ?? null, context.candidates)
-                : prepareSample(request.stage, request.replace);
+            if (request.task !== undefined && request.task !== 'sample') return prepareTask({ task: request.task }, context.workspace ?? null, context.candidates);
+            // Only a request that names the sample, or one of its stages, shows the sample.
+            if (request.task === 'sample' || request.stage !== undefined || request.scenario !== undefined) return prepareSample(request.stage, request.replace);
+            return Promise.resolve(notConnected('no-input'));
         },
 
         /**
@@ -416,5 +437,6 @@ export function sourceSummary(record, session) {
             polling: Boolean(record.server?.streamClients > 0),
         };
     }
+    if (record.source?.kind === 'none') return { kind: 'none', reason: record.source.reason, detail: record.source.detail ?? null };
     return { kind: 'sample', stage: session.scenario?.stage ?? null };
 }

@@ -27,7 +27,7 @@ import { FileError, readWorkspaceFile } from './workspace-files.mjs';
 
 const UI_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'ui');
 
-const UI_MODULES = ['anchors.mjs', 'app.mjs', 'context-menu.mjs', 'dom.mjs', 'highlight.mjs', 'history.mjs', 'ids.mjs', 'legend.mjs', 'markdown.mjs', 'preview-content.mjs', 'preview-state.mjs', 'previews.mjs', 'source-view.mjs', 'diagram.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs', 'tooltips.mjs'];
+const UI_MODULES = ['anchors.mjs', 'app.mjs', 'connect-view.mjs', 'context-menu.mjs', 'dom.mjs', 'highlight.mjs', 'history.mjs', 'ids.mjs', 'legend.mjs', 'markdown.mjs', 'preview-content.mjs', 'preview-state.mjs', 'previews.mjs', 'source-view.mjs', 'diagram.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs', 'tooltips.mjs'];
 
 /** Static files the page may load; nothing outside this map is ever served. */
 export const STATIC_FILES = Object.freeze({
@@ -82,7 +82,22 @@ const STATUS_FOR = Object.freeze({
     source_outside: 403,
     source_too_large: 413,
     source_managed: 409,
+    not_connected: 409,
+    too_soon: 429,
 });
+
+/** The Not connected screen's Ask the agent sends at most once in this interval. */
+export const CONNECT_REQUEST_INTERVAL_MS = 30000;
+
+/**
+ * The request a canvas that shows no session asks the agent, as the chat shows it. The page
+ * shows and copies the same text; the server alone sends it.
+ *
+ * @param {string | null | undefined} handle
+ */
+export function connectRequestText(handle) {
+    return `${handle ? `RPI canvas ${handle}` : 'RPI canvas'}: connect this canvas to this conversation's RPI session.`;
+}
 
 /** Error that maps to a JSON error response. */
 const FILE_STATUS = Object.freeze({
@@ -162,12 +177,13 @@ export function clientInfoFrom(body) {
  *   deliver?: (request: { prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
- *   getSource?: () => { kind?: string, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
+ *   getSource?: () => { kind?: string, reason?: string, detail?: string | null, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
  *   switchTask?: (ref: { taskId?: string, statePath?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   switchSession?: (key: string, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   resumeFollowing?: () => Promise<{ sessionId: string }>,
  *   pauseFollowing?: () => Promise<{ sessionId: string }>,
  *   listSessions?: () => Promise<{ sessions: any[], skipped: string[] }>,
+ *   showSample?: () => Promise<{ sessionId: string }>,
  * }} deps
  */
 export function createCanvasServer(deps) {
@@ -201,6 +217,11 @@ export function createCanvasServer(deps) {
     const watched = new Map();
     /** Documents of the other tasks in the shown task's session. */
     let others = new Set();
+    /** When Ask the agent last sent, so a double press does not send twice. */
+    let lastConnectRequest = 0;
+    /** False while the canvas shows no session, until the agent connects it. */
+    const connected = () => deps.getSource?.()?.kind !== 'none';
+    const notConnectedError = () => new HttpError(409, 'not_connected', 'This canvas is not connected to an RPI session. Ask the agent to connect it.');
     let heartbeat = null;
     let clientInfo = null;
     let pendingFocus = null;
@@ -221,7 +242,7 @@ export function createCanvasServer(deps) {
                 watched.delete(id);
             }
         }
-        for (const id of ids) if (!watched.has(id)) watched.set(id, store.watch(id));
+        for (const id of ids) if (id && !watched.has(id)) watched.set(id, store.watch(id));
     }
 
     function unwatchAll() {
@@ -290,14 +311,28 @@ export function createCanvasServer(deps) {
     const sessionDocs = (shown) => loadSessionDocs(store, shown, deps.getSource?.());
 
     async function shownSession() {
+        if (!connected()) throw notConnectedError();
         const session = await store.load(getSessionId());
         if (!session) {
-            throw new HttpError(404, 'not_found', 'No session is loaded yet. Ask the agent to load the sample scenario.');
+            throw new HttpError(404, 'not_found', 'No session is loaded yet. Ask the agent to connect the canvas.');
         }
         return session;
     }
 
     async function stateResponse() {
+        if (!connected()) {
+            const source = deps.getSource?.();
+            others = new Set();
+            unwatchAll();
+            return {
+                connected: false,
+                revision: 0,
+                canvas: getCanvas(),
+                preferences: await store.loadPreferences(),
+                editor: getEditor() ? { name: getEditor().name } : null,
+                notConnected: { reason: source?.reason ?? 'no-input', detail: source?.detail ?? null, request: connectRequestText(getCanvas()?.handle), canAsk: Boolean(deps.deliver) },
+            };
+        }
         const session = await shownSession();
         const docs = await sessionDocs(session);
         others = new Set(docs.slice(1).map((doc) => doc.id));
@@ -364,7 +399,7 @@ export function createCanvasServer(deps) {
 
     const sameItems = (a, b, ids) => ids.every((id) => JSON.stringify(a.feedback.find((item) => item.id === id)) === JSON.stringify(b.feedback.find((item) => item.id === id)));
 
-    const userUpdate = (change) => store.update(getSessionId(), change, { by: 'user' });
+    const userUpdate = (change) => (connected() ? store.update(getSessionId(), change, { by: 'user' }) : Promise.reject(notConnectedError()));
 
     const routes = {
         'GET /api/state': () => stateResponse(),
@@ -523,6 +558,32 @@ export function createCanvasServer(deps) {
             return { sessionId: result.sessionId, following: true };
         },
 
+        // The Not connected screen: show the sample, or ask the agent to connect the canvas with fixed text.
+        'POST /api/sample': async () => {
+            if (!deps.showSample) throw new HttpError(404, 'not_found', 'This canvas cannot show the sample.');
+            const shown = await deps.showSample();
+            return { sessionId: shown.sessionId };
+        },
+
+        'POST /api/connect-request': async () => {
+            if (connected()) throw new HttpError(409, 'conflict', 'This canvas is already connected.');
+            const at = Date.parse(now());
+            if (lastConnectRequest && at - lastConnectRequest < CONNECT_REQUEST_INTERVAL_MS) {
+                throw new HttpError(429, 'too_soon', 'The agent was just asked; give it a moment to connect the canvas.');
+            }
+            const canvas = getCanvas();
+            const displayPrompt = connectRequestText(canvas?.handle);
+            const prompt = `${displayPrompt}\n\nThe RPI Workflow canvas "${canvas?.instanceId ?? ''}" shows no RPI session. Call its show_task action with { "state": "<this conversation's RPI state file>" }, or { "task": "current" } for the most recently changed running session. If this conversation has no RPI session, tell the user instead.`;
+            lastConnectRequest = at;
+            try {
+                await deliver({ prompt, displayPrompt, ids: [] });
+            } catch (error) {
+                lastConnectRequest = 0;
+                throw error;
+            }
+            return { sent: true, retryAfterMs: CONNECT_REQUEST_INTERVAL_MS };
+        },
+
         'POST /api/source': async (body) => {
             try {
                 const { absolute: _absolute, ...shown } = await readWorkspaceFile(workspaceRoot(), body?.path, body?.anchor);
@@ -579,7 +640,8 @@ export function createCanvasServer(deps) {
             }, HEARTBEAT_MS);
             heartbeat.unref?.();
         }
-        store.load(getSessionId()).then((session) => {
+        // A canvas that shows no session has no document to read; its page still listens for the agent to connect it.
+        (getSessionId() ? store.load(getSessionId()) : Promise.resolve(null)).then((session) => {
             res.write(`event: revision\ndata: ${JSON.stringify({ revision: session?.revision ?? 0 })}\n\n`);
             if (pendingFocus) {
                 res.write(`event: focus\ndata: ${JSON.stringify(pendingFocus)}\n\n`);

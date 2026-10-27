@@ -468,3 +468,109 @@ describe('static files', () => {
         assert.deepEqual(missing, []);
     });
 });
+
+describe('a canvas that shows no session', () => {
+    const MISSING = '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/trail-maps-state.json';
+    const REQUEST = "RPI canvas 3WF0: connect this canvas to this conversation's RPI session.";
+
+    async function setupNone(name, { deliver } = {}) {
+        const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
+        const sent = [];
+        let source = { kind: 'none', reason: 'missing-session', detail: MISSING };
+        let sessionId = '';
+        let clock = Date.parse('2026-10-27T15:00:00.000Z');
+        const server = createCanvasServer({
+            store,
+            getSessionId: () => sessionId,
+            getCanvas: () => ({ handle: '3WF0', instanceId: 'rpi-workflow-demo' }),
+            getSource: () => source,
+            now: () => new Date(clock).toISOString(),
+            deliver: deliver ?? (async (request) => {
+                sent.push(request);
+            }),
+            showSample: async () => {
+                const session = await store.create(buildScenario('research'));
+                sessionId = session.id;
+                source = { kind: 'sample', stage: 'research' };
+                return { sessionId };
+            },
+        });
+        const url = new URL(await server.start());
+        return { store, server, url, sent, advance: (ms) => { clock += ms; } };
+    }
+
+    it('reports not connected with the reason, the request, and whether the agent can be asked', async () => {
+        const { server, url, store } = await setupNone('none-state');
+        const state = await request(url, { pathname: '/api/state' });
+        assert.equal(state.status, 200);
+        assert.deepEqual([state.json.connected, state.json.notConnected, state.json.canvas.handle, state.json.session],
+            [false, { reason: 'missing-session', detail: MISSING, request: REQUEST, canAsk: true }, '3WF0', undefined]);
+        for (const [method, pathname, body] of [['POST', '/api/feedback', { kind: 'comment', text: 'x' }], ['POST', '/api/delivery/preview', {}], ['POST', '/api/checklist', { phase: 'research', itemId: 'x', mark: 'good' }]]) {
+            const refused = await request(url, { method, pathname, body });
+            assert.deepEqual([refused.status, refused.json.error.code], [409, 'not_connected'], pathname);
+        }
+        await server.stop();
+        store.close();
+    });
+
+    it('opens the event stream without a session', async () => {
+        const { server, url, store } = await setupNone('none-events');
+        try {
+            const frames = await new Promise((resolve, reject) => {
+                const req = http.get({ host: '127.0.0.1', port: url.port, path: `/api/events?k=${url.searchParams.get('k')}` }, (res) => {
+                    let text = '';
+                    res.setEncoding('utf8');
+                    res.on('data', (chunk) => {
+                        text += chunk;
+                        if (/event: (revision|error)\ndata: .*\n\n/.test(text)) {
+                            req.destroy();
+                            resolve(text);
+                        }
+                    });
+                });
+                req.on('error', (error) => (error.code === 'ECONNRESET' ? null : reject(error)));
+            });
+            assert.match(frames, /event: revision\ndata: \{"revision":0\}/, 'the page listens for the agent to connect the canvas');
+            assert.doesNotMatch(frames, /event: error/);
+        } finally {
+            await server.stop();
+            store.close();
+        }
+    });
+
+    it('asks the agent with fixed text, then waits before asking again', async () => {
+        const { server, url, store, sent, advance } = await setupNone('none-ask');
+        const first = await request(url, { method: 'POST', pathname: '/api/connect-request', body: { prompt: 'ignored' } });
+        assert.deepEqual([first.status, first.json.sent], [200, true]);
+        assert.equal(sent[0].displayPrompt, REQUEST, 'the page cannot change the text');
+        assert.match(sent[0].prompt, /"rpi-workflow-demo"/);
+        assert.match(sent[0].prompt, /show_task/);
+        const again = await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} });
+        assert.deepEqual([again.status, again.json.error.code], [429, 'too_soon']);
+        advance(30000);
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} })).status, 200);
+        assert.equal(sent.length, 2);
+        await server.stop();
+        store.close();
+    });
+
+    it('lets the person try again at once when the message could not be sent', async () => {
+        const { server, url, store } = await setupNone('none-ask-fails', { deliver: async () => { throw new ModelError('delivery_unavailable', 'This host cannot take messages from the canvas.'); } });
+        for (let i = 0; i < 2; i += 1) {
+            const failed = await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} });
+            assert.deepEqual([failed.status, failed.json.error.code], [503, 'delivery_unavailable']);
+        }
+        await server.stop();
+        store.close();
+    });
+
+    it('shows the sample on request, and a connected canvas refuses another ask', async () => {
+        const { server, url, store } = await setupNone('none-sample');
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/sample', body: {} })).status, 200);
+        const state = await request(url, { pathname: '/api/state' });
+        assert.deepEqual([state.json.connected, state.json.session.scenario.sample], [undefined, true]);
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/connect-request', body: {} })).status, 409);
+        await server.stop();
+        store.close();
+    });
+});

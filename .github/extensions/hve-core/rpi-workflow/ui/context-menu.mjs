@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { h, icon } from './dom.mjs';
+import { h, icon, shownMain } from './dom.mjs';
 
 /**
  * The canvas's own right-click menu. A right-click anywhere but a text field opens it at the
@@ -71,15 +71,15 @@ export function installContextMenu(deps) {
         deps.onOpen?.();
         returnTo = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : target.closest?.('button, a[href], [tabindex]');
         build(items);
-        // The menu lives in the main landmark, or in the open dialog it serves; the top layer places it.
-        (target.closest?.('dialog[open]') ?? document.getElementById('document') ?? document.body).appendChild(menu);
+        // The menu lives in the main landmark on screen, or in the open dialog it serves; the top layer places it.
+        (target.closest?.('dialog[open]') ?? shownMain() ?? document.body).appendChild(menu);
         if (menu.showPopover) menu.showPopover();
         place(x, y);
         (entries()[0] ?? menu).focus({ preventScroll: true });
     }
 
     function openForFocus() {
-        const focused = document.activeElement instanceof Element && document.activeElement !== document.body ? document.activeElement : document.getElementById('document');
+        const focused = document.activeElement instanceof Element && document.activeElement !== document.body ? document.activeElement : shownMain();
         const rect = focused?.getBoundingClientRect?.() ?? { left: MARGIN, bottom: MARGIN };
         open(focused, rect.left + 4, rect.bottom + 2);
     }
