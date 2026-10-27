@@ -6,7 +6,7 @@ import { describe, it } from 'node:test';
 
 import { lineageStatusOf } from '../lib/source/assemble.mjs';
 import { parseState } from '../lib/source/parse.mjs';
-import { buildTree, humanizeSlug, nextFollowTarget } from '../lib/source/tree.mjs';
+import { agentTask, buildTree, humanizeSlug, nextFollowTarget } from '../lib/source/tree.mjs';
 
 const DIR = '.copilot-tracking/rpi-sessions/2026-10-23/rpi-workflow-canvas';
 const pathOf = (id) => `${DIR}/${id}-state.json`;
@@ -114,17 +114,43 @@ describe('following the running loop', () => {
         assert.equal(nextFollowTarget(tasks, pathOf('a')), null);
     });
 
-    it('stays when several children run, and follows the only running one in a fan', () => {
-        const parallel = tree([member('a', { status: 'completed', children: ['b', 'c'] }), member('b', { parent: 'a', session: 'running' }), member('c', { parent: 'a', session: 'running' })]);
-        assert.equal(nextFollowTarget(parallel, pathOf('a')), null);
+    it('follows the running loop that changed last when several run, and the only running one in a fan', () => {
+        const parallel = tree([member('a', { status: 'completed', children: ['b', 'c'] }), member('b', { parent: 'a', session: 'running', mtime: 20 }), member('c', { parent: 'a', session: 'running', mtime: 10 })]);
+        assert.equal(nextFollowTarget(parallel, pathOf('a'))?.id, 'b');
+        const tied = tree([member('a', { status: 'completed', children: ['b', 'c'] }), member('b', { parent: 'a', session: 'running' }), member('c', { parent: 'a', session: 'running' })]);
+        assert.equal(nextFollowTarget(tied, pathOf('a'))?.id, 'b', 'a tie goes to tree order');
         const fan = tree([member('a', { status: 'completed', children: ['b', 'c'] }), member('b', { parent: 'a', status: 'completed' }), member('c', { parent: 'a', session: 'running' })]);
         assert.equal(nextFollowTarget(fan, pathOf('a'))?.id, 'c');
+    });
+
+    it('moves to a running loop that is not a child of the followed task', () => {
+        const chain = tree([
+            member('a', { status: 'completed', children: ['b'] }),
+            member('b', { parent: 'a', status: 'completed', children: ['c'] }),
+            member('c', { parent: 'b', session: 'running' }),
+        ]);
+        assert.equal(nextFollowTarget(chain, pathOf('a'))?.id, 'c', 'from the root, past a completed loop');
+        const apart = tree([member('a', { status: 'completed' }), member('z', { session: 'running' })]);
+        assert.equal(nextFollowTarget(apart, pathOf('a'))?.id, 'z', 'to another task of the session');
     });
 
     it('stays in a stopped session and on an unknown task', () => {
         const stopped = tree([member('a', { children: ['b'] }), member('b', { parent: 'a' })]);
         assert.equal(nextFollowTarget(stopped, pathOf('a')), null);
         assert.equal(nextFollowTarget(stopped, pathOf('nope')), null);
+    });
+
+    it('finds where the agent works: the running task, else the latest loop', () => {
+        const running = tree([member('a', { status: 'completed', children: ['b'], mtime: 30 }), member('b', { parent: 'a', session: 'running', mtime: 5 })]);
+        assert.equal(agentTask(running)?.id, 'b');
+        const stopped = tree([
+            member('a', { status: 'completed', children: ['b', 'c'], mtime: 50 }),
+            member('b', { parent: 'a', status: 'completed', mtime: 10 }),
+            member('c', { parent: 'a', status: 'completed', mtime: 20 }),
+        ]);
+        assert.equal(agentTask(stopped)?.id, 'c', 'the root changed last but continues into loops, so the latest loop wins');
+        assert.equal(agentTask([]), null);
+        assert.ok(running.every((task) => typeof task.changedAt === 'number'), 'tree tasks carry their change time');
     });
 
     it('moves from this session\'s completed root, whose session still runs, to its running child', () => {

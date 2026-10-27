@@ -899,6 +899,7 @@ export function sessionTree(ctx, options) {
     const stack = [root];
     let last = null;
     const show = (task) => (options.onShow ? options.onShow(task) : ctx.act.showTask({ statePath: task.statePath }));
+    const agentPath = ctx.data.follow?.agent?.statePath ?? null;
     for (const task of tree.tasks) {
         const depth = Math.max(0, Math.min(task.depth, stack.length));
         while (stack.length > depth + 1) stack.pop();
@@ -915,6 +916,7 @@ export function sessionTree(ctx, options) {
                 badge(status),
                 h('strong', { class: 'tree-title', text: task.title }),
                 h('code', { class: 'tree-id', text: task.id }),
+                task.statePath && task.statePath === agentPath ? h('span', { class: 'badge tone-agent tree-agent', title: 'Where the agent works; Follow agent goes here' }, icon('sparkle'), 'Agent') : null,
                 task.shown
                     ? h('span', { class: 'badge tone-accent tree-shown' }, icon('eye'), 'Shown')
                     : switchable && task.statePath

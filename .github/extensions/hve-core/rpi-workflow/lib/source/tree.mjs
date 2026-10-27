@@ -28,6 +28,7 @@
  * @property {boolean} shown True for the task the canvas shows.
  * @property {{ id: string, title: string, statePath: string, session: string, status: string } | null} continues
  *   A parent in another session folder.
+ * @property {number} changedAt When the state file last changed, in milliseconds.
  */
 
 /** Session folder name as words: hyphens become spaces and the first letter is capitalized. */
@@ -126,6 +127,7 @@ export function buildTree({ members, shownPath, outside = new Map() }) {
             parent: parentOf.get(member.path) ?? null,
             shown: member.path === shownPath,
             continues: continues.get(member.path) ?? null,
+            changedAt: member.mtimeMs ?? 0,
         });
         for (const child of ordered(member)) visit(child, depth + 1);
     };
@@ -139,9 +141,27 @@ export function buildTree({ members, shownPath, outside = new Map() }) {
     return { tasks, warnings };
 }
 
+/** The task that changed last; the earlier one in tree order wins a tie. */
+const newest = (tasks) => tasks.reduce((best, task) => (best === null || (task.changedAt ?? 0) > (best.changedAt ?? 0) ? task : best), /** @type {TreeTask | null} */ (null));
+
 /**
- * The task to follow next: the one running child of the followed task, once the followed
- * task is no longer running. Null while it runs, or when no child or several children run.
+ * Where the agent works in the session: the running task that changed last, or, when none
+ * runs, the task that changed last among those no other task continues, its latest loop.
+ *
+ * @param {TreeTask[]} tasks
+ * @returns {TreeTask | null}
+ */
+export function agentTask(tasks) {
+    const running = tasks.filter((task) => task.status === 'running');
+    if (running.length) return newest(running);
+    const parents = new Set(tasks.map((task) => task.parent).filter(Boolean));
+    return newest(tasks.filter((task) => !parents.has(task.statePath)));
+}
+
+/**
+ * The task to follow next: once the followed task is no longer running, the running task
+ * that changed last, wherever it sits in the session. Null while the followed task runs,
+ * when it is not in the session, or when no task runs.
  *
  * @param {TreeTask[]} tasks
  * @param {string} statePath The followed task's state path.
@@ -150,6 +170,5 @@ export function buildTree({ members, shownPath, outside = new Map() }) {
 export function nextFollowTarget(tasks, statePath) {
     const self = tasks.find((task) => task.statePath === statePath);
     if (!self || self.status === 'running') return null;
-    const running = tasks.filter((task) => task.parent === statePath && task.status === 'running');
-    return running.length === 1 ? running[0] : null;
+    return newest(tasks.filter((task) => task.status === 'running'));
 }

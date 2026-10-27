@@ -21,6 +21,7 @@ import {
     transitionFeedback,
 } from './model.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
+import { agentTask } from './source/tree.mjs';
 import { preferencesPatch } from './store.mjs';
 import { EditorError } from './editor.mjs';
 import { FileError, readWorkspaceFile } from './workspace-files.mjs';
@@ -319,6 +320,12 @@ export function createCanvasServer(deps) {
         return session;
     }
 
+    /** The loop Follow agent goes to, for the page to name. */
+    const agentLoop = (tasks) => {
+        const task = agentTask(Array.isArray(tasks) ? tasks : []);
+        return task ? { taskId: task.id, title: task.title, statePath: task.statePath, status: task.status } : null;
+    };
+
     async function stateResponse() {
         if (!connected()) {
             const source = deps.getSource?.();
@@ -346,7 +353,7 @@ export function createCanvasServer(deps) {
             preferences: await store.loadPreferences(),
             canvas: getCanvas(),
             editor: getEditor() && deps.getSource?.()?.kind === 'rpi' ? { name: getEditor().name } : null,
-            follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused) } : null,
+            follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused), agent: agentLoop(source.tasks) } : null,
             otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at) })),
         };
     }

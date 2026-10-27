@@ -45,9 +45,10 @@ The canvas follows those files while it is open and never changes them. What you
 ### Following the Agent
 
 The Live control in the header shows whether the canvas follows the agent. While it shows Live, the canvas moves to the loop and phase the agent works in whenever either changes, and a note at the bottom of the document says when it moved to another loop.
-Choosing a phase other than the agent's, showing another loop or session, or going Back or Forward stops following, and so does pressing the control or `f`. The control then shows Follow agent, and the canvas stays where you are. Press it, or `f`, to catch up: the canvas shows the session's running loop and the agent's phase and follows again. When the agent points you at an item with `focus_item`, following continues. While the canvas connects or reconnects, the control says so.
+Choosing a phase other than the agent's, showing another loop or session, or going Back or Forward stops following, and so does pressing the control or `f`. The control then shows Follow agent, and the canvas stays where you are. Press it, or `f`, to catch up: the canvas shows the loop the agent works in, from anywhere in the session, and the agent's phase, and follows again.
+That loop is the session's running loop, the one that changed last when several run, or, when none runs, the latest loop, the one changed last that no other loop continues. Its tooltip names that loop when it is not the one shown, and the session menu marks it Agent. When the agent points you at an item with `focus_item`, following continues. While the canvas connects or reconnects, the control says so.
 
-For a real session, following is saved with the canvas, so a canvas you stopped stays stopped after the host restarts the extension. When the task the canvas shows is no longer running and exactly one of its child loops is, following moves to that loop in the same panel; with several running children, it stays and lets you choose.
+For a real session, following is saved with the canvas, so a canvas you stopped stays stopped after the host restarts the extension. When the task the canvas shows is no longer running and another loop of the session runs, following moves to that loop in the same panel, wherever it sits in the session; when several run, it moves to the one that changed last.
 
 ### Layout
 
@@ -315,7 +316,7 @@ The key keeps other local processes, such as other accounts or containers, from 
 
 * The canvas reads RPI files but never writes them. Changes to a real session reach the files only through the agent.
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
-* Following moves only to the one running child of a loop that has finished. A subagent that runs its own RPI loop in the session looks like any other child, so the canvas can follow into it; use the session menu to go back, which stops following.
+* Following goes to whichever loop of the session runs, so a subagent that runs its own RPI loop in the session looks like any other loop, and the canvas can follow into it; use the session menu to go back, which stops following. With several running loops, which happens only when an earlier conversation stopped without saying so, it picks the one that changed last.
 * Send to agent needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
 * Open in VS Code is verified with VS Code Insiders on macOS. Other hosts show the source in the canvas and Copy path.
 * VS Code may handle Alt+Left and Alt+Right before the canvas sees them; the Back and Forward buttons always work.

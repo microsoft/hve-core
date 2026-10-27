@@ -308,6 +308,27 @@ describe('source controller', () => {
         store.close();
     });
 
+    it('resumes following on the latest loop when none runs, from anywhere in the session', async () => {
+        const dir = path.join(tmp, 'follow-latest');
+        await writeFixtureWorkspace(dir);
+        await writeJson(dir, PATHS.childState, { ...CHILD_STATE, status: 'completed', session_status: 'stopped' });
+        const later = new Date(Date.now() + 5000);
+        await fs.utimes(path.join(dir, PATHS.rootState), later, later);
+        const store = createStore({ root: path.join(tmp, 'follow-latest-store') });
+        const sources = createSourceController({ store, intervalMs: 60000 });
+        const record = { sessionId: '', source: null, server: { rebind: () => {} } };
+        sources.attach(record, await sources.prepare({ state: PATHS.rootState, paused: true }, { candidates: [dir] }));
+        await sources.settled(record);
+        assert.deepEqual([record.source.taskId, record.source.follow.paused], [ROOT_TASK, true]);
+        await sources.resumeFollowing(record);
+        await sources.settled(record);
+        assert.deepEqual([record.source.taskId, record.source.follow.paused], [CHILD_TASK, false], 'the root changed last, but its loop is where the agent was');
+        await sources.resumeFollowing(record);
+        assert.equal(record.source.taskId, CHILD_TASK, 'resuming on the latest loop keeps it');
+        sources.detach(record);
+        store.close();
+    });
+
     it('moves along when the followed task finishes while the page is open', async () => {
         const dir = path.join(tmp, 'follow-later');
         await writeFixtureWorkspace(dir);

@@ -468,10 +468,13 @@ function renderLive() {
     btn.dataset.follow = following ? 'on' : 'off';
     btn.querySelector('use')?.setAttribute('href', `#i-${following ? 'live' : 'live-off'}`);
     $('liveLabel').textContent = state.live === 'reconnecting' ? 'Reconnecting' : state.live === 'connecting' ? 'Connecting' : following ? 'Live' : 'Follow agent';
-    $('liveHint').textContent = following ? ': following the agent. Press to stop following.' : ": not following. Press to follow the agent's loop and phase.";
+    // Names the loop Follow agent goes to when it is not the one shown.
+    const agent = state.data?.follow?.agent;
+    const elsewhere = agent && agent.statePath !== state.data?.session.source?.statePath ? agent.title : null;
+    $('liveHint').textContent = following ? ': following the agent. Press to stop following.' : elsewhere ? `: not following. Press to go to ${elsewhere} and follow the agent.` : ": not following. Press to follow the agent's loop and phase.";
     btn.setAttribute('data-tip', following
         ? 'Following the agent: the canvas moves to the loop and phase the agent works in. Press to stop following.'
-        : 'Follow the agent: go to the loop and phase the agent works in, and move with it.');
+        : elsewhere ? `Follow the agent: go to ${elsewhere} and move with it.` : 'Follow the agent: go to the loop and phase the agent works in, and move with it.');
     if (state.ui.shortcuts) btn.setAttribute('aria-keyshortcuts', 'f');
     else btn.removeAttribute('aria-keyshortcuts');
 }

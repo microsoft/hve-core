@@ -334,7 +334,7 @@ describe('a session-wide send', () => {
         const mine = await addComment(store, child.id, 'On the child');
         const theirs = await addComment(store, parent.id, 'On the parent');
         const state = await request(url, { pathname: '/api/state' });
-        assert.deepEqual(state.json.follow, { paused: false });
+        assert.deepEqual(state.json.follow, { paused: false, agent: null });
         assert.deepEqual(state.json.otherTasks.map((task) => [task.taskId, task.pending.map((entry) => entry.id)]), [[ROOT_TASK, [theirs.id]]]);
         const removed = await request(url, { method: 'POST', pathname: '/api/feedback/transition', body: { taskId: ROOT_TASK, id: theirs.id, to: 'dismissed' } });
         assert.equal(removed.status, 200);
@@ -356,6 +356,22 @@ describe('a session-wide send', () => {
             const after = await item(store, docId, id);
             assert.deepEqual([after.state, after.deliveredWith, after.deliveringSince], ['sent', 2, undefined]);
         }
+        await server.stop();
+        store.close();
+    });
+
+    it('names the loop Follow agent goes to: the running loop, else the latest', async () => {
+        const store = createStore({ root: path.join(tmp, 'agent-loop'), pollMs: 20 });
+        const child = await store.create(childSession().session);
+        const task = (id, extra) => ({ id, title: `Title ${id}`, status: 'completed', depth: 0, statePath: `s/${id}-state.json`, parent: null, shown: false, continues: null, changedAt: 0, ...extra });
+        const source = { kind: 'rpi', follow: { paused: true }, tasks: [task('root', { changedAt: 50 }), task('loop', { parent: 's/root-state.json', changedAt: 10 })] };
+        const server = createCanvasServer({ store, getSessionId: () => child.id, getSource: () => source });
+        const url = new URL(await server.start());
+        const latest = await request(url, { pathname: '/api/state' });
+        assert.deepEqual(latest.json.follow, { paused: true, agent: { taskId: 'loop', title: 'Title loop', statePath: 's/loop-state.json', status: 'completed' } }, 'the root changed last but continues into the loop');
+        source.tasks.push(task('other', { status: 'running', changedAt: 5 }));
+        const running = await request(url, { pathname: '/api/state' });
+        assert.equal(running.json.follow.agent.taskId, 'other', 'a running loop wins');
         await server.stop();
         store.close();
     });

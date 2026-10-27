@@ -3,8 +3,8 @@
 
 import { ModelError } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
-import { nextFollowTarget } from './source/tree.mjs';
-import { createFollower, listSessions, loadState, resolveState, resolveTask, resolveWorkspace, scanStates, sessionOf } from './source/workspace.mjs';
+import { agentTask, nextFollowTarget } from './source/tree.mjs';
+import { createFollower, listSessions, loadState, resolveState, resolveTask, resolveWorkspace, scanStates, sessionOf, sessionTreeOf } from './source/workspace.mjs';
 import { lineageStatusOf } from './source/assemble.mjs';
 
 export const DEFAULT_STAGE = 'implement';
@@ -99,9 +99,10 @@ export function notConnected(reason, detail = null) {
 /**
  * Decides what a canvas instance shows, the bundled sample at a stage or an RPI task read
  * from the workspace, and moves an instance between them. A task's follower polls only
- * while the instance's server has a page connected. While following, the canvas moves to
- * the one running child of a task that is no longer running; showing a task that is not
- * running, by hand or by `show_task`, pauses following until it resumes.
+ * while the instance's server has a page connected. While following, the canvas moves from
+ * a task that is no longer running to the session's running task, wherever it sits;
+ * showing a task that is not running, by hand or by `show_task`, pauses following until it
+ * resumes.
  *
  * @param {{
  *   store: ReturnType<typeof import('./store.mjs').createStore>,
@@ -182,8 +183,8 @@ export function createSourceController(deps) {
     }
 
     /**
-     * Moves a following instance to the one running child of its task once that task is
-     * no longer running, repeating down the tree. Concurrent calls share one move.
+     * Moves a following instance to the session's running task once the task it shows is no
+     * longer running. Concurrent calls share one move.
      *
      * @param {{ sessionId: string, source?: any, server?: any, moving?: Promise<void> | null }} record
      */
@@ -382,21 +383,17 @@ export function createSourceController(deps) {
         },
 
         /**
-         * Resumes following: shows the session's most recently changed running task, or
-         * keeps the shown task when none runs.
+         * Resumes following from wherever the instance is: shows where the agent works, the
+         * session's running task, or its latest loop when none runs.
          *
          * @param {{ sessionId: string, source?: any, server?: any }} record
          */
         async resumeFollowing(record) {
             requireRpi(record);
-            const { states } = await scanStates(record.source.workspace);
-            for (const entry of states.filter((item) => item.session === record.source.sessionKey)) {
-                const loaded = await loadState(record.source.workspace, entry.path).catch(() => null);
-                if (loaded && lineageStatusOf(loaded.state) === 'running') {
-                    if (loaded.path === record.source.statePath) break;
-                    return switchTo(record, { state: loaded.path }, false);
-                }
-            }
+            const { workspace, statePath } = record.source;
+            const self = await loadState(workspace, statePath).catch(() => null);
+            const target = self ? agentTask((await sessionTreeOf(workspace, self)).tasks) : null;
+            if (target && target.statePath !== statePath) return switchTo(record, { state: target.statePath }, false);
             record.source.follow.paused = false;
             record.server?.rebind?.({});
             remember(record);
