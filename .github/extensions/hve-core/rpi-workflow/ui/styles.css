@@ -504,8 +504,12 @@ button.id-chip:hover,
   color: var(--rw-fg);
 }
 
-.badge {
+/* Defaults with no specificity, so a tone class always wins whatever the rule order. */
+:where(.badge) {
   --tone: var(--rw-fg-muted);
+}
+
+.badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -783,8 +787,11 @@ details > summary:hover {
 
 /* Notices, callouts, and states */
 
-.notice {
+:where(.notice) {
   --tone: var(--rw-accent);
+}
+
+.notice {
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--rw-border));
   border-radius: var(--rw-radius-lg);

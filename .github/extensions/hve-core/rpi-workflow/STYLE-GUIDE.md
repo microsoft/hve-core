@@ -67,6 +67,7 @@ Measured contrast: `--rw-fg` reaches 13.9:1 or more on every surface in every sc
 | `--rw-danger`    | Failed, blocked, High and Critical severity, weakened    | `#d1242f` | `#f85149` | `#a0111f`           | `#ff7b72`          |
 
 Each hue reaches at least 4.5:1 against `--rw-bg` and `--rw-bg-subtle` in its scheme (4.57:1 is the lowest, light attention on subtle), so it may color small text there. On `--rw-bg-selected`, light-scheme hues fall to 4.3:1 to 4.6:1, so selected rows set text in `--rw-fg` and use hues only for icons. Chips and badges place `--rw-fg` text on a 14 percent tint of their hue, which measures 12.9:1 or more.
+A tone class (`tone-success` and the others) sets `--tone`; the badge and notice defaults sit in zero-specificity `:where()` rules, so a tone class always wins whatever the rule order.
 
 ### Status Vocabularies
 
