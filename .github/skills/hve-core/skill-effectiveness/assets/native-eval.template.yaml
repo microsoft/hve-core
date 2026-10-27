@@ -1,0 +1,78 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Copy to evals/<task>.eval.yaml and replace every angle-bracket value.
+name: <task-name>
+description: <ordinary user task being compared>
+version: "1.0.0"
+type: capability
+# Vally also supports regression. This classification does not select graders.
+
+defaults:
+  runs: 1
+  timeout: 60m
+  executor:
+    name: restricted-copilot-sdk
+    config:
+      # Absolute durable operator-owned path outside candidate workspaces.
+      # Native temporary session-log roots are deleted after events are exported.
+      auditDirectory: "${AUDIT_DIR=MUST-SET-AUDIT-DIR}"
+      # Optional explicit SDK context isolation for nested repository instructions.
+      # The empty-instruction startup guard remains mandatory in either mode.
+      # The adapter supplies the actual workspace/OS without ambient instructions.
+      # clientMode: empty
+      # Optional Windows-only candidate sandbox; requires normal local login.
+      # Copy scripts/native-windows-sandbox.mjs with the plugin.
+      # executionProfile:
+      #   name: windows-native
+      #   readonlyPaths: []
+      #   deniedPaths: []
+      # No-grants starting shape, not a runnable task policy.
+      # Include native skill when skills are supplied. Test legitimate directory
+      # listing and file operations as well as denials; do not grant broad reads.
+      sessionPolicy:
+        availableTools: []
+        permissions:
+          allow: []
+          deny: []
+  model: "${AGENT_MODEL=MUST-SET-AGENT-MODEL}"
+
+agent_environment:
+  # Explicit native environment selects the environment-aware client factory.
+  env:
+    DO_NOT_TRACK: "1"
+  skills: []
+  files:
+    - src: ../fixtures/<task>/public
+      dest: task-fixture
+
+# Collection and public delivery checks only, not private quality evidence.
+# Grade each original trial separately with the protected grade-only spec.
+# Generic backend containment remains separate. The optional native Windows
+# profile covers candidate commands, not offline graders or full task readiness.
+# Paid execution requires an explicit durable AUDIT_DIR, --output-dir and
+# --workspace; audit records never enter candidate listings or transient logs.
+# No aggregate threshold: native trial success requires every grader to pass.
+# Otherwise a mean score could hide a failed test or require a perfect judge score.
+scoring: {}
+
+stimuli:
+  - name: <task-name>
+    constraints:
+      max_agent_duration: 45m
+      max_duration: 60m
+    artifacts:
+      include:
+        - "deliverable/**"
+    prompt: |
+      <real user request; disclose required interfaces without prescribing a method>
+      Save the required output to deliverable/<artifact>.
+      Public task inputs are in task-fixture.
+      <disclose the output contract and observable checks applied equally to both arms>
+      The private evaluator is unavailable during this task; do not try to run it.
+    graders:
+      - type: completed
+      - type: file-exists
+        name: delivery
+        config:
+          path: deliverable/<artifact>

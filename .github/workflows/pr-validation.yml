@@ -306,6 +306,8 @@ jobs:
       base-sha: ${{ needs.change-range.outputs.base-sha }}
       head-sha: ${{ needs.change-range.outputs.head-sha }}
       working-directory: ${{ matrix.directory }}
+      # Copilot and Sharp require their optional platform packages.
+      include-optional-dependencies: ${{ matrix.directory == '.github/skills/hve-core/skill-effectiveness' }}
       soft-fail: false
       changed-files-only: true
       # Deck tests also read HTML, CSS and JSON sources, so each slide deck and

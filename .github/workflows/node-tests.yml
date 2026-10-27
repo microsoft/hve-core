@@ -39,6 +39,11 @@ on:
         required: false
         type: string
         default: ''
+      include-optional-dependencies:
+        description: 'Install optional platform packages required by this project'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -130,6 +135,7 @@ jobs:
         shell: bash
         env:
           SEARCH_ROOT: ${{ inputs.working-directory }}
+          INCLUDE_OPTIONAL: ${{ inputs.include-optional-dependencies && '1' || '0' }}
         run: ./scripts/ci/install-skill-node-deps.sh
 
       - name: Run Node tests with coverage
