@@ -30,7 +30,9 @@ User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Fo
 
 Select `RPI Agent` when one task should move through Research, Plan, Implement, Review, and Follow-up with a durable state record and one stable task identity. The agent activates the matching skills ([rpi-research](../../skills/rpi/rpi-research), [rpi-plan](../../skills/rpi/rpi-plan), [rpi-implement](../../skills/rpi/rpi-implement), [rpi-review](../../skills/rpi/rpi-review)) rather than duplicating their protocols.
 
-It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record so a later conversation can resume from the recorded phase.
+It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record per task so a later conversation can resume from the recorded phase. Every task a conversation works on keeps its state in one session folder, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, named after the session, and parent and child state files link to each other. Research, plans, critiques, changes, and reviews stay in their own dated folders.
+
+When the host offers the RPI Workflow canvas, the agent opens it once per conversation to show the session, the canvas follows each new loop in the same panel, and what you send from the canvas reaches the agent as your direction. When the host can rename chats, the agent names the chat after the session.
 
 Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts. They skip the plan critique and Review unless you ask for them on follow-up work. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
 
