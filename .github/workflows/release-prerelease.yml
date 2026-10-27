@@ -10,8 +10,7 @@ name: Pre-Release Preparation
 # and draft release at the merge commit. The resulting tag push starts the sole
 # post-tag producer.
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - release/prerelease
 # One release at a time per target branch. The reviewed promotion merge and the
@@ -23,20 +22,47 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  # A push to a protected release branch is the merge of a reviewed pull
+  # request. Resolve that pull request from the pushed commit so every later
+  # job checks the same merged-head identity the pull_request event carried,
+  # while running on the branch ref the release-governance environment allows.
+  resolve-merge:
+    name: Resolve Merged Pull Request
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read # list the pull request merged by this push
+    outputs:
+      merged: ${{ steps.resolve.outputs.merged }}
+      base-ref: ${{ steps.resolve.outputs.base-ref }}
+      head-ref: ${{ steps.resolve.outputs.head-ref }}
+      head-repository: ${{ steps.resolve.outputs.head-repository }}
+      head-sha: ${{ steps.resolve.outputs.head-sha }}
+      merge-sha: ${{ steps.resolve.outputs.merge-sha }}
+    steps:
+      - name: Resolve the merged pull request
+        id: resolve
+        uses: $/.github/actions/resolve-merged-pr
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          event-sha: ${{ github.sha }}
+          base-branch: ${{ github.ref_name }}
   # Every mutable pre-tag decision happens here, before any job holds release
   # write permission. validate-release keeps sole ownership of the post-tag
   # release-output and channel-state checks.
   validate-trigger:
+    needs: [resolve-merge]
     name: Validate Pre-Release Trigger
     if: >
-      github.event.pull_request.merged == true
-      && github.event.pull_request.base.ref == 'release/prerelease'
-      && github.event.pull_request.head.repo.full_name == github.repository
+      needs.resolve-merge.outputs.merged == 'true'
+      && needs.resolve-merge.outputs.base-ref == 'release/prerelease'
+      && needs.resolve-merge.outputs.head-repository == github.repository
       && (
-        github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
-        || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
+        needs.resolve-merge.outputs.head-ref == 'release-promotion--main--to--release-prerelease'
+        || needs.resolve-merge.outputs.head-ref == 'release-please--branches--release/prerelease'
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -47,13 +73,13 @@ jobs:
       - name: Validate merged head identity
         id: identity
         env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_REF: ${{ needs.resolve-merge.outputs.base-ref }}
           EVENT_SHA: ${{ github.sha }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ needs.resolve-merge.outputs.head-ref }}
+          HEAD_REPOSITORY: ${{ needs.resolve-merge.outputs.head-repository }}
           MANAGED_HEAD: release-please--branches--release/prerelease
-          MERGED: ${{ github.event.pull_request.merged }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          MERGED: ${{ needs.resolve-merge.outputs.merged }}
+          MERGE_SHA: ${{ needs.resolve-merge.outputs.merge-sha }}
           PROMOTION_HEAD: release-promotion--main--to--release-prerelease
           REPOSITORY: ${{ github.repository }}
         run: |
@@ -182,26 +208,30 @@ jobs:
 
   release-please:
     name: Release Please on release/prerelease
-    needs: [validate-trigger]
+    needs: [resolve-merge, validate-trigger]
     if: >
-      github.event.pull_request.merged == true
-      && github.event.pull_request.base.ref == 'release/prerelease'
-      && github.event.pull_request.head.repo.full_name == github.repository
+      needs.resolve-merge.outputs.merged == 'true'
+      && needs.resolve-merge.outputs.base-ref == 'release/prerelease'
+      && needs.resolve-merge.outputs.head-repository == github.repository
       && (
-        github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
-        || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
+        needs.resolve-merge.outputs.head-ref == 'release-promotion--main--to--release-prerelease'
+        || needs.resolve-merge.outputs.head-ref == 'release-please--branches--release/prerelease'
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions: {}
     outputs:
       release-pr-branch: ${{ steps.release-pr.outputs.branch }}
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # The token gets only the permissions this job uses.
           permission-contents: write
           permission-pull-requests: write
       - name: Run release-please
@@ -349,16 +379,20 @@ jobs:
     needs:
       - release-please
     if: ${{ !cancelled() && !failure() && needs.release-please.outputs.release-pr-branch != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # The token gets only the permissions this job uses.
           permission-contents: write
       - name: Checkout trusted release updater
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

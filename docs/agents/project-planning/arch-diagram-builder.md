@@ -3,7 +3,7 @@ title: Architecture Diagrams Skill
 description: Use the portable architecture-diagrams skill to generate ASCII or Mermaid architecture diagrams from infrastructure source files
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-10-10
 ms.topic: how-to
 keywords:
   - architecture diagrams
@@ -11,7 +11,7 @@ keywords:
   - infrastructure as code
 ---
 
-The [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) is the recommended way to generate ASCII or Mermaid architecture diagrams from infrastructure source files. It is especially useful for ADRs, onboarding guides, and design reviews when you want a quick, text-based view of a system's structure.
+The [architecture-diagrams skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/hve-core/architecture-diagrams/SKILL.md) is the recommended way to generate ASCII or Mermaid architecture diagrams from infrastructure source files. It is especially useful for ADRs, onboarding guides, and design reviews when you want a quick, text-based view of a system's structure.
 
 ## When to Use This Skill
 

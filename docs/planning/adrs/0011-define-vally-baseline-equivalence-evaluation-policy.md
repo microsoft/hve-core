@@ -3,7 +3,7 @@ id: "0011"
 title: "Define the Vally baseline-equivalence evaluation policy"
 description: "Define launch-based agent invocation, authoritative evidence, report-only comparison calibration, model scope, and trial posture for the baseline-equivalence suite."
 author: "HVE Core Maintainers"
-ms.date: "2026-09-23"
+ms.date: "2026-10-10"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-08-01"
@@ -202,7 +202,7 @@ The authoritative/report-only separation, fail-closed rules, population reconcil
 ## More Information
 
 * [package.json](../../../package.json) pins the Vally CLI version whose executor timeout and cleanup semantics the suite relies on.
-* [evals/baseline-equivalence/](pathname://../../../evals/baseline-equivalence/) holds the stimulus corpus and the paired baseline and customized specs this policy governs; its [README.md](pathname://../../../evals/baseline-equivalence/README.md) documents the runtime behavior, the summary field contract, and the pass and fail interpretation rules.
+* [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/tree/main/evals/baseline-equivalence/) holds the stimulus corpus and the paired baseline and customized specs this policy governs; its [README.md](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) documents the runtime behavior, the summary field contract, and the pass and fail interpretation rules.
 * [.github/workflows/eval-validation.yml](../../../.github/workflows/eval-validation.yml) owns the outer eval-shard timeout and credentialed calibration dispatch.
 * [scripts/evals/Invoke-BaselineEquivalence.ps1](../../../scripts/evals/Invoke-BaselineEquivalence.ps1) is the single entry point that owns tier validation, model resolution, the pinned judge invocation, and the exit policy in parts 1, 3, and 4.
 * [scripts/evals/lib/EquivalenceParsing.psm1](../../../scripts/evals/lib/EquivalenceParsing.psm1) computes both gates and the verdict described in parts 2 and 4, and reads comparison and guard results.

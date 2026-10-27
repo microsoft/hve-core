@@ -48,6 +48,7 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _parse_token_response,
     _read_capped,
     _refresh_access_token,
+    _resolve_active_profile,
     _resolve_token_store_path,
     _select_profile,
 )
@@ -191,7 +192,8 @@ def _require_scope(
     scope: "str | Sequence[str]",
     *,
     store: dict[str, Any] | None = None,
-    profile_name: str = DEFAULT_PROFILE_NAME,
+    profile_name: str | None = None,
+    cli_profile: str | None = None,
 ) -> None:
     """Raise :class:`MuralAuthScopeError` when ``scope`` is not in the granted
     set of the named profile.
@@ -199,9 +201,16 @@ def _require_scope(
     ``scope`` may be a single string or a sequence of strings; in the
     sequence form every entry must be granted (logical AND). Templates and
     composite tools pass their required scopes directly.
+
+    When ``profile_name`` is omitted, the profile is resolved the same way the
+    authenticated request path resolves it: ``cli_profile``, then
+    ``MURAL_PROFILE``, then the token store's ``active_profile``, then
+    ``default``.
     """
     if store is None:
         store = _load_token_store(_resolve_token_store_path())
+    if profile_name is None:
+        profile_name = _resolve_active_profile(store, os.environ, cli_profile)
     granted = _token_granted_scopes(store, profile_name)
     needed = (scope,) if isinstance(scope, str) else tuple(scope)
     for s in needed:

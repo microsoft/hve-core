@@ -1,9 +1,9 @@
 ---
 title: pull-request
-description: "Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps."
+description: "Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-20
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps.
+Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -48,6 +48,13 @@ pull request is not supported.
 
 The skill compares the current branch with the local base ref, applies the repository template,
 writes `.copilot-tracking/pr/pr.md`, and runs focused checks for the changed areas. Set
-`action=create` to request one final approval before the branch is pushed and the GitHub pull request
-is opened. If you ask it to fix a reported failure, the skill validates and commits the isolated
-repair, refreshes the pull request context, and includes the new commit in the final approval summary.
+`action=create` to prepare for final PR-write approval. A needed ordinary push requires its own
+consent; an explicit request or approval for that same push is reused, not requested again.
+Push consent does not approve opening or updating the PR. If a required push fails or cannot run,
+the dependent PR write stops with the actual result or restriction.
+
+If you ask it to fix a reported failure, the skill validates and commits the isolated repair,
+refreshes the pull request context, and includes the new commit in the final approval summary.
+
+For example, after approving an identified ordinary push, you can still leave the prepared PR
+unpublished. The remaining approval is for the PR write alone, not another approval of that push.

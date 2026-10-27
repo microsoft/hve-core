@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import pathlib
 import re
 import secrets
@@ -48,10 +47,7 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _list_kwargs,
     _list_widgets_with_context,
     _maybe_apply_author_tag,
-    _resolve_active_profile,
-    _select_profile,
     _state,
-    _token_granted_scopes,
     _widget_tag_ids,
 )
 from ._commands import (
@@ -66,17 +62,11 @@ from ._commands import (
     _template_target_body,
 )
 from ._constants import (
-    DEFAULT_PROFILE_NAME,
-    ENV_PROFILE,
     MAX_BULK_WIDGETS,
     POLL_DEFAULT_INTERVAL_S,
     POLL_DEFAULT_TIMEOUT_S,
     POLL_MAX_INTERVAL_S,
     POLL_MAX_TIMEOUT_S,
-)
-from ._credentials import (
-    _resolve_credential_file,
-    _resolve_token_store_path,
 )
 from ._exceptions import (
     MCPInvalidParamsError,
@@ -1616,34 +1606,6 @@ def _op_widget_list_with_context(arguments: dict[str, Any]) -> Any:
         limit=list_kwargs["limit"],
         page_size=list_kwargs["page_size"],
     )
-
-
-def _op_auth_status(arguments: dict[str, Any]) -> Any:
-    path = _resolve_token_store_path()
-    profile_arg = arguments.get("profile") if isinstance(arguments, dict) else None
-    cred_profile = profile_arg or os.environ.get(ENV_PROFILE) or DEFAULT_PROFILE_NAME
-    cred_path = _resolve_credential_file(cred_profile, os.environ)
-    cred_keys = {
-        "credential_file": str(cred_path),
-        "credential_file_exists": cred_path.exists(),
-    }
-    store = _pkg()._load_token_store(path)
-    if not store:
-        return {"authenticated": False, "token_store": str(path), **cred_keys}
-    profile_name = _resolve_active_profile(store, os.environ, profile_arg)
-    try:
-        profile = _select_profile(store, profile_name)
-    except MuralError:
-        return {"authenticated": False, "token_store": str(path), **cred_keys}
-    return {
-        "authenticated": True,
-        "token_store": str(path),
-        "profile": profile_name,
-        "granted_scopes": list(_token_granted_scopes(store, profile_name)),
-        "expires_at": profile.get("expires_at"),
-        "has_refresh_token": bool(profile.get("refresh_token")),
-        **cred_keys,
-    }
 
 
 def _op_spatial_widgets_in_shape(arguments: dict[str, Any]) -> Any:

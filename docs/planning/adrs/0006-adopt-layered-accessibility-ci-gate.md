@@ -3,7 +3,7 @@ id: "0006"
 title: "Adopt a layered accessibility CI gate as a blocking merge guardrail"
 description: "Adopt a layered accessibility CI architecture for the Docusaurus site that runs static linting, component-level axe assertions, behavioral end-to-end checks, and a full-site crawl as a single blocking job, gating merges at a zero-violation full-site threshold against WCAG 2.2 AA."
 author: "HVE Core Maintainers"
-ms.date: "2026-07-16"
+ms.date: "2026-10-23"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-06-14"
@@ -54,7 +54,7 @@ success_criteria:
     measurement_window: "every PR run"
     source: ".github/workflows/docusaurus-tests.yml"
   - metric: "static-lint-clean"
-    target: "eslint-plugin-jsx-a11y reports zero accessibility errors on the Docusaurus source tree"
+    target: "eslint-plugin-jsx-a11y-x reports zero accessibility errors on the Docusaurus source tree"
     measurement_window: "per-PR"
     source: "docs/docusaurus/eslint.config.mjs"
 decisionMetadata:
@@ -72,7 +72,7 @@ decisionMetadata:
 > full-site crawl from pa11y-ci to the `@axe-core/playwright` site-crawl spec
 > (`docs/docusaurus/e2e/site-crawl.spec.ts`). pa11y-ci, `.pa11yci`, and puppeteer were removed;
 > the full-site and behavioral layers now both run on Playwright, so the gate spans three tools
-> (`eslint-plugin-jsx-a11y`, `jest-axe`, Playwright with `@axe-core/playwright`) across four
+> (`eslint-plugin-jsx-a11y-x`, `jest-axe`, Playwright with `@axe-core/playwright`) across four
 > layers. The decision to run a layered, blocking accessibility gate at a zero-violation
 > full-site threshold is unchanged.
 
@@ -118,7 +118,7 @@ and the npm scripts that wire these together live in
 
 ## Considered Options
 
-* Option A: Layered multi-tool gate. Run static linting (`eslint-plugin-jsx-a11y`), component-level axe assertions (`jest-axe`), behavioral end-to-end checks (Playwright with `@axe-core/playwright`), and a full-site axe crawl (Playwright `@axe-core/playwright` site-crawl spec) as one blocking CI job at a zero-violation full-site threshold.
+* Option A: Layered multi-tool gate. Run static linting (`eslint-plugin-jsx-a11y-x`), component-level axe assertions (`jest-axe`), behavioral end-to-end checks (Playwright with `@axe-core/playwright`), and a full-site axe crawl (Playwright `@axe-core/playwright` site-crawl spec) as one blocking CI job at a zero-violation full-site threshold.
 * Option B: Single full-site scanner. Run only a Playwright axe crawl against the served site as the sole accessibility gate.
 * Option C: Runtime-only. Run only Playwright with axe injection against a running browser, with no static linting and no full-site crawl.
 
@@ -152,7 +152,7 @@ defense in depth, and they fall on CI rather than on authors.
 * Good, because the four layers are wired through standard npm scripts and the shared workflow, making the gate a reusable lighthouse pattern other sites can adopt.
 * Bad, because the layered gate spans several configuration surfaces to keep aligned, increasing the maintenance footprint under upstream churn.
 * Bad, because the behavioral layer drives a real browser and is the most likely source of flakiness, which can erode contributor trust if not contained.
-* Bad, because cross-browser behavioral coverage is deferred: the workflow installs Chromium only, so Firefox and WebKit keyboard/focus paths are not yet exercised in CI.
+* Bad, because cross-browser behavioral coverage is deferred: the workflow runs Playwright against system Google Chrome only, so Firefox and WebKit keyboard/focus paths are not yet exercised in CI.
 * Neutral, because the conformance target is fixed at WCAG 2.2 AA for all layers; tightening or relaxing it is a follow-up decision, not a per-run toggle.
 * Neutral, because the canonical scan set is intentionally small at adoption and grows as new page types ship rather than enumerating every route up front.
 
@@ -218,7 +218,7 @@ The diagram below traces a pull request through the layers to the merge gate.
 +--------------------------------------------------------------+
 |   docusaurus job (.github/workflows/docusaurus-tests.yml)    |
 |                                                              |
-|  Layer 1: eslint-plugin-jsx-a11y   (static / lint src)       |
+|  Layer 1: eslint-plugin-jsx-a11y-x (static / lint src)       |
 |       |                                                      |
 |       v                                                      |
 |  Layer 2: jest-axe                 (component / render)      |
@@ -240,7 +240,7 @@ The diagram below traces a pull request through the layers to the merge gate.
 
 * Risk: the layered gate spans several configuration surfaces to keep aligned, increasing the maintenance footprint under upstream churn. Mitigation: centralize the layers in one workflow and the `docs/docusaurus/package.json` scripts, and pin tool versions through the existing dependency-pinning checks.
 * Risk: the behavioral browser layer is the most likely source of flakiness, which can erode contributor trust if it produces false failures. Mitigation: scope the behavioral specs under `docs/docusaurus/e2e/` to deterministic flows, use explicit waits and focus helpers, and keep the highest-risk keyboard/focus paths narrow.
-* Risk: cross-browser behavioral coverage is deferred because the workflow installs Chromium only, so Firefox and WebKit regressions can slip through. Mitigation: track cross-browser expansion as a follow-up that extends `playwright.config.ts` to the highest-risk keyboard/focus paths on Firefox and WebKit once the Chromium gate is stable.
+* Risk: cross-browser behavioral coverage is deferred because the workflow runs Playwright against system Google Chrome only, so Firefox and WebKit regressions can slip through. Mitigation: track cross-browser expansion as a follow-up that extends `playwright.config.ts` to the highest-risk keyboard/focus paths on Firefox and WebKit once the Chrome gate is stable.
 
 ## Rollback / Exit Strategy
 

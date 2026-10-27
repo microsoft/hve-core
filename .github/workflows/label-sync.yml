@@ -9,11 +9,15 @@ on:
     paths:
       - '.github/labels.yml'
       - '.github/workflows/label-sync.yml'
+      - 'scripts/ci/Sync-RepositoryLabels.ps1'
+      - '.github/actions/setup-ps-modules/**'
+      - 'scripts/security/Install-PSModules.ps1'
+      - 'scripts/security/ps-module-versions.json'
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -21,20 +25,21 @@ permissions:
 jobs:
   sync-labels:
     name: Sync Labels
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-      issues: write
+      issues: write # create and update repository labels
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Sync labels
-        uses: EndBug/label-sync@52074158190acb45f3077f9099fea818aa43f97a # v2.3.3
-        with:
-          config-file: .github/labels.yml
-          delete-other-labels: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up PowerShell modules
+        uses: $/.github/actions/setup-ps-modules
 
+      - name: Sync labels
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/ci/Sync-RepositoryLabels.ps1

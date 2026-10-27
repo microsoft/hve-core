@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Commit Message
-description: Commit message format and conventions
+description: "Commit message format and conventions. Use when writing, generating, or reviewing a commit message or creating a Git commit."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-10-22
 ms.topic: reference
 keywords:
   - instruction
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Commit message format and conventions
+Commit message format and conventions. Use when writing, generating, or reviewing a commit message or creating a Git commit.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

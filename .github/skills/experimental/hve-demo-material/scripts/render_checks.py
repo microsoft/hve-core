@@ -1428,14 +1428,10 @@ def build_parser() -> argparse.ArgumentParser:
     transcript.add_argument("--level", required=True, choices=LEVELS)
     transcript.add_argument("--level-dir", type=Path, required=True)
     transcript.add_argument("--output-dir", type=Path)
-    transcript.add_argument(
-        "--narration", choices=("azure", "piper", "none"), default="azure"
-    )
+    transcript.add_argument("--narration", choices=("azure", "none"), default="azure")
     audio_check = sub.add_parser("check-audio-mode", help="Verify delivery audio mode")
     audio_check.add_argument("--video", type=Path, required=True)
-    audio_check.add_argument(
-        "--narration", choices=("azure", "piper", "none"), required=True
-    )
+    audio_check.add_argument("--narration", choices=("azure", "none"), required=True)
     publish = sub.add_parser("publish-generation", help="Install a staged delivery")
     publish.add_argument("--level", required=True, choices=LEVELS)
     publish.add_argument("--stage", type=Path, required=True)
@@ -1460,9 +1456,7 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_cmd.add_argument("--level", required=True, choices=LEVELS)
     evaluate_cmd.add_argument("--level-dir", type=Path, required=True)
     evaluate_cmd.add_argument("--capture", choices=("live", "deck-export"))
-    evaluate_cmd.add_argument(
-        "--narration", choices=("azure", "piper", "none"), default="azure"
-    )
+    evaluate_cmd.add_argument("--narration", choices=("azure", "none"), default="azure")
     evaluate_cmd.add_argument(
         "--html-deck", action="store_true", help="Score T-10 for the HTML deck"
     )

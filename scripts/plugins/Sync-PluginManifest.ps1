@@ -17,12 +17,16 @@
     - instructions/<package>/**/*.instructions.md
     - skills/<package>/<skill>/SKILL.md, unless the parsed top-level license
       carries a noncommercial qualifier
+    - extensions/<package>/<extension>/extension.mjs, declared through the
+      package container folder (.github/extensions/<package>) that holds the
+      extension folders
 
     Repository-root artifacts, which have no package segment, are excluded.
     Paths are unique and ordinal-sorted, manifest metadata is preserved, and the
-    version follows the root package.json. The manifest declares no hooks: hooks
-    support was removed with the telemetry hook, so a committed hooks field is
-    reported as drift rather than preserved.
+    version follows the root package.json. The extensions field is emitted only
+    when at least one extension container exists. The manifest declares no hooks:
+    hooks support was removed with the telemetry hook, so a committed hooks field
+    is reported as drift rather than preserved.
 
     Check mode writes nothing. It reports manifest drift and validates the
     one-entry marketplace catalog: exactly one entry, name and version parity,
@@ -65,10 +69,10 @@ $script:LocatorMetadataKey = @('name', 'description', 'version', 'author', 'home
 # Fields the marketplace locator must never declare. 'hooks' stays listed after
 # the manifest stopped supporting it, because a retired field is exactly what
 # this deny-list exists to reject.
-$script:RecipeField = @('agents', 'commands', 'rules', 'skills', 'hooks', 'x-hve')
+$script:RecipeField = @('agents', 'commands', 'rules', 'skills', 'extensions', 'hooks', 'x-hve')
 # Every field the derived manifest can produce. A committed field outside this
 # set is drift, which is what keeps a removed field from returning silently.
-$script:SupportedManifestField = @('name', 'description', 'version') + $script:ManifestMetadataKey + @('agents', 'commands', 'rules', 'skills')
+$script:SupportedManifestField = @('name', 'description', 'version') + $script:ManifestMetadataKey + @('agents', 'commands', 'rules', 'skills', 'extensions')
 
 #region Discovery
 
@@ -241,7 +245,7 @@ function Get-PluginComponentSet {
 
     .OUTPUTS
         [System.Collections.Specialized.OrderedDictionary] agents, commands,
-        rules, and skills path arrays.
+        rules, skills, and extensions path arrays.
     #>
     [CmdletBinding()]
     [OutputType([System.Collections.Specialized.OrderedDictionary])]
@@ -263,6 +267,7 @@ function Get-PluginComponentSet {
     $commands = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal)
     $rules = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal)
     $skills = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal)
+    $extensions = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal)
 
     foreach ($path in $TrackedPath) {
         switch -Regex ($path) {
@@ -276,14 +281,19 @@ function Get-PluginComponentSet {
                 }
                 continue
             }
+            '^(?<Container>extensions/[^/]+)/[^/]+/extension\.mjs$' {
+                [void]$extensions.Add("$script:ArtifactRoot/$($Matches['Container'])")
+                continue
+            }
         }
     }
 
     return [ordered]@{
-        agents   = @($agents | ForEach-Object { "$script:ArtifactRoot/$_" })
-        commands = @($commands | ForEach-Object { "$script:ArtifactRoot/$_" })
-        rules    = @($rules | ForEach-Object { "$script:ArtifactRoot/$_" })
-        skills   = @($skills)
+        agents     = @($agents | ForEach-Object { "$script:ArtifactRoot/$_" })
+        commands   = @($commands | ForEach-Object { "$script:ArtifactRoot/$_" })
+        rules      = @($rules | ForEach-Object { "$script:ArtifactRoot/$_" })
+        skills     = @($skills)
+        extensions = @($extensions)
     }
 }
 
@@ -330,7 +340,8 @@ function New-PluginManifest {
 
     .DESCRIPTION
         Metadata is preserved from the committed manifest, the version follows
-        the root package manifest, and component arrays are derived. No hooks
+        the root package manifest, and component arrays are derived. The
+        extensions array is emitted only when it has entries. No hooks
         declaration is emitted.
 
     .PARAMETER RepoRoot
@@ -383,6 +394,9 @@ function New-PluginManifest {
 
     foreach ($kind in @('agents', 'commands', 'rules', 'skills')) {
         $manifest[$kind] = @($Component[$kind])
+    }
+    if ($Component.Contains('extensions') -and @($Component['extensions']).Count -gt 0) {
+        $manifest['extensions'] = @($Component['extensions'])
     }
 
     return $manifest
@@ -452,15 +466,19 @@ function Compare-PluginManifest {
         }
     }
 
-    foreach ($kind in @('agents', 'commands', 'rules', 'skills')) {
+    foreach ($kind in @('agents', 'commands', 'rules', 'skills', 'extensions')) {
+        # A missing key must yield no paths: @($null) would contain one $null element.
         $committedPaths = @()
         if ($null -ne $Committed -and $Committed.Contains($kind)) {
             $committedPaths = @($Committed[$kind])
         }
-        $expectedPaths = @($Expected[$kind])
+        $expectedPaths = @()
+        if ($Expected.Contains($kind)) {
+            $expectedPaths = @($Expected[$kind])
+        }
 
-        $missing = @($expectedPaths | Where-Object { $_ -notin $committedPaths })
-        $extra = @($committedPaths | Where-Object { $_ -notin $expectedPaths })
+        $missing = @($expectedPaths | Where-Object { $_ -cnotin $committedPaths })
+        $extra = @($committedPaths | Where-Object { $_ -cnotin $expectedPaths })
 
         if ($missing.Count -gt 0) {
             $differences += "$kind missing $($missing.Count): $($missing -join ', ')"
@@ -609,8 +627,12 @@ function Get-PluginComponentCoverageViolations {
     # every platform preserve the script's case-sensitive path identity.
     $parentCache = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::Ordinal)
 
-    foreach ($kind in @('agents', 'commands', 'rules', 'skills')) {
-        $type = if ($kind -eq 'skills') { 'Container' } else { 'Leaf' }
+    $kinds = @('agents', 'commands', 'rules', 'skills')
+    if ($Manifest.Contains('extensions')) {
+        $kinds += 'extensions'
+    }
+    foreach ($kind in $kinds) {
+        $type = if ($kind -in @('skills', 'extensions')) { 'Container' } else { 'Leaf' }
         foreach ($path in @($Manifest[$kind])) {
             if ([System.IO.Path]::IsPathRooted($path) -or $path -match '\\' -or $path -match '(^|/)\.\.(/|$)') {
                 $violations += "$kind path escapes the plugin root: $path"
@@ -639,6 +661,15 @@ function Get-PluginComponentCoverageViolations {
 
             if ($resolved -cne $root -and -not $resolved.StartsWith($rootPrefix, [System.StringComparison]::Ordinal)) {
                 $violations += "$kind path resolves outside the plugin root: $path"
+                continue
+            }
+
+            if ($kind -eq 'extensions') {
+                $entryFiles = @(Get-ChildItem -LiteralPath $resolved -Directory -Force |
+                        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'extension.mjs') -PathType Leaf })
+                if ($entryFiles.Count -eq 0) {
+                    $violations += "extensions path holds no extension folder with extension.mjs: $path"
+                }
             }
         }
     }
@@ -713,7 +744,7 @@ function Get-PluginCatalogMetadataViolations {
             }
         }
     }
-    if ($catalog['metadata']['version'] -ne $Manifest['version']) {
+    if ($catalog['metadata']['version'] -cne $Manifest['version']) {
         $violations += "Catalog metadata version '$($catalog['metadata']['version'])' does not match manifest version '$($Manifest['version'])'"
     }
 
@@ -826,7 +857,7 @@ function Invoke-PluginManifestSync {
     $committedJson = ($committedRaw -replace "`r`n", "`n").TrimEnd("`n") + "`n"
 
     $violations = @($trackedIndex.Violations)
-    $changed = $expectedJson -ne $committedJson
+    $changed = $expectedJson -cne $committedJson
 
     $violations += @(Get-PluginCatalogViolations -RepoRoot $RepoRoot -Manifest $manifest)
 
@@ -869,6 +900,9 @@ if ($MyInvocation.InvocationName -ne '.') {
 
         $manifest = $result.Manifest
         $summary = "$($manifest.agents.Count) agents, $($manifest.commands.Count) commands, $($manifest.rules.Count) rules, $($manifest.skills.Count) skills"
+        if ($manifest.Contains('extensions')) {
+            $summary += ", $(@($manifest.extensions).Count) extension containers"
+        }
         if ($Check) {
             Write-Host "Plugin manifest and catalog are in sync ($summary)." -ForegroundColor Green
         }

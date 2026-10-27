@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-12
+ms.date: 2026-10-14
 ms.topic: how-to
 keywords:
   - evals
@@ -83,7 +83,11 @@ The execution matrix therefore contains one prompt row plus the planned agent,
 instruction, and skill rows. `max-parallel: 6` bounds that matrix. Baseline equivalence
 runs only when the canonical plan marks `baseline.required: true`; its fixed GPT and
 Claude producers use separate runner filesystems and a configurable maximum
-parallelism of two.
+parallelism of two. The plan requires it when the changed-artifact manifest lists
+`rpi-agent` in `affectedAgents`. A change reaches that list through the agent
+dependency map, or by touching any file inside a skill directory that the
+equivalence harness materializes for `rpi-agent`, including the skills it names in
+backticks such as `rpi-research`.
 
 At default shard counts the matrix holds more rows than the cap allows to start at
 once, so some rows wait for a free slot. To keep the longest producers from waiting
@@ -204,7 +208,7 @@ Run the deterministic and policy checks before changing the scheduling defaults:
 ```pwsh
 npm run test:ps -- -TestPath scripts/tests/evals/
 npm run lint:ps
-npm run lint:yaml
+npm run lint:workflows
 npm run lint:permissions
 npm run lint:workflow-runner
 npm run lint:dangerous-workflow
@@ -396,22 +400,24 @@ The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeri
 
 Content moderation runs in two complementary CI lanes, each scoped to a different surface.
 
-| Lane              | Job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                  | Surface                                                                   |
-|-------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
-| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)             | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
-| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](../../scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`)   | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
+| Lane                   | Job in [`eval-validation.yml`](../../.github/workflows/eval-validation.yml) | Script                                                                                           | Toolchain                                  | Surface                                                                   |
+|------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
+| Markdown corpus        | `eval-validation`                                                           | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)                 | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
+| Eval specs + artifacts | `content-moderation`                                                        | [scripts/evals/Invoke-ArtifactModeration.ps1](../../scripts/evals/Invoke-ArtifactModeration.ps1) | Python + Detoxify (`unbiased` by default)  | Every eval spec under `evals/` plus the AI artifacts changed in the PR    |
 
-The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
+The two lanes use different checkers: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the moderation lane scores every eval spec, plus the AI artifacts changed in the PR, against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
-The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
+The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), generates the changed-artifact manifest, then runs `npm run ci:eval:moderate:artifacts`.
 
-`Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
+`Invoke-ArtifactModeration.ps1` enumerates every eval spec under `evals/`, adds the changed AI artifacts from the changed-artifact manifest, and passes the de-duplicated file list to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for whole-file moderation.
+
+This lane applies one Detoxify threshold to every file (default `0.5`, set with `-Threshold`); the per-spec `moderation.threshold` field documented above is read by `Invoke-VallyEvals.ps1` for its pre-eval input moderation.
 
 Local opt-in for the Detoxify lane:
 
 ```pwsh
 uv sync --locked --project scripts/evals/moderation
-pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
+npm run ci:eval:moderate:artifacts
 ```
 
 Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs as the CI-owned `ci:eval:lint:text` lane without any moderation-environment opt-in.
@@ -523,7 +529,7 @@ Beyond the lint lanes, `scripts/evals/` holds the scripts that scope runs, moder
 | `Get-AgentDependencyMap.ps1`              | Run directly                                      | Builds a JSON map of agent dependencies for the baseline-equivalence dispatcher             |
 | `Update-AgentMatrixSummariesFromLogs.ps1` | Run directly                                      | Rebuilds per-agent matrix summaries from existing vally logs without re-running `npx vally` |
 
-`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest. Corpus moderation scores stimulus text inside eval specs; artifact moderation covers the specs plus the changed AI artifacts themselves, writing to a separate output file.
+`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest, each writing to its own output file. Artifact moderation covers every eval spec plus the changed AI artifacts and is the lane the `content-moderation` job runs; corpus moderation (`ci:eval:moderate:corpus`) strips frontmatter from the changed `.github/{agents,prompts,instructions,skills}/**/*.md` files and scores only their bodies.
 
 `ci:eval:agent:report` is the end-to-end convenience command: it runs `ci:eval:agent:matrix` and then `ci:eval:agent:dashboard`.
 
