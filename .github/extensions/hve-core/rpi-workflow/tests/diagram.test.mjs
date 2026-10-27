@@ -86,6 +86,10 @@ describe('layout', () => {
         assert.deepEqual(diagram.wrap('Added: sync status chip', 14), ['Added: sync', 'status chip']);
     });
 
+    it('breaks a word longer than a line inside it', () => {
+        assert.deepEqual(diagram.wrap('see inspections-offline-sync-status.ts', 14), ['see', 'inspections-of', 'fline-sync-sta', 'tus.ts']);
+    });
+
     it('keeps labels in the same gap from overlapping', () => {
         const labels = diagram.placeLabels([
             { gap: 1, x: 10, y: 50, width: 40, height: 19 },
@@ -101,7 +105,65 @@ describe('layout', () => {
     });
 });
 
+describe('fitLabel', () => {
+    const squash = (text) => text.replace(/\s+/g, '');
+
+    it('keeps a node label that fits four 14-character lines as it was', () => {
+        const label = 'Legend: Done, In progress, Bold outline, Dashed border';
+        assert.equal(diagram.wrap(label, 14).length, 4);
+        assert.deepEqual(diagram.fitLabel(label, diagram.NODE_FIT), { lines: diagram.wrap(label, 14), cut: false });
+    });
+
+    it('widens a longer node label before it takes more lines, keeping every word', () => {
+        for (const label of ['Chosen phase: a bold outline in the foreground color', 'Task board: progress beside the title; Backlog, In progress, Done; no scroll', 'Phases and tasks: task links land here, expanded; All only when needed']) {
+            const { lines, cut } = diagram.fitLabel(label, diagram.NODE_FIT);
+            assert.equal(cut, false, label);
+            assert.ok(lines.length <= 4 && lines.every((line) => line.length <= 22), label);
+            assert.equal(squash(lines.join('')), squash(label));
+        }
+    });
+
+    it('takes up to eight lines, and only past them ends with an ellipsis and marks the label cut', () => {
+        const eight = diagram.fitLabel('abcd '.repeat(30).trim(), diagram.NODE_FIT);
+        assert.equal(eight.cut, false);
+        assert.equal(eight.lines.length, 8);
+        const nine = diagram.fitLabel('abcd '.repeat(33).trim(), diagram.NODE_FIT);
+        assert.equal(nine.cut, true);
+        assert.equal(nine.lines.length, 8);
+        assert.ok(nine.lines.at(-1).endsWith('…'));
+        assert.ok(nine.lines.every((line) => line.length <= 22));
+    });
+
+    it('fits edge labels in two lines of up to 16 characters, then four', () => {
+        assert.deepEqual(diagram.fitLabel('describes', diagram.EDGE_FIT), { lines: ['describes'], cut: false });
+        assert.deepEqual(diagram.fitLabel('context tier inherited by', diagram.EDGE_FIT), { lines: ['context tier', 'inherited by'], cut: false });
+        const long = diagram.fitLabel('a relationship label that runs on and on well past what four lines of sixteen can hold', diagram.EDGE_FIT);
+        assert.equal(long.cut, true);
+        assert.equal(long.lines.length, 4);
+        assert.ok(long.lines[3].endsWith('…'));
+    });
+});
+
 describe('renderDiagram', () => {
+    it('draws every word of a long label, and gives a cut label a hover title', () => {
+        const board = 'Task board: progress beside the title; Backlog, In progress, Done; no scroll';
+        const overflow = 'abcdefghijkl '.repeat(9).trim();
+        const edge = 'abcdefghi '.repeat(6).trim();
+        const source = ['flowchart LR', `    a["${board}"]`, `    b["${overflow}"]`, '    c["C"]', '    a -->|context tier inherited by| b', `    b -->|${edge}| c`].join('\n');
+        const markup = serialize(diagram.renderDiagram(source, { caption: 'After', idPrefix: 'long' }));
+        const texts = (lines) => lines.map((line) => `>${line}</text>`);
+        let at = 0;
+        for (const piece of texts(diagram.fitLabel(board, diagram.NODE_FIT).lines)) {
+            const found = markup.indexOf(piece, at);
+            assert.ok(found > at, `missing ${piece}`);
+            at = found;
+        }
+        assert.doesNotMatch(markup, /<title>Task board/, 'a whole label needs no hover title');
+        assert.match(markup, new RegExp(`<g class="diagram-node"><title>${overflow}</title><rect`));
+        assert.match(markup, /<g class="diagram-label"><rect [^>]*class="diagram-edge-bg"[^>]*><\/rect><text [^>]*>context tier<\/text><text [^>]*>inherited by<\/text><\/g>/);
+        assert.match(markup, new RegExp(`<g class="diagram-label"><title>${edge}</title><rect`));
+    });
+
     it('draws dashed edges dashed and names them and the groups in the text version', () => {
         const markup = serialize(diagram.renderDiagram(GROUPED, { caption: 'After', idPrefix: 'grouped' }));
         assert.equal((markup.match(/class="diagram-edge is-dashed"/g) ?? []).length, 2);

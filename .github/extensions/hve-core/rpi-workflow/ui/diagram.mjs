@@ -9,14 +9,24 @@ export { parseFlowchart };
 /**
  * Draws the Mermaid flowchart subset RPI plans use (see `./flowchart.mjs`) as native SVG with
  * a text alternative. A dashed edge draws dashed; subgraph groups appear in the text version.
- * A diagram it cannot read falls back to its source, with the reason in the caption.
+ * Labels keep every word (see `fitLabel`). A diagram it cannot read falls back to its source,
+ * with the reason in the caption.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-/** Wraps at spaces and slashes, so paths such as src/api/file.ts can break too. */
-export function wrap(label, width, maxLines = 4) {
-    const tokens = label.split(/(?<=[\s/])/);
+/**
+ * Wraps at spaces and slashes, so paths such as src/api/file.ts can break too. A word longer
+ * than `width` breaks inside it, so no line is wider than `width`.
+ */
+export function wrap(label, width) {
+    const tokens = label.split(/(?<=[\s/])/).flatMap((token) => {
+        const word = token.trimEnd();
+        if (word.length <= width) return [token];
+        const pieces = word.match(new RegExp(`.{1,${width}}`, 'gu'));
+        pieces[pieces.length - 1] += token.slice(word.length);
+        return pieces;
+    });
     const lines = [];
     let current = '';
     for (const token of tokens) {
@@ -28,10 +38,37 @@ export function wrap(label, width, maxLines = 4) {
         }
     }
     if (current.trim()) lines.push(current.trimEnd());
-    return lines.slice(0, maxLines);
+    return lines;
 }
 
-const labelLines = (text) => wrap(text, 10, 2);
+/** Node labels: 14 to 22 characters a line, four lines before a box grows taller, at most eight. */
+export const NODE_FIT = Object.freeze({ min: 14, max: 22, lines: 4, cap: 8 });
+/** Edge labels: 10 to 16 characters a line, two lines before a label grows taller, at most four. */
+export const EDGE_FIT = Object.freeze({ min: 10, max: 16, lines: 2, cap: 4 });
+
+/**
+ * Fits a label into lines without losing words: the narrowest width from `fit.min` to `fit.max`
+ * that needs at most `fit.lines` lines, else `fit.max` wide with up to `fit.cap` lines. Only a
+ * label longer than that is cut: its last line ends with an ellipsis and `cut` is true, so the
+ * caller can show the full label on hover.
+ *
+ * @param {string} label
+ * @param {{ min: number, max: number, lines: number, cap: number }} fit
+ * @returns {{ lines: string[], cut: boolean }}
+ */
+export function fitLabel(label, fit) {
+    for (let width = fit.min; width < fit.max; width += 1) {
+        const lines = wrap(label, width);
+        if (lines.length <= fit.lines) return { lines, cut: false };
+    }
+    const lines = wrap(label, fit.max);
+    if (lines.length <= fit.cap) return { lines, cut: false };
+    const kept = lines.slice(0, fit.cap);
+    kept[fit.cap - 1] = `${kept[fit.cap - 1].slice(0, fit.max - 1).trimEnd()}…`;
+    return { lines: kept, cut: true };
+}
+
+const labelLines = (text) => fitLabel(text, EDGE_FIT).lines;
 const labelWidth = (text) => Math.max(...labelLines(text).map((line) => line.length)) * 6 + 12;
 const labelHeight = (text) => labelLines(text).length * 13 + 6;
 
@@ -111,9 +148,9 @@ export function layout(graph) {
     });
     const boxes = new Map();
     for (const id of ids) {
-        const lines = wrap(graph.nodes.get(id).label, 14);
+        const { lines, cut } = fitLabel(graph.nodes.get(id).label, NODE_FIT);
         const width = Math.min(184, Math.max(88, Math.max(...lines.map((line) => line.length)) * 6.9 + 24));
-        boxes.set(id, { lines, width, height: lines.length * 17 + 18 });
+        boxes.set(id, { lines, cut, width, height: lines.length * 17 + 18 });
     }
     const horizontal = graph.direction === 'LR';
     const gaps = layers.map((_group, index) => {
@@ -165,6 +202,13 @@ const svg = (tag, attrs = {}) => {
     return element;
 };
 
+/** A hover title holding a label the drawing had to cut. */
+const fullLabel = (text) => {
+    const title = svg('title');
+    title.textContent = text;
+    return title;
+};
+
 /**
  * @param {string} source
  * @param {{ caption: string, highlight?: Iterable<string>, progress?: Map<string, 'done' | 'active'>, idPrefix: string, textOpen?: boolean, onTextToggle?: (open: boolean) => void }} options
@@ -207,18 +251,23 @@ export function renderDiagram(source, options) {
         }
     }
     for (const label of placeLabels(labels, horizontal)) {
-        root.append(svg('rect', { x: label.x - label.width / 2, y: label.y - label.height / 2, width: label.width, height: label.height, rx: 4, class: 'diagram-edge-bg' }));
-        labelLines(label.text).forEach((line, index, all) => {
+        const fit = fitLabel(label.text, EDGE_FIT);
+        const group = svg('g', { class: 'diagram-label' });
+        if (fit.cut) group.append(fullLabel(label.text));
+        group.append(svg('rect', { x: label.x - label.width / 2, y: label.y - label.height / 2, width: label.width, height: label.height, rx: 4, class: 'diagram-edge-bg' }));
+        fit.lines.forEach((line, index, all) => {
             const text = svg('text', { x: label.x, y: label.y + 4 + (index - (all.length - 1) / 2) * 13, 'text-anchor': 'middle', class: 'diagram-edge-label' });
             text.textContent = line;
-            root.append(text);
+            group.append(text);
         });
+        root.append(group);
     }
     for (const [id, node] of graph.nodes) {
         const box = positions.get(id);
         const state = progress.get(id);
         const classes = ['diagram-node', node.classes.has('new') ? 'is-new' : '', highlight.has(id) || node.classes.has('phase') ? 'is-highlight' : '', state ? `is-${state}` : ''].filter(Boolean).join(' ');
         const group = svg('g', { class: classes });
+        if (box.cut) group.append(fullLabel(node.label));
         group.append(svg('rect', { x: box.x, y: box.y, width: box.width, height: box.height, rx: 6 }));
         box.lines.forEach((line, index) => {
             const text = svg('text', { x: box.x + box.width / 2, y: box.y + 22 + index * 17, 'text-anchor': 'middle' });
