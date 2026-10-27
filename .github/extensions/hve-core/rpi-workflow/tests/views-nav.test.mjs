@@ -149,6 +149,23 @@ describe('preview content', () => {
     });
 });
 
+describe('tooltips', () => {
+    it('take over a title once, keep it as a description when it says more, and name the shortcut', async () => {
+        const { tipText } = await import('../ui/tooltips.mjs');
+        const { button, h } = await import('../ui/dom.mjs');
+        const comment = button('Comment', { iconName: 'message', hideLabel: true, attrs: { 'aria-keyshortcuts': 'c' } });
+        assert.equal(tipText(comment), 'Comment (c)');
+        assert.equal(comment.hasAttribute('title'), false, 'no native tooltip doubles it');
+        assert.equal(comment.getAttribute('data-tip'), 'Comment');
+        assert.equal(comment.hasAttribute('aria-description'), false, 'the title only repeated the name');
+        assert.equal(tipText(comment), 'Comment (c)', 'reading it again gives the same tooltip');
+        const badge = h('span', { class: 'badge', title: 'The file changed 2 hours ago.' }, 'Updated');
+        assert.equal(tipText(badge), 'The file changed 2 hours ago.');
+        assert.equal(badge.getAttribute('aria-description'), 'The file changed 2 hours ago.', 'a title that says more stays as a description');
+        assert.equal(tipText(h('span', null, 'plain')), '');
+    });
+});
+
 describe('sources', () => {
     const withEditor = (ctx, editor) => ({ ...ctx, data: { ...ctx.data, editor } });
     const recordingActs = (ctx) => {
@@ -156,6 +173,30 @@ describe('sources', () => {
         const act = new Proxy({}, { get: (_target, name) => (...args) => calls.push([name, ...args]) });
         return { ctx: { ...ctx, act }, calls };
     };
+
+    it('shows a website source with one globe and a readable label, and other sources as prose', async () => {
+        const { rootSession } = await import('./helpers/rpi-fixture.mjs');
+        const { evidenceSource } = await import('../ui/source-view.mjs');
+        const ctx = makeContext(rootSession().session, 'research');
+        const render = (item) => {
+            const root = document.createElement('td');
+            root.appendChild(evidenceSource(ctx, item));
+            return root;
+        };
+        const globes = (root) => elements(root).filter((node) => node.localName === 'use' && node.getAttribute('href') === '#i-globe').length;
+        const titled = render({ id: 'W1', source: '[Storage quotas](https://developer.mozilla.org/q)', url: 'https://developer.mozilla.org/q' });
+        assert.equal(globes(titled), 1);
+        assert.equal(titled.textContent.trim().startsWith('Storage quotas'), true, 'a Markdown link shows its title');
+        const bare = render({ id: 'W2', source: 'Vendor terms page, https://example.com/terms/tiles; checked twice', url: 'https://example.com/terms/tiles' });
+        assert.equal(globes(bare), 1);
+        assert.match(bare.textContent, /^Vendor terms page, example\.com\/…\/tiles/);
+        const sample = render({ id: 'W3', source: 'MDN: If-Match header', url: 'https://developer.mozilla.org/if-match' });
+        assert.equal(globes(sample), 1, 'a source kept apart from its address becomes the link');
+        assert.match(sample.textContent, /^MDN: If-Match header/);
+        const prose = render({ id: 'W4', source: 'Copilot SDK `canvas.d.ts`, the VS Code bundle' });
+        assert.equal(elements(prose).filter((node) => node.localName === 'code').map((node) => node.textContent).join(), 'canvas.d.ts', 'prose stays prose; only its code spans are code');
+        assert.equal(globes(prose), 0);
+    });
 
     it('shows a cited location as a chip that opens here, with the editor only when there is one', async () => {
         const { rootSession } = await import('./helpers/rpi-fixture.mjs');
@@ -196,7 +237,7 @@ describe('sources', () => {
         const root = document.createElement('div');
         root.appendChild(sourceChip(ctx, { path: 'ui/markdown.mjs', anchor: 'ID_RE', status: 'missing' }));
         assert.equal(elements(root).some((node) => node.localName === 'button'), false);
-        assert.match(root.textContent, /ui\/markdown\.mjsID_REnot a file in this workspace/);
+        assert.match(root.textContent, /^markdown\.mjsnot a file in this workspaceui\/ · ID_RE$/, 'the file name and the reason, then its folder and anchor');
     });
 
     it('turns a relative link in a real artifact into a source link at the symbol after its colon', async () => {

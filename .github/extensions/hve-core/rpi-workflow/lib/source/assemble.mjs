@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 
 import { checklistFor, verdictOf } from '../checklists.mjs';
 import { PHASES, SESSION_FORMAT, SESSION_VERSION, validateSession } from '../model.mjs';
-import { idsIn, labelKey, linksIn, listItems, plainText } from './markdown.mjs';
+import { idsIn, inlineMarkdown, labelKey, linksIn, listItems, plainText } from './markdown.mjs';
 import { sourceLocations } from './locations.mjs';
 import { stateDecision } from './parse.mjs';
 
@@ -159,6 +159,30 @@ function lower(value) {
  *
  * @param {{ status: string | null, sessionStatus: string | null }} state
  */
+/** The first http or https address in text, without trailing punctuation such as `;` or an unmatched `)`. */
+export function bareUrl(text) {
+    const match = /https?:\/\/[^\s<>\]]{1,2000}/.exec(String(text ?? ''));
+    if (!match) return null;
+    let url = match[0];
+    let open = 0;
+    let close = 0;
+    for (const ch of url) {
+        if (ch === '(') open += 1;
+        else if (ch === ')') close += 1;
+    }
+    for (;;) {
+        const last = url.at(-1);
+        if (last && '.,;:!?\'"`'.includes(last)) {
+            url = url.slice(0, -1);
+        } else if (last === ')' && close > open) {
+            url = url.slice(0, -1);
+            close -= 1;
+        } else {
+            return url;
+        }
+    }
+}
+
 export function lineageStatusOf(state) {
     if (lower(state.status) === 'completed') return 'completed';
     return lower(state.sessionStatus) === 'running' ? 'running' : 'stopped';
@@ -230,14 +254,14 @@ export function assembleSession(input) {
     const researchDir = typeof files?.research?.path === 'string' ? files.research.path.split('/').slice(0, -1).join('/') : '';
     const evidence = (research?.evidence ?? []).map((row) => {
         const link = linksIn(row.source)[0];
-        const url = link?.href ?? /https?:\/\/[^\s)>\]]+/.exec(row.source)?.[0] ?? null;
+        const url = link?.href ?? bareUrl(row.source);
         const web = row.id.startsWith('W');
         const locations = web ? [] : sourceLocations(row.source, researchDir);
         return {
             id: row.id,
             kind: web ? 'web' : 'code',
-            claim: plainText(row.claim),
-            source: plainText(row.source),
+            claim: inlineMarkdown(row.claim),
+            source: inlineMarkdown(row.source),
             ...(locations.length ? { locations } : {}),
             ...(url && /^https?:\/\//.test(url) ? { url } : {}),
             ...(/^\d{4}-\d{2}-\d{2}/.test(row.retrieved) ? { retrieved: row.retrieved.slice(0, 10) } : {}),
@@ -340,7 +364,7 @@ export function assembleSession(input) {
     const validationRows = (rows, source) => rows.map((row) => {
         const status = validationOf(row.status);
         if (!status) warnings.push(`${source}: validation "${truncate(row.check, 60)}" has an unrecognized status "${row.status}".`);
-        return { check: row.check, scope: row.scope ?? '', status: status ?? 'unavailable', summary: plainText(row.summary) };
+        return { check: row.check, scope: row.scope ?? '', status: status ?? 'unavailable', summary: inlineMarkdown(row.summary) };
     });
     const blockers = [...(changes?.blockers ?? []), ...state.blockers.map((item) => item.summary)].filter(Boolean).map((text, index) => ({
         id: `B${index + 1}`,
@@ -352,7 +376,7 @@ export function assembleSession(input) {
     if (changes) addSection('changes-summary', 'implement', 'Summary', changes.summary, 'changes');
 
     // Review
-    const history = (review?.history ?? []).map((event) => ({ id: event.id, subject: event.subject, status: event.status, owner: event.owner, rationale: plainText(event.rationale), at: null }));
+    const history = (review?.history ?? []).map((event) => ({ id: event.id, subject: event.subject, status: event.status, owner: event.owner, rationale: inlineMarkdown(event.rationale), at: null }));
     const decisionFor = (findingId) => {
         for (const event of [...(review?.history ?? [])].reverse()) {
             if (idsIn(event.subject, /^RV-\d{3}$/).includes(findingId)) {
@@ -375,7 +399,7 @@ export function assembleSession(input) {
         if (status === 'needs-input') owner = 'user';
         const label = truncate(plainText(row.item), 200);
         const settled = status !== 'needs-input';
-        const rationale = plainText(row.rationale);
+        const rationale = inlineMarkdown(row.rationale);
         // A detail block supplies the question, context, and options; a settled answer that starts with an option's letter picks it.
         const blockOptions = (row.block?.options ?? []).map((option) => ({ id: option.id, label: option.label, ...(option.recommended ? { recommended: true } : {}) }));
         const picked = settled && blockOptions.length ? blockOptions.find((option) => option.id === /^\(?([A-Z])(?:[):]|\s|$)/.exec(rationale)?.[1]) : null;
@@ -392,7 +416,7 @@ export function assembleSession(input) {
             question: settled ? '' : row.block?.question || rationale || label,
             context: settled ? '' : row.block?.context ?? '',
             rationale: settled ? (picked ? rationale.replace(/^\(?[A-Z](?:[):]\s*|\s+)/, '') : rationale) : '',
-            impact: plainText(row.impact),
+            impact: inlineMarkdown(row.impact),
             evidence: row.evidence.filter((id) => evidenceIds.has(id)),
             anchor: { phase, rowId: `${phase}-decisions` },
             options,
@@ -466,18 +490,18 @@ export function assembleSession(input) {
         phases,
         sections,
         research: {
-            questions: (research?.questions ?? []).map((question) => ({ id: question.id, text: plainText(question.text), status: questionStatusOf(question.status), findings: findings.filter((finding) => finding.questions.includes(question.id)).map((finding) => finding.id) })),
+            questions: (research?.questions ?? []).map((question) => ({ id: question.id, text: inlineMarkdown(question.text), status: questionStatusOf(question.status), findings: findings.filter((finding) => finding.questions.includes(question.id)).map((finding) => finding.id) })),
             findings,
             evidence,
-            alternatives: (research?.alternatives ?? []).map((row) => ({ option: row.option, benefits: plainText(row.benefits), costs: plainText(row.costs), evidence: row.evidence, disposition: alternativeOf(row.disposition) })),
-            risks: (research?.risks ?? []).map((row, index) => ({ id: `R${index + 1}`, priority: priorityOf(row.priority), type: row.type, text: plainText(row.text), impact: plainText(row.impact), action: plainText(row.action), owner: row.owner })),
+            alternatives: (research?.alternatives ?? []).map((row) => ({ option: row.option, benefits: inlineMarkdown(row.benefits), costs: inlineMarkdown(row.costs), evidence: row.evidence, disposition: alternativeOf(row.disposition) })),
+            risks: (research?.risks ?? []).map((row, index) => ({ id: `R${index + 1}`, priority: priorityOf(row.priority), type: row.type, text: inlineMarkdown(row.text), impact: inlineMarkdown(row.impact), action: inlineMarkdown(row.action), owner: row.owner })),
             lanes: [],
-            readiness: research?.readiness ? { status: readinessOf(research.readiness), text: plainText(research.readiness) } : null,
+            readiness: research?.readiness ? { status: readinessOf(research.readiness), text: inlineMarkdown(research.readiness) } : null,
         },
         plan: plan
             ? {
                 phases: planPhases,
-                requirements: plan.requirements.map((row) => ({ id: row.id, kind: row.kind, text: plainText(row.text) })),
+                requirements: plan.requirements.map((row) => ({ id: row.id, kind: row.kind, text: inlineMarkdown(row.text) })),
                 diagram: plan.after ? { before: plan.before, after: plan.after, phaseNodes: Object.fromEntries(plan.phases.map((phase) => [phase.id, highlightedNodes(phase, afterNodes)])) } : null,
                 critique: critique || plan.critique.status || plan.critique.setting
                     ? {
@@ -490,11 +514,11 @@ export function assembleSession(input) {
                             title: finding.title,
                             disposition: critiqueDispositionOf(dispositions.get(finding.id)?.disposition),
                             related: finding.related,
-                            response: plainText(dispositions.get(finding.id)?.response ?? ''),
+                            response: inlineMarkdown(dispositions.get(finding.id)?.response ?? ''),
                         })),
                     }
                     : null,
-                readiness: plan.readiness ? { status: readinessOf(plan.readiness), text: plainText(plan.readiness) } : null,
+                readiness: plan.readiness ? { status: readinessOf(plan.readiness), text: inlineMarkdown(plan.readiness) } : null,
             }
             : { phases: [], requirements: [], diagram: null, critique: null, readiness: null },
         implementation: {
@@ -516,10 +540,10 @@ export function assembleSession(input) {
                     severity: severityOf(finding.severity),
                     title: finding.title,
                     summary: '',
-                    expected: plainText(finding.expected),
+                    expected: inlineMarkdown(finding.expected),
                     observed: finding.observed,
-                    impact: plainText(finding.impact),
-                    resolution: plainText(finding.resolution),
+                    impact: inlineMarkdown(finding.impact),
+                    resolution: inlineMarkdown(finding.resolution),
                     route: routeOf(finding.destination),
                     decision: decisionFor(finding.id),
                     related: finding.related,
@@ -533,7 +557,7 @@ export function assembleSession(input) {
                 rank: item.rank,
                 id: `FU-${item.rank}`,
                 title: plainText(item.task),
-                rationale: plainText(item.rationale),
+                rationale: inlineMarkdown(item.rationale),
                 evidence: item.evidence,
                 required: /^required/i.test(item.rationale.trim()),
                 status: /assigned to child/i.test(item.task) ? 'in-progress' : 'proposed',

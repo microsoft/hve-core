@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, h, icon, idChip, idTag, known, plural, SEVERITY, TASK_STATUS } from './dom.mjs';
-import { decisionCard, decisionsRow, marginNote, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
+import { decisionCard, decisionsRow, marginNote, mdInline, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
 import { renderDiagram } from './diagram.mjs';
 import { anchoredDecisions, decisionsOutline, notesFor } from './view-research.mjs';
 
@@ -62,7 +62,7 @@ export function renderView(ctx) {
         id: 'plan-summary', idLabel: null, title: 'Summary', level: 2,
         badges: [readiness ? badge(readiness.status === 'ready' ? { icon: 'check-circle', label: 'Ready to implement', tone: 'success' } : { icon: 'hand', label: 'Not ready', tone: 'attention' }) : null],
         actions: rowActions(ctx, { sectionId: 'plan-summary', rowId: 'plan-summary' }),
-        body: [sectionBody(ctx, 'plan-summary'), readiness ? h('p', { class: 'readiness-line' }, icon(readiness.status === 'ready' ? 'check' : 'hand'), readiness.text) : null,
+        body: [sectionBody(ctx, 'plan-summary'), readiness ? h('p', { class: 'readiness-line' }, icon(readiness.status === 'ready' ? 'check' : 'hand'), h('span', null, mdInline(ctx, readiness.text, { doc: 'plan' }))) : null,
             ctx.data.session.sections['plan-unknowns'] ? h('div', { class: 'callout' }, icon('bulb', { className: 'callout-icon' }), sectionBody(ctx, 'plan-unknowns')) : null],
         margin: [critique ? h('article', { class: 'card' },
             h('header', { class: 'card-head' }, icon('shield-check', { className: 'card-icon' }), h('h4', { class: 'card-title', text: 'Plan critique' }), verdictBadge(critique.verdict)),
@@ -110,7 +110,7 @@ export function renderView(ctx) {
     rows.push(row(ctx, {
         id: 'requirements', idLabel: null, title: 'Requirements', level: 2,
         body: [table('Requirement coverage', ['ID', 'Requirement', 'Covered by'], plan.requirements.map((req) => [
-            h('span', { class: 'id-chip', dataset: { item: req.id }, tabindex: '-1', text: req.id }), req.text,
+            h('span', { class: 'id-chip', dataset: { item: req.id }, tabindex: '-1', text: req.id }), mdInline(ctx, req.text, { doc: 'plan' }),
             coverage.get(req.id).length ? h('span', { class: 'chip-row' }, coverage.get(req.id).map((id) => idChip(id, ctx.act.navigate))) : badge({ icon: 'alert', label: 'Not covered', tone: 'danger' }),
         ]))],
     }));
@@ -119,8 +119,8 @@ export function renderView(ctx) {
         id: 'critique', idLabel: null, title: 'Critique', level: 2,
         badges: critique?.verdict ? [badge({ icon: critique.verdict === 'Pass' ? 'check' : 'pencil', label: `Verdict: ${critique.verdict}`, tone: critique.verdict === 'Pass' ? 'success' : 'attention' })] : [],
         body: critique ? [h('ul', { class: 'finding-list' }, critique.findings.map((finding) => h('li', { class: 'mini-finding', dataset: { item: finding.id }, tabindex: '-1' },
-            h('p', { class: 'mini-head' }, badge(known(SEVERITY, finding.severity)), h('span', { class: 'id-chip', text: finding.id }), h('strong', { text: finding.title }), badge(known(DISPOSITION, finding.disposition))),
-            h('p', { class: 'meta' }, finding.response, ' ', finding.related.map((id) => idChip(id, ctx.act.navigate))))))] : [h('p', { class: 'empty', text: 'No critique has been recorded for this plan.' })],
+            h('p', { class: 'mini-head' }, badge(known(SEVERITY, finding.severity), { strong: true }), h('span', { class: 'id-chip', text: finding.id }), h('strong', { text: finding.title }), badge(known(DISPOSITION, finding.disposition))),
+            h('p', { class: 'meta' }, mdInline(ctx, finding.response, { doc: 'plan' }), ' ', finding.related.map((id) => idChip(id, ctx.act.navigate))))))] : [h('p', { class: 'empty', text: 'No critique has been recorded for this plan.' })],
     }));
 
     const record = recordRow(ctx, 'plan', 'Plan record');

@@ -171,7 +171,7 @@ The vendor terms allow caching for 30 days.
 
 | Priority | Type | Risk, question, or research item | Impact | Smallest action or evidence needed | Owner |
 |----------|------|----------------------------------|--------|------------------------------------|-------|
-| H | risk | Quota eviction on full devices | Lost tiles | Request persistent storage | downstream |
+| H | risk | Quota eviction on full devices | Lost tiles | Call \`navigator.storage.persist()\` | downstream |
 | M | further research | A second region | Scope | Ask users | deferred |
 
 ## Planning Readiness and Next Step
@@ -188,10 +188,10 @@ The vendor terms allow caching for 30 days.
 | ID | Claim or finding | Source or location | Retrieved and version | Tool | Confidence | Notes |
 |----|------------------|--------------------|-----------------------|------|------------|-------|
 | C1 | Quota allows 40 MB per region | src/storage/quota.ts (estimate) | not applicable | read | High | |
-| C2 | Cache API has no metadata | src/sw/cache.ts | not applicable | read | Medium | |
+| C2 | The \`Cache\` API has no **metadata** | src/sw/cache.ts | not applicable | read | Medium | |
 | C3 | Tiles are 20 KB each | src/map/tiles.ts | not applicable | read | High | |
 | W1 | IndexedDB quotas | [Storage quotas](https://developer.mozilla.org/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria) | ${DAY} | external_research | High | |
-| W2 | Tile terms | Vendor terms page | ${DAY} | external_research | Medium | |
+| W2 | Tile terms | Vendor terms page, https://example.com/terms/tiles; checked twice | ${DAY} | external_research | Medium | |
 `;
 
 export const PLAN = `<!-- markdownlint-disable-file -->

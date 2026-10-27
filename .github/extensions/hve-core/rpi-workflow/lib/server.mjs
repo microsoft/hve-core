@@ -27,7 +27,7 @@ import { FileError, readWorkspaceFile } from './workspace-files.mjs';
 
 const UI_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'ui');
 
-const UI_MODULES = ['app.mjs', 'dom.mjs', 'history.mjs', 'ids.mjs', 'legend.mjs', 'markdown.mjs', 'preview-content.mjs', 'preview-state.mjs', 'previews.mjs', 'source-view.mjs', 'diagram.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs'];
+const UI_MODULES = ['anchors.mjs', 'app.mjs', 'context-menu.mjs', 'dom.mjs', 'highlight.mjs', 'history.mjs', 'ids.mjs', 'legend.mjs', 'markdown.mjs', 'preview-content.mjs', 'preview-state.mjs', 'previews.mjs', 'source-view.mjs', 'diagram.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs', 'tooltips.mjs'];
 
 /** Static files the page may load; nothing outside this map is ever served. */
 export const STATIC_FILES = Object.freeze({
@@ -163,9 +163,10 @@ export function clientInfoFrom(body) {
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
  *   getSource?: () => { kind?: string, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
- *   switchTask?: (ref: { taskId?: string, statePath?: string }) => Promise<{ sessionId: string }>,
- *   switchSession?: (key: string) => Promise<{ sessionId: string }>,
+ *   switchTask?: (ref: { taskId?: string, statePath?: string }, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
+ *   switchSession?: (key: string, options?: { paused?: boolean }) => Promise<{ sessionId: string }>,
  *   resumeFollowing?: () => Promise<{ sessionId: string }>,
+ *   pauseFollowing?: () => Promise<{ sessionId: string }>,
  *   listSessions?: () => Promise<{ sessions: any[], skipped: string[] }>,
  * }} deps
  */
@@ -484,7 +485,8 @@ export function createCanvasServer(deps) {
                 throw new HttpError(404, 'not_found', 'This canvas cannot switch tasks.');
             }
             const ref = typeof body?.statePath === 'string' ? { statePath: body.statePath } : { taskId: typeof body?.taskId === 'string' ? body.taskId : '' };
-            const result = await deps.switchTask(ref);
+            // A switch the reader chose stops following when the page asks, even onto a running loop.
+            const result = await deps.switchTask(ref, { paused: body?.follow === false });
             return { sessionId: result.sessionId };
         },
 
@@ -501,16 +503,24 @@ export function createCanvasServer(deps) {
             }
             const key = typeof body?.key === 'string' ? body.key : '';
             if (!/^\d{4}-\d{2}-\d{2}\/[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(key)) throw new HttpError(400, 'invalid_input', 'key must be a session such as 2026-01-15/trail-maps.');
-            const result = await deps.switchSession(key);
+            const result = await deps.switchSession(key, { paused: body?.follow === false });
             return { sessionId: result.sessionId };
         },
 
-        'POST /api/follow': async () => {
+        // { follow: false } pauses following; anything else resumes it.
+        'POST /api/follow': async (body) => {
+            if (body?.follow === false) {
+                if (!deps.pauseFollowing) {
+                    throw new HttpError(404, 'not_found', 'This canvas does not follow a session.');
+                }
+                const paused = await deps.pauseFollowing();
+                return { sessionId: paused.sessionId, following: false };
+            }
             if (!deps.resumeFollowing) {
                 throw new HttpError(404, 'not_found', 'This canvas does not follow a session.');
             }
             const result = await deps.resumeFollowing();
-            return { sessionId: result.sessionId };
+            return { sessionId: result.sessionId, following: true };
         },
 
         'POST /api/source': async (body) => {

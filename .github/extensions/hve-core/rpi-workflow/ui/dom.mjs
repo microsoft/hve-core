@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { kindOf } from './ids.mjs';
+
 /** DOM helpers, formatting, and the status vocabularies from the style guide. */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -36,6 +38,11 @@ export function h(tag, attrs, ...children) {
         }
     }
     append(element, children);
+    // An ID chip carries its family, which sets its color, however it was built.
+    if (element.classList?.contains('id-chip') && !element.dataset.kind) {
+        const kind = kindOf(String(element.textContent ?? '').trim());
+        if (kind) element.dataset.kind = kind.key;
+    }
     return element;
 }
 
@@ -176,6 +183,54 @@ export const EVIDENCE_STATE = vocab([
     ['unresolved', 'question', 'Unresolved', 'muted'],
 ]);
 
+/** Risk and open question priority, as the research and plan files write it: H, M, or L. */
+export const PRIORITY = vocab([
+    ['H', 'priority-high', 'High', 'danger'],
+    ['M', 'priority-medium', 'Medium', 'attention'],
+    ['L', 'priority-low', 'Low', 'accent'],
+]);
+
+const capitalize = (word) => word.charAt(0).toUpperCase() + word.slice(1);
+
+/**
+ * Confidence as signal bars: three for high, two for medium, one for low, none when it is
+ * not recorded. The label keeps the file's own word, such as "Medium-high".
+ *
+ * @param {unknown} value
+ * @returns {{ icon: string, label: string, tone: string }}
+ */
+export function confidenceMeta(value) {
+    const word = String(value ?? '').trim();
+    const key = word.toLowerCase();
+    if (!word || /^(not recorded|not applicable|n\/a|none|unknown)$/.test(key)) return { icon: 'signal-0', label: 'Not recorded', tone: 'muted' };
+    const label = capitalize(word);
+    if (/^(very high|high)\b/.test(key)) return { icon: 'signal-3', label, tone: 'success' };
+    if (/^(medium-low|low)\b/.test(key)) return { icon: 'signal-1', label, tone: 'severe' };
+    if (/^(medium-high|medium|med|moderate)\b/.test(key)) return { icon: 'signal-2', label, tone: 'attention' };
+    return { icon: 'signal-0', label, tone: 'muted' };
+}
+
+/**
+ * The kind of a risk table row: risk, open question, further research, and the other words
+ * files use, each with its own icon and color. The label keeps the file's word.
+ *
+ * @param {unknown} value
+ * @returns {{ icon: string, label: string, tone: string } | null}
+ */
+export function riskTypeMeta(value) {
+    const word = String(value ?? '').trim();
+    if (!word) return null;
+    const key = word.toLowerCase();
+    const label = capitalize(word);
+    if (/question/.test(key)) return { icon: 'question', label, tone: 'accent' };
+    if (/research|investigat/.test(key)) return { icon: 'search', label, tone: 'teal' };
+    if (/^risks?\b/.test(key)) return { icon: 'alert', label, tone: 'severe' };
+    if (/assum/.test(key)) return { icon: 'bulb', label, tone: 'attention' };
+    if (/depend/.test(key)) return { icon: 'branch', label, tone: 'muted' };
+    if (/issue|blocker|problem|defect/.test(key)) return { icon: 'x-circle', label, tone: 'danger' };
+    return { icon: 'info', label, tone: 'muted' };
+}
+
 export const SEVERITY = vocab([
     ['critical', 'alert', 'Critical', 'danger'],
     ['high', 'alert', 'High', 'danger'],
@@ -232,16 +287,17 @@ export function known(vocabulary, key) {
 }
 
 /**
- * Status chip: icon, word, and a tinted tone. Meaning never rides on color alone.
+ * Status chip: icon, word, and a tinted tone. Meaning never rides on color alone. `strong`
+ * adds a colored border and a deeper tint, for levels and kinds such as priority.
  *
- * @param {{ icon: string, label: string, tone: string } | undefined} meta
- * @param {{ prefix?: string, title?: string }} [options]
+ * @param {{ icon: string, label: string, tone: string } | undefined | null} meta
+ * @param {{ prefix?: string, title?: string, strong?: boolean }} [options]
  */
 export function badge(meta, options = {}) {
     if (!meta) {
         return null;
     }
-    return h('span', { class: ['badge', `tone-${meta.tone}`], title: options.title }, icon(meta.icon), options.prefix ? `${options.prefix} ${meta.label.toLowerCase()}` : meta.label);
+    return h('span', { class: ['badge', `tone-${meta.tone}`, options.strong ? 'is-strong' : null], title: options.title }, icon(meta.icon), options.prefix ? `${options.prefix} ${meta.label.toLowerCase()}` : meta.label);
 }
 
 /** Plain chip for counts or labels. */

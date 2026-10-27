@@ -10,9 +10,12 @@ let restore;
 let renderMarkdown;
 let isSafeUrl;
 let externalLink;
+let renderInline;
+let shortUrl;
+let plainInline;
 before(async () => {
     restore = installFakeDom();
-    ({ renderMarkdown, isSafeUrl, externalLink } = await import('../ui/markdown.mjs'));
+    ({ renderMarkdown, isSafeUrl, externalLink, renderInline, shortUrl, plainInline } = await import('../ui/markdown.mjs'));
 });
 after(() => restore());
 
@@ -140,5 +143,37 @@ describe('renderMarkdown', () => {
             // Linear in practice: well under 50 ms locally; the bound leaves room for slower CI hosts.
             assert.ok(ms < 200, `${name} took ${Math.round(ms)} ms`);
         }
+    });
+});
+
+describe('renderInline', () => {
+    it('renders code spans, emphasis, links, and IDs on one line without block elements', () => {
+        const root = document.createElement('td');
+        root.appendChild(renderInline('The `Cache` API has **no**\n metadata, see [MDN](https://developer.mozilla.org/x) and C1', { resolveId: (id) => id === 'C1', navigate: () => {} }));
+        assert.deepEqual(tags(root, 'code').map((el) => el.textContent), ['Cache']);
+        assert.deepEqual(tags(root, 'strong').map((el) => el.textContent), ['no']);
+        assert.equal(tags(root, 'a')[0].getAttribute('title'), 'https://developer.mozilla.org/x', 'a website link names its address');
+        assert.equal(elements(root).filter((el) => el.classList.contains('id-chip')).length, 1);
+        assert.equal(tags(root, 'p').length, 0);
+        assert.match(root.textContent, /^The Cache API has no metadata, see MDN/, 'line breaks collapse to spaces');
+    });
+
+    it('labels a bare address by its host and page when asked, and keeps the full address as its title', () => {
+        const root = document.createElement('td');
+        root.appendChild(renderInline('Microsoft Learn, "Maximum Path Length Limitation", https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation;', { shortUrls: true }));
+        const [link] = tags(root, 'a');
+        assert.equal(link.getAttribute('href'), 'https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation');
+        assert.match(link.textContent, /^learn\.microsoft\.com\/…\/maximum-file-path-limitation/);
+        assert.equal(elements(link).filter((el) => el.localName === 'use' && el.getAttribute('href') === '#i-globe').length, 1, 'one globe per link');
+        assert.match(root.textContent, /^Microsoft Learn, "Maximum Path Length Limitation", /);
+        assert.match(root.textContent, /;$/, 'trailing punctuation stays outside the link');
+    });
+
+    it('shortens addresses and strips inline Markdown for tooltips', () => {
+        assert.equal(shortUrl('https://www.example.com/'), 'example.com');
+        assert.equal(shortUrl('https://example.com/docs'), 'example.com/docs');
+        assert.equal(shortUrl('https://example.com/a/b/c%20d'), 'example.com/…/c d');
+        assert.equal(shortUrl('not a url'), 'not a url');
+        assert.equal(plainInline('Run `npm test` with **care**, see [docs](https://x.example)'), 'Run npm test with care, see docs');
     });
 });

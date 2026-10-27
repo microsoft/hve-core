@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, chip, EVIDENCE_STATE, h, icon, idChip, timeEl } from './dom.mjs';
-import { decisionCard, decisionsRow, DECISION_ROWS, evidenceChips, marginNote, md, notesFor, recordSections, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
+import { badge, button, chip, confidenceMeta, EVIDENCE_STATE, h, icon, idChip, PRIORITY, riskTypeMeta, timeEl } from './dom.mjs';
+import { decisionCard, decisionsRow, DECISION_ROWS, evidenceChips, marginNote, md, mdInline, notesFor, recordSections, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { evidenceSource } from './source-view.mjs';
 
 /** Research view: summary, unknowns, questions, findings with decision margins, alternatives, risks, and the record. */
@@ -78,7 +78,7 @@ export function renderView(ctx) {
     rows.push(row(ctx, {
         id: 'research-summary', idLabel: null, title: 'Summary', level: 2, badges: [readinessBadge],
         actions: rowActions(ctx, { sectionId: 'research-summary', rowId: 'research-summary', research: true }),
-        body: [sectionBody(ctx, 'research-summary'), readiness ? h('p', { class: 'readiness-line' }, icon(readiness.status === 'ready' ? 'check' : 'hand'), readiness.text) : null],
+        body: [sectionBody(ctx, 'research-summary'), readiness ? h('p', { class: 'readiness-line' }, icon(readiness.status === 'ready' ? 'check' : 'hand'), h('span', null, mdInline(ctx, readiness.text, { doc: 'research' }))) : null],
         margin: [lanesCard(ctx), ...researchNotes(ctx, ['research-summary']).map((item) => marginNote(ctx, item))],
     }));
 
@@ -95,7 +95,7 @@ export function renderView(ctx) {
         id: 'questions', idLabel: null, title: 'Questions', level: 2, badges: [chip(`${research.questions.filter((q) => q.status === 'answered').length} of ${research.questions.length} answered`, 'muted')],
         body: [h('ol', { class: 'question-list' }, research.questions.map((question) => h('li', { class: 'question', dataset: { item: question.id }, tabindex: '-1' },
             h('span', { class: 'id-chip', text: question.id }),
-            h('span', { class: 'question-text', text: question.text }),
+            h('span', { class: 'question-text' }, mdInline(ctx, question.text, { doc: 'research' })),
             badge(question.status === 'answered' ? { icon: 'check', label: 'Answered', tone: 'success' } : question.status === 'blocked' ? { icon: 'alert', label: 'Blocked', tone: 'danger' } : { icon: 'hand', label: 'Open', tone: 'attention' }),
             h('span', { class: 'question-links' }, question.findings.map((id) => idChip(id, ctx.act.navigate))))))],
     }));
@@ -104,7 +104,7 @@ export function renderView(ctx) {
         const sectionId = `finding-${finding.id.toLowerCase()}`;
         rows.push(row(ctx, {
             id: finding.id, title: finding.title,
-            badges: [badge(EVIDENCE_STATE[finding.state]), finding.confidence ? chip(`Confidence ${finding.confidence}`, 'muted') : null],
+            badges: [badge(EVIDENCE_STATE[finding.state]), finding.confidence ? badge(confidenceMeta(finding.confidence), { prefix: 'Confidence', strong: true }) : null],
             actions: rowActions(ctx, { sectionId, rowId: finding.id, research: true }),
             body: [sectionBody(ctx, sectionId), h('p', { class: 'meta answers' }, 'Answers ', finding.questions.map((id) => idChip(id, ctx.act.navigate))), evidenceChips(ctx, finding.id, finding.evidence), traceStrip(ctx, finding.id)],
             margin: [...anchoredDecisions(ctx, [finding.id]).map((decision) => decisionCard(ctx, decision)), lanesCard(ctx, finding.id), ...researchNotes(ctx, [finding.id]).map((item) => marginNote(ctx, item))],
@@ -115,7 +115,7 @@ export function renderView(ctx) {
         id: 'research-recommendation', idLabel: null, title: 'Recommendation and alternatives', level: 2,
         actions: rowActions(ctx, { sectionId: 'research-recommendation', rowId: 'research-recommendation' }),
         body: [sectionBody(ctx, 'research-recommendation'), table('Alternatives', ['Option', 'Benefits', 'Costs and risks', 'Evidence', 'Disposition'], research.alternatives.map((alt) => [
-            h('strong', { text: alt.option }), alt.benefits, alt.costs, h('span', { class: 'chip-row' }, alt.evidence.map((id) => idChip(id, ctx.act.navigate))), badge(DISPOSITION[alt.disposition]),
+            h('strong', { text: alt.option }), mdInline(ctx, alt.benefits, { doc: 'research' }), mdInline(ctx, alt.costs, { doc: 'research' }), h('span', { class: 'chip-row' }, alt.evidence.map((id) => idChip(id, ctx.act.navigate))), badge(DISPOSITION[alt.disposition]),
         ]))],
         margin: researchNotes(ctx, ['research-recommendation']).map((item) => marginNote(ctx, item)),
     }));
@@ -123,20 +123,26 @@ export function renderView(ctx) {
     const decisions = decisionsRow(ctx, 'research');
     if (decisions) rows.push(decisions);
 
-    const priority = { H: { icon: 'alert', label: 'High', tone: 'danger' }, M: { icon: 'alert', label: 'Medium', tone: 'severe' }, L: { icon: 'info', label: 'Low', tone: 'muted' } };
     rows.push(row(ctx, {
         id: 'risks', idLabel: null, title: 'Risks and open questions', level: 2,
-        body: [table('Risks and open questions', ['Priority', 'Type', 'Item', 'Impact', 'Next action', 'Owner'], research.risks.map((risk) => [badge(priority[risk.priority]), risk.type, h('span', { dataset: { item: risk.id }, text: risk.text }), risk.impact, risk.action, risk.owner]))],
+        body: [table('Risks and open questions', ['Priority', 'Type', 'Item', 'Impact', 'Next action', 'Owner'], research.risks.map((risk) => [
+            badge(PRIORITY[risk.priority] ?? PRIORITY.M, { strong: true }),
+            badge(riskTypeMeta(risk.type), { strong: true }),
+            h('span', { dataset: { item: risk.id } }, mdInline(ctx, risk.text, { doc: 'research' })),
+            mdInline(ctx, risk.impact, { doc: 'research' }),
+            mdInline(ctx, risk.action, { doc: 'research' }),
+            risk.owner,
+        ]), { className: 'risk-table' })],
     }));
 
     const record = h('details', { class: 'record', open: ctx.ui.recordOpen, ontoggle: (event) => ctx.act.setRecordOpen(event.target.open) },
         h('summary', null, `Evidence log (${research.evidence.length})`),
         table('Evidence log', ['ID', 'Claim', 'Source', 'Confidence'], research.evidence.map((item) => [
             h('span', { class: 'id-chip', dataset: { item: item.id }, tabindex: '-1', text: item.id }),
-            item.claim,
+            mdInline(ctx, item.claim, { doc: 'research' }),
             evidenceSource(ctx, item),
-            item.confidence,
-        ])));
+            badge(confidenceMeta(item.confidence), { strong: true }),
+        ]), { className: 'evidence-log' }));
     rows.push(row(ctx, { id: 'record', idLabel: null, title: 'Research record', level: 2, body: [h('p', { class: 'meta', text: 'Method, evidence, and sources behind the findings. Evidence chips open their row here.' }), record, ...recordSections(ctx, 'research')] }));
     return rows;
 }

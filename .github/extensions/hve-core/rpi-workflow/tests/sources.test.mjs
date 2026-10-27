@@ -191,8 +191,27 @@ describe('source controller', () => {
         assert.equal(record.source.taskId, CHILD_TASK, 'resuming shows the running task');
         assert.equal(record.source.follow.paused, false);
 
+        const before = rebinds.length;
+        await sources.pauseFollowing(record);
+        assert.equal(record.source.follow.paused, true, 'pausing keeps the task and stops following');
+        assert.equal(record.source.taskId, CHILD_TASK);
+        assert.equal(rebinds.length, before + 1, 'the page hears about the pause');
+        assert.equal(sourceSummary(record, await store.load(record.sessionId)).following, 'paused');
+        await sources.pauseFollowing(record);
+        assert.equal(rebinds.length, before + 1, 'pausing twice changes nothing');
+        await sources.resumeFollowing(record);
+        assert.equal(record.source.follow.paused, false);
+
+        await sources.switchToTask(record, CHILD_TASK, { paused: true });
+        await sources.settled(record);
+        assert.deepEqual([record.source.taskId, record.source.follow.paused], [CHILD_TASK, true], 'a switch the reader chose can stay paused on a running loop');
+        await sources.switchToTask(record, CHILD_TASK);
+        assert.equal(record.source.follow.paused, false, 'without the option, a running loop follows');
+
         const other = await sources.switchToSession(record, STALE_SESSION_KEY);
         assert.equal(other.source.taskId, STALE_TASK);
+        const pausedSession = await sources.switchToSession(record, SESSION_KEY, { paused: true });
+        assert.equal(pausedSession.source.follow.paused, true, 'a session switch can stay paused');
         assert.equal(await codeOf(() => sources.switchToSession(record, '2030-01-01/none')), 'not_found');
         const listed = await sources.sessions(record);
         assert.deepEqual(listed.sessions.map((session) => session.key).sort(), [SESSION_KEY, STALE_SESSION_KEY].sort());
@@ -398,23 +417,32 @@ describe('server following and task switching', () => {
         const session = await store.create(buildScenario('research'));
         const calls = [];
         const follower = { start: () => calls.push('start'), stop: () => calls.push('stop') };
+        const followCalls = [];
+        const switchOptions = [];
         let sessionId = session.id;
         const server = createCanvasServer({
             store,
             getSessionId: () => sessionId,
             getSource: () => ({ follower }),
-            switchTask: async (ref) => {
+            switchTask: async (ref, options) => {
                 if (ref.taskId !== 'trail-maps-fixes' && ref.statePath !== PATHS.childState) throw Object.assign(new Error('not in this session'), { code: 'invalid_input' });
+                switchOptions.push(['task', options]);
                 sessionId = session.id;
                 server.rebind(ref.statePath ? { moved: { from: ROOT_TASK, to: CHILD_TASK, title: 'Fixes' } } : {});
                 return { sessionId };
             },
             resumeFollowing: async () => {
+                followCalls.push('resume');
                 server.rebind({});
                 return { sessionId };
             },
-            switchSession: async (key) => {
+            pauseFollowing: async () => {
+                followCalls.push('pause');
+                return { sessionId };
+            },
+            switchSession: async (key, options) => {
                 if (key !== SESSION_KEY) throw Object.assign(new Error('no such session'), { code: 'invalid_input' });
+                switchOptions.push(['session', options]);
                 return { sessionId };
             },
             listSessions: async () => ({ sessions: [{ key: SESSION_KEY }], skipped: [] }),
@@ -428,8 +456,15 @@ describe('server following and task switching', () => {
         await page.until((event) => event === 'reload');
         assert.deepEqual(calls, ['start', 'start'], 'rebinding restarts following for the new source');
         assert.equal((await post(url, '/api/task', { statePath: PATHS.childState })).status, 200);
-        assert.equal((await post(url, '/api/follow', {})).status, 200);
+        assert.equal((await post(url, '/api/task', { statePath: PATHS.childState, follow: false })).status, 200);
+        const resumed = await post(url, '/api/follow', {});
+        assert.deepEqual([resumed.status, resumed.json.following], [200, true]);
+        const paused = await post(url, '/api/follow', { follow: false });
+        assert.deepEqual([paused.status, paused.json.following], [200, false]);
+        assert.deepEqual(followCalls, ['resume', 'pause']);
         assert.deepEqual((await post(url, '/api/session', { key: SESSION_KEY })).status, 200);
+        assert.deepEqual((await post(url, '/api/session', { key: SESSION_KEY, follow: false })).status, 200);
+        assert.deepEqual(switchOptions.map(([kind, options]) => `${kind}:${options.paused}`), ['task:false', 'task:false', 'task:true', 'session:false', 'session:true'], 'only follow: false asks a switch to stay paused');
         assert.deepEqual((await post(url, '/api/session', { key: '../x' })).status, 400);
         const sessions = await new Promise((resolve, reject) => {
             http.get({ host: '127.0.0.1', port: url.port, path: '/api/sessions', headers: { 'x-rw-key': url.searchParams.get('k') } }, (res) => {

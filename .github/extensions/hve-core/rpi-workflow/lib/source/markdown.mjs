@@ -515,3 +515,13 @@ export function plainText(markdown) {
         .replace(/\s+/g, ' ')
         .trim();
 }
+
+/**
+ * Inline Markdown for text the canvas renders, such as table cells: the file's code spans,
+ * links, and emphasis kept, with whitespace collapsed to single spaces.
+ *
+ * @param {string} markdown
+ */
+export function inlineMarkdown(markdown) {
+    return String(markdown ?? '').replace(/\s+/g, ' ').trim();
+}

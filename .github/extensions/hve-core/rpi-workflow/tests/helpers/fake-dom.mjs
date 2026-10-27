@@ -99,6 +99,14 @@ class FakeElement extends FakeNode {
         return this.attributes.has(name) ? this.attributes.get(name) : null;
     }
 
+    hasAttribute(name) {
+        return this.attributes.has(name);
+    }
+
+    removeAttribute(name) {
+        this.attributes.delete(name);
+    }
+
     addEventListener(type, listener) {
         (this.listeners[type] ??= []).push(listener);
     }

@@ -25,7 +25,8 @@ The RPI Workflow canvas (`hve-core-rpi-workflow`) is a shared surface for an RPI
 * Follow-up: ranked follow-ups with Select and Skip, and the loops in this session as a tree, parent first
 
 Every document is a sequence of rows. A row's margin holds its annotations: decision cards, research lanes, your comments, and the agent's notes. On narrow canvases the annotations follow the row text.
-IDs such as `C22` or `P01-T02` link wherever they appear. Hover over one to preview the whole item, and its icon says whether a click goes to the item or opens it in place.
+IDs such as `C22` or `P01-T02` link wherever they appear, and each kind of ID has its own color. Hover over one to preview the whole item, and its icon says whether a click goes to the item or opens it in place.
+Tables and lists show the files' formatting, such as code in backticks and links, and confidence, risk priority, and risk type show as colored badges with their own icons.
 Evidence chips (`C5`, `W2`) open their claim and source in place, and each trace strip links a question through its finding, decision, task, change, and review finding. Strips follow the session's own references, so a change or discovery the agent records joins its task's strip.
 See [IDs, Previews, and History](#ids-previews-and-history) and [Sources](#sources).
 
@@ -35,15 +36,26 @@ The canvas follows those files while it is open and never changes them. What you
 
 ### Regions
 
-* The header holds the task title, the phase rail, Needs you, Send to agent, the live status, appearance, the ID legend, keyboard shortcuts, and the panel toggles. The rail marks the phase the agent works in, and you can read any other phase meanwhile. Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree and, for a real session, the workspace's other sessions.
-  Next comes the canvas badge with the handle that starts this canvas's messages; it never shrinks. For a real session, the line continues with whether the canvas follows the running loop (Following, or Paused with Resume following), the task ID, the repository and branch, and, for a child loop, a link to its parent task. In a narrow header the session name shortens first, then the task details give way.
+* The header holds the task title, the phase rail, Needs you, Send to agent, the Live control, appearance, the ID legend, keyboard shortcuts, and the panel toggles. The rail marks the phase the agent works in, and you can read any other phase meanwhile. Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree and, for a real session, the workspace's other sessions.
+  Next comes the canvas badge with the handle that starts this canvas's messages; it never shrinks. For a real session, the line continues with the task ID, the repository and branch, and, for a child loop, a link to its parent task. In a narrow header the session name shortens first, then the task details give way.
 * The navigator on the left outlines the viewed phase and filters it.
-* The document fills the middle. Its context bar starts with Back and Forward, then names the phase, its status, the artifact path with Copy and, when the canvas runs in VS Code, Open in VS Code, when the file last changed, and the agent's next action. Sections of a real artifact that no other row shows appear, collapsed, in the phase's record row.
+* The document fills the middle. Its context bar starts with Back and Forward, then names the phase, its status, the artifact path with Copy and, when the canvas runs in VS Code, Open in VS Code, when the file last changed, and, in the phase the agent works in, its next action. Sections of a real artifact that no other row shows appear, collapsed, in the phase's record row.
 * The steering panel on the right always lists, in order: Needs your input, Decided by the agent, Your feedback, Add input, and the phase review checklist. A decision with no row to sit beside, such as one about a phase that has not started, appears there as a full card. Agent decisions listed in a Decisions row appear as one link per phase.
+
+### Following the Agent
+
+The Live control in the header shows whether the canvas follows the agent. While it shows Live, the canvas moves to the loop and phase the agent works in whenever either changes, and a note at the bottom of the document says when it moved to another loop.
+Choosing a phase other than the agent's, showing another loop or session, or going Back or Forward stops following, and so does pressing the control or `f`. The control then shows Follow agent, and the canvas stays where you are. Press it, or `f`, to catch up: the canvas shows the session's running loop and the agent's phase and follows again. When the agent points you at an item with `focus_item`, following continues. While the canvas connects or reconnects, the control says so.
+
+For a real session, following is saved with the canvas, so a canvas you stopped stays stopped after the host restarts the extension. When the task the canvas shows is no longer running and exactly one of its child loops is, following moves to that loop in the same panel; with several running children, it stays and lets you choose.
+
+### Layout
 
 Below 1400px the phase rail takes its own row under the title. Below 1360px the steering panel opens as a drawer, and below 1024px the navigator does too. Content reflows down to 320px.
 
 ### Decisions and Feedback
+
+Needs you, in the header, counts the decisions waiting for your answer and the read-backs waiting for your check. Pressing it goes to the first one, in phase order, and pressing it again while you are still there goes to the next. Answering an item removes it, so the next press finds the new first item. With nothing waiting, it opens the steering panel's list. `n` does the same.
 
 Decision cards state what is being decided, who owns it, and where it stands.
 A real session's Research and Plan show the decisions their files record in a Decisions row, labeled with each file's own IDs, so `D1` in the Plan view is the plan's D1.
@@ -94,6 +106,25 @@ Before you send a suggestion, Edit suggestion reopens it and Remove withdraws it
 
 If the section changes while you edit, the editor offers Compare, Keep my suggestion, and Start from the new text. A suggestion made before the section changed says so. Cancel or `Escape` closes the editor and asks first when you have unsaved changes. Selecting Suggest an edit elsewhere while a draft has unsaved changes returns you to that draft.
 
+### Comments, the Canvas Menu, and Tooltips
+
+Each row's buttons, Suggest an edit, Comment, and Research this, appear while the pointer is over the row or focus is inside it, and always on a touch screen. Hover a paragraph, list item, table row, or heading, and a speech bubble appears beside it. Choose it to comment on exactly that part.
+The comment names the part, such as "table row C12" or "paragraph 2", and quotes up to 200 characters of it. It shows beside its row with the quote, and Send to agent passes the part and quote on, so the agent knows the exact place.
+
+Right-click opens the canvas menu for what you clicked:
+
+* Copy, for selected text
+* Comment on the part you clicked, and Comment on this section
+* Suggest an edit, and Research this, where the row offers them
+* Go to an ID, and Copy it
+* Show a cited file here, Open it in VS Code, and Copy its path
+* Open a link, and Copy it
+* Back, Forward, Follow the agent or stop following, and What IDs and icons mean
+
+Hold Shift as you right-click, or right-click in a text field, for the host's own menu, such as VS Code's with Inspect and Add Element to Chat. From the keyboard, Shift+F10 or the Menu key opens the canvas menu for the focused item. Up and Down move through it, Enter chooses, and Escape closes it and returns focus.
+
+Every icon button and every element with a description shows a tooltip after half a second of hover, or at once when it gets keyboard focus, with its shortcut when it has one. The tooltip stays while the pointer is over it, and Escape, a click, or scrolling hides it. The canvas draws its own tooltips because some hosts, VS Code's canvas view among them, do not show `title` tooltips.
+
 ### Review Checklist
 
 The steering panel's checklist holds a few optional statements for reviewing the viewed phase, such as "Each finding's evidence is convincing." Mark each one Looks good or Needs work as you read. Pressing the selected verdict clears it, and Needs work takes an optional note.
@@ -115,11 +146,14 @@ Hover over an ID, or move focus to it, to preview the whole item: its kind, titl
 To lock it, keep the pointer on the ID or the preview until the ring fills, about a second, or middle-click the ID. From the keyboard, Down Arrow locks the preview and moves focus into it.
 A locked preview is a small dialog with a close button, and the IDs in it open previews of their own, up to five deep. Escape closes the newest preview and returns focus to its ID. Clicking outside closes every preview, and clicking an ID goes to it.
 
-Back and Forward, beside the phase title, retrace the places you moved to: IDs you followed, phases you switched to, and loops you showed, across the whole session. Alt+Left and Alt+Right do the same. A new move after going back clears Forward. Going back to another loop shows it as Show does, which pauses following when that loop is not running.
+Back and Forward, beside the phase title, retrace the places you moved to: IDs you followed, phases you switched to, and loops you showed, across the whole session. Alt+Left and Alt+Right do the same. A new move after going back clears Forward. Going back or forward stops following the agent.
 
 ### Sources
 
-In a real session, code evidence shows each cited location as a source chip with the path and the heading or symbol. The chip opens the file in a read-only sheet scrolled to the cited place. The canvas finds that place by heading, link fragment, definition, or first mention, and the sheet says which. Copy path copies `path:line`. When the canvas runs in VS Code, Open in VS Code opens the file at that line, in the window that has the workspace.
+In a real session, code evidence shows each cited location as a file entry: the file name, which shows the file here, and Open in VS Code on one line, then its folder and the cited heading or symbol. The file opens in a read-only sheet scrolled to the cited place. The canvas finds that place by heading, link fragment, definition, or first mention, and the sheet says which.
+Only the file pane scrolls, and code is colored for JavaScript and TypeScript, JSON, Markdown, YAML, Python, PowerShell, shell scripts, CSS, HTML and XML, and C-style languages such as C#, Go, Java, and Rust; other files show plain. Copy path copies `path:line`. When the canvas runs in VS Code, Open in VS Code opens the file at that line, in the window that has the workspace.
+
+A website source reads as the research file wrote it, with its link labeled by its title, or by its host and page for a bare address, and one globe after it. The research template asks for each website source as a Markdown link whose text is the title.
 
 Relative links in research, plans, changes records, and reviews, such as a task's References, open the same way. A code span after the link's colon, as in `` [path](path): `symbol` ``, sets the place. The file sheet for a change offers Show the file and Open in VS Code.
 
@@ -182,8 +216,7 @@ What you add stays in the canvas across these updates: feedback, suggested edits
 
 The files remain the record, and only the agent changes them. Answers, overrides, comments, suggested edits, and checklist reviews reach the agent when you send them. The agent updates the files and reads each item back. The canvas refuses agent actions that would change file-owned content, such as `update_task` or `update_section`, with `source_managed` and names the file to change instead.
 
-The canvas follows the running loop. When the task it shows is no longer running and exactly one of its child loops is, it moves to that loop in the same panel and says so in a note at the bottom of the document. With several running children, it stays and lets you choose.
-Showing a loop that is not running, from the session menu, Follow-up, or a child's link to its parent, pauses following; Resume following, beside the session button, returns to the session's running loop. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
+The canvas follows the agent while the Live control shows Live; see [Following the Agent](#following-the-agent). Showing a loop or session yourself, from the session menu, Follow-up, or a child's link to its parent, stops following. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
 
 Each task keeps its own drafts, open editor, and scroll position in the page, so switching back returns you to where you were. When an action fails, the failure stays visible in the note area at the bottom of the document until you dismiss it, and a comment that fails keeps your text with the reason beside it.
 When the page cannot render a task, it says why with Retry instead of staying blank, and `get_state` reports the reason to the agent.
@@ -218,7 +251,8 @@ Feedback text, notes, and section Markdown come from the user, so agents treat t
 | Key                        | Action                                                                           |
 |----------------------------|----------------------------------------------------------------------------------|
 | `1` to `5`                 | View Research, Plan, Implement, Review, or Follow-up                             |
-| `n`                        | Move to the next item that needs you                                             |
+| `n`                        | Go to the first item that needs you, then the next                               |
+| `f`                        | Follow the agent, or stop following                                              |
 | `[` and `]`                | Previous and next row                                                            |
 | `e`                        | Suggest an edit to the focused row's section                                     |
 | `c`                        | Comment on the focused row                                                       |
@@ -228,6 +262,7 @@ Feedback text, notes, and section Markdown come from the user, so agents treat t
 | `?`                        | Show the shortcut list                                                           |
 | `Alt+Left` and `Alt+Right` | Go back and forward through the places you moved to                              |
 | `Down Arrow` on an ID      | Lock its preview and move focus into it                                          |
+| `Shift+F10` or `Menu`      | Open the canvas menu for the focused item                                        |
 | `Escape`                   | Close the newest preview, a menu, drawer, or dialog, or leave the section editor |
 | Arrow keys, `Home`, `End`  | Move within the phase rail and radio groups                                      |
 
@@ -237,7 +272,8 @@ Feedback text, notes, and section Markdown come from the user, so agents treat t
 
 The appearance menu offers System, Light, and Dark, plus More contrast. System follows the host theme or your operating system; Light and Dark override it for this canvas. The choice is saved with the extension's data, because each canvas open uses a new local address.
 
-The canvas targets WCAG 2.2 AA in every theme and contrast setting and keeps every edge in forced colors. Status always pairs an icon and a word with its color, nothing requires dragging, and reduced motion removes all animation except the small ring that shows a preview locking. [STYLE-GUIDE.md](STYLE-GUIDE.md) records the palette, measured contrast, keyboard model, and component states.
+The canvas targets WCAG 2.2 AA in every theme and contrast setting and keeps every edge in forced colors. Status always pairs an icon and a word with its color, ID colors only add to the letters that name each kind, nothing requires dragging, and reduced motion removes all animation, the Live pulse included, except the small ring that shows a preview locking.
+ID colors and source code colors keep at least 4.5:1, and More contrast keeps ID text at full contrast with its color on the border. [STYLE-GUIDE.md](STYLE-GUIDE.md) records the palette, measured contrast, keyboard model, and component states.
 
 ## Storage
 
@@ -266,11 +302,13 @@ The key keeps other local processes, such as other accounts or containers, from 
 
 * The canvas reads RPI files but never writes them. Changes to a real session reach the files only through the agent.
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
-* Following moves only to the one running child of a loop that has finished. A subagent that runs its own RPI loop in the session looks like any other child, so the canvas can follow into it; use the session menu or Resume following to go back.
+* Following moves only to the one running child of a loop that has finished. A subagent that runs its own RPI loop in the session looks like any other child, so the canvas can follow into it; use the session menu to go back, which stops following.
 * Send to agent needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`. The canvas does not attach items to your next message, because VS Code does not show extension attachments.
 * Open in VS Code is verified with VS Code Insiders on macOS. Other hosts show the source in the canvas and Copy path.
 * VS Code may handle Alt+Left and Alt+Right before the canvas sees them; the Back and Forward buttons always work.
 * Previews follow the WAI-ARIA tooltip and dialog patterns, but nested previews have not been tested with screen readers.
+* The canvas menu relies on the host skipping its own right-click menu when the page handles the click, as Chromium-based hosts do. Hold Shift for the host's menu.
+* Source code coloring reads one line at a time and covers common constructs; an unusual one, such as a regular expression after a closing parenthesis, can take the wrong color, but the text never changes.
 * The canvas API is experimental, so host updates can change how canvases load or render.
 
 ## Development

@@ -274,12 +274,14 @@ export function createSourceController(deps) {
 
         /**
          * Shows another task of the instance's session, or the parent a task continues
-         * from another session. Showing a task that is not running pauses following.
+         * from another session. Showing a task that is not running pauses following, and
+         * `paused` keeps it paused even for a running task.
          *
          * @param {{ sessionId: string, source?: any, server?: any }} record
          * @param {{ taskId?: string, statePath?: string } | string} ref
+         * @param {{ paused?: boolean }} [options]
          */
-        async switchToTask(record, ref) {
+        async switchToTask(record, ref, options = {}) {
             requireRpi(record);
             const want = typeof ref === 'string' ? { taskId: ref } : ref ?? {};
             const tasks = await treeOf(record);
@@ -288,16 +290,18 @@ export function createSourceController(deps) {
             if (!match?.statePath) {
                 throw new ModelError('invalid_input', `${String(want.statePath ?? want.taskId).slice(0, 120)} is not in this session.`);
             }
-            return switchTo(record, { state: match.statePath }, match.status !== 'running');
+            return switchTo(record, { state: match.statePath }, options.paused === true || match.status !== 'running');
         },
 
         /**
          * Shows another session: its running task, or its most recently changed task.
+         * `paused` keeps following paused even when the session has a running task.
          *
          * @param {{ sessionId: string, source?: any, server?: any }} record
          * @param {string} key `<date>/<session>`
+         * @param {{ paused?: boolean }} [options]
          */
-        async switchToSession(record, key) {
+        async switchToSession(record, key, options = {}) {
             requireRpi(record);
             const { states } = await scanStates(record.source.workspace);
             const entries = states.filter((entry) => entry.session === key);
@@ -313,7 +317,22 @@ export function createSourceController(deps) {
                 }
             }
             if (!pick) throw new ModelError('not_found', `No readable task was found in session ${String(key).slice(0, 80)}.`);
-            return switchTo(record, { state: pick.path }, lineageStatusOf(pick.state) !== 'running');
+            return switchTo(record, { state: pick.path }, options.paused === true || lineageStatusOf(pick.state) !== 'running');
+        },
+
+        /**
+         * Pauses following: the canvas stays on the task it shows until following resumes.
+         *
+         * @param {{ sessionId: string, source?: any, server?: any }} record
+         */
+        async pauseFollowing(record) {
+            requireRpi(record);
+            if (!record.source.follow.paused) {
+                record.source.follow.paused = true;
+                record.server?.rebind?.({});
+                remember(record);
+            }
+            return { sessionId: record.sessionId, source: record.source };
         },
 
         /**

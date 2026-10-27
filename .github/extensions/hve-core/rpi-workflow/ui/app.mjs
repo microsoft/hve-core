@@ -4,10 +4,13 @@
 import { badge, button, clear, decisionAlias, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
 import { disclosure, filePreview, hasMarginHome, sendItems, sendSheet, sessionPending, sessionTree, steerPanel } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
+import { anchorAt, installAnchorHandle } from './anchors.mjs';
+import { installContextMenu } from './context-menu.mjs';
 import { legendContent } from './legend.mjs';
 import { createHistory, placeLabel } from './history.mjs';
 import { kindOf } from './ids.mjs';
 import { installPreviews } from './previews.mjs';
+import { installTooltips } from './tooltips.mjs';
 import * as followupView from './view-followup.mjs';
 import * as implementView from './view-implement.mjs';
 import * as planView from './view-plan.mjs';
@@ -31,6 +34,8 @@ const state = {
     /** Why the last render failed, until a render succeeds; every environment report carries it. */
     renderError: null,
     live: 'connecting',
+    /** Whether the canvas moves with the agent's loop and phase; null until the first load. */
+    following: null,
     stream: null,
     pollTimer: null,
     /** Visible notes in the status area: failures and where following moved the canvas. */
@@ -44,7 +49,7 @@ const state = {
         expanded: new Set(),
         openEvidence: new Set(),
         send: freshSend(),
-        composer: { kind: 'comment', text: '', anchor: null },
+        composer: { kind: 'comment', text: '', anchor: null, part: null, quote: null, title: null },
         decisionDrafts: new Map(),
         corrections: new Map(),
         overrides: new Set(),
@@ -55,6 +60,8 @@ const state = {
         recordOpen: false,
         openDetails: new Set(),
         navFilter: '',
+        /** The waiting item Needs you last moved to. */
+        lastNeeds: null,
         shortcuts: true,
         navOpen: true,
         steerOpen: true,
@@ -91,6 +98,10 @@ function announce(text) {
 let noteSeq = 0;
 /** ID previews; set once the page is wired. */
 let previews = null;
+/** Tooltips, the hover comment button, and the canvas menu; set once the page is wired. */
+let tooltips = null;
+let anchors = null;
+let contextMenu = null;
 /** Places the reader moved through, across phases and tasks. */
 const places = createHistory();
 /** True while Back or Forward moves the view, so that move is not recorded. */
@@ -108,10 +119,10 @@ function reportFailure(text) {
 
 /** Says where following moved the canvas; replaces the previous move note. */
 function noteMoved(moved) {
-    const text = `Moved to ${moved.title}, the session's running loop. The canvas follows each new loop the agent starts.`;
+    const text = `Moved to ${moved.title}, the loop the agent works in. The canvas moves with the agent while the top of the canvas shows Live.`;
     state.notes = [...state.notes.filter((note) => note.kind !== 'moved'), { id: `note-${++noteSeq}`, kind: 'moved', tone: 'accent', icon: 'arrow-right', text }].slice(-MAX_NOTES);
     renderStatus();
-    announce(`Moved to ${moved.title}, the session's running loop.`);
+    announce(`Moved to ${moved.title}, the loop the agent works in.`);
 }
 
 function dismissNote(id) {
@@ -187,7 +198,7 @@ function remember(from, to) {
 }
 
 function setHash() {
-    history.replaceState(null, '', `#phase=${state.ui.phase}`);
+    history.replaceState(null, '', `#phase=${state.ui.phase}${state.following === false ? '&follow=off' : ''}`);
 }
 
 function phaseFromHash() {
@@ -195,8 +206,19 @@ function phaseFromHash() {
     return match && PHASES.includes(match[1]) ? match[1] : null;
 }
 
-function setPhase(phase) {
+/** The phase the agent works in, or null before the first load. */
+const agentPhase = () => state.data?.session.session.activePhase ?? null;
+
+/**
+ * Shows a phase. A phase the reader chose away from the agent's stops following; the agent's
+ * own moves (`agent: true`) keep it.
+ *
+ * @param {string} phase
+ * @param {{ agent?: boolean }} [options]
+ */
+function setPhase(phase, options = {}) {
     if (!PHASES.includes(phase)) return;
+    if (!options.agent && phase !== agentPhase()) stopFollowing();
     previews?.closeAll();
     if (phase !== state.ui.phase) {
         const from = here();
@@ -238,9 +260,11 @@ function targetElement(id) {
 
 function navigate(ref, phaseOverride, options = {}) {
     previews?.closeAll();
+    contextMenu?.close();
     const id = aliasOf(ref);
     const target = resolve(id);
     const phase = phaseOverride ?? target?.phase ?? state.ui.phase;
+    if (!options.agent && phase !== agentPhase()) stopFollowing();
     const from = here();
     const label = kindOf(id) ? find(id)?.ref ?? ref : find(id)?.title ?? ref;
     remember(from, from && { ...from, phase, id, label });
@@ -299,13 +323,14 @@ async function travel(direction) {
         announce(direction === 'back' ? 'There is no earlier place to go back to.' : 'There is no later place to go forward to.');
         return;
     }
+    stopFollowing();
     if (place.taskId === current.taskId) {
         applyPlace(place);
         return;
     }
     pendingPlace = place;
     try {
-        await api('/api/task', { taskId: place.taskId });
+        await api('/api/task', { taskId: place.taskId, follow: false });
         await refresh();
     } catch (error) {
         pendingPlace = null;
@@ -317,7 +342,7 @@ async function travel(direction) {
 
 // Data sync
 
-function announceChanges(previous, next) {
+function announceChanges(previous, next, moved = false) {
     if (!previous) return;
     const messages = [];
     const before = new Set(previous.view.needsYou.map((item) => item.id));
@@ -332,7 +357,7 @@ function announceChanges(previous, next) {
         }
     }
     if (previous.session.session.activePhase !== next.session.session.activePhase) {
-        messages.push(`The agent moved to ${PHASE_META[next.session.session.activePhase].label}.`);
+        messages.push(`The agent moved to ${PHASE_META[next.session.session.activePhase].label}${moved ? '; the canvas moved with it' : ''}.`);
     }
     if (messages.length) announce(messages.join(' '));
 }
@@ -345,7 +370,7 @@ const taskUi = () => ({
     expanded: new Set(),
     openEvidence: new Set(),
     send: freshSend(),
-    composer: { kind: 'comment', text: '', anchor: null },
+    composer: { kind: 'comment', text: '', anchor: null, part: null, quote: null, title: null },
     decisionDrafts: new Map(),
     corrections: new Map(),
     overrides: new Set(),
@@ -380,21 +405,31 @@ async function refresh() {
         const previous = state.data;
         const switched = Boolean(previous) && previous.session.id !== next.session.id;
         const leaving = switched ? here() : null;
+        syncFollowing(next);
+        const agentNow = next.session.session.activePhase;
         const scroll = switched ? switchTaskUi(previous.session.id, next) : null;
         state.data = next;
         state.error = null;
-        state.ui.phase ??= phaseFromHash() ?? next.session.session.activePhase;
-        if (switched) setHash();
+        state.ui.phase ??= state.following ? agentNow : phaseFromHash() ?? agentNow;
+        // While following, the canvas moves with the agent whenever its loop or phase changes.
+        const withAgent = Boolean(state.following && previous && (switched || previous.session.session.activePhase !== agentNow) && state.ui.phase !== agentNow);
+        if (withAgent) {
+            const from = switched ? null : here();
+            if (from) remember(from, { ...from, phase: agentNow, id: null, label: undefined });
+            Object.assign(state.ui, { phase: agentNow, place: null, highlight: null });
+        }
+        if (switched || withAgent) setHash();
         if (state.ui.editing) {
             const section = next.session.sections[state.ui.editing.sectionId];
             if (!section) state.ui.editing = null;
         }
         applyPreferences(next.preferences);
         if (switched) announce(`Showing ${next.session.task.title}, ${PHASE_META[state.ui.phase].label}.`);
-        else announceChanges(previous, next);
+        else announceChanges(previous, next, withAgent);
         render();
+        if (!switched && withAgent) $('document').scrollTop = 0;
         if (switched) {
-            $('document').scrollTop = scroll;
+            $('document').scrollTop = withAgent ? 0 : scroll;
             const pending = pendingPlace;
             pendingPlace = null;
             if (pending?.taskId === next.session.task.id) applyPlace(pending);
@@ -409,9 +444,82 @@ async function refresh() {
 
 function setLive(live) {
     state.live = live;
-    const chip = $('liveChip');
-    chip.dataset.state = live;
-    $('liveLabel').textContent = { live: 'Live', reconnecting: 'Reconnecting', paused: 'Paused', connecting: 'Connecting' }[live] ?? live;
+    renderLive();
+}
+
+/**
+ * The Live control: Live while the canvas follows the agent, Follow agent otherwise, and the
+ * connection state while the canvas is connecting or reconnecting.
+ */
+function renderLive() {
+    const btn = $('liveBtn');
+    const following = state.following !== false;
+    btn.dataset.state = state.live;
+    btn.dataset.follow = following ? 'on' : 'off';
+    btn.querySelector('use')?.setAttribute('href', `#i-${following ? 'live' : 'live-off'}`);
+    $('liveLabel').textContent = state.live === 'reconnecting' ? 'Reconnecting' : state.live === 'connecting' ? 'Connecting' : following ? 'Live' : 'Follow agent';
+    $('liveHint').textContent = following ? ': following the agent. Press to stop following.' : ": not following. Press to follow the agent's loop and phase.";
+    btn.setAttribute('data-tip', following
+        ? 'Following the agent: the canvas moves to the loop and phase the agent works in. Press to stop following.'
+        : 'Follow the agent: go to the loop and phase the agent works in, and move with it.');
+    if (state.ui.shortcuts) btn.setAttribute('aria-keyshortcuts', 'f');
+    else btn.removeAttribute('aria-keyshortcuts');
+}
+
+/** A follow change the page asked the server for; until it settles, the page's own value stands. */
+let followRequest = null;
+
+/** Takes the server's follow state for a task that follows RPI files, or the page's own for the sample. */
+function syncFollowing(next) {
+    if (next.session.source?.kind === 'rpi' && next.follow) {
+        if (!followRequest) state.following = !next.follow.paused;
+    } else if (state.following === null) {
+        state.following = !/(?:^|[#&])follow=off(?:&|$)/.test(location.hash);
+    }
+    renderLive();
+}
+
+function requestFollow(follow) {
+    if (state.data?.session.source?.kind !== 'rpi') return Promise.resolve();
+    const request = api('/api/follow', { follow }).finally(() => {
+        if (followRequest === request) followRequest = null;
+    });
+    followRequest = request;
+    return request;
+}
+
+/** Stops following, as any move of the reader's own does; the canvas stays where it is. */
+function stopFollowing() {
+    if (state.following === false) return;
+    state.following = false;
+    renderLive();
+    if (state.ui.phase) setHash();
+    requestFollow(false).catch((error) => reportFailure(`Could not stop following the agent: ${error.message}`));
+}
+
+/** Follows the agent again: its running loop, then the phase it works in. */
+async function startFollowing() {
+    state.following = true;
+    renderLive();
+    if (state.ui.phase) setHash();
+    try {
+        await requestFollow(true);
+    } catch (error) {
+        reportFailure(`Could not follow the agent: ${error.message}`);
+    }
+    await refresh();
+    const phase = agentPhase();
+    if (phase && phase !== state.ui.phase) setPhase(phase, { agent: true });
+    announce(`Following the agent. Showing ${state.data.session.task.title}, ${PHASE_META[state.ui.phase].label}.`);
+}
+
+function toggleFollowing() {
+    if (state.following === false) {
+        startFollowing();
+        return;
+    }
+    stopFollowing();
+    announce('Stopped following the agent. The canvas stays here until you follow it again.');
 }
 
 function stopPolling() {
@@ -446,7 +554,7 @@ function connect() {
     stream.addEventListener('focus', (event) => {
         const data = JSON.parse(event.data);
         if (data.itemId) navigate(data.itemId, data.phase ?? undefined, { agent: true });
-        else if (data.phase) setPhase(data.phase);
+        else if (data.phase) setPhase(data.phase, { agent: true });
     });
     stream.addEventListener('error', () => {
         if (state.live !== 'reconnecting') {
@@ -508,8 +616,9 @@ const act = {
     /** Shows another task of this RPI session, by task ID or `{ statePath }`. */
     async showTask(ref) {
         const before = state.data?.session.id;
+        stopFollowing();
         try {
-            await api('/api/task', typeof ref === 'string' ? { taskId: ref } : { statePath: ref.statePath });
+            await api('/api/task', { ...(typeof ref === 'string' ? { taskId: ref } : { statePath: ref.statePath }), follow: false });
             await refresh();
             if (state.data.session.id !== before) focusQuietly($('taskTitle'));
         } catch (error) {
@@ -519,25 +628,17 @@ const act = {
     /** Shows another session: its running loop, or its most recently changed one. */
     async switchSession(key) {
         toggleSessionMenu(false);
+        stopFollowing();
         try {
-            await api('/api/session', { key });
+            await api('/api/session', { key, follow: false });
             await refresh();
             focusQuietly($('taskTitle'));
         } catch (error) {
             reportFailure(`Could not show that session: ${error.message}`);
         }
     },
-    /** Follows the session's running loop again after a manual switch paused it. */
-    async resumeFollowing() {
-        try {
-            await api('/api/follow', {});
-            await refresh();
-            focusQuietly($('taskTitle'));
-            announce(`Following the running loop again. Showing ${state.data.session.task.title}.`);
-        } catch (error) {
-            reportFailure(`Could not resume following: ${error.message}`);
-        }
-    },
+    /** Follows the agent again: its running loop and the phase it works in. */
+    resumeFollowing: () => startFollowing(),
     toggleOverride(id) {
         if (state.ui.overrides.has(id)) state.ui.overrides.delete(id);
         else state.ui.overrides.add(id);
@@ -677,9 +778,10 @@ const act = {
         if (open) state.ui.openDetails.add(key);
         else state.ui.openDetails.delete(key);
     },
-    anchorComposer(rowId, kind, closeSheet = false) {
+    /** Opens the composer anchored to a row, or to a part of it with `detail` from the hover button or menu. */
+    anchorComposer(rowId, kind, closeSheet = false, detail = {}) {
         if (closeSheet) $('fileSheet').close();
-        state.ui.composer = { kind, text: state.ui.composer.text, anchor: rowId };
+        state.ui.composer = { kind, text: state.ui.composer.text, anchor: rowId, part: detail.part ?? null, quote: detail.quote ?? null, title: detail.rowTitle ?? null };
         openSteer();
         render();
         window.requestAnimationFrame(() => $('composer-text')?.focus());
@@ -687,6 +789,7 @@ const act = {
     setComposer(patch, rerender = true) {
         const hadError = Boolean(state.ui.composer.error);
         Object.assign(state.ui.composer, patch, { error: null });
+        if ('anchor' in patch && !patch.anchor) Object.assign(state.ui.composer, { part: null, quote: null, title: null });
         if (rerender || hadError) render();
         else {
             const submit = document.querySelector('.composer button[type="submit"]');
@@ -696,9 +799,10 @@ const act = {
     async submitComposer() {
         const composer = state.ui.composer;
         try {
-            await api('/api/feedback', { kind: composer.kind, text: composer.text, target: composer.anchor ? { id: composer.anchor } : undefined });
+            const target = composer.anchor ? { id: composer.anchor, ...(composer.part ? { part: composer.part } : {}), ...(composer.quote ? { quote: composer.quote } : {}) } : undefined;
+            await api('/api/feedback', { kind: composer.kind, text: composer.text, target });
             announce(composer.kind === 'research-request' ? 'Research request added. It waits for Send to agent, and a research lane starts when the agent takes it.' : `${composer.kind === 'context' ? 'Context' : 'Comment'} added. It waits for Send to agent.`);
-            state.ui.composer = { kind: composer.kind, text: '', anchor: null };
+            state.ui.composer = { kind: composer.kind, text: '', anchor: null, part: null, quote: null, title: null };
             await refresh();
             window.requestAnimationFrame(() => $('composer-text')?.focus());
         } catch (error) {
@@ -815,6 +919,7 @@ const act = {
         const file = change?.files.find((item) => item.path === path);
         if (!file) return;
         const sheet = $('fileSheet');
+        sheet.classList.remove('is-source');
         sheet.replaceChildren(...filePreview(context(), change, file));
         sheet.showModal();
     },
@@ -827,8 +932,14 @@ const act = {
         } catch (error) {
             sheet.replaceChildren(...sourceProblem(context(), path, error.message));
         }
+        sheet.classList.add('is-source');
         if (!sheet.open) sheet.showModal();
-        window.requestAnimationFrame(() => sheet.querySelector('.source-line.is-cited')?.scrollIntoView({ block: 'center' }));
+        // Only the file pane scrolls, so the cited line is centered in it rather than in the dialog.
+        window.requestAnimationFrame(() => {
+            const view = sheet.querySelector('.source-view');
+            const cited = view?.querySelector('.source-line.is-cited');
+            if (view && cited) view.scrollTop = Math.max(0, cited.offsetTop - (view.clientHeight - cited.offsetHeight) / 2);
+        });
     },
     /** Opens a workspace file in the editor at the cited place and says where it opened. */
     async openInEditor(path, anchor) {
@@ -839,12 +950,12 @@ const act = {
             reportFailure(`${path} did not open: ${error.message}`);
         }
     },
-    async copy(text) {
+    async copy(text, what = 'Path') {
         try {
             await navigator.clipboard.writeText(text);
-            announce('Path copied.');
+            announce(`${what} copied.`);
         } catch {
-            announce('Copy is not available here; select the path to copy it.');
+            announce(`Copy is not available here; select the ${what.toLowerCase()} to copy it.`);
         }
     },
 };
@@ -877,7 +988,6 @@ function renderHeader() {
         parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask(parent.statePath ? { statePath: parent.statePath } : parent.id) }, parent.title)) : null,
         session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null,
     ].filter(Boolean));
-    $('liveChip').title = rpi ? "The canvas follows this session's files while it is open." : 'The canvas shows changes as they happen.';
     renderSessionControls();
     const count = view.attentionCount;
     const needs = $('needsBtn');
@@ -887,9 +997,9 @@ function renderHeader() {
     needs.setAttribute('aria-label', count ? `${plural(count, 'item')} ${count === 1 ? 'needs' : 'need'} you` : 'Nothing needs you');
 }
 
-/** The session button and, for a canvas that follows RPI files, whether it follows the running loop. */
+/** The session button: the session's name and how many loops it has. */
 function renderSessionControls() {
-    const { session, follow } = state.data;
+    const { session } = state.data;
     const tree = session.followUps.tree;
     const name = tree.name ?? session.task.title;
     const loops = tree.tasks.length;
@@ -898,20 +1008,6 @@ function renderSessionControls() {
     $('sessionLabel').textContent = `${name} · ${plural(loops, 'loop')}`;
     btn.setAttribute('aria-label', `Session ${name}, ${plural(loops, 'loop')}. Show its loops${session.source?.kind === 'rpi' ? ' and other sessions' : ''}.`);
     btn.title = `Session “${name}”: ${plural(loops, 'loop')}${tree.key ? ` in ${tree.key}` : ''}`;
-    const followState = $('followState');
-    const resume = $('followResume');
-    if (!follow) {
-        followState.hidden = true;
-        resume.hidden = true;
-        return;
-    }
-    followState.hidden = false;
-    followState.dataset.state = follow.paused ? 'paused' : 'following';
-    followState.title = follow.paused
-        ? 'You chose a loop that is not running, so the canvas stays on it. Resume following to go back to the running loop.'
-        : 'The canvas shows the running loop and moves to each new loop the agent starts.';
-    followState.replaceChildren(icon(follow.paused ? 'pause' : 'active'), h('span', { class: 'follow-state-text', text: follow.paused ? 'Paused' : 'Following' }), sr(follow.paused ? ': following the running loop is paused' : ' the running loop'));
-    resume.hidden = !follow.paused;
 }
 
 /** Opens or closes the session menu: this session's loops, then the workspace's other sessions. */
@@ -941,10 +1037,10 @@ async function loadSessions() {
 
 function renderSessionMenu() {
     const menu = $('sessionMenu');
-    const { session, follow } = state.data;
+    const { session } = state.data;
     const tree = session.followUps.tree;
     const rpi = session.source?.kind === 'rpi';
-    const where = [tree.key, rpi ? (follow?.paused ? 'following paused' : 'following the running loop') : 'sample session'].filter(Boolean).join(' · ');
+    const where = [tree.key, rpi ? (state.following === false ? 'not following the agent' : 'following the agent') : 'sample session'].filter(Boolean).join(' · ');
     const keepFocus = menu.contains(document.activeElement) ? document.activeElement.dataset.key ?? null : null;
     menu.replaceChildren(
         h('h2', { class: 'menu-title session-menu-title', id: 'sessionMenuTitle', tabindex: '-1' }, icon('nodes'), tree.name ? `Session: ${tree.name}` : 'This session'),
@@ -959,7 +1055,7 @@ function renderSessionMenu() {
             },
         }),
         ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
-        h('p', { class: 'menu-note', text: rpi ? 'Showing a loop that is not running pauses following until you resume it.' : 'The sample has no other loops or sessions to show.' }));
+        h('p', { class: 'menu-note', text: rpi ? 'Choosing a loop or session stops following the agent; choose Follow agent at the top to catch up with it.' : 'The sample has no other loops or sessions to show.' }));
     if (rpi) renderSessionList();
     if (keepFocus) menu.querySelector(`[data-key="${CSS.escape(keepFocus)}"]`)?.focus({ preventScroll: true });
 }
@@ -1043,13 +1139,10 @@ function renderContextBar() {
     const phase = state.ui.phase;
     const record = session.phases[phase];
     const meta = PHASE_STATUS[record.status] ?? PHASE_STATUS.upcoming;
-    const active = session.session.activePhase;
-    let side = null;
-    if (active === phase) {
-        side = session.session.nextAction ? h('p', { class: 'next-action' }, icon('arrow-right'), h('span', { text: session.session.nextAction })) : null;
-    } else if (phaseReached(phase)) {
-        side = button(`Go to ${PHASE_META[active].label}, where the agent is`, { iconName: 'sparkle', onClick: () => setPhase(active) });
-    }
+    // The agent's next step shows where it works; the Live control follows it from anywhere.
+    const side = session.session.activePhase === phase && session.session.nextAction
+        ? h('p', { class: 'next-action' }, icon('arrow-right'), h('span', { text: session.session.nextAction }))
+        : null;
     const { back, forward } = places.peek();
     const phaseLabel = (key) => PHASE_META[key]?.label ?? key;
     const travelButton = (direction, place) => {
@@ -1296,6 +1389,8 @@ function renderPage() {
     }
     if (!$('sessionMenu').hidden) renderSessionMenu();
     previews?.refresh();
+    tooltips?.refresh();
+    anchors?.hide();
 }
 
 // Panels and drawers
@@ -1401,7 +1496,8 @@ function toggleAppearance(open) {
 
 const SHORTCUTS = [
     ['1 to 5', 'View Research, Plan, Implement, Review, or Follow-up'],
-    ['n', 'Move to the next item that needs you'],
+    ['n', 'Go to the first item that needs you, then the next'],
+    ['f', 'Follow the agent, or stop following'],
     ['[ and ]', 'Previous and next row'],
     ['e', "Suggest an edit to the focused row's section"],
     ['c', 'Comment on the focused row'],
@@ -1410,6 +1506,7 @@ const SHORTCUTS = [
     ['s', 'Show or hide the steering panel'],
     ['Alt+Left and Alt+Right', 'Go back and forward through the places you moved to'],
     ['l', 'Show what the IDs and icons mean'],
+    ['Shift+F10', 'Open the canvas menu for the focused item; Shift with a right-click opens the host menu'],
     ['?', 'Show this list'],
     ['Escape', 'Close a menu, drawer, or dialog, or leave the section editor'],
 ];
@@ -1475,14 +1572,9 @@ function onKeydown(event) {
         setPhase(PHASES[Number(key) - 1]);
         $('phaseRail').querySelector('[aria-selected="true"]')?.focus();
     } else if (key === 'n') {
-        const items = [...state.data.view.needsYou.map((item) => item.id), ...state.data.view.interpretations.map((id) => find(id)?.target?.id ?? id)];
-        if (!items.length) {
-            announce('Nothing needs you right now.');
-            return;
-        }
-        const index = items.indexOf(state.ui.lastNeeds);
-        state.ui.lastNeeds = items[(index + 1) % items.length];
-        navigate(state.ui.lastNeeds);
+        nextAttention();
+    } else if (key === 'f') {
+        toggleFollowing();
     } else if (key === '[' || key === ']') {
         moveRow(key === ']' ? 1 : -1);
     } else if (key === 'e' || key === 'c') {
@@ -1518,10 +1610,105 @@ function onKeydown(event) {
     event.preventDefault();
 }
 
+/** Waiting items in phase order, decisions before read-backs, then in the files' order. */
+function attentionItems() {
+    const { view } = state.data;
+    const decisions = view.needsYou.map((item, index) => ({ id: item.id, phase: item.phase, rank: 0, index }));
+    const readBacks = view.interpretations.map((id, index) => {
+        const item = find(id);
+        const target = item?.target?.type === 'decision' ? item.target.id : id;
+        return { id: target, phase: item?.target?.phase ?? resolve(target)?.phase ?? 'research', rank: 1, index };
+    });
+    const order = (phase) => (PHASES.includes(phase) ? PHASES.indexOf(phase) : PHASES.length);
+    return [...decisions, ...readBacks].sort((a, b) => order(a.phase) - order(b.phase) || a.rank - b.rank || a.index - b.index).map((item) => item.id);
+}
+
+/**
+ * Needs you: goes to the first waiting item, or to the next one when the reader is still on
+ * the item it went to last. Answering an item removes it, so the next press finds the new first.
+ */
+function nextAttention() {
+    if (!state.data) return;
+    const items = attentionItems();
+    if (!items.length) {
+        openSteer();
+        window.requestAnimationFrame(() => focusQuietly($('steer-needs')));
+        announce('Nothing needs you right now.');
+        return;
+    }
+    const still = state.ui.lastNeeds && state.ui.place?.id === state.ui.lastNeeds ? items.indexOf(state.ui.lastNeeds) : -1;
+    const next = items[still >= 0 ? (still + 1) % items.length : 0];
+    state.ui.lastNeeds = next;
+    navigate(next);
+    if (items.length > 1) announce(`${items.indexOf(next) + 1} of ${items.length} waiting for you.`);
+}
+
+/**
+ * What the canvas menu offers for what was right-clicked or focused: comments and edits for
+ * the row, the ID, file, or link under it, then copy, Back, Forward, and the legend.
+ *
+ * @param {Element} target
+ */
+function menuItemsFor(target) {
+    const items = [];
+    const selected = window.getSelection?.()?.toString().trim() ?? '';
+    if (selected) items.push({ label: 'Copy', icon: 'copy', onSelect: () => act.copy(selected, 'Text') });
+    const ready = Boolean(state.data);
+    const part = ready ? anchorAt(target) : null;
+    const row = ready && $('docBody').contains(target) ? target.closest('[data-row]') : null;
+    if (part) items.push({ label: `Comment on ${part.part}`, icon: 'message', onSelect: () => act.anchorComposer(part.rowId, 'comment', false, part) });
+    if (row?.dataset.row) {
+        const rowId = row.dataset.row;
+        const rowTitle = row.querySelector('.row-title')?.textContent?.trim() ?? rowId;
+        items.push({ label: 'Comment on this section', icon: 'message', shortcut: state.ui.shortcuts ? 'c' : undefined, onSelect: () => act.anchorComposer(rowId, 'comment', false, { rowTitle }) });
+        const edit = row.querySelector(`[data-key="edit-section-${CSS.escape(rowId)}"]`);
+        if (edit) items.push({ label: 'Suggest an edit to this section', icon: 'pencil', shortcut: state.ui.shortcuts ? 'e' : undefined, onSelect: () => edit.click() });
+        if (row.querySelector(`[data-key="research-${CSS.escape(rowId)}"]`)) items.push({ label: 'Research this', icon: 'search', onSelect: () => act.anchorComposer(rowId, 'research-request', false, { rowTitle }) });
+    }
+    const chip = target.closest('[data-preview]');
+    if (ready && chip?.dataset.preview && find(chip.dataset.preview)) {
+        const id = chip.dataset.preview;
+        const label = find(id)?.ref ?? id;
+        items.push({ separatorBefore: true, label: `Go to ${label}`, icon: 'go-to', onSelect: () => navigate(id) }, { label: `Copy ${label}`, icon: 'copy', onSelect: () => act.copy(label, 'ID') });
+    }
+    const source = target.closest('.source-item[data-path]');
+    if (source) {
+        const show = source.querySelector('.source-chip');
+        const open = source.querySelector('.source-editor');
+        items.push(
+            ...(show ? [{ separatorBefore: true, label: 'Show the file here', icon: 'file', onSelect: () => show.click() }] : []),
+            ...(open ? [{ label: open.getAttribute('data-tip') ?? open.getAttribute('title') ?? 'Open in your editor', icon: 'file-code', onSelect: () => open.click() }] : []),
+            { separatorBefore: !show && !open, label: 'Copy path', icon: 'copy', onSelect: () => act.copy(source.dataset.path) });
+    }
+    const link = target.closest('a.ext-link[href]');
+    if (link) {
+        items.push({ separatorBefore: true, label: 'Open the link', icon: 'globe', onSelect: () => link.click() }, { label: 'Copy the link', icon: 'copy', onSelect: () => act.copy(link.href, 'Link') });
+    }
+    if (ready) {
+        const { back, forward } = places.peek();
+        items.push(
+            { separatorBefore: true, label: 'Back', icon: 'arrow-left', disabled: !back, shortcut: 'Alt+Left', onSelect: () => travel('back') },
+            { label: 'Forward', icon: 'arrow-right', disabled: !forward, shortcut: 'Alt+Right', onSelect: () => travel('forward') },
+            { label: state.following === false ? 'Follow the agent' : 'Stop following the agent', icon: state.following === false ? 'live' : 'live-off', shortcut: state.ui.shortcuts ? 'f' : undefined, onSelect: toggleFollowing });
+    }
+    items.push({ separatorBefore: !ready, label: 'What IDs and icons mean', icon: 'legend', shortcut: state.ui.shortcuts ? 'l' : undefined, onSelect: openLegend });
+    return items;
+}
+
 // Boot
 
 function wire() {
     previews = installPreviews({ context, revision: () => state.data?.revision ?? 0 });
+    tooltips = installTooltips();
+    anchors = installAnchorHandle({ scroller: $('document'), onComment: (anchor) => act.anchorComposer(anchor.rowId, 'comment', false, anchor) });
+    contextMenu = installContextMenu({
+        itemsFor: menuItemsFor,
+        onOpen: () => {
+            previews?.closeAll();
+            tooltips?.hide();
+            anchors?.hide();
+        },
+    });
     clear($('shortcutList')).append(...SHORTCUTS.flatMap(([keys, text]) => [h('dt', null, h('kbd', { text: keys })), h('dd', { text })]));
     applyShortcutHints();
     $('shortcutSwitch').addEventListener('change', (event) => {
@@ -1544,14 +1731,7 @@ function wire() {
     $('legendBtn').addEventListener('click', openLegend);
     $('sendBtn').addEventListener('click', () => act.openSend());
     $('sendSheet').addEventListener('close', onSendClose);
-    $('needsBtn').addEventListener('click', () => {
-        openSteer();
-        window.requestAnimationFrame(() => {
-            const heading = $('steer-needs');
-            heading?.setAttribute('tabindex', '-1');
-            heading?.focus();
-        });
-    });
+    $('needsBtn').addEventListener('click', nextAttention);
     $('appearanceBtn').addEventListener('click', () => toggleAppearance());
     for (const input of document.querySelectorAll('input[name="theme"]')) {
         input.addEventListener('change', () => savePreferences({ theme: input.value }));
@@ -1566,7 +1746,7 @@ function wire() {
         const next = event.relatedTarget;
         if (next instanceof Node && !$('sessionMenu').contains(next) && next !== $('sessionBtn')) toggleSessionMenu(false);
     });
-    $('followResume').addEventListener('click', () => act.resumeFollowing());
+    $('liveBtn').addEventListener('click', toggleFollowing);
     $('navFilter').addEventListener('input', (event) => {
         state.ui.navFilter = event.target.value;
         if (state.data) {

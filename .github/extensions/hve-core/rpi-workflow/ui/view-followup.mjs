@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, h, known } from './dom.mjs';
-import { marginNote, md, row, rowActions, sectionBody, sessionTree } from './components.mjs';
+import { marginNote, md, mdInline, row, rowActions, sectionBody, sessionTree } from './components.mjs';
 import { notesFor } from './view-research.mjs';
 
 /** Follow-up view: summary, ranked follow-ups, and the session's loops. */
@@ -47,7 +47,7 @@ export function renderView(ctx) {
                 h('span', { class: 'rank', 'aria-hidden': 'true', text: String(item.rank) }),
                 h('div', { class: 'followup-body' },
                     h('p', { class: 'followup-head' }, h('strong', { text: item.title }), badge(item.required ? { icon: 'flag', label: 'Required', tone: 'attention' } : { icon: 'info', label: 'Optional', tone: 'muted' }), badge(known(STATUS, item.status))),
-                    item.rationale ? h('p', { text: item.rationale }) : null,
+                    item.rationale ? h('p', null, mdInline(ctx, item.rationale, { doc: 'followup' })) : null,
                     item.evidence ? h('div', { class: 'meta followup-evidence' }, h('span', { class: 'followup-evidence-label', text: 'Evidence' }), md(ctx, item.evidence)) : null,
                     item.status === 'proposed' ? h('div', { class: 'btn-row' },
                         button('Select as next loop', { iconName: 'check', onClick: () => ctx.act.requestTask(item.id, `Select ${item.id} (${item.title}) as the next child loop.`) }),

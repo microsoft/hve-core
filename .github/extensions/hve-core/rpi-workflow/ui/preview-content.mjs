@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { md } from './components.mjs';
-import { badge, DECISION_STATUS, DISCOVERY_KIND, EVIDENCE_STATE, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, known, SEVERITY, sr, TASK_STATUS } from './dom.mjs';
+import { badge, confidenceMeta, DECISION_STATUS, DISCOVERY_KIND, EVIDENCE_STATE, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, known, SEVERITY, sr, TASK_STATUS } from './dom.mjs';
 import { kindOf } from './ids.mjs';
 import { evidenceSource } from './source-view.mjs';
 
@@ -30,13 +30,13 @@ function partsFor(ctx, key, item) {
         case 'Q':
             return { title: item.text, badges: [plainStatus(words(item.status))], related: [chips('Answered by', item.findings)] };
         case 'F':
-            return { title: item.title, badges: [known(EVIDENCE_STATE, item.state), plainStatus(item.confidence && `Confidence ${item.confidence}`)], related: [chips('Answers', item.questions), chips('Evidence', item.evidence)] };
+            return { title: item.title, badges: [known(EVIDENCE_STATE, item.state), item.confidence ? { ...confidenceMeta(item.confidence), prefix: 'Confidence' } : null], related: [chips('Answers', item.questions), chips('Evidence', item.evidence)] };
         case 'C':
         case 'W': {
             const citing = [...session.research.findings, ...session.decisions].filter((entry) => entry.evidence?.includes(item.id)).map((entry) => entry.id);
             return {
                 title: item.claim,
-                badges: [plainStatus(item.confidence && `Confidence ${item.confidence}`), plainStatus(item.retrieved && `Retrieved ${item.retrieved}`)],
+                badges: [item.confidence ? { ...confidenceMeta(item.confidence), prefix: 'Confidence' } : null, plainStatus(item.retrieved && `Retrieved ${item.retrieved}`)],
                 source: item,
                 related: [chips('Cited by', citing)],
             };
@@ -128,7 +128,7 @@ export function previewContent(ctx, id, options) {
             go),
         body: [
             title.text ? h('div', { class: 'preview-title', id: options.titleId }, md(ctx, title.text)) : h('p', { class: 'preview-title', id: options.titleId, text: `${label} · ${kind.kind}` }),
-            ...(parts.badges ?? []).filter(Boolean).length ? [h('p', { class: 'preview-badges' }, (parts.badges ?? []).filter(Boolean).map((meta) => badge(meta)))] : [],
+            ...(parts.badges ?? []).filter(Boolean).length ? [h('p', { class: 'preview-badges' }, (parts.badges ?? []).filter(Boolean).map((meta) => badge(meta, { prefix: meta.prefix, strong: Boolean(meta.prefix) })))] : [],
             ...fields,
             parts.source ? h('div', { class: 'preview-source' }, evidenceSource(ctx, parts.source)) : null,
             ...related,

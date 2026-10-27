@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, chip, DECISION_STATUS, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, idTag, known, PHASE_META, plural, sr, timeEl } from './dom.mjs';
-import { renderMarkdown } from './markdown.mjs';
+import { badge, button, chip, confidenceMeta, DECISION_STATUS, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, idTag, known, PHASE_META, plural, sr, timeEl } from './dom.mjs';
+import { renderInline, renderMarkdown } from './markdown.mjs';
 import { editorButton, evidenceSource } from './source-view.mjs';
 
 /** Shared components: rows with margins, editing, evidence, traces, and decision cards. */
@@ -56,6 +56,24 @@ export const md = (ctx, text, label, baseDir) => renderMarkdown(text ?? '', {
     label,
     ...(typeof baseDir === 'string' ? { baseDir, openSource: ctx.act.openSource } : {}),
 });
+
+/**
+ * One line of inline Markdown with navigable IDs, for table cells and short fields. `doc`
+ * names the phase whose artifact the text comes from, so its relative links open as sources.
+ *
+ * @param {any} ctx
+ * @param {string | null | undefined} text
+ * @param {{ doc?: string, shortUrls?: boolean }} [options]
+ */
+export function mdInline(ctx, text, options = {}) {
+    const baseDir = options.doc ? artifactDir(ctx, options.doc) : undefined;
+    return renderInline(text ?? '', {
+        resolveId: (id) => Boolean(ctx.resolve(id)),
+        navigate: ctx.act.navigate,
+        shortUrls: Boolean(options.shortUrls),
+        ...(typeof baseDir === 'string' ? { baseDir, openSource: ctx.act.openSource } : {}),
+    });
+}
 
 /** The workspace folder of a phase's artifact in a real session, so its relative links open as sources. */
 export function artifactDir(ctx, doc) {
@@ -121,7 +139,11 @@ export function decisionsRow(ctx, phase) {
  */
 export function row(ctx, spec) {
     const titleId = `row-${spec.id}-title`;
-    const margin = (spec.margin ?? []).filter(Boolean);
+    const given = (spec.margin ?? []).filter(Boolean);
+    // Comments on a part of this row show beside it, even in rows that list no notes of their own.
+    const shown = new Set(given.map((element) => element.dataset?.item).filter(Boolean));
+    const partNotes = notesFor(ctx, [spec.id]).filter((item) => item.target?.part && !shown.has(item.id) && (item.kind === 'comment' || item.kind === 'context')).map((item) => marginNote(ctx, item));
+    const margin = [...given, ...partNotes];
     const section = h('section', {
         class: ['row', margin.length ? 'has-margin' : null, spec.className, ctx.ui.highlight === spec.id ? 'is-highlight' : null],
         id: `row-${spec.id}`,
@@ -140,7 +162,7 @@ export function row(ctx, spec) {
     return section;
 }
 
-/** Always-visible row actions: Suggest an edit, Comment, and optional Research this. */
+/** Row actions, shown while the row is hovered or holds focus: Suggest an edit, Comment, and optional Research this. */
 export function rowActions(ctx, { sectionId, rowId, research = false, ask = false }) {
     const items = [];
     if (sectionId && ctx.data.session.sections[sectionId]) {
@@ -148,7 +170,7 @@ export function rowActions(ctx, { sectionId, rowId, research = false, ask = fals
     }
     items.push(button('Comment', { iconName: 'message', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'comment'), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'c' : undefined, 'data-key': `comment-${rowId}` } }));
     if (research) {
-        items.push(button('Research this', { iconName: 'search', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'research-request') }));
+        items.push(button('Research this', { iconName: 'search', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'research-request'), attrs: { 'data-key': `research-${rowId}` } }));
     }
     if (ask) {
         items.push(button('Ask the agent', { iconName: 'sparkle', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'comment') }));
@@ -316,10 +338,12 @@ export function evidenceChips(ctx, rowKey, ids) {
             const item = ctx.find(id);
             if (!item) return h('p', { class: 'meta', text: `${id} is not in the evidence log.` });
             return h('div', { class: 'evidence-detail' },
-                h('p', null, idChip(id, ctx.act.navigate), ' ', item.claim),
-                h('p', { class: 'meta' },
+                h('p', null, idChip(id, ctx.act.navigate), ' ', mdInline(ctx, item.claim, { doc: 'research' })),
+                h('div', { class: 'evidence-meta' },
                     evidenceSource(ctx, item),
-                    item.confidence ? ` · Confidence ${item.confidence}` : '', item.retrieved ? ` · Retrieved ${item.retrieved}` : ''));
+                    h('span', { class: 'evidence-facts' },
+                        item.confidence ? badge(confidenceMeta(item.confidence), { prefix: 'Confidence', strong: true }) : null,
+                        item.retrieved ? h('span', { class: 'meta', text: `Retrieved ${item.retrieved}` }) : null)));
         }));
     return h('div', { class: 'evidence' }, chips, details);
 }
@@ -404,7 +428,7 @@ export function decisionCard(ctx, decision) {
             decision.context ? h('div', { class: 'card-context prose' }, md(ctx, decision.context)) : null,
             hasOptions ? optionList(ctx, decision, name, draft.optionId, (optionId) => update({ optionId }), undefined, { label: 'Your own answer', hint: 'Write it in the box below.' }) : null,
             evidence,
-            decision.impact ? h('p', { class: 'card-impact' }, icon('arrow-right'), h('span', null, h('strong', { text: 'If you answer: ' }), decision.impact)) : null,
+            decision.impact ? h('p', { class: 'card-impact' }, icon('arrow-right'), h('span', null, h('strong', { text: 'If you answer: ' }), mdInline(ctx, decision.impact, { doc: decision.phase }))) : null,
             h('label', { class: 'field-label', for: noteId, text: ownWords ? 'Your answer' : 'Add a note (optional)' }),
             h('textarea', { id: noteId, class: 'note', rows: ownWords ? '3' : '2', 'aria-required': ownWords ? 'true' : undefined, oninput: (event) => update({ note: event.target.value }) }, draft.note),
             h('div', { class: 'btn-row' },
@@ -417,7 +441,7 @@ export function decisionCard(ctx, decision) {
         const agentChoice = pending?.previousChosen !== undefined && pending?.previousChosen !== null ? decision.options.find((option) => option.id === pending.previousChosen) : chosen;
         const said = [
             agentChoice && agentChoice.label !== decision.title ? h('p', null, h('strong', { text: agentChoice.label })) : null,
-            decision.rationale ? h('p', { text: decision.rationale }) : null,
+            decision.rationale ? h('p', null, mdInline(ctx, decision.rationale, { doc: decision.phase })) : null,
         ].filter(Boolean);
         parts.push(said.length ? voice('agent', 'Agent decided', said) : null, evidence);
         const alternatives = decision.options.filter((option) => option.id !== agentChoice?.id);
@@ -443,7 +467,7 @@ export function decisionCard(ctx, decision) {
     } else {
         const history = feedback ? readBack(ctx, decision, feedback, 'You', { compact: true }) : null;
         const outcome = chosen?.label ?? (feedback?.text ? `“${feedback.text}”` : null);
-        parts.push(h('p', { class: 'resolved-line' }, icon('check', { className: 'tone-success-fg' }), h('span', null, outcome ? ['Resolved: ', h('strong', { text: outcome })] : 'Resolved', decision.impact ? ` · ${decision.impact}` : '')),
+        parts.push(h('p', { class: 'resolved-line' }, icon('check', { className: 'tone-success-fg' }), h('span', null, outcome ? ['Resolved: ', h('strong', { text: outcome })] : 'Resolved', decision.impact ? [' · ', mdInline(ctx, decision.impact, { doc: decision.phase })] : '')),
             history ? disclosure(ctx, `history-${decision.id}`, 'history', 'How this was decided', history) : null);
     }
     return withLabel(h('article', { class: ['card', 'decision', `is-${decision.status}`], id: `card-${decision.id}`, dataset: { item: decision.id }, tabindex: '-1' }, parts), decision);
@@ -490,6 +514,7 @@ export function marginNote(ctx, item) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
     return h('article', { class: ['card', 'note-card'], dataset: { item: item.id } },
         h('header', { class: 'card-head' }, icon(kind.icon, { className: 'card-icon' }), h('span', { class: 'id-chip', text: item.id }), h('h4', { class: 'card-title', text: kind.label }), badge(FEEDBACK_STATE[item.state])),
+        item.target?.quote ? h('blockquote', { class: 'note-quote' }, item.target.part ? h('span', { class: 'note-part', text: `${item.target.part.charAt(0).toUpperCase()}${item.target.part.slice(1)}` }) : null, h('span', { text: item.target.quote })) : null,
         voice('user', 'You', h('p', { text: item.text }), { meta: null }),
         item.interpretation ? voice('agent', 'Agent understood', [h('p', { text: item.interpretation.text }), item.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), item.interpretation.effect) : null], { reveal: ctx.ui.revealed.has(item.id) }) : null,
         item.state === 'interpreted' ? readBackActions(ctx, item, 'card') : null,
@@ -520,9 +545,9 @@ function readBackActions(ctx, item, where) {
 }
 
 /** Simple accessible table inside a scrollable well. */
-export function table(caption, headers, rows) {
+export function table(caption, headers, rows, options = {}) {
     return h('div', { class: 'table-well', tabindex: '0', role: 'region', 'aria-label': `${caption} table` },
-        h('table', { class: 'data-table' },
+        h('table', { class: ['data-table', options.className] },
             h('caption', { class: 'visually-hidden', text: caption }),
             h('thead', null, h('tr', null, headers.map((header) => h('th', { scope: 'col', text: header })))),
             h('tbody', null, rows.map((cells) => h('tr', null, cells.map((cell) => h('td', null, cell)))))));
@@ -544,9 +569,9 @@ function feedbackTarget(ctx, item) {
     const scoped = decision?.ref && decision.ref !== decision.id ? { label: decision.ref } : {};
     const section = item.target.type === 'section' ? ctx.data.session.sections[item.target.id] : null;
     if (section) {
-        return h('span', null, ' to ', h('strong', { text: section.title }), ` in ${PHASE_META[section.doc]?.label ?? section.doc}`);
+        return h('span', null, ' to ', h('strong', { text: section.title }), ` in ${PHASE_META[section.doc]?.label ?? section.doc}`, item.target.part ? `, ${item.target.part}` : null);
     }
-    return h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null);
+    return h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null, item.target.part ? `, ${item.target.part}` : null);
 }
 
 function feedbackRow(ctx, item) {
@@ -673,9 +698,12 @@ function composer(ctx) {
             h('input', { type: 'radio', name: 'composer-kind', id: `composer-kind-${kind.id}`, value: kind.id, checked: state.kind === kind.id, onchange: () => ctx.act.setComposer({ kind: kind.id }) }),
             h('span', { text: kind.label })))),
     state.anchor
-        ? h('p', { class: 'anchor-chip' }, icon('anchor'), 'About ', h('span', { class: 'id-chip', text: state.anchor }), anchor?.title ? h('span', { class: 'anchor-title', text: ` ${anchor.title}` }) : null,
-            button('Remove anchor', { iconName: 'x', hideLabel: true, attrs: { 'data-key': 'remove-anchor' }, onClick: () => ctx.act.setComposer({ anchor: null }) }))
-        : h('p', { class: 'meta', text: 'Tip: use Comment or Research this on a row to anchor your input to it.' }),
+        ? h('div', { class: 'anchor-box' },
+            h('p', { class: 'anchor-chip' }, icon('anchor'), 'About ', h('span', { class: 'id-chip', text: state.anchor }), (anchor?.title ?? state.title) ? h('span', { class: 'anchor-title', text: ` ${anchor?.title ?? state.title}` }) : null,
+                state.part ? h('span', { class: 'anchor-part', text: `, ${state.part}` }) : null,
+                button('Remove anchor', { iconName: 'x', hideLabel: true, attrs: { 'data-key': 'remove-anchor' }, onClick: () => ctx.act.setComposer({ anchor: null }) })),
+            state.quote ? h('blockquote', { class: 'anchor-quote' }, sr('Quote: '), state.quote) : null)
+        : h('p', { class: 'meta', text: 'Tip: hover a paragraph, list item, or table row and choose its comment button, or right-click it, to anchor your input to that part.' }),
     h('label', { class: 'visually-hidden', for: textId, text: 'Your input' }),
     h('textarea', { id: textId, class: 'note', rows: '3', placeholder, 'aria-invalid': state.error ? 'true' : undefined, 'aria-describedby': state.error ? 'composer-error' : undefined, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
     state.error ? h('p', { class: 'field-error', id: 'composer-error' }, icon('alert'), h('span', { text: `Not added: ${state.error} Your text is kept.` })) : null,

@@ -13,6 +13,7 @@ import { ID_SOURCE } from './ids.mjs';
 const MAX_LENGTH = 60000;
 const MAX_QUOTE_DEPTH = 6;
 const MAX_INLINE_DEPTH = 4;
+const MAX_INLINE_LENGTH = 4000;
 const ID_RE = new RegExp(ID_SOURCE, 'g');
 
 /** True when the URL may become a link: http or https only. */
@@ -137,6 +138,66 @@ export function renderMarkdown(source, ctx = {}) {
     const section = { name: typeof ctx.label === 'string' && ctx.label.trim() ? ctx.label.trim() : null };
     renderBlocks(fragment, text.replace(/\r\n?/g, '\n').split('\n'), { ...ctx, section }, 0);
     return fragment;
+}
+
+/**
+ * Inline Markdown as plain text, for tooltips and labels: link text instead of links, and no
+ * code or emphasis markers.
+ *
+ * @param {string | null | undefined} text
+ */
+export function plainInline(text) {
+    return String(text ?? '')
+        .replace(/\[([^\]\n]{0,500})\]\([^)\n]{0,2000}\)/g, '$1')
+        .replace(/`([^`\n]{0,2000})`/g, '$1')
+        .replace(/\*\*([^*\n]{1,2000})\*\*/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Renders one line of inline Markdown, such as a table cell: code spans, links, emphasis,
+ * and linked IDs, with whitespace collapsed. `shortUrls` labels a bare address by its host
+ * and the end of its path.
+ *
+ * @param {string} source
+ * @param {{ resolveId?: (id: string) => boolean, navigate?: (id: string) => void, shortUrls?: boolean, baseDir?: string, openSource?: (path: string, anchor: string | null) => void }} [ctx]
+ * @returns {DocumentFragment}
+ */
+export function renderInline(source, ctx = {}) {
+    const fragment = document.createDocumentFragment();
+    const text = typeof source === 'string' ? source.slice(0, MAX_INLINE_LENGTH).replace(/\s+/g, ' ').trim() : '';
+    try {
+        inline(fragment, text, ctx, 0);
+    } catch {
+        fragment.append(document.createTextNode(text));
+    }
+    return fragment;
+}
+
+/**
+ * A short label for a web address: its host without `www.`, then the last part of its path
+ * when there is one, such as `learn.microsoft.com/…/maximum-file-path-limitation`.
+ *
+ * @param {string} url
+ */
+export function shortUrl(url) {
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.replace(/^www\./, '');
+        const parts = parsed.pathname.split('/').filter(Boolean);
+        if (!parts.length) return host;
+        let last = parts.at(-1);
+        try {
+            last = decodeURIComponent(last);
+        } catch {
+            // Keep the encoded segment.
+        }
+        if (last.length > 48) last = `${last.slice(0, 47)}…`;
+        return parts.length > 1 ? `${host}/…/${last}` : `${host}/${last}`;
+    } catch {
+        return String(url ?? '');
+    }
 }
 
 function renderBlocks(parent, lines, ctx, depth) {
@@ -342,7 +403,7 @@ function inline(parent, text, ctx, depth) {
             const end = find('`', i + 1);
             if (end > i) {
                 flush();
-                parent.append(h('code', { text: text.slice(i + 1, end) }));
+                parent.append(h('code', null, breakAfterSlashes(text.slice(i + 1, end))));
                 i = end + 1;
                 continue;
             }
@@ -384,7 +445,7 @@ function inline(parent, text, ctx, depth) {
             while (end > i && '.,;:!?)\'"'.includes(text[end - 1])) end -= 1;
             flush();
             const url = text.slice(i, end);
-            appendLink(parent, url, url, ctx, depth);
+            appendLink(parent, ctx.shortUrls ? shortUrl(url) : url, url, ctx, depth);
             i = end;
             continue;
         }
@@ -435,7 +496,7 @@ export function workspaceTarget(baseDir, url) {
 function appendLink(parent, label, url, ctx, depth, after = '') {
     const labelCtx = { ...ctx, inLink: true };
     if (isSafeUrl(url)) {
-        const link = h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', class: 'ext-link' });
+        const link = h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', class: 'ext-link', title: url });
         inline(link, label, labelCtx, depth + 1);
         link.append(icon('globe', { className: 'icon-inline' }), sr(' (opens in a new tab)'));
         parent.append(link);
@@ -455,6 +516,13 @@ function appendLink(parent, label, url, ctx, depth, after = '') {
     parent.append(element);
 }
 
+/** Text with a line break opportunity after each slash, so long paths wrap at folders. */
+function breakAfterSlashes(text) {
+    if (!text.includes('/')) return [text];
+    const parts = text.split('/');
+    return parts.flatMap((part, index) => (index < parts.length - 1 ? [`${part}/`, h('wbr')] : part ? [part] : []));
+}
+
 function appendText(parent, text, ctx) {
     if (!ctx.resolveId || !ctx.navigate || ctx.inLink) {
         parent.append(document.createTextNode(text));
@@ -464,6 +532,8 @@ function appendText(parent, text, ctx) {
     ID_RE.lastIndex = 0;
     for (let match = ID_RE.exec(text); match; match = ID_RE.exec(text)) {
         const id = match[0];
+        // A key in a combination, such as Shift+F10, is not a finding.
+        if (text[match.index - 1] === '+' || text[match.index + id.length] === '+') continue;
         if (!ctx.resolveId(id)) continue;
         if (match.index > last) parent.append(document.createTextNode(text.slice(last, match.index)));
         parent.append(idChip(id, ctx.navigate, { className: 'inline' }));

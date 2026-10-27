@@ -8,6 +8,7 @@ import { createFeedback, markChecklist, recordActivity, suggestEdit, transitionF
 import {
     alignmentOf,
     assembleSession,
+    bareUrl,
     confidenceOf,
     critiqueDispositionOf,
     evidenceStateOf,
@@ -33,6 +34,7 @@ describe('vocabulary', () => {
         assert.equal(evidenceStateOf('nothing recognizable'), null);
         assert.equal(confidenceOf('Medium-high; the merge needs tests'), 'medium-high');
         assert.equal(confidenceOf('See C4'), null);
+        assert.deepEqual(['see https://a.example/x; and more', 'https://a.example/wiki/Foo_(bar)).', 'https://a.example/p?q=1,', '(https://a.example/y)', 'no address'].map(bareUrl), ['https://a.example/x', 'https://a.example/wiki/Foo_(bar)', 'https://a.example/p?q=1', 'https://a.example/y', null]);
         assert.deepEqual(['Passed', 'Passed with notes', 'FAILED', 'Skipped', 'Unavailable', 'Not run', 'Mostly fine'].map(validationOf), ['passed', 'passed', 'failed', 'skipped', 'unavailable', 'unavailable', null]);
         assert.deepEqual(['accepted', 'Resolved', 'child loop selected', 'Defects found'].map(findingDecisionOf), ['accepted', 'resolved', null, null]);
         assert.deepEqual(['rpi-implement', 'rpi-plan', 'Follow-up item', 'none', 'unclear'].map(routeOf), ['rpi-implement', 'rpi-plan', 'follow-up', 'none', 'none']);
@@ -65,6 +67,10 @@ describe('assembled document', () => {
         assert.deepEqual(session.research.findings.map((f) => [f.id, f.state, f.confidence]), [['F1', 'evidence-backed', 'high'], ['F2', 'partially-supported', 'medium']]);
         assert.deepEqual(session.research.questions.map((q) => [q.id, q.status, q.findings]), [['Q1', 'answered', ['F1']], ['Q2', 'answered', ['F2']], ['Q3', 'open', []]]);
         assert.equal(session.research.evidence.find((e) => e.id === 'W1').url, 'https://developer.mozilla.org/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria');
+        assert.equal(session.research.evidence.find((e) => e.id === 'C2').claim, 'The `Cache` API has no **metadata**', 'claims keep their inline Markdown');
+        assert.equal(session.research.evidence.find((e) => e.id === 'W1').source, '[Storage quotas](https://developer.mozilla.org/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria)');
+        assert.equal(session.research.evidence.find((e) => e.id === 'W2').url, 'https://example.com/terms/tiles', 'a bare address stops before trailing punctuation');
+        assert.equal(session.research.risks[0].action, 'Call `navigator.storage.persist()`');
         assert.deepEqual(session.research.alternatives.map((a) => a.disposition), ['selected', 'rejected']);
         assert.equal(session.research.readiness.status, 'ready');
         const tasks = session.plan.phases.flatMap((p) => p.tasks);
@@ -209,6 +215,20 @@ describe('rendering', () => {
                 assert.match(rendered.review.html, /A full disk leaves a half region/);
                 assert.match(rendered.plan.html, /Save tiles by region/);
                 assert.match(rendered.implement.html, /Regions download into the tile store and resume/);
+            }
+        }
+    });
+
+    it('lets every row the views show take a comment', async () => {
+        const { findItem } = await import('../lib/model.mjs');
+        const { buildScenario, STAGES } = await import('../lib/scenario.mjs');
+        const sessions = [rootSession().session, childSession().session, ...STAGES.map((stage) => buildScenario(stage, Date.parse(NOW)))];
+        for (const session of sessions) {
+            const rendered = await renderAll(session);
+            for (const [phase, { html }] of Object.entries(rendered)) {
+                const rows = [...html.matchAll(/data-row="([^"]+)"/g)].map((match) => match[1]);
+                const untargetable = rows.filter((id) => !findItem(session, id));
+                assert.deepEqual(untargetable, [], `${session.id} ${phase}: rows a comment cannot target`);
             }
         }
     });

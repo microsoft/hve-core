@@ -214,6 +214,25 @@ describe('delivery composition', () => {
         assert.match(prompt, /2\. FB-\d{3}: Comment on plan-decisions "Plan decisions" \(Plan\)\n {3}File: \.copilot-tracking\/plans\/2026-10-26\/t-plan\.md\n {3}Same for the plan\./);
     });
 
+    it('anchors a comment to a part of any view row and sends the part and its quote', () => {
+        let s = base();
+        s.feedback = [];
+        assert.deepEqual([findItem(s, 'risks')?.type, phaseOf(s, 'risks'), phaseOf(s, 'board'), phaseOf(s, 'session-loops')], ['row', 'research', 'implement', 'followup']);
+        const quote = '  Quota eviction on\n full devices  ';
+        const created = createFeedback(s, { kind: 'comment', target: { id: 'risks', part: 'table row 2', quote }, text: 'Raise this to High.' }, NOW);
+        assert.deepEqual(created.result.target, { id: 'risks', type: 'row', phase: 'research', part: 'table row 2', quote: 'Quota eviction on full devices' }, 'the quote keeps single spaces');
+        s = created.session;
+        const plain = createFeedback(s, { kind: 'comment', target: { id: 'questions' }, text: 'A question is missing.' }, NOW);
+        assert.deepEqual(plain.result.target, { id: 'questions', type: 'row', phase: 'research' }, 'a whole-row comment has no part');
+        s = plain.session;
+        const { prompt } = composeDelivery(s, s.feedback.map((item) => item.id), NOW, { canvas });
+        assert.match(prompt, /1\. FB-\d{3}: Comment on risks "Risks and open questions" \(Research\), table row 2\n {3}Quote: "Quota eviction on full devices"\n {3}Raise this to High\./);
+        assert.match(prompt, /2\. FB-\d{3}: Comment on questions "Questions" \(Research\)\n {3}A question is missing\./);
+        assert.equal(code(() => createFeedback(s, { kind: 'comment', text: 'x', target: { id: 'risks', part: 'p'.repeat(81) } }, NOW)), 'invalid_input');
+        assert.equal(code(() => createFeedback(s, { kind: 'comment', text: 'x', target: { id: 'risks', quote: 'q'.repeat(301) } }, NOW)), 'invalid_input');
+        assert.equal(code(() => createFeedback(s, { kind: 'comment', text: 'x', target: { id: 'risks', part: 3 } }, NOW)), 'invalid_input');
+    });
+
     it('groups items from several tasks by task, numbers them through, and asks for the task with each read-back', () => {
         const rpi = (id, status, phase) => {
             const s = base();

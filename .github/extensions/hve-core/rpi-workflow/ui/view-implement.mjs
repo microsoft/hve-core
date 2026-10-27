@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, idTag, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
-import { decisionCard, marginNote, md, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
+import { decisionCard, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
+import { plainInline } from './markdown.mjs';
 
 /** Implement view: now banner, board, changes, discoveries and plan updates, alignment, and validation. */
 
@@ -113,7 +114,7 @@ export function renderView(ctx) {
             ...paused.map((decision) => h('article', { class: ['card', 'paused-card'] },
                 h('header', { class: 'card-head' }, icon('pause', { className: 'card-icon tone-attention-fg' }), h('h4', { class: 'card-title', text: 'Work is paused for you' })),
                 h('p', null, h('span', { class: 'id-chip', text: decision.id }), ` ${decision.title}`),
-                h('p', { class: 'meta', text: decision.impact }),
+                h('p', { class: 'meta' }, mdInline(ctx, decision.impact, { doc: decision.phase })),
                 h('div', { class: 'btn-row' }, button('Answer now', { kind: 'primary', iconName: 'hand', onClick: () => ctx.act.navigate(decision.id) })))),
             impl.blockers.length ? h('article', { class: 'card' }, h('header', { class: 'card-head' }, icon('alert', { className: 'card-icon tone-danger-fg' }), h('h4', { class: 'card-title', text: plural(impl.blockers.length, 'blocker') })),
                 impl.blockers.map((blocker) => h('p', null, blocker.taskId ? [idChip(blocker.taskId, ctx.act.navigate), ' '] : null, blocker.text, blockerNote(blocker)))) : null,
@@ -149,7 +150,7 @@ export function renderView(ctx) {
             change.files.length ? h('ul', { class: 'file-list', 'aria-label': `Files in ${change.id}` }, change.files.map((file) => fileItem(change, file))) : null,
             checks.length ? h('p', { class: 'chip-row' }, checks.map((check) => {
                 const status = known(VALIDATION, check.status) ?? { icon: 'info', label: 'Not run', tone: 'muted' };
-                return h('span', { class: ['badge', `tone-${status.tone}`], title: check.summary || undefined }, icon(status.icon), h('code', { text: check.check }), ` ${status.label}`);
+                return h('span', { class: ['badge', `tone-${status.tone}`], title: plainInline(check.summary) || undefined }, icon(status.icon), h('code', { text: check.check }), ` ${status.label}`);
             })) : null,
             change.validationText ? h('div', { class: 'change-validation' }, h('p', { class: 'meta' }, icon('check-circle'), 'Validation'), h('div', { class: 'prose' }, md(ctx, change.validationText))) : null);
     };
@@ -204,7 +205,7 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'validation', idLabel: null, title: 'Validation and blockers', level: 2,
-        body: [table('Validation record', ['Check', 'Scope', 'Status', 'Result'], impl.validation.map((check) => [h('code', { text: check.check }), typeof check.scope === 'string' && TASK_ID_RE.test(check.scope) ? idChip(check.scope, ctx.act.navigate) : check.scope ?? '', badge(known(VALIDATION, check.status)), check.summary ?? ''])),
+        body: [table('Validation record', ['Check', 'Scope', 'Status', 'Result'], impl.validation.map((check) => [h('code', { text: check.check }), typeof check.scope === 'string' && TASK_ID_RE.test(check.scope) ? idChip(check.scope, ctx.act.navigate) : check.scope ?? '', badge(known(VALIDATION, check.status)), mdInline(ctx, check.summary, { doc: 'implement' })])),
             impl.blockers.length ? h('ul', { class: 'blockers' }, impl.blockers.map((blocker) => h('li', null, badge({ icon: 'alert', label: 'Blocked', tone: 'danger' }), ' ', blocker.taskId ? [idChip(blocker.taskId, ctx.act.navigate), ' '] : null, blocker.text, blockerNote(blocker)))) : h('p', { class: 'meta', text: 'No blockers.' })],
     }));
 

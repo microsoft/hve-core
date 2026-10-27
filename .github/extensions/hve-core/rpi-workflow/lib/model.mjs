@@ -238,6 +238,38 @@ function byId(list, id) {
 /** The Decisions row of a phase, which comments can anchor to. */
 export const DECISIONS_ROWS = Object.freeze({ 'research-decisions': 'research', 'plan-decisions': 'plan' });
 
+/**
+ * Rows the phase views show that are not items or sections themselves, so a comment can
+ * anchor to them or to a part of them. A section's row resolves as its section first.
+ */
+export const VIEW_ROWS = Object.freeze({
+    'research-summary': { phase: 'research', title: 'Summary' },
+    'research-unknowns': { phase: 'research', title: 'What you may not know' },
+    questions: { phase: 'research', title: 'Questions' },
+    'research-recommendation': { phase: 'research', title: 'Recommendation and alternatives' },
+    risks: { phase: 'research', title: 'Risks and open questions' },
+    record: { phase: 'research', title: 'Research record' },
+    'plan-summary': { phase: 'plan', title: 'Summary' },
+    'change-map': { phase: 'plan', title: 'Change map' },
+    requirements: { phase: 'plan', title: 'Requirements' },
+    critique: { phase: 'plan', title: 'Critique' },
+    'plan-record': { phase: 'plan', title: 'Plan record' },
+    now: { phase: 'implement', title: 'Now' },
+    board: { phase: 'implement', title: 'Task board' },
+    changes: { phase: 'implement', title: 'Changes' },
+    discoveries: { phase: 'implement', title: 'Discoveries and plan updates' },
+    alignment: { phase: 'implement', title: 'Business alignment' },
+    validation: { phase: 'implement', title: 'Validation and blockers' },
+    'implement-record': { phase: 'implement', title: 'Implementation record' },
+    'review-summary': { phase: 'review', title: 'Assessment' },
+    history: { phase: 'review', title: 'Decision history' },
+    'review-validation': { phase: 'review', title: 'Validation evidence' },
+    'review-record': { phase: 'review', title: 'Review record' },
+    'followup-summary': { phase: 'followup', title: 'Summary' },
+    followups: { phase: 'followup', title: 'Ranked follow-ups' },
+    'session-loops': { phase: 'followup', title: 'Loops in this session' },
+});
+
 /** Locates any addressable item by ID across the session. */
 export function findItem(session, id) {
     if (Object.prototype.hasOwnProperty.call(DECISIONS_ROWS, id)) {
@@ -278,6 +310,9 @@ export function findItem(session, id) {
     if (own(session.sections, id)) {
         return { type: 'section', item: session.sections[id] };
     }
+    if (own(VIEW_ROWS, id)) {
+        return { type: 'row', item: { id, ...VIEW_ROWS[id] } };
+    }
     return null;
 }
 
@@ -314,6 +349,8 @@ export function phaseOf(session, id) {
             return found.item.phase;
         case 'section':
             return found.item.doc;
+        case 'row':
+            return found.item.phase;
         default:
             return null;
     }
@@ -331,7 +368,10 @@ function targetFor(session, input) {
     if (!found) {
         fail('not_found', `No item ${id} exists in this session.`);
     }
-    return { id, type: found.type, phase: phaseOf(session, id) };
+    // A part of the item, such as "paragraph 2", and a quote of that part's text.
+    const part = text(input.part, 'target.part', { max: 80, optional: true });
+    const quote = text(typeof input.quote === 'string' ? input.quote.replace(/\s+/g, ' ') : input.quote, 'target.quote', { max: 300, optional: true });
+    return { id, type: found.type, phase: phaseOf(session, id), ...(part ? { part } : {}), ...(quote ? { quote } : {}) };
 }
 
 function pushHistory(item, state, by, now) {
@@ -690,6 +730,7 @@ function itemLines(session, items, start) {
             ? `${lead} ${PHASE_LABELS[item.phase] ?? 'the session'}`
             : `${lead} ${item.target ? describeTarget(session, item.target) : 'the session'}`;
         lines.push(`${start + index}. ${item.id}: ${subject}`);
+        if (item.target?.quote) lines.push(`   Quote: "${item.target.quote}"`);
         const decision = item.target?.type === 'decision' ? byId(session.decisions, item.target.id) : null;
         const file = rpi && (item.kind === 'edit' || decision || item.target?.type === 'decisions-row') ? artifactFor(session, item.target?.phase) : null;
         if (file) lines.push(`   File: ${file}`);
@@ -854,7 +895,8 @@ function describeTarget(session, target) {
     const title = found?.item?.title ?? found?.item?.text ?? '';
     const phase = target.phase ? PHASE_LABELS[target.phase] : null;
     const name = title ? `${target.id} "${title.length > 80 ? `${title.slice(0, 79)}...` : title}"` : target.id;
-    return phase ? `${name} (${phase})` : name;
+    const where = phase ? `${name} (${phase})` : name;
+    return target.part ? `${where}, ${target.part}` : where;
 }
 
 /**

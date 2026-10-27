@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, h, icon, idChip, known, SEVERITY, timeEl, VALIDATION } from './dom.mjs';
-import { decisionCard, marginNote, md, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
+import { decisionCard, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
 
 /** Review view: assessment, findings with expected and observed behavior, decision history, and validation. */
@@ -44,7 +44,7 @@ export function renderView(ctx) {
         body: [sectionBody(ctx, 'review-summary')],
         margin: [h('article', { class: 'card' },
             h('header', { class: 'card-head' }, icon('eye', { className: 'card-icon' }), h('h4', { class: 'card-title', text: 'Findings by severity' })),
-            counts.length ? h('ul', { class: 'severity-list' }, counts.map(([severity, count]) => h('li', null, badge(SEVERITY[severity]), h('span', { class: 'count-text', text: String(count) })))) : h('p', { class: 'meta', text: 'No findings.' }),
+            counts.length ? h('ul', { class: 'severity-list' }, counts.map(([severity, count]) => h('li', null, badge(SEVERITY[severity], { strong: true }), h('span', { class: 'count-text', text: String(count) })))) : h('p', { class: 'meta', text: 'No findings.' }),
             review.depth || participation ? h('p', { class: 'meta', text: [review.depth ? `Depth: ${review.depth}.` : null, participation].filter(Boolean).join(' ') }) : null)],
     }));
 
@@ -52,14 +52,14 @@ export function renderView(ctx) {
         const event = [...review.history].reverse().find((item) => item.subject === finding.id);
         rows.push(row(ctx, {
             id: finding.id, title: finding.title,
-            badges: [badge(known(SEVERITY, finding.severity)), finding.route ? chip(`Route: ${ROUTE[finding.route] ?? finding.route}`, 'muted') : null],
+            badges: [badge(known(SEVERITY, finding.severity), { strong: true }), finding.route ? chip(`Route: ${ROUTE[finding.route] ?? finding.route}`, 'muted') : null],
             actions: rowActions(ctx, { rowId: finding.id, ask: true }),
             body: [
-                finding.summary ? h('p', { text: finding.summary }) : null,
+                finding.summary ? h('p', null, mdInline(ctx, finding.summary, { doc: 'review' })) : null,
                 finding.expected || finding.observed ? h('div', { class: 'compare' },
-                    h('div', { class: 'compare-col' }, h('h4', null, icon('check'), 'Expected'), h('p', { text: finding.expected ?? '' })),
+                    h('div', { class: 'compare-col' }, h('h4', null, icon('check'), 'Expected'), h('p', null, mdInline(ctx, finding.expected, { doc: 'review' }))),
                     h('div', { class: 'compare-col is-observed' }, h('h4', null, icon('eye'), 'Observed'), h('div', { class: 'prose' }, md(ctx, finding.observed)))) : null,
-                finding.impact || finding.resolution ? h('dl', { class: 'facts' }, finding.impact ? [h('dt', { text: 'Impact' }), h('dd', { text: finding.impact })] : null, finding.resolution ? [h('dt', { text: 'Resolved when' }), h('dd', { text: finding.resolution })] : null) : null,
+                finding.impact || finding.resolution ? h('dl', { class: 'facts' }, finding.impact ? [h('dt', { text: 'Impact' }), h('dd', null, mdInline(ctx, finding.impact, { doc: 'review' }))] : null, finding.resolution ? [h('dt', { text: 'Resolved when' }), h('dd', null, mdInline(ctx, finding.resolution, { doc: 'review' }))] : null) : null,
                 finding.related.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Related' }), finding.related.map((id) => idChip(id, ctx.act.navigate))) : null,
                 traceStrip(ctx, finding.id),
             ],
@@ -67,7 +67,7 @@ export function renderView(ctx) {
                 h('article', { class: ['card', 'decision', 'is-decided'] },
                     h('header', { class: 'card-head' }, icon('sparkle', { className: 'card-icon tone-agent-fg' }), h('h4', { class: 'card-title', text: 'Agent decided' }), badge(known(FINDING_DECISION, finding.decision))),
                     findingOutcome(finding) ? h('p', null, h('strong', { text: findingOutcome(finding) })) : null,
-                    event?.rationale ? h('p', { text: event.rationale }) : null,
+                    event?.rationale ? h('p', null, mdInline(ctx, event.rationale, { doc: 'review' })) : null,
                     event ? h('p', { class: 'meta' }, h('span', { class: 'id-chip', text: event.id }), ' ', timeEl(event.at, ctx.now)) : null,
                     h('div', { class: 'btn-row' }, button('Question this decision', { iconName: 'message', onClick: () => ctx.act.anchorComposer(finding.id, 'comment') }))),
                 ...anchoredDecisions(ctx, [finding.id]).map((decision) => decisionCard(ctx, decision)),
@@ -81,12 +81,12 @@ export function renderView(ctx) {
         body: [h('p', { class: 'meta', text: 'Append-only. The latest event for a subject is current.' }), h('ol', { class: 'timeline' }, review.history.map((event) => h('li', { class: 'timeline-item', dataset: { item: event.id }, tabindex: '-1' },
             h('span', { class: 'timeline-dot', 'aria-hidden': 'true' }),
             h('p', { class: 'timeline-head' }, h('span', { class: 'id-chip', text: event.id }), /^RV-\d{3}$/.test(event.subject) ? idChip(event.subject, ctx.act.navigate) : h('strong', { text: event.subject }), badge(FINDING_DECISION[event.status] ?? { icon: 'info', label: event.status, tone: 'muted' }), timeEl(event.at, ctx.now)),
-            event.rationale ? h('p', { class: 'meta', text: event.owner ? `${event.owner}: ${event.rationale}` : event.rationale }) : null)))],
+            event.rationale ? h('p', { class: 'meta' }, event.owner ? `${event.owner}: ` : '', mdInline(ctx, event.rationale, { doc: 'review' })) : null)))],
     }));
 
     rows.push(row(ctx, {
         id: 'review-validation', idLabel: null, title: 'Validation evidence', level: 2,
-        body: [table('Validation evidence', ['Check', 'Scope', 'Status', 'Result'], review.validation.map((check) => [h('code', { text: check.check }), check.scope ?? '', badge(known(VALIDATION, check.status)), check.summary ?? '']))],
+        body: [table('Validation evidence', ['Check', 'Scope', 'Status', 'Result'], review.validation.map((check) => [h('code', { text: check.check }), check.scope ?? '', badge(known(VALIDATION, check.status)), mdInline(ctx, check.summary, { doc: 'review' })]))],
     }));
 
     const record = recordRow(ctx, 'review', 'Review record');

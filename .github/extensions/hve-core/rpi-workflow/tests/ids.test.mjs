@@ -4,7 +4,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import fs from 'node:fs';
+
 import { buildScenario, STAGES } from '../lib/scenario.mjs';
+import { confidenceMeta, PRIORITY, riskTypeMeta } from '../ui/dom.mjs';
 import { ID_KINDS, ID_SOURCE, kindOf, LEGEND_GROUPS, LINK_ICONS } from '../ui/ids.mjs';
 
 const NOW = Date.parse('2026-10-23T12:00:00.000Z');
@@ -47,9 +50,46 @@ describe('ID table', () => {
         });
     }
 
+    it('gives every family its own hue, each styled for chips', () => {
+        const hues = ID_KINDS.map((entry) => entry.hue);
+        assert.equal(new Set(hues).size, ID_KINDS.length, 'no two families share a hue');
+        const css = fs.readFileSync(new URL('../ui/styles.css', import.meta.url), 'utf8');
+        for (const entry of ID_KINDS) {
+            assert.match(css, new RegExp(`--rw-hue-${entry.hue}: light-dark\\(`), `${entry.hue} has light and dark text colors`);
+            assert.match(css, new RegExp(`\\.id-chip\\[data-kind="${entry.key}"\\] \\{ --id-hue: var\\(--rw-hue-${entry.hue}\\); --id-tint: var\\(--rw-hue-${entry.hue}-bg\\); \\}`), `${entry.key} chips use ${entry.hue}`);
+        }
+    });
+
     it('groups every family in the legend and explains each icon', () => {
         const phases = new Set(LEGEND_GROUPS.map((group) => group.phase));
         for (const entry of ID_KINDS) assert.ok(phases.has(entry.phase), entry.key);
         assert.deepEqual(LINK_ICONS.map((entry) => entry.icon), ['go-to', 'file', 'globe', 'file-code']);
+    });
+});
+
+describe('badge vocabularies', () => {
+    it('reads confidence as signal bars and keeps the file\'s word', () => {
+        const read = (word) => [confidenceMeta(word).icon, confidenceMeta(word).label, confidenceMeta(word).tone];
+        assert.deepEqual(read('high'), ['signal-3', 'High', 'success']);
+        assert.deepEqual(read('Very high'), ['signal-3', 'Very high', 'success']);
+        assert.deepEqual(read('medium-high'), ['signal-2', 'Medium-high', 'attention']);
+        assert.deepEqual(read('medium'), ['signal-2', 'Medium', 'attention']);
+        assert.deepEqual(read('medium-low'), ['signal-1', 'Medium-low', 'severe']);
+        assert.deepEqual(read('low'), ['signal-1', 'Low', 'severe']);
+        assert.deepEqual(read('not recorded'), ['signal-0', 'Not recorded', 'muted']);
+        assert.deepEqual(read(''), ['signal-0', 'Not recorded', 'muted']);
+        assert.deepEqual(read('see notes'), ['signal-0', 'See notes', 'muted']);
+    });
+
+    it('gives each priority and risk type its own icon and tone', () => {
+        assert.deepEqual(['H', 'M', 'L'].map((key) => [PRIORITY[key].icon, PRIORITY[key].tone]), [['priority-high', 'danger'], ['priority-medium', 'attention'], ['priority-low', 'accent']]);
+        const read = (word) => { const meta = riskTypeMeta(word); return meta && [meta.icon, meta.label, meta.tone]; };
+        assert.deepEqual(read('risk'), ['alert', 'Risk', 'severe']);
+        assert.deepEqual(read('open question'), ['question', 'Open question', 'accent']);
+        assert.deepEqual(read('further research'), ['search', 'Further research', 'teal']);
+        assert.deepEqual(read('assumption'), ['bulb', 'Assumption', 'attention']);
+        assert.deepEqual(read('dependency'), ['branch', 'Dependency', 'muted']);
+        assert.deepEqual(read('something else'), ['info', 'Something else', 'muted']);
+        assert.equal(riskTypeMeta(''), null);
     });
 });
