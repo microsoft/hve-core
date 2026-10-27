@@ -1,12 +1,16 @@
 ---
 title: Code Review Output Formats
 description: Report structure, findings schema, and persistence rules for review orchestrators and skill-backed subagents.
-ms.date: 2026-10-13
+ms.date: 2026-10-19
 ---
 
 ## Output contract
 
 Review findings should be expressed as structured data first, then rendered into a merged markdown report. The structured data format enables deterministic merging without re-parsing the narrative report.
+
+Do not assign or propagate reviewer confidence or certainty ratings: numeric scores, percentages, qualitative labels, renamed fields, or prose badges. Use citations and specific evidence gaps instead.
+Apply this rule to inline and delegated work, resumed artifacts, JSON, Markdown, summaries, recovery output, and actual publication payloads. Preserve supported findings, severity, counts, verdicts, and attributed source excerpts or measured statistics.
+Remove prohibited metadata without dropping findings; if valid repair is unavailable, disclose the incomplete result and block publication. For human-edited drafts, request revision rather than silently rewriting the text.
 
 ```json
 {

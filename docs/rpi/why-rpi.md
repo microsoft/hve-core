@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-16
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -94,7 +94,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 * No time wasted rediscovering conventions.
 * Completion checkboxes change only after completion evidence exists.
 * Descriptive change evidence and truthful validation establish what happened.
-* A significant discovery updates the affected plan after its required decision and pauses only dependent work; a follow-up critique is optional.
+* A significant discovery updates the affected plan after its required decision and pauses only dependent work; a follow-up critique runs only when you ask for one.
 
 ### Review Phase: Validating, Not Assuming
 

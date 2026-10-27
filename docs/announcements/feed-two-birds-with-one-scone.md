@@ -3,7 +3,7 @@ title: Feed Two Birds With One Scone
 description: Contribute to HVE Core while learning HVE Core, by using HVE Core on HVE Core itself.
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-21
 ms.topic: concept
 keywords:
   - contributing
@@ -51,14 +51,14 @@ The research workflow produces a dated evidence document under `.copilot-trackin
 
 Switch agents in the picker, this time to SSSC Planner. The agent runs a six-phase conversation:
 
-1. Capture (scope, repository context, conformance targets)
+1. Scoping (scope, repository context, conformance targets)
 2. Assessment against the combined capabilities inventory
 3. Standards mapping against OpenSSF Scorecard, SLSA, Sigstore, the OpenSSF Best Practices Badge, and SBOM minimum elements
 4. Gap analysis with adoption categories and effort sizing
 5. Backlog generation with priority derivation
-6. Handoff to the next planner or to your work-tracking system
+6. Review and handoff to your work-tracking system
 
-The research document from step 1 makes the capture phase faster. The planner has context to work with instead of asking you to recite the repo from memory.
+The research document from step 1 makes the scoping phase faster. The planner has context to work with instead of asking you to recite the repo from memory.
 
 ### 3. Walk the phases honestly
 

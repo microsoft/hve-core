@@ -17,6 +17,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Invoke-PythonTests.ps1'
+    Import-Module (Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1') -Force
 
     # Create stub functions so they can be mocked even when not installed
     function global:pytest { '' }
@@ -227,6 +228,13 @@ Describe 'Pytest Execution' -Tag 'Unit' {
     }
 
     BeforeEach {
+        Save-CIEnvironment
+        $script:UvEnvironment = @{}
+        foreach ($name in @('UV_DEFAULT_INDEX', 'UV_INDEX_URL')) {
+            $script:UvEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
+        }
+        $env:UV_DEFAULT_INDEX = 'https://pypi.org/simple'
+        Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
         Mock Push-Location {}
         Mock Pop-Location {}
         Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
@@ -239,6 +247,13 @@ Describe 'Pytest Execution' -Tag 'Unit' {
         }
         Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
         Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
+    }
+
+    AfterEach {
+        Restore-CIEnvironment
+        foreach ($name in $script:UvEnvironment.Keys) {
+            [Environment]::SetEnvironmentVariable($name, $script:UvEnvironment[$name])
+        }
     }
 
     Context 'Tests pass' {
@@ -382,7 +397,15 @@ Describe 'Pytest Execution' -Tag 'Unit' {
 
         It 'Runs pytest through uv' {
             Invoke-PythonTests -RepoRoot $TestDrive
-            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'run' -and $args[1] -eq 'pytest' -and $args[2] -eq 'tests/' } -Times 1
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'run' -and $args[1] -eq '--no-sync' -and $args[2] -eq 'pytest' -and $args[3] -eq 'tests/' } -Times 1
+        }
+
+        It 'Provisions unlocked projects and still prevents implicit pytest sync' {
+            Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.success | Should -BeTrue
+            Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'sync' -and $args[1] -eq '--dev' }
+            Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'run' -and $args[1] -eq '--no-sync' }
         }
     }
 
@@ -412,6 +435,163 @@ Describe 'Pytest Execution' -Tag 'Unit' {
             Invoke-PythonTests -RepoRoot $TestDrive
             Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'run' } -Times 0
         }
+    }
+
+    Context 'Locked uv project with custom default index' {
+        BeforeEach {
+            $env:UV_DEFAULT_INDEX = 'https://mirror.example.com/pypi/simple'
+            Mock Get-Command { [PSCustomObject]@{ Source = 'uv' } } -ParameterFilter { $Name -eq 'uv' }
+            Mock Test-Path { $true } -ParameterFilter { $Path -like '*uv.lock' }
+            Mock uv {
+                $global:LASTEXITCODE = 0
+                if ($args[0] -eq 'export') {
+                    return 'lock validated'
+                }
+
+                return '3 passed'
+            }
+        }
+
+        It 'Provisions the canonical lock and runs pytest without syncing' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+
+            $result.success | Should -BeTrue
+            Should -Invoke -CommandName uv -ParameterFilter {
+                $args[0] -eq 'export' -and
+                $args[1] -eq '--locked' -and
+                $args[2] -eq '--offline'
+            } -Times 1
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'sync' } -Times 0
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'venv' } -Times 1
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'pip' -and $args -contains '--require-hashes' } -Times 1
+            Should -Invoke -CommandName uv -ParameterFilter {
+                $args[0] -eq 'run' -and
+                $args[1] -eq '--no-sync' -and
+                $args[2] -eq 'pytest'
+            } -Times 1
+        }
+
+        It 'Does not run pytest after the mirrored prerequisite <Command> fails' -ForEach @(
+            @{ Command = 'run' }
+            @{ Command = 'export' }
+            @{ Command = 'venv' }
+            @{ Command = 'pip' }
+        ) {
+            $script:FailedUvCommand = $Command
+            Mock uv {
+                $global:LASTEXITCODE = if ($args[0] -eq $script:FailedUvCommand) { 42 } else { 0 }
+                'prerequisite result'
+            }
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.success | Should -BeFalse
+            $result.details[0].phase | Should -Be 'sync'
+            Should -Invoke uv -Times 0 -ParameterFilter { $args -contains 'pytest' }
+        }
+    }
+}
+
+Describe 'Invoke-UvEnvironmentSync mirror boundaries' -Tag 'Unit' {
+    BeforeEach {
+        Save-CIEnvironment
+        $script:UvEnvironment = @{}
+        foreach ($name in @('UV_DEFAULT_INDEX', 'UV_INDEX_URL')) {
+            $script:UvEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
+        }
+        $env:UV_DEFAULT_INDEX = 'https://mirror.example.com/simple'
+        Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
+        Mock uv { $global:LASTEXITCODE = 0; 'provisioned' }
+        Mock Test-Path { $false } -ParameterFilter { $Path -like '.venv/*' }
+    }
+
+    AfterEach {
+        Restore-CIEnvironment
+        foreach ($name in $script:UvEnvironment.Keys) {
+            [Environment]::SetEnvironmentVariable($name, $script:UvEnvironment[$name])
+        }
+    }
+
+    It 'Preserves both index variables after <Command> returns <ExitCode>' -ForEach @(
+        @{ Command = 'export'; ExitCode = 1; OriginalDefault = 'https://mirror.example.com/simple'; OriginalLegacy = $null }
+        @{ Command = 'venv'; ExitCode = 1; OriginalDefault = 'https://mirror.example.com/simple'; OriginalLegacy = '' }
+        @{ Command = 'pip'; ExitCode = 1; OriginalDefault = $null; OriginalLegacy = 'https://fallback.example.com/simple' }
+        @{ Command = 'pip'; ExitCode = 0; OriginalDefault = ''; OriginalLegacy = 'https://fallback.example.com/simple' }
+        @{ Command = 'pip'; ExitCode = 0; OriginalDefault = 'https://mirror.example.com/simple'; OriginalLegacy = 'https://fallback.example.com/simple' }
+    ) {
+        [Environment]::SetEnvironmentVariable('UV_DEFAULT_INDEX', $OriginalDefault)
+        [Environment]::SetEnvironmentVariable('UV_INDEX_URL', $OriginalLegacy)
+        $beforeDefault = [Environment]::GetEnvironmentVariable('UV_DEFAULT_INDEX')
+        $beforeLegacy = [Environment]::GetEnvironmentVariable('UV_INDEX_URL')
+        $script:BoundaryCommand = $Command
+        $script:BoundaryExit = $ExitCode
+        Mock uv {
+            $global:LASTEXITCODE = if ($args[0] -eq $script:BoundaryCommand) { $script:BoundaryExit } else { 0 }
+            'boundary result'
+        }
+        $result = Invoke-UvEnvironmentSync -Locked $true
+        $result.exitCode | Should -Be $ExitCode
+        [Environment]::GetEnvironmentVariable('UV_DEFAULT_INDEX') | Should -BeExactly $beforeDefault
+        [Environment]::GetEnvironmentVariable('UV_INDEX_URL') | Should -BeExactly $beforeLegacy
+    }
+
+    It 'Uses non-empty default before fallback: <DefaultIndex>' -ForEach @(
+        @{ DefaultIndex = ''; IndexUrl = 'https://fallback.example.com/simple'; Selected = 'https://fallback.example.com/simple' }
+        @{ DefaultIndex = $null; IndexUrl = 'https://fallback.example.com/simple'; Selected = 'https://fallback.example.com/simple' }
+        @{ DefaultIndex = 'https://preferred.example.com/simple'; IndexUrl = 'https://fallback.example.com/simple'; Selected = 'https://preferred.example.com/simple' }
+    ) {
+        $env:UV_DEFAULT_INDEX = $DefaultIndex
+        $env:UV_INDEX_URL = $IndexUrl
+        $script:SelectedIndex = $Selected
+        (Invoke-UvEnvironmentSync -Locked $true).exitCode | Should -Be 0
+        Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'pip' -and $args -contains $script:SelectedIndex }
+    }
+
+    It 'Reuses an existing environment without recreating it' {
+        Mock Test-Path { $true } -ParameterFilter { $Path -like '.venv/*' }
+        (Invoke-UvEnvironmentSync -Locked $true).exitCode | Should -Be 0
+        Should -Invoke uv -Times 0 -ParameterFilter { $args[0] -eq 'venv' }
+        Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'pip' }
+    }
+
+    It 'Syncs unlocked projects before no-sync test execution' {
+        (Invoke-UvEnvironmentSync -Locked $false).exitCode | Should -Be 0
+        Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'sync' -and $args[1] -eq '--dev' }
+    }
+
+    It 'Uses public locked sync when both index variables are unset' {
+        Remove-Item Env:UV_DEFAULT_INDEX -ErrorAction SilentlyContinue
+        Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
+        (Invoke-UvEnvironmentSync -Locked $true).exitCode | Should -Be 0
+        Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'sync' -and $args[1] -eq '--locked' }
+    }
+}
+
+Describe 'PowerShell controlled mirror restore' -Tag 'Unit', 'Integration' {
+    It 'Provisions a missing environment without source leakage with uv <Version>' -ForEach @(
+        @{ Version = '0.10.8'; Compatibility = $false }
+        @{ Version = '0.11.15'; Compatibility = $true }
+    ) {
+        if (-not $IsLinux) {
+            Set-ItResult -Skipped -Because 'controlled-index evidence requires Ubuntu'
+            return
+        }
+        if (-not (Get-Command uv -CommandType Application -ErrorAction SilentlyContinue) -or
+            -not (Get-Command uvx -CommandType Application -ErrorAction SilentlyContinue)) {
+            Set-ItResult -Skipped -Because 'local controlled-index evidence requires uv and uvx'
+            return
+        }
+        $fixture = Join-Path $PSScriptRoot '../devcontainer/fixtures/controlled_uv_index.py'
+        if ($Compatibility) {
+            $output = & uvx --from uv==0.11.15 uv run --no-project $fixture --mode powershell
+        } else {
+            $uvApplication = (Get-Command uv -CommandType Application).Source
+            $output = & $uvApplication run --no-project $fixture --mode powershell
+        }
+        $LASTEXITCODE | Should -Be 0
+        $evidence = $output | ConvertFrom-Json
+        $evidence.version | Should -Match ([regex]::Escape($Version))
+        $evidence.clean_environment | Should -BeTrue
+        $evidence.hash_rejected | Should -BeTrue
+        $evidence.explicit_requests | Should -HaveCount 0
     }
 }
 

@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-08
+ms.date: 2026-10-09
 ms.topic: reference
 keywords:
   - github actions
@@ -50,13 +50,13 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | Workflow                          | Triggers                                                                     | Mode                          | Purpose                                                                           |
 |-----------------------------------|------------------------------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
 | `pr-validation.yml`               | PR to main, develop, or either release branch; merge group to main; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
-| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                                                | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
-| `release-prerelease.yml`          | Merged PR to `release/prerelease`                                            | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
+| `release-prerelease-prepare.yml`  | Push to `main` (a merged PR); dispatch                                       | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
+| `release-prerelease.yml`          | Push to `release/prerelease` (a merged PR)                                   | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
 | `release-stable.yml`              | Published PreRelease; dispatch                                               | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
-| `release-stable-publish.yml`      | Merged PR to `release/stable`                                                | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
+| `release-stable-publish.yml`      | Push to `release/stable` (a merged PR)                                       | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
 | `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                                              | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
 | `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                                       | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
-| `backlog-groom-publisher.yml`     | Completed sweep                                                              | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
+| `backlog-groom-publisher.yml`     | Dispatched by the sweep, or manual replay with `sweep-run-id`                | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                                       | Soft-fail warnings            | Weekly security posture                                                           |
 | `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)                       | SARIF upload                  | OpenSSF Scorecard security posture                                                |
 
@@ -85,10 +85,11 @@ check, or an event without a range rule, selects full mode with empty commit
 IDs. A manual dispatch from the default-branch tip, or from a branch with no
 commits ahead of it, therefore selects full mode rather than an empty range.
 
-Every range-capable reusable workflow checks out `github.sha`, the trusted
-event commit, instead of a caller-supplied ref. In range mode, each job then
-fails before it runs repository code unless `HEAD` equals the resolved head
-commit.
+Every range-capable reusable workflow runs `actions/checkout` with no `ref`
+or `repository`, so it checks out the trusted event commit (`github.sha`)
+instead of a caller-supplied ref. Each job then fails before it runs
+repository code unless `HEAD` equals the resolved head commit in range mode,
+or `github.sha` in full mode.
 
 Full mode runs each owning validation across its complete scope instead of
 skipping it:
@@ -163,16 +164,37 @@ context and completes a squash merge.
 
 release-stable.yml jobs: prepare-promotion, open-promotion-pr
 
-release-stable-publish.yml jobs: validate-trigger, release-please,
-sync-release-pr
+release-stable-publish.yml jobs: resolve-merge, validate-trigger,
+release-please, sync-release-pr
 
 release-prerelease-prepare.yml jobs: prepare-promotion, open-promotion-pr
 
-release-prerelease.yml jobs: validate-trigger, release-please, sync-release-pr
+release-prerelease.yml jobs: resolve-merge, validate-trigger, release-please,
+sync-release-pr
 
 release-vsix-publish.yml jobs: validate-release, generate-dependency-sbom,
 extension-provenance, vex-attest, verify-provenance, sbom-diff,
 append-verification-notes, publish-release, close-milestone
+
+### Release App Key Governance
+
+Every job that mints a release GitHub App token reads `RELEASE_APP_PRIVATE_KEY`
+from the `release-governance` environment, declared as
+`environment: { name: release-governance, deployment: false }`. The
+environment admits only `main`, `release/prerelease`, `release/stable`, and the
+`v*` and `prerelease-v*` tags, so a workflow on any other ref, including a pull
+request's `refs/pull/N/merge`, cannot read the key, and no deployment record is
+created. The signer's `authorize` job uses the same environment and records one
+deployment per signing.
+
+For that reason `release-prerelease-prepare.yml`, `release-prerelease.yml`, and
+`release-stable-publish.yml` start on the push a reviewed merge produces, not on
+the pull request event. `release-prerelease.yml` and `release-stable-publish.yml`
+first run a read-only `resolve-merge` job that finds the pull request the pushed
+commit merged (`commits/{sha}/pulls`, matched on merge commit and base branch)
+and passes its merged state, base, head branch, head repository, and head SHA to
+the existing checks. A push that is not a pull request merge, such as creating
+the branch, resolves to `merged=false` and releases nothing.
 
 ### Release Channel Contract
 
@@ -234,11 +256,12 @@ identity.
 
 `extension-marketplace-publish.yml` has four jobs: `validate-inputs`, `verify`, `prepare-publisher`, and `publish`. Input validation resolves immutable release and protected-main commits before Marketplace environment activation. Verification downloads the one VSIX and checks its lane-specific attestation. Publisher preparation builds the minimal locked `vsce` toolchain from protected `main`. The protected publish job re-verifies provenance, obtains Azure OIDC, and invokes `vsce` directly.
 
-Tag governance is a mandatory activation prerequisite but is not yet active or
-proven. The intended `release-tags-creation-by-release-app` ruleset restricts
-creation only and grants a bypass to the Release App. The separate
-`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
-with no bypass. Their description here is not evidence that they are installed.
+Tag governance is a mandatory activation prerequisite. Both rulesets are
+active: `release-tags-creation-by-release-app` restricts creation only and
+grants a bypass to the Release App, and `release-tags-immutable` restricts
+updates, deletion, and force pushes with no bypass. No release has run under
+them yet. `extension-provenance-signer.yml` checks both before packaging; it
+cannot see bypass lists, so an administrator audits them before each release.
 Marketplace environment reviewers and Azure OIDC claim policy remain external
 controls.
 
@@ -304,12 +327,14 @@ handoff can proceed to GitHub Backlog Executor, and `Close` remains prohibited.
 
 The reducer retains detailed JSON and Markdown for 30 days and writes the exact
 terminal artifact identity to its job summary. It does not mutate the tracker.
-Completion activates `backlog-groom-publisher.yml` through the platform
-`workflow_run` event. The trigger accepts runs from `main` and from
-`backlog-grooming-sweep/**`, because continuation waves run at the pinned
-execution tag. The publisher resolves the terminal artifact from the completed
-run, authenticates its producer and source revision, revalidates the final
-aggregate, and compares the trusted tracker state before any persistence.
+Its final `dispatch-publisher` job, which holds only `actions: write`, starts
+`backlog-groom-publisher.yml` on the default branch with the sweep run ID.
+Continuation waves run at the pinned `backlog-grooming-sweep/<sweep-id>`
+execution tag, so the final run may come from that tag. The publisher waits for
+the run to complete and requires it to have succeeded. It then resolves the
+terminal artifact, authenticates its producer and source revision, revalidates
+the final aggregate, and compares the trusted tracker state before any
+persistence.
 
 Discovery skips runs from any other ref without failing. A tag-origin run must
 name the final artifact's sweep, the tag must still pin the run's commit, and
@@ -329,8 +354,9 @@ Optional report publication is disabled unless the repository variable
 `BACKLOG_GROOM_PUBLISH_GH_PAGES` equals the exact lowercase value `true`. When
 enabled, a downstream non-blocking job stores escaped HTML, `aggregate.json`,
 `history.json`, and `latest.json` on `backlog-grooming-reports`. A separate
-job dispatches `deploy-docs.yml` with the authenticated current branch-head
-SHA. The existing Docusaurus deployment stages that history at
+job, holding only `actions: write`, dispatches `deploy-docs.yml` with the publisher
+run ID. The deploy waits for that run to complete and revalidates its Pages
+provenance. The existing Docusaurus deployment stages that history at
 `/backlog-grooming/`, so production retains one GitHub Pages deployment.
 History or deployment failures do not roll back the completed core tracker
 publication.
@@ -366,11 +392,13 @@ worker execution.
 | `checkpoint-artifact-id` | `string` | Empty                       | Positive immutable artifact ID                  | Continuation | Requires plan `actions: read`           |
 | `checkpoint-digest`      | `string` | Empty                       | 64 lowercase hex characters                     | Continuation | No added permission                     |
 
-Publication derives the run, artifact, sweep, and source identities only from
-the completed orchestrator run delivered by `workflow_run`. The publisher has
-no `workflow_dispatch` trigger or caller-supplied identity inputs. If an
-automatic publisher attempt fails while the exact final artifact remains
-retained, rerun the failed jobs in that original publisher run. When the
+Publication takes one input, `sweep-run-id`, and derives the artifact, sweep,
+and source identities only from that run after it completes. It refuses to run
+from any ref other than the default branch, and it rejects a run that is not a
+successful default-branch orchestrator run at the current default-branch commit.
+If a publisher attempt fails while the exact final artifact remains retained,
+rerun the failed jobs in that original publisher run, or start the publisher manually with
+the same `sweep-run-id`. When the
 artifact has expired or its source revision is no longer accepted, start a new
 sweep instead of replaying publication from another ref.
 
@@ -389,14 +417,17 @@ expired, or invalid. It never captures a new snapshot.
 | Validate and reduce    | `actions: read`                                    | Validate immutable artifacts and reconstruct results         |
 | Checkpoint             | `actions: read`                                    | Persist one accepted checkpoint after exact wave validation  |
 | Continue               | `actions: write`, `contents: read`                 | Verify the execution tag and dispatch one successor          |
+| Dispatch publisher     | `actions: write`                                   | Start the default-branch publisher with this run's ID        |
 | Core publisher         | `actions: read`, `issues: write`                   | Revalidate the aggregate and update the compact tracker      |
 | Optional history       | `actions: read`, `contents: write`                 | Persist authenticated report history when explicitly enabled |
 | Optional Pages request | `actions: write`, `contents: read`                 | Dispatch the existing docs deployment at the report head     |
 
 No job combines `actions: write` with `issues: write`. Candidate issues are
-read-only throughout assessment. The publisher is the only issue-write surface,
-and GitHub activates it only after the terminal orchestrator run completes
-successfully.
+read-only throughout assessment. The publisher is the only issue-write surface.
+It runs only from the default branch, through the orchestrator's
+`dispatch-publisher` job or a manual replay with a completed run's
+`sweep-run-id`. It revalidates that run itself and publishes only an
+authenticated terminal sweep; a run that is not the final wave is a no-op.
 
 ### Optional report publication rollout
 
@@ -429,7 +460,7 @@ planned_sweep_aic = required_waves * planned_aic_per_wave
 
 The workflow rejects capacity or AIC values that exceed safe integer
 arithmetic. `max-parallel: 2` bounds concurrent model workers. gh-aw is pinned
-at `v0.86.2`; its worker uses the Copilot engine, a 20-minute timeout, and at
+at `v0.89.21`; its worker uses the Copilot engine, a 20-minute timeout, and at
 most 1,000 AIC. The 2,000 planned AIC per nonempty wave is the sum of two
 per-worker ceilings. gh-aw does not provide one shared runtime AIC pool across
 the matrix. Planned AIC is a configuration ceiling, not measured use or a
@@ -476,7 +507,7 @@ repository and account billing before approving a large snapshot.
 | Artifact retrieval  | Cross-run download requires an authenticated token and exact run ID; artifact ID, name, producer workflow, run, source SHA, schema, and digest are revalidated |
 | Artifact retention  | Sweep-critical artifacts use 30-day retention; when enabled, accepted final reports persist on the report-history branch and Pages                             |
 | Artifact storage    | Stored bytes count against repository or account quotas; artifact count grows per wave and with reruns                                                         |
-| Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses ten and the publisher uses none                             |
+| Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses ten and the publisher uses one (`sweep-run-id`)             |
 | Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; enabled optional publication escapes detailed evidence for Pages                         |
 
 See GitHub's [Actions limits](https://docs.github.com/en/actions/reference/limits),
@@ -503,7 +534,7 @@ account concurrency, and billing limits.
 | Snapshot or checkpoint expires                                                   | Artifact metadata reports expiry or download fails              | Unchanged          | Resume and publication fail closed                                | Start a new snapshot after reviewing abandoned evidence                                          | A new snapshot reassesses eligible issues |
 | Tag recovery finds no valid snapshot                                             | Tag dispatch finds no single valid retained snapshot            | Unchanged          | Fails before capture or worker execution                          | Start a new sweep from `main` after reviewing abandoned evidence                                 | A new snapshot reassesses eligible issues |
 | Tag recovery targets a completed sweep                                           | Retained checkpoint chain is already complete                   | Unchanged          | Worker-free no-op                                                 | None; the original terminal run owns publication                                                 | No issue is reassessed                    |
-| Multi-wave sweep finishes without a publisher run                                | No publisher run follows a successful tag-origin terminal run   | Unchanged          | None; the `branches` filter did not match the tag                 | Remove the publisher `branches` filter in a reviewed change; in-script checks still gate refs    | No assessment rerun required              |
+| Publisher dispatch fails                                                         | The `dispatch-publisher` job fails after a successful reduce    | Unchanged          | No publisher run starts                                           | Start the publisher from the default branch with the terminal run's `sweep-run-id`               | No assessment rerun required              |
 | API or concurrency throttling                                                    | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write     | Wait for limits to reset, then resume from the last accepted checkpoint                          | Only an unaccepted wave may repeat        |
 | Multiple trusted trackers                                                        | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                    | Resolve tracker ambiguity manually, then rerun the failed publisher job                          | No assessment rerun required              |
 | Final reducer fails                                                              | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary                 | Repair or rerun the first invalid or missing wave                                                | Only unaccepted work should repeat        |
@@ -543,10 +574,9 @@ validation. Any alternate privileged recovery path requires a reviewed workflow
 change with CODEOWNER approval; operators must not run publisher code from
 another ref.
 
-During transition from the former manual publisher, cancel queued manual
-publisher runs and use only new `workflow_run` activations. Rerun failed jobs
-only in the original automatic publisher run while its authenticated artifact
-is retained. Expired or abandoned sweeps are replaced by a fresh snapshot.
+Start the publisher only for a completed sweep run, either through the sweep's
+`dispatch-publisher` job or manually with that run's `sweep-run-id`, while its
+authenticated artifact is retained. Expired or abandoned sweeps are replaced by a fresh snapshot.
 GitHub removes ordinary artifacts according to the 30-day retention setting;
 optional immutable history is removed only through a reviewed repository
 maintenance change.
@@ -559,9 +589,11 @@ review of community-facing decisions is the final control.
 The production sweep starts on the first Monday of each month at 09:00 UTC. A
 weekly Monday cron reaches the orchestrator, which exits as a calendar no-op
 after the seventh day of the month so only the first Monday starts assessment.
-Maintainers can also initiate or resume a sweep manually. The publisher starts
-automatically only after a successful terminal sweep. It has no manual trigger
-and cannot start or continue a sweep.
+Maintainers can also initiate or resume a sweep manually. The orchestrator's
+`dispatch-publisher` job starts the publisher after each successful run, and
+the publisher publishes only a terminal sweep. Maintainers can replay
+publication manually with a completed run's `sweep-run-id`. The publisher
+cannot start or continue a sweep.
 
 ## Reusable Workflows
 
@@ -588,7 +620,7 @@ Usage example:
 ```yaml
 jobs:
   spell-check:
-    uses: ./.github/workflows/spell-check.yml
+    uses: $/.github/workflows/spell-check.yml
     with:
       soft-fail: false
 ```
@@ -664,7 +696,7 @@ Features:
 * Generated slides: the `analyze-generated-slides` job scans the delivered `docs/slides/*.html` decks, including the inlined and bundler-patched reveal.js, with `.github/codeql/generated-slides.yml` under category `/language:javascript-typescript/generated-slides`. The authored-source categories keep ignoring those generated files, so third-party findings stay separate from the authored-source baseline
 * Queries: security-extended and security-and-quality query suites
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
-* Not analyzed: CodeQL does not analyze Markdown, generic YAML, PowerShell, shell, or PPTX content; markdownlint, YAML lint, PSScriptAnalyzer, shellcheck, and the dependency and workflow security lints cover those formats
+* Not analyzed: CodeQL does not analyze Markdown, generic YAML, PowerShell, shell, or PPTX content; markdownlint, the workflow validator, PSScriptAnalyzer, shellcheck, and the dependency and workflow security lints cover those formats
 * Integration: Results appear in Security > Code Scanning tab
 * Threshold gate: after each analysis uploads its SARIF, `scripts/security/Test-CodeQLSarifThreshold.ps1` fails the job on any result with `security-severity` of 4.0 or higher, or any error- or warning-level result from a rule without a security severity. Because the gate runs inside the job, it also blocks merge-queue groups, which ruleset code-scanning protection does not cover.
   A finding is excused only by a tracked entry in `security/code-scanning-exceptions.yml`; the alert stays open and the gate lists it.
@@ -723,13 +755,14 @@ Behavior: Blocks PRs introducing vulnerable dependencies (moderate+ severity)
 
 #### `dependency-pinning-scan.yml`
 
-Purpose: Validates that all GitHub Actions use SHA-pinned versions
+Purpose: Validates dependency pinning across every rule type in `Test-DependencyPinning.ps1`. SARIF uses one rule per dependency type (`dependency-not-pinned/<type>`) and declares every scanned type, so a type-specific exception goes stale when its finding disappears.
+The gate runs in every mode and fails on any unpinned dependency that no tracked exception in `security/code-scanning-exceptions.yml` excuses, or on a stale or malformed exception; `soft-fail` reports that result without failing the job.
 
 Inputs:
 
-* `threshold` (number, default: 95): Minimum compliance percentage
-* `dependency-types` (string, default: 'actions,containers'): Types to validate
-* `soft-fail` (boolean, default: false): Continue on failures
+* `threshold` (number, default: 100): Compliance percentage reported in `is-compliant`; it does not gate
+* `dependency-types` (string, default: all nine types): Types to validate (`github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints`)
+* `soft-fail` (boolean, default: false): Report the gate result without failing the job
 * `upload-sarif` (boolean, default: false): Upload to Security tab
 * `upload-artifact` (boolean, default: true): Upload JSON results
 
@@ -738,6 +771,22 @@ Outputs:
 * `compliance-score`: Percentage of dependencies properly pinned
 * `unpinned-count`: Number of unpinned dependencies
 * `is-compliant`: Boolean indicating threshold met
+* `failing-count`: Unpinned dependencies that no tracked exception excuses
+* `excepted-count`: Unpinned dependencies excused by a tracked exception
+* `exception-error-count`: Stale, expired, mismatched, or malformed exception entries
+
+#### SARIF-gated scans
+
+Each of these reusable workflows runs one scanner to SARIF, uploads it to code scanning under its own category (skipped for fork pull requests, which never receive `security-events: write`), and then runs `Test-CodeQLSarifThreshold.ps1 -Threshold All`. Every finding fails unless a tracked exception excuses it, and a stale or malformed exception also fails. None takes inputs. `npm run validate:local` runs the first three through the same gate with `scripts/security/Invoke-ScannerGate.ps1`.
+
+| Workflow                            | Scanner                                                                          | SARIF category             |
+|-------------------------------------|----------------------------------------------------------------------------------|----------------------------|
+| `workflow-validation-scan.yml`      | Workflow validator with GitHub's parser and the manifest-pinned ShellCheck       | `workflow-validation`      |
+| `tool-version-consistency-scan.yml` | `Test-ToolVersionConsistency.ps1` against `scripts/security/tool-checksums.json` | `tool-version-consistency` |
+| `zizmor-scan.yml`                   | Manifest-pinned zizmor, `pedantic` persona, `--no-ignores`                       | `zizmor`                   |
+| `action-pin-provenance-scan.yml`    | `Test-ActionPinProvenance.ps1` against upstream tags and default branches        | `action-pin-provenance`    |
+
+`zizmor-scan.yml` also runs on pushes to `main` that touch workflows, actions, `dependabot.yml`, the exception register, or the tool manifest, and weekly, so its alerts stay current on `main`. The other three run only from `pr-validation.yml` (pull requests, merge-queue groups, and manual runs), so `main` has no analysis for them; the weekly exception status reports their exceptions as not observed.
 
 #### `sha-staleness-check.yml`
 
@@ -829,7 +878,7 @@ Call a reusable workflow from another workflow using the `uses` keyword:
 jobs:
   security-scan:
     name: CodeQL Security Analysis
-    uses: ./.github/workflows/codeql-analysis.yml
+    uses: $/.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
       security-events: write
@@ -843,10 +892,10 @@ Provide inputs to reusable workflows using the `with` keyword:
 ```yaml
 jobs:
   pinning-check:
-    uses: ./.github/workflows/dependency-pinning-scan.yml
+    uses: $/.github/workflows/dependency-pinning-scan.yml
     with:
-      threshold: 95
-      dependency-types: 'actions,containers'
+      threshold: 100
+      dependency-types: 'github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints'
       soft-fail: true
       upload-sarif: true
       upload-artifact: true
@@ -859,18 +908,21 @@ Access outputs from reusable workflows in downstream jobs:
 ```yaml
 jobs:
   security-scan:
-    uses: ./.github/workflows/dependency-pinning-scan.yml
+    uses: $/.github/workflows/dependency-pinning-scan.yml
     with:
       soft-fail: true
 
   summary:
     needs: security-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check compliance
+        env:
+          COMPLIANCE_SCORE: ${{ needs.security-scan.outputs.compliance-score }}
+          UNPINNED_COUNT: ${{ needs.security-scan.outputs.unpinned-count }}
         run: |
-          echo "Compliance: ${{ needs.security-scan.outputs.compliance-score }}%"
-          echo "Unpinned: ${{ needs.security-scan.outputs.unpinned-count }}"
+          echo "Compliance: ${COMPLIANCE_SCORE}%"
+          echo "Unpinned: ${UNPINNED_COUNT}"
 ```
 
 ## Common Patterns
@@ -892,7 +944,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@<sha>  # v4.2.2
         with:

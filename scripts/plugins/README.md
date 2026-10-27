@@ -20,8 +20,8 @@ PowerShell tooling for synchronizing root `plugin.json` with the complete distri
 
 ## Source to Manifest Pipeline
 
-1. Author artifacts in `.github/` (agents, prompts, instructions, skills)
-2. Run `npm run plugin:sync` to derive root `plugin.json`
+1. Author artifacts in `.github/` (agents, prompts, instructions, skills, canvas extensions)
+2. Stage new files with `git add`, then run `npm run plugin:sync` to derive root `plugin.json`
 3. Run `npm run plugin:validate` for non-mutating manifest validation
 4. Prepare or package the single extension separately when VSIX output is in scope
 
@@ -33,8 +33,15 @@ The script discovers these git-tracked paths beneath `.github` and emits reposit
 * `prompts/<package>/**/*.prompt.md`
 * `instructions/<package>/**/*.instructions.md`
 * `skills/<package>/<skill>/SKILL.md`, unless the top-level license has a noncommercial qualifier
+* `extensions/<package>/<extension>/extension.mjs`, declared as the package folder `.github/extensions/<package>` in the `extensions` field
 
-Artifacts without a package segment are excluded from discovery. Paths are unique and ordinal-sorted. Metadata is preserved and the version follows root `package.json`. The manifest declares no `hooks`: support for it was removed with the telemetry hook, so a committed `hooks` field (or any other field the manifest cannot derive) is reported as drift rather than preserved. Validation also requires tracked, regular, non-empty root `plugin.json`, `README.md`, and `LICENSE` files.
+Artifacts without a package segment are excluded from discovery. Paths are unique and ordinal-sorted. Metadata is preserved and the version follows root `package.json`.
+
+The `extensions` field appears only when at least one extension container exists. Check mode verifies that each declared container stays inside the plugin root and holds an extension folder with `extension.mjs`. The VSIX ignores `extensions` because VS Code extensions have no canvas contribution point.
+
+An `extension.mjs` directly under `.github/extensions/<name>/` is a repository-only project extension, such as the entry that loads the Session Log canvas in hve-core sessions, and is not plugin membership.
+
+The manifest declares no `hooks`: support for it was removed with the telemetry hook, so a committed `hooks` field (or any other field the manifest cannot derive) is reported as drift rather than preserved. Validation also requires tracked, regular, non-empty root `plugin.json`, `README.md`, and `LICENSE` files.
 
 ## Synchronizing After Artifact Changes
 
@@ -54,7 +61,7 @@ Check mode writes nothing and exits nonzero on manifest or locator drift.
 
 ## Locator Validation
 
-Check mode requires `.github/plugin/marketplace.json` to contain exactly one `hve-core` entry whose relative source is `.github`. It verifies parity for every retained manifest metadata field, source containment, manifest existence, component coverage, and the absence of recipe fields such as `agents`, `commands`, `rules`, `skills`, `hooks`, or `x-hve` on the locator entry.
+Check mode requires `.github/plugin/marketplace.json` to contain exactly one `hve-core` entry whose relative source is `.github`. It verifies parity for every retained manifest metadata field, source containment, manifest existence, component coverage, and the absence of recipe fields such as `agents`, `commands`, `rules`, `skills`, `extensions`, `hooks`, or `x-hve` on the locator entry.
 
 The Copilot CLI registration `microsoft/hve-core` tracks `main`; there are no release-channel plugin registrations. The catalog always locates the plugin root relative to the registered repository ref.
 

@@ -41,3 +41,142 @@ stimuli:
         name: requested-task-selected
         config:
           pattern: '^\s*2607\s*$'
+  - name: rpi-agent-first-task-assessment-defaults
+    prompt: |
+      This is a contained, response-only lifecycle-policy regression, not native
+      RPI execution. Read `policy/rpi-agent.agent.md`. Consider the first task in
+      a new automatic session. The user has not skipped either assessment.
+      Select the default settings. Return exactly two lines: `Critique: run|skip`
+      and `Review: run|skip`. Do not execute phases or write files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: policy/rpi-agent.agent.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      shape: rpi-assessment-policy
+      prompt_sha256: 530d7a5de4a0d3daea4823e4e614a235787022c2fcc075a9077bc9aaf6413e04
+    graders:
+      - type: output-matches
+        name: first-task-runs-both-assessments
+        config:
+          pattern: '(?i)^\s*Critique:[ \t]*run[ \t]*\r?\nReview:[ \t]*run\s*$'
+  - name: rpi-agent-child-assessment-defaults
+    prompt: |
+      This is a contained, response-only lifecycle-policy regression, not native
+      RPI execution. Read `policy/rpi-agent.agent.md`. The first task already
+      completed its critique and Review. A required child task is ready, and the
+      user has not requested more assessments. Select the child defaults.
+      Return exactly two lines: `Critique: run|skip` and `Review: run|skip`.
+      Do not execute phases or write files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: policy/rpi-agent.agent.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      shape: rpi-assessment-policy
+      prompt_sha256: 66d9ceef6327910cfd5ac7d0e4679186e4a47a395048a5480eb4d96f9fa1c50d
+    graders:
+      - type: output-matches
+        name: child-skips-unrequested-assessments
+        config:
+          pattern: '(?i)^\s*Critique:[ \t]*skip[ \t]*\r?\nReview:[ \t]*skip\s*$'
+  - name: rpi-agent-child-explicit-assessment-override
+    prompt: |
+      This is a contained, response-only lifecycle-policy regression, not native
+      RPI execution. Read `policy/rpi-agent.agent.md`. The first task already
+      completed both assessments. For a required child task the user explicitly
+      requests another plan critique and another Review. Select the child
+      settings. Return exactly two lines: `Critique: run|skip` and
+      `Review: run|skip`. Do not execute phases or write files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: policy/rpi-agent.agent.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      shape: rpi-assessment-policy
+      prompt_sha256: ee12bd79d01672080be94606943de3172f0c7e51fb9fcb088179f1262e703bae
+    graders:
+      - type: output-matches
+        name: explicit-child-request-runs-both
+        config:
+          pattern: '(?i)^\s*Critique:[ \t]*run[ \t]*\r?\nReview:[ \t]*run\s*$'
+  - name: rpi-agent-child-review-only-override
+    prompt: |
+      This is a contained, response-only lifecycle-policy regression, not native
+      RPI execution. Read `policy/rpi-agent.agent.md`. The first task already
+      completed both assessments. For a required child task the user requests
+      another Review but does not request another critique. Select the child
+      settings. Return exactly two lines: `Critique: run|skip` and
+      `Review: run|skip`. Do not execute phases or write files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: policy/rpi-agent.agent.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      shape: rpi-assessment-policy
+      prompt_sha256: 9ba8a9c38a75a7cba0810614248b34a3ba61b5910deeec6a1ccad77f1a9c0b87
+    graders:
+      - type: output-matches
+        name: review-request-does-not-add-critique
+        config:
+          pattern: '(?i)^\s*Critique:[ \t]*skip[ \t]*\r?\nReview:[ \t]*run\s*$'
+  - name: rpi-agent-interrupted-critique-continuation
+    prompt: |
+      This is a contained, response-only lifecycle-policy regression, not native
+      RPI execution. Read `policy/rpi-agent.agent.md` and
+      `policy/rpi-plan.SKILL.md`. In the first task, Critique Disposition is
+      started but no result exists after its first interruption. The prerequisite
+      is unchanged and the user has not skipped the critique. Classify recovery
+      and planning readiness. Return exactly two lines:
+      `Recovery: resume-existing|start-additional` and `Readiness: ready|not-ready`.
+      Do not execute phases or write files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: policy/rpi-agent.agent.md
+        - src: ../../.github/skills/rpi/rpi-plan/SKILL.md
+          dest: policy/rpi-plan.SKILL.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      shape: rpi-assessment-policy
+      prompt_sha256: 5f517b2ea2bc0c7cc060e9a32b64094c300ce663f2f4dcb870693d33967b9a1c
+    graders:
+      - type: output-matches
+        name: interrupted-critique-keeps-existing-assessment
+        config:
+          pattern: '(?i)^\s*Recovery:[ \t]*resume-existing[ \t]*\r?\nReadiness:[ \t]*not-ready\s*$'
+  - name: rpi-agent-interrupted-review-continuation
+    prompt: |
+      This is a contained, response-only lifecycle-policy regression, not native
+      RPI execution. Read `policy/rpi-agent.agent.md` and
+      `policy/rpi-review.SKILL.md`. The first task's canonical Review record is
+      started after an interruption. A stale session projection says completed,
+      but no finished Review exists. Classify recovery and which evidence
+      governs. Return exactly two lines:
+      `Recovery: resume-existing|start-additional` and `Evidence: canonical|projection`.
+      Do not execute phases or write files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+          dest: policy/rpi-agent.agent.md
+        - src: ../../.github/skills/rpi/rpi-review/SKILL.md
+          dest: policy/rpi-review.SKILL.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      shape: rpi-assessment-policy
+      prompt_sha256: 327726be39b55e046a4bfe5e61b86d544bc14a6b0d6e84c29222b2a3ac5916df
+    graders:
+      - type: output-matches
+        name: interrupted-review-keeps-canonical-record
+        config:
+          pattern: '(?i)^\s*Recovery:[ \t]*resume-existing[ \t]*\r?\nEvidence:[ \t]*canonical\s*$'

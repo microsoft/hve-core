@@ -3,7 +3,7 @@ title: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - agent
@@ -32,7 +32,7 @@ Select `RPI Agent` when one task should move through Research, Plan, Implement, 
 
 It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record so a later conversation can resume from the recorded phase.
 
-Child tasks inherit your participation preferences, session-wide critique and Review choices, and unresolved work, but own fresh phase artifacts; a skip you set for one task does not carry over. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
+Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts. They skip the plan critique and Review unless you ask for them on follow-up work. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
 
 It offers two modes:
 
@@ -43,7 +43,9 @@ It offers two modes:
 
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
 
-The plan critique and Review run by default in both modes. Ask to skip either one for a task or for the whole session, and the agent records the skip and moves to the next step: Planning finishes without the critique, and a skipped Review moves from Implement to Follow-up.
+The plan critique and Review each run once per session by default, in the first task, in both modes; plan changes and review-driven follow-ups do not start another unless you ask. Ask to skip either one, and the agent records the skip and moves to the next step: Planning finishes without the critique, and a skipped Review moves from Implement to Follow-up.
+
+You can also set the reasoning effort of research or review helper lanes, or of the plan critique's lenses, as one level or for specific lane kinds, topics, or lenses. Subagents stay optional in every phase: say how phases should use them, including not at all, and the agent records that direction and passes it to each phase. The agent passes these settings to the matching phase.
 
 Reach for a different asset when:
 
@@ -57,7 +59,7 @@ Reach for a different asset when:
 3. In manual mode, the agent walks you through each phase's artifacts and asks whether to refine the work or advance. Request the next phase in your answer, use the **Research**, **Plan**, **Implement**, and **Review** handoffs, or invoke the matching `/rpi-*` command.
 4. To switch to automatic mode, select **Full Auto** or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, choose one of the four options below. Every question includes freeform input.
 5. When a retained decision or exceptional confirmation pauses the session, answer the question; the session resumes automatically.
-6. In automatic mode, the agent continues required in-scope follow-ups from Research in a child task, honoring your decision preferences. Each child has its own plan, implementation, and Review evidence. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
+6. In automatic mode, the agent continues required in-scope follow-ups from Research in a child task, honoring your decision preferences. Each child has its own plan and implementation evidence, and runs no critique or Review unless you ask. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
 
 The opening question is "How would you like us to work on this?":
 
@@ -98,7 +100,7 @@ To continue, request Planning in your answer, run `/rpi-plan`, or select the Pla
 To delegate progression and ordinary decisions explicitly:
 
 ```text
-Use automatic mode. Make the decisions and keep iterating through full RPI loops until the storage output and its required tests are complete.
+Use automatic mode. Make the decisions and keep iterating through RPI loops until the storage output and its required tests are complete.
 ```
 
 After Review identifies a required test gap, the agent records the decision and continues without a follow-up question:
@@ -110,8 +112,9 @@ After Review identifies a required test gap, the agent records the decision and 
 Selected required follow-up:
 1. Add integration tests against the storage emulator (required by the acceptance criteria; RV-001).
 
-Starting child task blob-storage-integration-tests from Research, reusing the existing storage findings.
+Starting child task blob-storage-integration-tests from Research, reusing the existing storage findings; the session's one critique and Review have run, so the child skips both.
 Optional retry-helper cleanup remains unselected.
 ```
 
-Once required work has passing validation and completed Review evidence applicable to the current implementation, the agent stops the automatic session and reports completion. A child's changes must account for affected earlier acceptance checks. A repeated unresolved finding without measurable progress or a materially different evidence-backed corrective approach pauses as a no-progress blocker; file changes alone do not justify another loop.
+Once required work has passing validation, with the session's Review for the first task and implementation evidence for child work, the agent stops the automatic session and reports completion, naming any child changes that were validated but not reviewed.
+A child's changes must account for affected earlier acceptance checks. A repeated unresolved finding without measurable progress or a materially different evidence-backed corrective approach pauses as a no-progress blocker; file changes alone do not justify another loop.

@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding and communication guidelines for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-15
+ms.date: 2026-10-26
 ms.topic: reference
 keywords:
   - copilot
@@ -67,11 +67,11 @@ plugin alone does not prove the rule was included in a particular chat request.
 
 ### Git and Workflow
 
-| File                                                                               | Applies To                   | Purpose                              |
-|------------------------------------------------------------------------------------|------------------------------|--------------------------------------|
-| [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md) | Commit actions               | Conventional commit message format   |
-| [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)           | Git operations               | Merge, rebase, and conflict handling |
-| [pull-request.instructions.md](pull-request.instructions.md)                       | `**/.copilot-tracking/pr/**` | HVE Core pull request conventions    |
+| File                                                                               | Applies To                   | Purpose                                                                           |
+|------------------------------------------------------------------------------------|------------------------------|-----------------------------------------------------------------------------------|
+| [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md) | Commit actions               | Conventional commit message format                                                |
+| [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)           | Git operations               | Integration, ordinary-push authorization, account changes, and execution evidence |
+| [pull-request.instructions.md](pull-request.instructions.md)                       | `**/.copilot-tracking/pr/**` | HVE Core pull request conventions                                                 |
 
 ### Repository Workflow
 

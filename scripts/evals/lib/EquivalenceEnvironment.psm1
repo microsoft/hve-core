@@ -342,6 +342,52 @@ function Get-AgentDeclaredDependency {
     }
 }
 
+function Get-AgentSurfaceSkill {
+    <#
+    .SYNOPSIS
+        Returns the skill directories materialized for an agent's customization surface.
+    .DESCRIPTION
+        The surface carries the skills the agent references and, transitively, the skills
+        its declared subagents reference, because a subagent's skills are part of what the
+        parent agent delivers. `New-CustomizedEnvironment` copies exactly these
+        directories, and the change gate in `Get-ChangedAIArtifact.ps1` checks changed
+        paths against the same set, so the gate and the harness cannot disagree about
+        which skills an agent depends on.
+    .OUTPUTS
+        [string[]] Workspace-relative skill directory paths, deduplicated and sorted.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root that references are resolved against.
+    .PARAMETER AgentRelativePath
+        Workspace-relative path to the agent file whose surface is resolved.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$AgentRelativePath
+    )
+
+    $Declared = Get-AgentDeclaredDependency -RepoRoot $RepoRoot -AgentRelativePath $AgentRelativePath
+
+    $SkillDirs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($Relative in (Get-AgentSkillReference -RepoRoot $RepoRoot -AgentFilePath $AgentRelativePath)) {
+        [void]$SkillDirs.Add($Relative)
+    }
+    foreach ($SubagentRelative in @($Declared.Subagents)) {
+        if ([string]::IsNullOrWhiteSpace($SubagentRelative)) { continue }
+        foreach ($Relative in (Get-AgentSkillReference -RepoRoot $RepoRoot -AgentFilePath ([string]$SubagentRelative))) {
+            [void]$SkillDirs.Add($Relative)
+        }
+    }
+
+    return @($SkillDirs) | Sort-Object
+}
+
 function Copy-VerifiedRepositoryFile {
     <#
     .SYNOPSIS
@@ -468,20 +514,9 @@ function New-CustomizedEnvironment {
         $Applied.Add($CopilotInstructions)
     }
 
-    $SkillDirs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    foreach ($Relative in (Get-AgentSkillReference -RepoRoot $RepoRoot -AgentFilePath $AgentRelative)) {
-        [void]$SkillDirs.Add($Relative)
-    }
     # A subagent's skills are part of the surface the parent agent delivers, so they
     # are resolved transitively rather than left to the agent body alone.
-    foreach ($SubagentRelative in @($Declared.Subagents)) {
-        if ([string]::IsNullOrWhiteSpace($SubagentRelative)) { continue }
-        foreach ($Relative in (Get-AgentSkillReference -RepoRoot $RepoRoot -AgentFilePath ([string]$SubagentRelative))) {
-            [void]$SkillDirs.Add($Relative)
-        }
-    }
-
-    foreach ($Relative in ($SkillDirs | Sort-Object)) {
+    foreach ($Relative in (Get-AgentSurfaceSkill -RepoRoot $RepoRoot -AgentRelativePath $AgentRelative)) {
         $Source = Join-Path $RepoRoot $Relative
         if (-not (Test-Path -LiteralPath $Source -PathType Container)) { continue }
         $null = Assert-ContainedRepositoryPath -Path $Source -ApprovedRoot $RepoRoot -Because 'skill directory'
@@ -723,6 +758,7 @@ function Save-BaselineCacheEntry {
 Export-ModuleMember -Function @(
     'Get-AgentSkillReference',
     'Get-AgentDeclaredDependency',
+    'Get-AgentSurfaceSkill',
     'Assert-ContainedRepositoryPath',
     'Resolve-AgentScopePattern',
     'New-CustomizedEnvironment',

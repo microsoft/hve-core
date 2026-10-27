@@ -6,8 +6,27 @@ on:
     events: [pull_request_comment, pull_request_review_comment]
   roles: [admin, maintainer, write]
   reaction: eyes
+  # The pre-activation job needs no token scopes; declaring that explicitly
+  # keeps scanners from reading the empty workflow default as unset.
+  permissions:
+    contents: none
 
-engine: copilot
+engine:
+  id: copilot
+  # Pinned Copilot CLI; scripts/security/tool-checksums.json records it.
+  version: "1.0.87"
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
+# runtimes.node opts the agent into Node registry and CDN domains; the agent
+# installs no packages, so the Node ecosystem stays blocked.
+network:
+  allowed:
+    - defaults
+  blocked:
+    - node
 timeout-minutes: 15
 
 imports:
@@ -32,6 +51,8 @@ permissions:
   actions: read
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   create-pull-request-review-comment:
     max: 20
   submit-pull-request-review:
