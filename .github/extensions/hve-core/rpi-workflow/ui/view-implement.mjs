@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
+import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, idTag, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
 import { decisionCard, marginNote, md, recordRow, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
 
@@ -61,10 +61,10 @@ function boardCard(ctx, task) {
         type: 'button', class: ['board-card', selected ? 'is-selected' : null, current ? 'is-current' : null], 'aria-pressed': String(selected), dataset: { item: task.id },
         onclick: () => ctx.act.selectTask(task.id),
     },
-    h('span', { class: 'board-card-head' }, h('span', { class: 'id-chip', text: task.id }), current ? h('span', { class: 'badge tone-agent' }, icon('sparkle'), 'Agent') : null),
+    h('span', { class: 'board-card-head' }, idTag(task.id, 'file'), current ? h('span', { class: 'badge tone-agent' }, icon('sparkle'), 'Agent') : null),
     h('span', { class: 'board-card-title', text: task.title }),
     h('span', { class: 'board-card-meta' },
-        files.size ? h('span', { class: 'meta' }, icon('file'), plural(files.size, 'file')) : null,
+        files.size ? h('span', { class: 'meta' }, icon('diff'), plural(files.size, 'file')) : null,
         validationSummary(changes),
         decision && decision.status === 'needs-input' ? h('span', { class: 'badge tone-attention' }, icon('hand'), `Waiting on ${decision.id}`) : null)));
 }
@@ -80,8 +80,8 @@ function taskDetail(ctx, task) {
         h('p', { class: 'detail-head' }, h('span', { class: 'id-chip', text: task.id }), h('strong', { text: task.title }), badge(TASK_STATUS[task.status])),
         h('p', null, h('strong', { text: 'Goal: ' }), task.goals),
         task.guidance?.length ? h('div', { class: 'guidance' }, h('p', { class: 'meta' }, icon('pencil'), 'Guidance'), h('ul', null, task.guidance.map((line) => h('li', { text: line })))) : null,
-        changes.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Changes' }), changes.map((change) => idChip(change.id, ctx.act.navigate, { title: change.title }))) : null,
-        discoveries.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Discoveries' }), discoveries.map((item) => idChip(item.id, ctx.act.navigate, { title: item.title }))) : null,
+        changes.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Changes' }), changes.map((change) => idChip(change.id, ctx.act.navigate))) : null,
+        discoveries.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Discoveries' }), discoveries.map((item) => idChip(item.id, ctx.act.navigate))) : null,
         traceStrip(ctx, task.id),
         h('div', { class: 'btn-row' },
             button('Open in plan', { iconName: 'list', onClick: () => ctx.act.navigate(task.id, 'plan') }),

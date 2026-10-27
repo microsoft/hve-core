@@ -45,10 +45,12 @@ describe('answers and overrides in the user\'s words', () => {
         assert.equal(decisionOf(withdrawn, 'D2').status, 'needs-input');
     });
 
-    it('still requires one of the options when a decision lists them', () => {
+    it('takes an answer in the user\'s words even when the decision lists options, but not an empty one', () => {
         const { session: base } = rootSession();
         const { session, result } = upsertDecision(base, { owner: 'user', title: 'Pick a basemap', question: 'Which basemap?', options: [{ label: 'Terrain' }, { label: 'Satellite' }] }, NOW);
-        assert.equal(errorCode(() => createFeedback(session, { kind: 'answer', target: { id: result.id }, text: 'Something else' }, NOW)), 'invalid_input');
+        assert.equal(errorCode(() => createFeedback(session, { kind: 'answer', target: { id: result.id } }, NOW)), 'invalid_input', 'neither an option nor words');
+        const own = createFeedback(session, { kind: 'answer', target: { id: result.id }, text: 'A hybrid of both' }, NOW);
+        assert.deepEqual([own.result.optionId, own.result.text, decisionOf(own.session, result.id).status, decisionOf(own.session, result.id).chosen], [undefined, 'A hybrid of both', 'answered', undefined]);
     });
 
     it('overrides an agent decision without alternatives, restores it on withdrawal, and resolves it when applied', () => {
@@ -163,7 +165,7 @@ describe('views of imported sessions', () => {
         assert.match(rendered.research.steer, /1 recorded decision/);
         assert.match(rendered.research.steer, /2 recorded decisions/);
         assert.doesNotMatch(rendered.research.steer, /class="steer-card"/);
-        assert.match(rendered.research.steer, /class="steer-link"[^>]*>.*?<span class="id-chip">D2<\/span> Which region ships first\?/);
+        assert.match(rendered.research.steer, /class="steer-link"[^>]*>.*?<span class="id-chip">D2<svg[^>]*><use href="#i-go-to"><\/use><\/svg><\/span> Which region ships first\?/);
     });
 
     it('shows each phase\'s unmodeled sections in a record row', async () => {
@@ -181,12 +183,14 @@ describe('views of imported sessions', () => {
         for (const record of session.records.research) assert.ok(rendered.research.html.includes(record.heading.replace(/&/g, '&amp;')), record.heading);
     });
 
-    it('offers Show this task for the other tasks in the lineage', async () => {
+    it('lists the session\'s loops as a tree and offers Show for the other tasks', async () => {
         const rendered = await renderAll(childSession().session);
-        assert.match(rendered.followup.html, /aria-label="Show this task: Offline trail maps"/);
-        assert.doesNotMatch(rendered.followup.html, /Show this task: Offline trail maps review fixes/);
+        assert.match(rendered.followup.html, /aria-label="Show Offline trail maps"/);
+        assert.doesNotMatch(rendered.followup.html, /aria-label="Show Offline trail maps review fixes"/);
+        assert.match(rendered.followup.html, /<li class="tree-task"><div class="tree-card">.*Offline trail maps<\/strong>.*<ol class="session-tree-level"><li class="tree-task is-shown">/s, 'the child nests under its parent and is marked as shown');
+        assert.match(rendered.followup.html, /Its state files are in 2026-01-15\/trail-maps\./);
         const sample = await renderAll(buildScenario('followup'));
-        assert.doesNotMatch(sample.followup.html, /Show this task/);
+        assert.doesNotMatch(sample.followup.html, /aria-label="Show /);
     });
 
     it('never prints a missing value in any view, for full, child, and empty tasks', async () => {

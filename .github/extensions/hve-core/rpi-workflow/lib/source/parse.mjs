@@ -39,6 +39,10 @@ const KINDS = [
 ];
 
 const EVIDENCE_ID = /^[CW]\d{1,3}$/;
+const DECISION_ID = /^D\d{1,3}$/;
+const DECISION_BLOCK_RE = /^(D\d{1,3}):\s*(.+)$/;
+const OPTION_RE = /^([A-Z])\s*(\([Rr]ecommended\))?\s*:\s*([\s\S]+)$/;
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)+$/;
 const QUESTION_ID = /^Q\d{1,3}$/;
 const TASK_ID = /^P\d{2}-T\d{2}$/;
 const PLAN_ID = /^(?:P\d{2}(?:-T\d{2})?|FR-\d{3}|NFR-\d{3}|PC-\d{3}|CH-\d{3}|DS-\d{3})$/;
@@ -76,12 +80,118 @@ function others(doc, modeled) {
         .filter((record) => record.markdown.trim() !== '');
 }
 
+/** IDs as a readable list: "U1, U2, and P3". */
+function listIds(ids) {
+    const unique = [...new Set(ids)];
+    return unique.length < 3 ? unique.join(' and ') : `${unique.slice(0, -1).join(', ')}, and ${unique.at(-1)}`;
+}
+
+const oneLine = (text) => String(text).replace(/\s*\n\s*/g, ' ').trim();
+const hasTable = (block) => /^\s*\|.*\|\s*$/m.test(block);
+
+/** List items of one list chunk; a line that does not start an item continues the one before it. */
+function splitItems(chunk) {
+    const items = [];
+    for (const line of chunk.split('\n')) {
+        const start = /^\s*[*-]\s+(.*)$/.exec(line);
+        if (start) items.push(start[1]);
+        else if (items.length) items[items.length - 1] += `\n${line}`;
+    }
+    return items.map(oneLine);
+}
+
+/**
+ * Decision detail blocks below `section`: headings titled with a D number and a colon. The
+ * first paragraph is the question, list items such as `A (recommended): text` are the
+ * options, and other paragraphs are context. Problems become warnings.
+ *
+ * @param {any} doc
+ * @param {any} section The heading that holds the decision table.
+ * @param {string[]} warnings
+ * @returns {Map<string, { title: string, question: string, options: { id: string, label: string, recommended: boolean }[], context: string }>}
+ */
+function decisionBlocks(doc, section, warnings) {
+    const blocks = new Map();
+    if (!section) return blocks;
+    for (const heading of doc.headings.filter((item) => item.line > section.line && item.line < section.end && item.level > section.level)) {
+        const match = DECISION_BLOCK_RE.exec(plainText(heading.title));
+        if (!match) continue;
+        const [, id, title] = match;
+        if (blocks.has(id)) {
+            warnings.push(`Decision ${id} has more than one block; the canvas uses the first.`);
+            continue;
+        }
+        let question = '';
+        const options = [];
+        const context = [];
+        const unreadable = [];
+        for (const chunk of bodyOf(doc, heading, { own: true }).split(/\n\s*\n/).map((item) => item.trim()).filter(Boolean)) {
+            if (/^[*-]\s+/.test(chunk)) {
+                for (const item of splitItems(chunk)) {
+                    const option = OPTION_RE.exec(item);
+                    if (!option) unreadable.push(item);
+                    else if (options.some((existing) => existing.id === option[1])) unreadable.push(item);
+                    else options.push({ id: option[1], label: plainText(oneLine(option[3])), recommended: Boolean(option[2]) });
+                }
+            } else if (!question && !options.length) {
+                question = plainText(oneLine(chunk));
+            } else {
+                context.push(chunk);
+            }
+        }
+        if (unreadable.length) warnings.push(`Decision ${id}: ${unreadable.length === 1 ? 'one list item is' : `${unreadable.length} list items are`} not an option like "A: text" with a new letter, so the card leaves ${unreadable.length === 1 ? 'it' : 'them'} out.`);
+        if (!options.length) warnings.push(`Decision ${id}: the block lists no options like "A: text", so the card asks for an answer in your own words.`);
+        blocks.set(id, { title: plainText(title), question, options, context: context.join('\n\n') });
+    }
+    return blocks;
+}
+
+/**
+ * Decision rows of a decision section with their blocks, reporting rows the canvas does not
+ * show, blocks without a row, and a table it cannot read.
+ *
+ * @param {any} doc
+ * @param {any} section The heading that holds the decision table.
+ * @param {string[]} warnings
+ * @param {(row: Record<string, string>) => any} toRow
+ */
+function decisionRows(doc, section, warnings, toRow) {
+    if (!section) return [];
+    const table = tableWith(bodyOf(doc, section), ['Group', 'Decision or feedback item']);
+    const blocks = decisionBlocks(doc, section, warnings);
+    // Only the section's own text counts, so a table inside a decision block is not mistaken for the decision table.
+    if (!table && hasTable(bodyOf(doc, section, { own: true }))) warnings.push('The decision table has no Group and Decision or feedback item columns, so the canvas shows none of its decisions.');
+    const rows = table?.rows ?? [];
+    const skipped = rows.filter((row) => !DECISION_ID.test(row.group)).map((row) => row.group || 'blank');
+    if (skipped.length) warnings.push(`Decision ${skipped.length === 1 ? 'row' : 'rows'} ${listIds(skipped)} ${skipped.length === 1 ? 'is' : 'are'} not numbered D1, D2, and so on, so the canvas does not show ${skipped.length === 1 ? 'it' : 'them'}.`);
+    const decisions = rows.filter((row) => DECISION_ID.test(row.group)).map((row) => ({ ...toRow(row), block: blocks.get(row.group) ?? null }));
+    const orphans = [...blocks.keys()].filter((id) => !decisions.some((decision) => decision.id === id));
+    if (orphans.length) warnings.push(`${orphans.length === 1 ? 'The block' : 'The blocks'} for ${listIds(orphans)} ${orphans.length === 1 ? 'has' : 'have'} no row in the decision table, so the canvas does not show ${orphans.length === 1 ? 'it' : 'them'}.`);
+    return decisions;
+}
+
 const str = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
 const objects = (value) => (Array.isArray(value) ? value.filter((item) => item && typeof item === 'object' && !Array.isArray(item)) : []);
+const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+/**
+ * A task link from `parent_task` or a `child_tasks` entry: task ID, slug, and the
+ * workspace-relative state path, or null when the entry names neither a task nor a path.
+ *
+ * @param {unknown} value
+ */
+function taskLink(value) {
+    if (!isObject(value)) return null;
+    const link = /** @type {Record<string, unknown>} */ (value);
+    const taskId = str(link.task_id);
+    const statePath = str(link.state_path);
+    if (!taskId && !statePath) return null;
+    return { taskId, taskSlug: str(link.task_slug) ?? taskId, statePath };
+}
 
 /**
  * Normalizes a parsed state file. Unknown keys are ignored and missing keys come back
- * empty, so older or variant state files still load.
+ * empty, so older or variant state files still load. Malformed task links become warnings.
  *
  * @param {unknown} raw Parsed JSON.
  */
@@ -89,7 +199,18 @@ export function parseState(raw) {
     const doc = raw && typeof raw === 'object' && !Array.isArray(raw) ? /** @type {Record<string, any>} */ (raw) : {};
     const warnings = [];
     const paths = doc.artifact_paths && typeof doc.artifact_paths === 'object' ? doc.artifact_paths : {};
-    const parent = doc.parent_task && typeof doc.parent_task === 'object' ? { taskId: str(doc.parent_task.task_id), taskSlug: str(doc.parent_task.task_slug) } : null;
+    const parent = taskLink(doc.parent_task);
+    if (doc.parent_task !== undefined && doc.parent_task !== null && !parent) warnings.push('parent_task names no task_id or state_path.');
+    const children = [];
+    if (doc.child_tasks !== undefined && doc.child_tasks !== null && !Array.isArray(doc.child_tasks)) {
+        warnings.push('child_tasks is not a list.');
+    } else {
+        (doc.child_tasks ?? []).forEach((entry, index) => {
+            const link = taskLink(entry);
+            if (link) children.push(link);
+            else warnings.push(`child_tasks entry ${index + 1} names no task_id or state_path.`);
+        });
+    }
     const ranked = objects(doc.prioritized_follow_ups);
     const followUps = (ranked.length ? ranked : objects(doc.follow_ups)).map((item, index) => ({
         rank: Number.isInteger(item.rank) ? item.rank : index + 1,
@@ -101,7 +222,9 @@ export function parseState(raw) {
     return {
         taskId: str(doc.task_id),
         taskSlug: str(doc.task_slug) ?? str(doc.task_id),
-        parent: parent?.taskId ? parent : null,
+        sessionName: str(doc.session_name),
+        parent,
+        children,
         mode: str(doc.mode),
         activePhase: str(doc.active_phase),
         status: str(doc.status),
@@ -156,9 +279,7 @@ export function parseResearch(text) {
     const questions = (tableWith(bodyOfH2(doc, 'Scope and Questions'), ['ID', 'Question'])?.rows ?? [])
         .filter((row) => QUESTION_ID.test(row.id))
         .map((row) => ({ id: row.id, text: row.question, source: plainText(row.source), status: plainText(row.status) }));
-    const decisions = (tableWith(bodyOfH2(doc, 'Decisions and Feedback'), ['Group', 'Decision or feedback item'])?.rows ?? [])
-        .filter((row) => /^D\d{1,3}$/.test(row.group))
-        .map((row) => ({ id: row.group, item: row['decision or feedback item'], status: plainText(row.status), owner: plainText(row.owner), rationale: row['rationale or input needed'] ?? '', evidence: idsIn(row.evidence, EVIDENCE_ID), impact: row['impact of answer'] ?? '' }));
+    const decisions = decisionRows(doc, h2(doc, 'Decisions and Feedback'), warnings, (row) => ({ id: row.group, item: row['decision or feedback item'], status: plainText(row.status), owner: plainText(row.owner), rationale: row['rationale or input needed'] ?? '', evidence: idsIn(row.evidence, EVIDENCE_ID), impact: row['impact of answer'] ?? '' }));
     const risks = (tableWith(bodyOfH2(doc, 'Risks and Open Questions'), ['Priority', 'Type'])?.rows ?? []).map((row) => ({
         priority: plainText(row.priority),
         type: plainText(row.type),
@@ -168,12 +289,18 @@ export function parseResearch(text) {
         owner: plainText(row.owner),
     }));
     const readinessRow = (tableWith(bodyOfH2(doc, 'Planning Readiness and Next Step'), ['Field', 'Record'])?.rows ?? []).find((row) => labelKey(row.field) === 'planning readiness');
-    const evidence = (tableWith(text, ['ID', 'Claim or finding'])?.rows ?? [])
+    const evidenceTable = tableWith(text, ['ID', 'Claim or finding']);
+    const logSection = findSection(doc, 'Evidence Log');
+    if (!evidenceTable && logSection && hasTable(bodyOf(doc, logSection))) warnings.push('The evidence log has no ID and Claim or finding columns, so the canvas cannot show its sources.');
+    const title = afterColon(titleOf(doc));
+    if (!title) warnings.push('The file has no title heading; start it with "# Task Research:" and a readable task name.');
+    else if (SLUG_RE.test(title)) warnings.push(`The title is the slug "${title}"; a readable task name, as the research template asks, reads better in the canvas.`);
+    const evidence = (evidenceTable?.rows ?? [])
         .filter((row) => EVIDENCE_ID.test(row.id))
         .map((row) => ({ id: row.id, claim: row['claim or finding'] ?? '', source: row['source or location'] ?? '', retrieved: row['retrieved and version'] ?? '', tool: plainText(row.tool), confidence: plainText(row.confidence), notes: row.notes ?? '' }));
     return {
         kind: 'research',
-        title: afterColon(titleOf(doc)),
+        title,
         summary,
         unknowns: bodyOfH2(doc, 'What You May Not Know'),
         findings,
@@ -253,7 +380,6 @@ export function parsePlan(text) {
     };
     const phases = planPhases(doc, warnings);
     if (!phases.length) warnings.push('The plan has no phases.');
-    const decisionsBlock = bodyOfH2(doc, 'User Decisions and Requirements');
     const directionSection = h2(doc, 'User Decisions and Requirements');
     const direction = directionSection ? findSection(doc, 'Confirmed User Direction', { level: 3, within: directionSection }) : null;
     const readinessRows = tableWith(bodyOfH2(doc, 'Planning Readiness and Next Step'), ['Field', 'Record'])?.rows ?? [];
@@ -270,9 +396,7 @@ export function parsePlan(text) {
         after: diagram('After'),
         phases,
         requirements: [...requirementsFrom(bodyOfH2(doc, 'Functional Requirements'), 'FR'), ...requirementsFrom(bodyOfH2(doc, 'Non-Functional Requirements'), 'NFR')],
-        decisions: (tableWith(decisionsBlock, ['Group', 'Decision or feedback item'])?.rows ?? [])
-            .filter((row) => /^D\d{1,3}$/.test(row.group))
-            .map((row) => ({ id: row.group, item: row['decision or feedback item'], status: plainText(row.status), owner: plainText(row.owner), rationale: row['rationale or input needed'] ?? '', evidence: idsIn(row.evidence), impact: row['planning impact'] ?? '' })),
+        decisions: decisionRows(doc, (directionSection ? findSection(doc, 'Planning Decisions and Feedback', { within: directionSection }) : null) ?? directionSection, warnings, (row) => ({ id: row.group, item: row['decision or feedback item'], status: plainText(row.status), owner: plainText(row.owner), rationale: row['rationale or input needed'] ?? '', evidence: idsIn(row.evidence), impact: row['planning impact'] ?? '' })),
         direction: direction ? bodyOf(doc, direction) : '',
         readiness: readiness ? readiness.record : null,
         critique: {

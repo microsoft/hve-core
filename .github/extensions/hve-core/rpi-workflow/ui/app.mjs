@@ -1,8 +1,13 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, clear, decisionAlias, h, icon, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { disclosure, filePreview, hasMarginHome, pendingItems, sendSheet, steerPanel, workspaceEditorUri } from './components.mjs';
+import { badge, button, clear, decisionAlias, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
+import { disclosure, filePreview, hasMarginHome, sendItems, sendSheet, sessionPending, sessionTree, steerPanel } from './components.mjs';
+import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
+import { legendContent } from './legend.mjs';
+import { createHistory, placeLabel } from './history.mjs';
+import { kindOf } from './ids.mjs';
+import { installPreviews } from './previews.mjs';
 import * as followupView from './view-followup.mjs';
 import * as implementView from './view-implement.mjs';
 import * as planView from './view-plan.mjs';
@@ -26,6 +31,10 @@ const state = {
     live: 'connecting',
     stream: null,
     pollTimer: null,
+    /** Visible notes in the status area: failures and where following moved the canvas. */
+    notes: [],
+    /** Sessions in the workspace, loaded when the session menu opens. */
+    sessions: { loading: false, error: null, list: null, skipped: [] },
     ui: {
         phase: null,
         highlight: null,
@@ -53,8 +62,11 @@ const state = {
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** This canvas's key, from the address the host opened; every API call carries it. */
+const KEY = new URLSearchParams(location.search).get('k') ?? '';
+
 async function api(path, body) {
-    const init = body === undefined ? { headers: { accept: 'application/json' } } : { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body) };
+    const init = body === undefined ? { headers: { accept: 'application/json', 'x-rw-key': KEY } } : { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json', 'x-rw-key': KEY }, body: JSON.stringify(body) };
     const res = await fetch(path, init);
     const json = await res.json().catch(() => null);
     if (!res.ok) {
@@ -72,6 +84,54 @@ function announce(text) {
     window.setTimeout(() => {
         region.textContent = text;
     }, 40);
+}
+
+let noteSeq = 0;
+/** ID previews; set once the page is wired. */
+let previews = null;
+/** Places the reader moved through, across phases and tasks. */
+const places = createHistory();
+/** True while Back or Forward moves the view, so that move is not recorded. */
+let restoringPlace = false;
+/** A remembered place in another task, shown once that task loads. */
+let pendingPlace = null;
+const MAX_NOTES = 3;
+
+/** Shows a failure in the status area until dismissed, and announces it; focus stays where it is. */
+function reportFailure(text) {
+    state.notes = [...state.notes.filter((note) => note.text !== text), { id: `note-${++noteSeq}`, tone: 'danger', icon: 'alert', text }].slice(-MAX_NOTES);
+    renderStatus();
+    announce(text);
+}
+
+/** Says where following moved the canvas; replaces the previous move note. */
+function noteMoved(moved) {
+    const text = `Moved to ${moved.title}, the session's running loop. The canvas follows each new loop the agent starts.`;
+    state.notes = [...state.notes.filter((note) => note.kind !== 'moved'), { id: `note-${++noteSeq}`, kind: 'moved', tone: 'accent', icon: 'arrow-right', text }].slice(-MAX_NOTES);
+    renderStatus();
+    announce(`Moved to ${moved.title}, the session's running loop.`);
+}
+
+function dismissNote(id) {
+    const area = $('statusArea');
+    const hadFocus = area.contains(document.activeElement);
+    const index = state.notes.findIndex((note) => note.id === id);
+    state.notes = state.notes.filter((note) => note.id !== id);
+    renderStatus();
+    if (!hadFocus) return;
+    const next = state.notes[Math.min(index, state.notes.length - 1)];
+    const button = next ? area.querySelector(`[data-key="dismiss-${CSS.escape(next.id)}"]`) : null;
+    if (button) button.focus({ preventScroll: true });
+    else focusQuietly($('document'));
+}
+
+function renderStatus() {
+    const area = $('statusArea');
+    area.hidden = state.notes.length === 0;
+    area.replaceChildren(...state.notes.map((note) => h('div', { class: ['status-note', 'notice', `tone-${note.tone}`], dataset: { note: note.id } },
+        icon(note.icon, { className: 'status-note-icon' }),
+        h('p', { class: 'status-note-text', text: note.text }),
+        button('Dismiss', { iconName: 'x', hideLabel: true, title: 'Dismiss this note', attrs: { 'data-key': `dismiss-${note.id}` }, onClick: () => dismissNote(note.id) }))));
 }
 
 // Lookup and navigation
@@ -112,6 +172,18 @@ function resolve(ref) {
     return null;
 }
 
+/** Where the reader is: the task, phase, the item last moved to, and the scroll position. */
+function here() {
+    const session = state.data?.session;
+    if (!session || !state.ui.phase) return null;
+    return { taskId: session.task.id, taskTitle: session.task.title, phase: state.ui.phase, id: state.ui.place?.id ?? null, label: state.ui.place?.label, scroll: $('document').scrollTop };
+}
+
+/** Records a move in the history unless Back or Forward is making it. */
+function remember(from, to) {
+    if (!restoringPlace && from && to) places.move(from, to);
+}
+
 function setHash() {
     history.replaceState(null, '', `#phase=${state.ui.phase}`);
 }
@@ -123,6 +195,12 @@ function phaseFromHash() {
 
 function setPhase(phase) {
     if (!PHASES.includes(phase)) return;
+    previews?.closeAll();
+    if (phase !== state.ui.phase) {
+        const from = here();
+        remember(from, from && { ...from, phase, id: null, label: undefined });
+    }
+    state.ui.place = null;
     state.ui.phase = phase;
     state.ui.highlight = null;
     state.ui.navFilter = '';
@@ -157,10 +235,14 @@ function targetElement(id) {
 }
 
 function navigate(ref, phaseOverride, options = {}) {
+    previews?.closeAll();
     const id = aliasOf(ref);
     const target = resolve(id);
     const phase = phaseOverride ?? target?.phase ?? state.ui.phase;
-    if (/^[CW]\d{1,2}$/.test(id)) state.ui.recordOpen = true;
+    const from = here();
+    const label = kindOf(id) ? find(id)?.ref ?? ref : find(id)?.title ?? ref;
+    remember(from, from && { ...from, phase, id, label });
+    if (/^[CW]\d{1,3}$/.test(id)) state.ui.recordOpen = true;
     if (/^P\d{2}-T\d{2}$/.test(id)) {
         if (phase === 'plan') state.ui.expanded.add(id);
         if (phase === 'implement') state.ui.selectedTask = id;
@@ -168,6 +250,7 @@ function navigate(ref, phaseOverride, options = {}) {
     closeDrawer(false);
     state.ui.phase = phase;
     state.ui.highlight = id;
+    state.ui.place = { id, label };
     setHash();
     render();
     window.requestAnimationFrame(() => {
@@ -187,6 +270,47 @@ function navigate(ref, phaseOverride, options = {}) {
         }, 1200);
         if (options.agent) announce(`The agent pointed you to ${ref}${find(id)?.title ? `, ${find(id).title}` : ''}.`);
     });
+}
+
+/** Shows a remembered place without recording the move. */
+function applyPlace(place) {
+    restoringPlace = true;
+    try {
+        if (place.id && find(place.id)) {
+            navigate(place.id, place.phase);
+        } else {
+            setPhase(place.phase);
+            if (place.id) announce(`${place.label ?? place.id} is no longer in ${PHASE_META[place.phase]?.label ?? place.phase}.`);
+            else $('document').scrollTop = place.scroll;
+        }
+    } finally {
+        restoringPlace = false;
+    }
+}
+
+/** Moves Back or Forward through the history, showing the place's task first when it is another one. */
+async function travel(direction) {
+    const current = here();
+    if (!current) return;
+    const place = direction === 'back' ? places.back(current) : places.forward(current);
+    if (!place) {
+        announce(direction === 'back' ? 'There is no earlier place to go back to.' : 'There is no later place to go forward to.');
+        return;
+    }
+    if (place.taskId === current.taskId) {
+        applyPlace(place);
+        return;
+    }
+    pendingPlace = place;
+    try {
+        await api('/api/task', { taskId: place.taskId });
+        await refresh();
+    } catch (error) {
+        pendingPlace = null;
+        places.drop(place);
+        reportFailure(`${place.taskTitle} is no longer available: ${error.message}`);
+        render();
+    }
 }
 
 // Data sync
@@ -225,6 +349,7 @@ const taskUi = () => ({
     overrides: new Set(),
     revealed: new Set(),
     selectedTask: null,
+    place: null,
     diagramView: 'after',
     diagramPhase: null,
     recordOpen: false,
@@ -252,6 +377,7 @@ async function refresh() {
         const next = await api('/api/state');
         const previous = state.data;
         const switched = Boolean(previous) && previous.session.id !== next.session.id;
+        const leaving = switched ? here() : null;
         const scroll = switched ? switchTaskUi(previous.session.id, next) : null;
         state.data = next;
         state.error = null;
@@ -265,7 +391,13 @@ async function refresh() {
         if (switched) announce(`Showing ${next.session.task.title}, ${PHASE_META[state.ui.phase].label}.`);
         else announceChanges(previous, next);
         render();
-        if (switched) $('document').scrollTop = scroll;
+        if (switched) {
+            $('document').scrollTop = scroll;
+            const pending = pendingPlace;
+            pendingPlace = null;
+            if (pending?.taskId === next.session.task.id) applyPlace(pending);
+            else remember(leaving, here());
+        }
         if (state.ui.revealed.size) window.setTimeout(() => state.ui.revealed.clear(), 900);
     } catch (error) {
         state.error = error;
@@ -291,7 +423,7 @@ function connect() {
         setLive('paused');
         return;
     }
-    const stream = new EventSource('/api/events');
+    const stream = new EventSource(`/api/events?k=${encodeURIComponent(KEY)}`);
     state.stream = stream;
     stream.addEventListener('open', () => {
         const wasReconnecting = state.live === 'reconnecting';
@@ -303,7 +435,11 @@ function connect() {
         const { revision } = JSON.parse(event.data);
         if (!state.data || revision !== state.data.revision) refresh();
     });
-    stream.addEventListener('reload', () => refresh());
+    stream.addEventListener('reload', (event) => {
+        const data = event.data ? JSON.parse(event.data) : {};
+        if (data.moved) noteMoved(data.moved);
+        refresh();
+    });
     stream.addEventListener('preferences', (event) => applyPreferences(JSON.parse(event.data)));
     stream.addEventListener('focus', (event) => {
         const data = JSON.parse(event.data);
@@ -333,7 +469,7 @@ const act = {
             await refresh();
             targetElement(decisionId)?.focus({ preventScroll: true });
         } catch (error) {
-            announce(error.message);
+            reportFailure(`Not saved: ${error.message}`);
         }
     },
     async transition(id, to, extra = {}) {
@@ -342,8 +478,10 @@ const act = {
             state.ui.corrections.delete(id);
             announce(to === 'applied' ? 'Marked as understood.' : to === 'corrected' ? 'Correction saved. It waits for Send to agent.' : to === 'dismissed' ? 'Removed. It will not be sent.' : 'Updated.');
             await refresh();
+            return true;
         } catch (error) {
-            announce(error.message);
+            reportFailure(`Not updated: ${error.message}`);
+            return false;
         }
     },
     /** Takes back a queued answer, override, or correction and reopens it prefilled. */
@@ -365,15 +503,37 @@ const act = {
         const submit = document.querySelector(`[data-key="submit-${CSS.escape(id)}"][data-needs-text="true"]`);
         if (submit) submit.disabled = !draft.note?.trim();
     },
-    /** Shows another task of this RPI session: its parent or one of its child loops. */
-    async showTask(taskId) {
+    /** Shows another task of this RPI session, by task ID or `{ statePath }`. */
+    async showTask(ref) {
         const before = state.data?.session.id;
         try {
-            await api('/api/task', { taskId });
+            await api('/api/task', typeof ref === 'string' ? { taskId: ref } : { statePath: ref.statePath });
             await refresh();
             if (state.data.session.id !== before) focusQuietly($('taskTitle'));
         } catch (error) {
-            announce(error.message);
+            reportFailure(`Could not show that task: ${error.message}`);
+        }
+    },
+    /** Shows another session: its running loop, or its most recently changed one. */
+    async switchSession(key) {
+        toggleSessionMenu(false);
+        try {
+            await api('/api/session', { key });
+            await refresh();
+            focusQuietly($('taskTitle'));
+        } catch (error) {
+            reportFailure(`Could not show that session: ${error.message}`);
+        }
+    },
+    /** Follows the session's running loop again after a manual switch paused it. */
+    async resumeFollowing() {
+        try {
+            await api('/api/follow', {});
+            await refresh();
+            focusQuietly($('taskTitle'));
+            announce(`Following the running loop again. Showing ${state.data.session.task.title}.`);
+        } catch (error) {
+            reportFailure(`Could not resume following: ${error.message}`);
         }
     },
     toggleOverride(id) {
@@ -442,7 +602,7 @@ const act = {
                 window.requestAnimationFrame(() => $(`conflict-${editing.sectionId}`)?.focus());
             } else {
                 render();
-                announce(error.message);
+                reportFailure(`Suggestion not saved: ${error.message} Your text is still in the editor.`);
             }
         }
     },
@@ -523,8 +683,9 @@ const act = {
         window.requestAnimationFrame(() => $('composer-text')?.focus());
     },
     setComposer(patch, rerender = true) {
-        Object.assign(state.ui.composer, patch);
-        if (rerender) render();
+        const hadError = Boolean(state.ui.composer.error);
+        Object.assign(state.ui.composer, patch, { error: null });
+        if (rerender || hadError) render();
         else {
             const submit = document.querySelector('.composer button[type="submit"]');
             if (submit) submit.disabled = !state.ui.composer.text.trim();
@@ -539,7 +700,9 @@ const act = {
             await refresh();
             window.requestAnimationFrame(() => $('composer-text')?.focus());
         } catch (error) {
-            announce(error.message);
+            state.ui.composer.error = error.message;
+            render();
+            announce(`Not added: ${error.message} Your text is kept.`);
         }
     },
     async requestTask(id, text) {
@@ -548,7 +711,7 @@ const act = {
             announce('Request added. It waits for Send to agent.');
             await refresh();
         } catch (error) {
-            announce(error.message);
+            reportFailure(`Request not added: ${error.message}`);
         }
     },
     /** Sets one checklist verdict (null clears it), with a note for Needs work, and says when the review joins or leaves the next send. */
@@ -563,7 +726,7 @@ const act = {
             else if (!after && before) announce('Nothing from this checklist goes to the agent now.');
             else if (verdict === 'needs-work' && note) announce('Note saved.');
         } catch (error) {
-            announce(error.message);
+            reportFailure(`Checklist not saved: ${error.message}`);
         }
     },
     /** Opens Send to agent from the header or the steering panel and prepares the exact text. */
@@ -585,9 +748,9 @@ const act = {
     /** Sends the listed items as one chat message, after checking the list still matches the text prepared for it. */
     async send() {
         const send = state.ui.send;
-        const ids = pendingItems(context()).map((item) => item.id);
-        if (!send.preview || send.preview.ids.join() !== ids.join() || send.previewNote !== send.note) {
-            const listChanged = Boolean(send.preview) && send.preview.ids.join() !== ids.join();
+        const items = sendItems(context());
+        if (!send.preview || previewKey(send.preview) !== itemsKey(items) || send.previewNote !== send.note) {
+            const listChanged = Boolean(send.preview) && previewKey(send.preview) !== itemsKey(items);
             await refreshSendPreview();
             if (listChanged || !send.preview) {
                 announce('The list changed. Check it, then send.');
@@ -598,7 +761,7 @@ const act = {
         send.error = null;
         renderSendSheet();
         try {
-            const result = await api('/api/delivery', { ids: send.preview.ids, digest: send.preview.digest, ...(send.note.trim() ? { note: send.note } : {}) });
+            const result = await api('/api/delivery', { items, digest: send.preview.digest, ...(send.note.trim() ? { note: send.note } : {}) });
             const handle = state.data.canvas?.handle;
             Object.assign(state.ui.send, freshSend());
             $('sendSheet').close();
@@ -617,9 +780,21 @@ const act = {
             renderSendSheet();
         }
     },
-    async removePending(id) {
-        await act.transition(id, 'dismissed');
+    /** Removes an item from Send to agent, in this loop or another, and moves focus to the next item in its group. */
+    async removePending(id, taskId) {
+        const shownId = state.data.session.task.id;
+        const owner = taskId ?? shownId;
+        const keyFor = (item) => (owner === shownId ? `send-remove-${item.id}` : `send-remove-${owner}-${item.id}`);
+        const group = sessionPending(context()).find((entry) => entry.taskId === owner);
+        const index = group ? group.items.findIndex((item) => item.id === id) : -1;
+        const neighbor = group ? group.items[index + 1] ?? group.items[index - 1] : null;
+        const nextKey = neighbor ? keyFor(neighbor) : null;
+        const removed = await act.transition(id, 'dismissed', owner === shownId ? {} : { taskId: owner });
         renderSendSheet();
+        if (!removed) return;
+        const sheet = $('sendSheet');
+        const target = (nextKey && sheet.querySelector(`[data-key="${CSS.escape(nextKey)}"]`)) || $(`send-group-${owner}`) || $('sendSheetTitle');
+        focusQuietly(target);
     },
     /** Closes Send to agent and moves to what an item is about. */
     showPending(item) {
@@ -640,6 +815,27 @@ const act = {
         const sheet = $('fileSheet');
         sheet.replaceChildren(...filePreview(context(), change, file));
         sheet.showModal();
+    },
+    /** Shows a workspace file in the sheet at the cited place, or why it cannot be shown. */
+    async openSource(path, anchor) {
+        const sheet = $('fileSheet');
+        try {
+            const result = await api('/api/source', { path, ...(anchor ? { anchor } : {}) });
+            sheet.replaceChildren(...sourceSheet(context(), result));
+        } catch (error) {
+            sheet.replaceChildren(...sourceProblem(context(), path, error.message));
+        }
+        if (!sheet.open) sheet.showModal();
+        window.requestAnimationFrame(() => sheet.querySelector('.source-line.is-cited')?.scrollIntoView({ block: 'center' }));
+    },
+    /** Opens a workspace file in the editor at the cited place and says where it opened. */
+    async openInEditor(path, anchor) {
+        try {
+            const result = await api('/api/open', { path, ...(anchor ? { anchor } : {}) });
+            announce(`Opened ${result.path} at line ${result.line} in ${state.data?.editor?.name ?? 'your editor'}.`);
+        } catch (error) {
+            reportFailure(`${path} did not open: ${error.message}`);
+        }
     },
     async copy(text) {
         try {
@@ -665,25 +861,123 @@ function renderHeader() {
     $('taskTitle').textContent = task.title;
     document.title = `RPI Workflow: ${task.title}`;
     const where = [task.repository, task.branch].filter(Boolean).join(' · ');
-    const parent = rpi && task.parent ? session.followUps.lineage.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
+    const parent = rpi && task.parent ? session.followUps.tree.tasks.find((item) => item.id === task.parent) ?? { id: task.parent, title: task.parent } : null;
     const handle = state.data.canvas?.handle ?? null;
     const named = handle ? ` Messages this canvas sends to the agent start with “RPI canvas ${handle}”.` : '';
+    // The badge names the canvas the way its chat messages do; it has its own slot, so it is never clipped.
+    const badge = rpi ? h('span', { class: 'badge tone-muted session-badge', title: `RPI canvas${handle ? ` ${handle}` : ''}: shows the RPI files from ${source.statePath}.${named}` }, icon('message'), handle ? [sr('RPI canvas '), h('code', { class: 'canvas-handle', text: handle })] : 'RPI session') : handle ? h('span', { class: 'canvas-chip', title: named.trim() }, 'Canvas ', h('code', { class: 'canvas-handle', text: handle })) : null;
+    const slot = $('canvasBadge');
+    slot.hidden = !badge;
+    clear(slot).append(...(badge ? [badge] : []));
     clear($('taskMeta')).append(...[
-        // A real session's badge names the canvas the way its chat messages do.
-        rpi ? h('span', { class: 'badge tone-muted session-badge', title: `Shows the RPI files from ${source.statePath}.${named}` }, icon('file'), handle ? ['RPI canvas ', h('code', { class: 'canvas-handle', text: handle })] : 'RPI session') : null,
         rpi ? h('code', { class: 'task-id', title: `Task ID: ${task.id}`, text: task.id }) : null,
         where ? h('span', { class: 'task-where', title: where, text: where }) : null,
-        parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask(parent.id) }, parent.title)) : null,
+        parent ? h('span', { class: 'task-parent' }, 'Child of ', h('button', { type: 'button', class: 'link-btn', title: `Show the parent task: ${parent.title}`, dataset: { key: 'header-parent' }, 'aria-label': `Child of ${parent.title}: show the parent task`, onclick: () => act.showTask(parent.statePath ? { statePath: parent.statePath } : parent.id) }, parent.title)) : null,
         session.scenario?.sample ? h('span', { class: 'badge tone-muted sample-badge', title: 'Mock data for the canvas preview' }, icon('info'), 'Sample session') : null,
-        !rpi && handle ? h('span', { class: 'canvas-chip', title: named.trim() }, 'Canvas ', h('code', { class: 'canvas-handle', text: handle })) : null,
     ].filter(Boolean));
-    $('liveChip').title = rpi ? "The canvas follows this task's files while it is open." : 'The canvas shows changes as they happen.';
+    $('liveChip').title = rpi ? "The canvas follows this session's files while it is open." : 'The canvas shows changes as they happen.';
+    renderSessionControls();
     const count = view.attentionCount;
     const needs = $('needsBtn');
     needs.classList.toggle('has-items', count > 0);
     $('needsCount').textContent = String(count);
     $('needsLabel').textContent = count ? 'Needs you' : 'All clear';
     needs.setAttribute('aria-label', count ? `${plural(count, 'item')} ${count === 1 ? 'needs' : 'need'} you` : 'Nothing needs you');
+}
+
+/** The session button and, for a canvas that follows RPI files, whether it follows the running loop. */
+function renderSessionControls() {
+    const { session, follow } = state.data;
+    const tree = session.followUps.tree;
+    const name = tree.name ?? session.task.title;
+    const loops = tree.tasks.length;
+    const btn = $('sessionBtn');
+    btn.hidden = false;
+    $('sessionLabel').textContent = `${name} · ${plural(loops, 'loop')}`;
+    btn.setAttribute('aria-label', `Session ${name}, ${plural(loops, 'loop')}. Show its loops${session.source?.kind === 'rpi' ? ' and other sessions' : ''}.`);
+    btn.title = `Session “${name}”: ${plural(loops, 'loop')}${tree.key ? ` in ${tree.key}` : ''}`;
+    const followState = $('followState');
+    const resume = $('followResume');
+    if (!follow) {
+        followState.hidden = true;
+        resume.hidden = true;
+        return;
+    }
+    followState.hidden = false;
+    followState.dataset.state = follow.paused ? 'paused' : 'following';
+    followState.title = follow.paused
+        ? 'You chose a loop that is not running, so the canvas stays on it. Resume following to go back to the running loop.'
+        : 'The canvas shows the running loop and moves to each new loop the agent starts.';
+    followState.replaceChildren(icon(follow.paused ? 'pause' : 'active'), h('span', { class: 'follow-state-text', text: follow.paused ? 'Paused' : 'Following' }), sr(follow.paused ? ': following the running loop is paused' : ' the running loop'));
+    resume.hidden = !follow.paused;
+}
+
+/** Opens or closes the session menu: this session's loops, then the workspace's other sessions. */
+function toggleSessionMenu(open) {
+    const menu = $('sessionMenu');
+    const show = open ?? menu.hidden;
+    if (show && !state.data) return;
+    menu.hidden = !show;
+    $('sessionBtn').setAttribute('aria-expanded', String(show));
+    if (!show) return;
+    renderSessionMenu();
+    focusQuietly($('sessionMenuTitle'));
+    if (state.data.session.source?.kind === 'rpi') loadSessions();
+}
+
+async function loadSessions() {
+    state.sessions = { ...state.sessions, loading: true, error: null };
+    renderSessionList();
+    try {
+        const result = await api('/api/sessions');
+        state.sessions = { loading: false, error: null, list: result.sessions, skipped: result.skipped ?? [] };
+    } catch (error) {
+        state.sessions = { ...state.sessions, loading: false, error: error.message };
+    }
+    renderSessionList();
+}
+
+function renderSessionMenu() {
+    const menu = $('sessionMenu');
+    const { session, follow } = state.data;
+    const tree = session.followUps.tree;
+    const rpi = session.source?.kind === 'rpi';
+    const where = [tree.key, rpi ? (follow?.paused ? 'following paused' : 'following the running loop') : 'sample session'].filter(Boolean).join(' · ');
+    const keepFocus = menu.contains(document.activeElement) ? document.activeElement.dataset.key ?? null : null;
+    menu.replaceChildren(
+        h('h2', { class: 'menu-title session-menu-title', id: 'sessionMenuTitle', tabindex: '-1' }, icon('nodes'), tree.name ? `Session: ${tree.name}` : 'This session'),
+        h('p', { class: 'meta session-menu-where', text: where }),
+        h('h3', { class: 'menu-subtitle', text: 'Loops in this session' }),
+        sessionTree(context(), {
+            label: `Loops in ${tree.name ?? 'this session'}, parent first`,
+            keyPrefix: 'menu',
+            onShow: (task) => {
+                toggleSessionMenu(false);
+                act.showTask({ statePath: task.statePath });
+            },
+        }),
+        ...(rpi ? [h('h3', { class: 'menu-subtitle', text: 'Other sessions' }), h('div', { id: 'sessionList' })] : []),
+        h('p', { class: 'menu-note', text: rpi ? 'Showing a loop that is not running pauses following until you resume it.' : 'The sample has no other loops or sessions to show.' }));
+    if (rpi) renderSessionList();
+    if (keepFocus) menu.querySelector(`[data-key="${CSS.escape(keepFocus)}"]`)?.focus({ preventScroll: true });
+}
+
+function renderSessionList() {
+    const holder = $('sessionList');
+    if (!holder || !state.data) return;
+    const current = state.data.session.followUps.tree.key;
+    const { loading, error, list, skipped } = state.sessions;
+    const others = (list ?? []).filter((item) => item.key !== current);
+    holder.replaceChildren(...[
+        error ? h('p', { class: 'field-error' }, icon('alert'), h('span', { text: `Sessions could not be listed: ${error}` })) : null,
+        !error && loading && !list ? h('p', { class: 'meta', text: 'Loading sessions…' }) : null,
+        list && !others.length ? h('p', { class: 'meta', text: 'No other sessions in this workspace.' }) : null,
+        others.length ? h('ul', { class: 'session-list', 'aria-label': 'Other sessions, most recent first' }, others.map((item) => h('li', null,
+            h('button', { type: 'button', class: 'session-pick', dataset: { key: `session-${item.key}` }, onclick: () => act.switchSession(item.key) },
+                h('span', { class: 'session-pick-name', text: item.name }),
+                h('span', { class: 'meta session-pick-meta', text: [item.date, plural(item.tasks, 'loop'), item.running ? `running: ${item.running.title}` : 'nothing running'].join(' · ') }))))) : null,
+        skipped.length ? h('p', { class: 'meta', text: `${plural(skipped.length, 'state file')} outside a session folder ${skipped.length === 1 ? 'is' : 'are'} not shown; the problems notice lists ${skipped.length === 1 ? 'it' : 'them'}.` }) : null,
+    ].filter(Boolean));
 }
 
 function renderRail() {
@@ -706,7 +1000,8 @@ function renderRail() {
             onclick: () => setPhase(phase),
             onkeydown: (event) => {
                 const moves = { ArrowRight: 1, ArrowLeft: -1, Home: -99, End: 99 };
-                if (!(event.key in moves)) return;
+                // Alt with an arrow is Back or Forward, handled by the page.
+                if (!(event.key in moves) || event.altKey || event.ctrlKey || event.metaKey) return;
                 event.preventDefault();
                 const next = PHASES[Math.max(0, Math.min(PHASES.length - 1, index + moves[event.key]))];
                 setPhase(next);
@@ -729,7 +1024,7 @@ function renderNavigator() {
     clear($('navBody')).append(
         h('h2', { class: 'nav-title', text: `${PHASE_META[state.ui.phase].label} outline` }),
         shown.length ? h('ul', { class: 'nav-list' }, shown.map((item) => h('li', null, h('button', { type: 'button', class: 'nav-item', onclick: () => navigate(item.id, state.ui.phase) },
-            item.prefix ? h('span', { class: 'id-chip', text: item.prefix }) : null,
+            item.prefix ? idTag(item.prefix, 'go-to') : null,
             h('span', { class: 'nav-label', text: item.label }),
             item.meta ? icon(item.meta.icon, { className: `tone-${item.meta.tone}-fg`, label: item.meta.label }) : null,
             item.count !== undefined ? h('span', { class: 'count', text: String(item.count) }) : null))))
@@ -747,23 +1042,38 @@ function renderContextBar() {
     const record = session.phases[phase];
     const meta = PHASE_STATUS[record.status] ?? PHASE_STATUS.upcoming;
     const active = session.session.activePhase;
-    const editorLink = record.artifact ? workspaceEditorUri(context(), record.artifact) : null;
     let side = null;
     if (active === phase) {
         side = session.session.nextAction ? h('p', { class: 'next-action' }, icon('arrow-right'), h('span', { text: session.session.nextAction })) : null;
     } else if (phaseReached(phase)) {
         side = button(`Go to ${PHASE_META[active].label}, where the agent is`, { iconName: 'sparkle', onClick: () => setPhase(active) });
     }
-    clear($('contextBar')).append(
+    const { back, forward } = places.peek();
+    const phaseLabel = (key) => PHASE_META[key]?.label ?? key;
+    const travelButton = (direction, place) => {
+        const label = place ? placeLabel(direction, place, session.task.id, phaseLabel) : direction === 'back' ? 'Back: no earlier place yet' : 'Forward: no later place';
+        return button(label, {
+            iconName: direction === 'back' ? 'arrow-left' : 'arrow-right',
+            hideLabel: true,
+            disabled: !place,
+            title: `${label} (Alt+${direction === 'back' ? 'Left' : 'Right'})`,
+            attrs: { 'data-key': `history-${direction}`, 'aria-keyshortcuts': direction === 'back' ? 'Alt+ArrowLeft' : 'Alt+ArrowRight' },
+            onClick: () => travel(direction),
+        });
+    };
+    // Native append writes null as text, so the side panel is added only when there is one.
+    clear($('contextBar')).append(...[
         h('div', { class: 'context-main' },
+            h('span', { class: 'history-nav', role: 'group', 'aria-label': 'Back and forward' }, travelButton('back', back), travelButton('forward', forward)),
             h('h2', { class: 'context-title' }, icon(PHASE_META[phase].icon), PHASE_META[phase].label),
             badge(meta),
             record.artifact ? h('span', { class: 'context-artifact' },
                 h('code', { class: 'context-path', title: record.artifact, text: record.artifact }),
                 button('Copy artifact path', { iconName: 'copy', hideLabel: true, onClick: () => act.copy(record.artifact) }),
-                editorLink ? h('a', { class: 'btn btn-icon', href: editorLink, title: 'Open in editor', dataset: { key: 'open-artifact' } }, icon('external'), sr('Open in editor')) : null) : null,
+                editorButton(context(), record.artifact, null, 'open-artifact')) : null,
             record.updatedAt ? h('span', { class: 'meta', title: session.source?.kind === 'rpi' ? `The file last changed ${new Date(record.updatedAt).toLocaleString()}. The canvas reads it again whenever it changes.` : undefined }, 'Updated ', relTime(record.updatedAt, context().now)) : null),
-        side ? h('div', { class: 'context-side' }, side) : null);
+        side ? h('div', { class: 'context-side' }, side) : null,
+    ].filter(Boolean));
 }
 
 function renderDocument() {
@@ -803,19 +1113,22 @@ let sendNoteTimer = 0;
 let previewRequest = 0;
 let keepFocusOnClose = false;
 
+const itemsKey = (items) => items.map((item) => `${item.taskId}:${item.id}`).join();
+const previewKey = (preview) => (preview?.parts ?? []).flatMap((part) => part.ids.map((id) => `${part.taskId}:${id}`)).join();
+
 /** Fetches the exact text for the current list and message, then shows it in the open dialog. */
 async function refreshSendPreview() {
     const send = state.ui.send;
-    const ids = state.data ? pendingItems(context()).map((item) => item.id) : [];
+    const items = state.data ? sendItems(context()) : [];
     const request = ++previewRequest;
-    if (!ids.length) {
+    if (!items.length) {
         send.preview = null;
         renderSendSheet();
         return;
     }
     const note = send.note;
     try {
-        const preview = await api('/api/delivery/preview', { ids, ...(note.trim() ? { note } : {}) });
+        const preview = await api('/api/delivery/preview', { items, ...(note.trim() ? { note } : {}) });
         if (request !== previewRequest) return;
         send.preview = preview;
         send.previewNote = note;
@@ -876,7 +1189,7 @@ function onSendClose() {
 }
 
 function renderSendButton() {
-    const waiting = pendingItems(context()).length;
+    const waiting = sendItems(context()).length;
     const sendBtn = $('sendBtn');
     sendBtn.classList.toggle('has-items', waiting > 0);
     $('sendCount').textContent = String(waiting);
@@ -951,9 +1264,10 @@ function render() {
     applyPanels();
     if ($('sendSheet').open) {
         renderSendSheet();
-        const ids = pendingItems(context()).map((item) => item.id).join();
-        if (ids !== (state.ui.send.preview?.ids.join() ?? '')) refreshSendPreview();
+        if (itemsKey(sendItems(context())) !== previewKey(state.ui.send.preview)) refreshSendPreview();
     }
+    if (!$('sessionMenu').hidden) renderSessionMenu();
+    previews?.refresh();
 }
 
 // Panels and drawers
@@ -1043,7 +1357,7 @@ async function savePreferences(patch) {
         await api('/api/preferences', patch);
         announce(`Appearance set to ${next.theme}${next.contrast === 'more' ? ' with more contrast' : ''}.`);
     } catch (error) {
-        announce(error.message);
+        reportFailure(`Appearance not saved: ${error.message}`);
     }
 }
 
@@ -1066,9 +1380,18 @@ const SHORTCUTS = [
     ['/', 'Open the navigator and filter it'],
     ['b', 'Show or hide the navigator'],
     ['s', 'Show or hide the steering panel'],
+    ['Alt+Left and Alt+Right', 'Go back and forward through the places you moved to'],
+    ['l', 'Show what the IDs and icons mean'],
     ['?', 'Show this list'],
     ['Escape', 'Close a menu, drawer, or dialog, or leave the section editor'],
 ];
+
+/** Opens the legend, building it on first use; closing returns focus to where it was. */
+function openLegend() {
+    const dialog = $('legendDialog');
+    if (!dialog.childElementCount) dialog.append(...legendContent());
+    dialog.showModal();
+}
 
 /** The document row that holds focus, if any; row shortcuts never guess. */
 function focusedRow() {
@@ -1077,7 +1400,7 @@ function focusedRow() {
 
 /** Single-key shortcut hints follow the shortcut switch. */
 function applyShortcutHints() {
-    const hints = [[$('shortcutsBtn'), '?'], [$('navFilter'), '/']];
+    const hints = [[$('shortcutsBtn'), '?'], [$('legendBtn'), 'l'], [$('navFilter'), '/']];
     for (const [element, key] of hints) {
         if (state.ui.shortcuts) element.setAttribute('aria-keyshortcuts', key);
         else element.removeAttribute('aria-keyshortcuts');
@@ -1100,6 +1423,9 @@ function onKeydown(event) {
         if (!$('appearanceMenu').hidden) {
             toggleAppearance(false);
             $('appearanceBtn').focus();
+        } else if (!$('sessionMenu').hidden) {
+            toggleSessionMenu(false);
+            $('sessionBtn').focus();
         } else if (state.ui.drawer) {
             closeDrawer(true);
         } else if (state.ui.editing && document.activeElement?.closest('.editor')) {
@@ -1108,6 +1434,13 @@ function onKeydown(event) {
         return;
     }
     const typing = event.target.closest?.('input, textarea, select, [contenteditable="true"]');
+    if (event.altKey && !event.ctrlKey && !event.metaKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+        if (!typing && state.data && !document.querySelector('dialog[open]')) {
+            event.preventDefault();
+            travel(event.key === 'ArrowLeft' ? 'back' : 'forward');
+        }
+        return;
+    }
     if (typing || event.metaKey || event.ctrlKey || event.altKey || !state.ui.shortcuts || !state.data || document.querySelector('dialog[open]')) return;
     const key = event.key;
     if (key >= '1' && key <= '5') {
@@ -1147,6 +1480,8 @@ function onKeydown(event) {
         togglePanel('nav');
     } else if (key === 's') {
         togglePanel('steer');
+    } else if (key === 'l') {
+        openLegend();
     } else if (key === '?') {
         $('shortcutsDialog').showModal();
     } else {
@@ -1158,6 +1493,7 @@ function onKeydown(event) {
 // Boot
 
 function wire() {
+    previews = installPreviews({ context, revision: () => state.data?.revision ?? 0 });
     clear($('shortcutList')).append(...SHORTCUTS.flatMap(([keys, text]) => [h('dt', null, h('kbd', { text: keys })), h('dd', { text })]));
     applyShortcutHints();
     $('shortcutSwitch').addEventListener('change', (event) => {
@@ -1177,6 +1513,7 @@ function wire() {
     $('navClose').addEventListener('click', () => closeDrawer(true));
     $('scrim').addEventListener('click', () => closeDrawer(true));
     $('shortcutsBtn').addEventListener('click', () => $('shortcutsDialog').showModal());
+    $('legendBtn').addEventListener('click', openLegend);
     $('sendBtn').addEventListener('click', () => act.openSend());
     $('sendSheet').addEventListener('close', onSendClose);
     $('needsBtn').addEventListener('click', () => {
@@ -1194,7 +1531,14 @@ function wire() {
     $('contrastSwitch').addEventListener('change', (event) => savePreferences({ contrast: event.target.checked ? 'more' : 'standard' }));
     document.addEventListener('click', (event) => {
         if (!$('appearanceMenu').hidden && !event.target.closest('#appearanceMenu, #appearanceBtn')) toggleAppearance(false);
+        if (!$('sessionMenu').hidden && event.target.isConnected && !event.target.closest('#sessionMenu, #sessionBtn')) toggleSessionMenu(false);
     });
+    $('sessionBtn').addEventListener('click', () => toggleSessionMenu());
+    $('sessionMenu').addEventListener('focusout', (event) => {
+        const next = event.relatedTarget;
+        if (next instanceof Node && !$('sessionMenu').contains(next) && next !== $('sessionBtn')) toggleSessionMenu(false);
+    });
+    $('followResume').addEventListener('click', () => act.resumeFollowing());
     $('navFilter').addEventListener('input', (event) => {
         state.ui.navFilter = event.target.value;
         if (state.data) {

@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, h, icon, known } from './dom.mjs';
-import { marginNote, md, row, rowActions, sectionBody } from './components.mjs';
+import { badge, button, h, known } from './dom.mjs';
+import { marginNote, md, row, rowActions, sectionBody, sessionTree } from './components.mjs';
 import { notesFor } from './view-research.mjs';
 
-/** Follow-up view: summary, ranked follow-ups, and loop lineage. */
+/** Follow-up view: summary, ranked follow-ups, and the session's loops. */
 
 const STATUS = {
     proposed: { icon: 'circle', label: 'Proposed', tone: 'muted' },
@@ -13,30 +13,22 @@ const STATUS = {
     skipped: { icon: 'dash-circle', label: 'Skipped', tone: 'muted' },
     'in-progress': { icon: 'active', label: 'Child loop running', tone: 'accent' },
 };
-const LINEAGE = { completed: { icon: 'check-circle', label: 'Completed', tone: 'success' }, running: { icon: 'active', label: 'Running', tone: 'accent' }, stopped: { icon: 'pause', label: 'Stopped', tone: 'muted' } };
 
 export function outline(ctx) {
     return [
         { id: 'followup-summary', label: 'Summary' },
         { id: 'followups', label: 'Ranked follow-ups', count: ctx.data.session.followUps.items.length },
-        { id: 'lineage', label: 'Loop lineage' },
+        { id: 'session-loops', label: 'Loops in this session', count: ctx.data.session.followUps.tree.tasks.length },
     ];
 }
 
-function lineage(ctx) {
-    const items = ctx.data.session.followUps.lineage;
-    // Only a canvas reading real tracking files can show another task of the session.
-    const switchable = ctx.data.session.source?.kind === 'rpi';
-    return h('ol', { class: 'lineage', 'aria-label': 'Loop lineage, parent first' }, items.map((item, index) => h('li', { class: ['lineage-step', item.relation === 'this' ? 'is-this' : null] },
-        index > 0 ? icon('arrow-right', { className: 'lineage-arrow' }) : null,
-        h('span', { class: 'lineage-card' },
-            h('span', { class: 'meta', text: item.relation === 'this' ? 'This task' : item.relation === 'child' ? 'Child loop' : 'Parent task' }),
-            h('strong', { text: item.title }),
-            h('code', { class: 'lineage-id', text: item.id }),
-            badge(LINEAGE[item.status] ?? (item.status ? { icon: 'info', label: item.status, tone: 'muted' } : null)),
-            switchable && item.relation !== 'this'
-                ? button('Show this task', { iconName: 'arrow-right', attrs: { 'aria-label': `Show this task: ${item.title}`, 'data-key': `show-task-${item.id}` }, onClick: () => ctx.act.showTask(item.id) })
-                : null))));
+function sessionLoops(ctx) {
+    const { tree } = ctx.data.session.followUps;
+    const name = tree.name ? `“${tree.name}”` : 'This session';
+    return [
+        h('p', { class: 'meta', text: `${name} holds every loop this conversation worked on, parent first.${tree.key ? ` Its state files are in ${tree.key}.` : ''}` }),
+        sessionTree(ctx, { label: `Loops in ${tree.name ?? 'this session'}, parent first`, keyPrefix: 'followup' }),
+    ];
 }
 
 export function renderView(ctx) {
@@ -62,6 +54,6 @@ export function renderView(ctx) {
                         button('Skip', { iconName: 'dash-circle', onClick: () => ctx.act.requestTask(item.id, `Skip ${item.id} (${item.title}).`) })) : null))))],
         margin: notesFor(ctx, followUps.items.map((item) => item.id)).map((item) => marginNote(ctx, item)),
     }));
-    rows.push(row(ctx, { id: 'lineage', idLabel: null, title: 'Loop lineage', level: 2, body: [lineage(ctx)] }));
+    rows.push(row(ctx, { id: 'session-loops', idLabel: null, title: 'Loops in this session', level: 2, body: sessionLoops(ctx) }));
     return rows;
 }

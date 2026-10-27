@@ -9,7 +9,6 @@
  */
 
 const FENCE_RE = /^\s{0,12}(`{3,}|~{3,})(.*)$/;
-const HEADING_RE = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
 const MARKER_RE = /^<!--\s*rpi:([a-z][a-z-]{0,30})\s+id=([A-Za-z0-9._-]{1,80})\s*-->$/;
 const BULLET_FIELD_RE = /^[*-]\s+([A-Z][^:\n]{0,80}?):(?:\s+(.*))?$/;
 const LINE_FIELD_RE = /^([A-Z][A-Za-z0-9 ,'()/-]{0,80}?):(?:\s+(.*))?$/;
@@ -46,6 +45,32 @@ export function scanLines(text) {
     return { lines, fenced };
 }
 
+const isSpace = (ch) => ch !== undefined && /\s/.test(ch);
+
+/**
+ * An ATX heading's level and text, or null: up to `maxIndent` leading spaces, one to six `#`,
+ * whitespace, then the text without trailing whitespace and closing `#`s. It scans each
+ * character a bounded number of times, so long lines cannot stall it.
+ *
+ * @param {string} line
+ * @param {number} [maxIndent]
+ * @returns {{ level: number, title: string } | null}
+ */
+export function atxHeading(line, maxIndent = 0) {
+    let at = 0;
+    while (at < maxIndent && isSpace(line[at])) at += 1;
+    let level = 0;
+    while (line[at + level] === '#') level += 1;
+    if (level < 1 || level > 6 || !isSpace(line[at + level])) return null;
+    let start = at + level;
+    while (start < line.length && isSpace(line[start])) start += 1;
+    let end = line.length;
+    while (end > start && isSpace(line[end - 1])) end -= 1;
+    while (end > start && line[end - 1] === '#') end -= 1;
+    while (end > start && isSpace(line[end - 1])) end -= 1;
+    return { level, title: line.slice(start, end) };
+}
+
 /**
  * Parses a document into lines and headings. Each heading records where its section
  * ends, and its `marker` is the rpi marker on the line directly above it, when present.
@@ -57,10 +82,10 @@ export function parseDocument(text) {
     const headings = [];
     for (let i = 0; i < lines.length; i += 1) {
         if (fenced[i]) continue;
-        const match = HEADING_RE.exec(lines[i]);
-        if (!match) continue;
+        const heading = atxHeading(lines[i]);
+        if (!heading) continue;
         const above = i > 0 && !fenced[i - 1] ? MARKER_RE.exec(lines[i - 1].trim()) : null;
-        headings.push({ level: match[1].length, title: match[2], line: i, end: lines.length, index: headings.length, marker: above ? { kind: above[1], id: above[2] } : null });
+        headings.push({ level: heading.level, title: heading.title, line: i, end: lines.length, index: headings.length, marker: above ? { kind: above[1], id: above[2] } : null });
     }
     const open = [];
     for (const heading of headings) {

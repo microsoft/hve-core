@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, chip, h, icon, idChip, known, plural, SEVERITY, TASK_STATUS } from './dom.mjs';
+import { badge, button, chip, h, icon, idChip, idTag, known, plural, SEVERITY, TASK_STATUS } from './dom.mjs';
 import { decisionCard, decisionsRow, marginNote, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
 import { renderDiagram } from './diagram.mjs';
 import { anchoredDecisions, decisionsOutline, notesFor } from './view-research.mjs';
@@ -36,10 +36,10 @@ function taskBlock(ctx, task, index, siblings) {
         h('div', { class: 'task-head' },
             h('button', { type: 'button', class: 'task-toggle', 'aria-expanded': String(expanded), 'aria-controls': panelId, onclick: () => ctx.act.toggleExpanded(task.id) },
                 icon('chevron', { className: 'chev' }),
-                h('span', { class: 'id-chip', text: task.id }),
+                idTag(task.id, 'file'),
                 h('span', { class: 'task-title', text: task.title })),
             badge(TASK_STATUS[task.status]),
-            decision && decision.status === 'needs-input' ? h('button', { type: 'button', class: 'badge tone-attention is-link', onclick: () => ctx.act.navigate(decision.id) }, icon('hand'), `Waiting on ${decision.id}`) : null),
+            decision && decision.status === 'needs-input' ? h('button', { type: 'button', class: 'badge tone-attention is-link', onclick: () => ctx.act.navigate(decision.id) }, icon('hand'), `Waiting on ${decision.id}`, icon('go-to', { className: 'icon-inline chip-icon' })) : null),
         h('div', { class: 'task-panel', id: panelId, hidden: !expanded },
             task.goals ? h('p', { class: 'task-goal' }, h('strong', { text: 'Goal: ' }), task.goals) : null,
             task.requirements.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Requirements' }), task.requirements.map((id) => idChip(id, ctx.act.navigate))) : null,

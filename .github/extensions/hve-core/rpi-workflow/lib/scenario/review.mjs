@@ -82,10 +82,15 @@ export const followUps = {
         { rank: 3, id: 'FU-3', title: 'Warn before private browsing discards drafts', rationale: 'Optional: discovered during implementation and outside this task.', evidence: 'DS-003, W1', required: false, status: 'proposed' },
         { rank: 4, id: 'FU-4', title: 'Use background sync where the browser supports it', rationale: 'Optional and out of scope: helps only some inspectors.', evidence: 'F6, C8', required: false, status: 'proposed' },
     ],
-    lineage: [
-        { id: 'field-inspections-offline-sync', title: 'Offline drafts with background sync', relation: 'this', status: 'completed' },
-        { id: 'field-inspections-offline-sync-review-fixes', title: 'Fix review findings RV-001 to RV-004', relation: 'child', status: 'running' },
-    ],
+    tree: {
+        key: null,
+        date: null,
+        name: 'Offline drafts with background sync',
+        tasks: [
+            { id: 'field-inspections-offline-sync', title: 'Offline drafts with background sync', status: 'completed', depth: 0, statePath: null, parent: null, shown: true, continues: null },
+            { id: 'field-inspections-offline-sync-review-fixes', title: 'Fix review findings RV-001 to RV-004', status: 'running', depth: 1, statePath: null, parent: null, shown: false, continues: null },
+        ],
+    },
 };
 
 export const sections = {

@@ -9,23 +9,29 @@ import { ModelError } from '../model.mjs';
 import { assembleSession, lineageStatusOf, mergeImport } from './assemble.mjs';
 import { titleOf, parseDocument } from './markdown.mjs';
 import { artifactKind, parseArtifact, parseState } from './parse.mjs';
+import { buildTree, humanizeSlug } from './tree.mjs';
+import { checkWorkspacePath, FileError, resolveWorkspaceFile } from '../workspace-files.mjs';
 
 /**
  * Finds and reads RPI sessions in a workspace. Every read stays inside the workspace's
  * `.copilot-tracking` folder: paths come from input and from agent-written state files,
  * so each one is resolved, checked against the real path of that folder, refused when it
- * is a symlink, limited to `.md` and `.json` files, and capped in size.
+ * is a symlink, limited to `.md` and `.json` files, and capped in size. State files must
+ * also sit in a session folder: `.copilot-tracking/rpi-sessions/<date>/<session>/`.
  */
 
 export class SourceError extends ModelError {}
 
 export const TRACKING_DIR = '.copilot-tracking';
+export const SESSIONS_DIR = 'rpi-sessions';
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_STATE_FILES = 2000;
 const STATE_FILE_RE = /-state\.json$/;
 const ARTIFACT_KEYS = ['research', 'plan', 'critique', 'changes', 'review'];
+const SKIPPED_SHOWN = 5;
 
 const toPosix = (value) => value.split(path.sep).join('/');
+const normalizeLink = (value) => (value ? toPosix(path.normalize(value)).replace(/^\.\//, '') : value);
 const inside = (base, target) => {
     const relative = path.relative(base, target);
     return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
@@ -109,49 +115,110 @@ async function listDir(dir) {
 }
 
 /**
- * Every state file under `.copilot-tracking/rpi-sessions/<date>/`, newest first. Links
- * and files that are too large are skipped.
+ * The session a state path belongs to: `<date>/<session>` and its parts, or null when the
+ * path is not in a session folder.
+ *
+ * @param {string} statePath Workspace-relative path.
+ */
+export function sessionOf(statePath) {
+    const parts = String(statePath).split('/');
+    const at = parts.lastIndexOf(SESSIONS_DIR);
+    if (at < 0 || parts.length - at !== 4) return null;
+    const [date, folder] = parts.slice(at + 1, at + 3);
+    return { key: `${date}/${folder}`, date, folder };
+}
+
+/**
+ * Checks a state path: a contained `*-state.json` regular file in a session folder.
+ *
+ * @param {{ root: string, tracking: string }} workspace
+ * @param {string} target Workspace-relative or absolute path.
+ */
+export async function inspectState(workspace, target) {
+    if (typeof target === 'string' && target.trim() && !STATE_FILE_RE.test(target.trim())) {
+        throw new SourceError('source_invalid', `${target} is not an RPI state file; state files end in -state.json.`);
+    }
+    const facts = await inspectContained(workspace, target);
+    const segments = path.relative(path.join(workspace.tracking, SESSIONS_DIR), facts.absolute).split(path.sep);
+    if (segments[0] === '..' || path.isAbsolute(segments.join(path.sep))) {
+        throw new SourceError('source_outside', `${target} is outside ${TRACKING_DIR}/${SESSIONS_DIR}.`);
+    }
+    if (segments.length !== 3) {
+        throw new SourceError('source_outside', `${target} is not in a session folder, ${TRACKING_DIR}/${SESSIONS_DIR}/<date>/<session>/.`);
+    }
+    return facts;
+}
+
+/**
+ * Every state file in a session folder, newest first, and the state files the canvas
+ * skips because they sit directly in a date folder (the layout before session folders).
+ * Links and files that are too large are left out.
+ *
+ * @param {{ root: string, tracking: string }} workspace
+ * @returns {Promise<{ states: { path: string, mtimeMs: number, size: number, session: string }[], skipped: string[] }>}
+ */
+export async function scanStates(workspace) {
+    const base = path.join(workspace.tracking, SESSIONS_DIR);
+    const states = [];
+    const skipped = [];
+    for (const day of await listDir(base)) {
+        if (!day.isDirectory()) continue;
+        for (const entry of await listDir(path.join(base, day.name))) {
+            const absolute = path.join(base, day.name, entry.name);
+            if (entry.isFile() && STATE_FILE_RE.test(entry.name)) {
+                skipped.push(toPosix(path.relative(workspace.root, absolute)));
+                continue;
+            }
+            if (!entry.isDirectory()) continue;
+            for (const file of await listDir(absolute)) {
+                if (!file.isFile() || !STATE_FILE_RE.test(file.name) || states.length >= MAX_STATE_FILES) continue;
+                const target = path.join(absolute, file.name);
+                const stat = await fs.lstat(target).catch(() => null);
+                if (stat?.isFile() && stat.size <= MAX_FILE_BYTES) {
+                    states.push({ path: toPosix(path.relative(workspace.root, target)), mtimeMs: stat.mtimeMs, size: stat.size, session: `${day.name}/${entry.name}` });
+                }
+            }
+        }
+    }
+    states.sort((a, b) => b.mtimeMs - a.mtimeMs || a.path.localeCompare(b.path));
+    return { states, skipped: skipped.sort() };
+}
+
+/**
+ * Every state file in a session folder, newest first.
  *
  * @param {{ root: string, tracking: string }} workspace
  */
 export async function listStates(workspace) {
-    const base = path.join(workspace.tracking, 'rpi-sessions');
-    const found = [];
-    for (const day of await listDir(base)) {
-        if (!day.isDirectory()) continue;
-        for (const entry of await listDir(path.join(base, day.name))) {
-            if (!entry.isFile() || !STATE_FILE_RE.test(entry.name) || found.length >= MAX_STATE_FILES) continue;
-            const absolute = path.join(base, day.name, entry.name);
-            const stat = await fs.lstat(absolute).catch(() => null);
-            if (stat?.isFile() && stat.size <= MAX_FILE_BYTES) {
-                found.push({ path: toPosix(path.relative(workspace.root, absolute)), mtimeMs: stat.mtimeMs, size: stat.size });
-            }
-        }
-    }
-    return found.sort((a, b) => b.mtimeMs - a.mtimeMs || a.path.localeCompare(b.path));
+    return (await scanStates(workspace)).states;
 }
 
 /**
- * Reads and normalizes a state file.
+ * Reads and normalizes a state file, which must sit in a session folder. Link paths come
+ * back normalized to workspace-relative POSIX form.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {string} statePath
  */
 export async function loadState(workspace, statePath) {
-    const file = await readContained(workspace, statePath);
+    const facts = await inspectState(workspace, statePath);
+    const text = await fs.readFile(facts.absolute, 'utf8');
     let raw;
     try {
-        raw = JSON.parse(file.text);
+        raw = JSON.parse(text);
     } catch {
-        throw new SourceError('source_invalid', `${file.path} is not valid JSON.`);
+        throw new SourceError('source_invalid', `${facts.path} is not valid JSON.`);
     }
-    return { path: file.path, mtimeMs: file.mtimeMs, size: file.size, state: parseState(raw) };
+    const state = parseState(raw);
+    if (state.parent) state.parent = { ...state.parent, statePath: normalizeLink(state.parent.statePath) };
+    state.children = state.children.map((link) => ({ ...link, statePath: normalizeLink(link.statePath) }));
+    return { path: facts.path, mtimeMs: facts.mtimeMs, size: facts.size, state };
 }
 
-/** Every readable state, newest first; unreadable ones are skipped. */
-async function allStates(workspace) {
+/** Readable states for scan entries, newest first; unreadable ones are skipped. */
+async function loadAll(workspace, entries) {
     const loaded = [];
-    for (const entry of await listStates(workspace)) {
+    for (const entry of entries) {
         const state = await loadState(workspace, entry.path).catch(() => null);
         if (state?.state.taskId) loaded.push(state);
     }
@@ -159,32 +226,37 @@ async function allStates(workspace) {
 }
 
 /**
- * Resolves a task reference to its state file. `current` is the root of the most
- * recently changed running session (or of the most recently changed session); a task ID
- * is the newest state file for that task.
+ * Resolves a task reference to its state file. `current` is the most recently changed
+ * task whose session is running, or the most recently changed task when no session runs;
+ * a task ID is the newest state file for that task.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {string} ref
  */
 export async function resolveTask(workspace, ref) {
-    const states = await allStates(workspace);
+    const states = await loadAll(workspace, await listStates(workspace));
     const warnings = [];
     if (ref === 'current') {
-        let pick = states.find((entry) => entry.state.sessionStatus === 'running') ?? states[0];
-        if (!pick) throw new SourceError('source_not_found', `No RPI session state was found in ${TRACKING_DIR}/rpi-sessions.`);
-        const seen = new Set([pick.state.taskId]);
-        while (pick.state.parent?.taskId && !seen.has(pick.state.parent.taskId)) {
-            const parent = states.find((entry) => entry.state.taskId === pick.state.parent.taskId);
-            if (!parent) break;
-            seen.add(parent.state.taskId);
-            pick = parent;
-        }
+        const pick = states.find((entry) => entry.state.sessionStatus?.toLowerCase() === 'running') ?? states[0];
+        if (!pick) throw new SourceError('source_not_found', `No RPI session state was found in ${TRACKING_DIR}/${SESSIONS_DIR}.`);
         return { statePath: pick.path, taskId: pick.state.taskId, warnings };
     }
     const matches = states.filter((entry) => entry.state.taskId === ref);
     if (!matches.length) throw new SourceError('source_not_found', `No RPI session state for task ${ref} was found.`);
     if (matches.length > 1) warnings.push(`Task ${ref} has ${matches.length} state files; showing the newest, ${matches[0].path}.`);
     return { statePath: matches[0].path, taskId: ref, warnings };
+}
+
+/**
+ * Resolves a state path given as input.
+ *
+ * @param {{ root: string, tracking: string }} workspace
+ * @param {string} statePath
+ */
+export async function resolveState(workspace, statePath) {
+    const loaded = await loadState(workspace, statePath);
+    if (!loaded.state.taskId) throw new SourceError('source_invalid', `${loaded.path} has no task_id.`);
+    return { statePath: loaded.path, taskId: loaded.state.taskId, warnings: [] };
 }
 
 async function titleFor(workspace, state) {
@@ -198,32 +270,99 @@ async function titleFor(workspace, state) {
     return state.taskId;
 }
 
+/** A readable name for a session: its first task's title, unless that is just the task ID. */
+async function nameFromTask(workspace, loaded, folder) {
+    if (!loaded) return humanizeSlug(folder);
+    const title = await titleFor(workspace, loaded.state);
+    return title && title !== loaded.state.taskId ? title : humanizeSlug(folder);
+}
+
 /**
- * The task's lineage: its ancestors (root first), the task, then its child loops.
+ * Every session folder in the workspace, most recently changed first, and the state files
+ * skipped because they are not in a session folder.
  *
  * @param {{ root: string, tracking: string }} workspace
- * @param {{ path: string, state: ReturnType<typeof parseState> }} self
- * @param {Awaited<ReturnType<typeof loadState>>[]} [states]
  */
-export async function lineageOf(workspace, self, states) {
-    const known = states ?? await allStates(workspace);
-    const byTask = new Map();
-    for (const entry of known) if (!byTask.has(entry.state.taskId)) byTask.set(entry.state.taskId, entry);
-    const ancestors = [];
-    const seen = new Set([self.state.taskId]);
-    let cursor = self.state.parent?.taskId ? byTask.get(self.state.parent.taskId) : null;
-    while (cursor && !seen.has(cursor.state.taskId)) {
-        seen.add(cursor.state.taskId);
-        ancestors.unshift(cursor);
-        cursor = cursor.state.parent?.taskId ? byTask.get(cursor.state.parent.taskId) : null;
+export async function listSessions(workspace) {
+    const { states, skipped } = await scanStates(workspace);
+    const groups = new Map();
+    for (const entry of states) {
+        if (!groups.has(entry.session)) groups.set(entry.session, []);
+        groups.get(entry.session).push(entry);
     }
-    const children = known.filter((entry) => entry.state.parent?.taskId === self.state.taskId && !seen.has(entry.state.taskId)).reverse();
-    const describe = async (entry, relation) => ({ taskId: entry.state.taskId, title: await titleFor(workspace, entry.state), relation, status: lineageStatusOf(entry.state), statePath: entry.path });
-    return [
-        ...await Promise.all(ancestors.map((entry) => describe(entry, 'parent'))),
-        await describe(self, 'this'),
-        ...await Promise.all(children.map((entry) => describe(entry, 'child'))),
-    ];
+    const sessions = [];
+    for (const [key, entries] of groups) {
+        const [date, folder] = key.split('/');
+        const loaded = await loadAll(workspace, entries);
+        const named = loaded.find((entry) => entry.state.sessionName);
+        const running = loaded.find((entry) => lineageStatusOf(entry.state) === 'running') ?? null;
+        const first = loaded.filter((entry) => !entry.state.parent).at(-1) ?? loaded.at(-1) ?? null;
+        sessions.push({
+            key,
+            date,
+            folder,
+            name: named?.state.sessionName ?? await nameFromTask(workspace, first, folder),
+            tasks: entries.length,
+            running: running ? { taskId: running.state.taskId, title: await titleFor(workspace, running.state), statePath: running.path } : null,
+            changedAt: new Date(Math.max(...entries.map((entry) => entry.mtimeMs))).toISOString(),
+        });
+    }
+    return { sessions: sessions.sort((a, b) => b.changedAt.localeCompare(a.changedAt) || a.key.localeCompare(b.key)), skipped };
+}
+
+/**
+ * The session the task belongs to: its folder, name, and every task in it as a tree, with
+ * a warning for each link that could not be followed.
+ *
+ * @param {{ root: string, tracking: string }} workspace
+ * @param {Awaited<ReturnType<typeof loadState>>} self
+ * @param {Awaited<ReturnType<typeof scanStates>>} [scan]
+ */
+export async function sessionTreeOf(workspace, self, scan) {
+    const where = /** @type {{ key: string, date: string, folder: string }} */ (sessionOf(self.path));
+    const { states } = scan ?? await scanStates(workspace);
+    const warnings = [];
+    const members = [];
+    for (const entry of states.filter((item) => item.session === where.key)) {
+        let loaded = entry.path === self.path ? self : null;
+        if (!loaded) {
+            try {
+                loaded = await loadState(workspace, entry.path);
+            } catch (error) {
+                warnings.push(error instanceof Error ? error.message : `${entry.path} could not be read.`);
+                continue;
+            }
+        }
+        members.push({ path: loaded.path, mtimeMs: loaded.mtimeMs, state: loaded.state, title: await titleFor(workspace, loaded.state) ?? loaded.path, status: lineageStatusOf(loaded.state) });
+    }
+    if (!members.some((member) => member.path === self.path)) {
+        members.push({ path: self.path, mtimeMs: self.mtimeMs, state: self.state, title: await titleFor(workspace, self.state) ?? self.path, status: lineageStatusOf(self.state) });
+    }
+    const outside = new Map();
+    for (const member of members) {
+        const target = member.state.parent?.statePath;
+        if (!target || outside.has(target) || members.some((item) => item.path === target)) continue;
+        try {
+            const parent = await loadState(workspace, target);
+            outside.set(target, { id: parent.state.taskId ?? parent.path, title: await titleFor(workspace, parent.state) ?? parent.path, statePath: parent.path, session: sessionOf(parent.path)?.key ?? '', status: lineageStatusOf(parent.state) });
+        } catch (error) {
+            outside.set(target, { error: error instanceof Error ? error.message : 'unreadable' });
+        }
+    }
+    const tree = buildTree({ members, shownPath: self.path, outside });
+    const named = [...members].sort((a, b) => b.mtimeMs - a.mtimeMs).find((member) => member.state.sessionName);
+    const first = tree.tasks.find((task) => task.depth === 0);
+    const firstMember = first ? members.find((member) => member.path === first.statePath) : null;
+    const name = self.state.sessionName ?? named?.state.sessionName ?? (firstMember && firstMember.title !== firstMember.state.taskId ? firstMember.title : humanizeSlug(where.folder));
+    return { key: where.key, date: where.date, folder: where.folder, name, tasks: tree.tasks, warnings: [...warnings, ...tree.warnings] };
+}
+
+/** One warning naming state files the canvas skips, or none. */
+export function skippedWarning(skipped) {
+    if (!skipped.length) return [];
+    const shown = skipped.slice(0, SKIPPED_SHOWN).join(', ');
+    const more = skipped.length > SKIPPED_SHOWN ? `, and ${skipped.length - SKIPPED_SHOWN} more` : '';
+    return [`${skipped.length === 1 ? 'A state file is' : `${skipped.length} state files are`} not in a session folder, so the canvas skips ${skipped.length === 1 ? 'it' : 'them'}: ${shown}${more}. Move each into ${TRACKING_DIR}/${SESSIONS_DIR}/<date>/<session>/.`];
 }
 
 /**
@@ -261,6 +400,54 @@ export function storeIdFor(taskId) {
     return `${id.slice(0, 70).replace(/-+$/, '')}-${createHash('sha256').update(String(taskId)).digest('hex').slice(0, 8)}`;
 }
 
+const MAX_SOURCE_CHECKS = 200;
+
+/** Whether a cited location is a readable file, a folder, missing, outside the workspace, or hidden. */
+async function locationStatus(root, target) {
+    try {
+        checkWorkspacePath(target);
+    } catch (error) {
+        return error instanceof FileError && error.code === 'source_blocked' ? 'hidden' : error instanceof FileError && error.code === 'source_outside' ? 'outside' : 'missing';
+    }
+    try {
+        await resolveWorkspaceFile(root, target);
+        return 'file';
+    } catch (error) {
+        const code = error instanceof FileError ? error.code : 'source_not_found';
+        if (code === 'source_too_large' || code === 'source_binary') return 'file';
+        if (code === 'source_blocked') return 'hidden';
+        if (code === 'source_outside') return 'outside';
+        if (code === 'source_invalid') return await fs.stat(path.resolve(root, target)).then((stat) => (stat.isDirectory() ? 'folder' : 'missing'), () => 'missing');
+        return 'missing';
+    }
+}
+
+/**
+ * Marks each code evidence location with its status and returns one problem per evidence ID
+ * that cites a path missing from the workspace, checking at most 200 locations.
+ *
+ * @param {{ root: string }} workspace
+ * @param {any} session assembled canvas document
+ */
+export async function checkSourceLocations(workspace, session) {
+    const problems = [];
+    let checks = 0;
+    for (const item of session.research?.evidence ?? []) {
+        const missing = [];
+        for (const location of item.locations ?? []) {
+            if (checks >= MAX_SOURCE_CHECKS) return problems;
+            checks += 1;
+            location.status = await locationStatus(workspace.root, location.path);
+            if (location.status === 'missing' || location.status === 'outside') missing.push(location.path);
+        }
+        if (missing.length) {
+            const named = missing.length > 2 ? `${missing.slice(0, -1).join(', ')}, and ${missing.at(-1)}` : missing.join(' and ');
+            problems.push(`Research: ${item.id} cites ${named}, which ${missing.length === 1 ? 'is not a file' : 'are not files'} in this workspace; code evidence cites workspace-relative paths.`);
+        }
+    }
+    return problems;
+}
+
 /**
  * Reads a task's state and artifacts and assembles its canvas document. Artifact read
  * problems become warnings; a state file that cannot be read throws.
@@ -270,7 +457,6 @@ export function storeIdFor(taskId) {
  * @param {string} now ISO timestamp
  */
 export async function loadTask(workspace, statePath, now) {
-    const states = await allStates(workspace);
     const self = await loadState(workspace, statePath);
     const files = { state: { path: self.path, mtimeMs: self.mtimeMs } };
     const artifacts = {};
@@ -296,7 +482,8 @@ export async function loadTask(workspace, statePath, now) {
             if (!(key === 'research' && parsed?.kind)) warnings.push(`${file.path} is not a ${key} artifact.`);
         }
     }
-    const lineage = await lineageOf(workspace, self, states);
+    const scan = await scanStates(workspace);
+    const tree = await sessionTreeOf(workspace, self, scan);
     const assembled = assembleSession({
         id: storeIdFor(self.state.taskId),
         state: self.state,
@@ -304,26 +491,31 @@ export async function loadTask(workspace, statePath, now) {
         mismatched,
         statePath: self.path,
         files,
-        lineage,
+        tree,
         git: await readGit(workspace.root),
         root: workspace.root,
         now,
     });
-    assembled.session.source.warnings = [...warnings, ...assembled.session.source.warnings];
+    const sourceProblems = await checkSourceLocations(workspace, assembled.session);
+    assembled.session.source.warnings = [...warnings, ...assembled.session.source.warnings, ...sourceProblems, ...tree.warnings, ...skippedWarning(scan.skipped)];
     const watched = [self.path, ...ARTIFACT_KEYS.map((key) => self.state.artifacts[key]).filter(Boolean)];
-    return { session: assembled.session, warnings: assembled.session.source.warnings, watched, statePath: self.path, taskId: self.state.taskId, lineage };
+    return { session: assembled.session, warnings: assembled.session.source.warnings, watched, statePath: self.path, taskId: self.state.taskId, tree };
 }
 
 /**
- * One string that changes whenever a watched file, or the set of state files, changes.
+ * One string that changes whenever a watched file, a state file in the session, or the
+ * set of skipped state files changes.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {string[]} watched
+ * @param {string | null} [sessionKey] `<date>/<session>`; every session when omitted.
  */
-export async function sourceSignature(workspace, watched) {
+export async function sourceSignature(workspace, watched, sessionKey) {
     const parts = [];
     for (const target of watched) parts.push(`${target}=${await signatureOf(workspace, target)}`);
-    for (const entry of await listStates(workspace)) parts.push(`${entry.path}@${entry.size}:${entry.mtimeMs}`);
+    const { states, skipped } = await scanStates(workspace);
+    for (const entry of states) if (!sessionKey || entry.session === sessionKey) parts.push(`${entry.path}@${entry.size}:${entry.mtimeMs}`);
+    for (const entry of skipped) parts.push(`skipped:${entry}`);
     return createHash('sha256').update(parts.join('\n')).digest('hex');
 }
 
@@ -349,11 +541,12 @@ export async function importIntoStore(store, loaded, now) {
 }
 
 /**
- * Follows one task's files. `importNow` reads and imports immediately (on open or a task
- * switch). While started, each tick compares the files' signature with the one last
- * imported; a new signature is imported only once it repeats on the next tick, so a file
- * the agent is still writing is not read half-written. A failed import keeps the stored
- * document and records a warning on it; the next successful import clears the warning.
+ * Follows one task's files and the state files of its session. `importNow` reads and
+ * imports immediately (on open or a task switch). While started, each tick compares the
+ * files' signature with the one last imported; a new signature is imported only once it
+ * repeats on the next tick, so a file the agent is still writing is not read half-written.
+ * A failed import keeps the stored document and records a warning on it; the next
+ * successful import clears the warning. `onImport` runs after every successful import.
  *
  * @param {{
  *   store: ReturnType<typeof import('../store.mjs').createStore>,
@@ -362,6 +555,7 @@ export async function importIntoStore(store, loaded, now) {
  *   intervalMs?: number,
  *   now?: () => string,
  *   log?: (message: string) => void,
+ *   onImport?: (loaded: Awaited<ReturnType<typeof loadTask>>) => void | Promise<void>,
  * }} options
  */
 export function createFollower(options) {
@@ -369,6 +563,7 @@ export function createFollower(options) {
     const intervalMs = options.intervalMs ?? 1500;
     const now = options.now ?? (() => new Date().toISOString());
     const log = options.log ?? (() => {});
+    const sessionKey = sessionOf(statePath)?.key ?? null;
     let watched = [statePath];
     let documentId = null;
     let imported = null;
@@ -382,6 +577,11 @@ export function createFollower(options) {
         documentId = loaded.session.id;
         const result = await importIntoStore(store, loaded, now());
         imported = signature;
+        try {
+            await options.onImport?.(loaded);
+        } catch (error) {
+            log(`Following the session failed: ${error instanceof Error ? error.message : 'error'}`);
+        }
         return { ...result, loaded };
     }
 
@@ -396,7 +596,7 @@ export function createFollower(options) {
     }
 
     async function tick() {
-        const signature = await sourceSignature(workspace, watched);
+        const signature = await sourceSignature(workspace, watched, sessionKey);
         if (signature === imported) {
             pending = null;
             return false;
@@ -432,7 +632,7 @@ export function createFollower(options) {
             return serial(async () => {
                 const self = await loadState(workspace, statePath);
                 watched = [self.path, ...ARTIFACT_KEYS.map((key) => self.state.artifacts[key]).filter(Boolean)];
-                return load(await sourceSignature(workspace, watched));
+                return load(await sourceSignature(workspace, watched, sessionKey));
             });
         },
 

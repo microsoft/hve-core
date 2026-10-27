@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, chip, DECISION_STATUS, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, known, PHASE_META, plural, sr, timeEl } from './dom.mjs';
-import { editorUri, externalLink, renderMarkdown } from './markdown.mjs';
+import { badge, button, chip, DECISION_STATUS, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, idTag, known, PHASE_META, plural, sr, timeEl } from './dom.mjs';
+import { renderMarkdown } from './markdown.mjs';
+import { editorButton, evidenceSource } from './source-view.mjs';
 
 /** Shared components: rows with margins, editing, evidence, traces, and decision cards. */
 
@@ -49,31 +50,29 @@ function lazyDisclosure(ctx, key, className, summary, build) {
 }
 
 /** Markdown with navigable IDs; `label` names the text's section for its table regions. */
-export const md = (ctx, text, label) => renderMarkdown(text ?? '', { resolveId: (id) => Boolean(ctx.resolve(id)), navigate: ctx.act.navigate, label });
+export const md = (ctx, text, label, baseDir) => renderMarkdown(text ?? '', {
+    resolveId: (id) => Boolean(ctx.resolve(id)),
+    navigate: ctx.act.navigate,
+    label,
+    ...(typeof baseDir === 'string' ? { baseDir, openSource: ctx.act.openSource } : {}),
+});
+
+/** The workspace folder of a phase's artifact in a real session, so its relative links open as sources. */
+export function artifactDir(ctx, doc) {
+    if (ctx.data.session.source?.kind !== 'rpi') return undefined;
+    const artifact = ctx.data.session.phases?.[doc]?.artifact;
+    return typeof artifact === 'string' && artifact.includes('/') ? artifact.slice(0, artifact.lastIndexOf('/')) : undefined;
+}
 
 /** Feedback notes anchored to any of these rows, except dismissed ones. */
 export const notesFor = (ctx, rowIds) => ctx.data.session.feedback.filter((item) => item.target && rowIds.includes(item.target.id) && ['comment', 'context', 'research-request', 'correction', 'task-request'].includes(item.kind) && item.state !== 'dismissed');
-
-/**
- * Editor link for a workspace-relative path when the canvas reads a real workspace, or null.
- *
- * @param {any} ctx
- * @param {string | null | undefined} path
- */
-export function workspaceEditorUri(ctx, path) {
-    const root = ctx.data.session.source?.root;
-    if (typeof root !== 'string' || !root || typeof path !== 'string' || !path || path.split(/[\\/]/).includes('..')) {
-        return null;
-    }
-    return editorUri(`${root.replace(/[\\/]+$/, '')}/${path.replace(/^\.?[\\/]/, '')}`);
-}
 
 const slug = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 
 /** Sections of a phase's files that no other row shows, each collapsed and rendered as written. */
 export function recordSections(ctx, phase) {
     return (ctx.data.session.records?.[phase] ?? []).map((record) => lazyDisclosure(ctx, `record-${phase}-${slug(record.heading)}`, 'record', record.heading,
-        () => h('div', { class: 'prose record-body' }, md(ctx, record.markdown, record.heading))));
+        () => h('div', { class: 'prose record-body' }, md(ctx, record.markdown, record.heading, artifactDir(ctx, phase)))));
 }
 
 /**
@@ -160,6 +159,28 @@ export function rowActions(ctx, { sectionId, rowId, research = false, ask = fals
 /** Items the person has not sent yet, apart from any being sent right now. */
 export const pendingItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item));
 
+/** Status of the shown task in its session tree, or from its own state. */
+const shownStatus = (ctx) => ctx.data.session.followUps?.tree?.tasks.find((task) => task.shown)?.status ?? (ctx.data.session.session.status === 'completed' ? 'completed' : null);
+
+/**
+ * Unsent items across the session, grouped by task: the shown task first, then the other
+ * tasks in tree order. Other tasks' items are summaries from the server.
+ *
+ * @param {any} ctx
+ * @returns {{ taskId: string, title: string, status: string | null, shown: boolean, items: any[] }[]}
+ */
+export function sessionPending(ctx) {
+    const { session } = ctx.data;
+    const groups = [{ taskId: session.task.id, title: session.task.title, status: shownStatus(ctx), shown: true, items: pendingItems(ctx) }];
+    for (const task of ctx.data.otherTasks ?? []) {
+        if (task.pending.length) groups.push({ taskId: task.taskId, title: task.title, status: task.status, shown: false, items: task.pending });
+    }
+    return groups.filter((group) => group.items.length);
+}
+
+/** The items Send delivers, as `{ taskId, id }` in the order the dialog lists them. */
+export const sendItems = (ctx) => sessionPending(ctx).flatMap((group) => group.items.map((item) => ({ taskId: group.taskId, id: item.id })));
+
 /** Suggestions for a section that are waiting to be sent, with the agent, or read back. */
 const openSuggestions = (ctx, sectionId) => ctx.data.session.feedback.filter((item) => item.kind === 'edit' && item.target?.id === sectionId && ['queued', 'sent', 'interpreted'].includes(item.state));
 
@@ -176,7 +197,7 @@ export function sectionBody(ctx, sectionId) {
         return editor(ctx, section);
     }
     const suggestions = openSuggestions(ctx, sectionId);
-    const body = h('div', { class: 'prose' }, md(ctx, section.markdown));
+    const body = h('div', { class: 'prose' }, md(ctx, section.markdown, undefined, artifactDir(ctx, section.doc)));
     return suggestions.length ? h('div', { class: 'section-with-suggestions' }, body, suggestions.map((item) => suggestionCallout(ctx, section, item))) : body;
 }
 
@@ -241,7 +262,7 @@ function editor(ctx, section) {
             type: 'button', role: 'tab', class: 'edit-tab', 'aria-selected': String(state.mode === mode), tabindex: state.mode === mode ? '0' : '-1',
             onclick: () => ctx.act.setEditMode(mode),
             onkeydown: (event) => {
-                if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+                if ((event.key === 'ArrowRight' || event.key === 'ArrowLeft') && !event.altKey && !event.ctrlKey && !event.metaKey) {
                     ctx.act.setEditMode(mode === 'write' ? 'preview' : 'write');
                 }
             },
@@ -284,21 +305,20 @@ export function evidenceChips(ctx, rowKey, ids) {
     const open = ids.filter((id) => ctx.ui.openEvidence.has(`${rowKey}:${id}`));
     const chips = h('div', { class: 'evidence-chips' }, h('span', { class: 'meta', text: 'Evidence' }),
         ids.map((id) => {
-            const item = ctx.find(id);
             const expanded = ctx.ui.openEvidence.has(`${rowKey}:${id}`);
             return h('button', {
                 type: 'button', class: ['id-chip', 'is-link', 'evidence-chip', expanded ? 'is-open' : null], 'aria-expanded': String(expanded), 'aria-controls': regionId,
-                title: item?.claim ?? id, onclick: () => ctx.act.toggleEvidence(rowKey, id),
-            }, icon(item?.kind === 'web' ? 'external' : 'file', { className: 'icon-inline' }), id);
+                dataset: { preview: id }, onclick: () => ctx.act.toggleEvidence(rowKey, id),
+            }, id, icon('file', { className: 'icon-inline chip-icon' }));
         }));
     const details = h('div', { class: 'evidence-details', id: regionId, hidden: open.length === 0 },
         open.map((id) => {
             const item = ctx.find(id);
             if (!item) return h('p', { class: 'meta', text: `${id} is not in the evidence log.` });
             return h('div', { class: 'evidence-detail' },
-                h('p', null, h('span', { class: 'id-chip', text: id }), ' ', item.claim),
+                h('p', null, idChip(id, ctx.act.navigate), ' ', item.claim),
                 h('p', { class: 'meta' },
-                    item.url ? externalLink(item.url, item.source) : h('code', { text: item.source }),
+                    evidenceSource(ctx, item),
                     item.confidence ? ` · Confidence ${item.confidence}` : '', item.retrieved ? ` · Retrieved ${item.retrieved}` : ''));
         }));
     return h('div', { class: 'evidence' }, chips, details);
@@ -324,7 +344,14 @@ export function voice(kind, label, children, options = {}) {
         h('div', { class: 'voice-body' }, children));
 }
 
-function optionList(ctx, decision, name, selected, onChange, exclude) {
+/** The choice that answers in the person's own words; it is never one of the decision's options. */
+export const OWN_ANSWER = 'your-own';
+
+function optionList(ctx, decision, name, selected, onChange, exclude, own = null) {
+    const ownId = `${name}-${OWN_ANSWER}`;
+    const ownChoice = own ? h('label', { class: ['option', 'option-own', selected === OWN_ANSWER ? 'is-selected' : null], for: ownId },
+        h('input', { type: 'radio', name, id: ownId, value: OWN_ANSWER, checked: selected === OWN_ANSWER, onchange: () => onChange(OWN_ANSWER) }),
+        h('span', { class: 'option-body' }, h('span', { class: 'option-label', text: own.label }), h('span', { class: 'option-consequence', text: own.hint }))) : null;
     return h('fieldset', { class: 'options' },
         h('legend', { class: 'visually-hidden', text: decision.question || decision.title }),
         decision.options.filter((option) => option.id !== exclude).map((option) => {
@@ -336,7 +363,8 @@ function optionList(ctx, decision, name, selected, onChange, exclude) {
                     h('span', { class: 'option-label' }, option.label, option.recommended ? h('span', { class: 'badge tone-accent rec-tag' }, icon('sparkle'), 'Recommended') : null),
                     option.consequence ? h('span', { class: 'option-consequence', text: option.consequence }) : null,
                     option.recommended && option.why ? h('span', { class: 'option-why', text: `Why: ${option.why}` }) : null));
-        }));
+        }),
+        ownChoice);
 }
 
 /**
@@ -369,11 +397,12 @@ export function decisionCard(ctx, decision) {
     if (decision.status === 'needs-input') {
         const name = `decision-${decision.id}`;
         const noteId = `${name}-note`;
-        const ownWords = decision.options.length === 0;
+        const hasOptions = decision.options.length > 0;
+        const ownWords = !hasOptions || draft.optionId === OWN_ANSWER;
         parts.push(
             decision.question && decision.question !== decision.title ? h('p', { class: 'card-question', text: decision.question }) : null,
             decision.context ? h('div', { class: 'card-context prose' }, md(ctx, decision.context)) : null,
-            ownWords ? null : optionList(ctx, decision, name, draft.optionId, (optionId) => update({ optionId })),
+            hasOptions ? optionList(ctx, decision, name, draft.optionId, (optionId) => update({ optionId }), undefined, { label: 'Your own answer', hint: 'Write it in the box below.' }) : null,
             evidence,
             decision.impact ? h('p', { class: 'card-impact' }, icon('arrow-right'), h('span', null, h('strong', { text: 'If you answer: ' }), decision.impact)) : null,
             h('label', { class: 'field-label', for: noteId, text: ownWords ? 'Your answer' : 'Add a note (optional)' }),
@@ -397,10 +426,10 @@ export function decisionCard(ctx, decision) {
         } else if (overriding) {
             const name = `override-${decision.id}`;
             const noteId = `${name}-note`;
-            const ownWords = alternatives.length === 0;
+            const ownWords = alternatives.length === 0 || draft.optionId === OWN_ANSWER;
             parts.push(
-                ownWords ? null : h('p', { class: 'card-question', text: 'Choose a different option:' }),
-                ownWords ? null : optionList(ctx, decision, name, draft.optionId === decision.chosen ? null : draft.optionId, (optionId) => update({ optionId }), decision.chosen),
+                alternatives.length ? h('p', { class: 'card-question', text: 'Choose a different option, or say what to do instead:' }) : null,
+                alternatives.length ? optionList(ctx, decision, name, draft.optionId === decision.chosen ? null : draft.optionId, (optionId) => update({ optionId }), decision.chosen, { label: 'Something else', hint: 'Say what the agent should do instead in the box below.' }) : null,
                 h('label', { class: 'field-label', for: noteId, text: ownWords ? 'What should the agent do instead?' : 'Why (optional)' }),
                 h('textarea', { id: noteId, class: 'note', rows: ownWords ? '3' : '2', 'aria-required': ownWords ? 'true' : undefined, oninput: (event) => update({ note: event.target.value }) }, draft.note),
                 h('div', { class: 'btn-row' },
@@ -512,7 +541,7 @@ function feedbackTarget(ctx, item) {
     if (!item.target) return null;
     const decision = item.target.type === 'decision' ? ctx.data.session.decisions.find((candidate) => candidate.id === item.target.id) : null;
     // A namespaced decision such as plan.D1 shows its artifact ID and phase.
-    const scoped = decision?.ref && decision.ref !== decision.id ? { label: decision.ref, title: `Go to ${decision.ref} in ${PHASE_META[decision.phase]?.label ?? decision.phase}` } : {};
+    const scoped = decision?.ref && decision.ref !== decision.id ? { label: decision.ref } : {};
     const section = item.target.type === 'section' ? ctx.data.session.sections[item.target.id] : null;
     if (section) {
         return h('span', null, ' to ', h('strong', { text: section.title }), ` in ${PHASE_META[section.doc]?.label ?? section.doc}`);
@@ -571,10 +600,10 @@ export function steerPanel(ctx) {
     const needs = h('ul', { class: 'steer-list' },
         view.needsYou.map((item) => (hasMarginHome(ctx, decisionOf(item.id)) ? h('li', null,
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `needs-${item.id}` }, onclick: () => ctx.act.navigate(item.id) },
-                icon('hand', { className: 'tone-attention-fg' }), h('span', { class: 'steer-link-text' }, h('span', { class: 'id-chip', text: refOf(item.id) }), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))),
+                icon('hand', { className: 'tone-attention-fg' }), h('span', { class: 'steer-link-text' }, idTag(refOf(item.id), 'go-to'), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))),
         waiting.map((item) => h('li', null,
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `check-${item.id}` }, onclick: () => ctx.act.navigate(item.target?.type === 'decision' ? item.target.id : item.id) },
-                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, 'Check how the agent read ', h('span', { class: 'id-chip', text: item.id })), h('span', { class: 'meta', text: phaseLabel(item.target?.phase) })))));
+                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, 'Check how the agent read ', idTag(item.id, 'go-to')), h('span', { class: 'meta', text: phaseLabel(item.target?.phase) })))));
     const needsCount = view.needsYou.length + waiting.length;
     // Agent decisions listed in a phase's Decisions row collapse to one link per row.
     const rowGroups = new Map();
@@ -595,17 +624,23 @@ export function steerPanel(ctx) {
                 icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text', text: `${plural(group.count, 'recorded decision')}` }), h('span', { class: 'meta', text: phaseLabel(group.phase) })))),
         decidedSingles.map((item) => (hasMarginHome(ctx, decisionOf(item.id)) ? h('li', null,
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `decided-${item.id}` }, onclick: () => ctx.act.navigate(item.id) },
-                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, h('span', { class: 'id-chip', text: refOf(item.id) }), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
+                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, idTag(refOf(item.id), 'go-to'), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
 
     const pending = pendingItems(ctx);
+    const elsewhere = sendItems(ctx).length - pending.length;
     const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
     const earlier = session.feedback.filter((item) => ['applied', 'corrected', 'dismissed'].includes(item.state));
+    const sendButton = [h('div', { class: 'btn-row send-row' }, button('Review and send…', { kind: 'primary', iconName: 'send', attrs: { 'data-key': 'open-send', 'aria-haspopup': 'dialog' }, onClick: () => ctx.act.openSend() })),
+        h('p', { class: 'meta', text: 'Or use Send to agent at the top of the canvas.' })];
+    const otherLoops = elsewhere > 0
+        ? h('p', { class: 'meta other-pending' }, icon('nodes'), `${plural(elsewhere, 'item')} from other loops of this session also ${elsewhere === 1 ? 'waits' : 'wait'}; Send to agent includes ${elsewhere === 1 ? 'it' : 'them'}.`)
+        : null;
     const feedback = h('div', null,
         pending.length
-            ? [h('h4', { class: 'group-title', text: `Not sent yet (${pending.length})` }), h('ul', { class: 'fb-list' }, pending.map((item) => feedbackRow(ctx, item))),
-                h('div', { class: 'btn-row send-row' }, button('Review and send…', { kind: 'primary', iconName: 'send', attrs: { 'data-key': 'open-send', 'aria-haspopup': 'dialog' }, onClick: () => ctx.act.openSend() })),
-                h('p', { class: 'meta', text: 'Or use Send to agent at the top of the canvas.' })]
-            : h('p', { class: 'empty', text: 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you choose Send to agent at the top of the canvas.' }),
+            ? [h('h4', { class: 'group-title', text: `Not sent yet (${pending.length})` }), h('ul', { class: 'fb-list' }, pending.map((item) => feedbackRow(ctx, item))), otherLoops, ...sendButton]
+            : elsewhere > 0
+                ? [otherLoops, ...sendButton]
+                : h('p', { class: 'empty', text: 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you choose Send to agent at the top of the canvas.' }),
         inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item)))] : null,
         earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Earlier feedback (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item)))) : null);
 
@@ -642,7 +677,8 @@ function composer(ctx) {
             button('Remove anchor', { iconName: 'x', hideLabel: true, attrs: { 'data-key': 'remove-anchor' }, onClick: () => ctx.act.setComposer({ anchor: null }) }))
         : h('p', { class: 'meta', text: 'Tip: use Comment or Research this on a row to anchor your input to it.' }),
     h('label', { class: 'visually-hidden', for: textId, text: 'Your input' }),
-    h('textarea', { id: textId, class: 'note', rows: '3', placeholder, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
+    h('textarea', { id: textId, class: 'note', rows: '3', placeholder, 'aria-invalid': state.error ? 'true' : undefined, 'aria-describedby': state.error ? 'composer-error' : undefined, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
+    state.error ? h('p', { class: 'field-error', id: 'composer-error' }, icon('alert'), h('span', { text: `Not added: ${state.error} Your text is kept.` })) : null,
     h('div', { class: 'btn-row' }, h('button', { type: 'submit', class: 'btn btn-primary', disabled: !state.text.trim(), dataset: { key: 'composer-submit' } }, icon('plus'), h('span', { text: { comment: 'Add comment', context: 'Add context', 'research-request': 'Add research request' }[state.kind] ?? 'Add' }))),
     h('p', { class: 'meta', text: 'What you add waits in Your feedback until you choose Send to agent.' }));
 }
@@ -703,7 +739,9 @@ function checkItem(ctx, phase, item) {
  * @param {any} ctx
  */
 export function sendSheet(ctx) {
-    const pending = pendingItems(ctx);
+    const groups = sessionPending(ctx);
+    const pending = groups.flatMap((group) => group.items);
+    const grouped = groups.length > 1 || (groups.length === 1 && !groups[0].shown);
     const send = ctx.ui.send;
     const handle = ctx.data.canvas?.handle;
     const rpi = ctx.data.session.source?.kind === 'rpi';
@@ -723,9 +761,12 @@ export function sendSheet(ctx) {
             h('div', { class: 'btn-row' }, button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))];
     }
     const noun = plural(pending.length, 'item');
+    const fromTasks = grouped ? ` from ${plural(groups.length, 'loop')} of this session` : '';
     return [head,
-        h('p', { class: 'send-intro' }, ...from, ` sends ${pending.length === 1 ? 'this item' : `these ${pending.length} items`} to the agent in your chat as one message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”. The agent ${rpi ? "changes the task's files" : 'makes the changes'} and reads back how it understood each item.`),
-        h('ul', { class: 'send-list', 'aria-label': 'Items to send' }, pending.map((item) => sendRow(ctx, item))),
+        h('p', { class: 'send-intro' }, ...from, ` sends ${pending.length === 1 ? 'this item' : `these ${pending.length} items`}${fromTasks} to the agent in your chat as one message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”. The agent ${rpi ? (grouped ? "changes each loop's files" : "changes the task's files") : 'makes the changes'} and reads back how it understood each item.`),
+        ...(grouped
+            ? groups.map((group) => sendGroup(ctx, group))
+            : [h('ul', { class: 'send-list', 'aria-label': 'Items to send' }, pending.map((item) => sendRow(ctx, item)))]),
         h('label', { class: 'field-label', for: 'send-note', text: 'Message to the agent (optional)' }),
         h('textarea', { id: 'send-note', class: 'note', rows: '3', 'aria-describedby': 'send-note-hint', oninput: (event) => ctx.act.setSendNote(event.target.value) }, send.note),
         h('p', { class: 'meta', id: 'send-note-hint', text: 'Shown in the chat above the line that names this canvas.' }),
@@ -736,6 +777,32 @@ export function sendSheet(ctx) {
         h('div', { class: 'btn-row send-actions' },
             button(send.sending ? 'Sending' : `Send ${noun}`, { kind: 'primary', iconName: 'send', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-confirm', id: 'send-confirm' }, onClick: () => ctx.act.send() }),
             button('Cancel', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))].filter(Boolean);
+}
+
+/** One loop's items in the Send dialog, headed by the loop. */
+function sendGroup(ctx, group) {
+    const headingId = `send-group-${group.taskId}`;
+    const status = known(TASK_STATUS, group.status);
+    const completed = group.status === 'completed';
+    return h('section', { class: 'send-group', 'aria-labelledby': headingId },
+        h('h3', { class: 'send-group-title', id: headingId, tabindex: '-1' },
+            h('span', { class: 'send-group-name', text: group.title }),
+            group.shown ? h('span', { class: 'badge tone-accent' }, icon('eye'), 'Shown') : null,
+            badge(status)),
+        h('p', { class: 'meta send-group-meta' }, h('code', { text: group.taskId }), completed ? ' · This loop is completed, so these items go to the agent as follow-up work for the session.' : ''),
+        h('ul', { class: 'send-list', 'aria-label': `Items for ${group.title}` }, group.items.map((item) => (group.shown ? sendRow(ctx, item) : otherSendRow(ctx, group, item)))));
+}
+
+/** An item from another loop of the session: its kind, what it is about, and Remove. */
+function otherSendRow(ctx, group, item) {
+    const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
+    return h('li', { class: 'send-item', dataset: { item: `${group.taskId}:${item.id}` } },
+        icon(kind.icon, { className: 'send-item-icon' }),
+        h('div', { class: 'send-item-text' },
+            h('p', { class: 'send-item-kind' }, kind.label, h('span', { class: 'meta', text: ` · ${item.about}` })),
+            item.text ? h('p', { class: 'meta', text: excerpt(item.text.split('\n')[0], 140) }) : null),
+        h('div', { class: 'send-item-actions' },
+            button(`Remove ${item.id} from ${group.title}`, { iconName: 'x', hideLabel: true, attrs: { 'data-key': `send-remove-${group.taskId}-${item.id}` }, onClick: () => ctx.act.removePending(item.id, group.taskId) })));
 }
 
 function sendRow(ctx, item) {
@@ -762,11 +829,12 @@ function sendRow(ctx, item) {
  * @param {any} file
  */
 export function filePreview(ctx, change, file) {
+    const real = ctx.data.session.source?.kind === 'rpi';
+    const editor = real ? ctx.data.editor ?? null : null;
     const kindTone = { added: 'success', modified: 'accent', deleted: 'danger', renamed: 'muted' }[file.kind] ?? 'muted';
     const counted = Number.isFinite(file.additions) && Number.isFinite(file.deletions);
     const diff = diffView(file.diff, `Changes in ${file.path}`)
-        ?? h('p', { class: 'empty', text: counted ? 'No diff was recorded for this file. The changes record lists it with its line counts.' : 'No diff was recorded for this file. Open it in the editor to see its current content.' });
-    const editorLink = workspaceEditorUri(ctx, file.path) ?? editorUri(file.path);
+        ?? h('p', { class: 'empty', text: counted ? 'No diff was recorded for this file. The changes record lists it with its line counts.' : real ? 'No diff was recorded for this file. Show the file to see its current content.' : 'No diff was recorded for this file.' });
     return [
         h('div', { class: 'dialog-head' },
             h('h2', { id: 'fileSheetTitle', class: 'sheet-title' }, icon('file'), h('code', { text: file.path })),
@@ -776,6 +844,55 @@ export function filePreview(ctx, change, file) {
         h('div', { class: 'btn-row' },
             button('Copy path', { iconName: 'copy', onClick: () => ctx.act.copy(file.path) }),
             button('Ask the agent about this change', { iconName: 'message', onClick: () => ctx.act.anchorComposer(change.id, 'comment', true) }),
-            editorLink ? h('a', { class: 'btn', href: editorLink }, icon('external'), h('span', { text: 'Open in editor' })) : h('span', { class: 'meta', text: 'Open in editor appears for files in your workspace once the canvas reads real changes.' })),
+            real && file.kind !== 'deleted' ? button('Show the file', { iconName: 'file', onClick: () => ctx.act.openSource(file.path, null) }) : null,
+            editor && file.kind !== 'deleted' && !/\.code-workspace$/i.test(file.path) ? button(`Open in ${editor.name}`, { iconName: 'file-code', onClick: () => ctx.act.openInEditor(file.path, null) }) : null),
     ];
+}
+
+/** Status of a task in the session tree, in words and with an icon. */
+export const TASK_STATUS = Object.freeze({
+    completed: { icon: 'check-circle', label: 'Completed', tone: 'success' },
+    running: { icon: 'active', label: 'Running', tone: 'accent' },
+    stopped: { icon: 'pause', label: 'Stopped', tone: 'muted' },
+});
+
+/**
+ * The session's tasks as nested lists, parent first, in the order the reader built them.
+ * The shown task is marked; other tasks, and a parent in another session, offer Show when
+ * the canvas reads real tracking files.
+ *
+ * @param {any} ctx
+ * @param {{ label: string, keyPrefix: string, onShow?: (task: any) => void }} options
+ */
+export function sessionTree(ctx, options) {
+    const { tree } = ctx.data.session.followUps;
+    const switchable = ctx.data.session.source?.kind === 'rpi';
+    const root = h('ol', { class: 'session-tree', 'aria-label': options.label });
+    const stack = [root];
+    let last = null;
+    const show = (task) => (options.onShow ? options.onShow(task) : ctx.act.showTask({ statePath: task.statePath }));
+    for (const task of tree.tasks) {
+        const depth = Math.max(0, Math.min(task.depth, stack.length));
+        while (stack.length > depth + 1) stack.pop();
+        if (depth === stack.length && last) {
+            const nested = h('ol', { class: 'session-tree-level' });
+            last.append(nested);
+            stack.push(nested);
+        }
+        const status = known(TASK_STATUS, task.status) ?? { icon: 'info', label: task.status ?? 'Unknown', tone: 'muted' };
+        last = h('li', { class: ['tree-task', task.shown ? 'is-shown' : null], dataset: { task: task.id } },
+            task.continues ? h('p', { class: 'tree-continues meta' }, `Continues ${task.continues.title} from another session `,
+                switchable ? button('Show', { iconName: 'arrow-right', attrs: { 'aria-label': `Show ${task.continues.title}, from another session`, 'data-key': `${options.keyPrefix}-continues-${task.id}` }, onClick: () => show(task.continues) }) : null) : null,
+            h('div', { class: 'tree-card' },
+                badge(status),
+                h('strong', { class: 'tree-title', text: task.title }),
+                h('code', { class: 'tree-id', text: task.id }),
+                task.shown
+                    ? h('span', { class: 'badge tone-accent tree-shown' }, icon('eye'), 'Shown')
+                    : switchable && task.statePath
+                        ? button('Show', { iconName: 'arrow-right', attrs: { 'aria-label': `Show ${task.title}`, 'data-key': `${options.keyPrefix}-show-${task.id}` }, onClick: () => show(task) })
+                        : null));
+        stack[stack.length - 1].append(last);
+    }
+    return root;
 }

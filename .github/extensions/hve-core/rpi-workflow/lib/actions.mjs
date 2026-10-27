@@ -20,6 +20,7 @@ import {
     upsertDecision,
 } from './model.mjs';
 import { buildScenario, SCENARIO_ID, STAGES } from './scenario.mjs';
+import { loadSessionDocs } from './session-docs.mjs';
 import { sourceSummary } from './sources.mjs';
 
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
@@ -30,7 +31,7 @@ const PHASE = { type: 'string', enum: [...PHASES], description: 'research, plan,
 export const ACTION_DEFINITIONS = Object.freeze([
     {
         name: 'get_state',
-        description: 'Summarize the RPI session shown in this canvas: the canvas handle and instance ID that its messages name, phase, decisions needing the user, agent decisions, pending and interpreted feedback, progress, appearance, and what the page reported about its environment.',
+        description: 'Summarize the RPI session shown in this canvas: the canvas handle and instance ID that its messages name, phase, decisions needing the user, agent decisions, pending and interpreted feedback for the shown task and for the other tasks in its session (otherTasks), the session tree and whether the canvas follows its running loop, progress, appearance, and what the page reported about its environment.',
         inputSchema: { type: 'object', properties: { detail: { type: 'string', enum: ['summary', 'full'], description: 'summary (default) or full session data' } }, additionalProperties: false },
     },
     {
@@ -40,10 +41,11 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'show_task',
-        description: 'Point this canvas at an RPI task read from the workspace .copilot-tracking folder, or back at the sample. task is "current" (the root task of the most recently active RPI session), a task ID from a state file, or "sample" with an optional stage. The canvas follows the task files while the page is open; your edits and the user\'s feedback stay in the canvas.',
+        description: 'Point this canvas at an RPI task read from the workspace .copilot-tracking folder, or back at the sample. Give state, the workspace-relative path of a state file in a session folder, or task: "current" (the most recently changed task whose session is running), a task ID from a state file, or "sample" with an optional stage. The canvas follows the session\'s files while the page is open and moves to its running loop; showing a task that is not running pauses that until the user resumes it. Your edits and the user\'s feedback stay in the canvas.',
         inputSchema: {
             type: 'object',
             properties: {
+                state: str('State file path such as .copilot-tracking/rpi-sessions/2026-10-23/rpi-workflow-canvas/rpi-workflow-canvas-state.json'),
                 task: str('"current", a task ID such as rpi-workflow-canvas, or "sample"'),
                 stage: { type: 'string', enum: [...STAGES], description: 'Sample stage, when task is "sample"' },
             },
@@ -91,13 +93,13 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'take_feedback',
-        description: 'Collect every item the user has not sent yet (answers, overrides, comments, context, research requests, suggested edits, checklist reviews, corrections) and mark them sent. Use it when the user asks you to check the canvas; Send to agent delivers the same items as a chat message. Items being sent right now are skipped. A suggested edit includes section.markdown (the full suggested text) and section.diff (its line changes against section.revision); a checklist review includes its phase. Make each change in the task files, or with canvas actions on the sample, then read it back with record_interpretation.',
+        description: 'Collect every item the user has not sent yet, in every task of the shown session (answers, overrides, comments, context, research requests, suggested edits, checklist reviews, corrections), and mark them sent. Each item names its taskId; feedback IDs repeat across tasks. Use it when the user asks you to check the canvas; Send to agent delivers the same items as a chat message. Items being sent right now are skipped. A suggested edit includes section.markdown (the full suggested text) and section.diff (its line changes against section.revision); a checklist review includes its phase. Make each change in that task\'s files, or with canvas actions on the sample, then read it back with record_interpretation. Items for a completed task are follow-up work for the session.',
         inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     },
     {
         name: 'record_interpretation',
-        description: 'Tell the user how you understood a sent feedback item and what it changes. Set applied true once the change is made: in the task files for a canvas that follows RPI files, or with canvas actions on the sample. Without applied, the user confirms the read-back or corrects it.',
-        inputSchema: { type: 'object', properties: { feedbackId: str('Feedback ID such as FB-004'), text: str('Your interpretation in plain language'), effect: str('What changed, such as P02-T03 updated'), applied: { type: 'boolean' } }, required: ['feedbackId'], additionalProperties: false },
+        description: 'Tell the user how you understood a sent feedback item and what it changes. Set applied true once the change is made: in the task files for a canvas that follows RPI files, or with canvas actions on the sample. Without applied, the user confirms the read-back or corrects it. Pass taskId whenever the message or take_feedback named more than one task; it is required then, because feedback IDs repeat across tasks.',
+        inputSchema: { type: 'object', properties: { taskId: str('Task the item belongs to, as the message or take_feedback named it'), feedbackId: str('Feedback ID such as FB-004'), text: str('Your interpretation in plain language'), effect: str('What changed, such as P02-T03 updated'), applied: { type: 'boolean' } }, required: ['feedbackId'], additionalProperties: false },
     },
     {
         name: 'update_task',
@@ -267,6 +269,50 @@ export function createActionHandlers(deps) {
 
     const agentUpdate = (instance, change) => store.update(instance.sessionId, change, { by: 'agent' });
 
+    /** The shown document and the documents of the other tasks in its session. */
+    async function sessionDocsOf(instance) {
+        const shown = await store.load(instance.sessionId);
+        if (!shown) {
+            throw makeError('not_found', 'No session is loaded. Call load_scenario.');
+        }
+        return loadSessionDocs(store, shown, instance.source);
+    }
+
+    const byState = (session, state) => session.feedback.filter((item) => item.state === state).map((item) => ({ id: item.id, kind: item.kind, target: item.target?.id ?? null }));
+
+    /** Feedback waiting in the session's other tasks, for get_state. */
+    async function otherTasksOf(instance) {
+        const docs = await sessionDocsOf(instance);
+        return docs.slice(1).map((doc) => ({
+            taskId: doc.taskId,
+            status: doc.task?.status ?? null,
+            pendingFeedback: byState(doc.session, 'queued'),
+            awaitingInterpretation: byState(doc.session, 'sent'),
+            awaitingUserConfirmation: byState(doc.session, 'interpreted'),
+        })).filter((task) => task.pendingFeedback.length || task.awaitingInterpretation.length || task.awaitingUserConfirmation.length);
+    }
+
+    /**
+     * The task document a read-back belongs to: the named task, or the one task whose item
+     * is waiting for it. Refuses to guess when the item went out in a message that named
+     * several tasks or when several tasks have such an item.
+     */
+    async function interpretationDoc(instance, input) {
+        const docs = await sessionDocsOf(instance);
+        if (input.taskId !== undefined) {
+            const doc = docs.find((item) => item.taskId === input.taskId);
+            if (!doc) throw makeError('not_found', `Task ${String(input.taskId).slice(0, 80)} has no canvas items in this session.`);
+            return doc;
+        }
+        const waiting = (item) => item && (item.state === 'sent' || (input.applied === true && item.state === 'interpreted'));
+        const candidates = docs.filter((doc) => waiting(doc.session.feedback.find((item) => item.id === input.feedbackId)));
+        const shared = candidates.some((doc) => doc.session.feedback.find((item) => item.id === input.feedbackId)?.deliveredWith > 1);
+        if (candidates.length > 1 || shared) {
+            throw makeError('invalid_input', `${String(input.feedbackId).slice(0, 80)} went out with items from more than one task; pass taskId with the task named for it.`);
+        }
+        return candidates[0] ?? docs[0];
+    }
+
     /** The file an action would have to change on a canvas that follows RPI files. */
     async function managedFile(instance, action, input) {
         const session = await store.load(instance.sessionId);
@@ -315,8 +361,9 @@ export function createActionHandlers(deps) {
             if (!session) {
                 throw makeError('not_found', 'No session is loaded. Call load_scenario.');
             }
-            const base = { url: instance.server.url, canvas: { handle: instance.handle ?? null, instanceId: instance.instanceId ?? ctx.instanceId }, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0, source: sourceSummary(instance, session) };
-            return input.detail === 'full' ? { ...base, session } : { ...base, ...summarize(session) };
+            const base = { url: instance.server.address ?? null, editor: instance.server.editor ?? null, canvas: { handle: instance.handle ?? null, instanceId: instance.instanceId ?? ctx.instanceId }, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0, source: sourceSummary(instance, session) };
+            const otherTasks = await otherTasksOf(instance);
+            return input.detail === 'full' ? { ...base, session, otherTasks } : { ...base, ...summarize(session), otherTasks };
         }),
 
         load_scenario: (ctx) => guard(async () => {
@@ -343,16 +390,22 @@ export function createActionHandlers(deps) {
             if (input.task !== undefined && typeof input.task !== 'string') {
                 throw makeError('invalid_input', 'task must be "current", a task ID, or "sample".');
             }
+            if (input.state !== undefined && typeof input.state !== 'string') {
+                throw makeError('invalid_input', 'state must be the path of a state file.');
+            }
+            if (input.state !== undefined && input.task !== undefined) {
+                throw makeError('invalid_input', 'Give either state or task, not both.');
+            }
             if (input.stage !== undefined && !STAGES.includes(input.stage)) {
                 throw makeError('invalid_input', `stage must be one of: ${STAGES.join(', ')}.`);
             }
-            if (input.task === undefined && input.stage === undefined) {
-                throw makeError('invalid_input', 'Give task ("current", a task ID, or "sample") or a sample stage.');
+            if (input.task === undefined && input.state === undefined && input.stage === undefined) {
+                throw makeError('invalid_input', 'Give state, task ("current", a task ID, or "sample"), or a sample stage.');
             }
-            if (input.task !== undefined && input.task !== 'sample' && input.stage !== undefined) {
+            if (((input.task !== undefined && input.task !== 'sample') || input.state !== undefined) && input.stage !== undefined) {
                 throw makeError('invalid_input', 'stage applies only to the sample.');
             }
-            const request = input.task === undefined || input.task === 'sample' ? { stage: input.stage } : { task: input.task };
+            const request = input.state !== undefined ? { state: input.state } : input.task === undefined || input.task === 'sample' ? { stage: input.stage } : { task: input.task };
             const prepared = await deps.switchSource(instance, request, { workingDirectory: ctx?.session?.workingDirectory });
             return { ...summarize(prepared.session), source: sourceSummary(instance, prepared.session) };
         }),
@@ -362,15 +415,34 @@ export function createActionHandlers(deps) {
 
         take_feedback: (ctx) => guard(async () => {
             const instance = instanceOf(ctx);
-            const { session, result } = await agentUpdate(instance, (current) => takeFeedback(current, iso()));
+            const docs = await sessionDocsOf(instance);
+            const items = [];
+            let revision = docs[0].session.revision;
+            for (const doc of docs) {
+                const { session, result } = await store.update(doc.id, (current) => takeFeedback(current, iso()), { by: 'agent' });
+                if (doc.id === instance.sessionId) revision = session.revision;
+                const followUp = session.session?.status === 'completed' && docs.length > 1;
+                items.push(...result.map((item) => ({ taskId: doc.taskId, id: item.id, kind: item.kind, target: item.target, optionId: item.optionId ?? null, optionLabel: item.optionLabel ?? null, text: item.text, correctionOf: item.correctionOf ?? null, ...(followUp ? { followUp: true } : {}), ...(item.kind === 'edit' && item.section ? { section: item.section } : {}), ...(item.kind === 'checklist' ? { phase: item.phase ?? null } : {}) })));
+            }
+            const tasks = new Set(items.map((item) => item.taskId));
             return {
-                revision: session.revision,
-                items: result.map((item) => ({ id: item.id, kind: item.kind, target: item.target, optionId: item.optionId ?? null, optionLabel: item.optionLabel ?? null, text: item.text, correctionOf: item.correctionOf ?? null, ...(item.kind === 'edit' && item.section ? { section: item.section } : {}), ...(item.kind === 'checklist' ? { phase: item.phase ?? null } : {}) })),
-                note: result.length === 0 ? 'Nothing is waiting to be sent.' : 'Make each change, then read back each item with record_interpretation.',
+                revision,
+                items,
+                note: items.length === 0
+                    ? 'Nothing is waiting to be sent.'
+                    : tasks.size > 1
+                        ? 'Make each change in its task\'s files, then read back each item with record_interpretation, passing its taskId. Items marked followUp belong to a completed task: plan them as follow-up work.'
+                        : 'Make each change, then read back each item with record_interpretation.',
             };
         }),
 
-        record_interpretation: mutation((s, input, now) => recordInterpretation(s, input, now), (item, s) => ({ revision: s.revision, id: item.id, state: item.state })),
+        record_interpretation: (ctx) => guard(async () => {
+            const instance = instanceOf(ctx);
+            const input = inputOf(ctx);
+            const doc = await interpretationDoc(instance, input);
+            const { session, result } = await store.update(doc.id, (current) => recordInterpretation(current, input, iso()), { by: 'agent' });
+            return { revision: session.revision, id: result.id, state: result.state, taskId: doc.taskId };
+        }),
         update_task: managed('update_task', mutation((s, input, now) => updateTask(s, input, now), (task, s) => ({ revision: s.revision, task: { id: task.id, status: task.status } }))),
         record_change: managed('record_change', mutation((s, input, now) => recordChange(s, input, now), (change, s) => ({ revision: s.revision, id: change.id }))),
         record_discovery: managed('record_discovery', mutation((s, input, now) => recordDiscovery(s, input, now), (discovery, s) => ({ revision: s.revision, id: discovery.id }))),

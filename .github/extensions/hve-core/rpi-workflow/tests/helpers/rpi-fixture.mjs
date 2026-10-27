@@ -18,10 +18,13 @@ export const ROOT_TASK = 'trail-maps';
 export const CHILD_TASK = 'trail-maps-fixes';
 export const STALE_TASK = 'old-task';
 
+export const SESSION_KEY = `${DAY}/${ROOT_TASK}`;
+export const STALE_SESSION_KEY = `2026-01-10/${STALE_TASK}`;
+
 export const PATHS = {
-    rootState: `${T}/rpi-sessions/${DAY}/${ROOT_TASK}-state.json`,
-    childState: `${T}/rpi-sessions/${DAY}/${CHILD_TASK}-state.json`,
-    staleState: `${T}/rpi-sessions/2026-01-10/${STALE_TASK}-state.json`,
+    rootState: `${T}/rpi-sessions/${SESSION_KEY}/${ROOT_TASK}-state.json`,
+    childState: `${T}/rpi-sessions/${SESSION_KEY}/${CHILD_TASK}-state.json`,
+    staleState: `${T}/rpi-sessions/${STALE_SESSION_KEY}/${STALE_TASK}-state.json`,
     research: `${T}/research/${DAY}/${ROOT_TASK}-research.md`,
     plan: `${T}/plans/${DAY}/${ROOT_TASK}-plan.md`,
     critique: `${T}/reviews/plans/${DAY}/${ROOT_TASK}-plan-critique.md`,
@@ -36,7 +39,9 @@ const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
 export const ROOT_STATE = {
     task_id: ROOT_TASK,
     task_slug: ROOT_TASK,
+    session_name: 'Offline trail maps',
     parent_task: null,
+    child_tasks: [{ task_id: CHILD_TASK, task_slug: CHILD_TASK, state_path: PATHS.childState }],
     mode: 'automatic',
     active_phase: 'Follow-up',
     status: 'completed',
@@ -58,7 +63,9 @@ export const ROOT_STATE = {
 export const CHILD_STATE = {
     task_id: CHILD_TASK,
     task_slug: CHILD_TASK,
-    parent_task: { task_id: ROOT_TASK, task_slug: ROOT_TASK },
+    session_name: 'Offline trail maps',
+    parent_task: { task_id: ROOT_TASK, task_slug: ROOT_TASK, state_path: PATHS.rootState },
+    child_tasks: [],
     mode: 'automatic',
     active_phase: 'Follow-up',
     status: 'completed',
@@ -90,7 +97,7 @@ export const STALE_STATE = {
 };
 
 export const RESEARCH = `<!-- markdownlint-disable-file -->
-# Task Research: ${ROOT_TASK}
+# Task Research: Offline trail maps
 
 | Field              | Value                    |
 |--------------------|--------------------------|
@@ -683,14 +690,22 @@ export const FILES = {
     [PATHS.childChanges]: CHILD_CHANGES,
 };
 
+/** Workspace source files the fixture research cites as code evidence. */
+export const SOURCE_FILES = {
+    'src/storage/quota.ts': ['// Storage quota checks for offline regions.', 'export const REGION_LIMIT_MB = 40;', '', 'export async function estimate() {', '    return navigator.storage.estimate();', '}', ''].join('\n'),
+    'src/sw/cache.ts': ['// The service worker cache keeps responses without metadata.', 'export const CACHE_NAME = \'tiles-v1\';', ''].join('\n'),
+    'src/map/tiles.ts': ['// Map tiles are about 20 KB each.', 'export const TILE_BYTES = 20 * 1024;', ''].join('\n'),
+};
+
 /**
- * Writes the fixture session under `root` and dates the stale state file a few days back,
- * so the newest running session is the trail maps one.
+ * Writes the fixture session and the source files its research cites under `root`, and
+ * dates the stale state file a few days back, so the newest running session is the trail
+ * maps one.
  *
  * @param {string} root
  */
 export async function writeFixtureWorkspace(root) {
-    for (const [relative, content] of Object.entries(FILES)) {
+    for (const [relative, content] of Object.entries({ ...FILES, ...SOURCE_FILES })) {
         const target = path.join(root, relative);
         await fs.mkdir(path.dirname(target), { recursive: true });
         await fs.writeFile(target, content);
@@ -710,10 +725,15 @@ export const rootSession = () => assembleSession({
     artifacts: { research: parseResearch(RESEARCH), plan: parsePlan(PLAN), critique: parseCritique(CRITIQUE), changes: parseChanges(CHANGES), review: parseReview(REVIEW) },
     statePath: PATHS.rootState,
     files: { plan: { path: PATHS.plan, mtimeMs: Date.parse('2026-01-15T10:00:00Z') } },
-    lineage: [
-        { taskId: 'trail-maps', title: 'Offline trail maps', relation: 'this', status: 'running' },
-        { taskId: 'trail-maps-fixes', title: 'Offline trail maps review fixes', relation: 'child', status: 'completed' },
-    ],
+    tree: {
+        key: SESSION_KEY,
+        date: DAY,
+        name: 'Offline trail maps',
+        tasks: [
+            { id: ROOT_TASK, title: 'Offline trail maps', status: 'completed', depth: 0, statePath: PATHS.rootState, parent: null, shown: true, continues: null },
+            { id: CHILD_TASK, title: 'Offline trail maps review fixes', status: 'completed', depth: 1, statePath: PATHS.childState, parent: PATHS.rootState, shown: false, continues: null },
+        ],
+    },
     git: { repository: 'contoso/trails', branch: 'feat/offline' },
     root: '/work/trails',
     now: FIXTURE_NOW,
@@ -726,10 +746,15 @@ export const childSession = () => assembleSession({
     artifacts: { plan: parsePlan(CHILD_PLAN), changes: parseChanges(CHILD_CHANGES) },
     mismatched: [{ key: 'research', path: PATHS.review, kind: 'review' }],
     statePath: PATHS.childState,
-    lineage: [
-        { taskId: 'trail-maps', title: 'Offline trail maps', relation: 'parent', status: 'running' },
-        { taskId: 'trail-maps-fixes', title: 'Offline trail maps review fixes', relation: 'this', status: 'completed' },
-    ],
+    tree: {
+        key: SESSION_KEY,
+        date: DAY,
+        name: 'Offline trail maps',
+        tasks: [
+            { id: ROOT_TASK, title: 'Offline trail maps', status: 'completed', depth: 0, statePath: PATHS.rootState, parent: null, shown: false, continues: null },
+            { id: CHILD_TASK, title: 'Offline trail maps review fixes', status: 'completed', depth: 1, statePath: PATHS.childState, parent: PATHS.rootState, shown: true, continues: null },
+        ],
+    },
     now: FIXTURE_NOW,
 });
 
@@ -743,6 +768,6 @@ export const minimalSession = (activePhase) => assembleSession({
     id: 'rpi-bare-task',
     state: parseState({ task_id: 'bare-task', task_slug: 'bare-task', parent_task: null, mode: 'manual', active_phase: activePhase, status: 'active', session_status: null, artifact_paths: { research: null, plan: null, critique: null, changes: null, review: null }, confirmed_decisions: null, blockers: null, next_action: null, prioritized_follow_ups: null }),
     artifacts: {},
-    statePath: `${T}/rpi-sessions/${DAY}/bare-task-state.json`,
+    statePath: `${T}/rpi-sessions/${DAY}/bare-task/bare-task-state.json`,
     now: FIXTURE_NOW,
 });

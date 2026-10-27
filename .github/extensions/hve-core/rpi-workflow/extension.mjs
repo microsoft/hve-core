@@ -5,6 +5,7 @@ import { CanvasError, createCanvas, joinSession } from '@github/copilot-sdk/exte
 
 import { ACTION_DEFINITIONS, createActionHandlers } from './lib/actions.mjs';
 import { createDelivery } from './lib/delivery.mjs';
+import { createEditorOpener, findEditor } from './lib/editor.mjs';
 import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
 import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
@@ -25,6 +26,14 @@ const makeError = (code, message) => new CanvasError(code, message);
 const store = createStore({ log: (message) => log(message, 'warning') });
 const sources = createSourceController({ store, log: (message) => log(message, 'warning') });
 
+/** The VS Code that hosts this extension, when it is one; found once at startup. */
+let editor = null;
+findEditor().then((found) => {
+    editor = found ? { name: found.name, open: createEditorOpener(found) } : null;
+}).catch(() => {
+    editor = null;
+});
+
 /** Converts model and source errors into canvas errors the host shows. */
 const asCanvasError = (error) => (error instanceof ModelError
     ? makeError(error.code, error.message)
@@ -38,7 +47,11 @@ const registry = createInstanceRegistry({
             getSessionId: () => record.sessionId,
             getCanvas: () => ({ handle: record.handle, instanceId: record.instanceId }),
             getSource: () => record.source,
-            switchTask: (taskId) => sources.switchToTask(record, taskId),
+            getEditor: () => editor,
+            switchTask: (ref) => sources.switchToTask(record, ref),
+            switchSession: (key) => sources.switchToSession(record, key),
+            resumeFollowing: () => sources.resumeFollowing(record),
+            listSessions: () => sources.sessions(record),
             deliver: createDelivery({ getSession: () => joined }),
             log,
         });
@@ -51,8 +64,9 @@ const handlers = createActionHandlers({
     makeError,
     async switchSource(instance, request, context) {
         try {
+            const fromWorkspace = request.task !== undefined || request.state !== undefined;
             const prepared = await sources.prepare(request, {
-                workspace: request.task !== undefined && instance.source?.kind === 'rpi' ? instance.source.workspace : null,
+                workspace: fromWorkspace && instance.source?.kind === 'rpi' ? instance.source.workspace : null,
                 candidates: [context.workingDirectory, process.cwd()],
             });
             sources.attach(instance, prepared);
@@ -70,7 +84,8 @@ const canvas = createCanvas({
     inputSchema: {
         type: 'object',
         properties: {
-            task: { type: 'string', description: 'RPI task to show from the workspace .copilot-tracking folder: "current" (the root task of the most recently active session) or a task ID. Omit to show the sample.' },
+            state: { type: 'string', description: 'Workspace-relative path of the RPI state file to show, in a session folder such as .copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json. The canvas follows the session\'s running loop from there.' },
+            task: { type: 'string', description: 'RPI task to show from the workspace .copilot-tracking folder: "current" (the most recently changed task whose session is running) or a task ID. Omit task and state to show the sample.' },
             scenario: { type: 'string', enum: [SCENARIO_ID], description: 'Sample session to show; the canvas ships one.' },
             stage: { type: 'string', enum: [...STAGES], description: 'Stage of the sample session to show when opening.' },
         },
@@ -95,9 +110,7 @@ const canvas = createCanvas({
             },
         });
         const ready = /** @type {{ sessionId: string, source: any, session: any, note: string }} */ (prepared);
-        if (instance.sessionId !== ready.sessionId || instance.source !== ready.source) {
-            sources.attach(instance, ready);
-        }
+        sources.attach(instance, ready);
         const { session, note } = ready;
         const phase = PHASE_LABELS[session.session.activePhase] ?? session.session.activePhase;
         const status = ready.source.kind === 'rpi' ? `RPI session: ${session.task.title} · ${phase}${note}` : `Sample session: ${phase}${note}`;

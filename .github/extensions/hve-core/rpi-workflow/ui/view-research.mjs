@@ -3,7 +3,7 @@
 
 import { badge, button, chip, EVIDENCE_STATE, h, icon, idChip, timeEl } from './dom.mjs';
 import { decisionCard, decisionsRow, DECISION_ROWS, evidenceChips, marginNote, md, notesFor, recordSections, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
-import { externalLink } from './markdown.mjs';
+import { evidenceSource } from './source-view.mjs';
 
 /** Research view: summary, unknowns, questions, findings with decision margins, alternatives, risks, and the record. */
 
@@ -134,7 +134,7 @@ export function renderView(ctx) {
         table('Evidence log', ['ID', 'Claim', 'Source', 'Confidence'], research.evidence.map((item) => [
             h('span', { class: 'id-chip', dataset: { item: item.id }, tabindex: '-1', text: item.id }),
             item.claim,
-            item.url ? externalLink(item.url, item.source) : h('code', { text: item.source }),
+            evidenceSource(ctx, item),
             item.confidence,
         ])));
     rows.push(row(ctx, { id: 'record', idLabel: null, title: 'Research record', level: 2, body: [h('p', { class: 'meta', text: 'Method, evidence, and sources behind the findings. Evidence chips open their row here.' }), record, ...recordSections(ctx, 'research')] }));

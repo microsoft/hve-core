@@ -14,6 +14,7 @@ import {
     labeledFields,
     linksIn,
     listItems,
+    atxHeading,
     parseDocument,
     plainText,
     sectionsAt,
@@ -185,5 +186,21 @@ describe('IDs and headings', () => {
         assert.deepEqual(severityHeading('RV-011 [Low]: Storage gaps'), { id: 'RV-011', severity: 'low', title: 'Storage gaps' });
         assert.equal(severityHeading('PC-001 [Urgent]: x'), null);
         assert.equal(plainText('Use **`store.update`** and [the guide](https://example.com/g), _please_.'), 'Use store.update and the guide, please.');
+    });
+});
+
+describe('heading parsing on hostile input', () => {
+    it('reads ATX headings as before and stays fast on long lines', () => {
+        assert.deepEqual(atxHeading('## Title ##'), { level: 2, title: 'Title' });
+        assert.deepEqual(atxHeading('# C# notes'), { level: 1, title: 'C# notes' });
+        assert.equal(atxHeading('#######'), null);
+        assert.equal(atxHeading('#hashtag'), null);
+        assert.equal(atxHeading('   # x'), null);
+        assert.deepEqual(atxHeading('   # x', 3), { level: 1, title: 'x' });
+        const hostile = `# a${' '.repeat(200000)}b`;
+        const started = Date.now();
+        const parsed = parseDocument(`${hostile}\n## Next\n`);
+        assert.ok(Date.now() - started < 500, `parsed in ${Date.now() - started} ms`);
+        assert.deepEqual(parsed.headings.map((heading) => heading.title.length), [200002, 4]);
     });
 });

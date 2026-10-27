@@ -795,6 +795,64 @@ details > summary:hover {
   margin-top: 12px;
 }
 
+/* Status area: failures and follow moves stay visible at the bottom of the document until dismissed. */
+.status-area {
+  position: sticky;
+  bottom: 12px;
+  z-index: 15;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0 16px;
+  pointer-events: none;
+}
+
+.status-area[hidden] {
+  display: none;
+}
+
+.status-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: min(640px, 100%);
+  margin: 0;
+  box-shadow: var(--rw-shadow-float);
+  pointer-events: auto;
+}
+
+.status-note + * {
+  margin-top: 0;
+}
+
+.status-note-icon {
+  flex: none;
+  margin-top: 4px;
+  color: var(--tone);
+}
+
+.status-note-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 2px 0;
+  font: var(--rw-t-ui);
+  overflow-wrap: anywhere;
+}
+
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 6px 0 0;
+  color: var(--rw-danger);
+  font: var(--rw-t-meta);
+}
+
+.field-error .icon {
+  flex: none;
+  margin-top: 2px;
+}
+
 .notice-title {
   display: flex;
   align-items: center;
@@ -1000,6 +1058,112 @@ details > summary:hover {
   height: 18px;
   padding: 0 6px;
   font-size: 11.5px;
+}
+
+/* The session button and follow state share the meta line; the meta badges give way first. */
+.task-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+/* The canvas badge never shrinks; the session label gives way first, then the task details. */
+.task-meta-line > .task-meta {
+  flex: 1 1 0;
+  container-type: inline-size;
+}
+
+/* Too narrow to read anything: show no sliver of the task details. */
+@container (max-width: 6ch) {
+  .task-meta > * {
+    visibility: hidden;
+  }
+}
+
+.canvas-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.canvas-badge .badge {
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11.5px;
+}
+
+.session-btn {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: min(12ch, 100%);
+  align-items: center;
+  gap: 4px;
+  max-width: min(30ch, 100%);
+  height: 20px;
+  padding: 0 4px 0 6px;
+  border: 1px solid var(--rw-border);
+  border-radius: var(--rw-radius);
+  background: var(--rw-bg);
+  color: var(--rw-fg);
+  font: 500 12px/18px var(--rw-font);
+  cursor: pointer;
+}
+
+.session-btn:hover {
+  background: var(--rw-bg-hover);
+}
+
+.session-btn[aria-expanded="true"] {
+  border-color: var(--rw-accent);
+  background: var(--rw-bg-selected);
+}
+
+.session-btn > .icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--rw-fg-muted);
+}
+
+.session-btn-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-btn-chevron {
+  transform: rotate(90deg);
+}
+
+.session-btn[aria-expanded="true"] .session-btn-chevron {
+  transform: rotate(-90deg);
+}
+
+.follow-state {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-meta);
+  white-space: nowrap;
+}
+
+.follow-state .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--rw-accent);
+}
+
+.follow-state[data-state="paused"] .icon {
+  color: var(--rw-attention);
+}
+
+.follow-resume {
+  flex: none;
+  font: var(--rw-t-meta);
 }
 
 .rail {
@@ -1265,6 +1429,72 @@ details > summary:hover {
   font: 600 13px/20px var(--rw-font);
 }
 
+.session-menu {
+  top: calc(100% + 4px);
+  left: 48px;
+  display: grid;
+  gap: 8px;
+  width: min(460px, calc(100vw - 16px));
+  max-height: min(72vh, 600px);
+  overflow: auto;
+}
+
+.session-menu-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.session-menu-title .icon {
+  color: var(--rw-fg-muted);
+}
+
+.session-menu-where {
+  margin-top: -6px;
+  overflow-wrap: anywhere;
+}
+
+.menu-subtitle {
+  margin-top: 4px;
+  color: var(--rw-fg-muted);
+  font: 600 12px/18px var(--rw-font);
+}
+
+.session-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session-pick {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--rw-border-muted);
+  border-radius: var(--rw-radius-lg);
+  background: var(--rw-bg);
+  color: var(--rw-fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.session-pick:hover {
+  background: var(--rw-bg-hover);
+}
+
+.session-pick-name {
+  font: 600 13px/20px var(--rw-font);
+  overflow-wrap: anywhere;
+}
+
+.session-pick-meta {
+  overflow-wrap: anywhere;
+}
+
 .appearance-menu .segmented {
   display: flex;
   width: 100%;
@@ -1520,6 +1750,32 @@ details > summary:hover {
 
 .context-title .icon {
   color: var(--rw-fg-muted);
+}
+
+/* Back and forward retrace the places the reader moved to, across phases and tasks. */
+.history-nav {
+  display: inline-flex;
+  gap: 2px;
+  margin-inline-start: -6px;
+}
+
+.history-nav .btn-icon {
+  width: 28px;
+  min-height: 28px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.history-nav .btn-icon:hover:not(:disabled) {
+  border-color: var(--rw-border);
+  background: var(--rw-bg-hover);
+  color: var(--rw-fg);
+}
+
+.history-nav .btn-icon:disabled {
+  border-color: transparent;
+  background: transparent;
+  opacity: 0.4;
 }
 
 .context-artifact {
@@ -1864,8 +2120,12 @@ details > summary:hover {
   margin-inline-end: 2px;
 }
 
-.evidence-chip .icon-inline {
-  margin: 0 4px 0 0;
+/* The icon after an ID says what a click does: go-to navigates, the page opens in place. */
+.id-chip .chip-icon {
+  width: 11px;
+  height: 11px;
+  margin-inline-start: 4px;
+  vertical-align: 0;
 }
 
 .evidence-details {
@@ -2082,6 +2342,11 @@ details > summary:hover {
   background: var(--rw-bg);
   cursor: pointer;
   transition: background-color var(--rw-fast) var(--rw-ease), border-color var(--rw-fast) var(--rw-ease);
+}
+
+/* Your own answer: dashed, because the person writes it rather than picks it. */
+.option.option-own {
+  border-style: dashed;
 }
 
 .option:hover {
@@ -2712,6 +2977,30 @@ details > summary:hover {
 
 .send-sheet {
   width: min(640px, calc(100vw - 32px));
+}
+
+.send-group {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.send-group-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font: var(--rw-t-h3);
+}
+
+.send-group-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.send-group-meta code {
+  font: var(--rw-t-code);
+  font-size: 11.5px;
 }
 
 .send-intro {
@@ -3722,45 +4011,77 @@ details > summary:hover {
   font: var(--rw-t-meta);
 }
 
-.lineage {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+/* Session tree: the session's loops, parent first, used in Follow-up and the session menu */
+
+.session-tree,
+.session-tree-level {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
-.lineage-step {
+.session-tree-level {
+  margin: 6px 0 0 11px;
+  padding-left: 14px;
+  border-left: 1px solid var(--rw-border);
+}
+
+.tree-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-}
-
-.lineage-arrow {
-  color: var(--rw-fg-muted);
-}
-
-.lineage-card {
-  display: grid;
-  gap: 2px;
-  padding: 8px 12px;
-  border: 1px solid var(--rw-border);
+  gap: 4px 8px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--rw-border-muted);
   border-radius: var(--rw-radius-lg);
-  background: var(--rw-bg-subtle);
+  background: var(--rw-bg);
 }
 
-.lineage-step.is-this .lineage-card {
+.tree-task.is-shown > .tree-card {
   border-color: var(--rw-accent);
   background: var(--rw-bg-selected);
 }
 
-.lineage-id {
-  font-size: 12px;
+.tree-title {
+  min-width: 0;
+  font: 600 13px/20px var(--rw-font);
+  overflow-wrap: anywhere;
 }
 
-.lineage-card > .btn {
-  justify-self: start;
-  margin-top: 6px;
+.tree-id {
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-code);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+.tree-card > .btn,
+.tree-card > .tree-shown {
+  margin-left: auto;
+}
+
+.tree-continues {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+}
+
+.other-pending {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.other-pending .icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--rw-accent);
 }
 
 /* Dialogs and the file preview sheet */
@@ -3820,6 +4141,364 @@ details > summary:hover {
   gap: 8px 16px;
   align-items: baseline;
   margin-bottom: 16px;
+}
+
+/* Previews */
+
+.preview {
+  position: fixed;
+  inset: auto;
+  z-index: 60;
+  width: max-content;
+  max-width: min(440px, calc(100vw - 16px));
+  max-height: min(60vh, 440px);
+  margin: 0;
+  padding: 10px 12px 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--rw-border);
+  border-radius: var(--rw-radius-lg);
+  background: var(--rw-bg);
+  color: var(--rw-fg);
+  box-shadow: var(--rw-shadow-float);
+  font: var(--rw-t-ui);
+  text-align: start;
+}
+
+.preview.is-locked {
+  border-color: color-mix(in srgb, var(--rw-accent) 60%, var(--rw-border));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .preview {
+    animation: rw-preview-in var(--rw-fast) var(--rw-ease);
+  }
+}
+
+@keyframes rw-preview-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.preview-kind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-inline-end: auto;
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-meta);
+}
+
+.preview-go {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--rw-radius);
+  background: transparent;
+  color: var(--rw-accent);
+  font: 500 12px/18px var(--rw-font);
+  white-space: nowrap;
+}
+
+.preview-go:hover {
+  background: var(--rw-bg-hover);
+}
+
+.preview-state {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+
+.preview-state > svg {
+  grid-area: 1 / 1;
+}
+
+.preview-pin {
+  display: none;
+  color: var(--rw-accent);
+}
+
+.preview.is-locked .preview-ring {
+  display: none;
+}
+
+.preview.is-locked .preview-pin {
+  display: block;
+}
+
+.preview-ring {
+  width: 16px;
+  height: 16px;
+  transform: rotate(-90deg);
+}
+
+.preview-ring circle {
+  fill: none;
+  stroke-width: 2;
+}
+
+.preview-ring .ring-track {
+  stroke: var(--rw-border-muted);
+}
+
+.preview-ring .ring-fill {
+  stroke: var(--rw-accent);
+  stroke-dasharray: 37.7;
+  stroke-dashoffset: 37.7;
+}
+
+.preview.is-arming .ring-fill {
+  animation: rw-ring var(--rw-lock-ms, 1000ms) linear forwards;
+}
+
+@keyframes rw-ring {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.preview-close {
+  display: none;
+  width: 24px;
+  height: 24px;
+}
+
+.preview.is-locked .preview-close {
+  display: inline-flex;
+}
+
+.preview-title {
+  font: 600 14px/20px var(--rw-font);
+}
+
+.preview-title p,
+.preview-text p {
+  margin: 0;
+}
+
+.preview-title > * + *,
+.preview-text > * + * {
+  margin-top: 4px;
+}
+
+.preview-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.preview-field,
+.preview-related,
+.preview-more {
+  margin-top: 8px;
+}
+
+.preview-label {
+  margin-bottom: 2px;
+  color: var(--rw-fg-muted);
+  font: 600 11px/16px var(--rw-font);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.preview-source {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-meta);
+  overflow-wrap: anywhere;
+}
+
+.preview-source > .icon {
+  align-self: center;
+}
+
+/* Sources */
+
+.evidence-source {
+  overflow-wrap: anywhere;
+}
+
+.source-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.source-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.source-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 6px;
+  min-height: 24px;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--rw-accent) 35%, var(--rw-border));
+  border-radius: var(--rw-radius);
+  background: var(--rw-bg-subtle);
+  color: var(--rw-accent);
+  font: var(--rw-t-meta);
+  text-align: start;
+}
+
+button.source-chip:hover {
+  background: var(--rw-bg-hover);
+}
+
+.source-chip code {
+  font: 500 12px/18px var(--rw-mono);
+  overflow-wrap: anywhere;
+}
+
+.source-anchor {
+  color: var(--rw-fg);
+}
+
+.source-chip.is-unavailable {
+  border-style: dashed;
+  border-color: var(--rw-border);
+  background: transparent;
+  color: var(--rw-fg-muted);
+}
+
+.source-note {
+  font-style: italic;
+}
+
+.source-editor {
+  width: 24px;
+  height: 24px;
+}
+
+.source-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--rw-accent);
+  font: inherit;
+  text-align: start;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--rw-accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.source-link:hover {
+  text-decoration-color: currentColor;
+}
+
+.source-view {
+  max-height: min(62vh, 640px);
+  margin-bottom: 12px;
+  padding: 6px 0;
+  overflow: auto;
+  border: 1px solid var(--rw-border-muted);
+  border-radius: var(--rw-radius);
+  background: var(--rw-bg-inset);
+  font: 400 12.5px/20px var(--rw-mono);
+  tab-size: 4;
+}
+
+.source-line {
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr);
+  gap: 12px;
+  padding-inline-end: 12px;
+}
+
+.source-line.is-cited {
+  background: color-mix(in srgb, var(--rw-attention) 18%, transparent);
+  box-shadow: inset 3px 0 0 var(--rw-attention);
+}
+
+.source-num {
+  color: var(--rw-fg-muted);
+  text-align: end;
+  user-select: none;
+}
+
+.source-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Legend */
+
+.legend-sheet {
+  width: min(640px, calc(100vw - 32px));
+}
+
+.legend-section + .legend-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rw-border-muted);
+}
+
+.legend-section h3 {
+  margin-bottom: 8px;
+  font: 600 14px/20px var(--rw-font);
+}
+
+.legend-group h4 {
+  margin: 14px 0 6px;
+  color: var(--rw-fg-muted);
+  font: 600 12px/16px var(--rw-font);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.legend-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: baseline;
+}
+
+.legend-list dt {
+  justify-self: start;
+}
+
+.legend-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 24px;
+  border: 1px solid var(--rw-border-muted);
+  border-radius: var(--rw-radius);
+  color: var(--rw-accent);
+}
+
+.legend-icon .icon {
+  vertical-align: 0;
+}
+
+.legend-steps {
+  display: grid;
+  gap: 6px;
+  padding-inline-start: 20px;
+  list-style: disc;
 }
 
 kbd {
@@ -3952,7 +4631,8 @@ kbd {
     padding-inline-start: 8px;
   }
 
-  #liveLabel {
+  #liveLabel,
+  .follow-state-text {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -3975,8 +4655,32 @@ kbd {
 }
 
 @media (max-width: 560px) {
+  .task-meta-line {
+    flex-wrap: wrap;
+  }
+
+  /* In a very narrow panel the badge shortens rather than running under the actions. */
+  .canvas-badge {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .canvas-badge .badge {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .task-meta {
     display: none;
+  }
+
+  .session-btn {
+    max-width: 24ch;
+  }
+
+  .session-menu {
+    left: 8px;
   }
 
   .rail-list {
@@ -4041,6 +4745,11 @@ kbd {
     scroll-behavior: auto !important;
   }
 
+  /* The lock ring is a small progress indicator, so it keeps moving. */
+  .preview.is-arming .ring-fill {
+    animation: rw-ring var(--rw-lock-ms, 1000ms) linear forwards !important;
+  }
+
   .new-badge {
     display: inline-flex;
   }
@@ -4061,11 +4770,16 @@ kbd {
   .readiness-line,
   .live-chip,
   .board-col,
-  .lineage-card,
+  .tree-card,
+  .session-btn,
+  .status-note,
   .rank,
   .fb-interp,
   .plan-update,
   .evidence-detail,
+  .preview,
+  .source-chip,
+  .source-view,
   .diff-line.is-add,
   .diff-line.is-del {
     border: 1px solid CanvasText;
@@ -4127,7 +4841,7 @@ kbd {
   .board-card.is-selected,
   .id-chip.is-current,
   .id-chip.is-open,
-  .lineage-step.is-this .lineage-card {
+  .tree-task.is-shown > .tree-card {
     forced-color-adjust: none;
     border-color: Highlight;
     background: Highlight;
@@ -4137,8 +4851,20 @@ kbd {
   .option:has(input:checked) *,
   .mode:has(input:checked) *,
   .board-card.is-selected *,
-  .segmented label:has(input:checked) * {
+  .segmented label:has(input:checked) *,
+  .tree-task.is-shown > .tree-card * {
     color: HighlightText;
+  }
+
+  /* These outrank the rule above outside forced colors, so they repeat it here. */
+  .option:has(input:checked) .option-consequence,
+  .option:has(input:checked) .option-why {
+    color: HighlightText;
+  }
+
+  .option:has(input:checked) .badge {
+    border-color: HighlightText;
+    background: transparent;
   }
 
   input[role="switch"] {
@@ -4216,6 +4942,24 @@ kbd {
 
   .skip-link {
     border: 2px solid ButtonText;
+  }
+
+  .source-line.is-cited {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .source-line.is-cited .source-num {
+    color: HighlightText;
+  }
+
+  .preview-ring .ring-track {
+    stroke: GrayText;
+  }
+
+  .preview-ring .ring-fill {
+    stroke: Highlight;
   }
 }
 

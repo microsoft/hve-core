@@ -34,7 +34,7 @@ async function setup(name, stage = 'research') {
     const store = createStore({ root: path.join(tmp, name) });
     await store.create(buildScenario(stage));
     const focusCalls = [];
-    const server = { url: 'http://127.0.0.1:1/', clientInfo: null, streamClients: 1, focus: (request) => { focusCalls.push(request); return { delivered: true }; }, notifyReload: () => {} };
+    const server = { url: 'http://127.0.0.1:1/?k=test', address: 'http://127.0.0.1:1/', editor: { name: 'VS Code' }, clientInfo: null, streamClients: 1, focus: (request) => { focusCalls.push(request); return { delivered: true }; }, notifyReload: () => {} };
     const handlers = createActionHandlers({ getInstance: (id) => (id === 'i1' ? { server, sessionId: SCENARIO_ID, instanceId: 'i1', handle: 'K7QF' } : undefined), store, makeError });
     const call = (name, input) => handlers[name]({ instanceId: 'i1', input });
     return { store, handlers, call, focusCalls };
@@ -76,6 +76,8 @@ describe('handlers', () => {
         const { call, store } = await setup('state');
         const state = await call('get_state', {});
         assert.deepEqual(state.canvas, { handle: 'K7QF', instanceId: 'i1' });
+        assert.equal(state.url, 'http://127.0.0.1:1/', 'get_state reports the address without the key');
+        assert.deepEqual(state.editor, { name: 'VS Code' });
         assert.deepEqual((await call('get_state', { detail: 'full' })).canvas, { handle: 'K7QF', instanceId: 'i1' });
         assert.equal(state.activePhase, 'research');
         assert.ok(Array.isArray(state.pendingFeedback));

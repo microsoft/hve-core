@@ -129,8 +129,10 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 ```
 
 * Regions: header (48px), navigator (264px, `--rw-nav-w`), document (fluid), steering panel (336px, `--rw-steer-w`). The navigator and steering panel use `--rw-bg-subtle`.
-* Source label: the line under the task title says where the content comes from.
-  A real session shows a muted "RPI canvas 3WF0" badge with the file icon and the canvas handle in monospace, then the task ID in monospace, and the repository and branch.
+* Session line: the line under the task title starts with the session button, a 20px bordered chip with the nodes icon, the session name, the loop count ("Offline trail maps · 2 loops"), and a chevron that turns when its menu is open. It keeps its natural width up to 30 characters and never shrinks below it while the line has room.
+  For a real session, the follow state comes next: the active icon and "Following" in the accent hue, or the pause icon and "Paused" in the attention hue followed by a Resume following link button. Assistive technology hears "Following the running loop" or "Paused: following the running loop is paused".
+* Source label: the session line continues with where the content comes from.
+  A real session shows a muted badge with the file icon and the canvas handle in monospace; "RPI canvas" is kept for assistive technology and the tooltip. Then come the task ID in monospace, and the repository and branch.
   A child loop then adds "Child of" and its parent's title as a link button that shows the parent.
   The sample shows its "Sample session" badge instead.
   When space runs out, the repository and branch shorten first, then the task ID down to 9 characters, and the parent link keeps at least 14 characters. The line clips rather than run under the phase rail.
@@ -138,7 +140,10 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 * The steering panel docks at 1360px canvas width and wider; the navigator docks at 1024px and wider. Below those widths each opens as a modal drawer from its edge over a scrim, with the rest of the page inert.
 * Document rows show their margin column (272px, `--rw-margin-w`) when the document column is at least 800px wide (a container query on the document, not the window), so a 1440px canvas with both panels docked keeps its margins. Narrower, the margin's annotations follow the row text in reading order.
 * Only the navigator, the document, and the steering panel scroll; the page itself never scrolls. The sticky header and context bar reserve scroll padding so a focused element is never hidden beneath them.
-* Below 1400px the phase rail moves to its own full-width header row. Below 720px the Needs you, Send to agent, and Live labels become icon-only with their names kept for assistive technology; below 560px the repository line hides and the rail shows icons plus the viewed phase's label. Content reflows at 320px without horizontal scrolling of text.
+* Below 1400px the phase rail moves to its own full-width header row. Below 720px the Needs you, Send to agent, Live, and follow state labels become icon-only with their names kept for assistive technology; below 560px the source label hides, the session button narrows to 24 characters, and the rail shows icons plus the viewed phase's label. Content reflows at 320px without horizontal scrolling of text.
+* Session menu: the session button opens a non-modal menu below the title, 460px wide and scrolling within 72 percent of the viewport height.
+  It holds an `h2` ("Session: Offline trail maps") that takes focus, a meta line with the session folder and follow state, "Loops in this session" as a session tree, and, for a real session, "Other sessions" as full-width rows naming each session, its date, loop count, and running loop. `Escape`, a click outside, or moving focus out closes it, and `Escape` returns focus to the button.
+* Status area: failures and follow moves appear as notes centered at the bottom of the document, sticky above its content, at most 640px wide with the floating shadow, and at most three at once. Each note is a notice in its tone (danger for failures, accent for moves) with its icon, its text, and a Dismiss icon button. A note never takes focus and stays until dismissed or, for a move, until the next move; it is announced politely.
 
 ## Phase Rail
 
@@ -169,7 +174,8 @@ Every document is a sequence of rows. A row is one section or item (a finding, t
 
 Decision cards are the heart of the canvas. Each card states what is being decided, who owns it, and where it stands.
 
-* Needs your input: decision icon, ID and title, and a Needs your input chip; the question; a short context paragraph; options as radio cards, each with its consequence line and, when the agent recommends it, a Recommended tag with the reason; evidence chips; an impact line ("Changes P02-T03"); an optional note; and an Answer button. A line beside the button says "Waits for Send to agent".
+* Needs your input: decision icon, ID and title, and a Needs your input chip; the question; a short context paragraph; options as radio cards, each with its consequence line and, when the agent recommends it, a Recommended tag with the reason, then "Your own answer" as the last radio card with a dashed border; evidence chips; an impact line ("Changes P02-T03");
+  the text field, an optional note while an option is chosen and the required "Your answer" when Your own answer or no option exists; and an Answer button. A line beside the button says "Waits for Send to agent".
 * Answered: a "You" voice block (person icon, user hue label) quotes the chosen option and note, with the lifecycle chip and Edit answer while the answer is still queued.
 * Interpreted: an "Agent understood" voice block (sparkle icon, agent hue label) states the interpretation and its effect, with Looks right and Not what I meant. Not what I meant opens a correction field prefilled with the original note, so nothing is retyped.
 * Resolved: the card collapses to one line ("Resolved: Keep both photos · Changes P02-T03") with a How this was decided disclosure for its history.
@@ -216,7 +222,7 @@ A decision whose anchor has no row in a started phase, or that has no anchor, ap
 * Implement: a Now banner (current task, the agent's latest activity, progress), a board with Up next, In progress, Paused for you, Done, and Blocked columns, and a detail region for the selected card. Board cards move only through menu actions, never by dragging.
   * Below the board: changes grouped under a heading for each task (ID and title) in plan order, with files and validation and no repeated task chip; discoveries grouped under a heading for each kind (plan change, follow-up, implementation note, local judgment) with the kind's icon and word, omitting empty kinds; plan updates with before and after text; decisions that paused work; business alignment entries; blockers; and the validation record. Each group lists newest first.
 * Review: a summary band (execution, outcome, counts by severity), findings rows with expected and observed behavior side by side, resolution condition, and route; decision cards in the margin; the decision history as a timeline; and validation evidence.
-* Follow-up: ranked follow-ups with rationale, evidence, Select, and Skip, and the loop lineage from parent to child tasks. For a real session, each other task in the lineage offers Show this task. Its accessible name includes the task title, such as "Show this task: Offline trail maps".
+* Follow-up: ranked follow-ups with rationale, evidence, Select, and Skip, and "Loops in this session", the session tree. For a real session, each other loop offers Show, whose accessible name includes the loop's title, such as "Show Offline trail maps".
 * Real sessions: the context bar adds Open in editor beside Copy for the phase's file, and "Updated" is when that file last changed. Changes render their behavior and validation text as Markdown, and changes recorded without a task group under "Not linked to a plan task".
 
 Empty states teach: they say what will appear, when, and who produces it ("The plan appears here when Research is ready").
@@ -230,21 +236,34 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 * Choices: radio groups for exclusive choices (theme, composer kind, decision options), checkboxes for independent ones, and toggle buttons with `aria-pressed` for a clearable verdict (checklist items). Segmented controls are radio groups styled as segments.
 * Menus: a button that opens a list of actions; `Escape` closes it and returns focus to the button.
 * Disclosures: native `details` and `summary` with a rotating chevron, or a button with `aria-expanded`.
+* Session tree: nested ordered lists, parent first, each level indented 11px past a 1px guide line. Each loop is a card with its status badge (Completed, Running, or Stopped, with icon and word), its title, its task ID in monospace, and Show or a Shown badge at the end. The shown loop's card takes the accent border and selected fill. A loop continued from another session shows "Continues … from another session" with Show above its card.
+* Send groups: when unsent items come from more than one loop, the Send dialog shows a section per loop headed by an `h3` with the loop's title, a Shown badge for the shown loop, and its status badge, then the task ID and, for a completed loop, a line saying its items go as follow-up work. Removing an item moves focus to the next item in its group, then the nearest group heading.
+* Field errors: a failure about a field sits directly under it in the danger hue with the alert icon, the field gets `aria-invalid` and `aria-describedby`, and the person's text stays.
 * Board cards and file rows open their details in place or in the file preview sheet; they are buttons, not links, unless they navigate.
+* ID chips: monospace, in a 1px accent-tinted outline. The icon after the ID says what a click does: the box with an arrow goes to the item, and the page opens it in place. An ID inside a larger control, such as a navigator entry or a plan task toggle, carries that control's icon, and a plain ID label carries none. Websites show the globe and editor buttons the code file, so the box with an arrow never leaves the canvas.
+* Previews: a card in the top layer, at most 440px wide and 60vh tall, with `--rw-shadow-float` and a 1px border that turns accent when locked.
+  The head holds the ID chip and its kind in meta text, Go to, a 16px lock ring that fills over the lock delay, a pin once locked, and Close once locked.
+  A preview opens 500ms after hover or 300ms after keyboard focus, hides 300ms after the pointer leaves, locks after 1s, and nests up to five deep. Unlocked previews are tooltips whose controls stay out of the tab order; locked ones are non-modal dialogs.
+* Sources: a source chip shows the path in monospace and the anchor in body text, with the page icon, and the editor button beside it. An unavailable location has a dashed border and muted text with the reason in italics. The source sheet has a 4.5em line-number gutter and marks the cited line with a 3px attention bar on an 18 percent attention wash.
+* History: Back and Forward are 28px icon buttons before the phase title, transparent until hovered and 40 percent opacity when disabled. Their names say where they go.
+* Header meta line: the canvas badge never shrinks. The session label shortens first, then the task details clip, and they hide below 6ch. Below 560px the line wraps, and the badge may shorten rather than run under the actions.
 
-| State     | Treatment                                                                                |
-|-----------|------------------------------------------------------------------------------------------|
-| Loading   | Static skeleton rows in `--rw-bg-subtle`; no shimmer                                     |
-| Empty     | Explains what appears here, when, and who produces it                                    |
-| Error     | Names the problem and the recovery, with Retry                                           |
-| Live      | Header chip "Live" with a filled dot while the event stream is connected                 |
-| Reconnect | Header chip "Reconnecting" in the attention hue; the page polls until the stream returns |
-| Paused    | Header chip "Paused" while the page is hidden; nothing polls                             |
-| Saving    | The save button shows busy text ("Saving") and is disabled until the server answers      |
-| Conflict  | In-place notice with Compare, Keep my suggestion, and Start from the new text            |
-| Sent      | The feedback items move to Sent; a polite announcement names the count and the chat line |
-| Warnings  | Collapsed attention notice above the phase: "N problems reading this task's files"       |
-| Switching | "Showing" and the task and phase are announced; focus moves to the title when you switch |
+| State     | Treatment                                                                                              |
+|-----------|--------------------------------------------------------------------------------------------------------|
+| Loading   | Static skeleton rows in `--rw-bg-subtle`; no shimmer                                                   |
+| Empty     | Explains what appears here, when, and who produces it                                                  |
+| Error     | Names the problem and the recovery, with Retry                                                         |
+| Live      | Header chip "Live" with a filled dot while the event stream is connected                               |
+| Reconnect | Header chip "Reconnecting" in the attention hue; the page polls until the stream returns               |
+| Paused    | Header chip "Paused" while the page is hidden; nothing polls                                           |
+| Saving    | The save button shows busy text ("Saving") and is disabled until the server answers                    |
+| Conflict  | In-place notice with Compare, Keep my suggestion, and Start from the new text                          |
+| Sent      | The feedback items move to Sent; a polite announcement names the count and the chat line               |
+| Warnings  | Collapsed attention notice above the phase: "N problems reading this task's files"                     |
+| Switching | "Showing" and the task and phase are announced; focus moves to the title when you switch               |
+| Following | Header "Following" with the active icon; a move adds an accent note in the status area                 |
+| Paused    | Header "Paused" with the pause icon and Resume following, after a switch to a loop that is not running |
+| Failed    | Danger note in the status area, or a field error under its field; focus stays put                      |
 
 ## Motion
 
@@ -253,7 +272,8 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 * One authored moment: the Agent understood block reveals with a clip-path wipe from the top and a fade, 240ms, once per interpretation.
 * When the agent points the person to an item (`focus_item`), the row receives a 1.2s fade from a 12 percent accent wash to transparent, once.
 * Nothing animates continuously. The live dot is static.
-* Under `prefers-reduced-motion: reduce`, transitions, the reveal, and the wash are removed; a static "New" badge marks the change until the next update.
+* Previews fade in and rise 2px over 150ms, and the lock ring fills linearly over the lock delay while the pointer rests.
+* Under `prefers-reduced-motion: reduce`, transitions, the reveal, the wash, and the preview fade are removed; a static "New" badge marks the change until the next update. The lock ring keeps filling, because it reports progress.
 
 ## Keyboard
 
@@ -267,12 +287,15 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 | `/`                       | Open the navigator and filter it                             |
 | `b`                       | Show or hide the navigator                                   |
 | `s`                       | Show or hide the steering panel                              |
+| `l`                       | Show the ID legend                                           |
 | `?`                       | Show the shortcut list                                       |
+| `Alt+Left`, `Alt+Right`   | Go back and forward through the places moved to              |
+| `Down Arrow` on an ID     | Lock its preview and move focus into it                      |
 | `Escape`                  | Close a menu, drawer, or dialog, or leave the section editor |
 | Arrow keys, `Home`, `End` | Move within the phase rail, radio groups, and menus          |
 
 * `e` and `c` act on the row that has focus. Without one they announce how to reach a row, and `e` on a row without a section says so.
-* `Escape` closes the innermost layer: the appearance menu, then a drawer, then the editor when focus is inside it, which asks first when the draft changed. Open dialogs handle their own `Escape`, and `Escape` during input-method composition is left to the input method.
+* `Escape` closes the innermost layer: the newest preview, then the appearance menu, then a drawer, then the editor when focus is inside it, which asks first when the draft changed. Open dialogs handle their own `Escape`, and `Escape` during input-method composition is left to the input method.
 * Single-key shortcuts are ignored while focus is in a text field. The shortcut list has a switch that turns letter, number, and symbol shortcuts off; their hints then leave tooltips and `aria-keyshortcuts`, while `Escape` and arrow keys keep working.
 
 ## Accessibility
@@ -287,6 +310,7 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 * Nothing requires dragging: board moves, task moves, and panel sizes have buttons or menus.
 * Corrections, edits, and overrides prefill what the person already entered, so nothing is retyped. Each task of a real session keeps its own drafts, open editor, and scroll position in the page, so moving to a parent or child and back loses nothing.
 * Diagrams are figures with a caption and a text alternative that lists nodes and relationships, plus Show as text.
+* Previews meet WCAG 1.4.13: they open on hover and on focus, stay while hovered, and close with `Escape` without moving the pointer. A locked preview follows the non-modal dialog pattern, and focus returns to its ID when it closes.
 * Tabs follow the ARIA tabs pattern, and radio groups and menus follow their ARIA patterns. The shortcut list and the file preview are modal dialogs that return focus to their opener. Drawers are the navigation and complementary regions shown over a scrim: while one is open the rest of the page is inert, and closing it with `Escape` or its close button returns focus to its toggle.
 
 ## Content and Copy
@@ -298,13 +322,15 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 * Times show local `HH:MM` with the full ISO time in a `title`; relative times ("3 min ago") update with the data, not on a timer.
 * Never invent text. A value the session never recorded is left out with its label: times, line counts, owners, clearing text, review execution and depth, critique verdict and setting, confidence, and the next action. A row whose section was never recorded is left out, and an unrecognized status shows its recorded word in a neutral chip.
 * All session text is untrusted. It renders through DOM text APIs and a restricted Markdown subset: headings, paragraphs, lists and task lists, emphasis, inline and fenced code, tables, block quotes (nested up to six levels), rules, and links limited to `http` and `https`, which open in a new browsing context with `rel="noopener noreferrer"`.
-* Every link the canvas renders, including evidence sources, passes the same check; any other address renders as text with the address in its tooltip. Open in editor is the one exception: a `vscode://file/` link built from an absolute POSIX or Windows path, shown only when the path is absolute.
+* Every link the canvas renders, including evidence sources, passes the same check; any other address renders as text with the address in its tooltip. A relative link in an RPI file is the one exception: it opens as a source in the canvas.
 
 ## Icons
 
 Icons are authored inline SVG symbols in one sprite, on a 16px grid with a 1.5px stroke, round caps and joins, and `currentColor`. They extend the Session Log sprite and keep its shapes for shared meanings (person, sparkle, check, alert, info, chevron, search, panel, keyboard).
 
-Additions: phase icons (research magnifier, plan list, implement brackets, review eye, follow-up loop), decision signpost, hand, inbox, send, undo, pencil, sun, moon, contrast, steer sliders, trace nodes, file, diff, external link, anchor, checklist, light bulb, shield check, half circle, and trend down. Emoji and Unicode glyphs never stand in for icons. Decorative icons carry `aria-hidden="true"`.
+Additions: phase icons (research magnifier, plan list, implement brackets, review eye, follow-up loop), decision signpost, hand, inbox, send, undo, pencil, sun, moon, contrast, steer sliders, trace nodes, file, code file, diff, go-to, globe, left and right arrows, pin, legend, anchor, checklist, light bulb, shield check, half circle, and trend down. Emoji and Unicode glyphs never stand in for icons. Decorative icons carry `aria-hidden="true"`.
+
+Four icons keep one meaning wherever they mark a click: go-to (a box with an arrow) goes to the item in the canvas, file (a page with a folded corner) opens it in place, globe opens a website, and code file opens your editor. Static badges and headings do not use them.
 
 ## Browser Surfaces
 
@@ -316,37 +342,42 @@ Additions: phase icons (research magnifier, plan list, implement brackets, revie
 
 ## Revision Log
 
-| Date       | Change                                                                                                   | Reason                                                                                                           |
-|------------|----------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| 2026-10-23 | Initial guide                                                                                            | Canvas build                                                                                                     |
-| 2026-10-23 | Margin column is 272px and appears at 800px document width                                               | At 1440px with both panels docked the document is 840px, so the 880px rule hid every margin                      |
-| 2026-10-23 | Header rail moves to its own row below 1200px; labels go icon-only below 720px and 560px                 | Narrow editor panels; replaces the More menu with reflow that keeps every control visible                        |
-| 2026-10-23 | Delivery modes are a compact segmented control with the chosen mode's hint below, after the queued items | Three bordered radio cards pushed queued feedback below the fold; the panel now reads items, then mode           |
-| 2026-10-23 | Headings: rows `h3`, cards `h4`, Markdown headings `h4` and `h5`                                         | axe heading-order: rows were `h2` under the `h2` phase title and cards skipped to `h4`                           |
-| 2026-10-23 | Navigating to a tall target aligns it to the top; shorter targets center                                 | A centered tall decision card hid its header beneath the sticky context bar                                      |
-| 2026-10-23 | Readiness line uses a 14px radius instead of a full pill                                                 | Two-line readiness text looked like a stadium shape                                                              |
-| 2026-10-23 | Edit answer, Edit override, and corrections restore the earlier choice and text                          | Nothing is retyped; dismissing a correction now reopens what it corrected                                        |
-| 2026-10-23 | Decisions with no row in a started phase render as full cards in the steering panel                      | Such decisions were links to nothing, so they could not be answered or overridden                                |
-| 2026-10-23 | Deliver sends only the previewed text; items being delivered show Sending                                | A queue change after preview could send different text, and items could be delivered twice                       |
-| 2026-10-23 | Unsaved drafts ask before discarding; a second Edit section returns to the open draft                    | `Escape` and a second edit silently discarded typed changes                                                      |
-| 2026-10-23 | Focus returns to the same control, item, or section heading after updates                                | Re-renders and actions dropped keyboard focus to the page body                                                   |
-| 2026-10-23 | Focus offsets and header icon button sizes recorded as built                                             | The guide stated one 2px offset and 28px icon buttons; the canvas varies them on purpose                         |
-| 2026-10-23 | Drawers are inert-backed regions over a scrim, not dialogs; dialogs and drawers animate                  | The guide described drawers as dialogs and omitted their motion                                                  |
-| 2026-10-23 | Implement groups changes by task and discoveries by kind                                                 | The lists were flat, so a task's work and a kind's discoveries were hard to scan                                 |
-| 2026-10-23 | Change cards inside a task group omit the task chip and keep the time on the title line                  | The group heading already names the task; the repeated chip pushed the time onto a line of its own               |
-| 2026-10-23 | Trace strips derive from reference fields and follow the longest path onward                             | Static strips missed work the agent recorded during the session                                                  |
-| 2026-10-23 | Links outside `http` and `https` render as text everywhere, with editor links built from absolute paths  | Evidence links bypassed the scheme check, and editor links were malformed on Windows                             |
-| 2026-10-23 | Real sessions get a source label, a parent link, Open in editor, warnings, and record rows               | The canvas now reads RPI files, so it says which task and files it shows and keeps sections no view shows        |
-| 2026-10-23 | Decisions rows hold a phase's recorded decisions; the steering panel links one row per phase             | A real session records many decisions, which buried the rest of the panel as separate cards or links             |
-| 2026-10-23 | Answers and overrides can be written in the person's words when there are no options or alternatives     | Decisions read from files often list no options, so they could not be answered or overridden                     |
-| 2026-10-23 | Decision titles take their own line; a pending override keeps the agent's original choice in view        | Long titles squeezed into narrow columns, and the card showed the override as the agent's choice                 |
-| 2026-10-23 | Values never recorded are left out instead of showing "Not recorded"                                     | Files omit times, line counts, and depths, and placeholders crowded the views                                    |
-| 2026-10-23 | Show this task switches tasks and keeps each task's drafts, editor, and scroll position                  | A child loop and its parent are one session, and moving between them should not lose work                        |
-| 2026-10-26 | Send to agent sits in the header and opens a send dialog; the delivery modes are gone                    | The person could not tell how input reached the agent: Queue was never read, and Attach shows nothing in VS Code |
-| 2026-10-26 | Edits are suggestions shown beside the section's source text                                             | The canvas never writes the files, yet a saved edit replaced the text as if it had, then vanished on import      |
-| 2026-10-26 | Checklist items take Looks good or Needs work, and the review goes with the next send                    | Checkboxes and Share review hid the purpose and could not tell "not reviewed" from "needs work"                  |
-| 2026-10-26 | The canvas handle appears in the source badge and starts every message                                   | The agent could not tell which canvas a message came from                                                        |
-| 2026-10-26 | The phase rail takes its own row below 1400px; Markdown table regions name their section                 | The header's new control pushed the meta line under the rail; tables with the same columns had duplicate names   |
+| Date       | Change                                                                                                                       | Reason                                                                                                                 |
+|------------|------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| 2026-10-23 | Initial guide                                                                                                                | Canvas build                                                                                                           |
+| 2026-10-23 | Margin column is 272px and appears at 800px document width                                                                   | At 1440px with both panels docked the document is 840px, so the 880px rule hid every margin                            |
+| 2026-10-23 | Header rail moves to its own row below 1200px; labels go icon-only below 720px and 560px                                     | Narrow editor panels; replaces the More menu with reflow that keeps every control visible                              |
+| 2026-10-23 | Delivery modes are a compact segmented control with the chosen mode's hint below, after the queued items                     | Three bordered radio cards pushed queued feedback below the fold; the panel now reads items, then mode                 |
+| 2026-10-23 | Headings: rows `h3`, cards `h4`, Markdown headings `h4` and `h5`                                                             | axe heading-order: rows were `h2` under the `h2` phase title and cards skipped to `h4`                                 |
+| 2026-10-23 | Navigating to a tall target aligns it to the top; shorter targets center                                                     | A centered tall decision card hid its header beneath the sticky context bar                                            |
+| 2026-10-23 | Readiness line uses a 14px radius instead of a full pill                                                                     | Two-line readiness text looked like a stadium shape                                                                    |
+| 2026-10-23 | Edit answer, Edit override, and corrections restore the earlier choice and text                                              | Nothing is retyped; dismissing a correction now reopens what it corrected                                              |
+| 2026-10-23 | Decisions with no row in a started phase render as full cards in the steering panel                                          | Such decisions were links to nothing, so they could not be answered or overridden                                      |
+| 2026-10-23 | Deliver sends only the previewed text; items being delivered show Sending                                                    | A queue change after preview could send different text, and items could be delivered twice                             |
+| 2026-10-23 | Unsaved drafts ask before discarding; a second Edit section returns to the open draft                                        | `Escape` and a second edit silently discarded typed changes                                                            |
+| 2026-10-23 | Focus returns to the same control, item, or section heading after updates                                                    | Re-renders and actions dropped keyboard focus to the page body                                                         |
+| 2026-10-23 | Focus offsets and header icon button sizes recorded as built                                                                 | The guide stated one 2px offset and 28px icon buttons; the canvas varies them on purpose                               |
+| 2026-10-23 | Drawers are inert-backed regions over a scrim, not dialogs; dialogs and drawers animate                                      | The guide described drawers as dialogs and omitted their motion                                                        |
+| 2026-10-23 | Implement groups changes by task and discoveries by kind                                                                     | The lists were flat, so a task's work and a kind's discoveries were hard to scan                                       |
+| 2026-10-23 | Change cards inside a task group omit the task chip and keep the time on the title line                                      | The group heading already names the task; the repeated chip pushed the time onto a line of its own                     |
+| 2026-10-23 | Trace strips derive from reference fields and follow the longest path onward                                                 | Static strips missed work the agent recorded during the session                                                        |
+| 2026-10-23 | Links outside `http` and `https` render as text everywhere, with editor links built from absolute paths                      | Evidence links bypassed the scheme check, and editor links were malformed on Windows                                   |
+| 2026-10-23 | Real sessions get a source label, a parent link, Open in editor, warnings, and record rows                                   | The canvas now reads RPI files, so it says which task and files it shows and keeps sections no view shows              |
+| 2026-10-23 | Decisions rows hold a phase's recorded decisions; the steering panel links one row per phase                                 | A real session records many decisions, which buried the rest of the panel as separate cards or links                   |
+| 2026-10-23 | Answers and overrides can be written in the person's words when there are no options or alternatives                         | Decisions read from files often list no options, so they could not be answered or overridden                           |
+| 2026-10-23 | Decision titles take their own line; a pending override keeps the agent's original choice in view                            | Long titles squeezed into narrow columns, and the card showed the override as the agent's choice                       |
+| 2026-10-23 | Values never recorded are left out instead of showing "Not recorded"                                                         | Files omit times, line counts, and depths, and placeholders crowded the views                                          |
+| 2026-10-23 | Show this task switches tasks and keeps each task's drafts, editor, and scroll position                                      | A child loop and its parent are one session, and moving between them should not lose work                              |
+| 2026-10-26 | Send to agent sits in the header and opens a send dialog; the delivery modes are gone                                        | The person could not tell how input reached the agent: Queue was never read, and Attach shows nothing in VS Code       |
+| 2026-10-26 | Edits are suggestions shown beside the section's source text                                                                 | The canvas never writes the files, yet a saved edit replaced the text as if it had, then vanished on import            |
+| 2026-10-26 | Checklist items take Looks good or Needs work, and the review goes with the next send                                        | Checkboxes and Share review hid the purpose and could not tell "not reviewed" from "needs work"                        |
+| 2026-10-26 | The canvas handle appears in the source badge and starts every message                                                       | The agent could not tell which canvas a message came from                                                              |
+| 2026-10-26 | The phase rail takes its own row below 1400px; Markdown table regions name their section                                     | The header's new control pushed the meta line under the rail; tables with the same columns had duplicate names         |
+| 2026-10-26 | Session line, session menu, session tree, follow state, status notes, field errors, and Send groups                          | A canvas shows a whole session: its loops, where it is following, and every loop's unsent items; failures must be seen |
+| 2026-10-26 | Decision cards take options from the file's decision block and always end with Your own answer; Override adds Something else | People could not answer in their own words once a decision listed options, and file decisions had no options at all    |
+| 2026-10-26 | Icons say what a click does: go-to, page, globe, and code file; the canvas badge uses the message icon                       | The same ID navigated in one place and expanded in another, and the box with an arrow also meant leaving the canvas    |
+| 2026-10-26 | Previews, the legend, source chips and the source sheet, and Back and Forward                                                | The person could not read an ID without losing their place, check a source at the cited spot, or retrace their steps   |
+| 2026-10-26 | The canvas badge has its own slot; the session label shortens first; the meta line wraps below 560px                         | At 768px and 1440px the badge was clipped                                                                              |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

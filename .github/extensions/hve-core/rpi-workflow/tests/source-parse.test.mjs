@@ -33,9 +33,14 @@ describe('artifact kinds and state', () => {
         assert.equal(root.followUps.length, 2);
         assert.equal(stateDecision(root, 'review STEP').status, 'run');
         const child = parseState(CHILD_STATE);
-        assert.deepEqual(child.parent, { taskId: 'trail-maps', taskSlug: 'trail-maps' });
+        assert.deepEqual(child.parent, { taskId: 'trail-maps', taskSlug: 'trail-maps', statePath: '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/trail-maps-state.json' });
+        assert.equal(child.sessionName, 'Offline trail maps');
+        assert.deepEqual(child.children, []);
+        assert.deepEqual(root.children, [{ taskId: 'trail-maps-fixes', taskSlug: 'trail-maps-fixes', statePath: '.copilot-tracking/rpi-sessions/2026-01-15/trail-maps/trail-maps-fixes-state.json' }]);
         assert.equal(child.artifacts.critique, null);
         const stale = parseState(STALE_STATE);
+        assert.equal(stale.sessionName, null);
+        assert.deepEqual(stale.children, []);
         assert.deepEqual(stale.followUps, [{ rank: 1, task: 'Ask the vendor about tile licensing', rationale: 'Owner: user', evidence: '' }]);
         assert.deepEqual(stale.blockers, [{ id: 'B1', summary: 'Waiting on the map vendor', resolution: '' }]);
         const garbage = parseState(['not', 'a', 'state']);
@@ -43,13 +48,26 @@ describe('artifact kinds and state', () => {
         assert.equal(garbage.warnings.length, 1);
         assert.deepEqual(garbage.followUps, []);
     });
+
+    it('keeps usable task links and warns about malformed ones', () => {
+        const state = parseState({
+            task_id: 'linked',
+            parent_task: { task_slug: 'no-id-or-path' },
+            child_tasks: [{ task_id: 'kept' }, 'text', { state_path: '.copilot-tracking/rpi-sessions/2026-01-15/s/path-only-state.json' }, {}],
+        });
+        assert.equal(state.parent, null);
+        assert.deepEqual(state.children.map((link) => link.taskId ?? link.statePath), ['kept', '.copilot-tracking/rpi-sessions/2026-01-15/s/path-only-state.json']);
+        assert.deepEqual(state.warnings, ['parent_task names no task_id or state_path.', 'child_tasks entry 2 names no task_id or state_path.', 'child_tasks entry 4 names no task_id or state_path.']);
+        assert.deepEqual(parseState({ task_id: 'x', child_tasks: 'not a list' }).warnings, ['child_tasks is not a list.']);
+    });
 });
 
 describe('research', () => {
     const research = parseResearch(RESEARCH);
 
     it('reads findings with their fields, and keeps the rest of the body', () => {
-        assert.equal(research.title, 'trail-maps');
+        assert.equal(research.title, 'Offline trail maps');
+        assert.deepEqual(research.warnings, [], 'a research file in the template\'s shape reads cleanly');
         assert.equal(research.findings.length, 2);
         const [first] = research.findings;
         assert.deepEqual(first.evidence, ['C1', 'C2', 'C3', 'W1'], 'ranges expand');

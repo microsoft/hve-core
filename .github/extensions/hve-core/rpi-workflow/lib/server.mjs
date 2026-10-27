@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -8,9 +9,10 @@ import { fileURLToPath } from 'node:url';
 
 import {
     claimDelivery,
-    composeDelivery,
+    composeSessionDelivery,
     createFeedback,
     deriveView,
+    feedbackOverview,
     markChecklist,
     markDelivered,
     releaseDelivery,
@@ -18,11 +20,14 @@ import {
     suggestEdit,
     transitionFeedback,
 } from './model.mjs';
+import { loadSessionDocs } from './session-docs.mjs';
 import { preferencesPatch } from './store.mjs';
+import { EditorError } from './editor.mjs';
+import { FileError, readWorkspaceFile } from './workspace-files.mjs';
 
 const UI_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'ui');
 
-const UI_MODULES = ['app.mjs', 'dom.mjs', 'markdown.mjs', 'diagram.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs'];
+const UI_MODULES = ['app.mjs', 'dom.mjs', 'history.mjs', 'ids.mjs', 'legend.mjs', 'markdown.mjs', 'preview-content.mjs', 'preview-state.mjs', 'previews.mjs', 'source-view.mjs', 'diagram.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs'];
 
 /** Static files the page may load; nothing outside this map is ever served. */
 export const STATIC_FILES = Object.freeze({
@@ -55,6 +60,8 @@ const HEARTBEAT_MS = 15000;
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
 const USER_TRANSITIONS = Object.freeze({ draft: ['queued', 'dismissed'], queued: ['dismissed'], interpreted: ['applied', 'corrected'] });
+const MARK_ATTEMPTS = 3;
+const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 
 const STATUS_FOR = Object.freeze({
     invalid_input: 400,
@@ -78,6 +85,19 @@ const STATUS_FOR = Object.freeze({
 });
 
 /** Error that maps to a JSON error response. */
+const FILE_STATUS = Object.freeze({
+    source_invalid: 400,
+    source_outside: 403,
+    source_blocked: 403,
+    source_not_found: 404,
+    source_too_large: 413,
+    source_binary: 415,
+    editor_invalid: 400,
+    editor_busy: 409,
+    editor_failed: 502,
+});
+const fileHttpError = (error) => (error instanceof FileError || error instanceof EditorError ? new HttpError(FILE_STATUS[error.code] ?? 400, error.code, error.message) : error);
+
 export class HttpError extends Error {
     /**
      * @param {number} status
@@ -130,7 +150,9 @@ export function clientInfoFrom(body) {
 
 /**
  * One page server per canvas instance. Reads and writes go through the shared store;
- * changes from any process reach the page through the event stream.
+ * changes from any process reach the page through the event stream. For a canvas that
+ * follows RPI files, the page sees the documents of every task in the shown task's
+ * session: their unsent feedback, their changes, and one Send for all of them.
  *
  * @param {{
  *   store: ReturnType<import('./store.mjs').createStore>,
@@ -139,13 +161,28 @@ export function clientInfoFrom(body) {
  *   deliver?: (request: { prompt: string, displayPrompt: string, ids: string[] }) => Promise<void>,
  *   log?: (message: string, level?: string) => void,
  *   now?: () => string,
- *   getSource?: () => { follower?: { start: () => void, stop: () => void } } | undefined,
- *   switchTask?: (taskId: string) => Promise<{ sessionId: string }>,
+ *   getSource?: () => { kind?: string, follow?: { paused: boolean }, follower?: { start: () => void, stop: () => void } } | undefined,
+ *   switchTask?: (ref: { taskId?: string, statePath?: string }) => Promise<{ sessionId: string }>,
+ *   switchSession?: (key: string) => Promise<{ sessionId: string }>,
+ *   resumeFollowing?: () => Promise<{ sessionId: string }>,
+ *   listSessions?: () => Promise<{ sessions: any[], skipped: string[] }>,
  * }} deps
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
     const getCanvas = deps.getCanvas ?? (() => null);
+    // Every API call must carry this key, which only the page the host opens knows, so other
+    // local processes cannot read, change, or send through this canvas.
+    const key = typeof deps.key === 'string' && deps.key ? deps.key : randomBytes(24).toString('base64url');
+    const expectedKey = Buffer.from(key);
+    const keyMatches = (given) => {
+        if (typeof given !== 'string') return false;
+        const candidate = Buffer.from(given);
+        return candidate.length === expectedKey.length && timingSafeEqual(candidate, expectedKey);
+    };
+    const pageUrl = () => `http://127.0.0.1:${port}/?k=${key}`;
+    /** The editor that opens workspace files, once found: `{ name, open(absolute, line) }`. */
+    const getEditor = deps.getEditor ?? (() => null);
     const deliver = deps.deliver ?? (async () => {
         throw new ModelError('delivery_unavailable', 'This canvas is not connected to a Copilot session.');
     });
@@ -158,7 +195,10 @@ export function createCanvasServer(deps) {
     let starting = null;
     /** @type {Set<http.ServerResponse>} */
     const clients = new Set();
-    let unwatch = null;
+    /** Store watchers for the session's documents while a page is connected, by document ID. */
+    const watched = new Map();
+    /** Documents of the other tasks in the shown task's session. */
+    let others = new Set();
     let heartbeat = null;
     let clientInfo = null;
     let pendingFocus = null;
@@ -170,9 +210,28 @@ export function createCanvasServer(deps) {
         }
     }
 
+    /** Watches exactly `ids` while a page is connected. */
+    function syncWatches(ids) {
+        if (clients.size === 0) return;
+        for (const [id, stop] of watched) {
+            if (!ids.has(id)) {
+                stop();
+                watched.delete(id);
+            }
+        }
+        for (const id of ids) if (!watched.has(id)) watched.set(id, store.watch(id));
+    }
+
+    function unwatchAll() {
+        for (const stop of watched.values()) stop();
+        watched.clear();
+    }
+
     const onChange = (id, session) => {
         if (id === getSessionId()) {
             broadcast('revision', { revision: session.revision });
+        } else if (others.has(id)) {
+            broadcast('reload', { at: now() });
         }
     };
     const onPreferences = (preferences) => broadcast('preferences', preferences);
@@ -226,14 +285,82 @@ export function createCanvasServer(deps) {
         });
     }
 
-    async function stateResponse() {
-        const id = getSessionId();
-        const session = await store.load(id);
+    const sessionDocs = (shown) => loadSessionDocs(store, shown, deps.getSource?.());
+
+    async function shownSession() {
+        const session = await store.load(getSessionId());
         if (!session) {
             throw new HttpError(404, 'not_found', 'No session is loaded yet. Ask the agent to load the sample scenario.');
         }
-        return { revision: session.revision, session, view: deriveView(session), preferences: await store.loadPreferences(), canvas: getCanvas() };
+        return session;
     }
+
+    async function stateResponse() {
+        const session = await shownSession();
+        const docs = await sessionDocs(session);
+        others = new Set(docs.slice(1).map((doc) => doc.id));
+        syncWatches(new Set(docs.map((doc) => doc.id)));
+        const source = deps.getSource?.();
+        const at = now();
+        return {
+            revision: session.revision,
+            session,
+            view: deriveView(session),
+            preferences: await store.loadPreferences(),
+            canvas: getCanvas(),
+            editor: getEditor() && deps.getSource?.()?.kind === 'rpi' ? { name: getEditor().name } : null,
+            follow: source?.kind === 'rpi' ? { paused: Boolean(source.follow?.paused) } : null,
+            otherTasks: docs.slice(1).map((doc) => ({ taskId: doc.taskId, title: doc.task?.title ?? doc.session.task.title, status: doc.task?.status ?? null, statePath: doc.task?.statePath ?? null, ...feedbackOverview(doc.session, at) })),
+        };
+    }
+
+    /**
+     * The store document for a task in the shown session: the shown one when `taskId` is
+     * omitted or names it.
+     *
+     * @param {unknown} taskId
+     */
+    async function docFor(taskId) {
+        const session = await shownSession();
+        if (taskId === undefined || taskId === null || taskId === session.task.id) return { id: session.id, taskId: session.task.id, session };
+        if (typeof taskId !== 'string' || !TASK_ID_RE.test(taskId)) throw new HttpError(400, 'invalid_input', 'taskId must be a task ID.');
+        const doc = (await sessionDocs(session)).find((item) => item.taskId === taskId);
+        if (!doc) throw new HttpError(404, 'not_found', `Task ${taskId} has no canvas items in this session.`);
+        return doc;
+    }
+
+    /**
+     * Groups the items a send names by task, the shown task first and the others in tree
+     * order: `items` lists `{ taskId, id }`, or `ids` lists items of the shown task.
+     *
+     * @param {any} body
+     */
+    async function deliveryGroups(body) {
+        const session = await shownSession();
+        const docs = await sessionDocs(session);
+        const wanted = new Map();
+        if (Array.isArray(body?.items)) {
+            if (body.items.length === 0 || body.items.length > 50) throw new HttpError(400, 'invalid_input', 'items must list 1 to 50 feedback items.');
+            for (const entry of body.items) {
+                const taskId = entry?.taskId ?? session.task.id;
+                if (typeof entry?.id !== 'string' || typeof taskId !== 'string') throw new HttpError(400, 'invalid_input', 'Each item needs an id and a taskId.');
+                if (!docs.some((doc) => doc.taskId === taskId)) throw new HttpError(404, 'not_found', `Task ${String(taskId).slice(0, 80)} has no canvas items in this session.`);
+                if (!wanted.has(taskId)) wanted.set(taskId, []);
+                wanted.get(taskId).push(entry.id);
+            }
+        } else {
+            wanted.set(session.task.id, Array.isArray(body?.ids) ? body.ids : []);
+        }
+        return docs.filter((doc) => wanted.has(doc.taskId)).map((doc) => ({ ...doc, ids: wanted.get(doc.taskId) }));
+    }
+
+    const compose = (groups, body) => composeSessionDelivery(groups.map((group) => ({ session: group.session, ids: group.ids })), now(), {
+        canvas: getCanvas(),
+        note: body?.note,
+        sessionName: groups[0]?.session.followUps?.tree?.name ?? null,
+    });
+
+    const sameItems = (a, b, ids) => ids.every((id) => JSON.stringify(a.feedback.find((item) => item.id === id)) === JSON.stringify(b.feedback.find((item) => item.id === id)));
 
     const userUpdate = (change) => store.update(getSessionId(), change, { by: 'user' });
 
@@ -248,7 +375,8 @@ export function createCanvasServer(deps) {
         'POST /api/feedback/transition': async (body) => {
             const id = typeof body?.id === 'string' ? body.id : '';
             const to = typeof body?.to === 'string' ? body.to : '';
-            const { session, result } = await userUpdate((current) => {
+            const doc = await docFor(body?.taskId);
+            const { session, result } = await store.update(doc.id, (current) => {
                 const item = current.feedback.find((candidate) => candidate.id === id);
                 if (!item) {
                     throw new ModelError('not_found', `No feedback item ${id} exists.`);
@@ -257,7 +385,7 @@ export function createCanvasServer(deps) {
                     throw new ModelError('invalid_transition', `You cannot move feedback from ${item.state} to ${to}.`);
                 }
                 return transitionFeedback(current, id, to, { by: 'user', correction: body?.correction }, now());
-            });
+            }, { by: 'user' });
             return { revision: session.revision, item: result };
         },
 
@@ -276,53 +404,133 @@ export function createCanvasServer(deps) {
 
         'POST /api/preferences': async (body) => ({ preferences: await store.savePreferences(preferencesPatch(body)) }),
 
-        'POST /api/delivery/preview': async (body) => {
-            const session = await store.load(getSessionId());
-            if (!session) {
-                throw new HttpError(404, 'not_found', 'No session is loaded.');
-            }
-            return composeDelivery(session, body?.ids, now(), { canvas: getCanvas(), note: body?.note });
-        },
+        'POST /api/delivery/preview': async (body) => compose(await deliveryGroups(body), body),
 
         // Sends the items the user reviewed as one chat message, only when they still match the
-        // preview (by digest), and holds them so a concurrent take or send cannot repeat them.
+        // preview (by digest). Each task's items are held first so a concurrent take or send
+        // cannot repeat them; any failure before the message is handed to the chat releases
+        // every hold. Once it is handed over, the items are marked sent and never released.
         'POST /api/delivery': async (body) => {
             if (body?.mode !== undefined && body.mode !== 'send') {
                 throw new HttpError(400, 'invalid_input', 'The canvas sends items as a chat message; mode can only be send.');
             }
             const digest = typeof body?.digest === 'string' ? body.digest : '';
-            const claimed = await userUpdate((current) => {
-                const message = composeDelivery(current, body?.ids, now(), { canvas: getCanvas(), note: body?.note });
-                if (message.digest !== digest) {
-                    throw Object.assign(new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.'), { detail: { preview: message } });
+            const groups = await deliveryGroups(body);
+            const message = compose(groups, body);
+            if (message.digest !== digest) {
+                throw Object.assign(new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.'), { detail: { preview: message } });
+            }
+            const held = [];
+            const releaseAll = async () => {
+                for (const group of held) {
+                    await store.update(group.id, (current) => releaseDelivery(current, group.ids, now()), { by: 'user' })
+                        .catch((releaseError) => log(`Could not release delivery claim: ${releaseError instanceof Error ? releaseError.message : 'error'}`, 'warning'));
                 }
-                return { session: claimDelivery(current, message.ids, now()).session, result: message };
-            });
-            const message = claimed.result;
+            };
+            try {
+                for (const group of groups) {
+                    await store.update(group.id, (current) => {
+                        if (!sameItems(current, group.session, group.ids)) {
+                            throw new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.');
+                        }
+                        return { session: claimDelivery(current, group.ids, now()).session, result: null };
+                    }, { by: 'user' });
+                    held.push(group);
+                }
+            } catch (error) {
+                await releaseAll();
+                if (error instanceof ModelError && error.code === 'invalid_state') {
+                    throw new HttpError(409, 'preview_stale', 'Some of these items were sent or removed meanwhile. Check the list, then send again.');
+                }
+                throw error;
+            }
             try {
                 await deliver({ prompt: message.prompt, displayPrompt: message.displayPrompt, ids: message.ids });
             } catch (error) {
-                await userUpdate((current) => releaseDelivery(current, message.ids, now())).catch((releaseError) => log(`Could not release delivery claim: ${releaseError instanceof Error ? releaseError.message : 'error'}`, 'warning'));
+                await releaseAll();
                 const code = error instanceof ModelError ? error.code : 'delivery_failed';
                 log(`Send failed: ${error instanceof Error ? error.message : 'error'}`, 'warning');
                 throw new HttpError(STATUS_FOR[code] ?? 502, code, error instanceof Error ? error.message : 'Sending failed.');
             }
-            try {
-                const updated = await userUpdate((current) => markDelivered(current, message.ids, 'send', now()));
-                return { revision: updated.session.revision, delivered: updated.result };
-            } catch (error) {
-                log(`Sent, but the canvas could not record it: ${error instanceof Error ? error.message : 'error'}`, 'warning');
-                return { revision: null, delivered: message.ids, warning: 'The message was sent, but the canvas could not record it yet. The items stay marked as sending, so they will not be sent again.' };
+            const delivered = [];
+            const unrecorded = [];
+            let revision = null;
+            for (const group of groups) {
+                let marked = null;
+                for (let attempt = 0; attempt < MARK_ATTEMPTS && !marked; attempt += 1) {
+                    try {
+                        marked = await store.update(group.id, (current) => markDelivered(current, group.ids, 'send', now(), { tasks: groups.length }), { by: 'user' });
+                    } catch (error) {
+                        log(`Sent, but the canvas could not record it for ${group.taskId} (attempt ${attempt + 1}): ${error instanceof Error ? error.message : 'error'}`, 'warning');
+                        await new Promise((resolve) => setTimeout(resolve, 50 * (attempt + 1)));
+                    }
+                }
+                if (marked) {
+                    delivered.push(...marked.result);
+                    if (group.id === getSessionId()) revision = marked.session.revision;
+                } else {
+                    unrecorded.push(group.taskId);
+                }
             }
+            if (unrecorded.length) {
+                return { revision, delivered, warning: `The message was sent, but the canvas could not record it for ${unrecorded.join(', ')} yet. Those items stay marked as sending, so they will not be sent again.` };
+            }
+            return { revision, delivered, parts: message.parts };
         },
 
         'POST /api/task': async (body) => {
             if (!deps.switchTask) {
                 throw new HttpError(404, 'not_found', 'This canvas cannot switch tasks.');
             }
-            const taskId = typeof body?.taskId === 'string' ? body.taskId : '';
-            const result = await deps.switchTask(taskId);
+            const ref = typeof body?.statePath === 'string' ? { statePath: body.statePath } : { taskId: typeof body?.taskId === 'string' ? body.taskId : '' };
+            const result = await deps.switchTask(ref);
             return { sessionId: result.sessionId };
+        },
+
+        'GET /api/sessions': async () => {
+            if (!deps.listSessions) {
+                throw new HttpError(404, 'not_found', 'This canvas shows the sample session, which has no other sessions.');
+            }
+            return deps.listSessions();
+        },
+
+        'POST /api/session': async (body) => {
+            if (!deps.switchSession) {
+                throw new HttpError(404, 'not_found', 'This canvas cannot switch sessions.');
+            }
+            const key = typeof body?.key === 'string' ? body.key : '';
+            if (!/^\d{4}-\d{2}-\d{2}\/[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(key)) throw new HttpError(400, 'invalid_input', 'key must be a session such as 2026-01-15/trail-maps.');
+            const result = await deps.switchSession(key);
+            return { sessionId: result.sessionId };
+        },
+
+        'POST /api/follow': async () => {
+            if (!deps.resumeFollowing) {
+                throw new HttpError(404, 'not_found', 'This canvas does not follow a session.');
+            }
+            const result = await deps.resumeFollowing();
+            return { sessionId: result.sessionId };
+        },
+
+        'POST /api/source': async (body) => {
+            try {
+                const { absolute: _absolute, ...shown } = await readWorkspaceFile(workspaceRoot(), body?.path, body?.anchor);
+                return shown;
+            } catch (error) {
+                throw fileHttpError(error);
+            }
+        },
+
+        'POST /api/open': async (body) => {
+            const editor = getEditor();
+            if (!editor) throw new HttpError(404, 'editor_unavailable', 'No editor is available to open files from this canvas. Use Copy path instead.');
+            try {
+                const file = await readWorkspaceFile(workspaceRoot(), body?.path, body?.anchor);
+                await editor.open(file.absolute, file.line);
+                return { opened: true, path: file.path, line: file.line, match: file.match };
+            } catch (error) {
+                throw fileHttpError(error);
+            }
         },
 
         'POST /api/client-info': async (body) => {
@@ -330,6 +538,14 @@ export function createCanvasServer(deps) {
             return { ok: true };
         },
     };
+
+    /** The workspace root of a canvas reading real RPI files; other canvases show no files. */
+    function workspaceRoot() {
+        const source = deps.getSource?.();
+        const root = source?.kind === 'rpi' ? source.workspace?.root : null;
+        if (!root) throw new HttpError(404, 'source_unavailable', 'This canvas is not reading workspace files, so it cannot show them.');
+        return root;
+    }
 
     function openStream(req, res) {
         res.writeHead(200, {
@@ -340,8 +556,8 @@ export function createCanvasServer(deps) {
         });
         res.write('retry: 3000\n\n');
         clients.add(res);
-        if (!unwatch) {
-            unwatch = store.watch(getSessionId());
+        if (clients.size === 1) {
+            syncWatches(new Set([getSessionId(), ...others]));
             deps.getSource?.()?.follower?.start();
         }
         if (!heartbeat) {
@@ -364,8 +580,7 @@ export function createCanvasServer(deps) {
         req.on('close', () => {
             clients.delete(res);
             if (clients.size === 0) {
-                unwatch?.();
-                unwatch = null;
+                unwatchAll();
                 deps.getSource?.()?.follower?.stop();
                 clearInterval(heartbeat);
                 heartbeat = null;
@@ -407,6 +622,12 @@ export function createCanvasServer(deps) {
                 sendJson(res, 403, { error: { code: 'cross_site', message: 'Cross-site requests are not allowed' } });
                 return;
             }
+            // The event stream cannot send headers, so it carries the key in its address.
+            const given = req.headers['x-rw-key'] ?? (url.pathname === '/api/events' ? url.searchParams.get('k') : null);
+            if (!keyMatches(given)) {
+                sendJson(res, 403, { error: { code: 'invalid_key', message: 'This request does not come from this canvas. Reopen the canvas.' } });
+                return;
+            }
             if (url.pathname === '/api/events' && method === 'GET') {
                 openStream(req, res);
                 return;
@@ -446,8 +667,18 @@ export function createCanvasServer(deps) {
     }
 
     return {
+        /** The page address the host opens, with this canvas's key. */
         get url() {
+            return port ? pageUrl() : null;
+        },
+        /** The server's address without the key, safe to report. */
+        get address() {
             return port ? `http://127.0.0.1:${port}/` : null;
+        },
+        /** The editor that opens workspace files from this canvas, by name, or null. */
+        get editor() {
+            const found = getEditor();
+            return found ? { name: found.name } : null;
         },
         get listening() {
             return Boolean(server?.listening);
@@ -476,21 +707,25 @@ export function createCanvasServer(deps) {
         },
 
         /**
-         * Follows a new session after the instance switched documents: rebinds the store
-         * watcher and the source follower while a page is connected, then tells the page.
+         * Follows a new session after the instance switched documents or its follow state
+         * changed: rebinds the store watchers and the source follower while a page is
+         * connected, then tells the page, including where following moved it.
+         *
+         * @param {{ moved?: { from: string, to: string, title: string } }} [detail]
          */
-        rebind() {
+        rebind(detail = {}) {
+            others = new Set();
             if (clients.size > 0) {
-                unwatch?.();
-                unwatch = store.watch(getSessionId());
+                unwatchAll();
+                syncWatches(new Set([getSessionId()]));
                 deps.getSource?.()?.follower?.start();
             }
-            broadcast('reload', { at: now() });
+            broadcast('reload', { at: now(), ...(detail.moved ? { moved: detail.moved } : {}) });
         },
 
         start() {
             if (server?.listening) {
-                return Promise.resolve(`http://127.0.0.1:${port}/`);
+                return Promise.resolve(pageUrl());
             }
             if (starting) {
                 return starting;
@@ -522,7 +757,7 @@ export function createCanvasServer(deps) {
                         return;
                     }
                     port = /** @type {import('node:net').AddressInfo} */ (created.address()).port;
-                    resolve(`http://127.0.0.1:${port}/`);
+                    resolve(pageUrl());
                 });
             });
             starting = pending;
@@ -541,8 +776,7 @@ export function createCanvasServer(deps) {
                 res.end();
             }
             clients.clear();
-            unwatch?.();
-            unwatch = null;
+            unwatchAll();
             deps.getSource?.()?.follower?.stop();
             clearInterval(heartbeat);
             heartbeat = null;

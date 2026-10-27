@@ -82,7 +82,8 @@ describe('assembled document', () => {
         assert.equal(session.implementation.current, null, 'a completed task has no current work');
         assert.deepEqual(session.review.findings.map((f) => [f.id, f.decision, f.route]), [['RV-001', 'resolved', 'rpi-implement'], ['RV-002', 'resolved', 'rpi-implement']]);
         assert.deepEqual(session.followUps.items.map((i) => [i.id, i.required, i.status]), [['FU-1', true, 'in-progress'], ['FU-2', false, 'proposed']]);
-        assert.equal(session.followUps.lineage.length, 2);
+        assert.deepEqual(session.followUps.tree.tasks.map((t) => [t.id, t.depth, t.shown]), [['trail-maps', 0, true], ['trail-maps-fixes', 1, false]]);
+        assert.equal(session.followUps.tree.name, 'Offline trail maps');
         assert.ok(session.records.plan.some((record) => record.heading === 'Risks and Open Questions'));
     });
 

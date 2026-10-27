@@ -10,10 +10,9 @@ let restore;
 let renderMarkdown;
 let isSafeUrl;
 let externalLink;
-let editorUri;
 before(async () => {
     restore = installFakeDom();
-    ({ renderMarkdown, isSafeUrl, externalLink, editorUri } = await import('../ui/markdown.mjs'));
+    ({ renderMarkdown, isSafeUrl, externalLink } = await import('../ui/markdown.mjs'));
 });
 after(() => restore());
 
@@ -41,13 +40,6 @@ describe('link helpers', () => {
             assert.equal(unsafe.getAttribute('href'), null);
             assert.equal(unsafe.textContent, 'Source');
         }
-    });
-
-    it('builds editor links for POSIX and Windows absolute paths only', () => {
-        assert.equal(editorUri('/Users/me/repo/src/a b.ts'), 'vscode://file/Users/me/repo/src/a%20b.ts');
-        assert.equal(editorUri('C:\\repo\\src\\a.ts'), 'vscode://file/C:/repo/src/a.ts');
-        assert.equal(editorUri('src/a.ts'), null);
-        assert.equal(editorUri('//server/share/a.ts'), 'vscode://file//server/share/a.ts');
     });
 });
 

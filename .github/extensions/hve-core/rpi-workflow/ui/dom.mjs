@@ -248,21 +248,33 @@ export function badge(meta, options = {}) {
 export const chip = (text, tone = 'muted') => h('span', { class: ['badge', `tone-${tone}`], text });
 
 /**
- * Monospace ID; a button when navigation is available.
+ * Monospace ID; a button when navigation is available. A navigating chip ends with the
+ * go-to icon and carries `data-preview`, so hovering or focusing it shows the item.
  *
  * @param {string} id the ID navigation goes to
  * @param {((id: string) => void) | null} onNavigate
- * @param {{ className?: string, title?: string, label?: string }} [options] `label` replaces the visible ID, such as an artifact's own `D1` for `plan.D1`.
+ * @param {{ className?: string, label?: string }} [options] `label` replaces the visible ID, such as an artifact's own `D1` for `plan.D1`.
  */
 export function idChip(id, onNavigate, options = {}) {
     const label = options.label ?? id;
     if (!onNavigate) {
         return h('span', { class: 'id-chip', text: label });
     }
-    return h('button', { type: 'button', class: ['id-chip', 'is-link', options.className], title: options.title ?? `Go to ${label}`, onclick: (event) => {
+    return h('button', { type: 'button', class: ['id-chip', 'is-link', options.className], dataset: { preview: id }, onclick: (event) => {
         event.stopPropagation();
         onNavigate(id);
-    } }, label);
+    } }, label, icon('go-to', { className: 'icon-inline chip-icon' }));
+}
+
+/**
+ * A static ID label inside a larger control, ending with the icon for what that control does:
+ * `go-to` when it navigates, `file` when it opens in place.
+ *
+ * @param {string} label
+ * @param {'go-to' | 'file'} iconName
+ */
+export function idTag(label, iconName) {
+    return h('span', { class: 'id-chip' }, label, icon(iconName, { className: 'icon-inline chip-icon' }));
 }
 
 /** A button with an icon and a visible or hidden label. */

@@ -69,7 +69,8 @@ describe('scenario stages', () => {
         }
         const followup = buildScenario('followup', NOW);
         assert.ok(followup.followUps.items.length >= 3);
-        assert.ok(followup.followUps.lineage.some((l) => l.relation === 'child'));
+        assert.ok(followup.followUps.tree.tasks.some((task) => task.depth === 1 && task.status === 'running'));
+        assert.deepEqual(buildScenario('research', NOW).followUps.tree.tasks.map((task) => [task.shown, task.status]), [[true, 'running']], 'before Follow-up the session holds only this task');
     });
 
     it('rejects an unknown stage', () => {

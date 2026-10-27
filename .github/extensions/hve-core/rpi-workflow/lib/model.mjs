@@ -213,8 +213,15 @@ function byId(list, id) {
     return Array.isArray(list) ? list.find((item) => item && typeof item === 'object' && item.id === id) : undefined;
 }
 
+/** The Decisions row of a phase, which comments can anchor to. */
+export const DECISIONS_ROWS = Object.freeze({ 'research-decisions': 'research', 'plan-decisions': 'plan' });
+
 /** Locates any addressable item by ID across the session. */
 export function findItem(session, id) {
+    if (Object.prototype.hasOwnProperty.call(DECISIONS_ROWS, id)) {
+        const phase = DECISIONS_ROWS[id];
+        return { type: 'decisions-row', item: { id, title: `${PHASE_LABELS[phase]} decisions`, phase } };
+    }
     const pools = [
         ['question', session.research.questions],
         ['finding', session.research.findings],
@@ -281,6 +288,8 @@ export function phaseOf(session, id) {
             return 'followup';
         case 'decision':
             return found.item.phase;
+        case 'decisions-row':
+            return found.item.phase;
         case 'section':
             return found.item.doc;
         default:
@@ -346,10 +355,7 @@ export function createFeedback(session, input, now) {
                 item.previousChosen = decision.chosen;
             }
             if (input.optionId === undefined || input.optionId === null) {
-                // In the user's words: an answer to a decision that lists no options, or an override.
-                if (kind === 'answer' && decision.options.length > 0) {
-                    fail('invalid_input', `Choose one of the options for decision ${decision.id}.`);
-                }
+                // In the user's words, whether or not the decision lists options.
                 if (!body) {
                     fail('invalid_input', kind === 'answer' ? 'An answer without an option needs text.' : 'An override needs an option or text that says what to do instead.');
                 }
@@ -504,14 +510,16 @@ export function takeFeedback(session, now) {
 }
 
 /**
- * Marks specific pending items as sent in a message from the canvas.
+ * Marks specific pending items as sent in a message from the canvas. `tasks` is how many
+ * tasks the message named; above one, the agent must name the task with each read-back.
  *
  * @param {any} session
  * @param {string[]} ids
  * @param {'send'} mode
  * @param {string} now
+ * @param {{ tasks?: number }} [extra]
  */
-export function markDelivered(session, ids, mode, now) {
+export function markDelivered(session, ids, mode, now, extra = {}) {
     const delivery = oneOf(mode, ['send'], 'mode');
     const wanted = new Set(ids.map((id) => identifier(id, 'ids[]')));
     return mutate(session, now, (draft) => {
@@ -523,6 +531,7 @@ export function markDelivered(session, ids, mode, now) {
                 item.sentAt = now;
                 item.updatedAt = now;
                 item.delivery = delivery;
+                if (Number.isInteger(extra.tasks) && extra.tasks > 1) item.deliveredWith = extra.tasks;
                 pushHistory(item, 'sent', 'user', now);
                 done.push(item.id);
             }
@@ -610,30 +619,27 @@ const listOf = (parts) => (parts.length < 3 ? parts.join(' and ') : `${parts.sli
 const indent = (text) => String(text).split('\n').map((line) => `   ${line}`);
 
 /**
- * Composes the exact message that Send to agent delivers. The preview and the sent message
- * both come from this function. `displayPrompt` is what the chat shows: the user's message,
- * then a line naming the canvas. `prompt` is what the agent reads: the canvas handle and
- * instance ID, how to handle the items, the task's files, and each item with what it
- * targets. `digest` covers everything except the user's message, so typing one does not
- * make a preview stale.
+ * Composes the exact message that Send to agent delivers for one task's items. See
+ * `composeSessionDelivery`.
  *
  * @param {any} session
  * @param {string[]} ids
  * @param {string} [now]
  * @param {{ canvas?: { handle?: string | null, instanceId?: string | null } | null, note?: string }} [options]
- * @returns {{ prompt: string, displayPrompt: string, ids: string[], digest: string }}
+ * @returns {{ prompt: string, displayPrompt: string, ids: string[], digest: string, parts: { taskId: string, ids: string[] }[] }}
  */
 export function composeDelivery(session, ids, now = new Date().toISOString(), options = {}) {
-    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) {
-        fail('invalid_input', 'ids must list 1 to 50 feedback items.');
-    }
-    const note = text(options.note, 'note', { optional: true });
+    return composeSessionDelivery([{ session, ids }], now, options);
+}
+
+/** The unsent items a send names, in order; refuses items that are missing, sent, or held. */
+function sendableItems(session, ids, now) {
     const items = [];
     for (const raw of ids) {
         const id = identifier(raw, 'ids[]');
         const item = byId(session.feedback, id);
         if (!item) {
-            fail('not_found', `No feedback item ${id} exists.`);
+            fail('not_found', `No feedback item ${id} exists${session.task?.id ? ` in task ${session.task.id}` : ''}.`);
         }
         if (item.state !== 'queued') {
             fail('invalid_state', `Feedback ${id} is ${item.state}; only items not yet sent can be sent.`);
@@ -643,57 +649,159 @@ export function composeDelivery(session, ids, now = new Date().toISOString(), op
         }
         items.push(item);
     }
-    const handle = typeof options.canvas?.handle === 'string' && options.canvas.handle ? options.canvas.handle : null;
-    const instanceId = typeof options.canvas?.instanceId === 'string' && options.canvas.instanceId ? options.canvas.instanceId : null;
-    const name = handle ? `RPI canvas ${handle}` : 'RPI canvas';
-    const counts = new Map();
-    for (const item of items) counts.set(item.kind, (counts.get(item.kind) ?? 0) + 1);
-    const tally = listOf([...counts].map(([kind, count]) => `${count} ${KIND_LABELS[kind][count === 1 ? 1 : 2]}`));
-    const sent = `${items.length} ${items.length === 1 ? 'item' : 'items'}`;
-    const phase = PHASE_LABELS[session.session?.activePhase];
-    const rpi = session.source?.kind === 'rpi';
+    return items;
+}
 
-    const head = [`${name} sent ${sent} from the user about task ${session.task.id}${phase ? ` (current phase: ${phase})` : ''}.`];
-    if (instanceId) head.push(`Canvas instance ID: ${instanceId}. Pass it as instanceId to invoke_canvas_action to act on this canvas.`);
-    const rest = ['', 'How to handle these items:'];
-    if (rpi) {
-        rest.push("- The canvas does not change the task's files. Make each change yourself in the file named for it; the canvas shows the change once the file is saved.");
-    } else {
-        rest.push('- This canvas shows its sample session, which has no files. Make each change with canvas actions on this instance, such as update_section for a suggested edit or upsert_decision for a decision.');
-    }
-    rest.push('- Then call record_interpretation on this canvas for each item: feedbackId, text saying how you understood it, and applied: true once the change is made.');
-    if (rpi) {
-        const files = FILE_LABELS.map(([key, label]) => [label, key === 'statePath' ? session.source.statePath : session.source.artifacts?.[key]]).filter(([, path]) => typeof path === 'string' && path);
-        if (files.length) rest.push('', 'Task files:', ...files.map(([label, path]) => `- ${label}: ${path}`));
-    }
-    rest.push('', 'Items:');
+/** One task's files, as message lines. */
+function fileLines(session) {
+    const files = FILE_LABELS.map(([key, label]) => [label, key === 'statePath' ? session.source.statePath : session.source.artifacts?.[key]]).filter(([, path]) => typeof path === 'string' && path);
+    return files.length ? ['Task files:', ...files.map(([label, path]) => `- ${label}: ${path}`)] : [];
+}
+
+/** One task's items, as message lines numbered from `start`. */
+function itemLines(session, items, start) {
+    const rpi = session.source?.kind === 'rpi';
+    const lines = [];
     items.forEach((item, index) => {
         const [lead] = KIND_LABELS[item.kind];
         const subject = item.kind === 'checklist'
             ? `${lead} ${PHASE_LABELS[item.phase] ?? 'the session'}`
             : `${lead} ${item.target ? describeTarget(session, item.target) : 'the session'}`;
-        rest.push(`${index + 1}. ${item.id}: ${subject}`);
+        lines.push(`${start + index}. ${item.id}: ${subject}`);
         const decision = item.target?.type === 'decision' ? byId(session.decisions, item.target.id) : null;
-        const file = rpi && (item.kind === 'edit' || decision) ? artifactFor(session, item.target?.phase) : null;
-        if (file) rest.push(`   File: ${file}`);
+        const file = rpi && (item.kind === 'edit' || decision || item.target?.type === 'decisions-row') ? artifactFor(session, item.target?.phase) : null;
+        if (file) lines.push(`   File: ${file}`);
         if (item.optionLabel) {
-            rest.push(`   Chose: ${item.optionLabel}`);
+            lines.push(`   Chose: ${item.optionLabel}`);
         }
         if (item.text && item.kind !== 'edit') {
             const prefix = item.optionLabel ? '' : item.kind === 'override' ? 'Do instead: ' : item.kind === 'answer' ? 'Answer: ' : '';
-            item.text.split('\n').forEach((line, at) => rest.push(`   ${at === 0 ? prefix : ''}${line}`));
+            item.text.split('\n').forEach((line, at) => lines.push(`   ${at === 0 ? prefix : ''}${line}`));
         }
         if (item.correctionOf) {
-            rest.push(`   Corrects ${item.correctionOf}.`);
+            lines.push(`   Corrects ${item.correctionOf}.`);
         }
         if (item.kind === 'edit' && item.section) {
-            rest.push(...editLines(session, item));
+            lines.push(...editLines(session, item));
         }
     });
+    return lines;
+}
+
+const isCompleted = (session) => session.session?.status === 'completed';
+
+/**
+ * Composes the exact message that Send to agent delivers, from unsent items in one or more
+ * tasks of a session, the shown task first. The preview and the sent message both come
+ * from this function. `displayPrompt` is what the chat shows: the user's message, then a
+ * line naming the canvas. `prompt` is what the agent reads: the canvas handle and instance
+ * ID, how to handle the items, and for each task its files and items with what they
+ * target. A message that spans tasks groups items by task and asks for the task ID with
+ * every read-back, because feedback IDs repeat across tasks. Items for a completed task
+ * are follow-up work. `digest` covers everything except the user's message, so typing one
+ * does not make a preview stale.
+ *
+ * @param {{ session: any, ids: string[] }[]} parts
+ * @param {string} [now]
+ * @param {{ canvas?: { handle?: string | null, instanceId?: string | null } | null, note?: string, sessionName?: string | null }} [options]
+ * @returns {{ prompt: string, displayPrompt: string, ids: string[], digest: string, parts: { taskId: string, ids: string[] }[] }}
+ */
+export function composeSessionDelivery(parts, now = new Date().toISOString(), options = {}) {
+    const groups = (Array.isArray(parts) ? parts : []).filter((part) => Array.isArray(part?.ids) && part.ids.length > 0);
+    const total = groups.reduce((sum, part) => sum + part.ids.length, 0);
+    if (total === 0 || total > 50) {
+        fail('invalid_input', 'ids must list 1 to 50 feedback items.');
+    }
+    const note = text(options.note, 'note', { optional: true });
+    const sections = groups.map((part) => ({ session: part.session, items: sendableItems(part.session, part.ids, now) }));
+    const all = sections.flatMap((section) => section.items);
+    const handle = typeof options.canvas?.handle === 'string' && options.canvas.handle ? options.canvas.handle : null;
+    const instanceId = typeof options.canvas?.instanceId === 'string' && options.canvas.instanceId ? options.canvas.instanceId : null;
+    const name = handle ? `RPI canvas ${handle}` : 'RPI canvas';
+    const counts = new Map();
+    for (const item of all) counts.set(item.kind, (counts.get(item.kind) ?? 0) + 1);
+    const tally = listOf([...counts].map(([kind, count]) => `${count} ${KIND_LABELS[kind][count === 1 ? 1 : 2]}`));
+    const sent = `${all.length} ${all.length === 1 ? 'item' : 'items'}`;
+    const rpi = sections[0].session.source?.kind === 'rpi';
+    const multi = sections.length > 1;
+    const phaseOfTask = (session) => PHASE_LABELS[session.session?.activePhase];
+
+    const head = [];
+    if (multi) {
+        const sessionName = typeof options.sessionName === 'string' && options.sessionName.trim() ? ` "${options.sessionName.trim()}"` : '';
+        head.push(`${name} sent ${sent} from the user about ${sections.length} tasks in session${sessionName}: ${listOf(sections.map((section) => `${section.items.length} for ${section.session.task.id}`))}.`);
+    } else {
+        const phase = phaseOfTask(sections[0].session);
+        head.push(`${name} sent ${sent} from the user about task ${sections[0].session.task.id}${phase ? ` (current phase: ${phase})` : ''}.`);
+    }
+    if (instanceId) head.push(`Canvas instance ID: ${instanceId}. Pass it as instanceId to invoke_canvas_action to act on this canvas.`);
+    const rest = ['', 'How to handle these items:'];
+    if (rpi) {
+        rest.push(multi
+            ? "- The canvas does not change the tasks' files. Make each change yourself in the file named for it; the canvas shows the change once the file is saved."
+            : "- The canvas does not change the task's files. Make each change yourself in the file named for it; the canvas shows the change once the file is saved.");
+    } else {
+        rest.push('- This canvas shows its sample session, which has no files. Make each change with canvas actions on this instance, such as update_section for a suggested edit or upsert_decision for a decision.');
+    }
+    rest.push(multi
+        ? '- Then call record_interpretation on this canvas for each item: taskId and feedbackId as listed (feedback IDs repeat across tasks), text saying how you understood it, and applied: true once the change is made.'
+        : '- Then call record_interpretation on this canvas for each item: feedbackId, text saying how you understood it, and applied: true once the change is made.');
+    if (rpi && sections.some((section) => isCompleted(section.session))) {
+        rest.push(multi
+            ? "- Items for a completed task are follow-up work for the session: plan them as new work rather than editing that task's finished files."
+            : "- This task is completed, so these items are follow-up work for the session: plan them as new work rather than editing the task's finished files.");
+    }
+    if (multi) {
+        let number = 1;
+        for (const section of sections) {
+            const { session } = section;
+            const phase = phaseOfTask(session);
+            const status = isCompleted(session) ? 'completed; follow-up work' : phase ? `current phase: ${phase}` : '';
+            rest.push('', `Task ${session.task.id}: ${session.task.title}${status ? ` (${status})` : ''}`);
+            if (rpi) rest.push(...fileLines(session));
+            rest.push('Items:', ...itemLines(session, section.items, number));
+            number += section.items.length;
+        }
+    } else {
+        const { session } = sections[0];
+        const files = rpi ? fileLines(session) : [];
+        if (files.length) rest.push('', ...files);
+        rest.push('', 'Items:', ...itemLines(session, sections[0].items, 1));
+    }
     const digest = createHash('sha256').update([...head, ...rest].join('\n')).digest('hex').slice(0, 32);
     const prompt = [...head, ...(note ? ['', 'Message from the user:', ...indent(note)] : []), ...rest].join('\n');
     const label = `${name} sent ${sent}: ${tally}.`;
-    return { prompt, displayPrompt: note ? `${note}\n\n${label}` : label, ids: items.map((item) => item.id), digest };
+    return {
+        prompt,
+        displayPrompt: note ? `${note}\n\n${label}` : label,
+        ids: all.map((item) => item.id),
+        digest,
+        parts: sections.map((section) => ({ taskId: section.session.task.id, ids: section.items.map((item) => item.id) })),
+    };
+}
+
+/**
+ * What the canvas shows of another task's feedback: its unsent items with what they
+ * target, and how many sent items wait for the agent.
+ *
+ * @param {any} session
+ * @param {string} now
+ */
+export function feedbackOverview(session, now) {
+    const pending = session.feedback
+        .filter((item) => item.state === 'queued' && !isClaimed(item, now))
+        .map((item) => {
+            const about = item.kind === 'checklist' ? PHASE_LABELS[item.phase] ?? 'the session' : item.target ? describeTarget(session, item.target) : 'the session';
+            return {
+                id: item.id,
+                kind: item.kind,
+                about,
+                label: `${KIND_LABELS[item.kind][0]} ${about}`,
+                text: item.kind === 'edit' ? '' : String(item.optionLabel ?? item.text ?? '').slice(0, 280),
+                phase: item.target?.phase ?? item.phase ?? null,
+            };
+        });
+    return { pending, awaiting: session.feedback.filter((item) => item.state === 'sent').length };
 }
 
 /** A suggested edit in delivered text: its base, then its line changes or, for edits saved before suggestions, its text. */

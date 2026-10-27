@@ -12,20 +12,31 @@ import {
     createFollower,
     importIntoStore,
     inspectContained,
-    lineageOf,
+    inspectState,
+    listSessions,
     listStates,
     loadState,
     loadTask,
     MAX_FILE_BYTES,
     readContained,
     readGit,
+    resolveState,
     resolveTask,
     resolveWorkspace,
+    scanStates,
+    sessionOf,
+    sessionTreeOf,
     sourceSignature,
     storeIdFor,
 } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
-import { CHILD_TASK, PATHS, ROOT_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+
+const SESSION_DIR = `.copilot-tracking/rpi-sessions/${SESSION_KEY}`;
+const writeJson = async (dir, relative, value) => {
+    await fs.mkdir(path.dirname(path.join(dir, relative)), { recursive: true });
+    await fs.writeFile(path.join(dir, relative), JSON.stringify(value));
+};
 
 const NOW = '2026-01-15T12:00:00.000Z';
 let tmp;
@@ -71,34 +82,107 @@ describe('workspace and contained reads', () => {
 });
 
 describe('sessions in the workspace', () => {
-    it('lists states newest first and resolves current to the root of the newest running session', async () => {
+    it('lists states in session folders newest first and resolves current to the newest task whose session runs', async () => {
         const states = await listStates(workspace);
         assert.equal(states.length, 3);
         assert.equal(states.at(-1).path, PATHS.staleState, 'the stale session is oldest');
+        assert.deepEqual(states.map((entry) => entry.session).sort(), [SESSION_KEY, SESSION_KEY, '2026-01-10/old-task'].sort());
         assert.deepEqual(await resolveTask(workspace, 'current'), { statePath: PATHS.rootState, taskId: ROOT_TASK, warnings: [] });
         assert.equal((await resolveTask(workspace, CHILD_TASK)).statePath, PATHS.childState);
         await assert.rejects(resolveTask(workspace, 'no-such-task'), { code: 'source_not_found' });
+        assert.deepEqual(await resolveState(workspace, PATHS.childState), { statePath: PATHS.childState, taskId: CHILD_TASK, warnings: [] });
+        assert.deepEqual(sessionOf(PATHS.childState), { key: SESSION_KEY, date: '2026-01-15', folder: ROOT_TASK });
+        assert.equal(sessionOf('.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'), null);
     });
 
-    it('walks from a running child up to its root', async () => {
-        const child = JSON.parse(await fs.readFile(path.join(root, PATHS.childState), 'utf8'));
-        const childRoot = path.join(tmp, 'running-child');
-        await writeFixtureWorkspace(childRoot);
-        await fs.writeFile(path.join(childRoot, PATHS.childState), JSON.stringify({ ...child, session_status: 'running', status: 'active' }));
+    it('resolves current to a running child rather than climbing to its root', async () => {
+        const dir = path.join(tmp, 'running-child');
+        await writeFixtureWorkspace(dir);
+        await writeJson(dir, PATHS.childState, { ...CHILD_STATE, session_status: 'running', status: 'active' });
         const old = new Date(Date.now() - 3600 * 1000);
-        await fs.utimes(path.join(childRoot, PATHS.rootState), old, old);
-        const resolved = await resolveTask(await resolveWorkspace([childRoot]), 'current');
-        assert.equal(resolved.taskId, ROOT_TASK);
+        await fs.utimes(path.join(dir, PATHS.rootState), old, old);
+        const resolved = await resolveTask(await resolveWorkspace([dir]), 'current');
+        assert.equal(resolved.taskId, CHILD_TASK);
     });
 
-    it('builds lineage in both directions', async () => {
-        const rootLineage = await lineageOf(workspace, await loadState(workspace, PATHS.rootState));
-        assert.deepEqual(rootLineage.map((item) => [item.taskId, item.relation, item.status, item.title]), [
-            [ROOT_TASK, 'this', 'completed', 'Offline trail maps'],
-            [CHILD_TASK, 'child', 'completed', 'Offline trail maps review fixes'],
+    it('accepts only state files in a session folder, for input and for links', async () => {
+        const dir = path.join(tmp, 'contain');
+        await writeFixtureWorkspace(dir);
+        const ws = await resolveWorkspace([dir]);
+        await writeJson(dir, '.copilot-tracking/plans/2026-01-15/stray-state.json', { task_id: 'stray' });
+        await writeJson(dir, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json', { task_id: 'flat' });
+        await writeJson(dir, '.copilot-tracking/rpi-sessions/2026-01-15/s/deep/too-deep-state.json', { task_id: 'deep' });
+        await fs.writeFile(path.join(tmp, 'outside-state.json'), JSON.stringify({ task_id: 'outside' }));
+        await fs.symlink(path.join(tmp, 'outside-state.json'), path.join(dir, `${SESSION_DIR}/linked-state.json`));
+        await assert.rejects(inspectState(ws, '.copilot-tracking/plans/2026-01-15/stray-state.json'), { code: 'source_outside' });
+        await assert.rejects(inspectState(ws, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'), { code: 'source_outside' }, 'the layout before session folders');
+        await assert.rejects(inspectState(ws, '.copilot-tracking/rpi-sessions/2026-01-15/s/deep/too-deep-state.json'), { code: 'source_outside' });
+        await assert.rejects(inspectState(ws, '../outside-state.json'), { code: 'source_outside' });
+        await assert.rejects(inspectState(ws, `${SESSION_DIR}/linked-state.json`), { code: 'source_invalid' }, 'a symlink');
+        await assert.rejects(inspectState(ws, PATHS.plan), { code: 'source_invalid' }, 'not a state file');
+        await assert.rejects(resolveState(ws, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'), { code: 'source_outside' });
+
+        await writeJson(dir, `${SESSION_DIR}/linked-child-state.json`, { task_id: 'linked-child', parent_task: { task_id: 'elsewhere', state_path: `${SESSION_DIR}/linked-state.json` } });
+        await writeJson(dir, `${SESSION_DIR}/stray-child-state.json`, { task_id: 'stray-child', parent_task: { task_id: 'stray', state_path: '.copilot-tracking/plans/2026-01-15/stray-state.json' } });
+        await writeJson(dir, PATHS.rootState, { ...ROOT_STATE, child_tasks: [...ROOT_STATE.child_tasks, { task_id: 'outside', state_path: '../outside-state.json' }] });
+        const tree = await sessionTreeOf(ws, await loadState(ws, PATHS.rootState));
+        assert.deepEqual(tree.tasks.map((task) => task.id).sort(), [CHILD_TASK, 'linked-child', 'stray-child', ROOT_TASK].sort(), 'every readable member appears once, and the linked file is not one');
+        assert.deepEqual([...tree.warnings].sort(), [
+            `linked-child continues elsewhere, which could not be read: ${SESSION_DIR}/linked-state.json is not a regular file.`,
+            'stray-child continues stray, which could not be read: .copilot-tracking/plans/2026-01-15/stray-state.json is outside .copilot-tracking/rpi-sessions.',
+            'trail-maps lists child outside, whose state file is missing.',
         ]);
-        const childLineage = await lineageOf(workspace, await loadState(workspace, PATHS.childState));
-        assert.deepEqual(childLineage.map((item) => [item.taskId, item.relation]), [[ROOT_TASK, 'parent'], [CHILD_TASK, 'this']]);
+        assert.ok(tree.warnings.some((text) => /trail-maps lists child outside, whose state file is missing/.test(text)), tree.warnings.join('\n'));
+    });
+
+    it('builds the session tree from the links, with the shown task marked', async () => {
+        const fromRoot = await sessionTreeOf(workspace, await loadState(workspace, PATHS.rootState));
+        assert.equal(fromRoot.key, SESSION_KEY);
+        assert.equal(fromRoot.name, 'Offline trail maps');
+        assert.deepEqual(fromRoot.tasks.map((task) => [task.id, task.depth, task.status, task.title, task.shown, task.parent]), [
+            [ROOT_TASK, 0, 'completed', 'Offline trail maps', true, null],
+            [CHILD_TASK, 1, 'completed', 'Offline trail maps review fixes', false, PATHS.rootState],
+        ]);
+        assert.deepEqual(fromRoot.warnings, []);
+        const fromChild = await sessionTreeOf(workspace, await loadState(workspace, PATHS.childState));
+        assert.deepEqual(fromChild.tasks.map((task) => [task.id, task.shown]), [[ROOT_TASK, false], [CHILD_TASK, true]]);
+    });
+
+    it('orders siblings as the parent lists them and shows a parent from another session as context', async () => {
+        const dir = path.join(tmp, 'fan');
+        await writeFixtureWorkspace(dir);
+        const ws = await resolveWorkspace([dir]);
+        const child = (id) => ({ task_id: id, task_slug: id, state_path: `${SESSION_DIR}/${id}-state.json` });
+        await writeJson(dir, PATHS.rootState, { ...ROOT_STATE, child_tasks: [child(CHILD_TASK), child('second'), child('third')] });
+        await writeJson(dir, `${SESSION_DIR}/third-state.json`, { task_id: 'third', status: 'active', session_status: 'running', parent_task: { task_id: ROOT_TASK, state_path: PATHS.rootState } });
+        await writeJson(dir, `${SESSION_DIR}/second-state.json`, { task_id: 'second', status: 'active', session_status: 'running', parent_task: { task_id: ROOT_TASK, state_path: PATHS.rootState }, child_tasks: [child('grandchild')] });
+        await writeJson(dir, `${SESSION_DIR}/grandchild-state.json`, { task_id: 'grandchild', parent_task: { task_id: 'second', state_path: `${SESSION_DIR}/second-state.json` } });
+        await writeJson(dir, `${SESSION_DIR}/unlisted-state.json`, { task_id: 'unlisted', parent_task: { task_id: ROOT_TASK } });
+        const later = new Date(Date.now() + 60000);
+        await fs.utimes(path.join(dir, `${SESSION_DIR}/third-state.json`), later, later);
+        const tree = await sessionTreeOf(ws, await loadState(ws, `${SESSION_DIR}/second-state.json`));
+        assert.deepEqual(tree.tasks.map((task) => [task.id, task.depth]), [[ROOT_TASK, 0], [CHILD_TASK, 1], ['second', 1], ['grandchild', 2], ['third', 1], ['unlisted', 1]]);
+        assert.deepEqual(tree.warnings, ['trail-maps does not list its child unlisted in child_tasks.']);
+
+        await writeJson(dir, `.copilot-tracking/rpi-sessions/2026-02-01/next-session/continued-state.json`, { task_id: 'continued', session_name: 'Next session', parent_task: { task_id: ROOT_TASK, state_path: PATHS.rootState } });
+        const next = await sessionTreeOf(ws, await loadState(ws, '.copilot-tracking/rpi-sessions/2026-02-01/next-session/continued-state.json'));
+        assert.equal(next.name, 'Next session');
+        assert.deepEqual(next.tasks.map((task) => [task.id, task.continues?.id, task.continues?.session]), [['continued', ROOT_TASK, SESSION_KEY]]);
+        assert.deepEqual(next.warnings, []);
+    });
+
+    it('lists sessions with their names, running task, and the files it skips', async () => {
+        const dir = path.join(tmp, 'sessions');
+        await writeFixtureWorkspace(dir);
+        await writeJson(dir, '.copilot-tracking/rpi-sessions/2026-01-15/old-flat-state.json', { task_id: 'old-flat' });
+        const listed = await listSessions(await resolveWorkspace([dir]));
+        assert.deepEqual(listed.skipped, ['.copilot-tracking/rpi-sessions/2026-01-15/old-flat-state.json']);
+        assert.deepEqual(listed.sessions.map((session) => [session.key, session.name, session.tasks, session.running?.taskId ?? null]), [
+            [SESSION_KEY, 'Offline trail maps', 2, null],
+            ['2026-01-10/old-task', 'Old task', 1, STALE_TASK],
+        ]);
+        const scan = await scanStates(await resolveWorkspace([dir]));
+        assert.equal(scan.states.length, 3);
     });
 
     it('reads the branch and repository when the git files are there', async () => {
@@ -118,12 +202,13 @@ describe('sessions in the workspace', () => {
 });
 
 describe('loading and importing a task', () => {
-    it('loads a task with its artifacts, lineage, and watched files', async () => {
+    it('loads a task with its artifacts, session tree, and watched files', async () => {
         const loaded = await loadTask(workspace, PATHS.rootState, NOW);
         assert.equal(loaded.session.id, 'rpi-trail-maps');
         assert.equal(loaded.session.task.title, 'Offline trail maps');
         assert.equal(loaded.session.task.branch, 'feat/offline-maps');
-        assert.equal(loaded.session.followUps.lineage.length, 2);
+        assert.deepEqual(loaded.session.followUps.tree.tasks.map((task) => task.id), [ROOT_TASK, CHILD_TASK]);
+        assert.equal(loaded.tree.key, SESSION_KEY);
         assert.deepEqual(loaded.warnings, []);
         assert.equal(loaded.watched.length, 6);
         assert.equal(loaded.session.source.root, root);
@@ -144,17 +229,27 @@ describe('loading and importing a task', () => {
         await assert.rejects(loadTask(brokenWorkspace, PATHS.rootState, NOW), { code: 'source_invalid' });
     });
 
-    it('changes the signature when a watched file or the set of states changes', async () => {
+    it('changes the signature when a watched file, a state in the session, or a skipped file changes', async () => {
         const loaded = await loadTask(workspace, PATHS.rootState, NOW);
-        const first = await sourceSignature(workspace, loaded.watched);
-        assert.equal(await sourceSignature(workspace, loaded.watched), first);
+        const first = await sourceSignature(workspace, loaded.watched, SESSION_KEY);
+        assert.equal(await sourceSignature(workspace, loaded.watched, SESSION_KEY), first);
         const later = new Date(Date.now() + 5000);
         await fs.utimes(path.join(root, PATHS.plan), later, later);
-        const second = await sourceSignature(workspace, loaded.watched);
+        const second = await sourceSignature(workspace, loaded.watched, SESSION_KEY);
         assert.notEqual(second, first);
-        await fs.writeFile(path.join(root, '.copilot-tracking/rpi-sessions/2026-01-15/another-state.json'), JSON.stringify({ task_id: 'another', parent_task: { task_id: ROOT_TASK } }));
-        assert.notEqual(await sourceSignature(workspace, loaded.watched), second);
-        await fs.rm(path.join(root, '.copilot-tracking/rpi-sessions/2026-01-15/another-state.json'));
+        await writeJson(root, '.copilot-tracking/rpi-sessions/2026-03-01/elsewhere/other-state.json', { task_id: 'other' });
+        assert.equal(await sourceSignature(workspace, loaded.watched, SESSION_KEY), second, 'another session does not count');
+        await writeJson(root, `${SESSION_DIR}/another-state.json`, { task_id: 'another', parent_task: { task_id: ROOT_TASK } });
+        const third = await sourceSignature(workspace, loaded.watched, SESSION_KEY);
+        assert.notEqual(third, second);
+        await writeJson(root, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json', { task_id: 'flat' });
+        assert.notEqual(await sourceSignature(workspace, loaded.watched, SESSION_KEY), third, 'a new skipped file counts');
+        const warned = await loadTask(workspace, PATHS.rootState, NOW);
+        assert.ok(warned.warnings.some((text) => /not in a session folder, so the canvas skips it: .copilot-tracking\/rpi-sessions\/2026-01-15\/flat-state\.json/.test(text)), warned.warnings.join('\n'));
+        assert.ok(warned.warnings.some((text) => /trail-maps does not list its child another/.test(text)));
+        await fs.rm(path.join(root, `${SESSION_DIR}/another-state.json`));
+        await fs.rm(path.join(root, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'));
+        await fs.rm(path.join(root, '.copilot-tracking/rpi-sessions/2026-03-01'), { recursive: true });
     });
 
     it('creates the document once, then merges without counting as a user change', async () => {
@@ -228,6 +323,21 @@ describe('following the files', () => {
         await follower.tick();
         assert.equal(await follower.tick(), true);
         assert.deepEqual((await store.load(id)).source.warnings, []);
+        store.close();
+    });
+
+    it('tells the caller after each import, including the session tree', async () => {
+        const dir = path.join(tmp, 'follow-hook');
+        await writeFixtureWorkspace(dir);
+        const store = createStore({ root: path.join(tmp, 'follow-hook-store') });
+        const seen = [];
+        const follower = createFollower({ store, workspace: await resolveWorkspace([dir]), statePath: PATHS.rootState, intervalMs: 10000, onImport: (loaded) => seen.push(loaded.tree.tasks.map((task) => task.id)) });
+        await follower.importNow();
+        assert.deepEqual(seen, [[ROOT_TASK, CHILD_TASK]]);
+        await writeJson(dir, `${SESSION_DIR}/third-state.json`, { task_id: 'third', parent_task: { task_id: ROOT_TASK, state_path: PATHS.rootState } });
+        await follower.tick();
+        assert.equal(await follower.tick(), true, 'a new state in the session imports');
+        assert.deepEqual(seen.at(-1), [ROOT_TASK, CHILD_TASK, 'third']);
         store.close();
     });
 

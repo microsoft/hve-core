@@ -168,6 +168,38 @@ describe('send dialog', () => {
         assert.match(html(failed), /role="alert" id="send-error"/);
     });
 
+    it('groups items by loop when other loops of the session have unsent items, and says completed loops get follow-up work', () => {
+        const session = createFeedback(rootSession().session, { kind: 'comment', text: 'About this loop.', target: { id: 'F1' } }, NOW).session;
+        const ctx = makeContext(session, 'research');
+        ctx.data.otherTasks = [
+            { taskId: 'trail-maps-fixes', title: 'Offline trail maps review fixes', status: 'completed', statePath: 'x', pending: [{ id: 'FB-001', kind: 'comment', about: 'the session', label: 'Comment on the session', text: 'Child note', phase: null }, { id: 'FB-002', kind: 'context', about: 'F1 "Tiles" (Research)', label: 'Context for F1', text: 'Second', phase: 'research' }], awaiting: 0 },
+            { taskId: 'quiet', title: 'Quiet loop', status: 'running', statePath: 'y', pending: [], awaiting: 1 },
+        ];
+        assert.deepEqual(components.sendItems(ctx).map((item) => `${item.taskId}:${item.id}`), [`trail-maps:${components.pendingItems(ctx)[0].id}`, 'trail-maps-fixes:FB-001', 'trail-maps-fixes:FB-002']);
+        const sheet = components.sendSheet(ctx);
+        assert.ok(sheet.every((node) => node && !Array.isArray(node)), 'the dialog content is a flat list of nodes, as replaceChildren needs');
+        const out = html(sheet);
+        assert.match(textOf(out), /sends these 3 items from 2 loops of this session to the agent/);
+        assert.match(out, /<section class="send-group" aria-labelledby="send-group-trail-maps"><h3 class="send-group-title" id="send-group-trail-maps" tabindex="-1">/);
+        assert.match(out, /<section class="send-group" aria-labelledby="send-group-trail-maps-fixes">/);
+        assert.doesNotMatch(out, /send-group-quiet/, 'a loop with nothing unsent has no group');
+        assert.match(textOf(out), /This loop is completed, so these items go to the agent as follow-up work for the session\./);
+        assert.match(textOf(out), /Comment · the session/);
+        assert.ok(keyed(sheet, 'send-remove-trail-maps-fixes-FB-001'), 'other loops\' items have task-qualified Remove keys');
+        assert.ok(keyed(sheet, `send-remove-${components.pendingItems(ctx)[0].id}`), 'the shown loop keeps its keys');
+        assert.match(out, /aria-label="Items for Offline trail maps review fixes"/);
+        const steer = textOf(html(components.steerPanel(ctx)));
+        assert.match(steer, /2 items from other loops of this session also wait; Send to agent includes them\./);
+    });
+
+    it('shows a composer failure beside the text it keeps', () => {
+        const ui = initialUi('research');
+        ui.composer = { kind: 'comment', text: 'Keep me', anchor: 'research-decisions', error: 'No item research-decisions exists in this session.' };
+        const out = html(components.steerPanel(makeContext(rootSession().session, 'research', ui)));
+        assert.match(out, /<textarea id="composer-text"[^>]*aria-invalid="true"[^>]*aria-describedby="composer-error"[^>]*>Keep me<\/textarea>/);
+        assert.match(textOf(out), /Not added: No item research-decisions exists in this session\. Your text is kept\./);
+    });
+
     it('explains how to add input when nothing waits', () => {
         const { session } = rootSession();
         const out = textOf(html(components.sendSheet(makeContext(session, 'research'))));

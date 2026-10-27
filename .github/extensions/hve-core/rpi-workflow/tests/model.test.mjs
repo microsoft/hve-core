@@ -11,14 +11,18 @@ import {
     checklistReview,
     claimDelivery,
     composeDelivery,
+    composeSessionDelivery,
     createFeedback,
     deriveView,
     FEEDBACK_TRANSITIONS,
+    feedbackOverview,
+    findItem,
     LIMITS,
     markChecklist,
     markDelivered,
     ModelError,
     pendingSuggestion,
+    phaseOf,
     recordActivity,
     recordChange,
     recordInterpretation,
@@ -195,6 +199,51 @@ describe('delivery composition', () => {
         assert.match(prompt, /\n {3}\+One more line\.\n {3}~~~/);
         assert.equal(artifactFor(s, 'plan'), s.source.statePath, 'a phase without an artifact falls back to the state file');
         assert.equal(artifactFor(base(), 'research'), null);
+    });
+
+    it('accepts comments on the Decisions rows and names their file', () => {
+        let s = base();
+        s.feedback = [];
+        s.source = { kind: 'rpi', statePath: '.copilot-tracking/rpi-sessions/2026-10-26/s/t-state.json', artifacts: { research: '.copilot-tracking/research/2026-10-26/t-research.md', plan: '.copilot-tracking/plans/2026-10-26/t-plan.md', critique: null, changes: null, review: null } };
+        assert.deepEqual([findItem(s, 'research-decisions')?.type, phaseOf(s, 'research-decisions'), phaseOf(s, 'plan-decisions')], ['decisions-row', 'research', 'plan']);
+        s = createFeedback(s, { kind: 'comment', target: { id: 'research-decisions' }, text: 'Lay the questions out one per line.' }, NOW).session;
+        s = createFeedback(s, { kind: 'comment', target: { id: 'plan-decisions' }, text: 'Same for the plan.' }, NOW).session;
+        const ids = s.feedback.map((item) => item.id);
+        const { prompt } = composeDelivery(s, ids, NOW, { canvas });
+        assert.match(prompt, /1\. FB-\d{3}: Comment on research-decisions "Research decisions" \(Research\)\n {3}File: \.copilot-tracking\/research\/2026-10-26\/t-research\.md\n {3}Lay the questions out one per line\./);
+        assert.match(prompt, /2\. FB-\d{3}: Comment on plan-decisions "Plan decisions" \(Plan\)\n {3}File: \.copilot-tracking\/plans\/2026-10-26\/t-plan\.md\n {3}Same for the plan\./);
+    });
+
+    it('groups items from several tasks by task, numbers them through, and asks for the task with each read-back', () => {
+        const rpi = (id, status, phase) => {
+            const s = base();
+            s.feedback = [];
+            s.task = { ...s.task, id, title: `Title ${id}` };
+            s.session = { ...s.session, status, activePhase: phase };
+            s.source = { kind: 'rpi', statePath: `.copilot-tracking/rpi-sessions/2026-10-26/s/${id}-state.json`, artifacts: { research: `.copilot-tracking/research/2026-10-26/${id}-research.md`, plan: null, critique: null, changes: null, review: null } };
+            return createFeedback(s, { kind: 'comment', target: { id: 'F1' }, text: `About ${id}` }, NOW).session;
+        };
+        const child = rpi('child', 'active', 'implement');
+        const parent = rpi('parent', 'completed', 'followup');
+        const [childId, parentId] = [child.feedback[0].id, parent.feedback[0].id];
+        assert.equal(childId, parentId, 'feedback IDs repeat across tasks');
+        const both = composeSessionDelivery([{ session: child, ids: [childId] }, { session: parent, ids: [parentId] }], NOW, { canvas, sessionName: 'Session S' });
+        assert.match(both.prompt, /^RPI canvas 3WF0 sent 2 items from the user about 2 tasks in session "Session S": 1 for child and 1 for parent\./);
+        assert.match(both.prompt, /taskId and feedbackId as listed \(feedback IDs repeat across tasks\)/);
+        assert.match(both.prompt, /Items for a completed task are follow-up work for the session/);
+        assert.match(both.prompt, /\nTask child: Title child \(current phase: Implement\)\nTask files:\n- State: [^\n]+child-state\.json\n- Research: [^\n]+\nItems:\n1\. FB-\d{3}: Comment on F1/);
+        assert.match(both.prompt, /\nTask parent: Title parent \(completed; follow-up work\)\nTask files:\n[^]*?Items:\n2\. FB-\d{3}: Comment on F1/);
+        assert.deepEqual(both.parts, [{ taskId: 'child', ids: [childId] }, { taskId: 'parent', ids: [parentId] }]);
+        assert.equal(both.displayPrompt, 'RPI canvas 3WF0 sent 2 items: 2 comments.');
+        assert.match(composeDelivery(parent, [parentId], NOW, { canvas }).prompt, /This task is completed, so these items are follow-up work for the session/);
+        assert.doesNotMatch(composeDelivery(child, [childId], NOW, { canvas }).prompt, /follow-up work/);
+        assert.equal(code(() => composeSessionDelivery([{ session: child, ids: [] }], NOW)), 'invalid_input');
+        assert.equal(markDelivered(child, [childId], 'send', NOW, { tasks: 2 }).session.feedback[0].deliveredWith, 2);
+        assert.equal(markDelivered(child, [childId], 'send', NOW).session.feedback[0].deliveredWith, undefined);
+        const overview = feedbackOverview(parent, NOW);
+        assert.equal(overview.awaiting, 0);
+        assert.deepEqual(overview.pending.map((item) => [item.id, item.kind, item.text, item.phase]), [[parentId, 'comment', 'About parent', 'research']]);
+        assert.match(overview.pending[0].label, /^Comment on F1 "[^"]+" \(Research\)$/);
     });
 
     it('sends an edit saved before suggestions with its text', () => {

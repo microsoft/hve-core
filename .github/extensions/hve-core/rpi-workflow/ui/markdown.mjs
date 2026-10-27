@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { h, icon, idChip, sr } from './dom.mjs';
+import { ID_SOURCE } from './ids.mjs';
 
 /**
  * Restricted Markdown renderer. Builds DOM nodes only (never HTML strings), scans in
@@ -12,7 +13,7 @@ import { h, icon, idChip, sr } from './dom.mjs';
 const MAX_LENGTH = 60000;
 const MAX_QUOTE_DEPTH = 6;
 const MAX_INLINE_DEPTH = 4;
-const ID_RE = /\b(?:P\d{2}-T\d{2}|P\d{2}|FR-\d{3}|NFR-\d{3}|PC-\d{3}|RV-\d{3}|RD-\d{3}|CH-\d{3}|DS-\d{3}|FB-\d{3}|AL-\d{3}|[QFDCWL]\d{1,2})\b/g;
+const ID_RE = new RegExp(ID_SOURCE, 'g');
 
 /** True when the URL may become a link: http or https only. */
 export function isSafeUrl(url) {
@@ -35,20 +36,7 @@ export function externalLink(url, label) {
     if (!isSafeUrl(url)) {
         return h('span', { class: 'md-link-text', title: String(url ?? ''), text: label });
     }
-    return h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', class: 'ext-link' }, label, icon('external', { className: 'icon-inline' }), sr(' (opens in a new tab)'));
-}
-
-/**
- * Editor link for an absolute workspace path, such as `vscode://file/C:/repo/a.ts`, or null
- * for a relative path.
- *
- * @param {string} path
- */
-export function editorUri(path) {
-    const normalized = String(path ?? '').replace(/\\/g, '/');
-    if (normalized.startsWith('/')) return `vscode://file${encodeURI(normalized)}`;
-    if (/^[A-Za-z]:\//.test(normalized)) return `vscode://file/${encodeURI(normalized)}`;
-    return null;
+    return h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', class: 'ext-link' }, label, icon('globe', { className: 'icon-inline' }), sr(' (opens in a new tab)'));
 }
 
 const indentOf = (line) => {
@@ -364,7 +352,7 @@ function inline(parent, text, ctx, depth) {
                 const end = destinationEnd(close + 2);
                 if (end > close) {
                     flush();
-                    appendLink(parent, text.slice(i + 1, close), text.slice(close + 2, end), ctx, depth);
+                    appendLink(parent, text.slice(i + 1, close), text.slice(close + 2, end), ctx, depth, text.slice(end + 1, end + 200));
                     i = end + 1;
                     continue;
                 }
@@ -406,13 +394,59 @@ function inline(parent, text, ctx, depth) {
     flush();
 }
 
-/** Link labels never contain links or ID chips, so interactive content never nests. */
-function appendLink(parent, label, url, ctx, depth) {
+/**
+ * The workspace file a relative link in an artifact points at, resolved against the
+ * artifact's folder, or null for links with a scheme, root-relative or fragment-only links,
+ * and links that climb above the workspace.
+ *
+ * @param {string} baseDir workspace-relative folder of the artifact
+ * @param {string} url
+ * @returns {{ path: string, fragment: string | null } | null}
+ */
+export function workspaceTarget(baseDir, url) {
+    const value = String(url ?? '').trim();
+    if (!value || /^[a-z][\w+.-]*:/i.test(value) || value.startsWith('/') || value.startsWith('#') || /\s/.test(value)) return null;
+    const [target, hash] = value.split('#');
+    let decoded = target;
+    try {
+        decoded = decodeURI(target);
+    } catch {
+        return null;
+    }
+    const segments = [];
+    for (const part of [...String(baseDir).split('/'), ...decoded.replace(/\\/g, '/').split('/')]) {
+        if (!part || part === '.') continue;
+        if (part === '..') {
+            if (!segments.length) return null;
+            segments.pop();
+        } else {
+            segments.push(part);
+        }
+    }
+    return segments.length ? { path: segments.join('/'), fragment: hash ? `#${hash}` : null } : null;
+}
+
+/**
+ * Link labels never contain links or ID chips, so interactive content never nests. A
+ * relative link in an artifact becomes a source link when the caller can show workspace
+ * files; its anchor is the link's fragment or a code span right after a colon, as in
+ * `[path](path): \`symbol\``.
+ */
+function appendLink(parent, label, url, ctx, depth, after = '') {
     const labelCtx = { ...ctx, inLink: true };
     if (isSafeUrl(url)) {
         const link = h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', class: 'ext-link' });
         inline(link, label, labelCtx, depth + 1);
-        link.append(icon('external', { className: 'icon-inline' }), sr(' (opens in a new tab)'));
+        link.append(icon('globe', { className: 'icon-inline' }), sr(' (opens in a new tab)'));
+        parent.append(link);
+        return;
+    }
+    const target = ctx.openSource && typeof ctx.baseDir === 'string' ? workspaceTarget(ctx.baseDir, url) : null;
+    if (target) {
+        const anchor = target.fragment ?? /^\s*:\s*`([^`\n]{1,200})`/.exec(after)?.[1] ?? null;
+        const link = h('button', { type: 'button', class: 'source-link', onclick: () => ctx.openSource(target.path, anchor) });
+        inline(link, label, labelCtx, depth + 1);
+        link.append(icon('file', { className: 'icon-inline chip-icon' }), sr(', shows the file here'));
         parent.append(link);
         return;
     }

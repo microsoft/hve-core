@@ -195,7 +195,10 @@ export function buildScenario(stage = 'implement', nowMs = Date.now()) {
     const reviewDoc = reached('review')
         ? { execution: review.review.execution, outcome: review.review.outcome, depth: review.review.depth, findings: copy(review.review.findings), history: stamp(copy(review.review.history)), validation: copy(review.review.validation) }
         : { execution: null, outcome: null, depth: null, findings: [], history: [], validation: [] };
-    const followUps = reached('followup') ? copy(review.followUps) : { items: [], lineage: [] };
+    // Before Follow-up, the session holds only this task, still running.
+    const followUps = reached('followup')
+        ? copy(review.followUps)
+        : { items: [], tree: { ...copy(review.followUps.tree), tasks: copy(review.followUps.tree.tasks.slice(0, 1)).map((task) => ({ ...task, status: 'running' })) } };
 
     const checklistFor = (phase, list) => copy(list).map((item) => (passed(phase) ? { ...item, checked: true } : item));
     const session = {

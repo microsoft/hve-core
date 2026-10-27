@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { checklistFor, verdictOf } from '../checklists.mjs';
 import { PHASES, SESSION_FORMAT, SESSION_VERSION, validateSession } from '../model.mjs';
 import { idsIn, labelKey, linksIn, listItems, plainText } from './markdown.mjs';
+import { sourceLocations } from './locations.mjs';
 import { stateDecision } from './parse.mjs';
 
 /**
@@ -164,6 +165,32 @@ export function lineageStatusOf(state) {
 }
 
 /**
+ * The session tree stored on the document. Without a reader-built tree, the session holds
+ * only this task.
+ *
+ * @param {{ key: string | null, date: string | null, name: string | null, tasks: any[] } | null} tree
+ * @param {ReturnType<typeof import('./parse.mjs').parseState>} state
+ * @param {string} statePath
+ * @param {string} title
+ */
+function sessionTree(tree, state, statePath, title) {
+    if (tree) {
+        return {
+            key: tree.key ?? null,
+            date: tree.date ?? null,
+            name: tree.name ?? state.sessionName ?? null,
+            tasks: tree.tasks.map((task) => ({ id: task.id, title: task.title, status: task.status, depth: task.depth, statePath: task.statePath, parent: task.parent, shown: task.shown, continues: task.continues ?? null })),
+        };
+    }
+    return {
+        key: null,
+        date: null,
+        name: state.sessionName ?? null,
+        tasks: [{ id: state.taskId, title, status: lineageStatusOf(state), depth: 0, statePath, parent: null, shown: true, continues: null }],
+    };
+}
+
+/**
  * @typedef {object} AssembleInput
  * @property {string} id Session document ID.
  * @property {ReturnType<typeof import('./parse.mjs').parseState>} state
@@ -171,7 +198,7 @@ export function lineageStatusOf(state) {
  * @property {{ key: string, path: string, kind: string | null }[]} [mismatched] State paths whose artifact is another kind, such as reused research.
  * @property {string} statePath Workspace-relative state path.
  * @property {Record<string, { path: string, mtimeMs: number } | undefined>} [files] File facts by state key, plus `state`.
- * @property {{ taskId: string, title: string, relation: 'parent' | 'this' | 'child', status: string }[]} [lineage]
+ * @property {{ key: string | null, date: string | null, name: string | null, tasks: import('./tree.mjs').TreeTask[] } | null} [tree] The task's session.
  * @property {{ repository: string | null, branch: string | null } | null} [git]
  * @property {string | null} [root] Absolute workspace root.
  * @property {string} now ISO timestamp.
@@ -184,8 +211,9 @@ export function lineageStatusOf(state) {
  * @returns {{ session: any, warnings: string[] }}
  */
 export function assembleSession(input) {
-    const { state, artifacts = {}, mismatched = [], files = {}, lineage = [], git = null, root = null, now } = input;
+    const { state, artifacts = {}, mismatched = [], files = {}, tree = null, git = null, root = null, now } = input;
     const { research, plan, critique, changes, review } = artifacts;
+    const taskTitle = plan?.title || changes?.title || review?.title || research?.title || state.taskId;
     const warnings = [...state.warnings];
     for (const parsed of [research, plan, critique, changes, review]) {
         if (parsed) warnings.push(...parsed.warnings.map((text) => `${PHASE_TITLES[parsed.kind === 'critique' ? 'plan' : parsed.kind === 'changes' ? 'implement' : parsed.kind] ?? parsed.kind}: ${text}`));
@@ -199,20 +227,43 @@ export function assembleSession(input) {
     };
 
     // Research
+    const researchDir = typeof files?.research?.path === 'string' ? files.research.path.split('/').slice(0, -1).join('/') : '';
     const evidence = (research?.evidence ?? []).map((row) => {
         const link = linksIn(row.source)[0];
         const url = link?.href ?? /https?:\/\/[^\s)>\]]+/.exec(row.source)?.[0] ?? null;
+        const web = row.id.startsWith('W');
+        const locations = web ? [] : sourceLocations(row.source, researchDir);
         return {
             id: row.id,
-            kind: row.id.startsWith('W') ? 'web' : 'code',
+            kind: web ? 'web' : 'code',
             claim: plainText(row.claim),
             source: plainText(row.source),
+            ...(locations.length ? { locations } : {}),
             ...(url && /^https?:\/\//.test(url) ? { url } : {}),
             ...(/^\d{4}-\d{2}-\d{2}/.test(row.retrieved) ? { retrieved: row.retrieved.slice(0, 10) } : {}),
             confidence: lower(row.confidence) ?? 'not recorded',
         };
     });
     const evidenceIds = new Set(evidence.map((item) => item.id));
+    if (research) {
+        // Citations the evidence log does not list are reported, not dropped silently.
+        const missing = new Map();
+        const cite = (where, ids) => {
+            for (const id of ids ?? []) {
+                if (evidenceIds.has(id)) continue;
+                if (!missing.has(id)) missing.set(id, new Set());
+                missing.get(id).add(where);
+            }
+        };
+        research.findings.forEach((finding, index) => cite(`F${index + 1}`, finding.evidence));
+        research.decisions.forEach((row) => cite(row.id, row.evidence));
+        research.alternatives.forEach((row) => cite('the alternatives', row.evidence));
+        if (missing.size) {
+            const listed = [...missing].slice(0, 12).map(([id, where]) => `${id} (${[...where].join(', ')})`);
+            const more = missing.size > 12 ? `, and ${missing.size - 12} more` : '';
+            warnings.push(`Research: ${missing.size === 1 ? 'A citation points' : `${missing.size} citations point`} at evidence the log does not list: ${listed.join('; ')}${more}.`);
+        }
+    }
     const findings = (research?.findings ?? []).map((finding, index) => {
         const state = evidenceStateOf(finding.evidenceState);
         if (!state && finding.evidenceState) warnings.push(`Research: finding "${truncate(finding.title, 60)}" has an unrecognized evidence state.`);
@@ -324,6 +375,13 @@ export function assembleSession(input) {
         if (status === 'needs-input') owner = 'user';
         const label = truncate(plainText(row.item), 200);
         const settled = status !== 'needs-input';
+        const rationale = plainText(row.rationale);
+        // A detail block supplies the question, context, and options; a settled answer that starts with an option's letter picks it.
+        const blockOptions = (row.block?.options ?? []).map((option) => ({ id: option.id, label: option.label, ...(option.recommended ? { recommended: true } : {}) }));
+        const picked = settled && blockOptions.length ? blockOptions.find((option) => option.id === /^\(?([A-Z])(?:[):]|\s|$)/.exec(rationale)?.[1]) : null;
+        const options = settled
+            ? (picked ? blockOptions : [{ id: 'a', label: /defer/i.test(row.status) ? `Deferred: ${label}` : label }])
+            : blockOptions;
         const decision = {
             id: `${prefix}${row.id}`,
             ref: row.id,
@@ -331,14 +389,14 @@ export function assembleSession(input) {
             owner,
             status,
             title: label,
-            question: settled ? '' : plainText(row.rationale) || label,
-            context: '',
-            rationale: settled ? plainText(row.rationale) : '',
+            question: settled ? '' : row.block?.question || rationale || label,
+            context: settled ? '' : row.block?.context ?? '',
+            rationale: settled ? (picked ? rationale.replace(/^\(?[A-Z](?:[):]\s*|\s+)/, '') : rationale) : '',
             impact: plainText(row.impact),
             evidence: row.evidence.filter((id) => evidenceIds.has(id)),
             anchor: { phase, rowId: `${phase}-decisions` },
-            options: settled ? [{ id: 'a', label: /defer/i.test(row.status) ? `Deferred: ${label}` : label }] : [],
-            ...(settled ? { chosen: 'a' } : {}),
+            options,
+            ...(settled ? { chosen: picked?.id ?? 'a' } : {}),
             origin: 'artifact',
         };
         return { ...decision, base: fingerprint(decision) };
@@ -386,7 +444,7 @@ export function assembleSession(input) {
         },
         task: {
             id: state.taskId,
-            title: plan?.title || changes?.title || review?.title || research?.title || state.taskId,
+            title: taskTitle,
             repository: git?.repository ?? null,
             branch: git?.branch ?? null,
             parent: state.parent?.taskId ?? null,
@@ -480,7 +538,7 @@ export function assembleSession(input) {
                 required: /^required/i.test(item.rationale.trim()),
                 status: /assigned to child/i.test(item.task) ? 'in-progress' : 'proposed',
             })),
-            lineage: lineage.map((item) => ({ id: item.taskId, title: item.title, relation: item.relation, status: item.status })),
+            tree: sessionTree(tree, state, input.statePath, taskTitle),
         },
         records: {
             research: research?.other ?? [],

@@ -9,12 +9,17 @@ import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
 import { createActionHandlers } from '../lib/actions.mjs';
-import { createFeedback } from '../lib/model.mjs';
+import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createCanvasServer } from '../lib/server.mjs';
 import { createSourceController, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
 import { createStore } from '../lib/store.mjs';
-import { CHILD_TASK, PATHS, ROOT_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+
+const writeJson = async (dir, relative, value) => {
+    await fs.mkdir(path.dirname(path.join(dir, relative)), { recursive: true });
+    await fs.writeFile(path.join(dir, relative), JSON.stringify(value));
+};
 
 class FakeCanvasError extends Error {
     constructor(code, message) {
@@ -52,7 +57,9 @@ describe('open input', () => {
         assert.deepEqual(validateOpenInput({ scenario: SCENARIO_ID, stage: 'review' }, makeError), { scenario: SCENARIO_ID, stage: 'review' });
         assert.deepEqual(validateOpenInput({ task: 'current' }, makeError), { task: 'current' });
         assert.deepEqual(validateOpenInput({ task: ROOT_TASK }, makeError), { task: ROOT_TASK });
-        for (const bad of [[], 'x', { task: 'current', stage: 'plan' }, { task: ROOT_TASK, scenario: SCENARIO_ID }, { task: 'sample' }, { task: '../escape' }, { task: 7 }, { stage: 'later' }, { scenario: 'other' }, { extra: true }]) {
+        assert.deepEqual(validateOpenInput({ state: PATHS.childState }, makeError), { state: PATHS.childState });
+        for (const bad of [[], 'x', { task: 'current', stage: 'plan' }, { task: ROOT_TASK, scenario: SCENARIO_ID }, { task: 'sample' }, { task: '../escape' }, { task: 7 }, { stage: 'later' }, { scenario: 'other' }, { extra: true },
+            { state: PATHS.plan }, { state: '' }, { state: 7 }, { state: PATHS.rootState, task: ROOT_TASK }, { state: PATHS.rootState, stage: 'plan' }, { state: `x\u0000-state.json` }]) {
             assert.equal(await codeOf(() => validateOpenInput(bad, makeError)), 'invalid_input', JSON.stringify(bad));
         }
     });
@@ -69,6 +76,82 @@ describe('source controller', () => {
         const kept = await sources.prepare({ stage: 'review' });
         assert.equal(kept.session.session.activePhase, 'plan');
         assert.match(kept.note, /kept your changes/);
+        store.close();
+    });
+
+    it('opens a task from its state path and refuses paths outside the session folders', async () => {
+        const store = createStore({ root: path.join(tmp, 'state-store') });
+        const sources = createSourceController({ store });
+        const opened = await sources.prepare({ state: PATHS.childState }, { candidates: [root] });
+        assert.deepEqual([opened.sessionId, opened.source.taskId, opened.source.sessionKey], ['rpi-trail-maps-fixes', CHILD_TASK, SESSION_KEY]);
+        await writeJson(root, '.copilot-tracking/plans/2026-01-15/stray-state.json', { task_id: 'stray' });
+        await writeJson(root, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json', { task_id: 'flat' });
+        await fs.writeFile(path.join(tmp, 'outside-state.json'), JSON.stringify({ task_id: 'outside' }));
+        await fs.symlink(path.join(tmp, 'outside-state.json'), path.join(root, `.copilot-tracking/rpi-sessions/${SESSION_KEY}/linked-state.json`));
+        assert.equal(await codeOf(() => sources.prepare({ state: '.copilot-tracking/plans/2026-01-15/stray-state.json' }, { candidates: [root] })), 'source_outside');
+        assert.equal(await codeOf(() => sources.prepare({ state: '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json' }, { candidates: [root] })), 'source_outside');
+        assert.equal(await codeOf(() => sources.prepare({ state: '../outside-state.json' }, { candidates: [root] })), 'source_outside');
+        assert.equal(await codeOf(() => sources.prepare({ state: `.copilot-tracking/rpi-sessions/${SESSION_KEY}/linked-state.json` }, { candidates: [root] })), 'source_invalid');
+        assert.equal(await codeOf(() => sources.prepare({ state: PATHS.plan }, { candidates: [root] })), 'invalid_input');
+        await fs.rm(path.join(root, '.copilot-tracking/plans/2026-01-15/stray-state.json'));
+        await fs.rm(path.join(root, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'));
+        await fs.rm(path.join(root, `.copilot-tracking/rpi-sessions/${SESSION_KEY}/linked-state.json`));
+        store.close();
+    });
+
+    it('follows the running loop, pauses on a manual switch, and resumes', async () => {
+        const dir = path.join(tmp, 'follow-session');
+        await writeFixtureWorkspace(dir);
+        await writeJson(dir, PATHS.childState, { ...CHILD_STATE, status: 'active', session_status: 'running' });
+        const store = createStore({ root: path.join(tmp, 'follow-session-store') });
+        const sources = createSourceController({ store });
+        const rebinds = [];
+        const record = { sessionId: '', source: null, server: { rebind: (detail) => rebinds.push(detail) } };
+        sources.attach(record, await sources.prepare({ state: PATHS.rootState }, { candidates: [dir] }));
+        await sources.settled(record);
+        assert.equal(record.source.taskId, CHILD_TASK, 'the completed root hands over to its one running child');
+        assert.deepEqual(rebinds.at(-1), { moved: { from: ROOT_TASK, to: CHILD_TASK, title: 'Offline trail maps review fixes' } });
+        assert.equal(sourceSummary(record, await store.load(record.sessionId)).following, 'enabled');
+
+        await sources.switchToTask(record, ROOT_TASK);
+        await sources.settled(record);
+        assert.equal(record.source.taskId, ROOT_TASK, 'a manual switch to a task that is not running stays there');
+        assert.equal(sourceSummary(record, await store.load(record.sessionId)).following, 'paused');
+
+        await sources.resumeFollowing(record);
+        await sources.settled(record);
+        assert.equal(record.source.taskId, CHILD_TASK, 'resuming shows the running task');
+        assert.equal(record.source.follow.paused, false);
+
+        const other = await sources.switchToSession(record, STALE_SESSION_KEY);
+        assert.equal(other.source.taskId, STALE_TASK);
+        assert.equal(await codeOf(() => sources.switchToSession(record, '2030-01-01/none')), 'not_found');
+        const listed = await sources.sessions(record);
+        assert.deepEqual(listed.sessions.map((session) => session.key).sort(), [SESSION_KEY, STALE_SESSION_KEY].sort());
+        sources.detach(record);
+        store.close();
+    });
+
+    it('moves along when the followed task finishes while the page is open', async () => {
+        const dir = path.join(tmp, 'follow-later');
+        await writeFixtureWorkspace(dir);
+        await writeJson(dir, PATHS.rootState, { ...ROOT_STATE, status: 'active' });
+        await writeJson(dir, PATHS.childState, { ...CHILD_STATE, status: 'active', session_status: 'running' });
+        const store = createStore({ root: path.join(tmp, 'follow-later-store') });
+        const sources = createSourceController({ store, intervalMs: 60000 });
+        const record = { sessionId: '', source: null, server: { rebind: () => {} } };
+        sources.attach(record, await sources.prepare({ state: PATHS.rootState }, { candidates: [dir] }));
+        await sources.settled(record);
+        assert.equal(record.source.taskId, ROOT_TASK, 'a running parent keeps the canvas even with a running child');
+        await writeJson(dir, PATHS.rootState, { ...ROOT_STATE, status: 'completed' });
+        const later = new Date(Date.now() + 5000);
+        await fs.utimes(path.join(dir, PATHS.rootState), later, later);
+        const follower = record.source.follower;
+        await follower.tick();
+        await follower.tick();
+        await sources.settled(record);
+        assert.equal(record.source.taskId, CHILD_TASK);
+        sources.detach(record);
         store.close();
     });
 
@@ -89,7 +172,9 @@ describe('source controller', () => {
         assert.equal(task.source.follower.running, false, 'the previous follower stops');
         assert.deepEqual(rebinds, ['rpi-trail-maps-fixes']);
         assert.equal(child.session.phases.research.status, 'skipped');
-        assert.equal(await codeOf(() => sources.switchToTask(record, 'old-task')), 'invalid_input', 'only lineage tasks');
+        assert.equal(await codeOf(() => sources.switchToTask(record, 'old-task')), 'invalid_input', 'only tasks in the session');
+        const byPath = await sources.switchToTask(record, { statePath: PATHS.rootState });
+        assert.equal(byPath.source.taskId, ROOT_TASK);
         const sample = await sources.prepare({ stage: 'research' });
         sources.attach(record, sample);
         assert.equal(record.sessionId, SCENARIO_ID);
@@ -147,7 +232,35 @@ describe('actions on a canvas that follows RPI files', () => {
         assert.deepEqual(taken.items.map((item) => item.text), ['Hello agent']);
         assert.ok((await call('record_activity', { text: 'Reading' })).revision > 0);
         const state = await call('get_state', {});
-        assert.deepEqual([state.source.kind, state.source.taskId, state.source.lineage.length, state.source.following], ['rpi', ROOT_TASK, 2, false]);
+        assert.deepEqual([state.source.kind, state.source.taskId, state.source.session.tasks.length, state.source.following, state.source.polling], ['rpi', ROOT_TASK, 2, 'enabled', false]);
+        assert.deepEqual(state.source.session.tasks.map((task) => [task.taskId, task.shown]), [[ROOT_TASK, true], [CHILD_TASK, false]]);
+        store.close();
+    });
+
+    it('takes feedback from every task in the session and needs the task for a repeated ID', async () => {
+        const { call, store, instance } = await setup('session-feedback');
+        const other = await createSourceController({ store }).prepare({ task: CHILD_TASK }, { candidates: [root] });
+        other.source.follower.stop();
+        const add = async (id, text) => (await store.update(id, (current) => createFeedback(current, { kind: 'comment', text }, NOW), { by: 'user' })).result;
+        const mine = await add(instance.sessionId, 'Root note');
+        const theirs = await add(other.sessionId, 'Child note');
+        assert.equal(mine.id, theirs.id, 'feedback IDs repeat across tasks');
+        const state = await call('get_state', {});
+        assert.deepEqual(state.otherTasks.map((task) => [task.taskId, task.pendingFeedback.map((entry) => entry.id)]), [[CHILD_TASK, [theirs.id]]]);
+        const taken = await call('take_feedback', {});
+        assert.deepEqual(taken.items.map((entry) => [entry.taskId, entry.id, entry.text, entry.followUp === true]), [[ROOT_TASK, mine.id, 'Root note', true], [CHILD_TASK, theirs.id, 'Child note', true]]);
+        assert.match(taken.note, /passing its taskId/);
+        assert.equal(await codeOf(() => call('record_interpretation', { feedbackId: mine.id, text: 'Noted' })), 'invalid_input', 'the ID is waiting in two tasks');
+        const read = await call('record_interpretation', { taskId: CHILD_TASK, feedbackId: theirs.id, text: 'Child noted', applied: true });
+        assert.deepEqual([read.taskId, read.state], [CHILD_TASK, 'applied']);
+        assert.equal((await store.load(instance.sessionId)).feedback.find((entry) => entry.id === mine.id).state, 'sent', 'the root item is untouched');
+        const unique = await call('record_interpretation', { feedbackId: mine.id, text: 'Root noted' });
+        assert.deepEqual([unique.taskId, unique.state], [ROOT_TASK, 'interpreted'], 'once only one task waits, the ID is enough');
+        assert.equal(await codeOf(() => call('record_interpretation', { taskId: 'nope', feedbackId: mine.id })), 'not_found');
+        const third = await add(other.sessionId, 'Sent with others');
+        await store.update(other.sessionId, (current) => markDelivered(current, [third.id], 'send', NOW, { tasks: 2 }), { by: 'user' });
+        assert.equal(await codeOf(() => call('record_interpretation', { feedbackId: third.id, text: 'x' })), 'invalid_input', 'an item sent with other tasks needs its task');
+        other.source.follower.stop();
         store.close();
     });
 
@@ -174,7 +287,7 @@ describe('server following and task switching', () => {
     function stream(url) {
         const events = [];
         let waiter = null;
-        const req = http.get({ host: '127.0.0.1', port: url.port, path: '/api/events' }, (res) => {
+        const req = http.get({ host: '127.0.0.1', port: url.port, path: `/api/events?k=${url.searchParams.get('k')}` }, (res) => {
             let buffer = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
@@ -200,7 +313,7 @@ describe('server following and task switching', () => {
 
     const post = (url, pathname, body) => new Promise((resolve, reject) => {
         const payload = JSON.stringify(body);
-        const req = http.request({ host: '127.0.0.1', port: url.port, method: 'POST', path: pathname, headers: { 'content-type': 'application/json' } }, (res) => {
+        const req = http.request({ host: '127.0.0.1', port: url.port, method: 'POST', path: pathname, headers: { 'content-type': 'application/json', 'x-rw-key': url.searchParams.get('k') } }, (res) => {
             let text = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
@@ -222,12 +335,21 @@ describe('server following and task switching', () => {
             store,
             getSessionId: () => sessionId,
             getSource: () => ({ follower }),
-            switchTask: async (taskId) => {
-                if (taskId !== 'trail-maps-fixes') throw Object.assign(new Error('not in lineage'), { code: 'invalid_input' });
+            switchTask: async (ref) => {
+                if (ref.taskId !== 'trail-maps-fixes' && ref.statePath !== PATHS.childState) throw Object.assign(new Error('not in this session'), { code: 'invalid_input' });
                 sessionId = session.id;
-                server.rebind();
+                server.rebind(ref.statePath ? { moved: { from: ROOT_TASK, to: CHILD_TASK, title: 'Fixes' } } : {});
                 return { sessionId };
             },
+            resumeFollowing: async () => {
+                server.rebind({});
+                return { sessionId };
+            },
+            switchSession: async (key) => {
+                if (key !== SESSION_KEY) throw Object.assign(new Error('no such session'), { code: 'invalid_input' });
+                return { sessionId };
+            },
+            listSessions: async () => ({ sessions: [{ key: SESSION_KEY }], skipped: [] }),
         });
         const url = new URL(await server.start());
         const page = stream(url);
@@ -237,6 +359,21 @@ describe('server following and task switching', () => {
         assert.deepEqual([switched.status, switched.json.sessionId], [200, session.id]);
         await page.until((event) => event === 'reload');
         assert.deepEqual(calls, ['start', 'start'], 'rebinding restarts following for the new source');
+        assert.equal((await post(url, '/api/task', { statePath: PATHS.childState })).status, 200);
+        assert.equal((await post(url, '/api/follow', {})).status, 200);
+        assert.deepEqual((await post(url, '/api/session', { key: SESSION_KEY })).status, 200);
+        assert.deepEqual((await post(url, '/api/session', { key: '../x' })).status, 400);
+        const sessions = await new Promise((resolve, reject) => {
+            http.get({ host: '127.0.0.1', port: url.port, path: '/api/sessions', headers: { 'x-rw-key': url.searchParams.get('k') } }, (res) => {
+                let text = '';
+                res.setEncoding('utf8');
+                res.on('data', (chunk) => {
+                    text += chunk;
+                });
+                res.on('end', () => resolve(JSON.parse(text)));
+            }).on('error', reject);
+        });
+        assert.deepEqual(sessions.sessions.map((item) => item.key), [SESSION_KEY]);
         page.req.destroy();
         await new Promise((resolve) => setTimeout(resolve, 50));
         assert.equal(calls.at(-1), 'stop');
