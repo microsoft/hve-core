@@ -428,7 +428,7 @@ describe('the canvas key', () => {
             assert.equal(server.url, url.href);
             const denied = await request(url, { pathname: '/api/state', key: false });
             assert.deepEqual([denied.status, denied.json.error.code], [403, 'invalid_key']);
-            assert.equal((await request(url, { pathname: '/api/state', key: false, headers: { 'x-rw-key': `${key.slice(0, -1)}x` } })).status, 403);
+            assert.equal((await request(url, { pathname: '/api/state', key: false, headers: { 'x-rw-key': `${key.slice(0, -1)}${key.endsWith('x') ? 'y' : 'x'}` } })).status, 403);
             assert.equal((await request(url, { pathname: '/api/state', key: false, headers: { 'x-rw-key': key.slice(1) } })).status, 403);
             assert.equal((await request(url, { method: 'POST', pathname: '/api/delivery', body: { ids: [] }, key: false })).status, 403, 'no message reaches the agent without the key');
             assert.equal((await request(url, { pathname: '/api/state' })).status, 200);
