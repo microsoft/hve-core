@@ -989,6 +989,13 @@ details > summary:hover {
   line-height: 22px;
 }
 
+.callout-body {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  min-width: 0;
+}
+
 .readiness-line {
   display: inline-flex;
   align-items: center;
@@ -3616,6 +3623,47 @@ details > summary:hover {
   display: grid;
   gap: 2px;
   list-style: none;
+}
+
+/* A running critique: each lens with its status, then how far the critique or the revision has come. */
+.lens-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.lens-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--rw-t-ui);
+}
+
+.lens-item.is-queued .lens-name {
+  color: var(--rw-fg-muted);
+}
+
+.lens-item.is-in-progress .lens-name {
+  font-weight: 600;
+}
+
+.critique-now {
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-ui);
+}
+
+.critique-card .progress,
+.row .critique-now + .finding-list,
+.row .progress + .critique-now {
+  margin-top: 6px;
+}
+
+/* The agent changed this text a few minutes ago. */
+.updated-mark .time {
+  color: inherit;
+  font: inherit;
 }
 
 .mini-finding {

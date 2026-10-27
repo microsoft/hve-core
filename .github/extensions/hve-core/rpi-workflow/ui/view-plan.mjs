@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, h, icon, idChip, idTag, known, plural, SEVERITY, TASK_STATUS } from './dom.mjs';
-import { decisionCard, decisionsRow, marginNote, mdInline, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
+import { decisionCard, decisionsRow, marginNote, mdInline, recordRow, row, rowActions, sectionBody, table, updatedMark } from './components.mjs';
 import { renderDiagram } from './diagram.mjs';
 import { anchoredDecisions, decisionsOutline, notesFor } from './view-research.mjs';
 
@@ -14,6 +14,53 @@ const DISPOSITION = {
     open: { icon: 'hand', label: 'Open', tone: 'attention' },
     superseded: { icon: 'dash-circle', label: 'Superseded', tone: 'muted' },
 };
+
+/** A critique lens's status, in words and with an icon. */
+const LENS_STATUS = {
+    queued: { icon: 'clock', label: 'Queued', tone: 'muted' },
+    'in progress': { icon: 'active', label: 'In progress', tone: 'accent' },
+    complete: { icon: 'check', label: 'Done', tone: 'success' },
+    partial: { icon: 'alert', label: 'Partial', tone: 'attention' },
+    blocked: { icon: 'x-circle', label: 'Blocked', tone: 'danger' },
+};
+
+/** Finished lenses, the lens in progress, and the total. */
+export function lensProgress(critique) {
+    const lenses = critique?.lenses ?? [];
+    const done = lenses.filter((lens) => lens.status !== 'queued' && lens.status !== 'in progress').length;
+    return { done, total: lenses.length, current: lenses.find((lens) => lens.status === 'in progress') ?? null };
+}
+
+/** Findings the plan has addressed, any disposition but open, of all findings. */
+export function addressedFindings(critique) {
+    const findings = critique?.findings ?? [];
+    return { done: findings.filter((finding) => finding.disposition !== 'open').length, total: findings.length };
+}
+
+const progressBar = (done, total, label) => h('progress', { class: 'progress', max: String(Math.max(total, 1)), value: String(done), 'aria-label': label });
+
+/** What a critique is doing now: running with its lens progress, stopped, or how far the plan's revision has come. */
+function critiqueProgress(critique) {
+    const findings = critique.findings.length;
+    if (critique.run) {
+        const lenses = lensProgress(critique);
+        const so = `${plural(findings, 'finding')} so far.`;
+        const text = critique.run === 'stopped'
+            ? `The critique stopped before it finished${lenses.total ? `, after ${lenses.done} of ${lenses.total} lenses` : ''}; ${so}`
+            : lenses.current ? `Assessing the ${lenses.current.lens} lens, ${lenses.done + 1} of ${lenses.total}; ${so}` : lenses.total ? `${lenses.done} of ${lenses.total} lenses done; ${so}` : `Starting; ${so}`;
+        return [lenses.total ? progressBar(lenses.done, lenses.total, `${lenses.done} of ${lenses.total} critique lenses done`) : null, h('p', { class: 'critique-now', text })];
+    }
+    const fixed = addressedFindings(critique);
+    if (!fixed.total) return [];
+    const text = `${fixed.done} of ${plural(fixed.total, 'finding')} addressed in the plan.`;
+    return fixed.done < fixed.total ? [progressBar(fixed.done, fixed.total, text), h('p', { class: 'critique-now', text })] : [h('p', { class: 'critique-now', text })];
+}
+
+function runBadge(critique, long = false) {
+    if (critique?.run === 'running') return badge({ icon: 'active', label: long ? 'Critique running' : 'Running', tone: 'accent' });
+    if (critique?.run === 'stopped') return badge({ icon: 'pause', label: long ? 'Critique stopped' : 'Stopped', tone: 'attention' });
+    return null;
+}
 
 export function outline(ctx) {
     const plan = ctx.data.session.plan;
@@ -39,6 +86,7 @@ function taskBlock(ctx, task, index, siblings) {
                 idTag(task.id, 'file'),
                 h('span', { class: 'task-title', text: task.title })),
             badge(TASK_STATUS[task.status]),
+            updatedMark(ctx, task.sectionId),
             decision && decision.status === 'needs-input' ? h('button', { type: 'button', class: 'badge tone-attention is-link', onclick: () => ctx.act.navigate(decision.id) }, icon('hand'), `Waiting on ${decision.id}`, icon('go-to', { className: 'icon-inline chip-icon' })) : null),
         h('div', { class: 'task-panel', id: panelId, hidden: !expanded },
             task.goals ? h('p', { class: 'task-goal' }, h('strong', { text: 'Goal: ' }), task.goals) : null,
@@ -60,14 +108,15 @@ export function renderView(ctx) {
     const readiness = plan.readiness;
     rows.push(row(ctx, {
         id: 'plan-summary', idLabel: null, title: 'Summary', level: 2,
-        badges: [readiness ? badge(readiness.status === 'ready' ? { icon: 'check-circle', label: 'Ready to implement', tone: 'success' } : { icon: 'hand', label: 'Not ready', tone: 'attention' }) : null],
+        badges: [readiness ? badge(readiness.status === 'ready' ? { icon: 'check-circle', label: 'Ready to implement', tone: 'success' } : { icon: 'hand', label: 'Not ready', tone: 'attention' }) : null, updatedMark(ctx, 'plan-summary')],
         actions: rowActions(ctx, { sectionId: 'plan-summary', rowId: 'plan-summary' }),
         body: [sectionBody(ctx, 'plan-summary'), readiness ? h('p', { class: 'readiness-line' }, icon(readiness.status === 'ready' ? 'check' : 'hand'), h('span', null, mdInline(ctx, readiness.text, { doc: 'plan' }))) : null,
-            ctx.data.session.sections['plan-unknowns'] ? h('div', { class: 'callout' }, icon('bulb', { className: 'callout-icon' }), sectionBody(ctx, 'plan-unknowns')) : null],
-        margin: [critique ? h('article', { class: 'card' },
-            h('header', { class: 'card-head' }, icon('shield-check', { className: 'card-icon' }), h('h4', { class: 'card-title', text: 'Plan critique' }), verdictBadge(critique.verdict)),
-            h('p', { text: `${plural(critique.findings.length, 'finding')}, ${critique.findings.filter((f) => f.disposition === 'resolved').length} resolved in the plan.${critique.setting ? ` Setting: ${critique.setting}.` : ''}` }),
-            h('div', { class: 'btn-row' }, button('Review findings', { iconName: 'arrow-down', onClick: () => ctx.act.navigate('critique') }))) : null],
+            ctx.data.session.sections['plan-unknowns'] ? h('div', { class: 'callout' }, icon('bulb', { className: 'callout-icon' }), h('div', { class: 'callout-body' }, updatedMark(ctx, 'plan-unknowns'), sectionBody(ctx, 'plan-unknowns'))) : null],
+        margin: [critique ? h('article', { class: ['card', 'critique-card', critique.run ? `is-${critique.run}` : null] },
+            h('header', { class: 'card-head' }, icon('shield-check', { className: 'card-icon' }), h('h4', { class: 'card-title', text: 'Plan critique' }), runBadge(critique) ?? verdictBadge(critique.verdict)),
+            ...critiqueProgress(critique),
+            critique.run ? null : h('p', { class: 'meta', text: `${plural(critique.findings.length, 'finding')}.${critique.setting ? ` Setting: ${critique.setting}.` : ''}` }),
+            h('div', { class: 'btn-row' }, button(critique.run ? 'Go to the critique' : 'Review findings', { iconName: 'arrow-down', onClick: () => ctx.act.navigate('critique') }))) : null],
     }));
 
     const view = ctx.ui.diagramView;
@@ -117,8 +166,12 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'critique', idLabel: null, title: 'Critique', level: 2,
-        badges: critique?.verdict ? [badge({ icon: critique.verdict === 'Pass' ? 'check' : 'pencil', label: `Verdict: ${critique.verdict}`, tone: critique.verdict === 'Pass' ? 'success' : 'attention' })] : [],
-        body: critique ? [h('ul', { class: 'finding-list' }, critique.findings.map((finding) => h('li', { class: 'mini-finding', dataset: { item: finding.id }, tabindex: '-1' },
+        badges: runBadge(critique, true) ? [runBadge(critique, true)] : critique?.verdict ? [badge({ icon: critique.verdict === 'Pass' ? 'check' : 'pencil', label: `Verdict: ${critique.verdict}`, tone: critique.verdict === 'Pass' ? 'success' : 'attention' })] : [],
+        body: critique ? [
+            critique.lenses?.length ? h('ol', { class: 'lens-list', 'aria-label': 'Critique lenses' }, critique.lenses.map((lens) => h('li', { class: ['lens-item', `is-${lens.status.replace(' ', '-')}`] }, badge(LENS_STATUS[lens.status] ?? LENS_STATUS.complete), h('span', { class: 'lens-name', text: lens.lens })))) : null,
+            ...critiqueProgress(critique),
+            critique.findings.length ? null : h('p', { class: 'empty', text: critique.run === 'running' ? 'No findings yet. Each lens adds its findings when it finishes.' : 'The critique recorded no findings.' }),
+            h('ul', { class: 'finding-list' }, critique.findings.map((finding) => h('li', { class: 'mini-finding', dataset: { item: finding.id }, tabindex: '-1' },
             h('p', { class: 'mini-head' }, badge(known(SEVERITY, finding.severity), { strong: true }), h('span', { class: 'id-chip', text: finding.id }), h('strong', { text: finding.title }), badge(known(DISPOSITION, finding.disposition))),
             h('p', { class: 'meta' }, mdInline(ctx, finding.response, { doc: 'plan' }), ' ', finding.related.map((id) => idChip(id, ctx.act.navigate))))))] : [h('p', { class: 'empty', text: 'No critique has been recorded for this plan.' })],
     }));

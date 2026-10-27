@@ -17,6 +17,30 @@ import {
 } from '../lib/source/parse.mjs';
 import { CHANGES, CHILD_CHANGES, CHILD_STATE, CRITIQUE, PLAN, RESEARCH, REVIEW, ROOT_STATE, STALE_STATE } from './helpers/rpi-fixture.mjs';
 
+
+/** A critique record with a lens table, as the critique writes it while it runs and when it ends. */
+const critiqueRecord = (execution, verdict, lenses, findings = '') => [
+    '# RPI Plan Critique: Lens progress',
+    '',
+    '## Metadata',
+    '',
+    `* Critique execution: ${execution}`,
+    '',
+    '## Lens Assessments',
+    '',
+    '| Lens | Scope | Reasoning effort and source | Status | Candidates |',
+    '|------|-------|-----------------------------|--------|------------|',
+    ...lenses.map(([lens, status]) => `| ${lens} | every phase | direct | ${status} | pending |`),
+    '',
+    '## Verdict',
+    '',
+    `* Verdict: ${verdict}`,
+    '',
+    '## Findings',
+    '',
+    findings,
+].join('\n');
+
 describe('artifact kinds and state', () => {
     it('recognizes each kind by its first heading', () => {
         assert.deepEqual([RESEARCH, PLAN, CRITIQUE, CHANGES, REVIEW].map(artifactKind), ['research', 'plan', 'critique', 'changes', 'review']);
@@ -135,6 +159,16 @@ describe('plan and critique', () => {
         const unmarked = parsePlan('# RPI Plan: x\n\n## Phase Checklist\n\n### [x] P01: One\n\nGoals:\n* g\n\n#### [ ] P01-T01: Task\n\nGoals:\n* t\n');
         assert.deepEqual(unmarked.phases.map((p) => [p.id, p.tasks.map((t) => t.id)]), [['P01', ['P01-T01']]]);
         assert.equal(unmarked.warnings.length, 1);
+    });
+
+    it('reads lens progress, and expects findings only from a finished critique that did not pass', () => {
+        const running = parseCritique(critiqueRecord('started', 'pending', [['Coverage', 'Complete'], ['Evidence', 'in progress'], ['Risk', 'queued']]));
+        assert.equal(running.execution, 'started');
+        assert.deepEqual(running.lenses, [{ lens: 'Coverage', status: 'Complete' }, { lens: 'Evidence', status: 'in progress' }, { lens: 'Risk', status: 'queued' }]);
+        assert.deepEqual(running.warnings, [], 'a running critique may have no findings yet');
+        assert.deepEqual(parseCritique(critiqueRecord('Complete', 'Pass', [['Coverage', 'direct']])).warnings, [], 'a passing critique may have none');
+        assert.deepEqual(parseCritique(critiqueRecord('Complete', 'Revise', [['Coverage', 'Complete']])).warnings, ['The critique has no findings.']);
+        assert.deepEqual(parseCritique(CRITIQUE).lenses, [], 'a record without a lens table has no lenses');
     });
 
     it('reads critique findings with severity and related plan IDs', () => {

@@ -450,16 +450,23 @@ export function parseCritique(text) {
         resolving: field(fields, 'Exact resolving evidence'),
         route: plainText(field(fields, 'Decision route')),
     }));
+    const execution = plainText(field(metadata, 'Critique execution'));
+    const verdictText = plainText(field(verdict, 'Verdict'));
+    // A critique that is still running, or that passed, may have no findings yet or at all.
+    const findingsExpected = !/^started$/i.test(execution) && !/^pass\b/i.test(verdictText);
     return {
         kind: 'critique',
         title: afterColon(titleOf(doc)),
-        verdict: plainText(field(verdict, 'Verdict')),
+        verdict: verdictText,
         rationale: field(verdict, 'Rationale'),
         depth: plainText(field(metadata, 'Critique depth')),
-        execution: plainText(field(metadata, 'Critique execution')),
+        execution,
+        lenses: (tableWith(bodyOfH2(doc, 'Lens Assessments'), ['Lens', 'Status'])?.rows ?? [])
+            .map((row) => ({ lens: plainText(row.lens), status: plainText(row.status) }))
+            .filter((row) => row.lens),
         findings,
         other: others(doc, ['Metadata', 'Verdict', 'Findings']),
-        warnings: findings.length ? [] : ['The critique has no findings.'],
+        warnings: findings.length || !findingsExpected ? [] : ['The critique has no findings.'],
     };
 }
 

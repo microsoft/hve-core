@@ -19,7 +19,7 @@ keywords:
 The RPI Workflow canvas (`hve-core-rpi-workflow`) is a shared surface for an RPI session. You read, decide, edit, and steer here, and the agent reports its work, asks for decisions, and reads back how it understood you. The canvas adapts to the phase you view:
 
 * Research: a summary with readiness, what you may not know, a questions tracker, findings with evidence state and confidence, alternatives, risks, research lanes, and the evidence log
-* Plan: a summary with the critique verdict, a Before and After change map, phases and tasks that expand in place, requirement coverage, and critique findings
+* Plan: a summary with the critique verdict, a Before and After change map, phases and tasks that expand in place, requirement coverage, and critique findings. While the critique runs, it shows the lens in progress and the findings so far; while the plan is revised, how many findings are addressed; and plan text the agent changed in the last ten minutes is marked Updated
 * Implement: a Now banner with the agent's current task and latest activity, a task board, changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers
 * Review: an assessment with severity counts, findings with expected and observed behavior side by side, the agent's decisions with Question this decision, and the decision history
 * Follow-up: ranked follow-ups with Select and Skip, and the loops in this session as a tree, parent first

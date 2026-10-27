@@ -178,6 +178,24 @@ export function rowActions(ctx, { sectionId, rowId, research = false, ask = fals
     return items;
 }
 
+/** How long an Updated mark stays after the agent changes a section's text. */
+export const UPDATED_WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * "Updated" with the time, for a section whose text the agent changed in the last ten
+ * minutes after the canvas first read it, or null.
+ *
+ * @param {any} ctx
+ * @param {string | undefined} sectionId
+ */
+export function updatedMark(ctx, sectionId) {
+    const section = sectionId ? ctx.data.session.sections[sectionId] : null;
+    if (!section || !(section.revision > 1) || !section.updatedAt) return null;
+    const age = ctx.now - Date.parse(section.updatedAt);
+    if (!(age >= 0 && age < UPDATED_WINDOW_MS)) return null;
+    return h('span', { class: 'badge tone-agent updated-mark' }, icon('pencil'), 'Updated ', timeEl(section.updatedAt, ctx.now));
+}
+
 /** Items the person has not sent yet, apart from any being sent right now. */
 export const pendingItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item));
 

@@ -97,6 +97,16 @@ export function findingDecisionOf(text) {
     return null;
 }
 
+/** A critique lens's status; `direct`, from records written before lens progress, means finished. */
+export function lensStatusOf(text) {
+    const value = labelKey(text);
+    if (/^(?:queued|pending|not started)/.test(value)) return 'queued';
+    if (/^(?:in[ -]progress|running)/.test(value)) return 'in progress';
+    if (value.startsWith('partial')) return 'partial';
+    if (value.startsWith('blocked')) return 'blocked';
+    return 'complete';
+}
+
 export function critiqueDispositionOf(text) {
     const value = labelKey(text);
     if (value.startsWith('resolv')) return 'resolved';
@@ -339,6 +349,8 @@ export function assembleSession(input) {
     });
     const dispositions = new Map((plan?.critique.dispositions ?? []).map((row) => [row.finding, row]));
     const critiqueSkipped = /skip/i.test(plan?.critique.status ?? '') || /^skip/i.test(plan?.critique.setting ?? '');
+    // A critique whose execution is still `started` runs only while the task's session runs.
+    const critiqueStarted = /^started$/i.test(critique?.execution || plan?.critique.status || '');
     const verdictOf = (text) => /\b(Pass|Revise|Blocked|Block|Fail)\b/i.exec(plainText(text))?.[1] ?? null;
     if (plan) {
         addSection('plan-summary', 'plan', 'Summary', plan.summary, 'plan');
@@ -506,7 +518,9 @@ export function assembleSession(input) {
                 critique: critique || plan.critique.status || plan.critique.setting
                     ? {
                         status: critique?.execution || plan.critique.status || 'Not recorded',
-                        verdict: critiqueSkipped && !critique ? 'Skipped' : critique?.verdict || verdictOf(plan.critique.latest) || 'Not recorded',
+                        run: critiqueStarted ? (running ? 'running' : 'stopped') : null,
+                        verdict: critiqueStarted ? null : critiqueSkipped && !critique ? 'Skipped' : critique?.verdict || verdictOf(plan.critique.latest) || 'Not recorded',
+                        lenses: (critique?.lenses ?? []).map((row) => ({ lens: row.lens, status: lensStatusOf(row.status) })),
                         setting: (plan.critique.setting || critique?.depth || 'not recorded').split(';')[0].trim(),
                         findings: (critique?.findings ?? []).map((finding) => ({
                             id: finding.id,

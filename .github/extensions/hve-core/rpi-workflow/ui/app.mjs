@@ -364,6 +364,11 @@ function announceChanges(previous, next, moved = false) {
     if (previous.session.session.activePhase !== next.session.session.activePhase) {
         messages.push(`The agent moved to ${PHASE_META[next.session.session.activePhase].label}${moved ? '; the canvas moved with it' : ''}.`);
     }
+    // The critique starting and finishing are announced; each lens is not, to keep the page quiet.
+    const critiqueBefore = previous.session.plan.critique?.run ?? null;
+    const critique = next.session.plan.critique;
+    if (critique?.run === 'running' && critiqueBefore !== 'running') messages.push('The agent started the plan critique; its findings appear under Critique as each lens finishes.');
+    if (critiqueBefore === 'running' && !critique?.run && critique?.verdict) messages.push(`The plan critique finished: ${critique.verdict}, ${plural(critique.findings.length, 'finding')}.`);
     if (messages.length) announce(messages.join(' '));
 }
 

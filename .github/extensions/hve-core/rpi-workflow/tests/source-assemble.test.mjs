@@ -13,6 +13,7 @@ import {
     critiqueDispositionOf,
     evidenceStateOf,
     findingDecisionOf,
+    lensStatusOf,
     lineageStatusOf,
     mergeImport,
     readinessOf,
@@ -122,6 +123,47 @@ describe('assembled document', () => {
         assert.deepEqual(session.implementation.current, { taskId: 'P02-T02', startedAt: null });
         assert.equal(session.plan.phases[1].tasks[1].status, 'in-progress');
         assert.deepEqual(Object.values(session.phases).map((phase) => phase.status), ['done', 'done', 'active', 'upcoming', 'upcoming']);
+    });
+});
+
+describe('a critique while it runs', () => {
+    const record = (execution, statuses) => [
+        '# RPI Plan Critique: Offline trail maps',
+        '',
+        '## Metadata',
+        '',
+        `* Critique execution: ${execution}`,
+        '',
+        '## Lens Assessments',
+        '',
+        '| Lens | Scope | Reasoning effort and source | Status | Candidates |',
+        '|------|-------|-----------------------------|--------|------------|',
+        ...statuses.map(([lens, status]) => `| ${lens} | all | direct | ${status} | pending |`),
+        '',
+        '## Verdict',
+        '',
+        '* Verdict: pending',
+    ].join('\n');
+    const assemble = (critique, session) => assembleSession({
+        id: 'rpi-trail-maps',
+        state: parseState({ ...ROOT_STATE, status: 'active', active_phase: 'Plan', session_status: session }),
+        artifacts: { plan: parsePlan(PLAN), critique: parseCritique(critique) },
+        statePath: PATHS.rootState,
+        now: '2026-01-15T12:00:00.000Z',
+    }).session.plan.critique;
+
+    it('reads each lens status, and treats direct from older records as finished', () => {
+        assert.deepEqual(['queued', 'Pending', 'in progress', 'In-progress', 'Complete', 'direct', 'Partial', 'Blocked'].map(lensStatusOf), ['queued', 'queued', 'in progress', 'in progress', 'complete', 'complete', 'partial', 'blocked']);
+    });
+
+    it('shows a started critique as running while the session runs, and as stopped otherwise, with no verdict', () => {
+        const lenses = [['Coverage', 'Complete'], ['Evidence', 'in progress'], ['Risk', 'queued']];
+        const running = assemble(record('started', lenses), 'running');
+        assert.deepEqual([running.run, running.verdict, running.status], ['running', null, 'started']);
+        assert.deepEqual(running.lenses.map((lens) => lens.status), ['complete', 'in progress', 'queued']);
+        assert.equal(assemble(record('started', lenses), 'stopped').run, 'stopped', 'a critique left started by a stopped session stopped before it finished');
+        const done = assemble(record('Complete', [['Coverage', 'direct']]).replace('* Verdict: pending', '* Verdict: Revise'), 'running');
+        assert.deepEqual([done.run, done.verdict, done.lenses], [null, 'Revise', [{ lens: 'Coverage', status: 'complete' }]]);
     });
 });
 
