@@ -182,7 +182,7 @@ Record accepted, rejected, and deferred material here. A helper return is a sugg
 
 ### Evidence Log
 
-<!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows write each location as a workspace-relative path followed by its heading or symbol in backticks, separate several locations with semicolons, and use "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
+<!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows write each location as a workspace-relative path followed by its heading or symbol in backticks, separate several locations with semicolons, and use "not applicable" for retrieval metadata. External rows write the source title as a Markdown link to its URL, such as `[Maximum Path Length Limitation](https://learn.microsoft.com/windows/win32/fileio/maximum-file-path-limitation)`, and add the retrieval date plus version. -->
 
 * Helpers: {{none_or_each_helper_lane_with_its_question_reasoning_effort_and_effort_source_and_what_was_verified_at_the_source}}
 
