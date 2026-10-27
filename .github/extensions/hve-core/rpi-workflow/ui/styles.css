@@ -4186,6 +4186,18 @@ circle.diagram-mark-glyph {
     padding-block: 8px;
   }
 
+  .board-dock-head {
+    gap: 4px 8px;
+  }
+
+  .board-progress {
+    gap: 6px;
+  }
+
+  .board-progress .progress {
+    width: 40px;
+  }
+
   .board-dock-body {
     margin-top: 6px;
   }
