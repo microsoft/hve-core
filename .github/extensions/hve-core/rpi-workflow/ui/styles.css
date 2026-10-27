@@ -4071,6 +4071,7 @@ circle.diagram-mark-glyph {
 
 .board-col-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin: 0 4px 8px;
@@ -5445,6 +5446,12 @@ kbd {
   .option:has(input:checked) .option-consequence,
   .option:has(input:checked) .option-why {
     color: HighlightText;
+  }
+
+  /* A count in the chosen segment keeps its author background, so it is outlined instead. */
+  .segmented label:has(input:checked) .count {
+    border: 1px solid HighlightText;
+    background: transparent;
   }
 
   .option:has(input:checked) .badge {
