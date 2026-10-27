@@ -421,7 +421,8 @@ function switchTaskUi(previousId, next) {
     taskStash.set(previousId, { ui: Object.fromEntries(Object.keys(taskUi()).map((key) => [key, state.ui[key]])), scroll: $('document').scrollTop });
     const restored = taskStash.get(next.session.id);
     taskStash.delete(next.session.id);
-    Object.assign(state.ui, restored?.ui ?? taskUi(), { highlight: null, revealed: new Set(), navFilter: '' });
+    // A task you return to keeps its page, but never reopens a lane's dropdown on its own.
+    Object.assign(state.ui, restored?.ui ?? taskUi(), { highlight: null, revealed: new Set(), navFilter: '', boardLane: null });
     state.ui.phase ??= next.session.session.activePhase;
     $('navFilter').value = '';
     return restored?.scroll ?? 0;
@@ -449,7 +450,7 @@ async function refresh() {
         if (withAgent) {
             const from = switched ? null : here();
             if (from) remember(from, { ...from, phase: agentNow, id: null, label: undefined });
-            Object.assign(state.ui, { phase: agentNow, place: null, highlight: null });
+            Object.assign(state.ui, { phase: agentNow, place: null, highlight: null, boardLane: null });
         }
         if (switched || withAgent) setHash();
         if (state.ui.editing) {
