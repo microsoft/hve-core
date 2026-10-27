@@ -378,6 +378,7 @@ Four icons keep one meaning wherever they mark a click: go-to (a box with an arr
 | 2026-10-26 | Icons say what a click does: go-to, page, globe, and code file; the canvas badge uses the message icon                       | The same ID navigated in one place and expanded in another, and the box with an arrow also meant leaving the canvas    |
 | 2026-10-26 | Previews, the legend, source chips and the source sheet, and Back and Forward                                                | The person could not read an ID without losing their place, check a source at the cited spot, or retrace their steps   |
 | 2026-10-26 | The canvas badge has its own slot; the session label shortens first; the meta line wraps below 560px                         | At 768px and 1440px the badge was clipped                                                                              |
+| 2026-10-26 | A render failure replaces the document with its reason and Retry, and reaches `get_state`                                    | A stored sample from an earlier version crashed rendering and left only the loading skeleton                           |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

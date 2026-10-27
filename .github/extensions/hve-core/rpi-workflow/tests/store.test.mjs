@@ -46,6 +46,28 @@ describe('sessions', () => {
         store.close();
     });
 
+    it('upgrades a document saved before the session tree, so the page can render it', async () => {
+        const store = await fresh('upgrade');
+        const dir = path.join(store.root, 'sessions');
+        await fs.mkdir(dir, { recursive: true });
+        const old = buildScenario('implement');
+        delete old.followUps.tree;
+        old.followUps.lineage = [];
+        old.scenario = { ...old.scenario, userChanges: 4 };
+        await fs.writeFile(path.join(dir, `${old.id}.json`), JSON.stringify(old));
+        const loaded = await store.load(old.id);
+        assert.equal('lineage' in loaded.followUps, false);
+        assert.deepEqual(loaded.followUps.tree, {
+            key: null,
+            date: null,
+            name: old.task.title,
+            tasks: [{ id: old.task.id, title: old.task.title, status: 'running', depth: 0, statePath: null, parent: null, shown: true, continues: null }],
+        });
+        const { session } = await store.update(old.id, (current) => recordActivity(current, { text: 'Still works' }, new Date().toISOString()));
+        assert.ok(session.followUps.tree, 'the next write keeps the upgraded shape');
+        store.close();
+    });
+
     it('reports corrupt and future files and leaves them in place', async () => {
         const store = await fresh('corrupt');
         const dir = path.join(store.root, 'sessions');

@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { ModelError, validateSession } from './model.mjs';
+import { ModelError, upgradeSession, validateSession } from './model.mjs';
 
 export const CANVAS_ID = 'hve-core-rpi-workflow';
 export const PREFERENCES_FORMAT = 'hve-core-rpi-workflow.preferences';
@@ -151,7 +151,7 @@ export function createStore(options = {}) {
             return undefined;
         }
         try {
-            return validateSession(doc);
+            return validateSession(upgradeSession(doc));
         } catch (error) {
             const code = error instanceof ModelError ? error.code : 'storage_corrupt';
             throw new StoreError(code, `${file}: ${error instanceof Error ? error.message : 'invalid data'} It was left in place.`);

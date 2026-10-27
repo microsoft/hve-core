@@ -28,6 +28,8 @@ function freshSend() {
 const state = {
     data: null,
     error: null,
+    /** Why the last render failed, until a render succeeds; every environment report carries it. */
+    renderError: null,
     live: 'connecting',
     stream: null,
     pollTimer: null,
@@ -1242,7 +1244,33 @@ function restoreFocus(key) {
     if (heading) focusQuietly(heading);
 }
 
+/** Renders the page; a failure shows its reason with Retry instead of leaving the page blank. */
 function render() {
+    try {
+        renderPage();
+    } catch (error) {
+        showRenderFailure(error);
+        return;
+    }
+    if (state.renderError) {
+        state.renderError = null;
+        reportEnvironment();
+    }
+}
+
+/** Says why the page could not render and reports it, so the agent sees it in `get_state`. */
+function showRenderFailure(error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('The RPI Workflow canvas could not render this task.', error);
+    state.renderError = message;
+    clear($('docBody')).append(h('div', { class: 'notice tone-danger', role: 'alert' },
+        h('p', { class: 'notice-title' }, icon('alert'), 'The canvas could not show this task.'),
+        h('p', { text: `${message.replace(/\.$/, '')}. Retry, or reopen the canvas; the agent can see this problem too.` }),
+        h('div', { class: 'btn-row' }, button('Retry', { iconName: 'loop', onClick: refresh }))));
+    reportEnvironment();
+}
+
+function renderPage() {
     if (!state.data) {
         renderDocument();
         return;
@@ -1594,6 +1622,7 @@ function detectHostScheme() {
     return true;
 }
 
+/** Tells the server about the page's environment and any render failure, for `get_state`. */
 function reportEnvironment() {
     const style = getComputedStyle(document.documentElement);
     const hostTokens = detectHostScheme() || ['--text-color-default', '--vscode-editor-background'].some((name) => style.getPropertyValue(name).trim() !== '');
@@ -1606,6 +1635,7 @@ function reportEnvironment() {
         hostTokens,
         width: window.innerWidth,
         height: window.innerHeight,
+        renderError: state.renderError,
     }).catch(() => {});
 }
 

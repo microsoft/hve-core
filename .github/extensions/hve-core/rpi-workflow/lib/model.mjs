@@ -128,6 +128,28 @@ export function oneOf(value, allowed, field) {
 const clone = (value) => structuredClone(value);
 
 /**
+ * Brings a stored document from an earlier canvas version up to the current shape, for
+ * fields that changed without a version change. A session tree replaced `followUps.lineage`,
+ * so a document without one gets a tree holding only its own task.
+ *
+ * @param {any} doc parsed session document; upgraded in place
+ * @returns {any} the same document
+ */
+export function upgradeSession(doc) {
+    const followUps = doc?.followUps;
+    if (followUps && typeof followUps === 'object' && !Array.isArray(followUps) && !followUps.tree) {
+        const task = doc.task && typeof doc.task === 'object' ? doc.task : {};
+        const meta = doc.session && typeof doc.session === 'object' ? doc.session : {};
+        const status = meta.status === 'completed' ? 'completed' : meta.sessionStatus === 'running' ? 'running' : 'stopped';
+        const id = typeof task.id === 'string' && task.id ? task.id : doc.id;
+        const title = typeof task.title === 'string' && task.title ? task.title : id;
+        followUps.tree = { key: null, date: null, name: title, tasks: [{ id, title, status, depth: 0, statePath: null, parent: null, shown: true, continues: null }] };
+        delete followUps.lineage;
+    }
+    return doc;
+}
+
+/**
  * Validates the stored shape. Returns the session or throws `storage_corrupt` or
  * `storage_unsupported` so callers can report the file instead of overwriting it.
  *

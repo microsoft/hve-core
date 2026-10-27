@@ -418,6 +418,16 @@ describe('a session-wide send', () => {
 });
 
 
+describe('client info', () => {
+    it('keeps a render failure, capped, so get_state can report a blank page', () => {
+        assert.equal(clientInfoFrom({ scheme: 'dark' }).renderError, null);
+        assert.equal(clientInfoFrom({ renderError: '   ' }).renderError, null);
+        assert.equal(clientInfoFrom({ renderError: 42 }).renderError, null);
+        assert.equal(clientInfoFrom({ renderError: "Cannot read properties of undefined (reading 'name')" }).renderError, "Cannot read properties of undefined (reading 'name')");
+        assert.equal(clientInfoFrom({ renderError: 'x'.repeat(1000) }).renderError.length, 300);
+    });
+});
+
 describe('the canvas key', () => {
     it('admits only API calls that carry the key from the page address', async () => {
         const { server, url } = await setup('key');

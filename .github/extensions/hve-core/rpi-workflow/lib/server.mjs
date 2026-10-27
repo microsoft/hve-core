@@ -144,6 +144,7 @@ export function clientInfoFrom(body) {
         hostTokens: bool(body.hostTokens),
         width: num(body.width),
         height: num(body.height),
+        renderError: typeof body.renderError === 'string' && body.renderError.trim() ? body.renderError.trim().slice(0, 300) : null,
         reportedAt: new Date().toISOString(),
     };
 }
