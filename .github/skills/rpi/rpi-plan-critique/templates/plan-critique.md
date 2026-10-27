@@ -26,9 +26,9 @@
 
 <!-- One row per lens, written as queued before the first lens runs. Status moves from queued to in progress to Complete, Partial, or Blocked. Write "direct" as the reasoning effort when the critique parent assessed the lens itself. -->
 
-| Lens     | Scope                        | Reasoning effort and source                                    | Status                                                 | Candidates                                                          |
-|----------|------------------------------|----------------------------------------------------------------|--------------------------------------------------------|---------------------------------------------------------------------|
-| {{lens}} | {{phases_tasks_or_sections}} | {{effort}} ({{selected_caller_set_or_host_default}}) or direct | {{queued_in_progress_Complete_Partial_or_Blocked}}     | {{adopted_count}} adopted; {{rejected_count}} rejected: {{reasons}} |
+| Lens     | Scope                        | Reasoning effort and source                                    | Status                                             | Candidates                                                          |
+|----------|------------------------------|----------------------------------------------------------------|----------------------------------------------------|---------------------------------------------------------------------|
+| {{lens}} | {{phases_tasks_or_sections}} | {{effort}} ({{selected_caller_set_or_host_default}}) or direct | {{queued_in_progress_Complete_Partial_or_Blocked}} | {{adopted_count}} adopted; {{rejected_count}} rejected: {{reasons}} |
 
 ## Coverage Assessment
 
