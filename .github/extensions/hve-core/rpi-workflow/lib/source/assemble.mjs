@@ -3,6 +3,7 @@
 
 import { createHash } from 'node:crypto';
 
+import { parseFlowchart } from '../../ui/flowchart.mjs';
 import { checklistFor, verdictOf } from '../checklists.mjs';
 import { PHASES, SESSION_FORMAT, SESSION_VERSION, validateSession } from '../model.mjs';
 import { idsIn, inlineMarkdown, labelKey, linksIn, listItems, plainText } from './markdown.mjs';
@@ -321,6 +322,15 @@ export function assembleSession(input) {
     const allTasks = (plan?.phases ?? []).flatMap((phase) => phase.tasks);
     const currentTask = active === 'implement' && running ? allTasks.find((task) => !task.checked)?.id ?? null : null;
     const afterNodes = nodeIds(plan?.after);
+    // A Before or After diagram the canvas cannot draw shows as source; say which line stopped it.
+    for (const [name, source] of [['Before', plan?.before], ['After', plan?.after]]) {
+        if (!source) continue;
+        try {
+            parseFlowchart(source);
+        } catch (error) {
+            warnings.push(`Plan: the ${name} diagram is shown as source. ${error instanceof Error ? error.message : 'It could not be read.'}`);
+        }
+    }
     const planPhases = (plan?.phases ?? []).map((phase) => {
         const tasks = phase.tasks.map((task) => {
             const sectionId = `task-${task.id.toLowerCase()}`;

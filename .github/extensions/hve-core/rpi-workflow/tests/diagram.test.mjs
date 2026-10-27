@@ -16,6 +16,21 @@ before(async () => {
 after(() => restore());
 
 const AFTER = buildScenario('plan').plan.diagram.after;
+/** Groups and dashed edges, as the planning skill's diagrams use them. */
+const GROUPED = [
+    'flowchart LR',
+    '    subgraph first["First pass"]',
+    '        a["A"]',
+    '        b["B"]',
+    '    end',
+    '    subgraph second',
+    '        direction TB',
+    '        c["C"]',
+    '    end',
+    '    a --> b',
+    '    b -.-> c',
+    '    a -.->|removed: reads| c',
+].join('\n');
 
 describe('parseFlowchart', () => {
     it('parses the plan subset and ignores directives and style declarations', () => {
@@ -25,7 +40,16 @@ describe('parseFlowchart', () => {
         assert.equal(graph.edges.length, 9);
         assert.ok(graph.nodes.get('store').classes.has('new'));
         assert.equal(graph.nodes.get('form').classes.size, 0);
-        assert.deepEqual(graph.edges.find((edge) => edge.from === 'sync' && edge.to === 'api'), { from: 'sync', to: 'api', label: 'If-Match PUT' });
+        assert.deepEqual(graph.edges.find((edge) => edge.from === 'sync' && edge.to === 'api'), { from: 'sync', to: 'api', label: 'If-Match PUT', dashed: false });
+    });
+
+    it('reads the subgraph groups and dashed edges the planning skill draws', () => {
+        const graph = diagram.parseFlowchart(GROUPED);
+        assert.deepEqual(graph.groups, [{ id: 'first', label: 'First pass', members: ['a', 'b'] }, { id: 'second', label: 'second', members: ['c'] }]);
+        assert.deepEqual(graph.edges.map((edge) => [edge.from, edge.to, edge.label, edge.dashed]), [['a', 'b', '', false], ['b', 'c', '', true], ['a', 'c', 'removed: reads', true]]);
+        assert.equal(graph.nodes.size, 3, 'a group is not a node');
+        assert.throws(() => diagram.parseFlowchart('flowchart LR\n  subgraph g\n  a["A"]'), /The subgraph g has no end line/);
+        assert.throws(() => diagram.parseFlowchart('flowchart LR\n  a["A"]\n  end'), /Unsupported diagram line: end/);
     });
 
     it('rejects other diagram types, unknown lines, and oversized graphs', () => {
@@ -78,6 +102,16 @@ describe('layout', () => {
 });
 
 describe('renderDiagram', () => {
+    it('draws dashed edges dashed and names them and the groups in the text version', () => {
+        const markup = serialize(diagram.renderDiagram(GROUPED, { caption: 'After', idPrefix: 'grouped' }));
+        assert.equal((markup.match(/class="diagram-edge is-dashed"/g) ?? []).length, 2);
+        assert.equal((markup.match(/class="diagram-edge"/g) ?? []).length, 1);
+        assert.match(markup, /<li>B connects to C \(dashed line\)<\/li>/);
+        assert.match(markup, /<li>A removed: reads C \(dashed line\)<\/li>/);
+        assert.match(markup, /<li>Group First pass: A, B<\/li><li>Group second: C<\/li>/);
+        assert.doesNotMatch(markup, /is-fallback/);
+    });
+
     it('marks a map that shows progress, so its chosen phase is drawn as an outline', () => {
         const withProgress = diagram.renderDiagram(AFTER, { caption: 'After', idPrefix: 'map', highlight: ['store'], progress: new Map([['store', 'done']]) });
         const plain = diagram.renderDiagram(AFTER, { caption: 'After', idPrefix: 'plan', highlight: ['store'] });

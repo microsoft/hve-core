@@ -3679,6 +3679,11 @@ circle.diagram-mark-glyph {
   stroke-width: 1.25;
 }
 
+/* A dashed edge, such as a relationship a phase removes, keeps its dash in every scheme. */
+.diagram-edge.is-dashed {
+  stroke-dasharray: 6 4;
+}
+
 .diagram-arrow {
   fill: var(--rw-fg-muted);
 }

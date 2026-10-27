@@ -224,8 +224,9 @@ A task whose parent sits in another session shows that parent as context. A link
 
 While a page is open, the canvas checks the task's files and the session's state files about every 1.5 seconds. It imports a change once the file has stopped changing between two checks, so a half-written file is skipped. Edits by the agent appear within a few seconds. When a file cannot be read, the canvas keeps the last good version and lists the problem above each phase.
 
-The canvas reports what it cannot read instead of dropping it: decision rows not numbered `D1`, `D2`, and so on, decision blocks with no row or no options, citations the evidence log does not list, code evidence that cites a path missing from the workspace, tables without their expected columns, and a research title that is still the slug.
+The canvas reports what it cannot read instead of dropping it: decision rows not numbered `D1`, `D2`, and so on, decision blocks with no row or no options, citations the evidence log does not list, code evidence that cites a path missing from the workspace, tables without their expected columns, a research title that is still the slug, and a plan's Before or After diagram it can only show as source.
 These appear in the problems list and in `get_state`, and the RPI Agent fixes the ones in the files it is writing; older artifacts stay as they are.
+Plan diagrams draw as Mermaid flowcharts with labeled nodes, solid and dashed edges, `class` lines, and `subgraph` groups, which the text version lists.
 
 What you add stays in the canvas across these updates: feedback, suggested edits, checklist verdicts and notes, research lanes, activity, and decisions created in the canvas. A section always shows the file's text, and a suggestion for it stays beside it until it is applied or removed. An answer or override on a decision stays until the agent changes that decision. Text typed into a section by an earlier version of the canvas gives way to the file's text.
 

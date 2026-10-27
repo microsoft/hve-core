@@ -2,65 +2,17 @@
 // SPDX-License-Identifier: MIT
 
 import { h } from './dom.mjs';
+import { parseFlowchart } from './flowchart.mjs';
+
+export { parseFlowchart };
 
 /**
- * Draws the Mermaid flowchart subset RPI plans use (labeled nodes, labeled edges, and
- * the `new` and `phase` classes) as native SVG with a text alternative. `%%` lines and
- * `classDef` style declarations are ignored; anything else unknown falls back to source.
+ * Draws the Mermaid flowchart subset RPI plans use (see `./flowchart.mjs`) as native SVG with
+ * a text alternative. A dashed edge draws dashed; subgraph groups appear in the text version.
+ * A diagram it cannot read falls back to its source, with the reason in the caption.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const NODE_RE = /^([A-Za-z][\w-]{0,40})\["([^"\n]{1,120})"\]$/;
-const EDGE_RE = /^([A-Za-z][\w-]{0,40})\s*-->\s*(?:\|([^|\n]{1,60})\|\s*)?([A-Za-z][\w-]{0,40})$/;
-const CLASS_RE = /^class\s+([\w,-]{1,400})\s+([A-Za-z][\w-]{0,30})$/;
-const MAX_NODES = 120;
-const MAX_EDGES = 240;
-
-/**
- * @param {string} source
- * @returns {{ direction: 'LR' | 'TD', nodes: Map<string, { id: string, label: string, classes: Set<string> }>, edges: { from: string, to: string, label: string }[] }}
- */
-export function parseFlowchart(source) {
-    const lines = String(source ?? '').split('\n').map((line) => line.trim()).filter((line) => line && !line.startsWith('%%'));
-    const header = lines.shift() ?? '';
-    const direction = /^flowchart\s+(LR|TD|TB)$/.exec(header)?.[1];
-    if (!direction) {
-        throw new Error('Only flowchart LR and TD diagrams are supported.');
-    }
-    const nodes = new Map();
-    const edges = [];
-    const ensure = (id) => {
-        if (!nodes.has(id)) nodes.set(id, { id, label: id, classes: new Set() });
-        return nodes.get(id);
-    };
-    for (const line of lines) {
-        if (line.startsWith('classDef ')) continue;
-        let match = NODE_RE.exec(line);
-        if (match) {
-            ensure(match[1]).label = match[2];
-            continue;
-        }
-        match = EDGE_RE.exec(line);
-        if (match) {
-            ensure(match[1]);
-            ensure(match[3]);
-            edges.push({ from: match[1], to: match[3], label: match[2]?.trim() ?? '' });
-            continue;
-        }
-        match = CLASS_RE.exec(line);
-        if (match) {
-            for (const id of match[1].split(',')) {
-                if (nodes.has(id)) nodes.get(id).classes.add(match[2]);
-            }
-            continue;
-        }
-        throw new Error(`Unsupported diagram line: ${line.slice(0, 60)}`);
-    }
-    if (nodes.size > MAX_NODES || edges.length > MAX_EDGES) {
-        throw new Error(`Diagrams are limited to ${MAX_NODES} parts and ${MAX_EDGES} relationships.`);
-    }
-    return { direction: direction === 'LR' ? 'LR' : 'TD', nodes, edges };
-}
 
 /** Wraps at spaces and slashes, so paths such as src/api/file.ts can break too. */
 export function wrap(label, width, maxLines = 4) {
@@ -249,7 +201,7 @@ export function renderDiagram(source, options) {
         const [x1, y1, x2, y2] = horizontal ? [a.x + a.width, a.y + a.height / 2, b.x, b.y + b.height / 2] : [a.x + a.width / 2, a.y + a.height, b.x + b.width / 2, b.y];
         const bend = horizontal ? Math.max(24, (x2 - x1) / 2) : Math.max(24, (y2 - y1) / 2);
         const d = horizontal ? `M${x1} ${y1}C${x1 + bend} ${y1} ${x2 - bend} ${y2} ${x2 - 2} ${y2}` : `M${x1} ${y1}C${x1} ${y1 + bend} ${x2} ${y2 - bend} ${x2} ${y2 - 2}`;
-        root.append(svg('path', { d, class: 'diagram-edge', 'marker-end': `url(#${options.idPrefix}-arrow)` }));
+        root.append(svg('path', { d, class: edge.dashed ? 'diagram-edge is-dashed' : 'diagram-edge', 'marker-end': `url(#${options.idPrefix}-arrow)` }));
         if (edge.label) {
             labels.push({ text: edge.label, x: (x1 + x2) / 2, y: (y1 + y2) / 2, width: labelWidth(edge.label), height: labelHeight(edge.label), gap: layerOf.get(edge.from) });
         }
@@ -287,7 +239,8 @@ export function renderDiagram(source, options) {
     const describe = (id) => graph.nodes.get(id).label;
     const list = h('ul', { class: 'diagram-text' },
         [...graph.nodes.values()].map((node) => h('li', { text: `${node.label}${node.classes.has('new') ? ' (new)' : ''}${progress.get(node.id) === 'done' ? ' (done)' : progress.get(node.id) === 'active' ? ' (in progress)' : ''}${highlight.has(node.id) ? ' (highlighted)' : ''}` })),
-        graph.edges.map((edge) => h('li', { text: `${describe(edge.from)} ${edge.label || 'connects to'} ${describe(edge.to)}` })));
+        graph.edges.map((edge) => h('li', { text: `${describe(edge.from)} ${edge.label || 'connects to'} ${describe(edge.to)}${edge.dashed ? ' (dashed line)' : ''}` })),
+        graph.groups.filter((group) => group.members.length).map((group) => h('li', { text: `Group ${group.label}: ${group.members.map(describe).join(', ')}` })));
     // Scales down to fit its column, then scrolls rather than shrinking text below 80 percent.
     root.style.minWidth = `${Math.round((width + pad * 2) * 0.8)}px`;
     return h('figure', { class: 'diagram' },

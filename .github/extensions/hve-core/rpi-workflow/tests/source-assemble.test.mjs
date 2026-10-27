@@ -275,3 +275,27 @@ describe('rendering', () => {
         }
     });
 });
+
+describe('plan diagrams', () => {
+    const assembleWith = (plan) => assembleSession({
+        id: 'rpi-trail-maps',
+        state: parseState(ROOT_STATE),
+        artifacts: { research: parseResearch(RESEARCH), plan: parsePlan(plan), critique: parseCritique(CRITIQUE), changes: parseChanges(CHANGES), review: parseReview(REVIEW) },
+        statePath: PATHS.rootState,
+        now: NOW,
+    });
+
+    it('report a Before or After diagram the canvas cannot draw, naming the line', () => {
+        const { warnings } = assembleWith(PLAN.replace('    class store new\n', '    class store new\n    click store call alert()\n'));
+        assert.ok(warnings.includes('Plan: the After diagram is shown as source. Unsupported diagram line: click store call alert()'), warnings.join(' | '));
+        assert.equal(warnings.filter((warning) => warning.startsWith('Plan: the Before diagram')).length, 0);
+    });
+
+    it('draw groups and dashed edges without a warning', () => {
+        const grouped = PLAN.replace('    map["Map view"]\n    net["Tile server"]\n    store["Added: tile store"]\n    map -->|reads| store', '    subgraph app["App"]\n        map["Map view"]\n        store["Added: tile store"]\n    end\n    net["Tile server"]\n    map -->|reads| store\n    map -.->|removed: fetches| net');
+        assert.notEqual(grouped, PLAN, 'the fixture\'s After diagram changed');
+        const { warnings, session } = assembleWith(grouped);
+        assert.equal(warnings.filter((warning) => warning.startsWith('Plan:')).length, 0, warnings.join(' | '));
+        assert.ok(session.plan.diagram.after.includes('subgraph app'));
+    });
+});

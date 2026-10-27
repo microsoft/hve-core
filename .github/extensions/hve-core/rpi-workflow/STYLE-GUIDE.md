@@ -364,7 +364,7 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 * Color is never the only cue: every status has an icon and a word, diff lines have plus and minus markers, and the trace strip uses words and chevrons.
 * Nothing requires dragging: board moves, task moves, and panel sizes have buttons or menus.
 * Corrections, edits, and overrides prefill what the person already entered, so nothing is retyped. Each task of a real session keeps its own drafts, open editor, and scroll position in the page, so moving to a parent or child and back loses nothing.
-* Diagrams are figures with a caption and a text alternative that lists nodes and relationships, plus Show as text.
+* Diagrams are figures with a caption and a text alternative, behind Show as text, that lists the nodes, the relationships, and the subgraph groups. Dashed edges draw dashed and say so in the text. A diagram the canvas cannot draw shows its Mermaid source with the reason, and the problems list names it.
 * Previews meet WCAG 1.4.13: they open on hover and on focus, stay while hovered, and close with `Escape` without moving the pointer. A locked preview follows the non-modal dialog pattern, and focus returns to its ID when it closes.
 * Tabs follow the ARIA tabs pattern, and radio groups and menus follow their ARIA patterns. The shortcut list and the file preview are modal dialogs that return focus to their opener. Drawers are the navigation and complementary regions shown over a scrim: while one is open the rest of the page is inert, and closing it with `Escape` or its close button returns focus to its toggle.
 
