@@ -3,6 +3,7 @@
 
 import { md } from './components.mjs';
 import { badge, confidenceMeta, DECISION_STATUS, DISCOVERY_KIND, EVIDENCE_STATE, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, known, SEVERITY, sr, TASK_STATUS } from './dom.mjs';
+import { taskMarkers } from './board.mjs';
 import { kindOf } from './ids.mjs';
 import { evidenceSource } from './source-view.mjs';
 
@@ -54,8 +55,30 @@ function partsFor(ctx, key, item) {
         }
         case 'P':
             return { title: item.title, badges: [known(TASK_STATUS, item.status)], fields: [['Goal', item.goals]], related: [chips('Tasks', item.tasks?.map((task) => task.id))] };
-        case 'T':
-            return { title: item.title, badges: [known(TASK_STATUS, item.status)], fields: [['Goal', item.goals]], related: [chips('Requirements', item.requirements), chips('Depends on', item.dependencies)] };
+        case 'T': {
+            // A card leaves out what waits on the task, what blocks it, its changes, and the agent's recent work.
+            const impl = session.implementation;
+            const markers = taskMarkers(session, item);
+            const waitsOn = markers.paused ? markers.decision : null;
+            const blocker = markers.blocked ? markers.blocker : null;
+            const activity = impl?.current?.taskId === item.id ? (impl.activity ?? []).slice(-3).reverse().map((line) => `- ${line.text}`).join('\n') : '';
+            return {
+                title: item.title,
+                badges: [known(TASK_STATUS, item.status), markers.paused && item.status !== 'paused' ? TASK_STATUS.paused : null, markers.blocked && item.status !== 'blocked' ? TASK_STATUS.blocked : null],
+                fields: [
+                    ['Goal', item.goals],
+                    ['Waiting on', waitsOn?.title],
+                    ['Blocked', blocker ? [blocker.text, blocker.owner ? `Owner: ${blocker.owner}.` : '', blocker.clear ?? ''].filter(Boolean).join(' ') : ''],
+                    ['Agent activity', activity],
+                ],
+                related: [
+                    chips('Requirements', item.requirements),
+                    chips('Depends on', item.dependencies),
+                    chips('Waits on', waitsOn ? [waitsOn.id] : []),
+                    chips('Changes', (impl?.changes ?? []).filter((change) => change.taskId === item.id).map((change) => change.id)),
+                ],
+            };
+        }
         case 'FR':
         case 'NFR':
             return { title: item.text, badges: [] };

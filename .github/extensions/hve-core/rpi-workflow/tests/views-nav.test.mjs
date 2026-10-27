@@ -132,6 +132,29 @@ describe('preview content', () => {
         assert.deepEqual([...seen].sort(), ID_KINDS.map((entry) => entry.key).sort(), 'every family was previewed');
     });
 
+    it('shows a task\'s markers, what it waits on, what blocks it, its changes, and the agent\'s recent work', async () => {
+        const { previewContent } = await import('../ui/preview-content.mjs');
+        const session = buildScenario('implement', NOW);
+        const ctx = makeContext(session, 'implement');
+        const preview = (id) => {
+            const root = document.createElement('div');
+            const content = previewContent(ctx, id, { titleId: 't' });
+            for (const node of content.body) root.appendChild(node);
+            return { text: elements(root).map((node) => [...node.childNodes].filter((child) => typeof child.data === 'string').map((child) => child.data).join('')).join(' ').replace(/\s+/g, ' '), chips: elements(root).filter((node) => node.localName === 'button' && node.classList.contains('id-chip')).map((node) => node.dataset.preview) };
+        };
+        const paused = preview('P03-T01');
+        assert.match(paused.text, /Paused for you/);
+        assert.match(paused.text, /Waiting on How should photo metadata writes stay safe\?/);
+        assert.ok(paused.chips.includes('D6'), 'Waits on links D6');
+        const blocked = preview('P04-T02');
+        assert.match(blocked.text, /Blocked The device lab iOS simulators are offline until Friday\. Owner: QA\. Rerun the offline suite when the lab returns\./);
+        const agent = preview('P02-T02');
+        assert.match(agent.text, /Agent activity Edited src\/offline\/sync-engine\.ts \(\+12 -4\) A 412 response should mark the record as conflicted instead of retrying Ran npm test -- sync-engine: 18 passed, 1 failed/);
+        assert.doesNotMatch(preview('P03-T01').text, /Agent activity/, 'only the agent\'s task shows activity');
+        assert.ok(preview('P02-T01').chips.includes('CH-003'), 'a task links its changes');
+    });
+
+
     it('shows a website for web evidence and caps long text', async () => {
         const { previewContent, PREVIEW_TEXT_LIMIT } = await import('../ui/preview-content.mjs');
         const session = buildScenario('research', NOW);

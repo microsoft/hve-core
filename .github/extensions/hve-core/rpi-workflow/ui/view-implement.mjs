@@ -215,7 +215,7 @@ function phasesRow(ctx, tasks) {
                             h('span', { class: 'id-chip', text: phase.id }), h('span', { class: 'impl-phase-title', text: phase.title }),
                             chip(`${phaseDone} of ${phase.tasks.length} done`, phaseDone === phase.tasks.length ? 'success' : 'muted'),
                             badge({ icon: meta.icon, label: meta.label[0].toUpperCase() + meta.label.slice(1), tone: meta.tone })),
-                        h('ol', { class: 'task-list' }, shown.map((task) => taskBlock(ctx, task, phase.tasks.indexOf(task), phase.tasks))));
+                        h('ol', { class: 'task-list' }, shown.map((task) => taskBlock(ctx, task, phase.tasks.indexOf(task), phase.tasks, { implement: true }))));
                 })
                 : emptyFilter(ctx, filter, tasks),
         ],

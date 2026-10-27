@@ -190,3 +190,26 @@ describe('the steering panel on Implement', () => {
         assert.ok(panel.indexOf('steer-decided') < panel.indexOf('steer-feedback'), 'Your feedback follows Decided by the agent');
     });
 });
+
+describe('the task block on Implement', () => {
+    it('keeps the detail panel\'s tools: changes, discoveries, trace, and the do-next and skip requests', async () => {
+        const session = implementing();
+        const ui = initialUi('implement');
+        ui.taskFilter = 'all';
+        for (const id of ['P03-T01', 'P02-T01', 'P02-T03']) ui.expanded.add(id);
+        const rows = render(session, ui);
+        const block = (id) => textOf(serialize(all(rows).find((element) => element.classList?.contains('task') && element.dataset.item === id)));
+        assert.match(block('P03-T01'), /Discoveries DS-002 DS-004/);
+        assert.match(block('P03-T01'), /Ask the agent to skip it/);
+        assert.doesNotMatch(block('P03-T01'), /Ask the agent to do this next/, 'P03-T01 has started');
+        if ((makeContext(session, 'implement').data.view.traces['P03-T01'] ?? []).length > 1) assert.match(block('P03-T01'), /Trace/);
+        assert.match(block('P02-T01'), /Changes CH-003/);
+        assert.doesNotMatch(block('P02-T01'), /Ask the agent/, 'a done task offers neither request');
+        assert.match(block('P02-T03'), /Ask the agent to do this next.*Ask the agent to skip it/);
+        const plan = await import('../ui/view-plan.mjs');
+        const planUi = initialUi('plan');
+        planUi.expanded.add('P03-T01');
+        const planBlock = all(plan.renderView(makeContext(session, 'plan', planUi))).find((element) => element.classList?.contains('task') && element.dataset.item === 'P03-T01');
+        assert.doesNotMatch(textOf(serialize(planBlock)), /Ask the agent|Discoveries|Changes CH-|Trace/, 'Plan\'s block is unchanged');
+    });
+});

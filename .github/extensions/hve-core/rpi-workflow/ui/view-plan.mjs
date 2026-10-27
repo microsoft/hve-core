@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, h, icon, idChip, idTag, known, plural, SEVERITY, TASK_STATUS } from './dom.mjs';
-import { decisionCard, decisionsRow, marginNote, mdInline, recordRow, row, rowActions, sectionBody, table, updatedMark } from './components.mjs';
+import { decisionCard, decisionsRow, marginNote, mdInline, recordRow, row, rowActions, sectionBody, table, traceStrip, updatedMark } from './components.mjs';
 import { renderDiagram } from './diagram.mjs';
 import { anchoredDecisions, decisionsOutline, notesFor } from './view-research.mjs';
 
@@ -78,12 +78,22 @@ export function outline(ctx) {
 /**
  * One task, expandable, with its goal, requirements, details, guidance, dependencies, and
  * actions. `siblings` is the phase's full task list, so Move up and Move down follow plan
- * order wherever the block appears.
+ * order wherever the block appears. On Implement (`options.implement`), the task also shows
+ * its changes, discoveries, and trace, and offers to ask the agent to do it next or skip it.
+ *
+ * @param {any} ctx
+ * @param {any} task
+ * @param {number} index
+ * @param {any[]} siblings
+ * @param {{ implement?: boolean }} [options]
  */
-export function taskBlock(ctx, task, index, siblings) {
+export function taskBlock(ctx, task, index, siblings, options = {}) {
     const expanded = ctx.ui.expanded.has(task.id);
     const panelId = `task-panel-${task.id}`;
     const decision = task.decisionId ? ctx.data.session.decisions.find((d) => d.id === task.decisionId) : null;
+    const impl = ctx.data.session.implementation;
+    const changes = options.implement ? impl.changes.filter((change) => change.taskId === task.id) : [];
+    const discoveries = options.implement ? impl.discoveries.filter((item) => item.taskId === task.id) : [];
     return h('li', { class: ['task', `is-${task.status}`, ctx.ui.highlight === task.id ? 'is-highlight' : null], dataset: { item: task.id }, tabindex: '-1' },
         h('div', { class: 'task-head' },
             h('button', { type: 'button', class: 'task-toggle', 'aria-expanded': String(expanded), 'aria-controls': panelId, onclick: () => ctx.act.toggleExpanded(task.id) },
@@ -99,7 +109,12 @@ export function taskBlock(ctx, task, index, siblings) {
             h('div', { class: 'task-details' }, h('p', { class: 'meta', text: 'Details' }), sectionBody(ctx, task.sectionId)),
             task.guidance?.length ? h('div', { class: 'guidance' }, h('p', { class: 'meta' }, icon('pencil'), 'Guidance added during implementation'), h('ul', null, task.guidance.map((line) => h('li', { text: line })))) : null,
             h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Depends on' }), task.dependencies.length ? task.dependencies.map((id) => idChip(id, ctx.act.navigate)) : h('span', { class: 'meta', text: 'nothing' })),
+            changes.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Changes' }), changes.map((change) => idChip(change.id, ctx.act.navigate))) : null,
+            discoveries.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Discoveries' }), discoveries.map((item) => idChip(item.id, ctx.act.navigate))) : null,
+            options.implement ? traceStrip(ctx, task.id) : null,
             h('div', { class: 'btn-row' },
+                options.implement && task.status === 'todo' ? button('Ask the agent to do this next', { iconName: 'arrow-up', onClick: () => ctx.act.requestTask(task.id, `Work on ${task.id} next.`) }) : null,
+                options.implement && task.status !== 'done' ? button('Ask the agent to skip it', { iconName: 'dash-circle', onClick: () => ctx.act.requestTask(task.id, `Skip ${task.id} for now and record why.`) }) : null,
                 button('Suggest an edit', { iconName: 'pencil', onClick: () => ctx.act.startEdit(task.sectionId) }),
                 button('Move up', { iconName: 'arrow-up', disabled: index === 0, onClick: () => ctx.act.requestTask(task.id, `Move ${task.id} before ${siblings[index - 1]?.id}.`) }),
                 button('Move down', { iconName: 'arrow-down', disabled: index === siblings.length - 1, onClick: () => ctx.act.requestTask(task.id, `Move ${task.id} after ${siblings[index + 1]?.id}.`) }),
