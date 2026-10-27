@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { disclosure, filePreview, hasMarginHome, sendItems, sendSheet, sessionPending, sessionTree, steerPanel } from './components.mjs';
+import { disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionPending, sessionTree, steerPanel } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -24,7 +24,7 @@ const PHASES = ['research', 'plan', 'implement', 'review', 'followup'];
 const VIEWS = { research: researchView, plan: planView, implement: implementView, review: reviewView, followup: followupView };
 const $ = (id) => document.getElementById(id);
 
-/** The Send to agent dialog's state: the person's message, the previewed text, and progress. */
+/** The Review and send dialog's state: the person's message, the previewed text, and progress. */
 function freshSend() {
     return { note: '', preview: null, previewNote: null, sending: false, error: null };
 }
@@ -392,6 +392,8 @@ const taskUi = () => ({
     recordOpen: false,
     openDetails: new Set(),
     navFilter: '',
+    feedbackEdit: null,
+    confirm: null,
 });
 const taskStash = new Map();
 
@@ -447,8 +449,17 @@ async function refresh() {
             $('document').scrollTop = withAgent ? 0 : scroll;
             const pending = pendingPlace;
             pendingPlace = null;
-            if (pending?.taskId === next.session.task.id) applyPlace(pending);
-            else remember(leaving, here());
+            if (pending?.taskId === next.session.task.id) {
+                applyPlace(pending);
+                // A move you chose, such as Go to in Review and send, joins Back and Forward.
+                if (pending.record) remember(leaving, here());
+                if (pending.checklist) {
+                    openSteer();
+                    window.requestAnimationFrame(() => focusQuietly($('steer-checklist')));
+                }
+            } else {
+                remember(leaving, here());
+            }
         }
         if (state.ui.revealed.size) window.setTimeout(() => state.ui.revealed.clear(), 900);
     } catch (error) {
@@ -594,7 +605,7 @@ const act = {
             await api('/api/feedback', { kind, target: { id: decisionId }, optionId: draft.optionId ?? undefined, text: draft.note?.trim() || undefined });
             state.ui.decisionDrafts.delete(decisionId);
             state.ui.overrides.delete(decisionId);
-            announce(`${kind === 'answer' ? 'Answer' : 'Override'} for ${state.data.session.decisions.find((decision) => decision.id === decisionId)?.ref ?? decisionId} saved. It waits for Send to agent.`);
+            announce(`${kind === 'answer' ? 'Answer' : 'Override'} for ${state.data.session.decisions.find((decision) => decision.id === decisionId)?.ref ?? decisionId} saved. It waits in Review and send.`);
             await refresh();
             targetElement(decisionId)?.focus({ preventScroll: true });
         } catch (error) {
@@ -605,7 +616,7 @@ const act = {
         try {
             await api('/api/feedback/transition', { id, to, ...extra });
             state.ui.corrections.delete(id);
-            announce(to === 'applied' ? 'Marked as understood.' : to === 'corrected' ? 'Correction saved. It waits for Send to agent.' : to === 'dismissed' ? 'Removed. It will not be sent.' : 'Updated.');
+            announce(to === 'applied' ? 'Marked as understood.' : to === 'corrected' ? 'Correction saved. It waits in Review and send.' : to === 'dismissed' ? 'Removed. It will not be sent.' : 'Updated.');
             await refresh();
             return true;
         } catch (error) {
@@ -712,7 +723,7 @@ const act = {
         try {
             const result = await api('/api/suggestion', { sectionId: editing.sectionId, markdown: editing.draft, baseRevision: editing.baseRevision });
             state.ui.editing = null;
-            announce(result.withdrawn ? 'Your suggestion matched the current text, so it was removed.' : result.unchanged ? 'Nothing changed, so there is nothing to suggest.' : `Suggestion ${editing.suggestionId ? 'updated' : 'added'}. It waits for Send to agent, and the text changes when the agent applies it.`);
+            announce(result.withdrawn ? 'Your suggestion matched the current text, so it was removed.' : result.unchanged ? 'Nothing changed, so there is nothing to suggest.' : `Suggestion ${editing.suggestionId ? 'updated' : 'added'}. It waits in Review and send, and the text changes when the agent applies it.`);
             await refresh();
             targetElement(state.data.session.sections[editing.sectionId]?.id)?.focus({ preventScroll: true });
         } catch (error) {
@@ -820,7 +831,7 @@ const act = {
         try {
             const target = composer.anchor ? { id: composer.anchor, ...(composer.part ? { part: composer.part } : {}), ...(composer.quote ? { quote: composer.quote } : {}) } : undefined;
             await api('/api/feedback', { kind: composer.kind, text: composer.text, target });
-            announce(composer.kind === 'research-request' ? 'Research request added. It waits for Send to agent, and a research lane starts when the agent takes it.' : `${composer.kind === 'context' ? 'Context' : 'Comment'} added. It waits for Send to agent.`);
+            announce(composer.kind === 'research-request' ? 'Research request added. It waits in Review and send, and a research lane starts when the agent takes it.' : `${composer.kind === 'context' ? 'Context' : 'Comment'} added. It waits in Review and send.`);
             state.ui.composer = { kind: composer.kind, text: '', anchor: null, part: null, quote: null, title: null };
             await refresh();
             window.requestAnimationFrame(() => $('composer-text')?.focus());
@@ -833,7 +844,7 @@ const act = {
     async requestTask(id, text) {
         try {
             await api('/api/feedback', { kind: 'task-request', text, target: { id } });
-            announce('Request added. It waits for Send to agent.');
+            announce('Request added. It waits in Review and send.');
             await refresh();
         } catch (error) {
             reportFailure(`Request not added: ${error.message}`);
@@ -854,7 +865,7 @@ const act = {
             reportFailure(`Checklist not saved: ${error.message}`);
         }
     },
-    /** Opens Send to agent from the header or the steering panel and prepares the exact text. */
+    /** Opens Review and send from the header and prepares the exact text. */
     openSend() {
         const sheet = $('sendSheet');
         if (!state.data || sheet.open) return;
@@ -905,33 +916,174 @@ const act = {
             renderSendSheet();
         }
     },
-    /** Removes an item from Send to agent, in this loop or another, and moves focus to the next item in its group. */
-    async removePending(id, taskId) {
-        const shownId = state.data.session.task.id;
-        const owner = taskId ?? shownId;
-        const keyFor = (item) => (owner === shownId ? `send-remove-${item.id}` : `send-remove-${owner}-${item.id}`);
-        const group = sessionPending(context()).find((entry) => entry.taskId === owner);
-        const index = group ? group.items.findIndex((item) => item.id === id) : -1;
-        const neighbor = group ? group.items[index + 1] ?? group.items[index - 1] : null;
-        const nextKey = neighbor ? keyFor(neighbor) : null;
-        const removed = await act.transition(id, 'dismissed', owner === shownId ? {} : { taskId: owner });
-        renderSendSheet();
-        if (!removed) return;
+    /** Goes to what an item is about, showing its loop first when it is another one, and closes Review and send. */
+    async goToFeedback(taskId, item) {
         const sheet = $('sendSheet');
-        const target = (nextKey && sheet.querySelector(`[data-key="${CSS.escape(nextKey)}"]`)) || $(`send-group-${owner}`) || $('sendSheetTitle');
-        focusQuietly(target);
-    },
-    /** Closes Send to agent and moves to what an item is about. */
-    showPending(item) {
-        keepFocusOnClose = true;
-        $('sendSheet').close();
-        if (item.kind === 'checklist') {
-            if (item.phase && item.phase !== state.ui.phase) setPhase(item.phase);
-            openSteer();
-            window.requestAnimationFrame(() => focusQuietly($('steer-checklist')));
-        } else if (item.target?.id) {
-            navigate(item.target.id);
+        if (sheet.open) {
+            keepFocusOnClose = true;
+            sheet.close();
         }
+        const checklist = item.kind === 'checklist';
+        if (!taskId || taskId === state.data.session.task.id) {
+            if (checklist) {
+                if (item.phase && item.phase !== state.ui.phase) setPhase(item.phase);
+                openSteer();
+                window.requestAnimationFrame(() => focusQuietly($('steer-checklist')));
+            } else if (item.target?.id) {
+                navigate(item.target.id);
+            }
+            return;
+        }
+        stopFollowing();
+        const id = checklist ? null : item.target?.id ?? null;
+        pendingPlace = { taskId, taskTitle: taskId, phase: item.target?.phase ?? item.phase ?? null, id, label: id ?? undefined, scroll: 0, record: true, checklist };
+        try {
+            await api('/api/task', { taskId, follow: false });
+            await refresh();
+        } catch (error) {
+            pendingPlace = null;
+            reportFailure(`Could not go to ${item.id}: ${error.message}`);
+        }
+    },
+    /** Edits an item where it was made: a suggested edit in its section's editor, a checklist review in the checklist. */
+    async editInPlace(taskId, item) {
+        if (item.kind === 'edit' && item.target?.id && (!taskId || taskId === state.data.session.task.id)) {
+            const sheet = $('sendSheet');
+            if (sheet.open) {
+                keepFocusOnClose = true;
+                sheet.close();
+            }
+            navigate(item.target.id);
+            act.startEdit(item.target.id);
+            return;
+        }
+        await act.goToFeedback(taskId, item);
+    },
+    /** Arms a second-press button, or runs it when the second press is deliberate. */
+    pressConfirm(key, onConfirm, armedLabel) {
+        const armed = state.ui.confirm;
+        if (armed?.key === key) {
+            // A double click or a quick repeat lands inside the guard; only a deliberate press counts.
+            if (Date.now() - armed.at < CONFIRM_GUARD_MS) return;
+            clearConfirm();
+            onConfirm();
+            return;
+        }
+        clearConfirm(false);
+        state.ui.confirm = { key, at: Date.now() };
+        confirmTimer = window.setTimeout(() => {
+            if (state.ui.confirm?.key !== key) return;
+            clearConfirm();
+            announce('Nothing was discarded.');
+        }, CONFIRM_TIMEOUT_MS);
+        render();
+        announce(`${armedLabel} Press again to confirm, or wait and nothing is discarded.`);
+    },
+    disarmConfirm(key) {
+        if (state.ui.confirm?.key !== key) return;
+        clearConfirm();
+        announce('Nothing was discarded.');
+    },
+    /** Disarms once focus has really left the button, not when a re-render replaced it with its twin. */
+    confirmBlurred(key) {
+        window.setTimeout(() => {
+            if (state.ui.confirm?.key === key && document.activeElement?.dataset?.key !== key) clearConfirm();
+        }, 0);
+    },
+    startFeedbackEdit(where, taskId, item) {
+        clearConfirm(false);
+        state.ui.feedbackEdit = { where, taskId, id: item.id, text: item.text ?? '', saving: false, error: null };
+        render();
+        window.requestAnimationFrame(() => {
+            const field = $(`${feedbackEditBase(state.ui.feedbackEdit)}-text`);
+            if (!field) return;
+            field.focus();
+            field.setSelectionRange(field.value.length, field.value.length);
+        });
+    },
+    setFeedbackDraft(text) {
+        if (state.ui.feedbackEdit) state.ui.feedbackEdit.text = text;
+    },
+    /** Saves an item's new words; in Review and send, the exact message is prepared again. */
+    async saveFeedbackEdit() {
+        const edit = state.ui.feedbackEdit;
+        if (!edit || edit.saving) return;
+        edit.saving = true;
+        edit.error = null;
+        render();
+        try {
+            feedbackBusy = true;
+            await api('/api/feedback/edit', { taskId: edit.taskId, id: edit.id, text: edit.text });
+            state.ui.feedbackEdit = null;
+            await refresh();
+            feedbackBusy = false;
+            if ($('sendSheet').open) refreshSendPreview();
+            announce(`Saved the new words of ${edit.id}.`);
+            focusQuietly(document.querySelector(`[data-key="${CSS.escape(`${feedbackEditBase(edit, 'key')}`)}"]`));
+        } catch (error) {
+            feedbackBusy = false;
+            edit.saving = false;
+            edit.error = error.message;
+            render();
+            $(`${feedbackEditBase(edit)}-text`)?.focus();
+        }
+    },
+    cancelFeedbackEdit() {
+        const edit = state.ui.feedbackEdit;
+        state.ui.feedbackEdit = null;
+        render();
+        if (edit) focusQuietly(document.querySelector(`[data-key="${CSS.escape(feedbackEditBase(edit, 'key'))}"]`));
+    },
+    /** Discards unsent items in any loop; Review and send closes when nothing is left in it. */
+    async discardFeedback(items) {
+        const sheet = $('sendSheet');
+        const before = sendItems(context()).map((item) => `${item.taskId}:${item.id}`);
+        let result;
+        feedbackBusy = true;
+        try {
+            result = await api('/api/feedback/discard', { items });
+            await refresh();
+        } catch (error) {
+            reportFailure(`Not discarded: ${error.message}`);
+            return;
+        } finally {
+            feedbackBusy = false;
+        }
+        const told = discardMessage(result);
+        const left = sendItems(context());
+        if (sheet.open && !left.length) {
+            sheet.close();
+            announce(`${told} Nothing is waiting to send.`);
+            return;
+        }
+        announce(told);
+        if (!sheet.open) return;
+        renderSendSheet();
+        refreshSendPreview();
+        // Focus moves to the item that took the discarded one's place, or the one before it.
+        const index = before.indexOf(`${items[0].taskId}:${items[0].id}`);
+        const keys = left.map((item) => `${item.taskId}:${item.id}`);
+        const next = keys.find((key) => before.indexOf(key) > index) ?? keys.findLast((key) => before.indexOf(key) < index);
+        const [taskId, id] = next ? [next.slice(0, next.lastIndexOf(':')), next.slice(next.lastIndexOf(':') + 1)] : [];
+        focusQuietly((next && sheet.querySelector(`[data-key="${CSS.escape(`review-discard-${taskId}-${id}`)}"]`)) || $('sendSheetTitle'));
+    },
+    /** Discards everything Review and send lists, then closes it. */
+    async discardAll() {
+        const items = sendItems(context());
+        if (!items.length) return;
+        let result;
+        feedbackBusy = true;
+        try {
+            result = await api('/api/feedback/discard', { items });
+        } catch (error) {
+            reportFailure(`Not discarded: ${error.message}`);
+            return;
+        } finally {
+            feedbackBusy = false;
+        }
+        $('sendSheet').close();
+        await refresh();
+        announce(discardMessage(result));
     },
     openFile(changeId, path) {
         const change = state.data.session.implementation.changes.find((item) => item.id === changeId);
@@ -1219,10 +1371,40 @@ function renderSteer() {
     clear($('steerBody')).append(...steerPanel(context()));
 }
 
-// Send to agent
+// Review and send
 
-/** The control that opened Send to agent, so closing returns focus there. */
+/** The control that opened Review and send, so closing returns focus there. */
 let sendOpener = null;
+
+/** True while a discard or edit is in flight, when a re-render must not prepare a message from half-changed loops. */
+let feedbackBusy = false;
+
+/** A second press within this time is a double click, not a decision. */
+const CONFIRM_GUARD_MS = 500;
+/** An armed second-press button goes back after this long. */
+const CONFIRM_TIMEOUT_MS = 4000;
+let confirmTimer = 0;
+
+/** Disarms the second-press button, re-rendering unless the caller is about to. */
+function clearConfirm(rerender = true) {
+    window.clearTimeout(confirmTimer);
+    if (!state.ui.confirm) return;
+    state.ui.confirm = null;
+    if (rerender) render();
+}
+
+/** The ID base of an item's inline editor, or its Edit button's key with `key`. */
+function feedbackEditBase(edit, part = 'base') {
+    if (part === 'key') return edit.where === 'dialog' ? `review-edit-${edit.taskId}-${edit.id}` : `fb-edit-${edit.id}`;
+    return `${edit.where === 'dialog' ? 'review' : 'fb'}-edit-${edit.taskId}-${edit.id}`;
+}
+
+/** What a discard did, in words. */
+function discardMessage(result) {
+    const done = result.discarded.length;
+    const skipped = result.skipped.length;
+    return `${done === 1 ? `Discarded ${result.discarded[0].id}.` : `Discarded ${plural(done, 'item')}.`}${skipped ? ` ${plural(skipped, 'item')} could not be discarded because ${skipped === 1 ? 'it was' : 'they were'} sent or being sent.` : ''}`;
+}
 let sendNoteTimer = 0;
 let previewRequest = 0;
 let keepFocusOnClose = false;
@@ -1277,7 +1459,7 @@ function renderSendSheet() {
     const active = sheet.contains(document.activeElement) ? document.activeElement : null;
     const key = active ? { id: active.id || null, dataKey: active.dataset?.key ?? null, selection: typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd] : null } : null;
     const exactOpen = sheet.querySelector('details.send-exact')?.open ?? false;
-    sheet.replaceChildren(...sendSheet(context()));
+    sheet.replaceChildren(...reviewSheet(context()));
     const details = sheet.querySelector('details.send-exact');
     if (details) details.open = exactOpen;
     if (!key) return;
@@ -1292,6 +1474,8 @@ function renderSendSheet() {
 
 function onSendClose() {
     window.clearTimeout(sendNoteTimer);
+    if (state.ui.feedbackEdit?.where === 'dialog') state.ui.feedbackEdit = null;
+    clearConfirm(false);
     const opener = sendOpener;
     sendOpener = null;
     if (keepFocusOnClose) {
@@ -1307,7 +1491,7 @@ function renderSendButton() {
     const sendBtn = $('sendBtn');
     sendBtn.classList.toggle('has-items', waiting > 0);
     $('sendCount').textContent = String(waiting);
-    sendBtn.setAttribute('aria-label', waiting ? `Send to agent, ${plural(waiting, 'item')} waiting` : 'Send to agent, nothing waiting');
+    sendBtn.setAttribute('aria-label', waiting ? `Review and send, ${plural(waiting, 'item')} waiting` : 'Review and send, nothing waiting');
     sendBtn.title = waiting ? `Review and send ${plural(waiting, 'item')} to the agent` : 'Nothing to send yet. Answer, comment, or suggest an edit first.';
 }
 
@@ -1497,7 +1681,8 @@ function renderPage() {
     applyPanels();
     if ($('sendSheet').open) {
         renderSendSheet();
-        if (itemsKey(sendItems(context())) !== previewKey(state.ui.send.preview)) refreshSendPreview();
+        // While a discard or edit is in flight, its own refresh prepares the message once it lands.
+        if (!feedbackBusy && itemsKey(sendItems(context())) !== previewKey(state.ui.send.preview)) refreshSendPreview();
     }
     if (!$('sessionMenu').hidden) renderSessionMenu();
     previews?.refresh();

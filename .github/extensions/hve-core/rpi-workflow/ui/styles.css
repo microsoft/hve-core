@@ -1398,7 +1398,7 @@ details > summary:hover {
   background: color-mix(in srgb, var(--rw-attention) 22%, var(--rw-bg));
 }
 
-/* Send to agent: neutral while nothing waits, the primary accent with a count once something does. */
+/* Review and send: neutral while nothing waits, the primary accent with a count once something does. */
 .send-btn {
   display: inline-flex;
   align-items: center;
@@ -3136,7 +3136,7 @@ details > summary:hover {
   gap: 4px;
 }
 
-/* Send to agent dialog */
+/* Review and send dialog */
 
 .send-sheet {
   width: min(640px, calc(100vw - 32px));
@@ -3203,6 +3203,59 @@ details > summary:hover {
 .send-item-actions {
   display: flex;
   gap: 4px;
+}
+
+.send-item-option,
+.send-item-words {
+  margin-top: 2px;
+  font: var(--rw-t-ui);
+}
+
+.send-item-words {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Go to, Edit, and Discard on a feedback row, quiet until hovered. */
+.fb-tools {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.fb-tools .btn-icon,
+.send-item-actions .btn-icon {
+  width: 26px;
+  min-height: 26px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.fb-tools .btn-icon:hover,
+.send-item-actions .btn-icon:hover {
+  border-color: var(--rw-border);
+  background: var(--rw-bg-hover);
+}
+
+/* A second-press button once armed: a question that names what goes, in the danger tone. */
+.btn-confirm.is-armed {
+  border-color: var(--rw-danger);
+  background: color-mix(in srgb, var(--rw-danger) 12%, var(--rw-bg));
+  color: var(--rw-fg);
+  font-weight: 600;
+}
+
+.btn-confirm.is-armed .icon {
+  color: var(--rw-danger);
+}
+
+.btn-confirm.is-armed:hover {
+  background: color-mix(in srgb, var(--rw-danger) 20%, var(--rw-bg));
+}
+
+.fb-editor {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .send-howto {
@@ -5062,6 +5115,13 @@ kbd {
 }
 
 /* Forced colors: keep every edge, and mark selection with system colors. */
+
+/* Without color, an armed second-press button still stands out by its heavier border. */
+@media (forced-colors: active) {
+  .btn-confirm.is-armed {
+    border-width: 2px;
+  }
+}
 
 @media (forced-colors: active) {
   .badge,

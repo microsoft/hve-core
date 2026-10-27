@@ -248,7 +248,7 @@ function suggestionCallout(ctx, section, item) {
     const moved = Number.isInteger(item.section?.revision) && item.section.revision !== section.revision;
     const where = ctx.data.session.source?.kind === 'rpi' ? 'The file' : 'The document';
     const status = pending
-        ? `Waits for Send to agent. ${where} changes when the agent applies it.`
+        ? `Waits in Review and send. ${where} changes when the agent applies it.`
         : item.state === 'interpreted' ? 'The agent read it back. Check that it understood you.' : `${where} changes when the agent applies it.`;
     const titleId = `suggestion-${item.id}-t`;
     const changes = typeof item.section?.diff === 'string'
@@ -333,7 +333,7 @@ function editor(ctx, section) {
             : h('div', { class: 'btn-row' },
                 button(state.saving ? 'Saving' : updating ? 'Update suggestion' : 'Add suggestion', { kind: 'primary', iconName: 'check', disabled: state.saving, attrs: { 'data-key': 'save-edit' }, onClick: () => ctx.act.saveEdit() }),
                 button('Cancel', { attrs: { 'data-key': 'cancel-edit' }, onClick: () => ctx.act.requestCancelEdit() }),
-                h('span', { class: 'meta', text: `Your suggestion waits for Send to agent. ${ctx.data.session.source?.kind === 'rpi' ? 'The file' : 'The document'} changes when the agent applies it.` })));
+                h('span', { class: 'meta', text: `Your suggestion waits in Review and send. ${ctx.data.session.source?.kind === 'rpi' ? 'The file' : 'The document'} changes when the agent applies it.` })));
 }
 
 /** Evidence chips with an expandable detail list directly below them. */
@@ -451,7 +451,7 @@ export function decisionCard(ctx, decision) {
             h('textarea', { id: noteId, class: 'note', rows: ownWords ? '3' : '2', 'aria-required': ownWords ? 'true' : undefined, oninput: (event) => update({ note: event.target.value }) }, draft.note),
             h('div', { class: 'btn-row' },
                 button('Answer', { kind: 'primary', iconName: 'check', disabled: ownWords ? !draft.note.trim() : !draft.optionId, attrs: { 'data-key': submitKey, 'data-needs-text': ownWords ? 'true' : undefined }, onClick: () => ctx.act.answer(decision.id, 'answer', ownWords ? { optionId: null, note: current().note } : current()) }),
-                h('span', { class: 'meta', text: 'Waits for Send to agent' })));
+                h('span', { class: 'meta', text: 'Waits in Review and send' })));
     } else if (decision.status === 'decided' || decision.status === 'override-pending') {
         const overriding = ctx.ui.overrides.has(decision.id);
         const pending = decision.status === 'override-pending' ? feedback : null;
@@ -515,7 +515,7 @@ export function readBack(ctx, decision, feedback, youLabel, options = {}) {
     if (feedback.interpretation) {
         parts.push(voice('agent', 'Agent understood', [h('p', { text: feedback.interpretation.text }), feedback.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), feedback.interpretation.effect) : null], { reveal: fresh }));
     } else if (!options.compact && (feedback.state === 'queued' || feedback.state === 'sent')) {
-        parts.push(h('p', { class: 'waiting meta' }, icon(feedback.state === 'queued' ? 'inbox' : 'send'), feedback.state === 'queued' ? 'Not sent yet. It goes to the agent when you choose Send to agent.' : 'Sent. The agent will read back how it understood this.'));
+        parts.push(h('p', { class: 'waiting meta' }, icon(feedback.state === 'queued' ? 'inbox' : 'send'), feedback.state === 'queued' ? 'Not sent yet. It goes to the agent when you send it with Review and send.' : 'Sent. The agent will read back how it understood this.'));
         if (feedback.state === 'queued') {
             const overriding = (origin ?? feedback).kind === 'override';
             parts.push(h('div', { class: 'btn-row' }, button(overriding ? 'Edit override' : 'Edit answer', { iconName: 'pencil', onClick: () => ctx.act.editAnswer(decision.id, feedback, origin) })));
@@ -592,13 +592,95 @@ function feedbackTarget(ctx, item) {
     return h('span', null, ' about ', ctx.resolve(item.target.id) ? idChip(item.target.id, ctx.act.navigate, scoped) : h('span', { class: 'id-chip', text: scoped.label ?? item.target.id }), scoped.label ? ` in ${PHASE_META[decision.phase]?.label ?? decision.phase}` : null, item.target.part ? `, ${item.target.part}` : null);
 }
 
-function feedbackRow(ctx, item) {
+/** Matches EDITABLE_KINDS in lib/model.mjs: kinds whose words change here; the rest change where they were made. */
+const EDITABLE_KINDS = new Set(['comment', 'context', 'research-request', 'task-request', 'correction', 'answer', 'override']);
+
+/**
+ * A button that acts on a deliberate second press. The first press arms it: it becomes a
+ * question that names what goes, in the danger tone, and keeps focus. The app ignores
+ * presses for half a second after arming and repeated keys, and disarms it after four
+ * seconds, on Escape, or when focus leaves it.
+ *
+ * @param {any} ctx
+ * @param {{ key: string, label: string, armedLabel: string, hideLabel?: boolean, onConfirm: () => unknown }} options
+ */
+export function confirmButton(ctx, { key, label, armedLabel, hideLabel = false, onConfirm }) {
+    const armed = ctx.ui.confirm?.key === key;
+    const compact = hideLabel && !armed;
+    return h('button', {
+        type: 'button',
+        class: ['btn', 'btn-confirm', armed ? 'is-armed' : null, compact ? 'btn-icon' : null],
+        dataset: { key },
+        title: compact ? label : undefined,
+        onclick: () => ctx.act.pressConfirm(key, onConfirm, armedLabel),
+        onkeydown: (event) => {
+            if (event.repeat && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+            } else if (event.key === 'Escape' && armed) {
+                event.preventDefault();
+                event.stopPropagation();
+                ctx.act.disarmConfirm(key);
+            }
+        },
+        onblur: () => {
+            if (armed) ctx.act.confirmBlurred(key);
+        },
+    }, icon('trash'), compact ? sr(label) : h('span', { text: armed ? armedLabel : label }));
+}
+
+/** Where an item is edited inline: the Review and send dialog or Your feedback. */
+const editingHere = (ctx, where, taskId, item) => {
+    const edit = ctx.ui.feedbackEdit;
+    return Boolean(edit) && edit.where === where && edit.taskId === taskId && edit.id === item.id;
+};
+
+/** The inline editor for an unsent item's words, with Save and Cancel. */
+function feedbackEditor(ctx, where, taskId, item) {
+    const edit = ctx.ui.feedbackEdit;
+    const base = `${where === 'dialog' ? 'review' : 'fb'}-edit-${taskId}-${item.id}`;
+    const fieldId = `${base}-text`;
+    const withOption = (item.kind === 'answer' || item.kind === 'override') && Boolean(item.optionLabel);
+    return h('div', { class: 'fb-editor' },
+        h('label', { class: 'field-label', for: fieldId, text: withOption ? `Why, for ${item.id} (optional)` : `Words of ${item.id}` }),
+        h('textarea', { id: fieldId, class: 'note', rows: '3', 'aria-invalid': edit.error ? 'true' : undefined, 'aria-describedby': edit.error ? `${base}-error` : undefined, oninput: (event) => ctx.act.setFeedbackDraft(event.target.value) }, edit.text),
+        edit.error ? h('p', { class: 'field-error', id: `${base}-error` }, icon('alert'), h('span', { text: `Not saved: ${edit.error} Your words are kept.` })) : null,
+        h('div', { class: 'btn-row' },
+            button(edit.saving ? 'Saving' : 'Save', { kind: 'primary', iconName: 'check', disabled: edit.saving, attrs: { 'data-key': `${base}-save` }, onClick: () => ctx.act.saveFeedbackEdit() }),
+            button('Cancel', { attrs: { 'data-key': `${base}-cancel` }, onClick: () => ctx.act.cancelFeedbackEdit() })));
+}
+
+/**
+ * Go to, Edit, and Discard for an item: Go to when it is about something in the canvas,
+ * Edit and Discard while it has not been sent. `group` is its loop.
+ *
+ * @param {any} ctx
+ * @param {'dialog' | 'steer'} where
+ * @param {{ taskId: string, title: string, shown: boolean }} group
+ * @param {any} item a feedback item, or another loop's summary of one
+ */
+export function feedbackActions(ctx, where, group, item) {
+    const keyOf = (name) => (where === 'dialog' ? `review-${name}-${group.taskId}-${item.id}` : `fb-${name}-${item.id}`);
+    const reachable = item.kind === 'checklist' ? Boolean(item.phase) : Boolean(item.target?.id);
+    // Another loop's summaries list only unsent items, so they carry no state.
+    const unsent = item.state === undefined || (item.state === 'queued' && !isSending(ctx, item));
+    const editable = group.shown ? EDITABLE_KINDS.has(item.kind) : item.editable === true;
+    const elsewhere = group.shown ? '' : ` in ${group.title}`;
+    const actions = [];
+    if (reachable) {
+        actions.push(button(`Go to ${item.id}`, { iconName: 'go-to', hideLabel: true, title: `Go to what ${item.id} is about${elsewhere}`, attrs: { 'data-key': keyOf('goto') }, onClick: () => ctx.act.goToFeedback(group.taskId, item) }));
+    }
+    if (unsent) {
+        actions.push(button(`Edit ${item.id}`, { iconName: 'pencil', hideLabel: true, title: editable ? `Change the words of ${item.id}` : `Edit ${item.id} where you made it${elsewhere}`, attrs: { 'data-key': keyOf('edit') }, onClick: () => (editable ? ctx.act.startFeedbackEdit(where, group.taskId, item) : ctx.act.editInPlace(group.taskId, item)) }));
+        actions.push(confirmButton(ctx, { key: keyOf('discard'), label: `Discard ${item.id}`, armedLabel: `Discard ${item.id}?`, hideLabel: true, onConfirm: () => ctx.act.discardFeedback([{ taskId: group.taskId, id: item.id }]) }));
+    }
+    return actions;
+}
+
+function feedbackRow(ctx, item, group) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
     const actions = [];
     const sending = isSending(ctx, item);
-    const remove = !sending && (item.state === 'queued' || item.state === 'draft')
-        ? button(`Remove ${item.id}`, { iconName: 'x', hideLabel: true, attrs: { 'data-key': `dismiss-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'dismissed') })
-        : null;
+    const editing = editingHere(ctx, 'steer', group.taskId, item);
     let readBack = null;
     if (item.state === 'interpreted') {
         if (item.target?.type === 'decision') {
@@ -609,10 +691,11 @@ function feedbackRow(ctx, item) {
         }
     }
     const how = item.delivery && item.state !== 'queued' ? DELIVERY_WORDS[item.delivery] : null;
+    const tools = feedbackActions(ctx, 'steer', group, item);
     return h('li', { class: 'fb-item', dataset: { item: item.id } },
-        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(sending ? SENDING : FEEDBACK_STATE[item.state]), remove),
+        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(sending ? SENDING : FEEDBACK_STATE[item.state]), tools.length && !editing ? h('span', { class: 'fb-tools' }, tools) : null),
         item.optionLabel ? h('p', { class: 'fb-text' }, h('strong', { text: item.optionLabel })) : null,
-        item.text ? h('p', { class: 'fb-text', text: excerpt(item.text, 160) }) : null,
+        editing ? feedbackEditor(ctx, 'steer', group.taskId, item) : item.text ? h('p', { class: 'fb-text', text: excerpt(item.text, 160) }) : null,
         item.interpretation ? h('p', { class: 'fb-interp' }, icon('sparkle'), h('span', { text: item.interpretation.text })) : null,
         h('p', { class: 'fb-meta meta' }, h('span', { class: 'id-chip', text: item.id }), ' ', timeEl(item.updatedAt ?? item.createdAt, ctx.now), how ? ` · ${how}` : ''),
         actions.length ? h('div', { class: 'btn-row' }, actions) : null,
@@ -670,22 +753,15 @@ export function steerPanel(ctx) {
                 icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, idTag(refOf(item.id), 'go-to'), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
 
     const pending = pendingItems(ctx);
-    const elsewhere = sendItems(ctx).length - pending.length;
     const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
     const earlier = session.feedback.filter((item) => ['applied', 'corrected', 'dismissed'].includes(item.state));
-    const sendButton = [h('div', { class: 'btn-row send-row' }, button('Review and send…', { kind: 'primary', iconName: 'send', attrs: { 'data-key': 'open-send', 'aria-haspopup': 'dialog' }, onClick: () => ctx.act.openSend() })),
-        h('p', { class: 'meta', text: 'Or use Send to agent at the top of the canvas.' })];
-    const otherLoops = elsewhere > 0
-        ? h('p', { class: 'meta other-pending' }, icon('nodes'), `${plural(elsewhere, 'item')} from other loops of this session also ${elsewhere === 1 ? 'waits' : 'wait'}; Send to agent includes ${elsewhere === 1 ? 'it' : 'them'}.`)
-        : null;
+    const loop = { taskId: session.task.id, title: session.task.title, shown: true };
     const feedback = h('div', null,
         pending.length
-            ? [h('h4', { class: 'group-title', text: `Not sent yet (${pending.length})` }), h('ul', { class: 'fb-list' }, pending.map((item) => feedbackRow(ctx, item))), otherLoops, ...sendButton]
-            : elsewhere > 0
-                ? [otherLoops, ...sendButton]
-                : h('p', { class: 'empty', text: 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you choose Send to agent at the top of the canvas.' }),
-        inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item)))] : null,
-        earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Earlier feedback (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item)))) : null);
+            ? [h('h4', { class: 'group-title', text: `Not sent yet (${pending.length})` }), h('ul', { class: 'fb-list' }, pending.map((item) => feedbackRow(ctx, item, loop)))]
+            : h('p', { class: 'empty', text: 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you send them with Review and send at the top of the canvas.' }),
+        inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item, loop)))] : null,
+        earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Earlier feedback (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item, loop)))) : null);
 
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
@@ -726,7 +802,7 @@ function composer(ctx) {
     h('textarea', { id: textId, class: 'note', rows: '3', placeholder, 'aria-invalid': state.error ? 'true' : undefined, 'aria-describedby': state.error ? 'composer-error' : undefined, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
     state.error ? h('p', { class: 'field-error', id: 'composer-error' }, icon('alert'), h('span', { text: `Not added: ${state.error} Your text is kept.` })) : null,
     h('div', { class: 'btn-row' }, h('button', { type: 'submit', class: 'btn btn-primary', disabled: !state.text.trim(), dataset: { key: 'composer-submit' } }, icon('plus'), h('span', { text: { comment: 'Add comment', context: 'Add context', 'research-request': 'Add research request' }[state.kind] ?? 'Add' }))),
-    h('p', { class: 'meta', text: 'What you add waits in Your feedback until you choose Send to agent.' }));
+    h('p', { class: 'meta', text: 'What you add waits in Your feedback until you send it with Review and send.' }));
 }
 
 const PHASE_NOUNS = Object.freeze({ research: 'the research', plan: 'the plan', implement: 'the implementation', review: 'the review', followup: 'the follow-up' });
@@ -778,27 +854,26 @@ function checkItem(ctx, phase, item) {
 }
 
 /**
- * Content of the Send to agent dialog: what goes, from which canvas, an optional message,
- * the exact text the agent reads, and Send. With nothing waiting it explains how to add
- * something instead.
+ * Content of the Review and send dialog: every loop's unsent items under their loop, each
+ * with Go to, Edit, and Discard, then an optional message, the exact text, Send, Discard
+ * all, and Close. With nothing waiting it explains how to add something instead.
  *
  * @param {any} ctx
  */
-export function sendSheet(ctx) {
+export function reviewSheet(ctx) {
     const groups = sessionPending(ctx);
     const pending = groups.flatMap((group) => group.items);
-    const grouped = groups.length > 1 || (groups.length === 1 && !groups[0].shown);
     const send = ctx.ui.send;
     const handle = ctx.data.canvas?.handle;
     const rpi = ctx.data.session.source?.kind === 'rpi';
     const head = h('div', { class: 'dialog-head' },
-        h('h2', { id: 'sendSheetTitle', tabindex: '-1' }, icon('send'), 'Send to the agent'),
+        h('h2', { id: 'sendSheetTitle', tabindex: '-1' }, icon('send'), 'Review and send'),
         h('button', { type: 'button', class: 'icon-btn', 'data-close': '', dataset: { key: 'send-close' } }, icon('x'), sr('Close')));
     const from = handle ? ['Canvas ', h('code', { class: 'canvas-handle', text: handle })] : ['This canvas'];
     if (!pending.length) {
         return [head,
             h('p', { class: 'send-intro' }, ...from, ' has nothing waiting to send.'),
-            h('p', { text: 'Add something first, then send it all here:' }),
+            h('p', { text: 'Add something first, then review and send it all here:' }),
             h('ul', { class: 'send-howto' },
                 h('li', { text: 'Answer a decision the agent asks you, or override one it made.' }),
                 h('li', { text: 'Comment on a row, or suggest an edit to its text.' }),
@@ -807,12 +882,10 @@ export function sendSheet(ctx) {
             h('div', { class: 'btn-row' }, button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))];
     }
     const noun = plural(pending.length, 'item');
-    const fromTasks = grouped ? ` from ${plural(groups.length, 'loop')} of this session` : '';
+    const loops = groups.length;
     return [head,
-        h('p', { class: 'send-intro' }, ...from, ` sends ${pending.length === 1 ? 'this item' : `these ${pending.length} items`}${fromTasks} to the agent in your chat as one message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”. The agent ${rpi ? (grouped ? "changes each loop's files" : "changes the task's files") : 'makes the changes'} and reads back how it understood each item.`),
-        ...(grouped
-            ? groups.map((group) => sendGroup(ctx, group))
-            : [h('ul', { class: 'send-list', 'aria-label': 'Items to send' }, pending.map((item) => sendRow(ctx, item)))]),
+        h('p', { class: 'send-intro' }, ...from, ` sends ${pending.length === 1 ? 'this item' : `these ${pending.length} items`}${loops > 1 ? ` from ${loops} loops of this session` : ''} to the agent in your chat as one message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”. Check each one: go to it, change its words, or discard it. The agent ${rpi ? (loops > 1 ? "changes each loop's files" : "changes the task's files") : 'makes the changes'} and reads back how it understood each item.`),
+        ...groups.map((group) => reviewGroup(ctx, group)),
         h('label', { class: 'field-label', for: 'send-note', text: 'Message to the agent (optional)' }),
         h('textarea', { id: 'send-note', class: 'note', rows: '3', 'aria-describedby': 'send-note-hint', oninput: (event) => ctx.act.setSendNote(event.target.value) }, send.note),
         h('p', { class: 'meta', id: 'send-note-hint', text: 'Shown in the chat above the line that names this canvas.' }),
@@ -822,49 +895,36 @@ export function sendSheet(ctx) {
         send.error ? h('div', { class: 'notice tone-danger', role: 'alert', id: 'send-error' }, h('p', { class: 'notice-title' }, icon('alert'), send.error)) : null,
         h('div', { class: 'btn-row send-actions' },
             button(send.sending ? 'Sending' : `Send ${noun}`, { kind: 'primary', iconName: 'send', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-confirm', id: 'send-confirm' }, onClick: () => ctx.act.send() }),
-            button('Cancel', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))].filter(Boolean);
+            confirmButton(ctx, { key: 'send-discard-all', label: 'Discard all', armedLabel: loops > 1 ? `Discard all ${noun} from ${loops} loops?` : `Discard all ${noun}?`, onConfirm: () => ctx.act.discardAll() }),
+            button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))].filter(Boolean);
 }
 
-/** One loop's items in the Send dialog, headed by the loop. */
-function sendGroup(ctx, group) {
+/** One loop's items in Review and send, headed by the loop's title, status, and ID. */
+function reviewGroup(ctx, group) {
     const headingId = `send-group-${group.taskId}`;
-    const status = known(TASK_STATUS, group.status);
-    const completed = group.status === 'completed';
     return h('section', { class: 'send-group', 'aria-labelledby': headingId },
         h('h3', { class: 'send-group-title', id: headingId, tabindex: '-1' },
             h('span', { class: 'send-group-name', text: group.title }),
             group.shown ? h('span', { class: 'badge tone-accent' }, icon('eye'), 'Shown') : null,
-            badge(status)),
-        h('p', { class: 'meta send-group-meta' }, h('code', { text: group.taskId }), completed ? ' · This loop is completed, so these items go to the agent as follow-up work for the session.' : ''),
-        h('ul', { class: 'send-list', 'aria-label': `Items for ${group.title}` }, group.items.map((item) => (group.shown ? sendRow(ctx, item) : otherSendRow(ctx, group, item)))));
+            badge(known(TASK_STATUS, group.status))),
+        h('p', { class: 'meta send-group-meta' }, h('code', { text: group.taskId }), group.status === 'completed' ? ' · This loop is completed, so these items go to the agent as follow-up work for the session.' : ''),
+        h('ul', { class: 'send-list', 'aria-label': `Items for ${group.title}` }, group.items.map((item) => reviewRow(ctx, group, item))));
 }
 
-/** An item from another loop of the session: its kind, what it is about, and Remove. */
-function otherSendRow(ctx, group, item) {
+/** One unsent item: its ID, kind, what it is about, its words, and Go to, Edit, and Discard. */
+function reviewRow(ctx, group, item) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
-    return h('li', { class: 'send-item', dataset: { item: `${group.taskId}:${item.id}` } },
+    const editing = editingHere(ctx, 'dialog', group.taskId, item);
+    const about = group.shown ? feedbackTarget(ctx, item) : item.about ? h('span', null, `${item.kind === 'checklist' ? ' for' : ' about'} ${item.about}`) : null;
+    const lines = item.kind === 'edit' && Number.isFinite(item.section?.added) ? `${plural(item.section.added, 'line')} added, ${item.section.removed} removed` : null;
+    return h('li', { class: 'send-item', dataset: { reviewItem: `${group.taskId}:${item.id}` } },
         icon(kind.icon, { className: 'send-item-icon' }),
         h('div', { class: 'send-item-text' },
-            h('p', { class: 'send-item-kind' }, kind.label, h('span', { class: 'meta', text: ` · ${item.about}` })),
-            item.text ? h('p', { class: 'meta', text: excerpt(item.text.split('\n')[0], 140) }) : null),
-        h('div', { class: 'send-item-actions' },
-            button(`Remove ${item.id} from ${group.title}`, { iconName: 'x', hideLabel: true, attrs: { 'data-key': `send-remove-${group.taskId}-${item.id}` }, onClick: () => ctx.act.removePending(item.id, group.taskId) })));
-}
-
-function sendRow(ctx, item) {
-    const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
-    const detail = item.kind === 'edit' && Number.isFinite(item.section?.added)
-        ? `${plural(item.section.added, 'line')} added, ${item.section.removed} removed`
-        : item.optionLabel ?? item.text ?? '';
-    const where = item.kind === 'checklist' ? { phase: item.phase } : item.target ? { id: item.target.id } : null;
-    return h('li', { class: 'send-item', dataset: { item: item.id } },
-        icon(kind.icon, { className: 'send-item-icon' }),
-        h('div', { class: 'send-item-text' },
-            h('p', { class: 'send-item-kind' }, kind.label, feedbackTarget(ctx, item)),
-            detail ? h('p', { class: 'meta', text: excerpt(detail.split('\n')[0], 140) }) : null),
-        h('div', { class: 'send-item-actions' },
-            where ? button(`Show ${item.id} in the canvas`, { iconName: 'eye', hideLabel: true, attrs: { 'data-key': `send-show-${item.id}` }, onClick: () => ctx.act.showPending(item) }) : null,
-            button(`Remove ${item.id}`, { iconName: 'x', hideLabel: true, attrs: { 'data-key': `send-remove-${item.id}` }, onClick: () => ctx.act.removePending(item.id) })));
+            h('p', { class: 'send-item-kind' }, h('span', { class: 'id-chip', text: item.id }), ' ', kind.label, about),
+            item.optionLabel ? h('p', { class: 'send-item-option' }, h('strong', { text: item.optionLabel })) : null,
+            editing ? feedbackEditor(ctx, 'dialog', group.taskId, item) : item.text ? h('p', { class: 'send-item-words', text: item.text }) : null,
+            lines ? h('p', { class: 'meta', text: lines }) : null),
+        editing ? null : h('div', { class: 'send-item-actions' }, feedbackActions(ctx, 'dialog', group, item)));
 }
 
 /**

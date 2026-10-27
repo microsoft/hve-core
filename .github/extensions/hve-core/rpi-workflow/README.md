@@ -32,11 +32,11 @@ See [IDs, Previews, and History](#ids-previews-and-history) and [Sources](#sourc
 
 The canvas shows a real RPI session from the workspace's `.copilot-tracking/` folder, or a fictional sample session, "Offline drafts with background sync", that lets you try every phase and interaction. A canvas with neither says it is not connected and how to connect it; see [Open the Canvas](#open-the-canvas).
 A real session comes from its RPI files: the state file, research, plan, critique, changes record, and review log.
-The canvas follows those files while it is open and never changes them. What you add, suggested edits included, waits in the canvas until you send it to the agent, and the agent changes the files. See [Send to the Agent](#send-to-the-agent) and [Real RPI Sessions](#real-rpi-sessions).
+The canvas follows those files while it is open and never changes them. What you add, suggested edits included, waits in the canvas until you send it to the agent, and the agent changes the files. See [Review and Send](#review-and-send) and [Real RPI Sessions](#real-rpi-sessions).
 
 ### Regions
 
-* The header holds the task title, the phase rail, Needs you, Send to agent, the Live control, appearance, the ID legend, keyboard shortcuts, and the panel toggles. The rail marks the phase the agent works in, and you can read any other phase meanwhile. Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree and, for a real session, the workspace's other sessions.
+* The header holds the task title, the phase rail, Needs you, Review and send, the Live control, appearance, the ID legend, keyboard shortcuts, and the panel toggles. The rail marks the phase the agent works in, and you can read any other phase meanwhile. Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree and, for a real session, the workspace's other sessions.
   Next comes the canvas badge with the handle that starts this canvas's messages; it never shrinks. For a real session, the line continues with the task ID, the repository and branch, and, for a child loop, a link to its parent task. In a narrow header the session name shortens first, then the task details give way.
 * The navigator on the left outlines the viewed phase and filters it.
 * The document fills the middle. Its context bar starts with Back and Forward, then names the phase, its status, the artifact path with Copy and, when the canvas runs in VS Code, Open in VS Code, when the file last changed, and, in the phase the agent works in, its next action. Sections of a real artifact that no other row shows appear, collapsed, in the phase's record row.
@@ -71,20 +71,21 @@ While a decision the agent made is open, its card offers Override. Override list
 
 Answers, overrides, comments, context, research requests, suggested edits, corrections, and checklist reviews become feedback items:
 
-* An item is Not sent until you send it with Send to agent, or until the agent collects it with `take_feedback` when you ask it to. Then it is Sent.
+* An item is Not sent until you send it with Review and send, or until the agent collects it with `take_feedback` when you ask it to. Then it is Sent.
 * The agent reads it back (Interpreted). The item ends Applied when you confirm the read-back or the agent marks it applied, or Corrected when you write a correction, which waits to be sent like any other item.
-* You can remove an item you have not sent.
+* Until you send an item, you can change its words or discard it.
 
-### Send to the Agent
+### Review and Send
 
-Everything you add waits in the canvas until you send it. Send to agent, in the header next to Needs you, is there in every phase and at every width. It counts the items waiting in every loop of the session and turns blue once there are any. Your feedback in the steering panel lists the shown loop's items under Not sent yet, says how many wait in other loops, and offers Review and send.
+Everything you add waits in the canvas until you send it. Review and send, in the header next to Needs you, is there in every phase and at every width. It counts the items waiting in every loop of the session and turns blue once there are any. It opens a review of everything that would be sent:
 
-Either opens a short review:
+* the waiting items under a heading for each loop, with the loop's title, status, and ID, the shown loop first; a completed loop's group says its items go to the agent as follow-up work;
+* each item's ID, kind, what it is about, and its words, with Go to, Edit, and Discard. Go to closes the review and shows what the item is about, showing its loop first when it is another one. Edit changes the words in place; a suggested edit or a checklist review opens where you made it.
+  Discard asks "Discard FB-004?" and discards on a second press; a press in the first half second, such as the second click of a double click, does not count, and the question goes away after four seconds, on Escape, or when you move on;
+* an optional message to the agent, and the exact message the agent receives, behind a disclosure;
+* Send, which delivers the listed items as one message in the chat that opened the canvas, Discard all, which asks the same way, naming how many items and loops, and Close. The review closes after a send, after Discard all, or when you discard its last item.
 
-* every waiting item, with Show to go to it and Remove to take it out; when items wait in more than one loop, they appear in a group per loop, and a completed loop's group says its items go to the agent as follow-up work;
-* an optional message to the agent;
-* the exact message the agent receives, behind a disclosure;
-* Send, which delivers the listed items as one message in the chat that opened the canvas.
+Your feedback in the steering panel lists the shown loop's items: Not sent yet, With the agent, and Earlier. Each unsent item has Go to, Edit, and Discard, and the others have Go to.
 
 The chat shows your message, then a line such as "RPI canvas 3WF0 sent 3 items: 1 suggested edit, 1 review checklist, and 1 comment." The agent receives the full message:
 
@@ -110,7 +111,7 @@ If the section changes while you edit, the editor offers Compare, Keep my sugges
 ### Comments, the Canvas Menu, and Tooltips
 
 Each row's buttons, Suggest an edit, Comment, and Research this, appear while the pointer is over the row or focus is inside it, and always on a touch screen. Hover a paragraph, list item, table row, or heading, and a speech bubble appears beside it. Choose it to comment on exactly that part.
-The comment names the part, such as "table row C12" or "paragraph 2", and quotes up to 200 characters of it. It shows beside its row with the quote, and Send to agent passes the part and quote on, so the agent knows the exact place.
+The comment names the part, such as "table row C12" or "paragraph 2", and quotes up to 200 characters of it. It shows beside its row with the quote, and Review and send passes the part and quote on, so the agent knows the exact place.
 
 Right-click opens the canvas menu for what you clicked:
 
@@ -307,7 +308,7 @@ The extension keeps its data under `~/.copilot/extension-data/hve-core-rpi-workf
   It must not look like it holds secrets: `.env*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `*.keystore`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.pypirc`, `.netrc`, and `.git-credentials` are refused. The sheet shows at most 5,000 lines.
 * Open in VS Code runs VS Code's own command-line tool, found from the extension's own process, with `--goto` and the file's path and line. It runs without a shell, one open at a time, and only for files the read rules allow. Where no VS Code is found, the button does not appear. It never opens a `.code-workspace` file, which VS Code would open as a workspace with its settings and tasks; the canvas shows such a file instead.
 * Request bodies are limited to 16 KB, and 64 KB for a suggested edit.
-* Nothing reaches the agent until you select Send in the Send to agent review, or Ask the agent on the Not connected page. The canvas then sends one message, with the host's send method, into the session that opened it. Ask the agent sends only its fixed line naming the canvas.
+* Nothing reaches the agent until you select Send in Review and send, or Ask the agent on the Not connected page. The canvas then sends one message, with the host's send method, into the session that opened it. Ask the agent sends only its fixed line naming the canvas.
 * The Not connected page's bug report link opens GitHub with a title and details filled in. The details hold the reason, the canvas handle, the host's name, and the time, never a path or session content, and nothing is filed until you submit the form.
 
 The key keeps other local processes, such as other accounts or containers, from using the canvas. A process running as you can still read the extension's data folder and your workspace directly, as it always could. Close the canvas on shared machines when you are not using it.
@@ -317,7 +318,7 @@ The key keeps other local processes, such as other accounts or containers, from 
 * The canvas reads RPI files but never writes them. Changes to a real session reach the files only through the agent.
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
 * Following goes to whichever loop of the session runs, so a subagent that runs its own RPI loop in the session looks like any other loop, and the canvas can follow into it; use the session menu to go back, which stops following. With several running loops, which happens only when an earlier conversation stopped without saying so, it picks the one that changed last.
-* Send to agent needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
+* Review and send needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
 * Open in VS Code is verified with VS Code Insiders on macOS. Other hosts show the source in the canvas and Copy path.
 * VS Code may handle Alt+Left and Alt+Right before the canvas sees them; the Back and Forward buttons always work.
 * Previews follow the WAI-ARIA tooltip and dialog patterns, but nested previews have not been tested with screen readers.

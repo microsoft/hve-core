@@ -4,7 +4,7 @@
 import { ModelError } from './model.mjs';
 
 /**
- * Builds the adapter behind Send to agent and the Not connected screen's Ask the agent. It
+ * Builds the adapter behind Review and send and the Not connected screen's Ask the agent. It
  * enqueues one user message in the session that opened the canvas: the chat shows
  * `displayPrompt`, and the agent reads `prompt`. It only sends text the server composed, from
  * stored feedback items or the fixed request to connect the canvas; the page never supplies

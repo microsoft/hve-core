@@ -12,7 +12,10 @@ import {
     composeSessionDelivery,
     createFeedback,
     deriveView,
+    discardFeedback,
+    editFeedback,
     feedbackOverview,
+    LIMITS,
     markChecklist,
     markDelivered,
     releaseDelivery,
@@ -374,17 +377,19 @@ export function createCanvasServer(deps) {
     }
 
     /**
-     * Groups the items a send names by task, the shown task first and the others in tree
-     * order: `items` lists `{ taskId, id }`, or `ids` lists items of the shown task.
+     * Groups the items a request names by task, the shown task first and the others in tree
+     * order: `items` lists `{ taskId, id }`, or `ids` lists items of the shown task. A send
+     * takes at most 50 items; a discard, every item a session can hold.
      *
      * @param {any} body
+     * @param {number} [max]
      */
-    async function deliveryGroups(body) {
+    async function deliveryGroups(body, max = 50) {
         const session = await shownSession();
         const docs = await sessionDocs(session);
         const wanted = new Map();
         if (Array.isArray(body?.items)) {
-            if (body.items.length === 0 || body.items.length > 50) throw new HttpError(400, 'invalid_input', 'items must list 1 to 50 feedback items.');
+            if (body.items.length === 0 || body.items.length > max) throw new HttpError(400, 'invalid_input', `items must list 1 to ${max} feedback items.`);
             for (const entry of body.items) {
                 const taskId = entry?.taskId ?? session.task.id;
                 if (typeof entry?.id !== 'string' || typeof taskId !== 'string') throw new HttpError(400, 'invalid_input', 'Each item needs an id and a taskId.');
@@ -431,6 +436,24 @@ export function createCanvasServer(deps) {
                 return transitionFeedback(current, id, to, { by: 'user', correction: body?.correction }, now());
             }, { by: 'user' });
             return { revision: session.revision, item: result };
+        },
+
+        'POST /api/feedback/edit': async (body) => {
+            const doc = await docFor(body?.taskId);
+            const { session, result } = await store.update(doc.id, (current) => editFeedback(current, body?.id, body?.text, now()), { by: 'user' });
+            return { revision: session.revision, item: result };
+        },
+
+        'POST /api/feedback/discard': async (body) => {
+            const groups = await deliveryGroups(body, LIMITS.feedbackItems);
+            const discarded = [];
+            const skipped = [];
+            for (const group of groups) {
+                const { result } = await store.update(group.id, (current) => discardFeedback(current, group.ids, now()), { by: 'user' });
+                discarded.push(...result.discarded.map((id) => ({ taskId: group.taskId, id })));
+                skipped.push(...result.skipped.map((id) => ({ taskId: group.taskId, id })));
+            }
+            return { discarded, skipped };
         },
 
         'POST /api/suggestion': async (body) => {

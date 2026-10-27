@@ -79,7 +79,7 @@ describe('request guards', () => {
         const sectionSize = await request(url, { method: 'POST', pathname: '/api/suggestion', body: { sectionId: 'research-summary', markdown: 'y'.repeat(30000), baseRevision: 1 } });
         assert.equal(sectionSize.status, 200);
         assert.equal((await request(url, { method: 'POST', pathname: '/api/section', body: {} })).status, 404, 'edits are suggestions now');
-        assert.equal((await request(url, { method: 'POST', pathname: '/api/checklist/share', body: { phase: 'research' } })).status, 404, 'reviews go with Send to agent');
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/checklist/share', body: { phase: 'research' } })).status, 404, 'reviews go with Review and send');
         assert.equal((await request(url, { pathname: '/ui/secret.mjs' })).status, 404);
         assert.equal((await request(url, { method: 'DELETE', pathname: '/api/state' })).status, 405);
         assert.equal((await request(url, { pathname: '/api/nope' })).status, 404);
@@ -356,6 +356,28 @@ describe('a session-wide send', () => {
             const after = await item(store, docId, id);
             assert.deepEqual([after.state, after.deliveredWith, after.deliveringSince], ['sent', 2, undefined]);
         }
+        await server.stop();
+        store.close();
+    });
+
+    it('changes an unsent item\'s words in any loop, and discards more than a send can carry', async () => {
+        const { store, server, url, parent, child } = await sessionSetup('session-edit-discard');
+        const theirs = await addComment(store, parent.id, 'Old words on the parent');
+        const edited = await request(url, { method: 'POST', pathname: '/api/feedback/edit', body: { taskId: ROOT_TASK, id: theirs.id, text: 'New words' } });
+        assert.equal(edited.status, 200, JSON.stringify(edited.json));
+        assert.equal((await item(store, parent.id, theirs.id)).text, 'New words');
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/feedback/edit', body: { taskId: ROOT_TASK, id: theirs.id, text: ' ' } })).status, 400);
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/feedback/edit', body: { taskId: 'not-in-session', id: theirs.id, text: 'x' } })).status, 404);
+
+        const items = [{ taskId: ROOT_TASK, id: theirs.id }];
+        for (let index = 0; index < 55; index += 1) items.push({ taskId: CHILD_TASK, id: (await addComment(store, child.id, `Note ${index}`)).id });
+        items.push({ taskId: CHILD_TASK, id: 'FB-999' });
+        const discarded = await request(url, { method: 'POST', pathname: '/api/feedback/discard', body: { items } });
+        assert.equal(discarded.status, 200, JSON.stringify(discarded.json));
+        assert.equal(discarded.json.discarded.length, 56, 'more than the 50 a send carries');
+        assert.deepEqual(discarded.json.skipped, [{ taskId: CHILD_TASK, id: 'FB-999' }]);
+        assert.equal((await item(store, parent.id, theirs.id)).state, 'dismissed');
+        assert.ok((await store.load(child.id)).feedback.every((entry) => entry.state === 'dismissed'));
         await server.stop();
         store.close();
     });

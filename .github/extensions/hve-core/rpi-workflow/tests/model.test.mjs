@@ -14,6 +14,8 @@ import {
     composeSessionDelivery,
     createFeedback,
     deriveView,
+    discardFeedback,
+    editFeedback,
     FEEDBACK_TRANSITIONS,
     feedbackOverview,
     findItem,
@@ -144,6 +146,49 @@ describe('feedback lifecycle', () => {
         const full = structuredClone(s);
         full.feedback = Array.from({ length: LIMITS.feedbackItems }, (_, i) => ({ id: `FB-${i + 900}`, kind: 'comment', state: 'applied', target: null, text: '', history: [] }));
         assert.equal(code(() => createFeedback(full, { kind: 'comment', text: 'one more' }, NOW)), 'limit_reached');
+    });
+});
+
+describe('changing and discarding unsent feedback', () => {
+    it('changes the words of an unsent item, and refuses what was sent, is being sent, or lives elsewhere', () => {
+        let s = createFeedback(base(), { kind: 'comment', text: 'First words', target: { id: 'F1' } }, NOW).session;
+        const id = s.feedback.at(-1).id;
+        const LATER = '2026-10-23T12:05:00.000Z';
+        const edited = editFeedback(s, id, '  Better words  ', LATER);
+        const item = edited.session.feedback.find((entry) => entry.id === id);
+        assert.deepEqual([item.text, item.state, item.editedAt, item.updatedAt, edited.session.revision], ['Better words', 'queued', LATER, LATER, s.revision + 1]);
+        assert.equal(code(() => editFeedback(s, id, '   ', LATER)), 'invalid_input', 'a comment needs words');
+        assert.equal(code(() => editFeedback(s, 'FB-999', 'x', LATER)), 'not_found');
+        assert.equal(code(() => editFeedback(claimDelivery(s, [id], NOW).session, id, 'x', LATER)), 'invalid_state', 'not while it is being sent');
+        assert.equal(code(() => editFeedback(markDelivered(s, [id], 'send', NOW).session, id, 'x', LATER)), 'invalid_state', 'not once it was sent');
+        s = suggestEdit(s, { sectionId: 'research-summary', markdown: `${s.sections['research-summary'].markdown}\n\nMore.`, baseRevision: s.sections['research-summary'].revision }, NOW).session;
+        assert.equal(code(() => editFeedback(s, s.feedback.at(-1).id, 'x', LATER)), 'invalid_input', 'a suggested edit changes in its editor');
+    });
+
+    it('lets an answer with an option drop its note, but not an answer in words alone', () => {
+        const chosen = createFeedback(base(), { kind: 'answer', target: { id: 'D2' }, optionId: 'b', text: 'Because' }, NOW).session;
+        assert.equal(editFeedback(chosen, chosen.feedback.at(-1).id, '', NOW).session.feedback.at(-1).text, '');
+        const worded = createFeedback(base(), { kind: 'answer', target: { id: 'D2' }, text: 'Something else' }, NOW).session;
+        assert.equal(code(() => editFeedback(worded, worded.feedback.at(-1).id, '', NOW)), 'invalid_input');
+    });
+
+    it('discards every unsent item it names in one revision, and skips the rest', () => {
+        let s = base();
+        for (const text of ['One', 'Two', 'Three']) s = createFeedback(s, { kind: 'comment', text }, NOW).session;
+        const [a, b, c] = s.feedback.slice(-3).map((item) => item.id);
+        s = markDelivered(s, [c], 'send', NOW).session;
+        const { session, result } = discardFeedback(s, [a, b, c, 'FB-999'], NOW);
+        assert.deepEqual(result, { discarded: [a, b], skipped: [c, 'FB-999'] });
+        assert.deepEqual([a, b, c].map((id) => session.feedback.find((item) => item.id === id).state), ['dismissed', 'dismissed', 'sent']);
+        assert.equal(session.revision, s.revision + 1);
+        assert.equal(discardFeedback(s, [c], NOW).session, s, 'nothing to discard changes nothing');
+    });
+
+    it('summarizes another loop\'s unsent items with their whole words, target, and whether they can change here', () => {
+        const long = 'x'.repeat(600);
+        const s = createFeedback(base(), { kind: 'comment', text: long, target: { id: 'F1', part: 'paragraph 2' } }, NOW).session;
+        const [entry] = feedbackOverview(s, NOW).pending.filter((item) => item.kind === 'comment');
+        assert.deepEqual([entry.text.length, entry.target, entry.editable, entry.optionLabel], [600, { id: 'F1', part: 'paragraph 2' }, true, null]);
     });
 });
 

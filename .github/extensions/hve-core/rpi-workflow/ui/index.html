@@ -37,6 +37,7 @@
   <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5.5 3.25L2.25 6.5 5.5 9.75"/><path d="M2.5 6.5h7a4 4 0 0 1 0 8H7"/></symbol>
   <symbol id="i-pencil" viewBox="0 0 16 16"><path d="M10.75 2.5l2.75 2.75-8 8H2.75v-2.75z"/><path d="M9.25 4l2.75 2.75"/></symbol>
   <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.75 4.25h10.5M6.25 4.25V2.75h3.5v1.5M4.25 4.25l.55 8.6a1 1 0 0 0 1 .9h4.4a1 1 0 0 0 1-.9l.55-8.6M6.75 7v4.25M9.25 7v4.25"/></symbol>
   <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.05 1.05M11.55 11.55l1.05 1.05M3.4 12.6l1.05-1.05M11.55 4.45l1.05-1.05"/></symbol>
   <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.5 9.75A5.75 5.75 0 0 1 6.25 2.5a5.75 5.75 0 1 0 7.25 7.25z"/></symbol>
   <symbol id="i-contrast" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"/></symbol>
@@ -85,7 +86,7 @@
   <nav class="rail" aria-label="RPI phases"><div role="tablist" id="phaseRail" class="rail-list" aria-label="View phase"></div></nav>
   <div class="top-actions">
     <button type="button" class="needs-btn" id="needsBtn"><svg class="icon" aria-hidden="true"><use href="#i-hand"/></svg><span id="needsLabel">Needs you</span><span class="count" id="needsCount">0</span></button>
-    <button type="button" class="send-btn" id="sendBtn" aria-haspopup="dialog" aria-label="Send to agent, nothing waiting"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg><span id="sendLabel">Send to agent</span><span class="count" id="sendCount" aria-hidden="true">0</span></button>
+    <button type="button" class="send-btn" id="sendBtn" aria-haspopup="dialog" aria-label="Review and send, nothing waiting"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg><span id="sendLabel">Review and send</span><span class="count" id="sendCount" aria-hidden="true">0</span></button>
     <button type="button" class="live-btn" id="liveBtn" data-state="connecting" data-follow="on"><svg class="icon" aria-hidden="true"><use href="#i-live"/></svg><span id="liveLabel">Connecting</span><span class="visually-hidden" id="liveHint"></span></button>
     <button type="button" class="icon-btn" id="appearanceBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="appearanceMenu"><svg class="icon" aria-hidden="true"><use href="#i-contrast"/></svg><span class="visually-hidden">Appearance</span></button>
     <button type="button" class="icon-btn" id="legendBtn" aria-haspopup="dialog" aria-keyshortcuts="l"><svg class="icon" aria-hidden="true"><use href="#i-legend"/></svg><span class="visually-hidden">What the IDs and icons mean</span></button>

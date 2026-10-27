@@ -523,6 +523,69 @@ export function transitionFeedback(session, feedbackId, to, extra = {}, now = ne
     });
 }
 
+/** Kinds whose words can change before they are sent; suggested edits and checklist reviews change where they were made. */
+export const EDITABLE_KINDS = Object.freeze(['comment', 'context', 'research-request', 'task-request', 'correction', 'answer', 'override']);
+
+/** Unsent and not held by a delivery. */
+const unsent = (item, now) => (item.state === 'queued' || item.state === 'draft') && !isClaimed(item, now);
+
+/**
+ * Changes the words of an item that has not been sent and is not being sent. An answer or
+ * override with an option may have no words; every other item needs them.
+ *
+ * @param {any} session
+ * @param {string} feedbackId
+ * @param {unknown} value the new text
+ * @param {string} now
+ */
+export function editFeedback(session, feedbackId, value, now) {
+    const id = identifier(feedbackId, 'id');
+    const existing = byId(session.feedback, id);
+    if (!existing) {
+        fail('not_found', `No feedback item ${id} exists.`);
+    }
+    if (!EDITABLE_KINDS.includes(existing.kind)) {
+        fail('invalid_input', `A ${KIND_LABELS[existing.kind]?.[1] ?? existing.kind} is changed where it was made, not here.`);
+    }
+    if (!unsent(existing, now)) {
+        fail('invalid_state', isClaimed(existing, now) ? `Feedback ${id} is being sent.` : `Feedback ${id} was already sent.`);
+    }
+    const optional = (existing.kind === 'answer' || existing.kind === 'override') && Boolean(existing.optionId);
+    const body = text(value, 'text', { optional });
+    return mutate(session, now, (draft) => {
+        const item = byId(draft.feedback, id);
+        item.text = body ?? '';
+        item.updatedAt = now;
+        item.editedAt = now;
+        return item;
+    });
+}
+
+/**
+ * Discards each named item that has not been sent and is not being sent, and lists the
+ * ones it skipped. One revision for all of them.
+ *
+ * @param {any} session
+ * @param {string[]} ids
+ * @param {string} now
+ */
+export function discardFeedback(session, ids, now) {
+    let next = session;
+    const discarded = [];
+    const skipped = [];
+    for (const id of ids) {
+        const item = typeof id === 'string' ? next.feedback.find((entry) => entry.id === id) : null;
+        if (!item || !unsent(item, now)) {
+            skipped.push(String(id));
+            continue;
+        }
+        next = transitionFeedback(next, id, 'dismissed', { by: 'user' }, now).session;
+        discarded.push(id);
+    }
+    if (next !== session) next = { ...next, revision: session.revision + 1 };
+    return { session: next, result: { discarded, skipped } };
+}
+
 /** Line changes of a suggested edit included in delivered text, in characters. */
 export const EDIT_EXCERPT_MAX = 8000;
 
@@ -681,7 +744,7 @@ const listOf = (parts) => (parts.length < 3 ? parts.join(' and ') : `${parts.sli
 const indent = (text) => String(text).split('\n').map((line) => `   ${line}`);
 
 /**
- * Composes the exact message that Send to agent delivers for one task's items. See
+ * Composes the exact message that Review and send delivers for one task's items. See
  * `composeSessionDelivery`.
  *
  * @param {any} session
@@ -754,7 +817,7 @@ function itemLines(session, items, start) {
 const isCompleted = (session) => session.session?.status === 'completed';
 
 /**
- * Composes the exact message that Send to agent delivers, from unsent items in one or more
+ * Composes the exact message that Review and send delivers, from unsent items in one or more
  * tasks of a session, the shown task first. The preview and the sent message both come
  * from this function. `displayPrompt` is what the chat shows: the user's message, then a
  * line naming the canvas. `prompt` is what the agent reads: the canvas handle and instance
@@ -860,8 +923,11 @@ export function feedbackOverview(session, now) {
                 kind: item.kind,
                 about,
                 label: `${KIND_LABELS[item.kind][0]} ${about}`,
-                text: item.kind === 'edit' ? '' : String(item.optionLabel ?? item.text ?? '').slice(0, 280),
+                text: item.kind === 'edit' ? '' : String(item.text ?? ''),
+                optionLabel: item.optionLabel ?? null,
                 phase: item.target?.phase ?? item.phase ?? null,
+                target: item.target ? { id: item.target.id, ...(item.target.part ? { part: item.target.part } : {}) } : null,
+                editable: EDITABLE_KINDS.includes(item.kind),
             };
         });
     return { pending, awaiting: session.feedback.filter((item) => item.state === 'sent').length };
