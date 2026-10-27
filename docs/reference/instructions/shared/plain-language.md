@@ -16,7 +16,7 @@ keywords:
 |-------------|--------------------------------------------------------------|
 | Kind        | instruction                                                  |
 | Source      | `.github/instructions/shared/plain-language.instructions.md` |
-| Invocation  | Applied automatically                                        |
+| Invocation  | Included through explicit reference                          |
 | Interactive | No                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
