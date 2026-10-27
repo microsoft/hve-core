@@ -5737,26 +5737,40 @@ stimuli:
       pattern: (?i)^\s*['"`]?(?:the\s+)?(?:calling\s+|hve\s+builder\s+)?parent['"`]?[.!]?\s*$
 - name: hve-demo-material-class-recipe
   prompt: |
-    Plan the L100 demo deck and narrated video for HVE Core. List the phases
-    from sourcing to the finished MP4, and state the narration engine and the
-    duration contract you will use. Write the plan under
-    `.copilot-tracking/demo-material/` and report the path.
+    Read `.github/agents/experimental/hve-demo-material.agent.md` and the
+    staged hve-demo-material skill, including its curriculum. Using those
+    contracts, plan the L100 demo deck and narrated video for HVE Core.
+    List the phases from sourcing to the finished MP4, and state the
+    narration engine and duration contract for a later narrated run.
+    This task is planning only: do not build a deck, synthesize audio,
+    launch a browser or service, install packages, edit source, or publish.
+    Write only `.copilot-tracking/demo-material/synthetic-l100-plan.md`.
+    Return the plan prose and its path, without claiming delivery occurred.
+  rubric:
+  - The returned plan coherently sequences source gathering, storyboard and content, deck build and validation, deck-export visuals, narration, MP4 assembly, and final duration validation. Future production steps are a plan, not completed work.
+  - It specifies the L100 duration as 4 to 6 minutes and Azure AI Speech through tts-voiceover for the later narrated run. It remains planning-only and makes no unsupported delivery or execution claim.
+  - All criteria are mandatory. Fail wrong duration or engine, missing or incoherent phases, prompt echoes, generic vocabulary without a usable plan, path-only answers, and claims that the staged policy is unavailable. Accept equivalent wording and formatting.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/experimental/hve-demo-material.agent.md
+      dest: .github/agents/experimental/hve-demo-material.agent.md
+    - src: ../../.github/instructions/shared/plain-language.instructions.md
+      dest: .github/instructions/shared/plain-language.instructions.md
+    skills:
+    - ../../.github/skills/experimental/hve-demo-material
   tags:
     category: agent-behavior
     agent: hve-demo-material
   graders:
-  - type: output-matches
-    name: hve-demo-material-class-recipe-phase-marker-present
+  - type: prompt
+    name: hve-demo-material-class-recipe-content
     config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
-  - type: output-matches
-    name: hve-demo-material-class-recipe-tracking-file-write
+      scoring: binary
+      threshold: 0.85
+  - type: file-exists
+    name: hve-demo-material-class-recipe-plan-exists
     config:
-      pattern: (?i)\.copilot-tracking[-/\\](demo-material|plans)
-  - type: output-matches
-    name: hve-demo-material-class-recipe-duration-contract
-    config:
-      pattern: (?i)\b(4\s*(to|-|–)\s*6\s*min|duration contract)
+      path: .copilot-tracking/demo-material/synthetic-l100-plan.md
   - type: output-matches
     name: hve-demo-material-class-recipe-no-source-edit
     config:
@@ -6309,6 +6323,11 @@ stimuli:
     Integrate depends on a bounded comparable-product question, but Research
     returned `Needs clarification`. Can that result clear the phase gate?
     Explain the durable state and the smallest work that stops.
+  rubric:
+  - Needs clarification cannot clear the phase gate or support an evidence-dependent conclusion. The builder retains gate authority; Research does not grant approval.
+  - Persist the unresolved gap as an open question or unvalidated assumption and record the invocation gate relationship as does-not-satisfy.
+  - Stop only work that needs the unresolved answer; unrelated work may continue. All criteria are mandatory. Fail unsupported gate clearance, a missing durable gap or gate relationship, and blanket stopping.
+  - Accept equivalent wording, reordered clauses, and warnings that quote an invalid status such as "the gate is cleared" while explicitly rejecting it. Fail prompt echoes, generic vocabulary without these relationships, and unavailable-policy excuses.
   agent_environment:
     files:
     - src: ../../.github/agents/project-planning/prd-builder.agent.md
@@ -6321,19 +6340,11 @@ stimuli:
     scenario: prd-research-blocked
     agent: prd-builder
   graders:
-  - type: output-matches
-    name: prd-research-blocked-no-gate
+  - type: prompt
+    name: prd-research-blocked-contract
     config:
-      pattern: (?is)(Needs clarification|unresolved).*(cannot|does not|must not).*(phase|gate|exit)
-  - type: output-matches
-    name: prd-research-blocked-gap
-    config:
-      pattern: (?is)^(?=[\s\S]*(?:open question|unvalidated assumption))(?=[\s\S]*(?:(?:dependent|affected)[^.\r\n]{0,160}\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b|\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b[^.\r\n]{0,160}(?:dependent|affected)))
-  - type: output-matches
-    name: prd-research-blocked-no-gate-exit
-    config:
-      pattern: (?i)(phase|gate|integrate)\s+(is|can be|may now be)\s+(complete|cleared|satisfied|exited)
-      negate: true
+      scoring: binary
+      threshold: 0.85
 - name: prd-builder-executes-approved-authoring-plan
   prompt: |
     Resume the staged Atlas PRD in Build. I confirm the Implement segment for

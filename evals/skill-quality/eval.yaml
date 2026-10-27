@@ -28,22 +28,21 @@ stimuli:
       with evidence `E1`, but final budget approval is unresolved. Explain what
       the Architecture Review Record must preserve before an ADR or RPI Plan
       handoff, and who retains decision authority.
+    rubric:
+      - Preserve confirmed scope for synthetic-queue, evidence E1 and its recommendation of option A, assumptions distinct from verified context, and trade-offs with recommendation rationale.
+      - Give both reliability and cost an explicit disposition (finding, examined with no finding, or unassessed with a limit). Preserve unresolved final budget approval as a limit, not invented approval.
+      - Record review dispositions of recommendations with rationale and evidence, plus decision owners. Complete and persist the record before an ADR or RPI Plan handoff and pass its path as evidence.
+      - Decision authority stays in the ADR and with the user; the review record preserves analysis and does not approve or replace their decisions. All criteria are mandatory; wrong authority, missing pillar dispositions, or assumed budget approval fails.
+      - Accept equivalent wording and any clause order. Fail prompt echoes, generic lists without the required relationships, and unavailable-policy excuses.
     tags:
       category: skill-quality
       skill: architecture-review
     graders:
-      - type: output-matches
-        name: architecture-review-record-content
+      - type: prompt
+        name: architecture-review-contract
         config:
-          pattern: "(?is)(scope).*(evidence|E1).*(reliability).*(cost).*(trade-off|recommendation).*(limit|unresolved)"
-      - type: output-matches
-        name: architecture-review-preserves-authority
-        config:
-          pattern: "(?is)(ADR|user).*(remain|retain|authoritative|authority).*(review record|Architecture Review Record).*(not|does not|without)"
-      - type: output-matches
-        name: architecture-review-requires-record-first-handoff
-        config:
-          pattern: "(?is)(persist|complete|write).*(Architecture Review Record|record).*(before).*(ADR|RPI Plan|handoff)"
+          scoring: binary
+          threshold: 0.85
 
   - name: owasp-top10-identify-injection
     prompt: |

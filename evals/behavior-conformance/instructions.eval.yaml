@@ -2151,6 +2151,8 @@ stimuli:
       instruction: plain-language
       advisory: "true"
       prompt_sha256: d9a5479707855bf92e1429678c6ef96ef384ca3edde967a1956f1abe392ce21c
+    constraints:
+      max_duration: 300s
     graders:
       - type: prompt
         name: plain-language-direct-research-clarity

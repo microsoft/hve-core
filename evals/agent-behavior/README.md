@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-10-17
+ms.date: 2026-10-27
 ---
 
 ## Purpose
@@ -79,7 +79,42 @@ Three coverage kinds are distinct and do not overlap:
 
 A per-stimulus `agent_environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
 
-Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
+Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Most isolated functional stimuli use workspace instructions by remapping the agent file. A contained policy-reading case can instead explicitly ask the model to read a staged source-relative agent path; this tests the supplied contract, not native agent selection.
+
+### Demo Planning and Meaning-Based Contracts
+
+The [demo planning case](stimuli/hve-demo-material.yml) explicitly asks the model
+to read the staged demo agent and skill curriculum. The agent stays at its
+source-relative path so its instruction import still resolves. This is a
+planning-only case: no deck, audio, browser, service, installation or publishing
+is requested.
+
+One binary prompt judge assesses the returned plan's sourcing-to-MP4 sequence,
+L100 duration of 4 to 6 minutes, Azure AI Speech through `tts-voiceover`, and
+honest planning scope. A separate `file-exists` grader requires the fixed
+synthetic plan file named in the prompt. A path mentioned in the reply is not
+proof of a write; file presence does not prove file-content equality with the
+returned prose. The retained no-source-edit response matcher is supplemental,
+not filesystem immutability enforcement.
+
+The [PRD blocked-research case](stimuli/prd-builder.yml) and the architecture
+record case in [skill-quality](../skill-quality/eval.yaml) each use one binary
+prompt judge for all mandatory contract criteria. These replace wording and
+clause-order regexes, accepting paraphrases and correctly quoted warnings while
+rejecting wrong gate or decision authority, omitted durable evidence, and
+other required facts. Consolidation intentionally changes scoring granularity;
+it does not change suite thresholds, run counts, retries or judge defaults.
+Each prompt judge retains threshold `0.85`, and the suites retain `0.7`.
+
+The [focused regression tests](../../scripts/tests/evals/Test-EvalSpec.Tests.ps1)
+check configuration, effective runtime caps and real absent/present file grading.
+The [18 synthetic controls](../../scripts/tests/evals/fixtures/specs/plain-language-repair-controls.json)
+define expected semantic verdicts, not precomputed model results. Static tests
+or mocked judge wiring do not establish semantic calibration. Later genuine
+judging must compare each control's verdict with its label, including expected
+rejections, rather than requiring every answer to pass. Accept the demo repair
+only after checking file presence for every executed trial separately; the
+existing suite mean can hide an individual missing file.
 
 ### Data Science Coach RPI Scenarios
 

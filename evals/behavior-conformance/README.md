@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-10-26
+ms.date: 2026-10-27
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -33,6 +33,18 @@ The maintained `instructions.eval.yaml` inventory contains 89 stimuli: 81 instru
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`, `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
+
+The plain-language direct-research case runs a complete staged research workflow,
+not only a short prose response. Its scenario-only `constraints.max_duration: 300s`
+supplies a candidate executor ceiling; the instruction suite default stays
+at `120s`. The pinned planner resolves these to `300000` and `120000` milliseconds,
+respectively, in the [focused regression tests](../../scripts/tests/evals/Test-EvalSpec.Tests.ps1).
+The candidate matches the existing agent-behavior full-workflow budget, but has
+not yet demonstrated successful timing. Acceptance still needs all three
+original research trials to finish with gradeable results under that cap.
+Prompts, run counts, advisory status, the exact 45-day assertion, retry selection
+and diagnostic-integrity gates are unchanged. Static configuration checks do not
+establish model behavior or eliminate timeouts.
 
 The maintained `skill-behavior.eval.yaml` inventory contains 333 stimuli across 85 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
 
