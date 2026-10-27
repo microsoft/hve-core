@@ -288,4 +288,4 @@ stimuli:
       - type: output-matches
         name: security-planner-from-prd-no-artifact-fallback
         config:
-          pattern: '(?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(PRD|BRD|artifact|requirement)[\s\S]{0,500}(capture|file path|path)'
+          pattern: '(?is)(?=[\s\S]*(?:\b(?:no|none|zero)\b|not found|did not find|couldn\W?t find)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:PRD|BRD|artifact|requirement)|[\s\S]*(?:PRD|BRD|artifact|requirement)\w*(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:were not found|was not found|not found|do not exist|does not exist|are missing|is missing|absent))(?=[\s\S]*(?:\bcapture\b|file path|\b(?:provide|supply|share|give|point me to|ask\w*\s+(?:you\s+)?for)\b[^.!?\n]{0,40}\bpath\b))'

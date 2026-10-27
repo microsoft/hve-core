@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore couldn
+# cspell:ignore couldn doesn
 stimuli:
   - name: rai-planner-class-recipe
     prompt: |
@@ -168,6 +168,8 @@ stimuli:
           dest: .github/instructions/shared/disclaimer-language.instructions.md
         - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
           dest: .github/instructions/rai-planning/rai-identity.instructions.md
+        - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
+          dest: .github/instructions/shared/planner-identity-base.instructions.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -180,7 +182,7 @@ stimuli:
       - type: output-matches
         name: rai-planner-from-security-plan-capture-fallback
         config:
-          pattern: '(?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(security plan|plan|state\.json)[\s\S]{0,500}capture'
+          pattern: '(?is)(?=[\s\S]*(?:\b(?:no|none|zero)\b|not found|did not find|couldn\W?t find)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:security plan|plan|state\.json)|[\s\S]*(?:security plan|plan|state\.json)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:does not exist|doesn\W?t exist|not found|is missing|are missing|absent))(?=[\s\S]*\bcapture\b)'
 
   - name: rai-planner-cold-start-scoped-load
     prompt: |
