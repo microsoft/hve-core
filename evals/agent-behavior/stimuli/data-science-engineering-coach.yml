@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore declin rescan
+# cspell:ignore declin rescan accumulat bgenerat bpaus bresum continu decid disabl doesn generat honou modif overrid overwr resum revis waiv
 stimuli:
   - name: data-science-engineering-coach-initialize-and-select
     prompt: |
@@ -475,7 +475,7 @@ stimuli:
       - type: output-matches
         name: evaluation-research-authority
         config:
-          pattern: '(?is)(?=.*\bevaluation-design\b)(?=.*(?:\bevaluation-design\b(?:(?!\b(?:not|never|cannot)\b)[^\r\n.!?])*\b(?:selects?|chooses?)\b[^\r\n.!?]*\bmetrics?\b|\b(?:evaluation-design|That skill)\b(?:(?!\b(?:not|never|cannot)\b)[^\r\n.!?])*\b(?:authority|owner)\b[^\r\n.!?]*\bmetric selection\b|\bmetric selection\b(?:(?!\b(?:not|never|cannot)\b)[^\r\n.!?])*\bevaluation-design\b[^\r\n.!?]*\bauthority\b))(?=.*\b(?:Research|rpi-research)\b[^\r\n.!?]*\b(?:facts?|current|verify|verifies|verified|evidence)\b).*'
+          pattern: '(?is)(?=.*\bevaluation-design\b)(?=.*(?:\bevaluation-design\b(?:(?!\b(?:not|never|cannot)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\b(?:selects?|chooses?)\b[^\r\n.!?]*\bmetrics?\b|\b(?:evaluation-design|That skill)\b(?:(?!\b(?:not|never|cannot)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\b(?:authority|owner)\b[^\r\n.!?]*\bmetric selection\b|\bmetric selection\b(?:(?!\b(?:not|never|cannot)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\bevaluation-design\b[^\r\n.!?]*\bauthority\b|\b(?:evaluation-design|That skill)\b(?:(?!\b(?:not|never|cannot|no longer|research)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\b(?:owns?|keeps?|retains?|decides?|determines?|picks?|choosing|selecting|responsible for|in charge of|accountable for)\b(?:(?!\b(?:not|never|cannot|no longer|research)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\bmetrics?\b|\bmetrics?(?: selection| choice)?\b(?:(?!\b(?:not|never|cannot|no longer|research)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\b(?:stays?|remains?|rests?|belongs?|lies|sits?|(?:is|are)(?: still)? (?:owned|selected|chosen|picked|decided|made|determined|handled))\b(?:(?!\b(?:not|never|cannot|no longer|research)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\b(?:with|to|by|in|under|within)\b(?:(?!\b(?:not|never|cannot|no longer|research)\b|\w+n[\x27\u2019]t\b)[^\r\n.!?])*\bevaluation-design\b|\bevaluation-design\b[*_\x60]*\s*,?\s*not\s+[*_\x60]*(?:rpi-)?research\b[*_\x60]*\s*,?\s*(?:still\s+)?(?:owns?|keeps?|retains?|selects?|chooses?|decides?|determines?|picks?)\b[^\r\n.!?]*\bmetrics?\b|\|\s*[*_\x60]*(?:metric selection|metrics?|metric choice)[*_\x60]*\s*\|\s*[*_\x60]*evaluation-design\b))(?=.*(?:\b(?:Research|rpi-research)\b[^\r\n.!?]*\b(?:facts?|current|verify|verifies|verified|evidence)\b|\b(?:facts?|current|verify|verifies|verified|evidence)\b[^\r\n.!?]*\b(?:Research|rpi-research)\b)).*'
       - type: output-matches
         name: evaluation-research-job-stable
         config:

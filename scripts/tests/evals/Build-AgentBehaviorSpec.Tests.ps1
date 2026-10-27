@@ -2703,6 +2703,8 @@ Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
         @{ Name = 'owner of metric selection'; Grader = 'evaluation-research-authority'; Text = 'evaluation-design remains the owner of evaluation design, including metric selection. Research gathers evidence.' }
         @{ Name = 'returned skill retains authority'; Grader = 'evaluation-research-authority'; Text = 'Research returns verified facts to evaluation-design. That skill retains authority over metric selection.' }
         @{ Name = 'metric selection before authority'; Grader = 'evaluation-research-authority'; Text = 'Research returns verified facts. Metric selection remains within evaluation-design authority.' }
+        @{ Name = 'contrasted skill selects metrics'; Grader = 'evaluation-research-authority'; Text = '`evaluation-design`, not Research, selects the metrics. Research establishes current evaluator availability.' }
+        @{ Name = 'metric selection stays with skill'; Grader = 'evaluation-research-authority'; Text = 'Current facts come from rpi-research. Metric selection stays with `evaluation-design`.' }
         @{ Name = 'emphasized job stability'; Grader = 'evaluation-research-job-stable'; Text = 'Research does **not** change the active evaluation job, lifecycle class or session state.' }
     ) {
         $Text | Should -Match $script:DsPatterns[$Grader]
@@ -2722,6 +2724,8 @@ Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
         @{ Name = 'recommendations continue'; Grader = 'evaluation-research-blocked-stop'; Text = 'The evaluation job is active and evaluator recommendations continue as usual.' }
         @{ Name = 'negated recommendation stop'; Grader = 'evaluation-research-blocked-stop'; Text = 'Evaluator recommendations are not stopped.' }
         @{ Name = 'negated metric selection ownership'; Grader = 'evaluation-research-authority'; Text = 'Research returns facts. Metric selection is not within evaluation-design authority.' }
+        @{ Name = 'copula-negated metric selection'; Grader = 'evaluation-research-authority'; Text = 'evaluation-design is not the skill that selects metrics. Research verifies current facts.' }
+        @{ Name = 'contraction-negated metric selection'; Grader = 'evaluation-research-authority'; Text = "evaluation-design doesn$([char]0x2019)t select metrics. Research verifies current facts." }
     ) {
         $Text | Should -Not -Match $script:DsPatterns[$Grader]
     }
@@ -3459,6 +3463,30 @@ console.log(JSON.stringify(results));
       Slug = 'sssc-reviewer'; Scenario = 'sssc-reviewer-vex-triage-from-report'; Grader = 'sssc-reviewer-vex-triage-trivy-precedence'; Echo = $true
       Accept = @('Trivy JSON is authoritative; OSV-Scanner is secondary.', 'Trivy (`reports/trivy.json`) takes precedence over OSV-Scanner.', 'Precedence: Trivy, then OSV-Scanner.')
       Reject = @('OSV-Scanner takes precedence over Trivy.', 'Trivy is used after OSV-Scanner, which takes priority.', 'Use OSV-Scanner instead of Trivy.')
+    }
+    @{
+      Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-evaluator-research'; Grader = 'evaluation-research-authority'; Echo = $true
+      Accept = @(
+        '`evaluation-design` still owns metric selection. Research verifies current evaluator availability.',
+        'Metric selection stays with `evaluation-design`. rpi-research returns verified facts.',
+        '**evaluation-design** decides the metrics. Research gathers evidence.',
+        'evaluation-design remains responsible for choosing metrics. Research only verifies current facts.',
+        '`evaluation-design`, not Research, selects the metrics. Research verifies current facts.',
+        '`evaluation-design`, not Research, selects the metrics. Research establishes current evaluator availability.',
+        'Current facts come from rpi-research. Metric selection stays with `evaluation-design`.',
+        "| Responsibility | Owner |`n|---|---|`n| Metric selection | ``evaluation-design`` |`n`nResearch verifies current facts."
+      )
+      Reject = @(
+        'Research owns metric selection. evaluation-design verifies current facts.',
+        'evaluation-design no longer owns metric selection. Research verifies current facts.',
+        "evaluation-design doesn$([char]0x2019)t decide the metrics. Research verifies current facts.",
+        "evaluation-design doesn$([char]0x2019)t select metrics. Research verifies current facts.",
+        "evaluation-design doesn't choose the metrics. Research verifies current facts.",
+        'evaluation-design is not the skill that selects metrics. Research verifies current facts.',
+        'Metric selection is not owned by evaluation-design. Research verifies current facts.',
+        'evaluation-design keeps the job while Research picks the metrics. Research verifies current facts.',
+        'Metric selection stays with `evaluation-design`.'
+      )
     }
   ) {
     $stimulus = script:Get-RepairStimulus -Slug $Slug -Scenario $Scenario
