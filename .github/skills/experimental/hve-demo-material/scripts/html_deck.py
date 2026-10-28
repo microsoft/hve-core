@@ -105,7 +105,10 @@ def _items(value) -> list[str]:
         elif isinstance(entry, dict):
             keys = set(entry) & {"bullet", "text", "label", "title"}
             if len(keys) != 1 or set(entry) != keys:
-                raise CheckError("List items require exactly one bullet/text/label/title; map extra content explicitly")
+                raise CheckError(
+                    "List items require exactly one bullet/text/label/title; "
+                    "map extra content explicitly"
+                )
             items.extend(_items([entry[next(iter(keys))]]))
         else:
             raise CheckError("Unsupported list item; use text or a finite number")
@@ -135,7 +138,9 @@ def _table(elem: dict) -> str:
         raise CheckError("A table requires a nonempty rows list with a header row")
     for row in elem["rows"]:
         if isinstance(row, dict) and set(row) != {"cells"}:
-            raise CheckError("Table rows support cells only; map merged cells explicitly")
+            raise CheckError(
+                "Table rows support cells only; map merged cells explicitly"
+            )
         cells = row.get("cells") if isinstance(row, dict) else row
         rows.append(_items(cells))
     if not rows[0] or any(len(row) != len(rows[0]) for row in rows):
@@ -159,11 +164,16 @@ def _image(
     rel = str(elem.get("path") or "")
     if _safe_source_path(rel) is None:
         raise CheckError(f"{slide_dir.name}: image path must be a plain relative path")
-    candidates = [checked_path(base / rel, slide_dir.parent) for base in (slide_dir, slide_dir.parent)]
+    candidates = [
+        checked_path(base / rel, slide_dir.parent)
+        for base in (slide_dir, slide_dir.parent)
+    ]
     found = next((p for p in candidates if p.is_file()), None)
     mime = IMAGE_TYPES.get(found.suffix.lower()) if found else None
     if not mime:
-        raise CheckError(f"{slide_dir.name}/{rel}: missing or unsupported image; supply PNG/JPEG")
+        raise CheckError(
+            f"{slide_dir.name}/{rel}: missing or unsupported image; supply PNG/JPEG"
+        )
     data = base64.b64encode(found.read_bytes()).decode("ascii")
     css.append(f'.{name} {{ background-image: url("data:{mime};base64,{data}"); }}')
     return f'<div class="shot {name}" role="img" aria-label="{_esc(alt or rel)}"></div>'
@@ -178,12 +188,32 @@ def _flatten(elements) -> list[dict]:
     if not isinstance(elements, list):
         raise CheckError("elements must be a list of mappings")
     flat = []
-    styles = {"left", "top", "width", "height", "font", "font_size", "font_color", "font_bold", "auto_size", "alignment", "fill", "line", "border_color", "border_width", "shape", "corner_radius", "decorative"}
+    styles = {
+        "left",
+        "top",
+        "width",
+        "height",
+        "font",
+        "font_size",
+        "font_color",
+        "font_bold",
+        "auto_size",
+        "alignment",
+        "fill",
+        "line",
+        "border_color",
+        "border_width",
+        "shape",
+        "corner_radius",
+        "decorative",
+    }
     fields = {
         "textbox": {"text", "bullets", "paragraphs"},
         "shape": {"text", "bullets", "paragraphs"},
-        "card": {"title", "content"}, "table": {"rows"},
-        "arrow_flow": {"items"}, "numbered_step": {"label", "description"},
+        "card": {"title", "content"},
+        "table": {"rows"},
+        "arrow_flow": {"items"},
+        "numbered_step": {"label", "description"},
         "image": {"path", "alt"},
     }
     for elem in elements:
@@ -194,28 +224,60 @@ def _flatten(elements) -> list[dict]:
             raise CheckError("Element type and field names must be text")
         if kind == "group":
             if set(elem) - {"type", "elements"}:
-                raise CheckError("Groups support elements only; flatten transformed/labeled groups explicitly")
+                raise CheckError(
+                    "Groups support elements only; "
+                    "flatten transformed/labeled groups explicitly"
+                )
             flat += _flatten(elem.get("elements"))
             continue
         if kind == "connector":
-            raise CheckError("connector is unsupported; express the relationship as arrow_flow, numbered_step or labeled text")
+            raise CheckError(
+                "connector is unsupported; express the relationship as "
+                "arrow_flow, numbered_step or labeled text"
+            )
         if kind not in fields:
-            raise CheckError(f"Unsupported element type {kind!r}; map meaningful content explicitly")
-        if kind == "shape" and elem.get("shape", "rectangle") not in ("rectangle", "rounded_rectangle"):
-            raise CheckError("Only rectangular panel shapes are supported; express other shape meaning in text")
+            raise CheckError(
+                f"Unsupported element type {kind!r}; map meaningful content explicitly"
+            )
+        if kind == "shape" and elem.get("shape", "rectangle") not in (
+            "rectangle",
+            "rounded_rectangle",
+        ):
+            raise CheckError(
+                "Only rectangular panel shapes are supported; "
+                "express other shape meaning in text"
+            )
         extra = set(elem) - {"type"} - styles - fields[kind]
         if extra:
-            raise CheckError(f"{kind}: unsupported fields {sorted(extra)}; map rather than discard them")
+            raise CheckError(
+                f"{kind}: unsupported fields {sorted(extra)}; "
+                "map rather than discard them"
+            )
         for key in ("left", "top", "width", "height", "font_size"):
-            if key in elem and (type(elem[key]) not in (int, float) or not math.isfinite(elem[key])):
+            if key in elem and (
+                type(elem[key]) not in (int, float) or not math.isfinite(elem[key])
+            ):
                 raise CheckError(f"{kind}.{key} must be a finite number")
         if "decorative" in elem and type(elem["decorative"]) is not bool:
             raise CheckError("decorative must be a boolean")
-        for key in fields[kind] & {"text", "title", "label", "description", "path", "alt"}:
+        for key in fields[kind] & {
+            "text",
+            "title",
+            "label",
+            "description",
+            "path",
+            "alt",
+        }:
             if key in elem and not isinstance(elem[key], str):
                 raise CheckError(f"{kind}.{key} must be text")
-        if kind in ("textbox", "shape") and sum(key in elem for key in ("text", "bullets", "paragraphs")) > 1:
-            raise CheckError(f"{kind}: use one of text, bullets or paragraphs, not overlapping content")
+        if (
+            kind in ("textbox", "shape")
+            and sum(key in elem for key in ("text", "bullets", "paragraphs")) > 1
+        ):
+            raise CheckError(
+                f"{kind}: use one of text, bullets or paragraphs, "
+                "not overlapping content"
+            )
         if kind == "card" and not isinstance(elem.get("content"), (str, list)):
             raise CheckError("card.content must be text or a list")
         if kind == "numbered_step" and not str(elem.get("label", "")).strip():
@@ -227,7 +289,9 @@ def _flatten(elements) -> list[dict]:
 def _is_panel_shape(elem: dict) -> bool:
     """Return whether a text-free shape frames other text as a panel."""
     width, height = _num(elem, "width") or 0, _num(elem, "height") or 0
-    if elem.get("type") != "shape" or any(elem.get(key) for key in ("text", "bullets", "paragraphs")):
+    if elem.get("type") != "shape" or any(
+        elem.get(key) for key in ("text", "bullets", "paragraphs")
+    ):
         return False
     full_slide = width >= PANEL_MAX_WIDTH_IN and height >= PANEL_MAX_HEIGHT_IN
     return (
@@ -287,8 +351,13 @@ def _text_markup(elem: dict, in_panel: bool) -> str:
 
 
 def slide_markup(
-    number: int, slide: dict, slide_dir: Path, css: list[str], missing: list[str],
-    *, citations: list[str] | None = None,
+    number: int,
+    slide: dict,
+    slide_dir: Path,
+    css: list[str],
+    missing: list[str],
+    *,
+    citations: list[str] | None = None,
 ) -> str:
     """Return semantic markup and image rules; reject missing meaningful images.
 
@@ -319,10 +388,15 @@ def slide_markup(
         if is_frame(elem):
             continue
         if kind in ("textbox", "shape"):
-            if not text and not _items(elem.get("bullets") or elem.get("paragraphs") or []):
+            if not text and not _items(
+                elem.get("bullets") or elem.get("paragraphs") or []
+            ):
                 if elem.get("decorative") is True:
                     continue
-                raise CheckError(f"Slide {number}: empty {kind}; supply text or explicitly mark decorative")
+                raise CheckError(
+                    f"Slide {number}: empty {kind}; "
+                    "supply text or explicitly mark decorative"
+                )
             if normalized_text(text) == normalized_text(title):
                 continue
             holders = [f for f in frames if _contains(f, elem)]
@@ -340,7 +414,10 @@ def slide_markup(
                 (_num(frame, "top") or 0.0, _num(frame, "left") or 0.0, -1, frame)
             )
         elif frame.get("decorative") is not True:
-            raise CheckError(f"Slide {number}: empty panel shape; mark decorative or supply its meaning")
+            raise CheckError(
+                f"Slide {number}: empty panel shape; "
+                "mark decorative or supply its meaning"
+            )
     units.sort(key=lambda unit: (unit[0], unit[1], unit[2]))
 
     rows: list[list[tuple]] = []
@@ -503,7 +580,9 @@ def level_sources(level: str, level_dir: Path) -> list[str]:
         data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
         entries = data.get("sources") if isinstance(data, dict) else None
         if entries is not None and not isinstance(entries, list):
-            raise CheckError(f"Invalid source register in {name}; sources must be a list")
+            raise CheckError(
+                f"Invalid source register in {name}; sources must be a list"
+            )
         paths = [
             _safe_source_path(entry.get("path"))
             for entry in entries or []
@@ -512,7 +591,10 @@ def level_sources(level: str, level_dir: Path) -> list[str]:
         if entries is not None and (
             not isinstance(entries, list) or len(paths) != len(entries) or None in paths
         ):
-            raise CheckError(f"Invalid source register in {name}; use plain repository-relative paths")
+            raise CheckError(
+                f"Invalid source register in {name}; "
+                "use plain repository-relative paths"
+            )
         resolved = list(dict.fromkeys(path for path in paths if path))
         if resolved:
             return resolved
@@ -532,9 +614,13 @@ def build_deck_source(
     """
     parsed_url = urllib.parse.urlsplit(repo_url or "")
     if repo_url is not None and not (
-        parsed_url.scheme == "https" and parsed_url.hostname and repo_url.endswith("/")
-        and not parsed_url.username and not parsed_url.password
-        and not parsed_url.query and not parsed_url.fragment
+        parsed_url.scheme == "https"
+        and parsed_url.hostname
+        and repo_url.endswith("/")
+        and not parsed_url.username
+        and not parsed_url.password
+        and not parsed_url.query
+        and not parsed_url.fragment
     ):
         raise CheckError("--repo-url must be an https URL ending in '/'")
     level_dir = checked_path(level_dir)
@@ -552,12 +638,16 @@ def build_deck_source(
     title = str(metadata.get("title") or f"HVE Core {level}")
     description = str(metadata.get("subject") or f"HVE Core {level} demo material")
     language = metadata.get("language", "en-US")
-    if not isinstance(language, str) or not re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", language):
+    if not isinstance(language, str) or not re.fullmatch(
+        r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", language
+    ):
         raise CheckError("metadata.language must be a language tag such as en-US")
     deck_dir = checked_path(deck_dir, level_dir)
     if deck_dir == level_dir or deck_dir.is_relative_to(level_dir / "content"):
         raise CheckError("--deck-dir must be a generated directory outside content/")
-    if deck_dir.is_relative_to(template.parent.parent) or deck_dir.is_relative_to(SKILL_ROOT):
+    if deck_dir.is_relative_to(template.parent.parent) or deck_dir.is_relative_to(
+        SKILL_ROOT
+    ):
         raise CheckError("Deck source must not be written inside a skill installation")
 
     source_paths = level_sources(level, level_dir)
@@ -579,26 +669,53 @@ def build_deck_source(
     for number, slide in slides:
         if any(not isinstance(key, str) for key in slide):
             raise CheckError(f"Slide {number}: field names must be text")
-        extra = set(slide) - {"slide", "slide_number", "id", "title", "section", "layout", "background", "elements", "speaker_notes", "language", "citations"}
+        extra = set(slide) - {
+            "slide",
+            "slide_number",
+            "id",
+            "title",
+            "section",
+            "layout",
+            "background",
+            "elements",
+            "speaker_notes",
+            "language",
+            "citations",
+        }
         if extra:
             raise CheckError(f"Slide {number}: unsupported fields {sorted(extra)}")
         for identity in ("slide", "slide_number"):
-            if identity in slide and (type(slide[identity]) is not int or slide[identity] != number):
-                raise CheckError(f"Slide {number}: {identity} must match its directory number")
+            if identity in slide and (
+                type(slide[identity]) is not int or slide[identity] != number
+            ):
+                raise CheckError(
+                    f"Slide {number}: {identity} must match its directory number"
+                )
         slide_language = slide.get("language", language)
-        if not isinstance(slide_language, str) or not re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", slide_language):
+        if not isinstance(slide_language, str) or not re.fullmatch(
+            r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", slide_language
+        ):
             raise CheckError(f"Slide {number}: invalid language tag")
         slide_title = str(slide.get("title") or f"Slide {number}")
         chapter = str(slide.get("section") or level)
         slide_dir = level_dir / "content" / f"slide-{number:03d}"
         citations = slide.get("citations", source_paths)
-        if not isinstance(citations, list) or any(path not in source_paths for path in citations):
-            raise CheckError(f"Slide {number}: citations must name paths in the source register")
-        selected_ids = ",".join(f"source-{source_paths.index(path) + 1}" for path in citations) if repo_url else ""
+        if not isinstance(citations, list) or any(
+            path not in source_paths for path in citations
+        ):
+            raise CheckError(
+                f"Slide {number}: citations must name paths in the source register"
+            )
+        selected_ids = (
+            ",".join(f"source-{source_paths.index(path) + 1}" for path in citations)
+            if repo_url
+            else ""
+        )
         body = slide_markup(number, slide, slide_dir, css, missing, citations=citations)
         sections.append(
             f'      <section id="slide-{number}" data-title="{_esc(slide_title)}" '
-            f'lang="{_esc(slide_language)}" data-chapter="{_esc(chapter)}" data-sources="{selected_ids}">'
+            f'lang="{_esc(slide_language)}" data-chapter="{_esc(chapter)}" '
+            f'data-sources="{selected_ids}">'
             f"{body}</section>"
         )
 
@@ -655,11 +772,18 @@ def build_deck_source(
     files[BUILD_SUMMARY] = (
         json.dumps(
             {
-                "schema_version": 2, "renderer": "hve-slides", "format": "html",
-                "slides": len(slides), "slide_ids": [f"slide-{n}" for n, _ in slides],
+                "schema_version": 2,
+                "renderer": "hve-slides",
+                "format": "html",
+                "slides": len(slides),
+                "slide_ids": [f"slide-{n}" for n, _ in slides],
                 "content_sha256": content_digest(level_dir),
-                "missing_images": missing, "sources": len(source_paths),
-                "source_files": {name: hashlib.sha256(data).hexdigest() for name, data in files.items()},
+                "missing_images": missing,
+                "sources": len(source_paths),
+                "source_files": {
+                    name: hashlib.sha256(data).hexdigest()
+                    for name, data in files.items()
+                },
                 "template_files": {
                     name: hashlib.sha256((template / name).read_bytes()).hexdigest()
                     for name in (*COPIED_FILES, "index.html", "components.css")
@@ -669,20 +793,35 @@ def build_deck_source(
         )
         + "\n"
     ).encode("utf-8")
-    existing = [name for name in files if checked_path(deck_dir / name, level_dir).exists()]
+    existing = [
+        name for name in files if checked_path(deck_dir / name, level_dir).exists()
+    ]
     if existing:
         marker = checked_path(deck_dir / BUILD_SUMMARY, level_dir)
         if not marker.is_file():
-            raise CheckError("Source directory contains unowned files; choose a new --deck-dir")
+            raise CheckError(
+                "Source directory contains unowned files; choose a new --deck-dir"
+            )
         previous = json.loads(marker.read_text(encoding="utf-8"))
-        if not isinstance(previous, dict) or previous.get("schema_version") != 2 or previous.get("renderer") != "hve-slides":
-            raise CheckError("Source ownership record is incompatible; preserve it and choose a new --deck-dir")
+        if (
+            not isinstance(previous, dict)
+            or previous.get("schema_version") != 2
+            or previous.get("renderer") != "hve-slides"
+        ):
+            raise CheckError(
+                "Source ownership record is incompatible; "
+                "preserve it and choose a new --deck-dir"
+            )
         recorded = previous.get("source_files")
         if not isinstance(recorded, dict) or any(
-            name != BUILD_SUMMARY and recorded.get(name) != hashlib.sha256((deck_dir / name).read_bytes()).hexdigest()
+            name != BUILD_SUMMARY
+            and recorded.get(name)
+            != hashlib.sha256((deck_dir / name).read_bytes()).hexdigest()
             for name in existing
         ):
-            raise CheckError("Generated source was edited; preserve it and choose a new --deck-dir")
+            raise CheckError(
+                "Generated source was edited; preserve it and choose a new --deck-dir"
+            )
     install_files(deck_dir, files)
     return deck_dir
 

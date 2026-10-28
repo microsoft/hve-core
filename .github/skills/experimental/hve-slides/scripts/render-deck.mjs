@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { mkdir, mkdtemp, readdir, rmdir, unlink } from 'node:fs/promises';
 import path from 'node:path';

@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 """Tests for render_checks module."""
 
-import json
-import html
 import hashlib
+import html
+import json
 import os
 import shutil
 import subprocess
@@ -13,7 +13,6 @@ import wave
 from pathlib import Path
 
 import pytest
-from test_artifact_lookup import _published, SITE
 from render_checks import (
     LEVELS,
     STYLE_TEMPLATE,
@@ -47,6 +46,7 @@ from render_checks import (
     validate_scripted_render,
     verify_open_captions,
 )
+from test_artifact_lookup import SITE, _published
 
 _MINI_CURRICULUM = """# Curriculum
 
@@ -107,13 +107,20 @@ def _write_slides(level_dir: Path, count: int, notes: str = "one two three") -> 
 
 _SLIDES_ROOT = Path(__file__).resolve().parents[2] / "hve-slides"
 _THEME = (_SLIDES_ROOT / "templates/deck/theme.css").read_text(encoding="utf-8")
-_COMPONENTS = (_SLIDES_ROOT / "templates/deck/components.css").read_text(encoding="utf-8")
-_LAYOUT = (Path(__file__).resolve().parents[1] / "templates/html-deck.css").read_text(encoding="utf-8")
+_COMPONENTS = (_SLIDES_ROOT / "templates/deck/components.css").read_text(
+    encoding="utf-8"
+)
+_LAYOUT = (Path(__file__).resolve().parents[1] / "templates/html-deck.css").read_text(
+    encoding="utf-8"
+)
 _STYLED_HTML = (
     '<style data-bundled-source="vendor/reveal.css">\n.reveal {}\n</style>'
     f'<style data-bundled-source="theme.css">\n{_THEME}\n</style>'
     '<style data-bundled-source="components.css">\n'
-    + _COMPONENTS.rstrip() + '\n' + _LAYOUT + '\n</style>'
+    + _COMPONENTS.rstrip()
+    + "\n"
+    + _LAYOUT
+    + "\n</style>"
 )
 
 
@@ -126,13 +133,23 @@ def _write_deck(
 ) -> None:
     """Write minimal HTML with the same title/language/alternative fixtures."""
     lang = f' lang="{html.escape(language)}"' if language else ""
-    pic = f'<div role="img" aria-label="{html.escape(picture_descr)}"></div>' if picture_descr is not None else ""
+    pic = (
+        f'<div role="img" aria-label="{html.escape(picture_descr)}"></div>'
+        if picture_descr is not None
+        else ""
+    )
     sections = []
     for number in range(1, slides + 1):
         title = f"Slide title {number}"
         heading = f"<h2>{title}</h2>" if titled else ""
-        sections.append(f'<section id="slide-{number}" data-title="{title}">{heading}{pic}</section>')
-    path.write_text(f'<html{lang}><head>{_STYLED_HTML}</head><body>{"".join(sections)}</body></html>', encoding="utf-8")
+        sections.append(
+            f'<section id="slide-{number}" data-title="{title}">'
+            f"{heading}{pic}</section>"
+        )
+    path.write_text(
+        f"<html{lang}><head>{_STYLED_HTML}</head><body>{''.join(sections)}</body></html>",
+        encoding="utf-8",
+    )
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -567,7 +584,10 @@ class TestEvaluate:
     def _english_subtitles(self, mocker):
         mocker.patch("render_checks.subtitle_languages", return_value=["eng"])
         mocker.patch("render_checks.open_caption_evidence_problems", return_value=[])
-        mocker.patch("render_checks.check_html_deck", return_value={"result": "pass", "evidence": "matching HTML/frame fixture"})
+        mocker.patch(
+            "render_checks.check_html_deck",
+            return_value={"result": "pass", "evidence": "matching HTML/frame fixture"},
+        )
 
     @pytest.mark.parametrize("probe", [measure_minutes, subtitle_languages])
     def test_given_no_ffprobe_when_probed_then_none(self, tmp_path, mocker, probe):
@@ -582,16 +602,28 @@ class TestEvaluate:
         import yaml
 
         _write_slides(tmp_path, 3)
-        (tmp_path / "manifest.yml").write_text(yaml.safe_dump({
-            "schema_version": 6, "renderer": "hve-slides", "format": "html", "level": level,
-            "deliverables": {
-                "html_deck": f"output/hve-demo-{level}.html", "mp4": f"output/hve-demo-{level}.mp4",
-                "raw_assembly": f"output/hve-demo-{level}.raw.mp4", "captions": f"output/hve-demo-{level}.vtt",
-                "transcript_page": "output/index.html", "open_caption_evidence": "output/open-captions.json",
-                "html_build_evidence": "output/html-deck-build.json", "html_frame_evidence": "output/html-deck-check.json",
-                "render_result": "output/render-result.json",
-            },
-        }), encoding="utf-8")
+        (tmp_path / "manifest.yml").write_text(
+            yaml.safe_dump(
+                {
+                    "schema_version": 6,
+                    "renderer": "hve-slides",
+                    "format": "html",
+                    "level": level,
+                    "deliverables": {
+                        "html_deck": f"output/hve-demo-{level}.html",
+                        "mp4": f"output/hve-demo-{level}.mp4",
+                        "raw_assembly": f"output/hve-demo-{level}.raw.mp4",
+                        "captions": f"output/hve-demo-{level}.vtt",
+                        "transcript_page": "output/index.html",
+                        "open_caption_evidence": "output/open-captions.json",
+                        "html_build_evidence": "output/html-deck-build.json",
+                        "html_frame_evidence": "output/html-deck-check.json",
+                        "render_result": "output/render-result.json",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
         (tmp_path / "output").mkdir()
         (tmp_path / "output" / f"hve-demo-{level}.mp4").write_bytes(b"mp4")
         (tmp_path / "output" / "segments.yml").write_text(
@@ -619,7 +651,9 @@ class TestEvaluate:
         mocker.patch("render_checks.measure_minutes", return_value=5.0)
 
         # Act
-        result = evaluate("L100", level_dir, load_curriculum(), slides_skill_root=_SLIDES_ROOT)
+        result = evaluate(
+            "L100", level_dir, load_curriculum(), slides_skill_root=_SLIDES_ROOT
+        )
 
         # Assert
         assert result["ok"] is True, result["checks"]
@@ -635,7 +669,9 @@ class TestEvaluate:
         mocker.patch("render_checks.measure_minutes", return_value=9.0)
 
         # Act
-        result = evaluate("L300", level_dir, load_curriculum(), slides_skill_root=_SLIDES_ROOT)
+        result = evaluate(
+            "L300", level_dir, load_curriculum(), slides_skill_root=_SLIDES_ROOT
+        )
 
         # Assert
         assert result["ok"] is False
@@ -651,7 +687,11 @@ class TestEvaluate:
 
         # Act
         result = evaluate(
-            "L300", level_dir, load_curriculum(), capture_profile="deck-export", slides_skill_root=_SLIDES_ROOT
+            "L300",
+            level_dir,
+            load_curriculum(),
+            capture_profile="deck-export",
+            slides_skill_root=_SLIDES_ROOT,
         )
 
         # Assert
@@ -666,7 +706,17 @@ class TestEvaluate:
         mocker.patch("render_checks.measure_minutes", return_value=7.0)
 
         # Act
-        rc = main(["evaluate", "--level", "L100", "--level-dir", str(level_dir), "--slides-skill-root", str(_SLIDES_ROOT)])
+        rc = main(
+            [
+                "evaluate",
+                "--level",
+                "L100",
+                "--level-dir",
+                str(level_dir),
+                "--slides-skill-root",
+                str(_SLIDES_ROOT),
+            ]
+        )
 
         # Assert
         assert rc == 1
@@ -678,7 +728,9 @@ class TestContentPalette:
 
     def test_given_content_colour_outside_palette_when_checked_then_fail(self):
         # Arrange
-        style = _STYLED_HTML.replace(_LAYOUT, _LAYOUT + ".slide-002 { color: #10B981; }\n")
+        style = _STYLED_HTML.replace(
+            _LAYOUT, _LAYOUT + ".slide-002 { color: #10B981; }\n"
+        )
 
         # Act
         result = check_style(style, _THEME, _COMPONENTS)
@@ -770,7 +822,9 @@ class TestSilentTiming:
                 "SITE": str(site),
                 "RENDERS": str(renders),
                 "SOURCE_SHA": "b" * 40,
-                "LOOKUP": str(Path(__file__).resolve().parents[1] / "scripts/artifact_lookup.py"),
+                "LOOKUP": str(
+                    Path(__file__).resolve().parents[1] / "scripts/artifact_lookup.py"
+                ),
                 "AUTHOR_RUN_ID": "1",
                 "RENDER_RUN_ID": "2",
                 "RUNNER_TEMP": str(tmp_path),

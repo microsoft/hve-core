@@ -22,14 +22,14 @@ Authoring uses the caller's working directory or explicit workspace root, never 
 
 ### Security Posture Overview
 
-| Surface | Control | Residual |
-|---------|---------|----------|
-| Source reads | Fixed files, no-follow handles and identity checks | Concurrent ancestor replacement by a local writer |
-| Dependencies | Pinned reveal.js and exact patch anchors | Compromised local installation |
-| Output | Explicit destination, private staging and rename | Operator approval of destination and content |
-| Browser | Resource markup rejection | Authored JavaScript can create requests at runtime |
-| Authoring | Explicit/caller workspace, create-only scaffold | Operator selects and trusts workspace |
-| Build-all | Regular deck-module check, declared output verification | Workspace programs execute with Node privileges |
+| Surface      | Control                                                 | Residual                                           |
+|--------------|---------------------------------------------------------|----------------------------------------------------|
+| Source reads | Fixed files, no-follow handles and identity checks      | Concurrent ancestor replacement by a local writer  |
+| Dependencies | Pinned reveal.js and exact patch anchors                | Compromised local installation                     |
+| Output       | Explicit destination, private staging and rename        | Operator approval of destination and content       |
+| Browser      | Resource markup rejection                               | Authored JavaScript can create requests at runtime |
+| Authoring    | Explicit/caller workspace, create-only scaffold         | Operator selects and trusts workspace              |
+| Build-all    | Regular deck-module check, declared output verification | Workspace programs execute with Node privileges    |
 
 ## Contents
 
@@ -98,29 +98,29 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Protected asset | Control |
-|----------|-----------------|---------|
-| Source to renderer | Host process | No dynamic caller imports; input consumed as strings |
-| Renderer to filesystem | Source and installation | Explicit output outside source/install; link checks and rename |
-| HTML to browser | Recipient context | Review and isolated validation owned by caller; no sanitizer claim |
-| Workspace program to build-all | Host process | Operator trust required; regular-file checks are not sandboxing |
+| Boundary                       | Protected asset         | Control                                                            |
+|--------------------------------|-------------------------|--------------------------------------------------------------------|
+| Source to renderer             | Host process            | No dynamic caller imports; input consumed as strings               |
+| Renderer to filesystem         | Source and installation | Explicit output outside source/install; link checks and rename     |
+| HTML to browser                | Recipient context       | Review and isolated validation owned by caller; no sanitizer claim |
+| Workspace program to build-all | Host process            | Operator trust required; regular-file checks are not sandboxing    |
 
 ## Assets
 
-| ID | Asset |
-|----|-------|
+| ID | Asset                                         |
+|----|-----------------------------------------------|
 | A1 | Caller source, notes and embedded information |
-| A2 | Host filesystem and installed renderer |
-| A3 | Final HTML integrity and dependency notices |
-| A4 | Recipient browser context |
+| A2 | Host filesystem and installed renderer        |
+| A3 | Final HTML integrity and dependency notices   |
+| A4 | Recipient browser context                     |
 
 ## Adversaries
 
-| ID | Capability |
-|----|------------|
+| ID    | Capability                                                    |
+|-------|---------------------------------------------------------------|
 | ADV-a | Supplies crafted source or substitutes local dependency files |
-| ADV-b | Concurrent local writer with access to caller directories |
-| ADV-c | Recipient or publisher redistributes private embedded notes |
+| ADV-b | Concurrent local writer with access to caller directories     |
+| ADV-c | Recipient or publisher redistributes private embedded notes   |
 
 ## Bucket B1 Source and Dependency Parsing
 
@@ -150,11 +150,11 @@ The CLI statically imports its own modules rather than caller `build.mjs`. Autho
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Source/dependency substitution | Low | High | Medium | Partially mitigated |
-| Embedded private notes | Medium | Medium | Medium | Operator review required |
-| Oversized input | Low | Medium | Medium | Open |
+| Threat                         | Likelihood | Impact | Residual Risk | Status                   |
+|--------------------------------|------------|--------|---------------|--------------------------|
+| Source/dependency substitution | Low        | High   | Medium        | Partially mitigated      |
+| Embedded private notes         | Medium     | Medium | Medium        | Operator review required |
+| Oversized input                | Low        | Medium | Medium        | Open                     |
 
 ## Bucket B2 Output and Recipient Execution
 
@@ -184,11 +184,11 @@ No shell, network, package script or browser is invoked by the CLI. Browser exec
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Filesystem redirection race | Low | High | Medium | Operator-controlled directories required |
-| Runtime script behavior | Medium | High | Medium | Caller review/isolation required |
-| Misattributed delivery | Low | Medium | Low | Provenance, not attestation |
+| Threat                      | Likelihood | Impact | Residual Risk | Status                                   |
+|-----------------------------|------------|--------|---------------|------------------------------------------|
+| Filesystem redirection race | Low        | High   | Medium        | Operator-controlled directories required |
+| Runtime script behavior     | Medium     | High   | Medium        | Caller review/isolation required         |
+| Misattributed delivery      | Low        | Medium | Low           | Provenance, not attestation              |
 
 ## Bucket B3 Authoring and Trusted Workspace Builds
 
@@ -218,22 +218,22 @@ Workspace bundlers execute with the user's Node privileges. Regular-file checks 
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Untrusted workspace module execution | Medium | High | High | Trusted workspaces only |
-| Incorrect workspace selection | Low | Medium | Low | Explicit root and overwrite refusal |
-| Concurrent local directory replacement | Low | High | Medium | Operator-controlled directories required |
+| Threat                                 | Likelihood | Impact | Residual Risk | Status                                   |
+|----------------------------------------|------------|--------|---------------|------------------------------------------|
+| Untrusted workspace module execution   | Medium     | High   | High          | Trusted workspaces only                  |
+| Incorrect workspace selection          | Low        | Medium | Low           | Explicit root and overwrite refusal      |
+| Concurrent local directory replacement | Low        | High   | Medium        | Operator-controlled directories required |
 
 ## Enterprise Readiness Gaps
 
-| ID | Severity | Gap | Status |
-|----|----------|-----|--------|
-| G-TAM-1 | Tampering-Med | Ancestor checks are not a filesystem sandbox against a concurrent local writer. | Open; use private caller directories |
-| G-INF-1 | InfoDisc-Med | No classification gate for embedded notes or strings. | Operator review |
-| G-DOS-1 | DoS-Med | No aggregate input-size limit or runtime browser resource cap. | Caller containment |
-| G-EOP-1 | EoP-Med | Bundling does not sanitize authored browser JavaScript. | Review and offline isolated validation |
-| G-EOP-2 | EoP-High | Build-all executes workspace-authored Node modules without sandboxing. | Trusted workspaces only; render-only for imported content |
-| G-SUP-1 | SupplyChain-Med | Pin/anchors do not attest the complete local dependency installation. | Locked restore and host trust |
+| ID      | Severity        | Gap                                                                             | Status                                                    |
+|---------|-----------------|---------------------------------------------------------------------------------|-----------------------------------------------------------|
+| G-TAM-1 | Tampering-Med   | Ancestor checks are not a filesystem sandbox against a concurrent local writer. | Open; use private caller directories                      |
+| G-INF-1 | InfoDisc-Med    | No classification gate for embedded notes or strings.                           | Operator review                                           |
+| G-DOS-1 | DoS-Med         | No aggregate input-size limit or runtime browser resource cap.                  | Caller containment                                        |
+| G-EOP-1 | EoP-Med         | Bundling does not sanitize authored browser JavaScript.                         | Review and offline isolated validation                    |
+| G-EOP-2 | EoP-High        | Build-all executes workspace-authored Node modules without sandboxing.          | Trusted workspaces only; render-only for imported content |
+| G-SUP-1 | SupplyChain-Med | Pin/anchors do not attest the complete local dependency installation.           | Locked restore and host trust                             |
 
 ## References
 

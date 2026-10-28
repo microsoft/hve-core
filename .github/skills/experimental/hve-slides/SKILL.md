@@ -215,9 +215,9 @@ deck. Repository-relative pointers refer to this checkout; re-resolve them if th
 
 | Material                                                                    | License   |
 |-----------------------------------------------------------------------------|-----------|
-| `SKILL.md` and reference prose                                            | CC-BY-4.0 |
+| `SKILL.md` and reference prose                                              | CC-BY-4.0 |
 | Code examples in `references/style-recipes.md` and `references/bundling.md` | MIT       |
-| `scripts/`, `tests/` and fragment code                                     | MIT       |
+| `scripts/`, `tests/` and fragment code                                      | MIT       |
 
 The canonical `templates/deck/` belongs to this skill. Its code is MIT and its README
 is CC BY 4.0. Preserve the template `LICENSE` and the installed reveal.js license embedded

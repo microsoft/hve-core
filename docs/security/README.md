@@ -56,8 +56,8 @@ Skills whose shipped scripts make network requests, handle credentials, parse co
 
 HVE Slides uses one packaged skill for authoring and render-only delivery:
 
-| Skill | Runtime surface | Security model |
-|-------|-----------------|----------------|
+| Skill                     | Runtime surface                                                                       | Security model                                                                                                    |
+|---------------------------|---------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
 | hve-slides (experimental) | Caller-owned scaffolding, trusted workspace Node builds and standalone HTML rendering | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-slides/SECURITY.md) |
 
 ## Security Posture

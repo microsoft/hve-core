@@ -29,13 +29,13 @@ The adapter rejects unsupported meaningful content and confines image/source wri
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                                                                                           |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| Runtime surface    | GitHub REST API and Pages downloads; local file writes and deletes; node, npm, ffmpeg, ffprobe, uv, git subprocesses; offline headless Chromium |
-| Trust buckets      | B1 API client and token, B2 site recovery, B3 deck generation, B4 program orchestration, B5 caller and files                                    |
-| Credentials        | GITHUB_TOKEN read from the environment and sent as a bearer header; Azure Speech credentials only inherited                                     |
-| Network egress     | api.github.com (or GITHUB_API_URL), the repository's GitHub Pages site, the npm registry during npm ci                                          |
-| Residual gaps | Token endpoint/redirect handling, input size, private content, local races and operator-managed runtime/skill provenance |
+| Dimension       | Value                                                                                                                                           |
+|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| Runtime surface | GitHub REST API and Pages downloads; local file writes and deletes; node, npm, ffmpeg, ffprobe, uv, git subprocesses; offline headless Chromium |
+| Trust buckets   | B1 API client and token, B2 site recovery, B3 deck generation, B4 program orchestration, B5 caller and files                                    |
+| Credentials     | GITHUB_TOKEN read from the environment and sent as a bearer header; Azure Speech credentials only inherited                                     |
+| Network egress  | api.github.com (or GITHUB_API_URL), the repository's GitHub Pages site, the npm registry during npm ci                                          |
+| Residual gaps   | Token endpoint/redirect handling, input size, private content, local races and operator-managed runtime/skill provenance                        |
 
 ## Contents
 
@@ -154,21 +154,21 @@ flowchart TD
 | A3 | Authored level content                 | Command lifetime | Slide YAML, speaker notes, manifest, capture plan, and referenced images; may originate from an upstream pipeline fed by untrusted material.                                            |
 | A4 | Captured frames and narration audio    | Command lifetime | Live VS Code captures and speaker-note audio; can contain confidential on-screen material; notes are sent to Azure Speech under `azure`.                                                |
 | A5 | Published bundle and artifact metadata | Per-invocation   | `index.json` and level files on GitHub Pages; run and artifact identifiers from the GitHub API.                                                                                         |
-| A6 | Rendered outputs | Command lifetime | HTML, MP4, WebVTT, transcript, segments, JPEG frames and build/browser/media evidence under the level directory |
-| A7 | Level directory and surrounding files | Persistent | Adapter uses checked fixed-file rollback writes; shell cleanup and other media writes remain separate controls. |
+| A6 | Rendered outputs                       | Command lifetime | HTML, MP4, WebVTT, transcript, segments, JPEG frames and build/browser/media evidence under the level directory                                                                         |
+| A7 | Level directory and surrounding files  | Persistent       | Adapter uses checked fixed-file rollback writes; shell cleanup and other media writes remain separate controls.                                                                         |
 | A8 | HVE Slides template                    | Per-invocation   | `bundle.mjs`, `package.json`, `package-lock.json`, and `.npmrc` copied into the deck folder and executed or consumed by node and npm; its deck runtime also runs in the Chromium check. |
 | A9 | Host binaries                          | Per-invocation   | `node`, `npm`, `uv`, `ffmpeg`, `ffprobe`, `git`, and the Chromium that Playwright launches, resolved from the caller's PATH or the Playwright browser install.                          |
 
 ## Adversaries
 
-| Id    | Adversary                                   | In-scope mitigations                                                                                                                                                                                                                                                                                                                                                                  |
-|-------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Hostile or malformed authored content | Safe YAML parsing, escaped text/attributes, validated identities and mappings, confined image reads with link refusal; approved-root content still requires disclosure review (G-INF-1). |
-| ADV-b | Spoofed or compromised API or site endpoint | The site URL must start with `https://` and every request has a 60 s timeout. `GITHUB_API_URL` is not validated and redirects use urllib defaults (G-TLS-1).                                                                                                                                                                                                                          |
-| ADV-c | Hostile published bundle | v2 identities, fixed file inventories, SHA-256 and linked HTML/media evidence are checked. Known obsolete metadata can select regeneration but cannot supply delivery files. Unsigned publisher authenticity remains a residual (G-TAM-3). |
-| ADV-d | Hostile template or dependency              | `npm ci` runs with `--ignore-scripts` against the template's lockfile, and the Chromium check opens the bundle with the network disabled and fails on any external request. The template's `bundle.mjs` and `.npmrc` are still executed or honored, and its deck runtime runs in the browser (G-EOP-1, G-EOP-2, G-SUP-1).                                                             |
-| ADV-e | Hostile workspace repository                | Only fixed read-only git subcommands run (`remote get-url origin`, `rev-parse HEAD`) with a 30 s timeout. Only owner and repository name survive into the deck, so credentials in the remote URL are dropped, and the commit must be 40 hex characters.                                                                                                                               |
-| ADV-f | Hostile caller controlling argv or env | Quoted arguments, validated modes, caller-owned roots and link/refusal checks limit writes. Concurrent local races and trusted installation identity remain operator responsibilities. |
+| Id    | Adversary                                   | In-scope mitigations                                                                                                                                                                                                                                                                                                      |
+|-------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Hostile or malformed authored content       | Safe YAML parsing, escaped text/attributes, validated identities and mappings, confined image reads with link refusal; approved-root content still requires disclosure review (G-INF-1).                                                                                                                                  |
+| ADV-b | Spoofed or compromised API or site endpoint | The site URL must start with `https://` and every request has a 60 s timeout. `GITHUB_API_URL` is not validated and redirects use urllib defaults (G-TLS-1).                                                                                                                                                              |
+| ADV-c | Hostile published bundle                    | v2 identities, fixed file inventories, SHA-256 and linked HTML/media evidence are checked. Known obsolete metadata can select regeneration but cannot supply delivery files. Unsigned publisher authenticity remains a residual (G-TAM-3).                                                                                |
+| ADV-d | Hostile template or dependency              | `npm ci` runs with `--ignore-scripts` against the template's lockfile, and the Chromium check opens the bundle with the network disabled and fails on any external request. The template's `bundle.mjs` and `.npmrc` are still executed or honored, and its deck runtime runs in the browser (G-EOP-1, G-EOP-2, G-SUP-1). |
+| ADV-e | Hostile workspace repository                | Only fixed read-only git subcommands run (`remote get-url origin`, `rev-parse HEAD`) with a 30 s timeout. Only owner and repository name survive into the deck, so credentials in the remote URL are dropped, and the commit must be 40 hex characters.                                                                   |
+| ADV-f | Hostile caller controlling argv or env      | Quoted arguments, validated modes, caller-owned roots and link/refusal checks limit writes. Concurrent local races and trusted installation identity remain operator responsibilities.                                                                                                                                    |
 
 ## Bucket B1: GitHub API client and token handling
 
@@ -242,11 +242,11 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                     | Likelihood | Impact | Residual Risk | Status                          |
-|--------------------------------------------|------------|--------|---------------|---------------------------------|
-| Path traversal through hostile index.json  | Low        | High   | Low           | Mitigated (SITE_FILE allowlist) |
-| Tampered bundle restaged and republished | Low | Med | Low | Hash/schema/evidence checks; publisher authenticity remains (G-TAM-3) |
-| Oversized download exhausts memory or disk | Low        | Low    | Low           | Accepted (G-DOS-1)              |
+| Threat                                     | Likelihood | Impact | Residual Risk | Status                                                                |
+|--------------------------------------------|------------|--------|---------------|-----------------------------------------------------------------------|
+| Path traversal through hostile index.json  | Low        | High   | Low           | Mitigated (SITE_FILE allowlist)                                       |
+| Tampered bundle restaged and republished   | Low        | Med    | Low           | Hash/schema/evidence checks; publisher authenticity remains (G-TAM-3) |
+| Oversized download exhausts memory or disk | Low        | Low    | Low           | Accepted (G-DOS-1)                                                    |
 
 ## Bucket B3: Deck source generation from authored content
 
@@ -285,13 +285,13 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                           | Likelihood | Impact | Residual Risk | Status                             |
-|--------------------------------------------------|------------|--------|---------------|------------------------------------|
-| Image paths disclose unrelated host files | Low | Med | Low | Mitigated by containment and link refusal (G-INF-1) |
-| HTML or script injection through slide text      | Low        | Med    | Low           | Mitigated (html.escape, safe_load) |
-| HTML or caption injection through authored text  | Low        | Med    | Low           | Mitigated (html.escape, CSP)       |
-| Credential leakage through citation remote URL   | Low        | Med    | Low           | Mitigated (owner/repo only)        |
-| Unintended deletion through --deck-dir | Low | High | Low | Adapter uses bounded rollback writes; local races remain (G-TAM-1) |
+| Threat                                          | Likelihood | Impact | Residual Risk | Status                                                             |
+|-------------------------------------------------|------------|--------|---------------|--------------------------------------------------------------------|
+| Image paths disclose unrelated host files       | Low        | Med    | Low           | Mitigated by containment and link refusal (G-INF-1)                |
+| HTML or script injection through slide text     | Low        | Med    | Low           | Mitigated (html.escape, safe_load)                                 |
+| HTML or caption injection through authored text | Low        | Med    | Low           | Mitigated (html.escape, CSP)                                       |
+| Credential leakage through citation remote URL  | Low        | Med    | Low           | Mitigated (owner/repo only)                                        |
+| Unintended deletion through --deck-dir          | Low        | High   | Low           | Adapter uses bounded rollback writes; local races remain (G-TAM-1) |
 
 ## Bucket B4: External program orchestration
 
@@ -330,14 +330,14 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                                   | Likelihood | Impact | Residual Risk | Status                          |
-|----------------------------------------------------------|------------|--------|---------------|---------------------------------|
-| Substituted trusted skill executed by Node | Low | High | Med | Imported-source execution removed; trusted installation identity remains (G-EOP-1) |
-| Chromium renderer exploit through a hostile deck | Low | High | Low | Sandbox and isolated origin enabled; keep browser patched (G-EOP-2) |
-| Dependency or binary substitution                        | Low        | High   | Med           | Open (G-SUP-1)                  |
-| Confidential material in captures or narration           | Med        | Med    | Med           | Partially Mitigated (G-INF-2)   |
-| Command injection through level or workspace paths       | Low        | High   | Low           | Mitigated (quoting, validation) |
-| Option injection through a recorded commit in index.json | Low        | Med    | Low           | Mitigated (40-hex check)        |
+| Threat                                                   | Likelihood | Impact | Residual Risk | Status                                                                             |
+|----------------------------------------------------------|------------|--------|---------------|------------------------------------------------------------------------------------|
+| Substituted trusted skill executed by Node               | Low        | High   | Med           | Imported-source execution removed; trusted installation identity remains (G-EOP-1) |
+| Chromium renderer exploit through a hostile deck         | Low        | High   | Low           | Sandbox and isolated origin enabled; keep browser patched (G-EOP-2)                |
+| Dependency or binary substitution                        | Low        | High   | Med           | Open (G-SUP-1)                                                                     |
+| Confidential material in captures or narration           | Med        | Med    | Med           | Partially Mitigated (G-INF-2)                                                      |
+| Command injection through level or workspace paths       | Low        | High   | Low           | Mitigated (quoting, validation)                                                    |
+| Option injection through a recorded commit in index.json | Low        | Med    | Low           | Mitigated (40-hex check)                                                           |
 
 ## Bucket B5: CLI caller process and filesystem
 
@@ -380,19 +380,19 @@ The caller controls argv, environment, and the output locations (`--target`, `--
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                                                                                                                                                          | Severity        | Status                                                                                                                                           |
-|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| G-TLS-1 | `GITHUB_API_URL` and `--site-url` are not restricted by scheme or host (the API URL accepts `http://`), and the API client keeps urllib's default redirect handling, which forwards the `Authorization` header on a cross-host redirect, so the bearer token could reach an unintended host.                 | InfoDisc-Med    | Run only where the runner sets `GITHUB_API_URL`; use a least-privilege read-only token; planned fix is to require HTTPS and an allowlisted host. |
-| G-INF-1 | Image content under the approved content root may still be confidential; path checks cannot classify it. | InfoDisc-Low | Outside-root and symlink reads mitigated; review approved-root images before delivery. |
-| G-INF-2 | Live captures, frames, narration, and the generated transcript page can contain confidential workspace content, and nothing redacts them before a human-configured pipeline publishes them. Under `azure`, speaker notes leave the host.                                                                     | InfoDisc-Med    | Rely on the delivery approval step; use approved regions and avoid confidential material in captures and notes.                                  |
-| G-TAM-1 | Concurrent hostile local writers can race path checks and replacements. | Tampering-Low | Recursive source cleanup removed; source/frame ownership and rollback controls mitigate accidental replacement. Isolate local writers. |
-| G-TAM-2 | The caller-controlled workflow identifier is interpolated into an API path without quoting. | Tampering-Low | File inventories use full-match validation and GitHub outputs reject newlines; use trusted workflow identifiers and API endpoints. |
-| G-TAM-3 | A compromised publisher can replace content and its unsigned digest list together. | Tampering-Low | Per-file SHA-256, schema and linked evidence are checked during recovery/deployment; retain publisher access controls. |
-| G-DOS-1 | API/download responses, HTML, YAML and embedded images have no total size cap; pagination has no page cap; node/npm/media/git and sibling processes can outlive their intended run without host limits. | DoS-Low | Run under job timeouts and memory/disk limits. |
-| G-EOP-1 | The caller-selected trusted HVE Slides installation runs with Node privileges; a substituted installation can execute code. | EoP-Med | Source-supplied build programs are not imported. Verify trusted skill provenance. |
-| G-EOP-2 | Browser-engine vulnerabilities remain despite offline routing and the Chromium sandbox. | EoP-Low | Sandbox is explicitly enabled; unavailable support fails. Patch browsers and isolate render hosts. |
-| G-SUP-1 | `npm ci` and `uv run` fetch dependencies at render time, the Chromium that Playwright launches is a host-installed browser binary, and `node`, `npm`, `uv`, `ffmpeg`, `ffprobe`, and `git` are operator-installed and unpinned.                                                                              | SupplyChain-Med | Rely on lockfiles; pin and patch host binaries through the runner image.                                                                         |
-| G-SUP-2 | HVE Slides, narration, assembly and live-capture implementations are separate trust boundaries, not certified by this model. | SupplyChain-Low | Follow their security models and verify installed revisions; no runtime certification is implied here. |
+| Id      | Gap                                                                                                                                                                                                                                                                                          | Severity        | Status                                                                                                                                           |
+|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| G-TLS-1 | `GITHUB_API_URL` and `--site-url` are not restricted by scheme or host (the API URL accepts `http://`), and the API client keeps urllib's default redirect handling, which forwards the `Authorization` header on a cross-host redirect, so the bearer token could reach an unintended host. | InfoDisc-Med    | Run only where the runner sets `GITHUB_API_URL`; use a least-privilege read-only token; planned fix is to require HTTPS and an allowlisted host. |
+| G-INF-1 | Image content under the approved content root may still be confidential; path checks cannot classify it.                                                                                                                                                                                     | InfoDisc-Low    | Outside-root and symlink reads mitigated; review approved-root images before delivery.                                                           |
+| G-INF-2 | Live captures, frames, narration, and the generated transcript page can contain confidential workspace content, and nothing redacts them before a human-configured pipeline publishes them. Under `azure`, speaker notes leave the host.                                                     | InfoDisc-Med    | Rely on the delivery approval step; use approved regions and avoid confidential material in captures and notes.                                  |
+| G-TAM-1 | Concurrent hostile local writers can race path checks and replacements.                                                                                                                                                                                                                      | Tampering-Low   | Recursive source cleanup removed; source/frame ownership and rollback controls mitigate accidental replacement. Isolate local writers.           |
+| G-TAM-2 | The caller-controlled workflow identifier is interpolated into an API path without quoting.                                                                                                                                                                                                  | Tampering-Low   | File inventories use full-match validation and GitHub outputs reject newlines; use trusted workflow identifiers and API endpoints.               |
+| G-TAM-3 | A compromised publisher can replace content and its unsigned digest list together.                                                                                                                                                                                                           | Tampering-Low   | Per-file SHA-256, schema and linked evidence are checked during recovery/deployment; retain publisher access controls.                           |
+| G-DOS-1 | API/download responses, HTML, YAML and embedded images have no total size cap; pagination has no page cap; node/npm/media/git and sibling processes can outlive their intended run without host limits.                                                                                      | DoS-Low         | Run under job timeouts and memory/disk limits.                                                                                                   |
+| G-EOP-1 | The caller-selected trusted HVE Slides installation runs with Node privileges; a substituted installation can execute code.                                                                                                                                                                  | EoP-Med         | Source-supplied build programs are not imported. Verify trusted skill provenance.                                                                |
+| G-EOP-2 | Browser-engine vulnerabilities remain despite offline routing and the Chromium sandbox.                                                                                                                                                                                                      | EoP-Low         | Sandbox is explicitly enabled; unavailable support fails. Patch browsers and isolate render hosts.                                               |
+| G-SUP-1 | `npm ci` and `uv run` fetch dependencies at render time, the Chromium that Playwright launches is a host-installed browser binary, and `node`, `npm`, `uv`, `ffmpeg`, `ffprobe`, and `git` are operator-installed and unpinned.                                                              | SupplyChain-Med | Rely on lockfiles; pin and patch host binaries through the runner image.                                                                         |
+| G-SUP-2 | HVE Slides, narration, assembly and live-capture implementations are separate trust boundaries, not certified by this model.                                                                                                                                                                 | SupplyChain-Low | Follow their security models and verify installed revisions; no runtime certification is implied here.                                           |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

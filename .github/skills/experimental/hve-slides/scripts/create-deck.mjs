@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { constants } from 'node:fs';
 import { lstat, mkdir, open, realpath, writeFile } from 'node:fs/promises';

@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Tests for artifact_lookup: run discovery and published-bundle recovery."""
 
-import json
 import hashlib
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -247,33 +247,88 @@ def _published(levels=("L100",)):
         files[prefix + raw_name] = b"raw assembly"
         files[prefix + "manifest.yml"] = b"schema_version: 6\n"
         files[prefix + "source-register.md"] = b"Source register"
-        build = {"schema_version": 2, "renderer": "hve-slides", "format": "html", "slide_ids": ["slide-1"]}
+        build = {
+            "schema_version": 2,
+            "renderer": "hve-slides",
+            "format": "html",
+            "slide_ids": ["slide-1"],
+        }
         files[prefix + "html-deck-build.json"] = json.dumps(build).encode()
         browser = {
-            "schema_version": 2, "renderer": "hve-slides", "format": "html", "result": "pass",
-            "html_sha256": hashlib.sha256(files[prefix + f"hve-demo-{level}.html"]).hexdigest(),
-            "build_sha256": hashlib.sha256(files[prefix + "html-deck-build.json"]).hexdigest(),
-            "slide_ids": ["slide-1"], "frames": [{"slide_id": "slide-1", "path": "frames/deck/slide-001.jpg", "sha256": "a" * 64, "width": 1920, "height": 1080}],
+            "schema_version": 2,
+            "renderer": "hve-slides",
+            "format": "html",
+            "result": "pass",
+            "html_sha256": hashlib.sha256(
+                files[prefix + f"hve-demo-{level}.html"]
+            ).hexdigest(),
+            "build_sha256": hashlib.sha256(
+                files[prefix + "html-deck-build.json"]
+            ).hexdigest(),
+            "slide_ids": ["slide-1"],
+            "frames": [
+                {
+                    "slide_id": "slide-1",
+                    "path": "frames/deck/slide-001.jpg",
+                    "sha256": "a" * 64,
+                    "width": 1920,
+                    "height": 1080,
+                }
+            ],
         }
         files[prefix + "html-deck-check.json"] = json.dumps(browser).encode()
-        files[prefix + "open-captions.json"] = json.dumps({
-            "result": "pass",
-            "video_sha256": hashlib.sha256(files[prefix + f"hve-demo-{level}.mp4"]).hexdigest(),
-            "source_video_sha256": hashlib.sha256(files[prefix + raw_name]).hexdigest(),
-            "captions_sha256": hashlib.sha256(files[prefix + f"hve-demo-{level}.vtt"]).hexdigest(),
-        }).encode()
-        files[prefix + "render-result.json"] = json.dumps({
-            "schema_version": 2, "manifest_schema_version": 6, "renderer": "hve-slides", "format": "html",
-            "manifest_sha256": hashlib.sha256(files[prefix + "manifest.yml"]).hexdigest(),
-            "level": level, "ok": True, "capture_profile": "deck-export", "narration_engine": "none",
-            "timing_basis": "notes-word-count",
-            "checks": {key: {"result": "pass"} for key in ("T-04", "T-07", "T-08", "T-09", "T-10", "T-11")},
-        }).encode()
-        entry.update({
-            "renderer": "hve-slides", "format": "html", "render_schema_version": 2, "manifest_schema_version": 6,
-            "source_sha": "a" * 40, "author_run_id": "1", "render_run_id": "2",
-            "sha256": {url.removeprefix(f"{SITE}demo-material/"): hashlib.sha256(body).hexdigest() for url, body in files.items() if url.startswith(prefix)},
-        })
+        files[prefix + "open-captions.json"] = json.dumps(
+            {
+                "result": "pass",
+                "video_sha256": hashlib.sha256(
+                    files[prefix + f"hve-demo-{level}.mp4"]
+                ).hexdigest(),
+                "source_video_sha256": hashlib.sha256(
+                    files[prefix + raw_name]
+                ).hexdigest(),
+                "captions_sha256": hashlib.sha256(
+                    files[prefix + f"hve-demo-{level}.vtt"]
+                ).hexdigest(),
+            }
+        ).encode()
+        files[prefix + "render-result.json"] = json.dumps(
+            {
+                "schema_version": 2,
+                "manifest_schema_version": 6,
+                "renderer": "hve-slides",
+                "format": "html",
+                "manifest_sha256": hashlib.sha256(
+                    files[prefix + "manifest.yml"]
+                ).hexdigest(),
+                "level": level,
+                "ok": True,
+                "capture_profile": "deck-export",
+                "narration_engine": "none",
+                "timing_basis": "notes-word-count",
+                "checks": {
+                    key: {"result": "pass"}
+                    for key in ("T-04", "T-07", "T-08", "T-09", "T-10", "T-11")
+                },
+            }
+        ).encode()
+        entry.update(
+            {
+                "renderer": "hve-slides",
+                "format": "html",
+                "render_schema_version": 2,
+                "manifest_schema_version": 6,
+                "source_sha": "a" * 40,
+                "author_run_id": "1",
+                "render_run_id": "2",
+                "sha256": {
+                    url.removeprefix(f"{SITE}demo-material/"): hashlib.sha256(
+                        body
+                    ).hexdigest()
+                    for url, body in files.items()
+                    if url.startswith(prefix)
+                },
+            }
+        )
     return {f"{SITE}demo-material/index.json": json.dumps(index).encode(), **files}
 
 

@@ -27,7 +27,7 @@ Every extracted action item carries `intent ∈ {create, mutate, append, no-op}`
 
 | Intent   | Adapter behavior                                                                    |
 |----------|-------------------------------------------------------------------------------------|
-| `create` | Adapter creates a new artifact (work item, ADR, instructions file or document). |
+| `create` | Adapter creates a new artifact (work item, ADR, instructions file or document).     |
 | `mutate` | Adapter modifies an existing artifact identified by `hyperlink` or query.           |
 | `append` | Adapter appends to a living document section identified by `hyperlink` or anchor.   |
 | `no-op`  | Adapter records the rationale for not actioning (audit-only, `unactioned` adapter). |

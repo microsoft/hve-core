@@ -67,8 +67,12 @@ SITE_FILE = re.compile(
     r"|html-deck-(?:build|check)\.json|open-captions\.json)"
 )
 EVIDENCE_FILES = (
-    "render-result.json", "html-deck-build.json", "html-deck-check.json",
-    "open-captions.json", "manifest.yml", "source-register.md",
+    "render-result.json",
+    "html-deck-build.json",
+    "html-deck-check.json",
+    "open-captions.json",
+    "manifest.yml",
+    "source-register.md",
 )
 LEVELS = ("L100", "L200", "L300", "L400")
 PUBLISHED_FILE_KEYS = ("mp4", "vtt", "html", "page")
@@ -89,7 +93,11 @@ def safe_path(root: Path, relative: str = "") -> Path:
             info = candidate.lstat()
         except FileNotFoundError:
             continue
-        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400 or not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)):
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or getattr(info, "st_file_attributes", 0) & 0x400
+            or not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode))
+        ):
             raise ArtifactLookupError(f"non-regular bundle path: {candidate.name}")
     return path
 
@@ -107,25 +115,39 @@ def delivery_names(level: str) -> tuple[str, ...]:
     """Return the complete fixed HTML/media/evidence delivery inventory."""
     if level not in LEVELS:
         raise ArtifactLookupError("invalid delivery level")
-    return tuple(f"hve-demo-{level}.{ext}" for ext in ("html", "mp4", "vtt", "raw.mp4")) + ("index.html", *EVIDENCE_FILES)
+    return tuple(
+        f"hve-demo-{level}.{ext}" for ext in ("html", "mp4", "vtt", "raw.mp4")
+    ) + ("index.html", *EVIDENCE_FILES)
 
 
 def valid_entry(level: str, entry: object) -> bool:
     """Recognize current delivery metadata without accepting old-format files."""
     if level not in LEVELS or not isinstance(entry, dict):
         return False
-    expected = {ext: f"{level}/hve-demo-{level}.{ext}" for ext in ("mp4", "vtt", "html")}
+    expected = {
+        ext: f"{level}/hve-demo-{level}.{ext}" for ext in ("mp4", "vtt", "html")
+    }
     expected["page"] = f"{level}/index.html"
     hashes = entry.get("sha256")
     names = {f"{level}/{name}" for name in delivery_names(level)}
     return (
-        entry.get("renderer") == "hve-slides" and entry.get("format") == "html"
-        and entry.get("render_schema_version") == 2 and entry.get("manifest_schema_version") == 6
+        entry.get("renderer") == "hve-slides"
+        and entry.get("format") == "html"
+        and entry.get("render_schema_version") == 2
+        and entry.get("manifest_schema_version") == 6
         and entry.get("files") == expected
-        and isinstance(hashes, dict) and set(hashes) == names
-        and all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) for value in hashes.values())
-        and isinstance(entry.get("source_sha"), str) and re.fullmatch(r"[0-9a-f]{40}", entry["source_sha"]) is not None
-        and all(re.fullmatch(r"[0-9]+", str(entry.get(key, ""))) for key in ("author_run_id", "render_run_id"))
+        and isinstance(hashes, dict)
+        and set(hashes) == names
+        and all(
+            isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+            for value in hashes.values()
+        )
+        and isinstance(entry.get("source_sha"), str)
+        and re.fullmatch(r"[0-9a-f]{40}", entry["source_sha"]) is not None
+        and all(
+            re.fullmatch(r"[0-9]+", str(entry.get(key, "")))
+            for key in ("author_run_id", "render_run_id")
+        )
     )
 
 
@@ -139,15 +161,24 @@ def validate_delivery(root: Path, level: str) -> dict:
     if isinstance(result, dict) and result.get("capture_profile") == "live":
         required |= {"T-05", "T-06"}
     checks = result.get("checks") if isinstance(result, dict) else None
-    if (not isinstance(checks, dict) or result.get("schema_version") != 2
-            or result.get("renderer") != "hve-slides" or result.get("format") != "html"
-            or result.get("manifest_schema_version") != 6 or result.get("level") != level
-            or result.get("manifest_sha256") != file_hash(paths["manifest.yml"])
-            or result.get("ok") is not True or result.get("narration_engine") != "none"
-            or result.get("timing_basis") != "notes-word-count"
-            or result.get("capture_profile") not in ("live", "deck-export")
-            or not required.issubset(checks)
-            or any(not isinstance(value, dict) or value.get("result") != "pass" for value in checks.values())):
+    if (
+        not isinstance(checks, dict)
+        or result.get("schema_version") != 2
+        or result.get("renderer") != "hve-slides"
+        or result.get("format") != "html"
+        or result.get("manifest_schema_version") != 6
+        or result.get("level") != level
+        or result.get("manifest_sha256") != file_hash(paths["manifest.yml"])
+        or result.get("ok") is not True
+        or result.get("narration_engine") != "none"
+        or result.get("timing_basis") != "notes-word-count"
+        or result.get("capture_profile") not in ("live", "deck-export")
+        or not required.issubset(checks)
+        or any(
+            not isinstance(value, dict) or value.get("result") != "pass"
+            for value in checks.values()
+        )
+    ):
         raise ArtifactLookupError(f"non-pass or incompatible render evidence: {level}")
     browser = json.loads(paths["html-deck-check.json"].read_text(encoding="utf-8"))
     build = json.loads(paths["html-deck-build.json"].read_text(encoding="utf-8"))
@@ -160,29 +191,42 @@ def validate_delivery(root: Path, level: str) -> dict:
         build.get("schema_version") != 2
         or build.get("renderer") != "hve-slides"
         or build.get("format") != "html"
-        or not isinstance(ids, list) or not ids
+        or not isinstance(ids, list)
+        or not ids
         or not all(isinstance(item, str) for item in ids)
         or len(ids) != len(set(ids))
         or browser.get("schema_version") != 2
         or browser.get("renderer") != "hve-slides"
-        or browser.get("format") != "html" or browser.get("result") != "pass"
+        or browser.get("format") != "html"
+        or browser.get("result") != "pass"
         or browser.get("html_sha256") != file_hash(paths[f"hve-demo-{level}.html"])
         or browser.get("build_sha256") != file_hash(paths["html-deck-build.json"])
-        or browser.get("slide_ids") != ids or not isinstance(frames, list)
+        or browser.get("slide_ids") != ids
+        or not isinstance(frames, list)
         or len(frames) != len(ids)
-        or any(browser.get(key) for key in ("errors", "external_requests", "overflowing_slides"))
+        or any(
+            browser.get(key)
+            for key in ("errors", "external_requests", "overflowing_slides")
+        )
     ):
         raise ArtifactLookupError("HTML/frame evidence is missing or stale")
     for identity, frame in zip(ids, frames, strict=True):
-        if (not isinstance(identity, str) or not re.fullmatch(r"slide-[1-9][0-9]*", identity)
-                or not isinstance(frame, dict) or frame.get("slide_id") != identity
-                or (frame.get("width"), frame.get("height")) != (1920, 1080)
-                or not re.fullmatch(r"[0-9a-f]{64}", str(frame.get("sha256", "")))):
+        if (
+            not isinstance(identity, str)
+            or not re.fullmatch(r"slide-[1-9][0-9]*", identity)
+            or not isinstance(frame, dict)
+            or frame.get("slide_id") != identity
+            or (frame.get("width"), frame.get("height")) != (1920, 1080)
+            or not re.fullmatch(r"[0-9a-f]{64}", str(frame.get("sha256", "")))
+        ):
             raise ArtifactLookupError("invalid ordered frame evidence")
-    if (captions.get("result") != "pass"
-            or captions.get("video_sha256") != file_hash(paths[f"hve-demo-{level}.mp4"])
-            or captions.get("source_video_sha256") != file_hash(paths[f"hve-demo-{level}.raw.mp4"])
-            or captions.get("captions_sha256") != file_hash(paths[f"hve-demo-{level}.vtt"])):
+    if (
+        captions.get("result") != "pass"
+        or captions.get("video_sha256") != file_hash(paths[f"hve-demo-{level}.mp4"])
+        or captions.get("source_video_sha256")
+        != file_hash(paths[f"hve-demo-{level}.raw.mp4"])
+        or captions.get("captions_sha256") != file_hash(paths[f"hve-demo-{level}.vtt"])
+    ):
         raise ArtifactLookupError("caption evidence is missing or stale")
     return result
 
@@ -191,24 +235,38 @@ def validate_site(root: Path) -> dict:
     """Refuse incompatible, empty, incomplete or hash-mismatched site bundles."""
     index = json.loads(safe_path(root, "index.json").read_text(encoding="utf-8"))
     entries = index.get("levels") if isinstance(index, dict) else None
-    if not isinstance(entries, dict) or not entries or index.get("schema_version") != SITE_SCHEMA:
-        raise ArtifactLookupError("incompatible or empty site; preserve existing media and regenerate")
+    if (
+        not isinstance(entries, dict)
+        or not entries
+        or index.get("schema_version") != SITE_SCHEMA
+    ):
+        raise ArtifactLookupError(
+            "incompatible or empty site; preserve existing media and regenerate"
+        )
     for level, entry in entries.items():
         if not valid_entry(level, entry):
             raise ArtifactLookupError(f"incomplete site metadata: {level}")
         for relative, expected in entry["sha256"].items():
             path = safe_path(root, relative)
             if not path.is_file() or file_hash(path) != expected:
-                raise ArtifactLookupError(f"missing or mismatched site file: {relative}")
+                raise ArtifactLookupError(
+                    f"missing or mismatched site file: {relative}"
+                )
         validate_delivery(safe_path(root, level), level)
     for path in root.rglob("*"):
         safe_path(root, path.relative_to(root).as_posix())
-        if path.is_file() and path.relative_to(root).as_posix() != "index.json" and not SITE_FILE.fullmatch(path.relative_to(root).as_posix()):
+        if (
+            path.is_file()
+            and path.relative_to(root).as_posix() != "index.json"
+            and not SITE_FILE.fullmatch(path.relative_to(root).as_posix())
+        ):
             raise ArtifactLookupError(f"unexpected file in site: {path.name}")
     return index
 
 
-def assemble_site(site: Path, renders: Path, source_sha: str, author_run_id: str, render_run_id: str) -> dict:
+def assemble_site(
+    site: Path, renders: Path, source_sha: str, author_run_id: str, render_run_id: str
+) -> dict:
     """Merge validated levels without discarding previous compatible media."""
     site = safe_path(site)
     renders = safe_path(renders)
@@ -217,7 +275,9 @@ def assemble_site(site: Path, renders: Path, source_sha: str, author_run_id: str
         index = validate_site(site)
     else:
         if site.exists() and any(site.iterdir()):
-            raise ArtifactLookupError("Unindexed site files exist; preserve them before migration")
+            raise ArtifactLookupError(
+                "Unindexed site files exist; preserve them before migration"
+            )
         index = {"schema_version": SITE_SCHEMA, "levels": {}}
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     for candidate in sorted(renders.iterdir() if renders.is_dir() else ()):
@@ -225,7 +285,12 @@ def assemble_site(site: Path, renders: Path, source_sha: str, author_run_id: str
         if candidate.name not in LEVELS or not candidate.is_dir():
             raise ArtifactLookupError("unexpected render directory")
         level = candidate.name
-        attempt = {"source_sha": source_sha, "author_run_id": author_run_id, "render_run_id": render_run_id, "at": now}
+        attempt = {
+            "source_sha": source_sha,
+            "author_run_id": author_run_id,
+            "render_run_id": render_run_id,
+            "at": now,
+        }
         try:
             result = validate_delivery(candidate, level)
         except (ArtifactLookupError, OSError, ValueError):
@@ -233,13 +298,27 @@ def assemble_site(site: Path, renders: Path, source_sha: str, author_run_id: str
                 index["levels"][level]["last_failed_attempt"] = attempt
             continue
         entry = {
-            **attempt, "rendered_at": now, "renderer": "hve-slides", "format": "html",
-            "render_schema_version": 2, "manifest_schema_version": 6,
-            "narration_engine": "none", "timing_basis": "notes-word-count",
+            **attempt,
+            "rendered_at": now,
+            "renderer": "hve-slides",
+            "format": "html",
+            "render_schema_version": 2,
+            "manifest_schema_version": 6,
+            "narration_engine": "none",
+            "timing_basis": "notes-word-count",
             "capture_profile": result["capture_profile"],
             "measured_duration_minutes": result.get("measured_duration_minutes"),
-            "files": {**{ext: f"{level}/hve-demo-{level}.{ext}" for ext in ("mp4", "vtt", "html")}, "page": f"{level}/index.html"},
-            "sha256": {f"{level}/{name}": file_hash(candidate / name) for name in delivery_names(level)},
+            "files": {
+                **{
+                    ext: f"{level}/hve-demo-{level}.{ext}"
+                    for ext in ("mp4", "vtt", "html")
+                },
+                "page": f"{level}/index.html",
+            },
+            "sha256": {
+                f"{level}/{name}": file_hash(candidate / name)
+                for name in delivery_names(level)
+            },
         }
         if not valid_entry(level, entry):
             raise ArtifactLookupError("render provenance is invalid")
@@ -251,8 +330,10 @@ def assemble_site(site: Path, renders: Path, source_sha: str, author_run_id: str
         names = delivery_names(level)
         try:
             next_index = {
-                **index, "levels": {**index["levels"], level: entry},
-                "generated_at": now, "render_run_id": render_run_id,
+                **index,
+                "levels": {**index["levels"], level: entry},
+                "generated_at": now,
+                "render_run_id": render_run_id,
             }
             (stage / "next-index.json").write_text(
                 json.dumps(next_index, indent=2) + "\n", encoding="utf-8"
@@ -282,7 +363,9 @@ def assemble_site(site: Path, renders: Path, source_sha: str, author_run_id: str
             stage.rmdir()
         index = next_index
     if not index["levels"]:
-        raise ArtifactLookupError("No valid delivery; refusing an empty site publication")
+        raise ArtifactLookupError(
+            "No valid delivery; refusing an empty site publication"
+        )
     index.update(generated_at=now, render_run_id=render_run_id)
     descriptor, temporary = tempfile.mkstemp(prefix=".site-index-", dir=site)
     try:
@@ -436,7 +519,11 @@ def recover_site(
         raise ArtifactLookupError(
             f"published index.json is not JSON: {error}"
         ) from error
-    if isinstance(index, dict) and index.get("schema_version") == "demo-material-site/v1" and index_only:
+    if (
+        isinstance(index, dict)
+        and index.get("schema_version") == "demo-material-site/v1"
+        and index_only
+    ):
         target = safe_path(target)
         target.mkdir(parents=True, exist_ok=True)
         safe_path(target, "index.json").write_bytes(body)
@@ -451,7 +538,10 @@ def recover_site(
         raise ArtifactLookupError("published site is empty or incomplete")
     for level, entry in sorted(entries.items()):
         if not valid_entry(level, entry):
-            raise ArtifactLookupError(f"published index lists an unexpected file or incomplete metadata: {level}")
+            raise ArtifactLookupError(
+                "published index lists an unexpected file or incomplete metadata: "
+                f"{level}"
+            )
         levels.append(level)
         required += list(entry["sha256"])
     for path in required:
@@ -463,7 +553,8 @@ def recover_site(
     target = safe_path(target)
     if not index_only and target.exists() and any(target.iterdir()):
         raise ArtifactLookupError(
-            "Recovery requires an empty target; preserve existing media and choose a new directory"
+            "Recovery requires an empty target; "
+            "preserve existing media and choose a new directory"
         )
     target.mkdir(parents=True, exist_ok=True)
     if index_only:
@@ -474,7 +565,10 @@ def recover_site(
         content = fetch(base + path)
         if content is None:
             raise ArtifactLookupError(f"published file is missing: {path}")
-        if hashlib.sha256(content).hexdigest() != entries[path.split('/')[0]]["sha256"][path]:
+        if (
+            hashlib.sha256(content).hexdigest()
+            != entries[path.split("/")[0]]["sha256"][path]
+        ):
             raise ArtifactLookupError(f"published file hash mismatch: {path}")
         destination = safe_path(target, path)
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -495,9 +589,17 @@ def default_site_url(repository: str) -> str:
 
 def retry_levels(index: dict) -> list[str]:
     """Return failed or unpublished levels that need fresh authored content."""
-    if isinstance(index, dict) and index.get("schema_version") not in (None, SITE_SCHEMA, "demo-material-site/v1"):
+    if isinstance(index, dict) and index.get("schema_version") not in (
+        None,
+        SITE_SCHEMA,
+        "demo-material-site/v1",
+    ):
         raise ArtifactLookupError("render index has an unknown schema")
-    recorded = index.get("levels") if isinstance(index, dict) and index.get("schema_version") == SITE_SCHEMA else None
+    recorded = (
+        index.get("levels")
+        if isinstance(index, dict) and index.get("schema_version") == SITE_SCHEMA
+        else None
+    )
     recorded = recorded if isinstance(recorded, dict) else {}
     selected = []
     for level in LEVELS:
@@ -541,9 +643,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     retry.add_argument("--index", type=Path, required=True)
     retry.add_argument("--github-output")
-    validate = sub.add_parser("validate-site", help="Validate a complete current bundle")
+    validate = sub.add_parser(
+        "validate-site", help="Validate a complete current bundle"
+    )
     validate.add_argument("--target", type=Path, required=True)
-    assemble = sub.add_parser("assemble-site", help="Merge only validated current deliveries")
+    assemble = sub.add_parser(
+        "assemble-site", help="Merge only validated current deliveries"
+    )
     assemble.add_argument("--target", type=Path, required=True)
     assemble.add_argument("--renders", type=Path, required=True)
     return parser
@@ -578,13 +684,19 @@ def main(argv: list[str] | None = None, api=None) -> int:
         elif args.command == "validate-site":
             result = {"levels": list(validate_site(args.target)["levels"])}
         elif args.command == "assemble-site":
-            result = assemble_site(args.target, args.renders, os.environ.get("SOURCE_SHA", ""), os.environ.get("AUTHOR_RUN_ID", ""), os.environ.get("RENDER_RUN_ID", ""))
+            result = assemble_site(
+                args.target,
+                args.renders,
+                os.environ.get("SOURCE_SHA", ""),
+                os.environ.get("AUTHOR_RUN_ID", ""),
+                os.environ.get("RENDER_RUN_ID", ""),
+            )
         else:
             if args.index.is_file():
                 index = json.loads(args.index.read_text(encoding="utf-8"))
-                if (
-                    not isinstance(index, dict)
-                    or index.get("schema_version") not in (SITE_SCHEMA, "demo-material-site/v1")
+                if not isinstance(index, dict) or index.get("schema_version") not in (
+                    SITE_SCHEMA,
+                    "demo-material-site/v1",
                 ):
                     raise ArtifactLookupError("render index has an unknown schema")
             else:

@@ -36,16 +36,16 @@ from the reviewed YAML without starting a demo or inventing narration.
 
 ## Supported Elements
 
-| Type            | Content fields                          | HTML mapping                        |
-|-----------------|-----------------------------------------|-------------------------------------|
+| Type            | Content fields                           | HTML mapping                         |
+|-----------------|------------------------------------------|--------------------------------------|
 | `textbox`       | One of `text`, `bullets`, `paragraphs`   | Paragraph, heading or list           |
 | `shape`         | Text fields, or a text-containing frame  | Text or semantic panel               |
-| `card`          | `title`, `content` as text or a list      | Article with heading and body        |
+| `card`          | `title`, `content` as text or a list     | Article with heading and body        |
 | `table`         | `rows` of cell lists or `cells` mappings | Table with first row as column heads |
-| `arrow_flow`    | `items`                                 | Ordered relationship sequence        |
+| `arrow_flow`    | `items`                                  | Ordered relationship sequence        |
 | `numbered_step` | `label`, optional `description`          | Ordered step with detail             |
 | `image`         | `path`, `alt`, optional `decorative`     | Embedded PNG/JPEG with alternative   |
-| `group`         | `elements` only                         | Ordered child elements               |
+| `group`         | `elements` only                          | Ordered child elements               |
 
 List entries are nonempty strings, finite numbers, or mappings containing
 exactly one of `text`, `bullet`, `label`, or `title`. Table rows must have the

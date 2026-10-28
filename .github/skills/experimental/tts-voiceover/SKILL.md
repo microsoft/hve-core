@@ -170,12 +170,12 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 
 ## Troubleshooting
 
-| Issue                                                | Solution                                                                                                                                                                  |
-|:-----------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                                                                   |
-| `SPEECH_REGION must be set`                          | Export `SPEECH_REGION` with an approved Azure region. Synthesis has no default region.                                                                                    |
-| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes.                                            |
-| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                                                                       |
-| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                                                                     |
-| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                                                                     |
+| Issue                                                | Solution                                                                                                                       |
+|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
+| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                        |
+| `SPEECH_REGION must be set`                          | Export `SPEECH_REGION` with an approved Azure region. Synthesis has no default region.                                         |
+| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
+| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                            |
+| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                          |
+| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
 

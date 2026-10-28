@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Tests for html_deck, check_html_deck, and the T-10 render check."""
 
-import json
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -259,7 +259,11 @@ class TestBuildDeckSource:
         _slide(level_dir, 1, {"title": "Welcome & hello", "speaker_notes": "Hi."})
         _slide(level_dir, 2, {"title": "Next", "section": "Close"})
         deck = build_deck_source(
-            "L100", level_dir, template, level_dir / "html-deck" / "hve-demo-L100", _BASE
+            "L100",
+            level_dir,
+            template,
+            level_dir / "html-deck" / "hve-demo-L100",
+            _BASE,
         )
 
         for name in COPIED_FILES:
@@ -423,29 +427,51 @@ class TestT10:
             encoding="utf-8",
         )
         build = level_dir / "output/html-deck-build.json"
-        build.write_text(json.dumps({
-            "schema_version": 2, "renderer": "hve-slides", "format": "html",
-            "slide_ids": [f"slide-{n}" for n in range(1, sections + 1)],
-            "content_sha256": content_digest(level_dir), "missing_images": [],
-        }), encoding="utf-8")
+        build.write_text(
+            json.dumps(
+                {
+                    "schema_version": 2,
+                    "renderer": "hve-slides",
+                    "format": "html",
+                    "slide_ids": [f"slide-{n}" for n in range(1, sections + 1)],
+                    "content_sha256": content_digest(level_dir),
+                    "missing_images": [],
+                }
+            ),
+            encoding="utf-8",
+        )
         frames = []
         for number in range(1, sections + 1):
             frame = level_dir / f"frames/deck/slide-{number:03d}.jpg"
             frame.parent.mkdir(parents=True, exist_ok=True)
-            frame.write_bytes(bytes.fromhex("ffd8ffc00011080438078003011100021100031100ffd9"))
-            frames.append({
-                "slide_id": f"slide-{number}", "path": frame.relative_to(level_dir).as_posix(),
-                "sha256": hashlib.sha256(frame.read_bytes()).hexdigest(), "width": 1920, "height": 1080,
-            })
+            frame.write_bytes(
+                bytes.fromhex("ffd8ffc00011080438078003011100021100031100ffd9")
+            )
+            frames.append(
+                {
+                    "slide_id": f"slide-{number}",
+                    "path": frame.relative_to(level_dir).as_posix(),
+                    "sha256": hashlib.sha256(frame.read_bytes()).hexdigest(),
+                    "width": 1920,
+                    "height": 1080,
+                }
+            )
         (level_dir / "output" / "html-deck-check.json").write_text(
-            json.dumps({
-                "schema_version": 2, "renderer": "hve-slides", "format": "html",
-                "result": browser, "overflowing_slides": ["2. S2"] if browser != "pass" else [],
-                "html_sha256": hashlib.sha256((level_dir / "output/hve-demo-L100.html").read_bytes()).hexdigest(),
-                "build_sha256": hashlib.sha256(build.read_bytes()).hexdigest(),
-                "slide_ids": [f"slide-{n}" for n in range(1, sections + 1)],
-                "frames": frames,
-            }),
+            json.dumps(
+                {
+                    "schema_version": 2,
+                    "renderer": "hve-slides",
+                    "format": "html",
+                    "result": browser,
+                    "overflowing_slides": ["2. S2"] if browser != "pass" else [],
+                    "html_sha256": hashlib.sha256(
+                        (level_dir / "output/hve-demo-L100.html").read_bytes()
+                    ).hexdigest(),
+                    "build_sha256": hashlib.sha256(build.read_bytes()).hexdigest(),
+                    "slide_ids": [f"slide-{n}" for n in range(1, sections + 1)],
+                    "frames": frames,
+                }
+            ),
             encoding="utf-8",
         )
 

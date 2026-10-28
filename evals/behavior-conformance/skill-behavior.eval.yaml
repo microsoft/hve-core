@@ -7025,13 +7025,13 @@ stimuli:
       - type: output-matches
         name: skill-dt-canonical-deck-generation-failure-reported
         config:
-          pattern: "(?i)(generat|customer[-\\s]card|yaml).{0,160}(fail|error|unable|could not)"
+          pattern: "(?i)(generation|generate|generating|customer[-\\s]card|yaml).{0,160}(fail|error|unable|could not)"
       - type: output-matches
         name: skill-dt-canonical-deck-generation-failure-no-deck-build
         config:
           pattern: "(?i)(no|not)\\s+(?:\\w+\\s+){0,4}(deck|pptx|powerpoint)\\s+(?:\\w+\\s+){0,2}(build|available|supported)"
       - type: file-not-exists
-        name: skill-dt-canonical-deck-generation-failure-no-false-pptx-output
+        name: skill-dt-canonical-deck-generation-failure-no-pptx-output
         config:
           path: ".copilot-tracking/dt/synthetic-lifecycle-thin/render/output/customer-cards.pptx"
 

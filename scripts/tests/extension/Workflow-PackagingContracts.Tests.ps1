@@ -2912,7 +2912,7 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
         $resolveScript | Should -Match 'authorRun = context\.payload\.workflow_run'
         $resolveScript | Should -Match 'authorRun\.path !== "\.github/workflows/demo-material-author\.lock\.yml"'
         $resolveScript | Should -Match 'authorRun\.head_branch !== defaultBranch'
-        $resolveScript | Should -Match 'demo-material-content-\$\{authorRun\.id\}'
+        $resolveScript | Should -Match 'demo-material-content-v2-\$\{authorRun\.id\}'
 
         $author = Get-WorkflowDocument -Name 'demo-material-author.lock.yml'
         $author['jobs'].Contains('dispatch-render') | Should -BeFalse
