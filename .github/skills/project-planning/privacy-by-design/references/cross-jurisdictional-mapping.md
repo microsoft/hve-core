@@ -11,13 +11,13 @@ This reference provides a regulatory equivalence matrix to help the Privacy Plan
 
 Assess which regulations apply based on:
 
-| Trigger                                     | GDPR                                    | CCPA/CPRA                       | APP (Australia)                                 |
-|---------------------------------------------|-----------------------------------------|---------------------------------|-------------------------------------------------|
-| Entity established in jurisdiction          | Yes (Art. 3(1))                         | Yes (Cal. entity)               | Yes (Australian entity)                         |
-| Processing data of jurisdiction's residents | Assess targeting/monitoring (Art. 3(2)) | Assess statutory business scope | Assess Australian link (Privacy Act 1988, s 5B) |
+| Trigger                                     | GDPR                                    | CCPA/CPRA                                                                                                       | APP (Australia)                                 |
+|---------------------------------------------|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
+| Entity established in jurisdiction          | Yes (Art. 3(1))                         | Yes (Cal. entity)                                                                                               | Yes (Australian entity)                         |
+| Processing data of jurisdiction's residents | Assess targeting/monitoring (Art. 3(2)) | Assess statutory business scope                                                                                 | Assess Australian link (Privacy Act 1988, s 5B) |
 | Revenue threshold                           | N/A                                     | Statutory threshold, CPI-adjusted every two years ([CPPA](https://cppa.ca.gov/regulations/cpi_adjustment.html)) | $3M+ annual turnover (or other triggers)        |
-| Data volume threshold                       | N/A                                     | 100K+ consumers/households      | N/A                                             |
-| Derives revenue from selling data           | N/A                                     | 50%+ revenue from selling       | N/A                                             |
+| Data volume threshold                       | N/A                                     | 100K+ consumers/households                                                                                      | N/A                                             |
+| Derives revenue from selling data           | N/A                                     | 50%+ revenue from selling                                                                                       | N/A                                             |
 
 ## PbD principle-to-regulation equivalence matrix
 
