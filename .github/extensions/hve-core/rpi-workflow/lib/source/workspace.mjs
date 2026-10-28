@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { ModelError } from '../model.mjs';
+import { buildTraces, ModelError } from '../model.mjs';
 import { assembleSession, lineageStatusOf, mergeImport } from './assemble.mjs';
 import { titleOf, parseDocument } from './markdown.mjs';
 import { artifactKind, parseArtifact, parseState } from './parse.mjs';
@@ -448,26 +448,25 @@ export async function checkSourceLocations(workspace, session) {
     return problems;
 }
 
-/** Kinds whose earlier documents the canvas reads and offers to switch to. */
-const EARLIER_KINDS = ['research', 'plan'];
+/** The phase that shows each kind of document the canvas offers to switch between; critiques show with their plan. */
+const DOCUMENT_PHASES = Object.freeze({ research: 'research', plan: 'plan', changes: 'implement', review: 'review' });
 
-/** The files a task's view reads: its state, the current work's document of each kind, and every listed research document and plan. */
+/** The files a task's view reads: its state, the current work's documents, and every document the state lists. */
 function watchedFiles(statePath, state) {
-    return [...new Set([statePath, ...ARTIFACT_KEYS.map((key) => state.artifacts[key]), ...EARLIER_KINDS.flatMap((key) => state.documents[key])].filter(Boolean))];
+    return [...new Set([statePath, ...ARTIFACT_KEYS.map((key) => state.artifacts[key]), ...ARTIFACT_KEYS.flatMap((key) => state.documents[key])].filter(Boolean))];
 }
 
 /**
- * Reads the research documents and plans the state lists other than the current work's, each
- * numbered by its place in the list. A document that cannot be read or is another kind becomes
- * a warning.
+ * Reads every document the state lists other than the current work's, each numbered by its
+ * place in its kind's list. A document that cannot be read or is another kind becomes a warning.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {ReturnType<typeof parseState>} state
  * @param {string[]} warnings
  */
 async function readEarlier(workspace, state, warnings) {
-    const earlier = { research: [], plan: [] };
-    for (const key of EARLIER_KINDS) {
+    const earlier = Object.fromEntries(ARTIFACT_KEYS.map((key) => [key, []]));
+    for (const key of ARTIFACT_KEYS) {
         for (const [index, target] of state.documents[key].entries()) {
             if (target === state.artifacts[key]) continue;
             let file;
@@ -486,20 +485,26 @@ async function readEarlier(workspace, state, warnings) {
     return earlier;
 }
 
-/** The suffix each kind's file name ends with, before `.md`. */
-const NAME_SUFFIX = Object.freeze({ research: '-research', plan: '-plan' });
+/** How each kind's file name ends after its work's name; a critique or review of the same work may repeat with a number. */
+const NAME_SUFFIX = Object.freeze({
+    research: /-research$/,
+    plan: /-plan$/,
+    critique: /-plan-critique(?:-\d+)?$/,
+    changes: /-changes$/,
+    review: /-review(?:-\d+)?$/,
+});
 
 /**
- * A document's name: its file name without the folder, `.md`, and its kind's suffix, so
- * `task-board-polish-research.md` is `task-board-polish`. A trailing number stays in the name.
+ * A document's work name: its file name without the folder, `.md`, and its kind's suffix, so
+ * `task-board-polish-plan.md`, `task-board-polish-changes.md`, and `task-board-polish-review-2.md`
+ * all name `task-board-polish`. A trailing number on a research document or plan stays in the name.
  *
  * @param {string} target workspace-relative path
- * @param {'research' | 'plan'} key
+ * @param {'research' | 'plan' | 'critique' | 'changes' | 'review'} key
  */
 export function documentName(target, key) {
     const base = target.split('/').pop().replace(/\.md$/i, '');
-    const suffix = NAME_SUFFIX[key];
-    return base.endsWith(suffix) && base.length > suffix.length ? base.slice(0, -suffix.length) : base;
+    return base.replace(NAME_SUFFIX[key], '') || base;
 }
 
 /** IDs a research document or plan holds, from the session or an earlier document's snapshot. */
@@ -508,10 +513,13 @@ const DOCUMENT_IDS = Object.freeze({
     plan: (part) => [...(part.plan?.phases ?? []).flatMap((phase) => [phase.id, ...phase.tasks.map((task) => task.id)]), ...(part.plan?.requirements ?? []).map((item) => item.id), ...part.decisions.map((item) => item.id)],
 });
 
-/** Says which IDs appear in more than one document of a kind, naming the documents; links go to the current, else the newer. */
+/**
+ * Says which IDs appear in more than one research document or plan, naming the documents; links
+ * go to the current, else the newer. Changes records and reviews restart their IDs by design.
+ */
 function repeatedIdWarnings(session) {
     const warnings = [];
-    for (const key of EARLIER_KINDS) {
+    for (const key of Object.keys(DOCUMENT_IDS)) {
         const where = new Map();
         for (const entry of session.documents[key]) {
             const part = entry.current ? { [key]: session[key], decisions: session.decisions.filter((decision) => decision.phase === key) } : entry.snapshot;
@@ -529,10 +537,10 @@ function repeatedIdWarnings(session) {
 }
 
 /**
- * Reads a task's state, the current work's artifacts, and its other research documents and
- * plans, and assembles its canvas document: the current work's document of each kind, with each
- * other one as a snapshot in `documents`. Artifact read problems become warnings; a state file that cannot
- * be read throws.
+ * Reads a task's state, the current work's artifacts, and every other document the state lists,
+ * and assembles its canvas document: the current work's document of each kind, with each other
+ * research document, plan, changes record, and review as a snapshot in `documents`, by phase.
+ * Artifact read problems become warnings; a state file that cannot be read throws.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {string} statePath
@@ -590,33 +598,90 @@ export async function loadTask(workspace, statePath, now) {
         now,
     };
     const assembled = assembleSession({ ...input, findingOffset });
-    // Another document renders as the session would if it were the current work's of its kind.
-    const snapshotOf = (key, entry) => {
-        const alt = assembleSession({ ...input, artifacts: { ...artifacts, [key]: entry.parsed }, files: { ...files, [key]: { path: entry.path, mtimeMs: entry.mtimeMs } }, findingOffset: key === 'research' ? findingsBefore(entry.n) : findingOffset }).session;
-        return {
-            [key]: alt[key],
-            sections: Object.fromEntries(Object.entries(alt.sections).filter(([, section]) => section.doc === key)),
-            decisions: alt.decisions.filter((decision) => decision.phase === key),
-            record: alt.phases[key],
-        };
-    };
-    const iso = (ms) => (Number.isFinite(ms) ? new Date(ms).toISOString() : null);
-    assembled.session.documents = Object.fromEntries(EARLIER_KINDS.map((key) => {
-        const listed = self.state.documents[key];
-        return [key, listed.map((target, index) => {
-            const n = index + 1;
-            const name = documentName(target, key);
-            if (target === self.state.artifacts[key]) return { n, path: files[key]?.path ?? target, name, title: artifacts[key]?.title || null, updatedAt: iso(files[key]?.mtimeMs), current: true };
-            const entry = earlier[key].find((item) => item.n === n);
-            return entry
-                ? { n, path: entry.path, name, title: entry.parsed.title || null, updatedAt: iso(entry.mtimeMs), current: false, snapshot: snapshotOf(key, entry) }
-                : { n, path: target, name, title: null, updatedAt: null, current: false, missing: true };
-        })];
-    }));
+    assembled.session.documents = earlierDocuments({ state: self.state, artifacts, files, earlier, input, findingOffset, findingsBefore });
     const sourceProblems = await checkSourceLocations(workspace, assembled.session);
     assembled.session.source.warnings = [...warnings, ...assembled.session.source.warnings, ...repeatedIdWarnings(assembled.session), ...sourceProblems, ...tree.warnings, ...skippedWarning(scan.skipped)];
     const watched = watchedFiles(self.path, self.state);
     return { session: assembled.session, warnings: assembled.session.source.warnings, watched, statePath: self.path, taskId: self.state.taskId, tree };
+}
+
+/**
+ * The session's documents by phase, in the order the state lists them: the current work's marked
+ * `current`, and each earlier one with a snapshot of how it reads. An earlier document is
+ * assembled with its own work's other documents, found by name, as a stopped session, so no task
+ * is in progress and no current blocker shows. Documents of one work share an assembly.
+ *
+ * @param {{ state: any, artifacts: Record<string, any>, files: Record<string, any>, earlier: Record<string, any[]>, input: any, findingOffset: number, findingsBefore: (n: number) => number }} context
+ */
+function earlierDocuments({ state, artifacts, files, earlier, input, findingOffset, findingsBefore }) {
+    const listed = Object.fromEntries(ARTIFACT_KEYS.map((key) => [key, state.documents[key].map((target, index) => {
+        const n = index + 1;
+        const name = documentName(target, key);
+        if (target === state.artifacts[key]) return { key, n, name, current: true, parsed: artifacts[key] ?? null, path: files[key]?.path ?? target, mtimeMs: files[key]?.mtimeMs ?? null };
+        const entry = earlier[key].find((item) => item.n === n);
+        return { key, n, name, current: false, parsed: entry?.parsed ?? null, path: entry?.path ?? target, mtimeMs: entry?.mtimeMs ?? null };
+    })]));
+    // A work's document of a kind is the last listed one with its name.
+    const ofWork = (key, name) => listed[key].filter((doc) => doc.name === name && doc.parsed).at(-1) ?? null;
+    const stopped = { ...state, activePhase: 'Follow-up', sessionStatus: 'stopped', blockers: [] };
+    const assemblies = new Map();
+    const assembleWork = (doc) => {
+        const parts = Object.fromEntries(ARTIFACT_KEYS.map((key) => [key, key === doc.key ? doc : ofWork(key, doc.name)]));
+        const cacheKey = `${doc.name}\n${ARTIFACT_KEYS.map((key) => parts[key]?.n ?? 0).join(',')}`;
+        if (!assemblies.has(cacheKey)) {
+            const used = Object.entries(parts).filter(([, part]) => part);
+            const session = assembleSession({
+                ...input,
+                state: stopped,
+                artifacts: Object.fromEntries(used.map(([key, part]) => [key, part.parsed])),
+                mismatched: [],
+                files: { state: input.files.state, ...Object.fromEntries(used.map(([key, part]) => [key, { path: part.path, mtimeMs: part.mtimeMs }])) },
+                findingOffset: parts.research ? (parts.research.current ? findingOffset : findingsBefore(parts.research.n)) : 0,
+            }).session;
+            assemblies.set(cacheKey, { session, parts, traces: buildTraces(session) });
+        }
+        return assemblies.get(cacheKey);
+    };
+    const iso = (ms) => (Number.isFinite(ms) ? new Date(ms).toISOString() : null);
+    return Object.fromEntries(Object.entries(DOCUMENT_PHASES).map(([key, phase]) => [phase, listed[key].map((doc) => {
+        const entry = { n: doc.n, path: doc.path, name: doc.name, title: doc.parsed?.title || null, updatedAt: iso(doc.mtimeMs), current: doc.current, workTitle: ofWork('plan', doc.name)?.parsed.title || null };
+        if (doc.current) return entry;
+        if (!doc.parsed) return { ...entry, missing: true };
+        const { session, parts, traces } = assembleWork(doc);
+        return { ...entry, snapshot: snapshotOf(phase, session, traces, parts) };
+    })]));
+}
+
+/** What an earlier document's view shows, from its work's assembled session; trace strips sit on these IDs. */
+const SNAPSHOT_PARTS = Object.freeze({
+    research: (session) => ({ research: session.research, ids: [...session.research.questions, ...session.research.findings].map((item) => item.id) }),
+    plan: (session) => ({ plan: session.plan, ids: [] }),
+    implement: (session) => ({ implementation: session.implementation, ids: [...session.plan.phases.flatMap((phase) => phase.tasks), ...session.implementation.changes, ...session.implementation.discoveries].map((item) => item.id) }),
+    review: (session) => ({ review: session.review, ids: session.review.findings.map((finding) => finding.id) }),
+});
+
+/**
+ * An earlier document's snapshot: its phase's part, sections, decisions, status, other sections,
+ * and traces. A changes record names its plan's place in the Plan list, or null when no plan
+ * carries its name, instead of carrying a copy of the plan.
+ *
+ * @param {'research' | 'plan' | 'implement' | 'review'} phase
+ * @param {any} session the work's assembled session
+ * @param {Record<string, string[]>} traces
+ * @param {Record<string, any>} parts the work's documents by kind
+ */
+function snapshotOf(phase, session, traces, parts) {
+    const { ids, ...part } = SNAPSHOT_PARTS[phase](session);
+    const ownTraces = Object.fromEntries([...new Set([...ids, ...session.decisions.filter((decision) => decision.phase === phase).map((decision) => decision.id)])].filter((id) => traces[id]).map((id) => [id, traces[id]]));
+    return {
+        ...part,
+        sections: Object.fromEntries(Object.entries(session.sections).filter(([, section]) => section.doc === phase)),
+        decisions: session.decisions.filter((decision) => decision.phase === phase),
+        record: session.phases[phase],
+        records: session.records[phase],
+        traces: ownTraces,
+        ...(phase === 'implement' ? { pairedPlan: parts.plan?.n ?? null } : {}),
+    };
 }
 
 /**

@@ -31,7 +31,7 @@ import {
     storeIdFor,
 } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
-import { CHILD_STATE, CHILD_TASK, PATHS, PLAN, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { CHANGES, CHILD_STATE, CHILD_TASK, CRITIQUE, PATHS, PLAN, REVIEW, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 const EARLY_RESEARCH = `# Task Research: Offline trail maps, first look
 
@@ -279,6 +279,10 @@ describe('loading and importing a task', () => {
     it('names a document by its file name without the folder, .md, and its kind suffix', () => {
         assert.equal(documentName('.copilot-tracking/research/2026-10-28/task-board-polish-research.md', 'research'), 'task-board-polish');
         assert.equal(documentName('.copilot-tracking/plans/2026-10-28/task-board-polish-plan.md', 'plan'), 'task-board-polish');
+        assert.equal(documentName('.copilot-tracking/reviews/plans/2026-10-28/task-board-polish-plan-critique.md', 'critique'), 'task-board-polish');
+        assert.equal(documentName('.copilot-tracking/reviews/plans/2026-10-28/task-board-polish-plan-critique-2.md', 'critique'), 'task-board-polish', 'a follow-up critique names its plan\'s work');
+        assert.equal(documentName('.copilot-tracking/changes/2026-10-28/task-board-polish-changes.md', 'changes'), 'task-board-polish');
+        assert.equal(documentName('.copilot-tracking/reviews/logs/2026-10-28/task-board-polish-review-3.md', 'review'), 'task-board-polish', 'a new review of the same work names it');
         assert.equal(documentName('.copilot-tracking/research/2026-10-27/old-work-research-2.md', 'research'), 'old-work-research-2', 'a trailing number stays in the name');
         assert.equal(documentName('notes/plan.md', 'plan'), 'plan');
     });
@@ -332,6 +336,87 @@ describe('loading and importing a task', () => {
         const missing = await loadTask(await resolveWorkspace([many]), PATHS.rootState, NOW);
         assert.deepEqual(missing.session.documents.research.map((doc) => [doc.n, Boolean(doc.missing)]), [[1, true], [2, false]]);
         assert.ok(missing.warnings.some((text) => /gone-research\.md/.test(text)) && missing.warnings.some((text) => /finding numbers after it may not match/.test(text)), missing.warnings.join(' | '));
+    });
+
+    it('pairs earlier changes records, reviews, and critiques with their work by name, as finished work', async () => {
+        const pairs = path.join(tmp, 'pairs');
+        await writeFixtureWorkspace(pairs);
+        const early = {
+            research: '.copilot-tracking/research/2026-01-14/early-look-research.md',
+            plan: '.copilot-tracking/plans/2026-01-14/early-look-plan.md',
+            critique: '.copilot-tracking/reviews/plans/2026-01-14/early-look-plan-critique.md',
+            critique2: '.copilot-tracking/reviews/plans/2026-01-14/early-look-plan-critique-2.md',
+            changes: '.copilot-tracking/changes/2026-01-14/early-look-changes.md',
+            review: '.copilot-tracking/reviews/logs/2026-01-14/early-look-review.md',
+            review2: '.copilot-tracking/reviews/logs/2026-01-14/early-look-review-2.md',
+            lonely: '.copilot-tracking/changes/2026-01-13/lonely-changes.md',
+        };
+        const retitle = (text, title) => text.replace(/^# ([^:\n]+): .*$/m, `# $1: ${title}`);
+        const texts = [
+            [early.research, EARLY_RESEARCH],
+            [early.plan, retitle(PLAN, 'An early look')],
+            [early.critique, retitle(CRITIQUE, 'An early look')],
+            [early.critique2, retitle(CRITIQUE, 'An early look').replace('Downloads cannot resume', 'Downloads restart from zero')],
+            [early.changes, `${retitle(CHANGES, 'An early look')}\n## Early notes\n\nOnly the early record has these.\n`],
+            [early.review, retitle(REVIEW, 'The first look')],
+            [early.review2, `${retitle(REVIEW, 'The second look')}\n## Second look notes\n\nOnly the second review has these.\n`],
+            [early.lonely, retitle(CHANGES, 'A record without a plan')],
+        ];
+        for (const [target, text] of texts) {
+            await fs.mkdir(path.dirname(path.join(pairs, target)), { recursive: true });
+            await fs.writeFile(path.join(pairs, target), text);
+        }
+        // The agent implements the current work, with a blocker of its own.
+        await writeJson(pairs, PATHS.rootState, {
+            ...ROOT_STATE,
+            active_phase: 'Implement',
+            status: 'active',
+            blockers: [{ id: 'B1', summary: 'P02-T02 waits on the tile server', resolution: null }],
+            documents: {
+                research: [early.research, PATHS.research],
+                plan: [early.plan, PATHS.plan],
+                critique: [early.critique, early.critique2, PATHS.critique],
+                changes: [early.lonely, early.changes, PATHS.changes],
+                review: [early.review, early.review2, PATHS.review],
+            },
+        });
+        const loaded = await loadTask(await resolveWorkspace([pairs]), PATHS.rootState, NOW);
+        const { plan, implement, review } = loaded.session.documents;
+        assert.deepEqual(implement.map((doc) => [doc.n, doc.name, doc.title, doc.current, Boolean(doc.snapshot)]), [[1, 'lonely', 'A record without a plan', false, true], [2, 'early-look', 'An early look', false, true], [3, ROOT_TASK, 'Offline trail maps', true, false]]);
+        assert.deepEqual(review.map((doc) => [doc.name, doc.title, doc.workTitle, doc.current]), [['early-look', 'The first look', 'An early look', false], ['early-look', 'The second look', 'An early look', false], [ROOT_TASK, 'Offline trail maps', 'Offline trail maps', true]]);
+
+        // An earlier changes record names its plan's place and reads as finished.
+        const record = implement[1].snapshot;
+        assert.equal(record.pairedPlan, 1, 'the early record pairs with the plan of its name');
+        assert.equal(implement[0].snapshot.pairedPlan, null, 'no plan carries the lonely record\'s name');
+        assert.equal(record.implementation.current, null);
+        assert.deepEqual(record.implementation.blockers, [], 'the live state\'s blocker stays with the current work');
+        assert.ok(loaded.session.implementation.blockers.some((blocker) => /tile server/.test(blocker.text)), 'the current work keeps its blocker');
+        assert.deepEqual(record.implementation.changes.map((change) => change.id), loaded.session.implementation.changes.map((change) => change.id), 'changes number from CH-001 in each record');
+        assert.equal(record.record.status, 'done');
+        assert.ok(record.records.some((item) => item.heading === 'Early notes'), 'its other sections are its own');
+        assert.ok(!loaded.session.records.implement.some((item) => item.heading === 'Early notes'));
+        assert.ok(Object.values(record.sections).every((section) => section.doc === 'implement'));
+        assert.ok(record.traces['P02-T01']?.includes('CH-002'), 'its plan\'s tasks carry their traces');
+        assert.ok(!('plan' in record), 'it names its plan instead of copying it');
+
+        // An earlier plan reads as finished and pairs with the last critique of its name.
+        const earlyPlan = plan[0].snapshot;
+        assert.ok(earlyPlan.plan.phases.flatMap((phase) => phase.tasks).every((task) => task.status !== 'in-progress'));
+        assert.ok(loaded.session.plan.phases.flatMap((phase) => phase.tasks).some((task) => task.status === 'in-progress'), 'the current plan\'s next task is in progress');
+        assert.deepEqual(earlyPlan.plan.critique.findings.map((finding) => finding.title), ['Downloads restart from zero', 'Eviction is not discussed']);
+        assert.equal(earlyPlan.plan.critique.findings[0].disposition, 'resolved');
+        assert.deepEqual(loaded.session.plan.critique.findings.map((finding) => finding.title), ['Downloads cannot resume', 'Eviction is not discussed']);
+
+        // Each review is its own, with traces through its work's changes record and plan.
+        assert.ok(review[1].snapshot.records.some((item) => item.heading === 'Second look notes'));
+        assert.ok(!review[0].snapshot.records.some((item) => item.heading === 'Second look notes'));
+        assert.deepEqual(review[0].snapshot.review.findings.map((finding) => finding.id), ['RV-001', 'RV-002']);
+        const trace = review[0].snapshot.traces['RV-002'];
+        assert.ok(trace && trace.indexOf('P02-T01') < trace.indexOf('CH-002') && trace.indexOf('CH-002') < trace.indexOf('RV-002'), JSON.stringify(trace));
+
+        for (const target of Object.values(early)) assert.ok(loaded.watched.includes(target), `${target} is watched`);
+        assert.ok(!loaded.warnings.some((text) => /\b(?:CH|DS|AL|RV|RD)-\d{3}\b/.test(text)), loaded.warnings.join(' | '));
     });
 
     it('reports an unreadable artifact as a warning and fails on an unreadable state', async () => {
