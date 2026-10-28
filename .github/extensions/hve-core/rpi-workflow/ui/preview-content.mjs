@@ -106,7 +106,8 @@ function partsFor(ctx, key, item) {
             return { title: item.title, badges: [plainStatus(item.required ? 'Required' : 'Optional'), plainStatus(words(item.status))], fields: [['Why', item.rationale], ['Evidence', item.evidence]] };
         case 'FB':
             return {
-                title: FEEDBACK_KIND[item.kind]?.label ?? 'Your item',
+                // A saved item of a kind the canvas no longer creates reads as a comment, as it does in the panel.
+                title: (FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment).label,
                 badges: [known(FEEDBACK_STATE, item.state)],
                 fields: [['Choice', item.optionLabel], ['Your words', item.text]],
                 related: [chips('About', [item.target?.id])],

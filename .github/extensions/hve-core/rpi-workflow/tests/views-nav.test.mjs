@@ -132,6 +132,18 @@ describe('preview content', () => {
         assert.deepEqual([...seen].sort(), ID_KINDS.map((entry) => entry.key).sort(), 'every family was previewed');
     });
 
+    it('titles a saved item of a kind the canvas no longer creates as a comment', async () => {
+        const { previewContent } = await import('../ui/preview-content.mjs');
+        const base = buildScenario('research', NOW);
+        const saved = { id: 'FB-091', kind: 'research-request', state: 'sent', target: { id: 'F1', type: 'finding', phase: 'research' }, text: 'Check iOS quota.', createdAt: base.updatedAt, updatedAt: base.updatedAt, history: [] };
+        const ctx = makeContext({ ...base, feedback: [...base.feedback, saved] }, 'research');
+        const content = previewContent(ctx, 'FB-091', { titleId: 'preview-title' });
+        const root = document.createElement('div');
+        root.appendChild(content.head);
+        for (const node of content.body) root.appendChild(node);
+        assert.equal(elements(root).find((node) => node.getAttribute('id') === 'preview-title')?.textContent, 'Comment');
+    });
+
     it('shows a task\'s markers, what it waits on, what blocks it, its changes, and the agent\'s recent work', async () => {
         const { previewContent } = await import('../ui/preview-content.mjs');
         const session = buildScenario('implement', NOW);
