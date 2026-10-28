@@ -45,7 +45,7 @@ The canvas follows those files while it is open and never changes them. What you
   Next comes the canvas badge with the handle that starts this canvas's messages; it never shrinks. For a real session, the line continues with the task ID, the repository and branch, and, for a child loop, a link to its parent task. In a narrow header the session name shortens first, then the task details give way.
 * The navigator on the left outlines the viewed phase and filters it.
 * The document fills the middle. Its context bar starts with Back and Forward, then names the phase, its status, the artifact path with Copy and, when the canvas runs in VS Code, Open in VS Code, when the file last changed, and, in the phase the agent works in, its next action. Sections of a real artifact that no other row shows appear, collapsed, in the phase's record row.
-* The steering panel on the right always lists, in order: Needs your input, Recorded decisions, Your feedback, Add input, and the phase review checklist. A decision with no row to sit beside appears there as a full card. Recorded decisions shows two counts, the decisions the agent recorded and the ones you made, each going to the first of them, in the phase you view when it has one.
+* The steering panel on the right always lists, in order: Needs your input, Recorded decisions, Your feedback, and Add input. A decision with no row to sit beside appears there as a full card. Recorded decisions shows two counts, the decisions the agent recorded and the ones you made, each going to the first of them, in the phase you view when it has one.
 * Times read in your language, such as "5 minutes ago", and hovering one shows the full date and time in your time zone.
 
 ### Following the Agent
@@ -76,7 +76,7 @@ Edit answer takes back an answer you have not sent and reopens the card with you
 
 While a decision the agent made is open, its card offers Override. Override lists the alternatives and Something else, or, when the decision lists none, asks what the agent should do instead, in your words. Removing an override you have not sent restores the agent's choice. A settled decision shows the option it resolved to and how it was decided. In Review, the agent's decision on each finding offers Question this decision, which starts a comment about that finding.
 
-Answers, overrides, comments, context, research requests, suggested edits, corrections, and checklist reviews become feedback items:
+Answers, overrides, comments, context, research requests, suggested edits, and corrections become feedback items:
 
 * An item is Not sent until you send it now or queue it with Review and send, or until the agent collects it with `take_feedback` when you ask it to. A queued item shows Queued for the agent until the agent collects it at its next checkpoint. Then it is Sent.
 * Once sent, it shows The agent has it when the agent picks it up, with how: at its next step, in a new turn, after its turn, or collected from the canvas. Where the host does not report pickups, a sent item stays Sent until its read-back.
@@ -90,7 +90,7 @@ Answers, overrides, comments, context, research requests, suggested edits, corre
 Everything you add waits in the canvas until you send or queue it. Review and send, in the header next to Needs you, is there in every phase and at every width. It counts the items that wait for you in every loop of the session and turns blue once there are any; items you queued for the agent are named in its label but not counted. It opens a review of everything not sent yet:
 
 * the waiting items under a heading for each loop, with the loop's title, status, and ID, the shown loop first; a completed loop's group says its items go to the agent as follow-up work. Items you already queued come last in each group, marked Queued for the agent;
-* each item's ID, kind, what it is about, and its words, with Go to, Edit, and Discard. Go to closes the review and shows what the item is about, showing its loop first when it is another one. Edit changes the words in place; a suggested edit or a checklist review opens where you made it.
+* each item's ID, kind, what it is about, and its words, with Go to, Edit, and Discard. Go to closes the review and shows what the item is about, showing its loop first when it is another one. Edit changes the words in place; a suggested edit opens where you made it. An item saved before the canvas stopped creating its kind, such as a review checklist, shows as a comment and offers Go to and Discard only.
   Discard asks "Discard FB-004?" and discards on a second press; a press in the first half second, such as the second click of a double click, does not count, and the question goes away after four seconds, on Escape, or when you move on;
 * an optional message to the agent, which Send now shows in the chat and Queue keeps as a context item with the rest, and the exact message Send now delivers, behind a disclosure;
 * Send now, which gives the listed items to the agent at its next step, even mid-task, as one message in the chat that opened the canvas;
@@ -102,7 +102,7 @@ Your feedback in the steering panel lists the shown loop's items: Not sent yet, 
 
 The RPI Agent checks the canvas with `take_feedback` at its checkpoints and collects what you queued. When it asks you a question, it offers Answered in the canvas: choose it after you answer here, and the agent collects your answers before it goes on.
 
-The chat shows your message, then a line such as "RPI canvas 3WF0 sent 3 items: 1 suggested edit, 1 review checklist, and 1 comment." The agent receives the full message:
+The chat shows your message, then a line such as "RPI canvas 3WF0 sent 3 items: 1 suggested edit, 1 answer, and 1 comment." The agent receives the full message:
 
 * the canvas handle and instance ID;
 * how to handle the items: change the task's files, or use canvas actions on the sample, then read back each item;
@@ -141,12 +141,6 @@ Right-click opens the canvas menu for what you clicked:
 Hold Shift as you right-click, or right-click in a text field, for the host's own menu, such as VS Code's with Inspect and Add Element to Chat. From the keyboard, Shift+F10 or the Menu key opens the canvas menu for the focused item. Up and Down move through it, Enter chooses, and Escape closes it and returns focus.
 
 Every icon button and every element with a description shows a tooltip after half a second of hover, or at once when it gets keyboard focus, with its shortcut when it has one. The tooltip stays while the pointer is over it, and Escape, a click, or scrolling hides it. The canvas draws its own tooltips because some hosts, VS Code's canvas view among them, do not show `title` tooltips.
-
-### Review Checklist
-
-The steering panel's checklist holds a few optional statements for reviewing the viewed phase, such as "Each finding's evidence is convincing." Mark each one Looks good or Needs work as you read. Pressing the selected verdict clears it, and Needs work takes an optional note.
-
-Your marks track your progress and stay private. Items that need work, with their notes, go to the agent with your next send, and so does a list where every item looks good. The status line under the checklist says when your review goes with the next send.
 
 ### IDs, Previews, and History
 
@@ -247,9 +241,9 @@ The canvas reports what it cannot read instead of dropping it: decision rows not
 These appear in the problems list and in `get_state`, and the RPI Agent fixes the ones in the files it is writing; older artifacts stay as they are.
 Plan diagrams draw as Mermaid flowcharts with labeled nodes, solid and dashed edges, `class` lines, and `subgraph` groups, which the text version lists.
 
-What you add stays in the canvas across these updates: feedback, suggested edits, checklist verdicts and notes, research lanes, activity, and decisions created in the canvas. A section always shows the file's text, and a suggestion for it stays beside it until it is applied or removed. An answer or override on a decision stays until the agent changes that decision. Text typed into a section by an earlier version of the canvas gives way to the file's text.
+What you add stays in the canvas across these updates: feedback, suggested edits, research lanes, activity, and decisions created in the canvas. A section always shows the file's text, and a suggestion for it stays beside it until it is applied or removed. An answer or override on a decision stays until the agent changes that decision. Text typed into a section by an earlier version of the canvas gives way to the file's text.
 
-The files remain the record, and only the agent changes them. Answers, overrides, comments, suggested edits, and checklist reviews reach the agent when you send them. The agent updates the files and reads each item back. The canvas refuses agent actions that would change file-owned content, such as `update_task` or `update_section`, with `source_managed` and names the file to change instead.
+The files remain the record, and only the agent changes them. Answers, overrides, comments, and suggested edits reach the agent when you send them. The agent updates the files and reads each item back. The canvas refuses agent actions that would change file-owned content, such as `update_task` or `update_section`, with `source_managed` and names the file to change instead.
 
 The canvas follows the agent while the Live control shows Live; see [Following the Agent](#following-the-agent). Showing a loop or session yourself, from the session menu, Follow-up, or a child's link to its parent, stops following. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
 

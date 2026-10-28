@@ -146,7 +146,6 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 |  items       |                                    | notes, comments         |  Decided    |
 |              | Row text                           | Margin                  |  Feedback   |
 |              | ...                                                          |  Add input  |
-|              |                                                              |  Checklist  |
 +--------------+-------------------------------------------------------------+-------------+
 ```
 
@@ -212,7 +211,7 @@ Decision cards are the heart of the canvas. Each card states what is being decid
   Settled decisions have no Override.
   In Review, the agent's decision on a finding offers Question this decision, which anchors a comment to that finding.
 * Feedback items list their kind icon, target, an excerpt, the stage chip, and the time the item reached that stage, with a few words on how: "as a chat message", "at its next step", "collected from the canvas", "the change is not made yet", or "your correction is FB-012". Actions follow state: Go to whenever the item is about something in the canvas; Edit and Discard while not sent, as icon buttons beside the stage chip; Take back while queued; Correct this once read back, in the history too.
-  Edit opens the words in place, with Save and Cancel, for comments, context, research requests, task requests, corrections, and the note on an answer or override; a suggested edit or checklist review opens where it was made. Answers and overrides are edited from their decision card (Edit answer, Edit override) while not sent. While a send is under way, its items show Sending and offer no actions.
+  Edit opens the words in place, with Save and Cancel, for comments, context, research requests, task requests, corrections, and the note on an answer or override; a suggested edit opens where it was made, and an item saved before the canvas stopped creating its kind offers no Edit. Answers and overrides are edited from their decision card (Edit answer, Edit override) while not sent. While a send is under way, its items show Sending and offer no actions.
 * Review and send: a pill in the header, after Needs you, present in every phase and at every width. With nothing waiting it is neutral and its name is "Review and send, nothing waiting". Once items wait it takes the accent fill with a count, named "Review and send, 3 items waiting". Items queued for the agent are not counted; they add ", 2 items queued for the agent" to its name and tooltip. Below 720px its label is visually hidden and the icon and count remain. It is the only way to open the dialog.
 * Review and send dialog: a modal titled "Review and send", 640px wide, whose title takes focus when it opens.
   * An intro names the canvas by its handle and says to check each item.
@@ -239,9 +238,6 @@ The panel is the person's control center. Its sections always appear in this ord
 A decision whose anchor has no row in a started phase, or that has no anchor, appears in its section as a full decision card instead of a link, so it can be answered or overridden in place.
 3. Your feedback: the shown loop's items grouped as Not sent yet, Queued for the agent, With the agent, and Feedback history, each with Go to, and the unsent ones with Edit and Discard. Queued for the agent has a one-line hint naming the checkpoints, and each of its items carries the Queued for the agent badge, "for the agent's next checkpoint" after its time, and a Take back button with the undo icon. Other loops' items appear only in Review and send.
 4. Add input: a composer whose kind is Comment, Context, or Research request; an optional anchor chip ("About F3", removable) set from the focused row, whose title takes at most two lines with the full title on hover, and which never widens the panel; a text area; and Add comment, Add context, or Add research request. A line under it says that what you add waits until you send it with Review and send. A research request becomes a queued lane in the Research view.
-5. Review checklist: an intro that says the questions are optional, that items needing work (with notes) and an all-good list go with the next send, and that other marks only track progress.
-   A status line follows with progress ("3 of 6 reviewed, 1 needs work") and whether the review goes with the next send.
-   Then comes each statement with two toggle buttons, Looks good (check, success hue when pressed) and Needs work (flag, attention hue when pressed). The buttons use `aria-pressed` and fixed labels in a group named by the statement, and pressing the selected one clears it. Needs work reveals "What needs work? (optional)".
 
 ## Phase Views
 
@@ -284,7 +280,7 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 
 * Buttons: neutral by default (`--rw-bg` fill, `--rw-border-control` outline). One primary button per region uses the accent fill. Icon-only buttons have an accessible name and tooltip; they are 32px in the header and panel heads and 28px elsewhere.
 * Chips and badges: `--rw-t-meta`, fully rounded, 14 percent hue tint, `--rw-fg` text, and the status icon. Levels and kinds (confidence, priority, risk type, severity) use the strong badge: an 18 percent tint, a 1px border at 55 percent of the hue, and a 2px icon stroke.
-* Choices: radio groups for exclusive choices (theme, composer kind, decision options), checkboxes for independent ones, and toggle buttons with `aria-pressed` for a clearable verdict (checklist items). Segmented controls are radio groups styled as segments.
+* Choices: radio groups for exclusive choices (theme, composer kind, decision options), checkboxes for independent ones, and toggle buttons with `aria-pressed` for clearable states. Segmented controls are radio groups styled as segments.
 * Menus: a button that opens a list of actions; `Escape` closes it and returns focus to the button.
 * Canvas menu: right-click, Shift+F10, or the Menu key opens a `menu` of `menuitem` buttons at the pointer or under the focused element, in the top layer. Items are 28px with a 16px icon, the label, and the shortcut in meta text; separators group comments, the clicked ID, file, or link, and navigation.
   Focus moves to the first item, Up and Down wrap, Home and End jump, Enter and Space choose, and Escape or Tab close it and return focus. Shift with a right-click, and right-click in a text field, leave the host's menu.
@@ -394,7 +390,7 @@ Every interactive control has default, hover, focus, active, disabled, and busy 
 
 Icons are authored inline SVG symbols in one sprite, on a 16px grid with a 1.5px stroke, round caps and joins, and `currentColor`. They extend the Session Log sprite and keep its shapes for shared meanings (person, sparkle, check, alert, info, chevron, search, panel, keyboard).
 
-Additions: phase icons (research magnifier, plan list, implement brackets, review eye, follow-up loop), decision signpost, hand, inbox, send, undo, pencil, sun, moon, contrast, steer sliders, trace nodes, file, code file, diff, go-to, globe, left and right arrows, pin, legend, anchor, checklist, light bulb, shield check, half circle, trend down, and plug.
+Additions: phase icons (research magnifier, plan list, implement brackets, review eye, follow-up loop), decision signpost, hand, inbox, send, undo, pencil, sun, moon, contrast, steer sliders, trace nodes, file, code file, diff, go-to, globe, left and right arrows, pin, legend, anchor, light bulb, shield check, half circle, trend down, and plug.
 Discard uses a trash can (a lid with a handle over a tapered can with two ribs), the one icon for removing something you added.
 Level and state icons: signal bars (three filled bars of rising height, unfilled bars at 28 percent opacity), priority marks (double chevron up, equals, chevron down), and the Live dot (filled with a ring) and its hollow form.
 Emoji and Unicode glyphs never stand in for icons. Decorative icons carry `aria-hidden="true"`.
@@ -467,6 +463,7 @@ Four icons keep one meaning wherever they mark a click: go-to (a box with an arr
 | 2026-10-28 | Trace strips run from a change through its task to the research the task cites; finding and task previews link both ways                                                                              | A change could be traced to its task but not to the research that justified the task                                                                                                               |
 | 2026-10-28 | Documents are named for their work: the switcher lists titles and marks the current one, and a phase the current work has not reached can still show an earlier document                              | Later work's documents are named for the work instead of numbered, and a new plan must not show an earlier plan's critique, changes record, or review                                              |
 | 2026-10-28 | The pinned task board has no shadow, and an opened lane's dropdown uses the floating-layer border and shadow                                                                                          | Both shadows were mixed from the text color, so in dark mode they glowed instead of falling away                                                                                                   |
+| 2026-10-28 | The steering panel has no review checklist; it ends with Add input                                                                                                                                    | You found the checklist not useful; an item saved before shows as a comment and sends as one                                                                                                       |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
