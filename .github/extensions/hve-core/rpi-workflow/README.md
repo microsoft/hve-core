@@ -31,6 +31,7 @@ Every document is a sequence of rows. A row's margin holds its annotations: deci
 IDs such as `C22` or `P01-T02` link wherever they appear, and each kind of ID has its own color. Hover over one to preview the whole item, and its icon says whether a click goes to the item or opens it in place.
 Tables and lists show the files' formatting, such as code in backticks and links, and confidence, risk priority, and risk type show as colored badges with their own icons.
 Evidence chips (`C5`, `W2`) open their claim and source in place, and each trace strip links a question through its finding, decision, task, change, and review finding. Strips follow the session's own references, so a change or discovery the agent records joins its task's strip.
+A task whose Requirements cite research, such as "Research D10", links back to it, so a change's strip runs from the change through its task to the research behind it; a finding's preview lists the plan tasks that cite it.
 See [IDs, Previews, and History](#ids-previews-and-history) and [Sources](#sources).
 
 The canvas shows a real RPI session from the workspace's `.copilot-tracking/` folder, or a fictional sample session, "Offline drafts with background sync", that lets you try every phase and interaction. A canvas with neither says it is not connected and how to connect it; see [Open the Canvas](#open-the-canvas).
