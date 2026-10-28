@@ -177,6 +177,48 @@ function highlightedNodes(phase, afterNodes) {
     return [...new Set(classed)];
 }
 
+const CHANGE_CLASSES = ['new', 'changed', 'removed'];
+
+/**
+ * Each phase's parts from the tags in After and Before, After's order first, so a part the plan
+ * removes counts for its phase. Null when no part carries a tag, as in plans written with phase
+ * diagrams. Warns once about each tag naming a phase the plan lacks and each part marked as a
+ * change without a tag.
+ *
+ * @param {{ phases: { id: string }[], before: string | null, after: string | null }} plan
+ * @param {string[]} warnings
+ * @returns {Record<string, string[]> | null}
+ */
+function taggedPhaseParts(plan, warnings) {
+    const known = new Set(plan.phases.map((phase) => phase.id));
+    const parts = new Map(plan.phases.map((phase) => [phase.id, []]));
+    const problems = new Map();
+    let tagged = false;
+    for (const [name, source] of [['After', plan.after], ['Before', plan.before]]) {
+        let graph = null;
+        try {
+            graph = source ? parseFlowchart(source) : null;
+        } catch {
+            continue;
+        }
+        if (!graph) continue;
+        const tags = [...graph.nodes.values(), ...graph.groups].filter((item) => item.tag);
+        if (tags.length) tagged = true;
+        for (const item of tags) {
+            for (const phase of item.tag.phases) {
+                if (!known.has(phase)) problems.set(`${item.id}:${phase}`, `Plan: the ${name} diagram tags ${item.id} with ${phase}, which is not a phase in this plan.`);
+                else if (graph.nodes.has(item.id) && !parts.get(phase).includes(item.id)) parts.get(phase).push(item.id);
+            }
+        }
+        for (const node of graph.nodes.values()) {
+            if (!node.tag && CHANGE_CLASSES.some((kind) => node.classes.has(kind))) problems.set(`${node.id}:untagged`, `Plan: the ${name} diagram marks ${node.id} as a change but gives it no tag naming its phases.`);
+        }
+    }
+    if (!tagged) return null;
+    warnings.push(...problems.values());
+    return Object.fromEntries(parts);
+}
+
 function lower(value) {
     return typeof value === 'string' && value.trim() ? value.trim().toLowerCase() : null;
 }
@@ -341,6 +383,7 @@ export function assembleSession(input) {
     const allTasks = (plan?.phases ?? []).flatMap((phase) => phase.tasks);
     const currentTask = active === 'implement' && running ? allTasks.find((task) => !task.checked)?.id ?? null : null;
     const afterNodes = nodeIds(plan?.after);
+    const taggedParts = plan?.after ? taggedPhaseParts(plan, warnings) : null;
     // A Before or After diagram the canvas cannot draw shows as source; say which line stopped it.
     for (const [name, source] of [['Before', plan?.before], ['After', plan?.after]]) {
         if (!source) continue;
@@ -566,7 +609,7 @@ export function assembleSession(input) {
             ? {
                 phases: planPhases,
                 requirements: plan.requirements.map((row) => ({ id: row.id, kind: row.kind, text: inlineMarkdown(row.text) })),
-                diagram: plan.after ? { before: plan.before, after: plan.after, phaseNodes: Object.fromEntries(plan.phases.map((phase) => [phase.id, highlightedNodes(phase, afterNodes)])) } : null,
+                diagram: plan.after ? { before: plan.before, after: plan.after, phaseNodes: taggedParts ?? Object.fromEntries(plan.phases.map((phase) => [phase.id, highlightedNodes(phase, afterNodes)])) } : null,
                 critique: critique || plan.critique.status || plan.critique.setting
                     ? {
                         status: critique?.execution || plan.critique.status || 'Not recorded',

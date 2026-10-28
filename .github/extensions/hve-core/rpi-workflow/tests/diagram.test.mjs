@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { after, before, describe, it } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
-import { buildScenario } from '../lib/scenario.mjs';
 import { elements, installFakeDom, serialize } from './helpers/fake-dom.mjs';
+import { OLDER_AFTER } from './helpers/older-map.mjs';
 
 let restore;
 let diagram;
@@ -15,7 +17,9 @@ before(async () => {
 });
 after(() => restore());
 
-const AFTER = buildScenario('plan').plan.diagram.after;
+const AFTER = OLDER_AFTER;
+/** The planning skill's reference, whose Example change map the canvas must always draw. */
+const REFERENCE = fileURLToPath(new URL('../../../../skills/rpi/rpi-plan/references/planning.md', import.meta.url));
 /** Groups and dashed edges, as the planning skill's diagrams use them. */
 const GROUPED = [
     'flowchart LR',
@@ -31,6 +35,38 @@ const GROUPED = [
     '    b -.-> c',
     '    a -.->|removed: reads| c',
 ].join('\n');
+/** A change map in the planning skill's format: formatted labels, tags, marks, nested boxes. */
+const MAP = [
+    'flowchart LR',
+    '    accTitle: After: documents paired by work',
+    '    accDescr: The reader pairs documents; the page shows them.',
+    '    subgraph ws["`<code>lib/source/workspace.mjs</code>`"]',
+    '        load["`<code>loadTask()</code>`"]',
+    '        pair["`**<code>earlierDocuments()</code>**',
+    '        pairs *documents* by name',
+    '        changed · P24, P27`"]',
+    '        gone["`**<code>oldPairing()</code>**',
+    '        removed · P25`"]',
+    '    end',
+    '    subgraph ui["`<code>ui/</code>`"]',
+    '        subgraph dm["`<code>ui/documents.mjs</code>',
+    '        new file · P25`"]',
+    '            compose["`**<code>composeDocument()</code>**',
+    '            new · P25`"]',
+    '        end',
+    '        board["Task board"]',
+    '    end',
+    '    load --> pair',
+    '    pair -->|feeds| compose',
+    '    compose --> board',
+    '    pair -.->|replaces| gone',
+    '    classDef new stroke-dasharray: 6 4,stroke-width:2px',
+    '    classDef changed stroke-width:3px',
+    '    classDef removed stroke-dasharray: 2 3,stroke-width:2px',
+    '    class compose,dm new',
+    '    class pair changed',
+    '    class gone removed',
+].join('\n');
 
 describe('parseFlowchart', () => {
     it('parses the plan subset and ignores directives and style declarations', () => {
@@ -45,7 +81,10 @@ describe('parseFlowchart', () => {
 
     it('reads the subgraph groups and dashed edges the planning skill draws', () => {
         const graph = diagram.parseFlowchart(GROUPED);
-        assert.deepEqual(graph.groups, [{ id: 'first', label: 'First pass', members: ['a', 'b'] }, { id: 'second', label: 'second', members: ['c'] }]);
+        assert.deepEqual(graph.groups.map(({ id, label, members, parent, depth }) => ({ id, label, members, parent, depth })), [
+            { id: 'first', label: 'First pass', members: ['a', 'b'], parent: null, depth: 1 },
+            { id: 'second', label: 'second', members: ['c'], parent: null, depth: 1 },
+        ]);
         assert.deepEqual(graph.edges.map((edge) => [edge.from, edge.to, edge.label, edge.dashed]), [['a', 'b', '', false], ['b', 'c', '', true], ['a', 'c', 'removed: reads', true]]);
         assert.equal(graph.nodes.size, 3, 'a group is not a node');
         assert.throws(() => diagram.parseFlowchart('flowchart LR\n  subgraph g\n  a["A"]'), /The subgraph g has no end line/);
@@ -65,6 +104,52 @@ describe('parseFlowchart', () => {
         assert.equal(graph.edges[0].label.length, 120);
         assert.throws(() => diagram.parseFlowchart(`flowchart LR\n  a["${'n'.repeat(241)}"]`), /Unsupported diagram line/);
         assert.throws(() => diagram.parseFlowchart(`flowchart LR\n  a -->|${'e'.repeat(121)}| b`), /Unsupported diagram line/);
+    });
+
+    it('reads a formatted label over several lines as runs, plain text, and a tag', () => {
+        const graph = diagram.parseFlowchart(MAP);
+        const pair = graph.nodes.get('pair');
+        assert.equal(pair.label, 'earlierDocuments(), pairs documents by name');
+        assert.deepEqual(pair.tag, { kind: 'changed', noun: null, phases: ['P24', 'P27'] });
+        assert.deepEqual(pair.lines[0], [{ text: 'earlierDocuments()', bold: true, italic: false, code: true }]);
+        assert.deepEqual(pair.lines[1].map((run) => [run.text, run.italic]), [['pairs ', false], ['documents', true], [' by name', false]]);
+        assert.equal(pair.group, 'ws');
+        assert.deepEqual(graph.nodes.get('load').tag, null, 'a part that stays the same has no tag');
+        assert.deepEqual(graph.nodes.get('gone').tag, { kind: 'removed', noun: null, phases: ['P25'] });
+        assert.ok(graph.nodes.get('gone').classes.has('removed'));
+    });
+
+    it('keeps <code> in any label and draws other tags as text, never as markup', () => {
+        const graph = diagram.parseFlowchart('flowchart LR\n  a["Uses <code>layout()</code> and <b>bold</b><br>second line"]\n  b["`**x** <img src=x onerror=alert(1)>`"]');
+        assert.deepEqual(graph.nodes.get('a').lines.map((line) => line.map((run) => [run.text, run.code])), [[['Uses ', false], ['layout()', true], [' and <b>bold</b>', false]], [['second line', false]]]);
+        assert.equal(graph.nodes.get('b').lines[0].at(-1).text, ' <img src=x onerror=alert(1)>');
+    });
+
+    it('reads accTitle, accDescr, and an accDescr block', () => {
+        assert.equal(diagram.parseFlowchart(MAP).title, 'After: documents paired by work');
+        assert.equal(diagram.parseFlowchart(MAP).description, 'The reader pairs documents; the page shows them.');
+        const block = diagram.parseFlowchart('flowchart LR\n  accDescr {\n    First line\n    second line\n  }\n  a["A"]');
+        assert.equal(block.description, 'First line second line');
+        assert.equal(block.title, null);
+        assert.throws(() => diagram.parseFlowchart('flowchart LR\n  accDescr {\n  a["A"]'), /no closing brace/);
+    });
+
+    it('nests boxes, applies classes to boxes, and reads a box tag', () => {
+        const graph = diagram.parseFlowchart(MAP);
+        const ui = graph.groups.find((group) => group.id === 'ui');
+        const docs = graph.groups.find((group) => group.id === 'dm');
+        assert.deepEqual([ui.parent, ui.depth, docs.parent, docs.depth], [null, 1, 'ui', 2]);
+        assert.ok(docs.classes.has('new'));
+        assert.deepEqual(docs.tag, { kind: 'new', noun: 'file', phases: ['P25'] });
+        assert.equal(docs.label, 'ui/documents.mjs');
+        assert.deepEqual(docs.members, ['compose']);
+        assert.equal(graph.nodes.get('compose').group, 'dm');
+    });
+
+    it('still rejects lines the canvas does not draw', () => {
+        for (const line of ['click a call alert()', 'style a fill:#f00', 'linkStyle 0 stroke:red', 'a:::new --> b', 'a ==> b', 'a --- b']) {
+            assert.throws(() => diagram.parseFlowchart(`flowchart LR\n  a["A"]\n  b["B"]\n  ${line}`), /Unsupported diagram line/, line);
+        }
     });
 });
 
@@ -220,5 +305,32 @@ describe('renderDiagram', () => {
         const figure = diagram.renderDiagram('graph TD\n  A --> B', { caption: 'Before', idPrefix: 'x' });
         assert.ok(figure.className.includes('is-fallback'));
         assert.equal(elements(figure).find((el) => el.localName === 'code').textContent, 'graph TD\n  A --> B');
+    });
+});
+
+describe('the planning skill\'s change map', () => {
+    it('draws the reference\'s Before and After example without falling back to source', () => {
+        const text = readFileSync(REFERENCE, 'utf8');
+        const start = text.indexOf('\n### Example change map\n');
+        assert.notEqual(start, -1, 'the reference has an Example change map section');
+        const end = text.slice(start + 1).search(/\n#{2,3} /);
+        const section = end === -1 ? text.slice(start) : text.slice(start, start + 1 + end);
+        const blocks = [...section.matchAll(/```mermaid\n([\s\S]*?)```/g)].map((match) => match[1]);
+        assert.equal(blocks.length, 2, 'one Before and one After');
+        for (const source of blocks) {
+            const graph = diagram.parseFlowchart(source);
+            assert.ok(graph.title && graph.description, 'accTitle and accDescr');
+            assert.ok(graph.groups.length > 0, 'boxes');
+            assert.ok([...graph.nodes.values()].some((node) => node.tag), 'tags');
+            const figure = diagram.renderDiagram(source, { caption: graph.title, idPrefix: 'reference' });
+            assert.ok(!figure.className.includes('is-fallback'), graph.title);
+        }
+    });
+
+    it('keeps drawing a map written in the older format', () => {
+        const graph = diagram.parseFlowchart(OLDER_AFTER);
+        assert.equal(graph.nodes.size, 10);
+        assert.ok([...graph.nodes.values()].every((node) => node.tag === null));
+        assert.ok(!diagram.renderDiagram(OLDER_AFTER, { caption: 'After', idPrefix: 'older' }).className.includes('is-fallback'));
     });
 });

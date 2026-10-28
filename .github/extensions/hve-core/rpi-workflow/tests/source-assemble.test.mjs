@@ -318,4 +318,62 @@ describe('plan diagrams', () => {
         assert.equal(warnings.filter((warning) => warning.startsWith('Plan:')).length, 0, warnings.join(' | '));
         assert.ok(session.plan.diagram.after.includes('subgraph app'));
     });
+
+    /** The fixture plan with a change map in the planning skill's format: tags name the phases. */
+    const tagged = (after = TAGGED_AFTER) => {
+        const plan = PLAN.replace(/### Before\n[\s\S]*?The map reads tiles from a local store\./, `### Before\n\n\`\`\`mermaid\n${TAGGED_BEFORE}\n\`\`\`\n\n### After\n\n\`\`\`mermaid\n${after}\n\`\`\`\n\nThe map reads tiles from a local store.`);
+        assert.notEqual(plan, PLAN, 'the fixture\'s change map changed');
+        return plan;
+    };
+    const TAGGED_BEFORE = [
+        'flowchart LR',
+        '    accTitle: Before: tiles come from the server',
+        '    accDescr: The map fetches tiles over the network.',
+        '    subgraph app["`<code>src/map/</code>`"]',
+        '        map["`**Map view**',
+        '        changed · P01`"]',
+        '        live["`**Live fetch**',
+        '        removed · P02`"]',
+        '    end',
+        '    net["Tile server"]',
+        '    map -->|uses| live',
+        '    live -->|fetches| net',
+        '    class map changed',
+        '    class live removed',
+    ].join('\n');
+    const TAGGED_AFTER = [
+        'flowchart LR',
+        '    accTitle: After: tiles come from a local store',
+        '    accDescr: The map reads a local store that downloads tiles.',
+        '    subgraph app["`<code>src/map/</code>`"]',
+        '        map["`**Map view**',
+        '        changed · P01`"]',
+        '        store["`**Tile store**',
+        '        new · P01, P02`"]',
+        '    end',
+        '    net["Tile server"]',
+        '    map -->|reads| store',
+        '    store -->|downloads| net',
+        '    class store new',
+        '    class map changed',
+    ].join('\n');
+
+    it('take each phase\'s parts from the tags in After and Before', () => {
+        const { warnings, session } = assembleWith(tagged());
+        assert.equal(warnings.filter((warning) => warning.startsWith('Plan:')).length, 0, warnings.join(' | '));
+        assert.deepEqual(session.plan.diagram.phaseNodes, { P01: ['map', 'store'], P02: ['store', 'live'] }, 'a part the plan removes counts for its phase');
+    });
+
+    it('name a tag that points to no phase and a marked part without a tag', () => {
+        const { warnings, session } = assembleWith(tagged(TAGGED_AFTER.replace('new · P01, P02', 'new · P09').replace('    class map changed', '    class map,net changed')));
+        assert.ok(warnings.includes('Plan: the After diagram tags store with P09, which is not a phase in this plan.'), warnings.join(' | '));
+        assert.ok(warnings.includes('Plan: the After diagram marks net as a change but gives it no tag naming its phases.'), warnings.join(' | '));
+        assert.deepEqual(session.plan.diagram.phaseNodes, { P01: ['map'], P02: ['live'] });
+    });
+
+    it('keep reading an older plan\'s phase diagrams when no part has a tag', () => {
+        const { warnings, session } = assembleWith(PLAN);
+        assert.deepEqual(session.plan.diagram.phaseNodes, { P01: ['store'], P02: [] });
+        assert.equal(warnings.filter((warning) => warning.includes('no tag')).length, 0, 'older plans mark parts without tags');
+    });
 });
