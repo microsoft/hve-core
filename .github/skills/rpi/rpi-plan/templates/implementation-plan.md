@@ -23,32 +23,58 @@
 
 ## Phase Checklist
 
-<!-- Add both overall diagrams once the phases are stable and before the critique runs. Follow references/planning.md for state comparison and styling; reuse IDs for corresponding elements across all views. -->
-<!-- Reuse the initialization line unchanged in every diagram; before critique, check the emitted fontFamily and fontSize values and correct malformed or nested values to the prescribed strings. -->
+<!-- Add the change map once the phases are stable and before the critique runs. Follow Change map in references/planning.md: boxes for where changes land, the same boxes and part IDs in both diagrams, tags, border marks, and no fills, fonts, init line, or backticks inside labels. -->
 
 ### Before
 
-<!-- Show only evidence-backed pre-change elements and relationships. For greenfield work, show surrounding context or label the capability as absent; identify unknown state rather than inventing it. -->
+<!-- Show today's parts in the same boxes as After. Tag the parts the plan changes or removes, and leave out the parts it adds. For greenfield work, show the surrounding context or a labeled absence. -->
 
 ```mermaid
-%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
 flowchart LR
-    {{existing_node_id}}["{{existing_component_file_contract_or_behavior}}"]
-    {{existing_node_id}} -->|{{existing_relationship}}| {{other_existing_node_id}}
+    accTitle: Before: {{what_the_map_shows_today}}
+    accDescr: {{one_sentence_description_of_the_starting_point}}
+    subgraph {{box_id}}["`<code>{{workspace/relative/path}}</code>`"]
+        {{part_id}}["`<code>{{part_that_stays_the_same}}</code>`"]
+        {{changed_part_id}}["`**<code>{{part_the_plan_changes}}</code>**
+        changed · {{Pxx}}`"]
+        {{removed_part_id}}["`**<code>{{part_the_plan_removes}}</code>**
+        removed · {{Pxx}}`"]
+    end
+    {{part_id}} -->|{{verb}}| {{changed_part_id}}
+    classDef changed stroke-width:3px
+    classDef removed stroke-dasharray: 2 3,stroke-width:2px
+    class {{changed_part_ids}} changed
+    class {{removed_part_ids}} removed
 ```
 
 ### After
 
-<!-- Show the intended result of all phases. Omit removed elements and obsolete edges; label added nodes with Added: and retain their dashed borders. -->
+<!-- Show the result of all phases in the same boxes. Tag new and changed parts beside the existing parts they touch, and leave out removed parts and obsolete arrows. -->
 
 ```mermaid
-%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
 flowchart LR
-    {{node_id}}["{{final_component_file_contract_or_behavior_label}}"]
-    {{node_id}} -->|{{final_relationship}}| {{other_node_id}}
-    classDef new stroke-dasharray: 5 5
-    class {{node_ids_that_do_not_exist_yet}} new
+    accTitle: After: {{what_the_map_shows_once_every_phase_lands}}
+    accDescr: {{one_sentence_description_of_the_result}}
+    subgraph {{box_id}}["`<code>{{workspace/relative/path}}</code>`"]
+        {{part_id}}["`<code>{{part_that_stays_the_same}}</code>`"]
+        {{changed_part_id}}["`**<code>{{changed_part}}</code>**
+        {{optional_short_description}}
+        changed · {{Pxx}}`"]
+    end
+    subgraph {{new_box_id}}["`<code>{{new/workspace/relative/path}}</code>
+    new file · {{Pxx}}`"]
+        {{new_part_id}}["`**{{new_part_name}}**
+        new · {{Pxx}}`"]
+    end
+    {{part_id}} -->|{{verb}}| {{changed_part_id}}
+    {{changed_part_id}} -->|{{verb}}| {{new_part_id}}
+    classDef new stroke-dasharray: 6 4,stroke-width:2px
+    classDef changed stroke-width:3px
+    class {{new_box_id}},{{new_part_id}} new
+    class {{changed_part_ids}} changed
 ```
+
+Key: dashed border, new; thick border, changed; dotted border, removed, in Before only; each tag names the phases that make the change.
 
 {{short_prose_explanation_of_the_before_to_after_change}}
 
@@ -61,19 +87,7 @@ Goals:
 Dependencies:
 * {{phase_dependencies_or_none}}
 
-<!-- Copy After and highlight this phase's changed nodes, preserving new-node labels and dashed borders. For removals, add clearly labeled Before-only context as described in references/planning.md. -->
-
-```mermaid
-%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
-flowchart LR
-    {{same_nodes_and_edges_as_the_after_diagram_with_any_labeled_removal_context}}
-    classDef new stroke-dasharray: 5 5
-    class {{node_ids_that_do_not_exist_yet}} new
-    classDef phase fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px
-    class {{node_ids_this_phase_changes}} phase
-```
-
-Highlighted work: {{nodes_or_relationships_this_phase_changes}}
+Changes in the map: {{plain_words_naming_the_parts_this_phase_adds_changes_or_removes}}
 
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: {{task_name}}
@@ -215,12 +229,12 @@ Record the critique setting, status, verdict, finding dispositions, and any expl
 * [ ] Confirmed direction, grouped decisions, readiness, goals, scope, requirements, risks, and dependencies are current and consistent with the Phase Checklist.
 * [ ] Planning decision participation and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
 * [ ] Functional and non-functional requirements are current, and every `FR-nnn` and `NFR-nnn` is cited by at least one task's Requirements.
-* [ ] Every `Pxx` has Goals, Dependencies, and a phase diagram that highlights its part of After with any labeled removal context. Every `Pxx-Txx` has Goals, Requirements, Details, References, and Dependencies.
+* [ ] Every `Pxx` has Goals, Dependencies, and a `Changes in the map:` line that matches the tags naming it. Every `Pxx-Txx` has Goals, Requirements, Details, References, and Dependencies.
 * [ ] Task Goals describe observable behavior, capability, or state without prescribing unsupported implementation steps. Details and References ground the implementer; examples are illustrative unless a requirement or contract makes them binding.
 * [ ] Open decisions, risks, and questions live in their tables with the affected `Pxx-Txx` named; no task carries a separate status block.
 * [ ] Code, commands, and symbols use backticks. Existing files and folders are Markdown links whose text is the workspace-relative path and whose destination resolves from this plan file.
-* [ ] Before reflects the evidence-backed pre-change baseline; After reflects the intended result of all phases. Corresponding elements and phase diagrams reuse stable node IDs, with added and removed work distinguishable without color.
-* [ ] Every emitted initialization object has the prescribed string values for themeVariables.fontFamily and themeVariables.fontSize. All diagrams use theme-aware styling, with explicit text colors on custom fills. Dual-theme rendering evidence or its preview limitation is recorded.
+* [ ] Before reflects the evidence-backed pre-change baseline and After the intended result of all phases, in the same boxes with the same part IDs. Boxes show where changes land, one level deep or two for a complex plan, and the map holds about 3 to 6 boxes and 15 parts.
+* [ ] Every new, changed, or removed part has its border class and a tag naming real phases. Each diagram has `accTitle` and `accDescr` and no fills, fonts, `%%{init}%%` line, front matter, or backticks inside labels. Rendering in light and dark was checked, or the preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
 * [ ] The critique setting and provenance are recorded. The critique ran on the implementation-ready plan or was skipped by user or parent direction, and every `PC-xxx` has a disposition or accepted residual risk.
 * [ ] Readiness does not rely on a critique that returned no result.
