@@ -163,11 +163,14 @@ function boardLane(ctx, lane) {
 
 /**
  * The task board, pinned under the context bar: its title with progress and Collapse, then
- * Backlog, In progress, and Done with one card each.
+ * Backlog, In progress, and Done with one card each. Progress counts the shown plan's tasks,
+ * which are an earlier changes record's own when one shows.
  */
 function boardDock(ctx) {
     const collapsed = ctx.ui.boardCollapsed === true;
-    const { done, total } = ctx.data.view.progress;
+    const tasks = allTasks(ctx);
+    const done = tasks.filter((task) => task.status === 'done').length;
+    const total = tasks.length;
     return h('section', { class: ['board-dock', collapsed ? 'is-collapsed' : null], dataset: { row: 'board' }, tabindex: '-1', 'aria-labelledby': 'board-dock-title' },
         h('header', { class: 'board-dock-head' },
             h('h3', { class: 'board-dock-title', id: 'board-dock-title' }, icon('list'), 'Task board'),

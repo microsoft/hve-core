@@ -64,5 +64,14 @@ describe('one history across phases and tasks', () => {
         assert.equal(placeLabel('back', at('research', 'F1'), 'loop-3', label), 'Back to F1 in Research');
         assert.equal(placeLabel('forward', at('plan'), 'loop-3', label), 'Forward to Plan');
         assert.equal(placeLabel('back', at('implement', 'CH-002', 'loop-2', 'Artifact conformance'), 'loop-3', label), 'Back to CH-002 in Implement of Artifact conformance');
+        assert.equal(placeLabel('back', { ...at('implement', 'CH-002'), doc: 1, docLabel: 'An early look' }, 'loop-3', label), 'Back to CH-002 in Implement (An early look)');
+    });
+
+    it('keeps the same ID in an earlier document and in the current one as two places', () => {
+        const history = createHistory();
+        const earlier = { ...at('implement', 'CH-001'), doc: 1, docLabel: 'An early look' };
+        history.move(earlier, at('implement', 'CH-001'));
+        assert.equal(history.sizes.back, 1, 'moving from the earlier record to the current one is a move');
+        assert.equal(history.back(at('implement', 'CH-001')).doc, 1, 'Back returns to the earlier record');
     });
 });

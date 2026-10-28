@@ -31,7 +31,7 @@ import {
     storeIdFor,
 } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
-import { CHANGES, CHILD_STATE, CHILD_TASK, CRITIQUE, PATHS, PLAN, REVIEW, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { CHILD_STATE, CHILD_TASK, EARLY, PATHS, PLAN, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeEarlierWork, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
 
 const EARLY_RESEARCH = `# Task Research: Offline trail maps, first look
 
@@ -313,7 +313,7 @@ describe('loading and importing a task', () => {
         assert.ok(loaded.watched.includes(firstResearch) && loaded.watched.includes(firstPlan), 'earlier documents are watched');
         assert.ok(!loaded.warnings.some((text) => /more than one research document/.test(text)), 'continuing IDs do not repeat');
         const planNames = new RegExp(`^Plan: \\d+ IDs appear in more than one plan: P01 \\(trail-maps and ${ROOT_TASK}\\)`);
-        assert.ok(loaded.warnings.some((text) => planNames.test(text) && /Links go to the current plan when it holds the ID, else to the newer one\.$/.test(text)), loaded.warnings.join(' | '));
+        assert.ok(loaded.warnings.some((text) => planNames.test(text) && /Inside a plan, links go to its own IDs first; elsewhere, to the current plan when it holds the ID, else to the newer one\.$/.test(text)), loaded.warnings.join(' | '));
 
         // New work with research of its own and no plan yet: the earlier plan stays listed, and none is current.
         await writeJson(many, PATHS.rootState, { ...ROOT_STATE, artifact_paths: { ...ROOT_STATE.artifact_paths, plan: null, critique: null, changes: null, review: null }, documents: { research: [firstResearch, PATHS.research], plan: [firstPlan], critique: [PATHS.critique], changes: [PATHS.changes], review: [PATHS.review] } });
@@ -341,44 +341,14 @@ describe('loading and importing a task', () => {
     it('pairs earlier changes records, reviews, and critiques with their work by name, as finished work', async () => {
         const pairs = path.join(tmp, 'pairs');
         await writeFixtureWorkspace(pairs);
-        const early = {
-            research: '.copilot-tracking/research/2026-01-14/early-look-research.md',
-            plan: '.copilot-tracking/plans/2026-01-14/early-look-plan.md',
-            critique: '.copilot-tracking/reviews/plans/2026-01-14/early-look-plan-critique.md',
-            critique2: '.copilot-tracking/reviews/plans/2026-01-14/early-look-plan-critique-2.md',
-            changes: '.copilot-tracking/changes/2026-01-14/early-look-changes.md',
-            review: '.copilot-tracking/reviews/logs/2026-01-14/early-look-review.md',
-            review2: '.copilot-tracking/reviews/logs/2026-01-14/early-look-review-2.md',
-            lonely: '.copilot-tracking/changes/2026-01-13/lonely-changes.md',
-        };
-        const retitle = (text, title) => text.replace(/^# ([^:\n]+): .*$/m, `# $1: ${title}`);
-        const texts = [
-            [early.research, EARLY_RESEARCH],
-            [early.plan, retitle(PLAN, 'An early look')],
-            [early.critique, retitle(CRITIQUE, 'An early look')],
-            [early.critique2, retitle(CRITIQUE, 'An early look').replace('Downloads cannot resume', 'Downloads restart from zero')],
-            [early.changes, `${retitle(CHANGES, 'An early look')}\n## Early notes\n\nOnly the early record has these.\n`],
-            [early.review, retitle(REVIEW, 'The first look')],
-            [early.review2, `${retitle(REVIEW, 'The second look')}\n## Second look notes\n\nOnly the second review has these.\n`],
-            [early.lonely, retitle(CHANGES, 'A record without a plan')],
-        ];
-        for (const [target, text] of texts) {
-            await fs.mkdir(path.dirname(path.join(pairs, target)), { recursive: true });
-            await fs.writeFile(path.join(pairs, target), text);
-        }
+        const documents = await writeEarlierWork(pairs, { research: EARLY_RESEARCH });
         // The agent implements the current work, with a blocker of its own.
         await writeJson(pairs, PATHS.rootState, {
             ...ROOT_STATE,
             active_phase: 'Implement',
             status: 'active',
             blockers: [{ id: 'B1', summary: 'P02-T02 waits on the tile server', resolution: null }],
-            documents: {
-                research: [early.research, PATHS.research],
-                plan: [early.plan, PATHS.plan],
-                critique: [early.critique, early.critique2, PATHS.critique],
-                changes: [early.lonely, early.changes, PATHS.changes],
-                review: [early.review, early.review2, PATHS.review],
-            },
+            documents,
         });
         const loaded = await loadTask(await resolveWorkspace([pairs]), PATHS.rootState, NOW);
         const { plan, implement, review } = loaded.session.documents;
@@ -415,7 +385,7 @@ describe('loading and importing a task', () => {
         const trace = review[0].snapshot.traces['RV-002'];
         assert.ok(trace && trace.indexOf('P02-T01') < trace.indexOf('CH-002') && trace.indexOf('CH-002') < trace.indexOf('RV-002'), JSON.stringify(trace));
 
-        for (const target of Object.values(early)) assert.ok(loaded.watched.includes(target), `${target} is watched`);
+        for (const target of Object.values(EARLY)) assert.ok(loaded.watched.includes(target), `${target} is watched`);
         assert.ok(!loaded.warnings.some((text) => /\b(?:CH|DS|AL|RV|RD)-\d{3}\b/.test(text)), loaded.warnings.join(' | '));
     });
 

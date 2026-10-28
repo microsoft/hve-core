@@ -34,7 +34,8 @@ export function outline(ctx) {
 
 export function renderView(ctx) {
     const { review } = ctx.data.session;
-    const participation = PARTICIPATION[ctx.data.session.session.participation?.review];
+    // An earlier review is read-only, so it does not invite questions about its decisions.
+    const participation = ctx.readOnly ? null : PARTICIPATION[ctx.data.session.session.participation?.review];
     const rows = [];
     const counts = ['critical', 'high', 'medium', 'low'].map((severity) => [severity, review.findings.filter((finding) => finding.severity === severity).length]).filter(([, count]) => count);
     rows.push(row(ctx, {
@@ -69,7 +70,7 @@ export function renderView(ctx) {
                     findingOutcome(finding) ? h('p', null, h('strong', { text: findingOutcome(finding) })) : null,
                     event?.rationale ? h('p', null, mdInline(ctx, event.rationale, { doc: 'review' })) : null,
                     event ? h('p', { class: 'meta' }, h('span', { class: 'id-chip', text: event.id }), ' ', timeEl(event.at, ctx.now)) : null,
-                    h('div', { class: 'btn-row' }, button('Question this decision', { iconName: 'message', onClick: () => ctx.act.anchorComposer(finding.id) }))),
+                    ctx.readOnly ? null : h('div', { class: 'btn-row' }, button('Question this decision', { iconName: 'message', onClick: () => ctx.act.anchorComposer(finding.id) }))),
                 ...anchoredDecisions(ctx, [finding.id]).map((decision) => decisionCard(ctx, decision)),
                 ...notesFor(ctx, [finding.id]).map((item) => marginNote(ctx, item)),
             ],

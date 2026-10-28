@@ -29,9 +29,11 @@ function lockRing() {
 
 /**
  * Wires ID previews into the page. Hovering or focusing any element with `data-preview`
- * shows the item, and the preview model decides when previews lock, nest, and close.
+ * shows the item, and the preview model decides when previews lock, nest, and close. A
+ * preview whose trigger sits in the document or its outline, or in a preview opened from
+ * there, reads the context of the shown document, which may be an earlier one.
  *
- * @param {{ context: () => any, revision: () => number }} deps
+ * @param {{ context: (inDocument: boolean) => any, revision: () => number }} deps
  */
 export function installPreviews(deps) {
     /** @type {{ trigger: Element, element: HTMLElement, revision: number }[]} */
@@ -46,7 +48,15 @@ export function installPreviews(deps) {
         const host = previewOf(trigger);
         return host ? indexOfPreview(host) : -1;
     };
-    const known = (trigger) => Boolean(trigger.dataset.preview && deps.context().find(trigger.dataset.preview));
+    /** True when a trigger reads the shown document: it sits in the document or outline, or in a preview opened from there. */
+    const inDocument = (trigger) => {
+        const host = previewOf(trigger);
+        if (!host) return Boolean(trigger.closest?.('#docBody, #navBody'));
+        const parent = shown[indexOfPreview(host)];
+        return parent ? inDocument(parent.trigger) : false;
+    };
+    const contextFor = (trigger) => deps.context(inDocument(trigger));
+    const known = (trigger) => Boolean(trigger.dataset.preview && contextFor(trigger).find(trigger.dataset.preview));
 
     function setInteractive(element, interactive) {
         for (const control of element.querySelectorAll('button, a[href], input, select, textarea')) {
@@ -58,7 +68,7 @@ export function installPreviews(deps) {
     function build(entry, index) {
         const id = `rw-preview-${serial += 1}`;
         const titleId = `${id}-title`;
-        const content = previewContent(deps.context(), entry.id, { titleId });
+        const content = previewContent(contextFor(entry.trigger), entry.id, { titleId });
         const element = h('div', { class: 'preview', id, dataset: { previewId: entry.id } });
         if (supportsPopover()) element.setAttribute('popover', 'manual');
         element.style.setProperty('--rw-lock-ms', `${TIMING.lock}ms`);
@@ -245,7 +255,7 @@ export function installPreviews(deps) {
             shown.forEach((entry, index) => {
                 if (entry.revision === revision || hasFocus(index)) return;
                 const titleId = entry.element.dataset.titleId;
-                const content = previewContent(deps.context(), entry.element.dataset.previewId, { titleId });
+                const content = previewContent(contextFor(entry.trigger), entry.element.dataset.previewId, { titleId });
                 if (!content) return;
                 const keep = entry.element.querySelector('.preview-state');
                 const close = entry.element.querySelector('.preview-close');

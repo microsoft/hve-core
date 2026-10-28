@@ -954,7 +954,8 @@ function reviewRow(ctx, group, item) {
 }
 
 /**
- * File preview sheet content with a symbol-marked diff and file actions.
+ * File preview sheet content with a symbol-marked diff and file actions. A change from an
+ * earlier, read-only changes record offers no way to ask the agent about it.
  *
  * @param {any} ctx
  * @param {any} change
@@ -975,7 +976,7 @@ export function filePreview(ctx, change, file) {
         diff,
         h('div', { class: 'btn-row' },
             button('Copy path', { iconName: 'copy', onClick: () => ctx.act.copy(file.path) }),
-            button('Ask the agent about this change', { iconName: 'message', onClick: () => ctx.act.anchorComposer(change.id, true) }),
+            ctx.readOnly ? null : button('Ask the agent about this change', { iconName: 'message', onClick: () => ctx.act.anchorComposer(change.id, true) }),
             real && file.kind !== 'deleted' ? button('Show the file', { iconName: 'file', onClick: () => ctx.act.openSource(file.path, null) }) : null,
             editor && file.kind !== 'deleted' && !/\.code-workspace$/i.test(file.path) ? button(`Open in ${editor.name}`, { iconName: 'file-code', onClick: () => ctx.act.openInEditor(file.path, null) }) : null),
     ];

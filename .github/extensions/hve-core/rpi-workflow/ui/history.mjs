@@ -6,15 +6,17 @@
  * keep. Pure: the page reports each move with the place it leaves and the place it goes to,
  * and asks where Back and Forward lead.
  *
- * @typedef {{ taskId: string, taskTitle: string, phase: string, id: string | null, label?: string, scroll: number }} Place
+ * @typedef {{ taskId: string, taskTitle: string, phase: string, id: string | null, label?: string, doc?: number | null, docLabel?: string, scroll: number }} Place
  * `label` is how the place reads in a button, such as D1 for `plan.D1` or a section title.
+ * `doc` is the earlier document the phase showed, by number, and `docLabel` its title; both are
+ * absent or null in the current work's document.
  */
 
 /** The history keeps at most this many places in each direction. */
 export const MAX_PLACES = 50;
 
-/** Two places are the same when they show the same item, or the same phase top, of a task. */
-export const samePlace = (a, b) => Boolean(a && b && a.taskId === b.taskId && a.phase === b.phase && (a.id ?? null) === (b.id ?? null));
+/** Two places are the same when they show the same item, or the same phase top, of the same document of a task. */
+export const samePlace = (a, b) => Boolean(a && b && a.taskId === b.taskId && a.phase === b.phase && (a.id ?? null) === (b.id ?? null) && (a.doc ?? null) === (b.doc ?? null));
 
 export function createHistory() {
     /** @type {Place[]} */
@@ -74,8 +76,9 @@ export function createHistory() {
 }
 
 /**
- * Names where a history button leads: "Back to F1 in Research", adding "of" and the task
- * title when the place is in another task.
+ * Names where a history button leads: "Back to F1 in Research", adding the earlier document's
+ * title in parentheses when the place is in one, and "of" and the task title when the place is
+ * in another task.
  *
  * @param {'back' | 'forward'} direction
  * @param {Place} place
@@ -83,7 +86,8 @@ export function createHistory() {
  * @param {(phase: string) => string} phaseLabel
  */
 export function placeLabel(direction, place, currentTaskId, phaseLabel) {
-    const where = place.id ? `${place.label ?? place.id} in ${phaseLabel(place.phase)}` : phaseLabel(place.phase);
+    const phase = `${phaseLabel(place.phase)}${place.doc && place.docLabel ? ` (${place.docLabel})` : ''}`;
+    const where = place.id ? `${place.label ?? place.id} in ${phase}` : phase;
     const task = place.taskId !== currentTaskId ? ` of ${place.taskTitle}` : '';
     return `${direction === 'back' ? 'Back' : 'Forward'} to ${where}${task}`;
 }

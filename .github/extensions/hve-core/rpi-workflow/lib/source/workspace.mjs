@@ -514,8 +514,9 @@ const DOCUMENT_IDS = Object.freeze({
 });
 
 /**
- * Says which IDs appear in more than one research document or plan, naming the documents; links
- * go to the current, else the newer. Changes records and reviews restart their IDs by design.
+ * Says which IDs appear in more than one research document or plan, naming the documents. Inside
+ * a document, links go to its own IDs first; elsewhere, to the current one, else the newer.
+ * Changes records and reviews restart their IDs by design.
  */
 function repeatedIdWarnings(session) {
     const warnings = [];
@@ -531,7 +532,7 @@ function repeatedIdWarnings(session) {
         const shown = repeated.slice(0, 8).map(([id, names]) => `${id} (${names.join(' and ')})`);
         const more = repeated.length > 8 ? `, and ${repeated.length - 8} more` : '';
         const noun = key === 'research' ? 'research document' : 'plan';
-        warnings.push(`${key === 'research' ? 'Research' : 'Plan'}: ${repeated.length === 1 ? 'an ID appears' : `${repeated.length} IDs appear`} in more than one ${noun}: ${shown.join('; ')}${more}. Links go to the current ${noun} when it holds the ID, else to the newer one.`);
+        warnings.push(`${key === 'research' ? 'Research' : 'Plan'}: ${repeated.length === 1 ? 'an ID appears' : `${repeated.length} IDs appear`} in more than one ${noun}: ${shown.join('; ')}${more}. Inside a ${noun}, links go to its own IDs first; elsewhere, to the current ${noun} when it holds the ID, else to the newer one.`);
     }
     return warnings;
 }

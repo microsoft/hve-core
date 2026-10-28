@@ -6,6 +6,7 @@ import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, send
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
+import { composeDocument, DOCUMENT_NOUNS, documentChoices, documentLabel, documentsIn, earlierDocument, inEarlier, pairedPlanOf, scopedLookup } from './documents.mjs';
 import { installContextMenu } from './context-menu.mjs';
 import { legendContent } from './legend.mjs';
 import { createHistory, placeLabel } from './history.mjs';
@@ -57,7 +58,7 @@ const state = {
         corrections: new Map(),
         overrides: new Set(),
         revealed: new Set(),
-        docs: { research: null, plan: null },
+        docs: { research: null, plan: null, implement: null, review: null },
         diagramView: 'after',
         diagramPhase: null,
         recordOpen: false,
@@ -163,62 +164,16 @@ function renderStatus() {
 /** The ID a reference means in the viewed phase: a bare `D#` names that phase's decision first. */
 const aliasOf = (id) => decisionAlias(state.data?.session, id, state.ui.phase);
 
-/** Kinds with earlier documents the canvas can show, and their names. */
-const DOCUMENT_KINDS = Object.freeze({ research: 'Research', plan: 'Plan' });
+/** A phase's documents in the order the session made them; `current` marks the current work's. */
+const documentsOf = (phase) => documentsIn(state.data?.session, phase);
 
-/** How a kind's document reads in a sentence. */
-const DOCUMENT_NOUNS = Object.freeze({ research: 'research document', plan: 'plan' });
+/** The earlier document of a phase the reader chose, or null while the current work's shows. */
+const shownEarlier = (phase) => earlierDocument(state.data?.session, phase, state.ui.docs?.[phase]);
 
-/** A kind's documents in the order the session made them; `current` marks the current work's. */
-const documentsOf = (kind) => state.data?.session.documents?.[kind] ?? [];
-
-/** A document's name for people: its title, else the name of its work from its file name. */
-const documentLabel = (doc) => doc.title || doc.name || doc.path;
-
-/** The earlier document of a kind the reader chose, or null while the current work's shows. */
-function shownEarlier(kind) {
-    const n = state.ui.docs?.[kind] ?? null;
-    if (!n) return null;
-    return documentsOf(kind).find((doc) => doc.n === n && !doc.current && doc.snapshot) ?? null;
-}
-
-/** The session as it reads with an earlier document of a kind in place of the current work's. */
-function withDocument(session, kind, doc) {
-    const { snapshot } = doc;
-    return {
-        ...session,
-        [kind]: kind === 'research' ? { ...snapshot.research, lanes: [] } : snapshot.plan,
-        sections: { ...Object.fromEntries(Object.entries(session.sections).filter(([, section]) => section.doc !== kind)), ...snapshot.sections },
-        decisions: [...session.decisions.filter((decision) => decision.phase !== kind), ...snapshot.decisions],
-        phases: { ...session.phases, [kind]: { ...session.phases[kind], status: snapshot.record?.status ?? session.phases[kind].status, artifact: doc.path, updatedAt: doc.updatedAt ?? session.phases[kind].updatedAt } },
-    };
-}
-
-/** An item in an earlier document's snapshot: its research or plan, its decisions, or its sections. */
-function findIn(part, id) {
-    const pools = [part.research?.questions, part.research?.findings, part.research?.evidence, part.decisions, part.plan?.requirements, part.plan?.critique?.findings].filter(Boolean);
-    for (const pool of pools) {
-        const found = pool.find((item) => item?.id === id);
-        if (found) return found;
-    }
-    for (const phase of part.plan?.phases ?? []) {
-        if (phase.id === id) return phase;
-        const task = phase.tasks.find((entry) => entry.id === id);
-        if (task) return task;
-    }
-    return part.sections && Object.prototype.hasOwnProperty.call(part.sections, id) ? part.sections[id] : null;
-}
-
-/** The newest earlier document holding an ID, as `{ kind, doc, item }`. */
-function inEarlier(id) {
-    for (const kind of Object.keys(DOCUMENT_KINDS)) {
-        for (const doc of [...documentsOf(kind)].reverse()) {
-            if (doc.current || !doc.snapshot) continue;
-            const item = findIn(doc.snapshot, id);
-            if (item) return { kind, doc, item };
-        }
-    }
-    return null;
+/** The shown earlier document of a phase as a lookup scope, or null while the current work's shows. */
+function scopeOf(phase) {
+    const doc = DOCUMENT_NOUNS[phase] ? shownEarlier(phase) : null;
+    return doc ? { phase, doc } : null;
 }
 
 /** An item by ID: in the current work's documents and the canvas's own data first, then in earlier documents. */
@@ -226,7 +181,23 @@ function find(ref) {
     const session = state.data?.session;
     if (!session || typeof ref !== 'string') return null;
     const id = aliasOf(ref);
-    return findCurrent(session, id) ?? inEarlier(id)?.item ?? null;
+    return findCurrent(session, id) ?? inEarlier(session, id)?.item ?? null;
+}
+
+/** The ID a reference means inside an earlier document: a bare `D#` names that document's decision first. */
+const scopedAlias = (scope, ref) => decisionAlias(composeDocument(state.data.session, scope.phase, scope.doc), ref, scope.phase);
+
+/** An item by ID inside an earlier document: in it, then in its work's other documents, then as `find` does. */
+function scopedFind(scope, ref) {
+    if (!state.data || typeof ref !== 'string') return null;
+    return scopedLookup(state.data.session, scope, scopedAlias(scope, ref))?.item ?? find(ref);
+}
+
+/** Where an ID inside an earlier document leads: the document of its own work that holds it, then as `resolve` does. */
+function scopedResolve(scope, ref) {
+    if (!state.data || typeof ref !== 'string') return null;
+    const hit = scopedLookup(state.data.session, scope, scopedAlias(scope, ref));
+    return hit ? { phase: hit.phase, doc: hit.doc } : resolve(ref);
 }
 
 /** An item in the current work's documents and the canvas's own data. */
@@ -249,8 +220,8 @@ function resolve(ref) {
     if (!item) return null;
     const id = aliasOf(ref);
     // An ID only an earlier document holds lives in that document, in its kind's phase.
-    const earlier = findCurrent(state.data.session, id) ? null : inEarlier(id);
-    if (earlier) return { phase: earlier.kind, doc: earlier.doc.n };
+    const earlier = findCurrent(state.data.session, id) ? null : inEarlier(state.data.session, id);
+    if (earlier) return { phase: earlier.phase, doc: earlier.doc.n };
     if (/^[QFCWL]\d{1,3}$/.test(id)) return { phase: 'research' };
     if (/^(?:plan\.)?D\d{1,3}$/.test(id)) return hasMarginHome(context(), item) ? { phase: item.anchor.phase } : { phase: state.ui.phase };
     if (/^P\d{2}(-T\d{2})?$/.test(id)) return { phase: state.ui.phase === 'implement' ? 'implement' : 'plan' };
@@ -263,11 +234,17 @@ function resolve(ref) {
     return null;
 }
 
-/** Where the reader is: the task, phase, the item last moved to, and the scroll position. */
+/** Where the reader is: the task, phase, the earlier document shown there, the item last moved to, and the scroll position. */
 function here() {
     const session = state.data?.session;
     if (!session || !state.ui.phase) return null;
-    return { taskId: session.task.id, taskTitle: session.task.title, phase: state.ui.phase, id: state.ui.place?.id ?? null, label: state.ui.place?.label, scroll: $('document').scrollTop };
+    return placeAt({ taskId: session.task.id, taskTitle: session.task.title, scroll: $('document').scrollTop }, state.ui.phase, state.ui.place?.id ?? null, state.ui.place?.label);
+}
+
+/** A place in a phase of the shown task, with the earlier document that phase shows, if any. */
+function placeAt(from, phase, id, label) {
+    const doc = DOCUMENT_NOUNS[phase] ? shownEarlier(phase) : null;
+    return { ...from, phase, id, label, doc: doc?.n ?? null, docLabel: doc ? documentLabel(doc) : undefined };
 }
 
 /** Records a move in the history unless Back or Forward is making it. */
@@ -300,7 +277,7 @@ function setPhase(phase, options = {}) {
     previews?.closeAll();
     if (phase !== state.ui.phase) {
         const from = here();
-        remember(from, from && { ...from, phase, id: null, label: undefined });
+        remember(from, from && placeAt(from, phase, null));
     }
     state.ui.place = null;
     state.ui.phase = phase;
@@ -337,17 +314,28 @@ function targetElement(id) {
     return document.querySelector(`[data-item="${escaped}"]`) ?? document.querySelector(`[data-row="${escaped}"]`);
 }
 
+/**
+ * Goes to an ID: shows its phase, and the document there that holds it, and moves to it. With a
+ * `scope`, the ID is looked up inside that earlier document and its work first; `keepDocument`
+ * stays in the document the phase shows.
+ *
+ * @param {string} ref
+ * @param {string} [phaseOverride]
+ * @param {{ agent?: boolean, keepDocument?: boolean, scope?: { phase: string, doc: any } | null }} [options]
+ */
 function navigate(ref, phaseOverride, options = {}) {
     previews?.closeAll();
     contextMenu?.close();
-    const id = aliasOf(ref);
-    const target = resolve(id);
+    const { scope } = options;
+    const id = scope ? scopedAlias(scope, ref) : aliasOf(ref);
+    const target = scope ? scopedResolve(scope, id) : resolve(id);
     const phase = phaseOverride ?? target?.phase ?? state.ui.phase;
+    const from = here();
     if (!options.agent && phase !== agentPhase()) stopFollowing();
-    // An ID only an earlier document holds shows that document; any other ID shows the current
+    // An ID an earlier document holds shows that document; any other ID shows the current
     // work's, unless the reader goes to an ID inside the earlier document already shown.
     const doc = options.keepDocument ? state.ui.docs[phase] ?? null : target?.doc ?? null;
-    if (DOCUMENT_KINDS[phase] && doc !== (state.ui.docs[phase] ?? null)) {
+    if (DOCUMENT_NOUNS[phase] && doc !== (state.ui.docs[phase] ?? null)) {
         if (doc) {
             if (!options.agent) stopFollowing();
             const earlier = documentsOf(phase).find((entry) => entry.n === doc);
@@ -355,13 +343,13 @@ function navigate(ref, phaseOverride, options = {}) {
         }
         state.ui.docs[phase] = doc;
     }
-    const from = here();
-    const label = kindOf(id) ? find(id)?.ref ?? ref : find(id)?.title ?? ref;
-    remember(from, from && { ...from, phase, id, label });
+    const found = scope ? scopedFind(scope, id) : find(id);
+    const label = kindOf(id) ? found?.ref ?? ref : found?.title ?? ref;
+    remember(from, from && placeAt(from, phase, id, label));
     if (/^[CW]\d{1,3}$/.test(id)) state.ui.recordOpen = true;
     if (/^P\d{2}-T\d{2}$/.test(id) && (phase === 'plan' || phase === 'implement')) state.ui.expanded.add(id);
     // A phase or task lands in Phases and tasks, which shows all tasks when its filter would hide it.
-    const widened = /^P\d{2}(?:-T\d{2})?$/.test(id) && phase === 'implement' && Boolean(state.data) && !implementView.filterShows(state.data.session, state.ui.taskFilter, id);
+    const widened = /^P\d{2}(?:-T\d{2})?$/.test(id) && phase === 'implement' && Boolean(state.data) && !implementView.filterShows(viewContext('implement').data.session, state.ui.taskFilter, id);
     if (widened) state.ui.taskFilter = 'all';
     state.ui.boardLane = null;
     closeDrawer(false);
@@ -390,16 +378,22 @@ function navigate(ref, phaseOverride, options = {}) {
             element.classList.remove('is-highlight');
             if (state.ui.highlight === id) state.ui.highlight = null;
         }, 1200);
-        if (options.agent) announce(`The agent pointed you to ${ref}${find(id)?.title ? `, ${find(id).title}` : ''}.`);
+        if (options.agent) announce(`The agent pointed you to ${ref}${found?.title ? `, ${found.title}` : ''}.`);
     });
 }
 
-/** Shows a remembered place without recording the move. */
+/** Shows a remembered place without recording the move, in the earlier document it was in when that can still show. */
 function applyPlace(place) {
     restoringPlace = true;
     try {
-        if (place.id && find(place.id)) {
-            navigate(place.id, place.phase);
+        if (DOCUMENT_NOUNS[place.phase]) {
+            const doc = earlierDocument(state.data.session, place.phase, place.doc);
+            if (doc) stopFollowing();
+            state.ui.docs[place.phase] = doc?.n ?? null;
+        }
+        const scope = scopeOf(place.phase);
+        if (place.id && (scope ? scopedFind(scope, place.id) : find(place.id))) {
+            navigate(place.id, place.phase, { keepDocument: true, scope });
         } else {
             setPhase(place.phase);
             if (place.id) announce(`${place.label ?? place.id} is no longer in ${PHASE_META[place.phase]?.label ?? place.phase}.`);
@@ -484,8 +478,8 @@ const taskUi = () => ({
     corrections: new Map(),
     overrides: new Set(),
     revealed: new Set(),
-    // The earlier research document or plan shown instead of the newest, by number; null shows the newest.
-    docs: { research: null, plan: null },
+    // The earlier document each phase shows instead of the current work's, by number; null shows the current work's.
+    docs: { research: null, plan: null, implement: null, review: null },
     place: null,
     diagramView: 'after',
     diagramPhase: null,
@@ -538,7 +532,7 @@ async function refresh() {
         const withAgent = Boolean(state.following && previous && (switched || previous.session.session.activePhase !== agentNow) && state.ui.phase !== agentNow);
         if (withAgent) {
             const from = switched ? null : here();
-            if (from) remember(from, { ...from, phase: agentNow, id: null, label: undefined });
+            if (from) remember(from, placeAt(from, agentNow, null));
             Object.assign(state.ui, { phase: agentNow, place: null, highlight: null, boardLane: null });
         }
         if (switched || withAgent) setHash();
@@ -631,7 +625,9 @@ function stopFollowing() {
 /** Follows the agent again: its running loop, then the phase it works in. */
 async function startFollowing() {
     state.following = true;
-    state.ui.docs = { research: null, plan: null };
+    // The current changes record shows what is in progress, which an earlier one showed all of.
+    if (state.ui.docs.implement) state.ui.taskFilter = 'active';
+    state.ui.docs = { research: null, plan: null, implement: null, review: null };
     renderLive();
     if (state.ui.phase) setHash();
     try {
@@ -765,7 +761,11 @@ const act = {
         const submit = document.querySelector(`[data-key="submit-${CSS.escape(id)}"][data-needs-text="true"]`);
         if (submit) submit.disabled = !draft.note?.trim();
     },
-    /** Shows a kind's document by its place in the list: an earlier one read-only, or with 0 or the current one's place, the current work's. Choosing an earlier one stops following. */
+    /**
+     * Shows a phase's document by its place in the list: an earlier one read-only, or with 0 or the
+     * current one's place, the current work's. Choosing an earlier one stops following. An earlier
+     * changes record shows all its tasks, since none is in progress; the current one shows what is.
+     */
     showDocument(kind, n) {
         const docs = documentsOf(kind);
         const current = docs.find((entry) => entry.current) ?? null;
@@ -780,6 +780,7 @@ const act = {
         if (earlier) stopFollowing();
         previews?.closeAll();
         state.ui.docs[kind] = earlier ? earlier.n : null;
+        if (kind === 'implement') state.ui.taskFilter = earlier ? 'all' : 'active';
         state.ui.highlight = null;
         state.ui.place = null;
         if (state.ui.phase !== kind) setPhase(kind);
@@ -1234,13 +1235,15 @@ const act = {
         await refresh();
         announce(discardMessage(result));
     },
+    /** Opens a change's file in the sheet, from the changes record Implement shows, which may be an earlier, read-only one. */
     openFile(changeId, path) {
-        const change = state.data.session.implementation.changes.find((item) => item.id === changeId);
+        const ctx = viewContext('implement');
+        const change = ctx.data.session.implementation.changes.find((item) => item.id === changeId);
         const file = change?.files.find((item) => item.path === path);
         if (!file) return;
         const sheet = $('fileSheet');
         sheet.classList.remove('is-source');
-        sheet.replaceChildren(...filePreview(context(), change, file));
+        sheet.replaceChildren(...filePreview(ctx, change, file));
         sheet.showModal();
     },
     /** Shows a workspace file in the sheet at the cited place, or why it cannot be shown. */
@@ -1437,14 +1440,15 @@ function renderRail() {
 function renderNavigator() {
     const phase = state.ui.phase;
     // The outline lists the shown document, which may be an earlier one, and stays inside it.
-    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
+    const scope = scopeOf(phase);
+    const earlier = scope?.doc ?? null;
     const ctx = viewContext(phase);
     const items = phaseReached(phase) || earlier ? VIEWS[phase].outline(ctx) : [];
     const filter = state.ui.navFilter.trim().toLowerCase();
     const shown = items.filter((item) => !filter || `${item.prefix ?? ''} ${item.label}`.toLowerCase().includes(filter));
     clear($('navBody')).append(
         h('h2', { class: 'nav-title', text: `${PHASE_META[phase].label} outline` }),
-        shown.length ? h('ul', { class: 'nav-list' }, shown.map((item) => h('li', null, h('button', { type: 'button', class: 'nav-item', onclick: () => navigate(item.id, phase, { keepDocument: Boolean(earlier) }) },
+        shown.length ? h('ul', { class: 'nav-list' }, shown.map((item) => h('li', null, h('button', { type: 'button', class: 'nav-item', onclick: () => navigate(item.id, phase, { keepDocument: Boolean(earlier), scope }) },
             item.prefix ? idTag(item.prefix, 'go-to') : null,
             h('span', { class: 'nav-label', text: item.label }),
             item.meta ? icon(item.meta.icon, { className: `tone-${item.meta.tone}-fg`, label: item.meta.label }) : null,
@@ -1509,10 +1513,10 @@ function renderDocument() {
             h('ul', { class: 'source-warning-list' }, warnings.map((text) => h('li', { text })))));
     }
     const phase = state.ui.phase;
-    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
+    const earlier = DOCUMENT_NOUNS[phase] ? shownEarlier(phase) : null;
     if (!phaseReached(phase) && !earlier) {
         const previous = PHASES[PHASES.indexOf(phase) - 1];
-        const others = DOCUMENT_KINDS[phase] && documentsOf(phase).some((doc) => !doc.current && doc.snapshot);
+        const others = DOCUMENT_NOUNS[phase] && documentsOf(phase).some((doc) => !doc.current && doc.snapshot);
         body.append(h('div', { class: 'empty-state' },
             icon(PHASE_META[phase].icon, { className: 'empty-icon' }),
             h('h3', { text: `${PHASE_META[phase].label} has not started` }),
@@ -1528,48 +1532,50 @@ function renderDocument() {
 }
 
 /**
- * The context the shown phase renders with: an earlier document in place of the newest, read-only,
- * when the reader chose one.
+ * The context the shown phase renders with: when the reader chose an earlier document, that
+ * document in place of the current work's, read-only, with its own traces, and with lookups
+ * and moves that start inside it and its work.
  *
  * @param {string} phase
  */
 function viewContext(phase) {
     const ctx = context();
-    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
-    if (!earlier) return ctx;
-    return { ...ctx, data: { ...ctx.data, session: withDocument(ctx.data.session, phase, earlier) }, readOnly: true };
+    const scope = scopeOf(phase);
+    if (!scope) return ctx;
+    return {
+        ...ctx,
+        data: { ...ctx.data, session: composeDocument(ctx.data.session, phase, scope.doc), view: { ...ctx.data.view, traces: scope.doc.snapshot.traces ?? {} } },
+        readOnly: true,
+        find: (ref) => scopedFind(scope, ref),
+        resolve: (ref) => scopedResolve(scope, ref),
+        act: { ...act, navigate: (ref, phaseOverride, options = {}) => navigate(ref, phaseOverride, { ...options, scope }) },
+    };
 }
 
 /** Says an earlier document shows, names the current work's, and offers it. */
 function earlierNotice(phase, earlier) {
     const current = documentsOf(phase).find((doc) => doc.current) ?? null;
     const noun = DOCUMENT_NOUNS[phase];
+    const planless = phase === 'implement' && pairedPlanOf(state.data.session, earlier).missing;
     return h('div', { class: 'notice tone-accent doc-notice', role: 'note' },
         h('p', { class: 'notice-title' }, icon('file'), h('span', { text: `You are reading an earlier ${noun}: ${documentLabel(earlier)}.` })),
         h('p', { text: current
             ? `The agent works from the current ${noun}, ${documentLabel(current)}. This one is read-only here: to change something, comment on the current ${noun} or ask the agent.`
             : `The current work has no ${noun} yet. This one is read-only here: to change something, ask the agent.` }),
+        planless ? h('p', { text: "Its plan is not in this session's Plan list, so its tasks do not show." }) : null,
         h('div', { class: 'btn-row' }, button(current ? `Show the current ${noun}` : 'Back to the current work', { kind: 'primary', iconName: 'arrow-right', attrs: { 'data-key': `doc-current-${phase}` }, onClick: () => act.showDocument(phase, 0) })));
 }
 
-/** Longest document label an option shows before it ends with an ellipsis; the notice shows the whole title. */
-const DOCUMENT_OPTION_CHARS = 72;
-
-/** The switcher between a kind's documents, by name and time, when the kind has an earlier one. */
+/** The switcher between a phase's documents, by name and time, when the phase has an earlier one; Review groups them by work. */
 function documentSwitcher(phase) {
-    const docs = documentsOf(phase);
-    if (!DOCUMENT_KINDS[phase] || !docs.some((doc) => !doc.current)) return null;
-    const current = docs.find((doc) => doc.current) ?? null;
-    const shown = shownEarlier(phase)?.n ?? current?.n ?? 0;
-    const noun = DOCUMENT_NOUNS[phase];
     const now = context().now;
-    const clip = (text) => (text.length > DOCUMENT_OPTION_CHARS ? `${text.slice(0, DOCUMENT_OPTION_CHARS - 1).trimEnd()}…` : text);
-    const optionText = (doc) => `${clip(documentLabel(doc))}${doc.current ? ' (current)' : doc.snapshot ? '' : ' (unreadable)'}${doc.updatedAt ? ` · ${relTime(doc.updatedAt, now)}` : ''}`;
+    const choices = documentChoices(state.data.session, phase, state.ui.docs?.[phase], (doc) => relTime(doc.updatedAt, now));
+    if (!choices) return null;
+    const option = (item) => h('option', { value: String(item.value), selected: item.value === choices.selected, disabled: item.disabled, title: item.title ?? undefined, text: item.text });
     return h('label', { class: 'doc-switch' },
         h('span', { class: 'doc-switch-label', text: 'Document' }),
         h('select', { class: 'doc-select', dataset: { key: `doc-switch-${phase}` }, onchange: (event) => act.showDocument(phase, Number(event.target.value)) },
-            docs.map((doc) => h('option', { value: String(doc.n), selected: doc.n === shown, disabled: !doc.current && !doc.snapshot, title: doc.path, text: optionText(doc) })),
-            current ? null : h('option', { value: '0', selected: shown === 0, text: `Current work: no ${noun} yet` })));
+            choices.groups.map((group) => (group.label ? h('optgroup', { label: group.label }, group.options.map(option)) : group.options.map(option)))));
 }
 
 function renderSteer() {
@@ -2131,7 +2137,7 @@ function onKeydown(event) {
         if (!row) {
             announce('Move to a row first, for example with ] or by selecting it.');
         } else if (row.closest('[data-readonly="true"]')) {
-            announce('This document is read-only here. Show the newest to comment or suggest an edit.');
+            announce('This document is read-only here. Show the current one to comment or suggest an edit.');
         } else if (key === 'c') {
             act.anchorComposer(row.dataset.row);
         } else {
@@ -2212,10 +2218,13 @@ function menuItemsFor(target) {
         if (edit) items.push({ label: 'Suggest an edit to this section', icon: 'pencil', shortcut: state.ui.shortcuts ? 'e' : undefined, onSelect: () => edit.click() });
     }
     const chip = target.closest('[data-preview]');
-    if (ready && chip?.dataset.preview && find(chip.dataset.preview)) {
+    // A chip inside an earlier document means that document's item first.
+    const scope = chip && ($('docBody').contains(chip) || $('navBody').contains(chip)) ? scopeOf(state.ui.phase) : null;
+    const item = ready && chip?.dataset.preview ? (scope ? scopedFind(scope, chip.dataset.preview) : find(chip.dataset.preview)) : null;
+    if (item) {
         const id = chip.dataset.preview;
-        const label = find(id)?.ref ?? id;
-        items.push({ separatorBefore: true, label: `Go to ${label}`, icon: 'go-to', onSelect: () => navigate(id) }, { label: `Copy ${label}`, icon: 'copy', onSelect: () => act.copy(label, 'ID') });
+        const label = item.ref ?? id;
+        items.push({ separatorBefore: true, label: `Go to ${label}`, icon: 'go-to', onSelect: () => navigate(id, undefined, { scope }) }, { label: `Copy ${label}`, icon: 'copy', onSelect: () => act.copy(label, 'ID') });
     }
     const source = target.closest('.source-item[data-path]');
     if (source) {
@@ -2249,7 +2258,8 @@ function menuItemsFor(target) {
 // Boot
 
 function wire() {
-    previews = installPreviews({ context, revision: () => state.data?.revision ?? 0 });
+    // A preview from inside the shown document reads that document, which may be an earlier one.
+    previews = installPreviews({ context: (inDocument) => (inDocument && state.ui.phase ? viewContext(state.ui.phase) : context()), revision: () => state.data?.revision ?? 0 });
     tooltips = installTooltips();
     anchors = installAnchorHandle({ scroller: $('document'), onComment: (anchor) => act.anchorComposer(anchor.rowId, false, anchor) });
     contextMenu = installContextMenu({

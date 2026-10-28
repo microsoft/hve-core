@@ -718,6 +718,52 @@ export async function writeFixtureWorkspace(root) {
 /** Clock the assembled fixture documents use. */
 export const FIXTURE_NOW = '2026-01-15T12:00:00.000Z';
 
+/** An earlier piece of work in the fixture session, early-look, and a changes record no plan names. */
+export const EARLY = Object.freeze({
+    research: `${T}/research/2026-01-14/early-look-research.md`,
+    plan: `${T}/plans/2026-01-14/early-look-plan.md`,
+    critique: `${T}/reviews/plans/2026-01-14/early-look-plan-critique.md`,
+    critique2: `${T}/reviews/plans/2026-01-14/early-look-plan-critique-2.md`,
+    changes: `${T}/changes/2026-01-14/early-look-changes.md`,
+    review: `${T}/reviews/logs/2026-01-14/early-look-review.md`,
+    review2: `${T}/reviews/logs/2026-01-14/early-look-review-2.md`,
+    lonely: `${T}/changes/2026-01-13/lonely-changes.md`,
+});
+
+/**
+ * Writes the earlier work's documents under `root`, from the fixture's with new titles: its
+ * plan, two critiques where the second retitles PC-001, its changes record with an extra
+ * section, two reviews where the second has an extra section, and a changes record no plan
+ * names. Returns the state's `documents`, earlier work first.
+ *
+ * @param {string} root
+ * @param {{ research?: string }} [options] the earlier research document's text, when it should have one
+ */
+export async function writeEarlierWork(root, options = {}) {
+    const retitle = (text, title) => text.replace(/^# ([^:\n]+): .*$/m, `# $1: ${title}`);
+    const texts = [
+        ...(options.research ? [[EARLY.research, options.research]] : []),
+        [EARLY.plan, retitle(PLAN, 'An early look')],
+        [EARLY.critique, retitle(CRITIQUE, 'An early look')],
+        [EARLY.critique2, retitle(CRITIQUE, 'An early look').replace('Downloads cannot resume', 'Downloads restart from zero')],
+        [EARLY.changes, `${retitle(CHANGES, 'An early look')}\n## Early notes\n\nOnly the early record has these.\n`],
+        [EARLY.review, retitle(REVIEW, 'The first look')],
+        [EARLY.review2, `${retitle(REVIEW, 'The second look')}\n## Second look notes\n\nOnly the second review has these.\n`],
+        [EARLY.lonely, retitle(CHANGES, 'A record without a plan')],
+    ];
+    for (const [target, text] of texts) {
+        await fs.mkdir(path.dirname(path.join(root, target)), { recursive: true });
+        await fs.writeFile(path.join(root, target), text);
+    }
+    return {
+        research: [...(options.research ? [EARLY.research] : []), PATHS.research],
+        plan: [EARLY.plan, PATHS.plan],
+        critique: [EARLY.critique, EARLY.critique2, PATHS.critique],
+        changes: [EARLY.lonely, EARLY.changes, PATHS.changes],
+        review: [EARLY.review, EARLY.review2, PATHS.review],
+    };
+}
+
 /** The root task assembled from every fixture artifact, with a child loop in its lineage. */
 export const rootSession = () => assembleSession({
     id: 'rpi-trail-maps',
