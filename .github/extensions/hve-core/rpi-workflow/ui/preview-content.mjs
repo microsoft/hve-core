@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { md } from './components.mjs';
+import { changeWords, progressOf } from './diagram.mjs';
 import { badge, confidenceMeta, DECISION_STATUS, DISCOVERY_KIND, EVIDENCE_STATE, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, known, SEVERITY, sr, TASK_STATUS } from './dom.mjs';
 import { taskMarkers } from './board.mjs';
 import { kindOf } from './ids.mjs';
@@ -120,13 +121,15 @@ function partsFor(ctx, key, item) {
 
 /**
  * The content of an ID's preview: a header naming the ID and its kind with a Go to button,
- * then the item's title, text, status, and related IDs. Returns null when the ID is unknown.
+ * then the item's title, text, status, and related IDs. A change-map part's `part:` ID has its
+ * own preview. Returns null when the ID is unknown.
  *
  * @param {any} ctx view context
  * @param {string} id the ID a chip navigates to
  * @param {{ titleId: string }} options
  */
 export function previewContent(ctx, id, options) {
+    if (String(id).startsWith('part:')) return partContent(ctx, id, options);
     const item = ctx.find(id);
     const kind = kindOf(id);
     if (!item || !kind) return null;
@@ -160,6 +163,66 @@ export function previewContent(ctx, id, options) {
             parts.source ? h('div', { class: 'preview-source' }, evidenceSource(ctx, parts.source)) : null,
             ...related,
             title.clipped || notes.length ? h('p', { class: 'meta preview-more', text: `Go to ${label} to read all of it.` }) : null,
+        ].filter(Boolean),
+    };
+}
+
+// Change-map parts
+
+const PART_PROGRESS = { done: TASK_STATUS.done, active: TASK_STATUS['in-progress'], needed: { icon: 'circle', label: 'Still needed', tone: 'muted' } };
+const listWords = (items) => (items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0] ?? '');
+
+/** A line of label runs as inline elements, with code, bold, and italics as the map draws them. */
+const inlineRuns = (line) => line.map((run) => {
+    let node = run.code ? h('code', { text: run.text }) : run.text;
+    if (run.italic) node = h('em', null, node);
+    if (run.bold) node = h('strong', null, node);
+    return node;
+});
+
+/** A label's lines without its tag line, joined into one line of runs. */
+const labelRuns = (item) => (item.tag ? item.lines.slice(0, -1) : item.lines).flatMap((line, index) => (index ? [{ text: ' ', bold: false, italic: false, code: false }, ...line] : line));
+
+/** Items joined as "a, b and c", each built by `node`. */
+const joined = (items, node) => items.flatMap((item, index) => [index ? (index === items.length - 1 ? ' and ' : ', ') : null, node(item)]);
+
+/**
+ * A part's preview: its name and description, its boxes, its change and progress, the phases
+ * that change it, and its tasks, each a chip that goes to the task. Selecting the part locks
+ * it, and the keyboard lands on the first task.
+ */
+function partContent(ctx, id, options) {
+    const part = ctx.find(id);
+    if (part?.kind !== 'part') return null;
+    const { node, boxes, phases, tasks, paths, matched } = part;
+    const [first = [], ...rest] = node.tag ? node.lines.slice(0, -1) : node.lines;
+    const change = changeWords(node).replace(/^ \((.*)\)$/, '$1');
+    const progress = PART_PROGRESS[progressOf(phases.map((phase) => phase.status))] ?? null;
+    const chipFor = (ref) => (ctx.resolve(ref) ? idChip(ref, ctx.act.navigate) : h('span', { class: 'id-chip', text: ref }));
+    const items = tasks.map((task, index) => {
+        const chip = chipFor(task.id);
+        if (index === 0 && chip.localName === 'button') chip.dataset.previewFocus = '';
+        return h('li', { class: 'preview-task' }, chip, h('span', { class: 'preview-task-title', text: task.title }), badge(known(TASK_STATUS, task.status)));
+    });
+    const phaseIds = phases.map((phase) => phase.id);
+    const phaseText = listWords(phaseIds);
+    const named = joined(paths, (path) => h('code', { text: path }));
+    const note = !phaseIds.length ? ['No phase in this plan changes this part.']
+        : matched ? [`The tasks in ${phaseText} whose References name `, named, '.']
+            : paths.length ? [`No task in ${phaseText} names `, named, `, so every task in ${phaseIds.length > 1 ? 'them' : 'it'} shows.`]
+                : [`Every task in ${phaseText}.`];
+    return {
+        kind: null,
+        label: first.map((run) => run.text).join(''),
+        head: h('div', { class: 'preview-head' }, h('p', { class: 'preview-kind' }, h('span', { text: 'Change map part' }))),
+        body: [
+            h('p', { class: 'preview-title preview-part-name', id: options.titleId }, inlineRuns(first)),
+            rest.length ? h('p', { class: 'preview-text' }, rest.map((line, index) => [index ? ' ' : null, inlineRuns(line)])) : null,
+            boxes.length ? h('p', { class: 'meta preview-part-where' }, 'In ', joined(boxes, (box) => inlineRuns(labelRuns(box)))) : null,
+            change || progress ? h('p', { class: 'preview-badges' }, change ? badge(plainStatus(`${change.charAt(0).toUpperCase()}${change.slice(1)}`)) : null, badge(progress)) : null,
+            phaseIds.length ? h('p', { class: 'chip-row preview-related' }, h('span', { class: 'meta', text: phaseIds.length > 1 ? 'Phases' : 'Phase' }), phaseIds.map(chipFor)) : null,
+            items.length ? h('div', { class: 'preview-field' }, h('p', { class: 'preview-label', text: 'Tasks' }), h('ul', { class: 'preview-tasks' }, items)) : null,
+            h('p', { class: 'meta preview-part-note' }, note),
         ].filter(Boolean),
     };
 }

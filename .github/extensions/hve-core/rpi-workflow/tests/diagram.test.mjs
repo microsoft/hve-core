@@ -366,6 +366,36 @@ describe('renderDiagram', () => {
         assert.doesNotMatch(serialize(plain), /has-progress/, 'Plan\'s map keeps its fill for the chosen phase');
     });
 
+    it('draws a check for done, a dot for in progress, and a hollow circle for still needed, and says each in text', () => {
+        const figure = diagram.renderDiagram(MAP, { idPrefix: 'marks', progress: new Map([['pair', 'done'], ['compose', 'active'], ['gone', 'needed']]) });
+        const markup = serialize(figure);
+        assert.match(markup, /<g class="diagram-mark is-done"><circle [^>]*><\/circle><path [^>]*class="diagram-mark-glyph"><\/path><\/g>/);
+        assert.match(markup, /<g class="diagram-mark is-active"><circle [^>]*><\/circle><circle [^>]*class="diagram-mark-glyph"><\/circle><\/g>/);
+        assert.match(markup, /<g class="diagram-mark is-needed"><circle [^>]*><\/circle><\/g>/);
+        const text = elements(figure).find((el) => el.className === 'diagram-text').textContent;
+        assert.match(text, /\(done\)/);
+        assert.match(text, /\(in progress\)/);
+        assert.match(text, /\(still needed\)/);
+    });
+
+    it('makes the changed parts it is given buttons with part previews, and the drawing a group', () => {
+        const figure = diagram.renderDiagram(MAP, { idPrefix: 'select', progress: new Map([['pair', 'done']]), select: { side: 'after', ids: ['pair', 'compose', 'elsewhere'] } });
+        const svg = elements(figure).find((el) => el.localName === 'svg');
+        assert.equal(svg.getAttribute('role'), 'group', 'an image hides its children, so a drawing with parts to select is a group');
+        assert.equal(svg.getAttribute('aria-labelledby'), 'select-title');
+        assert.equal(svg.getAttribute('aria-describedby'), 'select-desc');
+        const parts = elements(figure).filter((el) => el.localName === 'g' && el.getAttribute('data-preview'));
+        assert.deepEqual(parts.map((el) => el.getAttribute('data-preview')), ['part:after:pair', 'part:after:compose']);
+        const pair = parts[0];
+        assert.equal(pair.getAttribute('tabindex'), '0');
+        assert.equal(pair.getAttribute('role'), 'button');
+        assert.equal(pair.getAttribute('aria-label'), 'earlierDocuments(), pairs documents by name (changed in P24 and P27) (done)');
+        assert.ok(pair.hasAttribute('data-preview-select'));
+        const plain = diagram.renderDiagram(MAP, { idPrefix: 'plain' });
+        assert.equal(elements(plain).find((el) => el.localName === 'svg').getAttribute('role'), 'img');
+        assert.ok(!elements(plain).some((el) => el.localName === 'g' && el.hasAttribute('tabindex')), 'without select, no part takes focus');
+    });
+
     it('draws a labeled SVG figure with a text alternative', () => {
         const figure = diagram.renderDiagram(AFTER, { caption: 'After', idPrefix: 'map', highlight: ['store'] });
         const svg = elements(figure).find((el) => el.localName === 'svg');

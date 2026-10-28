@@ -4,6 +4,7 @@
 // Test helper: renders every phase view, its outline, and the steering panel for a session
 // under the fake DOM, the way ui/app.mjs does. Call installFakeDom() before importing.
 import { deriveView, findItem } from '../../lib/model.mjs';
+import { mapPart } from '../../ui/map-part.mjs';
 import { decisionAlias } from '../../ui/dom.mjs';
 import { serialize } from './fake-dom.mjs';
 
@@ -45,6 +46,7 @@ export function initialUi(phase) {
 /** A view context with no-op actions; a bare `D#` names the viewed phase's decision first, as in the page. */
 export function makeContext(session, phase, ui = initialUi(phase), canvas = { handle: 'K7QF', instanceId: 'test-canvas' }) {
     const find = (ref) => {
+        if (String(ref).startsWith('part:')) return mapPart(session, ref);
         const id = decisionAlias(session, ref, phase);
         return findItem(session, id)?.item ?? (Object.prototype.hasOwnProperty.call(session.sections, id) ? session.sections[id] : null);
     };

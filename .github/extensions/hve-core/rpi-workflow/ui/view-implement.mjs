@@ -3,7 +3,7 @@
 
 import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, idTag, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
 import { decisionCard, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
-import { markLegend, renderDiagram } from './diagram.mjs';
+import { markLegend, progressOf, renderDiagram } from './diagram.mjs';
 import { boardLanes, laneOf, taskMarkers } from './board.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
 import { taskBlock } from './view-plan.mjs';
@@ -71,10 +71,10 @@ export function filterShows(session, filterId, id) {
 
 /**
  * Each change-map node's progress: in progress while any phase that changes it is, done once
- * every such phase is. Nodes no phase changes have none.
+ * every such phase is, and still needed otherwise. Nodes no phase changes have none.
  *
  * @param {any} plan
- * @returns {Map<string, 'done' | 'active'>}
+ * @returns {Map<string, 'done' | 'active' | 'needed'>}
  */
 export function nodeProgress(plan) {
     const statuses = new Map();
@@ -85,10 +85,7 @@ export function nodeProgress(plan) {
         }
     }
     const progress = new Map();
-    for (const [node, list] of statuses) {
-        if (list.some((status) => status === 'in-progress')) progress.set(node, 'active');
-        else if (list.every((status) => status === 'done')) progress.set(node, 'done');
-    }
+    for (const [node, list] of statuses) progress.set(node, progressOf(list));
     return progress;
 }
 
@@ -225,7 +222,7 @@ function phasesRow(ctx, tasks) {
     });
 }
 
-/** The plan's change map with done and in-progress parts marked, and a tab per phase. */
+/** The plan's change map with each change marked done, in progress, or still needed, and a tab per phase. */
 function mapRow(ctx) {
     const { plan } = ctx.data.session;
     const progress = nodeProgress(plan);
@@ -248,9 +245,10 @@ function mapRow(ctx) {
                 h('fieldset', { class: 'segmented compact map-phases' }, h('legend', { class: 'meta', text: 'Phase' }), tab('all', null), plan.phases.map((phase) => tab(phase.id, phase)))),
             renderDiagram(plan.diagram.after, {
                 defaultCaption: 'The intended result',
-                captionSuffix: `, with done and in-progress parts marked${highlight.length ? `, ${chosen} outlined` : ''}`,
+                captionSuffix: `, with each change marked done, in progress, or still needed${highlight.length ? `, ${chosen} outlined` : ''}`,
                 highlight,
                 progress,
+                select: { side: 'after', ids: progress.keys() },
                 idPrefix: 'impl-map',
                 textOpen: ctx.ui.openDetails.has('impl-map-text'),
                 onTextToggle: (open) => ctx.act.setDetailsOpen('impl-map-text', open),
@@ -258,8 +256,10 @@ function mapRow(ctx) {
             h('p', { class: 'meta legend' },
                 h('span', { class: 'legend-swatch is-done' }), ' Done. ',
                 h('span', { class: 'legend-swatch is-active' }), ' In progress. ',
-                h('span', { class: 'legend-swatch is-chosen' }), ' Bold outline: the chosen phase. ',
-                ...markLegend(plan.diagram.after)),
+                h('span', { class: 'legend-swatch is-needed' }), ' Still needed. ',
+                ...markLegend(plan.diagram.after),
+                h('span', { class: 'legend-swatch is-chosen' }), ' Bold outline: the chosen phase.',
+                progress.size ? ' Select a changed part to list its tasks.' : null),
         ],
     });
 }

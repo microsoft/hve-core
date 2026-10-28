@@ -32,7 +32,7 @@ import { FileError, readWorkspaceFile } from './workspace-files.mjs';
 
 const UI_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'ui');
 
-const UI_MODULES = ['anchors.mjs', 'app.mjs', 'board.mjs', 'connect-view.mjs', 'context-menu.mjs', 'documents.mjs', 'dom.mjs', 'highlight.mjs', 'history.mjs', 'ids.mjs', 'legend.mjs', 'markdown.mjs', 'preview-content.mjs', 'preview-state.mjs', 'previews.mjs', 'source-view.mjs', 'diagram.mjs', 'flowchart.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs', 'tooltips.mjs'];
+const UI_MODULES = ['anchors.mjs', 'app.mjs', 'board.mjs', 'connect-view.mjs', 'context-menu.mjs', 'documents.mjs', 'dom.mjs', 'highlight.mjs', 'history.mjs', 'ids.mjs', 'legend.mjs', 'map-part.mjs', 'markdown.mjs', 'preview-content.mjs', 'preview-state.mjs', 'previews.mjs', 'source-view.mjs', 'diagram.mjs', 'flowchart.mjs', 'components.mjs', 'view-research.mjs', 'view-plan.mjs', 'view-implement.mjs', 'view-review.mjs', 'view-followup.mjs', 'tooltips.mjs'];
 
 /** Static files the page may load; nothing outside this map is ever served. */
 export const STATIC_FILES = Object.freeze({

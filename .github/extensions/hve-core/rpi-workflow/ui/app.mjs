@@ -12,6 +12,7 @@ import { legendContent } from './legend.mjs';
 import { createHistory, placeLabel } from './history.mjs';
 import { kindOf } from './ids.mjs';
 import { installPreviews } from './previews.mjs';
+import { mapPart } from './map-part.mjs';
 import { installTooltips } from './tooltips.mjs';
 import * as followupView from './view-followup.mjs';
 import * as implementView from './view-implement.mjs';
@@ -191,10 +192,11 @@ function scopeOf(phase) {
     return doc ? { phase, doc } : null;
 }
 
-/** An item by ID: in the current work's documents and the canvas's own data first, then in earlier documents. */
+/** An item by ID: in the current work's documents and the canvas's own data first, then in earlier documents. A `part:` ID is a part of the current plan's change map. */
 function find(ref) {
     const session = state.data?.session;
     if (!session || typeof ref !== 'string') return null;
+    if (ref.startsWith('part:')) return mapPart(session, ref);
     const id = aliasOf(ref);
     return findCurrent(session, id) ?? inEarlier(session, id)?.item ?? null;
 }
@@ -202,9 +204,10 @@ function find(ref) {
 /** The ID a reference means inside an earlier document: a bare `D#` names that document's decision first. */
 const scopedAlias = (scope, ref) => decisionAlias(composeDocument(state.data.session, scope.phase, scope.doc), ref, scope.phase);
 
-/** An item by ID inside an earlier document: in it, then in its work's other documents, then as `find` does. */
+/** An item by ID inside an earlier document: in it, then in its work's other documents, then as `find` does. A `part:` ID is a part of that document's plan's change map. */
 function scopedFind(scope, ref) {
     if (!state.data || typeof ref !== 'string') return null;
+    if (ref.startsWith('part:')) return mapPart(composeDocument(state.data.session, scope.phase, scope.doc), ref);
     return scopedLookup(state.data.session, scope, scopedAlias(scope, ref))?.item ?? find(ref);
 }
 
@@ -2233,7 +2236,8 @@ function menuItemsFor(target) {
     // A chip inside an earlier document means that document's item first.
     const scope = chip && ($('docBody').contains(chip) || $('navBody').contains(chip)) ? scopeOf(state.ui.phase) : null;
     const item = ready && chip?.dataset.preview ? (scope ? scopedFind(scope, chip.dataset.preview) : find(chip.dataset.preview)) : null;
-    if (item) {
+    // A change-map part has no place to go to and no ID to copy.
+    if (item && item.kind !== 'part') {
         const id = chip.dataset.preview;
         const label = item.ref ?? id;
         items.push({ separatorBefore: true, label: `Go to ${label}`, icon: 'go-to', onSelect: () => navigate(id, undefined, { scope }) }, { label: `Copy ${label}`, icon: 'copy', onSelect: () => act.copy(label, 'ID') });

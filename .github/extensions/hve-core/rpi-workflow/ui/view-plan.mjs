@@ -147,6 +147,8 @@ export function renderView(ctx) {
     const canHighlight = view === 'after' || Boolean(plan.diagram?.tagged);
     const highlight = canHighlight && chosen ? plan.diagram?.phaseNodes?.[chosen] ?? [] : [];
     const source = view === 'before' ? plan.diagram?.before : plan.diagram?.after;
+    // Parts a phase changes can be selected to list the tasks that change them.
+    const changing = Object.values(plan.diagram?.phaseNodes ?? {}).flat();
     if (plan.diagram) rows.push(row(ctx, {
         id: 'change-map', idLabel: null, title: 'Change map', level: 2,
         body: [
@@ -155,8 +157,8 @@ export function renderView(ctx) {
                     ['before', 'after'].map((value) => h('label', { for: `map-${value}` }, h('input', { type: 'radio', name: 'map-view', id: `map-${value}`, value, checked: view === value, onchange: () => ctx.act.setDiagram({ view: value }) }), h('span', { text: value === 'before' ? 'Before' : 'After' })))),
                 canHighlight ? h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'meta', text: 'Highlight' }),
                     ['none', ...phaseIds].map((value) => h('label', { for: `map-phase-${value}` }, h('input', { type: 'radio', name: 'map-phase', id: `map-phase-${value}`, value, checked: (chosen ?? 'none') === value, onchange: () => ctx.act.setDiagram({ phase: value === 'none' ? null : value }) }), h('span', { text: value === 'none' ? 'None' : value })))) : null),
-            renderDiagram(source, { defaultCaption: view === 'before' ? 'Before' : 'After: the intended result', captionSuffix: highlight.length ? `, ${chosen} highlighted` : '', highlight, idPrefix: `map-${view}`, textOpen: ctx.ui.openDetails.has('map-text'), onTextToggle: (open) => ctx.act.setDetailsOpen('map-text', open) }),
-            h('p', { class: 'meta legend' }, ...markLegend(source), canHighlight ? [h('span', { class: 'legend-swatch is-highlight' }), ' Filled: the highlighted phase.'] : null),
+            renderDiagram(source, { defaultCaption: view === 'before' ? 'Before' : 'After: the intended result', captionSuffix: highlight.length ? `, ${chosen} highlighted` : '', highlight, select: { side: view, ids: changing }, idPrefix: `map-${view}`, textOpen: ctx.ui.openDetails.has('map-text'), onTextToggle: (open) => ctx.act.setDetailsOpen('map-text', open) }),
+            h('p', { class: 'meta legend' }, ...markLegend(source), canHighlight ? [h('span', { class: 'legend-swatch is-highlight' }), ' Filled: the highlighted phase.'] : null, changing.length ? ' Select a changed part to list its tasks.' : null),
         ],
     }));
 

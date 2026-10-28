@@ -530,6 +530,9 @@ const svg = (tag, attrs = {}) => {
     return element;
 };
 
+/** The SVG path of a rectangle with rounded corners, for shapes the `rect` rules must not style. */
+const roundedRect = (x, y, width, height, r) => `M${x + r} ${y}H${x + width - r}A${r} ${r} 0 0 1 ${x + width} ${y + r}V${y + height - r}A${r} ${r} 0 0 1 ${x + width - r} ${y + height}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + height - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+
 /** A hover title holding a label the drawing had to cut. */
 const fullLabel = (text) => {
     const title = svg('title');
@@ -581,14 +584,29 @@ export function markLegend(source) {
     return MARKS.filter((mark) => marks.has(mark)).flatMap((mark) => [h('span', { class: `legend-swatch is-${mark}` }), ` ${MARK_WORDS[mark]} `]);
 }
 
-const PROGRESS_WORDS = { done: 'done', active: 'in progress' };
+const PROGRESS_WORDS = { done: 'done', active: 'in progress', needed: 'still needed' };
+
+/**
+ * A part's progress from the statuses of the phases that change it: in progress while any is,
+ * done once every one is, and still needed otherwise. Null for a part no phase changes.
+ *
+ * @param {string[]} statuses
+ * @returns {'done' | 'active' | 'needed' | null}
+ */
+export function progressOf(statuses) {
+    if (!statuses.length) return null;
+    if (statuses.some((status) => status === 'in-progress')) return 'active';
+    return statuses.every((status) => status === 'done') ? 'done' : 'needed';
+}
 
 /**
  * @param {string} source
- * @param {{ caption?: string, defaultCaption?: string, captionSuffix?: string, highlight?: Iterable<string>, progress?: Map<string, 'done' | 'active'>, idPrefix: string, textOpen?: boolean, onTextToggle?: (open: boolean) => void }} options
+ * @param {{ caption?: string, defaultCaption?: string, captionSuffix?: string, highlight?: Iterable<string>, progress?: Map<string, 'done' | 'active' | 'needed'>, select?: { side: 'before' | 'after', ids: Iterable<string> }, idPrefix: string, textOpen?: boolean, onTextToggle?: (open: boolean) => void }} options
  *   `caption` replaces the diagram's own title; otherwise the caption is its `accTitle`, else
- *   `defaultCaption`, followed by `captionSuffix`. `progress` marks parts done or in progress,
- *   with a corner mark so color is not the only cue.
+ *   `defaultCaption`, followed by `captionSuffix`. `progress` marks parts done, in progress, or
+ *   still needed, with a corner mark so color is not the only cue. `select` makes the named
+ *   parts buttons whose `part:<side>:<id>` preview lists the tasks that change them; a drawing
+ *   with such parts is a group rather than an image, so assistive technology reaches them.
  * @returns {HTMLElement}
  */
 export function renderDiagram(source, options) {
@@ -603,11 +621,12 @@ export function renderDiagram(source, options) {
     const caption = options.caption ?? `${graph.title ?? options.defaultCaption ?? 'Diagram'}${options.captionSuffix ?? ''}`;
     const highlight = new Set(options.highlight ?? []);
     const progress = options.progress ?? new Map();
+    const selectable = new Set([...(options.select?.ids ?? [])].filter((id) => graph.nodes.has(id)));
     const { positions, layerOf, width, height, horizontal, frames, routes } = layout(graph);
     const pad = 12;
     const titleId = `${options.idPrefix}-title`;
     const descId = `${options.idPrefix}-desc`;
-    const root = svg('svg', { viewBox: `${-pad} ${-pad} ${width + pad * 2} ${height + pad * 2}`, width: width + pad * 2, height: height + pad * 2, role: 'img', 'aria-labelledby': titleId, class: options.progress ? 'diagram-svg has-progress' : 'diagram-svg' });
+    const root = svg('svg', { viewBox: `${-pad} ${-pad} ${width + pad * 2} ${height + pad * 2}`, width: width + pad * 2, height: height + pad * 2, role: selectable.size ? 'group' : 'img', 'aria-labelledby': titleId, class: options.progress ? 'diagram-svg has-progress' : 'diagram-svg' });
     const title = svg('title', { id: titleId });
     title.textContent = `${caption}: ${graph.nodes.size} parts and ${graph.edges.length} relationships. A text version follows.`;
     root.append(title);
@@ -651,29 +670,35 @@ export function renderDiagram(source, options) {
         });
         root.append(group);
     }
+    const partText = (node) => `${node.label}${changeWords(node)}${PROGRESS_WORDS[progress.get(node.id)] ? ` (${PROGRESS_WORDS[progress.get(node.id)]})` : ''}${highlight.has(node.id) ? ' (highlighted)' : ''}`;
     for (const [id, node] of graph.nodes) {
         const box = positions.get(id);
         const state = progress.get(id);
         const classes = ['diagram-node', ...markClasses(node.classes), highlight.has(id) || node.classes.has('phase') ? 'is-highlight' : '', state ? `is-${state}` : ''].filter(Boolean).join(' ');
-        const group = svg('g', { class: classes });
-        if (box.cut) group.append(fullLabel(`${node.label}${changeWords(node)}`));
+        // A selectable part is a button named by its text version; its preview shows the full label, so it needs no hover title.
+        const group = svg('g', selectable.has(id)
+            ? { class: classes, tabindex: '0', role: 'button', 'aria-label': partText(node), 'data-preview': `part:${options.select.side}:${id}`, 'data-preview-select': '' }
+            : { class: classes });
+        if (box.cut && !selectable.has(id)) group.append(fullLabel(`${node.label}${changeWords(node)}`));
         group.append(svg('rect', { x: box.x, y: box.y, width: box.width, height: box.height, rx: 6 }));
         box.lines.forEach((line, index) => {
             group.append(textLine(line, { x: box.x + box.width / 2, y: box.y + 22 + index * NODE_LINE, 'text-anchor': 'middle', ...(index >= box.tagFrom ? { class: 'diagram-tag' } : {}) }));
         });
         if (state) {
-            // A corner mark: a check for done, a dot for in progress.
+            // A corner mark: a check for done, a dot for in progress, a hollow circle for still needed.
             const mark = svg('g', { class: `diagram-mark is-${state}` });
             const cx = box.x + box.width - 2;
             const cy = box.y + 2;
             mark.append(svg('circle', { cx, cy, r: 7 }));
-            mark.append(state === 'done' ? svg('path', { d: `M${cx - 3} ${cy}l2 2 4-4`, class: 'diagram-mark-glyph' }) : svg('circle', { cx, cy, r: 2.5, class: 'diagram-mark-glyph' }));
+            if (state === 'done') mark.append(svg('path', { d: `M${cx - 3} ${cy}l2 2 4-4`, class: 'diagram-mark-glyph' }));
+            else if (state === 'active') mark.append(svg('circle', { cx, cy, r: 2.5, class: 'diagram-mark-glyph' }));
             group.append(mark);
         }
+        // Browsers do not outline an SVG group, so a selectable part draws its own focus ring, 2px wide and 2px out.
+        if (selectable.has(id)) group.append(svg('path', { d: roundedRect(box.x - 3, box.y - 3, box.width + 6, box.height + 6, 9), class: 'diagram-focus' }));
         root.append(group);
     }
     const describe = (id) => graph.nodes.get(id).label;
-    const partText = (node) => `${node.label}${changeWords(node)}${PROGRESS_WORDS[progress.get(node.id)] ? ` (${PROGRESS_WORDS[progress.get(node.id)]})` : ''}${highlight.has(node.id) ? ' (highlighted)' : ''}`;
     const boxOf = (node) => {
         let group = graph.groups.find((candidate) => candidate.id === node.group) ?? null;
         while (group && group.depth > 2) group = graph.groups.find((candidate) => candidate.id === group.parent) ?? null;

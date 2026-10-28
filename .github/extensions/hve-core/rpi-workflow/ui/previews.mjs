@@ -29,9 +29,11 @@ function lockRing() {
 
 /**
  * Wires ID previews into the page. Hovering or focusing any element with `data-preview`
- * shows the item, and the preview model decides when previews lock, nest, and close. A
- * preview whose trigger sits in the document or its outline, or in a preview opened from
- * there, reads the context of the shown document, which may be an earlier one.
+ * shows the item, and the preview model decides when previews lock, nest, and close. An
+ * element that also has `data-preview-select`, such as a change-map part, locks its preview
+ * when clicked or when Enter or Space is pressed on it. A preview whose trigger sits in the
+ * document or its outline, or in a preview opened from there, reads the context of the shown
+ * document, which may be an earlier one.
  *
  * @param {{ context: (inDocument: boolean) => any, revision: () => number }} deps
  */
@@ -57,6 +59,8 @@ export function installPreviews(deps) {
     };
     const contextFor = (trigger) => deps.context(inDocument(trigger));
     const known = (trigger) => Boolean(trigger.dataset.preview && contextFor(trigger).find(trigger.dataset.preview));
+    /** A trigger such as a change-map part, whose click, Enter, or Space selects it by locking its preview. */
+    const selects = (trigger) => Boolean(trigger?.hasAttribute('data-preview-select'));
 
     function setInteractive(element, interactive) {
         for (const control of element.querySelectorAll('button, a[href], input, select, textarea')) {
@@ -163,7 +167,8 @@ export function installPreviews(deps) {
     function lockFromKeyboard(trigger) {
         const index = model.lock(trigger, { id: trigger.dataset.preview, parent: parentOf(trigger) });
         if (index === -1) return false;
-        shown[index]?.element.querySelector('.preview-go, button, a[href]')?.focus({ preventScroll: true });
+        const element = shown[index]?.element;
+        (element?.querySelector('[data-preview-focus]') ?? element?.querySelector('.preview-go, button, a[href]'))?.focus({ preventScroll: true });
         return true;
     }
 
@@ -215,11 +220,21 @@ export function installPreviews(deps) {
         if (event.key === 'ArrowDown' && !event.altKey && !event.ctrlKey && !event.metaKey) {
             const trigger = triggerOf(document.activeElement);
             if (trigger && trigger === document.activeElement && known(trigger) && lockFromKeyboard(trigger)) event.preventDefault();
+            return;
+        }
+        if ((event.key === 'Enter' || event.key === ' ') && !event.altKey && !event.ctrlKey && !event.metaKey) {
+            const trigger = triggerOf(document.activeElement);
+            if (trigger && trigger === document.activeElement && selects(trigger) && known(trigger) && lockFromKeyboard(trigger)) event.preventDefault();
         }
     }, true);
 
-    // A click outside every preview closes them all.
+    // A click on a selectable trigger locks its preview in place of any other; a click outside every preview closes them all.
     document.addEventListener('click', (event) => {
+        const trigger = triggerOf(event.target);
+        if (selects(trigger) && known(trigger)) {
+            model.lock(trigger, { id: trigger.dataset.preview, parent: parentOf(trigger) });
+            return;
+        }
         if (!model.stack.length || previewOf(event.target)) return;
         model.closeAll();
     }, true);

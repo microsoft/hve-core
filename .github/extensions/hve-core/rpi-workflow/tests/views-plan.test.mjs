@@ -90,6 +90,18 @@ describe('the change map', () => {
         assert.match(textOf(after), /Dashed border: new\. Thick border: changed\. Filled: the highlighted phase\./);
     });
 
+    it('lets you select each part a phase changes, in Before and in After, and says so in the legend', () => {
+        const { session } = rootSession();
+        session.plan.diagram = { before: TAGGED_BEFORE, after: TAGGED_AFTER, phaseNodes: { P01: ['map', 'store'], P02: ['store', 'live'] }, tagged: true };
+        const markup = (diagramView) => html(planView.renderView(makeContext(session, 'plan', { ...makeContext(session, 'plan').ui, diagramView })));
+        const parts = (out) => [...out.matchAll(/data-preview="(part:[^"]+)"/g)].map((match) => match[1]);
+        const after = markup('after');
+        assert.match(after, /<svg [^>]*role="group"/);
+        assert.deepEqual(parts(after), ['part:after:map', 'part:after:store']);
+        assert.match(textOf(after), /Select a changed part to list its tasks\./);
+        assert.deepEqual(parts(markup('before')), ['part:before:map', 'part:before:live']);
+    });
+
     it('gives an older plan\'s Before a plain caption and no Highlight control', () => {
         const { session } = rootSession();
         assert.equal(session.plan.diagram.tagged, false);

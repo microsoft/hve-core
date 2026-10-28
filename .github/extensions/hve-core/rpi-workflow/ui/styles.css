@@ -3697,6 +3697,32 @@ details > summary:hover {
   fill: var(--rw-accent);
 }
 
+/* Still needed: a hollow ring, so a change not yet started reads as empty beside a check or a dot. */
+.diagram-mark.is-needed > circle:first-child {
+  fill: var(--rw-bg);
+  stroke: var(--rw-fg-muted);
+}
+
+/* A changed part takes a click, Enter, or Space to list the tasks that change it, and draws its own focus ring. */
+.diagram-node[data-preview-select] {
+  cursor: pointer;
+}
+
+.diagram-node[data-preview-select]:focus {
+  outline: none;
+}
+
+.diagram-focus {
+  fill: none;
+  stroke: var(--rw-accent);
+  stroke-width: 2;
+  visibility: hidden;
+}
+
+.diagram-node:focus-visible > .diagram-focus {
+  visibility: visible;
+}
+
 .diagram-mark-glyph {
   fill: none;
   stroke: var(--rw-bg);
@@ -3787,6 +3813,11 @@ circle.diagram-mark-glyph {
 .legend-swatch.is-active {
   border: 2px solid var(--rw-accent);
   background: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
+}
+
+.legend-swatch.is-needed {
+  border: 1.5px solid var(--rw-fg-muted);
+  border-radius: 50%;
 }
 
 .legend-swatch.is-highlight {
@@ -4948,6 +4979,32 @@ circle.diagram-mark-glyph {
   align-self: center;
 }
 
+/* A change-map part's preview: where the part sits, then each task with its title and status. */
+.preview-part-where,
+.preview-part-note {
+  margin-top: 6px;
+}
+
+.preview-tasks {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preview-task {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.preview-task-title {
+  flex: 1 1 12em;
+  min-width: 0;
+}
+
 /* Sources */
 
 .evidence-source {
@@ -5629,6 +5686,40 @@ kbd {
     stroke: CanvasText;
   }
 
+  /* Change borders and progress keep their shapes, dashes, and corner marks in system colors. */
+  .diagram-node.is-new rect,
+  .diagram-node.is-changed rect,
+  .diagram-node.is-removed rect,
+  .diagram-node.is-done rect,
+  .diagram-node.is-active rect {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+
+  .diagram-mark > circle:first-child,
+  .diagram-mark.is-done > circle:first-child,
+  .diagram-mark.is-active > circle:first-child {
+    fill: CanvasText;
+    stroke: Canvas;
+  }
+
+  .diagram-mark.is-needed > circle:first-child {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+
+  .diagram-mark-glyph {
+    stroke: Canvas;
+  }
+
+  .diagram-focus {
+    stroke: Highlight;
+  }
+
+  circle.diagram-mark-glyph {
+    fill: Canvas;
+  }
+
   .diagram-node.is-highlight rect {
     fill: Highlight;
   }
@@ -5644,7 +5735,10 @@ kbd {
     fill: HighlightText;
   }
 
-  .diagram-box > rect {
+  .diagram-box > rect,
+  .diagram-box.is-new > rect,
+  .diagram-box.is-changed > rect,
+  .diagram-box.is-removed > rect {
     fill: none;
     stroke: CanvasText;
   }

@@ -156,11 +156,13 @@ describe('phases and tasks', () => {
 });
 
 describe('the change map with progress', () => {
-    it('marks each phase\'s parts done or in progress, starts on the phase in progress, and says so in text', () => {
+    it('marks each phase\'s parts done, in progress, or still needed, starts on the phase in progress, and says so in text', () => {
         const session = implementing();
+        session.plan.phases.find((phase) => phase.id === 'P04').status = 'todo';
         const progress = view.nodeProgress(session.plan);
         assert.equal(progress.get('store'), 'done');
         assert.equal(progress.get('outbox'), 'active');
+        assert.equal(progress.get('status'), 'needed', 'P04 has not started, so its part is still needed');
         const out = html(render(session));
         assert.equal(withData(render(session), 'row', 'implement-map').length, 1);
         assert.match(out, /<input type="radio" name="impl-map-phase" id="impl-map-phase-P02" value="P02" checked=""/);
@@ -168,16 +170,32 @@ describe('the change map with progress', () => {
         assert.match(out, /class="diagram-node[^"]*is-done"/);
         assert.match(out, /class="diagram-node[^"]*is-highlight is-active"/);
         assert.match(out, /<g class="diagram-mark is-done">/);
+        assert.match(out, /<g class="diagram-mark is-needed"><circle [^>]*><\/circle><\/g>/, 'a still-needed part has a hollow corner mark with no glyph');
+        assert.match(out, /<svg [^>]*role="group"/, 'its parts can be selected, so the drawing is a group');
+        assert.match(out, /data-preview="part:after:outbox" data-preview-select=""/);
+        assert.match(textOf(out), /Select a changed part to list its tasks\./);
         assert.match(out, /<label for="impl-map-phase-P02"><input[^>]*><\/input><span><svg class="icon tone-accent-fg"/, 'the in-progress tab\'s icon is in the in-progress tone');
         assert.match(out, /<label for="impl-map-phase-P01"><input[^>]*><\/input><span><svg class="icon tone-success-fg"/, 'a done tab\'s icon stays in the success tone');
         assert.match(out, /<h4 class="impl-phase-head" id="impl-phase-P02">(?:(?!<\/h4>).)*<span class="badge tone-accent[^"]*">(?:(?!<\/h4>).)*In progress/, 'the phase in progress is headed in the in-progress tone');
         assert.match(textOf(out), /\(done\)/);
         assert.match(textOf(out), /\(in progress\) \(highlighted\)/);
-        assert.match(textOf(out), /Done\. In progress\. Bold outline: the chosen phase\. Dashed border: new\./, 'the legend names what the map draws');
+        assert.match(textOf(out), /\(still needed\)/);
+        assert.match(textOf(out), /Done\. In progress\. Still needed\. Dashed border: new\. Bold outline: the chosen phase\./, 'the legend names the three states, then the borders the map draws, then the outline');
         assert.match(out, /<span class="legend-swatch is-chosen">/);
         const ui = initialUi('implement');
         ui.mapPhase = null;
         assert.match(html(render(session, ui)), /id="impl-map-phase-all" value="all" checked=""/, 'All phases highlights nothing');
+    });
+
+    it('calls a part still needed until every phase that changes it is done, and in progress while any is', () => {
+        const plan = (second) => ({
+            phases: [{ id: 'P01', status: 'done' }, { id: 'P02', status: second }],
+            diagram: { phaseNodes: { P01: ['shared', 'first'], P02: ['shared', 'second'] } },
+        });
+        assert.deepEqual([...view.nodeProgress(plan('todo'))], [['shared', 'needed'], ['first', 'done'], ['second', 'needed']]);
+        assert.deepEqual([...view.nodeProgress(plan('in-progress'))], [['shared', 'active'], ['first', 'done'], ['second', 'active']]);
+        assert.deepEqual([...view.nodeProgress(plan('done'))], [['shared', 'done'], ['first', 'done'], ['second', 'done']]);
+        assert.equal(view.nodeProgress({ phases: [{ id: 'P01', status: 'todo' }], diagram: { phaseNodes: {} } }).size, 0, 'a part no phase changes has no mark');
     });
 
     it('reads a phase chosen in another plan as no choice', () => {

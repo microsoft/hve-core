@@ -56,7 +56,8 @@ export function legendContent() {
                 h('li', { text: 'A plan\'s change map draws its Before and After diagrams. Each box is a class, module, file, or document where changes land, with the parts that change beside the parts they touch.' }),
                 h('li', null, h('span', { class: 'legend-swatch is-new' }), ' A dashed border marks a new part or box, ', h('span', { class: 'legend-swatch is-changed' }), ' a thick border a changed part, and ', h('span', { class: 'legend-swatch is-removed' }), ' a dotted border a part the plan removes, which only Before shows.'),
                 h('li', { text: 'A marked part\'s last line, such as "changed · P24", names the phases that make the change. In Plan, Highlight fills one phase\'s parts.' }),
-                h('li', { text: 'In Implement, a check marks a part whose change is done and a dot one in progress.' }))),
+                h('li', { text: 'In Implement, a check marks a part whose change is done, a dot one in progress, and a hollow circle one still needed.' }),
+                h('li', { text: 'Hover or focus a changed part to see its change, its phases, and the tasks that change it; click it or press Enter to keep that open, then go to a task.' }))),
         section('legend-history', 'Back and forward',
             h('p', { text: 'The arrows beside the phase title, or Alt with the left or right arrow key, retrace the places you moved to, across phases and tasks.' })),
     ];

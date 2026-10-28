@@ -339,3 +339,101 @@ describe('sources', () => {
         assert.equal(elements(root).some((node) => (node.getAttribute('href') ?? '').startsWith('vscode')), false);
     });
 });
+
+describe('change-map part previews', () => {
+    const AFTER = [
+        'flowchart LR',
+        '    subgraph ws["`<code>lib/source/workspace.mjs</code>`"]',
+        '        pair["`**<code>earlierDocuments()</code>**',
+        '        pairs documents by name',
+        '        changed · P01, P02`"]',
+        '    end',
+        '    subgraph ui["`<code>ui/</code>`"]',
+        '        nav["`**<code>navigate()</code>**',
+        '        changed · P02`"]',
+        '    end',
+        '    subgraph guides["Canvas docs"]',
+        '        readme["`**<code>README.md</code>**',
+        '        changed · P03`"]',
+        '    end',
+        '    plain["A part no phase changes"]',
+        '    pair --> nav',
+        '    nav -.-> readme',
+        '    pair --> plain',
+        '    classDef changed stroke-width:3px',
+        '    class pair,nav,readme changed',
+    ].join('\n');
+    const BEFORE = ['flowchart LR', '    subgraph ws["`<code>lib/source/workspace.mjs</code>`"]', '        pair["`**<code>earlierDocuments()</code>**', '        research and plans only', '        changed · P01, P02`"]', '    end', '    classDef changed stroke-width:3px', '    class pair changed'].join('\n');
+    const task = (id, title, status, references) => ({ id, title, status, references, goals: '', requirements: [], research: [], details: [], dependencies: [], sectionId: `task-${id.toLowerCase()}` });
+    const session = () => {
+        const base = buildScenario('implement', NOW);
+        return {
+            ...base,
+            plan: {
+                ...base.plan,
+                diagram: { before: BEFORE, after: AFTER, phaseNodes: { P01: ['pair'], P02: ['pair', 'nav'], P03: ['readme'] }, tagged: true },
+                phases: [
+                    { id: 'P01', title: 'Pair documents', status: 'done', tasks: [task('P01-T01', 'Pair each document with its work', 'done', ['.github/extensions/hve-core/rpi-workflow/lib/source/workspace.mjs: `earlierDocuments`']), task('P01-T02', 'Write the guide', 'done', ['docs/rpi/README.md'])] },
+                    { id: 'P02', title: 'Navigate', status: 'in-progress', tasks: [task('P02-T01', 'Move between documents', 'in-progress', ['.github/extensions/hve-core/rpi-workflow/ui/app.mjs: `navigate`']), task('P02-T02', 'Keep the web app', 'todo', ['src/webapp.mjs'])] },
+                    { id: 'P03', title: 'Docs', status: 'todo', tasks: [task('P03-T01', 'Describe the dropdown', 'todo', ['docs/guide.md']), task('P03-T02', 'Add a revision row', 'todo', [])] },
+                ],
+            },
+        };
+    };
+    const preview = async (ctx, id) => {
+        const { previewContent } = await import('../ui/preview-content.mjs');
+        const content = previewContent(ctx, id, { titleId: 'part-title' });
+        if (!content) return null;
+        const root = document.createElement('div');
+        root.appendChild(content.head);
+        for (const node of content.body) root.appendChild(node);
+        return root;
+    };
+    const chipsOf = (root) => elements(root).filter((node) => node.localName === 'button' && node.classList.contains('id-chip')).map((node) => node.dataset.preview);
+
+    it('finds a part with its boxes, phases, and the tasks whose References name its file, where a folder names the files inside it', async () => {
+        const { mapPart } = await import('../ui/map-part.mjs');
+        const pair = mapPart(session(), 'part:after:pair');
+        assert.deepEqual(pair.boxes.map((box) => box.id), ['ws']);
+        assert.deepEqual(pair.phases.map((phase) => phase.id), ['P01', 'P02']);
+        assert.deepEqual(pair.paths, ['lib/source/workspace.mjs']);
+        assert.deepEqual(pair.tasks.map((item) => item.id), ['P01-T01']);
+        assert.equal(pair.matched, true);
+        assert.deepEqual(mapPart(session(), 'part:after:nav').tasks.map((item) => item.id), ['P02-T01'], 'ui/ names ui/app.mjs, not src/webapp.mjs');
+        const readme = mapPart(session(), 'part:after:readme');
+        assert.deepEqual(readme.tasks.map((item) => item.id), ['P03-T01', 'P03-T02'], 'no task names README.md, so every task in P03 shows');
+        assert.equal(readme.matched, false);
+        assert.equal(mapPart(session(), 'part:before:pair').node.label, 'earlierDocuments(), research and plans only', 'Before reads its own label');
+        assert.deepEqual(mapPart(session(), 'part:after:plain').phases, []);
+        assert.equal(mapPart(session(), 'part:after:missing'), null);
+        assert.equal(mapPart(session(), 'P01-T01'), null);
+    });
+
+    it('previews a part\'s name, boxes, change, progress, phases, and tasks, landing the keyboard on the first task', async () => {
+        const ctx = makeContext(session(), 'implement');
+        const root = await preview(ctx, 'part:after:pair');
+        const text = root.textContent.replace(/\s+/g, ' ');
+        assert.match(text, /^Change map part/);
+        assert.ok(!elements(root).some((node) => node.classList?.contains('preview-go')), 'a part has no place to go to');
+        const title = elements(root).find((node) => node.getAttribute('id') === 'part-title');
+        assert.equal(title.textContent, 'earlierDocuments()');
+        assert.ok(elements(title).some((node) => node.localName === 'code'), 'the code name keeps its code face');
+        assert.match(text, /pairs documents by name/);
+        assert.match(text, /In lib\/source\/workspace\.mjs/);
+        assert.match(text, /Changed in P01 and P02/);
+        assert.match(text, /In progress/, 'P02 is in progress, so the part is');
+        assert.deepEqual(chipsOf(root), ['P01', 'P02', 'P01-T01']);
+        assert.match(text, /Pair each document with its work/);
+        assert.match(text, /The tasks in P01 and P02 whose References name lib\/source\/workspace\.mjs\./);
+        const first = elements(root).find((node) => node.dataset?.previewFocus === '');
+        assert.equal(first?.dataset.preview, 'P01-T01');
+    });
+
+    it('says when no task names the part\'s file, marks a part still needed, and has no preview for a part the map lacks', async () => {
+        const ctx = makeContext(session(), 'implement');
+        const text = (await preview(ctx, 'part:after:readme')).textContent.replace(/\s+/g, ' ');
+        assert.match(text, /Still needed/);
+        assert.match(text, /No task in P03 names README\.md, so every task in it shows\./);
+        assert.equal(await preview(ctx, 'part:after:missing'), null);
+    });
+});
