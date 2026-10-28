@@ -102,7 +102,7 @@ This reference maps the 7 PbD Foundation Principles to industry-specific context
 
 ### Key regulations
 
-- PCI DSS v4.0 (Global) — cardholder data protection architecture
+- PCI DSS v4.0.1 (Global): cardholder data protection architecture
 - PSD2/SCA (EU) — strong customer authentication, open banking consent
 - FCRA (US) — credit reporting accuracy, consumer rights
 - APRA CPS 234 (AU) — information security for regulated entities
