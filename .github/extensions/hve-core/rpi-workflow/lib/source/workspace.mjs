@@ -451,14 +451,15 @@ export async function checkSourceLocations(workspace, session) {
 /** Kinds whose earlier documents the canvas reads and offers to switch to. */
 const EARLIER_KINDS = ['research', 'plan'];
 
-/** The files a task's view reads: its state, the newest document of each kind, and earlier research documents and plans. */
+/** The files a task's view reads: its state, the current work's document of each kind, and every listed research document and plan. */
 function watchedFiles(statePath, state) {
     return [...new Set([statePath, ...ARTIFACT_KEYS.map((key) => state.artifacts[key]), ...EARLIER_KINDS.flatMap((key) => state.documents[key])].filter(Boolean))];
 }
 
 /**
- * Reads the earlier research documents and plans the state lists, each numbered by its place
- * in the list. A document that cannot be read or is another kind becomes a warning.
+ * Reads the research documents and plans the state lists other than the current work's, each
+ * numbered by its place in the list. A document that cannot be read or is another kind becomes
+ * a warning.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {ReturnType<typeof parseState>} state
@@ -467,7 +468,8 @@ function watchedFiles(statePath, state) {
 async function readEarlier(workspace, state, warnings) {
     const earlier = { research: [], plan: [] };
     for (const key of EARLIER_KINDS) {
-        for (const [index, target] of state.documents[key].slice(0, -1).entries()) {
+        for (const [index, target] of state.documents[key].entries()) {
+            if (target === state.artifacts[key]) continue;
             let file;
             try {
                 file = await readContained(workspace, target);
@@ -478,10 +480,26 @@ async function readEarlier(workspace, state, warnings) {
             }
             const parsed = parseArtifact(file.text);
             if (parsed?.kind === key) earlier[key].push({ n: index + 1, path: file.path, mtimeMs: file.mtimeMs, parsed });
-            else warnings.push(`${file.path} is listed as ${key} ${index + 1} but is not a ${key} artifact.`);
+            else warnings.push(`${file.path} is listed in documents.${key} but is not a ${key} artifact.`);
         }
     }
     return earlier;
+}
+
+/** The suffix each kind's file name ends with, before `.md`. */
+const NAME_SUFFIX = Object.freeze({ research: '-research', plan: '-plan' });
+
+/**
+ * A document's name: its file name without the folder, `.md`, and its kind's suffix, so
+ * `task-board-polish-research.md` is `task-board-polish`. A trailing number stays in the name.
+ *
+ * @param {string} target workspace-relative path
+ * @param {'research' | 'plan'} key
+ */
+export function documentName(target, key) {
+    const base = target.split('/').pop().replace(/\.md$/i, '');
+    const suffix = NAME_SUFFIX[key];
+    return base.endsWith(suffix) && base.length > suffix.length ? base.slice(0, -suffix.length) : base;
 }
 
 /** IDs a research document or plan holds, from the session or an earlier document's snapshot. */
@@ -490,29 +508,30 @@ const DOCUMENT_IDS = Object.freeze({
     plan: (part) => [...(part.plan?.phases ?? []).flatMap((phase) => [phase.id, ...phase.tasks.map((task) => task.id)]), ...(part.plan?.requirements ?? []).map((item) => item.id), ...part.decisions.map((item) => item.id)],
 });
 
-/** Says which IDs appear in more than one document of a kind; links go to the newer. */
+/** Says which IDs appear in more than one document of a kind, naming the documents; links go to the current, else the newer. */
 function repeatedIdWarnings(session) {
     const warnings = [];
     for (const key of EARLIER_KINDS) {
         const where = new Map();
         for (const entry of session.documents[key]) {
-            const part = entry.newest ? { [key]: session[key], decisions: session.decisions.filter((decision) => decision.phase === key) } : entry.snapshot;
+            const part = entry.current ? { [key]: session[key], decisions: session.decisions.filter((decision) => decision.phase === key) } : entry.snapshot;
             if (!part) continue;
-            for (const id of new Set(DOCUMENT_IDS[key](part))) where.set(id, [...(where.get(id) ?? []), entry.n]);
+            for (const id of new Set(DOCUMENT_IDS[key](part))) where.set(id, [...(where.get(id) ?? []), entry.name]);
         }
-        const repeated = [...where].filter(([, numbers]) => numbers.length > 1);
+        const repeated = [...where].filter(([, names]) => names.length > 1);
         if (!repeated.length) continue;
-        const shown = repeated.slice(0, 8).map(([id, numbers]) => `${id} (${numbers.map((n) => `${key} ${n}`).join(' and ')})`);
+        const shown = repeated.slice(0, 8).map(([id, names]) => `${id} (${names.join(' and ')})`);
         const more = repeated.length > 8 ? `, and ${repeated.length - 8} more` : '';
-        warnings.push(`${key === 'research' ? 'Research' : 'Plan'}: ${repeated.length === 1 ? 'an ID appears' : `${repeated.length} IDs appear`} in more than one ${key === 'research' ? 'research document' : 'plan'}: ${shown.join('; ')}${more}. Links go to the newer one.`);
+        const noun = key === 'research' ? 'research document' : 'plan';
+        warnings.push(`${key === 'research' ? 'Research' : 'Plan'}: ${repeated.length === 1 ? 'an ID appears' : `${repeated.length} IDs appear`} in more than one ${noun}: ${shown.join('; ')}${more}. Links go to the current ${noun} when it holds the ID, else to the newer one.`);
     }
     return warnings;
 }
 
 /**
- * Reads a task's state, its newest artifacts, and its earlier research documents and plans,
- * and assembles its canvas document: the newest of each kind, with each earlier one as a
- * snapshot in `documents`. Artifact read problems become warnings; a state file that cannot
+ * Reads a task's state, the current work's artifacts, and its other research documents and
+ * plans, and assembles its canvas document: the current work's document of each kind, with each
+ * other one as a snapshot in `documents`. Artifact read problems become warnings; a state file that cannot
  * be read throws.
  *
  * @param {{ root: string, tracking: string }} workspace
@@ -546,9 +565,14 @@ export async function loadTask(workspace, statePath, now) {
         }
     }
     const earlier = await readEarlier(workspace, self.state, warnings);
-    const findingsBefore = (n) => earlier.research.filter((entry) => entry.n < n).reduce((sum, entry) => sum + entry.parsed.findings.length, 0);
-    const findingOffset = findingsBefore(self.state.documents.research.length);
-    if (earlier.research.length < self.state.documents.research.length - 1) {
+    // Findings number on across the listed research documents, the current work's included.
+    const findingCounts = self.state.documents.research.map((target, index) => (target === self.state.artifacts.research
+        ? artifacts.research?.findings.length ?? 0
+        : earlier.research.find((entry) => entry.n === index + 1)?.parsed.findings.length ?? 0));
+    const findingsBefore = (n) => findingCounts.slice(0, n - 1).reduce((sum, count) => sum + count, 0);
+    const currentAt = self.state.documents.research.indexOf(self.state.artifacts.research);
+    const findingOffset = currentAt > 0 ? findingsBefore(currentAt + 1) : 0;
+    if (earlier.research.length < self.state.documents.research.filter((target) => target !== self.state.artifacts.research).length) {
         warnings.push('An earlier research document could not be read, so finding numbers after it may not match the files.');
     }
     const scan = await scanStates(workspace);
@@ -566,7 +590,7 @@ export async function loadTask(workspace, statePath, now) {
         now,
     };
     const assembled = assembleSession({ ...input, findingOffset });
-    // An earlier document renders as the session would if it were the newest of its kind.
+    // Another document renders as the session would if it were the current work's of its kind.
     const snapshotOf = (key, entry) => {
         const alt = assembleSession({ ...input, artifacts: { ...artifacts, [key]: entry.parsed }, files: { ...files, [key]: { path: entry.path, mtimeMs: entry.mtimeMs } }, findingOffset: key === 'research' ? findingsBefore(entry.n) : findingOffset }).session;
         return {
@@ -581,11 +605,12 @@ export async function loadTask(workspace, statePath, now) {
         const listed = self.state.documents[key];
         return [key, listed.map((target, index) => {
             const n = index + 1;
-            if (index === listed.length - 1) return { n, path: files[key]?.path ?? target, title: artifacts[key]?.title || null, updatedAt: iso(files[key]?.mtimeMs), newest: true };
+            const name = documentName(target, key);
+            if (target === self.state.artifacts[key]) return { n, path: files[key]?.path ?? target, name, title: artifacts[key]?.title || null, updatedAt: iso(files[key]?.mtimeMs), current: true };
             const entry = earlier[key].find((item) => item.n === n);
             return entry
-                ? { n, path: entry.path, title: entry.parsed.title || null, updatedAt: iso(entry.mtimeMs), newest: false, snapshot: snapshotOf(key, entry) }
-                : { n, path: target, title: null, updatedAt: null, newest: false, missing: true };
+                ? { n, path: entry.path, name, title: entry.parsed.title || null, updatedAt: iso(entry.mtimeMs), current: false, snapshot: snapshotOf(key, entry) }
+                : { n, path: target, name, title: null, updatedAt: null, current: false, missing: true };
         })];
     }));
     const sourceProblems = await checkSourceLocations(workspace, assembled.session);

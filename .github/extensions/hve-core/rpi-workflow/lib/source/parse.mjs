@@ -192,9 +192,10 @@ function taskLink(value) {
 const ARTIFACT_KINDS = Object.freeze(['research', 'plan', 'critique', 'changes', 'review']);
 
 /**
- * Every document of each kind, in creation order with the newest last. `artifact_paths`
- * names the newest; a state without `documents` has one document per kind. Fills a missing
- * newest path from the list, so `artifacts` and the list agree.
+ * Every document of each kind, in creation order. `artifact_paths` names the document the
+ * current work uses, which may be an earlier one it reuses; a null path means the current
+ * work has none of that kind yet, even when the list holds earlier work's. A state without
+ * `documents` has one document per kind, and a path the list lacks joins its end.
  *
  * @param {unknown} raw the state's `documents`
  * @param {Record<string, string | null>} artifacts
@@ -207,14 +208,10 @@ function documentsOf(raw, artifacts, warnings) {
         const value = given[key];
         if (value !== undefined && value !== null && !Array.isArray(value)) warnings.push(`documents.${key} is not a list.`);
         const list = [...new Set((Array.isArray(value) ? value : []).map(str).filter(Boolean))];
-        if (!artifacts[key] && list.length) artifacts[key] = list.at(-1);
-        const newest = artifacts[key];
-        if (!newest) return [key, list];
-        if (list.length && list.at(-1) !== newest) {
-            warnings.push(`documents.${key} does not end with artifact_paths.${key}; the canvas shows ${newest} as the newest.`);
-            return [key, [...list.filter((path) => path !== newest), newest]];
-        }
-        return [key, list.length ? list : [newest]];
+        const current = artifacts[key];
+        if (!current || list.includes(current)) return [key, list];
+        if (list.length) warnings.push(`documents.${key} does not list artifact_paths.${key}; the canvas adds ${current} after the others.`);
+        return [key, [...list, current]];
     }));
 }
 

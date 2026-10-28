@@ -73,18 +73,22 @@ describe('artifact kinds and state', () => {
         assert.deepEqual(garbage.followUps, []);
     });
 
-    it('lists every document of each kind, newest last, in step with artifact_paths', () => {
+    it('lists every document of each kind in creation order, with artifact_paths naming the current work\'s', () => {
         const base = { task_id: 't', artifact_paths: { research: 'r2.md', plan: null } };
         const one = parseState(base);
         assert.deepEqual(one.documents.research, ['r2.md'], 'a state without documents has one per kind');
         assert.deepEqual(one.documents.plan, []);
         const many = parseState({ ...base, documents: { research: ['r1.md', 'r2.md', 'r1.md'], plan: ['p1.md'] } });
         assert.deepEqual(many.documents.research, ['r1.md', 'r2.md']);
-        assert.equal(many.artifacts.plan, 'p1.md', 'a list without an artifact path names the newest');
+        assert.deepEqual(many.documents.plan, ['p1.md'], 'earlier work\'s plan stays listed');
+        assert.equal(many.artifacts.plan, null, 'a null path means the current work has no plan yet');
         assert.deepEqual(many.warnings, []);
-        const off = parseState({ ...base, documents: { research: ['r2.md', 'r1.md'], plan: 'p1.md' } });
-        assert.deepEqual(off.documents.research, ['r1.md', 'r2.md'], 'artifact_paths names the newest');
-        assert.ok(off.warnings.some((text) => /documents\.research does not end with artifact_paths\.research/.test(text)), off.warnings.join(' | '));
+        const reused = parseState({ ...base, documents: { research: ['r2.md', 'r1.md'] } });
+        assert.deepEqual(reused.documents.research, ['r2.md', 'r1.md'], 'the current work may reuse an earlier document');
+        assert.deepEqual(reused.warnings, []);
+        const off = parseState({ ...base, documents: { research: ['r1.md'], plan: 'p1.md' } });
+        assert.deepEqual(off.documents.research, ['r1.md', 'r2.md'], 'a path the list lacks joins its end');
+        assert.ok(off.warnings.some((text) => /documents\.research does not list artifact_paths\.research/.test(text)), off.warnings.join(' | '));
         assert.ok(off.warnings.some((text) => /documents\.plan is not a list/.test(text)));
         assert.ok(parseState({ ...base, documents: ['r1.md'] }).warnings.some((text) => /documents is not an object of lists/.test(text)));
     });

@@ -10,6 +10,7 @@ import { after, before, describe, it } from 'node:test';
 import { createFeedback } from '../lib/model.mjs';
 import {
     createFollower,
+    documentName,
     importIntoStore,
     inspectContained,
     inspectState,
@@ -275,6 +276,13 @@ describe('loading and importing a task', () => {
         assert.deepEqual(child.warnings, [], 'reused research is not a problem');
     });
 
+    it('names a document by its file name without the folder, .md, and its kind suffix', () => {
+        assert.equal(documentName('.copilot-tracking/research/2026-10-28/task-board-polish-research.md', 'research'), 'task-board-polish');
+        assert.equal(documentName('.copilot-tracking/plans/2026-10-28/task-board-polish-plan.md', 'plan'), 'task-board-polish');
+        assert.equal(documentName('.copilot-tracking/research/2026-10-27/old-work-research-2.md', 'research'), 'old-work-research-2', 'a trailing number stays in the name');
+        assert.equal(documentName('notes/plan.md', 'plan'), 'plan');
+    });
+
     it('reads earlier research documents and plans, numbers findings on across them, and names repeated IDs', async () => {
         const many = path.join(tmp, 'many');
         await writeFixtureWorkspace(many);
@@ -287,7 +295,8 @@ describe('loading and importing a task', () => {
         await writeJson(many, PATHS.rootState, { ...ROOT_STATE, documents: { research: [firstResearch, PATHS.research], plan: [firstPlan, PATHS.plan] } });
         const loaded = await loadTask(await resolveWorkspace([many]), PATHS.rootState, NOW);
         const { research, plan } = loaded.session.documents;
-        assert.deepEqual(research.map((doc) => [doc.n, doc.newest, Boolean(doc.snapshot)]), [[1, false, true], [2, true, false]]);
+        assert.deepEqual(research.map((doc) => [doc.n, doc.current, Boolean(doc.snapshot)]), [[1, false, true], [2, true, false]]);
+        assert.deepEqual(research.map((doc) => doc.name), ['trail-maps', ROOT_TASK], 'each document is named for its work');
         assert.equal(research[0].title, 'Offline trail maps, first look');
         assert.equal(research[0].path, firstResearch);
         assert.deepEqual(research[0].snapshot.research.findings.map((finding) => finding.id), ['F1', 'F2', 'F3']);
@@ -296,10 +305,29 @@ describe('loading and importing a task', () => {
         assert.deepEqual(research[0].snapshot.decisions.map((decision) => decision.id), ['D10']);
         assert.deepEqual(loaded.session.research.findings.map((finding) => finding.id), ['F4', 'F5'], 'the newest numbers its findings on from the earlier one');
         assert.ok(loaded.session.sections['finding-f4'] && !loaded.session.sections['finding-f1']);
-        assert.deepEqual(plan.map((doc) => [doc.n, doc.newest]), [[1, false], [2, true]]);
+        assert.deepEqual(plan.map((doc) => [doc.n, doc.current]), [[1, false], [2, true]]);
         assert.ok(loaded.watched.includes(firstResearch) && loaded.watched.includes(firstPlan), 'earlier documents are watched');
         assert.ok(!loaded.warnings.some((text) => /more than one research document/.test(text)), 'continuing IDs do not repeat');
-        assert.ok(loaded.warnings.some((text) => /^Plan: \d+ IDs appear in more than one plan: P01 \(plan 1 and plan 2\)/.test(text) && /Links go to the newer one\.$/.test(text)), loaded.warnings.join(' | '));
+        const planNames = new RegExp(`^Plan: \\d+ IDs appear in more than one plan: P01 \\(trail-maps and ${ROOT_TASK}\\)`);
+        assert.ok(loaded.warnings.some((text) => planNames.test(text) && /Links go to the current plan when it holds the ID, else to the newer one\.$/.test(text)), loaded.warnings.join(' | '));
+
+        // New work with research of its own and no plan yet: the earlier plan stays listed, and none is current.
+        await writeJson(many, PATHS.rootState, { ...ROOT_STATE, artifact_paths: { ...ROOT_STATE.artifact_paths, plan: null, critique: null, changes: null, review: null }, documents: { research: [firstResearch, PATHS.research], plan: [firstPlan], critique: [PATHS.critique], changes: [PATHS.changes], review: [PATHS.review] } });
+        const fresh = await loadTask(await resolveWorkspace([many]), PATHS.rootState, NOW);
+        assert.deepEqual(fresh.session.documents.plan.map((doc) => [doc.n, doc.current, Boolean(doc.snapshot)]), [[1, false, true]]);
+        assert.equal(fresh.session.plan.phases.length, 0, 'the current work has no plan');
+        assert.ok(fresh.session.documents.plan[0].snapshot.plan.phases.length > 0, 'the earlier plan still reads');
+        assert.equal(fresh.session.plan.critique, null, 'no earlier critique pairs with the current work');
+        assert.deepEqual(fresh.session.implementation.changes, [], 'no earlier changes record pairs with the current work');
+        assert.deepEqual(fresh.session.review.findings, [], 'no earlier review pairs with the current work');
+        assert.ok(!fresh.warnings.some((text) => /does not list artifact_paths/.test(text)), fresh.warnings.join(' | '));
+
+        // Current work that reuses research listed before another: findings still number in list order.
+        await writeJson(many, PATHS.rootState, { ...ROOT_STATE, documents: { research: [PATHS.research, firstResearch], plan: [PATHS.plan] } });
+        const reused = await loadTask(await resolveWorkspace([many]), PATHS.rootState, NOW);
+        assert.deepEqual(reused.session.documents.research.map((doc) => [doc.n, doc.current]), [[1, true], [2, false]]);
+        assert.deepEqual(reused.session.research.findings.map((finding) => finding.id), ['F1', 'F2']);
+        assert.deepEqual(reused.session.documents.research[1].snapshot.research.findings.map((finding) => finding.id), ['F3', 'F4', 'F5'], 'a document listed after the current one numbers on from it');
         await writeJson(many, PATHS.rootState, { ...ROOT_STATE, documents: { research: ['.copilot-tracking/research/2026-01-13/gone-research.md', PATHS.research] } });
         const missing = await loadTask(await resolveWorkspace([many]), PATHS.rootState, NOW);
         assert.deepEqual(missing.session.documents.research.map((doc) => [doc.n, Boolean(doc.missing)]), [[1, true], [2, false]]);
