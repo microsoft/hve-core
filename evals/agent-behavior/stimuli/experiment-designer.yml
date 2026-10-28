@@ -459,7 +459,7 @@ stimuli:
       - type: output-matches
         name: experiment-research-gap-recorded
         config:
-          pattern: '(?is)^(?=[\s\S]*(?:unavailable|blocked))(?=[\s\S]*(?:\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)\w*[^.\r\n]{0,200}(?:gap|unknown|inconclusive|unresolved)|(?:gap|unknown|inconclusive|unresolved)[^.\r\n]{0,200}\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)))'
+          pattern: '(?is)^(?=[\s\S]*\b(?:unavailable|blocked)\b)(?![\s\S]*\bgap\s+(?:is|was|has\s+been)\s+(?:resolved|validated|confirmed|proven|inconclusive)\b)(?![\s\S]*\b(?:gap|unknown)\b[^.!?\r\n]{0,40}\b(?:should|must|will)\s+not\s+be\s+(?:recorded|retained|documented|captured|tracked)\b)(?![\s\S]*(?<!\b(?:not|never|cannot|can[\x27\u2019]t|don[\x27\u2019]t)\s+(?:(?:be|been|being|ever|actually)\s+){0,2})\b(?:record|mark|label|treat)\b[^.!?\r\n]{0,80}\bgap\s+as\s+(?:resolved|validated|confirmed|proven|inconclusive)\b)(?=[\s\S]*(?:(?<!\b(?:not|never|cannot|can[\x27\u2019]t|don[\x27\u2019]t)\s+(?:(?:be|been|being|ever|actually)\s+){0,2})\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)\w*(?:(?![.!?](?:\s|$))[\s\S]){0,200}\b(?:gap|unknown|unresolved)\b|\b(?:gap|unknown|unresolved)\b(?:(?![.!?](?:\s|$))[\s\S]){0,200}(?<!\b(?:not|never|cannot|can[\x27\u2019]t|don[\x27\u2019]t)\s+(?:(?:be|been|being|ever|actually)\s+){0,2})\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)\w*))'
       - type: output-matches
         name: experiment-research-dependent-stop
         config:
@@ -927,22 +927,31 @@ stimuli:
                     tableRows.push({ row, table });
                   }
                 }
-                const metric = (field, label, actual, percentage) => check(() => {
+                const measurements = (field, label, percentage, milliseconds = false) => {
                   const measured = [];
                   const labelPattern = String.raw`(?:observed[^\S\n]+)?(?:` + label + String.raw`)[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?`;
                   const labelOnly = new RegExp('^' + labelPattern + '$', 'i');
                   const observe = (rawValue, rawUnit = '') => {
                     const headerUnit = rawUnit.trim().toLowerCase();
-                    const value = /^(\d+(?:\.\d+)?)[^\S\n]*(%|(?:synthetic\s+)?requests?)?(.*)$/i.exec(rawValue.trim());
+                    const formula = field === 'latency-reduction' && !milliseconds &&
+                      /^\(([\d.]+)\s*-\s*([\d.]+)\)\s*\/\s*([\d.]+)\s+([\d.]+)\s*=\s*([\d.]+)%[.!]?$/i.exec(rawValue.trim());
+                    if (formula) {
+                      const numbers = formula.slice(1).map(Number);
+                      if (numbers[0] !== baseline || numbers[1] !== treatment || numbers[2] !== baseline || numbers[3] !== 100) fail('latency-reduction-mismatch');
+                      rawValue = formula[5] + '%';
+                    }
+                    const value = /^(\d+(?:\.\d+)?)[^\S\n]*(%|(?:synthetic\s+)?requests?|milliseconds?|ms)?(.*)$/i.exec(rawValue.trim());
                     const valueUnit = (value?.[2] ?? '').toLowerCase();
-                    const validHeader = percentage ? ['', '%', 'percent'].includes(headerUnit) : ['', 'request', 'requests', 'count'].includes(headerUnit);
-                    const validValue = percentage ? ['', '%'].includes(valueUnit) && (headerUnit !== '' || valueUnit === '%') : ['', 'request', 'requests', 'synthetic request', 'synthetic requests'].includes(valueUnit);
+                    const validHeader = milliseconds ? ['', 'ms', 'millisecond', 'milliseconds'].includes(headerUnit)
+                      : percentage ? ['', '%', 'percent'].includes(headerUnit) : ['', 'request', 'requests', 'count'].includes(headerUnit);
+                    const validValue = milliseconds ? ['', 'ms', 'millisecond', 'milliseconds'].includes(valueUnit) && (headerUnit !== '' || valueUnit !== '')
+                      : percentage ? ['', '%'].includes(valueUnit) && (headerUnit !== '' || valueUnit === '%') : ['', 'request', 'requests', 'synthetic request', 'synthetic requests'].includes(valueUnit);
                     if (!value || !validHeader || !validValue || !Number.isFinite(Number(value[1]))) fail('missing-' + field);
                     const annotation = value[3].trim();
                     if (annotation && !/^[.!]$/.test(annotation)) {
                       const context = /^\(([\d.]+)\s+(?:ms|milliseconds?)\s+(?:unbatched|baseline)\s+to\s+([\d.]+)\s+(?:ms|milliseconds?)\s+(?:batched|treatment)\)[.!]?$/i.exec(annotation);
                       const arithmetic = /^:\s*\(([\d.]+)\s*-\s*([\d.]+)\)\s*\/\s*([\d.]+)\s+([\d.]+)[.!]?$/.exec(annotation);
-                      if (field !== 'latency-reduction' || (!context && !arithmetic)) fail('missing-' + field);
+                      if (milliseconds || field !== 'latency-reduction' || (!context && !arithmetic)) fail('missing-' + field);
                       const numbers = (context ?? arithmetic).slice(1).map(Number);
                       if (numbers[0] !== baseline || numbers[1] !== treatment || (arithmetic && (numbers[2] !== baseline || numbers[3] !== 100))) fail(field + '-mismatch');
                     }
@@ -976,6 +985,24 @@ stimuli:
                         observe(match[1], 'requests');
                       }
                     }
+                  }
+                  return measured;
+                };
+                const reportedLatencies = [];
+                for (const [label, expectedValue] of [
+                  ['(?:unbatched|baseline) (?:median )?latency', baseline],
+                  ['(?:batched|treatment) (?:median )?latency', treatment]
+                ]) check(() => {
+                  const measured = measurements('latency-reduction', label, false, true);
+                  if (measured.length === 0) return;
+                  const reported = single(measured, 'missing-latency-reduction', 'conflicting-latency-reduction');
+                  if (!(Math.abs(reported - expectedValue) < 0.001)) fail('latency-reduction-mismatch');
+                  reportedLatencies.push(reported);
+                });
+                const metric = (field, label, actual, percentage) => check(() => {
+                  const measured = measurements(field, label, percentage);
+                  if (field === 'latency-reduction' && reportedLatencies.length === 2) {
+                    measured.push((reportedLatencies[0] - reportedLatencies[1]) / reportedLatencies[0] * 100);
                   }
                   if (!(Math.abs(single(measured, 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
                 });

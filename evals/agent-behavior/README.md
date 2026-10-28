@@ -146,14 +146,23 @@ A separate unchanged-criteria clause cannot hide a measured count or its conflic
 with another observation.
 This is bounded format support, not arbitrary prose parsing.
 
-The two numeric bodies in
+Observed baseline/unbatched and treatment/batched median latency pairs can
+establish the reduction without a separate reduction row. Both raw values need
+millisecond units and must agree with the source results. A calculation-first
+value such as `(100 - 76) / 100 * 100 = 24%` is also supported; its operands and
+reported result are checked rather than evaluated as arbitrary code. Raw and
+derived observations must agree, so a correct reduction label cannot hide an
+incorrect treatment value.
+
+The four numeric bodies in
 [final-two-output-controls.json](../../scripts/tests/evals/fixtures/specs/final-two-output-controls.json)
-retain actual generated table and count layouts. The installed-grader tests
+retain actual generated table, arithmetic and count layouts. The installed-grader tests
 add fixture bindings dynamically and exercise incorrect values, missing units,
 ambiguous columns and contradictions as independent negative controls.
 The same file includes labeled architecture explanations for later genuine
-calibration. Configuration checks do not establish model verdicts or restore
-access to the configured judge.
+calibration, including equivalent explanation-only answers and wrong ownership
+or approval claims. Configuration checks do not establish model verdicts or
+stability; genuine repeated grading uses the configured judge without replacing it.
 
 The existing generator tests and eval-spec tests must both pass when these
 contracts change. Updating only a new configuration test does not cover an

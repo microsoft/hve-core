@@ -780,7 +780,7 @@ stimuli:
       - type: output-matches
         name: skill-owasp-cicd-bleed-detection-skill-attribution
         config:
-          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|owasp\s+llm|owasp\s+top\s+10)'
+          pattern: '(?is)^(?!\s*Yes\b)(?![\s\S]*\b(?:actually\s*[,;:]?\s*yes|does\s+apply\s+(?:here|to\s+(?:this|your))|applies\s+(?:here|to\s+(?:this|your)\s+(?:runtime|case|web|prompt))|is\s+(?:the\s+)?(?:right|correct)\s+skill\s+(?:here|for\s+(?:this|your))))(?=[\s\S]*\b(?:ci[\s/-]*cd|pipeline|owasp-cicd)\b)(?=[\s\S]*\b(?:runtime|running|prompt|web|llm)\b)(?=[\s\S]*(?:^\s*No\b|\b(?:does(?:\s+not|n[\x27\u2019]t)\s+apply|not\s+applicable|inapplicable|different\s+skill|outside\s+[^.!?\r\n]{0,60}scope)\b|\b(?:ci[\s/-]*cd|pipeline|owasp-cicd)\b[^.!?\r\n]{0,160}\bnot\s+(?!only\b|just\b)[^.!?\r\n]{0,80}\b(?:runtime|running|prompt|web|llm)\b|\b(?:runtime|running|prompt|web|llm)\b[^.!?\r\n]{0,160}\b(?:rather\s+than|instead\s+of|not)\s+(?:the\s+)?(?:ci[\s/-]*cd|owasp-cicd)\b))'
       - type: output-matches
         name: skill-owasp-cicd-bleed-detection-scope-language
         config:

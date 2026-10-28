@@ -144,25 +144,48 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
 
         It 'Retains actual numeric layouts and separate architecture calibration expectations' {
             $fixture = Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/final-two-output-controls.json') -Raw | ConvertFrom-Json
-            $fixture.outcomes | Should -HaveCount 2
-            @($fixture.outcomes.id | Sort-Object -Unique) | Should -HaveCount 2
+            $fixture.outcomes | Should -HaveCount 4
+            @($fixture.outcomes.id | Sort-Object -Unique) | Should -HaveCount 4
             $fixture.outcomes[0].body | Should -Match '\| Measure \| Precommitted criterion \| Recorded result \| Evaluation \|'
             $fixture.outcomes[1].body | Should -Match '\| Measure \| Result \| Criterion \| Comparison \|'
+            ($fixture.outcomes | Where-Object id -EQ 'raw-latency-pair').body | Should -Match '\| Unbatched median latency \| 100 ms \|'
+            ($fixture.outcomes | Where-Object id -EQ 'formula-first').body | Should -Match '\(100 - 76\) / 100 \* 100 = 24%'
             foreach ($outcome in $fixture.outcomes) {
-                $outcome.body | Should -Match 'Median latency reduction'
-                $outcome.body | Should -Match '100 synthetic requests'
+                $outcome.body | Should -Match '(?:Median latency reduction|Unbatched median latency)'
+                $outcome.body | Should -Match '(?:100 synthetic requests|\| Synthetic requests \| 100 \||Synthetic requests: 100)'
                 $outcome.body | Should -Not -Match '(?i)C:\\Users|\.copilot-tracking/research|sessionID|rubric_scores'
             }
             $fixture.architectureSubject | Should -Be 'architecture-review-record-and-authority'
-            $fixture.architecture | Should -HaveCount 6
-            @($fixture.architecture.id | Sort-Object -Unique) | Should -HaveCount 6
-            @($fixture.architecture | Where-Object expected -EQ $true) | Should -HaveCount 2
-            @($fixture.architecture | Where-Object expected -EQ $false) | Should -HaveCount 4
+            $fixture.architecture | Should -HaveCount 10
+            @($fixture.architecture.id | Sort-Object -Unique) | Should -HaveCount 10
+            @($fixture.architecture | Where-Object expected -EQ $true) | Should -HaveCount 4
+            @($fixture.architecture | Where-Object expected -EQ $false) | Should -HaveCount 6
             foreach ($control in $fixture.architecture) {
                 $control.expected | Should -BeOfType ([bool])
                 $control.answer | Should -Not -BeNullOrEmpty
                 $control.rationale | Should -Not -BeNullOrEmpty
             }
+        }
+
+        It 'Judges architecture recording requirements without requiring an executed assessment' {
+            $case = $script:RepairCases[2]
+            $case.prompt | Should -Match 'ownership requirements.*user authority'
+            $rubric = $case.rubric -join ' '
+            $rubric | Should -Match 'do not demand an actual assessed disposition'
+            $rubric | Should -Match 'ownership must be recorded'
+            $rubric | Should -Match 'user as the human decision owner'
+            $rubric | Should -Match 'each criterion against its own evidence'
+        }
+
+        It 'Separates ordinary RPI questions from workflow state and progression' {
+            $agent = Get-Content -Raw (Join-Path $script:RepoRoot '.github/agents/hve-core/rpi-agent.agent.md')
+            $agent | Should -Match '## Applicability'
+            $agent | Should -Match '(?s)ordinary questions.*answer directly.*self-introductions.*phase headings.*unsolicited task redirection'
+            $agent | Should -Match 'Do not recover, create, or update task or session tracking state'
+            $agent | Should -Match 'Preserve platform-required identity disclosures'
+            $agent | Should -Match '(?s)active task.*side question.*already-authorized work.*recorded mode and progression boundary'
+            $agent | Should -Match 'For workflow work, follow the active phase skill'
+            $agent | Should -Match 'Immediately persist the current state'
         }
 
         It 'Resolves actual planner caps and observes missing versus present demo files without an executor' {

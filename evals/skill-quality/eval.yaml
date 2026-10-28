@@ -30,14 +30,15 @@ stimuli:
       handoff, and who retains decision authority. Describe the allowed kinds
       of disposition that must be recorded for each confirmed focus area,
       rather than only saying that a disposition is required. Explain the
-      record's requirements; do not perform a review or invent actual pillar
+      record's ownership requirements and how they preserve user authority.
+      Explain what must be recorded; do not perform a review or invent actual pillar
       findings, evidence, decision-owner identities, or budget approval.
     rubric:
       - Preserve confirmed scope for synthetic-queue, evidence E1 and its recommendation of option A, assumptions distinct from verified context, and trade-offs with recommendation rationale.
-      - Give both reliability and cost an explicit disposition (finding, examined with no finding, or unassessed with a limit). Preserve unresolved final budget approval as a limit, not invented approval.
-      - Record review dispositions of recommendations with rationale and evidence, plus decision owners. Complete and persist the record before an ADR or RPI Plan handoff and pass its path as evidence.
-      - Decision authority stays in the ADR and with the user; the review record preserves analysis and does not approve or replace their decisions. All criteria are mandatory; wrong authority, missing pillar dispositions, or assumed budget approval fails.
-      - Accept equivalent wording and any clause order. Fail prompt echoes, generic lists without the required relationships, and unavailable-policy excuses.
+      - Explain that both reliability and cost require one of the allowed dispositions (finding, examined with no finding, or unassessed with a limit). Naming the alternatives for each confirmed area satisfies this explanation task; do not demand an actual assessed disposition or invented pillar result. Preserve unresolved final budget approval as a limit, not invented approval.
+      - Explain that the record must capture review dispositions of recommendations with rationale and evidence, plus decision owners. Complete and persist the record before an ADR or RPI Plan handoff and pass its path as evidence. Describing who retains authority alone does not explain that ownership must be recorded; do not require invented owner identities.
+      - Decision authority stays in the ADR and with the user; the review record preserves analysis and does not approve or replace their decisions. Accept the user as the human decision owner in equivalent wording, but not a transfer to an unrelated owner. All criteria are mandatory; wrong authority, missing required disposition alternatives, or assumed budget approval fails.
+      - Judge only whether the answer explains these recording and authority requirements, not whether it performs an actual review. Accept equivalent wording and any clause order without requiring literal labels. Assess each criterion against its own evidence; an authority-wording change does not change whether disposition alternatives were explained. Fail prompt echoes, generic lists without the required relationships, and unavailable-policy excuses.
     tags:
       category: skill-quality
       skill: architecture-review
@@ -96,7 +97,7 @@ stimuli:
       - type: output-matches
         name: identifies-pipeline-poisoning
         config:
-          pattern: "(?i)pipeline.poison|code.injection|supply.chain|untrusted"
+          pattern: '(?is)^(?![\s\S]*\b(?:no|not|never|does(?:n[\x27\u2019]t|\s+not))\s+(?:(?:a|an|any|risk|chance|possibility|likelihood|of|the|introduce|involve|cause|present)\s+){0,4}(?:poisoned\s+pipeline\s+execution|pipeline[ -]+poison(?:ing)?|code[ -]+injection|supply[ -]+chain|untrusted))(?![\s\S]*\b(?:poisoned\s+pipeline\s+execution|pipeline[ -]+poison(?:ing)?|code[ -]+injection|supply[ -]+chain)\b[^.!?\r\n]{0,40}\b(?:(?:is|are)\s+not\s+(?:a\s+)?(?:risk|possible|applicable|present)|cannot\s+(?:happen|occur))\b)(?=[\s\S]*\b(?:poisoned\s+pipeline\s+execution|pipeline[ -]+poison(?:ing)?|code[ -]+injection|supply[ -]+chain|untrusted)\b)'
       - type: output-matches
         name: recommends-controls
         config:

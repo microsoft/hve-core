@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-10-01
+ms.date: 2026-10-28
 ---
 
 ## Purpose
@@ -209,6 +209,13 @@ Each entry in [stimuli.yml](stimuli.yml) uses these keys:
 
 A grader may run without gating. Omitting it from `invariants` while leaving it in `graders` keeps it executing and keeps its per-trial result in the run output, but removes it from the verdict.
 
+The `multi-turn-confirm-action` question supplies a hypothetical code-review
+proposal within the prompt. It does not assume an unstaged previous conversation
+or claim that a real rename occurred. The same question appears in the canonical,
+baseline, customized second turn and comparison specs. Its `mentions-loadconfig`
+invariant remains an exact identifier check; self-reference guards and gating
+policy are unchanged.
+
 That split exists because invariants are read from the baseline run only: a grader that records how the *uncustomized* model chose to respond cannot distinguish "the customization layer changed behavior" from "the underlying model answered differently," which is the only question this suite asks.
 `asks-clarifying-question` and `mentions-print-paren` report under that rule.
 `mentions-scripts-or-deps` still gates, because its stimulus reads a file the seed workspace provides and intermittent failure means the read itself is unreliable.
@@ -220,6 +227,12 @@ Trajectory invariants live at the spec level (not per stimulus) and apply across
 ## Customized Disallow Guards
 
 The 35-stimulus corpus is entirely equivalent-policy. `customized_disallow` guards on the instruction-bleed stimuli detect unsolicited RPI Agent self-reference while leaving comparison report-only. Complete delivery evidence showed that the removed customization-boundary guards measured lifecycle phase behavior rather than nominal model non-degradation. Agent behavior testing owns those implementation and scope contracts.
+
+Ordinary customized answers should not introduce the workflow persona, start
+intake or create session state merely because the agent was loaded. An active
+workflow can answer a side question without changing its task, mode or authorized
+progression. These behavior expectations do not turn individual report-only
+guards into authoritative gates.
 
 This framing is intentional. The suite is not a free-form quality grader; it asks the narrow question "does customization change anything beyond what we said it would?" Curated allowances keep the question crisp.
 

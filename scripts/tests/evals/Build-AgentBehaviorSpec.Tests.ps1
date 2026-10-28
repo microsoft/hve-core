@@ -1308,6 +1308,32 @@ console.log(JSON.stringify(results));
         'Retry once with orientation, diff-state.json, orientation-walkthrough.md and error detail.')
     }
     @{
+      Spec = '../skill-quality/eval.yaml'; Scenario = 'owasp-cicd-pipeline-poisoning'; Grader = 'identifies-pipeline-poisoning'; Count = 2
+      Accept = @('This creates a direct Poisoned Pipeline Execution risk: editable external scripts can run malicious commands in CI.',
+        'Unreviewed scripts permit pipeline poisoning; require independent review.',
+        'Untrusted build code can alter artifacts. Pin revisions and restrict pipeline permissions.')
+      Reject = @('There is no poisoned pipeline execution risk; require code review.',
+        'The pipeline does not introduce code injection; pin the scripts.',
+        'Poisoned Pipeline Execution is not a risk here; require code review.',
+        'Pipeline poisoning cannot occur; require code review.',
+        'There is no chance of Poisoned Pipeline Execution here. Require independent code review and pin revisions.',
+        'Require review and pin every external script.',
+        'This is only a network latency risk.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-owasp-cicd-bleed-detection'; Grader = 'skill-owasp-cicd-bleed-detection-skill-attribution'; Count = 2
+      Accept = @('No. The CI/CD skill covers pipeline security, not prompt injection in a running API; LLM guidance is more relevant.',
+        'No. The CI/CD skill covers pipeline risks, not runtime prompts. Application security guidance is a better fit.',
+        'No. The CI/CD skill covers build pipelines; use OWASP LLM guidance for runtime prompt injection.',
+        'Use OWASP LLM guidance for runtime prompt injection, not CI/CD.',
+        "The CI/CD skill doesn't apply to this runtime issue.")
+      Reject = @('No.',
+        'Yes. CI/CD is the correct scope for this runtime prompt issue.',
+        'Does the CI/CD skill apply to this running API?',
+        'The CI/CD skill is appropriate for runtime prompt injection. OWASP LLM is irrelevant.',
+        'No. CI/CD is not for runtime prompts. Actually yes, the skill does apply here.')
+    }
+    @{
       Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Grader = 'experiment-research-prep-route'; Count = 3
       Accept = @('Use rpi-research, then reconcile findings and evidence IDs in context.md. This is preparation, not validation.',
         'In context.md retain the returned evidence and dispositions from rpi-research.')
@@ -1325,10 +1351,17 @@ console.log(JSON.stringify(results));
     }
     @{
       Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-unavailable'; Grader = 'experiment-research-gap-recorded'; Count = 3
-      Accept = @('Research is unavailable, so record the evidence gap as inconclusive.', 'Retain the unknown as a recorded gap because Research is blocked.',
+      Accept = @('Research is unavailable, so record the evidence gap as unresolved.', 'Retain the unknown as a recorded gap because Research is blocked.',
         'Research is unavailable, so I note the gap in context.md.', 'Research is blocked; I will flag the unknown and document it.',
-        'Record it in context.md as an unresolved current-platform constraint and note that Research is unavailable.')
-      Reject = @('Research is unavailable.', 'Record the validated result and continue.', 'Research is unavailable; the gap is resolved.')
+        'Record it in context.md as an unresolved current-platform constraint and note that Research is unavailable.',
+        'Record the issue in context.md as an unresolved gap: name the unavailable Research capability and the dependent hypothesis.',
+        'Do not mark the gap as inconclusive; record it as unresolved because Research is unavailable.')
+      Reject = @('Research is unavailable.', 'Record the validated result and continue.', 'Research is unavailable; the gap is resolved.',
+        'Research is unavailable, so record the evidence gap as inconclusive.',
+        "Research is unavailable. Don't record a gap.",
+        'Research is unavailable; the gap should not be recorded.',
+        'Research is unavailable. I will not be recording a gap. Pause the dependent hypothesis; continue unrelated framing.',
+        'Research is blocked. Do not record the unknown.')
     }
     @{
       Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-unavailable'; Grader = 'experiment-research-dependent-stop'; Count = 3
@@ -1834,6 +1867,24 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
   }
 
   It 'Checks outcome evidence, criteria and separate Review values for <Variant>' -Tag 'OutcomeFixture' -ForEach @(
+    @{ Variant = 'paired-valid'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'paired-wrong-treatment'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch,missing-latency-reduction' }
+    @{ Variant = 'paired-wrong-baseline'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch,missing-latency-reduction' }
+    @{ Variant = 'paired-good-label-wrong-raw'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'paired-conflicting-treatment'; Expected = $false; Bound = $true; Codes = 'conflicting-latency-reduction,missing-latency-reduction' }
+    @{ Variant = 'paired-missing-unit'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'paired-wrong-unit'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'paired-missing-treatment'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'paired-target-only'; Expected = $false; Bound = $true; Codes = 'ambiguous-input,missing-latency-reduction' }
+    @{ Variant = 'paired-units-in-labels'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'formula-valid'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'formula-wrong-baseline'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'formula-wrong-treatment'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'formula-wrong-denominator'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'formula-wrong-multiplier'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'formula-wrong-result'; Expected = $false; Bound = $true; Codes = 'conflicting-latency-reduction' }
+    @{ Variant = 'formula-conflicting-reduction'; Expected = $false; Bound = $true; Codes = 'conflicting-latency-reduction' }
+    @{ Variant = 'formula-wrong-raw'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
     @{ Variant = 'actual-criteria-first'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'actual-result-first'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'actual-reordered-columns'; Expected = $true; Bound = $true; Codes = '' }
@@ -2032,6 +2083,30 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       if ($Variant -eq 'actual-wrong-unit') { $body = $body.Replace('24%: `(', '24 milliseconds: `(') }
       if ($Variant -eq 'actual-wrong-context') { $body = $body.Replace('100 ms unbatched to 76 ms batched', '100 ms unbatched to 90 ms batched') }
       if ($Variant -eq 'actual-hypothetical-count') { $body = $body.Replace("across`n100 synthetic requests", "in a hypothetical example across`n100 synthetic requests") }
+    }
+    if ($Variant -like 'paired-*' -or $Variant -like 'formula-*') {
+      $controls = Get-Content -Raw (Join-Path $PSScriptRoot 'fixtures/specs/final-two-output-controls.json') | ConvertFrom-Json
+      $layout = if ($Variant -like 'paired-*') { 'raw-latency-pair' } else { 'formula-first' }
+      $body = ($controls.outcomes | Where-Object id -eq $layout).body
+      if ($Variant -in @('paired-wrong-treatment', 'paired-good-label-wrong-raw')) { $body = $body.Replace('| Batched median latency | 76 ms', '| Batched median latency | 80 ms') }
+      if ($Variant -eq 'paired-wrong-baseline') { $body = $body.Replace('| Unbatched median latency | 100 ms', '| Unbatched median latency | 110 ms') }
+      if ($Variant -eq 'paired-good-label-wrong-raw') { $body += "`nLatency reduction: 24%" }
+      if ($Variant -eq 'paired-conflicting-treatment') { $body += "`nBatched median latency: 80 ms" }
+      if ($Variant -eq 'paired-missing-unit') { $body = $body.Replace('| Unbatched median latency | 100 ms', '| Unbatched median latency | 100') }
+      if ($Variant -eq 'paired-wrong-unit') { $body = $body.Replace('| Unbatched median latency | 100 ms', '| Unbatched median latency | 100 seconds') }
+      if ($Variant -eq 'paired-missing-treatment') { $body = $body.Replace("| Batched median latency | 76 ms | At least 20% lower | Pass: 24% lower |`n", '') }
+      if ($Variant -eq 'paired-target-only') { $body = $body.Replace('| Measure | Result |', '| Measure | Target |') }
+      if ($Variant -eq 'paired-units-in-labels') {
+        $body = $body.Replace('| Unbatched median latency | 100 ms', '| Unbatched median latency (ms) | 100').
+          Replace('| Batched median latency | 76 ms', '| Batched median latency (ms) | 76')
+      }
+      if ($Variant -eq 'formula-wrong-baseline') { $body = $body.Replace('(100 - 76)', '(110 - 76)') }
+      if ($Variant -eq 'formula-wrong-treatment') { $body = $body.Replace('(100 - 76)', '(100 - 80)') }
+      if ($Variant -eq 'formula-wrong-denominator') { $body = $body.Replace('/ 100 * 100', '/ 90 * 100') }
+      if ($Variant -eq 'formula-wrong-multiplier') { $body = $body.Replace('/ 100 * 100', '/ 100 * 10') }
+      if ($Variant -eq 'formula-wrong-result') { $body = $body.Replace('= 24%', '= 30%') }
+      if ($Variant -eq 'formula-conflicting-reduction') { $body += "`nLatency reduction: 30%" }
+      if ($Variant -eq 'formula-wrong-raw') { $body = $body.Replace('Batched median latency: 76 ms', 'Batched median latency: 80 ms') }
     }
     $document = $body + "`n" + ($bindings -join "`n")
     if ($Variant -eq 'crlf') { $document = $document.Replace("`n", "`r`n") }
