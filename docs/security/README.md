@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Security Documentation"
 pagination_label: Security Documentation
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-10-28
 ms.topic: overview
 keywords:
   - security
@@ -43,7 +43,7 @@ Skills whose shipped scripts make network requests, handle credentials, parse co
 | **jira**                                        | REST CLI; environment credentials                                                                                                                                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/jira/SECURITY.md)              |
 | **gitlab**                                      | REST CLI; environment credentials; git-remote subprocess                                                                                                          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/gitlab/SECURITY.md)            |
 | **mural** (experimental)                        | REST CLI; embedded MCP server; OAuth token store                                                                                                                  | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/mural/SECURITY.md)                 |
-| **tts-voiceover** (experimental)                | Azure Speech egress; key/Entra credentials; SSML + PPTX parsing                                                                                                   | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SECURITY.md)         |
+| **tts-voiceover** (experimental)                | Azure Speech egress; key/Entra credentials; SSML + YAML parsing                                                                                                   | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SECURITY.md)         |
 | **accessibility**                               | Arbitrary-URL scan egress; `npx @axe-core/cli` subprocess                                                                                                         | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/accessibility/accessibility/SECURITY.md)        |
 | **copilot-otel-metrics** (experimental)         | Diff-approved global settings write; loopback OTLP ingest into a container stack; local-API query helpers; generated Azure collector and infrastructure templates | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/SECURITY.md)  |
 | **gh-code-scanning**                            | GitHub code-scanning read via `gh` CLI subprocess                                                                                                                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/gh-code-scanning/SECURITY.md)          |
