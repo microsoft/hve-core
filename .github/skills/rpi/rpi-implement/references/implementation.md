@@ -6,7 +6,7 @@ description: "Reference protocol for following a marker-based RPI plan, keeping 
 
 ## Artifact contract
 
-Read the task-centered plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`. Create or update `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` for implementation evidence.
+Read the task-centered plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`. Create or update `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` for implementation evidence. The changes record takes the name of the plan it implements, so a plan named for a later request's work gets a changes record of the same name.
 
 Navigate plan content through `<!-- rpi:phase id=Pxx -->`, `<!-- rpi:task id=Pxx-Txx -->`, and their headings; enable searching through ignored files for the plan.
 
