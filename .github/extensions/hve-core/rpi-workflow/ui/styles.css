@@ -1993,7 +1993,9 @@ details > summary:hover {
   scroll-margin-top: var(--rw-row-margin, 72px);
 }
 
-.row:first-child {
+/* The pinned board's own bottom border separates it from the row under it. */
+.row:first-child,
+.board-dock + .row {
   border-top: 0;
 }
 
