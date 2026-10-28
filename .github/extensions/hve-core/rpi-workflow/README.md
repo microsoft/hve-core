@@ -221,14 +221,15 @@ The canvas looks for `.copilot-tracking/` in the session's working directory, th
 
 * the state files in session folders, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, to find the task, its mode and phase, its session, and the other loops in it;
 * the artifacts a state file names in `artifact_paths`, the documents the current work uses: research, plan, plan critique, changes record, and review log;
-* the other research documents and plans its `documents` lists in the order they were made, for a session that took on a new request; each is named for its work, such as `task-board-polish-research.md`;
+* the other documents its `documents` lists in the order they were made, for a session that took on a new request; each is named for its work, such as `task-board-polish-research.md`, and a critique, changes record, and review take their plan's name, such as `task-board-polish-changes.md` and `task-board-polish-review-2.md`;
 * the branch and repository from the workspace's `.git` folder, for the header.
 
 Each phase shows the current work's document, the one `artifact_paths` names. A kind the current work has none of yet shows nothing, even when earlier work has one, so a new plan never shows an earlier plan's critique, changes record, or review.
-When Research or Plan has an earlier document, a Document switcher in the context bar lists the documents by title and time, marking the current one, or ending with "Current work: no plan yet" when there is none.
+When Research, Plan, Implement, or Review has an earlier document, a Document switcher in the context bar lists that phase's documents by title and time, marking the current one, or ending with "Current work: no changes record yet" or the like when there is none. Review groups its reviews by work, under each work's plan title.
 Choosing an earlier one shows it read-only, with a note naming it and the current one and a button back, even when the current work has not reached that phase.
+An earlier document reads as its own work, paired by name: a plan with its own last critique, and a changes record with the plan of its name, whose board, tasks, and change map it shows, with all its tasks listed and none in progress. Each shows its own other sections and trace strips.
 Findings are numbered in order across the documents, so a later document's findings go on from the earlier ones', and an ID that only an earlier document holds opens that document when you go to it.
-An ID that two documents both hold goes to the current one when it holds it, else the newer, and the problems list names the documents by their work.
+Inside an earlier document, an ID goes to that document first, then to its own work's other documents, so RV-001 in an earlier review stays in it and a task it cites opens its own plan. Elsewhere, an ID that two documents both hold goes to the current one when it holds it, else the newer, and the problems list names research documents and plans that repeat an ID. Back and Forward remember which document a place was in.
 
 Every file must be a Markdown or JSON file inside `.copilot-tracking/`, reached without symbolic links, and at most 2 MB. A state file, whether given as input or named by another state file's link, must also sit in a session folder. The canvas refuses anything else and never writes these files.
 
@@ -333,7 +334,7 @@ The key keeps other local processes, such as other accounts or containers, from 
 ## Limitations
 
 * The canvas reads RPI files but never writes them. Changes to a real session reach the files only through the agent.
-* An earlier research document or plan is read-only in the canvas: comment on the current one, or ask the agent. Only Research and Plan switch documents; the other phases show the current work's critique, changes record, and review, and nothing from earlier work.
+* An earlier document is read-only in the canvas: comment on the current one, or ask the agent. Research, Plan, Implement, and Review switch documents; Follow-up and the steering panel always show the current work.
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
 * Following goes to whichever loop of the session runs, so a subagent that runs its own RPI loop in the session looks like any other loop, and the canvas can follow into it; use the session menu to go back, which stops following. With several running loops, which happens only when an earlier conversation stopped without saying so, it picks the one that changed last.
 * Send now needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`; Queue works either way. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
