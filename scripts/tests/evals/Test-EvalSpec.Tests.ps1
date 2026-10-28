@@ -183,6 +183,53 @@ console.log(JSON.stringify({ items: plan.items.map(i => ({ name: i.stimulus.name
         }
     }
 
+    Context 'Unreadable-base semantic contract' {
+        BeforeAll {
+            $partial = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/code-review.yml') -Raw)
+            $script:FallbackCase = @($partial.stimuli | Where-Object name -EQ 'code-review-business-alignment-unreadable-base-fallback')[0]
+            $script:FallbackControls = Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/post-repair-grader-controls.json') -Raw | ConvertFrom-Json
+        }
+
+        It 'Keeps one binary judge under the existing natural-language scenario' {
+            $script:FallbackCase.graders | Should -HaveCount 1
+            $grader = $script:FallbackCase.graders[0]
+            $grader.name | Should -Be 'code-review-unreadable-base-contract'
+            $grader.type | Should -Be 'prompt'
+            $grader.config.scoring | Should -Be 'binary'
+            $grader.config.threshold | Should -Be 0.85
+            $grader.config.ContainsKey('model') | Should -BeFalse
+            $script:FallbackCase.tags.category | Should -Be 'agent-behavior'
+            $script:FallbackCase.tags.ContainsKey('advisory') | Should -BeFalse
+            $script:FallbackCase.prompt | Should -Match 'response-only'
+            $script:FallbackCase.agent_environment.files.dest | Should -Contain '.github/copilot-instructions.md'
+        }
+
+        It 'Requires every baseline relationship and rejects contradictory clearance' {
+            $rubric = $script:FallbackCase.rubric -join ' '
+            $rubric | Should -Match '(?s)(?=.*one bounded)(?=.*unchanged)(?=.*FR-008)(?=.*baseline is head)'
+            $rubric | Should -Match 'FR-007.*removed pre-change.*baseline diff'
+            $rubric | Should -Match 'FR-009.*unavailable.*unassessed.*cannot.*clear drift'
+            $rubric | Should -Match 'All criteria are mandatory'
+            $rubric | Should -Match 'equivalent wording.*clause order'
+            $rubric | Should -Match 'contradictory.*even if correct phrases'
+            $rubric | Should -Match 'prompt echoes.*unavailable-policy.*live review'
+        }
+
+        It 'Retains eight labeled controls as calibration inputs, not measured verdicts' {
+            $script:FallbackControls.subject | Should -Be $script:FallbackCase.name
+            $controls = $script:FallbackControls.controls
+            $controls | Should -HaveCount 8
+            @($controls.id | Sort-Object -Unique) | Should -HaveCount 8
+            @($controls | Where-Object expected -EQ $true) | Should -HaveCount 2
+            @($controls | Where-Object expected -EQ $false) | Should -HaveCount 6
+            foreach ($control in $controls) {
+                $control.expected | Should -BeOfType ([bool])
+                $control.answer | Should -Not -BeNullOrEmpty
+                $control.rationale | Should -Not -BeNullOrEmpty
+            }
+        }
+    }
+
     Context 'Valid fixtures' {
         It 'Reports zero errors for valid-minimal.yaml' {
             $path = Join-Path $script:ValidFixturesRoot 'valid-minimal.yaml'

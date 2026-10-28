@@ -116,6 +116,32 @@ rejections, rather than requiring every answer to pass. Accept the demo repair
 only after checking file presence for every executed trial separately; the
 existing suite mean can hide an individual missing file.
 
+The code-review unreadable-base fallback case also uses one binary prompt judge.
+It requires the bounded unchanged-source read and the correct baseline for each
+passage, and rejects contradictory clearance claims even when correct phrases
+also appear. The eight labeled controls in
+[post-repair-grader-controls.json](../../scripts/tests/evals/fixtures/specs/post-repair-grader-controls.json)
+are inputs for later genuine calibration, not measured judge results.
+
+The experiment outcome case keeps deterministic measurement and evidence-binding
+checks. Percentage units may appear in the value or in a label/table header,
+such as `Latency reduction (%): 24`; sample-size labels may specify requests or
+count. Labeled observations must have supported units and numeric values.
+Consistent repeated values are accepted; missing units, unsupported units,
+conflicting values and contradictory anomaly reports fail. `Anomalies: not
+observed` is equivalent to `Anomalies: none`. The original Review, hypothesis,
+decision, committed-criteria and hash-binding checks remain in force.
+
+The existing generator tests and eval-spec tests must both pass when these
+contracts change. Updating only a new configuration test does not cover an
+older consumer that still expects deleted graders. These grading repairs do not
+change worker timeouts, retry policy, scheduling or result reporting.
+
+The resumed-review sample metadata has LF checkout endings pinned in
+[.gitattributes](../../.gitattributes). Its protected-file grader compares exact
+bytes, so Windows checkout conversion must not alter the sample. The equality
+check still rejects changes to protected files.
+
 ### Data Science Coach RPI Scenarios
 
 The [Data Science Coach partial](stimuli/data-science-engineering-coach.yml) keeps

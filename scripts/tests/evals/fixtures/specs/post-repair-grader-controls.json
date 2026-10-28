@@ -1,0 +1,53 @@
+{
+  "subject": "code-review-business-alignment-unreadable-base-fallback",
+  "controls": [
+    {
+      "id": "fallback-complete",
+      "expected": true,
+      "rationale": "Preserves one bounded unchanged-source read and all three baseline treatments.",
+      "answer": "One bounded current-source read is allowed only for unchanged owner metadata and FR-008 outside changed hunks, using baseline head. FR-007 uses removed pre-change lines with baseline diff. FR-009 is a proposed source update; its baseline is unavailable, so it remains unassessed and cannot clear drift. This describes the policy, not a comparison I ran."
+    },
+    {
+      "id": "fallback-reordered",
+      "expected": true,
+      "rationale": "Equivalent prose and reordered clauses must not require the old regex wording.",
+      "answer": "FR-009 has no recoverable baseline: mark it unavailable and unassessed as a proposed update, and never use its added text to establish alignment. Use the removed lines, not the current edit, for FR-007 with baseline diff. Read the current PRD once, limited to owner metadata and FR-008 proven unchanged by the diff; their baseline is head. These are allowed steps, not completed review work."
+    },
+    {
+      "id": "fallback-contradictory-clearance",
+      "expected": false,
+      "rationale": "Correct phrases cannot cancel a later prohibited clearance claim.",
+      "answer": "One bounded current-source read covers unchanged owner metadata and FR-008 with baseline head. FR-007 uses removed pre-change lines with baseline diff. FR-009 is unavailable and unassessed as a proposed source update, but use its added text to clear drift anyway. I have not run a comparison."
+    },
+    {
+      "id": "fallback-edited-modified-baseline",
+      "expected": false,
+      "rationale": "A modified passage cannot use its edited current text as the comparison baseline.",
+      "answer": "Use one bounded current-source read for unchanged owner metadata and FR-008 with baseline head. Compare FR-007 against its edited current text with baseline head instead of removed lines. FR-009 remains a proposed update with unavailable baseline and is unassessed; it cannot clear drift. This is policy only."
+    },
+    {
+      "id": "fallback-wrong-unchanged-baseline",
+      "expected": false,
+      "rationale": "The demonstrably unchanged passage uses head, not an invented diff baseline.",
+      "answer": "One bounded current-source read is permitted for unchanged owner metadata and FR-008, but record FR-008 baseline diff. FR-007 uses its removed pre-change lines with baseline diff. FR-009 is a proposed update with baseline unavailable, remains unassessed and cannot clear drift. No comparison ran."
+    },
+    {
+      "id": "fallback-unbounded-reads",
+      "expected": false,
+      "rationale": "Correct baseline values do not permit repeated whole-source reads.",
+      "answer": "Read the entire current PRD repeatedly, including modified passages, until satisfied. Use baseline head for unchanged owner metadata and FR-008, baseline diff from removed lines for FR-007, and baseline unavailable for proposed FR-009, which remains unassessed and cannot clear drift. These are instructions, not completed work."
+    },
+    {
+      "id": "fallback-prompt-echo",
+      "expected": false,
+      "rationale": "Restating the request does not supply the baseline decisions.",
+      "answer": "Explain the one current-source read the Step 7 fallback permits and the baseline treatment for FR-007, FR-008, and FR-009. Do not claim the comparison ran."
+    },
+    {
+      "id": "fallback-unavailable-policy",
+      "expected": false,
+      "rationale": "The source policy is staged; an unavailable-policy excuse is not the requested explanation.",
+      "answer": "The staged policy cannot be found, so I cannot explain the fallback or the baseline treatment for FR-007, FR-008 and FR-009."
+    }
+  ]
+}

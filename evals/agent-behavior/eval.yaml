@@ -2369,6 +2369,11 @@ stimuli:
     only in added lines. Explain the one current-source read the Step 7
     fallback permits and the baseline treatment for FR-007, FR-008, and
     FR-009. Do not claim the comparison ran.
+  rubric:
+  - Permit only one bounded current-source read for owner metadata and FR-008 that the persisted diff demonstrates are unchanged. Their comparison baseline is head, not edited current text for a modified passage.
+  - For FR-007, use the diff's removed pre-change lines as the comparison source with baseline diff. Do not substitute its edited current text.
+  - For added-only FR-009, the baseline is unavailable and the passage remains unassessed as a proposed source update. Its added text cannot establish alignment or clear drift.
+  - All criteria are mandatory. Accept equivalent wording and any clause order. Fail any incorrect or contradictory read permission, baseline or clearance claim even if correct phrases also appear. Do not credit prompt echoes, unavailable-policy excuses or claims that a live review or comparison ran.
   agent_environment:
     files:
     - src: ../../.github/agents/coding-standards/code-review.agent.md
@@ -2380,18 +2385,11 @@ stimuli:
     category: agent-behavior
     agent: code-review
   graders:
-  - type: output-matches
-    name: fallback-allows-one-bounded-unchanged-read
+  - type: prompt
+    name: code-review-unreadable-base-contract
     config:
-      pattern: (?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))
-  - type: output-matches
-    name: fallback-uses-removed-lines-for-modified-passage
-    config:
-      pattern: (?is)(?:FR-007|modified passage)[^.\r\n]{0,180}(?:removed|pre-change)[^.\r\n]{0,100}(?:line|text|baseline)|(?:removed|pre-change)[^.\r\n]{0,140}(?:line|text|baseline)[^.\r\n]{0,100}(?:FR-007|modified passage)
-  - type: output-matches
-    name: fallback-leaves-added-only-passage-unassessed
-    config:
-      pattern: (?is)(?:FR-009|added-only|only in added lines)[^.\r\n]{0,180}(?:unavailable|unassessed|not assessed)(?=[^.\r\n]*(?:never|not|cannot|does not)[^.\r\n]{0,120}(?:clear|prove|establish))?
+      scoring: binary
+      threshold: 0.85
 - name: code-review-business-alignment-possible-drift-shape
   prompt: |
     This is a response-only structured-output scenario, not a live repository
@@ -5384,14 +5382,26 @@ stimuli:
           });
           reviewField('review-execution', /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review execution:\s*(\w+)/gim);
           reviewField('review-outcome', /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review outcome:\s*(\w+)/gim);
-          const metric = (field, pattern, actual) => check(() => {
-            if (!(Math.abs(single(values(text, pattern).map(Number), 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
+          const metric = (field, label, actual, percentage) => check(() => {
+            const pattern = new RegExp(String.raw`(?:^|\n)[^\S\n]*(?:[-+][^\S\n]+)?\|?[^\S\n]*(?:observed[^\S\n]+)?(?:${label})[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?(?:[:|]|\n)\s*([^\n|]*)`, 'gi');
+            const measured = [];
+            for (const match of text.matchAll(pattern)) {
+              const headerUnit = (match[1] ?? '').trim().toLowerCase();
+              const value = /^([\d.]+)[^\S\n]*(%|requests?)?[^\S\n]*[.!]?$/i.exec(match[2].trim());
+              const valueUnit = (value?.[2] ?? '').toLowerCase();
+              const validHeader = percentage ? ['', '%', 'percent'].includes(headerUnit) : ['', 'request', 'requests', 'count'].includes(headerUnit);
+              const validValue = percentage ? ['', '%'].includes(valueUnit) && (headerUnit !== '' || valueUnit === '%') : ['', 'request', 'requests'].includes(valueUnit);
+              if (!value || !validHeader || !validValue || !Number.isFinite(Number(value[1]))) fail('missing-' + field);
+              measured.push(Number(value[1]));
+            }
+            if (!(Math.abs(single(measured, 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
           });
-          metric('latency-reduction', /(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\n)\s*([\d.]+)%/gi, reduction);
-          metric('sample-size', /(?:sample size|synthetic requests)\s*(?:[:|]|\n)\s*([\d.]+)/gi, sample);
-          metric('error-rate', /(?:error rate|batched errors)\s*(?:[:|]|\n)\s*([\d.]+)%/gi, errorRate);
+          metric('latency-reduction', 'latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease)', reduction, true);
+          metric('sample-size', 'sample size|synthetic requests', sample, false);
+          metric('error-rate', 'error rate|batched errors', errorRate, true);
           const anomalies = values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi);
-          if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !/^(?:none|no\b)/.test(value))) codes.add('anomaly-mismatch');
+          const noAnomalies = /^(?:none(?:\s+(?:observed|detected|reported))?|no(?:\s+anomal(?:y|ies))?(?:\s+(?:were\s+)?(?:observed|detected|reported))?|not\s+(?:observed|detected|reported))[.!]?$/;
+          if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !noAnomalies.test(value))) codes.add('anomaly-mismatch');
           if (!/\bconfidence\b/i.test(text)) codes.add('missing-confidence');
           const unchanged = /(?:criteri[^.\n]*(?:unchanged|not changed)|(?:unchanged|pre[- ]?committed) criteria|divergence\s*[:|]\s*none|no (?:post-start |criteria )?divergence)/i.test(text);
           const changed = /criteri[^.\n]*(?:changed to|lowered|relaxed)/i.test(text) ||

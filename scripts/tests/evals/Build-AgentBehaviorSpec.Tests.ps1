@@ -1350,11 +1350,6 @@ console.log(JSON.stringify(results));
       Reject = @('Record an open question and continue the dependent work.', 'The dependent work must stop.', 'Record an open question. Unrelated work continues.')
     }
     @{
-      Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-research-blocked'; Grader = 'prd-research-blocked-gap'; Count = 3
-      Accept = @('Record an open question. The dependent work must stop.', 'Pause the evidence-dependent conclusion and keep an unvalidated assumption.', 'Keep an open question; affected requirements cannot proceed.')
-      Reject = @('Record an open question and continue the dependent work.', 'The dependent work must stop.', 'Record an open question. Unrelated work continues.')
-    }
-    @{
       Spec = 'stimuli/brd-builder.yml'; Scenario = 'brd-builder-records-blocked-research-segment'; Grader = 'brd-blocked-segment-does-not-clear-gate'; Count = 3
       Accept = @('The segment is blocked, so Discover cannot exit.', 'Discover does not clear while the segment is blocked.', 'This does not satisfy Discover; the state records does-not-satisfy.')
       Reject = @('The segment is blocked. Discover is cleared.', 'Discover cannot exit yet.', 'The segment is blocked and Discover is satisfied.')
@@ -1853,6 +1848,18 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'wrong-metric'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
     @{ Variant = 'repeated-consistent'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'improvement-label'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'metric-units-in-labels'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'metric-units-in-table'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'anomalies-not-observed'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'metric-multiline'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'consistent-unit-alias'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'conflicting-unit-alias'; Expected = $false; Bound = $true; Codes = 'conflicting-latency-reduction' }
+    @{ Variant = 'wrong-unit-value'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'missing-percentage-unit'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'unsupported-unit-alias'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'contradictory-anomalies'; Expected = $false; Bound = $true; Codes = 'anomaly-mismatch' }
+    @{ Variant = 'positive-anomalies'; Expected = $false; Bound = $true; Codes = 'anomaly-mismatch' }
+    @{ Variant = 'wrong-sample-unit'; Expected = $false; Bound = $true; Codes = 'missing-sample-size' }
     @{ Variant = 'divergence-none'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'conflicting-decision'; Expected = $false; Bound = $true; Codes = 'conflicting-downstream-decision' }
     @{ Variant = 'stale-hash'; Expected = $true; Bound = $false; Codes = '' }
@@ -1929,6 +1936,18 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     if ($Variant -eq 'wrong-metric') { $body = $body.Replace('Latency reduction: 24%', 'Latency reduction: 30%') }
     if ($Variant -eq 'repeated-consistent') { $body += "`n## Summary`nH1: validated`nDecision: go`nLatency reduction: 24%" }
     if ($Variant -eq 'improvement-label') { $body = $body.Replace('Latency reduction: 24%', 'Latency improvement: 24%') }
+    if ($Variant -eq 'metric-units-in-labels') { $body = $body.Replace('Latency reduction: 24%', 'Observed latency reduction (%): 24').Replace('Sample size: 100', 'Sample size (requests): 100').Replace('Error rate: 0.5%', 'Error rate (percent): 0.5') }
+    if ($Variant -eq 'metric-units-in-table') { $body = $body.Replace('Latency reduction: 24%', '| Latency reduction (%) | 24 |').Replace('Sample size: 100', '| Synthetic requests (count) | 100 |').Replace('Error rate: 0.5%', '| Batched errors (%) | 0.5 |') }
+    if ($Variant -eq 'anomalies-not-observed') { $body = $body.Replace('Anomalies: none', 'Anomalies: not observed') }
+    if ($Variant -eq 'metric-multiline') { $body = $body.Replace('Latency reduction: 24%', "Latency reduction (%)`n24").Replace('Error rate: 0.5%', "Error rate`n0.5%") }
+    if ($Variant -eq 'consistent-unit-alias') { $body += "`nObserved median improvement (%): 24" }
+    if ($Variant -eq 'conflicting-unit-alias') { $body += "`nObserved median improvement (%): 30" }
+    if ($Variant -eq 'wrong-unit-value') { $body = $body.Replace('Latency reduction: 24%', 'Latency reduction (%): 30') }
+    if ($Variant -eq 'missing-percentage-unit') { $body = $body.Replace('Latency reduction: 24%', 'Latency reduction: 24') }
+    if ($Variant -eq 'unsupported-unit-alias') { $body += "`nLatency reduction (milliseconds): 24" }
+    if ($Variant -eq 'contradictory-anomalies') { $body = $body.Replace('Anomalies: none', 'Anomalies: not observed, but two spikes occurred') }
+    if ($Variant -eq 'positive-anomalies') { $body += "`nAnomalies: two spikes occurred" }
+    if ($Variant -eq 'wrong-sample-unit') { $body = $body.Replace('Sample size: 100', 'Sample size (%): 100') }
     if ($Variant -eq 'divergence-none') { $body = $body.Replace('Precommitted criteria unchanged: at least 20% reduction and below 1% errors.', 'Criteria: at least 20% reduction and below 1% errors. Divergence: none.') }
     if ($Variant -eq 'conflicting-decision') { $body += "`nDecision: no-go" }
     if ($Variant -eq 'percent-word') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.5 percent').Replace('Latency reduction: 24%', 'Latency reduction: 24 percent') }

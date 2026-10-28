@@ -907,14 +907,26 @@ stimuli:
                 });
                 reviewField('review-execution', /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review execution:\s*(\w+)/gim);
                 reviewField('review-outcome', /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review outcome:\s*(\w+)/gim);
-                const metric = (field, pattern, actual) => check(() => {
-                  if (!(Math.abs(single(values(text, pattern).map(Number), 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
+                const metric = (field, label, actual, percentage) => check(() => {
+                  const pattern = new RegExp(String.raw`(?:^|\n)[^\S\n]*(?:[-+][^\S\n]+)?\|?[^\S\n]*(?:observed[^\S\n]+)?(?:${label})[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?(?:[:|]|\n)\s*([^\n|]*)`, 'gi');
+                  const measured = [];
+                  for (const match of text.matchAll(pattern)) {
+                    const headerUnit = (match[1] ?? '').trim().toLowerCase();
+                    const value = /^([\d.]+)[^\S\n]*(%|requests?)?[^\S\n]*[.!]?$/i.exec(match[2].trim());
+                    const valueUnit = (value?.[2] ?? '').toLowerCase();
+                    const validHeader = percentage ? ['', '%', 'percent'].includes(headerUnit) : ['', 'request', 'requests', 'count'].includes(headerUnit);
+                    const validValue = percentage ? ['', '%'].includes(valueUnit) && (headerUnit !== '' || valueUnit === '%') : ['', 'request', 'requests'].includes(valueUnit);
+                    if (!value || !validHeader || !validValue || !Number.isFinite(Number(value[1]))) fail('missing-' + field);
+                    measured.push(Number(value[1]));
+                  }
+                  if (!(Math.abs(single(measured, 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
                 });
-                metric('latency-reduction', /(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\n)\s*([\d.]+)%/gi, reduction);
-                metric('sample-size', /(?:sample size|synthetic requests)\s*(?:[:|]|\n)\s*([\d.]+)/gi, sample);
-                metric('error-rate', /(?:error rate|batched errors)\s*(?:[:|]|\n)\s*([\d.]+)%/gi, errorRate);
+                metric('latency-reduction', 'latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease)', reduction, true);
+                metric('sample-size', 'sample size|synthetic requests', sample, false);
+                metric('error-rate', 'error rate|batched errors', errorRate, true);
                 const anomalies = values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi);
-                if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !/^(?:none|no\b)/.test(value))) codes.add('anomaly-mismatch');
+                const noAnomalies = /^(?:none(?:\s+(?:observed|detected|reported))?|no(?:\s+anomal(?:y|ies))?(?:\s+(?:were\s+)?(?:observed|detected|reported))?|not\s+(?:observed|detected|reported))[.!]?$/;
+                if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !noAnomalies.test(value))) codes.add('anomaly-mismatch');
                 if (!/\bconfidence\b/i.test(text)) codes.add('missing-confidence');
                 const unchanged = /(?:criteri[^.\n]*(?:unchanged|not changed)|(?:unchanged|pre[- ]?committed) criteria|divergence\s*[:|]\s*none|no (?:post-start |criteria )?divergence)/i.test(text);
                 const changed = /criteri[^.\n]*(?:changed to|lowered|relaxed)/i.test(text) ||
