@@ -3,7 +3,7 @@ title: TTS Voice-Over Skill
 description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure AI Speech neural voices
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-27
 ms.topic: how-to
 keywords:
   - tts
@@ -18,7 +18,7 @@ The `tts-voiceover` skill generates per-slide WAV voice-over files from YAML spe
 
 ## Overview
 
-This skill reads `content.yaml` files produced by the PowerPoint skill, extracts `speaker_notes` fields, applies SSML acronym aliases for correct pronunciation, and produces one WAV file per slide. An optional embedding step adds the WAV files back into the PPTX deck as auto-play media objects.
+This skill reads `content.yaml` files from a slide content directory, extracts `speaker_notes` fields, applies SSML acronym aliases for correct pronunciation, and produces one WAV file per slide. An optional embedding step adds the WAV files back into the PPTX deck as auto-play media objects.
 
 ## Prerequisites
 
@@ -128,7 +128,7 @@ Lexicon resolution order:
 
 ## Content Directory Structure
 
-The skill expects the same directory structure produced by the PowerPoint skill:
+The skill expects this slide content directory structure:
 
 ```text
 content/

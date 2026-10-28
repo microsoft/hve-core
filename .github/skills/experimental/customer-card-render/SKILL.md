@@ -1,29 +1,27 @@
 ---
 name: customer-card-render
-description: 'Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline'
+description: 'Generate customer-card slide content YAML from Design Thinking canonical artifacts'
 license: MIT
-compatibility: 'Requires Python 3.11+, uv, and the experimental powerpoint skill'
+compatibility: 'Requires Python 3.11+ and uv'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-10-02"
+  last_updated: "2026-10-27"
 ---
 
 # Customer Card Render Skill
 
-Converts canonical Design Thinking markdown artifacts into PowerPoint skill `content.yaml` slide definitions and builds the final deck through the shared PowerPoint build pipeline.
+Converts canonical Design Thinking markdown artifacts into template-driven `content.yaml` slide definitions.
 
 ## Overview
 
-This skill is a sibling to the experimental powerpoint skill. It handles the Design Thinking-specific mapping layer: extracting sections from canonical markdown artifacts and filling template-driven `content.yaml` files. The PowerPoint skill then owns layout rendering, theming, export, and validation.
+This skill handles the Design Thinking-specific mapping layer: extracting sections from canonical markdown artifacts and filling template-driven `content.yaml` files. It does not build, theme, export, or validate a presentation file; no deck renderer ships with this repository.
 
-Keeping these concerns separate means:
+Keeping this layer separate means:
 
-* Customer-card mapping logic stays independent from general PowerPoint capabilities.
+* Customer-card mapping logic stays independent from any presentation tooling.
 * The skill can be included in packages independently.
-* Layout primitives, `Invoke-PptxPipeline.ps1`, theming, and validation behavior are not reimplemented here.
-
-For full PowerPoint pipeline documentation, activate the `powerpoint` skill by name. When it does not resolve, warn the user that the pipeline documentation and build behavior are unavailable and stop rather than reimplementing them here.
+* The generated YAML stays a reviewable, renderer-neutral artifact.
 
 ## Prerequisites
 
@@ -39,8 +37,6 @@ For full PowerPoint pipeline documentation, activate the `powerpoint` skill by n
   ```
 
   To install from a release archive instead, download it from the [uv releases page](https://github.com/astral-sh/uv/releases) and check it against its `.sha256` file before extracting.
-
-* The experimental `powerpoint` skill, activated by name, for the `Invoke-PptxPipeline.ps1` build step. When it does not resolve, warn the user that the build step is unavailable and stop.
 
 ## Directory Structure
 
@@ -89,9 +85,9 @@ Each Use Case expands into 4 consecutive slides with distinct sections:
 
 Cards are ordered by artifact type (Vision → Problem → Scenario → Use Case → Persona), then alphabetically by title within each type. Use Cases appear with all 4 slides consecutive (Slide N, N+1, N+2, N+3).
 
-## Two-Command Flow
+## Generate Slide YAML
 
-### Step 1: Generate slide YAML from canonical markdown
+### Generate slide YAML from canonical markdown
 
 ```bash
 python "<customer-card-render-skill-root>/scripts/generate_cards.py" \
@@ -113,19 +109,11 @@ The script reads each markdown file in `--canonical-dir`, detects the artifact t
 
 For the section-to-field mapping contract and Use Case 4-slide layout details, see [references/mapping-spec.md](references/mapping-spec.md).
 
-### Step 2: Build PPTX using the PowerPoint skill pipeline
-
-Activate the `powerpoint` skill by name and hand it the build, supplying these three inputs:
-
-* Content directory: `.copilot-tracking/dt/<project-slug>/render/content`
-* Style path: `.copilot-tracking/dt/<project-slug>/render/content/global/style.yaml`
-* Output path: `.copilot-tracking/dt/<project-slug>/render/output/customer-cards.pptx`
-
-The `powerpoint` skill owns the `Invoke-PptxPipeline.ps1` orchestrator, its parameter reference, template usage, validation, and export options, and it manages virtual environment setup and dependency installation automatically via `uv sync`. When that skill is unavailable, warn the user that the build step cannot run and stop rather than invoking the pipeline from a guessed location.
+The generated `content.yaml` files are the skill's final output. Building a presentation file from them is not supported; report that step as unavailable rather than invoking a deck pipeline from a guessed location.
 
 ## DT Coach Integration
 
-The `dt-coaching-foundation` skill's `canonical-deck` reference provides opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to build customer cards at method exit points. The two-command flow above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
+The `dt-coaching-foundation` skill's `canonical-deck` reference provides opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to generate customer-card YAML at method exit points. The generation command above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
 
 Canonical artifacts are produced by the DT coach and live under `.copilot-tracking/dt/<project-slug>/canonical/`.
 
@@ -153,11 +141,10 @@ For complete mapping details, see [references/mapping-spec.md](references/mappin
 
 ## Troubleshooting
 
-| Issue                           | Cause                                     | Solution                                                                                                                 |
-|---------------------------------|-------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `uv` not found                  | uv not installed                          | Run `winget install --id astral-sh.uv -e` (Windows) or `brew install uv` (macOS/Linux)                                   |
-| Python not found by uv          | No Python 3.11+ on PATH                   | Run `uv python install 3.11`                                                                                             |
-| Template not found              | `--canonical-dir` contains unknown type   | Check frontmatter `type:` field against supported artifact types                                                         |
-| Empty output directory          | No canonical markdown files found         | Confirm `--canonical-dir` path and that files have `---` frontmatter                                                     |
-| PPTX build fails after generate | PowerPoint skill missing or not activated | Activate the `powerpoint` skill by name. When its content does not arrive, stop and report the build step as unavailable |
+| Issue                  | Cause                                   | Solution                                                                               |
+|------------------------|-----------------------------------------|----------------------------------------------------------------------------------------|
+| `uv` not found         | uv not installed                        | Run `winget install --id astral-sh.uv -e` (Windows) or `brew install uv` (macOS/Linux) |
+| Python not found by uv | No Python 3.11+ on PATH                 | Run `uv python install 3.11`                                                           |
+| Template not found     | `--canonical-dir` contains unknown type | Check frontmatter `type:` field against supported artifact types                       |
+| Empty output directory | No canonical markdown files found       | Confirm `--canonical-dir` path and that files have `---` frontmatter                   |
 

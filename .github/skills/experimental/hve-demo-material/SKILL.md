@@ -74,7 +74,7 @@ capture fidelity, and criterion templates, while topic sets the source set.
 * Intended audience and training context
 * Approved narration voice, plus the Azure Speech region and authentication
   posture
-* Any requested delivery location or optional GIF requirement
+* Any requested delivery location
 
 ## Success Criteria
 
@@ -142,7 +142,6 @@ capture fidelity, and criterion templates, while topic sets the source set.
 * Authenticate Azure Speech with `SPEECH_RESOURCE_ID` (Microsoft Entra ID,
   recommended) or `SPEECH_KEY`, plus `SPEECH_REGION`. Keep credential values out
   of manifests, logs, and generated artifacts.
-* Use `video-to-gif` only when a GIF is explicitly requested.
 * Author for accessibility. Give every slide a `title` that matches its visible
   heading, give every image `alt` text that says what it shows (or
   `decorative: true`), and write speaker notes that voice every on-screen claim

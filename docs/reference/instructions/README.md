@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-10-22
+ms.date: 2026-10-27
 ms.topic: overview
 keywords:
   - reference
@@ -37,7 +37,6 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Engagement Reporting/Style Guide](engagement-reporting/style-guide.md)                                       | Formatting, tone, and language rules for engagement reports                                                                                                                                                                                                                           |
 | [Engagement Reporting/Terminology](engagement-reporting/terminology.md)                                       | Correct spellings and naming conventions for people, products, and teams                                                                                                                                                                                                              |
 | [Experimental/Experiment Designer](experimental/experiment-designer.md)                                       | MVE tracking-artifact conventions for session directories, artifact names, and file hygiene; routes MVE methodology to the experiment-design skill                                                                                                                                    |
-| [Experimental/Pptx](experimental/pptx.md)                                                                     | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                                                       |
 | [Hve Core/Commit Message](hve-core/commit-message.md)                                                         | Commit message format and conventions. Use when writing, generating, or reviewing a commit message or creating a Git commit.                                                                                                                                                          |
 | [Hve Core/Copilot Tracking Location](hve-core/copilot-tracking-location.md)                                   | Where .copilot-tracking/ lives (codebase root, not a host session folder) and how to find its gitignored files. Use when creating, finding, listing, or reading tracking files or storing intermediate files.                                                                         |
 | [Hve Core/Copilot Tracking](hve-core/copilot-tracking.md)                                                     | Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence                                                                                                                                                                     |

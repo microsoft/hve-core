@@ -34,8 +34,8 @@ the engine in force, and a complete output manifest.
 * `animation` from `none` or `characters`, defaulting to `none`; select
   `characters` only when the caller supplies it or explicitly requests
   animated characters, animated comic figures, or character dialogue scenes
-* Audience, delivery context, approved Azure AI Speech voice, the Azure Speech
-  region when `narration` is `azure`, and whether a GIF is explicitly requested
+* Audience, delivery context, approved Azure AI Speech voice, and the Azure
+  Speech region when `narration` is `azure`
 
 ## Success Criteria
 
@@ -114,8 +114,7 @@ through a human-configured pipeline outside the agent.
   dispatched as a nested agent. Dispatch `PowerPoint Subagent` directly for
   `build-content`, `build-deck`, `validate`, and `export` tasks.
 * Invoke `powerpoint`, `tts-voiceover`, `demo-video`, and
-  `vscode-playwright` as skills. Invoke `video-to-gif` only for an explicit GIF
-  request.
+  `vscode-playwright` as skills.
 * Take every deck's style from the skill's pinned `templates/style.yaml`,
   substituting only the deck title, subject, keywords, and slide list. Never
   invent a palette, change a fixed value, or introduce a colour outside the set
@@ -207,8 +206,7 @@ through a human-configured pipeline outside the agent.
 ### 1. Confirm Scope and Prerequisites
 
 1. Confirm requested levels, topic, autonomy mode, capture profile, audience,
-   delivery context, approved voice, the Azure Speech region, and whether a GIF
-   is explicitly requested. Apply
+   delivery context, approved voice, and the Azure Speech region. Apply
    the documented defaults for anything unstated, and under `full` never prompt
   for them. Reject `capture: live` for L100 and L200 before creating level
   artifacts; those levels require deterministic deck-export frames.

@@ -49,7 +49,7 @@ Run a demo with custom inputs:
 
 - Running a real Design Thinking engagement with actual stakeholders (use the DT Coach directly)
 - Building a production prototype without the demo scaffolding and walkthrough
-- Creating a static slide deck or documentation (use the canonical deck or PowerPoint skill)
+- Creating a static slide deck or documentation (use the canonical deck)
 - The audience already knows the tools and needs advanced workflow guidance
 
 ## Inputs

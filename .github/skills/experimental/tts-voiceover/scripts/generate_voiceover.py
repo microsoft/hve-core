@@ -463,7 +463,7 @@ def _run(args: argparse.Namespace) -> int:
         if slide_count == 0:
             logger.warning(
                 "No slides with speaker_notes found in %s. "
-                "Verify --content-dir points to a PowerPoint skill content directory.",
+                "Verify --content-dir points to a slide content directory.",
                 content_dir,
             )
             return EXIT_FAILURE

@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-22
+ms.date: 2026-10-27
 ms.topic: how-to
 keywords:
   - validation
@@ -331,6 +331,15 @@ it does not add new ones.
 
 If a proxy-generated lockfile changes source or integrity metadata, regenerate
 it where the public registry is reachable instead of editing it by hand.
+
+### Keep Dependabot uv coverage explicit
+
+`.github/dependabot.yml` lists each uv project (a skill, `scripts/evals/moderation`,
+or a `scripts/tools/*` project) in its own `package-ecosystem: uv` entry with one
+`directory`. A multi-directory uv entry runs security updates against only its
+first directory, so do not use `directories` or globs for uv. When you add or
+remove a project with a `pyproject.toml` and `uv.lock`, add or remove its entry in
+the same change and copy the existing entry's schedule, groups, labels, and limit.
 
 ## Documentation checks and browser lane
 

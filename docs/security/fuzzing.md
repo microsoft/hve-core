@@ -3,7 +3,7 @@ title: Fuzzing
 description: OSSF Scorecard fuzz harness convention and compliance for HVE Core Python skills
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-27
 ms.topic: concept
 keywords:
   - fuzzing
@@ -44,7 +44,7 @@ The `validate:skills` npm script enforces this convention. Builds fail when a Py
 ### pytest Mode (CI Default)
 
 ```bash
-cd .github/skills/experimental/powerpoint
+cd .github/skills/experimental/customer-card-render
 uv run pytest tests/fuzz_harness.py -v
 ```
 
@@ -53,7 +53,7 @@ Runs property-based tests without requiring Atheris. This is the default CI path
 ### Atheris Mode (Local Fuzzing)
 
 ```bash
-cd .github/skills/experimental/powerpoint
+cd .github/skills/experimental/customer-card-render
 uv sync --group fuzz
 uv run python tests/fuzz_harness.py
 ```

@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-21
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - package
@@ -70,7 +70,7 @@ The complete plugin includes:
 * Azure DevOps, GitHub, GitLab, and Jira integrations
 * Source-grounded engagement reporting, review, Council critique, and optional
   Outlook draft creation
-* Design Thinking, UX, data science, experimentation, diagrams, PowerPoint, voice-over, and demo media tooling
+* Design Thinking, UX, data science, experimentation, diagrams, voice-over, and demo media tooling
 * Documentation authoring, release workflows, Git operations, and local
   telemetry foundations
 * Session Log canvas for reading Copilot sessions, tool calls, and subagents

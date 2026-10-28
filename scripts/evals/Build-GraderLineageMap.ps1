@@ -58,8 +58,10 @@ $ErrorActionPreference = 'Stop'
 #region Constants
 
 $script:ExpectedSourceToTargetPairs = 1240
-$script:ExpectedAuthoredAliases = 414
+$script:ExpectedAuthoredAliases = 411
 $script:ExpectedGeneratedCopies = 171
+# Stimulus sources whose agents were removed; their aliases have no current target.
+$script:RetiredAliasSources = @('evals/agent-behavior/stimuli/pptx.yml')
 $script:GeneratedSpecPath = 'evals/agent-behavior/eval.yaml'
 $script:LineageRoots = @(
     'evals/agent-behavior/stimuli',
@@ -718,6 +720,9 @@ function New-GraderLineageMap {
         }
         if ($pair.Source.Source -eq $script:GeneratedSpecPath) {
             $generatedCopies++
+            continue
+        }
+        if ($pair.Source.Source -in $script:RetiredAliasSources) {
             continue
         }
         $aliases.Add([ordered]@{

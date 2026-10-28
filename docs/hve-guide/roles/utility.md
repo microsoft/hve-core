@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - utility
@@ -22,7 +22,6 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 |---------------|-------------------------------------------------------|
 | Continuity    | Resume from each workflow's durable artifacts         |
 | Documentation | Documentation audit, drift, authoring, and validation |
-| Media         | Video-to-GIF conversion with FFmpeg optimization      |
 | Git           | Commit messages, merge workflows, PR creation         |
 | Installation  | Selective component adoption and environment setup    |
 | Diagnostics   | Build information retrieval and CI/CD status checks   |
@@ -58,12 +57,6 @@ getting started guide.
 Select documentation agent in drift mode. Sync docs with recent changes.
 ```
 
-### Media Processing
-
-The video-to-gif skill converts video files to optimized GIF format using FFmpeg two-pass encoding. Invoke the skill directly when you need this conversion.
-
-Refer to the [video-to-gif skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SKILL.md) for detailed usage, parameters, and optimization options.
-
 ### Git Workflows
 
 Git utilities manage commit messages, merge operations, and pull request creation across all roles.
@@ -94,7 +87,6 @@ Git utilities manage commit messages, merge operations, and pull request creatio
 | pull-request       | Git          | `/pull-request`                   | Pull request creation with template support                |
 | backlog-management | Diagnostics  | Ask for Azure DevOps build status | Azure DevOps build status and log retrieval                |
 | installer          | Installation |                                   | HVE Core customized installation                           |
-| video-to-gif       | Media        |                                   | FFmpeg two-pass video-to-GIF conversion                    |
 
 ## Tips
 

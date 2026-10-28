@@ -2,7 +2,7 @@
 title: TTS Voice-Over Skill Security Model
 description: STRIDE threat model for the tts-voiceover skill organized by assets, adversaries, and trust buckets (CLI to Azure Speech, environment/Entra credentials, untrusted content inputs, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-08
+ms.date: 2026-10-27
 ms.topic: reference
 estimated_reading_time: 10
 keywords:
@@ -207,7 +207,7 @@ Credentials are resolved per invocation. `SPEECH_KEY` is read from the environme
 
 * **SSML injection is mitigated**: all dynamic values inserted into the SSML document — speaker notes, voice name, prosody rate, and acronym alias/replacement text — are XML-escaped or attribute-quoted before assembly. A single-pass regex prevents acronym substitution from corrupting previously inserted markup.
 * In `embed_audio.py`, the input PPTX is opened through python-pptx (external entity resolution disabled upstream) and WAV duration is read from the file header only via `wave.open`.
-* The narration timing element is built by parsing a hardcoded `_TIMING_TEMPLATE` constant with `XMLParser(resolve_entities=False, no_network=True)`, the idiom used by the sibling powerpoint skill; a test asserts that the parser does not expand entities.
+* The narration timing element is built by parsing a hardcoded `_TIMING_TEMPLATE` constant with `XMLParser(resolve_entities=False, no_network=True)`; a test asserts that the parser does not expand entities.
 
 ### Repudiation
 

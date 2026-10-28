@@ -1,6 +1,6 @@
 # cspell:ignore azspeech customercards docproc exfiltrated fileperms ghapi ghmcp ghscan
-# cspell:ignore interactor logsink misdrive mupdf noredirect pdfbounds reposcan retargets
-# cspell:ignore securityplanning soffice tokencache videogif webscan
+# cspell:ignore interactor logsink misdrive noredirect reposcan retargets
+# cspell:ignore securityplanning tokencache webscan
 # cspell:ignore deltacum deltatocumulative grafana jsonc lgtm otel otlp promql traceql
 # cspell:ignore tagpin pyroscope
 # HVE Core comprehensive threat-model spec
@@ -147,7 +147,7 @@ assets:
   - id: asset-docproc
     name: Document-processing content and render outputs
     kind: data
-    description: PowerPoint YAML, PPTX/PDF/SVG/PNG outputs, and local media conversion artifacts.
+    description: Customer-card content.yaml generated from Design Thinking artifacts.
     sensitivity: internal
     category: Content
   - id: asset-code-scan
@@ -240,18 +240,6 @@ components:
     name: GitHub REST API
     kind: external_interactor
     trust_zone_id: tz-github
-  - id: ext-ffmpeg
-    name: FFmpeg / ffprobe
-    kind: external_interactor
-    trust_zone_id: tz-dev
-  - id: ext-soffice
-    name: LibreOffice / soffice
-    kind: external_interactor
-    trust_zone_id: tz-dev
-  - id: ext-mupdf
-    name: MuPDF / PyMuPDF
-    kind: external_interactor
-    trust_zone_id: tz-dev
   - id: ext-axe
     name: axe-core / Headless Browser
     kind: external_interactor
@@ -332,16 +320,6 @@ components:
     name: TTS Voice-Over Skill CLI
     kind: process
     asset_ids: [asset-speaker-notes]
-    trust_zone_id: tz-dev
-  - id: comp-powerpoint
-    name: PowerPoint Skill Runtime
-    kind: process
-    asset_ids: [asset-docproc]
-    trust_zone_id: tz-dev
-  - id: comp-videogif
-    name: Video-to-GIF Skill Runtime
-    kind: process
-    asset_ids: [asset-docproc]
     trust_zone_id: tz-dev
   - id: comp-customercards
     name: Customer Card Render Skill Runtime
@@ -481,20 +459,15 @@ representations:
         - { id: comp-devcon, kind: process, trust_zone_id: tz-dev }
         - { id: ext-npm, kind: external_interactor, trust_zone_id: tz-ext }
     - id: dom-docproc
-      name: Document processing and deck rendering
+      name: Document processing
       description: >-
-        The PowerPoint, customer-card-render, and video-to-gif skills process local
-        content and hand off render work to local parser and converter binaries.
+        The customer-card-render skill processes local Design Thinking content
+        into slide content YAML.
       trust_zone_ids: [tz-dev]
-      flows: [flow-15, flow-16, flow-17, flow-18, flow-31, flow-32, flow-33]
+      flows: [flow-31]
       elements:
         - { id: ext-dev }
         - { id: comp-customercards }
-        - { id: comp-powerpoint }
-        - { id: comp-videogif }
-        - { id: ext-soffice }
-        - { id: ext-mupdf }
-        - { id: ext-ffmpeg }
     - id: dom-reposcan
       name: Repository scanning and VEX gate evaluation
       description: >-
@@ -722,54 +695,6 @@ data_flows:
     data_sensitivity: confidential
     retention: operator-managed
     notes: Redacted operational logs (_redact / _REDACT_KEYS pipeline).
-  - id: flow-15
-    source_ref: comp-customercards
-    target_ref: comp-powerpoint
-    ordinal: 15
-    label: handoff content
-    transport: local file handoff
-    encryption: n/a (local)
-    authentication: workstation user
-    authorization: operator-controlled output directory
-    data_sensitivity: internal
-    retention: operator-managed
-    notes: Customer-card content.yaml is handed off to the PowerPoint builder.
-  - id: flow-16
-    source_ref: comp-powerpoint
-    target_ref: ext-soffice
-    ordinal: 16
-    label: render PPTX
-    transport: local process invocation
-    encryption: n/a (local)
-    authentication: workstation user
-    authorization: operator-controlled input path
-    data_sensitivity: internal
-    retention: none
-    notes: PPTX is converted via LibreOffice in headless mode.
-  - id: flow-17
-    source_ref: comp-powerpoint
-    target_ref: ext-mupdf
-    ordinal: 17
-    label: render PDF
-    transport: local process invocation
-    encryption: n/a (local)
-    authentication: workstation user
-    authorization: operator-controlled input path
-    data_sensitivity: internal
-    retention: none
-    notes: PDF inputs are parsed by MuPDF after safety checks.
-  - id: flow-18
-    source_ref: comp-videogif
-    target_ref: ext-ffmpeg
-    ordinal: 18
-    label: transcode media
-    transport: local process invocation
-    encryption: n/a (local)
-    authentication: workstation user
-    authorization: operator-controlled input path
-    data_sensitivity: internal
-    retention: none
-    notes: ffprobe and ffmpeg decode untrusted media on the local host.
   - id: flow-19
     source_ref: comp-ghscan
     target_ref: ext-ghapi
@@ -926,30 +851,6 @@ data_flows:
     data_sensitivity: internal
     retention: operator-managed
     notes: Operator invokes the customer-card render skill from the local workstation.
-  - id: flow-32
-    source_ref: ext-dev
-    target_ref: comp-powerpoint
-    ordinal: 32
-    label: invoke PowerPoint
-    transport: local process invocation
-    encryption: n/a (local)
-    authentication: workstation user
-    authorization: operator-authorized CLI execution
-    data_sensitivity: internal
-    retention: operator-managed
-    notes: Operator invokes the PowerPoint skill from the local workstation.
-  - id: flow-33
-    source_ref: ext-dev
-    target_ref: comp-videogif
-    ordinal: 33
-    label: invoke converter
-    transport: local process invocation
-    encryption: n/a (local)
-    authentication: workstation user
-    authorization: operator-authorized CLI execution
-    data_sensitivity: internal
-    retention: operator-managed
-    notes: Operator invokes the video-to-GIF skill from the local workstation.
   - id: flow-34
     source_ref: ext-dev
     target_ref: comp-ghscan
@@ -2348,87 +2249,12 @@ threats:
       source_skill: tts-voiceover
       bucket: B1
       gap_ids: [G-TLS-1, G-SUP-1]
-  - id: PP-1
-    target_ref: comp-powerpoint
-    interaction_ref: flow-16
-    category: tampering
-    title: Author-supplied content-extra execution escapes the denylist confinement
-    description: A hostile content-extra script could attempt to bypass the documented denylist and reach host capabilities.
-    state: Partially Mitigated
-    citations: { stride: [T], nist: [SA-11, AC-6], mitre: [CWE-94] }
-    mitigation_ids: [M-PP-DENYLIST]
-    notes: "Traceability: G-EOP-1; G-TAM-1"
-    properties:
-      Priority: Medium
-      UserThreatDescription: >-
-        A hostile content-extra script could attempt to bypass the documented denylist and reach host
-        capabilities. Source: powerpoint skill, bucket B1. Gaps: G-EOP-1, G-TAM-1. See
-        .github/skills/experimental/powerpoint/SECURITY.md.
-      source_skill: powerpoint
-      bucket: B1
-      gap_ids: [G-EOP-1, G-TAM-1]
-  - id: PP-2
-    target_ref: comp-powerpoint
-    interaction_ref: flow-17
-    category: elevation-of-privilege
-    title: LibreOffice / MuPDF parser exploitation on untrusted deck or PDF
-    description: A hostile PPTX or PDF can stress or exploit the external parser chain used during export.
-    state: Partially Mitigated
-    citations: { stride: [E], nist: [SI-10, SC-7], mitre: [CWE-20] }
-    mitigation_ids: [M-PP-PDFBOUNDS, M-PP-ARGS]
-    notes: "Traceability: G-TAM-1; G-TAM-2"
-    properties:
-      Priority: Medium
-      UserThreatDescription: >-
-        A hostile PPTX or PDF can stress or exploit the external parser chain used during export.
-        Source: powerpoint skill, bucket B2. Gaps: G-TAM-1, G-TAM-2, G-SUP-1. See
-        .github/skills/experimental/powerpoint/SECURITY.md.
-      source_skill: powerpoint
-      bucket: B2
-      gap_ids: [G-TAM-1, G-TAM-2, G-SUP-1]
-  - id: VG-1
-    target_ref: comp-videogif
-    interaction_ref: flow-18
-    category: tampering
-    title: Hostile media triggers FFmpeg decoder CVE exposure
-    description: A crafted video stream could exercise a decoder defect within FFmpeg or ffprobe.
-    state: Partially Mitigated
-    citations: { stride: [T], nist: [SI-10], mitre: [CWE-20] }
-    mitigation_ids: [M-VG-TIMEOUT]
-    notes: "Traceability: G-SUP-1"
-    properties:
-      Priority: Medium
-      UserThreatDescription: >-
-        A crafted video stream could exercise a decoder defect within FFmpeg or ffprobe. Source:
-        video-to-gif skill, bucket B1. Gaps: G-SUP-1. See
-        .github/skills/experimental/video-to-gif/SECURITY.md.
-      source_skill: video-to-gif
-      bucket: B1
-      gap_ids: [G-SUP-1]
-  - id: VG-2
-    target_ref: comp-videogif
-    interaction_ref: flow-18
-    category: denial-of-service
-    title: Unbounded media conversion exhausts CPU and disk
-    description: A pathological input or large media file could consume resources before conversion completes.
-    state: Mitigated
-    citations: { stride: [D], nist: [SC-5], mitre: [CWE-400] }
-    mitigation_ids: [M-VG-TIMEOUT]
-    properties:
-      Priority: Low
-      UserThreatDescription: >-
-        A pathological input or large media file could consume resources before conversion completes.
-        Source: video-to-gif skill, bucket B2. Gaps: G-INF-1. See
-        .github/skills/experimental/video-to-gif/SECURITY.md.
-      source_skill: video-to-gif
-      bucket: B2
-      gap_ids: [G-INF-1]
   - id: CC-1
     target_ref: comp-customercards
-    interaction_ref: flow-15
+    interaction_ref: flow-31
     category: information-disclosure
     title: Confidential DT prose reaches downstream YAML without a classification gate
-    description: Customer or product prose emitted into content.yaml can be exposed in downstream decks.
+    description: Customer or product prose emitted into content.yaml can be exposed in any downstream use.
     state: Partially Mitigated
     citations: { stride: [I], nist: [SC-28], mitre: [CWE-200] }
     mitigation_ids: [M-CC-ESCAPE]
@@ -3203,26 +3029,6 @@ mitigations:
     description: yaml.safe_load; python-pptx with external-entity resolution disabled.
     target_refs: [comp-tts]
     citations: { nist: [SI-10] }
-  - id: M-PP-DENYLIST
-    name: Denylist-constrained author Python execution
-    description: content-extra.py is validated against a blocked-module and blocked-builtin denylist before execution.
-    target_refs: [comp-powerpoint]
-    citations: { nist: [AC-6, SI-10] }
-  - id: M-PP-PDFBOUNDS
-    name: PDF safety bounds before MuPDF parse
-    description: File size, magic-byte prefix, and page-count checks reject obvious malformed PDFs before parsing.
-    target_refs: [comp-powerpoint]
-    citations: { nist: [SI-10] }
-  - id: M-PP-ARGS
-    name: Argument-list subprocess execution for converter invocations
-    description: LibreOffice and export helpers are invoked with argument lists rather than shell strings.
-    target_refs: [comp-powerpoint]
-    citations: { nist: [SC-7] }
-  - id: M-VG-TIMEOUT
-    name: Wall-clock timeout around ffprobe / ffmpeg execution
-    description: Each conversion invocation is bounded by a timeout so pathological media cannot run indefinitely.
-    target_refs: [comp-videogif]
-    citations: { nist: [SC-5] }
   - id: M-CC-ESCAPE
     name: YAML scalar escaping for downstream content
     description: dynamic card text is escaped and wrapped in quoted YAML scalars before emission.

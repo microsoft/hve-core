@@ -12,7 +12,7 @@ Generates per-slide WAV voice-over files from YAML `speaker_notes` using Azure A
 
 ## Overview
 
-This skill reads `content.yaml` files from a PowerPoint skill content directory, extracts `speaker_notes` fields, applies acronym aliases for correct pronunciation of technical terms, and produces one WAV file per slide. Supports dry-run mode for SSML template verification without Azure credentials.
+This skill reads `content.yaml` files from a slide content directory (`slide-NNN/content.yaml`), extracts `speaker_notes` fields, applies acronym aliases for correct pronunciation of technical terms, and produces one WAV file per slide. Supports dry-run mode for SSML template verification without Azure credentials.
 
 Synthesis uses Azure AI Speech neural voices, including the HD voices such as `en-US-Andrew:DragonHDLatestNeural`. HD voices are offered in a subset of Azure regions; check the [Speech service regions](https://learn.microsoft.com/azure/ai-services/speech-service/regions) before choosing `SPEECH_REGION`.
 
@@ -179,9 +179,9 @@ Each slide produces an SSML document:
 </speak>
 ```
 
-## Integration with PowerPoint Skill
+## Content Directory Contract
 
-This skill reads from the PowerPoint skill's content directory structure:
+This skill reads a slide content directory with this structure:
 
 ```text
 content/

@@ -120,10 +120,10 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 ### Check 12: Subagent Invocation Uses Human-Readable Names
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: when the prompt or its delegated agent invokes a subagent, invocation text MUST reference the subagent by the human-readable `name:` from the subagent's frontmatter (for example, "Run PowerPoint Subagent"). Invocation by filename or by file path is non-conforming.
+* Testable behavior: when the prompt or its delegated agent invokes a subagent, invocation text MUST reference the subagent by the human-readable `name:` from the subagent's frontmatter (for example, "Dispatch the BRD Quality Reviewer subagent"). Invocation by filename or by file path is non-conforming.
 * Suggested stimulus: ask the assistant which subagent a named prompt invokes and how the invocation reads.
-* Grader recommendation: `regex` with positive pattern `(?i)\brun\s+[A-Z][A-Za-z0-9 ]+\s+Subagent\b` and negate pattern `(?i)[A-Za-z0-9_-]+\.agent\.md`.
-* Evidence: `.github/agents/experimental/pptx.agent.md` invokes `PowerPoint Subagent` by its human-readable name.
+* Grader recommendation: `regex` with a positive pattern naming the subagent, for example `(?i)\bBRD Quality Reviewer\b`, and negate pattern `(?i)[A-Za-z0-9_-]+\.agent\.md`.
+* Evidence: `.github/agents/project-planning/brd-builder.agent.md` dispatches `BRD Quality Reviewer` by its human-readable name.
 
 ## Cross-References
 

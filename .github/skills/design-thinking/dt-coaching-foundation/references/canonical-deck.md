@@ -1,6 +1,6 @@
 ---
 title: 'DT Canonical Deck Instructions'
-description: Optional canonical deck and customer-card PowerPoint workflow for Design Thinking teams, offered on request or once DT work has produced renderable assets.
+description: Optional canonical deck and customer-card slide-content workflow for Design Thinking teams, offered on request or once DT work has produced renderable assets.
 ---
 
 Use this workflow when the team requests canonical deck support, or when it accepts an automatic offer at an eligible method exit.
@@ -10,9 +10,9 @@ Use this workflow when the team requests canonical deck support, or when it acce
 Canonical deck workflow covers two related outputs:
 
 1. Canonical markdown artifacts under `.copilot-tracking/dt/{project-slug}/canonical/`.
-2. Optional customer-card PowerPoint output under `.copilot-tracking/dt/{project-slug}/render/`.
+2. Optional customer-card slide content (`content.yaml`) under `.copilot-tracking/dt/{project-slug}/render/`.
 
-Treat canonical deck and PowerPoint generation as optional and skippable at each offer point.
+Treat canonical deck and customer-card generation as optional and skippable at each offer point. No presentation-file (PPTX) build is available; never claim one exists.
 
 ## Single Source of Truth
 
@@ -56,7 +56,7 @@ Before making an automatic offer, confirm the project has DT method outputs that
 
 After any canonical deck create or refresh, the coach must ask this yes-or-no question in the same turn:
 
-> Would you like to generate the customer-card PowerPoint now?
+> Would you like to generate the customer-card slide content now?
 
 This checkpoint is required whenever canonical artifacts were created or updated at the Method 3 or Method 5 offer points, or at an explicit user request.
 
@@ -66,10 +66,10 @@ Record the offer timestamp and user response in coaching state.
 
 ### Customer-Card Re-Offer Rules
 
-If the user declines the customer-card PowerPoint offer:
+If the user declines the customer-card offer:
 
 - **If the decline happens before Method 5**: do not re-offer until the Method 5 exit checkpoint.
-- **At the Method 5 exit checkpoint**: ask one final customer-card question before the transition to Method 6: *"We're finishing up Method 5. Before we move to prototyping, would you like to generate the customer-card PowerPoint now?"*
+- **At the Method 5 exit checkpoint**: ask one final customer-card question before the transition to Method 6: *"We're finishing up Method 5. Before we move to prototyping, would you like to generate the customer-card slide content now?"*
 - **If the decline happens at Method 5 (first or second decline)**: do not re-offer again in the current DT run; continue to implementation methods.
 
 Record all offers and responses in coaching state for audit and session recovery.
@@ -96,7 +96,7 @@ Before generating or refreshing canonical deck content, run this checklist:
 6. Record snapshot metadata in coaching state for the current method checkpoint when generated.
 7. Ask the mandatory post-snapshot customer-card checkpoint question.
 8. Record the offer timestamp and user response in coaching state.
-9. If requested, proceed to customer-card PowerPoint build branch.
+9. If requested, proceed to the customer-card slide-content branch.
 
 ## Canonical Artifact Model
 
@@ -183,71 +183,24 @@ Every persona entry must include:
 
 If information is missing, use `<insufficient knowledge>` and add `#### Questions to Ask` with 2-5 targeted questions.
 
-## Customer Card PowerPoint Branch
+## Customer Card Slide-Content Branch
 
-When the team requests PowerPoint output, accepts a build offer, or accepts the mandatory post-snapshot checkpoint:
+When the team requests customer cards, accepts a generation offer, or accepts the mandatory post-snapshot checkpoint:
 
-1. Generate `content.yaml` slide artifacts from canonical markdown using the customer-card-render skill.
+1. Activate the `customer-card-render` skill by name and run its generation command with `--canonical-dir` set to `.copilot-tracking/dt/{project-slug}/canonical` and `--output-dir` set to `.copilot-tracking/dt/{project-slug}/render/content`.
+2. Report the canonical artifact path and the generated `content.yaml` directory.
+3. If the user asks for a PowerPoint or other presentation file, explain that no deck build is available and that the generated `content.yaml` is the final output. Do not invoke a deck pipeline from a guessed location or reimplement one.
 
-2. Determine the active shell runtime and follow the appropriate build path.
+### Generation Outcome
 
-### PowerShell Runtime Path
-
-When the active runtime is a PowerShell terminal:
-
-1. Invoke `Invoke-PptxPipeline.ps1` directly (do not prefix with `pwsh`; the script runs in the current session).
-2. If `Invoke-PptxPipeline.ps1` fails specifically because of an outdated PowerShell version (for example, `#requires` version mismatch):
-   - Ask the user for explicit approval to upgrade PowerShell.
-   - If the user approves: upgrade PowerShell, verify the version, then retry the script.
-   - If the user declines: stop and inform the user that the PowerPoint cannot be generated due to an incompatible PowerShell version.
-
-### Bash Runtime Path
-
-When the active runtime is a bash terminal (Git Bash, WSL, or similar):
-
-**Never attempt to run the PowerShell script (`Invoke-PptxPipeline.ps1`) in a bash terminal. Use the bash script (`invoke-pptx-pipeline.sh`) instead.**
-
-1. Verify you are in a bash terminal by observing a prompt containing `MINGW64`, `bash`, `/bin/bash`, or a Unix-style path like `~/git/`.
-2. Before sending the build command, send `invoke-pptx-pipeline.sh --help` to the bash terminal via `send_to_terminal` and read the output with `get_terminal_output` to confirm the exact flag names. Do not infer bash flags from PowerShell parameter names — they differ.
-3. Send the build command to the bash terminal using `send_to_terminal` with the confirmed flags.
-4. Poll for completion by calling `get_terminal_output` on the same `terminalId` until the bash prompt reappears or output is stable.
-5. If no bash terminal is found, stop and inform the user: "I can't generate the PowerPoint in bash because no bash terminal is available. Please open a Git Bash or WSL terminal in VS Code and try again."
-
-### General Requirements
-
-- Always require explicit user approval before any PowerShell upgrade action.
-- Do not silently fall back between runtime paths. The shell environment you are running in determines the path: PowerShell terminal → PowerShell script; bash terminal → bash script.
-
-### Build Outcome
-
-- Do not run `pip install` or install dependencies manually. Rely on the `powerpoint` skill's environment setup and its documented prerequisites.
+- Do not run `pip install` or install dependencies manually. Rely on the `customer-card-render` skill's documented prerequisites.
 - Keep generated output under `.copilot-tracking/dt/{project-slug}/render/`.
-- On success, report the canonical artifact path and the PPTX path under `render/output/`.
-- When the build fails for any reason other than the PowerShell version case above, do not retry or troubleshoot on your own. Report that content generation completed but the PPTX build failed, give the cause in plain language, and never claim that a PPTX exists. Then offer the next steps: verify the PowerShell and Python prerequisites, and re-run the build from the same render content.
-
-### Mandatory Runtime Compliance Contract
-
-The procedure defined above in **Customer Card PowerPoint Branch** is the single runtime protocol and must be executed exactly as written.
-
-Enforcement:
-
-1. The shell environment you are in determines which script path to use: PowerShell terminal uses `Invoke-PptxPipeline.ps1`; bash terminal uses `invoke-pptx-pipeline.sh`.
-2. Do not run `invoke-pptx-pipeline.sh` in a PowerShell terminal under any circumstances.
-3. Always require explicit user approval before upgrading PowerShell.
-4. If the user declines a PowerShell upgrade, stop immediately and inform the user that the PowerPoint cannot be generated due to the incompatible version.
-
-Any deviation from the defined paths is non-compliant with this workflow.
-
-Do not restate pipeline internals here. Use these sources:
-
-- The `customer-card-render` skill, for the customer-card mapping and build contract
-- The `powerpoint` skill, for the deck build pipeline and its Script Reference
-
-Both ship in the experimental package. When either is unavailable, say which pipeline capability is missing and stop before generating deck or customer-card artifacts rather than reimplementing the pipeline here.
+- When generation fails, do not retry or troubleshoot on your own. Report the cause in plain language and offer to re-run generation from the same canonical artifacts.
+- When the `customer-card-render` skill is unavailable, say so and stop rather than reimplementing its mapping here.
 
 ## Method 5 Auto-Generate
 
-If the team completes Method 5 and the asset-readiness check passes, ask whether to create or update canonical deck and customer card artifacts. If accepted, generate a final canonical deck refresh and then offer customer-card build.
+If the team completes Method 5 and the asset-readiness check passes, ask whether to create or update canonical deck and customer card artifacts. If accepted, generate a final canonical deck refresh and then offer customer-card generation.
 
 ## Coaching State Expectations
 

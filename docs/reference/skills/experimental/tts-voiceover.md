@@ -1,9 +1,9 @@
 ---
 title: tts-voiceover
 description: Text-to-speech voice-over generation from YAML speaker notes using Azure AI Speech neural voices with SSML pronunciation control
-sidebar_position: 9
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - skill
@@ -28,7 +28,7 @@ Text-to-speech voice-over generation from YAML speaker notes using Azure AI Spee
 
 ## When to use it
 
-Use this skill to produce per-slide WAV narration from PowerPoint content YAML's
+Use this skill to produce per-slide WAV narration from slide content YAML's
 `speaker_notes`, with SSML aliases for technical terms. Choose dry-run to inspect
 SSML without Azure credentials or audio generation. Live synthesis requires
 Python 3.11+, `uv`, an Azure Speech resource, authentication, and an approved region.

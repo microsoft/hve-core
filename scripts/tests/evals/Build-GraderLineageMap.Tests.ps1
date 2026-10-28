@@ -17,7 +17,7 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
 
         $first.Outcome | Should -BeExactly 'NoDrift'
         $first.Counts.sourceToTargetPairs | Should -Be 1240
-        $first.Counts.authoredAliases | Should -Be 414
+        $first.Counts.authoredAliases | Should -Be 411
         $first.Counts.generatedCopies | Should -Be 171
         $first.Counts.semanticChanges | Should -Be 0
         ($second.Counts | ConvertTo-Json -Compress) | Should -BeExactly ($first.Counts | ConvertTo-Json -Compress)
@@ -65,7 +65,7 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
         Mock Get-CurrentGraderLineageRecords { $script:LineageRecords }
 
         if ($Allowed) {
-            (Test-CommittedGraderLineageMap -RepoRoot $script:RepoRoot -Map $map).authoredAliases | Should -Be 414
+            (Test-CommittedGraderLineageMap -RepoRoot $script:RepoRoot -Map $map).authoredAliases | Should -Be 411
         }
         else {
             { Test-CommittedGraderLineageMap -RepoRoot $script:RepoRoot -Map $map } | Should -Throw '*incompatible type drift*'
