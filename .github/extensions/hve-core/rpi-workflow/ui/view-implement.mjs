@@ -230,7 +230,9 @@ function mapRow(ctx) {
     const { plan } = ctx.data.session;
     const progress = nodeProgress(plan);
     const working = plan.phases.find((phase) => phase.status === 'in-progress')?.id ?? null;
-    const chosen = ctx.ui.mapPhase === undefined ? working : ctx.ui.mapPhase;
+    // No choice, or a phase chosen in another plan, shows the phase in progress, else All phases.
+    const known = ctx.ui.mapPhase === null || plan.phases.some((phase) => phase.id === ctx.ui.mapPhase);
+    const chosen = ctx.ui.mapPhase === undefined || !known ? working : ctx.ui.mapPhase;
     const highlight = chosen ? plan.diagram.phaseNodes?.[chosen] ?? [] : [];
     const tab = (value, phase) => {
         const meta = phase ? PHASE_PROGRESS[phase.status] ?? PHASE_PROGRESS.todo : null;

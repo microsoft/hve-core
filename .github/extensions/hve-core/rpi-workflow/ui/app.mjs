@@ -170,6 +170,21 @@ const documentsOf = (phase) => documentsIn(state.data?.session, phase);
 /** The earlier document of a phase the reader chose, or null while the current work's shows. */
 const shownEarlier = (phase) => earlierDocument(state.data?.session, phase, state.ui.docs?.[phase]);
 
+/**
+ * Sets the document a phase shows: an earlier one by number, or the current work's with null. A
+ * changes record shows all its tasks when it is an earlier one, since none is in progress there,
+ * and what is in progress when it is the current one.
+ *
+ * @param {string} phase
+ * @param {number | null} n
+ */
+function setShownDocument(phase, n) {
+    const next = n ?? null;
+    if ((state.ui.docs[phase] ?? null) === next) return;
+    state.ui.docs[phase] = next;
+    if (phase === 'implement') state.ui.taskFilter = next ? 'all' : 'active';
+}
+
 /** The shown earlier document of a phase as a lookup scope, or null while the current work's shows. */
 function scopeOf(phase) {
     const doc = DOCUMENT_NOUNS[phase] ? shownEarlier(phase) : null;
@@ -341,7 +356,7 @@ function navigate(ref, phaseOverride, options = {}) {
             const earlier = documentsOf(phase).find((entry) => entry.n === doc);
             announce(`${ref} is in the earlier ${DOCUMENT_NOUNS[phase]} "${earlier ? documentLabel(earlier) : doc}"; showing it.`);
         }
-        state.ui.docs[phase] = doc;
+        setShownDocument(phase, doc);
     }
     const found = scope ? scopedFind(scope, id) : find(id);
     const label = kindOf(id) ? found?.ref ?? ref : found?.title ?? ref;
@@ -389,7 +404,7 @@ function applyPlace(place) {
         if (DOCUMENT_NOUNS[place.phase]) {
             const doc = earlierDocument(state.data.session, place.phase, place.doc);
             if (doc) stopFollowing();
-            state.ui.docs[place.phase] = doc?.n ?? null;
+            setShownDocument(place.phase, doc?.n ?? null);
         }
         const scope = scopeOf(place.phase);
         if (place.id && (scope ? scopedFind(scope, place.id) : find(place.id))) {
@@ -625,9 +640,7 @@ function stopFollowing() {
 /** Follows the agent again: its running loop, then the phase it works in. */
 async function startFollowing() {
     state.following = true;
-    // The current changes record shows what is in progress, which an earlier one showed all of.
-    if (state.ui.docs.implement) state.ui.taskFilter = 'active';
-    state.ui.docs = { research: null, plan: null, implement: null, review: null };
+    for (const phase of Object.keys(DOCUMENT_NOUNS)) setShownDocument(phase, null);
     renderLive();
     if (state.ui.phase) setHash();
     try {
@@ -779,8 +792,7 @@ const act = {
         const earlier = doc && !doc.current ? doc : null;
         if (earlier) stopFollowing();
         previews?.closeAll();
-        state.ui.docs[kind] = earlier ? earlier.n : null;
-        if (kind === 'implement') state.ui.taskFilter = earlier ? 'all' : 'active';
+        setShownDocument(kind, earlier?.n ?? null);
         state.ui.highlight = null;
         state.ui.place = null;
         if (state.ui.phase !== kind) setPhase(kind);

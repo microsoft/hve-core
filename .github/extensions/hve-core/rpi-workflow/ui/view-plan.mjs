@@ -141,7 +141,9 @@ export function renderView(ctx) {
 
     const view = ctx.ui.diagramView;
     const phaseIds = plan.phases.map((phase) => phase.id);
-    const highlight = view === 'after' && ctx.ui.diagramPhase ? plan.diagram?.phaseNodes?.[ctx.ui.diagramPhase] ?? [] : [];
+    // A phase chosen in another plan, such as the current one while an earlier plan shows, reads as none.
+    const chosen = phaseIds.includes(ctx.ui.diagramPhase) ? ctx.ui.diagramPhase : null;
+    const highlight = view === 'after' && chosen ? plan.diagram?.phaseNodes?.[chosen] ?? [] : [];
     if (plan.diagram) rows.push(row(ctx, {
         id: 'change-map', idLabel: null, title: 'Change map', level: 2,
         body: [
@@ -149,8 +151,8 @@ export function renderView(ctx) {
                 h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'visually-hidden', text: 'Diagram' }),
                     ['before', 'after'].map((value) => h('label', { for: `map-${value}` }, h('input', { type: 'radio', name: 'map-view', id: `map-${value}`, value, checked: view === value, onchange: () => ctx.act.setDiagram({ view: value }) }), h('span', { text: value === 'before' ? 'Before' : 'After' })))),
                 view === 'after' ? h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'meta', text: 'Highlight' }),
-                    ['none', ...phaseIds].map((value) => h('label', { for: `map-phase-${value}` }, h('input', { type: 'radio', name: 'map-phase', id: `map-phase-${value}`, value, checked: (ctx.ui.diagramPhase ?? 'none') === value, onchange: () => ctx.act.setDiagram({ phase: value === 'none' ? null : value }) }), h('span', { text: value === 'none' ? 'None' : value })))) : null),
-            renderDiagram(view === 'before' ? plan.diagram.before : plan.diagram.after, { caption: view === 'before' ? 'Before: how the app saves today' : `After: the intended result${highlight.length ? `, ${ctx.ui.diagramPhase} highlighted` : ''}`, highlight, idPrefix: `map-${view}`, textOpen: ctx.ui.openDetails.has('map-text'), onTextToggle: (open) => ctx.act.setDetailsOpen('map-text', open) }),
+                    ['none', ...phaseIds].map((value) => h('label', { for: `map-phase-${value}` }, h('input', { type: 'radio', name: 'map-phase', id: `map-phase-${value}`, value, checked: (chosen ?? 'none') === value, onchange: () => ctx.act.setDiagram({ phase: value === 'none' ? null : value }) }), h('span', { text: value === 'none' ? 'None' : value })))) : null),
+            renderDiagram(view === 'before' ? plan.diagram.before : plan.diagram.after, { caption: view === 'before' ? 'Before: how the app saves today' : `After: the intended result${highlight.length ? `, ${chosen} highlighted` : ''}`, highlight, idPrefix: `map-${view}`, textOpen: ctx.ui.openDetails.has('map-text'), onTextToggle: (open) => ctx.act.setDetailsOpen('map-text', open) }),
             h('p', { class: 'meta legend' }, h('span', { class: 'legend-swatch is-new' }), ' Dashed border: added by this plan. ', h('span', { class: 'legend-swatch is-highlight' }), ' Filled: the highlighted phase.'),
         ],
     }));

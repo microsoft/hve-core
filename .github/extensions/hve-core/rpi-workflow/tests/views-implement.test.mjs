@@ -179,6 +179,17 @@ describe('the change map with progress', () => {
         ui.mapPhase = null;
         assert.match(html(render(session, ui)), /id="impl-map-phase-all" value="all" checked=""/, 'All phases highlights nothing');
     });
+
+    it('reads a phase chosen in another plan as no choice', () => {
+        const session = implementing();
+        const ui = initialUi('implement');
+        ui.mapPhase = 'P99';
+        const out = html(render(session, ui));
+        assert.match(out, /id="impl-map-phase-P02" value="P02" checked=""/, 'the phase in progress, as with no choice');
+        assert.doesNotMatch(out, /P99/);
+        const done = buildScenario('review', Date.parse(NOW));
+        assert.match(html(render(done, ui)), /id="impl-map-phase-all" value="all" checked=""/, 'All phases when nothing is in progress');
+    });
 });
 
 describe('the steering panel on Implement', () => {

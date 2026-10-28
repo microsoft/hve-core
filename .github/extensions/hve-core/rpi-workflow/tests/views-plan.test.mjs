@@ -61,6 +61,18 @@ describe('plan critique progress', () => {
     });
 });
 
+describe('the change map', () => {
+    it('reads a phase chosen in another plan as none', () => {
+        const { session } = rootSession();
+        const phase = session.plan.phases[0].id;
+        const markup = (diagramPhase) => html(planView.renderView(makeContext(session, 'plan', { ...makeContext(session, 'plan').ui, diagramView: 'after', diagramPhase })));
+        assert.match(markup(phase), new RegExp(`id="map-phase-${phase}" value="${phase}" checked=""`));
+        const foreign = markup('P99');
+        assert.match(foreign, /id="map-phase-none" value="none" checked=""/);
+        assert.doesNotMatch(foreign, /P99 highlighted/);
+    });
+});
+
 describe('updated marks', () => {
     it('marks plan text the agent changed in the last ten minutes, after the first read', () => {
         const { session } = rootSession();
