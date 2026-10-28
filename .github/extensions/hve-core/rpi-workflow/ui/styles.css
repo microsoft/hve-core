@@ -1979,12 +1979,21 @@ details > summary:hover {
   min-width: 0;
 }
 
+/* The heading wraps under a long title; the actions keep to the top of their own column. */
 .row-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+  margin-bottom: 10px;
+}
+
+.row-heading {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   gap: 6px 10px;
-  margin-bottom: 10px;
+  min-width: 0;
 }
 
 .row-title {
@@ -2006,7 +2015,6 @@ details > summary:hover {
 .row-actions {
   display: inline-flex;
   gap: 2px;
-  margin-inline-start: auto;
 }
 
 /* With a pointer that hovers, row actions show while the row is hovered or holds focus. */
@@ -2987,6 +2995,7 @@ details > summary:hover {
 
 .composer {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -3022,8 +3031,20 @@ details > summary:hover {
   color: var(--rw-user);
 }
 
+/* A long title or part never sets the steering panel's width: the title takes two lines at most. */
 .anchor-title {
   flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.anchor-chip .anchor-part {
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5826,6 +5847,7 @@ tr.is-anchor-target > td {
 
 .anchor-box {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
 
@@ -5842,7 +5864,7 @@ tr.is-anchor-target > td {
   border-inline-start: 3px solid var(--rw-border);
   color: var(--rw-fg-muted);
   font: var(--rw-t-meta);
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .note-quote {

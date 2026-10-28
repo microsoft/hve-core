@@ -153,9 +153,10 @@ export function row(ctx, spec) {
     },
     h('div', { class: 'row-main' },
         h('header', { class: 'row-head' },
-            spec.idLabel === null ? null : h('span', { class: 'id-chip', text: spec.idLabel ?? spec.id }),
-            h('h3', { class: ['row-title', spec.level === 2 ? 'is-major' : null], id: titleId, text: spec.title }),
-            (spec.badges ?? []).length ? h('span', { class: 'row-badges' }, spec.badges) : null,
+            h('div', { class: 'row-heading' },
+                spec.idLabel === null ? null : h('span', { class: 'id-chip', text: spec.idLabel ?? spec.id }),
+                h('h3', { class: ['row-title', spec.level === 2 ? 'is-major' : null], id: titleId, text: spec.title }),
+                (spec.badges ?? []).length ? h('span', { class: 'row-badges' }, spec.badges) : null),
             (spec.actions ?? []).length ? h('span', { class: 'row-actions' }, spec.actions) : null),
         h('div', { class: 'row-text' }, spec.body)),
     margin.length ? h('aside', { class: 'row-margin', 'aria-label': `Notes for ${spec.idLabel ?? spec.id}` }, margin) : null);
@@ -750,26 +751,26 @@ export function steerPanel(ctx) {
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `check-${item.id}` }, onclick: () => ctx.act.navigate(item.target?.type === 'decision' ? item.target.id : item.id) },
                 icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, 'Check how the agent read ', idTag(item.id, 'go-to')), h('span', { class: 'meta', text: phaseLabel(item.target?.phase) })))));
     const needsCount = view.needsYou.length + waiting.length;
-    // Agent decisions listed in a phase's Decisions row collapse to one link per row.
-    const rowGroups = new Map();
-    const decidedSingles = [];
-    for (const item of view.decidedByAgent) {
-        const decision = decisionOf(item.id);
-        const rowId = decision?.anchor?.rowId;
-        if (Object.values(DECISION_ROWS).includes(rowId) && hasMarginHome(ctx, decision)) {
-            if (!rowGroups.has(rowId)) rowGroups.set(rowId, { phase: decision.anchor.phase, count: 0 });
-            rowGroups.get(rowId).count += 1;
-        } else {
-            decidedSingles.push(item);
-        }
-    }
+    // Recorded decisions show as two counts, the agent's and yours, each going to the first such
+    // decision, in the viewed phase when it has one. A decision with no row to sit beside keeps its card.
+    const agentDecisions = view.decidedByAgent.map((item) => decisionOf(item.id)).filter(Boolean);
+    const yourDecisions = session.decisions.filter((decision) => decision.owner === 'user' && decision.status !== 'needs-input');
+    const homeOf = (list) => list.filter((decision) => hasMarginHome(ctx, decision));
+    const firstOf = (list) => list.find((decision) => decision.phase === ctx.ui.phase) ?? list[0];
+    const countLink = (key, list, iconName, tone, words) => {
+        const homed = homeOf(list);
+        if (!homed.length) return null;
+        const target = firstOf(homed);
+        return h('li', null, h('button', { type: 'button', class: 'steer-link', dataset: { key }, title: `Go to ${refOf(target.id)}, the first of them`, onclick: () => ctx.act.navigate(target.id) },
+            icon(iconName, { className: `tone-${tone}-fg` }), h('span', { class: 'steer-link-text', text: words(homed.length) }), idTag(refOf(target.id), 'go-to')));
+    };
+    const homeless = agentDecisions.filter((decision) => !hasMarginHome(ctx, decision));
+    // The count matches what the section lists: both counts, plus the agent's cards.
+    const decidedCount = agentDecisions.length + homeOf(yourDecisions).length;
     const decided = h('ul', { class: 'steer-list' },
-        [...rowGroups].map(([rowId, group]) => h('li', null,
-            h('button', { type: 'button', class: 'steer-link', dataset: { key: `decided-${rowId}` }, onclick: () => ctx.act.navigate(rowId, group.phase) },
-                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text', text: `${plural(group.count, 'recorded decision')}` }), h('span', { class: 'meta', text: phaseLabel(group.phase) })))),
-        decidedSingles.map((item) => (hasMarginHome(ctx, decisionOf(item.id)) ? h('li', null,
-            h('button', { type: 'button', class: 'steer-link', dataset: { key: `decided-${item.id}` }, onclick: () => ctx.act.navigate(item.id) },
-                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, idTag(refOf(item.id), 'go-to'), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
+        countLink('decided-agent', agentDecisions, 'sparkle', 'agent', (count) => `${plural(count, 'decision')} the agent recorded`),
+        countLink('decided-yours', yourDecisions, 'person', 'user', (count) => `${plural(count, 'decision')} you made`),
+        homeless.map((decision) => steerCard(decision)));
 
     const pending = pendingItems(ctx);
     const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
@@ -784,7 +785,7 @@ export function steerPanel(ctx) {
 
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
-        steerSection('decided', 'Decided by the agent', view.decidedByAgent.length, view.decidedByAgent.length ? decided : h('p', { class: 'empty', text: 'No agent decisions yet.' }), { iconName: 'sparkle' }),
+        steerSection('decided', 'Recorded decisions', decidedCount, decidedCount ? decided : h('p', { class: 'empty', text: 'No recorded decisions yet.' }), { iconName: 'sparkle' }),
         steerSection('feedback', 'Your feedback', pending.length + inFlight.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
         steerSection('checklist', ctx.ui.phase === 'review' ? 'Review checklist' : `${PHASE_META[ctx.ui.phase]?.label ?? ''} review checklist`, null, checklist(ctx), { iconName: 'checklist' }),
@@ -812,7 +813,7 @@ function composer(ctx) {
             h('span', { text: kind.label })))),
     state.anchor
         ? h('div', { class: 'anchor-box' },
-            h('p', { class: 'anchor-chip' }, icon('anchor'), 'About ', h('span', { class: 'id-chip', text: state.anchor }), (anchor?.title ?? state.title) ? h('span', { class: 'anchor-title', text: ` ${anchor?.title ?? state.title}` }) : null,
+            h('p', { class: 'anchor-chip' }, icon('anchor'), 'About ', h('span', { class: 'id-chip', text: state.anchor }), (anchor?.title ?? state.title) ? h('span', { class: 'anchor-title', title: anchor?.title ?? state.title, text: ` ${anchor?.title ?? state.title}` }) : null,
                 state.part ? h('span', { class: 'anchor-part', text: `, ${state.part}` }) : null,
                 button('Remove anchor', { iconName: 'x', hideLabel: true, attrs: { 'data-key': 'remove-anchor' }, onClick: () => ctx.act.setComposer({ anchor: null }) })),
             state.quote ? h('blockquote', { class: 'anchor-quote' }, sr('Quote: '), state.quote) : null)

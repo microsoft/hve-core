@@ -156,16 +156,20 @@ describe('views of imported sessions', () => {
         assert.ok(userVoice.includes(other.label), 'override names the user\'s choice');
     });
 
-    it('lists imported decisions in Decisions rows and groups them in the steering panel', async () => {
+    it('lists imported decisions in Decisions rows and counts them in the steering panel', async () => {
         const { session } = rootSession();
         const rendered = await renderAll(session);
         assert.match(rendered.research.html, /id="row-research-decisions"/);
         assert.match(rendered.plan.html, /id="row-plan-decisions"/);
         assert.ok(rendered.plan.outline.some((item) => item.id === 'plan-decisions'));
-        assert.match(rendered.research.steer, /1 recorded decision/);
-        assert.match(rendered.research.steer, /2 recorded decisions/);
+        assert.match(rendered.research.steer, /Recorded decisions<span class="count">3<\/span>/);
+        assert.match(rendered.research.steer, /3 decisions the agent recorded<\/span><span class="id-chip">D1/);
+        assert.doesNotMatch(rendered.research.steer, /you made/, 'no count for decisions you have not made');
         assert.doesNotMatch(rendered.research.steer, /class="steer-card"/);
         assert.match(rendered.research.steer, /class="steer-link"[^>]*>.*?<span class="id-chip">D2<svg[^>]*><use href="#i-go-to"><\/use><\/svg><\/span> Which region ships first\?/);
+        const answered = structuredClone(session);
+        answered.decisions.find((decision) => decision.id === 'D2').status = 'resolved';
+        assert.match((await renderAll(answered)).research.steer, /1 decision you made<\/span><span class="id-chip">D2/);
     });
 
     it('shows each phase\'s unmodeled sections in a record row', async () => {
