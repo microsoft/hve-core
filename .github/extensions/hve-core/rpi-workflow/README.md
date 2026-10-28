@@ -76,7 +76,7 @@ Edit answer takes back an answer you have not sent and reopens the card with you
 
 While a decision the agent made is open, its card offers Override. Override lists the alternatives and Something else, or, when the decision lists none, asks what the agent should do instead, in your words. Removing an override you have not sent restores the agent's choice. A settled decision shows the option it resolved to and how it was decided. In Review, the agent's decision on each finding offers Question this decision, which starts a comment about that finding.
 
-Answers, overrides, comments, context, research requests, suggested edits, and corrections become feedback items:
+Add input takes one kind, a comment: say in your words whether it is a question, context, or something to research. Answers, overrides, comments, suggested edits, and corrections become feedback items:
 
 * An item is Not sent until you send it now or queue it with Review and send, or until the agent collects it with `take_feedback` when you ask it to. A queued item shows Queued for the agent until the agent collects it at its next checkpoint. Then it is Sent.
 * Once sent, it shows The agent has it when the agent picks it up, with how: at its next step, in a new turn, after its turn, or collected from the canvas. Where the host does not report pickups, a sent item stays Sent until its read-back.
@@ -125,14 +125,14 @@ If the section changes while you edit, the editor offers Compare, Keep my sugges
 
 ### Comments, the Canvas Menu, and Tooltips
 
-Each row's buttons, Suggest an edit, Comment, and Research this, appear while the pointer is over the row or focus is inside it, and always on a touch screen. Hover a paragraph, list item, table row, or heading, and a speech bubble appears beside it. Choose it to comment on exactly that part.
+Each row's buttons, Suggest an edit and Comment, appear while the pointer is over the row or focus is inside it, and always on a touch screen. Hover a paragraph, list item, table row, or heading, and a speech bubble appears beside it. Choose it to comment on exactly that part.
 The comment names the part, such as "table row C12" or "paragraph 2", and quotes up to 200 characters of it. It shows beside its row with the quote, and Review and send passes the part and quote on, so the agent knows the exact place.
 
 Right-click opens the canvas menu for what you clicked:
 
 * Copy, for selected text
 * Comment on the part you clicked, and Comment on this section
-* Suggest an edit, and Research this, where the row offers them
+* Suggest an edit, where the row offers it
 * Go to an ID, and Copy it
 * Show a cited file here, Open it in VS Code, and Copy its path
 * Open a link, and Copy it
