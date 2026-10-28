@@ -6,15 +6,21 @@ import fs from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { after, before, describe, it } from 'node:test';
+import { after, afterEach, before, describe, it } from 'node:test';
 
 import { createActionHandlers } from '../lib/actions.mjs';
 import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
-import { createCanvasServer } from '../lib/server.mjs';
+import { createCanvasServer as newServer } from '../lib/server.mjs';
 import { createSourceController, notConnected, openPlan, sourceSummary, validateOpenInput } from '../lib/sources.mjs';
 import { createStore, MAX_INSTANCES } from '../lib/store.mjs';
+import { stopTracked, track } from './helpers/cleanup.mjs';
 import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+
+/** A canvas server that stops after the test even when an assertion fails. */
+const createCanvasServer = (deps) => track(newServer(deps));
+
+afterEach(stopTracked);
 
 const writeJson = async (dir, relative, value) => {
     await fs.mkdir(path.dirname(path.join(dir, relative)), { recursive: true });
@@ -101,20 +107,19 @@ describe('reopening an instance', () => {
         const sources = createSourceController({ store });
         const record = { instanceId: 'rpi-trail-maps', sessionId: '', source: null, server: { rebind: () => {} } };
         sources.attach(record, await sources.prepare({ state: PATHS.rootState }, { candidates: [dir] }));
-        await sources.settled(record);
-        const waitFor = async (predicate) => {
-            for (let i = 0; i < 50 && !predicate(await store.loadInstance('rpi-trail-maps')); i += 1) await new Promise((resolve) => setTimeout(resolve, 20));
+        // What an instance shows is written once its move and memory write settle.
+        const remembered = async (shownBy) => {
+            await sources.settled(shownBy);
             return store.loadInstance('rpi-trail-maps');
         };
-        let shown = await waitFor((entry) => entry?.state === PATHS.childState);
+        let shown = await remembered(record);
         assert.deepEqual([shown.kind, shown.state, shown.paused], ['rpi', PATHS.childState, false], 'following moved to the running child');
         await sources.switchToTask(record, ROOT_TASK);
-        shown = await waitFor((entry) => entry?.paused === true);
+        shown = await remembered(record);
         assert.deepEqual([shown.state, shown.paused], [PATHS.rootState, true], 'a manual switch to a stopped loop is remembered as paused');
         await sources.resumeFollowing(record);
-        await sources.settled(record);
-        shown = await waitFor((entry) => entry?.paused === false && entry.state === PATHS.childState);
-        assert.equal(shown.state, PATHS.childState);
+        shown = await remembered(record);
+        assert.deepEqual([shown.state, shown.paused], [PATHS.childState, false]);
         sources.detach(record);
 
         const plan = openPlan({}, { open: false, remembered: { ...shown, state: PATHS.rootState, paused: true } });
@@ -125,7 +130,7 @@ describe('reopening an instance', () => {
         sources.detach(reopened);
         const sample = { instanceId: 'rpi-trail-maps', sessionId: '', source: null, server: { rebind: () => {} } };
         sources.attach(sample, await sources.prepare({ stage: 'plan' }, {}));
-        assert.equal((await waitFor((entry) => entry?.kind === 'sample')).kind, 'sample', 'showing the sample on purpose is remembered too');
+        assert.equal((await remembered(sample)).kind, 'sample', 'showing the sample on purpose is remembered too');
         store.close();
     });
 
@@ -134,13 +139,10 @@ describe('reopening an instance', () => {
         const sources = createSourceController({ store });
         const record = { instanceId: 'panel', sessionId: '', source: null, server: { rebind: () => {} }, hostSessionId: 'session-a' };
         sources.attach(record, await sources.prepare({ task: 'sample' }, {}));
-        let memory = null;
-        for (let i = 0; i < 50 && memory?.kind !== 'sample'; i += 1) {
-            await new Promise((resolve) => setTimeout(resolve, 20));
-            memory = await store.loadInstance('panel', 'session-a');
-        }
+        await sources.settled(record);
+        assert.equal((await store.loadInstance('panel', 'session-a')).kind, 'sample');
         sources.attach(record, notConnected('missing-session', PATHS.childState));
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await sources.settled(record);
         assert.equal((await store.loadInstance('panel', 'session-a')).kind, 'sample');
         assert.deepEqual(sourceSummary(record, null), { kind: 'none', reason: 'missing-session', detail: PATHS.childState });
         store.close();

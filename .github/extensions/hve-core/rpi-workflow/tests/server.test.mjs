@@ -6,13 +6,19 @@ import fs from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { after, before, describe, it } from 'node:test';
+import { after, afterEach, before, describe, it } from 'node:test';
 
 import { agentEditSection, createFeedback, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
-import { clientInfoFrom, createCanvasServer, MAX_BODY, renderShell } from '../lib/server.mjs';
+import { clientInfoFrom, createCanvasServer as newServer, MAX_BODY, renderShell } from '../lib/server.mjs';
 import { createStore } from '../lib/store.mjs';
+import { stopTracked, track } from './helpers/cleanup.mjs';
 import { CHILD_TASK, childSession, ROOT_TASK, rootSession } from './helpers/rpi-fixture.mjs';
+
+/** A canvas server that stops after the test even when an assertion fails. */
+const createCanvasServer = (deps) => track(newServer(deps));
+
+afterEach(stopTracked);
 
 let tmp;
 before(async () => {
@@ -370,6 +376,7 @@ describe('a session-wide send', () => {
             deliver: deliver ?? (async (message) => {
                 sent.push(message);
             }),
+            markRetryMs: 1,
         });
         const url = new URL(await server.start());
         return { store, server, url, sent, parent, child };

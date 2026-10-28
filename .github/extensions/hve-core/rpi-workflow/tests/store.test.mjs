@@ -133,7 +133,7 @@ describe('sessions', () => {
     });
 
     it('never writes under or removes a lock another process took over', async () => {
-        const store = createStore({ root: path.join(tmp, 'stolen'), lockWaitMs: 150 });
+        const store = createStore({ root: path.join(tmp, 'stolen'), lockWaitMs: 30 });
         const scenario = await store.create(buildScenario('research'));
         const lock = path.join(store.root, 'sessions', `${scenario.id}.json.lock`);
         const theirs = '4242 0123456789abcdef01234567 2026-10-23T12:00:00.000Z\n';
