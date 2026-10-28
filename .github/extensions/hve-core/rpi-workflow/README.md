@@ -62,15 +62,15 @@ Below 1400px the phase rail takes its own row under the title. Below 1360px the 
 
 ### Decisions and Feedback
 
-Needs you, in the header, counts the decisions waiting for your answer and the read-backs waiting for your check. Pressing it goes to the first one, in phase order, and pressing it again while you are still there goes to the next. Answering an item removes it, so the next press finds the new first item. With nothing waiting, it opens the steering panel's list. `n` does the same.
+Needs you, in the header, counts the decisions waiting for your answer. Pressing it goes to the first one, in phase order, and pressing it again while you are still there goes to the next. Answering an item removes it, so the next press finds the new first item. With nothing waiting, it opens the steering panel's list. `n` does the same.
 
 Decision cards state what is being decided, who owns it, and where it stands.
 A real session's Research and Plan show the decisions their files record in a Decisions row, labeled with each file's own IDs, so `D1` in the Plan view is the plan's D1.
 In a real session, a decision that needs you shows the question and options from its detail block in the research or plan file, with the recommended option marked.
 Answer a decision by choosing an option, adding an optional note, and selecting Answer, or choose Your own answer, the last choice, and write it.
 When a decision lists no options, write your answer instead.
-The agent then reads back how it understood you in an Agent understood block.
-Select Looks right, or select Not what I meant to write a correction that starts with your earlier note.
+The agent then reads back how it understood you in an Agent understood block; you do not need to confirm it.
+If it misunderstood you, select Correct this to write a correction that starts with your earlier note, even after the decision is resolved.
 Edit answer takes back an answer you have not sent and reopens the card with your choice and note filled in.
 
 While a decision the agent made is open, its card offers Override. Override lists the alternatives and Something else, or, when the decision lists none, asks what the agent should do instead, in your words. Removing an override you have not sent restores the agent's choice. A settled decision shows the option it resolved to and how it was decided. In Review, the agent's decision on each finding offers Question this decision, which starts a comment about that finding.
@@ -78,7 +78,10 @@ While a decision the agent made is open, its card offers Override. Override list
 Answers, overrides, comments, context, research requests, suggested edits, corrections, and checklist reviews become feedback items:
 
 * An item is Not sent until you send it now or queue it with Review and send, or until the agent collects it with `take_feedback` when you ask it to. A queued item shows Queued for the agent until the agent collects it at its next checkpoint. Then it is Sent.
-* The agent reads it back (Interpreted). The item ends Applied when you confirm the read-back or the agent marks it applied, or Corrected when you write a correction, which waits to be sent like any other item.
+* Once sent, it shows The agent has it when the agent picks it up, with how: at its next step, in a new turn, after its turn, or collected from the canvas. Where the host does not report pickups, a sent item stays Sent until its read-back.
+* The agent then reads it back, and it moves to Feedback history as Read back, with no confirming. A read-back the agent makes before the change waits under With the agent and says the change is not made yet.
+* Correct this, on any read-back, writes a correction that names the item it corrects and waits to be sent like any other item; the original then shows Corrected.
+* Each item shows its stage and since when, in your local time, and the page announces when the agent has items and when it reads them back.
 * Until you send an item, you can change its words or discard it.
 
 ### Review and Send
@@ -94,7 +97,7 @@ Everything you add waits in the canvas until you send or queue it. Review and se
   Discard all, which asks the same way, naming how many items and loops; and Close.
   Lines above the buttons say what each does, and Queue disappears once everything is queued. The review closes after you send or queue, after Discard all, or when you discard its last item.
 
-Your feedback in the steering panel lists the shown loop's items: Not sent yet, Queued for the agent, With the agent, and Earlier. Each unsent item has Go to, Edit, and Discard, and a queued one also has Take back, which returns it to Not sent yet until you send or queue it again. The others have Go to.
+Your feedback in the steering panel lists the shown loop's items: Not sent yet, Queued for the agent, With the agent, and Feedback history. Each unsent item has Go to, Edit, and Discard, and a queued one also has Take back, which returns it to Not sent yet until you send or queue it again. The others have Go to.
 
 The RPI Agent checks the canvas with `take_feedback` at its checkpoints and collects what you queued. When it asks you a question, it offers Answered in the canvas: choose it after you answer here, and the agent collects your answers before it goes on.
 
@@ -255,7 +258,7 @@ When the page cannot render a task, it says why with Retry instead of staying bl
 | Session                   | `update_session`        | Sets the agent's phase, task and session status, mode, next action, or a phase status                                                                                                                                                                                                                                                                                         |
 | Decisions and feedback    | `upsert_decision`       | Asks the user for a decision (owner `user`) or records an agent decision the user can override (owner `agent`)                                                                                                                                                                                                                                                                |
 | Decisions and feedback    | `take_feedback`         | Collects what the user has for the agent in every loop of the session and marks it sent: with `checkpoint: true`, only the items the user queued; otherwise every unsent item. Also returns sent items without a read-back, marked `alreadySent` and unchanged. Each item has its `taskId`, and each suggested edit its full text and line changes; skips items being sent    |
-| Decisions and feedback    | `record_interpretation` | Reads back how the agent understood an item and what it changes; takes `taskId`, which is required when the item went out with items from other tasks                                                                                                                                                                                                                         |
+| Decisions and feedback    | `record_interpretation` | Reads back how the agent understood an item and what it changes, and applies it unless `applied` is false; takes `taskId`, which is required when the item went out with items from other tasks                                                                                                                                                                               |
 | Implementation            | `update_task`           | Changes a task's status, adds guidance, or links the decision that paused it                                                                                                                                                                                                                                                                                                  |
 | Implementation            | `record_change`         | Records completed work with its behavior, files, and validation                                                                                                                                                                                                                                                                                                               |
 | Implementation            | `record_discovery`      | Records local judgment, an implementation note, a follow-up, or a plan change with before and after text                                                                                                                                                                                                                                                                      |
