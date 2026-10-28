@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { checklistFor } from '../checklists.mjs';
-
 // Implementation content for the sample scenario. `minutes` values are offsets before now.
 
 export const activity = [
@@ -175,5 +173,3 @@ export const sections = {
         markdown: 'Drafts now persist on the device and autosave, and queued changes sync with backoff. Conditional writes are in progress. Photo uploads are paused for a decision about weak ETags, and the offline suite waits for the device lab.',
     },
 };
-
-export const checklist = checklistFor('implement');

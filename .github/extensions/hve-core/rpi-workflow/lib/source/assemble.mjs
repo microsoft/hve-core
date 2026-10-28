@@ -4,7 +4,6 @@
 import { createHash } from 'node:crypto';
 
 import { parseFlowchart } from '../../ui/flowchart.mjs';
-import { checklistFor, verdictOf } from '../checklists.mjs';
 import { PHASES, SESSION_FORMAT, SESSION_VERSION, validateSession } from '../model.mjs';
 import { idsIn, inlineMarkdown, labelKey, linksIn, listItems, plainText } from './markdown.mjs';
 import { sourceLocations } from './locations.mjs';
@@ -641,13 +640,6 @@ export function assembleSession(input) {
         decisions,
         feedback: [],
         links: [],
-        checklists: {
-            research: research || researchReused ? checklistFor('research') : [],
-            plan: plan ? checklistFor('plan') : [],
-            implement: changes ? checklistFor('implement') : [],
-            review: review ? checklistFor('review') : [],
-            followup: activeIndex >= PHASES.indexOf('followup') ? checklistFor('followup') : [],
-        },
     };
     return { session: validateSession(session), warnings };
 }
@@ -670,7 +662,7 @@ function comparable(session) {
 /**
  * Merges a fresh import into the stored document. Document data comes from the import;
  * what the person added in the canvas stays:
- * feedback, checklists, research lanes, activity, decisions created in the canvas, and
+ * feedback, research lanes, activity, decisions created in the canvas, and
  * the change count. A section whose source text is unchanged keeps the stored version,
  * including a saved edit still waiting for the agent; a changed section takes the new
  * text and a higher revision, so an open editor sees a conflict on save. An imported
@@ -700,15 +692,6 @@ export function mergeImport(stored, imported, now) {
     });
     const importedIds = new Set(imported.decisions.map((decision) => decision.id));
     decisions.push(...stored.decisions.filter((decision) => decision.origin !== 'artifact' && !importedIds.has(decision.id)));
-    // Labels follow the current checklist; verdicts and notes the person gave carry over by item ID.
-    const checklists = Object.fromEntries(Object.entries(imported.checklists).map(([phase, list]) => {
-        const kept = new Map((stored.checklists?.[phase] ?? []).map((item) => [item.id, item]));
-        return [phase, list.map((item) => {
-            const verdict = verdictOf(kept.get(item.id));
-            const note = verdict === 'needs-work' ? kept.get(item.id).note : undefined;
-            return verdict ? { ...item, verdict, ...(note ? { note } : {}) } : item;
-        })];
-    }));
     const merged = {
         ...imported,
         ...(stored.scenario ? { scenario: stored.scenario } : {}),
@@ -719,7 +702,6 @@ export function mergeImport(stored, imported, now) {
         implementation: { ...imported.implementation, activity: stored.implementation?.activity ?? [] },
         decisions,
         feedback: stored.feedback,
-        checklists,
     };
     if (comparable(merged) === comparable(stored)) return stored;
     return validateSession({ ...merged, revision: stored.revision + 1, updatedAt: now });

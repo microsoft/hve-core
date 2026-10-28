@@ -559,10 +559,6 @@ async function refresh() {
                 applyPlace(pending);
                 // A move you chose, such as Go to in Review and send, joins Back and Forward.
                 if (pending.record) remember(leaving, here());
-                if (pending.checklist) {
-                    openSteer();
-                    window.requestAnimationFrame(() => focusQuietly($('steer-checklist')));
-                }
             } else {
                 remember(leaving, here());
             }
@@ -1016,21 +1012,6 @@ const act = {
             reportFailure(`Request not added: ${error.message}`);
         }
     },
-    /** Sets one checklist verdict (null clears it), with a note for Needs work, and says when the review joins or leaves the next send. */
-    async markChecklist(phase, itemId, verdict, note) {
-        const waiting = () => state.data.session.feedback.some((item) => item.kind === 'checklist' && item.phase === phase && item.state === 'queued');
-        const before = waiting();
-        try {
-            await api('/api/checklist', { phase, itemId, verdict, ...(note !== undefined ? { note } : {}) });
-            await refresh();
-            const after = waiting();
-            if (after && !before) announce('Your review now goes with your next send.');
-            else if (!after && before) announce('Nothing from this checklist goes to the agent now.');
-            else if (verdict === 'needs-work' && note) announce('Note saved.');
-        } catch (error) {
-            reportFailure(`Checklist not saved: ${error.message}`);
-        }
-    },
     /** Opens Review and send from the header and prepares the exact text. */
     openSend() {
         const sheet = $('sendSheet');
@@ -1098,20 +1079,13 @@ const act = {
             keepFocusOnClose = true;
             sheet.close();
         }
-        const checklist = item.kind === 'checklist';
         if (!taskId || taskId === state.data.session.task.id) {
-            if (checklist) {
-                if (item.phase && item.phase !== state.ui.phase) setPhase(item.phase);
-                openSteer();
-                window.requestAnimationFrame(() => focusQuietly($('steer-checklist')));
-            } else if (item.target?.id) {
-                navigate(item.target.id);
-            }
+            if (item.target?.id) navigate(item.target.id);
             return;
         }
         stopFollowing();
-        const id = checklist ? null : item.target?.id ?? null;
-        pendingPlace = { taskId, taskTitle: taskId, phase: item.target?.phase ?? item.phase ?? null, id, label: id ?? undefined, scroll: 0, record: true, checklist };
+        const id = item.target?.id ?? null;
+        pendingPlace = { taskId, taskTitle: taskId, phase: item.target?.phase ?? item.phase ?? null, id, label: id ?? undefined, scroll: 0, record: true };
         try {
             await api('/api/task', { taskId, follow: false });
             await refresh();
@@ -1120,7 +1094,7 @@ const act = {
             reportFailure(`Could not go to ${item.id}: ${error.message}`);
         }
     },
-    /** Edits an item where it was made: a suggested edit in its section's editor, a checklist review in the checklist. */
+    /** Edits an item where it was made: a suggested edit in its section's editor. */
     async editInPlace(taskId, item) {
         if (item.kind === 'edit' && item.target?.id && (!taskId || taskId === state.data.session.task.id)) {
             const sheet = $('sendSheet');

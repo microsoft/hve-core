@@ -9,7 +9,6 @@
 
 import { createHash } from 'node:crypto';
 
-import { VERDICTS, verdictOf } from './checklists.mjs';
 import { unifiedDiff } from './textdiff.mjs';
 
 export const SESSION_FORMAT = 'hve-core-rpi-workflow.session';
@@ -19,7 +18,7 @@ export const PHASE_LABELS = Object.freeze({ research: 'Research', plan: 'Plan', 
 export const PHASE_STATUSES = Object.freeze(['done', 'active', 'upcoming', 'paused', 'blocked', 'skipped']);
 export const TASK_STATUSES = Object.freeze(['todo', 'in-progress', 'paused', 'done', 'blocked']);
 export const DECISION_STATUSES = Object.freeze(['needs-input', 'answered', 'decided', 'override-pending', 'resolved']);
-export const FEEDBACK_KINDS = Object.freeze(['answer', 'override', 'comment', 'context', 'research-request', 'edit', 'checklist', 'correction', 'task-request']);
+export const FEEDBACK_KINDS = Object.freeze(['answer', 'override', 'comment', 'context', 'research-request', 'edit', 'correction', 'task-request']);
 export const FEEDBACK_STATES = Object.freeze(['draft', 'queued', 'sent', 'interpreted', 'applied', 'corrected', 'dismissed']);
 export const DELIVERY_MODES = Object.freeze(['queue', 'attach', 'send']);
 export const DISCOVERY_KINDS = Object.freeze(['local', 'annotation', 'follow-up', 'plan-change']);
@@ -169,7 +168,7 @@ export function validateSession(doc) {
     if (typeof doc.id !== 'string' || !ID_RE.test(doc.id) || !Number.isInteger(doc.revision) || doc.revision < 0) {
         fail('storage_corrupt', 'Session data is missing its ID or revision.');
     }
-    for (const key of ['task', 'session', 'phases', 'sections', 'research', 'plan', 'implementation', 'review', 'followUps', 'checklists']) {
+    for (const key of ['task', 'session', 'phases', 'sections', 'research', 'plan', 'implementation', 'review', 'followUps']) {
         if (!doc[key] || typeof doc[key] !== 'object' || Array.isArray(doc[key])) {
             fail('storage_corrupt', `Session data is missing ${key}.`);
         }
@@ -401,7 +400,7 @@ export function createFeedback(session, input, now) {
     const kind = oneOf(input.kind, FEEDBACK_KINDS, 'kind');
     const state = input.state === undefined ? 'queued' : oneOf(input.state, ['draft', 'queued'], 'state');
     const target = targetFor(session, input.target);
-    const needsText = !['answer', 'override', 'checklist'].includes(kind);
+    const needsText = !['answer', 'override'].includes(kind);
     const body = text(input.text, 'text', { optional: !needsText });
     return mutate(session, now, (draft) => {
         capFeedback(draft);
@@ -525,7 +524,7 @@ export function transitionFeedback(session, feedbackId, to, extra = {}, now = ne
     });
 }
 
-/** Kinds whose words can change before they are sent; suggested edits and checklist reviews change where they were made. */
+/** Kinds whose words can change before they are sent; suggested edits change where they were made. */
 export const EDITABLE_KINDS = Object.freeze(['comment', 'context', 'research-request', 'task-request', 'correction', 'answer', 'override']);
 
 /** Unsent and not held by a delivery. */
@@ -821,10 +820,12 @@ const KIND_LABELS = Object.freeze({
     context: ['Context for', 'context note', 'context notes'],
     'research-request': ['Research request about', 'research request', 'research requests'],
     edit: ['Suggested edit to', 'suggested edit', 'suggested edits'],
-    checklist: ['Review checklist for', 'review checklist', 'review checklists'],
     correction: ['Correction about', 'correction', 'corrections'],
     'task-request': ['Task request for', 'task request', 'task requests'],
 });
+
+/** The kind whose words an item takes: a saved item of a kind the canvas no longer creates reads as a comment. */
+const wordsKind = (kind) => (Object.prototype.hasOwnProperty.call(KIND_LABELS, kind) ? kind : 'comment');
 
 const ARTIFACT_OF_PHASE = Object.freeze({ research: 'research', plan: 'plan', implement: 'changes', review: 'review' });
 const FILE_LABELS = Object.freeze([['statePath', 'State'], ['research', 'Research'], ['plan', 'Plan'], ['critique', 'Plan critique'], ['changes', 'Changes'], ['review', 'Review']]);
@@ -893,10 +894,8 @@ function itemLines(session, items, start) {
     const rpi = session.source?.kind === 'rpi';
     const lines = [];
     items.forEach((item, index) => {
-        const [lead] = KIND_LABELS[item.kind];
-        const subject = item.kind === 'checklist'
-            ? `${lead} ${PHASE_LABELS[item.phase] ?? 'the session'}`
-            : `${lead} ${item.target ? describeTarget(session, item.target) : 'the session'}`;
+        const [lead] = KIND_LABELS[wordsKind(item.kind)];
+        const subject = `${lead} ${item.target ? describeTarget(session, item.target) : 'the session'}`;
         lines.push(`${start + index}. ${item.id}: ${subject}`);
         if (item.target?.quote) lines.push(`   Quote: "${item.target.quote}"`);
         const decision = item.target?.type === 'decision' ? byId(session.decisions, item.target.id) : null;
@@ -950,7 +949,7 @@ export function composeSessionDelivery(parts, now = new Date().toISOString(), op
     const instanceId = typeof options.canvas?.instanceId === 'string' && options.canvas.instanceId ? options.canvas.instanceId : null;
     const name = handle ? `RPI canvas ${handle}` : 'RPI canvas';
     const counts = new Map();
-    for (const item of all) counts.set(item.kind, (counts.get(item.kind) ?? 0) + 1);
+    for (const item of all) counts.set(wordsKind(item.kind), (counts.get(wordsKind(item.kind)) ?? 0) + 1);
     const tally = listOf([...counts].map(([kind, count]) => `${count} ${KIND_LABELS[kind][count === 1 ? 1 : 2]}`));
     const sent = `${all.length} ${all.length === 1 ? 'item' : 'items'}`;
     const rpi = sections[0].session.source?.kind === 'rpi';
@@ -1022,12 +1021,12 @@ export function feedbackOverview(session, now) {
     const pending = session.feedback
         .filter((item) => item.state === 'queued' && !isClaimed(item, now))
         .map((item) => {
-            const about = item.kind === 'checklist' ? PHASE_LABELS[item.phase] ?? 'the session' : item.target ? describeTarget(session, item.target) : 'the session';
+            const about = item.target ? describeTarget(session, item.target) : 'the session';
             return {
                 id: item.id,
                 kind: item.kind,
                 about,
-                label: `${KIND_LABELS[item.kind][0]} ${about}`,
+                label: `${KIND_LABELS[wordsKind(item.kind)][0]} ${about}`,
                 text: item.kind === 'edit' ? '' : String(item.text ?? ''),
                 optionLabel: item.optionLabel ?? null,
                 phase: item.target?.phase ?? item.phase ?? null,
@@ -1205,91 +1204,6 @@ export function requireSection(session, sectionId) {
         fail('not_found', `No section ${key} exists.`);
     }
     return key;
-}
-
-/**
- * Marks one checklist item Looks good (`ok`) or Needs work, with an optional note for
- * Needs work, or clears it with a `null` verdict. The phase's pending review follows.
- *
- * @param {any} session
- * @param {{ phase: string, itemId: string, verdict: 'ok' | 'needs-work' | null, note?: string }} input
- * @param {string} now
- */
-export function markChecklist(session, input, now) {
-    const phase = oneOf(input?.phase, PHASES, 'phase');
-    const itemId = identifier(input?.itemId, 'itemId');
-    const verdict = input?.verdict === null || input?.verdict === undefined ? null : oneOf(input.verdict, VERDICTS, 'verdict');
-    const note = verdict === 'needs-work' ? text(input?.note, 'note', { optional: true }) : undefined;
-    const list = own(session.checklists, phase) ? session.checklists[phase] : [];
-    if (!byId(list, itemId)) {
-        fail('not_found', `No checklist item ${itemId} exists for ${phase}.`);
-    }
-    return mutate(session, now, (draft) => {
-        const item = byId(draft.checklists[phase], itemId);
-        delete item.checked;
-        if (verdict) item.verdict = verdict;
-        else delete item.verdict;
-        if (note) item.note = note;
-        else delete item.note;
-        syncChecklistReview(draft, phase, now);
-        return clone(item);
-    });
-}
-
-/**
- * What a phase checklist tells the agent, or null when it has nothing to send: the items
- * that need work with their notes, or that every item looks good. Partial Looks good marks
- * only track the person's progress.
- *
- * @param {any[]} list
- * @param {string} phase
- * @returns {{ text: string, digest: string } | null}
- */
-export function checklistReview(list, phase) {
-    const work = list.filter((item) => verdictOf(item) === 'needs-work');
-    const good = list.filter((item) => verdictOf(item) === 'ok');
-    if (list.length === 0 || (work.length === 0 && good.length < list.length)) {
-        return null;
-    }
-    const label = PHASE_LABELS[phase] ?? phase;
-    const lines = work.length === 0
-        ? [`${label} review: all ${list.length} items look good.`]
-        : [
-            `${label} review: ${work.length} of ${list.length} items ${work.length === 1 ? 'needs' : 'need'} work${good.length ? `, and ${good.length} ${good.length === 1 ? 'looks' : 'look'} good` : ''}.`,
-            ...work.map((item) => `Needs work: ${item.label}${item.note ? `. Note: ${item.note}` : ''}`),
-            ...good.map((item) => `Looks good: ${item.label}`),
-        ];
-    const body = lines.join('\n');
-    return { text: body, digest: createHash('sha256').update(body).digest('hex').slice(0, 16) };
-}
-
-/**
- * Keeps the phase's pending review item in step with its checklist: created or updated
- * while the checklist has something new to send, and removed, never having been sent,
- * when it has nothing. An item being delivered is left alone.
- */
-function syncChecklistReview(draft, phase, now) {
-    const review = checklistReview(draft.checklists[phase] ?? [], phase);
-    const pending = draft.feedback.find((item) => item.kind === 'checklist' && item.phase === phase && item.state === 'queued');
-    if (pending && isClaimed(pending, now)) {
-        return;
-    }
-    const lastSent = draft.feedback.findLast((item) => item.kind === 'checklist' && item.phase === phase && ['sent', 'interpreted', 'applied', 'corrected'].includes(item.state));
-    const wanted = review && review.digest !== lastSent?.digest ? review : null;
-    if (!wanted) {
-        if (pending) draft.feedback.splice(draft.feedback.indexOf(pending), 1);
-        return;
-    }
-    if (pending) {
-        pending.text = wanted.text;
-        pending.digest = wanted.digest;
-        pending.updatedAt = now;
-        return;
-    }
-    capFeedback(draft);
-    const item = { id: nextId(draft.feedback, 'FB'), kind: 'checklist', state: 'queued', target: null, phase, text: wanted.text, digest: wanted.digest, createdAt: now, updatedAt: now, history: [] };
-    pushHistory(item, 'queued', 'user', now);
-    draft.feedback.push(item);
 }
 
 /**

@@ -636,9 +636,6 @@ export function stageOf(ctx, item) {
 
 /** What a feedback item is about, as the steering panel and the send dialog name it. */
 function feedbackTarget(ctx, item) {
-    if (item.kind === 'checklist') {
-        return h('span', null, ` for ${PHASE_META[item.phase]?.label ?? 'this phase'}`);
-    }
     if (!item.target) return null;
     const decision = item.target.type === 'decision' ? ctx.data.session.decisions.find((candidate) => candidate.id === item.target.id) : null;
     // A namespaced decision such as plan.D1 shows its artifact ID and phase.
@@ -737,7 +734,7 @@ function feedbackEditor(ctx, where, taskId, item) {
  */
 export function feedbackActions(ctx, where, group, item) {
     const keyOf = (name) => (where === 'dialog' ? `review-${name}-${group.taskId}-${item.id}` : `fb-${name}-${item.id}`);
-    const reachable = item.kind === 'checklist' ? Boolean(item.phase) : Boolean(item.target?.id);
+    const reachable = Boolean(item.target?.id);
     // Another loop's summaries list only unsent items, so they carry no state.
     const unsent = item.state === undefined || (item.state === 'queued' && !isSending(ctx, item));
     const editable = group.shown ? EDITABLE_KINDS.has(item.kind) : item.editable === true;
@@ -746,8 +743,11 @@ export function feedbackActions(ctx, where, group, item) {
     if (reachable) {
         actions.push(button(`Go to ${item.id}`, { iconName: 'go-to', hideLabel: true, title: `Go to what ${item.id} is about${elsewhere}`, attrs: { 'data-key': keyOf('goto') }, onClick: () => ctx.act.goToFeedback(group.taskId, item) }));
     }
-    if (unsent) {
+    // A suggested edit changes in its section's editor; a saved item of a kind the canvas no longer creates has nowhere to change.
+    if (unsent && (editable || item.kind === 'edit')) {
         actions.push(button(`Edit ${item.id}`, { iconName: 'pencil', hideLabel: true, title: editable ? `Change the words of ${item.id}` : `Edit ${item.id} where you made it${elsewhere}`, attrs: { 'data-key': keyOf('edit') }, onClick: () => (editable ? ctx.act.startFeedbackEdit(where, group.taskId, item) : ctx.act.editInPlace(group.taskId, item)) }));
+    }
+    if (unsent) {
         actions.push(confirmButton(ctx, { key: keyOf('discard'), label: `Discard ${item.id}`, armedLabel: `Discard ${item.id}?`, hideLabel: true, onConfirm: () => ctx.act.discardFeedback([{ taskId: group.taskId, id: item.id }]) }));
     }
     return actions;
@@ -791,8 +791,8 @@ function steerSection(id, title, count, content, options = {}) {
 }
 
 /**
- * The steering panel: needs your input, decided by the agent, your feedback, add input, and
- * the phase checklist, always in that order.
+ * The steering panel: needs your input, decided by the agent, your feedback, and add input,
+ * always in that order.
  *
  * @param {any} ctx
  */
@@ -836,7 +836,7 @@ export function steerPanel(ctx) {
     const feedback = h('div', null,
         pending.length
             ? [h('h4', { class: 'group-title', text: `Not sent yet (${pending.length})` }), h('ul', { class: 'fb-list' }, pending.map((item) => feedbackRow(ctx, item, loop)))]
-            : h('p', { class: 'empty', text: agentQueue.length ? 'Nothing waits for you to send. What you queued is below.' : 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you send or queue them with Review and send at the top of the canvas.' }),
+            : h('p', { class: 'empty', text: agentQueue.length ? 'Nothing waits for you to send. What you queued is below.' : 'Nothing waiting to send. Your answers, comments, and suggested edits collect here until you send or queue them with Review and send at the top of the canvas.' }),
         agentQueue.length ? [h('h4', { class: 'group-title', text: `Queued for the agent (${agentQueue.length})` }), h('p', { class: 'meta group-hint', text: 'The agent collects these at its next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn.' }), h('ul', { class: 'fb-list' }, agentQueue.map((item) => feedbackRow(ctx, item, loop)))] : null,
         inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item, loop)))] : null,
         earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Feedback history (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item, loop)))) : null);
@@ -846,7 +846,6 @@ export function steerPanel(ctx) {
         steerSection('decided', 'Recorded decisions', decidedCount, decidedCount ? decided : h('p', { class: 'empty', text: 'No recorded decisions yet.' }), { iconName: 'sparkle' }),
         steerSection('feedback', 'Your feedback', pending.length + agentQueue.length + inFlight.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
-        steerSection('checklist', ctx.ui.phase === 'review' ? 'Review checklist' : `${PHASE_META[ctx.ui.phase]?.label ?? ''} review checklist`, null, checklist(ctx), { iconName: 'checklist' }),
     ].filter(Boolean);
 }
 
@@ -883,54 +882,6 @@ function composer(ctx) {
     h('p', { class: 'meta', text: 'What you add waits in Your feedback until you send or queue it with Review and send.' }));
 }
 
-const PHASE_NOUNS = Object.freeze({ research: 'the research', plan: 'the plan', implement: 'the implementation', review: 'the review', followup: 'the follow-up' });
-
-/** A checklist item's verdict; items saved before verdicts read `checked` as Looks good. */
-const verdictOf = (item) => (item.verdict === 'ok' || item.verdict === 'needs-work' ? item.verdict : item.checked === true ? 'ok' : null);
-
-/**
- * The phase's review checklist: why it exists and what reaches the agent, then each
- * statement with Looks good and Needs work toggles and, for Needs work, a note.
- */
-function checklist(ctx) {
-    const phase = ctx.ui.phase;
-    const items = ctx.data.session.checklists[phase] ?? [];
-    if (!items.length) {
-        return h('p', { class: 'empty', text: 'A checklist appears when this phase has content to review.' });
-    }
-    const reviewed = items.filter((item) => verdictOf(item)).length;
-    const work = items.filter((item) => verdictOf(item) === 'needs-work').length;
-    const review = ctx.data.session.feedback.filter((item) => item.kind === 'checklist' && item.phase === phase);
-    const pending = review.find((item) => item.state === 'queued');
-    const sent = review.findLast((item) => ['sent', 'interpreted', 'applied', 'corrected'].includes(item.state));
-    const status = pending ? 'Your review goes with your next send.' : sent ? 'The agent has your latest review.' : 'Nothing here goes to the agent yet.';
-    return h('div', { class: 'checklist' },
-        h('p', { class: 'checklist-intro', text: `Optional questions for reviewing ${PHASE_NOUNS[phase] ?? 'this phase'}. Mark each one as you read. Items that need work, with your notes, go to the agent with your next send, and so does an all-good list. Other marks only track your progress.` }),
-        h('p', { class: ['checklist-status', pending ? 'is-pending' : null], role: 'status' },
-            icon(pending ? 'send' : 'checklist'),
-            h('span', { text: `${reviewed} of ${items.length} reviewed${work ? `, ${work} ${work === 1 ? 'needs' : 'need'} work` : ''}. ${status}` })),
-        h('ul', { class: 'check-list' }, items.map((item) => checkItem(ctx, phase, item))));
-}
-
-function checkItem(ctx, phase, item) {
-    const verdict = verdictOf(item);
-    const labelId = `check-${phase}-${item.id}`;
-    const noteId = `check-note-${phase}-${item.id}`;
-    // Pressing the selected verdict clears it; the labels never change, so the pressed state carries the meaning.
-    const toggle = (value, iconName, text) => h('button', {
-        type: 'button', class: ['verdict', `is-${value}`], 'aria-pressed': String(verdict === value), dataset: { key: `verdict-${phase}-${item.id}-${value}` },
-        onclick: () => ctx.act.markChecklist(phase, item.id, verdict === value ? null : value, value === 'needs-work' ? item.note ?? '' : undefined),
-    }, icon(iconName), h('span', { text }));
-    return h('li', { class: ['check-item', verdict ? `is-${verdict}` : null] },
-        h('p', { class: 'check-label', id: labelId, text: item.label }),
-        h('div', { class: 'verdicts', role: 'group', 'aria-labelledby': labelId }, toggle('ok', 'check', 'Looks good'), toggle('needs-work', 'flag', 'Needs work')),
-        verdict === 'needs-work'
-            ? h('div', { class: 'check-note' },
-                h('label', { class: 'field-label', for: noteId, text: 'What needs work? (optional)' }),
-                h('textarea', { id: noteId, class: 'note', rows: '2', onchange: (event) => ctx.act.markChecklist(phase, item.id, 'needs-work', event.target.value) }, item.note ?? ''))
-            : null);
-}
-
 /**
  * Content of the Review and send dialog: every loop's unsent items under their loop, each
  * with Go to, Edit, and Discard, then an optional message, the exact text, Send, Discard
@@ -955,8 +906,7 @@ export function reviewSheet(ctx) {
             h('ul', { class: 'send-howto' },
                 h('li', { text: 'Answer a decision the agent asks you, or override one it made.' }),
                 h('li', { text: 'Comment on a row, or suggest an edit to its text.' }),
-                h('li', { text: 'Add context or a research request under Add input.' }),
-                h('li', { text: 'Mark items in the review checklist.' })),
+                h('li', { text: 'Add context or a research request under Add input.' })),
             h('div', { class: 'btn-row' }, button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))];
     }
     const noun = plural(pending.length, 'item');
@@ -1002,7 +952,7 @@ function reviewGroup(ctx, group) {
 function reviewRow(ctx, group, item) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
     const editing = editingHere(ctx, 'dialog', group.taskId, item);
-    const about = group.shown ? feedbackTarget(ctx, item) : item.about ? h('span', null, `${item.kind === 'checklist' ? ' for' : ' about'} ${item.about}`) : null;
+    const about = group.shown ? feedbackTarget(ctx, item) : item.about ? h('span', null, ` about ${item.about}`) : null;
     const lines = item.kind === 'edit' && Number.isFinite(item.section?.added) ? `${plural(item.section.added, 'line')} added, ${item.section.removed} removed` : null;
     return h('li', { class: 'send-item', dataset: { reviewItem: `${group.taskId}:${item.id}` } },
         icon(kind.icon, { className: 'send-item-icon' }),

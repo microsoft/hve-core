@@ -200,7 +200,6 @@ export function buildScenario(stage = 'implement', nowMs = Date.now()) {
         ? copy(review.followUps)
         : { items: [], tree: { ...copy(review.followUps.tree), tasks: copy(review.followUps.tree.tasks.slice(0, 1)).map((task) => ({ ...task, status: 'running' })) } };
 
-    const checklistFor = (phase, list) => copy(list).map((item) => (passed(phase) ? { ...item, checked: true } : item));
     const session = {
         format: SESSION_FORMAT,
         version: SESSION_VERSION,
@@ -244,13 +243,6 @@ export function buildScenario(stage = 'implement', nowMs = Date.now()) {
         decisions,
         feedback: feedbackItems,
         links: [],
-        checklists: {
-            research: checklistFor('research', research.checklist),
-            plan: reached('plan') ? checklistFor('plan', plan.checklist) : [],
-            implement: reached('implement') ? checklistFor('implement', implement.checklist) : [],
-            review: reached('review') ? checklistFor('review', review.checklists.review) : [],
-            followup: reached('followup') ? copy(review.checklists.followup) : [],
-        },
     };
     session.links = LINKS.filter(([from, to]) => findItem(session, from) && findItem(session, to)).map((pair) => [...pair]);
     return validateSession(session);

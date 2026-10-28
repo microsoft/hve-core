@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { checklistFor } from '../checklists.mjs';
-
 // Plan content for the sample scenario.
 
 const task = (id, title, goals, requirements, details, dependencies, references = []) => ({
@@ -149,5 +147,3 @@ for (const phase of phases) {
         sections[item.sectionId] = { title: item.title, markdown: item.details.map((line) => `* ${line}`).join('\n') };
     }
 }
-
-export const checklist = checklistFor('plan');

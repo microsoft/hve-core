@@ -16,7 +16,6 @@ import {
     editFeedback,
     feedbackOverview,
     LIMITS,
-    markChecklist,
     markDelivered,
     releaseDelivery,
     ModelError,
@@ -507,11 +506,6 @@ export function createCanvasServer(deps) {
                 throw Object.assign(new HttpError(409, 'conflict', 'This section changed while you were editing.'), { detail: { section: result.section } });
             }
             return { revision: session.revision, feedbackId: result.feedbackId ?? null, withdrawn: result.withdrawn ?? null, unchanged: result.unchanged === true };
-        },
-
-        'POST /api/checklist': async (body) => {
-            const { session, result } = await userUpdate((current) => markChecklist(current, body, now()));
-            return { revision: session.revision, item: result };
         },
 
         'POST /api/preferences': async (body) => ({ preferences: await store.savePreferences(preferencesPatch(body)) }),

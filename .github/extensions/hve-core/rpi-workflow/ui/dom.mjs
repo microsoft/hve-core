@@ -276,7 +276,6 @@ export const FEEDBACK_KIND = Object.freeze({
     context: { icon: 'info', label: 'Context' },
     'research-request': { icon: 'search', label: 'Research request' },
     edit: { icon: 'pencil', label: 'Suggested edit' },
-    checklist: { icon: 'checklist', label: 'Review checklist' },
     correction: { icon: 'undo', label: 'Correction' },
     'task-request': { icon: 'list', label: 'Task request' },
 });

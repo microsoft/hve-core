@@ -10,7 +10,7 @@ import { after, before, describe, it } from 'node:test';
 import { ACTION_DEFINITIONS, ACTION_GROUPS, createActionHandlers } from '../lib/actions.mjs';
 import { createDelivery } from '../lib/delivery.mjs';
 import { createInstanceRegistry } from '../lib/lifecycle.mjs';
-import { createFeedback, markChecklist, ModelError, queueForAgent, suggestEdit } from '../lib/model.mjs';
+import { createFeedback, ModelError, queueForAgent, suggestEdit } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createStore } from '../lib/store.mjs';
 
@@ -107,15 +107,11 @@ describe('handlers', () => {
         assert.ok(!state.readBackNotApplied.some((item) => item.id === taken.items[0].id));
         assert.equal(await code(call('record_interpretation', { feedbackId: 'FB-999', text: 'x' })), 'not_found');
         await store.update(SCENARIO_ID, (s) => suggestEdit(s, { sectionId: 'research-summary', markdown: 'Shorter summary', baseRevision: s.sections['research-summary'].revision }, new Date().toISOString()), { by: 'user' });
-        await store.update(SCENARIO_ID, (s) => markChecklist(s, { phase: 'research', itemId: 'R5', verdict: 'needs-work', note: 'Name the storage risk.' }, new Date().toISOString()), { by: 'user' });
         const pending = await call('take_feedback', {});
         const edit = pending.items.find((item) => item.kind === 'edit');
         assert.equal(edit.section.markdown, 'Shorter summary');
         assert.match(edit.section.diff, /\+Shorter summary/);
         assert.equal(edit.section.revision, (await store.load(SCENARIO_ID)).sections['research-summary'].revision, 'the section itself is unchanged');
-        const review = pending.items.find((item) => item.kind === 'checklist');
-        assert.equal(review.phase, 'research');
-        assert.match(review.text, /Needs work: The open risks are acceptable\. Note: Name the storage risk\./);
         store.close();
     });
 

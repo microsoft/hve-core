@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
-import { createFeedback, markChecklist, recordActivity, suggestEdit, transitionFeedback, upsertDecision, validateSession } from '../lib/model.mjs';
+import { createFeedback, recordActivity, suggestEdit, transitionFeedback, upsertDecision, validateSession } from '../lib/model.mjs';
 import {
     alignmentOf,
     assembleSession,
@@ -209,7 +209,6 @@ describe('merging a re-import', () => {
     it('keeps what the person added in the canvas', () => {
         let stored = rootSession().session;
         stored = createFeedback(stored, { kind: 'comment', text: 'Mine', target: { id: 'F1', type: 'finding', phase: 'research' } }, NOW).session;
-        stored = markChecklist(stored, { phase: 'research', itemId: 'R1', verdict: 'needs-work', note: 'Say which region first.' }, NOW).session;
         stored = recordActivity(stored, { text: 'Reading the plan' }, NOW).session;
         stored = upsertDecision(stored, { owner: 'user', phase: 'plan', title: 'Ship the coast first?', question: 'Which region?', options: [{ label: 'Coast' }, { label: 'Park' }] }, NOW).session;
         const asked = stored.decisions.at(-1);
@@ -219,21 +218,19 @@ describe('merging a re-import', () => {
         assert.notEqual(merged, stored);
         assert.equal(merged.revision, stored.revision + 1);
         assert.deepEqual(merged.feedback, stored.feedback);
-        const r1 = merged.checklists.research.find((item) => item.id === 'R1');
-        assert.equal(r1.verdict, 'needs-work');
-        assert.equal(r1.note, 'Say which region first.');
-        assert.equal(r1.label, 'The bottom line is clear');
         assert.equal(merged.implementation.activity.length, 1);
         assert.ok(merged.decisions.some((decision) => decision.id === 'D3'));
         assert.deepEqual(merged.scenario, { userChanges: 2 });
         assert.match(merged.sections['research-unknowns'].markdown, /Vendor licenses/);
     });
 
-    it('carries verdicts saved before verdicts existed onto the current checklist labels', () => {
-        const fresh = rootSession().session;
-        const stored = { ...fresh, checklists: { ...fresh.checklists, research: fresh.checklists.research.map((item) => (item.id === 'R2' ? { id: 'R2', label: 'Old wording', checked: true } : item)) } };
-        const merged = mergeImport(stored, withResearch(RESEARCH.replace('Tile licenses limit', 'Vendor licenses limit')), LATER);
-        assert.deepEqual(merged.checklists.research.find((item) => item.id === 'R2'), { id: 'R2', label: "Each finding's evidence is convincing", verdict: 'ok' });
+    it('drops the checklists a session saved before the canvas stopped keeping them', () => {
+        const stored = { ...rootSession().session, checklists: { research: [{ id: 'R1', label: 'Old wording', verdict: 'needs-work', note: 'Old note' }] } };
+        const merged = mergeImport(stored, rootSession().session, LATER);
+        assert.notEqual(merged, stored, 'the first import after the change writes once');
+        assert.equal(merged.revision, stored.revision + 1);
+        assert.equal(merged.checklists, undefined);
+        assert.equal(mergeImport(merged, rootSession().session, LATER), merged, 'and then writes nothing');
     });
 
     it('never changes section text for a suggestion, and lets the file replace text edited before suggestions', () => {

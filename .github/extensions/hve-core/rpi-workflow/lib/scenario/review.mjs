@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { checklistFor } from '../checklists.mjs';
-
 // Review and follow-up content for the sample scenario. `minutes` values are offsets before now.
 
 export const review = {
@@ -107,5 +105,3 @@ export const sections = {
         markdown: 'The task is complete with four required findings routed to a child loop that is running now. Three optional follow-ups wait for your selection; none blocks acceptance.',
     },
 };
-
-export const checklists = { review: checklistFor('review'), followup: checklistFor('followup') };

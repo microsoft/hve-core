@@ -8,7 +8,6 @@ import {
     agentEditSection,
     artifactFor,
     buildTraces,
-    checklistReview,
     claimDelivery,
     composeDelivery,
     composeSessionDelivery,
@@ -20,7 +19,6 @@ import {
     feedbackOverview,
     findItem,
     LIMITS,
-    markChecklist,
     markDelivered,
     ModelError,
     pendingSuggestion,
@@ -424,39 +422,24 @@ describe('decisions, tasks, and session', () => {
         assert.equal(code(() => updateSession(base(), { activePhase: 'deploy' }, NOW)), 'invalid_input');
     });
 
-    it('keeps one pending review per phase in step with its verdicts', () => {
-        const s0 = base();
-        assert.equal(s0.checklists.research.find((i) => i.id === 'R1').verdict, 'ok', 'the sample starts with R1 and R2 marked Looks good');
-        let s = markChecklist(s0, { phase: 'research', itemId: 'R3', verdict: 'ok' }, NOW).session;
-        assert.equal(s.feedback.filter((item) => item.kind === 'checklist').length, 0, 'partial Looks good marks stay private');
-        s = markChecklist(s, { phase: 'research', itemId: 'R4', verdict: 'needs-work', note: 'D2 should keep both photos.' }, NOW).session;
-        let pending = s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued');
-        assert.equal(pending.length, 1);
-        assert.equal(pending[0].phase, 'research');
-        assert.match(pending[0].text, /^Research review: 1 of 6 items needs work, and 3 look good\.\nNeeds work: The decisions match what I want\. Note: D2 should keep both photos\.\nLooks good: The bottom line is clear/);
-        s = markChecklist(s, { phase: 'research', itemId: 'R2', verdict: 'needs-work' }, NOW).session;
-        pending = s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued');
-        assert.equal(pending.length, 1, 'the same pending item is updated');
-        assert.match(pending[0].text, /2 of 6 items need work/);
-        s = markChecklist(s, { phase: 'research', itemId: 'R2', verdict: 'ok', note: 'ignored' }, NOW).session;
-        assert.equal(s.checklists.research.find((i) => i.id === 'R2').note, undefined, 'a note goes with Needs work only');
-        s = markChecklist(s, { phase: 'research', itemId: 'R4', verdict: null }, NOW).session;
-        assert.equal(s.feedback.filter((item) => item.kind === 'checklist').length, 0, 'nothing to send removes the unsent item');
-        for (const id of ['R4', 'R5', 'R6']) s = markChecklist(s, { phase: 'research', itemId: id, verdict: 'ok' }, NOW).session;
-        pending = s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued');
-        assert.equal(pending[0].text, 'Research review: all 6 items look good.');
-        s = markDelivered(s, [pending[0].id], 'send', NOW).session;
-        s = markChecklist(s, { phase: 'research', itemId: 'R6', verdict: null }, NOW).session;
-        s = markChecklist(s, { phase: 'research', itemId: 'R6', verdict: 'ok' }, NOW).session;
-        assert.equal(s.feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued').length, 0, 'a review equal to the one already sent is not sent again');
-        assert.equal(code(() => markChecklist(s, { phase: 'research', itemId: 'R9', verdict: 'ok' }, NOW)), 'not_found');
-        assert.equal(code(() => markChecklist(s, { phase: 'research', itemId: 'R1', verdict: 'yes' }, NOW)), 'invalid_input');
+    it('loads a saved session that still holds checklists, and creates no checklist items', () => {
+        const saved = { ...base(), checklists: { research: [{ id: 'R1', label: 'An old statement', verdict: 'ok' }] } };
+        assert.equal(validateSession(saved), saved, 'a session saved with checklists still loads');
+        assert.equal(base().checklists, undefined, 'new sessions carry no checklists');
+        assert.equal(code(() => createFeedback(base(), { kind: 'checklist', text: 'x' }, NOW)), 'invalid_input');
     });
 
-    it('reads checklists saved before verdicts', () => {
-        const legacy = [{ id: 'R1', label: 'A', checked: true }, { id: 'R2', label: 'B', checked: true }];
-        assert.equal(checklistReview(legacy, 'research').text, 'Research review: all 2 items look good.');
-        assert.equal(checklistReview([{ id: 'R1', label: 'A', checked: false }, { id: 'R2', label: 'B', checked: true }], 'research'), null);
+    it('words and sends a saved item of a kind the canvas no longer creates as a comment', () => {
+        const canvas = { handle: '3WF0', instanceId: 'rpi-workflow-demo' };
+        let s = createFeedback(base(), { kind: 'comment', target: { id: 'F1' }, text: 'A comment' }, NOW).session;
+        const comment = s.feedback.at(-1).id;
+        const legacy = { id: 'FB-090', kind: 'checklist', state: 'queued', target: null, phase: 'research', text: 'Research review: all 6 items look good.', createdAt: NOW, updatedAt: NOW, history: [] };
+        s = { ...s, feedback: [...s.feedback, legacy] };
+        const sent = composeDelivery(s, [comment, legacy.id], NOW, { canvas });
+        assert.match(sent.prompt, /\n\d+\. FB-090: Comment on the session\n/);
+        assert.equal(sent.displayPrompt, 'RPI canvas 3WF0 sent 2 items: 2 comments.', 'counted with the comments, not as its own kind');
+        const entry = feedbackOverview(s, NOW).pending.find((item) => item.id === legacy.id);
+        assert.equal(entry.label, 'Comment on the session');
     });
 });
 

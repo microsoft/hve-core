@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { checklistFor } from '../checklists.mjs';
-
 // Research content for the sample scenario. Repository paths are fictional; external
 // claims cite public pages verified when the scenario was written.
 
@@ -144,5 +142,3 @@ export const sections = {
     'finding-f6': { title: 'Service worker background sync cannot replace the outbox', markdown: 'Background sync would let changes upload after the tab closes, but about a third of inspectors use iOS Safari, where it is not available. The outbox has to work in the page either way.' },
     'finding-f7': { title: 'Inspectors may want a manual Sync now on metered connections', markdown: 'A few support tickets ask for control over when photos upload on metered connections. This is a hypothesis from a small sample, not a requirement yet.' },
 };
-
-export const checklist = checklistFor('research', ['R1', 'R2']);

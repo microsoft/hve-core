@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
-import { agentEditSection, claimDelivery, createFeedback, markChecklist, markDelivered, markPickedUp, queueForAgent, recordInterpretation, suggestEdit, takeFeedback, transitionFeedback } from '../lib/model.mjs';
+import { agentEditSection, claimDelivery, createFeedback, markDelivered, markPickedUp, queueForAgent, recordInterpretation, suggestEdit, takeFeedback, transitionFeedback } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { elements, installFakeDom, serialize } from './helpers/fake-dom.mjs';
 import { rootSession } from './helpers/rpi-fixture.mjs';
@@ -51,7 +51,7 @@ describe('steering panel', () => {
     it('explains how to add input when nothing waits', () => {
         const { session } = rootSession();
         const out = textOf(html(components.steerPanel(makeContext(session, 'research'))));
-        assert.match(out, /Nothing waiting to send\. Your answers, comments, suggested edits, and checklist reviews collect here until you send or queue them with Review and send at the top of the canvas\./);
+        assert.match(out, /Nothing waiting to send\. Your answers, comments, and suggested edits collect here until you send or queue them with Review and send at the top of the canvas\./);
     });
 });
 
@@ -142,27 +142,20 @@ describe('suggested edits', () => {
     });
 });
 
-describe('review checklist', () => {
-    it('explains what reaches the agent and takes verdicts with fixed labels', () => {
-        const session = sample();
+describe('steering panel without a checklist', () => {
+    it('ends with Add input, and shows a saved checklist item as a comment', () => {
+        const legacy = { id: 'FB-090', kind: 'checklist', state: 'queued', target: null, phase: 'research', text: 'Research review: all 6 items look good.', createdAt: NOW, updatedAt: NOW, history: [] };
+        const base = sample();
+        const session = { ...base, feedback: [...base.feedback, legacy] };
         const steer = components.steerPanel(makeContext(session, 'research'));
         const out = html(steer);
-        assert.match(textOf(out), /Optional questions for reviewing the research\. Mark each one as you read\. Items that need work, with your notes, go to the agent with your next send, and so does an all-good list\. Other marks only track your progress\./);
-        assert.match(textOf(out), /2 of 6 reviewed\. Nothing here goes to the agent yet\./);
-        assert.equal((out.match(/aria-pressed="true"/g) ?? []).length, 2);
-        const okToggle = keyed(steer, 'verdict-research-R1-ok');
-        assert.equal(okToggle.getAttribute('aria-pressed'), 'true');
-        assert.match(serialize(okToggle), /Looks good/);
-        assert.equal(keyed(steer, 'verdict-research-R1-needs-work').getAttribute('aria-pressed'), 'false');
-        assert.doesNotMatch(out, /What needs work\?/);
-    });
-
-    it('opens a note for Needs work and says the review goes with the next send', () => {
-        const session = markChecklist(sample(), { phase: 'research', itemId: 'R3', verdict: 'needs-work', note: 'Add a native app option.' }, NOW).session;
-        const out = html(components.steerPanel(makeContext(session, 'research')));
-        assert.match(textOf(out), /3 of 6 reviewed, 1 needs work\. Your review goes with your next send\./);
-        assert.match(out, /<label class="field-label" for="check-note-research-R3">What needs work\? \(optional\)<\/label><textarea id="check-note-research-R3"[^>]*>Add a native app option\.<\/textarea>/);
-        assert.match(out, /role="group" aria-labelledby="check-research-R3"/);
+        const sections = [...out.matchAll(/<h3 class="steer-title" id="steer-([a-z]+)"/g)].map((match) => match[1]);
+        assert.equal(sections.at(-1), 'add', 'Add input is the last section');
+        assert.ok(!sections.includes('checklist'));
+        assert.doesNotMatch(out, /data-key="verdict-/);
+        assert.match(textOf(out), /Comment Not sent Discard FB-090 Research review: all 6 items look good\./, 'shown as a comment');
+        assert.ok(keyed(steer, 'fb-discard-FB-090'));
+        assert.equal(keyed(steer, 'fb-edit-FB-090'), null, 'no Edit, since it has nowhere to change');
     });
 });
 
@@ -170,7 +163,6 @@ describe('send dialog', () => {
     it('lists each item with Go to, Edit, and Discard, the canvas handle, a message field, and the exact text', () => {
         let session = createFeedback(sample(), { kind: 'comment', text: 'Please compare quotas.', target: { id: 'F1' } }, NOW).session;
         session = withSuggestion(session).session;
-        session = markChecklist(session, { phase: 'research', itemId: 'R3', verdict: 'needs-work' }, NOW).session;
         const pending = components.pendingItems(makeContext(session, 'research'));
         const ui = initialUi('research');
         ui.send = { note: 'Start with F1.', preview: { prompt: 'EXACT PROMPT TEXT', displayPrompt: 'x', ids: pending.map((item) => item.id), digest: 'd' }, previewNote: 'Start with F1.', sending: false, error: null };
@@ -184,7 +176,6 @@ describe('send dialog', () => {
         assert.match(out, /<code class="canvas-handle">K7QF<\/code>/);
         assert.match(textOf(out), /Send now gives them to the agent at its next step, even mid-task, as one chat message that starts with “RPI canvas K7QF”\./);
         assert.match(textOf(out), /Queue keeps them here until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn\. You can take them back until then\./);
-        assert.match(textOf(out), /Review checklist for Research/);
         assert.match(textOf(out), /Suggested edit to Summary in Research/);
         assert.match(textOf(out), /Comment about F1 \(Research\)/, 'a row about a plain ID names its phase, as other loops\' rows do');
         assert.doesNotMatch(textOf(out), /in Research \(Research\)|for Research \(Research\)/, 'no row names its phase twice');

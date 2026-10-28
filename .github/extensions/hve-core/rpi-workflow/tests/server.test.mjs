@@ -80,7 +80,7 @@ describe('request guards', () => {
         const sectionSize = await request(url, { method: 'POST', pathname: '/api/suggestion', body: { sectionId: 'research-summary', markdown: 'y'.repeat(30000), baseRevision: 1 } });
         assert.equal(sectionSize.status, 200);
         assert.equal((await request(url, { method: 'POST', pathname: '/api/section', body: {} })).status, 404, 'edits are suggestions now');
-        assert.equal((await request(url, { method: 'POST', pathname: '/api/checklist/share', body: { phase: 'research' } })).status, 404, 'reviews go with Review and send');
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/checklist', body: { phase: 'research', itemId: 'R1', verdict: 'ok' } })).status, 404, 'the review checklist is gone');
         assert.equal((await request(url, { pathname: '/ui/secret.mjs' })).status, 404);
         assert.equal((await request(url, { method: 'DELETE', pathname: '/api/state' })).status, 405);
         assert.equal((await request(url, { pathname: '/api/nope' })).status, 404);
@@ -135,21 +135,6 @@ describe('page routes', () => {
         assert.equal(stale.json.error.section.markdown, 'Agent text');
         const missing = await request(url, { method: 'POST', pathname: '/api/suggestion', body: { sectionId: 'nope', markdown: 'x', baseRevision: 1 } });
         assert.equal(missing.status, 404);
-        await server.stop();
-        store.close();
-    });
-
-    it('marks checklist items and keeps the pending review in step', async () => {
-        const { server, url, store, session } = await setup('checklist');
-        const marked = await request(url, { method: 'POST', pathname: '/api/checklist', body: { phase: 'research', itemId: 'R3', verdict: 'needs-work', note: 'Add a native-app option.' } });
-        assert.equal(marked.status, 200);
-        assert.equal(marked.json.item.verdict, 'needs-work');
-        const pending = (await store.load(session.id)).feedback.filter((item) => item.kind === 'checklist' && item.state === 'queued');
-        assert.equal(pending.length, 1);
-        assert.match(pending[0].text, /Note: Add a native-app option\./);
-        assert.equal((await request(url, { method: 'POST', pathname: '/api/checklist', body: { phase: 'research', itemId: 'R3', verdict: null } })).status, 200);
-        assert.equal((await store.load(session.id)).feedback.filter((item) => item.kind === 'checklist').length, 0);
-        assert.equal((await request(url, { method: 'POST', pathname: '/api/checklist', body: { phase: 'research', itemId: 'R3', verdict: 'maybe' } })).status, 400);
         await server.stop();
         store.close();
     });
@@ -610,7 +595,7 @@ describe('a canvas that shows no session', () => {
         assert.equal(state.status, 200);
         assert.deepEqual([state.json.connected, state.json.notConnected, state.json.canvas.handle, state.json.session],
             [false, { reason: 'missing-session', detail: MISSING, request: REQUEST, canAsk: true }, '3WF0', undefined]);
-        for (const [method, pathname, body] of [['POST', '/api/feedback', { kind: 'comment', text: 'x' }], ['POST', '/api/delivery/preview', {}], ['POST', '/api/checklist', { phase: 'research', itemId: 'x', mark: 'good' }]]) {
+        for (const [method, pathname, body] of [['POST', '/api/feedback', { kind: 'comment', text: 'x' }], ['POST', '/api/delivery/preview', {}]]) {
             const refused = await request(url, { method, pathname, body });
             assert.deepEqual([refused.status, refused.json.error.code], [409, 'not_connected'], pathname);
         }

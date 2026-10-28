@@ -3093,113 +3093,6 @@ details > summary:hover {
   background: transparent;
 }
 
-.checklist {
-  display: grid;
-  gap: 8px;
-}
-
-.checklist-intro {
-  color: var(--rw-fg-muted);
-  font: var(--rw-t-meta);
-}
-
-.checklist-status {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 6px 8px;
-  border: 1px solid var(--rw-border-muted);
-  border-radius: var(--rw-radius);
-  background: var(--rw-bg);
-  font: var(--rw-t-meta);
-}
-
-.checklist-status > .icon {
-  flex: none;
-  margin-top: 1px;
-  color: var(--rw-fg-muted);
-}
-
-.checklist-status.is-pending {
-  border-color: color-mix(in srgb, var(--rw-accent) 45%, var(--rw-border));
-  background: color-mix(in srgb, var(--rw-accent) 8%, var(--rw-bg));
-}
-
-.checklist-status.is-pending > .icon {
-  color: var(--rw-accent);
-}
-
-.check-list {
-  display: grid;
-  list-style: none;
-}
-
-.check-item {
-  display: grid;
-  gap: 6px;
-  padding: 8px 0;
-  border-top: 1px solid var(--rw-border-muted);
-}
-
-.check-item:first-child {
-  border-top: 0;
-}
-
-.check-label {
-  font: 500 13px/19px var(--rw-font);
-}
-
-.verdicts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.verdict {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: var(--rw-control);
-  padding: 0 9px;
-  border: 1px solid var(--rw-border-control);
-  border-radius: 999px;
-  background: var(--rw-bg);
-  color: var(--rw-fg-muted);
-  font: 500 12.5px/18px var(--rw-font);
-}
-
-.verdict:hover {
-  background: var(--rw-bg-hover);
-  color: var(--rw-fg);
-}
-
-.verdict.is-ok[aria-pressed="true"] {
-  border-color: var(--rw-success);
-  background: color-mix(in srgb, var(--rw-success) 14%, var(--rw-bg));
-  color: var(--rw-fg);
-  font-weight: 600;
-}
-
-.verdict.is-ok[aria-pressed="true"] > .icon {
-  color: var(--rw-success);
-}
-
-.verdict.is-needs-work[aria-pressed="true"] {
-  border-color: var(--rw-attention);
-  background: color-mix(in srgb, var(--rw-attention) 16%, var(--rw-bg));
-  color: var(--rw-fg);
-  font-weight: 600;
-}
-
-.verdict.is-needs-work[aria-pressed="true"] > .icon {
-  color: var(--rw-attention);
-}
-
-.check-note {
-  display: grid;
-  gap: 4px;
-}
-
 /* Review and send dialog */
 
 .send-sheet {
@@ -5559,12 +5452,10 @@ kbd {
   .file-btn,
   .edit-tab,
   .rail-tab,
-  .send-btn,
-  .verdict {
+  .send-btn {
     border: 1px solid ButtonText;
   }
 
-  .verdict[aria-pressed="true"],
   .send-btn.has-items {
     forced-color-adjust: none;
     border: 2px solid Highlight;
@@ -5572,7 +5463,6 @@ kbd {
     color: HighlightText;
   }
 
-  .verdict[aria-pressed="true"] .icon,
   .send-btn.has-items .icon {
     color: HighlightText;
   }
@@ -5582,7 +5472,6 @@ kbd {
   }
 
   .suggestion,
-  .checklist-status,
   .send-list {
     border: 1px solid CanvasText;
   }
