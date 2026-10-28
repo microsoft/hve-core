@@ -109,12 +109,15 @@ Persist one JSON object with these stable fields:
 * `mode`: `manual`, `automatic`, or `null`; `active_phase`: `Research`, `Plan`, `Implement`, `Review`, `Follow-up`, or `null`; `status`: `active`, `blocked`, `completed`, or `null`
 * `session_status`: `running`, `stopped`, or `null`; keep it distinct from the task `status`, so a completed automatic task can have a running session
 * `artifact_paths`: an object keyed by `research`, `plan`, `critique`, `changes`, and `review`, each containing a workspace-relative string path or `null`
+* `documents`: an object with the same keys, each listing every workspace-relative document of that kind in creation order, newest last, or an empty array before the first exists
 * `confirmed_decisions`: `null` when unavailable; otherwise an array of objects with string-or-null `decision`, `status`, and `evidence`
 * `blockers`: `null` when unavailable; otherwise an array of objects with string-or-null `id`, `summary`, and `resolution`
 * `next_action`: `null` or an object with string-or-null `phase` and `action`
 * `prioritized_follow_ups`: `null` when unavailable; otherwise an array of objects with integer `rank`, string-or-null `task`, `rationale`, and `evidence`
 
 Use empty arrays only for known-empty collections. Use `null` for unavailable values, report missing recovery-critical values as blockers, and never substitute placeholder identity or paths.
+
+When a phase skill returns a new document path, append it to that kind's `documents` list and set `artifact_paths` to it, so `artifact_paths` always names the newest document of each kind.
 
 This illustrative state, at `.copilot-tracking/rpi-sessions/2026-10-20/report-export/report-export-csv-state.json`, belongs to a child loop in Implement; the field definitions govern.
 
@@ -139,6 +142,13 @@ This illustrative state, at `.copilot-tracking/rpi-sessions/2026-10-20/report-ex
     "critique": null,
     "changes": ".copilot-tracking/changes/2026-10-21/report-export-csv-changes.md",
     "review": null
+  },
+  "documents": {
+    "research": [".copilot-tracking/research/2026-10-21/report-export-csv-research.md"],
+    "plan": [".copilot-tracking/plans/2026-10-21/report-export-csv-plan.md"],
+    "critique": [],
+    "changes": [".copilot-tracking/changes/2026-10-21/report-export-csv-changes.md"],
+    "review": []
   },
   "confirmed_decisions": [
     { "decision": "Automatic progression boundary", "status": "through-review", "evidence": "User request 2026-10-20" }
