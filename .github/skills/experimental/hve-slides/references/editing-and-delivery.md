@@ -6,11 +6,10 @@ description: 'Source ownership, new-deck adaptation and local HTML delivery for 
 
 ## Read the Working Reference
 
-The current implementation is under `slides/hve-updates/`. Read its
-[README](../../../../slides/hve-updates/README.md) and the files relevant to the change.
-These paths identify the implementation inspected when this skill was created; if they
-move or disappear, locate the equivalent within the current repository or report the gap.
-Do not search a previous user's home directory for a replacement.
+Read the selected deck's README and files relevant to the change. In an HVE Core checkout,
+`slides/hve-updates/` is an additional working reference; it is not an installed dependency.
+For other workspaces, use the selected deck and the bundled starter rather than searching
+for a checkout or a previous user's home directory. Report missing required source.
 
 | Source                                           | Owns                                                                             |
 |--------------------------------------------------|----------------------------------------------------------------------------------|
@@ -56,7 +55,7 @@ Choose an unused lower-kebab-case directory under `slides/`. If it already exist
 it and resolve whether the user wants an update; do not overwrite it as a scaffold.
 
 Use the create-only script described in [templates.md](templates.md). It copies the
-declared files from `templates/deck/`, sets the title and package name, and leaves a
+declared files from this skill's `templates/deck/`, sets the title and package name, and leaves a
 self-contained source directory. The neutral starter has no mandatory RPI mounts or
 plugin installation content. It does not copy dependencies or generated output.
 

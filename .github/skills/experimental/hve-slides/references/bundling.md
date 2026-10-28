@@ -9,7 +9,7 @@ Use the maintained modules as the implementation source:
 [bundle.mjs](../templates/deck/bundle.mjs) and
 [deck.test.cjs](../templates/deck/deck.test.cjs).
 Read them before copying; the examples below explain their current interfaces.
-Code examples are Microsoft code under the [MIT license](../../../../LICENSE);
+Code examples are Microsoft code under the [MIT license](../templates/deck/LICENSE);
 prose is CC BY 4.0.
 
 ## Pipeline Architecture
@@ -43,6 +43,12 @@ The bundler is a build-time Node module, not a browser script or server.
 `dependencyRoot` defaults to the parent of the build output, which is the deck directory
 whose `node_modules/reveal.js` the build copied. Pass it only when a test copies the build
 output somewhere without that dependency tree.
+
+This skill's portable `scripts/render-deck.mjs` CLI uses these same trusted modules with explicit
+`deckDir`, build `output` and `dependencyRoot` options to `buildDeck`, plus an explicit
+standalone `output` for `bundleDeck` or `checkBundle`. It never imports an authored build
+program. Existing deck wrappers retain their default repository output. Both paths reject
+symbolic-link ancestors and nonregular inputs and stage final writes before replacement.
 
 ## Create the Modules for a New Deck
 
@@ -282,7 +288,7 @@ Rebuild after source updates and commit the resulting `docs/slides/<deck-slug>.h
 with those updates. Do not hand-edit the generated bundle. Existing ignored files
 from an older `dist/` output are not the shareable artifact.
 
-The Docusaurus build stages these files as static assets under `/slides/`, preserving
+In an HVE Core checkout, the Docusaurus build stages these files as static assets under `/slides/`, preserving
 their bytes. Its Slides page uses base-path-aware native links so each deck opens as
 standalone HTML rather than an MDX or client-side application route.
 The bundler embeds the `title` and `description` from `deck.json` in one

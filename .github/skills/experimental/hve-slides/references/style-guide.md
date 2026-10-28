@@ -6,13 +6,13 @@ description: 'Visual system for HVE Core HTML decks: tokens, type roles, the sli
 # Style Guide
 
 Every HVE deck shares one visual system: a token set, a type scale, a slide skeleton and a
-small set of components built on them. [HVE Updates](../../../../slides/hve-updates/README.md)
-implements all of it and is the deck to compare against. [Design and examples](design-and-examples.md)
+small set of components built on them. The bundled starter implements the shared treatment;
+`slides/hve-updates/` is an additional example in HVE Core checkouts. [Design and examples](design-and-examples.md)
 explains when to use a layout and [styling recipes](style-recipes.md) show adaptable code.
 This guide sets the values and rules both of them assume.
 
 Prose here is CC BY 4.0. Code examples are Microsoft code under the
-[MIT license](../../../../LICENSE).
+[MIT license](../templates/deck/LICENSE).
 
 ## Visual Character
 
@@ -213,6 +213,6 @@ nothing to report leaves the band empty, and its title stays in the same place.
 
 Apply the parts in this order: tokens, background, skeleton, components, then the deck's
 tests. The [deck starter](../templates/deck/README.md) already follows the guide.
-[RPI with HVE Core](../../../../slides/rpi-with-hve/README.md) and
-[RAI Planner](../../../../slides/rai-planner/README.md) draw the glow on the viewport but keep
+The optional HVE Core checkout examples `slides/rpi-with-hve/` and
+`slides/rai-planner/` draw the glow on the viewport but keep
 their eyebrow labels until their next restyle.

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,7 +12,7 @@ import { createDeck } from '../scripts/create-deck.mjs';
 import { createRequire } from 'node:module';
 
 const skillDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { loadSlideBundles } = createRequire(import.meta.url)('../../../../docs/docusaurus/scripts/slide-bundles.cjs');
+const { loadSlideBundles } = createRequire(import.meta.url)('../../../../../docs/docusaurus/scripts/slide-bundles.cjs');
 
 async function workspace(t) {
   const root = await mkdtemp(path.join(tmpdir(), 'hve-slide-build-test-'));
@@ -145,9 +145,9 @@ test('preserves a deck failure and stops before later decks', async t => {
   assert.deepEqual(await readdir(later), ['bundle.mjs']);
 });
 
-test('CLI locates decks beside its repository, reports failures and accepts only help', async t => {
+test('CLI locates decks in its caller workspace and reports failures for unsupported inputs', async t => {
   const root = await workspace(t);
-  const scripts = path.join(root, '.github/skills/hve-slides/scripts');
+  const scripts = path.join(root, '.github/skills/experimental/hve-slides/scripts');
   await mkdir(scripts, { recursive: true });
   const script = path.join(scripts, 'build-decks.mjs');
   await copyFile(path.join(skillDirectory, 'scripts/build-decks.mjs'), script);
@@ -161,7 +161,7 @@ test('CLI locates decks beside its repository, reports failures and accepts only
       return fileURLToPath(output);
     }
   `);
-  const run = (...args) => spawnSync(process.execPath, [script, ...args], { cwd: tmpdir(), encoding: 'utf8' });
+  const run = (...args) => spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8' });
   const success = run();
   assert.equal(success.status, 0, success.stderr);
   assert.ok(success.stdout.includes(path.join(root, 'docs/slides/cli-demo.html')));
@@ -169,7 +169,7 @@ test('CLI locates decks beside its repository, reports failures and accepts only
   assert.equal(run('--help').status, 0);
   const unknown = run('--install');
   assert.equal(unknown.status, 1);
-  assert.match(unknown.stderr, /Only --check or --help is supported/);
+  assert.match(unknown.stderr, /Only --check, --repo-root or --help is supported/);
   const missingCheck = run('--check');
   assert.equal(missingCheck.status, 1);
   assert.match(missingCheck.stderr, /must export a checkBundle function/);

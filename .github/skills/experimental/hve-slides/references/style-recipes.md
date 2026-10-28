@@ -7,7 +7,7 @@ description: 'Adaptable CSS architecture, slide layouts and component-data examp
 
 Use these patterns selectively. They illustrate the existing design guidance; they do not
 replace the deck shell, its navigation or the user's chosen visual direction. Code examples
-are Microsoft code under the [MIT license](../../../../LICENSE); prose is CC BY 4.0.
+are Microsoft code under the [MIT license](../templates/deck/LICENSE); prose is CC BY 4.0.
 
 The [starter and fragment guide](templates.md) provides these patterns as files that can
 be copied selectively. Its generic `DeckContent`/`DeckComponents` globals differ from the
@@ -67,7 +67,7 @@ on a 1600-pixel-wide slide remains 18 pixels on a smaller screen.
 
 To bring an older deck into line with the shared
 [bottom chrome](design-and-examples.md#bottom-chrome), port the starter's rules from
-`templates/deck/theme.css`, `index.html` and `deck.js` instead of restyling them by hand.
+this skill's `templates/deck/theme.css`, `index.html` and `deck.js` instead of restyling them by hand.
 These excerpts show only the parts that keep the treatment consistent.
 
 The presenter bar names the deck and the current chapter before its controls:
@@ -258,9 +258,9 @@ Keep keyboard focus visible:
 
 ## Diagrams and Changes Views
 
-Use the implementation patterns already present in
-[content.js](../../../../slides/hve-updates/content.js) and
-[components.js](../../../../slides/hve-updates/components.js):
+When updating HVE Updates in an HVE Core checkout, use the implementation patterns
+in that deck's `content.js` and `components.js`. For other decks, adapt the following
+principles to the selected data/renderer contract without requiring that exemplar:
 
 * Declare nodes and edges once. Let `mermaidSource` and the constrained diagram preview
   consume the same graph. Keep source/preview parity when adding or renaming nodes.
@@ -275,8 +275,8 @@ or general-purpose Mermaid interpreter.
 
 ## Source References
 
-* [Reference theme](../../../../slides/hve-updates/theme.css) and
-  [component styles](../../../../slides/hve-updates/components.css): current maintained implementation.
+* [Starter theme](../templates/deck/theme.css) and
+  [component styles](../templates/deck/components.css): packaged shared implementation.
 * [CSS Grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout):
   track sizing and layout concepts.
 * [VS Code source](https://github.com/microsoft/vscode): verify current UI structure before

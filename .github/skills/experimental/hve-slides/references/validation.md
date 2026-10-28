@@ -34,6 +34,10 @@ checks and screenshot inspection answer different questions.
 
 ## Generated HTML and CodeQL
 
+The following repository aliases and CI integration apply to HVE Core checkouts. In other
+workspaces, use the selected deck's checks or render-only `--check`; do not assume the
+HVE Core workflows, Docusaurus site or root package scripts are installed with this skill.
+
 Run `npm run slides:check` before changing or publishing the generated HTML. It rebuilds
 ignored intermediate assets, compares every bundle with its current source, and fails
 on missing, stale, or orphaned HTML without rewriting the committed bundles. Regenerate
@@ -41,7 +45,7 @@ with `npm run slides:build` when the source changes.
 
 CodeQL analyzes generated HTML in its own category. The authored-source categories ignore
 `docs/slides/*.html` so embedded third-party code does not mix with first-party results.
-A separate job scans the committed bundles with `.github/codeql/generated-slides.yml` under
+A separate job scans the committed bundles with the repository's generated-slides CodeQL configuration under
 `/language:javascript-typescript/generated-slides`, which covers the inlined, patched
 reveal.js that recipients actually run. Both analyses run only after the source-to-bundle
 check passes in a separate job, so generated intermediates do not enter the scan workspace.

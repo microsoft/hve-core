@@ -1,9 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildDeck } from './build.mjs';
+import { buildDeck, readRegularFile, writeOutput } from './build.mjs';
 
 const stylesheetTag = /<link rel="stylesheet" href="([^"]+)">/g;
 const scriptTag = /(?:^[ \t]*)?<script defer src="([^"]+)"><\/script>/gm;
@@ -64,11 +63,11 @@ export function neutralizeRevealSinks(js, revealVersion) {
 }
 
 export async function readRevealVersion(dependencyRoot) {
-  const manifest = JSON.parse(await readFile(path.join(dependencyRoot, 'package.json'), 'utf8'));
+  const manifest = JSON.parse(await readRegularFile(path.join(dependencyRoot, 'package.json')));
   const pinned = manifest.dependencies?.['reveal.js'];
   let installed;
   try {
-    installed = JSON.parse(await readFile(path.join(dependencyRoot, 'node_modules/reveal.js/package.json'), 'utf8')).version;
+    installed = JSON.parse(await readRegularFile(path.join(dependencyRoot, 'node_modules/reveal.js/package.json'))).version;
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     throw new Error(`reveal.js is missing. Run npm ci in ${dependencyRoot} before bundling.`, { cause: error });
@@ -167,9 +166,9 @@ export function createStandaloneHtml(html, assets, license, metadata, { revealVe
   return document.replace(/<\/body>/i, () => `${notices}\n${catalog}${provenance}${scripts.join('\n')}\n</body>`);
 }
 
-async function renderBundle(build, dependencyRoot) {
+async function renderBundle(build, dependencyRoot, destinationOverride) {
   const output = await build();
-  const html = await readFile(path.join(output, 'index.html'), 'utf8');
+  const html = await readRegularFile(path.join(output, 'index.html'));
   const paths = new Set([
     ...[...html.matchAll(stylesheetTag)].map(match => match[1]),
     ...[...html.matchAll(scriptTag)].map(match => match[1])
@@ -177,30 +176,31 @@ async function renderBundle(build, dependencyRoot) {
   if (!paths.has(revealAsset)) throw new Error(`The deck must load reveal.js from ${revealAsset} so the bundler can apply its security patch.`);
   const assets = new Map(await Promise.all([...paths].map(async source => [
     source,
-    await readFile(path.join(output, localAssetPath(source)), 'utf8')
+    await readRegularFile(path.join(output, localAssetPath(source)))
   ])));
-  const license = await readFile(path.join(output, 'vendor/reveal-LICENSE.txt'), 'utf8');
-  const metadata = JSON.parse(await readFile(path.join(output, 'deck.json'), 'utf8'));
+  const license = await readRegularFile(path.join(output, 'vendor/reveal-LICENSE.txt'));
+  const metadata = JSON.parse(await readRegularFile(path.join(output, 'deck.json')));
   const deckDirectory = path.dirname(output);
   const revealVersion = await readRevealVersion(dependencyRoot ?? deckDirectory);
   const standalone = createStandaloneHtml(html, assets, license, metadata, { revealVersion });
   const destinationDirectory = path.resolve(deckDirectory, '../../docs/slides');
-  const destination = path.join(destinationDirectory, `${path.basename(deckDirectory)}.html`);
+  const destination = destinationOverride === undefined
+    ? path.join(destinationDirectory, `${path.basename(deckDirectory)}.html`)
+    : path.resolve(destinationOverride);
   return { destination, standalone };
 }
 
-export async function bundleDeck({ build = buildDeck, dependencyRoot } = {}) {
-  const { destination, standalone } = await renderBundle(build, dependencyRoot);
-  await mkdir(path.dirname(destination), { recursive: true });
-  await writeFile(destination, standalone, 'utf8');
+export async function bundleDeck({ build = buildDeck, dependencyRoot, output } = {}) {
+  const { destination, standalone } = await renderBundle(build, dependencyRoot, output);
+  await writeOutput(destination, standalone);
   return destination;
 }
 
-export async function checkBundle({ build = buildDeck, dependencyRoot } = {}) {
-  const { destination, standalone } = await renderBundle(build, dependencyRoot);
+export async function checkBundle({ build = buildDeck, dependencyRoot, output } = {}) {
+  const { destination, standalone } = await renderBundle(build, dependencyRoot, output);
   let actual;
   try {
-    actual = await readFile(destination, 'utf8');
+    actual = await readRegularFile(destination);
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     throw new Error(`Generated bundle is missing: ${destination}. Run npm run slides:build.`, { cause: error });

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -131,18 +131,20 @@ test('parses only the documented CLI inputs', () => {
   }
 });
 
-test('CLI resolves its repository from its location, not the caller working directory', async t => {
+test('CLI uses its explicit workspace rather than its installation location', async t => {
   const root = await workspace(t);
-  const fixtureSkill = path.join(root, '.github/skills/hve-slides');
+  const fixtureSkill = path.join(root, '.github/skills/experimental/hve-slides');
   const actualSkill = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const fixtureTemplate = path.join(fixtureSkill, 'templates/deck');
+  const actualTemplate = path.join(actualSkill, 'templates/deck');
   await mkdir(path.join(fixtureSkill, 'scripts'), { recursive: true });
-  await mkdir(path.join(fixtureSkill, 'templates/deck'), { recursive: true });
+  await mkdir(fixtureTemplate, { recursive: true });
   await copyFile(path.join(actualSkill, 'scripts/create-deck.mjs'), path.join(fixtureSkill, 'scripts/create-deck.mjs'));
   for (const file of templateFiles) {
-    await copyFile(path.join(actualSkill, 'templates/deck', file), path.join(fixtureSkill, 'templates/deck', file));
+    await copyFile(path.join(actualTemplate, file), path.join(fixtureTemplate, file));
   }
   const output = execFileSync(process.execPath, [
-    path.join(fixtureSkill, 'scripts/create-deck.mjs'), '--slug', 'cli-demo', '--title', 'CLI example'
+    path.join(fixtureSkill, 'scripts/create-deck.mjs'), '--repo-root', root, '--slug', 'cli-demo', '--title', 'CLI example'
   ], { cwd: tmpdir(), encoding: 'utf8' });
   assert.ok(output.includes(path.join(root, 'slides/cli-demo')));
   assert.match(output, /Open docs\/slides\/cli-demo\.html after building/);
@@ -152,6 +154,6 @@ test('CLI resolves its repository from its location, not the caller working dire
 
 test('HVE Updates delegates to the same standalone HTML transformation', async () => {
   const canonical = await import('../templates/deck/bundle.mjs');
-  const existing = await import('../../../../slides/hve-updates/bundle.mjs');
+  const existing = await import('../../../../../slides/hve-updates/bundle.mjs');
   assert.equal(existing.createStandaloneHtml, canonical.createStandaloneHtml);
 });

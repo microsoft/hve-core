@@ -44,8 +44,8 @@ Separate headings from their examples more than labels from their values.
 
 ### Bottom Chrome
 
-HVE decks share one treatment for the bottom of the screen. The starter implements it, and
-[RPI with HVE Core](../../../../slides/rpi-with-hve/README.md) shows it in a finished talk:
+HVE decks share one treatment for the bottom of the screen. The starter implements it;
+`slides/rpi-with-hve/` is an optional finished-talk example in HVE Core checkouts:
 
 * The presenter bar is a dark band close to the canvas tone. It starts with the HVE Core
   mark and current chapter, then the utility buttons, then slide navigation. Its ends stay

@@ -26,7 +26,7 @@ site build. Its links open the HTML directly, preserving the presentation contro
 The page displays the `title` and `description` from `deck.json`. Bundling embeds
 these fields as inert JSON in the HTML; adding or renaming a catalog entry requires
 only source metadata edits and a rebuild, not hand-editing the HTML or site.
-From the repository root, `npm run slides:check` verifies that every committed bundle
+In HVE Core checkouts, `npm run slides:check` from the root verifies that every committed bundle
 matches source without rewriting it. The template exports `checkBundle()` for this check.
 Pull request validation runs this deck's tests when any of its files change. When
 Dependabot updates reveal.js here, rebuild and commit the bundle on that branch.
@@ -129,7 +129,8 @@ note, example and embedded source string. Do not include credentials or private 
 
 ## Template maintenance
 
-This deck was created from the repository-only HVE Slides starter. Its files are local
+This deck was created from the shared HVE Slides starter, used by the same skill's
+authoring and render-only modes in repository and installed workflows. Its files are local
 copies, not runtime imports from another deck. Adapt them deliberately; do not overwrite
 an existing deck with a newer template.
 

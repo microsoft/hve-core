@@ -54,6 +54,12 @@ Skills whose shipped scripts make network requests, handle credentials, parse co
 | **session-log-canvas-update** (repository only) | Local Node.js CLI; installed or operator-named session event schema parsing; operator-selected `--indexer` module import; one fixed baseline write                | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/session-log-canvas-update/SECURITY.md)          |
 | **hve-demo-material** (experimental)            | GitHub REST and Pages client with `GITHUB_TOKEN`; deck and video render writes; `node`, `npm`, `ffmpeg`, `git` subprocesses                                       | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/SECURITY.md)     |
 
+HVE Slides uses one packaged skill for authoring and render-only delivery:
+
+| Skill | Runtime surface | Security model |
+|-------|-----------------|----------------|
+| hve-slides (experimental) | Caller-owned scaffolding, trusted workspace Node builds and standalone HTML rendering | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-slides/SECURITY.md) |
+
 ## Security Posture
 
 HVE Core is an enterprise prompt engineering framework that:

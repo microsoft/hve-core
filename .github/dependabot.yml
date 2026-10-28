@@ -11,7 +11,7 @@ updates:
   # starter's lockfile. A deck update changes its embedded library, so rebuild
   # that deck's bundle with `npm run slides:build` before merging.
   - /slides/*
-  - /.github/skills/hve-slides/templates/deck
+  - /.github/skills/experimental/hve-slides/templates/deck
   groups:
     npm-dependencies:
       patterns:

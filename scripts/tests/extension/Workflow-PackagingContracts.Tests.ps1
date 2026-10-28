@@ -2757,13 +2757,13 @@ Describe 'Node test discovery and selection for Copilot extensions' -Tag 'Unit' 
 
     It 'Does not select the canvas update skill lane for <Path>' -ForEach @(
         @{ Path = '.github/skills/session-log-canvas-update-extra/SKILL.md' }
-        @{ Path = '.github/skills/hve-slides/scripts/build-decks.mjs' }
+        @{ Path = '.github/skills/experimental/hve-slides/scripts/build-decks.mjs' }
     ) {
         $Path | Should -Not -Match $script:CanvasUpdatePattern
     }
 
     It 'Keeps the slide deck branch and the JS-family default' {
-        $script:NodeSelection | Should -Match ([regex]::Escape("startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory)"))
+        $script:NodeSelection | Should -Match ([regex]::Escape("startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory)"))
         $script:NodeSelection | Should -Match "\|\| '' \}\}$"
     }
 }

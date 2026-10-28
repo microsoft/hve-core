@@ -1,14 +1,18 @@
-// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { lstat, readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
-const defaultRepoRoot = path.resolve(scriptDirectory, '../../../..');
 
-export async function buildAllDecks({ repoRoot = defaultRepoRoot, check = false } = {}) {
+export async function buildAllDecks({ repoRoot = process.cwd(), check = false } = {}) {
   const root = await realpath(repoRoot);
+  const installation = await realpath(path.resolve(scriptDirectory, '..'));
+  const relative = path.relative(installation, root);
+  if (relative === '' || (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`))) {
+    throw new Error('The workspace root must be outside the skill installation. Use --repo-root with a trusted workspace.');
+  }
   const slides = path.join(root, 'slides');
   const parent = await lstat(slides);
   if (!parent.isDirectory() || parent.isSymbolicLink()) {
@@ -56,11 +60,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     const args = process.argv.slice(2);
     if (args.length === 1 && args[0] === '--help') {
-      console.log('Usage: npm run slides:build | npm run slides:check\nBundles every deck under slides/ into docs/slides/<deck-name>.html. --check verifies committed HTML without rewriting it. Does not install, serve or publish.');
+      console.log('Usage: node <loaded-skill-root>/scripts/build-decks.mjs [--repo-root <workspace>] [--check]\nRuns trusted deck programs under slides/ and writes docs/slides/<deck-name>.html. Defaults to the current working directory. --check compares existing HTML. Does not install, serve or publish.');
     } else {
-      const check = args.length === 1 && args[0] === '--check';
-      if (args.length && !check) throw new Error('Only --check or --help is supported.');
-      const outputs = await buildAllDecks({ check });
+      const options = {};
+      for (let index = 0; index < args.length; index += 1) {
+        const option = args[index];
+        if (option === '--check' && !Object.hasOwn(options, 'check')) options.check = true;
+        else if (option === '--repo-root' && !Object.hasOwn(options, 'repoRoot')) {
+          const value = args[++index];
+          if (!value || value.startsWith('--')) throw new Error('Missing value for --repo-root.');
+          options.repoRoot = value;
+        } else throw new Error('Only --check, --repo-root or --help is supported; options must not repeat.');
+      }
+      const check = options.check === true;
+      const outputs = await buildAllDecks(options);
       for (const output of outputs) console.log(`${check ? 'Checked' : 'Built'} ${output}`);
       console.log(`${check ? 'Checked' : 'Bundled'} ${outputs.length} deck(s).`);
     }

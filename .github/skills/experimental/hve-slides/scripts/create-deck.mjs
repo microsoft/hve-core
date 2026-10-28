@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { constants } from 'node:fs';
 import { lstat, mkdir, open, realpath, writeFile } from 'node:fs/promises';
@@ -7,7 +7,6 @@ import { fileURLToPath } from 'node:url';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const templateDirectory = path.resolve(scriptDirectory, '../templates/deck');
-const defaultRepoRoot = path.resolve(scriptDirectory, '../../../..');
 export const templateFiles = Object.freeze([
   '.gitignore', '.npmrc', 'LICENSE', 'README.md', 'package.json', 'package-lock.json',
   'deck.json', 'index.html', 'theme.css', 'components.css', 'content.js',
@@ -43,8 +42,8 @@ export function parseArguments(args) {
   const values = {};
   for (let index = 0; index < args.length; index += 2) {
     const option = args[index];
-    if (!['--slug', '--title'].includes(option)) throw new Error(`Unknown option: ${option}`);
-    const key = option.slice(2);
+    if (!['--slug', '--title', '--repo-root'].includes(option)) throw new Error(`Unknown option: ${option}`);
+    const key = option === '--repo-root' ? 'repoRoot' : option.slice(2);
     if (Object.hasOwn(values, key)) throw new Error(`Repeated option: ${option}`);
     if (!args[index + 1] || args[index + 1].startsWith('--')) throw new Error(`Missing value for ${option}`);
     values[key] = args[index + 1];
@@ -53,7 +52,7 @@ export function parseArguments(args) {
   return values;
 }
 
-export async function createDeck({ slug, title, repoRoot = defaultRepoRoot }) {
+export async function createDeck({ slug, title, repoRoot = process.cwd() }) {
   if (typeof slug !== 'string' || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(slug)
     || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/.test(slug)) {
     throw new Error('Use a portable lower-kebab-case slug, without paths or reserved device names.');
@@ -62,6 +61,11 @@ export async function createDeck({ slug, title, repoRoot = defaultRepoRoot }) {
     throw new Error('Use a nonempty single-line title.');
   }
   const root = await realpath(repoRoot);
+  const installation = await realpath(path.resolve(scriptDirectory, '..'));
+  const relative = path.relative(installation, root);
+  if (relative === '' || (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`))) {
+    throw new Error('The workspace root must be outside the skill installation. Use --repo-root with a caller-owned workspace.');
+  }
   const slides = path.join(root, 'slides');
   const destination = path.join(slides, slug);
   const parent = await inspect(slides);
@@ -100,10 +104,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     const args = parseArguments(process.argv.slice(2));
     if (args.help) {
-      console.log('Usage: node .github/skills/hve-slides/scripts/create-deck.mjs --slug contributor-tour --title "Contributor tour"\nCreates a new slides/<slug> directory. Does not install, serve or publish.');
+      console.log('Usage: node <loaded-skill-root>/scripts/create-deck.mjs [--repo-root <workspace>] --slug contributor-tour --title "Contributor tour"\nCreates slides/<slug> under the explicit workspace or current working directory. Does not install, serve or publish.');
     } else {
       const destination = await createDeck(args);
-      console.log(`Created ${destination}\nNext: npm ci --prefix slides/${args.slug}\nThen: npm run bundle --prefix slides/${args.slug}\nOpen docs/slides/${args.slug}.html after building. Replace the starter content before presenting.`);
+      console.log(`Created ${destination}\nFrom ${path.dirname(path.dirname(destination))}:\nNext: npm ci --prefix slides/${args.slug}\nThen: npm run bundle --prefix slides/${args.slug}\nOpen docs/slides/${args.slug}.html after building. Replace the starter content before presenting.`);
     }
   } catch (error) {
     console.error(error.message);

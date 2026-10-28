@@ -15,7 +15,7 @@ scripts, a pinned lockfile and Node tests. It also carries the shared
 mark and chapter, a divided slide footer and a framed walkthrough with its step controls
 in the frame footer.
 
-From the repository root:
+In an HVE Core checkout, run the repository alias from its root:
 
 ```bash
 npm run slides:create -- --slug contributor-tour --title "Contributor tour"
@@ -26,8 +26,9 @@ The [scaffold script](../scripts/create-deck.mjs) copies a fixed list of templat
 It rejects invalid slugs, existing files/directories and symbolic-link destinations.
 It also rejects a symbolic-link `slides/` parent. It never overwrites an existing deck,
 executes package commands, installs a browser, starts a server or publishes anything.
-The npm alias calls `node .github/skills/hve-slides/scripts/create-deck.mjs`; direct
-Node invocation supports the same flags and does not depend on the caller's directory.
+Installed callers invoke `node <loaded-skill-root>/scripts/create-deck.mjs` with the same
+flags and optional `--repo-root <workspace>`. The default is the current working directory,
+never the installation's ancestor. Workspace roots inside the skill are rejected.
 
 Template reads validate and consume the same open file handle. A replacement detected
 between opening and validation fails; a later path replacement cannot redirect the read.
@@ -60,7 +61,12 @@ does not inherit HVE history, a snack theme, plugin instructions or an RPI Agent
 
 ## Build All Decks
 
-After restoring each deck's dependencies, run from the repository root:
+This operation imports and executes workspace-authored `bundle.mjs` programs. Use it only
+in a trusted workspace, never for untrusted imported source; use this skill's render-only
+mode for that case. Installed callers invoke `node <loaded-skill-root>/scripts/build-decks.mjs`
+with `--repo-root <workspace>` or from the workspace root. Installation roots are rejected.
+
+In an HVE Core checkout, after restoring each deck's dependencies, run from the repository root:
 
 ```bash
 npm run slides:build
@@ -78,7 +84,7 @@ under `slides/`, including existing bundles, are ignored during deck discovery.
 Symbolic links and missing or incompatible bundlers
 fail explicitly. The command stops on the first failure, leaving any earlier
 successful outputs in place. It never installs dependencies, starts a server or
-publishes. The template under this skill is not included in discovery.
+publishes. The shared renderer's template is not included in discovery.
 
 Commit the regenerated single-file HTML with the deck source updates. Keep each
 deck's intermediate `dist/` directory and `node_modules/` ignored.
@@ -86,7 +92,7 @@ Run `npm run slides:check` to verify the committed bundles without rewriting the
 This calls each module's exported `checkBundle()` function, rebuilds ignored intermediate
 assets, and rejects missing, stale, or orphaned HTML. Older copied bundlers need the
 current `checkBundle()` export before they can participate in this verification.
-The Docusaurus site discovers the committed HTML files for its Slides page. Run
+In HVE Core, the Docusaurus site discovers the committed HTML files for its Slides page. Run
 `npm run docs:build` after bundling to refresh the site; no deck dependencies are
 needed for a site-only build. After adding or removing a bundle during local site
 development, restart the site so the static files and catalog are refreshed.
@@ -129,7 +135,7 @@ Preserve its RPI guidance, current examples and unrelated edits.
 
 ## Template Maintenance and Checks
 
-The canonical bundler lives in `templates/deck/bundle.mjs`. New decks copy it. HVE Updates
+The canonical bundler lives in this skill's `templates/deck/bundle.mjs`. New decks copy it. HVE Updates
 has a thin wrapper passing its own build function, so there is no second maintained parser.
 Keep imported modules free of build side effects. Do not introduce cross-deck browser
 imports, automatic template upgrades or an overwrite option to the scaffold script.
@@ -141,11 +147,12 @@ mark, desynchronizes the bar height or moves walkthrough controls out of their f
 that deck's tests.
 
 The skill's `scripts/` and `tests/` are maintenance tooling, not copied into a new deck.
-Run the bounded checks after changing the starter, scaffold script or build-all script:
+For maintenance in an HVE Core checkout, run the bounded checks after changing the
+starter, scaffold script or build-all script, subject to the caller's execution permissions:
 
 ```bash
 npm run test:slides
-npm test --prefix .github/skills/hve-slides/templates/deck
+npm test --prefix <loaded-skill-root>/templates/deck
 npm test --prefix slides/hve-updates
 ```
 
