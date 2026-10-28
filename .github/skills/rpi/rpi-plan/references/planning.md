@@ -16,6 +16,8 @@ Use one date and one lower-kebab-case task slug across the task's durable artifa
 
 The research, changes, and review paths belong to their respective RPI stages. Planning creates or revises only the plan and critique artifacts unless a justified research activation is required. A follow-up critique adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`, so earlier critiques stay intact.
 
+A plan for a new request in a session that already has one is the next numbered plan, such as `{{task_slug}}-plan-2.md`, so earlier plans stay intact. Its phase, task, decision, `FR-`, and `NFR-` IDs continue from the earlier plans, so every ID stays unique in the session, and its research citations may name any of the session's research documents. Return the new path so the parent can list it.
+
 ## Artifact audience and order
 
 The plan is the user-facing source of truth, implementation handoff, and downstream checklist. A reader should understand what will change and how the work is sequenced before reaching supporting detail, so the sections appear in this order:
