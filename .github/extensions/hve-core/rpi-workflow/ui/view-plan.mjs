@@ -112,7 +112,7 @@ export function taskBlock(ctx, task, index, siblings, options = {}) {
             changes.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Changes' }), changes.map((change) => idChip(change.id, ctx.act.navigate))) : null,
             discoveries.length ? h('p', { class: 'chip-row' }, h('span', { class: 'meta', text: 'Discoveries' }), discoveries.map((item) => idChip(item.id, ctx.act.navigate))) : null,
             options.implement ? traceStrip(ctx, task.id) : null,
-            h('div', { class: 'btn-row' },
+            ctx.readOnly ? null : h('div', { class: 'btn-row' },
                 options.implement && task.status === 'todo' ? button('Ask the agent to do this next', { iconName: 'arrow-up', onClick: () => ctx.act.requestTask(task.id, `Work on ${task.id} next.`) }) : null,
                 options.implement && task.status !== 'done' ? button('Ask the agent to skip it', { iconName: 'dash-circle', onClick: () => ctx.act.requestTask(task.id, `Skip ${task.id} for now and record why.`) }) : null,
                 button('Suggest an edit', { iconName: 'pencil', onClick: () => ctx.act.startEdit(task.sectionId) }),

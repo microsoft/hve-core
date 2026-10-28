@@ -9,7 +9,7 @@ import { editorButton, evidenceSource } from './source-view.mjs';
 
 /** Rows whose margins render decision cards, by phase. */
 const DECISION_MARGIN_ROWS = Object.freeze({
-    research: /^F\d{1,2}$/,
+    research: /^F\d{1,3}$/,
     plan: /^P\d{2}(?:-T\d{2})?$/,
     implement: /^DS-\d{3}$/,
     review: /^RV-\d{3}$/,
@@ -83,7 +83,8 @@ export function artifactDir(ctx, doc) {
 }
 
 /** Feedback notes anchored to any of these rows, except dismissed ones. */
-export const notesFor = (ctx, rowIds) => ctx.data.session.feedback.filter((item) => item.target && rowIds.includes(item.target.id) && ['comment', 'context', 'research-request', 'correction', 'task-request'].includes(item.kind) && item.state !== 'dismissed');
+// An earlier document is read-only: its row IDs can repeat the newest document's, so no notes show on it.
+export const notesFor = (ctx, rowIds) => (ctx.readOnly ? [] : ctx.data.session.feedback).filter((item) => item.target && rowIds.includes(item.target.id) && ['comment', 'context', 'research-request', 'correction', 'task-request'].includes(item.kind) && item.state !== 'dismissed');
 
 const slug = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 
@@ -166,6 +167,7 @@ export function row(ctx, spec) {
 /** Row actions, shown while the row is hovered or holds focus: Suggest an edit, Comment, and optional Research this. */
 export function rowActions(ctx, { sectionId, rowId, research = false, ask = false }) {
     const items = [];
+    if (ctx.readOnly) return items;
     if (sectionId && ctx.data.session.sections[sectionId]) {
         items.push(button('Suggest an edit', { iconName: 'pencil', hideLabel: true, onClick: () => ctx.act.startEdit(sectionId), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'e' : undefined, 'data-key': `edit-section-${rowId}` } }));
     }
@@ -245,10 +247,10 @@ export function sectionBody(ctx, sectionId) {
     if (!section) {
         return null;
     }
-    if (ctx.ui.editing?.sectionId === sectionId) {
+    if (!ctx.readOnly && ctx.ui.editing?.sectionId === sectionId) {
         return editor(ctx, section);
     }
-    const suggestions = openSuggestions(ctx, sectionId);
+    const suggestions = ctx.readOnly ? [] : openSuggestions(ctx, sectionId);
     const body = h('div', { class: 'prose' }, md(ctx, section.markdown, undefined, artifactDir(ctx, section.doc)));
     return suggestions.length ? h('div', { class: 'section-with-suggestions' }, body, suggestions.map((item) => suggestionCallout(ctx, section, item))) : body;
 }
@@ -447,6 +449,15 @@ export function decisionCard(ctx, decision) {
     const parts = [head, owner];
     const evidence = evidenceChips(ctx, `dec-${decision.id}`, decision.evidence);
     const submitKey = `submit-${decision.id}`;
+    // In an earlier document, a decision shows what was decided, without answering or overriding.
+    if (ctx.readOnly) {
+        parts.push(
+            decision.question && decision.question !== decision.title ? h('p', { class: 'card-question', text: decision.question }) : null,
+            chosen ? h('p', { class: 'resolved-line' }, icon('check', { className: 'tone-success-fg' }), h('span', null, 'Chosen: ', h('strong', { text: chosen.label }))) : null,
+            decision.rationale ? h('p', null, mdInline(ctx, decision.rationale, { doc: decision.phase })) : null,
+            evidence);
+        return withLabel(h('article', { class: ['card', 'decision', `is-${decision.status}`], id: `card-${decision.id}`, dataset: { item: decision.id }, tabindex: '-1' }, parts.filter(Boolean)), decision);
+    }
 
     if (decision.status === 'needs-input') {
         const name = `decision-${decision.id}`;

@@ -34,6 +34,7 @@ const DISPOSITION = {
 /** Research lanes, including research you requested that the agent has not started. */
 export function lanesCard(ctx, filter) {
     const { session } = ctx.data;
+    if (ctx.readOnly) return null;
     const lanes = session.research.lanes.filter((lane) => !filter || lane.findingId === filter);
     const startedFrom = new Set(lanes.map((lane) => lane.origin).filter(Boolean));
     const requested = session.feedback.filter((item) => item.kind === 'research-request' && ['queued', 'sent'].includes(item.state) && !startedFrom.has(item.id) && (!filter || item.target?.id === filter));

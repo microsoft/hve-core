@@ -40,7 +40,8 @@ function positionOf(scope, selector, block) {
  */
 export function anchorAt(element) {
     const text = element?.closest?.('.row-text');
-    if (!text || element.closest(EXCLUDED)) return null;
+    // An earlier document is read-only, so nothing in it can be commented on.
+    if (!text || element.closest(EXCLUDED) || element.closest('[data-readonly="true"]')) return null;
     const row = text.closest('[data-row]');
     if (!row?.dataset.row) return null;
     const block = element.closest('tbody tr') ?? element.closest('li') ?? element.closest('p, h3, h4, h5, h6, blockquote, pre');

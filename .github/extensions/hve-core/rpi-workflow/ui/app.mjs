@@ -57,6 +57,7 @@ const state = {
         corrections: new Map(),
         overrides: new Set(),
         revealed: new Set(),
+        docs: { research: null, plan: null },
         diagramView: 'after',
         diagramPhase: null,
         recordOpen: false,
@@ -162,10 +163,68 @@ function renderStatus() {
 /** The ID a reference means in the viewed phase: a bare `D#` names that phase's decision first. */
 const aliasOf = (id) => decisionAlias(state.data?.session, id, state.ui.phase);
 
+/** Kinds with earlier documents the canvas can show, and their names. */
+const DOCUMENT_KINDS = Object.freeze({ research: 'Research', plan: 'Plan' });
+
+/** A kind's documents, oldest first; the last is the newest. */
+const documentsOf = (kind) => state.data?.session.documents?.[kind] ?? [];
+
+/** The earlier document of a kind the reader chose, or null while the newest shows. */
+function shownEarlier(kind) {
+    const n = state.ui.docs?.[kind] ?? null;
+    if (!n) return null;
+    return documentsOf(kind).find((doc) => doc.n === n && !doc.newest && doc.snapshot) ?? null;
+}
+
+/** The session as it reads with an earlier document of a kind in place of the newest. */
+function withDocument(session, kind, doc) {
+    const { snapshot } = doc;
+    return {
+        ...session,
+        [kind]: kind === 'research' ? { ...snapshot.research, lanes: [] } : snapshot.plan,
+        sections: { ...Object.fromEntries(Object.entries(session.sections).filter(([, section]) => section.doc !== kind)), ...snapshot.sections },
+        decisions: [...session.decisions.filter((decision) => decision.phase !== kind), ...snapshot.decisions],
+        phases: { ...session.phases, [kind]: { ...session.phases[kind], artifact: doc.path, updatedAt: doc.updatedAt ?? session.phases[kind].updatedAt } },
+    };
+}
+
+/** An item in an earlier document's snapshot: its research or plan, its decisions, or its sections. */
+function findIn(part, id) {
+    const pools = [part.research?.questions, part.research?.findings, part.research?.evidence, part.decisions, part.plan?.requirements, part.plan?.critique?.findings].filter(Boolean);
+    for (const pool of pools) {
+        const found = pool.find((item) => item?.id === id);
+        if (found) return found;
+    }
+    for (const phase of part.plan?.phases ?? []) {
+        if (phase.id === id) return phase;
+        const task = phase.tasks.find((entry) => entry.id === id);
+        if (task) return task;
+    }
+    return part.sections && Object.prototype.hasOwnProperty.call(part.sections, id) ? part.sections[id] : null;
+}
+
+/** The newest earlier document holding an ID, as `{ kind, doc, item }`. */
+function inEarlier(id) {
+    for (const kind of Object.keys(DOCUMENT_KINDS)) {
+        for (const doc of [...documentsOf(kind)].reverse()) {
+            if (doc.newest || !doc.snapshot) continue;
+            const item = findIn(doc.snapshot, id);
+            if (item) return { kind, doc, item };
+        }
+    }
+    return null;
+}
+
+/** An item by ID: in the newest documents and the canvas's own data first, then in earlier documents. */
 function find(ref) {
     const session = state.data?.session;
     if (!session || typeof ref !== 'string') return null;
     const id = aliasOf(ref);
+    return findCurrent(session, id) ?? inEarlier(id)?.item ?? null;
+}
+
+/** An item in the session's newest documents and the canvas's own data. */
+function findCurrent(session, id) {
     const pools = [session.research.questions, session.research.findings, session.research.evidence, session.research.lanes, session.decisions, session.plan.requirements, session.plan.critique?.findings ?? [], session.implementation.changes, session.implementation.discoveries, session.implementation.alignment, session.review.findings, session.review.history, session.followUps.items, session.feedback];
     for (const pool of pools) {
         const found = pool.find((item) => item?.id === id);
@@ -183,7 +242,10 @@ function resolve(ref) {
     const item = find(ref);
     if (!item) return null;
     const id = aliasOf(ref);
-    if (/^[QFCWL]\d{1,2}$/.test(id)) return { phase: 'research' };
+    // An ID only an earlier document holds lives in that document, in its kind's phase.
+    const earlier = findCurrent(state.data.session, id) ? null : inEarlier(id);
+    if (earlier) return { phase: earlier.kind, doc: earlier.doc.n };
+    if (/^[QFCWL]\d{1,3}$/.test(id)) return { phase: 'research' };
     if (/^(?:plan\.)?D\d{1,3}$/.test(id)) return hasMarginHome(context(), item) ? { phase: item.anchor.phase } : { phase: state.ui.phase };
     if (/^P\d{2}(-T\d{2})?$/.test(id)) return { phase: state.ui.phase === 'implement' ? 'implement' : 'plan' };
     if (/^(FR|NFR|PC)-\d{3}$/.test(id)) return { phase: 'plan' };
@@ -276,6 +338,14 @@ function navigate(ref, phaseOverride, options = {}) {
     const target = resolve(id);
     const phase = phaseOverride ?? target?.phase ?? state.ui.phase;
     if (!options.agent && phase !== agentPhase()) stopFollowing();
+    // An ID only an earlier document holds shows that document; any other ID shows the newest.
+    if (DOCUMENT_KINDS[phase] && (target?.doc ?? null) !== (state.ui.docs[phase] ?? null)) {
+        if (target?.doc) {
+            if (!options.agent) stopFollowing();
+            announce(`${ref} is in ${DOCUMENT_KINDS[phase].toLowerCase()} ${target.doc}; showing it.`);
+        }
+        state.ui.docs[phase] = target?.doc ?? null;
+    }
     const from = here();
     const label = kindOf(id) ? find(id)?.ref ?? ref : find(id)?.title ?? ref;
     remember(from, from && { ...from, phase, id, label });
@@ -405,6 +475,8 @@ const taskUi = () => ({
     corrections: new Map(),
     overrides: new Set(),
     revealed: new Set(),
+    // The earlier research document or plan shown instead of the newest, by number; null shows the newest.
+    docs: { research: null, plan: null },
     place: null,
     diagramView: 'after',
     diagramPhase: null,
@@ -554,6 +626,7 @@ function stopFollowing() {
 /** Follows the agent again: its running loop, then the phase it works in. */
 async function startFollowing() {
     state.following = true;
+    state.ui.docs = { research: null, plan: null };
     renderLive();
     if (state.ui.phase) setHash();
     try {
@@ -686,6 +759,26 @@ const act = {
         // An answer or override in the user's words is ready once it has text.
         const submit = document.querySelector(`[data-key="submit-${CSS.escape(id)}"][data-needs-text="true"]`);
         if (submit) submit.disabled = !draft.note?.trim();
+    },
+    /** Shows a kind's document by number: an earlier one read-only, or the newest. Choosing an earlier one stops following. */
+    showDocument(kind, n) {
+        const docs = documentsOf(kind);
+        const doc = docs.find((entry) => entry.n === n);
+        if (!doc) return;
+        const name = DOCUMENT_KINDS[kind].toLowerCase();
+        if (!doc.newest && !doc.snapshot) {
+            reportFailure(`${DOCUMENT_KINDS[kind]} ${n} could not be read; the problems list says why.`);
+            return;
+        }
+        if (!doc.newest) stopFollowing();
+        previews?.closeAll();
+        state.ui.docs[kind] = doc.newest ? null : n;
+        state.ui.highlight = null;
+        state.ui.place = null;
+        if (state.ui.phase !== kind) setPhase(kind);
+        else render();
+        $('document').scrollTop = 0;
+        announce(doc.newest ? `Showing ${name} ${n}, the newest.` : `Showing ${name} ${n} of ${docs.length}. It is read-only here.`);
     },
     /** Shows another task of this RPI session, by task ID or `{ statePath }`. */
     async showTask(ref) {
@@ -1377,7 +1470,8 @@ function phaseReached(phase) {
 function renderContextBar() {
     const { session } = state.data;
     const phase = state.ui.phase;
-    const record = session.phases[phase];
+    // The file and time are the shown document's, which may be an earlier one.
+    const record = viewContext(phase).data.session.phases[phase];
     const meta = PHASE_STATUS[record.status] ?? PHASE_STATUS.upcoming;
     // The agent's next step shows where it works; the Live control follows it from anywhere.
     const side = session.session.activePhase === phase && session.session.nextAction
@@ -1402,6 +1496,7 @@ function renderContextBar() {
             h('span', { class: 'history-nav', role: 'group', 'aria-label': 'Back and forward' }, travelButton('back', back), travelButton('forward', forward)),
             h('h2', { class: 'context-title' }, icon(PHASE_META[phase].icon), PHASE_META[phase].label),
             badge(meta),
+            documentSwitcher(phase),
             record.artifact ? h('span', { class: 'context-artifact' },
                 h('code', { class: 'context-path', title: record.artifact, text: record.artifact }),
                 button('Copy artifact path', { iconName: 'copy', hideLabel: true, onClick: () => act.copy(record.artifact) }),
@@ -1433,7 +1528,48 @@ function renderDocument() {
             button(`Go to ${PHASE_META[state.data.session.session.activePhase].label}`, { kind: 'primary', iconName: 'arrow-right', onClick: () => setPhase(state.data.session.session.activePhase) })));
         return;
     }
-    body.append(...VIEWS[phase].renderView(context()));
+    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
+    if (earlier) body.append(earlierNotice(phase, earlier));
+    body.toggleAttribute('data-readonly', false);
+    if (earlier) body.dataset.readonly = 'true';
+    body.append(...VIEWS[phase].renderView(viewContext(phase)));
+}
+
+/**
+ * The context the shown phase renders with: an earlier document in place of the newest, read-only,
+ * when the reader chose one.
+ *
+ * @param {string} phase
+ */
+function viewContext(phase) {
+    const ctx = context();
+    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
+    if (!earlier) return ctx;
+    return { ...ctx, data: { ...ctx.data, session: withDocument(ctx.data.session, phase, earlier) }, readOnly: true };
+}
+
+/** Says an earlier document shows and offers the newest. */
+function earlierNotice(phase, earlier) {
+    const docs = documentsOf(phase);
+    const newest = docs.at(-1);
+    const name = DOCUMENT_KINDS[phase].toLowerCase();
+    return h('div', { class: 'notice tone-accent doc-notice', role: 'note' },
+        h('p', { class: 'notice-title' }, icon('file'), h('span', { text: `You are reading ${name} ${earlier.n} of ${docs.length}${earlier.title ? `: ${earlier.title}` : ''}.` })),
+        h('p', { text: `The agent works from ${name} ${newest.n}. This one is read-only here: to change something, comment on the newest or ask the agent.` }),
+        h('div', { class: 'btn-row' }, button(`Show ${name} ${newest.n}, the newest`, { kind: 'primary', iconName: 'arrow-right', attrs: { 'data-key': `doc-newest-${phase}` }, onClick: () => act.showDocument(phase, newest.n) })));
+}
+
+/** The switcher between a kind's documents, by number and date, when it has more than one. */
+function documentSwitcher(phase) {
+    const docs = documentsOf(phase);
+    if (!DOCUMENT_KINDS[phase] || docs.length < 2) return null;
+    const shown = shownEarlier(phase)?.n ?? docs.at(-1).n;
+    const name = DOCUMENT_KINDS[phase];
+    const now = context().now;
+    return h('label', { class: 'doc-switch' },
+        h('span', { class: 'doc-switch-label', text: 'Document' }),
+        h('select', { class: 'doc-select', dataset: { key: `doc-switch-${phase}` }, onchange: (event) => act.showDocument(phase, Number(event.target.value)) },
+            docs.map((doc) => h('option', { value: String(doc.n), selected: doc.n === shown, disabled: !doc.newest && !doc.snapshot, text: `${name} ${doc.n}${doc.newest ? ', newest' : doc.snapshot ? '' : ', unreadable'}${doc.updatedAt ? ` · ${relTime(doc.updatedAt, now)}` : ''}` }))));
 }
 
 function renderSteer() {
@@ -1994,6 +2130,8 @@ function onKeydown(event) {
         const row = focusedRow();
         if (!row) {
             announce('Move to a row first, for example with ] or by selecting it.');
+        } else if (row.closest('[data-readonly="true"]')) {
+            announce('This document is read-only here. Show the newest to comment or suggest an edit.');
         } else if (key === 'c') {
             act.anchorComposer(row.dataset.row, 'comment');
         } else {
@@ -2063,7 +2201,8 @@ function menuItemsFor(target) {
     if (selected) items.push({ label: 'Copy', icon: 'copy', onSelect: () => act.copy(selected, 'Text') });
     const ready = Boolean(state.data);
     const part = ready ? anchorAt(target) : null;
-    const row = ready && $('docBody').contains(target) ? target.closest('[data-row]') : null;
+    // An earlier document is read-only, so its rows offer no comments or edits.
+    const row = ready && $('docBody').contains(target) && !target.closest('[data-readonly="true"]') ? target.closest('[data-row]') : null;
     if (part) items.push({ label: `Comment on ${part.part}`, icon: 'message', onSelect: () => act.anchorComposer(part.rowId, 'comment', false, part) });
     if (row?.dataset.row) {
         const rowId = row.dataset.row;

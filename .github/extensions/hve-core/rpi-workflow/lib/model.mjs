@@ -1628,7 +1628,7 @@ export function deriveView(session) {
 }
 
 // Rows whose anchored decision follows from them, and task rows a decision shapes.
-const DECISION_SOURCE_ROW_RE = /^(?:Q\d{1,2}|F\d{1,2}|DS-\d{3}|RV-\d{3})$/;
+const DECISION_SOURCE_ROW_RE = /^(?:Q\d{1,3}|F\d{1,3}|DS-\d{3}|RV-\d{3})$/;
 const TASK_ROW_RE = /^P\d{2}-T\d{2}$/;
 
 /**

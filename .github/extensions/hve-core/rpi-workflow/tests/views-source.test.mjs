@@ -118,6 +118,31 @@ describe('views of imported sessions', () => {
     });
     after(() => restore());
 
+    it('renders an earlier document read-only: no row actions, notes, answers, or task buttons', async () => {
+        let { session } = rootSession();
+        session = createFeedback(session, { kind: 'comment', text: 'A note on the newest summary', target: { id: 'research-summary' } }, '2026-01-15T12:00:00.000Z').session;
+        const research = await import('../ui/view-research.mjs');
+        const plan = await import('../ui/view-plan.mjs');
+        const open = makeContext(session, 'research');
+        const openHtml = research.renderView(open).map(serialize).join('');
+        assert.match(openHtml, /data-key="comment-research-summary"/, 'the newest offers comments');
+        assert.match(openHtml, /A note on the newest summary/);
+        const readOnly = { ...makeContext(session, 'research'), readOnly: true };
+        const html = research.renderView(readOnly).map(serialize).join('');
+        assert.doesNotMatch(html, /data-key="(?:comment|edit-section|research)-/, 'no row actions');
+        assert.doesNotMatch(html, /A note on the newest summary/, 'notes for the newest do not show on an earlier document');
+        assert.doesNotMatch(html, /Request more research/);
+        assert.match(html, /Store map tiles in IndexedDB/, 'the content still shows');
+        const card = serialize(components.decisionCard(readOnly, decisionOf(session, 'D2')));
+        assert.doesNotMatch(card, /<textarea|data-key="submit-D2"|Override/, 'a decision cannot be answered or overridden there');
+        assert.equal(components.rowActions(readOnly, { sectionId: 'research-summary', rowId: 'research-summary' }).length, 0);
+        const planUi = makeContext(session, 'plan').ui;
+        planUi.expanded = new Set(session.plan.phases[0].tasks.map((task) => task.id));
+        const planHtml = plan.renderView({ ...makeContext(session, 'plan', planUi), readOnly: true }).map(serialize).join('');
+        assert.doesNotMatch(planHtml, /Suggest an edit|Move up|Move down/, 'task panels offer no changes');
+        assert.match(plan.renderView(makeContext(session, 'plan', planUi)).map(serialize).join(''), /Move up/, 'the newest plan still does');
+    });
+
     it('asks for an answer in the user\'s words when a decision lists no options', () => {
         const { session } = rootSession();
         const ctx = makeContext(session, 'research');
