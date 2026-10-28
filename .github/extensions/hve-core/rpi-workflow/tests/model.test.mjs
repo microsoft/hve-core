@@ -28,6 +28,7 @@ import {
     recordActivity,
     recordChange,
     recordInterpretation,
+    referenceLinks,
     releaseDelivery,
     suggestEdit,
     takeFeedback,
@@ -470,6 +471,21 @@ describe('validation and traces', () => {
         const traces = buildTraces({ links: [['Q1', 'F1'], ['F1', 'D1'], ['D1', 'P01-T01']] });
         assert.deepEqual(traces['D1'], ['Q1', 'F1', 'D1', 'P01-T01']);
         assert.deepEqual(buildTraces({ links: [['A', 'B'], ['B', 'A']] })['A'].length, 2);
+    });
+
+    it('traces a change back through its task to the research the task cites', () => {
+        const session = {
+            research: { questions: [{ id: 'Q1', findings: ['F1'] }], findings: [{ id: 'F1' }, { id: 'F2' }] },
+            decisions: [{ id: 'D1', phase: 'research' }, { id: 'plan.D1', phase: 'plan', anchor: { rowId: 'P01-T01' } }],
+            plan: { phases: [{ id: 'P01', tasks: [{ id: 'P01-T01', research: ['F1', 'D1', 'F9'] }, { id: 'P01-T02', research: [] }] }] },
+            implementation: { changes: [{ id: 'CH-001', taskId: 'P01-T01' }], discoveries: [] },
+            review: { findings: [{ id: 'RV-001', related: ['CH-001'] }] },
+        };
+        const pairs = referenceLinks(session);
+        assert.ok(pairs.some(([from, to]) => from === 'F1' && to === 'P01-T01') && pairs.some(([from, to]) => from === 'D1' && to === 'P01-T01'));
+        assert.ok(!pairs.some(([from]) => from === 'F9'), 'a citation of an ID the research lacks adds nothing');
+        assert.equal(pairs.findIndex(([, to]) => to === 'P01-T01'), pairs.findIndex(([from, to]) => from === 'F1' && to === 'P01-T01'), 'citations lead the task\'s other links');
+        assert.deepEqual(buildTraces(session)['CH-001'], ['Q1', 'F1', 'P01-T01', 'CH-001', 'RV-001']);
     });
 
     it('derives traces from reference fields so recorded work joins them', () => {

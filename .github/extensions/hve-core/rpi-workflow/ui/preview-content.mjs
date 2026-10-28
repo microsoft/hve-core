@@ -27,11 +27,13 @@ const words = (value) => String(value ?? '').replace(/-/g, ' ');
 function partsFor(ctx, key, item) {
     const chips = (label, ids) => ({ label, ids: (ids ?? []).filter((id) => typeof id === 'string' && id) });
     const session = ctx.data.session;
+    // The plan tasks whose Requirements cite a research finding or decision.
+    const citedBy = (id) => (session.plan?.phases ?? []).flatMap((phase) => phase.tasks).filter((task) => task.research?.includes(id)).map((task) => task.id);
     switch (key) {
         case 'Q':
             return { title: item.text, badges: [plainStatus(words(item.status))], related: [chips('Answered by', item.findings)] };
         case 'F':
-            return { title: item.title, badges: [known(EVIDENCE_STATE, item.state), item.confidence ? { ...confidenceMeta(item.confidence), prefix: 'Confidence' } : null], related: [chips('Answers', item.questions), chips('Evidence', item.evidence)] };
+            return { title: item.title, badges: [known(EVIDENCE_STATE, item.state), item.confidence ? { ...confidenceMeta(item.confidence), prefix: 'Confidence' } : null], related: [chips('Answers', item.questions), chips('Evidence', item.evidence), chips('Plan tasks', citedBy(item.id))] };
         case 'C':
         case 'W': {
             const citing = [...session.research.findings, ...session.decisions].filter((entry) => entry.evidence?.includes(item.id)).map((entry) => entry.id);
@@ -50,7 +52,7 @@ function partsFor(ctx, key, item) {
                 title: item.title,
                 badges: [known(DECISION_STATUS, item.status), plainStatus(item.owner && `Owner: ${item.owner}`)],
                 fields: [['Question', item.question], ['Chosen', chosen?.label], ['Why', item.rationale], ['Impact', item.impact]],
-                related: [chips('Evidence', item.evidence)],
+                related: [chips('Evidence', item.evidence), chips('Plan tasks', item.phase === 'research' ? citedBy(item.id) : [])],
             };
         }
         case 'P':
@@ -73,6 +75,7 @@ function partsFor(ctx, key, item) {
                 ],
                 related: [
                     chips('Requirements', item.requirements),
+                    chips('Research', item.research),
                     chips('Depends on', item.dependencies),
                     chips('Waits on', waitsOn ? [waitsOn.id] : []),
                     chips('Changes', (impl?.changes ?? []).filter((change) => change.taskId === item.id).map((change) => change.id)),

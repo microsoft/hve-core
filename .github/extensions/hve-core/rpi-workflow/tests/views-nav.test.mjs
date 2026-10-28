@@ -155,6 +155,23 @@ describe('preview content', () => {
     });
 
 
+    it('links a research finding or decision and the plan tasks that cite it, both ways', async () => {
+        const { previewContent } = await import('../ui/preview-content.mjs');
+        const session = buildScenario('implement', NOW);
+        const task = session.plan.phases[0].tasks[0];
+        task.research = ['F1', 'D1'];
+        const ctx = makeContext(session, 'implement');
+        const chipsOf = (id) => {
+            const root = document.createElement('div');
+            for (const node of previewContent(ctx, id, { titleId: 't' }).body) root.appendChild(node);
+            return elements(root).filter((node) => node.localName === 'button' && node.classList.contains('id-chip')).map((node) => node.dataset.preview);
+        };
+        assert.ok(chipsOf('F1').includes(task.id), 'a finding lists the tasks that cite it');
+        assert.ok(chipsOf('D1').includes(task.id), 'so does a research decision');
+        assert.ok(chipsOf(task.id).includes('F1') && chipsOf(task.id).includes('D1'), 'a task lists the research it cites');
+        assert.ok(!chipsOf('F2').includes(task.id));
+    });
+
     it('shows a website for web evidence and caps long text', async () => {
         const { previewContent, PREVIEW_TEXT_LIMIT } = await import('../ui/preview-content.mjs');
         const session = buildScenario('research', NOW);

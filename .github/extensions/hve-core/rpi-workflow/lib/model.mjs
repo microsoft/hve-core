@@ -1632,7 +1632,9 @@ const DECISION_SOURCE_ROW_RE = /^(?:Q\d{1,3}|F\d{1,3}|DS-\d{3}|RV-\d{3})$/;
 const TASK_ROW_RE = /^P\d{2}-T\d{2}$/;
 
 /**
- * Reference pairs read from the session's own fields: question to finding; a decision's
+ * Reference pairs read from the session's own fields: question to finding; a research finding
+ * or decision to each plan task that cites it in its Requirements, ahead of the task's other
+ * links, so a change's trace runs back through its task to the research; a decision's
  * anchor (a question, finding, discovery, or review finding row leads to the decision, and
  * the decision leads to an anchored task); the decision a task waits on; task to change
  * and discovery, changes first because they are a task's main outcome; discovery to its
@@ -1646,6 +1648,12 @@ export function referenceLinks(session) {
     const pairs = [];
     for (const question of session.research?.questions ?? []) {
         for (const finding of question.findings ?? []) pairs.push([question.id, finding]);
+    }
+    const researchIds = new Set([...(session.research?.findings ?? []).map((finding) => finding.id), ...(session.decisions ?? []).filter((decision) => decision.phase === 'research').map((decision) => decision.id)]);
+    for (const phase of session.plan?.phases ?? []) {
+        for (const task of phase.tasks) {
+            for (const id of task.research ?? []) if (researchIds.has(id)) pairs.push([id, task.id]);
+        }
     }
     for (const decision of session.decisions ?? []) {
         const row = decision.anchor?.rowId;

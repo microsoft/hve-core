@@ -17,6 +17,7 @@ import {
     lineageStatusOf,
     mergeImport,
     readinessOf,
+    researchCitations,
     routeOf,
     validationOf,
 } from '../lib/source/assemble.mjs';
@@ -25,6 +26,16 @@ import { installFakeDom } from './helpers/fake-dom.mjs';
 import { CHANGES, CHILD_CHANGES, CHILD_PLAN, CHILD_STATE, childSession, CRITIQUE, PATHS, PLAN, RESEARCH, REVIEW, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
 
 const NOW = '2026-01-15T12:00:00.000Z';
+
+describe('research citations', () => {
+    it('reads the findings and decisions each Requirements item cites after "research"', () => {
+        assert.deepEqual(researchCitations('* FR-019, NFR-011\n* Research D10: each phase shows its documents.'), ['D10']);
+        assert.deepEqual(researchCitations('* research F18, D19 (the trace)\n* Decision D5 stays in the plan'), ['F18', 'D19'], 'one item does not run into the next');
+        assert.deepEqual(researchCitations('* Research D13 to D15, and research C31'), ['D13', 'D14', 'D15'], 'ranges expand and evidence IDs are not cited work');
+        assert.deepEqual(researchCitations('* FR-001'), []);
+        assert.deepEqual(researchCitations(undefined), []);
+    });
+});
 
 describe('vocabulary', () => {
     it('maps artifact words into the canvas vocabulary', () => {

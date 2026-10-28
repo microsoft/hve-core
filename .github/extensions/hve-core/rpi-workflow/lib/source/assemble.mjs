@@ -136,6 +136,23 @@ function decisionStatusOf(status, owner) {
 }
 
 const truncate = (text, max) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
+
+/**
+ * The research findings and decisions a task's Requirements cite after the word "research",
+ * such as "Research D10: …" or "research F18, D19", in order. Other IDs there are plan IDs.
+ *
+ * @param {string | undefined} block
+ */
+export function researchCitations(block) {
+    const ids = [];
+    const items = listItems(block ?? '');
+    for (const item of items.length ? items : [block ?? '']) {
+        for (const match of plainText(item).matchAll(/\bresearch\b([^:;\n]*)/gi)) {
+            for (const id of idsIn(match[1], /^[FD]\d{1,3}$/)) if (!ids.includes(id)) ids.push(id);
+        }
+    }
+    return ids;
+}
 const realItems = (block) => listItems(block).filter((item) => !NONE_RE.test(plainText(item)));
 const joinedText = (block) => plainText(realItems(block).join(' ')) || plainText(block);
 
@@ -347,6 +364,7 @@ export function assembleSession(input) {
                 title: task.title,
                 goals: joinedText(task.goals),
                 requirements: idsIn(task.requirements, /^N?FR-\d{3}$/),
+                research: researchCitations(task.requirements),
                 details: realItems(task.details).map(plainText),
                 dependencies: idsIn(task.dependencies, /^P\d{2}(?:-T\d{2})?$/),
                 references: realItems(task.references).map(plainText),
