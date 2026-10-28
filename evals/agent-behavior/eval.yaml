@@ -5382,23 +5382,81 @@ stimuli:
           });
           reviewField('review-execution', /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review execution:\s*(\w+)/gim);
           reviewField('review-outcome', /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review outcome:\s*(\w+)/gim);
+          const cells = line => line.includes('|') ? line.trim().replace(/^\||\|$/g, '').split('|').map(value => value.trim()) : null;
+          const tableRows = [];
+          const prose = [];
+          const lines = text.split('\n');
+          let table = null;
+          for (let index = 0; index < lines.length; index++) {
+            const row = cells(lines[index]);
+            if (!row) { table = null; prose.push(lines[index]); continue; }
+            const next = cells(lines[index + 1] ?? '');
+            if (next && next.every(value => /^:?-{3,}:?$/.test(value))) {
+              table = {
+                size: row.length,
+                measure: row.findIndex(value => /^(?:measure|metric|measurement)$/i.test(value)),
+                results: row.flatMap((value, column) => /^(?:(?:recorded|observed|measured|actual)\s+)?(?:result|value)(?:\s*\([^)]*\))?$/i.test(value) ? [column] : []),
+                headers: row
+              };
+            } else if (!row.every(value => /^:?-{3,}:?$/.test(value))) {
+              tableRows.push({ row, table });
+            }
+          }
           const metric = (field, label, actual, percentage) => check(() => {
-            const pattern = new RegExp(String.raw`(?:^|\n)[^\S\n]*(?:[-+][^\S\n]+)?\|?[^\S\n]*(?:observed[^\S\n]+)?(?:` + label + String.raw`)[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?(?:[:|]|\n)\s*([^\n|]*)`, 'gi');
             const measured = [];
-            for (const match of text.matchAll(pattern)) {
-              const headerUnit = (match[1] ?? '').trim().toLowerCase();
-              const value = /^([\d.]+)[^\S\n]*(%|requests?)?[^\S\n]*[.!]?$/i.exec(match[2].trim());
+            const labelPattern = String.raw`(?:observed[^\S\n]+)?(?:` + label + String.raw`)[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?`;
+            const labelOnly = new RegExp('^' + labelPattern + '$', 'i');
+            const observe = (rawValue, rawUnit = '') => {
+              const headerUnit = rawUnit.trim().toLowerCase();
+              const value = /^(\d+(?:\.\d+)?)[^\S\n]*(%|(?:synthetic\s+)?requests?)?(.*)$/i.exec(rawValue.trim());
               const valueUnit = (value?.[2] ?? '').toLowerCase();
               const validHeader = percentage ? ['', '%', 'percent'].includes(headerUnit) : ['', 'request', 'requests', 'count'].includes(headerUnit);
-              const validValue = percentage ? ['', '%'].includes(valueUnit) && (headerUnit !== '' || valueUnit === '%') : ['', 'request', 'requests'].includes(valueUnit);
+              const validValue = percentage ? ['', '%'].includes(valueUnit) && (headerUnit !== '' || valueUnit === '%') : ['', 'request', 'requests', 'synthetic request', 'synthetic requests'].includes(valueUnit);
               if (!value || !validHeader || !validValue || !Number.isFinite(Number(value[1]))) fail('missing-' + field);
+              const annotation = value[3].trim();
+              if (annotation && !/^[.!]$/.test(annotation)) {
+                const context = /^\(([\d.]+)\s+(?:ms|milliseconds?)\s+(?:unbatched|baseline)\s+to\s+([\d.]+)\s+(?:ms|milliseconds?)\s+(?:batched|treatment)\)[.!]?$/i.exec(annotation);
+                const arithmetic = /^:\s*\(([\d.]+)\s*-\s*([\d.]+)\)\s*\/\s*([\d.]+)\s+([\d.]+)[.!]?$/.exec(annotation);
+                if (field !== 'latency-reduction' || (!context && !arithmetic)) fail('missing-' + field);
+                const numbers = (context ?? arithmetic).slice(1).map(Number);
+                if (numbers[0] !== baseline || numbers[1] !== treatment || (arithmetic && (numbers[2] !== baseline || numbers[3] !== 100))) fail(field + '-mismatch');
+              }
               measured.push(Number(value[1]));
+            };
+            for (const entry of tableRows) {
+              const column = entry.table?.measure >= 0 ? entry.table.measure : 0;
+              const match = labelOnly.exec(entry.row[column] ?? '');
+              if (!match) continue;
+              let resultColumn = 1;
+              let resultUnit = '';
+              if (entry.table) {
+                if (entry.row.length !== entry.table.size || entry.table.results.length !== 1) fail('ambiguous-input');
+                resultColumn = entry.table.results[0];
+                resultUnit = /\(([^)]*)\)/.exec(entry.table.headers[resultColumn])?.[1] ?? '';
+                if (resultColumn === column) fail('ambiguous-input');
+              } else if (entry.row.length !== 2) {
+                fail('ambiguous-input');
+              }
+              if (match[1] && resultUnit && match[1].trim().toLowerCase() !== resultUnit.trim().toLowerCase()) fail('ambiguous-input');
+              observe(entry.row[resultColumn] ?? '', match[1] ?? resultUnit);
+            }
+            const proseText = prose.join('\n');
+            const pattern = new RegExp(String.raw`(?:^|\n)[^\S\n]*(?:[-+][^\S\n]+)?` + labelPattern + String.raw`(?::|\n)\s*([^\n]*)`, 'gi');
+            for (const match of proseText.matchAll(pattern)) observe(match[2], match[1] ?? '');
+            if (field === 'sample-size') {
+              for (const sentence of proseText.split(/(?<!\d)[.!?](?!\d)/)) {
+                for (const match of sentence.matchAll(/\bacross\s+(\d+(?:\.\d+)?)\s+synthetic\s+requests\b/gi)) {
+                  const context = sentence.slice(sentence.lastIndexOf(';', match.index) + 1, match.index);
+                  if (/\b(?:if|would|could|hypothetical|example|criteria|criterion|threshold|requires)\b/i.test(context)) continue;
+                  observe(match[1], 'requests');
+                }
+              }
             }
             if (!(Math.abs(single(measured, 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
           });
-          metric('latency-reduction', 'latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease)', reduction, true);
+          metric('latency-reduction', '(?:median )?latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease)', reduction, true);
           metric('sample-size', 'sample size|synthetic requests', sample, false);
-          metric('error-rate', 'error rate|batched errors', errorRate, true);
+          metric('error-rate', '(?:batched )?error rate|batched errors', errorRate, true);
           const anomalies = values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi);
           const noAnomalies = /^(?:none(?:\s+(?:observed|detected|reported))?|no(?:\s+anomal(?:y|ies))?(?:\s+(?:were\s+)?(?:observed|detected|reported))?|not\s+(?:observed|detected|reported))[.!]?$/;
           if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !noAnomalies.test(value))) codes.add('anomaly-mismatch');

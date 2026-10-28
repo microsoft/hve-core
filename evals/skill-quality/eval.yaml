@@ -27,7 +27,11 @@ stimuli:
       focus areas for review `synthetic-queue`. Research recommends option A
       with evidence `E1`, but final budget approval is unresolved. Explain what
       the Architecture Review Record must preserve before an ADR or RPI Plan
-      handoff, and who retains decision authority.
+      handoff, and who retains decision authority. Describe the allowed kinds
+      of disposition that must be recorded for each confirmed focus area,
+      rather than only saying that a disposition is required. Explain the
+      record's requirements; do not perform a review or invent actual pillar
+      findings, evidence, decision-owner identities, or budget approval.
     rubric:
       - Preserve confirmed scope for synthetic-queue, evidence E1 and its recommendation of option A, assumptions distinct from verified context, and trade-offs with recommendation rationale.
       - Give both reliability and cost an explicit disposition (finding, examined with no finding, or unassessed with a limit). Preserve unresolved final budget approval as a limit, not invented approval.

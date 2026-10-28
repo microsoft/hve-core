@@ -131,6 +131,40 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             }
         }
 
+        It 'Clarifies architecture disposition knowledge without giving the answer categories' {
+            $case = $script:RepairCases[2]
+            $case.prompt | Should -Match '(?s)allowed kinds.*disposition.*each confirmed focus area'
+            $case.prompt | Should -Match 'do not perform a review'
+            $case.prompt | Should -Match '(?s)do not.*invent.*pillar.*findings.*budget approval'
+            $case.prompt | Should -Not -Match '(?i)no.finding|unassessed'
+            $case.graders | Should -HaveCount 1
+            $case.graders[0].name | Should -Be 'architecture-review-contract'
+            $case.graders[0].config.ContainsKey('model') | Should -BeFalse
+        }
+
+        It 'Retains actual numeric layouts and separate architecture calibration expectations' {
+            $fixture = Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/final-two-output-controls.json') -Raw | ConvertFrom-Json
+            $fixture.outcomes | Should -HaveCount 2
+            @($fixture.outcomes.id | Sort-Object -Unique) | Should -HaveCount 2
+            $fixture.outcomes[0].body | Should -Match '\| Measure \| Precommitted criterion \| Recorded result \| Evaluation \|'
+            $fixture.outcomes[1].body | Should -Match '\| Measure \| Result \| Criterion \| Comparison \|'
+            foreach ($outcome in $fixture.outcomes) {
+                $outcome.body | Should -Match 'Median latency reduction'
+                $outcome.body | Should -Match '100 synthetic requests'
+                $outcome.body | Should -Not -Match '(?i)C:\\Users|\.copilot-tracking/research|sessionID|rubric_scores'
+            }
+            $fixture.architectureSubject | Should -Be 'architecture-review-record-and-authority'
+            $fixture.architecture | Should -HaveCount 6
+            @($fixture.architecture.id | Sort-Object -Unique) | Should -HaveCount 6
+            @($fixture.architecture | Where-Object expected -EQ $true) | Should -HaveCount 2
+            @($fixture.architecture | Where-Object expected -EQ $false) | Should -HaveCount 4
+            foreach ($control in $fixture.architecture) {
+                $control.expected | Should -BeOfType ([bool])
+                $control.answer | Should -Not -BeNullOrEmpty
+                $control.rationale | Should -Not -BeNullOrEmpty
+            }
+        }
+
         It 'Resolves actual planner caps and observes missing versus present demo files without an executor' {
             $probe = @'
 const { pathToFileURL } = await import('node:url');

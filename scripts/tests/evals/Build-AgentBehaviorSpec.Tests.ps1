@@ -1834,6 +1834,26 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
   }
 
   It 'Checks outcome evidence, criteria and separate Review values for <Variant>' -Tag 'OutcomeFixture' -ForEach @(
+    @{ Variant = 'actual-criteria-first'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'actual-result-first'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'actual-reordered-columns'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'actual-wrong-result'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'actual-target-only'; Expected = $false; Bound = $true; Codes = 'ambiguous-input' }
+    @{ Variant = 'actual-empty-result'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'actual-ambiguous-results'; Expected = $false; Bound = $true; Codes = 'ambiguous-input' }
+    @{ Variant = 'actual-conflicting-row'; Expected = $false; Bound = $true; Codes = 'conflicting-error-rate' }
+    @{ Variant = 'actual-wrong-annotation-value'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'actual-conflicting-prose-count'; Expected = $false; Bound = $true; Codes = 'conflicting-sample-size' }
+    @{ Variant = 'actual-conflicting-count-before-criteria'; Expected = $false; Bound = $true; Codes = 'conflicting-sample-size' }
+    @{ Variant = 'actual-conflicting-count-after-criteria'; Expected = $false; Bound = $true; Codes = 'conflicting-sample-size' }
+    @{ Variant = 'actual-prose-count-with-criteria'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'actual-criterion-count'; Expected = $false; Bound = $true; Codes = 'missing-sample-size' }
+    @{ Variant = 'actual-missing-units'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'actual-contradictory-label'; Expected = $false; Bound = $true; Codes = 'conflicting-error-rate' }
+    @{ Variant = 'actual-malformed-count'; Expected = $false; Bound = $true; Codes = 'missing-sample-size' }
+    @{ Variant = 'actual-wrong-unit'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction' }
+    @{ Variant = 'actual-wrong-context'; Expected = $false; Bound = $true; Codes = 'latency-reduction-mismatch' }
+    @{ Variant = 'actual-hypothetical-count'; Expected = $false; Bound = $true; Codes = 'missing-sample-size' }
     @{ Variant = 'valid'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'reordered'; Expected = $true; Bound = $true; Codes = '' }
     @{ Variant = 'heading-body'; Expected = $true; Bound = $true; Codes = '' }
@@ -1978,6 +1998,41 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     if ($Variant -eq 'wrong-sample-size') { $body = $body.Replace('Sample size: 100', 'Sample size: 90') }
     if ($Variant -eq 'wrong-error-rate') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.7%') }
     if ($Variant -eq 'concurrent-failures') { $body = $body.Replace('Review outcome: Accepted', 'Review outcome: Complete').Replace('Downstream decision: go', 'Downstream decision: no-go') }
+    if ($Variant -like 'actual-*') {
+      $controls = Get-Content -Raw (Join-Path $PSScriptRoot 'fixtures/specs/final-two-output-controls.json') | ConvertFrom-Json
+      $layout = if ($Variant -in @('actual-result-first', 'actual-wrong-annotation-value', 'actual-wrong-context')) { 'result-first' } else { 'criteria-first' }
+      $body = ($controls.outcomes | Where-Object id -eq $layout).body
+      if ($Variant -eq 'actual-reordered-columns') {
+        $body = $body.Replace('| Measure | Precommitted criterion | Recorded result | Evaluation |', '| Recorded result | Evaluation | Measure | Precommitted criterion |').
+          Replace('|---------|------------------------|-----------------|------------|', '|-----------------|------------|---------|------------------------|').
+          Replace('| Median latency reduction | At least 20% | 24%: `(100 - 76) / 100 * 100` | Met |', '| 24%: `(100 - 76) / 100 * 100` | Met | Median latency reduction | At least 20% |').
+          Replace('| Error rate | Below 1% | 0.5% | Met |', '| 0.5% | Met | Error rate | Below 1% |')
+      }
+      if ($Variant -eq 'actual-wrong-result') { $body = $body.Replace('| At least 20% | 24%:', '| At least 20% (reference: 24%) | 30%:') }
+      if ($Variant -eq 'actual-target-only') {
+        $body = $body.Replace('| Recorded result ', '').Replace('|---------|------------------------|-----------------|------------|', '|---------|------------------------|------------|').
+          Replace('| 24%: `(100 - 76) / 100 * 100` ', '').Replace('| 0.5% ', '')
+      }
+      if ($Variant -eq 'actual-empty-result') { $body = $body.Replace('24%: `(100 - 76) / 100 * 100`', '') }
+      if ($Variant -eq 'actual-ambiguous-results') {
+        $body = $body.Replace('| Recorded result |', '| Recorded result | Observed value |').
+          Replace('|-----------------|', '|-----------------|----------------|').
+          Replace('| 24%:', '| 24% | 24%:').Replace('| 0.5% |', '| 0.5% | 0.5% |')
+      }
+      if ($Variant -eq 'actual-conflicting-row') { $body = $body.Replace('| Error rate | Below 1% | 0.5% | Met |', "| Error rate | Below 1% | 0.5% | Met |`n| Error rate | Below 1% | 2% | Not met |") }
+      if ($Variant -eq 'actual-wrong-annotation-value') { $body = $body.Replace('24% (100 ms', '30% (100 ms') }
+      if ($Variant -eq 'actual-conflicting-prose-count') { $body += "`nObserved the run across 90 synthetic requests." }
+      if ($Variant -eq 'actual-conflicting-count-before-criteria') { $body += "`nThe run completed across 90 synthetic requests; criteria were unchanged." }
+      if ($Variant -eq 'actual-conflicting-count-after-criteria') { $body += "`nCriteria were unchanged; the run completed across 90 synthetic requests." }
+      if ($Variant -eq 'actual-prose-count-with-criteria') { $body = $body.Replace("across`n100 synthetic requests.", "across`n100 synthetic requests; criteria were unchanged.") }
+      if ($Variant -eq 'actual-criterion-count') { $body = $body.Replace("across`n100 synthetic requests", "with a criterion requiring measurement across`n100 synthetic requests") }
+      if ($Variant -eq 'actual-missing-units') { $body = $body.Replace('24%: `(', '24: `(') }
+      if ($Variant -eq 'actual-contradictory-label') { $body += "`nError rate: 2%" }
+      if ($Variant -eq 'actual-malformed-count') { $body = $body.Replace('100 synthetic requests.', 'an unspecified number of synthetic requests.') }
+      if ($Variant -eq 'actual-wrong-unit') { $body = $body.Replace('24%: `(', '24 milliseconds: `(') }
+      if ($Variant -eq 'actual-wrong-context') { $body = $body.Replace('100 ms unbatched to 76 ms batched', '100 ms unbatched to 90 ms batched') }
+      if ($Variant -eq 'actual-hypothetical-count') { $body = $body.Replace("across`n100 synthetic requests", "in a hypothetical example across`n100 synthetic requests") }
+    }
     $document = $body + "`n" + ($bindings -join "`n")
     if ($Variant -eq 'crlf') { $document = $document.Replace("`n", "`r`n") }
     if ($Variant -ne 'missing-outcome') { [System.IO.File]::WriteAllText((Join-Path $session 'outcome.md'), $document) }

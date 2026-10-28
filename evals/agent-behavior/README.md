@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-10-27
+ms.date: 2026-10-28
 ---
 
 ## Purpose
@@ -131,6 +131,29 @@ Consistent repeated values are accepted; missing units, unsupported units,
 conflicting values and contradictory anomaly reports fail. `Anomalies: not
 observed` is equivalent to `Anomalies: none`. The original Review, hypothesis,
 decision, committed-criteria and hash-binding checks remain in force.
+
+Measurement tables use an identifiable result/value column, including
+`Recorded result`, rather than the first numeric-looking cell. Criterion and
+evaluation columns cannot substitute for missing results. Reordered columns
+are supported; missing or duplicate result columns and conflicting observations
+fail. Full labels such as `Median latency reduction` and `Batched error rate`
+are supported. Reduction cells can include the source-backed arithmetic or
+baseline-to-treatment annotation. Counts can use `100 synthetic requests` as a
+labeled value or appear in an observed statement such as `across 100 synthetic
+requests`. Hypothetical or criterion statements do not supply a sample count.
+The context before each count is checked within its semicolon-delimited clause.
+A separate unchanged-criteria clause cannot hide a measured count or its conflict
+with another observation.
+This is bounded format support, not arbitrary prose parsing.
+
+The two numeric bodies in
+[final-two-output-controls.json](../../scripts/tests/evals/fixtures/specs/final-two-output-controls.json)
+retain actual generated table and count layouts. The installed-grader tests
+add fixture bindings dynamically and exercise incorrect values, missing units,
+ambiguous columns and contradictions as independent negative controls.
+The same file includes labeled architecture explanations for later genuine
+calibration. Configuration checks do not establish model verdicts or restore
+access to the configured judge.
 
 The existing generator tests and eval-spec tests must both pass when these
 contracts change. Updating only a new configuration test does not cover an
