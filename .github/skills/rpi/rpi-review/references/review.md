@@ -6,7 +6,7 @@ description: "Reference protocol for evidence-based RPI review, outcome separati
 
 ## Artifact set
 
-Review one task set using these paths:
+Review one piece of work's documents using these paths, where `{{task_slug}}` is the work's name: the task slug for a task's first work, or the name a later request's documents carry:
 
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
 * `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
