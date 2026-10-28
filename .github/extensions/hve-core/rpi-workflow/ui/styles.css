@@ -3957,7 +3957,6 @@ circle.diagram-mark-glyph {
   padding: 10px var(--rw-gutter, 32px);
   border-bottom: 1px solid var(--rw-border);
   background: var(--rw-bg);
-  box-shadow: 0 10px 12px -12px color-mix(in srgb, var(--rw-fg) 35%, transparent);
 }
 
 .board-dock:focus-visible {
@@ -4019,7 +4018,6 @@ circle.diagram-mark-glyph {
 @media (max-height: 560px) {
   .board-dock {
     position: static;
-    box-shadow: none;
   }
 }
 
@@ -4118,7 +4116,7 @@ circle.diagram-mark-glyph {
 
 .board-lane-toggle:hover,
 .board-lane-toggle[aria-expanded="true"] {
-  border-color: var(--rw-border-control);
+  border-color: var(--rw-border);
   background: var(--rw-bg);
 }
 
@@ -4146,6 +4144,7 @@ circle.diagram-mark-glyph {
   height: 14px;
 }
 
+/* The open lane's list is a floating layer, drawn like menus and dialogs. */
 .board-drop {
   position: absolute;
   top: calc(100% + 4px);
@@ -4156,10 +4155,10 @@ circle.diagram-mark-glyph {
   overflow: auto;
   overscroll-behavior: contain;
   padding: 6px;
-  border: 1px solid var(--rw-border-control);
+  border: 1px solid var(--rw-border);
   border-radius: var(--rw-radius-lg);
   background: var(--rw-bg);
-  box-shadow: 0 12px 28px -8px color-mix(in srgb, var(--rw-fg) 40%, transparent);
+  box-shadow: var(--rw-shadow-float);
 }
 
 .board-drop[hidden] {
