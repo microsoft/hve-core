@@ -639,12 +639,13 @@ export function takeFeedback(session, now) {
 /**
  * Marks specific pending items as sent in a message from the canvas. `tasks` is how many
  * tasks the message named; above one, the agent must name the task with each read-back.
+ * `messageId` is the chat message that carried them, when the host returned one.
  *
  * @param {any} session
  * @param {string[]} ids
  * @param {'send'} mode
  * @param {string} now
- * @param {{ tasks?: number }} [extra]
+ * @param {{ tasks?: number, messageId?: string | null }} [extra]
  */
 export function markDelivered(session, ids, mode, now, extra = {}) {
     const delivery = oneOf(mode, ['send'], 'mode');
@@ -659,6 +660,7 @@ export function markDelivered(session, ids, mode, now, extra = {}) {
                 item.updatedAt = now;
                 item.delivery = delivery;
                 if (Number.isInteger(extra.tasks) && extra.tasks > 1) item.deliveredWith = extra.tasks;
+                if (typeof extra.messageId === 'string' && extra.messageId) item.messageId = extra.messageId;
                 pushHistory(item, 'sent', 'user', now);
                 done.push(item.id);
             }
@@ -708,6 +710,71 @@ export function releaseDelivery(session, ids, now) {
             }
         }
         return released;
+    });
+}
+
+/**
+ * Queues unsent items for the agent's next checkpoint. They stay in the canvas, marked with
+ * the time, until the agent collects them with take_feedback or you take them back. Items
+ * already queued keep their first time.
+ *
+ * @param {any} session
+ * @param {string[]} ids
+ * @param {string} now
+ */
+export function queueForAgent(session, ids, now) {
+    const wanted = [...new Set(ids.map((id) => identifier(id, 'ids[]')))];
+    for (const id of wanted) {
+        const item = byId(session.feedback, id);
+        if (!item || item.state !== 'queued') {
+            fail('invalid_state', `Feedback ${id} is no longer waiting to be sent.`);
+        }
+        if (isClaimed(item, now)) {
+            fail('invalid_state', `Feedback ${id} is being sent.`);
+        }
+    }
+    const fresh = wanted.filter((id) => !byId(session.feedback, id).queuedForAgentAt);
+    if (fresh.length === 0) {
+        return { session, result: [] };
+    }
+    return mutate(session, now, (draft) => {
+        for (const id of fresh) {
+            const item = byId(draft.feedback, id);
+            item.queuedForAgentAt = now;
+            item.updatedAt = now;
+        }
+        return fresh;
+    });
+}
+
+/**
+ * Takes items back from the agent's queue before it collects them, so they wait for you again.
+ *
+ * @param {any} session
+ * @param {string[]} ids
+ * @param {string} now
+ */
+export function takeBackFeedback(session, ids, now) {
+    const wanted = [...new Set(ids.map((id) => identifier(id, 'ids[]')))];
+    for (const id of wanted) {
+        const item = byId(session.feedback, id);
+        if (item && ['sent', 'interpreted', 'applied', 'corrected'].includes(item.state)) {
+            fail('invalid_state', `The agent already has ${id}.`);
+        }
+        if (!item || item.state !== 'queued' || !item.queuedForAgentAt) {
+            fail('invalid_state', `Feedback ${id} is not queued for the agent.`);
+        }
+        if (isClaimed(item, now)) {
+            fail('invalid_state', `Feedback ${id} is being sent.`);
+        }
+    }
+    return mutate(session, now, (draft) => {
+        for (const id of wanted) {
+            const item = byId(draft.feedback, id);
+            delete item.queuedForAgentAt;
+            item.updatedAt = now;
+        }
+        return wanted;
     });
 }
 
@@ -930,6 +997,7 @@ export function feedbackOverview(session, now) {
                 phase: item.target?.phase ?? item.phase ?? null,
                 target: item.target ? { id: item.target.id, ...(item.target.part ? { part: item.target.part } : {}) } : null,
                 editable: EDITABLE_KINDS.includes(item.kind),
+                queuedForAgent: Boolean(item.queuedForAgentAt),
             };
         });
     return { pending, awaiting: session.feedback.filter((item) => item.state === 'sent').length };

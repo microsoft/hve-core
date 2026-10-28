@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
-import { agentEditSection, claimDelivery, createFeedback, markChecklist, markDelivered, recordInterpretation, suggestEdit } from '../lib/model.mjs';
+import { agentEditSection, claimDelivery, createFeedback, markChecklist, markDelivered, queueForAgent, recordInterpretation, suggestEdit } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { elements, installFakeDom, serialize } from './helpers/fake-dom.mjs';
 import { rootSession } from './helpers/rpi-fixture.mjs';
@@ -41,7 +41,7 @@ describe('steering panel', () => {
         assert.equal(keyed(steer, 'open-send'), null, 'Review and send is at the top of the canvas, not in the panel');
         assert.doesNotMatch(out, /Deliver feedback by|Attach to my next message|Queue for the agent|Preview what will be sent|Share review with the agent|other loops/);
         assert.match(textOf(out), /Add comment/);
-        assert.match(textOf(out), /What you add waits in Your feedback until you send it with Review and send\./);
+        assert.match(textOf(out), /What you add waits in Your feedback until you send or queue it with Review and send\./);
         const id = session.feedback.at(-1).id;
         assert.match(serialize(keyed(steer, `fb-goto-${id}`)), /title="Go to what FB-\d{3} is about"/);
         assert.match(serialize(keyed(steer, `fb-edit-${id}`)), /title="Change the words of FB-\d{3}"/);
@@ -51,7 +51,7 @@ describe('steering panel', () => {
     it('explains how to add input when nothing waits', () => {
         const { session } = rootSession();
         const out = textOf(html(components.steerPanel(makeContext(session, 'research'))));
-        assert.match(out, /Nothing waiting to send\. Your answers, comments, suggested edits, and checklist reviews collect here until you send them with Review and send at the top of the canvas\./);
+        assert.match(out, /Nothing waiting to send\. Your answers, comments, suggested edits, and checklist reviews collect here until you send or queue them with Review and send at the top of the canvas\./);
     });
 });
 
@@ -180,7 +180,8 @@ describe('send dialog', () => {
         assert.match(textOf(out), /Review and send/);
         assert.match(textOf(out), /Check each one: go to it, change its words, or discard it\./);
         assert.match(out, /<code class="canvas-handle">K7QF<\/code>/);
-        assert.match(textOf(out), /one message that starts with “RPI canvas K7QF”/);
+        assert.match(textOf(out), /Send now gives them to the agent at its next step, even mid-task, as one chat message that starts with “RPI canvas K7QF”\./);
+        assert.match(textOf(out), /Queue keeps them here until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn\. You can take them back until then\./);
         assert.match(textOf(out), /Review checklist for Research/);
         assert.match(textOf(out), /Suggested edit to Summary in Research/);
         assert.match(textOf(out), /Comment about F1 \(Research\)/, 'a row about a plain ID names its phase, as other loops\' rows do');
@@ -199,11 +200,17 @@ describe('send dialog', () => {
         assert.match(out, /EXACT PROMPT TEXT/);
         const confirm = keyed(sheet, 'send-confirm');
         assert.equal(confirm.getAttribute('disabled'), null);
-        assert.match(serialize(confirm), new RegExp(`Send ${pending.length} items`));
+        assert.match(serialize(confirm), /<span>Send now<\/span>/);
+        assert.equal(confirm.getAttribute('aria-describedby'), 'send-modes');
+        const queue = keyed(sheet, 'send-queue');
+        assert.match(serialize(queue), /<span>Queue<\/span>/);
+        assert.equal(queue.getAttribute('aria-describedby'), 'send-modes');
+        assert.equal(queue.getAttribute('disabled'), null);
         ui.send.preview = null;
         ui.send.error = 'Not sent: This host cannot take messages from the canvas.';
         const failed = components.reviewSheet(makeContext(session, 'research', ui));
         assert.equal(keyed(failed, 'send-confirm').getAttribute('disabled'), '');
+        assert.equal(keyed(failed, 'send-queue').getAttribute('disabled'), '', 'neither button works without the prepared text');
         assert.match(html(failed), /role="alert" id="send-error"/);
     });
 
@@ -218,7 +225,7 @@ describe('send dialog', () => {
         const sheet = components.reviewSheet(ctx);
         assert.ok(sheet.every((node) => node && !Array.isArray(node)), 'the dialog content is a flat list of nodes, as replaceChildren needs');
         const out = html(sheet);
-        assert.match(textOf(out), /sends these 3 items from 2 loops of this session to the agent/);
+        assert.match(textOf(out), /has these 3 items from 2 loops of this session for the agent/);
         assert.match(out, /<section class="send-group" aria-labelledby="send-group-trail-maps"><h3 class="send-group-title" id="send-group-trail-maps" tabindex="-1">/);
         assert.match(out, /<section class="send-group" aria-labelledby="send-group-trail-maps-fixes">/);
         assert.doesNotMatch(out, /send-group-quiet/, 'a loop with nothing unsent has no group');
@@ -263,6 +270,50 @@ describe('send dialog', () => {
         assert.match(serialize(keyed(components.reviewSheet(ctx), 'send-discard-all')), /Discard all 2 items from 2 loops\?/);
         ui.confirm = null;
         assert.match(serialize(keyed(components.reviewSheet(ctx), 'send-discard-all')), /<span>Discard all<\/span>/);
+    });
+
+    it('marks items queued for the agent, lists them after the rest, and drops Queue once everything is queued', () => {
+        let session = createFeedback(rootSession().session, { kind: 'comment', text: 'Waits for me', target: { id: 'F1' } }, NOW).session;
+        session = createFeedback(session, { kind: 'context', text: 'Queued already' }, NOW).session;
+        const [mine, queued] = session.feedback.slice(-2).map((item) => item.id);
+        session = queueForAgent(session, [queued], NOW).session;
+        const ui = initialUi('research');
+        ui.send = { note: '', preview: { prompt: 'P', displayPrompt: 'x', ids: [mine, queued], digest: 'd' }, previewNote: '', sending: false, error: null };
+        const ctx = makeContext(session, 'research', ui);
+        assert.deepEqual(components.pendingItems(ctx).map((item) => item.id), [mine]);
+        assert.deepEqual(components.agentQueueItems(ctx).map((item) => item.id), [queued]);
+        assert.deepEqual(components.sendItems(ctx).map((item) => item.id), [mine, queued], 'Send now can take queued items too');
+        assert.equal(components.waitingCount(ctx), 1, 'the header counts only what waits for you');
+        const sheet = components.reviewSheet(ctx);
+        const out = textOf(html(sheet));
+        assert.match(out, new RegExp(`${queued} Context .*Queued for the agent`));
+        assert.match(out, /Queue keeps the 1 item not queued yet here until the agent's next checkpoint/);
+        ctx.data.otherTasks = [{ taskId: 'trail-maps-fixes', title: 'Fixes', status: 'running', statePath: 'x', pending: [{ id: 'FB-001', kind: 'comment', about: 'the session', label: 'x', text: 'Queued there', phase: null, target: null, editable: true, queuedForAgent: true }, { id: 'FB-002', kind: 'comment', about: 'the session', label: 'x', text: 'Not yet', phase: null, target: null, editable: true }], awaiting: 0 }];
+        assert.deepEqual(components.sendItems(ctx).filter((item) => item.taskId === 'trail-maps-fixes').map((item) => item.id), ['FB-002', 'FB-001'], 'another loop lists items not queued yet first');
+        assert.equal(components.waitingCount(ctx), 2);
+        ctx.data.otherTasks = [];
+        session = queueForAgent(session, [mine], NOW).session;
+        const all = components.reviewSheet(makeContext(session, 'research', ui));
+        assert.equal(keyed(all, 'send-queue'), null, 'nothing is left to queue');
+        assert.ok(keyed(all, 'send-confirm'), 'Send now still gives them to the agent sooner');
+        assert.match(textOf(html(all)), /Queue is done: everything here waits for the agent's next checkpoint\. Send now gives it to the agent sooner\./);
+    });
+
+    it('lists queued items in the steering panel with Take back, between Not sent yet and With the agent', () => {
+        let session = createFeedback(rootSession().session, { kind: 'comment', text: 'Mine', target: { id: 'F1' } }, NOW).session;
+        session = createFeedback(session, { kind: 'comment', text: 'For the agent', target: { id: 'F1' } }, NOW).session;
+        const queued = session.feedback.at(-1).id;
+        session = queueForAgent(session, [queued], NOW).session;
+        const steer = components.steerPanel(makeContext(session, 'research'));
+        const out = textOf(html(steer));
+        assert.match(out, /Not sent yet \(1\).*Queued for the agent \(1\) The agent collects these at its next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn\./);
+        assert.match(out, new RegExp(`Queued for the agent .*${queued} .*for the agent's next checkpoint`));
+        const take = keyed(steer, `take-back-${queued}`);
+        assert.match(serialize(take), /title="Keep FB-\d{3} here instead of giving it to the agent at its next checkpoint"/);
+        assert.ok(keyed(steer, `fb-edit-${queued}`) && keyed(steer, `fb-discard-${queued}`), 'a queued item can still change or go');
+        assert.match(out, /Your feedback 2/, 'the count includes queued items');
+        const onlyQueued = queueForAgent(session, [session.feedback.at(-2).id], NOW).session;
+        assert.match(textOf(html(components.steerPanel(makeContext(onlyQueued, 'research')))), /Nothing waits for you to send\. What you queued is below\./);
     });
 
     it('shows a composer failure beside the text it keeps', () => {

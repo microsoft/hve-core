@@ -163,7 +163,8 @@ describe('page routes', () => {
         assert.equal(sent[0].prompt.replace('\n\nMessage from the user:\n   Start with F1.', ''), preview.json.prompt, 'the sent text is the reviewed text plus the message');
         assert.match(sent[0].prompt, /Message from the user:\n {3}Start with F1\./);
         assert.equal(sent[0].displayPrompt, 'Start with F1.\n\nRPI canvas 3WF0 sent 2 items: 1 comment and 1 research request.');
-        assert.deepEqual(Object.keys(sent[0]).sort(), ['displayPrompt', 'ids', 'prompt']);
+        assert.deepEqual(Object.keys(sent[0]).sort(), ['displayPrompt', 'ids', 'mode', 'prompt']);
+        assert.equal(sent[0].mode, 'immediate', 'Send now reaches the agent at its next step');
         const again = await request(url, { method: 'POST', pathname: '/api/delivery', body: { ids, digest: preview.json.digest } });
         assert.equal(again.status, 409);
         assert.equal(sent.length, 1);
@@ -182,6 +183,54 @@ describe('page routes', () => {
         assert.equal(sent.length, 1);
         const missing = await request(url, { method: 'POST', pathname: '/api/delivery', body: { ids: [c.json.item.id] } });
         assert.equal(missing.status, 409);
+        await server.stop();
+        store.close();
+    });
+
+    it('records the chat message ID on items sent now', async () => {
+        const { server, url, store, session } = await setup('delivery-id', { deliver: async () => ({ messageId: 'msg-7' }) });
+        const a = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'First', target: { id: 'F1' } } });
+        const preview = await request(url, { method: 'POST', pathname: '/api/delivery/preview', body: { ids: [a.json.item.id] } });
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/delivery', body: { ids: [a.json.item.id], digest: preview.json.digest } })).status, 200);
+        const item = (await store.load(session.id)).feedback.find((entry) => entry.id === a.json.item.id);
+        assert.equal(item.messageId, 'msg-7');
+        assert.equal(item.state, 'sent');
+        await server.stop();
+        store.close();
+    });
+
+    it('queues reviewed items for the agent without a message, keeps a note as context, and takes items back', async () => {
+        const { server, url, store, sent, session } = await setup('delivery-queue');
+        const a = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'First', target: { id: 'F1' } } });
+        const b = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'Second', target: { id: 'F1' } } });
+        const ids = [a.json.item.id, b.json.item.id];
+        const body = { ids, note: 'Look at F1 first.' };
+        const preview = await request(url, { method: 'POST', pathname: '/api/delivery/preview', body });
+        const queued = await request(url, { method: 'POST', pathname: '/api/delivery', body: { ...body, digest: preview.json.digest, mode: 'queue' } });
+        assert.equal(queued.status, 200);
+        assert.equal(sent.length, 0, 'Queue sends no chat message');
+        const noteId = queued.json.queued.at(-1).id;
+        assert.deepEqual(queued.json.queued.map((entry) => entry.id), [...ids, noteId]);
+        let stored = await store.load(session.id);
+        const byId = (id) => stored.feedback.find((entry) => entry.id === id);
+        assert.ok([...ids, noteId].every((id) => byId(id).state === 'queued' && typeof byId(id).queuedForAgentAt === 'string'), 'queued items stay in the canvas with the time');
+        assert.equal(byId(noteId).kind, 'context');
+        assert.equal(byId(noteId).text, 'Look at F1 first.');
+
+        const back = await request(url, { method: 'POST', pathname: '/api/feedback/take-back', body: { ids: [ids[0]] } });
+        assert.equal(back.status, 200);
+        assert.deepEqual(back.json.ids, [ids[0]]);
+        stored = await store.load(session.id);
+        assert.equal(byId(ids[0]).queuedForAgentAt, undefined, 'taken back, it waits for the user again');
+        assert.equal(byId(ids[0]).state, 'queued');
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/feedback/take-back', body: { ids: [ids[0]] } })).status, 409, 'it is no longer queued for the agent');
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/feedback/take-back', body: { ids: [] } })).status, 400);
+
+        await store.update(session.id, (current) => takeFeedback(current, new Date().toISOString()), { by: 'agent' });
+        const late = await request(url, { method: 'POST', pathname: '/api/feedback/take-back', body: { ids: [ids[1]] } });
+        assert.equal(late.status, 409);
+        assert.match(late.json.error.message, /The agent already has FB-\d{3}\./);
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/delivery', body: { ids, digest: 'x', mode: 'later' } })).status, 400);
         await server.stop();
         store.close();
     });

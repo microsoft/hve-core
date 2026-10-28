@@ -197,30 +197,41 @@ export function updatedMark(ctx, sectionId) {
     return h('span', { class: 'badge tone-agent updated-mark' }, icon('pencil'), 'Updated ', timeEl(section.updatedAt, ctx.now));
 }
 
-/** Items the person has not sent yet, apart from any being sent right now. */
-export const pendingItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item));
+/** True for an unsent item you queued for the agent's next checkpoint; other loops' summaries carry a flag. */
+export const queuedForAgent = (item) => Boolean(item.queuedForAgentAt ?? item.queuedForAgent);
+
+/** Items you have not sent or queued yet, apart from any being sent right now. */
+export const pendingItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item) && !queuedForAgent(item));
+
+/** Items you queued for the agent that it has not collected yet. */
+export const agentQueueItems = (ctx) => ctx.data.session.feedback.filter((item) => item.state === 'queued' && !isSending(ctx, item) && queuedForAgent(item));
 
 /** Status of the shown task in its session tree, or from its own state. */
 const shownStatus = (ctx) => ctx.data.session.followUps?.tree?.tasks.find((task) => task.shown)?.status ?? (ctx.data.session.session.status === 'completed' ? 'completed' : null);
 
 /**
  * Unsent items across the session, grouped by task: the shown task first, then the other
- * tasks in tree order. Other tasks' items are summaries from the server.
+ * tasks in tree order, each listing items not sent yet before items queued for the agent.
+ * Other tasks' items are summaries from the server.
  *
  * @param {any} ctx
  * @returns {{ taskId: string, title: string, status: string | null, shown: boolean, items: any[] }[]}
  */
 export function sessionPending(ctx) {
     const { session } = ctx.data;
-    const groups = [{ taskId: session.task.id, title: session.task.title, status: shownStatus(ctx), shown: true, items: pendingItems(ctx) }];
+    const groups = [{ taskId: session.task.id, title: session.task.title, status: shownStatus(ctx), shown: true, items: [...pendingItems(ctx), ...agentQueueItems(ctx)] }];
     for (const task of ctx.data.otherTasks ?? []) {
-        if (task.pending.length) groups.push({ taskId: task.taskId, title: task.title, status: task.status, shown: false, items: task.pending });
+        const items = [...task.pending.filter((item) => !queuedForAgent(item)), ...task.pending.filter(queuedForAgent)];
+        if (items.length) groups.push({ taskId: task.taskId, title: task.title, status: task.status, shown: false, items });
     }
     return groups.filter((group) => group.items.length);
 }
 
-/** The items Send delivers, as `{ taskId, id }` in the order the dialog lists them. */
+/** The items Send now delivers, as `{ taskId, id }` in the order the dialog lists them. */
 export const sendItems = (ctx) => sessionPending(ctx).flatMap((group) => group.items.map((item) => ({ taskId: group.taskId, id: item.id })));
+
+/** How many items across the session wait for you to send or queue them. */
+export const waitingCount = (ctx) => sessionPending(ctx).reduce((sum, group) => sum + group.items.filter((item) => !queuedForAgent(item)).length, 0);
 
 /** Suggestions for a section that are waiting to be sent, with the agent, or read back. */
 const openSuggestions = (ctx, sectionId) => ctx.data.session.feedback.filter((item) => item.kind === 'edit' && item.target?.id === sectionId && ['queued', 'sent', 'interpreted'].includes(item.state));
@@ -575,6 +586,7 @@ export function table(caption, headers, rows, options = {}) {
 /** Matches the model's claim window: a send holds its items for up to 10 minutes. */
 const isSending = (ctx, item) => item.state === 'queued' && Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000;
 const SENDING = Object.freeze({ icon: 'send', label: 'Sending', tone: 'accent' });
+const QUEUED = Object.freeze({ icon: 'clock', label: 'Queued for the agent', tone: 'agent' });
 const DELIVERY_WORDS = Object.freeze({ send: 'sent as a message', queue: 'collected by the agent', attach: 'attached to a message' });
 
 /** What a feedback item is about, as the steering panel and the send dialog name it. */
@@ -700,8 +712,12 @@ function feedbackRow(ctx, item, group) {
     const kind = FEEDBACK_KIND[item.kind] ?? FEEDBACK_KIND.comment;
     const actions = [];
     const sending = isSending(ctx, item);
+    const queued = item.state === 'queued' && !sending && queuedForAgent(item);
     const editing = editingHere(ctx, 'steer', group.taskId, item);
     let readBack = null;
+    if (queued) {
+        actions.push(button('Take back', { iconName: 'undo', title: `Keep ${item.id} here instead of giving it to the agent at its next checkpoint`, attrs: { 'data-key': `take-back-${item.id}` }, onClick: () => ctx.act.takeBack(group.taskId, item) }));
+    }
     if (item.state === 'interpreted') {
         if (item.target?.type === 'decision') {
             actions.push(button('Looks right', { iconName: 'check', kind: 'primary', attrs: { 'data-key': `looks-right-row-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'applied') }),
@@ -710,10 +726,10 @@ function feedbackRow(ctx, item, group) {
             readBack = readBackActions(ctx, item, 'row');
         }
     }
-    const how = item.delivery && item.state !== 'queued' ? DELIVERY_WORDS[item.delivery] : null;
+    const how = queued ? "for the agent's next checkpoint" : item.delivery && item.state !== 'queued' ? DELIVERY_WORDS[item.delivery] : null;
     const tools = feedbackActions(ctx, 'steer', group, item);
     return h('li', { class: 'fb-item', dataset: { item: item.id } },
-        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(sending ? SENDING : FEEDBACK_STATE[item.state]), tools.length && !editing ? h('span', { class: 'fb-tools' }, tools) : null),
+        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(sending ? SENDING : queued ? QUEUED : FEEDBACK_STATE[item.state]), tools.length && !editing ? h('span', { class: 'fb-tools' }, tools) : null),
         item.optionLabel ? h('p', { class: 'fb-text' }, h('strong', { text: item.optionLabel })) : null,
         editing ? feedbackEditor(ctx, 'steer', group.taskId, item) : item.text ? h('p', { class: 'fb-text', text: excerpt(item.text, 160) }) : null,
         item.interpretation ? h('p', { class: 'fb-interp' }, icon('sparkle'), h('span', { text: item.interpretation.text })) : null,
@@ -773,20 +789,22 @@ export function steerPanel(ctx) {
         homeless.map((decision) => steerCard(decision)));
 
     const pending = pendingItems(ctx);
+    const agentQueue = agentQueueItems(ctx);
     const inFlight = session.feedback.filter((item) => item.state === 'sent' || item.state === 'interpreted' || isSending(ctx, item));
     const earlier = session.feedback.filter((item) => ['applied', 'corrected', 'dismissed'].includes(item.state));
     const loop = { taskId: session.task.id, title: session.task.title, shown: true };
     const feedback = h('div', null,
         pending.length
             ? [h('h4', { class: 'group-title', text: `Not sent yet (${pending.length})` }), h('ul', { class: 'fb-list' }, pending.map((item) => feedbackRow(ctx, item, loop)))]
-            : h('p', { class: 'empty', text: 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you send them with Review and send at the top of the canvas.' }),
+            : h('p', { class: 'empty', text: agentQueue.length ? 'Nothing waits for you to send. What you queued is below.' : 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you send or queue them with Review and send at the top of the canvas.' }),
+        agentQueue.length ? [h('h4', { class: 'group-title', text: `Queued for the agent (${agentQueue.length})` }), h('p', { class: 'meta group-hint', text: 'The agent collects these at its next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn.' }), h('ul', { class: 'fb-list' }, agentQueue.map((item) => feedbackRow(ctx, item, loop)))] : null,
         inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item, loop)))] : null,
         earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Earlier feedback (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item, loop)))) : null);
 
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),
         steerSection('decided', 'Recorded decisions', decidedCount, decidedCount ? decided : h('p', { class: 'empty', text: 'No recorded decisions yet.' }), { iconName: 'sparkle' }),
-        steerSection('feedback', 'Your feedback', pending.length + inFlight.length, feedback, { iconName: 'inbox' }),
+        steerSection('feedback', 'Your feedback', pending.length + agentQueue.length + inFlight.length, feedback, { iconName: 'inbox' }),
         steerSection('add', 'Add input', null, composer(ctx), { iconName: 'plus' }),
         steerSection('checklist', ctx.ui.phase === 'review' ? 'Review checklist' : `${PHASE_META[ctx.ui.phase]?.label ?? ''} review checklist`, null, checklist(ctx), { iconName: 'checklist' }),
     ].filter(Boolean);
@@ -822,7 +840,7 @@ function composer(ctx) {
     h('textarea', { id: textId, class: 'note', rows: '3', placeholder, 'aria-invalid': state.error ? 'true' : undefined, 'aria-describedby': state.error ? 'composer-error' : undefined, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
     state.error ? h('p', { class: 'field-error', id: 'composer-error' }, icon('alert'), h('span', { text: `Not added: ${state.error} Your text is kept.` })) : null,
     h('div', { class: 'btn-row' }, h('button', { type: 'submit', class: 'btn btn-primary', disabled: !state.text.trim(), dataset: { key: 'composer-submit' } }, icon('plus'), h('span', { text: { comment: 'Add comment', context: 'Add context', 'research-request': 'Add research request' }[state.kind] ?? 'Add' }))),
-    h('p', { class: 'meta', text: 'What you add waits in Your feedback until you send it with Review and send.' }));
+    h('p', { class: 'meta', text: 'What you add waits in Your feedback until you send or queue it with Review and send.' }));
 }
 
 const PHASE_NOUNS = Object.freeze({ research: 'the research', plan: 'the plan', implement: 'the implementation', review: 'the review', followup: 'the follow-up' });
@@ -903,18 +921,27 @@ export function reviewSheet(ctx) {
     }
     const noun = plural(pending.length, 'item');
     const loops = groups.length;
+    const fresh = pending.filter((item) => !queuedForAgent(item)).length;
+    const busy = send.sending ? send.busy ?? 'send' : null;
+    const them = (count) => (count === 1 ? 'it' : 'them');
     return [head,
-        h('p', { class: 'send-intro' }, ...from, ` sends ${pending.length === 1 ? 'this item' : `these ${pending.length} items`}${loops > 1 ? ` from ${loops} loops of this session` : ''} to the agent in your chat as one message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”. Check each one: go to it, change its words, or discard it. The agent ${rpi ? (loops > 1 ? "changes each loop's files" : "changes the task's files") : 'makes the changes'} and reads back how it understood each item.`),
+        h('p', { class: 'send-intro' }, ...from, ` has ${pending.length === 1 ? 'this item' : `these ${pending.length} items`}${loops > 1 ? ` from ${loops} loops of this session` : ''} for the agent. Check each one: go to it, change its words, or discard it. The agent ${rpi ? (loops > 1 ? "changes each loop's files" : "changes the task's files") : 'makes the changes'} and reads back how it understood each item.`),
         ...groups.map((group) => reviewGroup(ctx, group)),
         h('label', { class: 'field-label', for: 'send-note', text: 'Message to the agent (optional)' }),
         h('textarea', { id: 'send-note', class: 'note', rows: '3', 'aria-describedby': 'send-note-hint', oninput: (event) => ctx.act.setSendNote(event.target.value) }, send.note),
-        h('p', { class: 'meta', id: 'send-note-hint', text: 'Shown in the chat above the line that names this canvas.' }),
+        h('p', { class: 'meta', id: 'send-note-hint', text: 'With Send now, it shows in the chat above the line that names this canvas. With Queue, it waits with your items as context.' }),
         h('details', { class: 'send-exact' },
-            h('summary', { text: 'Exact message the agent receives' }),
+            h('summary', { text: 'Exact message Send now delivers' }),
             h('pre', { class: 'preview-text', id: 'send-preview', tabindex: '0', text: send.preview?.prompt ?? 'Preparing the message…' })),
         send.error ? h('div', { class: 'notice tone-danger', role: 'alert', id: 'send-error' }, h('p', { class: 'notice-title' }, icon('alert'), send.error)) : null,
+        h('ul', { class: 'send-modes', id: 'send-modes' },
+            h('li', null, icon('send'), h('span', null, h('strong', { text: 'Send now' }), ` gives ${them(pending.length)} to the agent at its next step, even mid-task, as one chat message that starts with “RPI canvas${handle ? ` ${handle}` : ''}”.`)),
+            h('li', null, icon('clock'), h('span', null, h('strong', { text: 'Queue' }), fresh
+                ? ` keeps ${fresh === pending.length ? them(fresh) : `the ${plural(fresh, 'item')} not queued yet`} here until the agent's next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn. You can take ${them(fresh)} back until then.`
+                : ' is done: everything here waits for the agent\'s next checkpoint. Send now gives it to the agent sooner.'))),
         h('div', { class: 'btn-row send-actions' },
-            button(send.sending ? 'Sending' : `Send ${noun}`, { kind: 'primary', iconName: 'send', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-confirm', id: 'send-confirm' }, onClick: () => ctx.act.send() }),
+            button(busy === 'send' ? 'Sending' : 'Send now', { kind: 'primary', iconName: 'send', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-confirm', id: 'send-confirm', 'aria-describedby': 'send-modes' }, onClick: () => ctx.act.send('send') }),
+            fresh ? button(busy === 'queue' ? 'Queueing' : 'Queue', { iconName: 'clock', disabled: send.sending || !send.preview, attrs: { 'data-key': 'send-queue', id: 'send-queue', 'aria-describedby': 'send-modes' }, onClick: () => ctx.act.send('queue') }) : null,
             confirmButton(ctx, { key: 'send-discard-all', label: 'Discard all', armedLabel: loops > 1 ? `Discard all ${noun} from ${loops} loops?` : `Discard all ${noun}?`, onConfirm: () => ctx.act.discardAll() }),
             button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))].filter(Boolean);
 }
@@ -940,7 +967,7 @@ function reviewRow(ctx, group, item) {
     return h('li', { class: 'send-item', dataset: { reviewItem: `${group.taskId}:${item.id}` } },
         icon(kind.icon, { className: 'send-item-icon' }),
         h('div', { class: 'send-item-text' },
-            h('p', { class: 'send-item-kind' }, h('span', { class: 'id-chip', text: item.id }), ' ', kind.label, about),
+            h('p', { class: 'send-item-kind' }, h('span', { class: 'id-chip', text: item.id }), ' ', kind.label, about, queuedForAgent(item) ? [' ', badge(QUEUED)] : null),
             item.optionLabel ? h('p', { class: 'send-item-option' }, h('strong', { text: item.optionLabel })) : null,
             editing ? feedbackEditor(ctx, 'dialog', group.taskId, item) : item.text ? h('p', { class: 'send-item-words', text: item.text }) : null,
             lines ? h('p', { class: 'meta', text: lines }) : null),

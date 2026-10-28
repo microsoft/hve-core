@@ -3315,6 +3315,36 @@ details > summary:hover {
   margin-top: 12px;
 }
 
+/* What Send now and Queue each do, right above the buttons. */
+.send-modes {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.send-modes li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: var(--rw-fg-muted);
+  font: 400 12.5px/19px var(--rw-font);
+}
+
+.send-modes strong {
+  color: var(--rw-fg);
+}
+
+.send-modes .icon {
+  margin-top: 2px;
+}
+
+.group-hint {
+  margin: 0 0 6px;
+}
+
 /* Send stays in view while the exact text is open. */
 .send-sheet > .send-actions {
   position: sticky;

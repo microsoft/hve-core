@@ -20,7 +20,9 @@ import {
     markDelivered,
     releaseDelivery,
     ModelError,
+    queueForAgent,
     suggestEdit,
+    takeBackFeedback,
     transitionFeedback,
 } from './model.mjs';
 import { loadSessionDocs } from './session-docs.mjs';
@@ -413,6 +415,40 @@ export function createCanvasServer(deps) {
 
     const userUpdate = (change) => (connected() ? store.update(getSessionId(), change, { by: 'user' }) : Promise.reject(notConnectedError()));
 
+    // Queue: marks each task's reviewed items for the agent's next checkpoint. A note waits with
+    // them as a context item in the shown task, so it is not lost without a message to carry it.
+    const queueGroups = async (groups, body) => {
+        const queued = [];
+        let revision = null;
+        try {
+            for (const group of groups) {
+                const { session, result } = await store.update(group.id, (current) => {
+                    if (!sameItems(current, group.session, group.ids)) {
+                        throw new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then queue again.');
+                    }
+                    return queueForAgent(current, group.ids, now());
+                }, { by: 'user' });
+                queued.push(...result.map((id) => ({ taskId: group.taskId, id })));
+                if (group.id === getSessionId()) revision = session.revision;
+            }
+        } catch (error) {
+            if (error instanceof ModelError && error.code === 'invalid_state') {
+                throw new HttpError(409, 'preview_stale', 'Some of these items were sent or removed meanwhile. Check the list, then queue again.');
+            }
+            throw error;
+        }
+        const note = typeof body?.note === 'string' ? body.note.trim() : '';
+        if (note) {
+            const { session, result } = await userUpdate((current) => {
+                const created = createFeedback(current, { kind: 'context', text: note }, now());
+                return { session: queueForAgent(created.session, [created.result.id], now()).session, result: created.result };
+            });
+            queued.push({ taskId: session.task.id, id: result.id });
+            revision = session.revision;
+        }
+        return { revision, queued };
+    };
+
     const routes = {
         'GET /api/state': () => stateResponse(),
 
@@ -444,6 +480,15 @@ export function createCanvasServer(deps) {
             return { revision: session.revision, item: result };
         },
 
+        // Takes queued items back before the agent collects them; they wait for the user again.
+        'POST /api/feedback/take-back': async (body) => {
+            const doc = await docFor(body?.taskId);
+            const ids = Array.isArray(body?.ids) ? body.ids.slice(0, LIMITS.feedbackItems) : [];
+            if (!ids.length) throw new HttpError(400, 'invalid_input', 'ids must list the items to take back.');
+            const { session, result } = await store.update(doc.id, (current) => takeBackFeedback(current, ids, now()), { by: 'user' });
+            return { revision: session.revision, ids: result };
+        },
+
         'POST /api/feedback/discard': async (body) => {
             const groups = await deliveryGroups(body, LIMITS.feedbackItems);
             const discarded = [];
@@ -473,19 +518,26 @@ export function createCanvasServer(deps) {
 
         'POST /api/delivery/preview': async (body) => compose(await deliveryGroups(body), body),
 
-        // Sends the items the user reviewed as one chat message, only when they still match the
-        // preview (by digest). Each task's items are held first so a concurrent take or send
-        // cannot repeat them; any failure before the message is handed to the chat releases
-        // every hold. Once it is handed over, the items are marked sent and never released.
+        // Sends the items the user reviewed, only when they still match the preview (by digest).
+        // Queue marks them for the agent's next checkpoint; they stay in the canvas, and an
+        // optional note waits with them as context. Send now hands them to the chat as one
+        // message the agent reads at its next step. Each task's items are held first so a
+        // concurrent take or send cannot repeat them; any failure before the message is handed
+        // to the chat releases every hold. Once it is handed over, the items are marked sent,
+        // with the chat's message ID, and never released.
         'POST /api/delivery': async (body) => {
-            if (body?.mode !== undefined && body.mode !== 'send') {
-                throw new HttpError(400, 'invalid_input', 'The canvas sends items as a chat message; mode can only be send.');
+            const mode = body?.mode === undefined ? 'send' : body.mode;
+            if (mode !== 'send' && mode !== 'queue') {
+                throw new HttpError(400, 'invalid_input', "mode is send, which the chat delivers at the agent's next step, or queue, which waits in the canvas for the agent's next checkpoint.");
             }
             const digest = typeof body?.digest === 'string' ? body.digest : '';
             const groups = await deliveryGroups(body);
             const message = compose(groups, body);
             if (message.digest !== digest) {
                 throw Object.assign(new HttpError(409, 'preview_stale', 'Your items changed since you opened this. Check the list, then send again.'), { detail: { preview: message } });
+            }
+            if (mode === 'queue') {
+                return queueGroups(groups, body);
             }
             const held = [];
             const releaseAll = async () => {
@@ -511,14 +563,16 @@ export function createCanvasServer(deps) {
                 }
                 throw error;
             }
+            let sent = null;
             try {
-                await deliver({ prompt: message.prompt, displayPrompt: message.displayPrompt, ids: message.ids });
+                sent = await deliver({ prompt: message.prompt, displayPrompt: message.displayPrompt, ids: message.ids, mode: 'immediate' });
             } catch (error) {
                 await releaseAll();
                 const code = error instanceof ModelError ? error.code : 'delivery_failed';
                 log(`Send failed: ${error instanceof Error ? error.message : 'error'}`, 'warning');
                 throw new HttpError(STATUS_FOR[code] ?? 502, code, error instanceof Error ? error.message : 'Sending failed.');
             }
+            const messageId = typeof sent?.messageId === 'string' ? sent.messageId : null;
             const delivered = [];
             const unrecorded = [];
             let revision = null;
@@ -526,7 +580,7 @@ export function createCanvasServer(deps) {
                 let marked = null;
                 for (let attempt = 0; attempt < MARK_ATTEMPTS && !marked; attempt += 1) {
                     try {
-                        marked = await store.update(group.id, (current) => markDelivered(current, group.ids, 'send', now(), { tasks: groups.length }), { by: 'user' });
+                        marked = await store.update(group.id, (current) => markDelivered(current, group.ids, 'send', now(), { tasks: groups.length, messageId }), { by: 'user' });
                     } catch (error) {
                         log(`Sent, but the canvas could not record it for ${group.taskId} (attempt ${attempt + 1}): ${error instanceof Error ? error.message : 'error'}`, 'warning');
                         await new Promise((resolve) => setTimeout(resolve, 50 * (attempt + 1)));

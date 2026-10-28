@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionPending, sessionTree, steerPanel } from './components.mjs';
+import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionPending, sessionTree, steerPanel, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -26,7 +26,7 @@ const $ = (id) => document.getElementById(id);
 
 /** The Review and send dialog's state: the person's message, the previewed text, and progress. */
 function freshSend() {
-    return { note: '', preview: null, previewNote: null, sending: false, error: null };
+    return { note: '', preview: null, previewNote: null, sending: false, busy: null, error: null };
 }
 
 const state = {
@@ -648,6 +648,18 @@ const act = {
             return false;
         }
     },
+    /** Takes an item back from the agent's queue, so it waits for you again in Not sent yet. */
+    async takeBack(taskId, item) {
+        try {
+            await api('/api/feedback/take-back', { taskId, ids: [item.id] });
+            announce(`${item.id} is back in Not sent yet. It waits until you send or queue it.`);
+            await refresh();
+            window.requestAnimationFrame(() => document.querySelector(`[data-key="fb-edit-${CSS.escape(item.id)}"]`)?.focus());
+        } catch (error) {
+            reportFailure(`Not taken back: ${error.message}`);
+            await refresh();
+        }
+    },
     /** Takes back a queued answer, override, or correction and reopens it prefilled. */
     async editAnswer(decisionId, feedback, origin) {
         const source = origin ?? feedback;
@@ -921,8 +933,13 @@ const act = {
         window.clearTimeout(sendNoteTimer);
         sendNoteTimer = window.setTimeout(refreshSendPreview, 400);
     },
-    /** Sends the listed items as one chat message, after checking the list still matches the text prepared for it. */
-    async send() {
+    /**
+     * Sends the listed items now as one chat message, or queues them for the agent's next
+     * checkpoint, after checking the list still matches the text prepared for it.
+     *
+     * @param {'send' | 'queue'} [mode]
+     */
+    async send(mode = 'send') {
         const send = state.ui.send;
         const items = sendItems(context());
         if (!send.preview || previewKey(send.preview) !== itemsKey(items) || send.previewNote !== send.note) {
@@ -934,23 +951,27 @@ const act = {
             }
         }
         send.sending = true;
+        send.busy = mode;
         send.error = null;
         renderSendSheet();
         try {
-            const result = await api('/api/delivery', { items, digest: send.preview.digest, ...(send.note.trim() ? { note: send.note } : {}) });
+            const result = await api('/api/delivery', { items, digest: send.preview.digest, mode, ...(send.note.trim() ? { note: send.note } : {}) });
             const handle = state.data.canvas?.handle;
             Object.assign(state.ui.send, freshSend());
             $('sendSheet').close();
-            announce(result.warning ?? `Sent ${plural(result.delivered.length, 'item')} to the agent. Look for “RPI canvas${handle ? ` ${handle}` : ''} sent” in the chat.`);
+            announce(mode === 'queue'
+                ? `Queued ${plural(result.queued.length, 'item')} for the agent. It collects them at its next checkpoint; until then, you can take them back from Your feedback.`
+                : result.warning ?? `Sent ${plural(result.delivered.length, 'item')} to the agent. Look for “RPI canvas${handle ? ` ${handle}` : ''} sent” in the chat.`);
             await refresh();
         } catch (error) {
             send.sending = false;
+            send.busy = null;
             if (error.code === 'preview_stale' && error.detail?.preview) {
                 send.preview = error.detail.preview;
                 send.previewNote = send.note;
-                announce('Your items changed since this opened. Check the list, then send again.');
+                announce(`Your items changed since this opened. Check the list, then ${mode === 'queue' ? 'queue' : 'send'} again.`);
             } else {
-                send.error = `Not sent: ${error.message}`;
+                send.error = `${mode === 'queue' ? 'Not queued' : 'Not sent'}: ${error.message}`;
                 announce(send.error);
             }
             renderSendSheet();
@@ -1489,6 +1510,8 @@ function updateSendPreview() {
     }
     pre.textContent = state.ui.send.preview?.prompt ?? 'Preparing the message…';
     confirm.disabled = state.ui.send.sending || !state.ui.send.preview;
+    const queue = sheet.querySelector('[data-key="send-queue"]');
+    if (queue) queue.disabled = confirm.disabled;
 }
 
 /** Rebuilds the open dialog, keeping focus, selection, and the exact-text disclosure where they were. */
@@ -1525,13 +1548,19 @@ function onSendClose() {
     else $('sendBtn').focus({ preventScroll: true });
 }
 
+/** The header button counts what waits for you; items you queued for the agent only show in its words. */
 function renderSendButton() {
-    const waiting = sendItems(context()).length;
+    const ctx = context();
+    const waiting = waitingCount(ctx);
+    const queued = sendItems(ctx).length - waiting;
     const sendBtn = $('sendBtn');
     sendBtn.classList.toggle('has-items', waiting > 0);
     $('sendCount').textContent = String(waiting);
-    sendBtn.setAttribute('aria-label', waiting ? `Review and send, ${plural(waiting, 'item')} waiting` : 'Review and send, nothing waiting');
-    sendBtn.title = waiting ? `Review and send ${plural(waiting, 'item')} to the agent` : 'Nothing to send yet. Answer, comment, or suggest an edit first.';
+    const inQueue = queued ? `${plural(queued, 'item')} queued for the agent` : '';
+    sendBtn.setAttribute('aria-label', `Review and send, ${waiting ? `${plural(waiting, 'item')} waiting` : 'nothing waiting'}${inQueue ? `, ${inQueue}` : ''}`);
+    sendBtn.title = waiting
+        ? `Review and send ${plural(waiting, 'item')} to the agent${inQueue ? `; ${inQueue}` : ''}`
+        : inQueue ? `${inQueue}. Open to send ${queued === 1 ? 'it' : 'them'} now.` : 'Nothing to send yet. Answer, comment, or suggest an edit first.';
 }
 
 /** The CSS selector for a board lane. */

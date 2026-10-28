@@ -145,6 +145,18 @@ describe('delivery adapter', () => {
         assert.deepEqual(calls, [{ prompt: 'Full text', displayPrompt: 'RPI canvas K7QF sent 1 item: 1 comment.', mode: 'enqueue' }]);
     });
 
+    it('sends now when asked, and returns the chat message ID', async () => {
+        const calls = [];
+        const deliver = createDelivery({ getSession: () => ({ send: async (options) => {
+            calls.push(options);
+            return 'msg-42';
+        } }) });
+        assert.deepEqual(await deliver({ prompt: 'Now', displayPrompt: 'd', ids: ['FB-001'], mode: 'immediate' }), { messageId: 'msg-42' });
+        assert.equal(calls[0].mode, 'immediate');
+        const quiet = createDelivery({ getSession: () => ({ send: async () => undefined }) });
+        assert.deepEqual(await quiet({ prompt: 'x', displayPrompt: 'x', ids: [] }), { messageId: null }, 'a host that returns no ID records none');
+    });
+
     it('reports hosts that cannot take messages, pointing to take_feedback', async () => {
         const none = createDelivery({ getSession: () => null });
         await assert.rejects(none({ prompt: 'x', displayPrompt: 'x', ids: [] }), (error) => error instanceof ModelError && error.code === 'delivery_unavailable' && /take_feedback/.test(error.message));
