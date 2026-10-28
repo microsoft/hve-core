@@ -89,7 +89,7 @@ For each `user-owned` or `user-retained` group:
 1. Persist the pending group and its evidence before conversation.
 2. Present the plan and supporting research, source, or code as Markdown links. Explain the decision, why it matters now, viable choices and consequences, evidence-backed recommendation when available, uncertainty, and readiness effect in plain language.
 3. Add a compact Mermaid diagram in conversation only when architecture, dependency, sequence, or a trade-off would otherwise be difficult to understand. The diagram supplements accessible prose.
-4. Call the question tool when available with one concise question per decision and fixed options plus freeform input when useful. When unavailable, ask the same question in chat and wait.
+4. Call the question tool when available with one concise question per decision and fixed options plus freeform input when useful. Offer `Answered in the canvas` while a canvas shows the session, as the skill's Flow step 8 describes. When unavailable, ask the same question in chat and wait.
 5. Persist the answer, provenance, affected requirements and phases, and readiness effect before presenting the next group.
 
 When no unresolved material decision exists, record that no walkthrough is required and do not ask for acknowledgment. In `agent-owned` mode, apply the same group ordering internally, select only evidence-supported options, and persist each rationale. Missing decision-critical evidence produces Not ready or Blocked with the smallest evidence needed.

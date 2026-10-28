@@ -158,6 +158,7 @@ Use the host's question tool, such as `vscode_askQuestions`, when available, wit
 * `Gather more information`
 * `Skip this item`
 * `Finish review decisions`
+* `Answered in the canvas`, only while an RPI Workflow canvas shows the session; when the user chooses it, collect the answer with the canvas's `take_feedback` action
 
 The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the question tool is unavailable, present the same choices in chat and wait.
 

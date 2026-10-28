@@ -114,7 +114,7 @@ For each `user-owned` or `user-retained` group:
 1. Persist the pending group and its evidence before conversation.
 2. Present the primary research artifact and relevant source files as Markdown links. Explain the decision, why it matters now, viable choices and consequences, evidence-backed recommendation when available, uncertainty, and readiness effect in plain language.
 3. Add a compact Mermaid diagram in the conversation only when a relationship, sequence, or trade-off would otherwise be difficult to understand. The diagram supplements the explanation and does not replace accessible prose.
-4. Ask with the question tool, one concise question per decision, using fixed options plus freeform input when useful.
+4. Ask with the question tool, one concise question per decision, using fixed options plus freeform input when useful. Offer `Answered in the canvas` while a canvas shows the session, as the skill's Flow step 9 describes.
 5. Persist the answer, evidence or user source, resulting decision, affected findings, and readiness effect before presenting the next group.
 
 Agent-owned decisions, the unavailable-tool fallback, and the no-walkthrough case follow the skill's Flow step 9.
