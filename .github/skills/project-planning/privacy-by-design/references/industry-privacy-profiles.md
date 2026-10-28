@@ -39,7 +39,7 @@ This reference maps the 7 PbD Foundation Principles to industry-specific context
 ### Key regulations
 
 - ePrivacy Directive (EU) — consent for location, confidentiality of communications
-- Telecommunications Act 1997 (AU) — metadata retention, interception warrants
+- Telecommunications (Interception and Access) Act 1979 (AU) (Part 5-1A metadata retention, interception warrants); Telecommunications Act 1997 (AU) (Part 13 confidentiality of customer information)
 - CPNI Rules 47 CFR § 64.2001 (US) — customer network information protection
 
 ---
