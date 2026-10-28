@@ -187,7 +187,7 @@ Optional. Suppress checks that don't apply to this system.
 
 ## Assessment integration
 
-When the Privacy Reviewer assesses a system:
+When an assessment loads this skill, the assessor follows this sequence:
 
 1. Load `.pbd-config.yml` if present (or infer industry from codebase).
 2. Resolve effective principle priorities from justified overrides, then the selected profile, then the base severity rules. Priority does not weight checklist counts or create a deficiency.
