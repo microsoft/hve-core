@@ -60,6 +60,8 @@ jobs:
             30 
           }
           
+          Import-Module ./scripts/lib/Modules/CIHelpers.psm1 -Force
+
           Write-Host "Running SHA staleness check with $thresholdDays day threshold..."
           
           # Run staleness check and capture output
@@ -80,7 +82,7 @@ jobs:
             # Fire warnings for each stale dependency
             foreach ($staleDep in $report.Dependencies) {
               if ($staleDep.DaysOld -gt $thresholdDays) {
-                Write-Output "::warning file=$($staleDep.File)::Stale SHA detected: $($staleDep.Action)@$($staleDep.CurrentVersion) is $($staleDep.DaysOld) days old (latest: $($staleDep.LatestVersion))"
+                Write-CIAnnotation -Level Warning -File $staleDep.File -Message "Stale SHA detected: $($staleDep.Name)@$($staleDep.CurrentVersion) is $($staleDep.DaysOld) days old (latest: $($staleDep.LatestVersion))"
               }
             }
           } else {
