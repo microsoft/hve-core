@@ -170,6 +170,7 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 ## Phase Rail
 
 * The rail is an ARIA tab list of the five phases in order. The selected tab chooses which phase the document shows; it has a 2px accent underline and a 600 weight label, matching the Session Log tab treatment.
+* A phase other than the agent's shows the status its document records: Done, In progress, or Blocked. A phase the agent moved back from keeps that status and its content; only a later phase with no document is Upcoming and shows "has not started".
 * Each tab shows its phase status icon and label. Done segments of the connecting line use `--rw-success`; others use `--rw-border-muted`.
 * The agent's active phase carries an "Agent" marker (sparkle icon and the word, in the agent hue). Viewing another phase never moves the marker, so a person can read Research while the agent implements.
 * A tab with items needing the person shows an attention badge with the count.
@@ -449,6 +450,7 @@ Four icons keep one meaning wherever they mark a click: go-to (a box with an arr
 | 2026-10-27 | Implement's change map draws in-progress parts in the accent tone and outlines the chosen phase; every Review and send row names its phase; the style guide states the board's narrow-panel cap       | Done and in-progress parts looked alike, the legend promised a fill the map did not draw, and rows about a plain ID named no phase      |
 | 2026-10-27 | The task board shows three lanes with one card each, progress beside its title, lane dropdowns, card markers and previews, and card clicks that go to Phases and tasks; Now leaves the steering panel | The board scrolled and listed every card in five columns, its detail panel repeated the task block, and Now repeated the board          |
 | 2026-10-27 | Diagram labels keep every word: boxes widen up to 22 characters before they grow, long words break, and only a label past eight lines ends with an ellipsis and a hover title; layers never empty     | Long labels lost words without a mark in 41 plan diagrams, two maps drew with broken sizes, and a 122-character label was refused       |
+| 2026-10-27 | A phase other than the agent's shows the status its document records, and keeps its content when the agent moves back                                                                                 | Plan, Implement, Review, and Follow-up went blank as Upcoming whenever the agent revisited an earlier phase                             |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

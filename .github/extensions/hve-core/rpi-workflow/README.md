@@ -39,7 +39,8 @@ The canvas follows those files while it is open and never changes them. What you
 
 ### Regions
 
-* The header holds the task title, the phase rail, Needs you, Review and send, the Live control, appearance, the ID legend, keyboard shortcuts, and the panel toggles. The rail marks the phase the agent works in, and you can read any other phase meanwhile. Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree and, for a real session, the workspace's other sessions.
+* The header holds the task title, the phase rail, Needs you, Review and send, the Live control, appearance, the ID legend, keyboard shortcuts, and the panel toggles. The rail marks the phase the agent works in, and you can read any other phase meanwhile.
+  Each phase shows what its documents hold, with the status they record, wherever the agent is, so a phase the agent moved back from keeps its content; only a later phase with no document yet shows that it has not started. Under the title, the session button names the session and counts its loops; it opens the session menu, which lists the session's loops as a tree and, for a real session, the workspace's other sessions.
   Next comes the canvas badge with the handle that starts this canvas's messages; it never shrinks. For a real session, the line continues with the task ID, the repository and branch, and, for a child loop, a link to its parent task. In a narrow header the session name shortens first, then the task details give way.
 * The navigator on the left outlines the viewed phase and filters it.
 * The document fills the middle. Its context bar starts with Back and Forward, then names the phase, its status, the artifact path with Copy and, when the canvas runs in VS Code, Open in VS Code, when the file last changed, and, in the phase the agent works in, its next action. Sections of a real artifact that no other row shows appear, collapsed, in the phase's record row.
@@ -47,7 +48,7 @@ The canvas follows those files while it is open and never changes them. What you
 
 ### Following the Agent
 
-The Live control in the header shows whether the canvas follows the agent. While it shows Live, the canvas moves to the loop and phase the agent works in whenever either changes, and a note at the bottom of the document says when it moved to another loop.
+The Live control in the header shows whether the canvas follows the agent. While it shows Live, the canvas moves to the loop and phase the agent works in whenever either changes, back to an earlier phase as well as forward, and a note at the bottom of the document says when it moved to another loop.
 Choosing a phase other than the agent's, showing another loop or session, or going Back or Forward stops following, and so does pressing the control or `f`. The control then shows Follow agent, and the canvas stays where you are. Press it, or `f`, to catch up: the canvas shows the loop the agent works in, from anywhere in the session, and the agent's phase, and follows again.
 That loop is the session's running loop, the one that changed last when several run, or, when none runs, the latest loop, the one changed last that no other loop continues. Its tooltip names that loop when it is not the one shown, and the session menu marks it Agent. When the agent points you at an item with `focus_item`, following continues. While the canvas connects or reconnects, the control says so.
 
