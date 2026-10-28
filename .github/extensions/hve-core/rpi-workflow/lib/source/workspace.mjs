@@ -448,9 +448,72 @@ export async function checkSourceLocations(workspace, session) {
     return problems;
 }
 
+/** Kinds whose earlier documents the canvas reads and offers to switch to. */
+const EARLIER_KINDS = ['research', 'plan'];
+
+/** The files a task's view reads: its state, the newest document of each kind, and earlier research documents and plans. */
+function watchedFiles(statePath, state) {
+    return [...new Set([statePath, ...ARTIFACT_KEYS.map((key) => state.artifacts[key]), ...EARLIER_KINDS.flatMap((key) => state.documents[key])].filter(Boolean))];
+}
+
 /**
- * Reads a task's state and artifacts and assembles its canvas document. Artifact read
- * problems become warnings; a state file that cannot be read throws.
+ * Reads the earlier research documents and plans the state lists, each numbered by its place
+ * in the list. A document that cannot be read or is another kind becomes a warning.
+ *
+ * @param {{ root: string, tracking: string }} workspace
+ * @param {ReturnType<typeof parseState>} state
+ * @param {string[]} warnings
+ */
+async function readEarlier(workspace, state, warnings) {
+    const earlier = { research: [], plan: [] };
+    for (const key of EARLIER_KINDS) {
+        for (const [index, target] of state.documents[key].slice(0, -1).entries()) {
+            let file;
+            try {
+                file = await readContained(workspace, target);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'could not be read.';
+                warnings.push(message.includes(target) ? message : `${target}: ${message}`);
+                continue;
+            }
+            const parsed = parseArtifact(file.text);
+            if (parsed?.kind === key) earlier[key].push({ n: index + 1, path: file.path, mtimeMs: file.mtimeMs, parsed });
+            else warnings.push(`${file.path} is listed as ${key} ${index + 1} but is not a ${key} artifact.`);
+        }
+    }
+    return earlier;
+}
+
+/** IDs a research document or plan holds, from the session or an earlier document's snapshot. */
+const DOCUMENT_IDS = Object.freeze({
+    research: (part) => [...(part.research?.questions ?? []), ...(part.research?.findings ?? []), ...(part.research?.evidence ?? []), ...part.decisions].map((item) => item.id),
+    plan: (part) => [...(part.plan?.phases ?? []).flatMap((phase) => [phase.id, ...phase.tasks.map((task) => task.id)]), ...(part.plan?.requirements ?? []).map((item) => item.id), ...part.decisions.map((item) => item.id)],
+});
+
+/** Says which IDs appear in more than one document of a kind; links go to the newer. */
+function repeatedIdWarnings(session) {
+    const warnings = [];
+    for (const key of EARLIER_KINDS) {
+        const where = new Map();
+        for (const entry of session.documents[key]) {
+            const part = entry.newest ? { [key]: session[key], decisions: session.decisions.filter((decision) => decision.phase === key) } : entry.snapshot;
+            if (!part) continue;
+            for (const id of new Set(DOCUMENT_IDS[key](part))) where.set(id, [...(where.get(id) ?? []), entry.n]);
+        }
+        const repeated = [...where].filter(([, numbers]) => numbers.length > 1);
+        if (!repeated.length) continue;
+        const shown = repeated.slice(0, 8).map(([id, numbers]) => `${id} (${numbers.map((n) => `${key} ${n}`).join(' and ')})`);
+        const more = repeated.length > 8 ? `, and ${repeated.length - 8} more` : '';
+        warnings.push(`${key === 'research' ? 'Research' : 'Plan'}: ${repeated.length === 1 ? 'an ID appears' : `${repeated.length} IDs appear`} in more than one ${key === 'research' ? 'research document' : 'plan'}: ${shown.join('; ')}${more}. Links go to the newer one.`);
+    }
+    return warnings;
+}
+
+/**
+ * Reads a task's state, its newest artifacts, and its earlier research documents and plans,
+ * and assembles its canvas document: the newest of each kind, with each earlier one as a
+ * snapshot in `documents`. Artifact read problems become warnings; a state file that cannot
+ * be read throws.
  *
  * @param {{ root: string, tracking: string }} workspace
  * @param {string} statePath
@@ -482,9 +545,15 @@ export async function loadTask(workspace, statePath, now) {
             if (!(key === 'research' && parsed?.kind)) warnings.push(`${file.path} is not a ${key} artifact.`);
         }
     }
+    const earlier = await readEarlier(workspace, self.state, warnings);
+    const findingsBefore = (n) => earlier.research.filter((entry) => entry.n < n).reduce((sum, entry) => sum + entry.parsed.findings.length, 0);
+    const findingOffset = findingsBefore(self.state.documents.research.length);
+    if (earlier.research.length < self.state.documents.research.length - 1) {
+        warnings.push('An earlier research document could not be read, so finding numbers after it may not match the files.');
+    }
     const scan = await scanStates(workspace);
     const tree = await sessionTreeOf(workspace, self, scan);
-    const assembled = assembleSession({
+    const input = {
         id: storeIdFor(self.state.taskId),
         state: self.state,
         artifacts,
@@ -495,10 +564,33 @@ export async function loadTask(workspace, statePath, now) {
         git: await readGit(workspace.root),
         root: workspace.root,
         now,
-    });
+    };
+    const assembled = assembleSession({ ...input, findingOffset });
+    // An earlier document renders as the session would if it were the newest of its kind.
+    const snapshotOf = (key, entry) => {
+        const alt = assembleSession({ ...input, artifacts: { ...artifacts, [key]: entry.parsed }, files: { ...files, [key]: { path: entry.path, mtimeMs: entry.mtimeMs } }, findingOffset: key === 'research' ? findingsBefore(entry.n) : findingOffset }).session;
+        return {
+            [key]: alt[key],
+            sections: Object.fromEntries(Object.entries(alt.sections).filter(([, section]) => section.doc === key)),
+            decisions: alt.decisions.filter((decision) => decision.phase === key),
+            record: alt.phases[key],
+        };
+    };
+    const iso = (ms) => (Number.isFinite(ms) ? new Date(ms).toISOString() : null);
+    assembled.session.documents = Object.fromEntries(EARLIER_KINDS.map((key) => {
+        const listed = self.state.documents[key];
+        return [key, listed.map((target, index) => {
+            const n = index + 1;
+            if (index === listed.length - 1) return { n, path: files[key]?.path ?? target, title: artifacts[key]?.title || null, updatedAt: iso(files[key]?.mtimeMs), newest: true };
+            const entry = earlier[key].find((item) => item.n === n);
+            return entry
+                ? { n, path: entry.path, title: entry.parsed.title || null, updatedAt: iso(entry.mtimeMs), newest: false, snapshot: snapshotOf(key, entry) }
+                : { n, path: target, title: null, updatedAt: null, newest: false, missing: true };
+        })];
+    }));
     const sourceProblems = await checkSourceLocations(workspace, assembled.session);
-    assembled.session.source.warnings = [...warnings, ...assembled.session.source.warnings, ...sourceProblems, ...tree.warnings, ...skippedWarning(scan.skipped)];
-    const watched = [self.path, ...ARTIFACT_KEYS.map((key) => self.state.artifacts[key]).filter(Boolean)];
+    assembled.session.source.warnings = [...warnings, ...assembled.session.source.warnings, ...repeatedIdWarnings(assembled.session), ...sourceProblems, ...tree.warnings, ...skippedWarning(scan.skipped)];
+    const watched = watchedFiles(self.path, self.state);
     return { session: assembled.session, warnings: assembled.session.source.warnings, watched, statePath: self.path, taskId: self.state.taskId, tree };
 }
 
@@ -631,7 +723,7 @@ export function createFollower(options) {
         importNow() {
             return serial(async () => {
                 const self = await loadState(workspace, statePath);
-                watched = [self.path, ...ARTIFACT_KEYS.map((key) => self.state.artifacts[key]).filter(Boolean)];
+                watched = watchedFiles(self.path, self.state);
                 return load(await sourceSignature(workspace, watched, sessionKey));
             });
         },

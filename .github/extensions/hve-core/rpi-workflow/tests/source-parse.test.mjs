@@ -73,6 +73,22 @@ describe('artifact kinds and state', () => {
         assert.deepEqual(garbage.followUps, []);
     });
 
+    it('lists every document of each kind, newest last, in step with artifact_paths', () => {
+        const base = { task_id: 't', artifact_paths: { research: 'r2.md', plan: null } };
+        const one = parseState(base);
+        assert.deepEqual(one.documents.research, ['r2.md'], 'a state without documents has one per kind');
+        assert.deepEqual(one.documents.plan, []);
+        const many = parseState({ ...base, documents: { research: ['r1.md', 'r2.md', 'r1.md'], plan: ['p1.md'] } });
+        assert.deepEqual(many.documents.research, ['r1.md', 'r2.md']);
+        assert.equal(many.artifacts.plan, 'p1.md', 'a list without an artifact path names the newest');
+        assert.deepEqual(many.warnings, []);
+        const off = parseState({ ...base, documents: { research: ['r2.md', 'r1.md'], plan: 'p1.md' } });
+        assert.deepEqual(off.documents.research, ['r1.md', 'r2.md'], 'artifact_paths names the newest');
+        assert.ok(off.warnings.some((text) => /documents\.research does not end with artifact_paths\.research/.test(text)), off.warnings.join(' | '));
+        assert.ok(off.warnings.some((text) => /documents\.plan is not a list/.test(text)));
+        assert.ok(parseState({ ...base, documents: ['r1.md'] }).warnings.some((text) => /documents is not an object of lists/.test(text)));
+    });
+
     it('keeps usable task links and warns about malformed ones', () => {
         const state = parseState({
             task_id: 'linked',

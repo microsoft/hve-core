@@ -30,7 +30,65 @@ import {
     storeIdFor,
 } from '../lib/source/workspace.mjs';
 import { createStore } from '../lib/store.mjs';
-import { CHILD_STATE, CHILD_TASK, PATHS, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+import { CHILD_STATE, CHILD_TASK, PATHS, PLAN, ROOT_STATE, ROOT_TASK, SESSION_KEY, STALE_TASK, writeFixtureWorkspace } from './helpers/rpi-fixture.mjs';
+
+const EARLY_RESEARCH = `# Task Research: Offline trail maps, first look
+
+## Executive Summary
+
+* Bottom line: Trails need maps that work without signal.
+
+## Findings
+
+### Hikers lose signal on most trails
+
+Most trails have no signal past the trailhead.
+
+* Questions: Q10
+* Evidence state: Evidence-backed finding
+* Evidence: C10
+* Confidence and limits: High.
+
+### Phones keep about a gigabyte free
+
+Most phones in the survey keep a gigabyte free.
+
+* Questions: Q10
+* Evidence state: Evidence-backed finding
+* Evidence: W10
+* Confidence and limits: Medium.
+
+### Tiles come from one vendor
+
+One vendor serves every tile the app shows.
+
+* Questions: Q11
+* Evidence state: Evidence-backed finding
+* Evidence: W10
+* Confidence and limits: High.
+
+## Scope and Questions
+
+| ID | Question | Source | Status |
+|----|----------|--------|--------|
+| Q10 | Do hikers lose signal? | Inferred | answered |
+| Q11 | Where do tiles come from? | Inferred | answered |
+
+## Decisions and Feedback
+
+| Group | Decision or feedback item | Status | Owner | Rationale or input needed | Evidence | Impact of answer |
+|-------|---------------------------|--------|-------|---------------------------|----------|------------------|
+| D10 | Plan for offline maps | confirmed | agent | Signal drops | C10 | Starts the work |
+
+## Research Record
+
+### Evidence Log
+
+| ID | Claim or finding | Source or location | Retrieved and version | Tool | Confidence | Notes |
+|----|------------------|--------------------|-----------------------|------|------------|-------|
+| C10 | Trails lack signal | src/map/coverage.ts | not applicable | read | High | |
+| W10 | Vendor tiles | [Tile vendor](https://example.com/tiles) | 2026-01-14 | external_research | High | |
+`;
 
 const SESSION_DIR = `.copilot-tracking/rpi-sessions/${SESSION_KEY}`;
 const writeJson = async (dir, relative, value) => {
@@ -215,6 +273,37 @@ describe('loading and importing a task', () => {
         const child = await loadTask(workspace, PATHS.childState, NOW);
         assert.equal(child.session.phases.research.status, 'skipped');
         assert.deepEqual(child.warnings, [], 'reused research is not a problem');
+    });
+
+    it('reads earlier research documents and plans, numbers findings on across them, and names repeated IDs', async () => {
+        const many = path.join(tmp, 'many');
+        await writeFixtureWorkspace(many);
+        const firstResearch = '.copilot-tracking/research/2026-01-14/trail-maps-research.md';
+        const firstPlan = '.copilot-tracking/plans/2026-01-14/trail-maps-plan.md';
+        for (const [target, text] of [[firstResearch, EARLY_RESEARCH], [firstPlan, PLAN]]) {
+            await fs.mkdir(path.dirname(path.join(many, target)), { recursive: true });
+            await fs.writeFile(path.join(many, target), text);
+        }
+        await writeJson(many, PATHS.rootState, { ...ROOT_STATE, documents: { research: [firstResearch, PATHS.research], plan: [firstPlan, PATHS.plan] } });
+        const loaded = await loadTask(await resolveWorkspace([many]), PATHS.rootState, NOW);
+        const { research, plan } = loaded.session.documents;
+        assert.deepEqual(research.map((doc) => [doc.n, doc.newest, Boolean(doc.snapshot)]), [[1, false, true], [2, true, false]]);
+        assert.equal(research[0].title, 'Offline trail maps, first look');
+        assert.equal(research[0].path, firstResearch);
+        assert.deepEqual(research[0].snapshot.research.findings.map((finding) => finding.id), ['F1', 'F2', 'F3']);
+        assert.ok(research[0].snapshot.sections['finding-f1'] && research[0].snapshot.sections['research-summary']);
+        assert.ok(Object.values(research[0].snapshot.sections).every((section) => section.doc === 'research'));
+        assert.deepEqual(research[0].snapshot.decisions.map((decision) => decision.id), ['D10']);
+        assert.deepEqual(loaded.session.research.findings.map((finding) => finding.id), ['F4', 'F5'], 'the newest numbers its findings on from the earlier one');
+        assert.ok(loaded.session.sections['finding-f4'] && !loaded.session.sections['finding-f1']);
+        assert.deepEqual(plan.map((doc) => [doc.n, doc.newest]), [[1, false], [2, true]]);
+        assert.ok(loaded.watched.includes(firstResearch) && loaded.watched.includes(firstPlan), 'earlier documents are watched');
+        assert.ok(!loaded.warnings.some((text) => /more than one research document/.test(text)), 'continuing IDs do not repeat');
+        assert.ok(loaded.warnings.some((text) => /^Plan: \d+ IDs appear in more than one plan: P01 \(plan 1 and plan 2\)/.test(text) && /Links go to the newer one\.$/.test(text)), loaded.warnings.join(' | '));
+        await writeJson(many, PATHS.rootState, { ...ROOT_STATE, documents: { research: ['.copilot-tracking/research/2026-01-13/gone-research.md', PATHS.research] } });
+        const missing = await loadTask(await resolveWorkspace([many]), PATHS.rootState, NOW);
+        assert.deepEqual(missing.session.documents.research.map((doc) => [doc.n, Boolean(doc.missing)]), [[1, true], [2, false]]);
+        assert.ok(missing.warnings.some((text) => /gone-research\.md/.test(text)) && missing.warnings.some((text) => /finding numbers after it may not match/.test(text)), missing.warnings.join(' | '));
     });
 
     it('reports an unreadable artifact as a warning and fails on an unreadable state', async () => {

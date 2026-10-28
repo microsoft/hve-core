@@ -189,6 +189,35 @@ function taskLink(value) {
     return { taskId, taskSlug: str(link.task_slug) ?? taskId, statePath };
 }
 
+const ARTIFACT_KINDS = Object.freeze(['research', 'plan', 'critique', 'changes', 'review']);
+
+/**
+ * Every document of each kind, in creation order with the newest last. `artifact_paths`
+ * names the newest; a state without `documents` has one document per kind. Fills a missing
+ * newest path from the list, so `artifacts` and the list agree.
+ *
+ * @param {unknown} raw the state's `documents`
+ * @param {Record<string, string | null>} artifacts
+ * @param {string[]} warnings
+ */
+function documentsOf(raw, artifacts, warnings) {
+    const given = raw && typeof raw === 'object' && !Array.isArray(raw) ? /** @type {Record<string, unknown>} */ (raw) : {};
+    if (raw !== undefined && raw !== null && given !== raw) warnings.push('documents is not an object of lists.');
+    return Object.fromEntries(ARTIFACT_KINDS.map((key) => {
+        const value = given[key];
+        if (value !== undefined && value !== null && !Array.isArray(value)) warnings.push(`documents.${key} is not a list.`);
+        const list = [...new Set((Array.isArray(value) ? value : []).map(str).filter(Boolean))];
+        if (!artifacts[key] && list.length) artifacts[key] = list.at(-1);
+        const newest = artifacts[key];
+        if (!newest) return [key, list];
+        if (list.length && list.at(-1) !== newest) {
+            warnings.push(`documents.${key} does not end with artifact_paths.${key}; the canvas shows ${newest} as the newest.`);
+            return [key, [...list.filter((path) => path !== newest), newest]];
+        }
+        return [key, list.length ? list : [newest]];
+    }));
+}
+
 /**
  * Normalizes a parsed state file. Unknown keys are ignored and missing keys come back
  * empty, so older or variant state files still load. Malformed task links become warnings.
@@ -219,6 +248,8 @@ export function parseState(raw) {
         evidence: str(item.evidence) ?? str(item.source) ?? '',
     })).filter((item) => item.task);
     if (!str(doc.task_id)) warnings.push('The state file has no task_id.');
+    const artifacts = Object.fromEntries(ARTIFACT_KINDS.map((key) => [key, str(paths[key])]));
+    const documents = documentsOf(doc.documents, artifacts, warnings);
     return {
         taskId: str(doc.task_id),
         taskSlug: str(doc.task_slug) ?? str(doc.task_id),
@@ -229,7 +260,8 @@ export function parseState(raw) {
         activePhase: str(doc.active_phase),
         status: str(doc.status),
         sessionStatus: str(doc.session_status),
-        artifacts: Object.fromEntries(['research', 'plan', 'critique', 'changes', 'review'].map((key) => [key, str(paths[key])])),
+        artifacts,
+        documents,
         decisions: objects(doc.confirmed_decisions).map((item) => ({ decision: str(item.decision) ?? '', status: str(item.status) ?? '', evidence: str(item.evidence) ?? '' })),
         blockers: objects(doc.blockers).map((item, index) => ({ id: str(item.id) ?? `B${index + 1}`, summary: str(item.summary) ?? '', resolution: str(item.resolution) ?? '' })),
         nextAction: doc.next_action && typeof doc.next_action === 'object' ? { phase: str(doc.next_action.phase), action: str(doc.next_action.action) ?? '' } : null,

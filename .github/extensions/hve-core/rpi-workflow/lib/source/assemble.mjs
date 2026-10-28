@@ -236,6 +236,7 @@ function sessionTree(tree, state, statePath, title) {
  * @property {{ key: string | null, date: string | null, name: string | null, tasks: import('./tree.mjs').TreeTask[] } | null} [tree] The task's session.
  * @property {{ repository: string | null, branch: string | null } | null} [git]
  * @property {string | null} [root] Absolute workspace root.
+ * @property {number} [findingOffset] How many findings the session's earlier research documents hold; this document's findings count on from there.
  * @property {string} now ISO timestamp.
  */
 
@@ -248,6 +249,8 @@ function sessionTree(tree, state, statePath, title) {
 export function assembleSession(input) {
     const { state, artifacts = {}, mismatched = [], files = {}, tree = null, git = null, root = null, now } = input;
     const { research, plan, critique, changes, review } = artifacts;
+    // Findings are numbered in order across the session's research documents.
+    const findingOffset = Number.isInteger(input.findingOffset) && input.findingOffset > 0 ? input.findingOffset : 0;
     const taskTitle = plan?.title || changes?.title || review?.title || research?.title || state.taskId;
     const warnings = [...state.warnings];
     for (const parsed of [research, plan, critique, changes, review]) {
@@ -290,7 +293,7 @@ export function assembleSession(input) {
                 missing.get(id).add(where);
             }
         };
-        research.findings.forEach((finding, index) => cite(`F${index + 1}`, finding.evidence));
+        research.findings.forEach((finding, index) => cite(`F${findingOffset + index + 1}`, finding.evidence));
         research.decisions.forEach((row) => cite(row.id, row.evidence));
         research.alternatives.forEach((row) => cite('the alternatives', row.evidence));
         if (missing.size) {
@@ -302,8 +305,8 @@ export function assembleSession(input) {
     const findings = (research?.findings ?? []).map((finding, index) => {
         const state = evidenceStateOf(finding.evidenceState);
         if (!state && finding.evidenceState) warnings.push(`Research: finding "${truncate(finding.title, 60)}" has an unrecognized evidence state.`);
-        addSection(`finding-f${index + 1}`, 'research', finding.title, finding.body, 'research');
-        return { id: `F${index + 1}`, title: finding.title, state: state ?? 'unresolved', confidence: confidenceOf(finding.confidence), questions: finding.questions, evidence: finding.evidence };
+        addSection(`finding-f${findingOffset + index + 1}`, 'research', finding.title, finding.body, 'research');
+        return { id: `F${findingOffset + index + 1}`, title: finding.title, state: state ?? 'unresolved', confidence: confidenceOf(finding.confidence), questions: finding.questions, evidence: finding.evidence };
     });
     const researchReused = !research && (/reused|satisfied/i.test(stateDecision(state, 'Research disposition')?.status ?? '') || mismatched.some((item) => item.key === 'research'));
     if (research) {
