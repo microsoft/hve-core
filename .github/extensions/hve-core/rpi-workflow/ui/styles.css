@@ -1906,6 +1906,7 @@ details > summary:hover {
   align-items: center;
   gap: 6px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .doc-switch-label {
@@ -1913,8 +1914,10 @@ details > summary:hover {
   font: 600 12px/18px var(--rw-font);
 }
 
+/* A document's title can be long; the list and the notice show it whole. */
 .doc-select {
-  max-width: 100%;
+  min-width: 0;
+  max-width: min(100%, 32em);
   min-height: var(--rw-control);
   padding: 3px 6px;
   border: 1px solid var(--rw-border-control);

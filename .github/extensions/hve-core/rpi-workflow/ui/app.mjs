@@ -166,17 +166,23 @@ const aliasOf = (id) => decisionAlias(state.data?.session, id, state.ui.phase);
 /** Kinds with earlier documents the canvas can show, and their names. */
 const DOCUMENT_KINDS = Object.freeze({ research: 'Research', plan: 'Plan' });
 
-/** A kind's documents, oldest first; the last is the newest. */
+/** How a kind's document reads in a sentence. */
+const DOCUMENT_NOUNS = Object.freeze({ research: 'research document', plan: 'plan' });
+
+/** A kind's documents in the order the session made them; `current` marks the current work's. */
 const documentsOf = (kind) => state.data?.session.documents?.[kind] ?? [];
 
-/** The earlier document of a kind the reader chose, or null while the newest shows. */
+/** A document's name for people: its title, else the name of its work from its file name. */
+const documentLabel = (doc) => doc.title || doc.name || doc.path;
+
+/** The earlier document of a kind the reader chose, or null while the current work's shows. */
 function shownEarlier(kind) {
     const n = state.ui.docs?.[kind] ?? null;
     if (!n) return null;
-    return documentsOf(kind).find((doc) => doc.n === n && !doc.newest && doc.snapshot) ?? null;
+    return documentsOf(kind).find((doc) => doc.n === n && !doc.current && doc.snapshot) ?? null;
 }
 
-/** The session as it reads with an earlier document of a kind in place of the newest. */
+/** The session as it reads with an earlier document of a kind in place of the current work's. */
 function withDocument(session, kind, doc) {
     const { snapshot } = doc;
     return {
@@ -184,7 +190,7 @@ function withDocument(session, kind, doc) {
         [kind]: kind === 'research' ? { ...snapshot.research, lanes: [] } : snapshot.plan,
         sections: { ...Object.fromEntries(Object.entries(session.sections).filter(([, section]) => section.doc !== kind)), ...snapshot.sections },
         decisions: [...session.decisions.filter((decision) => decision.phase !== kind), ...snapshot.decisions],
-        phases: { ...session.phases, [kind]: { ...session.phases[kind], artifact: doc.path, updatedAt: doc.updatedAt ?? session.phases[kind].updatedAt } },
+        phases: { ...session.phases, [kind]: { ...session.phases[kind], status: snapshot.record?.status ?? session.phases[kind].status, artifact: doc.path, updatedAt: doc.updatedAt ?? session.phases[kind].updatedAt } },
     };
 }
 
@@ -207,7 +213,7 @@ function findIn(part, id) {
 function inEarlier(id) {
     for (const kind of Object.keys(DOCUMENT_KINDS)) {
         for (const doc of [...documentsOf(kind)].reverse()) {
-            if (doc.newest || !doc.snapshot) continue;
+            if (doc.current || !doc.snapshot) continue;
             const item = findIn(doc.snapshot, id);
             if (item) return { kind, doc, item };
         }
@@ -215,7 +221,7 @@ function inEarlier(id) {
     return null;
 }
 
-/** An item by ID: in the newest documents and the canvas's own data first, then in earlier documents. */
+/** An item by ID: in the current work's documents and the canvas's own data first, then in earlier documents. */
 function find(ref) {
     const session = state.data?.session;
     if (!session || typeof ref !== 'string') return null;
@@ -223,7 +229,7 @@ function find(ref) {
     return findCurrent(session, id) ?? inEarlier(id)?.item ?? null;
 }
 
-/** An item in the session's newest documents and the canvas's own data. */
+/** An item in the current work's documents and the canvas's own data. */
 function findCurrent(session, id) {
     const pools = [session.research.questions, session.research.findings, session.research.evidence, session.research.lanes, session.decisions, session.plan.requirements, session.plan.critique?.findings ?? [], session.implementation.changes, session.implementation.discoveries, session.implementation.alignment, session.review.findings, session.review.history, session.followUps.items, session.feedback];
     for (const pool of pools) {
@@ -338,13 +344,16 @@ function navigate(ref, phaseOverride, options = {}) {
     const target = resolve(id);
     const phase = phaseOverride ?? target?.phase ?? state.ui.phase;
     if (!options.agent && phase !== agentPhase()) stopFollowing();
-    // An ID only an earlier document holds shows that document; any other ID shows the newest.
-    if (DOCUMENT_KINDS[phase] && (target?.doc ?? null) !== (state.ui.docs[phase] ?? null)) {
-        if (target?.doc) {
+    // An ID only an earlier document holds shows that document; any other ID shows the current
+    // work's, unless the reader goes to an ID inside the earlier document already shown.
+    const doc = options.keepDocument ? state.ui.docs[phase] ?? null : target?.doc ?? null;
+    if (DOCUMENT_KINDS[phase] && doc !== (state.ui.docs[phase] ?? null)) {
+        if (doc) {
             if (!options.agent) stopFollowing();
-            announce(`${ref} is in ${DOCUMENT_KINDS[phase].toLowerCase()} ${target.doc}; showing it.`);
+            const earlier = documentsOf(phase).find((entry) => entry.n === doc);
+            announce(`${ref} is in the earlier ${DOCUMENT_NOUNS[phase]} "${earlier ? documentLabel(earlier) : doc}"; showing it.`);
         }
-        state.ui.docs[phase] = target?.doc ?? null;
+        state.ui.docs[phase] = doc;
     }
     const from = here();
     const label = kindOf(id) ? find(id)?.ref ?? ref : find(id)?.title ?? ref;
@@ -760,25 +769,29 @@ const act = {
         const submit = document.querySelector(`[data-key="submit-${CSS.escape(id)}"][data-needs-text="true"]`);
         if (submit) submit.disabled = !draft.note?.trim();
     },
-    /** Shows a kind's document by number: an earlier one read-only, or the newest. Choosing an earlier one stops following. */
+    /** Shows a kind's document by its place in the list: an earlier one read-only, or with 0 or the current one's place, the current work's. Choosing an earlier one stops following. */
     showDocument(kind, n) {
         const docs = documentsOf(kind);
-        const doc = docs.find((entry) => entry.n === n);
-        if (!doc) return;
-        const name = DOCUMENT_KINDS[kind].toLowerCase();
-        if (!doc.newest && !doc.snapshot) {
-            reportFailure(`${DOCUMENT_KINDS[kind]} ${n} could not be read; the problems list says why.`);
+        const current = docs.find((entry) => entry.current) ?? null;
+        const doc = n ? docs.find((entry) => entry.n === n) : current;
+        if (n && !doc) return;
+        const noun = DOCUMENT_NOUNS[kind];
+        if (doc && !doc.current && !doc.snapshot) {
+            reportFailure(`The ${noun} "${documentLabel(doc)}" could not be read; the problems list says why.`);
             return;
         }
-        if (!doc.newest) stopFollowing();
+        const earlier = doc && !doc.current ? doc : null;
+        if (earlier) stopFollowing();
         previews?.closeAll();
-        state.ui.docs[kind] = doc.newest ? null : n;
+        state.ui.docs[kind] = earlier ? earlier.n : null;
         state.ui.highlight = null;
         state.ui.place = null;
         if (state.ui.phase !== kind) setPhase(kind);
         else render();
         $('document').scrollTop = 0;
-        announce(doc.newest ? `Showing ${name} ${n}, the newest.` : `Showing ${name} ${n} of ${docs.length}. It is read-only here.`);
+        announce(earlier
+            ? `Showing the earlier ${noun} "${documentLabel(earlier)}". It is read-only here.`
+            : current ? `Showing the current ${noun}, "${documentLabel(current)}".` : `Showing the current work, which has no ${noun} yet.`);
     },
     /** Shows another task of this RPI session, by task ID or `{ statePath }`. */
     async showTask(ref) {
@@ -1448,13 +1461,16 @@ function renderRail() {
 }
 
 function renderNavigator() {
-    const ctx = context();
-    const items = phaseReached(state.ui.phase) ? VIEWS[state.ui.phase].outline(ctx) : [];
+    const phase = state.ui.phase;
+    // The outline lists the shown document, which may be an earlier one, and stays inside it.
+    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
+    const ctx = viewContext(phase);
+    const items = phaseReached(phase) || earlier ? VIEWS[phase].outline(ctx) : [];
     const filter = state.ui.navFilter.trim().toLowerCase();
     const shown = items.filter((item) => !filter || `${item.prefix ?? ''} ${item.label}`.toLowerCase().includes(filter));
     clear($('navBody')).append(
-        h('h2', { class: 'nav-title', text: `${PHASE_META[state.ui.phase].label} outline` }),
-        shown.length ? h('ul', { class: 'nav-list' }, shown.map((item) => h('li', null, h('button', { type: 'button', class: 'nav-item', onclick: () => navigate(item.id, state.ui.phase) },
+        h('h2', { class: 'nav-title', text: `${PHASE_META[phase].label} outline` }),
+        shown.length ? h('ul', { class: 'nav-list' }, shown.map((item) => h('li', null, h('button', { type: 'button', class: 'nav-item', onclick: () => navigate(item.id, phase, { keepDocument: Boolean(earlier) }) },
             item.prefix ? idTag(item.prefix, 'go-to') : null,
             h('span', { class: 'nav-label', text: item.label }),
             item.meta ? icon(item.meta.icon, { className: `tone-${item.meta.tone}-fg`, label: item.meta.label }) : null,
@@ -1519,16 +1535,18 @@ function renderDocument() {
             h('ul', { class: 'source-warning-list' }, warnings.map((text) => h('li', { text })))));
     }
     const phase = state.ui.phase;
-    if (!phaseReached(phase)) {
+    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
+    if (!phaseReached(phase) && !earlier) {
         const previous = PHASES[PHASES.indexOf(phase) - 1];
+        const others = DOCUMENT_KINDS[phase] && documentsOf(phase).some((doc) => !doc.current && doc.snapshot);
         body.append(h('div', { class: 'empty-state' },
             icon(PHASE_META[phase].icon, { className: 'empty-icon' }),
             h('h3', { text: `${PHASE_META[phase].label} has not started` }),
             h('p', { text: `It appears here when ${previous ? PHASE_META[previous].label : 'the session'} is ready. The agent writes it and asks you about anything it cannot decide from evidence.` }),
+            others ? h('p', { text: `Earlier ${DOCUMENT_NOUNS[phase]}s from this session are in the Document list above.` }) : null,
             button(`Go to ${PHASE_META[state.data.session.session.activePhase].label}`, { kind: 'primary', iconName: 'arrow-right', onClick: () => setPhase(state.data.session.session.activePhase) })));
         return;
     }
-    const earlier = DOCUMENT_KINDS[phase] ? shownEarlier(phase) : null;
     if (earlier) body.append(earlierNotice(phase, earlier));
     body.toggleAttribute('data-readonly', false);
     if (earlier) body.dataset.readonly = 'true';
@@ -1548,28 +1566,36 @@ function viewContext(phase) {
     return { ...ctx, data: { ...ctx.data, session: withDocument(ctx.data.session, phase, earlier) }, readOnly: true };
 }
 
-/** Says an earlier document shows and offers the newest. */
+/** Says an earlier document shows, names the current work's, and offers it. */
 function earlierNotice(phase, earlier) {
-    const docs = documentsOf(phase);
-    const newest = docs.at(-1);
-    const name = DOCUMENT_KINDS[phase].toLowerCase();
+    const current = documentsOf(phase).find((doc) => doc.current) ?? null;
+    const noun = DOCUMENT_NOUNS[phase];
     return h('div', { class: 'notice tone-accent doc-notice', role: 'note' },
-        h('p', { class: 'notice-title' }, icon('file'), h('span', { text: `You are reading ${name} ${earlier.n} of ${docs.length}${earlier.title ? `: ${earlier.title}` : ''}.` })),
-        h('p', { text: `The agent works from ${name} ${newest.n}. This one is read-only here: to change something, comment on the newest or ask the agent.` }),
-        h('div', { class: 'btn-row' }, button(`Show ${name} ${newest.n}, the newest`, { kind: 'primary', iconName: 'arrow-right', attrs: { 'data-key': `doc-newest-${phase}` }, onClick: () => act.showDocument(phase, newest.n) })));
+        h('p', { class: 'notice-title' }, icon('file'), h('span', { text: `You are reading an earlier ${noun}: ${documentLabel(earlier)}.` })),
+        h('p', { text: current
+            ? `The agent works from the current ${noun}, ${documentLabel(current)}. This one is read-only here: to change something, comment on the current ${noun} or ask the agent.`
+            : `The current work has no ${noun} yet. This one is read-only here: to change something, ask the agent.` }),
+        h('div', { class: 'btn-row' }, button(current ? `Show the current ${noun}` : 'Back to the current work', { kind: 'primary', iconName: 'arrow-right', attrs: { 'data-key': `doc-current-${phase}` }, onClick: () => act.showDocument(phase, 0) })));
 }
 
-/** The switcher between a kind's documents, by number and date, when it has more than one. */
+/** Longest document label an option shows before it ends with an ellipsis; the notice shows the whole title. */
+const DOCUMENT_OPTION_CHARS = 72;
+
+/** The switcher between a kind's documents, by name and time, when the kind has an earlier one. */
 function documentSwitcher(phase) {
     const docs = documentsOf(phase);
-    if (!DOCUMENT_KINDS[phase] || docs.length < 2) return null;
-    const shown = shownEarlier(phase)?.n ?? docs.at(-1).n;
-    const name = DOCUMENT_KINDS[phase];
+    if (!DOCUMENT_KINDS[phase] || !docs.some((doc) => !doc.current)) return null;
+    const current = docs.find((doc) => doc.current) ?? null;
+    const shown = shownEarlier(phase)?.n ?? current?.n ?? 0;
+    const noun = DOCUMENT_NOUNS[phase];
     const now = context().now;
+    const clip = (text) => (text.length > DOCUMENT_OPTION_CHARS ? `${text.slice(0, DOCUMENT_OPTION_CHARS - 1).trimEnd()}…` : text);
+    const optionText = (doc) => `${clip(documentLabel(doc))}${doc.current ? ' (current)' : doc.snapshot ? '' : ' (unreadable)'}${doc.updatedAt ? ` · ${relTime(doc.updatedAt, now)}` : ''}`;
     return h('label', { class: 'doc-switch' },
         h('span', { class: 'doc-switch-label', text: 'Document' }),
         h('select', { class: 'doc-select', dataset: { key: `doc-switch-${phase}` }, onchange: (event) => act.showDocument(phase, Number(event.target.value)) },
-            docs.map((doc) => h('option', { value: String(doc.n), selected: doc.n === shown, disabled: !doc.newest && !doc.snapshot, text: `${name} ${doc.n}${doc.newest ? ', newest' : doc.snapshot ? '' : ', unreadable'}${doc.updatedAt ? ` · ${relTime(doc.updatedAt, now)}` : ''}` }))));
+            docs.map((doc) => h('option', { value: String(doc.n), selected: doc.n === shown, disabled: !doc.current && !doc.snapshot, title: doc.path, text: optionText(doc) })),
+            current ? null : h('option', { value: '0', selected: shown === 0, text: `Current work: no ${noun} yet` })));
 }
 
 function renderSteer() {
