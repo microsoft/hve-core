@@ -3,6 +3,7 @@
 """Tests for html_deck, check_html_deck, and the T-10 render check."""
 
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -17,7 +18,7 @@ from html_deck import (
     main,
     slide_markup,
 )
-from render_checks import CheckError, build_transcript_page
+from render_checks import CheckError, build_transcript_page, content_digest
 from render_checks import check_html_deck as t10
 
 _TEMPLATE_INDEX = """<!doctype html>
@@ -45,8 +46,8 @@ _BASE = f"https://github.com/contoso/widgets/blob/{_COMMIT}/"
 
 @pytest.fixture
 def template(tmp_path: Path) -> Path:
-    root = tmp_path / "template"
-    root.mkdir()
+    root = tmp_path / "installed/templates/deck"
+    root.mkdir(parents=True)
     for name in COPIED_FILES:
         (root / name).write_text(f"/* {name} */\n", encoding="utf-8")
     (root / "components.css").write_text(".panel { color: red; }\n", encoding="utf-8")
@@ -177,7 +178,6 @@ class TestSlideMarkup:
                     "title": "B",
                     "content": ["y"],
                 },
-                {"type": "connector"},
             ],
         }
         markup = slide_markup(3, slide, tmp_path, [], [])
@@ -237,11 +237,15 @@ class TestSlideMarkup:
                 },
             ],
         }
+        with pytest.raises(CheckError, match="missing or unsupported image"):
+            slide_markup(5, slide, slide_dir, css, missing)
+        slide["elements"].pop(1)
+        css.clear()
         markup = slide_markup(5, slide, slide_dir, css, missing)
         assert 'role="img" aria-label="The lifecycle table"' in markup
         assert "<img" not in markup and "src=" not in markup
         assert len(css) == 1 and "data:image/png;base64," in css[0]
-        assert missing == ["slide-005/images/missing.png"]
+        assert missing == []
 
 
 class TestBuildDeckSource:
@@ -255,7 +259,7 @@ class TestBuildDeckSource:
         _slide(level_dir, 1, {"title": "Welcome & hello", "speaker_notes": "Hi."})
         _slide(level_dir, 2, {"title": "Next", "section": "Close"})
         deck = build_deck_source(
-            "L100", level_dir, template, tmp_path / "slides" / "hve-demo-L100", _BASE
+            "L100", level_dir, template, level_dir / "html-deck" / "hve-demo-L100", _BASE
         )
 
         for name in COPIED_FILES:
@@ -284,11 +288,12 @@ class TestBuildDeckSource:
     def test_given_no_link_base_when_built_then_no_citations(self, tmp_path, template):
         level_dir = tmp_path / "L100"
         _slide(level_dir, 1, {"title": "One"})
-        deck = build_deck_source("L100", level_dir, template, tmp_path / "out")
+        deck = build_deck_source("L100", level_dir, template, level_dir / "out")
         assert 'data-sources=""' in (deck / "index.html").read_text(encoding="utf-8")
         assert "sources: {}" in (deck / "content.js").read_text(encoding="utf-8")
         summary = json.loads((deck / BUILD_SUMMARY).read_text(encoding="utf-8"))
-        assert summary["sources"] == 0
+        assert summary["sources"] > 0
+        assert "Sources:" in (deck / "index.html").read_text(encoding="utf-8")
 
     @pytest.mark.parametrize(
         "repo_url", ["http://github.com/o/r/blob/x/", "https://github.com/o/r"]
@@ -376,7 +381,8 @@ class TestCitationSources:
             ),
             encoding="utf-8",
         )
-        assert level_sources("L100", tmp_path) == ["guide/intro.md", "src/app.py"]
+        with pytest.raises(CheckError, match="Invalid source register"):
+            level_sources("L100", tmp_path)
 
     def test_given_no_manifest_when_listed_then_pinned_sources(self, tmp_path):
         sources = level_sources("L100", tmp_path)
@@ -416,8 +422,30 @@ class TestT10:
             'id="hve-slide-metadata">{}</script></body></html>',
             encoding="utf-8",
         )
+        build = level_dir / "output/html-deck-build.json"
+        build.write_text(json.dumps({
+            "schema_version": 2, "renderer": "hve-slides", "format": "html",
+            "slide_ids": [f"slide-{n}" for n in range(1, sections + 1)],
+            "content_sha256": content_digest(level_dir), "missing_images": [],
+        }), encoding="utf-8")
+        frames = []
+        for number in range(1, sections + 1):
+            frame = level_dir / f"frames/deck/slide-{number:03d}.jpg"
+            frame.parent.mkdir(parents=True, exist_ok=True)
+            frame.write_bytes(bytes.fromhex("ffd8ffc00011080438078003011100021100031100ffd9"))
+            frames.append({
+                "slide_id": f"slide-{number}", "path": frame.relative_to(level_dir).as_posix(),
+                "sha256": hashlib.sha256(frame.read_bytes()).hexdigest(), "width": 1920, "height": 1080,
+            })
         (level_dir / "output" / "html-deck-check.json").write_text(
-            json.dumps({"result": browser, "overflowing_slides": ["2. S2"]}),
+            json.dumps({
+                "schema_version": 2, "renderer": "hve-slides", "format": "html",
+                "result": browser, "overflowing_slides": ["2. S2"] if browser != "pass" else [],
+                "html_sha256": hashlib.sha256((level_dir / "output/hve-demo-L100.html").read_bytes()).hexdigest(),
+                "build_sha256": hashlib.sha256(build.read_bytes()).hexdigest(),
+                "slide_ids": [f"slide-{n}" for n in range(1, sections + 1)],
+                "frames": frames,
+            }),
             encoding="utf-8",
         )
 

@@ -5,13 +5,7 @@ requires-python = ">=3.11"
 dependencies = [
     "azure-cognitiveservices-speech>=1.41",
     "azure-identity>=1.19",
-    "lxml>=6.1.0",  # direct dep (embed_audio.py) and transitive via python-pptx; explicit pin ensures CVE patches
-    "python-pptx>=1.0",
     "pyyaml>=6.0",
-    # transitive via python-pptx; 41 Pillow advisories, including CVE-2026-54058/54059/54060/
-    # 55379/55798/59199/59205, are fixed by 13.0.0.
-    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
-    "pillow>=13.0.0,<14.0",
     # transitive via azure-identity/msal/pyjwt[crypto]; CVE-2026-69247 (Bleichenbacher oracle
     # in PKCS7 decrypt) fixed in 50.0.0.
     # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.

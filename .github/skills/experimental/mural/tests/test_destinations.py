@@ -43,7 +43,6 @@ def test_loads_authoritative_registry_and_all_destinations() -> None:
         "instructions-file",
         "adr",
         "living-document",
-        "powerpoint-deck",
         "next-workshop-seed",
         "unactioned",
     }
@@ -396,12 +395,6 @@ def test_destination_projection_contains_only_declared_and_source_fields() -> No
             "tags",
             "source_ref",
             "freshness",
-        ),
-        "powerpoint-deck": (
-            "parent_chain",
-            "tags",
-            "source_ref",
-            "image_asset_urls",
         ),
         "next-workshop-seed": (
             "parent_chain",

@@ -12,7 +12,7 @@ Canonical deck workflow covers two related outputs:
 1. Canonical markdown artifacts under `.copilot-tracking/dt/{project-slug}/canonical/`.
 2. Optional customer-card slide content (`content.yaml`) under `.copilot-tracking/dt/{project-slug}/render/`.
 
-Treat canonical deck and customer-card generation as optional and skippable at each offer point. No presentation-file (PPTX) build is available; never claim one exists.
+Treat canonical deck and customer-card generation as optional and skippable at each offer point. An HTML presentation is a separate explicit handoff to `hve-slides`, not an automatic part of YAML generation. No PPTX build is available.
 
 ## Single Source of Truth
 
@@ -189,7 +189,7 @@ When the team requests customer cards, accepts a generation offer, or accepts th
 
 1. Activate the `customer-card-render` skill by name and run its generation command with `--canonical-dir` set to `.copilot-tracking/dt/{project-slug}/canonical` and `--output-dir` set to `.copilot-tracking/dt/{project-slug}/render/content`.
 2. Report the canonical artifact path and the generated `content.yaml` directory.
-3. If the user asks for a PowerPoint or other presentation file, explain that no deck build is available and that the generated `content.yaml` is the final output. Do not invoke a deck pipeline from a guessed location or reimplement one.
+3. If the user asks for a presentation, offer the `hve-slides` HTML workflow using reviewed YAML as authoring input. Resolve the skill by name and preserve canonical text, order and source labels. Keep rendering separate from canonical/YAML generation; report missing renderer or validation evidence instead of guessing a pipeline. For levelled HTML/MP4 demo material, use `hve-demo-material` and its `references/slide-content.md` input contract. A PPTX request cannot be satisfied by claiming HTML is PPTX.
 
 ### Generation Outcome
 

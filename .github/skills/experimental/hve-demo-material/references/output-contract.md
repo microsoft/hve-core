@@ -36,45 +36,38 @@ directory. Reference sibling directories as `../frames/...` and `../audio/...`,
 and set `output` to `./<name>.mp4`. Level-root-relative paths resolve inside
 `output/` and fail assembly with a missing-narration error.
 
-The level directory is deliberately passed as the `PowerPoint Subagent` working
-directory. It is `.copilot-tracking/ppt`-shaped internally because it contains
-the `content/`, `content/global/`, and `changes/` surfaces that the subagent
-requires, without duplicating its outputs into a second tracking tree. Pass
-`content/`, `content/global/style.yaml`, the level research file, and a
-`changes/` execution-log path explicitly on each dispatch.
+The adapter writes source under `html-deck/slides/hve-demo-{{level}}/` using
+`references/slide-content.md`. Activate loaded `hve-slides` directly in
+render-only mode; no deck subagent or guessed checkout path is used.
 
-Store the deck at `output/hve-demo-{{level}}.pptx`, its narrated version at
-`output/hve-demo-{{level}}-narrated.pptx` when produced, and the video at
-`output/hve-demo-{{level}}.mp4`. Store the manifest at
-`output/manifest.yml`.
-
-A scripted render in the hve-core repository also stores a single-file HTML
-slide deck at `output/hve-demo-{{level}}.html`, with its offline browser result
-in `output/html-deck-check.json`. The deck is generated from the same
-`content/` as the PPTX, so the two never diverge. It uses the HVE Slides theme
-and presenter controls rather than the house palette, which governs the PPTX and
-the video frames.
+Store required HTML at `output/hve-demo-{{level}}.html`, video at
+`output/hve-demo-{{level}}.mp4`, and the manifest at `output/manifest.yml`.
+Retain `output/html-deck-build.json` and `output/html-deck-check.json`.
+Export 1920x1080 slide-canvas images to `frames/deck/slide-NNN.jpg`, with ordered
+IDs and hashes bound to the delivered HTML. HTML and video frames share the
+canonical HVE Slides theme. Narration stays in WAV/MP4; standalone HTML rejects
+audio/video resource markup.
 
 ## Prerequisite Matrix
 
 Azure AI Speech is the default narration engine outside CI. CI selects
 `narration: none` and needs no voice, speech service, or speech credentials;
 mark the speech prerequisites `not-required`. Silent runs retain text alternatives and do not claim audio
-description or a narrated PPTX.
+description.
 
 | Capability                                         | Required prerequisite                                                                                            | Deferred behavior                                                                                                                              |
 |----------------------------------------------------|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| Build and deck operations                          | `uv`, Python 3.11+, and PowerShell 7+                                                                            | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
-| Deterministic deck frame export                    | LibreOffice                                                                                                      | Record `LibreOffice` absence as `Deferred`; do not claim the L100 or L200 visual evidence passed                                               |
+| Build and deck operations                          | `uv`, Python 3.11+, loaded `hve-slides`, Node.js 24+ and pinned reveal.js | Record missing runtime or renderer as `Deferred`; never omit HTML |
+| Deterministic HTML frame export                    | Chromium in the existing `vscode-playwright` environment | Record absence as `Deferred`; do not claim frame evidence passed |
 | Azure AI Speech narration, `narration: azure` only | `SPEECH_RESOURCE_ID` (Microsoft Entra ID, recommended) or `SPEECH_KEY`, plus `SPEECH_REGION`                     | Record unavailable authentication or region approval as `Deferred`; do not substitute another speech engine                                    |
-| Vision slide check                                 | GitHub Copilot CLI, authenticated                                                                                | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
+| Visual slide inspection                            | Delivered HTML and matching exported frames | Required before `validation.deck: pass`; inspect clipping, contrast and fidelity, not metadata alone |
 | Approved narration voice                           | A caller-named Azure AI Speech voice, otherwise `en-US-Andrew:DragonHDLatestNeural`                              | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
 | MP4 assembly and visible captions                  | Discoverable FFmpeg and ffprobe; FFmpeg exposes the libass-backed `subtitles` filter and `libx264` encoder       | Offer approval-gated setup under attended modes; otherwise record `Deferred` and do not claim an accessible MP4 exists                         |
 | Scripted live capture, `capture: live` only        | VS Code CLI, `uv`, the `vscode-playwright` environment, and Playwright Chromium; no MCP server                   | Record the unavailable entrypoint as `Deferred`; preserve live capture and do not substitute deck export                                       |
 | Interactive live capture, `capture: live` only     | VS Code CLI, Playwright MCP browser tools, and `curl`                                                            | Defer when the selected interactive path cannot run; missing MCP does not prevent scripted live capture                                        |
 | Character animation, `animation: characters`       | Original known-rights character assets, approved dialogue voices, and browser video recording through Playwright | Record the missing capability as `Deferred`; do not silently replace requested animation with `none`                                           |
 | Dynamic topic resolution                           | The `rpi-research` skill                                                                                         | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
-| HTML slide deck, scripted renders only             | The hve-core HVE Slides starter, Node.js 24 with npm, and Chromium through `vscode-playwright`                   | Without the starter, skip the deck and record `html_deck: not-applicable`; a missing Node.js or Chromium fails `T-10`                          |
+| HTML slide deck, all levels                         | Loaded `hve-slides` render-only mode and offline browser evidence | HTML and T-10 are mandatory in repository and installed use; missing prerequisites defer delivery |
 
 Run the bundled resolver before rendering:
 
@@ -129,7 +122,9 @@ Read this schema and copy its structure into `output/manifest.yml`. Values in
 angle brackets are placeholders, not literal output.
 
 ```yaml
-schema_version: 5
+schema_version: 6
+renderer: hve-slides
+format: html
 level: L100
 topic: <topic name; hve-core-general is the default only in the hve-core repository>
 source_roots: <researched folders | not-applicable> # not-applicable for a pinned topic
@@ -147,16 +142,17 @@ sources:
     claim: <supported claim>
     untrusted_content_note: <one-line note | none>
 deliverables:
-  pptx: output/hve-demo-L100.pptx
-  narrated_pptx: <output/hve-demo-L100-narrated.pptx | not-applicable> # not-applicable for none
+  html_deck: output/hve-demo-L100.html
   mp4: output/hve-demo-L100.mp4 # shows open captions and carries an English selectable caption track
   raw_assembly: output/hve-demo-L100.raw.mp4 # retained clean input; never burn captions over a finalized MP4
   captions: output/hve-demo-L100.vtt
   transcript_page: output/index.html
   open_caption_evidence: output/open-captions.json
-  html_deck: <output/hve-demo-L100.html | not-applicable> # scripted renders with the HVE Slides starter
+  html_build_evidence: output/html-deck-build.json
+  html_frame_evidence: output/html-deck-check.json
+  render_result: output/render-result.json
 visuals:
-  capture_profile: <live | deck-export> # deck-export at L300 or L400 only when the caller supplied it
+  capture_profile: <live | deck-export> # deck-export means HTML frames; L300/L400 downgrade is caller-owned
   transition:
     type: crossfade
     duration_seconds: 0.5
@@ -165,7 +161,7 @@ visuals:
   animation_evidence: <not-applicable | animation/character-sheet.md and recorded clip paths>
   evidence:
     - capture_id: slide-001
-      path: frames/slide-001.jpg
+      path: frames/deck/slide-001.jpg
       rendered_font_size_pt: <measured number | not-applicable>
       source_resolution: <width>x<height | not-applicable>
 narration:
@@ -201,10 +197,11 @@ validation:
       result: <pass | fail | deferred | not-applicable> # not-applicable only in the case the curriculum permits
 prerequisites:
   uv: <available | missing>
-  libreoffice: <available | missing | not-required>
+  hve_slides: <available | missing>
+  node: <available | missing>
   ffmpeg: <available | missing>
   azure_speech: <available | missing>
-  playwright: <available | missing | not-required>
+  playwright: <available | missing>
   rpi_research: <available | missing | not-required>
 approvals:
   storyboard: <approved | auto | pending>
@@ -220,6 +217,10 @@ evidence:
 
 ## State Rules
 
+* `output/render-result.json` uses `schema_version: 2`, `renderer: hve-slides`
+  and `format: html`. T-08 compares delivered styling, T-09 checks HTML and
+  media accessibility, and T-10 always requires current HTML/frame evidence.
+  Missing or old evidence is not a pass or `not-applicable`.
 * Assemble to the retained raw MP4, then invoke the finalizer through Bash.
   It stages WebVTT, the finalized MP4, evidence bound to the raw source, and
   transcript before installing a complete delivery with rollback on failure.

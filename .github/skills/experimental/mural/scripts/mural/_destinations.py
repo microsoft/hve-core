@@ -305,12 +305,6 @@ _DESTINATION_FIELDS: Mapping[str, tuple[str, ...]] = {
     "instructions-file": ("parent_chain", "tags", "source_ref", "spatial_neighbors"),
     "adr": ("parent_chain", "tags", "source_ref", "spatial_neighbors"),
     "living-document": ("parent_chain", "tags", "source_ref", "freshness"),
-    "powerpoint-deck": (
-        "parent_chain",
-        "tags",
-        "source_ref",
-        "image_asset_urls",
-    ),
     "next-workshop-seed": (
         "parent_chain",
         "room",

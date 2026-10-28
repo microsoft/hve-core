@@ -15,7 +15,7 @@ Converts canonical Design Thinking markdown artifacts into template-driven `cont
 
 ## Overview
 
-This skill handles the Design Thinking-specific mapping layer: extracting sections from canonical markdown artifacts and filling template-driven `content.yaml` files. It does not build, theme, export, or validate a presentation file; no deck renderer ships with this repository.
+This skill handles the Design Thinking-specific mapping layer: extracting sections from canonical markdown artifacts and filling template-driven `content.yaml` files. It does not build, theme, export, or validate a presentation file. The separate `hve-slides` skill owns HTML presentation authoring and rendering.
 
 Keeping this layer separate means:
 
@@ -109,7 +109,7 @@ The script reads each markdown file in `--canonical-dir`, detects the artifact t
 
 For the section-to-field mapping contract and Use Case 4-slide layout details, see [references/mapping-spec.md](references/mapping-spec.md).
 
-The generated `content.yaml` files are the skill's final output. Building a presentation file from them is not supported; report that step as unavailable rather than invoking a deck pipeline from a guessed location.
+The generated `content.yaml` files are this skill's final output. For an explicitly requested HTML presentation, hand reviewed YAML to `hve-slides` authoring. For a levelled demo, use `hve-demo-material` and its `references/slide-content.md` adapter contract. Resolve skills by name, preserve canonical order, source labels and unknown-knowledge markers, and never claim a presentation exists until rendered and validated. This mapping skill does not synthesize narration or dispatch a deck subagent.
 
 ## DT Coach Integration
 
