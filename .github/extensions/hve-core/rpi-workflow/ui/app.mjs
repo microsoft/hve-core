@@ -568,6 +568,13 @@ function toggleFollowing() {
     announce('Stopped following the agent. The canvas stays here until you follow it again.');
 }
 
+/** Stops following once you start adding input, and says how to catch up. */
+function pauseForInput() {
+    if (state.following !== true) return;
+    stopFollowing();
+    announce('Stopped following the agent while you add input. Press Follow agent to catch up.');
+}
+
 function stopPolling() {
     window.clearInterval(state.pollTimer);
     state.pollTimer = null;
@@ -2133,6 +2140,10 @@ function wire() {
         if (next instanceof Node && !$('sessionMenu').contains(next) && next !== $('sessionBtn')) toggleSessionMenu(false);
     });
     $('liveBtn').addEventListener('click', toggleFollowing);
+    // Starting to write or choose an answer stops following, so an agent move never takes the page away.
+    $('workspace').addEventListener('focusin', (event) => {
+        if (event.target.matches?.('textarea, .options input, .composer input')) pauseForInput();
+    });
     $('navFilter').addEventListener('input', (event) => {
         state.ui.navFilter = event.target.value;
         if (state.data) {
