@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas Style Guide
 description: Visual language, interaction grammar, and accessibility requirements for the hve-core RPI Workflow canvas
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-10-28
 ms.topic: reference
 keywords:
   - canvas
@@ -268,10 +268,12 @@ A decision whose anchor has no row in a started phase, or that has no anchor, ap
 * Review: a summary band (execution, outcome, counts by severity), findings rows with expected and observed behavior side by side, resolution condition, and route; decision cards in the margin; the decision history as a timeline; and validation evidence.
 * Follow-up: ranked follow-ups with rationale, evidence, Select, and Skip, and "Loops in this session", the session tree. For a real session, each other loop offers Show, whose accessible name includes the loop's title, such as "Show Offline trail maps".
 * Real sessions: the context bar adds Open in editor beside Copy for the phase's file, and "Updated" is when that file last changed.
-* Several documents: when Research or Plan has more than one, the context bar adds a Document switcher after the status chip: a visible "Document" label and a native select listing "Research 1 · 3 days ago" up to "Research 2, newest · 5 minutes ago", so arrows, typeahead, and screen readers work as they do anywhere.
-  Choosing an earlier one shows its path and time in the context bar, an accent note at the top ("You are reading research 1 of 2") with Show research 2, the newest, and the document read-only:
+* Several documents: when Research or Plan has an earlier document, the context bar adds a Document switcher after the status chip: a visible "Document" label and a native select listing each document by its title and time, such as "An early look at the canvas · 3 days ago", with the current one marked "(current)", so arrows, typeahead, and screen readers work as they do anywhere.
+  A title longer than 72 characters ends with an ellipsis, the option's tooltip is its path, and the select is at most 32em wide and never wider than the bar.
+  When the current work has none of that kind yet, the list ends with "Current work: no plan yet", selected, and the phase's empty state says earlier plans are in the Document list.
+  Choosing an earlier one shows its path, time, and status in the context bar, an accent note at the top ("You are reading an earlier plan: …") naming the current one, with Show the current plan, or Back to the current work when there is none, and the document read-only:
   no row actions, part comments, margin notes, suggestions, answer controls, or task buttons, and the canvas menu offers no comments.
-  Choosing an earlier one stops following, and following again shows the newest. Changes render their behavior and validation text as Markdown, and changes recorded without a task group under "Not linked to a plan task".
+  The outline lists the shown document, and its items stay in it. Choosing an earlier one stops following, and following again shows the current work's. Changes render their behavior and validation text as Markdown, and changes recorded without a task group under "Not linked to a plan task".
 
 Empty states teach: they say what will appear, when, and who produces it ("The plan appears here when Research is ready").
 
@@ -462,6 +464,7 @@ Four icons keep one meaning wherever they mark a click: go-to (a box with an arr
 | 2026-10-27 | Feedback shows its stage and since when; read-backs apply without confirming and go to Feedback history, where Correct this stays; Looks right and the read-back links in Needs your input go         | Confirming each read-back was a step people skipped, and a sent comment gave no sign of reaching the agent                                                                                         |
 | 2026-10-28 | Research and Plan switch between a session's documents with a native select; earlier ones are read-only, with a note and a way back                                                                   | A session that takes on a new request keeps its earlier research and plans, and they stay readable without mixing their IDs into the newest                                                        |
 | 2026-10-28 | Trace strips run from a change through its task to the research the task cites; finding and task previews link both ways                                                                              | A change could be traced to its task but not to the research that justified the task                                                                                                               |
+| 2026-10-28 | Documents are named for their work: the switcher lists titles and marks the current one, and a phase the current work has not reached can still show an earlier document                              | Later work's documents are named for the work instead of numbered, and a new plan must not show an earlier plan's critique, changes record, or review                                              |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
