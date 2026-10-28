@@ -226,7 +226,12 @@ The canvas looks for `.copilot-tracking/` in the session's working directory, th
 
 * the state files in session folders, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, to find the task, its mode and phase, its session, and the other loops in it;
 * the artifacts a state file names in `artifact_paths`: research, plan, plan critique, changes record, and review log;
+* the earlier research documents and plans its `documents` lists, oldest first, such as `-research-2.md` after `-research.md`, for a session that took on a new request;
 * the branch and repository from the workspace's `.git` folder, for the header.
+
+Research and Plan show the newest document, the one `artifact_paths` names. When a session has more than one, a Document switcher in the context bar lists them by number and date, and choosing an earlier one shows it read-only, with a note and a button back to the newest.
+Findings are numbered in order across the documents, so a second document's findings go on from the first's, and an ID that only an earlier document holds opens that document when you go to it.
+An ID that two documents both hold goes to the newer, and the problems list names it.
 
 Every file must be a Markdown or JSON file inside `.copilot-tracking/`, reached without symbolic links, and at most 2 MB. A state file, whether given as input or named by another state file's link, must also sit in a session folder. The canvas refuses anything else and never writes these files.
 
@@ -331,6 +336,7 @@ The key keeps other local processes, such as other accounts or containers, from 
 ## Limitations
 
 * The canvas reads RPI files but never writes them. Changes to a real session reach the files only through the agent.
+* An earlier research document or plan is read-only in the canvas: comment on the newest, or ask the agent. Only Research and Plan switch documents; the other phases show the newest critique, changes record, and review.
 * Artifacts that stray far from the RPI templates still render, but sections the canvas does not recognize appear only in the record rows.
 * Following goes to whichever loop of the session runs, so a subagent that runs its own RPI loop in the session looks like any other loop, and the canvas can follow into it; use the session menu to go back, which stops following. With several running loops, which happens only when an earlier conversation stopped without saying so, it picks the one that changed last.
 * Send now needs a host that accepts messages from extensions. When it does not, the review says so, and the items stay unsent until the agent collects them with `take_feedback`; Queue works either way. The canvas does not attach items to your next message, because VS Code does not show extension attachments. The Not connected page then offers Copy request without Ask the agent.
