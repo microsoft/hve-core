@@ -456,18 +456,40 @@ export function assembleSession(input) {
     const activeIndex = PHASES.indexOf(active);
     const completed = lower(state.status) === 'completed';
     const reviewSkipped = !review && /skip/i.test(stateDecision(state, 'Review step')?.status ?? '');
-    const phaseStatus = (phase, index) => {
-        if (index < activeIndex) {
-            if (phase === 'research' && researchReused) return 'skipped';
-            if (phase === 'review' && reviewSkipped) return 'skipped';
-            return 'done';
+    const changesComplete = /^complete/i.test(changes?.status?.status ?? '');
+    // A phase other than the agent's shows the status its document records, so a phase the agent
+    // left keeps its content when the agent moves back. Without a recorded status, a phase before
+    // the agent's is done and one after it is in progress.
+    const recorded = (text, index) => (text ? (readinessOf(text) === 'ready' ? 'done' : 'active') : index < activeIndex ? 'done' : 'active');
+    const documentStatus = (phase, index) => {
+        switch (phase) {
+            case 'research': return research ? recorded(research.readiness, index) : null;
+            case 'plan': return plan ? recorded(plan.readiness, index) : null;
+            case 'implement': {
+                if (!changes) return null;
+                const status = changes.status?.status ?? '';
+                if (!status) return index < activeIndex ? 'done' : 'active';
+                return changesComplete ? 'done' : /^blocked/i.test(status) ? 'blocked' : 'active';
+            }
+            case 'review': {
+                if (!review) return null;
+                const execution = review.execution ?? '';
+                if (!execution) return index < activeIndex ? 'done' : 'active';
+                return /^started$/i.test(execution) ? 'active' : /^blocked/i.test(execution) ? 'blocked' : 'done';
+            }
+            case 'followup': return review || completed || (reviewSkipped && changesComplete) ? 'done' : null;
+            default: return null;
         }
+    };
+    const phaseStatus = (phase, index) => {
         if (index === activeIndex) {
             if (lower(state.status) === 'blocked') return 'blocked';
             if (completed && (phase !== 'followup' || !running)) return 'done';
             return 'active';
         }
-        return 'upcoming';
+        if (phase === 'research' && researchReused) return 'skipped';
+        if (phase === 'review' && reviewSkipped) return 'skipped';
+        return documentStatus(phase, index) ?? (index < activeIndex ? 'done' : 'upcoming');
     };
     const artifactPath = { research: state.artifacts.research, plan: state.artifacts.plan, implement: state.artifacts.changes, review: state.artifacts.review, followup: input.statePath };
     const updated = { research: at('research'), plan: at('plan'), implement: at('changes'), review: at('review'), followup: at('state') };

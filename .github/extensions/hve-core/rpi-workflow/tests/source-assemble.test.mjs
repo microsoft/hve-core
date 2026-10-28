@@ -124,6 +124,18 @@ describe('assembled document', () => {
         assert.equal(session.plan.phases[1].tasks[1].status, 'in-progress');
         assert.deepEqual(Object.values(session.phases).map((phase) => phase.status), ['done', 'done', 'active', 'upcoming', 'upcoming']);
     });
+
+    it('shows each phase as its documents are when the agent moves back', () => {
+        const artifacts = { research: parseResearch(RESEARCH), plan: parsePlan(PLAN), changes: parseChanges(CHANGES), review: parseReview(REVIEW) };
+        const statuses = (activePhase, files) => {
+            const state = parseState({ ...ROOT_STATE, active_phase: activePhase, status: 'active', session_status: 'running' });
+            return Object.values(assembleSession({ id: 'x', state, artifacts: files, statePath: PATHS.rootState, now: NOW }).session.phases).map((phase) => phase.status);
+        };
+        assert.deepEqual(statuses('Plan', artifacts), ['done', 'active', 'done', 'done', 'done'], 'finished work stays done while the agent plans again');
+        const unfinished = { ...artifacts, changes: { ...artifacts.changes, status: { ...artifacts.changes.status, status: 'In progress' } }, review: { ...artifacts.review, execution: 'started' } };
+        assert.deepEqual(statuses('Research', unfinished), ['active', 'done', 'active', 'active', 'done'], 'unfinished documents read in progress');
+        assert.deepEqual(statuses('Plan', { research: artifacts.research, plan: artifacts.plan }), ['done', 'active', 'upcoming', 'upcoming', 'upcoming'], 'a later phase with no document has not started');
+    });
 });
 
 describe('a critique while it runs', () => {
