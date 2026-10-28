@@ -3,14 +3,14 @@ title: TTS Voice-Over Skill
 description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure AI Speech neural voices
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-10-28
 ms.topic: how-to
 keywords:
   - tts
   - voice-over
   - azure speech
   - ssml
-  - powerpoint
+  - narration
 estimated_reading_time: 5
 ---
 
@@ -18,7 +18,7 @@ The `tts-voiceover` skill generates per-slide WAV voice-over files from YAML spe
 
 ## Overview
 
-This skill reads `content.yaml` files from a slide content directory, extracts `speaker_notes` fields, applies SSML acronym aliases for correct pronunciation, and produces one WAV file per slide. An optional embedding step adds the WAV files back into the PPTX deck as auto-play media objects.
+This skill reads `content.yaml` files, extracts `speaker_notes`, applies SSML acronym aliases, and produces one WAV per slide. Use `demo-video` to assemble narration with visuals, or `hve-demo-material` for the HTML/frame/MP4/caption workflow. Presentation-file embedding is retired.
 
 ## Prerequisites
 
@@ -78,16 +78,12 @@ uv run scripts/generate_voiceover.py --dry-run --content-dir path/to/content
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
 
-### 3. Embed Audio into PPTX
+### 3. Assemble Narration with Visuals
 
-Embedding adds WAV files as media objects and injects narration timing XML so
-PowerPoint recognizes the audio for video export.
-
-```bash
-uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over
-```
-
-After embedding, use **File > Export > Create a Video > Use Recorded Timings and Narrations** in PowerPoint to produce an MP4 with synchronized audio.
+Hand the WAVs and matching frames or clips to `demo-video`. For levelled training,
+use `hve-demo-material`, which renders HTML through HVE Slides, exports matching
+frames, and retains captions and a transcript. Standalone HTML and narrated MP4
+are separate deliverables; the HTML deck does not embed audio/video.
 
 ## Cross-Platform Wrappers
 
@@ -97,14 +93,12 @@ Bash and PowerShell wrappers manage the Python virtual environment automatically
 
 ```bash
 ./scripts/generate-voiceover.sh --dry-run --content-dir content
-./scripts/embed-audio.sh --input deck.pptx --audio-dir voice-over
 ```
 
 ### PowerShell
 
 ```powershell
 ./scripts/Invoke-GenerateVoiceover.ps1 -DryRun -ContentDir content
-./scripts/Invoke-EmbedAudio.ps1 -InputPath deck.pptx -AudioDir voice-over
 ```
 
 Both wrappers accept `--skip-venv-setup` / `-SkipVenvSetup` to skip `uv sync` when the environment is already initialized.
@@ -147,7 +141,6 @@ content/
 | 401 with Entra ID auth                     | Verify custom domain and `Cognitive Services Speech User` role assignment |
 | Empty WAV files                            | Verify `speaker_notes:` is present and non-empty in `content.yaml`        |
 | Mispronounced acronyms                     | Add entries to `acronyms.yaml` with phonetic aliases                      |
-| Video export shows "No timings recorded"   | Re-embed audio with the latest `embed_audio.py`                           |
 
 ## Related Resources
 

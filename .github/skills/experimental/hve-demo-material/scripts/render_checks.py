@@ -60,6 +60,7 @@ LIVE_LEVELS = frozenset({"L300", "L400"})
 # A change under any of these paths rebuilds every level.
 SHARED_TRIGGER_PATHS = (
     ".github/skills/experimental/hve-demo-material/",
+    ".github/skills/experimental/hve-slides/",
     ".github/agents/experimental/hve-demo-material.agent.md",
     "docs/getting-started/tts-voiceover.md",
 )
@@ -265,13 +266,20 @@ def changed_levels(
     A level with no recorded ``source_sha`` in ``index``, or whose recorded
     commit cannot be diffed, is treated as changed.
     """
-    recorded = index.get("levels", {}) if isinstance(index, dict) else {}
+    from artifact_lookup import SITE_SCHEMA, valid_entry
+
+    schema = index.get("schema_version") if isinstance(index, dict) else None
+    if schema not in (None, SITE_SCHEMA, "demo-material-site/v1"):
+        raise CheckError("Unknown render index schema; preserve it and investigate")
+    recorded = index.get("levels", {}) if isinstance(index, dict) and schema == SITE_SCHEMA else {}
     selected = []
     for level in LEVELS:
         entry = recorded.get(level) if isinstance(recorded, dict) else None
         base = entry.get("source_sha") if isinstance(entry, dict) else None
         if (
             force
+            or not valid_entry(level, entry)
+            or isinstance(entry.get("last_failed_attempt"), dict)
             or not isinstance(base, str)
             or not re.fullmatch(r"[0-9a-f]{40}", base)
         ):
@@ -1524,10 +1532,35 @@ def evaluate(
         )
         checks["T-04"]["evidence"] += "; WAVs provide silent timing, not narration"
     checks["T-10"] = check_html_deck(level, level_dir)
-    return {
+    import yaml
+
+    manifest_path = checked_path(level_dir / "manifest.yml", level_dir)
+    if not manifest_path.is_file():
+        manifest_path = checked_path(level_dir / "output/manifest.yml", level_dir)
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else {}
+    expected_outputs = {
+        "html_deck": f"output/hve-demo-{level}.html",
+        "mp4": f"output/hve-demo-{level}.mp4",
+        "raw_assembly": f"output/hve-demo-{level}.raw.mp4",
+        "captions": f"output/hve-demo-{level}.vtt", "transcript_page": "output/index.html",
+        "open_caption_evidence": "output/open-captions.json",
+        "html_build_evidence": "output/html-deck-build.json",
+        "html_frame_evidence": "output/html-deck-check.json",
+        "render_result": "output/render-result.json",
+    }
+    deliverables = manifest.get("deliverables", {}) if isinstance(manifest, dict) else {}
+    manifest_valid = (
+        isinstance(manifest, dict) and manifest.get("schema_version") == 6
+        and manifest.get("renderer") == "hve-slides" and manifest.get("format") == "html"
+        and manifest.get("level") == level and isinstance(deliverables, dict)
+        and deliverables == expected_outputs
+    )
+    result = {
         "schema_version": 2,
         "renderer": "hve-slides",
         "format": "html",
+        "manifest_schema_version": 6 if manifest_valid else None,
+        "manifest_valid": manifest_valid,
         "level": level,
         "capture_profile": "live" if live else "deck-export",
         "narration_engine": narration_engine,
@@ -1538,8 +1571,20 @@ def evaluate(
         "measured_duration_minutes": round(minutes, 2) if minutes else None,
         "contract_duration_minutes": {"min": contract["min"], "max": contract["max"]},
         "checks": checks,
-        "ok": all(check["result"] == "pass" for check in checks.values()),
+        "ok": manifest_valid and all(check["result"] == "pass" for check in checks.values()),
     }
+    if manifest_valid:
+        validation = manifest.setdefault("validation", {})
+        if not isinstance(validation, dict):
+            raise CheckError("manifest.validation must be a mapping")
+        validation["machine_checks"] = checks
+        validation["deck"] = "deferred" if all(checks[key]["result"] == "pass" for key in ("T-08", "T-09", "T-10")) else "fail"
+        validation["video"] = "pass" if result["ok"] else "fail"
+        # Machine scoring does not grant human delivery approval or visual review.
+        manifest["state"] = "Deferred"
+        install_files(level_dir / "output", {"manifest.yml": yaml.safe_dump(manifest, sort_keys=False).encode("utf-8")})
+        result["manifest_sha256"] = _sha256(level_dir / "output/manifest.yml")
+    return result
 
 
 def build_parser() -> argparse.ArgumentParser:

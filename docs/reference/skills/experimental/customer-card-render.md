@@ -31,7 +31,8 @@ Generate customer-card slide content YAML from Design Thinking canonical artifac
 Use this skill to turn canonical Design Thinking artifacts into customer-card
 slide content. It handles the mapping from Vision, Problem, Scenario, Use Case, and
 Persona Markdown to slide YAML. It does not build, style, export, or validate a
-presentation file, and no deck renderer ships with this repository.
+presentation file. For an explicitly requested HTML presentation, hand reviewed
+YAML to HVE Slides; levelled HTML/MP4 demos use the HVE Demo Material workflow.
 
 Python 3.11+ and `uv` are prerequisites.
 

@@ -66,7 +66,7 @@ COPIED_FILES = (
     "LICENSE",
 )
 BUILD_SUMMARY = "demo-material-build.json"
-MANIFEST_PATHS = ("output/manifest.yml", "manifest.yml")
+MANIFEST_PATHS = ("manifest.yml", "output/manifest.yml")
 _GITHUB_REMOTE = re.compile(
     r"^(?:https://(?:[^@/]+@)?github\.com/|git@github\.com:|ssh://git@github\.com/)"
     r"([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$"

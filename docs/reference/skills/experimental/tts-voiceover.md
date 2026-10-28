@@ -49,6 +49,6 @@ a generated WAV or verified pronunciation.
 After region and authentication are configured separately, an authorized synthesis
 request can produce matching `slide-NNN.wav` files. Listen for pronunciation and
 pauses; `--collapse-newlines` is useful when block-scalar wrapping should not become
-spoken pauses. Embedding into a separate narrated PPTX is another step: the script
-replaces existing timing and disables click advancement, so review animations and
-playback rather than overwriting an authored deck without checking.
+spoken pauses. Use `demo-video` for synchronized visuals and audio, or
+`hve-demo-material` for the HTML/frame/MP4/caption workflow. Presentation-file
+embedding is retired; existing user presentations are not modified or converted.

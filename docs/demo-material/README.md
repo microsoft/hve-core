@@ -2,7 +2,7 @@
 title: Demo Material
 description: Levelled HVE Core training decks, silent CI videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-28
 ms.topic: overview
 keywords:
   - demo material
@@ -19,7 +19,7 @@ pagination_label: Demo Material
 estimated_reading_time: 3
 ---
 
-HVE Core publishes a training deck, a video, and a browser slide deck
+HVE Core's delivery workflow produces an HTML training deck and a video
 for each of four depth levels. Each level targets a different audience and
 builds on the one before it. The catalog reads the published build index and
 shows links only when that level has a complete passing bundle.
@@ -69,7 +69,7 @@ source documents changed:
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
    workflow starts when an author run finishes authoring; it waits for that run to
    complete and checks it before building. It builds each authored level into a
-   deck, a silent video, and browser slides from the same slide content, then
+  HTML deck and a silent video from matching exported slide frames, then
    scores the checks a machine can verify: timing paired to every slide, absence
    of an audio stream, the video landing inside the
    level's length, readable live captures, the pinned house style, the
@@ -83,13 +83,24 @@ source documents changed:
 
 New CI builds are silent: no speech service or speech model is used. Local
 narrated production uses an AI-generated Azure AI Speech voice. During
-regeneration, a level may retain an earlier passing video with voiceover until
-its silent replacement passes. The published index records `narration_engine`
+regeneration, a level retains its previous compatible passing files until a
+replacement passes. The published index records `narration_engine`
 and the timing basis for new renders. The
 [level contracts and sources](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/references/curriculum.md)
 define what each level covers.
 
 ## Build Status
+
+Current delivery uses `demo-material-content/v2`, `demo-material-site/v2`,
+manifest6 and render-result2. HTML, raw/final MP4, captions, transcript and
+hash-bound evidence must agree. Old metadata can trigger fresh authoring but
+cannot certify a new delivery. The catalog hides obsolete or incomplete links.
+
+The first v2 publication requires explicit maintainer approval and preservation
+of existing published media. Recovery/deployment stop on incompatible old bundles
+rather than resetting the index or publishing an empty directory. Archive or
+preserve the existing site outside the replacement deployment, verify new outputs,
+then authorize the migration; this source change performs no publication.
 
 The [build index](pathname:///demo-material/index.json) records, for each level,
 the commit it was built from, when it was rendered, its measured length, and the

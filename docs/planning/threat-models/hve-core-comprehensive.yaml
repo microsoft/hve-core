@@ -2197,21 +2197,21 @@ threats:
     target_ref: comp-tts
     interaction_ref: flow-13
     category: elevation-of-privilege
-    title: Untrusted PPTX / YAML parsing (XXE / unsafe deserialization)
-    description: Malicious content.yaml or PPTX could exploit unsafe YAML or XML external-entity parsing.
-    state: Partially Mitigated
-    citations: { stride: [E], nist: [SI-10], mitre: [CWE-611, CWE-502] }
+    title: Untrusted YAML parsing
+    description: Malicious content.yaml could exploit unsafe object deserialization.
+    state: Mitigated
+    citations: { stride: [E], nist: [SI-10], mitre: [CWE-502] }
     mitigation_ids: [M-SAFE-PARSE]
     properties:
       Priority: Low
       UserThreatDescription: >-
-        Malicious content.yaml or PPTX could exploit unsafe YAML or XML external-entity parsing. Source:
-        tts-voiceover skill, bucket B2 (environment and Entra credentials). Gaps: G-TAM-1. See
+        Content YAML is parsed as data through safe_load; presentation and timing XML parsing are retired. Source:
+        tts-voiceover skill, bucket B3 (untrusted inputs). See
         .github/skills/experimental/tts-voiceover/SECURITY.md.
         Data sensitivity: confidential (Speaker-notes narration content).
       source_skill: tts-voiceover
-      bucket: B2
-      gap_ids: [G-TAM-1]
+      bucket: B3
+      gap_ids: []
   - id: TT-6
     asset_ids: [asset-speaker-notes]
     target_ref: comp-tts
@@ -3025,8 +3025,8 @@ mitigations:
     target_refs: [comp-tts]
     citations: { nist: [AU-9, SI-11] }
   - id: M-SAFE-PARSE
-    name: Safe YAML/OOXML parsing
-    description: yaml.safe_load; python-pptx with external-entity resolution disabled.
+    name: Safe YAML parsing
+    description: yaml.safe_load parses content as data; presentation/archive parsing is retired.
     target_refs: [comp-tts]
     citations: { nist: [SI-10] }
   - id: M-CC-ESCAPE

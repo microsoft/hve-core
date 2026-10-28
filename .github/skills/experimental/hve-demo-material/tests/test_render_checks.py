@@ -4,6 +4,7 @@
 
 import json
 import html
+import hashlib
 import os
 import shutil
 import subprocess
@@ -12,6 +13,7 @@ import wave
 from pathlib import Path
 
 import pytest
+from test_artifact_lookup import _published, SITE
 from render_checks import (
     LEVELS,
     STYLE_TEMPLATE,
@@ -392,7 +394,9 @@ class TestChangedLevels:
         base = _git(repo, "rev-parse", "HEAD")
         (repo / "docs" / "d.md").write_text("changed", encoding="utf-8")
         _git(repo, "commit", "-q", "-am", "change")
-        index = {"levels": {level: {"source_sha": base} for level in LEVELS}}
+        index = json.loads(next(iter(_published(LEVELS).values())))
+        for entry in index["levels"].values():
+            entry["source_sha"] = base
 
         # Act
         result = changed_levels(parse_curriculum(_MINI_CURRICULUM), index, repo)
@@ -403,7 +407,9 @@ class TestChangedLevels:
     def test_given_unknown_sha_when_checked_then_level_selected(self, repo):
         # Arrange
         head = _git(repo, "rev-parse", "HEAD")
-        index = {"levels": {level: {"source_sha": head} for level in LEVELS}}
+        index = json.loads(next(iter(_published(LEVELS).values())))
+        for entry in index["levels"].values():
+            entry["source_sha"] = head
         index["levels"]["L200"]["source_sha"] = "0" * 40
 
         # Act
@@ -415,7 +421,9 @@ class TestChangedLevels:
     def test_given_force_when_checked_then_all_levels(self, repo):
         # Arrange
         head = _git(repo, "rev-parse", "HEAD")
-        index = {"levels": {level: {"source_sha": head} for level in LEVELS}}
+        index = json.loads(next(iter(_published(LEVELS).values())))
+        for entry in index["levels"].values():
+            entry["source_sha"] = head
 
         # Act
         result = changed_levels(
@@ -571,7 +579,19 @@ class TestEvaluate:
         assert probe(mp4) is None
 
     def _level(self, tmp_path, level="L100", mocker=None):
+        import yaml
+
         _write_slides(tmp_path, 3)
+        (tmp_path / "manifest.yml").write_text(yaml.safe_dump({
+            "schema_version": 6, "renderer": "hve-slides", "format": "html", "level": level,
+            "deliverables": {
+                "html_deck": f"output/hve-demo-{level}.html", "mp4": f"output/hve-demo-{level}.mp4",
+                "raw_assembly": f"output/hve-demo-{level}.raw.mp4", "captions": f"output/hve-demo-{level}.vtt",
+                "transcript_page": "output/index.html", "open_caption_evidence": "output/open-captions.json",
+                "html_build_evidence": "output/html-deck-build.json", "html_frame_evidence": "output/html-deck-check.json",
+                "render_result": "output/render-result.json",
+            },
+        }), encoding="utf-8")
         (tmp_path / "output").mkdir()
         (tmp_path / "output" / f"hve-demo-{level}.mp4").write_bytes(b"mp4")
         (tmp_path / "output" / "segments.yml").write_text(
@@ -717,36 +737,26 @@ class TestSilentTiming:
         site = tmp_path / "site"
         prior = site / "L100"
         prior.mkdir(parents=True)
-        (prior / "hve-demo-L100.mp4").write_bytes(b"previous passing video")
-        (site / "index.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": "demo-material-site/v1",
-                    "levels": {
-                        "L100": {
-                            "source_sha": "prior",
-                            "files": {"mp4": "L100/hve-demo-L100.mp4"},
-                        }
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
+        fixture = _published()
+        for url, body in fixture.items():
+            path = site / url.removeprefix(f"{SITE}demo-material/")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(body)
+        previous_video = (prior / "hve-demo-L100.mp4").read_bytes()
         renders = tmp_path / "renders"
         candidate = renders / "L100"
         candidate.mkdir(parents=True)
-        for extension in ("mp4", "pptx", "vtt", "html"):
-            (candidate / f"hve-demo-L100.{extension}").write_bytes(b"new render")
-        (candidate / "index.html").write_text("Transcript", encoding="utf-8")
+        for file in prior.iterdir():
+            shutil.copyfile(file, candidate / file.name)
+        (candidate / "hve-demo-L100.mp4").write_bytes(b"new render")
+        caption_evidence = json.loads((candidate / "open-captions.json").read_text())
+        caption_evidence["video_sha256"] = hashlib.sha256(b"new render").hexdigest()
+        (candidate / "open-captions.json").write_text(json.dumps(caption_evidence))
+        report = json.loads((candidate / "render-result.json").read_text())
+        report["narration_engine"] = engine
+        report["checks"]["T-11"]["result"] = audio_check
         (candidate / "render-result.json").write_text(
-            json.dumps(
-                {
-                    "ok": True,
-                    "narration_engine": engine,
-                    "timing_basis": "notes-word-count",
-                    "checks": {"T-11": {"result": audio_check}},
-                }
-            ),
+            json.dumps(report),
             encoding="utf-8",
         )
 
@@ -759,7 +769,8 @@ class TestSilentTiming:
                 ),
                 "SITE": str(site),
                 "RENDERS": str(renders),
-                "SOURCE_SHA": "candidate",
+                "SOURCE_SHA": "b" * 40,
+                "LOOKUP": str(Path(__file__).resolve().parents[1] / "scripts/artifact_lookup.py"),
                 "AUTHOR_RUN_ID": "1",
                 "RENDER_RUN_ID": "2",
                 "RUNNER_TEMP": str(tmp_path),
@@ -770,7 +781,7 @@ class TestSilentTiming:
 
         entry = json.loads((site / "index.json").read_text())["levels"]["L100"]
         assert (prior / "hve-demo-L100.mp4").read_bytes() == (
-            b"new render" if published else b"previous passing video"
+            b"new render" if published else previous_video
         )
         if published:
             assert entry["narration_engine"] == "none"

@@ -2,7 +2,7 @@
 title: HVE Demo Material Skill Security Model
 description: STRIDE threat model for the hve-demo-material skill organized by assets, adversaries, and trust buckets (GitHub API client and token, published site recovery, deck source generation, external program orchestration, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-27
+ms.date: 2026-10-28
 ms.topic: reference
 estimated_reading_time: 16
 keywords:
@@ -165,10 +165,10 @@ flowchart TD
 |-------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ADV-a | Hostile or malformed authored content | Safe YAML parsing, escaped text/attributes, validated identities and mappings, confined image reads with link refusal; approved-root content still requires disclosure review (G-INF-1). |
 | ADV-b | Spoofed or compromised API or site endpoint | The site URL must start with `https://` and every request has a 60 s timeout. `GITHUB_API_URL` is not validated and redirects use urllib defaults (G-TLS-1).                                                                                                                                                                                                                          |
-| ADV-c | Hostile published bundle                    | `index.json` must be JSON with the `demo-material-site/v1` schema; levels must match `L[1-4]00`; every listed path must match the fixed `SITE_FILE` pattern, which blocks traversal and unexpected names. `render_checks.py changed` passes a recorded `source_sha` to `git diff` only when it is exactly 40 hex characters. File content is not verified against a digest (G-TAM-3). |
+| ADV-c | Hostile published bundle | v2 identities, fixed file inventories, SHA-256 and linked HTML/media evidence are checked. Known obsolete metadata can select regeneration but cannot supply delivery files. Unsigned publisher authenticity remains a residual (G-TAM-3). |
 | ADV-d | Hostile template or dependency              | `npm ci` runs with `--ignore-scripts` against the template's lockfile, and the Chromium check opens the bundle with the network disabled and fails on any external request. The template's `bundle.mjs` and `.npmrc` are still executed or honored, and its deck runtime runs in the browser (G-EOP-1, G-EOP-2, G-SUP-1).                                                             |
 | ADV-e | Hostile workspace repository                | Only fixed read-only git subcommands run (`remote get-url origin`, `rev-parse HEAD`) with a 30 s timeout. Only owner and repository name survive into the deck, so credentials in the remote URL are dropped, and the commit must be 40 hex characters.                                                                                                                               |
-| ADV-f | Hostile caller controlling argv or env      | Level, narration, and capture values are validated by regex; level and workspace directories are resolved with `cd && pwd`; all expansions are quoted. Output and deck directories are caller-controlled and not confined (G-TAM-1, G-TAM-2).                                                                                                                                         |
+| ADV-f | Hostile caller controlling argv or env | Quoted arguments, validated modes, caller-owned roots and link/refusal checks limit writes. Concurrent local races and trusted installation identity remain operator responsibilities. |
 
 ## Bucket B1: GitHub API client and token handling
 
@@ -216,12 +216,13 @@ flowchart TD
 ### Spoofing
 
 * The site URL must start with `https://`; the default is derived from `GITHUB_REPOSITORY` as `https://<owner>.github.io/<name>/`. A caller-supplied `--site-url` may name any HTTPS host (G-TLS-1).
-* `index.json` must carry the `demo-material-site/v1` schema or recovery fails with an error.
+* Full recovery requires `demo-material-site/v2`, complete per-level identities and a nonempty delivery. Index-only detection recognizes known obsolete v1 metadata solely to select regeneration; it never downloads or publishes old delivery files.
 
 ### Tampering
 
-* Each path listed by `index.json`, plus the optional per-level files, must match the fixed `SITE_FILE` pattern (`L[1-4]00/` followed by one of a short set of file names), so traversal and arbitrary file names are rejected before any write.
-* Required files that are missing abort recovery so a partial bundle is never staged. Downloaded bytes are written verbatim and are not verified against a digest, and the pattern's `$` anchor tolerates a trailing newline (G-TAM-3, G-TAM-2).
+* Fixed file inventories use full-match validation and link/reparse/special-file refusal. Recovery verifies per-file SHA-256; deployment repeats delivery checks for renderer/schema, HTML/build/frame evidence and caption/raw/final media hashes. Missing or incompatible evidence stops deployment instead of resetting the index.
+* Bundle merges retain prior compatible levels on failed renders and roll back failed file replacements. Unknown or obsolete site content requires explicit preservation/migration; it is never recursively deleted. Hashes detect inconsistent bytes but do not authenticate a compromised publisher (G-TAM-3).
+* Full recovery requires an empty caller-owned target, so a failed later download cannot overwrite existing local media. Level installation includes its index replacement in the rollback boundary; index-only refreshes use atomic replacement.
 
 ### Repudiation
 
@@ -244,7 +245,7 @@ flowchart TD
 | Threat                                     | Likelihood | Impact | Residual Risk | Status                          |
 |--------------------------------------------|------------|--------|---------------|---------------------------------|
 | Path traversal through hostile index.json  | Low        | High   | Low           | Mitigated (SITE_FILE allowlist) |
-| Tampered bundle restaged and republished   | Low        | Med    | Low           | Partially Mitigated (G-TAM-3)   |
+| Tampered bundle restaged and republished | Low | Med | Low | Hash/schema/evidence checks; publisher authenticity remains (G-TAM-3) |
 | Oversized download exhausts memory or disk | Low        | Low    | Low           | Accepted (G-DOS-1)              |
 
 ## Bucket B3: Deck source generation from authored content
@@ -385,8 +386,8 @@ The following are known limitations recorded so operators can make informed depl
 | G-INF-1 | Image content under the approved content root may still be confidential; path checks cannot classify it. | InfoDisc-Low | Outside-root and symlink reads mitigated; review approved-root images before delivery. |
 | G-INF-2 | Live captures, frames, narration, and the generated transcript page can contain confidential workspace content, and nothing redacts them before a human-configured pipeline publishes them. Under `azure`, speaker notes leave the host.                                                                     | InfoDisc-Med    | Rely on the delivery approval step; use approved regions and avoid confidential material in captures and notes.                                  |
 | G-TAM-1 | Concurrent hostile local writers can race path checks and replacements. | Tampering-Low | Recursive source cleanup removed; source/frame ownership and rollback controls mitigate accidental replacement. Isolate local writers. |
-| G-TAM-2 | `--github-output` values are written without newline stripping, `--workflow` is interpolated into the API path unquoted, and the `SITE_FILE` pattern uses `$`, which tolerates a trailing newline.                                                                                                           | Tampering-Low   | Use a trusted API endpoint; planned fix is `fullmatch`, path quoting, and single-line output values.                                             |
-| G-TAM-3 | Recovered bundle files are checked only by name pattern and TLS, with no digest verification, and the bundle is restaged for redeployment.                                                                                                                                                                   | Tampering-Low   | Restrict who can alter the Pages site; planned fix is a digest list in `index.json` verified before staging.                                     |
+| G-TAM-2 | The caller-controlled workflow identifier is interpolated into an API path without quoting. | Tampering-Low | File inventories use full-match validation and GitHub outputs reject newlines; use trusted workflow identifiers and API endpoints. |
+| G-TAM-3 | A compromised publisher can replace content and its unsigned digest list together. | Tampering-Low | Per-file SHA-256, schema and linked evidence are checked during recovery/deployment; retain publisher access controls. |
 | G-DOS-1 | API/download responses, HTML, YAML and embedded images have no total size cap; pagination has no page cap; node/npm/media/git and sibling processes can outlive their intended run without host limits. | DoS-Low | Run under job timeouts and memory/disk limits. |
 | G-EOP-1 | The caller-selected trusted HVE Slides installation runs with Node privileges; a substituted installation can execute code. | EoP-Med | Source-supplied build programs are not imported. Verify trusted skill provenance. |
 | G-EOP-2 | Browser-engine vulnerabilities remain despite offline routing and the Chromium sandbox. | EoP-Low | Sandbox is explicitly enabled; unavailable support fails. Patch browsers and isolate render hosts. |
