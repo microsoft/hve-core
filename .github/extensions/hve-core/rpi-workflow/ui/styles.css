@@ -3586,6 +3586,14 @@ details > summary:hover {
   stroke-width: 1.5;
 }
 
+.diagram-node.is-changed rect {
+  stroke: var(--rw-fg);
+}
+
+.diagram-node.is-removed rect {
+  stroke: var(--rw-fg-muted);
+}
+
 .diagram-node.is-highlight rect {
   fill: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
   stroke: var(--rw-accent);
@@ -3618,6 +3626,62 @@ details > summary:hover {
 
 .has-progress .diagram-node.is-highlight.is-active rect {
   fill: color-mix(in srgb, var(--rw-accent) 16%, var(--rw-bg));
+}
+
+/* Change marks keep their border under any highlight or progress fill: thick for changed, dotted for removed. */
+.diagram-node.is-changed rect {
+  stroke-width: 2.5;
+}
+
+.diagram-node.is-removed rect {
+  stroke-dasharray: 2 3;
+  stroke-width: 2;
+}
+
+/* Change-map boxes: a titled frame per class, module, file, or document; an inner box sits inside its frame. */
+.diagram-box > rect {
+  fill: none;
+  stroke: var(--rw-border-control);
+  stroke-width: 1;
+}
+
+.diagram-box.is-new > rect {
+  stroke: var(--rw-accent);
+  stroke-dasharray: 5 3;
+  stroke-width: 1.5;
+}
+
+.diagram-box.is-changed > rect {
+  stroke: var(--rw-fg);
+  stroke-width: 2.5;
+}
+
+.diagram-box.is-removed > rect {
+  stroke-dasharray: 2 3;
+  stroke-width: 2;
+}
+
+.diagram-box-title {
+  fill: var(--rw-fg-muted);
+  font: 600 11.5px var(--rw-font);
+}
+
+.diagram-run.is-bold {
+  font-weight: 700;
+}
+
+.diagram-run.is-italic {
+  font-style: italic;
+}
+
+.diagram-run.is-code {
+  font-family: var(--rw-mono);
+  font-size: 12px;
+}
+
+/* A tag line, such as "changed · P24", reads quieter than the part's name. */
+.diagram-node .diagram-tag {
+  fill: var(--rw-fg-muted);
 }
 
 .diagram-mark > circle:first-child {
@@ -3705,6 +3769,14 @@ circle.diagram-mark-glyph {
 
 .legend-swatch.is-new {
   border: 1.5px dashed var(--rw-accent);
+}
+
+.legend-swatch.is-changed {
+  border: 2.5px solid var(--rw-fg);
+}
+
+.legend-swatch.is-removed {
+  border: 2px dotted var(--rw-fg-muted);
 }
 
 .legend-swatch.is-done {
@@ -5570,6 +5642,16 @@ kbd {
 
   .diagram-node.is-highlight text {
     fill: HighlightText;
+  }
+
+  .diagram-box > rect {
+    fill: none;
+    stroke: CanvasText;
+  }
+
+  .diagram-box-title,
+  .diagram-node .diagram-tag {
+    fill: CanvasText;
   }
 
   .diagram-node text,

@@ -3,7 +3,7 @@
 
 import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, idTag, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
 import { decisionCard, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
-import { renderDiagram } from './diagram.mjs';
+import { markLegend, renderDiagram } from './diagram.mjs';
 import { boardLanes, laneOf, taskMarkers } from './board.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
 import { taskBlock } from './view-plan.mjs';
@@ -247,7 +247,8 @@ function mapRow(ctx) {
             h('div', { class: 'map-controls' },
                 h('fieldset', { class: 'segmented compact map-phases' }, h('legend', { class: 'meta', text: 'Phase' }), tab('all', null), plan.phases.map((phase) => tab(phase.id, phase)))),
             renderDiagram(plan.diagram.after, {
-                caption: `The intended result, with done and in-progress parts marked${highlight.length ? `, ${chosen} outlined` : ''}`,
+                defaultCaption: 'The intended result',
+                captionSuffix: `, with done and in-progress parts marked${highlight.length ? `, ${chosen} outlined` : ''}`,
                 highlight,
                 progress,
                 idPrefix: 'impl-map',
@@ -258,7 +259,7 @@ function mapRow(ctx) {
                 h('span', { class: 'legend-swatch is-done' }), ' Done. ',
                 h('span', { class: 'legend-swatch is-active' }), ' In progress. ',
                 h('span', { class: 'legend-swatch is-chosen' }), ' Bold outline: the chosen phase. ',
-                h('span', { class: 'legend-swatch is-new' }), ' Dashed border: added by the plan.'),
+                ...markLegend(plan.diagram.after)),
         ],
     });
 }

@@ -609,7 +609,7 @@ export function assembleSession(input) {
             ? {
                 phases: planPhases,
                 requirements: plan.requirements.map((row) => ({ id: row.id, kind: row.kind, text: inlineMarkdown(row.text) })),
-                diagram: plan.after ? { before: plan.before, after: plan.after, phaseNodes: taggedParts ?? Object.fromEntries(plan.phases.map((phase) => [phase.id, highlightedNodes(phase, afterNodes)])) } : null,
+                diagram: plan.after ? { before: plan.before, after: plan.after, phaseNodes: taggedParts ?? Object.fromEntries(plan.phases.map((phase) => [phase.id, highlightedNodes(phase, afterNodes)])), tagged: Boolean(taggedParts) } : null,
                 critique: critique || plan.critique.status || plan.critique.setting
                     ? {
                         status: critique?.execution || plan.critique.status || 'Not recorded',

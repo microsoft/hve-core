@@ -194,8 +194,17 @@ describe('layout', () => {
         assert.deepEqual(diagram.wrap('Added: sync status chip', 14), ['Added: sync', 'status chip']);
     });
 
-    it('breaks a word longer than a line inside it', () => {
-        assert.deepEqual(diagram.wrap('see inspections-offline-sync-status.ts', 14), ['see', 'inspections-of', 'fline-sync-sta', 'tus.ts']);
+    it('breaks a word longer than a line after hyphens, dots, and camelCase humps, and inside a piece only when it must', () => {
+        assert.deepEqual(diagram.wrap('see inspections-offline-sync-status.ts', 14), ['see', 'inspections-', 'offline-sync-', 'status.ts']);
+        assert.deepEqual(diagram.wrap('setShownDocumentInTheView()', 14), ['setShown', 'DocumentInThe', 'View()']);
+        assert.deepEqual(diagram.wrap('abcdefghijklmnopqrstuvwxyz', 10), ['abcdefghij', 'klmnopqrst', 'uvwxyz']);
+    });
+
+    it('keeps a name whole when it fits the widest line, and puts a box title on one line when it fits', () => {
+        const name = [[{ text: 'composeDocument()', bold: true, italic: false, code: true }], [{ text: 'new · P25', bold: false, italic: false, code: false }]];
+        assert.deepEqual(diagram.fitRuns(name, diagram.NODE_FIT).lines.map((line) => line.map((run) => run.text).join('')), ['composeDocument()', 'new · P25']);
+        const title = [[{ text: 'lib/source/workspace.mjs', bold: false, italic: false, code: true }]];
+        assert.equal(diagram.fitRuns(title, diagram.TITLE_FIT).lines.length, 1);
     });
 
     it('keeps labels in the same gap from overlapping', () => {
@@ -210,6 +219,73 @@ describe('layout', () => {
             assert.ok(gapOne[i].y - gapOne[i - 1].y >= (gapOne[i].height + gapOne[i - 1].height) / 2, 'labels overlap');
         }
         assert.equal(labels[3].y, 50);
+    });
+});
+
+/** A map of `size` parts in boxes two levels deep, with arrows that skip columns. */
+function bigMap(size = 34, direction = 'LR') {
+    const lines = [`flowchart ${direction}`];
+    const per = Math.ceil(size / 6);
+    let n = 0;
+    for (let top = 0; top < 3; top += 1) {
+        lines.push(`    subgraph t${top}["\`<code>area${top}/</code>\`"]`);
+        for (let inner = 0; inner < 2; inner += 1) {
+            lines.push(`        subgraph t${top}i${inner}["\`<code>area${top}/file${inner}.mjs</code>\`"]`);
+            for (let k = 0; k < per && n < size; k += 1, n += 1) lines.push(`            p${n}["\`**<code>part${n}()</code>**\nchanged · P0${1 + (n % 3)}\`"]`);
+            lines.push('        end');
+        }
+        lines.push('    end');
+    }
+    for (let i = 0; i + 6 < size; i += 1) lines.push(`    p${i} --> p${i + 6}`);
+    for (let i = 0; i + 13 < size; i += 3) lines.push(`    p${i} -->|skips| p${i + 13}`);
+    return lines.join('\n');
+}
+
+const inside = (inner, outer) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;
+const apart = (a, b) => a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y;
+
+describe('boxes and routes', () => {
+    for (const [name, source] of [['a two-level map', bigMap()], ['a top-to-bottom map', bigMap(20, 'TD')], ['the nested change map', MAP]]) {
+        it(`keeps every part inside its boxes and frames apart unless one holds the other: ${name}`, () => {
+            const graph = diagram.parseFlowchart(source);
+            const { positions, frames } = diagram.layout(graph);
+            const list = [...frames.values()];
+            assert.ok(list.length > 0);
+            for (const a of list) {
+                for (const b of list) {
+                    if (a !== b) assert.ok(apart(a, b) || inside(a, b) || inside(b, a), `${a.id} and ${b.id} overlap`);
+                }
+            }
+            for (const node of graph.nodes.values()) {
+                for (let group = graph.groups.find((candidate) => candidate.id === node.group); group; group = graph.groups.find((candidate) => candidate.id === group.parent)) {
+                    if (group.depth <= 2) assert.ok(inside(positions.get(node.id), frames.get(group.id)), `${node.id} lies outside ${group.id}`);
+                }
+            }
+        });
+
+        it(`routes every arrow around the parts between its ends: ${name}`, () => {
+            const graph = diagram.parseFlowchart(source);
+            const { positions, routes, horizontal } = diagram.layout(graph);
+            graph.edges.forEach((edge, index) => {
+                for (const point of diagram.sampleRoute(routes[index], horizontal)) {
+                    for (const [id, box] of positions) {
+                        if (id === edge.from || id === edge.to) continue;
+                        const hit = point.x > box.x + 1 && point.x < box.x + box.width - 1 && point.y > box.y + 1 && point.y < box.y + box.height - 1;
+                        assert.ok(!hit, `${edge.from} -> ${edge.to} crosses ${id} at ${Math.round(point.x)},${Math.round(point.y)}`);
+                    }
+                }
+            });
+        });
+    }
+
+    it('lays out a 34-part map with two levels of boxes quickly', () => {
+        const graph = diagram.parseFlowchart(bigMap());
+        assert.equal(graph.nodes.size, 34);
+        const start = performance.now();
+        diagram.layout(graph);
+        const ms = performance.now() - start;
+        // Well under 50 ms locally; the bound leaves room for slower CI hosts.
+        assert.ok(ms < 200, `${Math.round(ms)} ms`);
     });
 });
 
@@ -278,7 +354,7 @@ describe('renderDiagram', () => {
         assert.equal((markup.match(/class="diagram-edge"/g) ?? []).length, 1);
         assert.match(markup, /<li>B connects to C \(dashed line\)<\/li>/);
         assert.match(markup, /<li>A removed: reads C \(dashed line\)<\/li>/);
-        assert.match(markup, /<li>Group First pass: A, B<\/li><li>Group second: C<\/li>/);
+        assert.match(markup, /<ul class="diagram-text"><li>In First pass: A; B<\/li><li>In second: C<\/li><li>A connects to B<\/li>/, 'boxes come first, then the relationships');
         assert.doesNotMatch(markup, /is-fallback/);
     });
 
@@ -299,6 +375,37 @@ describe('renderDiagram', () => {
         assert.equal(list.childNodes.length, 19);
         assert.ok(elements(figure).some((el) => el.className === 'diagram-node is-new is-highlight'));
         assert.match(svg.style.minWidth, /^\d+px$/);
+    });
+
+    it('draws runs as tspans, marks parts and boxes, and dims tag lines', () => {
+        const markup = serialize(diagram.renderDiagram(MAP, { idPrefix: 'runs' }));
+        assert.match(markup, /<tspan class="diagram-run is-bold is-code">earlierDocuments\(\)<\/tspan>/);
+        assert.match(markup, /<tspan class="diagram-run is-italic">documents<\/tspan>/);
+        assert.match(markup, /<g class="diagram-node is-changed">/);
+        assert.match(markup, /<g class="diagram-node is-removed">/);
+        assert.match(markup, /<g class="diagram-node is-new">/);
+        assert.match(markup, /<g class="diagram-box is-depth-2 is-new">/);
+        assert.match(markup, /<g class="diagram-box is-depth-1">/);
+        assert.match(markup, /<text [^>]*class="diagram-tag"[^>]*>changed · P24, P27<\/text>/);
+        assert.match(markup, /<text [^>]*class="diagram-box-title diagram-tag"[^>]*>new file · P25<\/text>/);
+        assert.match(markup, /<li>In lib\/source\/workspace.mjs: loadTask\(\); earlierDocuments\(\), pairs documents by name \(changed in P24 and P27\); oldPairing\(\) \(removed in P25\)<\/li>/);
+        assert.match(markup, /<li>In ui\/, in ui\/documents.mjs \(new file in P25\): composeDocument\(\) \(new in P25\)<\/li>/);
+    });
+
+    it('captions a diagram with its own title and describes it with its description', () => {
+        const own = serialize(diagram.renderDiagram(MAP, { defaultCaption: 'After', captionSuffix: ', P24 outlined', idPrefix: 'own' }));
+        assert.match(own, /<figcaption>After: documents paired by work, P24 outlined<\/figcaption>/);
+        assert.match(own, /<svg [^>]*aria-describedby="own-desc"/);
+        assert.match(own, /<desc id="own-desc">The reader pairs documents; the page shows them.<\/desc>/);
+        const older = serialize(diagram.renderDiagram(OLDER_AFTER, { defaultCaption: 'After: the intended result', idPrefix: 'older' }));
+        assert.match(older, /<figcaption>After: the intended result<\/figcaption>/);
+        assert.doesNotMatch(older, /aria-describedby/);
+    });
+
+    it('never builds an element from label markup', () => {
+        const figure = diagram.renderDiagram('flowchart LR\n  a["`<img src=x onerror=alert(1)> **bold**`"]\n  b["<script>alert(1)</script>"]\n  a --> b', { caption: 'After', idPrefix: 'safe' });
+        assert.ok(!elements(figure).some((el) => ['img', 'script'].includes(el.localName)));
+        assert.match(serialize(figure), /&lt;img src=x onerror=alert\(1\)&gt; |<img src=x onerror=alert\(1\)> /);
     });
 
     it('falls back to the source for unsupported diagrams', () => {

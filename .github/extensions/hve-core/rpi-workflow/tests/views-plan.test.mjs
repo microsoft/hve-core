@@ -71,6 +71,32 @@ describe('the change map', () => {
         assert.match(foreign, /id="map-phase-none" value="none" checked=""/);
         assert.doesNotMatch(foreign, /P99 highlighted/);
     });
+
+    const TAGGED_BEFORE = ['flowchart LR', '    accTitle: Before: tiles come from the server', '    accDescr: The map fetches tiles.', '    subgraph app["`<code>src/map/</code>`"]', '        map["`**Map view**', '        changed · P01`"]', '        live["`**Live fetch**', '        removed · P02`"]', '    end', '    map --> live', '    class map changed', '    class live removed'].join('\n');
+    const TAGGED_AFTER = ['flowchart LR', '    accTitle: After: tiles come from a local store', '    accDescr: The map reads a local store.', '    subgraph app["`<code>src/map/</code>`"]', '        map["`**Map view**', '        changed · P01`"]', '        store["`**Tile store**', '        new · P01, P02`"]', '    end', '    map --> store', '    class store new', '    class map changed'].join('\n');
+
+    it('captions each diagram with its own title and highlights a phase in Before when the map has tags', () => {
+        const { session } = rootSession();
+        session.plan.diagram = { before: TAGGED_BEFORE, after: TAGGED_AFTER, phaseNodes: { P01: ['map', 'store'], P02: ['store', 'live'] }, tagged: true };
+        const markup = (diagramView, diagramPhase = null) => html(planView.renderView(makeContext(session, 'plan', { ...makeContext(session, 'plan').ui, diagramView, diagramPhase })));
+        const before = markup('before', 'P02');
+        assert.match(before, /<figcaption>Before: tiles come from the server, P02 highlighted<\/figcaption>/);
+        assert.match(before, /id="map-phase-P02" value="P02" checked=""/);
+        assert.match(before, /class="diagram-node is-removed is-highlight"/);
+        assert.match(textOf(before), /Thick border: changed\. Dotted border: removed\. Filled: the highlighted phase\./);
+        assert.doesNotMatch(before, /how the app saves today/);
+        const after = markup('after');
+        assert.match(after, /<figcaption>After: tiles come from a local store<\/figcaption>/);
+        assert.match(textOf(after), /Dashed border: new\. Thick border: changed\. Filled: the highlighted phase\./);
+    });
+
+    it('gives an older plan\'s Before a plain caption and no Highlight control', () => {
+        const { session } = rootSession();
+        assert.equal(session.plan.diagram.tagged, false);
+        const before = html(planView.renderView(makeContext(session, 'plan', { ...makeContext(session, 'plan').ui, diagramView: 'before' })));
+        assert.match(before, /<figcaption>Before<\/figcaption>/);
+        assert.doesNotMatch(before, /name="map-phase"/);
+    });
 });
 
 describe('updated marks', () => {

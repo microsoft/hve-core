@@ -173,7 +173,7 @@ describe('the change map with progress', () => {
         assert.match(out, /<h4 class="impl-phase-head" id="impl-phase-P02">(?:(?!<\/h4>).)*<span class="badge tone-accent[^"]*">(?:(?!<\/h4>).)*In progress/, 'the phase in progress is headed in the in-progress tone');
         assert.match(textOf(out), /\(done\)/);
         assert.match(textOf(out), /\(in progress\) \(highlighted\)/);
-        assert.match(textOf(out), /Done\. In progress\. Bold outline: the chosen phase\. Dashed border: added by the plan\./, 'the legend names what the map draws');
+        assert.match(textOf(out), /Done\. In progress\. Bold outline: the chosen phase\. Dashed border: new\./, 'the legend names what the map draws');
         assert.match(out, /<span class="legend-swatch is-chosen">/);
         const ui = initialUi('implement');
         ui.mapPhase = null;
