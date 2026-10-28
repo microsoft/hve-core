@@ -5383,7 +5383,7 @@ stimuli:
           reviewField('review-execution', /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review execution:\s*(\w+)/gim);
           reviewField('review-outcome', /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review outcome:\s*(\w+)/gim);
           const metric = (field, label, actual, percentage) => check(() => {
-            const pattern = new RegExp(String.raw`(?:^|\n)[^\S\n]*(?:[-+][^\S\n]+)?\|?[^\S\n]*(?:observed[^\S\n]+)?(?:${label})[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?(?:[:|]|\n)\s*([^\n|]*)`, 'gi');
+            const pattern = new RegExp(String.raw`(?:^|\n)[^\S\n]*(?:[-+][^\S\n]+)?\|?[^\S\n]*(?:observed[^\S\n]+)?(?:` + label + String.raw`)[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?(?:[:|]|\n)\s*([^\n|]*)`, 'gi');
             const measured = [];
             for (const match of text.matchAll(pattern)) {
               const headerUnit = (match[1] ?? '').trim().toLowerCase();
