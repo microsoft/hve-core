@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -42,6 +44,44 @@ function indexWithL100() {
 afterEach(() => mockFetch.mockReset());
 
 describe('DemoMaterialCatalog', () => {
+  it('compiles the documentation page as a React catalog with the site configuration', () => {
+    const result = spawnSync(process.execPath, ['--input-type=commonjs', '-e', `
+      const assert = require('node:assert/strict');
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const { DEFAULT_PARSE_FRONT_MATTER } = require('@docusaurus/utils');
+      const { loadSiteConfig } = require('@docusaurus/core/lib/server/config');
+      const { compileToJSX } = require('@docusaurus/mdx-loader/lib/utils');
+
+      (async () => {
+        const siteDir = process.cwd();
+        const { siteConfig } = await loadSiteConfig({ siteDir });
+        const filePath = path.resolve(siteDir, '../demo-material/README.md');
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const { frontMatter } = await DEFAULT_PARSE_FRONT_MATTER({ fileContent });
+        const compiled = await compileToJSX({
+          filePath,
+          fileContent,
+          frontMatter,
+          options: {
+            ...siteConfig.presets[0][1].docs,
+            siteDir,
+            staticDirs: siteConfig.staticDirectories.map(directory => path.resolve(siteDir, directory)),
+            markdownConfig: siteConfig.markdown,
+          },
+        });
+        assert.ok(compiled.content.includes('_jsx(DemoMaterialCatalog,'));
+        assert.ok(!compiled.content.includes('DemoMaterialCatalog'.toLowerCase()));
+        console.log('catalog compiled');
+      })().catch(error => { console.error(error); process.exitCode = 1; });
+    `], { cwd: path.resolve(__dirname, '../../../..'), encoding: 'utf8', timeout: 30_000 });
+
+    expect(result.error).toBeUndefined();
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('catalog compiled');
+  });
+
   it('renders links only for levels with a complete published file map', async () => {
     mockFetch.mockResolvedValue(response(indexWithL100()));
 
