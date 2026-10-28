@@ -6,6 +6,7 @@ import { CanvasError, createCanvas, joinSession } from '@github/copilot-sdk/exte
 import { ACTION_DEFINITIONS, createActionHandlers } from './lib/actions.mjs';
 import { createDelivery } from './lib/delivery.mjs';
 import { createEditorOpener, findEditor } from './lib/editor.mjs';
+import { createPickupTracker } from './lib/pickup.mjs';
 import { createInstanceRegistry } from './lib/lifecycle.mjs';
 import { ModelError, PHASE_LABELS } from './lib/model.mjs';
 import { SCENARIO_ID, STAGES } from './lib/scenario.mjs';
@@ -25,6 +26,7 @@ function log(message, level = 'info') {
 const makeError = (code, message) => new CanvasError(code, message);
 const store = createStore({ log: (message) => log(message, 'warning') });
 const sources = createSourceController({ store, log: (message) => log(message, 'warning') });
+const pickups = createPickupTracker({ store, log: (message) => log(message, 'warning') });
 
 /** The VS Code that hosts this extension, when it is one; found once at startup. */
 let editor = null;
@@ -66,6 +68,7 @@ const registry = createInstanceRegistry({
             listSessions: () => sources.sessions(record),
             showSample: () => sources.show(record, { task: 'sample' }, {}),
             deliver: createDelivery({ getSession: () => joined }),
+            pickups,
             log,
         });
     },
@@ -75,6 +78,7 @@ const handlers = createActionHandlers({
     getInstance: (instanceId) => registry.get(instanceId),
     store,
     makeError,
+    chatEvents: () => pickups.status(),
     async switchSource(instance, request, context) {
         try {
             const fromWorkspace = request.task !== undefined || request.state !== undefined;
@@ -161,3 +165,9 @@ const canvas = createCanvas({
 });
 
 joined = await joinSession({ canvases: [canvas] });
+// Tells the canvas when the agent picks up a message it sent, where the host passes these events on.
+if (typeof joined?.on === 'function') {
+    joined.on('user.message', (event) => {
+        pickups.observe(event).catch((error) => log(`Could not read a chat event: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
+    });
+}

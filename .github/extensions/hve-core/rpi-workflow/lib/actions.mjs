@@ -36,7 +36,7 @@ const WITHOUT_SESSION = new Set(['get_state', 'show_task', 'load_scenario', 'set
 export const ACTION_DEFINITIONS = Object.freeze([
     {
         name: 'get_state',
-        description: 'Summarize the RPI session shown in this canvas: the canvas handle and instance ID that its messages name, phase, decisions needing the user, agent decisions, pending and interpreted feedback for the shown task and for the other tasks in its session (otherTasks), the session tree and whether the canvas follows its running loop, progress, appearance, and what the page reported about its environment.',
+        description: 'Summarize the RPI session shown in this canvas: the canvas handle and instance ID that its messages name, phase, decisions needing the user, agent decisions, pending and interpreted feedback for the shown task and for the other tasks in its session (otherTasks), the session tree and whether the canvas follows its running loop, progress, appearance, what the page reported about its environment, and chatEvents: how many chat user-message events the canvas has seen, which is how it learns that you picked up a message it sent.',
         inputSchema: { type: 'object', properties: { detail: { type: 'string', enum: ['summary', 'full'], description: 'summary (default) or full session data' } }, additionalProperties: false },
     },
     {
@@ -362,7 +362,7 @@ export function createActionHandlers(deps) {
         get_state: (ctx) => guard(async () => {
             const instance = instanceOf(ctx);
             const input = inputOf(ctx);
-            const common = { url: instance.server.address ?? null, editor: instance.server.editor ?? null, canvas: { handle: instance.handle ?? null, instanceId: instance.instanceId ?? ctx.instanceId }, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0 };
+            const common = { url: instance.server.address ?? null, editor: instance.server.editor ?? null, canvas: { handle: instance.handle ?? null, instanceId: instance.instanceId ?? ctx.instanceId }, preferences: await store.loadPreferences(), clientInfo: instance.server.clientInfo, pageConnected: instance.server.streamClients > 0, chatEvents: deps.chatEvents?.() ?? null };
             if (instance.source?.kind === 'none') {
                 return { ...common, connected: false, source: sourceSummary(instance, null), nextStep: NOT_CONNECTED_NEXT_STEP };
             }

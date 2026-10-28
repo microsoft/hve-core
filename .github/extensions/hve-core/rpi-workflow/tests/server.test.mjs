@@ -22,7 +22,7 @@ after(async () => {
     await fs.rm(tmp, { recursive: true, force: true });
 });
 
-async function setup(name, { stage = 'research', deliver } = {}) {
+async function setup(name, { stage = 'research', deliver, pickups } = {}) {
     const store = createStore({ root: path.join(tmp, name), pollMs: 20 });
     const session = await store.create(buildScenario(stage));
     const sent = [];
@@ -33,6 +33,7 @@ async function setup(name, { stage = 'research', deliver } = {}) {
         deliver: deliver ?? (async (request) => {
             sent.push(request);
         }),
+        pickups,
     });
     const url = new URL(await server.start());
     return { store, server, url, sent, session };
@@ -195,6 +196,17 @@ describe('page routes', () => {
         const item = (await store.load(session.id)).feedback.find((entry) => entry.id === a.json.item.id);
         assert.equal(item.messageId, 'msg-7');
         assert.equal(item.state, 'sent');
+        await server.stop();
+        store.close();
+    });
+
+    it('tells the pickup tracker which items each sent message carried', async () => {
+        const remembered = [];
+        const { server, url, store, session } = await setup('delivery-pickups', { deliver: async () => ({ messageId: 'msg-8' }), pickups: { remember: async (messageId, groups) => remembered.push({ messageId, groups }) } });
+        const a = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'First', target: { id: 'F1' } } });
+        const preview = await request(url, { method: 'POST', pathname: '/api/delivery/preview', body: { ids: [a.json.item.id] } });
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/delivery', body: { ids: [a.json.item.id], digest: preview.json.digest } })).status, 200);
+        assert.deepEqual(remembered, [{ messageId: 'msg-8', groups: [{ id: session.id, ids: [a.json.item.id] }] }]);
         await server.stop();
         store.close();
     });

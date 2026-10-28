@@ -630,6 +630,9 @@ export function takeFeedback(session, now, options = {}) {
                 item.sentAt = now;
                 item.updatedAt = now;
                 item.delivery = 'queue';
+                // Collecting an item is how the agent picks it up.
+                item.pickedUpAt = now;
+                item.pickedUpHow = 'collected';
                 pushHistory(item, 'sent', 'agent', now);
                 taken.push(item);
             }
@@ -664,6 +667,37 @@ export function markDelivered(session, ids, mode, now, extra = {}) {
                 if (Number.isInteger(extra.tasks) && extra.tasks > 1) item.deliveredWith = extra.tasks;
                 if (typeof extra.messageId === 'string' && extra.messageId) item.messageId = extra.messageId;
                 pushHistory(item, 'sent', 'user', now);
+                done.push(item.id);
+            }
+        }
+        return done;
+    });
+}
+
+/** How the agent picked up a sent item: a fresh turn, a step of its current turn, after its turn, or by collecting it. */
+export const PICKUP_KINDS = Object.freeze(['idle', 'steering', 'queued', 'collected']);
+
+/**
+ * Marks sent items as picked up: the chat handed their message to the agent at `pickup.at`, and
+ * `pickup.how` says how. Only items still marked sent change; one read back already stays as it is.
+ *
+ * @param {any} session
+ * @param {string[]} ids
+ * @param {{ at: string, how?: string | null }} pickup
+ * @param {string} now
+ */
+export function markPickedUp(session, ids, pickup, now) {
+    const wanted = new Set(ids);
+    const open = (item) => wanted.has(item.id) && item.state === 'sent' && !item.pickedUpAt;
+    if (!session.feedback.some(open) || Number.isNaN(Date.parse(pickup?.at ?? ''))) {
+        return { session, result: [] };
+    }
+    return mutate(session, now, (draft) => {
+        const done = [];
+        for (const item of draft.feedback) {
+            if (open(item)) {
+                item.pickedUpAt = pickup.at;
+                if (PICKUP_KINDS.includes(pickup.how)) item.pickedUpHow = pickup.how;
                 done.push(item.id);
             }
         }

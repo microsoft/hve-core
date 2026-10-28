@@ -593,6 +593,9 @@ export function createCanvasServer(deps) {
                     unrecorded.push(group.taskId);
                 }
             }
+            // The chat reports when the agent picks the message up; remember which items it carried.
+            await deps.pickups?.remember(messageId, groups.filter((group) => !unrecorded.includes(group.taskId)).map((group) => ({ id: group.id, ids: group.ids })))
+                .catch((error) => log(`Could not watch for the agent picking up the message: ${error instanceof Error ? error.message : 'error'}`, 'warning'));
             if (unrecorded.length) {
                 return { revision, delivered, warning: `The message was sent, but the canvas could not record it for ${unrecorded.join(', ')} yet. Those items stay marked as sending, so they will not be sent again.` };
             }
