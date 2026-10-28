@@ -97,6 +97,17 @@ export function shownMain() {
     return [...document.querySelectorAll('main')].find((element) => !element.closest('[hidden]')) ?? null;
 }
 
+// Times read in the reader's language and time zone, through the browser's own formatters.
+const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+const SHORT_DATE = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+const FULL_TIME = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+
+/** The full date and time in the reader's language and time zone, or null for a missing time. */
+export function fullTime(iso) {
+    const then = Date.parse(iso ?? '');
+    return Number.isNaN(then) ? null : FULL_TIME.format(then);
+}
+
 /**
  * Relative time from the data's own clock, never a timer.
  *
@@ -111,20 +122,21 @@ export function relTime(iso, now) {
     if (Number.isNaN(then)) {
         return 'Not recorded';
     }
-    const minutes = Math.round((now - then) / 60000);
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes} min ago`;
-    const hours = Math.round(minutes / 60);
-    if (hours < 24) return `${hours} h ago`;
-    return new Date(then).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const seconds = Math.round((then - now) / 1000);
+    const size = Math.abs(seconds);
+    if (size < 45) return RELATIVE.format(0, 'second');
+    if (size < 45 * 60) return RELATIVE.format(Math.round(seconds / 60), 'minute');
+    if (size < 22 * 3600) return RELATIVE.format(Math.round(seconds / 3600), 'hour');
+    if (size < 6 * 86400) return RELATIVE.format(Math.round(seconds / 86400), 'day');
+    return SHORT_DATE.format(then);
 }
 
-/** Relative time with the full ISO time as a title, or null when no valid time was recorded. */
+/** Relative time with the full local date and time as a title, or null when no valid time was recorded. */
 export function timeEl(iso, now) {
     if (!iso || Number.isNaN(Date.parse(iso))) {
         return null;
     }
-    return h('time', { datetime: iso, title: iso, class: 'time', text: relTime(iso, now) });
+    return h('time', { datetime: iso, title: fullTime(iso), class: 'time', text: relTime(iso, now) });
 }
 
 /**

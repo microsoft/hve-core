@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { badge, button, clear, decisionAlias, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
+import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
 import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionPending, sessionTree, steerPanel } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
@@ -1370,7 +1370,7 @@ function renderContextBar() {
                 h('code', { class: 'context-path', title: record.artifact, text: record.artifact }),
                 button('Copy artifact path', { iconName: 'copy', hideLabel: true, onClick: () => act.copy(record.artifact) }),
                 editorButton(context(), record.artifact, null, 'open-artifact')) : null,
-            record.updatedAt ? h('span', { class: 'meta', title: session.source?.kind === 'rpi' ? `The file last changed ${new Date(record.updatedAt).toLocaleString()}. The canvas reads it again whenever it changes.` : undefined }, 'Updated ', relTime(record.updatedAt, context().now)) : null),
+            record.updatedAt ? h('span', { class: 'meta', title: session.source?.kind === 'rpi' ? `The file last changed ${fullTime(record.updatedAt)}. The canvas reads it again whenever it changes.` : fullTime(record.updatedAt) }, 'Updated ', relTime(record.updatedAt, context().now)) : null),
         side ? h('div', { class: 'context-side' }, side) : null,
     ].filter(Boolean));
 }
