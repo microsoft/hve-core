@@ -108,7 +108,7 @@ Persist one JSON object with these stable fields:
 * `child_tasks`: an array, in creation order, of objects with string-or-null `task_id`, `task_slug`, and `state_path` for each child; empty until a child exists
 * `mode`: `manual`, `automatic`, or `null`; `active_phase`: `Research`, `Plan`, `Implement`, `Review`, `Follow-up`, or `null`; `status`: `active`, `blocked`, `completed`, or `null`
 * `session_status`: `running`, `stopped`, or `null`; keep it distinct from the task `status`, so a completed automatic task can have a running session
-* `artifact_paths`: an object keyed by `research`, `plan`, `critique`, `changes`, and `review`, each containing a workspace-relative string path or `null`
+* `artifact_paths`: an object keyed by `research`, `plan`, `critique`, `changes`, and `review`, each holding the workspace-relative path of the document of that kind the current work uses, or `null` while the current work has none
 * `documents`: an object with the same keys, each listing every workspace-relative document of that kind in creation order, newest last, or an empty array before the first exists
 * `confirmed_decisions`: `null` when unavailable; otherwise an array of objects with string-or-null `decision`, `status`, and `evidence`
 * `blockers`: `null` when unavailable; otherwise an array of objects with string-or-null `id`, `summary`, and `resolution`
@@ -117,7 +117,9 @@ Persist one JSON object with these stable fields:
 
 Use empty arrays only for known-empty collections. Use `null` for unavailable values, report missing recovery-critical values as blockers, and never substitute placeholder identity or paths.
 
-When a phase skill returns a new document path, append it to that kind's `documents` list and set `artifact_paths` to it, so `artifact_paths` always names the newest document of each kind.
+When a phase skill returns a new document path, append it to that kind's `documents` list and set `artifact_paths` to it.
+
+When a later request in the session needs its own research or plan, name its work: a short lower-kebab-case name that describes the work and differs from the session's other document names, such as `task-board-polish`. Pass the name to the phase skills, which use it in place of `{{task_slug}}` for that work's research, plan, critique, changes, and review. Set `artifact_paths` to `null` for each kind the work has not produced yet, and keep a path only for an earlier document the work reuses, such as research its plan builds on. Earlier documents stay in `documents`, so the state, together with the documents' references to each other, ties the session's documents together.
 
 This illustrative state, at `.copilot-tracking/rpi-sessions/2026-10-20/report-export/report-export-csv-state.json`, belongs to a child loop in Implement; the field definitions govern.
 
