@@ -2,7 +2,7 @@
 title: Shared Library
 description: Shared utility scripts and modules used across hve-core automation
 author: HVE Core Team
-ms.date: 2026-08-06
+ms.date: 2026-10-24
 ms.topic: reference
 keywords:
   - powershell
@@ -61,6 +61,8 @@ the repository.
 |----------------------------------|--------------------------------------------------------|
 | `ConvertTo-GitHubActionsEscaped` | Escapes strings for GitHub Actions workflow commands   |
 | `ConvertTo-AzureDevOpsEscaped`   | Escapes strings for Azure DevOps logging commands      |
+| `ConvertTo-MarkdownEscaped`      | Escapes strings so they render as literal Markdown     |
+| `Format-StaleDependencyLine`     | Formats a stale-dependency report entry as a list item |
 | `Get-CIPlatform`                 | Returns the current CI platform (GitHub, AzureDevOps)  |
 | `Get-StandardTimestamp`          | Returns the current UTC time in ISO 8601 format        |
 | `Get-StandardTimestampPattern`   | Returns the regex matching standard timestamp output   |

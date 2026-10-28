@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-23
+ms.date: 2026-10-26
 ms.topic: reference
 keywords:
   - security
@@ -2361,13 +2361,13 @@ When a new skill meets a trigger, or a change alters a triggered surface or a ci
 
 ### Validation Workflow Coverage
 
-| Workflow                        | Trigger            | Security Checks                                                |
-|---------------------------------|--------------------|----------------------------------------------------------------|
-| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks                           |
-| release-stable.yml              | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
-| codeql-analysis.yml             | Push, PR, weekly   | Static analysis                                                |
-| dependency-review.yml           | PR to main/develop | Vulnerability scanning                                         |
-| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL, advisory workflow/Poutine scans    |
+| Workflow                        | Trigger                   | Security Checks                                                                           |
+|---------------------------------|---------------------------|-------------------------------------------------------------------------------------------|
+| pr-validation.yml               | PR to main/develop        | Pinning, npm audit, CodeQL, gitleaks                                                      |
+| release-stable.yml              | Push to main              | Pinning, gitleaks, SBOM attestation, dependency diff (release)                            |
+| codeql-analysis.yml             | Push, PR, weekly          | Static analysis                                                                           |
+| dependency-review.yml           | Push & PR to main/develop | PR vulnerability scanning; push/non-fork PR dependency submission; SBOM on main push only |
+| weekly-security-maintenance.yml | Sundays 2 AM UTC          | Pinning, staleness, CodeQL, advisory workflow/Poutine scans                               |
 
 Weekly Poutine coverage reuses the PR scanner with findings retained in the `poutine`
 SARIF category and a 90-day artifact. Its success status is execution metadata, not proof

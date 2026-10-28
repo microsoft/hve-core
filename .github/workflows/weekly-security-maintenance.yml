@@ -76,6 +76,11 @@ jobs:
       contents: read
       issues: write # create or update the weekly maintenance issue
     steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       - name: Generate summary
         shell: pwsh
         env:
@@ -94,6 +99,8 @@ jobs:
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
         run: |
+          Import-Module ./scripts/lib/Modules/CIHelpers.psm1 -Force
+
           $pinningScore = $env:PINNING_SCORE
           $gateError = $env:GATE_ERROR -eq 'true'
           # Registered exceptions are tracked findings, not new risks. Fall back to the raw
@@ -182,7 +189,7 @@ jobs:
             if ($stalenessReport -and $stalenessReport.Dependencies) {
               foreach ($staleDep in $stalenessReport.Dependencies) {
                 if ($staleDep.DaysOld -gt $staleThreshold) {
-                  $staleDetails += "- **$($staleDep.File)**: $($staleDep.Action)@$($staleDep.CurrentVersion) ($($staleDep.DaysOld) days old, latest: $($staleDep.LatestVersion))`n"
+                  $staleDetails += (Format-StaleDependencyLine -Dependency $staleDep -Style Summary) + "`n"
                 }
               }
             }
@@ -297,6 +304,8 @@ jobs:
           SERVER_URL: ${{ github.server_url }}
           RUN_ID: ${{ github.run_id }}
         run: |
+          Import-Module ./scripts/lib/Modules/CIHelpers.psm1 -Force
+
           $staleCount = [int]$env:STALE_COUNT
           $thresholdDays = $env:THRESHOLD_DAYS
           $automationMarker = '<!-- automation:sha-staleness -->'
@@ -318,7 +327,7 @@ jobs:
             $report = Get-Content $resultsPath | ConvertFrom-Json
             foreach ($dep in $report.Dependencies) {
               if ($dep.DaysOld -gt [int]$thresholdDays) {
-                $staleDetails += "- **$($dep.File):** ``$($dep.Action)@$($dep.CurrentVersion)`` — $($dep.DaysOld) days old (latest: ``$($dep.LatestVersion)``)`n"
+                $staleDetails += (Format-StaleDependencyLine -Dependency $dep -Style Issue) + "`n"
               }
             }
           }
@@ -340,7 +349,7 @@ jobs:
 
           ### Action Required
 
-          - [ ] Run ``npm run sha-staleness`` to review current state
+          - [ ] Run ``pwsh scripts/security/Test-SHAStaleness.ps1`` to review current state
           - [ ] Update outdated SHAs: ``scripts/security/Update-ActionSHAPinning.ps1 -Path .github/workflows -UpdateStale``
           - [ ] Close this issue manually after fixes are merged
 

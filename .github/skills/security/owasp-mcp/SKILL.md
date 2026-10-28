@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://owasp.org/www-project-mcp-top-10/"
 ---
 
-# OWASP MCP Top 10 — Skill Entry
+# OWASP® MCP Top 10 — Skill Entry
 
 Use plain, direct language for user-facing text; preserve necessary technical terms
 and exact output formats. Before composing any user-facing reply or generated prose,
@@ -44,3 +44,14 @@ that an agent can query to identify, assess, and remediate MCP security risks.
 - `references/` — the MCP Top 10 normative documents.
   - `00-vulnerability-index.md` — index of all vulnerability identifiers, severities, and cross-references.
   - `01` through `10` — one document per vulnerability aligned with OWASP MCP numbering.
+
+## Third-Party Attribution
+
+Copyright © OWASP Foundation.
+OWASP® MCP Top 10 content is derived from works by the
+OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
+Source: <https://owasp.org/www-project-mcp-top-10/>
+Modifications: Vulnerability descriptions restructured into agent-consumable reference
+documents with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
