@@ -8579,3 +8579,271 @@ stimuli:
         name: skill-engagement-report-council-critique-ignore-st-7e8e15df
         config:
           pattern: '(?i)(do not write|without writing|not write).{0,120}(critique|artifact)'
+
+  - name: skill-privacy-by-design-unknown-only-seven-principles
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU/Australian subscriber profile service. The boundary is its account API and personal-data store; the sole stored category is subscriber profile data. For each of the seven principles, one applicable checklist item has no supporting or contradictory evidence and no deficiency has been established. The retention schedule, backup purge and applicable common jurisdictional obligations also lack evidence. Provide the full finding-schema summary and seven principle records with counts, evidence requests, severity, citations and any appropriate handoff. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 667559236d2007359c5355807f45a334e8acf3e3af670ed293cb5f6004f6818a
+    rubric:
+      - >
+        The response has exactly seven unique principle rollups and seven
+        unknown-only finding records, each with one applicable unknown, zero
+        MET and NOT MET, incomplete evidence, N/A severity, an evidence request
+        and no deficiency remediation. Finding and severity counts reconcile
+        without counting rollups twice. Stored-data retention is incomplete
+        with one unknown category, zero proven gaps, and an unknown rather than
+        false or null common baseline. Overall is INCOMPLETE; no backlog fix is
+        invented for absent evidence. A copied scenario or generic explanation
+        without assessed results does not satisfy this rubric.
+    graders:
+      - type: prompt
+        name: privacy-unknown-only-reconciles-results
+        config:
+          threshold: 0.85
+
+  - name: skill-privacy-by-design-mixed-deficiency-and-unknowns
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU account service. The boundary is its account API and personal-data store. Use this validated effective-checklist ledger: PbD-02 has two satisfied checks, one violated default-sharing check and two unresolved checks; PbD-03 has one satisfied check, three violated architecture checks and one unresolved check; each other principle has exactly one satisfied check. There are no suppressions. The single stored account-profile category's retention and backups are satisfactory. The applicable GDPR baseline includes the violated sharing obligation; other obligations are satisfactory. No critical anti-pattern is alleged. Return a finding-schema summary and seven principle rollups, reconcile counts, and separate remediation from evidence requests. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: f8fdb997f0eb0920b01c2b44a3aca79cce324656850f90355bf27ccc111ce85b
+    rubric:
+      - >
+        The response reports PbD-02 PARTIAL with 2 MET, 1 NOT MET and 2 unknown
+        of 5; PbD-03 FAIL with 1 MET, 3 NOT MET and 1 unknown of 5. Both are
+        incomplete but retain actionable remediation for the proven violations
+        and separate requests for unknown checks. The other five principles
+        retain PASS with N/A severity, exactly seven rollups appear, and record
+        counts reconcile independently. A known FAIL takes overall precedence
+        as NON_COMPLIANT despite incomplete evidence; neither missing evidence
+        nor the known violation is discarded. Echoing the input is insufficient.
+    graders:
+      - type: prompt
+        name: privacy-known-failure-precedes-incompleteness
+        config:
+          threshold: 0.85
+
+  - name: skill-privacy-by-design-sensitive-all-pass-preserved
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU service that processes sensitive profile data. Its boundary is the application and its single personal-data store, with one stored profile category. Use the supplied validated effective-checklist ledger: exactly one satisfied applicable check for each of the seven principles, no suppressions, no unknowns and no anti-patterns. Purpose-linked retention, backup purge and legal-hold controls are verified, and the applicable GDPR baseline has no gaps. Return the finding-schema summary, principle outcomes, severity distribution and backlog decision. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: e05bd4b67663e57ec9a9e5f1a0c08d63196a305c9f0c4dc9f48dc706a515645d
+    rubric:
+      - >
+        The assessed report preserves seven PASS principles and COMPLIANT
+        overall with complete evidence, a MET jurisdiction baseline and one
+        compliant retention category. All seven principle findings have N/A
+        severity and no remediation; no P1 or other backlog item is created
+        just because data is sensitive. Counts reflect findings rather than
+        double-counting the seven rollups. A bare restatement of the scenario
+        without a report does not satisfy this rubric.
+    graders:
+      - type: prompt
+        name: privacy-sensitive-pass-does-not-create-defect
+        config:
+          threshold: 0.85
+
+  - name: skill-privacy-by-design-telco-critical-priority-order
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU telecommunications service covering subscriber settings, metadata processing and storage. The effective configuration selects telco, justifiably overrides PbD-04 priority to CRITICAL, and adds a HIGH-severity PbD-03 purpose-binding check. Use this validated effective-checklist ledger: PbD-02 and PbD-05 each have one satisfied and three violated checks with direct subscriber impact; PbD-04 has three satisfied and one violated check with limited impact; PbD-03 has the violated custom check and three satisfied checks; the other principles each have one satisfied check. No suppressions, unknowns or other anti-patterns exist. The single subscriber-metadata retention category is satisfactory; the GDPR baseline includes the proven control violations. Provide outcomes, counts, effective severities and an ordered remediation backlog. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 06ee0f5262893e51420da0876ea6e12d69e1bc62f7dc3f2357b8a4e70adebe09
+    rubric:
+      - >
+        The report applies telco checks and effective priority rather than
+        merely naming the profile. PbD-02 and PbD-05 FAIL and retain CRITICAL
+        severity in findings and distribution; the failed PbD-03 custom check
+        retains at least HIGH, while the PbD-04 override does not automatically
+        turn its PARTIAL limited-impact result into CRITICAL. Both CRITICAL and
+        HIGH map to P1, with CRITICAL before HIGH; PbD-04 is remediated at its
+        justified lower tier. No P0 appears. Counts and seven rollups reconcile,
+        and overall remains NON_COMPLIANT. Naming severities without assigning
+        them to the evidenced checks is insufficient.
+    graders:
+      - type: prompt
+        name: privacy-telco-priorities-preserve-critical
+        config:
+          threshold: 0.85
+
+  - name: skill-privacy-by-design-esim-promise-versus-recovery
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU telecommunications eSIM service covering its notice, deactivation pipeline and primary and backup stores. The current notice promises profile destruction within 30 days of deactivation. A dated restoration test at day 120 recovered the sole stored category, deactivated eSIM profiles, from backup; no hold or disclosed exception covers it. Use a complete validated effective checklist: PbD-05 has seven satisfied controls plus the disposal check to assess; PbD-06 has seven satisfied controls, including notice accessibility, plain language and the contact route, plus the notice-accuracy check to assess; the other five principles each have one satisfied check. No unknowns, suppressions or critical anti-patterns exist. The GDPR baseline includes accurate disclosure and the promised disposal obligation. Reconcile the conflicting evidence into finding-schema outputs, retention and transparency results, remediation and counts without losing unrelated credit. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 634c0ba33b44f32e697e333d815156938a9ec7a6420b63153ff59dd5a28738aa
+    rubric:
+      - >
+        The response cites both dated operational and notice evidence, marks
+        the contradicted disposal and notice-accuracy checks NOT MET under
+        PbD-05 and PbD-06, and does not award either an unqualified PASS.
+        Independently verified accessibility, plain language and contact
+        controls remain MET. The known retention category and proven backup
+        disposal gap are accounted for; actionable, cross-referenced fixes
+        address the actual discrepancy without duplicate remediation for the
+        same cause. The other five principles retain PASS. Reject an answer
+        that treats recoverability as merely unknown or nullifies all notice
+        credit; repeating the question is not an assessment.
+    graders:
+      - type: prompt
+        name: privacy-esim-contradiction-preserves-unaffected-credit
+        config:
+          threshold: 0.85
+
+  - name: skill-privacy-by-design-healthcare-hold-and-backups
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only healthcare assessment of a synthetic EU clinic's patient portal, imaging export and clinical and research stores. GDPR applicability is established; healthcare profile checks are engineering assessment criteria, not evidence that US laws apply. A minimum-necessary disclosure test passes; an imaging export test confirms patient metadata remains in DICOM output; break-the-glass audit evidence is unavailable. A signed legal hold specifies only clinical records, has a review date and is currently enforced; research records are outside its scope. The clinical retention period is documented, but backup purge verification and research retention period are unavailable. Other principle evidence is not provided. Explain effective healthcare checks, seven-principle outcomes, established gaps versus requests, retention-category accounting, hold scope and any supported citation fields. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: b9d9942bf574fb0b1e1353f5c4c8944757d1b8225080f78a9aa2584551f94cc8
+    rubric:
+      - >
+        The healthcare profile's satisfied minimum-necessary check stays MET;
+        the confirmed DICOM metadata exposure is a PbD-05 deficiency with
+        actionable remediation, while the break-the-glass investigation under
+        PbD-03 is an evidence gap, not an invented failure. The scoped active
+        hold exempts only clinical records and neither proves backup disposal
+        nor excuses the unrelated research category. Two stored categories are
+        assessed, unknown retention evidence is not a proven gap, and known
+        category citations are permitted without inventing periods or legal
+        obligations. Seven unique rollups and an incomplete overall assessment
+        preserve known deficiencies; the response must assess, not just echo.
+    graders:
+      - type: prompt
+        name: privacy-healthcare-known-versus-unknown-retention
+        config:
+          threshold: 0.85
+
+  - name: skill-privacy-by-design-financial-profile-and-unknown-kyc
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU financial service covering its customer portal, payment boundary and KYC archive. GDPR applicability and the financial profile are established. Tests verify CDE isolation, tokenization outside payment processing and that CVV is never stored. A service test shows customers declining optional profiling lose ordinary account features. KYC documents are stored but neither their justified retention period nor the archive backup purge is evidenced. Other principle evidence and evidence that the applicable GDPR baseline obligations are met remain unavailable; do not infer statutory retention periods. Provide seven-principle rollups, profile-specific results, remediation versus evidence requests, retention citations and overall verdict. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 4d09d0dab5db9f04cfa7e6b3d33bd6edc148437f773d4202cac1b9497a580a6e
+    rubric:
+      - >
+        The financial profile's verified CDE isolation, tokenization and
+        no-CVV controls receive MET credit without a sensitivity-only defect.
+        Service degradation produces an evidenced PbD-04 deficiency and
+        actionable remediation. KYC and backup periods remain unknown, with
+        evidence requests, one known retention category, no fabricated
+        retention gap or statutory minimum, and an unresolved jurisdiction
+        baseline where satisfaction is unproven despite known applicability. Seven rollups reflect
+        incomplete evidence; absent a proven FAIL overall is INCOMPLETE,
+        whereas a justified FAIL would take precedence. No invented PASS for
+        unevaluated principles; prompt restatement does not meet the rubric.
+    graders:
+      - type: prompt
+        name: privacy-financial-evidence-does-not-imply-retention-law
+        config:
+          threshold: 0.85
+
+  - name: skill-privacy-by-design-active-suppression-zero-guard
+    prompt: |
+      Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU financial account service. Its boundary is its account portal and outsourced payments gateway: no payment-card processing or cardholder data enters the assessed system. The financial profile would otherwise activate CDE isolation; configuration suppresses that exact check with this documented inapplicability reason. A second suppression names a DICOM check inactive in this profile. Report the actual CDE suppression record, unmatched DICOM effect and seven principle outcomes; other principle and retention evidence is unavailable. Separately, a validated aggregate-only boundary fixture supplies PbD-03 with zero applicable items and eleven justified exclusions, no custom checks and no deficiency. For that separate fixture return only applicable/suppressed counts, verdict, completeness, severity and remediation eligibility; individual exclusion identities/reasons are not supplied, so do not generate a full finding record or infer the fixture from the gateway. Do not fetch external facts or change files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/privacy-by-design
+      files:
+        - src: ../../.github/skills/project-planning/privacy-by-design
+          dest: .github/skills/project-planning/privacy-by-design
+    tags:
+      category: behavior-conformance
+      kind: skill
+      skill: privacy-by-design
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: a286f10534992cca197f1004714a5716000988eda8447cdfe2c11337b3e8a063
+    rubric:
+      - >
+        The answer first recognizes CDE isolation as an active financial
+        profile check, then excludes it only on the documented no-card-data
+        applicability evidence. It separately records the actual suppressed
+        check and reason; the unmatched DICOM suppression excludes nothing and
+        changes no denominator. In the separate aggregate-only boundary fixture,
+        PbD-03 has zero applicable items and eleven separately counted
+        suppressions, INSUFFICIENT_EVIDENCE, incomplete
+        evidence and N/A severity, not a vacuous PASS or deficiency remediation.
+        The first assessment's unknowns remain unknown across seven rollups;
+        overall INCOMPLETE. The second fixture does not invent exclusion
+        records from the supplied aggregate counts.
+        Counts reconcile without treating suppressed items as MET or unknown.
+        Merely restating the suppression configuration is insufficient.
+    graders:
+      - type: prompt
+        name: privacy-suppression-excludes-active-check-without-pass
+        config:
+          threshold: 0.85
