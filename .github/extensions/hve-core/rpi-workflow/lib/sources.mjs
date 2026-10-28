@@ -236,7 +236,7 @@ export function createSourceController(deps) {
         // A canvas that shows no session keeps its last place, so a session that returns can still reopen.
         if (source?.kind === 'none') return;
         const shown = source?.kind === 'rpi' ? { kind: 'rpi', state: source.statePath, paused: source.follow?.paused === true } : { kind: 'sample' };
-        store.rememberInstance(record.instanceId, shown, { hostSessionId: record.hostSessionId }).catch((error) => log(`Could not remember what canvas ${record.instanceId} shows: ${error instanceof Error ? error.message : 'error'}`));
+        record.remembering = store.rememberInstance(record.instanceId, shown, { hostSessionId: record.hostSessionId }).catch((error) => log(`Could not remember what canvas ${record.instanceId} shows: ${error instanceof Error ? error.message : 'error'}`));
     }
 
     /** The tree of the task an instance shows. */
@@ -314,9 +314,10 @@ export function createSourceController(deps) {
             record.source?.follower?.stop();
         },
 
-        /** Resolves once a pending automatic move finishes; for tests and callers that need a settled source. */
-        settled(record) {
-            return record.moving ?? Promise.resolve();
+        /** Resolves once a pending automatic move and the memory write it causes finish; for tests and callers that need a settled source. */
+        async settled(record) {
+            await record.moving;
+            await record.remembering;
         },
 
         /**

@@ -66,6 +66,8 @@ const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
 const USER_TRANSITIONS = Object.freeze({ draft: ['queued', 'dismissed'], queued: ['dismissed'], interpreted: ['corrected'], applied: ['corrected'] });
 const MARK_ATTEMPTS = 3;
+/** The pause before the first retry of recording a send; each later retry waits one step longer. */
+const MARK_RETRY_MS = 50;
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 
 const STATUS_FOR = Object.freeze({
@@ -189,10 +191,12 @@ export function clientInfoFrom(body) {
  *   pauseFollowing?: () => Promise<{ sessionId: string }>,
  *   listSessions?: () => Promise<{ sessions: any[], skipped: string[] }>,
  *   showSample?: () => Promise<{ sessionId: string }>,
+ *   markRetryMs?: number,
  * }} deps
  */
 export function createCanvasServer(deps) {
     const { store, getSessionId } = deps;
+    const markRetryMs = Number.isFinite(deps.markRetryMs) ? deps.markRetryMs : MARK_RETRY_MS;
     const getCanvas = deps.getCanvas ?? (() => null);
     // Every API call must carry this key, which only the page the host opens knows, so other
     // local processes cannot read, change, or send through this canvas.
@@ -577,7 +581,7 @@ export function createCanvasServer(deps) {
                         marked = await store.update(group.id, (current) => markDelivered(current, group.ids, 'send', now(), { tasks: groups.length, messageId }), { by: 'user' });
                     } catch (error) {
                         log(`Sent, but the canvas could not record it for ${group.taskId} (attempt ${attempt + 1}): ${error instanceof Error ? error.message : 'error'}`, 'warning');
-                        await new Promise((resolve) => setTimeout(resolve, 50 * (attempt + 1)));
+                        await new Promise((resolve) => setTimeout(resolve, markRetryMs * (attempt + 1)));
                     }
                 }
                 if (marked) {
