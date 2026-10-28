@@ -98,8 +98,8 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'take_feedback',
-        description: 'Collect every item the user has not sent yet, in every task of the shown session (answers, overrides, comments, context, research requests, suggested edits, checklist reviews, corrections), and mark them sent. Each item names its taskId; feedback IDs repeat across tasks. Use it when the user asks you to check the canvas; Review and send delivers the same items as a chat message. Items being sent right now are skipped. A suggested edit includes section.markdown (the full suggested text) and section.diff (its line changes against section.revision); a checklist review includes its phase. Make each change in that task\'s files, or with canvas actions on the sample, then read it back with record_interpretation. Items for a completed task are follow-up work for the session.',
-        inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+        description: 'Collect what the user has for you in every task of the shown session (answers, overrides, comments, context, research requests, suggested edits, checklist reviews, corrections), and mark it sent. At your checkpoints, which are when you change phase, after each task, before you ask the user a question, and before you end your turn, pass checkpoint true: you get only the items the user queued for you with Review and send. When the user asks you to check the canvas, or answers a question with "Answered in the canvas", omit checkpoint: you get every item they have not sent. Both forms also return items already sent to you that you have not read back, marked alreadySent and left unchanged; those reached you as a chat message too, so handle each once, by its ID. Each item names its taskId; feedback IDs repeat across tasks. Items being sent right now are skipped. A suggested edit includes section.markdown (the full suggested text) and section.diff (its line changes against section.revision); a checklist review includes its phase. Make each change in that task\'s files, or with canvas actions on the sample, then read it back with record_interpretation. Items for a completed task are follow-up work for the session.',
+        inputSchema: { type: 'object', properties: { checkpoint: { type: 'boolean', description: 'True at your checkpoints, to take only the items the user queued for you. Omit when the user asks you to check the canvas.' } }, additionalProperties: false },
     },
     {
         name: 'record_interpretation',
@@ -207,7 +207,7 @@ export const ACTION_GROUPS = Object.freeze({
  */
 export function summarize(session) {
     const view = deriveView(session);
-    const byState = (state) => session.feedback.filter((item) => item.state === state).map((item) => ({ id: item.id, kind: item.kind, target: item.target?.id ?? null }));
+    const byState = (state) => session.feedback.filter((item) => item.state === state).map((item) => ({ id: item.id, kind: item.kind, target: item.target?.id ?? null, ...(item.state === 'queued' && item.queuedForAgentAt ? { queuedForAgent: true } : {}) }));
     return {
         scenario: session.scenario,
         revision: session.revision,
@@ -283,7 +283,7 @@ export function createActionHandlers(deps) {
         return loadSessionDocs(store, shown, instance.source);
     }
 
-    const byState = (session, state) => session.feedback.filter((item) => item.state === state).map((item) => ({ id: item.id, kind: item.kind, target: item.target?.id ?? null }));
+    const byState = (session, state) => session.feedback.filter((item) => item.state === state).map((item) => ({ id: item.id, kind: item.kind, target: item.target?.id ?? null, ...(item.state === 'queued' && item.queuedForAgentAt ? { queuedForAgent: true } : {}) }));
 
     /** Feedback waiting in the session's other tasks, for get_state. */
     async function otherTasksOf(instance) {
@@ -424,24 +424,39 @@ export function createActionHandlers(deps) {
 
         take_feedback: (ctx) => guard(async () => {
             const instance = instanceOf(ctx);
+            const input = inputOf(ctx);
+            if (input.checkpoint !== undefined && typeof input.checkpoint !== 'boolean') {
+                throw makeError('invalid_input', 'checkpoint must be true or false.');
+            }
+            const checkpoint = input.checkpoint === true;
             const docs = await sessionDocsOf(instance);
             const items = [];
             let revision = docs[0].session.revision;
             for (const doc of docs) {
-                const { session, result } = await store.update(doc.id, (current) => takeFeedback(current, iso()), { by: 'agent' });
+                // Sent items without a read-back, as they stood before this take sent anything.
+                let unread = [];
+                const { session, result } = await store.update(doc.id, (current) => {
+                    unread = current.feedback.filter((item) => item.state === 'sent');
+                    return takeFeedback(current, iso(), { queuedOnly: checkpoint });
+                }, { by: 'agent' });
                 if (doc.id === instance.sessionId) revision = session.revision;
                 const followUp = session.session?.status === 'completed' && docs.length > 1;
-                items.push(...result.map((item) => ({ taskId: doc.taskId, id: item.id, kind: item.kind, target: item.target, optionId: item.optionId ?? null, optionLabel: item.optionLabel ?? null, text: item.text, correctionOf: item.correctionOf ?? null, ...(followUp ? { followUp: true } : {}), ...(item.kind === 'edit' && item.section ? { section: item.section } : {}), ...(item.kind === 'checklist' ? { phase: item.phase ?? null } : {}) })));
+                const shape = (item, extra = {}) => ({ taskId: doc.taskId, id: item.id, kind: item.kind, target: item.target, optionId: item.optionId ?? null, optionLabel: item.optionLabel ?? null, text: item.text, correctionOf: item.correctionOf ?? null, ...(followUp ? { followUp: true } : {}), ...(item.kind === 'edit' && item.section ? { section: item.section } : {}), ...(item.kind === 'checklist' ? { phase: item.phase ?? null } : {}), ...extra });
+                items.push(...result.map((item) => shape(item)), ...unread.map((item) => shape(item, { alreadySent: true, sentAt: item.sentAt ?? null })));
             }
             const tasks = new Set(items.map((item) => item.taskId));
+            const again = items.some((item) => item.alreadySent);
             return {
                 revision,
                 items,
                 note: items.length === 0
-                    ? 'Nothing is waiting to be sent.'
-                    : tasks.size > 1
-                        ? 'Make each change in its task\'s files, then read back each item with record_interpretation, passing its taskId. Items marked followUp belong to a completed task: plan them as follow-up work.'
-                        : 'Make each change, then read back each item with record_interpretation.',
+                    ? `${checkpoint ? 'Nothing is queued for you' : 'Nothing is waiting to be sent'}, and nothing sent to you waits for a read-back.`
+                    : [
+                        tasks.size > 1
+                            ? 'Make each change in its task\'s files, then read back each item with record_interpretation, passing its taskId. Items marked followUp belong to a completed task: plan them as follow-up work.'
+                            : 'Make each change, then read back each item with record_interpretation.',
+                        again ? 'Items marked alreadySent also reached you as a chat message: handle each once, by its ID.' : null,
+                    ].filter(Boolean).join(' '),
             };
         }),
 

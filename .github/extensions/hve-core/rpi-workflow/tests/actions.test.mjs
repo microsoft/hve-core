@@ -10,7 +10,7 @@ import { after, before, describe, it } from 'node:test';
 import { ACTION_DEFINITIONS, ACTION_GROUPS, createActionHandlers } from '../lib/actions.mjs';
 import { createDelivery } from '../lib/delivery.mjs';
 import { createInstanceRegistry } from '../lib/lifecycle.mjs';
-import { createFeedback, markChecklist, ModelError, suggestEdit } from '../lib/model.mjs';
+import { createFeedback, markChecklist, ModelError, queueForAgent, suggestEdit } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
 import { createStore } from '../lib/store.mjs';
 
@@ -96,8 +96,12 @@ describe('handlers', () => {
         const taken = await call('take_feedback', {});
         assert.equal(taken.items.length, 1);
         assert.equal(taken.items[0].optionLabel, 'Merge per field; queue same-field conflicts for review');
-        assert.deepEqual((await call('take_feedback', {})).items, []);
+        const again = await call('take_feedback', {});
+        assert.deepEqual(again.items.map((item) => [item.id, item.alreadySent]), [[taken.items[0].id, true]], 'a sent item without a read-back comes back, marked');
+        assert.match(again.note, /alreadySent also reached you as a chat message: handle each once, by its ID\./);
+        assert.equal((await store.load(SCENARIO_ID)).feedback.find((item) => item.id === taken.items[0].id).state, 'sent', 'and stays as it was');
         await call('record_interpretation', { feedbackId: taken.items[0].id, text: 'Queue same-field conflicts.', effect: 'Adds P02-T03' });
+        assert.deepEqual((await call('take_feedback', {})).items, [], 'once read back, it does not come back');
         const state = await call('get_state', {});
         assert.ok(state.awaitingUserConfirmation.some((item) => item.id === taken.items[0].id));
         assert.equal(await code(call('record_interpretation', { feedbackId: 'FB-999', text: 'x' })), 'not_found');
@@ -111,6 +115,28 @@ describe('handlers', () => {
         const review = pending.items.find((item) => item.kind === 'checklist');
         assert.equal(review.phase, 'research');
         assert.match(review.text, /Needs work: The open risks are acceptable\. Note: Name the storage risk\./);
+        store.close();
+    });
+
+    it('takes only what the user queued at a checkpoint, and every unsent item on request', async () => {
+        const { call, store } = await setup('checkpoint');
+        const now = () => new Date().toISOString();
+        await store.update(SCENARIO_ID, (s) => createFeedback(s, { kind: 'comment', text: 'Not queued' }, now()), { by: 'user' });
+        await store.update(SCENARIO_ID, (s) => createFeedback(s, { kind: 'comment', text: 'Queued' }, now()), { by: 'user' });
+        const [kept, queued] = (await store.load(SCENARIO_ID)).feedback.slice(-2).map((item) => item.id);
+        await store.update(SCENARIO_ID, (s) => queueForAgent(s, [queued], now()), { by: 'user' });
+        assert.deepEqual((await call('get_state', {})).pendingFeedback.filter((item) => item.queuedForAgent).map((item) => item.id), [queued], 'get_state names what waits for a checkpoint');
+        const atCheckpoint = await call('take_feedback', { checkpoint: true });
+        assert.deepEqual(atCheckpoint.items.map((item) => item.id), [queued]);
+        assert.equal((await store.load(SCENARIO_ID)).feedback.find((item) => item.id === kept).state, 'queued', 'items not queued stay with the user');
+        const next = await call('take_feedback', { checkpoint: true });
+        assert.deepEqual(next.items.map((item) => [item.id, item.alreadySent === true]), [[queued, true]], 'only the unread item comes back');
+        const all = await call('take_feedback', {});
+        assert.deepEqual(all.items.filter((item) => !item.alreadySent).map((item) => item.id), [kept], 'on request, the rest come too');
+        await call('record_interpretation', { feedbackId: queued, text: 'Read.', applied: true });
+        await call('record_interpretation', { feedbackId: kept, text: 'Read.', applied: true });
+        assert.match((await call('take_feedback', { checkpoint: true })).note, /^Nothing is queued for you, and nothing sent to you waits for a read-back\.$/);
+        assert.equal(await code(call('take_feedback', { checkpoint: 'yes' })), 'invalid_input');
         store.close();
     });
 

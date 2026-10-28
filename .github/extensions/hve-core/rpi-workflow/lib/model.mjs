@@ -610,20 +610,22 @@ export function isClaimed(item, now) {
 }
 
 /**
- * Marks every pending item as sent through the queue and returns them for the agent.
+ * Marks pending items as sent through the queue and returns them for the agent: at a
+ * checkpoint, only the items the user queued for it; on request, every unsent item.
  *
  * @param {any} session
  * @param {string} now
+ * @param {{ queuedOnly?: boolean }} [options]
  */
-export function takeFeedback(session, now) {
-    const queued = session.feedback.filter((item) => item.state === 'queued' && !isClaimed(item, now));
-    if (queued.length === 0) {
+export function takeFeedback(session, now, options = {}) {
+    const wanted = (item) => item.state === 'queued' && !isClaimed(item, now) && (!options.queuedOnly || Boolean(item.queuedForAgentAt));
+    if (!session.feedback.some(wanted)) {
         return { session, result: [] };
     }
     return mutate(session, now, (draft) => {
         const taken = [];
         for (const item of draft.feedback) {
-            if (item.state === 'queued' && !isClaimed(item, now)) {
+            if (wanted(item)) {
                 item.state = 'sent';
                 item.sentAt = now;
                 item.updatedAt = now;
