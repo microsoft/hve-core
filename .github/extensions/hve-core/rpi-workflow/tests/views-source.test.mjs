@@ -127,11 +127,12 @@ describe('views of imported sessions', () => {
         const openHtml = research.renderView(open).map(serialize).join('');
         assert.match(openHtml, /data-key="comment-research-summary"/, 'the newest offers comments');
         assert.match(openHtml, /A note on the newest summary/);
+        assert.match(openHtml, /Ask for more research/, 'the current research offers more research');
         const readOnly = { ...makeContext(session, 'research'), readOnly: true };
         const html = research.renderView(readOnly).map(serialize).join('');
         assert.doesNotMatch(html, /data-key="(?:comment|edit-section|research)-/, 'no row actions');
         assert.doesNotMatch(html, /A note on the newest summary/, 'notes for the newest do not show on an earlier document');
-        assert.doesNotMatch(html, /Request more research/);
+        assert.doesNotMatch(html, /Ask for more research/, 'no lanes card on an earlier document');
         assert.match(html, /Store map tiles in IndexedDB/, 'the content still shows');
         const card = serialize(components.decisionCard(readOnly, decisionOf(session, 'D2')));
         assert.doesNotMatch(card, /<textarea|data-key="submit-D2"|Override/, 'a decision cannot be answered or overridden there');

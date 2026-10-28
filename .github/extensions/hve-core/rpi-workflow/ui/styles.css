@@ -3035,15 +3035,6 @@ details > summary:hover {
   gap: 10px;
 }
 
-.composer .segmented {
-  display: flex;
-}
-
-.composer .segmented label {
-  flex: 1 1 auto;
-  justify-content: center;
-}
-
 .composer > .meta {
   margin-top: -2px;
 }

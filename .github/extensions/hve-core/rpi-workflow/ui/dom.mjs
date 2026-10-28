@@ -273,8 +273,6 @@ export const FEEDBACK_KIND = Object.freeze({
     answer: { icon: 'person', label: 'Answer' },
     override: { icon: 'undo', label: 'Override' },
     comment: { icon: 'message', label: 'Comment' },
-    context: { icon: 'info', label: 'Context' },
-    'research-request': { icon: 'search', label: 'Research request' },
     edit: { icon: 'pencil', label: 'Suggested edit' },
     correction: { icon: 'undo', label: 'Correction' },
     'task-request': { icon: 'list', label: 'Task request' },

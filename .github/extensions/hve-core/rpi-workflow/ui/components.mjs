@@ -82,9 +82,12 @@ export function artifactDir(ctx, doc) {
     return typeof artifact === 'string' && artifact.includes('/') ? artifact.slice(0, artifact.lastIndexOf('/')) : undefined;
 }
 
-/** Feedback notes anchored to any of these rows, except dismissed ones. */
-// An earlier document is read-only: its row IDs can repeat the newest document's, so no notes show on it.
-export const notesFor = (ctx, rowIds) => (ctx.readOnly ? [] : ctx.data.session.feedback).filter((item) => item.target && rowIds.includes(item.target.id) && ['comment', 'context', 'research-request', 'correction', 'task-request'].includes(item.kind) && item.state !== 'dismissed');
+/** Kinds shown elsewhere: answers and overrides on their decision cards, suggested edits beside their section. */
+const NOT_NOTES = new Set(['answer', 'override', 'edit']);
+
+/** Feedback notes anchored to any of these rows, except dismissed ones; a saved item of a removed kind shows as a note too. */
+// An earlier document is read-only: its row IDs can repeat the current document's, so no notes show on it.
+export const notesFor = (ctx, rowIds) => (ctx.readOnly ? [] : ctx.data.session.feedback).filter((item) => item.target && rowIds.includes(item.target.id) && !NOT_NOTES.has(item.kind) && item.state !== 'dismissed');
 
 const slug = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 
@@ -143,7 +146,7 @@ export function row(ctx, spec) {
     const given = (spec.margin ?? []).filter(Boolean);
     // Comments on a part of this row show beside it, even in rows that list no notes of their own.
     const shown = new Set(given.map((element) => element.dataset?.item).filter(Boolean));
-    const partNotes = notesFor(ctx, [spec.id]).filter((item) => item.target?.part && !shown.has(item.id) && (item.kind === 'comment' || item.kind === 'context')).map((item) => marginNote(ctx, item));
+    const partNotes = notesFor(ctx, [spec.id]).filter((item) => item.target?.part && !shown.has(item.id)).map((item) => marginNote(ctx, item));
     const margin = [...given, ...partNotes];
     const section = h('section', {
         class: ['row', margin.length ? 'has-margin' : null, spec.className, ctx.ui.highlight === spec.id ? 'is-highlight' : null],
@@ -164,19 +167,16 @@ export function row(ctx, spec) {
     return section;
 }
 
-/** Row actions, shown while the row is hovered or holds focus: Suggest an edit, Comment, and optional Research this. */
-export function rowActions(ctx, { sectionId, rowId, research = false, ask = false }) {
+/** Row actions, shown while the row is hovered or holds focus: Suggest an edit, Comment, and optional Ask the agent. */
+export function rowActions(ctx, { sectionId, rowId, ask = false }) {
     const items = [];
     if (ctx.readOnly) return items;
     if (sectionId && ctx.data.session.sections[sectionId]) {
         items.push(button('Suggest an edit', { iconName: 'pencil', hideLabel: true, onClick: () => ctx.act.startEdit(sectionId), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'e' : undefined, 'data-key': `edit-section-${rowId}` } }));
     }
-    items.push(button('Comment', { iconName: 'message', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'comment'), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'c' : undefined, 'data-key': `comment-${rowId}` } }));
-    if (research) {
-        items.push(button('Research this', { iconName: 'search', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'research-request'), attrs: { 'data-key': `research-${rowId}` } }));
-    }
+    items.push(button('Comment', { iconName: 'message', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId), attrs: { 'aria-keyshortcuts': ctx.ui.shortcuts ? 'c' : undefined, 'data-key': `comment-${rowId}` } }));
     if (ask) {
-        items.push(button('Ask the agent', { iconName: 'sparkle', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId, 'comment') }));
+        items.push(button('Ask the agent', { iconName: 'sparkle', hideLabel: true, onClick: () => ctx.act.anchorComposer(rowId) }));
     }
     return items;
 }
@@ -650,7 +650,7 @@ function feedbackTarget(ctx, item) {
 }
 
 /** Matches EDITABLE_KINDS in lib/model.mjs: kinds whose words change here; the rest change where they were made. */
-const EDITABLE_KINDS = new Set(['comment', 'context', 'research-request', 'task-request', 'correction', 'answer', 'override']);
+const EDITABLE_KINDS = new Set(['comment', 'task-request', 'correction', 'answer', 'override']);
 
 /** A second press within this time is a double click, not a decision. */
 export const CONFIRM_GUARD_MS = 500;
@@ -849,25 +849,14 @@ export function steerPanel(ctx) {
     ].filter(Boolean);
 }
 
-const COMPOSER_KINDS = [
-    { id: 'comment', label: 'Comment' },
-    { id: 'context', label: 'Context' },
-    { id: 'research-request', label: 'Research request' },
-];
-
 function composer(ctx) {
     const state = ctx.ui.composer;
     const textId = 'composer-text';
     const anchor = state.anchor ? ctx.find(state.anchor) : null;
-    const placeholder = state.kind === 'research-request' ? 'What should the agent research? A research subagent lane starts when the agent takes this.' : state.kind === 'context' ? 'Facts, links, or constraints the agent should know.' : 'Your comment for the agent.';
     return h('form', { class: 'composer', onsubmit: (event) => {
         event.preventDefault();
         ctx.act.submitComposer();
     } },
-    h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'visually-hidden', text: 'Kind of input' }),
-        COMPOSER_KINDS.map((kind) => h('label', { for: `composer-kind-${kind.id}` },
-            h('input', { type: 'radio', name: 'composer-kind', id: `composer-kind-${kind.id}`, value: kind.id, checked: state.kind === kind.id, onchange: () => ctx.act.setComposer({ kind: kind.id }) }),
-            h('span', { text: kind.label })))),
     state.anchor
         ? h('div', { class: 'anchor-box' },
             h('p', { class: 'anchor-chip' }, icon('anchor'), 'About ', h('span', { class: 'id-chip', text: state.anchor }), (anchor?.title ?? state.title) ? h('span', { class: 'anchor-title', title: anchor?.title ?? state.title, text: ` ${anchor?.title ?? state.title}` }) : null,
@@ -876,9 +865,9 @@ function composer(ctx) {
             state.quote ? h('blockquote', { class: 'anchor-quote' }, sr('Quote: '), state.quote) : null)
         : h('p', { class: 'meta', text: 'Tip: hover a paragraph, list item, or table row and choose its comment button, or right-click it, to anchor your input to that part.' }),
     h('label', { class: 'visually-hidden', for: textId, text: 'Your input' }),
-    h('textarea', { id: textId, class: 'note', rows: '3', placeholder, 'aria-invalid': state.error ? 'true' : undefined, 'aria-describedby': state.error ? 'composer-error' : undefined, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
+    h('textarea', { id: textId, class: 'note', rows: '3', placeholder: 'Your comment for the agent: a question, context, or something to research.', 'aria-invalid': state.error ? 'true' : undefined, 'aria-describedby': state.error ? 'composer-error' : undefined, oninput: (event) => ctx.act.setComposer({ text: event.target.value }, false) }, state.text),
     state.error ? h('p', { class: 'field-error', id: 'composer-error' }, icon('alert'), h('span', { text: `Not added: ${state.error} Your text is kept.` })) : null,
-    h('div', { class: 'btn-row' }, h('button', { type: 'submit', class: 'btn btn-primary', disabled: !state.text.trim(), dataset: { key: 'composer-submit' } }, icon('plus'), h('span', { text: { comment: 'Add comment', context: 'Add context', 'research-request': 'Add research request' }[state.kind] ?? 'Add' }))),
+    h('div', { class: 'btn-row' }, h('button', { type: 'submit', class: 'btn btn-primary', disabled: !state.text.trim(), dataset: { key: 'composer-submit' } }, icon('plus'), h('span', { text: 'Add comment' }))),
     h('p', { class: 'meta', text: 'What you add waits in Your feedback until you send or queue it with Review and send.' }));
 }
 
@@ -906,7 +895,7 @@ export function reviewSheet(ctx) {
             h('ul', { class: 'send-howto' },
                 h('li', { text: 'Answer a decision the agent asks you, or override one it made.' }),
                 h('li', { text: 'Comment on a row, or suggest an edit to its text.' }),
-                h('li', { text: 'Add context or a research request under Add input.' })),
+                h('li', { text: 'Write a comment under Add input: a question, context, or something to research.' })),
             h('div', { class: 'btn-row' }, button('Close', { attrs: { 'data-close': '', 'data-key': 'send-cancel' } }))];
     }
     const noun = plural(pending.length, 'item');
@@ -919,7 +908,7 @@ export function reviewSheet(ctx) {
         ...groups.map((group) => reviewGroup(ctx, group)),
         h('label', { class: 'field-label', for: 'send-note', text: 'Message to the agent (optional)' }),
         h('textarea', { id: 'send-note', class: 'note', rows: '3', 'aria-describedby': 'send-note-hint', oninput: (event) => ctx.act.setSendNote(event.target.value) }, send.note),
-        h('p', { class: 'meta', id: 'send-note-hint', text: 'With Send now, it shows in the chat above the line that names this canvas. With Queue, it waits with your items as context.' }),
+        h('p', { class: 'meta', id: 'send-note-hint', text: 'With Send now, it shows in the chat above the line that names this canvas. With Queue, it waits with your items as a comment.' }),
         h('details', { class: 'send-exact' },
             h('summary', { text: 'Exact message Send now delivers' }),
             h('pre', { class: 'preview-text', id: 'send-preview', tabindex: '0', text: send.preview?.prompt ?? 'Preparing the message…' })),
@@ -986,7 +975,7 @@ export function filePreview(ctx, change, file) {
         diff,
         h('div', { class: 'btn-row' },
             button('Copy path', { iconName: 'copy', onClick: () => ctx.act.copy(file.path) }),
-            button('Ask the agent about this change', { iconName: 'message', onClick: () => ctx.act.anchorComposer(change.id, 'comment', true) }),
+            button('Ask the agent about this change', { iconName: 'message', onClick: () => ctx.act.anchorComposer(change.id, true) }),
             real && file.kind !== 'deleted' ? button('Show the file', { iconName: 'file', onClick: () => ctx.act.openSource(file.path, null) }) : null,
             editor && file.kind !== 'deleted' && !/\.code-workspace$/i.test(file.path) ? button(`Open in ${editor.name}`, { iconName: 'file-code', onClick: () => ctx.act.openInEditor(file.path, null) }) : null),
     ];

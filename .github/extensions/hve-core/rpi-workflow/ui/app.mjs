@@ -52,7 +52,7 @@ const state = {
         expanded: new Set(),
         openEvidence: new Set(),
         send: freshSend(),
-        composer: { kind: 'comment', text: '', anchor: null, part: null, quote: null, title: null },
+        composer: { text: '', anchor: null, part: null, quote: null, title: null },
         decisionDrafts: new Map(),
         corrections: new Map(),
         overrides: new Set(),
@@ -479,7 +479,7 @@ const taskUi = () => ({
     expanded: new Set(),
     openEvidence: new Set(),
     send: freshSend(),
-    composer: { kind: 'comment', text: '', anchor: null, part: null, quote: null, title: null },
+    composer: { text: '', anchor: null, part: null, quote: null, title: null },
     decisionDrafts: new Map(),
     corrections: new Map(),
     overrides: new Set(),
@@ -971,9 +971,9 @@ const act = {
         else state.ui.openDetails.delete(key);
     },
     /** Opens the composer anchored to a row, or to a part of it with `detail` from the hover button or menu. */
-    anchorComposer(rowId, kind, closeSheet = false, detail = {}) {
+    anchorComposer(rowId, closeSheet = false, detail = {}) {
         if (closeSheet) $('fileSheet').close();
-        state.ui.composer = { kind, text: state.ui.composer.text, anchor: rowId, part: detail.part ?? null, quote: detail.quote ?? null, title: detail.rowTitle ?? null };
+        state.ui.composer = { text: state.ui.composer.text, anchor: rowId, part: detail.part ?? null, quote: detail.quote ?? null, title: detail.rowTitle ?? null };
         openSteer();
         render();
         window.requestAnimationFrame(() => $('composer-text')?.focus());
@@ -992,9 +992,9 @@ const act = {
         const composer = state.ui.composer;
         try {
             const target = composer.anchor ? { id: composer.anchor, ...(composer.part ? { part: composer.part } : {}), ...(composer.quote ? { quote: composer.quote } : {}) } : undefined;
-            await api('/api/feedback', { kind: composer.kind, text: composer.text, target });
-            announce(composer.kind === 'research-request' ? 'Research request added. It waits in Review and send, and a research lane starts when the agent takes it.' : `${composer.kind === 'context' ? 'Context' : 'Comment'} added. It waits in Review and send.`);
-            state.ui.composer = { kind: composer.kind, text: '', anchor: null, part: null, quote: null, title: null };
+            await api('/api/feedback', { kind: 'comment', text: composer.text, target });
+            announce('Comment added. It waits in Your feedback until you send or queue it.');
+            state.ui.composer = { text: '', anchor: null, part: null, quote: null, title: null };
             await refresh();
             window.requestAnimationFrame(() => $('composer-text')?.focus());
         } catch (error) {
@@ -2133,7 +2133,7 @@ function onKeydown(event) {
         } else if (row.closest('[data-readonly="true"]')) {
             announce('This document is read-only here. Show the newest to comment or suggest an edit.');
         } else if (key === 'c') {
-            act.anchorComposer(row.dataset.row, 'comment');
+            act.anchorComposer(row.dataset.row);
         } else {
             const editButton = row.querySelector(`[data-key="edit-section-${CSS.escape(row.dataset.row)}"]`);
             if (editButton) editButton.click();
@@ -2203,14 +2203,13 @@ function menuItemsFor(target) {
     const part = ready ? anchorAt(target) : null;
     // An earlier document is read-only, so its rows offer no comments or edits.
     const row = ready && $('docBody').contains(target) && !target.closest('[data-readonly="true"]') ? target.closest('[data-row]') : null;
-    if (part) items.push({ label: `Comment on ${part.part}`, icon: 'message', onSelect: () => act.anchorComposer(part.rowId, 'comment', false, part) });
+    if (part) items.push({ label: `Comment on ${part.part}`, icon: 'message', onSelect: () => act.anchorComposer(part.rowId, false, part) });
     if (row?.dataset.row) {
         const rowId = row.dataset.row;
         const rowTitle = row.querySelector('.row-title')?.textContent?.trim() ?? rowId;
-        items.push({ label: 'Comment on this section', icon: 'message', shortcut: state.ui.shortcuts ? 'c' : undefined, onSelect: () => act.anchorComposer(rowId, 'comment', false, { rowTitle }) });
+        items.push({ label: 'Comment on this section', icon: 'message', shortcut: state.ui.shortcuts ? 'c' : undefined, onSelect: () => act.anchorComposer(rowId, false, { rowTitle }) });
         const edit = row.querySelector(`[data-key="edit-section-${CSS.escape(rowId)}"]`);
         if (edit) items.push({ label: 'Suggest an edit to this section', icon: 'pencil', shortcut: state.ui.shortcuts ? 'e' : undefined, onSelect: () => edit.click() });
-        if (row.querySelector(`[data-key="research-${CSS.escape(rowId)}"]`)) items.push({ label: 'Research this', icon: 'search', onSelect: () => act.anchorComposer(rowId, 'research-request', false, { rowTitle }) });
     }
     const chip = target.closest('[data-preview]');
     if (ready && chip?.dataset.preview && find(chip.dataset.preview)) {
@@ -2252,7 +2251,7 @@ function menuItemsFor(target) {
 function wire() {
     previews = installPreviews({ context, revision: () => state.data?.revision ?? 0 });
     tooltips = installTooltips();
-    anchors = installAnchorHandle({ scroller: $('document'), onComment: (anchor) => act.anchorComposer(anchor.rowId, 'comment', false, anchor) });
+    anchors = installAnchorHandle({ scroller: $('document'), onComment: (anchor) => act.anchorComposer(anchor.rowId, false, anchor) });
     contextMenu = installContextMenu({
         itemsFor: menuItemsFor,
         onOpen: () => {

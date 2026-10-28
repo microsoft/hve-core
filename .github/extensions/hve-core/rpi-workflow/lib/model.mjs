@@ -18,7 +18,7 @@ export const PHASE_LABELS = Object.freeze({ research: 'Research', plan: 'Plan', 
 export const PHASE_STATUSES = Object.freeze(['done', 'active', 'upcoming', 'paused', 'blocked', 'skipped']);
 export const TASK_STATUSES = Object.freeze(['todo', 'in-progress', 'paused', 'done', 'blocked']);
 export const DECISION_STATUSES = Object.freeze(['needs-input', 'answered', 'decided', 'override-pending', 'resolved']);
-export const FEEDBACK_KINDS = Object.freeze(['answer', 'override', 'comment', 'context', 'research-request', 'edit', 'correction', 'task-request']);
+export const FEEDBACK_KINDS = Object.freeze(['answer', 'override', 'comment', 'edit', 'correction', 'task-request']);
 export const FEEDBACK_STATES = Object.freeze(['draft', 'queued', 'sent', 'interpreted', 'applied', 'corrected', 'dismissed']);
 export const DELIVERY_MODES = Object.freeze(['queue', 'attach', 'send']);
 export const DISCOVERY_KINDS = Object.freeze(['local', 'annotation', 'follow-up', 'plan-change']);
@@ -525,7 +525,7 @@ export function transitionFeedback(session, feedbackId, to, extra = {}, now = ne
 }
 
 /** Kinds whose words can change before they are sent; suggested edits change where they were made. */
-export const EDITABLE_KINDS = Object.freeze(['comment', 'context', 'research-request', 'task-request', 'correction', 'answer', 'override']);
+export const EDITABLE_KINDS = Object.freeze(['comment', 'task-request', 'correction', 'answer', 'override']);
 
 /** Unsent and not held by a delivery. */
 const unsent = (item, now) => (item.state === 'queued' || item.state === 'draft') && !isClaimed(item, now);
@@ -817,8 +817,6 @@ const KIND_LABELS = Object.freeze({
     answer: ['Answer to', 'answer', 'answers'],
     override: ['Override of', 'override', 'overrides'],
     comment: ['Comment on', 'comment', 'comments'],
-    context: ['Context for', 'context note', 'context notes'],
-    'research-request': ['Research request about', 'research request', 'research requests'],
     edit: ['Suggested edit to', 'suggested edit', 'suggested edits'],
     correction: ['Correction about', 'correction', 'corrections'],
     'task-request': ['Task request for', 'task request', 'task requests'],

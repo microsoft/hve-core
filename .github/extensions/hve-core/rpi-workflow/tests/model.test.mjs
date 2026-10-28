@@ -204,7 +204,7 @@ describe('delivery composition', () => {
     it('produces one string for preview and prompt, naming the canvas in both texts', () => {
         let s = base();
         s = createFeedback(s, { kind: 'answer', target: { id: 'D2' }, optionId: 'a', text: 'Keep both photos.' }, NOW).session;
-        s = createFeedback(s, { kind: 'research-request', target: { id: 'F1' }, text: 'Check iOS quota.' }, NOW).session;
+        s = createFeedback(s, { kind: 'comment', target: { id: 'F1' }, text: 'Please research the iOS quota.' }, NOW).session;
         const ids = s.feedback.filter((item) => item.state === 'queued').map((item) => item.id);
         const preview = composeDelivery(s, ids, NOW, { canvas });
         const again = composeDelivery(s, ids, NOW, { canvas });
@@ -215,12 +215,12 @@ describe('delivery composition', () => {
         assert.doesNotMatch(preview.prompt, /Task files:/);
         assert.match(preview.prompt, /1\. FB-\d{3}: Answer to D2 "[^"]+" \(Research\)\n {3}Chose: Merge per field/);
         assert.match(preview.prompt, /record_interpretation on this canvas/);
-        assert.equal(preview.displayPrompt, 'RPI canvas 3WF0 sent 2 items: 1 answer and 1 research request.');
-        assert.equal(composeDelivery(s, ids, NOW).displayPrompt, 'RPI canvas sent 2 items: 1 answer and 1 research request.', 'a canvas without a handle still names itself');
+        assert.equal(preview.displayPrompt, 'RPI canvas 3WF0 sent 2 items: 1 answer and 1 comment.');
+        assert.equal(composeDelivery(s, ids, NOW).displayPrompt, 'RPI canvas sent 2 items: 1 answer and 1 comment.', 'a canvas without a handle still names itself');
         const noted = composeDelivery(s, ids, NOW, { canvas, note: 'Please start with the quota.\nThanks.' });
         assert.equal(noted.digest, preview.digest, 'the message does not change the digest');
         assert.match(noted.prompt, /\n\nMessage from the user:\n {3}Please start with the quota\.\n {3}Thanks\.\n\nHow to handle/);
-        assert.equal(noted.displayPrompt, 'Please start with the quota.\nThanks.\n\nRPI canvas 3WF0 sent 2 items: 1 answer and 1 research request.');
+        assert.equal(noted.displayPrompt, 'Please start with the quota.\nThanks.\n\nRPI canvas 3WF0 sent 2 items: 1 answer and 1 comment.');
         assert.equal(code(() => composeDelivery(s, ids, NOW, { note: 'x'.repeat(LIMITS.text + 1) })), 'invalid_input');
         const claimed = claimDelivery(s, ids, NOW);
         assert.equal(takeFeedback(claimed.session, NOW).result.length, 0);
@@ -434,10 +434,13 @@ describe('decisions, tasks, and session', () => {
         let s = createFeedback(base(), { kind: 'comment', target: { id: 'F1' }, text: 'A comment' }, NOW).session;
         const comment = s.feedback.at(-1).id;
         const legacy = { id: 'FB-090', kind: 'checklist', state: 'queued', target: null, phase: 'research', text: 'Research review: all 6 items look good.', createdAt: NOW, updatedAt: NOW, history: [] };
-        s = { ...s, feedback: [...s.feedback, legacy] };
-        const sent = composeDelivery(s, [comment, legacy.id], NOW, { canvas });
+        const asked = { id: 'FB-091', kind: 'research-request', state: 'queued', target: { id: 'F1', type: 'finding', phase: 'research' }, text: 'Check iOS quota.', createdAt: NOW, updatedAt: NOW, history: [] };
+        s = { ...s, feedback: [...s.feedback, legacy, asked] };
+        const sent = composeDelivery(s, [comment, legacy.id, asked.id], NOW, { canvas });
         assert.match(sent.prompt, /\n\d+\. FB-090: Comment on the session\n/);
-        assert.equal(sent.displayPrompt, 'RPI canvas 3WF0 sent 2 items: 2 comments.', 'counted with the comments, not as its own kind');
+        assert.match(sent.prompt, /\n\d+\. FB-091: Comment on F1/);
+        assert.equal(sent.displayPrompt, 'RPI canvas 3WF0 sent 3 items: 3 comments.', 'counted with the comments, not as their own kinds');
+        assert.equal(code(() => createFeedback(base(), { kind: 'context', text: 'x' }, NOW)), 'invalid_input');
         const entry = feedbackOverview(s, NOW).pending.find((item) => item.id === legacy.id);
         assert.equal(entry.label, 'Comment on the session');
     });

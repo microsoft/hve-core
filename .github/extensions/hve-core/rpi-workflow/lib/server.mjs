@@ -443,7 +443,7 @@ export function createCanvasServer(deps) {
         const note = typeof body?.note === 'string' ? body.note.trim() : '';
         if (note) {
             const { session, result } = await userUpdate((current) => {
-                const created = createFeedback(current, { kind: 'context', text: note }, now());
+                const created = createFeedback(current, { kind: 'comment', text: note }, now());
                 return { session: queueForAgent(created.session, [created.result.id], now()).session, result: created.result };
             });
             queued.push({ taskId: session.task.id, id: result.id });

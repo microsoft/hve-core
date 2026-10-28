@@ -118,7 +118,7 @@ export function taskBlock(ctx, task, index, siblings, options = {}) {
                 button('Suggest an edit', { iconName: 'pencil', onClick: () => ctx.act.startEdit(task.sectionId) }),
                 button('Move up', { iconName: 'arrow-up', disabled: index === 0, onClick: () => ctx.act.requestTask(task.id, `Move ${task.id} before ${siblings[index - 1]?.id}.`) }),
                 button('Move down', { iconName: 'arrow-down', disabled: index === siblings.length - 1, onClick: () => ctx.act.requestTask(task.id, `Move ${task.id} after ${siblings[index + 1]?.id}.`) }),
-                button('Comment', { iconName: 'message', onClick: () => ctx.act.anchorComposer(task.id, 'comment') }))));
+                button('Comment', { iconName: 'message', onClick: () => ctx.act.anchorComposer(task.id) }))));
 }
 
 export function renderView(ctx) {

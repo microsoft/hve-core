@@ -148,7 +148,8 @@ describe('page routes', () => {
     it('sends exactly the reviewed text as one message, once, even after unrelated agent writes', async () => {
         const { server, url, store, sent, session } = await setup('delivery');
         const a = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'First', target: { id: 'F1' } } });
-        const b = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'research-request', text: 'Second', target: { id: 'F4' } } });
+        const b = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'Second', target: { id: 'F4' } } });
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'research-request', text: 'x' } })).status, 400, 'the canvas creates only comments from typed input');
         const ids = [a.json.item.id, b.json.item.id];
         const preview = await request(url, { method: 'POST', pathname: '/api/delivery/preview', body: { ids } });
         assert.match(preview.json.prompt, /^RPI canvas 3WF0 sent 2 items/);
@@ -160,7 +161,7 @@ describe('page routes', () => {
         assert.equal(sent.length, 1);
         assert.equal(sent[0].prompt.replace('\n\nMessage from the user:\n   Start with F1.', ''), preview.json.prompt, 'the sent text is the reviewed text plus the message');
         assert.match(sent[0].prompt, /Message from the user:\n {3}Start with F1\./);
-        assert.equal(sent[0].displayPrompt, 'Start with F1.\n\nRPI canvas 3WF0 sent 2 items: 1 comment and 1 research request.');
+        assert.equal(sent[0].displayPrompt, 'Start with F1.\n\nRPI canvas 3WF0 sent 2 items: 2 comments.');
         assert.deepEqual(Object.keys(sent[0]).sort(), ['displayPrompt', 'ids', 'mode', 'prompt']);
         assert.equal(sent[0].mode, 'immediate', 'Send now reaches the agent at its next step');
         const again = await request(url, { method: 'POST', pathname: '/api/delivery', body: { ids, digest: preview.json.digest } });
@@ -208,7 +209,7 @@ describe('page routes', () => {
         store.close();
     });
 
-    it('queues reviewed items for the agent without a message, keeps a note as context, and takes items back', async () => {
+    it('queues reviewed items for the agent without a message, keeps a note as a comment, and takes items back', async () => {
         const { server, url, store, sent, session } = await setup('delivery-queue');
         const a = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'First', target: { id: 'F1' } } });
         const b = await request(url, { method: 'POST', pathname: '/api/feedback', body: { kind: 'comment', text: 'Second', target: { id: 'F1' } } });
@@ -223,7 +224,7 @@ describe('page routes', () => {
         let stored = await store.load(session.id);
         const byId = (id) => stored.feedback.find((entry) => entry.id === id);
         assert.ok([...ids, noteId].every((id) => byId(id).state === 'queued' && typeof byId(id).queuedForAgentAt === 'string'), 'queued items stay in the canvas with the time');
-        assert.equal(byId(noteId).kind, 'context');
+        assert.equal(byId(noteId).kind, 'comment');
         assert.equal(byId(noteId).text, 'Look at F1 first.');
 
         const back = await request(url, { method: 'POST', pathname: '/api/feedback/take-back', body: { ids: [ids[0]] } });

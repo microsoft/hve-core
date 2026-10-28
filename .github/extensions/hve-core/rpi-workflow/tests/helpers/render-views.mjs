@@ -24,7 +24,7 @@ export function initialUi(phase) {
         expanded: new Set(),
         openEvidence: new Set(),
         send: { note: '', preview: null, previewNote: null, sending: false, error: null },
-        composer: { kind: 'comment', text: '', anchor: null },
+        composer: { text: '', anchor: null },
         decisionDrafts: new Map(),
         corrections: new Map(),
         overrides: new Set(),

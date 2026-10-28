@@ -164,7 +164,7 @@ export const decisions = [
 
 export const feedback = [
     { id: 'FB-004', kind: 'comment', state: 'sent', target: { id: 'CH-002', type: 'change', phase: 'implement' }, text: 'Could the autosave wait 500 ms after the last keystroke instead of saving on every change?', delivery: 'queue', minutes: 40, sentMinutes: 33 },
-    { id: 'FB-005', kind: 'research-request', state: 'queued', target: { id: 'F1', type: 'finding', phase: 'research' }, text: 'Do installed web apps on iOS keep IndexedDB data when the device is low on storage?', minutes: 3 },
+    { id: 'FB-005', kind: 'comment', state: 'queued', target: { id: 'F1', type: 'finding', phase: 'research' }, text: 'Please research this: do installed web apps on iOS keep IndexedDB data when the device is low on storage?', minutes: 3 },
 ];
 
 export const sections = {

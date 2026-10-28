@@ -142,6 +142,41 @@ describe('suggested edits', () => {
     });
 });
 
+describe('one kind of typed input', () => {
+    it('adds a comment from Add input, with no choice of kind', () => {
+        const out = html(components.steerPanel(makeContext(rootSession().session, 'research')));
+        assert.doesNotMatch(out, /name="composer-kind"|Kind of input/);
+        assert.match(out, /<textarea id="composer-text"[^>]*placeholder="Your comment for the agent: a question, context, or something to research\."/);
+        assert.match(textOf(out), /Add comment/);
+    });
+
+    it('offers Comment on research rows and Ask for more research on the lanes card', async () => {
+        const research = await import('../ui/view-research.mjs');
+        const session = sample();
+        const out = research.renderView(makeContext(session, 'research')).map(serialize).join('');
+        assert.match(out, /data-key="comment-F1"/);
+        assert.doesNotMatch(out, /data-key="research-F1"|Research this/);
+        assert.match(out, /data-key="ask-research"[^>]*>.*Ask for more research/);
+    });
+
+    it('shows saved context and research requests as comments in the margin and in Your feedback', async () => {
+        const research = await import('../ui/view-research.mjs');
+        const base = sample();
+        const saved = [
+            { id: 'FB-091', kind: 'context', state: 'queued', target: { id: 'F1', type: 'finding', phase: 'research' }, text: 'Saved context', createdAt: NOW, updatedAt: NOW, history: [] },
+            { id: 'FB-092', kind: 'research-request', state: 'queued', target: { id: 'F1', type: 'finding', phase: 'research' }, text: 'Saved research ask', createdAt: NOW, updatedAt: NOW, history: [] },
+        ];
+        const session = { ...base, feedback: [...base.feedback, ...saved] };
+        const view = textOf(research.renderView(makeContext(session, 'research')).map(serialize).join(''));
+        assert.match(view, /Saved context/);
+        assert.match(view, /Saved research ask/, 'a saved research request is a note, not a requested lane');
+        assert.doesNotMatch(view, /Requested by you/);
+        const steer = textOf(html(components.steerPanel(makeContext(session, 'research'))));
+        assert.match(steer, /Comment about F1 \(Research\) Not sent Go to FB-091 Discard FB-091 Saved context/, 'a comment with Go to and Discard, and no Edit');
+        assert.match(steer, /Comment about F1 \(Research\) Not sent Go to FB-092 Discard FB-092 Saved research ask/);
+    });
+});
+
 describe('steering panel without a checklist', () => {
     it('ends with Add input, and shows a saved checklist item as a comment', () => {
         const legacy = { id: 'FB-090', kind: 'checklist', state: 'queued', target: null, phase: 'research', text: 'Research review: all 6 items look good.', createdAt: NOW, updatedAt: NOW, history: [] };
@@ -211,7 +246,7 @@ describe('send dialog', () => {
         const session = createFeedback(rootSession().session, { kind: 'comment', text: 'About this loop.', target: { id: 'F1' } }, NOW).session;
         const ctx = makeContext(session, 'research');
         ctx.data.otherTasks = [
-            { taskId: 'trail-maps-fixes', title: 'Offline trail maps review fixes', status: 'completed', statePath: 'x', pending: [{ id: 'FB-001', kind: 'comment', about: 'the session', label: 'Comment on the session', text: 'Child note', phase: null, target: null, editable: true }, { id: 'FB-002', kind: 'context', about: 'F1 "Tiles" (Research)', label: 'Context for F1', text: 'Second', phase: 'research', target: { id: 'F1' }, editable: true }], awaiting: 0 },
+            { taskId: 'trail-maps-fixes', title: 'Offline trail maps review fixes', status: 'completed', statePath: 'x', pending: [{ id: 'FB-001', kind: 'comment', about: 'the session', label: 'Comment on the session', text: 'Child note', phase: null, target: null, editable: true }, { id: 'FB-002', kind: 'comment', about: 'F1 "Tiles" (Research)', label: 'Comment on F1', text: 'Second', phase: 'research', target: { id: 'F1' }, editable: true }], awaiting: 0 },
             { taskId: 'quiet', title: 'Quiet loop', status: 'running', statePath: 'y', pending: [], awaiting: 1 },
         ];
         assert.deepEqual(components.sendItems(ctx).map((item) => `${item.taskId}:${item.id}`), [`trail-maps:${components.pendingItems(ctx)[0].id}`, 'trail-maps-fixes:FB-001', 'trail-maps-fixes:FB-002']);
@@ -267,7 +302,7 @@ describe('send dialog', () => {
 
     it('marks items queued for the agent, lists them after the rest, and drops Queue once everything is queued', () => {
         let session = createFeedback(rootSession().session, { kind: 'comment', text: 'Waits for me', target: { id: 'F1' } }, NOW).session;
-        session = createFeedback(session, { kind: 'context', text: 'Queued already' }, NOW).session;
+        session = createFeedback(session, { kind: 'comment', text: 'Queued already' }, NOW).session;
         const [mine, queued] = session.feedback.slice(-2).map((item) => item.id);
         session = queueForAgent(session, [queued], NOW).session;
         const ui = initialUi('research');
@@ -279,7 +314,7 @@ describe('send dialog', () => {
         assert.equal(components.waitingCount(ctx), 1, 'the header counts only what waits for you');
         const sheet = components.reviewSheet(ctx);
         const out = textOf(html(sheet));
-        assert.match(out, new RegExp(`${queued} Context .*Queued for the agent`));
+        assert.match(out, new RegExp(`${queued} Comment Queued for the agent`));
         assert.match(out, /Queue keeps the 1 item not queued yet here until the agent's next checkpoint/);
         ctx.data.otherTasks = [{ taskId: 'trail-maps-fixes', title: 'Fixes', status: 'running', statePath: 'x', pending: [{ id: 'FB-001', kind: 'comment', about: 'the session', label: 'x', text: 'Queued there', phase: null, target: null, editable: true, queuedForAgent: true }, { id: 'FB-002', kind: 'comment', about: 'the session', label: 'x', text: 'Not yet', phase: null, target: null, editable: true }], awaiting: 0 }];
         assert.deepEqual(components.sendItems(ctx).filter((item) => item.taskId === 'trail-maps-fixes').map((item) => item.id), ['FB-002', 'FB-001'], 'another loop lists items not queued yet first');
@@ -351,7 +386,7 @@ describe('send dialog', () => {
 
     it('shows a composer failure beside the text it keeps', () => {
         const ui = initialUi('research');
-        ui.composer = { kind: 'comment', text: 'Keep me', anchor: 'research-decisions', error: 'No item research-decisions exists in this session.' };
+        ui.composer = { text: 'Keep me', anchor: 'research-decisions', error: 'No item research-decisions exists in this session.' };
         const out = html(components.steerPanel(makeContext(rootSession().session, 'research', ui)));
         assert.match(out, /<textarea id="composer-text"[^>]*aria-invalid="true"[^>]*aria-describedby="composer-error"[^>]*>Keep me<\/textarea>/);
         assert.match(textOf(out), /Not added: No item research-decisions exists in this session\. Your text is kept\./);
