@@ -103,7 +103,8 @@ describe('handlers', () => {
         await call('record_interpretation', { feedbackId: taken.items[0].id, text: 'Queue same-field conflicts.', effect: 'Adds P02-T03' });
         assert.deepEqual((await call('take_feedback', {})).items, [], 'once read back, it does not come back');
         const state = await call('get_state', {});
-        assert.ok(state.awaitingUserConfirmation.some((item) => item.id === taken.items[0].id));
+        assert.equal((await store.load(SCENARIO_ID)).feedback.find((item) => item.id === taken.items[0].id).state, 'applied', 'a read-back applies the item');
+        assert.ok(!state.readBackNotApplied.some((item) => item.id === taken.items[0].id));
         assert.equal(await code(call('record_interpretation', { feedbackId: 'FB-999', text: 'x' })), 'not_found');
         await store.update(SCENARIO_ID, (s) => suggestEdit(s, { sectionId: 'research-summary', markdown: 'Shorter summary', baseRevision: s.sections['research-summary'].revision }, new Date().toISOString()), { by: 'user' });
         await store.update(SCENARIO_ID, (s) => markChecklist(s, { phase: 'research', itemId: 'R5', verdict: 'needs-work', note: 'Name the storage risk.' }, new Date().toISOString()), { by: 'user' });

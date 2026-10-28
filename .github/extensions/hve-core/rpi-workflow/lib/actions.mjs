@@ -103,8 +103,8 @@ export const ACTION_DEFINITIONS = Object.freeze([
     },
     {
         name: 'record_interpretation',
-        description: 'Tell the user how you understood a sent feedback item and what it changes. Set applied true once the change is made: in the task files for a canvas that follows RPI files, or with canvas actions on the sample. Without applied, the user confirms the read-back or corrects it. Pass taskId whenever the message or take_feedback named more than one task; it is required then, because feedback IDs repeat across tasks.',
-        inputSchema: { type: 'object', properties: { taskId: str('Task the item belongs to, as the message or take_feedback named it'), feedbackId: str('Feedback ID such as FB-004'), text: str('Your interpretation in plain language'), effect: str('What changed, such as P02-T03 updated'), applied: { type: 'boolean' } }, required: ['feedbackId'], additionalProperties: false },
+        description: 'Tell the user how you understood a sent feedback item and what it changes, once you have made the change: in the task files for a canvas that follows RPI files, or with canvas actions on the sample. The read-back applies the item and moves it to the user\'s feedback history; the user does not confirm it, but can correct it, which sends you a correction item naming it in correctionOf. Pass applied false only to read back before you make the change, then record it again without applied once you have. Pass taskId whenever the message or take_feedback named more than one task; it is required then, because feedback IDs repeat across tasks.',
+        inputSchema: { type: 'object', properties: { taskId: str('Task the item belongs to, as the message or take_feedback named it'), feedbackId: str('Feedback ID such as FB-004'), text: str('Your interpretation in plain language'), effect: str('What changed, such as P02-T03 updated'), applied: { type: 'boolean', description: 'False only when you read back before making the change; omit otherwise' } }, required: ['feedbackId'], additionalProperties: false },
     },
     {
         name: 'update_task',
@@ -222,7 +222,7 @@ export function summarize(session) {
         decidedByAgent: view.decidedByAgent,
         pendingFeedback: byState('queued'),
         awaitingInterpretation: byState('sent'),
-        awaitingUserConfirmation: byState('interpreted'),
+        readBackNotApplied: byState('interpreted'),
         progress: view.progress,
         currentTask: session.implementation.current?.taskId ?? null,
     };
@@ -293,8 +293,8 @@ export function createActionHandlers(deps) {
             status: doc.task?.status ?? null,
             pendingFeedback: byState(doc.session, 'queued'),
             awaitingInterpretation: byState(doc.session, 'sent'),
-            awaitingUserConfirmation: byState(doc.session, 'interpreted'),
-        })).filter((task) => task.pendingFeedback.length || task.awaitingInterpretation.length || task.awaitingUserConfirmation.length);
+            readBackNotApplied: byState(doc.session, 'interpreted'),
+        })).filter((task) => task.pendingFeedback.length || task.awaitingInterpretation.length || task.readBackNotApplied.length);
     }
 
     /**

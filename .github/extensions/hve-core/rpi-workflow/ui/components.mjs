@@ -261,7 +261,7 @@ function suggestionCallout(ctx, section, item) {
     const where = ctx.data.session.source?.kind === 'rpi' ? 'The file' : 'The document';
     const status = pending
         ? `Waits in Review and send. ${where} changes when the agent applies it.`
-        : item.state === 'interpreted' ? 'The agent read it back. Check that it understood you.' : `${where} changes when the agent applies it.`;
+        : item.state === 'interpreted' ? 'The agent read it back and has not made the change yet. Correct it if it misunderstood you.' : `${where} changes when the agent applies it.`;
     const titleId = `suggestion-${item.id}-t`;
     const changes = typeof item.section?.diff === 'string'
         ? diffView(item.section.diff, `Your changes to ${section.title}`)
@@ -498,7 +498,8 @@ export function decisionCard(ctx, decision) {
         const history = feedback ? readBack(ctx, decision, feedback, 'You', { compact: true }) : null;
         const outcome = chosen?.label ?? (feedback?.text ? `“${feedback.text}”` : null);
         parts.push(h('p', { class: 'resolved-line' }, icon('check', { className: 'tone-success-fg' }), h('span', null, outcome ? ['Resolved: ', h('strong', { text: outcome })] : 'Resolved', decision.impact ? [' · ', mdInline(ctx, decision.impact, { doc: decision.phase })] : '')),
-            history ? disclosure(ctx, `history-${decision.id}`, 'history', 'How this was decided', history) : null);
+            history ? disclosure(ctx, `history-${decision.id}`, 'history', 'How this was decided', history) : null,
+            feedback && (feedback.state === 'applied' || feedback.state === 'interpreted') ? readBackActions(ctx, feedback, 'card') : null);
     }
     return withLabel(h('article', { class: ['card', 'decision', `is-${decision.status}`], id: `card-${decision.id}`, dataset: { item: decision.id }, tabindex: '-1' }, parts), decision);
 }
@@ -527,13 +528,16 @@ export function readBack(ctx, decision, feedback, youLabel, options = {}) {
     if (feedback.interpretation) {
         parts.push(voice('agent', 'Agent understood', [h('p', { text: feedback.interpretation.text }), feedback.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), feedback.interpretation.effect) : null], { reveal: fresh }));
     } else if (!options.compact && (feedback.state === 'queued' || feedback.state === 'sent')) {
-        parts.push(h('p', { class: 'waiting meta' }, icon(feedback.state === 'queued' ? 'inbox' : 'send'), feedback.state === 'queued' ? 'Not sent yet. It goes to the agent when you send it with Review and send.' : 'Sent. The agent will read back how it understood this.'));
+        const words = feedback.state === 'queued'
+            ? queuedForAgent(feedback) ? 'Queued for the agent. It collects this at its next checkpoint.' : 'Not sent yet. It goes to the agent when you send or queue it with Review and send.'
+            : feedback.pickedUpAt ? 'The agent has it and will read back how it understood this.' : 'Sent. The agent will read back how it understood this.';
+        parts.push(h('p', { class: 'waiting meta' }, icon(stageOf(ctx, feedback).badge.icon), words));
         if (feedback.state === 'queued') {
             const overriding = (origin ?? feedback).kind === 'override';
             parts.push(h('div', { class: 'btn-row' }, button(overriding ? 'Edit override' : 'Edit answer', { iconName: 'pencil', onClick: () => ctx.act.editAnswer(decision.id, feedback, origin) })));
         }
     }
-    if (!options.compact && feedback.state === 'interpreted') {
+    if (!options.compact && (feedback.state === 'interpreted' || feedback.state === 'applied')) {
         parts.push(readBackActions(ctx, feedback, 'card'));
     }
     return h('div', { class: 'readback' }, parts);
@@ -547,15 +551,16 @@ export function marginNote(ctx, item) {
         item.target?.quote ? h('blockquote', { class: 'note-quote' }, item.target.part ? h('span', { class: 'note-part', text: `${item.target.part.charAt(0).toUpperCase()}${item.target.part.slice(1)}` }) : null, h('span', { text: item.target.quote })) : null,
         voice('user', 'You', h('p', { text: item.text }), { meta: null }),
         item.interpretation ? voice('agent', 'Agent understood', [h('p', { text: item.interpretation.text }), item.interpretation.effect ? h('p', { class: 'effect' }, icon('arrow-right'), item.interpretation.effect) : null], { reveal: ctx.ui.revealed.has(item.id) }) : null,
-        item.state === 'interpreted' ? readBackActions(ctx, item, 'card') : null,
+        item.state === 'interpreted' || item.state === 'applied' ? readBackActions(ctx, item, 'card') : null,
         item.createdAt ? h('p', { class: 'meta' }, timeEl(item.createdAt, ctx.now)) : null);
 }
 
 /**
- * Looks right and Not what I meant, or the prefilled correction field when it is open here.
+ * Correct this, for an item the agent read back, or the prefilled correction field when it is
+ * open here. A correction is a new item that names the one it corrects and waits to be sent.
  *
  * @param {any} ctx
- * @param {any} item interpreted feedback item
+ * @param {any} item feedback item the agent read back
  * @param {'card' | 'row'} where the decision card or margin note, or the steering feedback row
  */
 function readBackActions(ctx, item, where) {
@@ -570,8 +575,7 @@ function readBackActions(ctx, item, where) {
                 button('Cancel', { attrs: { 'data-key': `cancel-correction-${item.id}` }, onClick: () => ctx.act.toggleCorrection(item.id, null) })));
     }
     return h('div', { class: 'btn-row' },
-        button('Looks right', { kind: 'primary', iconName: 'check', attrs: { 'data-key': `looks-right-${where}-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'applied') }),
-        button('Not what I meant', { iconName: 'undo', attrs: { 'data-key': `not-meant-${where}-${item.id}` }, onClick: () => ctx.act.toggleCorrection(item.id, item.text ?? '', where) }));
+        button('Correct this', { iconName: 'undo', title: `Tell the agent what you meant by ${item.id}; the correction waits in Review and send`, attrs: { 'data-key': `correct-${where}-${item.id}` }, onClick: () => ctx.act.toggleCorrection(item.id, item.text ?? '', where) }));
 }
 
 /** Simple accessible table inside a scrollable well. */
@@ -587,7 +591,37 @@ export function table(caption, headers, rows, options = {}) {
 const isSending = (ctx, item) => item.state === 'queued' && Boolean(item.deliveringSince) && ctx.now - Date.parse(item.deliveringSince) < 10 * 60 * 1000;
 const SENDING = Object.freeze({ icon: 'send', label: 'Sending', tone: 'accent' });
 const QUEUED = Object.freeze({ icon: 'clock', label: 'Queued for the agent', tone: 'agent' });
-const DELIVERY_WORDS = Object.freeze({ send: 'sent as a message', queue: 'collected by the agent', attach: 'attached to a message' });
+const HAS_IT = Object.freeze({ icon: 'sparkle', label: 'The agent has it', tone: 'agent' });
+const DELIVERY_WORDS = Object.freeze({ send: 'as a chat message', queue: 'collected by the agent', attach: 'attached to a message' });
+const PICKUP_WORDS = Object.freeze({ steering: 'at its next step', idle: 'in a new turn', queued: 'after its turn', collected: 'collected from the canvas' });
+
+/**
+ * Where an item is and since when: its badge, the time it got there, and a few words on how.
+ * Not sent, Queued for the agent, Sent, The agent has it, then Read back, Corrected, or Removed.
+ *
+ * @param {any} ctx
+ * @param {any} item
+ * @returns {{ badge: { icon: string, label: string, tone: string }, at: string | null, words: string | null }}
+ */
+export function stageOf(ctx, item) {
+    if (isSending(ctx, item)) return { badge: SENDING, at: item.deliveringSince, words: null };
+    if (item.state === 'queued') {
+        return queuedForAgent(item)
+            ? { badge: QUEUED, at: item.queuedForAgentAt ?? null, words: "for the agent's next checkpoint" }
+            : { badge: FEEDBACK_STATE.queued, at: item.updatedAt ?? item.createdAt ?? null, words: null };
+    }
+    if (item.state === 'sent') {
+        return item.pickedUpAt
+            ? { badge: HAS_IT, at: item.pickedUpAt, words: PICKUP_WORDS[item.pickedUpHow] ?? null }
+            : { badge: FEEDBACK_STATE.sent, at: item.sentAt ?? item.updatedAt ?? null, words: DELIVERY_WORDS[item.delivery] ?? null };
+    }
+    if (item.state === 'interpreted') return { badge: FEEDBACK_STATE.interpreted, at: item.interpretation?.at ?? item.updatedAt ?? null, words: 'the change is not made yet' };
+    if (item.state === 'corrected') {
+        const follow = ctx.data.session.feedback.find((entry) => entry.correctionOf === item.id);
+        return { badge: FEEDBACK_STATE.corrected, at: item.updatedAt ?? null, words: follow ? `your correction is ${follow.id}` : null };
+    }
+    return { badge: FEEDBACK_STATE[item.state] ?? FEEDBACK_STATE.queued, at: item.updatedAt ?? item.createdAt ?? null, words: null };
+}
 
 /** What a feedback item is about, as the steering panel and the send dialog name it. */
 function feedbackTarget(ctx, item) {
@@ -718,22 +752,21 @@ function feedbackRow(ctx, item, group) {
     if (queued) {
         actions.push(button('Take back', { iconName: 'undo', title: `Keep ${item.id} here instead of giving it to the agent at its next checkpoint`, attrs: { 'data-key': `take-back-${item.id}` }, onClick: () => ctx.act.takeBack(group.taskId, item) }));
     }
-    if (item.state === 'interpreted') {
+    if (item.state === 'interpreted' || item.state === 'applied') {
         if (item.target?.type === 'decision') {
-            actions.push(button('Looks right', { iconName: 'check', kind: 'primary', attrs: { 'data-key': `looks-right-row-${item.id}` }, onClick: () => ctx.act.transition(item.id, 'applied') }),
-                button('Not what I meant', { iconName: 'undo', attrs: { 'data-key': `not-meant-row-${item.id}` }, onClick: () => ctx.act.openDecisionCorrection(item) }));
+            actions.push(button('Correct this', { iconName: 'undo', title: `Correct ${item.id} on its decision card; the correction waits in Review and send`, attrs: { 'data-key': `correct-row-${item.id}` }, onClick: () => ctx.act.openDecisionCorrection(item) }));
         } else {
             readBack = readBackActions(ctx, item, 'row');
         }
     }
-    const how = queued ? "for the agent's next checkpoint" : item.delivery && item.state !== 'queued' ? DELIVERY_WORDS[item.delivery] : null;
+    const stage = stageOf(ctx, item);
     const tools = feedbackActions(ctx, 'steer', group, item);
     return h('li', { class: 'fb-item', dataset: { item: item.id } },
-        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(sending ? SENDING : queued ? QUEUED : FEEDBACK_STATE[item.state]), tools.length && !editing ? h('span', { class: 'fb-tools' }, tools) : null),
+        h('div', { class: 'fb-head' }, icon(kind.icon), h('span', { class: 'fb-kind' }, kind.label, feedbackTarget(ctx, item)), badge(stage.badge), tools.length && !editing ? h('span', { class: 'fb-tools' }, tools) : null),
         item.optionLabel ? h('p', { class: 'fb-text' }, h('strong', { text: item.optionLabel })) : null,
         editing ? feedbackEditor(ctx, 'steer', group.taskId, item) : item.text ? h('p', { class: 'fb-text', text: excerpt(item.text, 160) }) : null,
         item.interpretation ? h('p', { class: 'fb-interp' }, icon('sparkle'), h('span', { text: item.interpretation.text })) : null,
-        h('p', { class: 'fb-meta meta' }, h('span', { class: 'id-chip', text: item.id }), ' ', timeEl(item.updatedAt ?? item.createdAt, ctx.now), how ? ` · ${how}` : ''),
+        h('p', { class: 'fb-meta meta' }, h('span', { class: 'id-chip', text: item.id }), ' ', timeEl(stage.at, ctx.now), stage.words ? ` · ${stage.words}` : ''),
         actions.length ? h('div', { class: 'btn-row' }, actions) : null,
         readBack);
 }
@@ -755,18 +788,14 @@ function steerSection(id, title, count, content, options = {}) {
 export function steerPanel(ctx) {
     const { session, view } = ctx.data;
     const phaseLabel = (phase) => PHASE_META[phase]?.label ?? phase;
-    const waiting = view.interpretations.map((id) => session.feedback.find((item) => item.id === id)).filter(Boolean);
     const decisionOf = (id) => session.decisions.find((decision) => decision.id === id);
     const steerCard = (decision) => h('li', { class: 'steer-card' }, decisionCard(ctx, decision));
     const refOf = (id) => decisionOf(id)?.ref ?? id;
     const needs = h('ul', { class: 'steer-list' },
         view.needsYou.map((item) => (hasMarginHome(ctx, decisionOf(item.id)) ? h('li', null,
             h('button', { type: 'button', class: 'steer-link', dataset: { key: `needs-${item.id}` }, onclick: () => ctx.act.navigate(item.id) },
-                icon('hand', { className: 'tone-attention-fg' }), h('span', { class: 'steer-link-text' }, idTag(refOf(item.id), 'go-to'), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))),
-        waiting.map((item) => h('li', null,
-            h('button', { type: 'button', class: 'steer-link', dataset: { key: `check-${item.id}` }, onclick: () => ctx.act.navigate(item.target?.type === 'decision' ? item.target.id : item.id) },
-                icon('sparkle', { className: 'tone-agent-fg' }), h('span', { class: 'steer-link-text' }, 'Check how the agent read ', idTag(item.id, 'go-to')), h('span', { class: 'meta', text: phaseLabel(item.target?.phase) })))));
-    const needsCount = view.needsYou.length + waiting.length;
+                icon('hand', { className: 'tone-attention-fg' }), h('span', { class: 'steer-link-text' }, idTag(refOf(item.id), 'go-to'), ' ', item.title), h('span', { class: 'meta', text: phaseLabel(item.phase) }))) : steerCard(decisionOf(item.id)))));
+    const needsCount = view.needsYou.length;
     // Recorded decisions show as two counts, the agent's and yours, each going to the first such
     // decision, in the viewed phase when it has one. A decision with no row to sit beside keeps its card.
     const agentDecisions = view.decidedByAgent.map((item) => decisionOf(item.id)).filter(Boolean);
@@ -799,7 +828,7 @@ export function steerPanel(ctx) {
             : h('p', { class: 'empty', text: agentQueue.length ? 'Nothing waits for you to send. What you queued is below.' : 'Nothing waiting to send. Your answers, comments, suggested edits, and checklist reviews collect here until you send or queue them with Review and send at the top of the canvas.' }),
         agentQueue.length ? [h('h4', { class: 'group-title', text: `Queued for the agent (${agentQueue.length})` }), h('p', { class: 'meta group-hint', text: 'The agent collects these at its next checkpoint: when it changes phase, finishes a task, asks you something, or ends its turn.' }), h('ul', { class: 'fb-list' }, agentQueue.map((item) => feedbackRow(ctx, item, loop)))] : null,
         inFlight.length ? [h('h4', { class: 'group-title', text: `With the agent (${inFlight.length})` }), h('ul', { class: 'fb-list' }, inFlight.map((item) => feedbackRow(ctx, item, loop)))] : null,
-        earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Earlier feedback (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item, loop)))) : null);
+        earlier.length ? disclosure(ctx, 'earlier-feedback', 'earlier', `Feedback history (${earlier.length})`, h('ul', { class: 'fb-list' }, earlier.slice().reverse().map((item) => feedbackRow(ctx, item, loop)))) : null);
 
     return [
         steerSection('needs', 'Needs your input', needsCount, needsCount ? needs : h('p', { class: 'empty', text: 'Nothing needs you right now. Decisions the agent asks you about appear here.' }), { iconName: 'hand', className: needsCount ? 'has-items' : null }),

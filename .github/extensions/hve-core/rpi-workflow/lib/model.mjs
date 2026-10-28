@@ -33,7 +33,7 @@ export const FEEDBACK_TRANSITIONS = Object.freeze({
     sent: Object.freeze(['interpreted', 'applied']),
     interpreted: Object.freeze(['applied', 'corrected']),
     corrected: Object.freeze([]),
-    applied: Object.freeze([]),
+    applied: Object.freeze(['corrected']),
     dismissed: Object.freeze([]),
 });
 
@@ -1082,7 +1082,8 @@ export function recordInterpretation(session, input, now) {
     if (!input || typeof input !== 'object') {
         fail('invalid_input', 'Interpretation input must be an object.');
     }
-    if (input.applied === true) {
+    // A read-back applies the item unless the agent says it has not made the change yet.
+    if (input.applied !== false) {
         const interpreted = input.text ? transitionFeedback(session, input.feedbackId, 'interpreted', { by: 'agent', interpretation: { text: input.text, effect: input.effect } }, now).session : session;
         return transitionFeedback(interpreted, input.feedbackId, 'applied', { by: 'agent' }, now);
     }
@@ -1605,28 +1606,22 @@ export function deriveView(session) {
     const decidedByAgent = session.decisions
         .filter((decision) => decision.owner === 'agent' && (decision.status === 'decided' || decision.status === 'override-pending'))
         .map((decision) => ({ id: decision.id, phase: decision.phase, title: decision.title, status: decision.status }));
-    const interpretations = session.feedback.filter((item) => item.state === 'interpreted').map((item) => item.id);
+    // Read-backs need no confirmation; they are listed so the page can announce new ones.
+    const readBacks = session.feedback.filter((item) => (item.state === 'interpreted' || item.state === 'applied') && item.interpretation).map((item) => item.id);
     const feedbackByState = Object.fromEntries(FEEDBACK_STATES.map((state) => [state, session.feedback.filter((item) => item.state === state).map((item) => item.id)]));
     const needsYouByPhase = Object.fromEntries(PHASES.map((phase) => [phase, 0]));
     for (const item of needsYou) {
         needsYouByPhase[item.phase] = (needsYouByPhase[item.phase] ?? 0) + 1;
-    }
-    for (const id of interpretations) {
-        const item = byId(session.feedback, id);
-        const phase = item?.target?.phase;
-        if (phase && own(needsYouByPhase, phase)) {
-            needsYouByPhase[phase] += 1;
-        }
     }
     const tasks = (session.plan.phases ?? []).flatMap((phase) => phase.tasks ?? []);
     const progress = { done: tasks.filter((task) => task.status === 'done').length, total: tasks.length };
     return {
         needsYou,
         decidedByAgent,
-        interpretations,
+        readBacks,
         feedbackByState,
         needsYouByPhase,
-        attentionCount: needsYou.length + interpretations.length,
+        attentionCount: needsYou.length,
         progress,
         traces: buildTraces(session),
     };

@@ -76,17 +76,24 @@ describe('feedback lifecycle', () => {
         session = undefined;
     });
 
-    it('answers a decision, reads back, and resolves on Looks right', () => {
+    it('answers a decision, and a read-back resolves it without asking the user to confirm', () => {
         let s = base();
         const created = createFeedback(s, { kind: 'answer', target: { id: 'D2' }, optionId: 'a', text: 'Keep both photos.' }, NOW);
         s = created.session;
         assert.equal(s.decisions.find((d) => d.id === 'D2').status, 'answered');
         const taken = takeFeedback(s, NOW);
         assert.deepEqual(taken.result.map((item) => item.id), [created.result.id]);
+        const early = recordInterpretation(taken.session, { feedbackId: created.result.id, text: 'Queue same-field conflicts.', applied: false }, NOW).session;
+        assert.equal(early.feedback.find((item) => item.id === created.result.id).state, 'interpreted', 'applied false reads back before the change');
         s = recordInterpretation(taken.session, { feedbackId: created.result.id, text: 'Queue same-field conflicts.', effect: 'Adds P02-T03' }, NOW).session;
-        assert.ok(deriveView(s).interpretations.includes(created.result.id));
-        s = transitionFeedback(s, created.result.id, 'applied', {}, NOW).session;
+        assert.equal(s.feedback.find((item) => item.id === created.result.id).state, 'applied');
         assert.equal(s.decisions.find((d) => d.id === 'D2').status, 'resolved');
+        const view = deriveView(s);
+        assert.ok(view.readBacks.includes(created.result.id));
+        assert.equal(view.attentionCount, view.needsYou.length, 'read-backs do not need the user');
+        const corrected = transitionFeedback(s, created.result.id, 'corrected', { correction: 'Keep one photo.' }, NOW);
+        assert.equal(corrected.result.correctionOf, created.result.id, 'a correction from the history names the item');
+        assert.equal(corrected.session.decisions.find((d) => d.id === 'D2').status, 'answered', 'and reopens the decision until the agent reads it back');
     });
 
     it('creates a prefilled correction linked to the original', () => {

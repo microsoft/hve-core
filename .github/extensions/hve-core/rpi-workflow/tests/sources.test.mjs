@@ -481,7 +481,7 @@ describe('actions on a canvas that follows RPI files', () => {
         assert.deepEqual([read.taskId, read.state], [CHILD_TASK, 'applied']);
         assert.equal((await store.load(instance.sessionId)).feedback.find((entry) => entry.id === mine.id).state, 'sent', 'the root item is untouched');
         const unique = await call('record_interpretation', { feedbackId: mine.id, text: 'Root noted' });
-        assert.deepEqual([unique.taskId, unique.state], [ROOT_TASK, 'interpreted'], 'once only one task waits, the ID is enough');
+        assert.deepEqual([unique.taskId, unique.state], [ROOT_TASK, 'applied'], 'once only one task waits, the ID is enough, and the read-back applies it');
         assert.equal(await codeOf(() => call('record_interpretation', { taskId: 'nope', feedbackId: mine.id })), 'not_found');
         const third = await add(other.sessionId, 'Sent with others');
         await store.update(other.sessionId, (current) => markDelivered(current, [third.id], 'send', NOW, { tasks: 2 }), { by: 'user' });

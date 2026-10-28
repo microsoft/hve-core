@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import { agentEditSection, createFeedback, ModelError, recordActivity, takeFeedback, upsertDecision } from '../lib/model.mjs';
+import { agentEditSection, createFeedback, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { clientInfoFrom, createCanvasServer, MAX_BODY, renderShell } from '../lib/server.mjs';
 import { createStore } from '../lib/store.mjs';
@@ -105,10 +105,16 @@ describe('page routes', () => {
         const sneaky = await request(url, { method: 'POST', pathname: '/api/feedback/transition', body: { id: created.json.item.id, to: 'sent' } });
         assert.equal(sneaky.status, 409);
         const interpreted = state.json.session.feedback.find((item) => item.state === 'interpreted');
-        const applied = await request(url, { method: 'POST', pathname: '/api/feedback/transition', body: { id: interpreted.id, to: 'applied' } });
-        assert.equal(applied.json.item.state, 'applied');
+        assert.equal((await request(url, { method: 'POST', pathname: '/api/feedback/transition', body: { id: interpreted.id, to: 'applied' } })).status, 409, 'read-backs need no confirmation');
+        const corrected = await request(url, { method: 'POST', pathname: '/api/feedback/transition', body: { id: interpreted.id, to: 'corrected', correction: 'I meant the other one.' } });
+        assert.equal(corrected.json.item.kind, 'correction');
+        assert.equal(corrected.json.item.correctionOf, interpreted.id);
+        const done = createFeedback(await store.load(session.id), { kind: 'comment', text: 'Applied already' }, new Date().toISOString());
+        await store.update(session.id, () => recordInterpretation(takeFeedback(done.session, new Date().toISOString()).session, { feedbackId: done.result.id, text: 'Done.' }, new Date().toISOString()), { by: 'agent' });
+        const fromHistory = await request(url, { method: 'POST', pathname: '/api/feedback/transition', body: { id: done.result.id, to: 'corrected', correction: 'Not quite.' } });
+        assert.equal(fromHistory.json.item.correctionOf, done.result.id, 'an item in the history can still be corrected');
         const stored = await store.load(session.id);
-        assert.equal(stored.scenario.userChanges, 2);
+        assert.equal(stored.scenario.userChanges, 3);
         await server.stop();
         store.close();
     });

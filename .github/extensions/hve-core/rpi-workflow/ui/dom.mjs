@@ -178,8 +178,8 @@ export const FEEDBACK_STATE = vocab([
     ['draft', 'pencil', 'Draft', 'muted'],
     ['queued', 'inbox', 'Not sent', 'accent'],
     ['sent', 'send', 'Sent', 'accent'],
-    ['interpreted', 'sparkle', 'Interpreted', 'agent'],
-    ['applied', 'check', 'Applied', 'success'],
+    ['interpreted', 'sparkle', 'Read back', 'agent'],
+    ['applied', 'check', 'Read back', 'success'],
     ['corrected', 'undo', 'Corrected', 'attention'],
     ['dismissed', 'x', 'Removed', 'muted'],
 ]);

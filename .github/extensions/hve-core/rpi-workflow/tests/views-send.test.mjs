@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
-import { agentEditSection, claimDelivery, createFeedback, markChecklist, markDelivered, queueForAgent, recordInterpretation, suggestEdit } from '../lib/model.mjs';
+import { agentEditSection, claimDelivery, createFeedback, markChecklist, markDelivered, markPickedUp, queueForAgent, recordInterpretation, suggestEdit, takeFeedback, transitionFeedback } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { elements, installFakeDom, serialize } from './helpers/fake-dom.mjs';
 import { rootSession } from './helpers/rpi-fixture.mjs';
@@ -107,10 +107,12 @@ describe('suggested edits', () => {
         assert.match(textOf(sendingOut), /Sending/);
         assert.doesNotMatch(sendingOut, /edit-suggestion-/);
         session = markDelivered(session, [id], 'send', NOW).session;
-        session = recordInterpretation(session, { feedbackId: id, text: 'Add the line to the summary.' }, NOW).session;
+        session = recordInterpretation(session, { feedbackId: id, text: 'Add the line to the summary.', applied: false }, NOW).session;
         const readBack = html(components.sectionBody(makeContext(session, 'research'), 'research-summary'));
         assert.match(textOf(readBack), /Agent understood Add the line to the summary\./);
-        assert.match(readBack, new RegExp(`data-key="looks-right-card-${id}"`));
+        assert.match(textOf(readBack), /The agent read it back and has not made the change yet\. Correct it if it misunderstood you\./);
+        assert.match(readBack, new RegExp(`data-key="correct-card-${id}"`));
+        assert.doesNotMatch(readBack, /Looks right/);
     });
 
     it('say the file changes for a real session, and show text saved before suggestions', () => {
@@ -314,6 +316,46 @@ describe('send dialog', () => {
         assert.match(out, /Your feedback 2/, 'the count includes queued items');
         const onlyQueued = queueForAgent(session, [session.feedback.at(-2).id], NOW).session;
         assert.match(textOf(html(components.steerPanel(makeContext(onlyQueued, 'research')))), /Nothing waits for you to send\. What you queued is below\./);
+    });
+
+    it('shows where each item is and since when, and keeps read-backs in Feedback history with Correct this', () => {
+        let session = rootSession().session;
+        const add = (text) => {
+            const made = createFeedback(session, { kind: 'comment', text, target: { id: 'F1' } }, NOW);
+            session = made.session;
+            return made.result.id;
+        };
+        const collected = add('Collected');
+        session = takeFeedback(session, NOW).session;
+        const [notSent, queued, sent, picked, applied, early, corrected] = ['Not sent', 'Queued', 'Sent', 'Picked up', 'Applied', 'Early', 'Corrected'].map(add);
+        session = queueForAgent(session, [queued], NOW).session;
+        session = markDelivered(session, [sent, picked, applied, early, corrected], 'send', NOW, { messageId: 'm1' }).session;
+        session = markPickedUp(session, [picked], { at: NOW, how: 'steering' }, NOW).session;
+        session = recordInterpretation(session, { feedbackId: applied, text: 'Done as asked.' }, NOW).session;
+        session = recordInterpretation(session, { feedbackId: early, text: 'Will do.', applied: false }, NOW).session;
+        session = recordInterpretation(session, { feedbackId: corrected, text: 'Done.' }, NOW).session;
+        const fix = transitionFeedback(session, corrected, 'corrected', { correction: 'Not that.' }, NOW);
+        session = fix.session;
+        const ctx = makeContext(session, 'research');
+        const stage = (id) => {
+            const found = components.stageOf(ctx, session.feedback.find((item) => item.id === id));
+            return [found.badge.label, found.words];
+        };
+        assert.deepEqual(stage(notSent), ['Not sent', null]);
+        assert.deepEqual(stage(queued), ['Queued for the agent', "for the agent's next checkpoint"]);
+        assert.deepEqual(stage(sent), ['Sent', 'as a chat message']);
+        assert.deepEqual(stage(picked), ['The agent has it', 'at its next step']);
+        assert.deepEqual(stage(collected), ['The agent has it', 'collected from the canvas']);
+        assert.deepEqual(stage(early), ['Read back', 'the change is not made yet']);
+        assert.deepEqual(stage(applied), ['Read back', null]);
+        assert.deepEqual(stage(corrected), ['Corrected', `your correction is ${fix.result.id}`]);
+        const steer = components.steerPanel(ctx);
+        const out = textOf(html(steer));
+        assert.match(out, /With the agent \(4\)/, 'sent, picked up, collected, and read back but not made yet');
+        assert.match(out, /Feedback history \(2\)/);
+        assert.ok(keyed(steer, `correct-row-${applied}`) && keyed(steer, `correct-row-${early}`), 'read-backs can be corrected, in the history too');
+        assert.equal(keyed(steer, `correct-row-${sent}`), null, 'not before the agent reads it back');
+        assert.doesNotMatch(out, /Looks right|Check how the agent read/);
     });
 
     it('shows a composer failure beside the text it keeps', () => {

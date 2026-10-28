@@ -65,7 +65,7 @@ export const MAX_BODY = 16 * 1024;
 const HEARTBEAT_MS = 15000;
 const THEMES = new Set(['system', 'light', 'dark']);
 const CONTRASTS = new Set(['standard', 'more']);
-const USER_TRANSITIONS = Object.freeze({ draft: ['queued', 'dismissed'], queued: ['dismissed'], interpreted: ['applied', 'corrected'] });
+const USER_TRANSITIONS = Object.freeze({ draft: ['queued', 'dismissed'], queued: ['dismissed'], interpreted: ['corrected'], applied: ['corrected'] });
 const MARK_ATTEMPTS = 3;
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 

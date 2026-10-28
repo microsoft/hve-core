@@ -359,6 +359,13 @@ async function travel(direction) {
 
 // Data sync
 
+/** IDs as a short list for announcements: "FB-001", "FB-001 and FB-002", or the first three and how many more. */
+function listIds(ids) {
+    if (ids.length <= 2) return ids.join(' and ');
+    if (ids.length === 3) return `${ids[0]}, ${ids[1]}, and ${ids[2]}`;
+    return `${ids.slice(0, 3).join(', ')}, and ${ids.length - 3} more`;
+}
+
 function announceChanges(previous, next, moved = false) {
     if (!previous) return;
     const messages = [];
@@ -366,13 +373,14 @@ function announceChanges(previous, next, moved = false) {
     for (const item of next.view.needsYou) {
         if (!before.has(item.id)) messages.push(`${item.id} needs your input: ${item.title}.`);
     }
-    const interpreted = new Set(previous.view.interpretations);
-    for (const id of next.view.interpretations) {
-        if (!interpreted.has(id)) {
-            state.ui.revealed.add(id);
-            messages.push(`The agent read back ${id}. Check that it understood you.`);
-        }
-    }
+    // Where sent items are, said politely: the agent picking them up, then reading them back.
+    const hadIt = new Set(previous.session.feedback.filter((item) => item.pickedUpAt).map((item) => item.id));
+    const picked = next.session.feedback.filter((item) => item.pickedUpAt && item.state === 'sent' && !hadIt.has(item.id)).map((item) => item.id);
+    if (picked.length) messages.push(`The agent has ${listIds(picked)}.`);
+    const readBefore = new Set(previous.view.readBacks ?? []);
+    const read = (next.view.readBacks ?? []).filter((id) => !readBefore.has(id));
+    for (const id of read) state.ui.revealed.add(id);
+    if (read.length) messages.push(`The agent read back ${listIds(read)}. ${read.length === 1 ? 'It is' : 'They are'} in Your feedback, where you can correct ${read.length === 1 ? 'it' : 'them'}.`);
     if (previous.session.session.activePhase !== next.session.session.activePhase) {
         messages.push(`The agent moved to ${PHASE_META[next.session.session.activePhase].label}${moved ? '; the canvas moved with it' : ''}.`);
     }
@@ -721,7 +729,7 @@ const act = {
         const open = state.ui.corrections.get(id);
         state.ui.corrections.set(id, { text, where: open?.where ?? 'card' });
     },
-    /** Not what I meant on a decision's feedback row corrects it on the decision card. */
+    /** Correct this on a decision's feedback row corrects it on the decision card. */
     openDecisionCorrection(item) {
         state.ui.corrections.set(item.id, { text: item.text ?? '', where: 'card' });
         navigate(item.target.id);
@@ -2015,17 +2023,12 @@ function onKeydown(event) {
     event.preventDefault();
 }
 
-/** Waiting items in phase order, decisions before read-backs, then in the files' order. */
+/** Decisions waiting for you in phase order, then in the files' order. */
 function attentionItems() {
     const { view } = state.data;
-    const decisions = view.needsYou.map((item, index) => ({ id: item.id, phase: item.phase, rank: 0, index }));
-    const readBacks = view.interpretations.map((id, index) => {
-        const item = find(id);
-        const target = item?.target?.type === 'decision' ? item.target.id : id;
-        return { id: target, phase: item?.target?.phase ?? resolve(target)?.phase ?? 'research', rank: 1, index };
-    });
     const order = (phase) => (PHASES.includes(phase) ? PHASES.indexOf(phase) : PHASES.length);
-    return [...decisions, ...readBacks].sort((a, b) => order(a.phase) - order(b.phase) || a.rank - b.rank || a.index - b.index).map((item) => item.id);
+    return view.needsYou.map((item, index) => ({ id: item.id, phase: item.phase, index }))
+        .sort((a, b) => order(a.phase) - order(b.phase) || a.index - b.index).map((item) => item.id);
 }
 
 /**
