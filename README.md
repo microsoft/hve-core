@@ -2,7 +2,7 @@
 title: HVE Core
 description: Agentic SDLC framework for context management, governance, shift-left engineering, reusable organizational knowledge, and consistent practices across teams
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-28
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -96,6 +96,7 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 | [Plugin Inventory](docs/plugins/hve-core.md)                     | One-plugin identity and included capabilities    |
 | [Package Migration](docs/getting-started/package-migration.md)   | Move from retired distribution identities        |
 | [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
+| [RPI Workflow Canvas](docs/rpi/rpi-workflow-canvas.md)           | Follow and steer an RPI session beside the chat  |
 | [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts  |
 | [Agents Reference](.github/CUSTOM-AGENTS.md)                     | All available agents                             |
 | [Instructions Reference](.github/instructions/README.md)         | All coding instructions                          |
