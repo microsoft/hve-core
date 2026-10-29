@@ -295,7 +295,7 @@ A plan that changes one or two parts and no connections needs no map. Under `## 
 
 ### Labels and tags
 
-* A new or changed part has a bold name, then one short clause saying what it does after the change, then a tag line. A removed part, in Before, has a bold name and its tag line.
+* In After, a new or changed part has a bold name, then one short clause saying what it does after the change, then a tag line. In Before, a changed or removed part has a bold name and its tag line, with no clause.
 * A tag line names the change and the phases that make it: `new · P01`, `changed · P01, P03`, or `removed · P02`. A new box has a tag line under its title, such as `new file · P01`; write `class`, `module`, `folder`, or `document` in place of `file` when that fits.
 * A part that stays the same has its plain name, with no bold, clause, or tag.
 * Write code names, such as files, functions, classes, and settings, in `<code>`. Never put a backtick inside a label: Mermaid wraps formatted labels in backticks, so one inside ends the label early and stops the whole diagram from rendering.
@@ -335,7 +335,7 @@ Before the critique, check each diagram and fix it until every answer is yes:
 2. Does it hold at most about 10 parts and 4 boxes, with unchanged parts only where a changed part connects to them?
 3. Does every arrow have an active verb, and does every arrow point from the part that acts?
 4. Do arrows run from box to box in one direction, apart from tests and docs?
-5. Does every new and changed part have a bold name, one short clause, and a tag naming real phases?
+5. In After, does every new and changed part have a bold name, one short clause, and a tag naming real phases? In Before, does every changed and removed part have a bold name and such a tag?
 6. Does Before appear only because connections change?
 7. Do the key and the walk-through follow After?
 8. When a preview is available, such as the VS Code Markdown preview, do labels, box titles, marks, and arrows read in light and dark without overlapping? Otherwise record that rendering was not checked.

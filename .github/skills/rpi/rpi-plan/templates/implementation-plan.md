@@ -23,7 +23,7 @@
 
 ## Phase Checklist
 
-<!-- Add the change map once the phases are stable and before the critique runs. Follow Change map in references/planning.md: one question in at most about 10 parts and 4 boxes, arrows from the part that acts with active verbs, boxes as layers from left to right, a clause and a tag on every new or changed part, border marks, and no fills, fonts, init line, front matter, edge IDs, or backticks inside labels. Run its check list. A plan that changes one or two parts and no connections replaces the map with one sentence naming them. -->
+<!-- Add the change map once the phases are stable and before the critique runs. Follow Change map in references/planning.md: one question in at most about 10 parts and 4 boxes, arrows from the part that acts with active verbs, boxes as layers from left to right, a clause and a tag on every new or changed part in After and a tag alone in Before, border marks, and no fills, fonts, init line, front matter, edge IDs, or backticks inside labels. Run its check list. A plan that changes one or two parts and no connections replaces the map with one sentence naming them. -->
 
 ### Before
 
@@ -237,7 +237,7 @@ Record the critique setting, status, verdict, finding dispositions, and any expl
 * [ ] Code, commands, and symbols use backticks. Existing files and folders are Markdown links whose text is the workspace-relative path and whose destination resolves from this plan file.
 * [ ] The change map answers one question in at most about 10 parts and 4 boxes, with unchanged parts only where a changed part connects to them, or the plan changes one or two parts and no connections and names them in one sentence instead.
 * [ ] Every arrow has an active verb and points from the part that acts, and boxes show where changes land, ordered so arrows run one way. Before appears only because connections change, in After's boxes with After's part IDs, and After shows the intended result of all phases.
-* [ ] Every new, changed, or removed part has its border class and a tag naming real phases, and each new or changed part has a bold name and one short clause. Each diagram has `accTitle` and `accDescr` and no fills, fonts, `%%{init}%%` line, front matter, edge IDs, or backticks inside labels. The key and walk-through follow After, and rendering in light and dark was checked, or the preview limitation is recorded.
+* [ ] Every new, changed, or removed part has its border class and a tag naming real phases; each new or changed part in After has a bold name and one short clause, and each changed or removed part in Before has a bold name and its tag. Each diagram has `accTitle` and `accDescr` and no fills, fonts, `%%{init}%%` line, front matter, edge IDs, or backticks inside labels. The key and walk-through follow After, and rendering in light and dark was checked, or the preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
 * [ ] The critique setting and provenance are recorded. The critique ran on the implementation-ready plan or was skipped by user or parent direction, and every `PC-xxx` has a disposition or accepted residual risk.
 * [ ] Readiness does not rely on a critique that returned no result.
