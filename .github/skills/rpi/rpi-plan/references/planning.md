@@ -289,6 +289,7 @@ A plan that changes one or two parts and no connections needs no map. Under `## 
 * Group parts in boxes for where each change lands: the folder, module, file, or document a reader would open. Title each box with its workspace-relative path in `<code>`; a class box names its file too. A long path may be shortened from the left to the part a reader would search for, such as `<code>rpi-workflow/ui/</code>`, as long as every box title in the map stays unique.
 * Order boxes as layers, so arrows run from one box to the next: callers first, then what they use.
 * Use `flowchart LR` by default, with callers to the left of what they use. Use `flowchart TB` only when the boxes form stacked layers, each holding several parts under a short title: Mermaid puts each box title at the top of its box, where top-to-bottom arrows and their labels arrive.
+* When an arrow, a label, or a part covers a box title in the preview, try the other direction and keep whichever reads more clearly.
 * Use one level of boxes by default. Use a second level, such as a folder holding files or a file holding classes, only when a complex plan reads better with it, and never a third.
 * Declare each part inside its box, and write every arrow after the last box, so Mermaid and the RPI Workflow canvas place each part in the same box.
 
