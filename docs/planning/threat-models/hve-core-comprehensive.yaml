@@ -1,6 +1,6 @@
 # cspell:ignore azspeech customercards docproc exfiltrated fileperms ghapi ghmcp ghscan
 # cspell:ignore interactor logsink misdrive noredirect reposcan retargets
-# cspell:ignore securityplanning tokencache webscan
+# cspell:ignore securityplanning tokencache videogif webscan
 # cspell:ignore deltacum deltatocumulative grafana jsonc lgtm otel otlp promql traceql
 # cspell:ignore tagpin pyroscope
 # HVE Core comprehensive threat-model spec
@@ -147,7 +147,7 @@ assets:
   - id: asset-docproc
     name: Document-processing content and render outputs
     kind: data
-    description: Customer-card content.yaml generated from Design Thinking artifacts.
+    description: Customer-card content.yaml generated from Design Thinking artifacts and local media conversion artifacts.
     sensitivity: internal
     category: Content
   - id: asset-code-scan
@@ -240,6 +240,10 @@ components:
     name: GitHub REST API
     kind: external_interactor
     trust_zone_id: tz-github
+  - id: ext-ffmpeg
+    name: FFmpeg / ffprobe
+    kind: external_interactor
+    trust_zone_id: tz-dev
   - id: ext-axe
     name: axe-core / Headless Browser
     kind: external_interactor
@@ -320,6 +324,11 @@ components:
     name: TTS Voice-Over Skill CLI
     kind: process
     asset_ids: [asset-speaker-notes]
+    trust_zone_id: tz-dev
+  - id: comp-videogif
+    name: Video-to-GIF Skill Runtime
+    kind: process
+    asset_ids: [asset-docproc]
     trust_zone_id: tz-dev
   - id: comp-customercards
     name: Customer Card Render Skill Runtime
@@ -462,12 +471,15 @@ representations:
       name: Document processing
       description: >-
         The customer-card-render skill processes local Design Thinking content
-        into slide content YAML.
+        into slide content YAML, and the video-to-gif skill hands local media to
+        FFmpeg for conversion.
       trust_zone_ids: [tz-dev]
-      flows: [flow-31]
+      flows: [flow-18, flow-31, flow-33]
       elements:
         - { id: ext-dev }
         - { id: comp-customercards }
+        - { id: comp-videogif }
+        - { id: ext-ffmpeg }
     - id: dom-reposcan
       name: Repository scanning and VEX gate evaluation
       description: >-
@@ -695,6 +707,18 @@ data_flows:
     data_sensitivity: confidential
     retention: operator-managed
     notes: Redacted operational logs (_redact / _REDACT_KEYS pipeline).
+  - id: flow-18
+    source_ref: comp-videogif
+    target_ref: ext-ffmpeg
+    ordinal: 18
+    label: transcode media
+    transport: local process invocation
+    encryption: n/a (local)
+    authentication: workstation user
+    authorization: operator-controlled input path
+    data_sensitivity: internal
+    retention: none
+    notes: ffprobe and ffmpeg decode untrusted media on the local host.
   - id: flow-19
     source_ref: comp-ghscan
     target_ref: ext-ghapi
@@ -851,6 +875,18 @@ data_flows:
     data_sensitivity: internal
     retention: operator-managed
     notes: Operator invokes the customer-card render skill from the local workstation.
+  - id: flow-33
+    source_ref: ext-dev
+    target_ref: comp-videogif
+    ordinal: 33
+    label: invoke converter
+    transport: local process invocation
+    encryption: n/a (local)
+    authentication: workstation user
+    authorization: operator-authorized CLI execution
+    data_sensitivity: internal
+    retention: operator-managed
+    notes: Operator invokes the video-to-GIF skill from the local workstation.
   - id: flow-34
     source_ref: ext-dev
     target_ref: comp-ghscan
@@ -2249,6 +2285,43 @@ threats:
       source_skill: tts-voiceover
       bucket: B1
       gap_ids: [G-TLS-1, G-SUP-1]
+  - id: VG-1
+    target_ref: comp-videogif
+    interaction_ref: flow-18
+    category: tampering
+    title: Hostile media triggers FFmpeg decoder CVE exposure
+    description: A crafted video stream could exercise a decoder defect within FFmpeg or ffprobe.
+    state: Partially Mitigated
+    citations: { stride: [T], nist: [SI-10], mitre: [CWE-20] }
+    mitigation_ids: [M-VG-TIMEOUT]
+    notes: "Traceability: G-SUP-1"
+    properties:
+      Priority: Medium
+      UserThreatDescription: >-
+        A crafted video stream could exercise a decoder defect within FFmpeg or ffprobe. Source:
+        video-to-gif skill, bucket B1. Gaps: G-SUP-1. See
+        .github/skills/experimental/video-to-gif/SECURITY.md.
+      source_skill: video-to-gif
+      bucket: B1
+      gap_ids: [G-SUP-1]
+  - id: VG-2
+    target_ref: comp-videogif
+    interaction_ref: flow-18
+    category: denial-of-service
+    title: Unbounded media conversion exhausts CPU and disk
+    description: A pathological input or large media file could consume resources before conversion completes.
+    state: Mitigated
+    citations: { stride: [D], nist: [SC-5], mitre: [CWE-400] }
+    mitigation_ids: [M-VG-TIMEOUT]
+    properties:
+      Priority: Low
+      UserThreatDescription: >-
+        A pathological input or large media file could consume resources before conversion completes.
+        Source: video-to-gif skill, bucket B2. Gaps: G-INF-1. See
+        .github/skills/experimental/video-to-gif/SECURITY.md.
+      source_skill: video-to-gif
+      bucket: B2
+      gap_ids: [G-INF-1]
   - id: CC-1
     target_ref: comp-customercards
     interaction_ref: flow-31
@@ -3029,6 +3102,11 @@ mitigations:
     description: yaml.safe_load parses content as data; presentation/archive parsing is retired.
     target_refs: [comp-tts]
     citations: { nist: [SI-10] }
+  - id: M-VG-TIMEOUT
+    name: Wall-clock timeout around ffprobe / ffmpeg execution
+    description: Each conversion invocation is bounded by a timeout so pathological media cannot run indefinitely.
+    target_refs: [comp-videogif]
+    citations: { nist: [SC-5] }
   - id: M-CC-ESCAPE
     name: YAML scalar escaping for downstream content
     description: dynamic card text is escaped and wrapped in quoted YAML scalars before emission.

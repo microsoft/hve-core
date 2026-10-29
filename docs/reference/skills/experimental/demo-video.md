@@ -3,7 +3,7 @@ title: demo-video
 description: Assemble ordered frames or clips with narration and optional synchronized scene transitions into an MP4 via FFmpeg
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-10-29
 ms.topic: reference
 keywords:
   - skill
@@ -32,7 +32,8 @@ Use this skill when ordered screenshots or clips and matching WAV narration are
 ready to assemble into a walkthrough MP4. It normalizes segments with FFmpeg and
 uses hard concatenation or synchronized crossfades according to the manifest;
 it does not capture the screens or generate the voiceover.
-Use `vscode-playwright` for capture or `tts-voiceover` for narration.
+Use `vscode-playwright` for capture, `tts-voiceover` for narration, or `video-to-gif`
+when the desired output is a silent animated GIF.
 
 FFmpeg and ffprobe must be on PATH. Manifest-relative paths make the visual and
 audio inputs portable as one local package.

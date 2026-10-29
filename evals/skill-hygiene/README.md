@@ -2,7 +2,7 @@
 title: Skill Hygiene
 description: 'Lint-based skill hygiene suite for .github/skills/ delivered via vally lint'
 author: HVE Core Team
-ms.date: 2026-10-27
+ms.date: 2026-10-29
 ---
 
 This directory documents the **skill hygiene** suite. It is the only suite that ships through `vally lint` rather than `vally eval` and so contains no `eval.yaml`.
@@ -25,6 +25,7 @@ The lint sweep iterates every `SKILL.md` discovered under `.github/skills/`. Cur
 | `coding-standards` | `python-foundational`       |
 | `experimental`     | `customer-card-render`      |
 | `experimental`     | `tts-voiceover`             |
+| `experimental`     | `video-to-gif`              |
 | `experimental`     | `vscode-playwright`         |
 | `github`           | `gh-code-scanning`          |
 | `gitlab`           | `gitlab`                    |

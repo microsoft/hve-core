@@ -2,7 +2,7 @@
 title: "Transparency Note for HVE Core"
 description: "What HVE Core does, how we test it, its limitations, and what you should know before using it with GitHub Copilot."
 author: HVE Core Maintainers
-ms.date: 2026-10-27
+ms.date: 2026-10-29
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -130,11 +130,11 @@ Use the credential storage and permissions documented for each tool.
 HVE Core does not include generative media models. Each media type uses a
 different path:
 
-| Media  | What HVE Core does                                                      | Service used                                                       | What leaves your machine | Learn more                                                                     |
-|--------|-------------------------------------------------------------------------|--------------------------------------------------------------------|--------------------------|--------------------------------------------------------------------------------|
-| Audio  | Turns slide speaker notes into narration, including demo-material video | Azure AI Speech neural voices in the region you configure          | Speaker-notes text       | [TTS Voice-over](docs/reference/skills/experimental/tts-voiceover.md)          |
-| Video  | Combines slide images, screen captures, and narration                   | None; FFmpeg assembles the video locally                           | Nothing                  | [Demo Video](docs/reference/skills/experimental/demo-video.md)                 |
-| Images | Writes text prompts for simple stick-figure concept sketches            | None; you choose whether to paste a prompt into another image tool | Only what you paste      | [Design Thinking methods](docs/reference/skills/design-thinking/dt-methods.md) |
+| Media  | What HVE Core does                                                      | Service used                                                       | What leaves your machine | Learn more                                                                                                                         |
+|--------|-------------------------------------------------------------------------|--------------------------------------------------------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| Audio  | Turns slide speaker notes into narration, including demo-material video | Azure AI Speech neural voices in the region you configure          | Speaker-notes text       | [TTS Voice-over](docs/reference/skills/experimental/tts-voiceover.md)                                                              |
+| Video  | Combines slide images, screen captures, and narration                   | None; FFmpeg assembles the video locally                           | Nothing                  | [Demo Video](docs/reference/skills/experimental/demo-video.md), [Video to GIF](docs/reference/skills/experimental/video-to-gif.md) |
+| Images | Writes text prompts for simple stick-figure concept sketches            | None; you choose whether to paste a prompt into another image tool | Only what you paste      | [Design Thinking methods](docs/reference/skills/design-thinking/dt-methods.md)                                                     |
 
 For narration:
 

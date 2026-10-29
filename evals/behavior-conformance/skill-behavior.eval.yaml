@@ -243,6 +243,60 @@ stimuli:
         name: skill-tts-voiceover-bleed-detection-scope-language
         config:
           pattern: '(?i)(music|narration|voice|speech)'
+  - name: skill-video-to-gif-knowledge
+    prompt: |
+      Summarize the `video-to-gif` skill's conversion approach and the tool
+      it relies on.
+    tags:
+      category: behavior-conformance
+      skill: video-to-gif
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-video-to-gif-knowledge-skill-attribution
+        config:
+          pattern: '(?i)(ffmpeg|two-pass|palette)'
+      - type: output-matches
+        name: skill-video-to-gif-knowledge-scope-language
+        config:
+          pattern: '(?i)(gif|video|convert|optimi[sz]e)'
+  - name: skill-video-to-gif-tool-trigger
+    prompt: |
+      I have a recorded screencast `demo.mp4` and need an optimized animated
+      GIF embedded in documentation. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: video-to-gif
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-video-to-gif-tool-trigger-skill-domain-attribution
+        config:
+          pattern: '(?i)(video|gif|screencast|convert)'
+      - type: output-matches
+        name: skill-video-to-gif-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(gif|video|screencast|convert)'
+  - name: skill-video-to-gif-bleed-detection
+    prompt: |
+      I need to convert a single PNG image into a short looping MP4 video.
+      Does the `video-to-gif` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: video-to-gif
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-video-to-gif-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|image[-\s]to[-\s]video)'
+      - type: output-matches
+        name: skill-video-to-gif-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(image|video|mp4|gif)'
   - name: skill-vscode-playwright-knowledge
     prompt: |
       Describe what the `vscode-playwright` skill captures and the toolchain
@@ -402,7 +456,7 @@ stimuli:
       - type: output-matches
         name: skill-hve-demo-material-bleed-detection-skill-attribution
         config:
-          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill)'
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|video-to-gif)'
       - type: output-matches
         name: skill-hve-demo-material-bleed-detection-scope-language
         config:

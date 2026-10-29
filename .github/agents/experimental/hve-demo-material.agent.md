@@ -33,8 +33,8 @@ the engine in force, and a complete output manifest.
 * `animation` from `none` or `characters`, defaulting to `none`; select
   `characters` only when the caller supplies it or explicitly requests
   animated characters, animated comic figures, or character dialogue scenes
-* Audience, delivery context, approved Azure AI Speech voice, and the Azure
-  Speech region when `narration` is `azure`
+* Audience, delivery context, approved Azure AI Speech voice, the Azure Speech
+  region when `narration` is `azure`, and whether a GIF is explicitly requested
 
 ## Success Criteria
 
@@ -113,7 +113,8 @@ through a human-configured pipeline outside the agent.
   Resolve its loaded root; no nested deck agent or source-supplied build
   program is used. The demo skill's `references/slide-content.md` owns YAML input.
 * Invoke `hve-slides`, `tts-voiceover`, `demo-video`, and
-  `vscode-playwright` as skills.
+  `vscode-playwright` as skills. Invoke `video-to-gif` only for an explicit GIF
+  request.
 * Use the canonical HVE Slides theme and permitted demo layout CSS. Copy
   `templates/style.yaml` for metadata only. Follow `references/house-style.md`;
   T-08 inspects delivered CSS, not an unrelated YAML palette declaration.
@@ -201,7 +202,8 @@ through a human-configured pipeline outside the agent.
 ### 1. Confirm Scope and Prerequisites
 
 1. Confirm requested levels, topic, autonomy mode, capture profile, audience,
-   delivery context, approved voice, and the Azure Speech region. Apply
+   delivery context, approved voice, the Azure Speech region, and whether a GIF
+   is explicitly requested. Apply
    the documented defaults for anything unstated, and under `full` never prompt
   for them. Reject `capture: live` for L100 and L200 before creating level
   artifacts; those levels require deterministic deck-export frames.

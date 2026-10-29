@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-10-29
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -59,6 +59,7 @@ All coding standard instructions activate automatically based on file type:
 | rpi-implement | `/rpi-implement`                | Execute approved work and record change evidence           |
 | rpi-review    | `/rpi-review`                   | Reconcile implementation evidence and route follow-up      |
 | hve-builder   | Use `hve-builder`               | Author or review prompts, instructions, agents, and skills |
+| video-to-gif  | Use `video-to-gif`              | Convert video to optimized GIFs                            |
 | git-commit    | `/git-commit`                   | Stage and commit changes                                   |
 | git-commit    | `/git-commit mode=message-only` | Generate a commit message for staged changes               |
 
