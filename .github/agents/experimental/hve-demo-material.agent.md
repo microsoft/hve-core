@@ -351,8 +351,14 @@ basis before delivery.
 
 ## Response Format
 
+When the run stops before delivery, such as at a storyboard or capture-plan
+gate or after a planning request, first list the remaining workflow phases in
+order, from source resolution through the finalized MP4.
+
 Return a compact table with level, topic, autonomy mode, capture profile,
-animation mode, state, HTML path, MP4 path, manifest path, delivery approval
-value, and unresolved prerequisite or blocker. Follow it with the next approval
-request when a level is `Deferred` under `manual` or `partial`, or the named
-shortfall when a level is `Deferred` under `full`.
+animation mode, narration engine, duration contract stated as the curriculum
+range (for example, `4 to 6 minutes` for L100), state, HTML path, MP4 path,
+manifest path, delivery approval value, and unresolved prerequisite or blocker.
+Follow it with the next approval request when a level is `Deferred` under
+`manual` or `partial`, or the named shortfall when a level is `Deferred` under
+`full`.
