@@ -269,7 +269,7 @@ const inside = (inner, outer) => inner.x >= outer.x && inner.y >= outer.y && inn
 const apart = (a, b) => a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y;
 
 describe('boxes and routes', () => {
-    for (const [name, source] of [['a two-level map', bigMap()], ['a top-to-bottom map', bigMap(20, 'TD')], ['the nested change map', MAP], ['a top-to-bottom layered map', layered('TB')]]) {
+    for (const [name, source] of [['a two-level map', bigMap()], ['a top-to-bottom map', bigMap(20, 'TD')], ['the nested change map', MAP], ['a top-to-bottom layered map', layered('TB')], ['a left-to-right layered map', layered('LR')]]) {
         it(`keeps every part inside its boxes and frames apart unless one holds the other: ${name}`, () => {
             const graph = diagram.parseFlowchart(source);
             const { positions, frames } = diagram.layout(graph);
