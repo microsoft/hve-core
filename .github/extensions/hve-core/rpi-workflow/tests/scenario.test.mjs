@@ -6,6 +6,7 @@ import { describe, it } from 'node:test';
 
 import { deriveView, findItem, validateSession } from '../lib/model.mjs';
 import { buildScenario, STAGES } from '../lib/scenario.mjs';
+import { parseFlowchart } from '../ui/flowchart.mjs';
 
 const NOW = Date.parse('2026-10-23T12:00:00.000Z');
 
@@ -71,6 +72,22 @@ describe('scenario stages', () => {
         assert.ok(followup.followUps.items.length >= 3);
         assert.ok(followup.followUps.tree.tasks.some((task) => task.depth === 1 && task.status === 'running'));
         assert.deepEqual(buildScenario('research', NOW).followUps.tree.tasks.map((task) => [task.shown, task.status]), [[true, 'running']], 'before Follow-up the session holds only this task');
+    });
+
+    it('draws the sample\'s change map as the plan rules ask', () => {
+        const { diagram } = buildScenario('plan', NOW).plan;
+        const before = parseFlowchart(diagram.before);
+        const after = parseFlowchart(diagram.after);
+        assert.ok(after.nodes.size <= 10 && after.groups.length <= 4, 'at most about 10 parts and 4 boxes');
+        for (const graph of [before, after]) {
+            assert.ok(graph.title && graph.description, 'a caption and a description');
+            assert.ok(graph.edges.every((edge) => edge.label), 'every arrow has a verb');
+        }
+        // Before stays because the plan rewires how the form and the photo picker reach the server.
+        assert.ok(before.edges.some((edge) => !after.edges.some((other) => other.from === edge.from && other.to === edge.to)), 'Before shows a connection After removes');
+        assert.ok([...after.nodes.values()].filter((node) => node.tag).every((node) => node.lines.length >= 3), 'each new or changed part has a name, a clause, and a tag');
+        assert.match(diagram.walkthrough, /\(P01, P02\)/);
+        assert.deepEqual(Object.keys(diagram.phaseNodes), ['P01', 'P02', 'P03', 'P04']);
     });
 
     it('rejects an unknown stage', () => {
