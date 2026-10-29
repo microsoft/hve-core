@@ -19,8 +19,8 @@ keywords:
 The RPI Workflow canvas (`hve-core-rpi-workflow`) is a shared surface for an RPI session. You read, decide, edit, and steer here, and the agent reports its work, asks for decisions, and reads back how it understood you. The canvas adapts to the phase you view:
 
 * Research: a summary with readiness, what you may not know, a questions tracker, findings with evidence state and confidence, alternatives, risks, research lanes, and the evidence log
-* Plan: a summary with the critique verdict, a Before and After change map, phases and tasks that expand in place, requirement coverage, and critique findings.
-  The change map groups parts in boxes where changes land, marks each change with a border and a tag naming its phases, highlights a phase on either view, and lists the tasks that change a part when you select it.
+* Plan: a summary with the critique verdict, a change map, phases and tasks that expand in place, requirement coverage, and critique findings.
+  The change map draws the plan's After, with a Before and After switch only when the plan has a Before. It groups parts in boxes where changes land, marks each change with a border and a tag naming its phases, highlights a phase, lists the tasks that change a part when you select it, and shows the plan's walk-through of the map under it.
   While the critique runs, it shows the lens in progress and the findings so far; while the plan is revised, how many findings are addressed; and plan text the agent changed in the last ten minutes is marked Updated
 * Implement: the task board, pinned under the phase title with its progress beside its title. Its three lanes, Backlog, In progress, and Done, each show one card: the next task ready to start, the agent's task, and the task finished last. A lane with more cards opens as a dropdown that lists them all.
   A card shows its task's ID, title, and markers for work paused for you or blocked, and the agent's card shows its latest activity. Hovering a card previews the task, and clicking it goes to the task in Phases and tasks, which shows All when its filter would hide it.
@@ -245,7 +245,8 @@ The canvas reports what it cannot read instead of dropping it: decision rows not
 These appear in the problems list and in `get_state`, and the RPI Agent fixes the ones in the files it is writing; older artifacts stay as they are.
 Plan diagrams draw as Mermaid flowcharts.
 A change map's boxes come from `subgraph` groups, one or two levels deep, each framed with its title; labels keep bold, italics, and `<code>` names; a tag line such as `changed · P24, P27` names the phases that make a change; dashed, thick, and dotted borders mark new, changed, and removed parts; and arrows, solid or dotted, bend around the parts between their ends.
-`accTitle` captions a diagram and `accDescr` describes it. The text version lists each box with its parts, their changes, and their phases, then the relationships. A plan written before the change map, with Highlighted work lines or phase diagrams, still draws, and its phases' parts come from those lines.
+Boxes at different steps share space along the flow, so a layered map draws as layers, left to right or top to bottom; parts in a box keep their box's columns; arrow labels stay off box titles and parts; and box titles draw over arrows, haloed in the background.
+`accTitle` captions a diagram and `accDescr` describes it. The prose after the After diagram, without its `Key:` line, is the map's walk-through. The text version lists each box with its parts, their changes, and their phases, then the relationships. A plan written before the change map, with Highlighted work lines or phase diagrams, still draws, and its phases' parts come from those lines.
 
 What you add stays in the canvas across these updates: feedback, suggested edits, research lanes, activity, and decisions created in the canvas. A section always shows the file's text, and a suggestion for it stays beside it until it is applied or removed. An answer or override on a decision stays until the agent changes that decision. Text typed into a section by an earlier version of the canvas gives way to the file's text.
 
