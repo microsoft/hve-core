@@ -125,13 +125,13 @@
     "ci:eval:agent:report:dryrun": "npm run ci:eval:agent:matrix:dryrun && npm run ci:eval:agent:dashboard"
   },
   "devDependencies": {
-    "@cspell/cspell-json-reporter": "10.3.6",
+    "@cspell/cspell-json-reporter": "10.4.0",
     "@microsoft/vally-cli": "0.19.0",
     "@modelcontextprotocol/server": "2.3.1",
     "@types/node": "26.6.5",
     "@vscode/vsce": "4.0.0",
     "audit-ci": "7.1.0",
-    "cspell": "10.3.6",
+    "cspell": "10.4.0",
     "markdown-link-check": "3.15.0",
     "markdown-table-formatter": "1.7.0",
     "markdownlint-cli2": "0.23.3",
@@ -147,11 +147,15 @@
     "vfile-sort": "4.0.0"
   },
   "overrides": {
+    "@azure/identity": {
+      "@azure/msal-node": "7.1.1"
+    },
     "@opentelemetry/core": "2.10.0",
     "basic-ftp": "6.2.1",
+    "body-parser": "2.4.0",
     "brace-expansion@^2": "2.1.7",
     "brace-expansion@^5": "5.0.12",
-    "fast-uri": "3.1.8",
+    "fast-uri": "3.1.9",
     "form-data": "4.0.6",
     "ip-address": "10.7.4",
     "js-yaml": "4.3.2",
@@ -160,13 +164,14 @@
     "markdown-it": "14.3.3",
     "picomatch@^2": "2.3.2",
     "picomatch@^4": "4.0.4",
-    "qs": "6.16.0",
+    "qs": "6.16.1",
     "smol-toml": "1.9.0",
     "tmp": "0.2.7",
-    "undici": "7.29.1",
+    "undici": "7.30.1",
     "uuid": "14.0.0",
     "yaml": "2.8.3",
-    "yauzl": "3.2.1"
+    "yauzl": "3.2.1",
+    "zod": "4.6.7"
   },
   "repository": {
     "type": "git",
