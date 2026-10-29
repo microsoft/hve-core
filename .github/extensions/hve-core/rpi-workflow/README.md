@@ -16,17 +16,22 @@ keywords:
 
 ## Overview
 
-The RPI Workflow canvas (`hve-core-rpi-workflow`) is a shared surface for an RPI session. You read, decide, edit, and steer here, and the agent reports its work, asks for decisions, and reads back how it understood you. The canvas adapts to the phase you view:
+The RPI Workflow canvas (`hve-core-rpi-workflow`) is a shared surface for an RPI session. You read, decide, edit, and steer here, and the agent reports its work, asks for decisions, and reads back how it understood you. For a step-by-step guide with screenshots from a real session, see [RPI Workflow Canvas](../../../../docs/rpi/rpi-workflow-canvas.md) in the docs.
+
+The canvas adapts to the phase you view:
 
 * Research: a summary with readiness, what you may not know, a questions tracker, findings with evidence state and confidence, alternatives, risks, research lanes, and the evidence log
-* Plan: a summary with the critique verdict, a change map, phases and tasks that expand in place, requirement coverage, and critique findings.
-  The change map draws the plan's After, with a Before and After switch only when the plan has a Before. It groups parts in boxes where changes land, marks each change with a border and a tag naming its phases, highlights a phase, lists the tasks that change a part when you select it, and shows the plan's walk-through of the map under it.
-  While the critique runs, it shows the lens in progress and the findings so far; while the plan is revised, how many findings are addressed; and plan text the agent changed in the last ten minutes is marked Updated
-* Implement: the task board, pinned under the phase title with its progress beside its title. Its three lanes, Backlog, In progress, and Done, each show one card: the next task ready to start, the agent's task, and the task finished last. A lane with more cards opens as a dropdown that lists them all.
-  A card shows its task's ID, title, and markers for work paused for you or blocked, and the agent's card shows its latest activity. Hovering a card previews the task, and clicking it goes to the task in Phases and tasks, which shows All when its filter would hide it.
-  Live sessions mark a task paused when a decision waiting on you names it in its impact, and blocked when a blocker names it.
-  Below the board come Phases and tasks from the plan, filtered to what is in progress by default, with Backlog, Done, and All, where an expanded task also shows its changes, discoveries, and trace, and asks the agent to do it next or skip it;
-  the change map with each change marked done, in progress, or still needed, a status on each phase's tab, and changed parts you can select to list their tasks; then changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers
+* Plan: a summary with the critique verdict, a change map, phases and tasks that expand in place, requirement coverage, and critique findings
+  * The change map draws the plan's After, with a Before and After switch only when the plan has a Before. It groups parts in boxes where changes land and marks each change with a border and a tag naming its phases.
+  * You can highlight a phase, select a part to list the tasks that change it, and read the plan's walk-through of the map under it.
+  * While the critique runs, the view shows the lens in progress and the findings so far, and while the plan is revised, how many findings are addressed. Plan text the agent changed in the last ten minutes is marked Updated.
+* Implement: the task board, pinned under the phase title with its progress beside its title
+  * Its three lanes, Backlog, In progress, and Done, each show one card: the next task ready to start, the agent's task, and the task finished last. A lane with more cards opens as a dropdown that lists them all.
+  * A card shows its task's ID, title, and markers for work paused for you or blocked, and the agent's card shows its latest activity. Hovering a card previews the task, and clicking it goes to the task in Phases and tasks, which shows All when its filter would hide it.
+  * Live sessions mark a task paused when a decision waiting on you names it in its impact, and blocked when a blocker names it.
+  * Below the board, Phases and tasks from the plan show what is in progress by default, with Backlog, Done, and All. An expanded task also shows its changes, discoveries, and trace, and asks the agent to do it next or skip it.
+  * The change map marks each change done, in progress, or still needed, puts a status on each phase's tab, and lists a changed part's tasks when you select it.
+  * Then come changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers.
 * Review: an assessment with severity counts, findings with expected and observed behavior side by side, the agent's decisions with Question this decision, and the decision history
 * Follow-up: ranked follow-ups with Select and Skip, and the loops in this session as a tree, parent first
 
@@ -241,7 +246,7 @@ A task whose parent sits in another session shows that parent as context. A link
 
 While a page is open, the canvas checks the task's files and the session's state files about every 1.5 seconds. It imports a change once the file has stopped changing between two checks, so a half-written file is skipped. Edits by the agent appear within a few seconds. When a file cannot be read, the canvas keeps the last good version and lists the problem above each phase.
 
-The canvas reports what it cannot read instead of dropping it: decision rows not numbered `D1`, `D2`, and so on, decision blocks with no row or no options, citations the evidence log does not list, code evidence that cites a path missing from the workspace, tables without their expected columns, a research title that is still the slug, and a plan's Before or After diagram it can only show as source.
+The canvas reports what it cannot read: decision rows not numbered `D1`, `D2`, and so on, decision blocks with no row or no options, citations the evidence log does not list, code evidence that cites a path missing from the workspace, tables without their expected columns, a research title that is still the slug, and a plan's Before or After diagram it can only show as source.
 These appear in the problems list and in `get_state`, and the RPI Agent fixes the ones in the files it is writing; older artifacts stay as they are.
 Plan diagrams draw as Mermaid flowcharts.
 A change map's boxes come from `subgraph` groups, one or two levels deep, each framed with its title; labels keep bold, italics, and `<code>` names; a tag line such as `changed · P24, P27` names the phases that make a change; dashed, thick, and dotted borders mark new, changed, and removed parts; and arrows, solid or dotted, bend around the parts between their ends.
@@ -255,7 +260,7 @@ The files remain the record, and only the agent changes them. Answers, overrides
 The canvas follows the agent while the Live control shows Live; see [Following the Agent](#following-the-agent). Showing a loop or session yourself, from the session menu, Follow-up, or a child's link to its parent, stops following. The session menu also lists the workspace's other sessions, newest first, and shows a session's running loop, or its most recently changed one.
 
 Each task keeps its own drafts, open editor, and scroll position in the page, so switching back returns you to where you were. When an action fails, the failure stays visible in the note area at the bottom of the document until you dismiss it, and a comment that fails keeps your text with the reason beside it.
-When the page cannot render a task, it says why with Retry instead of staying blank, and `get_state` reports the reason to the agent.
+When the page cannot render a task, it says why and offers Retry, and `get_state` reports the reason to the agent.
 
 ## Agent Actions
 
