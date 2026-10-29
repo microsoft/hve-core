@@ -19,11 +19,14 @@ keywords:
 The RPI Workflow canvas (`hve-core-rpi-workflow`) is a shared surface for an RPI session. You read, decide, edit, and steer here, and the agent reports its work, asks for decisions, and reads back how it understood you. The canvas adapts to the phase you view:
 
 * Research: a summary with readiness, what you may not know, a questions tracker, findings with evidence state and confidence, alternatives, risks, research lanes, and the evidence log
-* Plan: a summary with the critique verdict, a Before and After change map, phases and tasks that expand in place, requirement coverage, and critique findings. While the critique runs, it shows the lens in progress and the findings so far; while the plan is revised, how many findings are addressed; and plan text the agent changed in the last ten minutes is marked Updated
+* Plan: a summary with the critique verdict, a Before and After change map, phases and tasks that expand in place, requirement coverage, and critique findings.
+  The change map groups parts in boxes where changes land, marks each change with a border and a tag naming its phases, highlights a phase on either view, and lists the tasks that change a part when you select it.
+  While the critique runs, it shows the lens in progress and the findings so far; while the plan is revised, how many findings are addressed; and plan text the agent changed in the last ten minutes is marked Updated
 * Implement: the task board, pinned under the phase title with its progress beside its title. Its three lanes, Backlog, In progress, and Done, each show one card: the next task ready to start, the agent's task, and the task finished last. A lane with more cards opens as a dropdown that lists them all.
   A card shows its task's ID, title, and markers for work paused for you or blocked, and the agent's card shows its latest activity. Hovering a card previews the task, and clicking it goes to the task in Phases and tasks, which shows All when its filter would hide it.
   Live sessions mark a task paused when a decision waiting on you names it in its impact, and blocked when a blocker names it.
-  Below the board come Phases and tasks from the plan, filtered to what is in progress by default, with Backlog, Done, and All, where an expanded task also shows its changes, discoveries, and trace, and asks the agent to do it next or skip it; the change map with done and in-progress parts marked and a status on each phase's tab; then changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers
+  Below the board come Phases and tasks from the plan, filtered to what is in progress by default, with Backlog, Done, and All, where an expanded task also shows its changes, discoveries, and trace, and asks the agent to do it next or skip it;
+  the change map with each change marked done, in progress, or still needed, a status on each phase's tab, and changed parts you can select to list their tasks; then changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers
 * Review: an assessment with severity counts, findings with expected and observed behavior side by side, the agent's decisions with Question this decision, and the decision history
 * Follow-up: ranked follow-ups with Select and Skip, and the loops in this session as a tree, parent first
 
@@ -240,7 +243,9 @@ While a page is open, the canvas checks the task's files and the session's state
 
 The canvas reports what it cannot read instead of dropping it: decision rows not numbered `D1`, `D2`, and so on, decision blocks with no row or no options, citations the evidence log does not list, code evidence that cites a path missing from the workspace, tables without their expected columns, a research title that is still the slug, and a plan's Before or After diagram it can only show as source.
 These appear in the problems list and in `get_state`, and the RPI Agent fixes the ones in the files it is writing; older artifacts stay as they are.
-Plan diagrams draw as Mermaid flowcharts with labeled nodes, solid and dashed edges, `class` lines, and `subgraph` groups, which the text version lists.
+Plan diagrams draw as Mermaid flowcharts.
+A change map's boxes come from `subgraph` groups, one or two levels deep, each framed with its title; labels keep bold, italics, and `<code>` names; a tag line such as `changed · P24, P27` names the phases that make a change; dashed, thick, and dotted borders mark new, changed, and removed parts; and arrows, solid or dotted, bend around the parts between their ends.
+`accTitle` captions a diagram and `accDescr` describes it. The text version lists each box with its parts, their changes, and their phases, then the relationships. A plan written before the change map, with Highlighted work lines or phase diagrams, still draws, and its phases' parts come from those lines.
 
 What you add stays in the canvas across these updates: feedback, suggested edits, research lanes, activity, and decisions created in the canvas. A section always shows the file's text, and a suggestion for it stays beside it until it is applied or removed. An answer or override on a decision stays until the agent changes that decision. Text typed into a section by an earlier version of the canvas gives way to the file's text.
 
@@ -280,23 +285,24 @@ Feedback text, notes, and section Markdown come from the user, so agents treat t
 
 ## Keyboard
 
-| Key                        | Action                                                                           |
-|----------------------------|----------------------------------------------------------------------------------|
-| `1` to `5`                 | View Research, Plan, Implement, Review, or Follow-up                             |
-| `n`                        | Go to the first item that needs you, then the next                               |
-| `f`                        | Follow the agent, or stop following                                              |
-| `[` and `]`                | Previous and next row                                                            |
-| `e`                        | Suggest an edit to the focused row's section                                     |
-| `c`                        | Comment on the focused row                                                       |
-| `/`                        | Open the navigator and filter it                                                 |
-| `b` and `s`                | Show or hide the navigator and the steering panel                                |
-| `l`                        | Show what the IDs and icons mean                                                 |
-| `?`                        | Show the shortcut list                                                           |
-| `Alt+Left` and `Alt+Right` | Go back and forward through the places you moved to                              |
-| `Down Arrow` on an ID      | Lock its preview and move focus into it                                          |
-| `Shift+F10` or `Menu`      | Open the canvas menu for the focused item                                        |
-| `Escape`                   | Close the newest preview, a menu, drawer, or dialog, or leave the section editor |
-| Arrow keys, `Home`, `End`  | Move within the phase rail and radio groups                                      |
+| Key                              | Action                                                                           |
+|----------------------------------|----------------------------------------------------------------------------------|
+| `1` to `5`                       | View Research, Plan, Implement, Review, or Follow-up                             |
+| `n`                              | Go to the first item that needs you, then the next                               |
+| `f`                              | Follow the agent, or stop following                                              |
+| `[` and `]`                      | Previous and next row                                                            |
+| `e`                              | Suggest an edit to the focused row's section                                     |
+| `c`                              | Comment on the focused row                                                       |
+| `/`                              | Open the navigator and filter it                                                 |
+| `b` and `s`                      | Show or hide the navigator and the steering panel                                |
+| `l`                              | Show what the IDs and icons mean                                                 |
+| `?`                              | Show the shortcut list                                                           |
+| `Alt+Left` and `Alt+Right`       | Go back and forward through the places you moved to                              |
+| `Down Arrow` on an ID            | Lock its preview and move focus into it                                          |
+| `Enter` or `Space` on a map part | Lock the part's preview and move focus to its first task                         |
+| `Shift+F10` or `Menu`            | Open the canvas menu for the focused item                                        |
+| `Escape`                         | Close the newest preview, a menu, drawer, or dialog, or leave the section editor |
+| Arrow keys, `Home`, `End`        | Move within the phase rail and radio groups                                      |
 
 `e` and `c` act on the row that has focus; move between rows with `[` and `]`. On a row without a section, `e` says so. Single-key shortcuts pause while focus is in a text field, and the shortcut list has a switch that turns them off. `Alt` with an arrow key works outside text fields and dialogs. Leaving the editor asks first when you have unsaved changes, and `Escape` never interrupts an input method.
 
@@ -341,6 +347,7 @@ The key keeps other local processes, such as other accounts or containers, from 
 * Open in VS Code is verified with VS Code Insiders on macOS. Other hosts show the source in the canvas and Copy path.
 * VS Code may handle Alt+Left and Alt+Right before the canvas sees them; the Back and Forward buttons always work.
 * Previews follow the WAI-ARIA tooltip and dialog patterns, but nested previews have not been tested with screen readers.
+* The canvas lays out a change map itself, so its boxes and arrows sit differently than in VS Code's Mermaid preview; the parts, boxes, arrows, and marks are the same.
 * The canvas menu relies on the host skipping its own right-click menu when the page handles the click, as Chromium-based hosts do. Hold Shift for the host's menu.
 * Source code coloring reads one line at a time and covers common constructs; an unusual one, such as a regular expression after a closing parenthesis, can take the wrong color, but the text never changes.
 * The canvas API is experimental, so host updates can change how canvases load or render.
