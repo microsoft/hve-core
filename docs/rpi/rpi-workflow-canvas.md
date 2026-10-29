@@ -21,7 +21,7 @@ The RPI Workflow canvas shows the session the RPI Agent is working on, one phase
 
 The session's files in `.copilot-tracking/` stay the record. The canvas never changes them; it shows them, collects your input, and passes that input to the agent, which updates the files.
 
-The screenshots follow one session: the RPI Agent building the docs README check from [Your First Full Workflow](../getting-started/first-workflow), in a session set to keep going but check with you.
+The screenshots follow one session: the RPI Agent building the docs README check from [Your First Full Workflow](../getting-started/first-workflow). The agent moved through the phases on its own, asking about research, planning, and follow-up decisions and making the review decisions itself.
 
 ## Before You Start
 
