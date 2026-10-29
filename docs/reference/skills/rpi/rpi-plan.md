@@ -35,11 +35,12 @@ The change map is an **After** Mermaid diagram of the intended result of all pha
 one question in about 10 parts and 4 boxes: what changes, and how the changed parts connect to the
 code around them. Boxes stand for the folders, files, or documents where changes land and read as
 layers, left to right by default, with every arrow pointing from the part that acts to the part it
-acts on and labeled with a verb. A new or changed part shows its name in bold, with code names in
-`<code>`, one short clause on what it does after the change, and a tag line such as
-`changed · P02, P03` that names the phases making the change; dashed, thick, and dotted borders mark
-new, changed, and removed parts. A key and a two- or three-sentence walk-through follow After, and
-a plan that changes only one or two parts names them in a sentence instead. Each phase names its
+acts on and labeled with a verb. In After, a new or changed part shows its name in bold, with code
+names in `<code>`, one short clause on what it does after the change, and a tag line such as
+`changed · P02, P03` that names the phases making the change; in Before, a changed or removed part
+shows its bold name and tag line. Dashed, thick, and dotted borders mark new, changed, and removed
+parts. A key and a two- or three-sentence walk-through follow After, and a plan that changes only
+one or two parts and no connections names them in a sentence instead. Each phase names its
 parts on a `Changes in the map:` line. Every diagram carries `accTitle` and `accDescr` and sets no
 fills, fonts, init line, or edge IDs, so it inherits the renderer's light or dark theme and its
 sans-serif labels.
