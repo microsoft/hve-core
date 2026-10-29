@@ -468,7 +468,7 @@ export function workspaceTarget(baseDir, url) {
     const value = String(url ?? '').trim();
     if (!value || /^[a-z][\w+.-]*:/i.test(value) || value.startsWith('/') || value.startsWith('#') || /\s/.test(value)) return null;
     const [target, hash] = value.split('#');
-    let decoded = target;
+    let decoded;
     try {
         decoded = decodeURI(target);
     } catch {

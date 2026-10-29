@@ -3,7 +3,7 @@
 
 import { badge, button, chip, confidenceMeta, DECISION_STATUS, FEEDBACK_KIND, FEEDBACK_STATE, h, icon, idChip, idTag, known, PHASE_META, plural, sr, timeEl } from './dom.mjs';
 import { renderInline, renderMarkdown } from './markdown.mjs';
-import { editorButton, evidenceSource } from './source-view.mjs';
+import { evidenceSource } from './source-view.mjs';
 
 /** Shared components: rows with margins, editing, evidence, traces, and decision cards. */
 

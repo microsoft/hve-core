@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionPending, sessionTree, steerPanel, waitingCount } from './components.mjs';
+import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionTree, steerPanel, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -2379,11 +2379,13 @@ function detectHostScheme() {
         return false;
     }
     const probe = document.createElement('canvas').getContext('2d');
+    // A canvas ignores a color it cannot parse, so the value stays at the sentinel.
     probe.fillStyle = '#000001';
+    const sentinel = String(probe.fillStyle);
     probe.fillStyle = raw;
     const parsed = String(probe.fillStyle);
     const channels = parsed.startsWith('#') ? [1, 3, 5].map((index) => Number.parseInt(parsed.slice(index, index + 2), 16)) : (parsed.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
-    if (channels.length !== 3 || (parsed === '#000001' && raw.toLowerCase() !== '#000001')) {
+    if (channels.length !== 3 || (parsed === sentinel && raw.toLowerCase() !== '#000001')) {
         delete root.dataset.hostScheme;
         return true;
     }

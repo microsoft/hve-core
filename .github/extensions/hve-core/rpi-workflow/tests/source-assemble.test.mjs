@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 
-import { createFeedback, recordActivity, suggestEdit, transitionFeedback, upsertDecision, validateSession } from '../lib/model.mjs';
+import { createFeedback, recordActivity, suggestEdit, upsertDecision, validateSession } from '../lib/model.mjs';
 import {
     alignmentOf,
     assembleSession,
@@ -23,7 +23,7 @@ import {
 } from '../lib/source/assemble.mjs';
 import { parseChanges, parseCritique, parsePlan, parseResearch, parseReview, parseState } from '../lib/source/parse.mjs';
 import { installFakeDom } from './helpers/fake-dom.mjs';
-import { CHANGES, CHILD_CHANGES, CHILD_PLAN, CHILD_STATE, childSession, CRITIQUE, PATHS, PLAN, RESEARCH, REVIEW, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
+import { CHANGES, childSession, CRITIQUE, PATHS, PLAN, RESEARCH, REVIEW, ROOT_STATE, rootSession } from './helpers/rpi-fixture.mjs';
 
 const NOW = '2026-01-15T12:00:00.000Z';
 

@@ -64,7 +64,7 @@ export function sourceLocations(raw, baseDir = '') {
         if (link && !/^[a-z][\w+.-]*:/i.test(link[2])) {
             const [target, hash] = link[2].split('#');
             if (target) {
-                let decoded = target;
+                let decoded;
                 try {
                     decoded = decodeURI(target);
                 } catch {
