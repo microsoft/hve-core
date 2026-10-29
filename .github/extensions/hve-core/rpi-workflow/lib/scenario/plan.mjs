@@ -3,6 +3,8 @@
 
 // Plan content for the sample scenario.
 
+import { taggedPhaseParts } from '../source/assemble.mjs';
+
 const task = (id, title, goals, requirements, details, dependencies, references = []) => ({
     id, title, goals, requirements, details, dependencies, references, status: 'todo', sectionId: `task-${id.toLowerCase()}`,
 });
@@ -50,44 +52,80 @@ export const requirements = [
     { id: 'NFR-003', kind: 'NFR', text: 'An inspection with 40 photos opens its draft in under 200 ms.' },
 ];
 
-export const diagram = {
-    before: [
-        'flowchart LR',
-        '    form["Inspection form"]',
-        '    api["src/api/inspections.ts"]',
-        '    server["Inspections API"]',
-        '    picker["Photo picker"]',
-        '    form -->|saves via| api',
-        '    api -->|PUT| server',
-        '    picker -->|uploads to| server',
-    ].join('\n'),
-    after: [
-        '%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%',
-        'flowchart LR',
-        '    form["Inspection form"]',
-        '    store["Added: draft store"]',
-        '    outbox["Added: outbox"]',
-        '    sync["Added: sync engine"]',
-        '    conflicts["Added: conflict review"]',
-        '    uploader["Added: chunk uploader"]',
-        '    status["Added: sync status chip"]',
-        '    api["src/api/inspections.ts"]',
-        '    server["Inspections API"]',
-        '    picker["Photo picker"]',
-        '    form -->|autosaves to| store',
-        '    store -->|enqueues| outbox',
-        '    sync -->|drains| outbox',
-        '    sync -->|If-Match PUT| api',
-        '    api -->|PUT| server',
-        '    sync -->|flags| conflicts',
-        '    picker -->|queues| uploader',
-        '    uploader -->|chunks to| server',
-        '    status -->|reads| sync',
-        '    classDef new stroke-dasharray: 5 5',
-        '    class store,outbox,sync,conflicts,uploader,status new',
-    ].join('\n'),
-    phaseNodes: { P01: ['store', 'form'], P02: ['outbox', 'sync', 'conflicts'], P03: ['uploader', 'picker'], P04: ['status'] },
-};
+const before = [
+    'flowchart LR',
+    '    accTitle: Before: inspections save straight to the server',
+    '    accDescr: The form saves through the API client and the photo picker uploads whole photos, so work done in a dead zone is lost.',
+    '    subgraph inspections["`<code>src/inspections/</code>`"]',
+    '        form["`**<code>InspectionForm.tsx</code>**',
+    '        saves only when online',
+    '        changed · P01`"]',
+    '        picker["`**Photo picker**',
+    '        uploads whole photos',
+    '        changed · P03`"]',
+    '    end',
+    '    subgraph client["`<code>src/api/inspections.ts</code>`"]',
+    '        api["`**<code>saveInspection()</code>**',
+    '        changed · P02`"]',
+    '    end',
+    '    server["Inspections API"]',
+    '    form -->|saves via| api',
+    '    api -->|PUT| server',
+    '    picker -->|uploads to| server',
+    '    classDef changed stroke-width:3px',
+    '    class form,picker,api changed',
+].join('\n');
+
+const after = [
+    'flowchart LR',
+    '    accTitle: After: drafts stay on the device and sync through an outbox',
+    '    accDescr: The form autosaves to a draft store; an outbox and sync engine send changes when a connection returns and flag conflicts, and photos upload in resumable chunks.',
+    '    subgraph inspections["`<code>src/inspections/</code>`"]',
+    '        form["`**<code>InspectionForm.tsx</code>**',
+    '        autosaves every change',
+    '        changed · P01`"]',
+    '        picker["`**Photo picker**',
+    '        queues photos',
+    '        changed · P03`"]',
+    '        conflicts["`**Conflict review**',
+    '        new · P02`"]',
+    '        status["`**Sync status chip**',
+    '        new · P04`"]',
+    '    end',
+    '    subgraph offline["`<code>src/offline/</code>',
+    '    new folder · P01`"]',
+    '        store["`**Draft store**',
+    '        new · P01`"]',
+    '        outbox["`**Outbox**',
+    '        new · P02`"]',
+    '        sync["`**Sync engine**',
+    '        new · P02`"]',
+    '        uploader["`**Chunk uploader**',
+    '        new · P03`"]',
+    '    end',
+    '    subgraph client["`<code>src/api/inspections.ts</code>`"]',
+    '        api["`**<code>saveInspection()</code>**',
+    '        sends If-Match',
+    '        changed · P02`"]',
+    '    end',
+    '    server["Inspections API"]',
+    '    form -->|autosaves to| store',
+    '    store -->|enqueues| outbox',
+    '    sync -->|drains| outbox',
+    '    sync -->|If-Match PUT| api',
+    '    api -->|PUT| server',
+    '    sync -->|flags| conflicts',
+    '    picker -->|queues| uploader',
+    '    uploader -->|chunks to| server',
+    '    status -->|reads| sync',
+    '    classDef new stroke-dasharray: 6 4,stroke-width:2px',
+    '    classDef changed stroke-width:3px',
+    '    class offline,store,outbox,sync,uploader,conflicts,status new',
+    '    class form,picker,api changed',
+].join('\n');
+
+// Each phase's parts come from the map's tags, as they do for a real plan.
+export const diagram = { before, after, phaseNodes: taggedPhaseParts({ phases, before, after }, []), tagged: true };
 
 export const critique = {
     status: 'Complete', verdict: 'Revise', setting: 'standard',

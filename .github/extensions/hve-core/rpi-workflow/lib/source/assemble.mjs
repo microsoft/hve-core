@@ -189,7 +189,7 @@ const CHANGE_CLASSES = ['new', 'changed', 'removed'];
  * @param {string[]} warnings
  * @returns {Record<string, string[]> | null}
  */
-function taggedPhaseParts(plan, warnings) {
+export function taggedPhaseParts(plan, warnings) {
     const known = new Set(plan.phases.map((phase) => phase.id));
     const parts = new Map(plan.phases.map((phase) => [phase.id, []]));
     const problems = new Map();
