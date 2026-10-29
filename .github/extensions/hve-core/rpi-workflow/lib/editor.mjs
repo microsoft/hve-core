@@ -41,6 +41,33 @@ export class EditorError extends Error {
 const isFile = (target) => fs.stat(target).then((stat) => stat.isFile(), () => false);
 
 /**
+ * Reads `product.json` through one handle, so the type and size checks describe the file
+ * that is read.
+ *
+ * @param {string} productPath
+ * @returns {Promise<unknown>} the parsed product, `undefined` when no regular file is there,
+ *   or `null` when the file is too large or is not JSON
+ */
+async function readProduct(productPath) {
+    let handle;
+    try {
+        handle = await fs.open(productPath, 'r');
+    } catch {
+        return undefined;
+    }
+    try {
+        const stat = await handle.stat();
+        if (!stat.isFile()) return undefined;
+        if (stat.size > MAX_PRODUCT_BYTES) return null;
+        return JSON.parse(await handle.readFile('utf8'));
+    } catch {
+        return null;
+    } finally {
+        await handle.close();
+    }
+}
+
+/**
  * Finds the VS Code install around an executable: the nearest ancestor folder with
  * `Resources/app/product.json` (macOS) or `resources/app/product.json` (Windows and Linux)
  * whose product is VS Code, with its `out/cli.js` and app binary present.
@@ -54,16 +81,8 @@ export async function findEditor(options = {}) {
     for (let level = 0; level < MAX_LEVELS; level += 1) {
         for (const resources of ['Resources', 'resources']) {
             const app = path.join(dir, resources, 'app');
-            const productPath = path.join(app, 'product.json');
-            const stat = await fs.stat(productPath).catch(() => null);
-            if (!stat?.isFile()) continue;
-            if (stat.size > MAX_PRODUCT_BYTES) return null;
-            let product;
-            try {
-                product = JSON.parse(await fs.readFile(productPath, 'utf8'));
-            } catch {
-                return null;
-            }
+            const product = await readProduct(path.join(app, 'product.json'));
+            if (product === undefined) continue;
             if (!VSCODE_PROTOCOLS.has(product?.urlProtocol) || typeof product.nameShort !== 'string' || typeof product.applicationName !== 'string') return null;
             const cli = path.join(app, 'out', 'cli.js');
             const binary = platform === 'darwin'

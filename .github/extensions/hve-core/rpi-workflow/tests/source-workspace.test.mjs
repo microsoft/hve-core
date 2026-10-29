@@ -250,6 +250,11 @@ describe('sessions in the workspace', () => {
         await fs.writeFile(path.join(root, '.git', 'HEAD'), 'ref: refs/heads/feat/offline-maps\n');
         await fs.writeFile(path.join(root, '.git', 'config'), '[core]\n\tbare = false\n[remote "origin"]\n\turl = git@github.com:contoso/trails.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n');
         assert.deepEqual(await readGit(root), { repository: 'contoso/trails', branch: 'feat/offline-maps' });
+        const linkedRoot = path.join(tmp, 'linked-git-root');
+        await fs.mkdir(path.join(linkedRoot, '.git'), { recursive: true });
+        await fs.writeFile(path.join(tmp, 'outside-head'), 'ref: refs/heads/elsewhere\n');
+        await fs.symlink(path.join(tmp, 'outside-head'), path.join(linkedRoot, '.git', 'HEAD'));
+        assert.equal(await readGit(linkedRoot), null, 'a linked HEAD is not read');
     });
 
     it('derives store IDs that fit the store pattern and never match the sample', () => {

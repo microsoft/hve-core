@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { createHash } from 'node:crypto';
+import { constants as fsConstants } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -372,10 +373,27 @@ export function skippedWarning(skipped) {
  * @param {string} root
  */
 export async function readGit(root) {
+    // Reads through one handle, so the type and size checks describe the file that is read.
+    // O_NOFOLLOW refuses a linked file as it opens; where the platform lacks it, a link is
+    // refused after opening.
     const small = async (name, limit) => {
         const target = path.join(root, '.git', name);
-        const stat = await fs.lstat(target).catch(() => null);
-        return stat?.isFile() && stat.size <= limit ? fs.readFile(target, 'utf8').catch(() => null) : null;
+        let handle;
+        try {
+            handle = await fs.open(target, fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0));
+        } catch {
+            return null;
+        }
+        try {
+            const stat = await handle.stat();
+            if (!stat.isFile() || stat.size > limit) return null;
+            if (fsConstants.O_NOFOLLOW === undefined && (await fs.lstat(target)).isSymbolicLink()) return null;
+            return await handle.readFile('utf8');
+        } catch {
+            return null;
+        } finally {
+            await handle.close();
+        }
     };
     const head = await small('HEAD', 4096);
     if (head === null) return null;
