@@ -90,7 +90,7 @@ describe('sessions', () => {
         const backupFile = path.join(store.root, 'sessions', `${scenario.id}.previous.json`);
         await store.create(scenario);
         await store.create(buildScenario('research'));
-        await assert.rejects(fs.access(backupFile), { code: 'ENOENT' }, 'replacing an untouched sample keeps no backup');
+        await assert.rejects(fs.readFile(backupFile, 'utf8'), { code: 'ENOENT' }, 'replacing an untouched sample keeps no backup');
         await store.update(scenario.id, (s) => createFeedback(s, { kind: 'comment', text: 'mine' }, NOW), { by: 'user' });
         await assert.rejects(store.create(buildScenario('plan')), { code: 'scenario_exists' });
         const replaced = await store.create(buildScenario('plan'), { replace: true });

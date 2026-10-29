@@ -69,7 +69,7 @@ describe('preview timing', () => {
         clock.advance(TIMING.hide - 1);
         previews.enterPreview(0);
         clock.advance(TIMING.hide);
-        assert.deepEqual(ids().map((id) => id.replace('*', '')), ['C22']);
+        assert.deepEqual(ids().map((id) => id.replaceAll('*', '')), ['C22']);
         previews.closeAll();
         previews.enter('w11', { id: 'W11', parent: -1, via: 'pointer' });
         clock.advance(TIMING.showHover);
