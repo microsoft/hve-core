@@ -140,8 +140,9 @@ describe('renderMarkdown', () => {
             const start = performance.now();
             renderMarkdown(input, { resolveId: () => true, navigate: () => {} });
             const ms = performance.now() - start;
-            // Linear in practice: well under 50 ms locally; the bound leaves room for slower CI hosts.
-            assert.ok(ms < 200, `${name} took ${Math.round(ms)} ms`);
+            // Linear in practice: the slowest input, ids, takes about 50 ms locally and about 250 ms on a CI
+            // runner under coverage, while a quadratic scan of inputs this size takes about a second or more.
+            assert.ok(ms < 500, `${name} took ${Math.round(ms)} ms`);
         }
     });
 });
