@@ -124,44 +124,30 @@ Key findings:
    .copilot-tracking/reviews/plans/2025-01-28/blob-storage-plan-critique.md
    ```
 
-5. Verify the plan structure. The plan opens with an executive summary and a `## Phase Checklist` that starts with the change map: Before and After diagrams grouped by where changes land, with each change tagged by its phases. Supporting sections such as decisions, readiness, requirements, and sources follow it:
+5. Verify the plan structure. The plan opens with an executive summary and a `## Phase Checklist` that starts with the change map: an After diagram of the result, grouped by where changes land, with each change tagged by its phases, and a Before only when the plan changes how parts connect. Supporting sections such as decisions, readiness, requirements, and sources follow it:
 
 ````markdown
 ## Phase Checklist
-
-### Before
-
-```mermaid
-flowchart LR
-    accTitle: Before: pipeline output goes to local files
-    accDescr: The factory builds the file writer, which writes pipeline output to local disk.
-    subgraph pipeline["`<code>src/pipeline/</code>`"]
-        factory["`**<code>factory.py</code>**
-        changed · P03`"]
-        files["`<code>writers/file_writer.py</code>`"]
-    end
-    factory -->|constructs| files
-    classDef changed stroke-width:3px
-    class factory changed
-```
 
 ### After
 
 ```mermaid
 flowchart LR
     accTitle: After: pipeline output streams to Azure Blob Storage
-    accDescr: The factory builds a blob writer that uploads through a new storage client.
+    accDescr: The factory builds a blob writer that uploads through a new storage client, beside the file writer it already builds.
     subgraph pipeline["`<code>src/pipeline/</code>`"]
         factory["`**<code>factory.py</code>**
-        builds the writer the config names
+        builds the configured writer
         changed · P03`"]
         files["`<code>writers/file_writer.py</code>`"]
         writer["`**<code>writers/blob_writer.py</code>**
+        streams output to blobs
         new · P02`"]
     end
     subgraph storage["`<code>src/storage/blob_client.py</code>
     new file · P01`"]
         client["`**<code>BlobStorageClient</code>**
+        uploads to a container
         new · P01`"]
     end
     factory -->|constructs| files
@@ -173,7 +159,9 @@ flowchart LR
     class factory changed
 ```
 
-Key: dashed border, new; thick border, changed; each tag names the phases that make the change.
+Key: arrows point from a part to what it uses; dashed border, new; thick border, changed; each tag names the phases that make the change.
+
+The factory now builds the writer the configuration names (P03): the existing file writer or a new blob writer (P02), which uploads through the new `BlobStorageClient` (P01). The plan removes nothing, so the map has no Before.
 
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: Storage Client Setup

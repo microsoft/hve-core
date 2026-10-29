@@ -81,7 +81,7 @@ When evidence is adequate, Research is reused or satisfied-and-skipped instead o
 * Giving each phase a coherent outcome goal and each task an observable behavior or capability goal.
 * Identifying dependencies between changes.
 * Keeping requirements, details, and linked references under the task they inform, and leaving verification choices to the implementer.
-* Showing the overall change as a Before and After change map in the Phase Checklist, grouped by where changes land, with each change tagged by the phases that make it.
+* Showing the overall change as a small change map in the Phase Checklist, grouped by where changes land, with each change tagged by the phases that make it and a Before view when the plan rewires how parts connect.
 * Using code as illustrative guidance unless a real interface or requirement makes it binding.
 * Running an independent `rpi-plan-critique` before implementation readiness by default, unless you skip it.
 

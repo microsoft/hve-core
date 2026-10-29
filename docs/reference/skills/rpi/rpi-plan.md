@@ -30,15 +30,19 @@ Create or resume an evidence-based RPI implementation plan with an optional inde
 
 Use `rpi-plan` when adequate evidence exists and the work needs a sequenced, verifiable plan before implementation. The skill writes one plan under `.copilot-tracking/plans/` with a stable task ID, `Pxx` phases, and `Pxx-Txx` tasks. The plan leads with an executive summary and a Phase Checklist that opens with a change map; each task carries `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks.
 
-The change map is a pair of **Before** and **After** Mermaid diagrams comparing the
-evidence-backed starting state with the intended result of all phases. Both group parts in boxes
-for the objects, classes, files, or documents where changes land, one level deep by default and two
-for a complex plan. A changed part shows its name in bold, with code names in `<code>`, and ends
-with a tag line such as `changed · P02, P03` that names the phases making the change; dashed,
-thick, and dotted borders mark new, changed, and removed parts. Each phase names its parts on a
-`Changes in the map:` line instead of copying the diagram. Every diagram carries `accTitle` and
-`accDescr` and sets no fills, fonts, or init line, so it inherits the renderer's light or dark
-theme and its sans-serif labels.
+The change map is an **After** Mermaid diagram of the intended result of all phases, with a
+**Before** diagram of the starting state only when the plan changes how parts connect. It answers
+one question in about 10 parts and 4 boxes: what changes, and how the changed parts connect to the
+code around them. Boxes stand for the folders, files, or documents where changes land and read as
+layers, left to right by default, with every arrow pointing from the part that acts to the part it
+acts on and labeled with a verb. A new or changed part shows its name in bold, with code names in
+`<code>`, one short clause on what it does after the change, and a tag line such as
+`changed · P02, P03` that names the phases making the change; dashed, thick, and dotted borders mark
+new, changed, and removed parts. A key and a two- or three-sentence walk-through follow After, and
+a plan that changes only one or two parts names them in a sentence instead. Each phase names its
+parts on a `Changes in the map:` line. Every diagram carries `accTitle` and `accDescr` and sets no
+fills, fonts, init line, or edge IDs, so it inherits the renderer's light or dark theme and its
+sans-serif labels.
 
 Planning owns two internal steps. It activates [rpi-research](rpi-research) only for a demonstrated
 readiness gap, and runs [rpi-plan-critique](rpi-plan-critique) by default once the plan is
