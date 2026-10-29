@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, h, icon, idChip, idTag, known, plural, SEVERITY, TASK_STATUS } from './dom.mjs';
-import { decisionCard, decisionsRow, marginNote, mdInline, recordRow, row, rowActions, sectionBody, table, traceStrip, updatedMark } from './components.mjs';
+import { artifactDir, decisionCard, decisionsRow, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table, traceStrip, updatedMark } from './components.mjs';
 import { markLegend, renderDiagram } from './diagram.mjs';
 import { anchoredDecisions, decisionsOutline, notesFor } from './view-research.mjs';
 
@@ -139,7 +139,9 @@ export function renderView(ctx) {
             h('div', { class: 'btn-row' }, button(critique.run ? 'Go to the critique' : 'Review findings', { iconName: 'arrow-down', onClick: () => ctx.act.navigate('critique') }))) : null],
     }));
 
-    const view = ctx.ui.diagramView;
+    // A plan without a Before draws only its After, whatever view was last chosen.
+    const hasBefore = Boolean(plan.diagram?.before);
+    const view = hasBefore ? ctx.ui.diagramView : 'after';
     const phaseIds = plan.phases.map((phase) => phase.id);
     // A phase chosen in another plan, such as the current one while an earlier plan shows, reads as none.
     const chosen = phaseIds.includes(ctx.ui.diagramPhase) ? ctx.ui.diagramPhase : null;
@@ -153,12 +155,13 @@ export function renderView(ctx) {
         id: 'change-map', idLabel: null, title: 'Change map', level: 2,
         body: [
             h('div', { class: 'map-controls' },
-                h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'visually-hidden', text: 'Diagram' }),
-                    ['before', 'after'].map((value) => h('label', { for: `map-${value}` }, h('input', { type: 'radio', name: 'map-view', id: `map-${value}`, value, checked: view === value, onchange: () => ctx.act.setDiagram({ view: value }) }), h('span', { text: value === 'before' ? 'Before' : 'After' })))),
+                hasBefore ? h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'visually-hidden', text: 'Diagram' }),
+                    ['before', 'after'].map((value) => h('label', { for: `map-${value}` }, h('input', { type: 'radio', name: 'map-view', id: `map-${value}`, value, checked: view === value, onchange: () => ctx.act.setDiagram({ view: value }) }), h('span', { text: value === 'before' ? 'Before' : 'After' })))) : null,
                 canHighlight ? h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'meta', text: 'Highlight' }),
                     ['none', ...phaseIds].map((value) => h('label', { for: `map-phase-${value}` }, h('input', { type: 'radio', name: 'map-phase', id: `map-phase-${value}`, value, checked: (chosen ?? 'none') === value, onchange: () => ctx.act.setDiagram({ phase: value === 'none' ? null : value }) }), h('span', { text: value === 'none' ? 'None' : value })))) : null),
             renderDiagram(source, { defaultCaption: view === 'before' ? 'Before' : 'After: the intended result', captionSuffix: highlight.length ? `, ${chosen} highlighted` : '', highlight, select: { side: view, ids: changing }, idPrefix: `map-${view}`, textOpen: ctx.ui.openDetails.has('map-text'), onTextToggle: (open) => ctx.act.setDetailsOpen('map-text', open) }),
             h('p', { class: 'meta legend' }, ...markLegend(source), canHighlight ? [h('span', { class: 'legend-swatch is-highlight' }), ' Filled: the highlighted phase.'] : null, changing.length ? ' Select a changed part to list its tasks.' : null),
+            plan.diagram.walkthrough ? h('div', { class: 'map-walkthrough prose' }, md(ctx, plan.diagram.walkthrough, 'Change map', artifactDir(ctx, 'plan'))) : null,
         ],
     }));
 

@@ -395,6 +395,23 @@ function requirementsFrom(block, kind) {
     return listItems(block).map((item) => re.exec(item)).filter(Boolean).map((match) => ({ id: match[1], kind, text: match[2].trim() }));
 }
 
+/**
+ * The prose after the first `mermaid` block of a map section, which walks the map in words,
+ * without HTML comments or the paragraph that starts with `Key:`.
+ *
+ * @param {string} body
+ */
+function walkthroughOf(body) {
+    const lines = body.split('\n');
+    const open = lines.findIndex((line) => /^\s*(`{3,}|~{3,})\s*mermaid\b/i.test(line));
+    if (open === -1) return '';
+    const fence = lines[open].trim().match(/^(`{3,}|~{3,})/)[1];
+    let close = open + 1;
+    while (close < lines.length && !(lines[close].trim().startsWith(fence) && !/[^`~]/.test(lines[close].trim()))) close += 1;
+    return lines.slice(close + 1).join('\n').replace(/<!--[\s\S]*?-->/g, '').split(/\n\s*\n/)
+        .map((paragraph) => paragraph.trim()).filter((paragraph) => paragraph && !/^Key:/i.test(paragraph)).join('\n\n');
+}
+
 /** @param {string} text */
 export function parsePlan(text) {
     const doc = parseDocument(text);
@@ -403,10 +420,12 @@ export function parsePlan(text) {
     const summarySection = h2(doc, 'Executive Summary');
     const unknownsSection = summarySection ? findSection(doc, 'What You May Not Know', { level: 3, within: summarySection }) : null;
     const checklist = h2(doc, 'Phase Checklist');
+    const mapSection = (title) => (checklist ? findSection(doc, title, { level: 3, within: checklist }) : null);
     const diagram = (title) => {
-        const section = checklist ? findSection(doc, title, { level: 3, within: checklist }) : null;
+        const section = mapSection(title);
         return section ? codeBlocks(bodyOf(doc, section), 'mermaid')[0]?.code ?? null : null;
     };
+    const afterSection = mapSection('After');
     const phases = planPhases(doc, warnings);
     if (!phases.length) warnings.push('The plan has no phases.');
     const directionSection = h2(doc, 'User Decisions and Requirements');
@@ -423,6 +442,7 @@ export function parsePlan(text) {
         unknowns: unknownsSection ? bodyOf(doc, unknownsSection) : '',
         before: diagram('Before'),
         after: diagram('After'),
+        walkthrough: afterSection ? walkthroughOf(bodyOf(doc, afterSection)) : '',
         phases,
         requirements: [...requirementsFrom(bodyOfH2(doc, 'Functional Requirements'), 'FR'), ...requirementsFrom(bodyOfH2(doc, 'Non-Functional Requirements'), 'NFR')],
         decisions: decisionRows(doc, (directionSection ? findSection(doc, 'Planning Decisions and Feedback', { within: directionSection }) : null) ?? directionSection, warnings, (row) => ({ id: row.group, item: row['decision or feedback item'], status: plainText(row.status), owner: plainText(row.owner), rationale: row['rationale or input needed'] ?? '', evidence: idsIn(row.evidence), impact: row['planning impact'] ?? '' })),

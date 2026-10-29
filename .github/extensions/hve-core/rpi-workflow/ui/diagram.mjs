@@ -188,10 +188,16 @@ function tagLineCount(item, width) {
 /**
  * Layered layout: longest-path columns, parts pulled toward their successors so arrows span one
  * column where possible, waypoints in each column a longer arrow crosses, then barycenter sweeps
- * to reduce crossings. Boxes stack as bands across the columns, a box inside a box as a band
- * inside its band, so each box's parts stay together and frames never overlap.
+ * to reduce crossings. Each top-level box is a band across the columns its parts and its arrows'
+ * waypoints use, and parts outside any box form one band per run of columns; a band sits just past
+ * every earlier band whose columns it shares, so boxes at different steps share space, as layers
+ * do, and frames never overlap. A box inside a box stacks as a band inside its band. In a
+ * top-to-bottom map the gap above a box's first row makes room for its title, and arrow labels
+ * sit above it.
  *
  * @returns {{ positions: Map<string, any>, layerOf: Map<string, number>, width: number, height: number, horizontal: boolean, frames: Map<string, any>, routes: any[] }}
+ *   Each frame carries `titleBox`, the rectangle its title draws in; each route carries `label`,
+ *   the point its label centers on before labels in one gap are nudged apart.
  */
 export function layout(graph) {
     const horizontal = graph.direction === 'LR';
@@ -358,9 +364,36 @@ export function layout(graph) {
     const mainOf = (id) => (horizontal ? boxes.get(id).width : boxes.get(id).height);
     const crossOf = (id) => (horizontal ? boxes.get(id).height : boxes.get(id).width);
 
+    // Box titles, measured before the columns so a top-to-bottom map can make room for them.
+    const titles = new Map();
+    for (const [key, band] of bands) {
+        if (!band.group) continue;
+        const fit = fitRuns(band.group.lines, TITLE_FIT);
+        titles.set(key, { lines: fit.lines, tagFrom: fit.lines.length - (fit.cut ? 0 : tagLineCount(band.group, fit.width)), width: Math.max(...fit.lines.map((line) => lineWidth(line, TITLE_CHARS)), 0), size: fit.lines.length * TITLE_LINE });
+    }
+    // The parts a box holds, inner boxes included, and the column its first row sits in.
+    const partsOf = (key) => {
+        const band = bands.get(key);
+        return [...band.loose, ...band.children.flatMap(partsOf)];
+    };
+    const firstLayer = (key) => Math.min(...partsOf(key).map((id) => layer.get(id)));
+    // Top to bottom, how far a box's frame reaches above its first row: padding and its title,
+    // plus the reach of an inner box that starts in the same row.
+    const reach = (key) => {
+        const band = bands.get(key);
+        if (!band.group || !partsOf(key).length) return 0;
+        const inner = band.children.filter((child) => partsOf(child).length && firstLayer(child) === firstLayer(key)).map((child) => reach(child) - FRAME_PAD);
+        return FRAME_PAD + titles.get(key).size + TITLE_GAP + Math.max(0, ...inner);
+    };
+    const reserve = layers.map(() => 0);
+    if (!horizontal) {
+        for (const [key, band] of bands) {
+            if (band.group && partsOf(key).length) reserve[firstLayer(key)] = Math.max(reserve[firstLayer(key)], reach(key));
+        }
+    }
     const gaps = layers.map((_group, index) => {
         const labels = graph.edges.filter((edge) => edge.label && layer.get(edge.from) === index).map((edge) => (horizontal ? labelWidth(edge.label) : labelHeight(edge.label)));
-        return Math.min(150, Math.max(56, Math.max(0, ...labels) + 28));
+        return Math.min(150, Math.max(56, Math.max(0, ...labels) + 28)) + (reserve[index + 1] ?? 0);
     });
     const columnStart = [];
     const columnSize = [];
@@ -372,16 +405,10 @@ export function layout(graph) {
     });
 
     // Cross positions: each band's rows and inner bands in source order, each framed band with room for its title.
-    const titles = new Map();
-    for (const [key, band] of bands) {
-        if (!band.group) continue;
-        const fit = fitRuns(band.group.lines, TITLE_FIT);
-        titles.set(key, { lines: fit.lines, tagFrom: fit.lines.length - (fit.cut ? 0 : tagLineCount(band.group, fit.width)), width: Math.max(...fit.lines.map((line) => lineWidth(line, TITLE_CHARS)), 0), size: fit.lines.length * TITLE_LINE });
-    }
     const cross = new Map();
     const frames = new Map();
-    const placeRow = (key, start) => {
-        const cells = layers.map((group = []) => group.filter((id) => rowOf.get(id) === key));
+    const placeRow = (key, start, only = null) => {
+        const cells = layers.map((group = [], index) => (only && !only.has(index) ? [] : group.filter((id) => rowOf.get(id) === key)));
         const sizes = cells.map((cell) => cell.reduce((sum, id) => sum + crossOf(id), 0) + GAP_CROSS * Math.max(0, cell.length - 1));
         const size = Math.max(...sizes, 0);
         cells.forEach((cell, index) => {
@@ -426,7 +453,48 @@ export function layout(graph) {
         frames.set(key, { id: key, group: band.group, depth: band.group.depth, main: [mainStart, mainEnd], cross: [start, end], title });
         return end;
     };
-    const crossTotal = placeBand(ROOT, 0);
+    // Along the flow, a band uses the columns of its frame and of the waypoints of arrows leaving
+    // it. Each top-level band, and each run of columns holding parts outside any box, sits just
+    // past every earlier one whose columns it shares, so boxes at different steps share space.
+    const mainSpan = (members) => [Math.min(...members.map((id) => columnStart[layer.get(id)])), Math.max(...members.map((id) => columnStart[layer.get(id)] + (graph.nodes.has(id) ? mainOf(id) : columnSize[layer.get(id)])))];
+    const heldBy = (key) => {
+        const keys = new Set([key]);
+        const add = (band) => band.children.forEach((child) => {
+            keys.add(child);
+            add(bands.get(child));
+        });
+        add(bands.get(key));
+        return all.filter((id) => keys.has(rowOf.get(id)));
+    };
+    const items = [];
+    for (const item of contentOf(ROOT)) {
+        if (item.kind === 'band') {
+            const held = heldBy(item.key);
+            if (!held.length) continue;
+            const [from, to] = mainSpan(held);
+            const title = titles.get(item.key);
+            // The frame reaches past its parts: padding, and its title above the first row top to bottom or along the top left to right.
+            const span = horizontal
+                ? [from - FRAME_PAD, Math.max(to + FRAME_PAD, from - FRAME_PAD + title.width + FRAME_PAD * 2)]
+                : [Math.min(from, columnStart[firstLayer(item.key)] - reach(item.key)), to + FRAME_PAD];
+            items.push({ span, place: (start) => placeBand(item.key, start) });
+            continue;
+        }
+        const used = [...new Set(all.filter((id) => rowOf.get(id) === ROOT).map((id) => layer.get(id)))].sort((x, y) => x - y);
+        for (let i = 0; i < used.length;) {
+            let j = i;
+            while (j + 1 < used.length && used[j + 1] === used[j] + 1) j += 1;
+            const run = new Set(used.slice(i, j + 1));
+            items.push({ span: mainSpan(all.filter((id) => rowOf.get(id) === ROOT && run.has(layer.get(id)))), place: (start) => placeRow(ROOT, start, run) });
+            i = j + 1;
+        }
+    }
+    const placed = [];
+    for (const item of items) {
+        const start = Math.max(0, ...placed.filter((other) => other.span[0] < item.span[1] && item.span[0] < other.span[1]).map((other) => other.end + BAND_GAP));
+        placed.push({ span: item.span, end: item.place(start) });
+    }
+    const crossTotal = Math.max(0, ...placed.map((item) => item.end));
 
     // Normalize: titles above a column in a top-to-bottom map can start above the first row.
     const mainMin = Math.min(0, ...[...frames.values()].map((frame) => frame.main[0]));
@@ -439,10 +507,20 @@ export function layout(graph) {
         positions.set(id, { ...boxes.get(id), ...place });
     }
     const waypointAt = new Map(waypoints.map((id) => [id, toBox(columnStart[layer.get(id)], cross.get(id), columnSize[layer.get(id)], crossOf(id))]));
-    const framed = new Map([...frames].map(([key, frame]) => [key, { ...frame, ...toBox(frame.main[0], frame.cross[0], frame.main[1] - frame.main[0], frame.cross[1] - frame.cross[0]) }]));
+    const framed = new Map([...frames].map(([key, frame]) => {
+        const box = toBox(frame.main[0], frame.cross[0], frame.main[1] - frame.main[0], frame.cross[1] - frame.cross[0]);
+        return [key, { ...frame, ...box, titleBox: { x: box.x + FRAME_PAD, y: box.y + FRAME_PAD, width: frame.title.width, height: frame.title.size } }];
+    }));
 
     // Routes: out of the source to the end of its column, through each waypoint's column, into the target.
     const columnEnd = (id) => columnStart[layer.get(id)] + columnSize[layer.get(id)] - mainMin;
+    // A label centers between the end of its source's column and where the arrow next arrives; top
+    // to bottom, it stays above the room the next row keeps for box titles.
+    const withLabel = (route, edge, forward) => {
+        const to = route.via[0]?.in ?? route.end;
+        const room = !horizontal && forward ? reserve[layer.get(edge.from) + 1] ?? 0 : 0;
+        return { ...route, label: { x: (route.lead.x + to.x) / 2, y: (route.lead.y + to.y - room) / 2 } };
+    };
     const routes = graph.edges.map((edge, index) => {
         const a = positions.get(edge.from);
         const b = positions.get(edge.to);
@@ -450,11 +528,11 @@ export function layout(graph) {
         if (horizontal) {
             const start = { x: a.x + a.width, y: a.y + a.height / 2 };
             const forward = b.x > start.x;
-            return { start, lead: forward ? { x: Math.max(start.x, columnEnd(edge.from)), y: start.y } : start, via: via.map((w) => ({ in: { x: w.x, y: w.y + w.height / 2 }, out: { x: w.x + w.width, y: w.y + w.height / 2 } })), end: { x: b.x, y: b.y + b.height / 2 } };
+            return withLabel({ start, lead: forward ? { x: Math.max(start.x, columnEnd(edge.from)), y: start.y } : start, via: via.map((w) => ({ in: { x: w.x, y: w.y + w.height / 2 }, out: { x: w.x + w.width, y: w.y + w.height / 2 } })), end: { x: b.x, y: b.y + b.height / 2 } }, edge, forward);
         }
         const start = { x: a.x + a.width / 2, y: a.y + a.height };
         const forward = b.y > start.y;
-        return { start, lead: forward ? { x: start.x, y: Math.max(start.y, columnEnd(edge.from)) } : start, via: via.map((w) => ({ in: { x: w.x + w.width / 2, y: w.y }, out: { x: w.x + w.width / 2, y: w.y + w.height } })), end: { x: b.x + b.width / 2, y: b.y } };
+        return withLabel({ start, lead: forward ? { x: start.x, y: Math.max(start.y, columnEnd(edge.from)) } : start, via: via.map((w) => ({ in: { x: w.x + w.width / 2, y: w.y }, out: { x: w.x + w.width / 2, y: w.y + w.height } })), end: { x: b.x + b.width / 2, y: b.y } }, edge, forward);
     });
 
     const width = Math.max(horizontal ? main - mainMin : crossTotal, ...[...framed.values()].map((frame) => frame.x + frame.width), 1);
@@ -503,6 +581,29 @@ export function sampleRoute(route, horizontal, steps = 12) {
     });
     points.push(route.end);
     return points;
+}
+
+/**
+ * The drawn edge labels of a laid-out graph: each centered on its route's label point, moved past
+ * a box title it would cover, then nudged apart from the other labels in its gap.
+ *
+ * @param {ReturnType<typeof parseFlowchart>} graph
+ * @param {{ routes: any[], layerOf: Map<string, number>, horizontal: boolean, frames: Map<string, any> }} laid
+ * @returns {{ text: string, x: number, y: number, width: number, height: number, gap: number }[]}
+ */
+export function edgeLabels(graph, laid) {
+    const titles = [...laid.frames.values()].map((frame) => frame.titleBox).filter((box) => box && box.width > 0);
+    const labels = [];
+    graph.edges.forEach((edge, index) => {
+        if (!edge.label) return;
+        const label = { text: edge.label, ...laid.routes[index].label, width: labelWidth(edge.label), height: labelHeight(edge.label), gap: laid.layerOf.get(edge.from) };
+        for (const box of titles) {
+            const covers = label.x - label.width / 2 < box.x + box.width && box.x < label.x + label.width / 2 && label.y - label.height / 2 < box.y + box.height && box.y < label.y + label.height / 2;
+            if (covers) label.y = box.y + box.height + label.height / 2 + 2;
+        }
+        labels.push(label);
+    });
+    return placeLabels(labels, laid.horizontal);
 }
 
 /** Keeps edge labels in the same gap from overlapping by nudging them apart along the cross axis. */
@@ -649,16 +750,10 @@ export function renderDiagram(source, options) {
         });
         root.append(group);
     }
-    const labels = [];
     graph.edges.forEach((edge, index) => {
-        const route = routes[index];
-        root.append(svg('path', { d: routePath(route, horizontal), class: edge.dashed ? 'diagram-edge is-dashed' : 'diagram-edge', 'marker-end': `url(#${options.idPrefix}-arrow)` }));
-        if (edge.label) {
-            const to = route.via[0]?.in ?? route.end;
-            labels.push({ text: edge.label, x: (route.lead.x + to.x) / 2, y: (route.lead.y + to.y) / 2, width: labelWidth(edge.label), height: labelHeight(edge.label), gap: layerOf.get(edge.from) });
-        }
+        root.append(svg('path', { d: routePath(routes[index], horizontal), class: edge.dashed ? 'diagram-edge is-dashed' : 'diagram-edge', 'marker-end': `url(#${options.idPrefix}-arrow)` }));
     });
-    for (const label of placeLabels(labels, horizontal)) {
+    for (const label of edgeLabels(graph, { routes, layerOf, horizontal, frames })) {
         const fit = fitLabel(label.text, EDGE_FIT);
         const group = svg('g', { class: 'diagram-label' });
         if (fit.cut) group.append(fullLabel(label.text));

@@ -241,11 +241,35 @@ function bigMap(size = 34, direction = 'LR') {
     return lines.join('\n');
 }
 
+/** Three boxes in layers, each calling the next, as a change map draws code that calls the layer below. */
+function layered(direction) {
+    return [
+        `flowchart ${direction}`,
+        '    subgraph screens["`<code>src/screens/</code>`"]',
+        '        form["Form"]',
+        '        list["List"]',
+        '    end',
+        '    subgraph logic["`<code>src/logic/</code>`"]',
+        '        store["Store"]',
+        '        sync["Sync engine"]',
+        '    end',
+        '    subgraph client["`<code>src/api/client.ts</code>`"]',
+        '        api["API client"]',
+        '    end',
+        '    server["Server"]',
+        '    form -->|saves drafts to| store',
+        '    list -->|reads state from| sync',
+        '    store -->|sends changes through| api',
+        '    sync -->|retries through| api',
+        '    api -->|PUT| server',
+    ].join('\n');
+}
+
 const inside = (inner, outer) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;
 const apart = (a, b) => a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y;
 
 describe('boxes and routes', () => {
-    for (const [name, source] of [['a two-level map', bigMap()], ['a top-to-bottom map', bigMap(20, 'TD')], ['the nested change map', MAP]]) {
+    for (const [name, source] of [['a two-level map', bigMap()], ['a top-to-bottom map', bigMap(20, 'TD')], ['the nested change map', MAP], ['a top-to-bottom layered map', layered('TB')]]) {
         it(`keeps every part inside its boxes and frames apart unless one holds the other: ${name}`, () => {
             const graph = diagram.parseFlowchart(source);
             const { positions, frames } = diagram.layout(graph);
@@ -277,6 +301,34 @@ describe('boxes and routes', () => {
             });
         });
     }
+
+    it('lets boxes at different steps share space across the flow, top to bottom and left to right', () => {
+        for (const direction of ['TB', 'LR']) {
+            const { frames, horizontal } = diagram.layout(diagram.parseFlowchart(layered(direction)));
+            const [screens, logic, client] = ['screens', 'logic', 'client'].map((id) => frames.get(id));
+            const along = (frame) => (horizontal ? [frame.x, frame.x + frame.width] : [frame.y, frame.y + frame.height]);
+            const across = (frame) => (horizontal ? [frame.y, frame.y + frame.height] : [frame.x, frame.x + frame.width]);
+            for (const [first, next] of [[screens, logic], [logic, client]]) {
+                assert.ok(along(first)[1] <= along(next)[0], `${direction}: ${first.id} ends before ${next.id} starts along the flow`);
+                assert.ok(across(first)[0] < across(next)[1] && across(next)[0] < across(first)[1], `${direction}: ${first.id} and ${next.id} share space across the flow`);
+            }
+        }
+    });
+
+    it('keeps every arrow label off box titles and parts', () => {
+        const covers = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+        for (const [name, source] of [['two levels', bigMap()], ['top to bottom', bigMap(20, 'TD')], ['nested', MAP], ['layered top to bottom', layered('TB')], ['layered left to right', layered('LR')]]) {
+            const graph = diagram.parseFlowchart(source);
+            const laid = diagram.layout(graph);
+            const labels = diagram.edgeLabels(graph, laid);
+            assert.ok(labels.length > 0, name);
+            for (const label of labels) {
+                const box = { x: label.x - label.width / 2, y: label.y - label.height / 2, width: label.width, height: label.height };
+                for (const frame of laid.frames.values()) assert.ok(!covers(box, frame.titleBox), `${name}: "${label.text}" covers the title of ${frame.id}`);
+                for (const [id, part] of laid.positions) assert.ok(!covers(box, part), `${name}: "${label.text}" covers ${id}`);
+            }
+        }
+    });
 
     it('lays out a 34-part map with two levels of boxes quickly', () => {
         const graph = diagram.parseFlowchart(bigMap());

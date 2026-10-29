@@ -164,6 +164,20 @@ describe('plan and critique', () => {
         assert.match(plan.unknowns, /Tiles expire/);
     });
 
+    it('reads the walk-through under After without its key or comments, and none without an After', () => {
+        const text = [
+            '# RPI Plan: x', '', '## Phase Checklist', '', '### After', '',
+            '```mermaid', 'flowchart LR', '    a["A"]', '```', '',
+            'Key: arrows point from a part to what it uses; thick border, changed.', '',
+            'The form saves drafts first (P01).', 'Then the sync engine sends them (P02).', '',
+            '<!-- a note for the agent -->', '',
+            'Conflicts wait for a person.', '',
+            '<!-- rpi:phase id=P01 -->', '### [ ] P01: One', '', 'Goals:', '* g', '',
+        ].join('\n');
+        assert.equal(parsePlan(text).walkthrough, 'The form saves drafts first (P01).\nThen the sync engine sends them (P02).\n\nConflicts wait for a person.');
+        assert.equal(parsePlan('# RPI Plan: x\n\n## Phase Checklist\n\n### [ ] P01: One\n\nGoals:\n* g\n').walkthrough, '');
+    });
+
     it('reads requirements, decisions, readiness, critique dispositions, and follow-ups', () => {
         assert.deepEqual(plan.requirements.map((r) => r.id), ['FR-001', 'FR-002', 'FR-003', 'NFR-001']);
         assert.match(plan.requirements[3].text, /Objective threshold/);

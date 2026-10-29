@@ -102,6 +102,20 @@ describe('the change map', () => {
         assert.deepEqual(parts(markup('before')), ['part:before:map', 'part:before:live']);
     });
 
+    it('draws only After, with no Before switch, for a plan without a Before, and shows the plan\'s walk-through', () => {
+        const { session } = rootSession();
+        session.plan.diagram = { before: null, after: TAGGED_AFTER, walkthrough: 'The map reads tiles from the **local store** (P01).', phaseNodes: { P01: ['map', 'store'] }, tagged: true };
+        const alone = html(planView.renderView(makeContext(session, 'plan', { ...makeContext(session, 'plan').ui, diagramView: 'before' })));
+        assert.doesNotMatch(alone, /name="map-view"/);
+        assert.match(alone, /<figcaption>After: tiles come from a local store<\/figcaption>/);
+        assert.match(alone, /class="map-walkthrough prose"/);
+        assert.match(textOf(alone), /The map reads tiles from the local store \(\s*P01\s*\)\./);
+        session.plan.diagram = { ...session.plan.diagram, before: TAGGED_BEFORE, walkthrough: '' };
+        const both = html(planView.renderView(makeContext(session, 'plan', { ...makeContext(session, 'plan').ui, diagramView: 'before' })));
+        assert.match(both, /name="map-view"/);
+        assert.doesNotMatch(both, /map-walkthrough/);
+    });
+
     it('gives an older plan\'s Before a plain caption and no Highlight control', () => {
         const { session } = rootSession();
         assert.equal(session.plan.diagram.tagged, false);
