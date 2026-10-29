@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Understanding the RPI Workflow"
 pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-10-16
+ms.date: 2026-10-28
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -68,7 +68,7 @@ The skill creates or revises the plan and, unless you skip the critique, a criti
 .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 ```
 
-The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. It opens with an executive summary and a Phase Checklist that starts with a Mermaid diagram of the overall change; each phase repeats that diagram with its own portion highlighted.
+The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. It opens with an executive summary and a Phase Checklist that starts with a change map: Before and After Mermaid diagrams of the overall change, grouped by where changes land, with each change tagged by the phases that make it. Each phase names its parts of the map in one line.
 
 Every task carries labeled `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks, with backticks around code and commands and Markdown links to the files it touches. The `Requirements:` block is the checkable record for the task; how to verify it is left to the implementer.
 

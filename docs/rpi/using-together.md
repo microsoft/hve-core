@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-16
+ms.date: 2026-10-28
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -124,21 +124,56 @@ Key findings:
    .copilot-tracking/reviews/plans/2025-01-28/blob-storage-plan-critique.md
    ```
 
-5. Verify the plan structure. The plan opens with an executive summary and a diagrammed `## Phase Checklist`; supporting sections such as decisions, readiness, requirements, and sources follow it:
+5. Verify the plan structure. The plan opens with an executive summary and a `## Phase Checklist` that starts with the change map: Before and After diagrams grouped by where changes land, with each change tagged by its phases. Supporting sections such as decisions, readiness, requirements, and sources follow it:
 
 ````markdown
 ## Phase Checklist
 
+### Before
+
 ```mermaid
 flowchart LR
-    client["src/storage/blob_client.py"]
-    writer["src/pipeline/writers/blob_writer.py"]
-    factory["src/pipeline/factory.py"]
-    writer -->|uploads through| client
-    factory -->|constructs| writer
-    classDef new stroke-dasharray: 5 5
-    class client,writer new
+    accTitle: Before: pipeline output goes to local files
+    accDescr: The factory builds the file writer, which writes pipeline output to local disk.
+    subgraph pipeline["`<code>src/pipeline/</code>`"]
+        factory["`**<code>factory.py</code>**
+        changed · P03`"]
+        files["`<code>writers/file_writer.py</code>`"]
+    end
+    factory -->|constructs| files
+    classDef changed stroke-width:3px
+    class factory changed
 ```
+
+### After
+
+```mermaid
+flowchart LR
+    accTitle: After: pipeline output streams to Azure Blob Storage
+    accDescr: The factory builds a blob writer that uploads through a new storage client.
+    subgraph pipeline["`<code>src/pipeline/</code>`"]
+        factory["`**<code>factory.py</code>**
+        builds the writer the config names
+        changed · P03`"]
+        files["`<code>writers/file_writer.py</code>`"]
+        writer["`**<code>writers/blob_writer.py</code>**
+        new · P02`"]
+    end
+    subgraph storage["`<code>src/storage/blob_client.py</code>
+    new file · P01`"]
+        client["`**<code>BlobStorageClient</code>**
+        new · P01`"]
+    end
+    factory -->|constructs| files
+    factory -->|constructs| writer
+    writer -->|uploads through| client
+    classDef new stroke-dasharray: 6 4,stroke-width:2px
+    classDef changed stroke-width:3px
+    class storage,client,writer new
+    class factory changed
+```
+
+Key: dashed border, new; thick border, changed; each tag names the phases that make the change.
 
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: Storage Client Setup
@@ -149,16 +184,7 @@ Goals:
 Dependencies:
 * None
 
-```mermaid
-flowchart LR
-    client["src/storage/blob_client.py"]
-    writer["src/pipeline/writers/blob_writer.py"]
-    factory["src/pipeline/factory.py"]
-    writer -->|uploads through| client
-    factory -->|constructs| writer
-    classDef phase fill:#fff3bf,stroke:#f08c00,stroke-width:2px
-    class client phase
-```
+Changes in the map: the new `src/storage/blob_client.py` file and its `BlobStorageClient`.
 
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: Create BlobStorageClient class

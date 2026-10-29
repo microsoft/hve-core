@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-16
+ms.date: 2026-10-28
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -81,7 +81,7 @@ When evidence is adequate, Research is reused or satisfied-and-skipped instead o
 * Giving each phase a coherent outcome goal and each task an observable behavior or capability goal.
 * Identifying dependencies between changes.
 * Keeping requirements, details, and linked references under the task they inform, and leaving verification choices to the implementer.
-* Showing the overall change and each phase's slice of it as Mermaid diagrams in the Phase Checklist.
+* Showing the overall change as a Before and After change map in the Phase Checklist, grouped by where changes land, with each change tagged by the phases that make it.
 * Using code as illustrative guidance unless a real interface or requirement makes it binding.
 * Running an independent `rpi-plan-critique` before implementation readiness by default, unless you skip it.
 

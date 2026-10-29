@@ -28,13 +28,17 @@ Create or resume an evidence-based RPI implementation plan with an optional inde
 
 ## When to use it
 
-Use `rpi-plan` when adequate evidence exists and the work needs a sequenced, verifiable plan before implementation. The skill writes one plan under `.copilot-tracking/plans/` with a stable task ID, `Pxx` phases, and `Pxx-Txx` tasks. The plan leads with an executive summary and a diagrammed Phase Checklist; each task carries `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks.
+Use `rpi-plan` when adequate evidence exists and the work needs a sequenced, verifiable plan before implementation. The skill writes one plan under `.copilot-tracking/plans/` with a stable task ID, `Pxx` phases, and `Pxx-Txx` tasks. The plan leads with an executive summary and a Phase Checklist that opens with a change map; each task carries `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks.
 
-The Phase Checklist opens with **Before** and **After** Mermaid diagrams comparing the
-evidence-backed starting state with the intended result of all phases. Each phase highlights its
-changes within the After view, including labeled removal context when needed. Diagrams inherit the
-renderer's light or dark theme, use readable sans-serif labels, and pair custom highlight fills
-with explicit contrasting text colors.
+The change map is a pair of **Before** and **After** Mermaid diagrams comparing the
+evidence-backed starting state with the intended result of all phases. Both group parts in boxes
+for the objects, classes, files, or documents where changes land, one level deep by default and two
+for a complex plan. A changed part shows its name in bold, with code names in `<code>`, and ends
+with a tag line such as `changed · P02, P03` that names the phases making the change; dashed,
+thick, and dotted borders mark new, changed, and removed parts. Each phase names its parts on a
+`Changes in the map:` line instead of copying the diagram. Every diagram carries `accTitle` and
+`accDescr` and sets no fills, fonts, or init line, so it inherits the renderer's light or dark
+theme and its sans-serif labels.
 
 Planning owns two internal steps. It activates [rpi-research](rpi-research) only for a demonstrated
 readiness gap, and runs [rpi-plan-critique](rpi-plan-critique) by default once the plan is
@@ -78,7 +82,7 @@ Reach for a different asset when:
 /rpi-plan task=blob-storage research=.copilot-tracking/research/2026-09-04/blob-storage-research.md
 ```
 
-The skill sends one `RPI Plan` opening with the interpreted goal, starting evidence, and decision state, drafts the phases, adds the Phase Checklist diagrams, and runs the critique once the plan is ready. Its final response summarizes readiness rather than restating the plan:
+The skill sends one `RPI Plan` opening with the interpreted goal, starting evidence, and decision state, drafts the phases, adds the change map, and runs the critique once the plan is ready. Its final response summarizes readiness rather than restating the plan:
 
 ```text
 * Planning execution: Complete; Planning Readiness: Ready
