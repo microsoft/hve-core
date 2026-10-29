@@ -221,7 +221,10 @@ export function layout(graph) {
         return value;
     };
     ids.forEach(depthOf);
+    // A part outside any box moves toward its successors so its arrows span one column. A part in a
+    // box keeps its column, so a box's parts stay in the layers they share, as Mermaid keeps them.
     for (const id of [...ids].sort((a, b) => layer.get(b) - layer.get(a))) {
+        if (graph.nodes.get(id).group) continue;
         const next = outgoing.get(id).map((to) => layer.get(to));
         if (next.length && next.every((value) => value > layer.get(id))) {
             layer.set(id, Math.min(...next) - 1);
@@ -742,17 +745,23 @@ export function renderDiagram(source, options) {
     marker.append(svg('path', { d: 'M0 0L10 5L0 10z', class: 'diagram-arrow' }));
     defs.append(marker);
     root.append(defs);
-    for (const frame of [...frames.values()].sort((a, b) => a.depth - b.depth)) {
+    const ordered = [...frames.values()].sort((a, b) => a.depth - b.depth);
+    for (const frame of ordered) {
         const group = svg('g', { class: ['diagram-box', `is-depth-${frame.depth}`, ...markClasses(frame.group.classes)].join(' ') });
         group.append(svg('rect', { x: frame.x, y: frame.y, width: frame.width, height: frame.height, rx: 8 }));
-        frame.title.lines.forEach((line, index) => {
-            group.append(textLine(line, { x: frame.x + FRAME_PAD, y: frame.y + FRAME_PAD + 11 + index * TITLE_LINE, class: index >= frame.title.tagFrom ? 'diagram-box-title diagram-tag' : 'diagram-box-title' }));
-        });
         root.append(group);
     }
     graph.edges.forEach((edge, index) => {
         root.append(svg('path', { d: routePath(routes[index], horizontal), class: edge.dashed ? 'diagram-edge is-dashed' : 'diagram-edge', 'marker-end': `url(#${options.idPrefix}-arrow)` }));
     });
+    // Box titles draw over the arrows, haloed in the drawing's background, so an arrow passing under one never hides it.
+    const titles = svg('g', { class: 'diagram-box-titles' });
+    for (const frame of ordered) {
+        frame.title.lines.forEach((line, index) => {
+            titles.append(textLine(line, { x: frame.x + FRAME_PAD, y: frame.y + FRAME_PAD + 11 + index * TITLE_LINE, class: index >= frame.title.tagFrom ? 'diagram-box-title diagram-tag' : 'diagram-box-title' }));
+        });
+    }
+    root.append(titles);
     for (const label of edgeLabels(graph, { routes, layerOf, horizontal, frames })) {
         const fit = fitLabel(label.text, EDGE_FIT);
         const group = svg('g', { class: 'diagram-label' });

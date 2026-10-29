@@ -3664,6 +3664,10 @@ details > summary:hover {
 .diagram-box-title {
   fill: var(--rw-fg-muted);
   font: 600 11.5px var(--rw-font);
+  paint-order: stroke;
+  stroke: var(--rw-bg-subtle);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 
 .diagram-run.is-bold {
@@ -5746,6 +5750,10 @@ kbd {
   .diagram-box-title,
   .diagram-node .diagram-tag {
     fill: CanvasText;
+  }
+
+  .diagram-box-title {
+    stroke: Canvas;
   }
 
   .diagram-node text,
