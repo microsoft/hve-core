@@ -427,6 +427,8 @@ After Review, an automatic session presents ranked follow-up choices alongside *
 
 Both modes persist one JSON state record with the task identity, mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups, so a later conversation can resume from the recorded phase.
 
+When your host shows canvases, the agent also opens the [RPI Workflow canvas](rpi-workflow-canvas) on the session. In either mode, you can read each phase there as it is written, answer the decisions the agent leaves to you, and queue input for its next checkpoint.
+
 ## Resuming a Long Lifecycle
 
 A long lifecycle can accumulate context. Resume from the durable RPI artifact set rather than relying on a conversation transcript:
@@ -446,6 +448,7 @@ See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the ag
 * [RPI Overview](./) - Understand the workflow
 * [Why the RPI Workflow Works](why-rpi) - Understand the rationale for phase separation
 * [Context Engineering](context-engineering) - Why context management matters
+* [RPI Workflow Canvas](rpi-workflow-canvas) - Follow and steer a session phase by phase beside the chat
 
 ---
 

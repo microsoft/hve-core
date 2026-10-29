@@ -116,6 +116,9 @@ Choose the smallest entry surface that owns the next action:
 
 Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. It runs in manual mode until you confirm an automatic session, which then completes the remaining phases through Review and offers ranked follow-up work. `RPI Agent` is an entry surface, not an autonomous dispatcher of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
 
+> [!TIP]
+> When your host shows canvases, the RPI Agent opens the [RPI Workflow canvas](rpi-workflow-canvas) beside the chat. You follow the session phase by phase there, answer the agent's decisions, and send it comments that it reads back.
+
 ## Managing Context Between Lifecycle Concepts
 
 Use `/clear` or a new chat when a long lifecycle has accumulated context, you are switching concepts, or the conversation is no longer serving the task well. A context reset is a tool for clarity, not a requirement to repeat research or restart the lifecycle.
@@ -157,6 +160,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 * [Using RPI Together](using-together) - Follow a complete workflow example
 * [Context Engineering](context-engineering) - Why context management matters
 * [RPI Walkthrough](rpi-walkthrough) - Explore code or artifacts through a guided explanation
+* [RPI Workflow Canvas](rpi-workflow-canvas) - Follow and steer a session phase by phase beside the chat
 * [Agents Reference](../reference/agents/) - All available agents
 * [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI
 
