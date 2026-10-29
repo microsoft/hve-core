@@ -23,11 +23,11 @@
 
 ## Phase Checklist
 
-<!-- Add the change map once the phases are stable and before the critique runs. Follow Change map in references/planning.md: boxes for where changes land, the same boxes and part IDs in both diagrams, tags, border marks, and no fills, fonts, init line, or backticks inside labels. -->
+<!-- Add the change map once the phases are stable and before the critique runs. Follow Change map in references/planning.md: one question in at most about 10 parts and 4 boxes, arrows from the part that acts with active verbs, boxes as layers from left to right, a clause and a tag on every new or changed part, border marks, and no fills, fonts, init line, front matter, edge IDs, or backticks inside labels. Run its check list. A plan that changes one or two parts and no connections replaces the map with one sentence naming them. -->
 
 ### Before
 
-<!-- Show today's parts in the same boxes as After. Tag the parts the plan changes or removes, and leave out the parts it adds. For greenfield work, show the surrounding context or a labeled absence. -->
+<!-- Optional. Keep Before only when the plan changes how parts connect: it removes a part or a connection, or replaces one path with another. Show only the parts that change and the parts they connect to, in After's boxes with After's part IDs. Tag the parts the plan changes or removes, and leave out the parts it adds. Otherwise delete this section. -->
 
 ```mermaid
 flowchart LR
@@ -40,7 +40,8 @@ flowchart LR
         {{removed_part_id}}["`**<code>{{part_the_plan_removes}}</code>**
         removed · {{Pxx}}`"]
     end
-    {{part_id}} -->|{{verb}}| {{changed_part_id}}
+    {{part_id}} -->|{{active_verb}}| {{changed_part_id}}
+    {{changed_part_id}} -->|{{active_verb}}| {{removed_part_id}}
     classDef changed stroke-width:3px
     classDef removed stroke-dasharray: 2 3,stroke-width:2px
     class {{changed_part_ids}} changed
@@ -49,7 +50,7 @@ flowchart LR
 
 ### After
 
-<!-- Show the result of all phases in the same boxes. Tag new and changed parts beside the existing parts they touch, and leave out removed parts and obsolete arrows. -->
+<!-- Show the result of all phases. Tag new and changed parts beside the unchanged parts they connect to, and leave out removed parts and obsolete arrows. Point each arrow from the part that acts to the part it acts on, labeled with an active verb. Use flowchart TB only for stacked layers with short box titles. -->
 
 ```mermaid
 flowchart LR
@@ -58,25 +59,26 @@ flowchart LR
     subgraph {{box_id}}["`<code>{{workspace/relative/path}}</code>`"]
         {{part_id}}["`<code>{{part_that_stays_the_same}}</code>`"]
         {{changed_part_id}}["`**<code>{{changed_part}}</code>**
-        {{optional_short_description}}
+        {{what_it_does_after_the_change}}
         changed · {{Pxx}}`"]
     end
     subgraph {{new_box_id}}["`<code>{{new/workspace/relative/path}}</code>
     new file · {{Pxx}}`"]
         {{new_part_id}}["`**{{new_part_name}}**
+        {{what_it_does}}
         new · {{Pxx}}`"]
     end
-    {{part_id}} -->|{{verb}}| {{changed_part_id}}
-    {{changed_part_id}} -->|{{verb}}| {{new_part_id}}
+    {{part_id}} -->|{{active_verb}}| {{changed_part_id}}
+    {{changed_part_id}} -->|{{active_verb}}| {{new_part_id}}
     classDef new stroke-dasharray: 6 4,stroke-width:2px
     classDef changed stroke-width:3px
     class {{new_box_id}},{{new_part_id}} new
     class {{changed_part_ids}} changed
 ```
 
-Key: dashed border, new; thick border, changed; dotted border, removed, in Before only; each tag names the phases that make the change.
+Key: arrows point from a part to what it uses; dotted arrows, tests and docs; dashed border, new; thick border, changed; dotted border, removed, in Before only; each tag names the phases that make the change.
 
-{{short_prose_explanation_of_the_before_to_after_change}}
+{{two_or_three_sentences_walking_the_main_path_in_arrow_order_naming_the_changed_parts_and_their_phases}}
 
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: {{phase_name}}
@@ -233,8 +235,9 @@ Record the critique setting, status, verdict, finding dispositions, and any expl
 * [ ] Task Goals describe observable behavior, capability, or state without prescribing unsupported implementation steps. Details and References ground the implementer; examples are illustrative unless a requirement or contract makes them binding.
 * [ ] Open decisions, risks, and questions live in their tables with the affected `Pxx-Txx` named; no task carries a separate status block.
 * [ ] Code, commands, and symbols use backticks. Existing files and folders are Markdown links whose text is the workspace-relative path and whose destination resolves from this plan file.
-* [ ] Before reflects the evidence-backed pre-change baseline and After the intended result of all phases, in the same boxes with the same part IDs. Boxes show where changes land, one level deep or two for a complex plan, and the map holds about 3 to 6 boxes and 15 parts.
-* [ ] Every new, changed, or removed part has its border class and a tag naming real phases. Each diagram has `accTitle` and `accDescr` and no fills, fonts, `%%{init}%%` line, front matter, or backticks inside labels. Rendering in light and dark was checked, or the preview limitation is recorded.
+* [ ] The change map answers one question in at most about 10 parts and 4 boxes, with unchanged parts only where a changed part connects to them, or the plan changes one or two parts and no connections and names them in one sentence instead.
+* [ ] Every arrow has an active verb and points from the part that acts, and boxes show where changes land, ordered so arrows run one way. Before appears only because connections change, in After's boxes with After's part IDs, and After shows the intended result of all phases.
+* [ ] Every new, changed, or removed part has its border class and a tag naming real phases, and each new or changed part has a bold name and one short clause. Each diagram has `accTitle` and `accDescr` and no fills, fonts, `%%{init}%%` line, front matter, edge IDs, or backticks inside labels. The key and walk-through follow After, and rendering in light and dark was checked, or the preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
 * [ ] The critique setting and provenance are recorded. The critique ran on the implementation-ready plan or was skipped by user or parent direction, and every `PC-xxx` has a disposition or accepted residual risk.
 * [ ] Readiness does not rely on a critique that returned no result.

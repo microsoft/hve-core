@@ -24,7 +24,7 @@ The plan is the user-facing source of truth, implementation handoff, and downstr
 
 1. `## Task Metadata`
 2. `## Executive Summary` with `### What You May Not Know`
-3. `## Phase Checklist` with the Before and After change map, then phases, each with its `Changes in the map:` line, and their tasks
+3. `## Phase Checklist` with the change map, its After and, when the plan changes how parts connect, a Before, then phases, each with its `Changes in the map:` line, and their tasks
 4. `## User Decisions and Requirements`
 5. `## Planning Readiness and Next Step`
 6. `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, `## Non-Functional Requirements`, `## Risks and Open Questions`, `## Dependencies`, and `## Sources`, each included when it holds content
@@ -266,31 +266,53 @@ These rows inform the user and do not block planning by themselves. Planning doe
 
 ## Change map
 
-The change map is the pair of diagrams under `## Phase Checklist`: `### Before` and `### After`. Add them once the phases are stable, before the critique runs or the plan is finalized, so a reader sees where each change lands without reading every task.
+The change map is the picture of the plan under `## Phase Checklist`: an `### After` diagram of the result of all phases, and a `### Before` diagram only when the plan changes how parts connect. Draw it once the phases are stable, before the critique runs, so a reader sees what changes, where it lands, and how the changed parts connect without reading every task.
 
-### Boxes
+A plan that changes one or two parts and no connections needs no map. Under `## Phase Checklist`, write one sentence naming those parts instead, such as `No change map: this plan changes only Build-Manifest and its tests.`, and keep each phase's `Changes in the map:` line.
 
-* Group parts into boxes for where each change lands: the class, module, file, or document a reader would open. Title each box with its workspace-relative path in `<code>`; a class box names its file too.
+### What the map shows
+
+* Answer one question: what the plan changes, and how the changed parts connect to the code around them.
+* Show the parts the plan adds, changes, or removes, and only the unchanged parts they connect to directly. Leave out parts that neither change nor touch a change.
+* Keep the map to at most about 10 parts and 4 boxes. When more would change, make each part coarser, such as one module or folder, and leave the detail to the phases and tasks.
+* People, services, and input files that are not code may sit outside any box.
+
+### Arrows
+
+* Point each arrow from the part that acts to the part it acts on: a caller to what it calls, a reader to what it reads, a writer to what it writes.
+* Label every arrow with an active verb phrase, such as `saves drafts to` or `reads`. A passive label, such as `read by`, means the arrow points the wrong way.
+* Use solid arrows (`-->`) for code and data, and dotted arrows (`-.->`) only for tests and docs that check or describe a part.
+* Do not give arrows IDs, as in `e1@-->`. Mermaid 11 accepts them, but Mermaid 10 rejects the whole diagram, GitHub does not publish which version it runs, and the RPI Workflow canvas does not read them.
+
+### Boxes and direction
+
+* Group parts in boxes for where each change lands: the folder, module, file, or document a reader would open. Title each box with its workspace-relative path in `<code>`; a class box names its file too. A long path may be shortened from the left to the part a reader would search for, such as `<code>rpi-workflow/ui/</code>`, as long as every box title in the map stays unique.
+* Order boxes as layers, so arrows run from one box to the next: callers first, then what they use.
+* Use `flowchart LR` by default, with callers to the left of what they use. Use `flowchart TB` only when the boxes form stacked layers, each holding several parts under a short title: Mermaid puts each box title at the top of its box, where top-to-bottom arrows and their labels arrive.
 * Use one level of boxes by default. Use a second level, such as a folder holding files or a file holding classes, only when a complex plan reads better with it, and never a third.
-* When a plan touches more files than about six boxes can hold, use folders or modules as boxes and name only the parts that change or that the changes touch.
-* Parts outside the code, such as a person, a service, or an input file, may sit outside any box.
 * Declare each part inside its box, and write every arrow after the last box, so Mermaid and the RPI Workflow canvas place each part in the same box.
-
-### Before and After
-
-* Use the same boxes and part IDs in both diagrams.
-* `### Before` shows the evidence-backed state before any planned work. Tag the parts the plan changes or removes, and leave out the parts it adds. For greenfield work, show the surrounding context or a labeled absence of the planned capability. Label unknown state and record any decision-critical evidence gap rather than inventing a baseline.
-* `### After` shows the intended result of all phases, not an intermediate state. Tag new and changed parts, keep the existing parts they connect to, and leave out removed parts and obsolete arrows.
-* Under After, add a one-line key naming the marks, then a short explanation of the change.
-* Keep Before anchored to pre-change evidence; correct it only when evidence about that baseline or the approved comparison scope changes, not as tasks complete. Keep After and the tags current when phases or tasks change.
 
 ### Labels and tags
 
-* A part the plan adds, changes, or removes has a formatted label: a bold name, an optional short description on the next line, and a tag line last.
-* A tag line names the change and the phases that make it: `new · P01`, `changed · P01, P03`, or `removed · P02`. A new box has a tag line under its title, such as `new file · P01`; write `class`, `module`, or `document` in place of `file` when that fits.
-* A part that stays the same has its plain name, with no bold and no tag.
+* A new or changed part has a bold name, then one short clause saying what it does after the change, then a tag line. A removed part, in Before, has a bold name and its tag line.
+* A tag line names the change and the phases that make it: `new · P01`, `changed · P01, P03`, or `removed · P02`. A new box has a tag line under its title, such as `new file · P01`; write `class`, `module`, `folder`, or `document` in place of `file` when that fits.
+* A part that stays the same has its plain name, with no bold, clause, or tag.
 * Write code names, such as files, functions, classes, and settings, in `<code>`. Never put a backtick inside a label: Mermaid wraps formatted labels in backticks, so one inside ends the label early and stops the whole diagram from rendering.
-* Keep names short, and leave explanation to the phase and task text.
+* Keep each line to a few words, and leave explanation to the walk-through and the tasks.
+
+### Before and After
+
+* `### After` shows the intended result of all phases, not an intermediate state. Tag new and changed parts, keep the unchanged parts they connect to, and leave out removed parts and obsolete arrows.
+* Add `### Before`, above After, only when the plan changes how parts connect: it removes a part or a connection, or replaces one path with another. Draw only the parts that change and the parts they connect to, in After's boxes with After's part IDs. Tag the parts the plan changes or removes, and leave out the parts it adds.
+* When parts change in place and their connections stay the same, leave Before out: After's clauses and marks already show the difference. Greenfield work has After alone.
+* Keep Before anchored to pre-change evidence; correct it only when evidence about that baseline or the approved comparison scope changes, not as tasks complete. Label unknown state and record any decision-critical evidence gap rather than inventing a baseline. Keep After and the tags current when phases or tasks change.
+
+### Captions, key, and walk-through
+
+* Start each diagram with an `accTitle:` line naming the view and what it covers, such as `After: drafts stay on the device and sync through an outbox`, then an `accDescr:` line with one sentence describing the picture. The RPI Workflow canvas uses them as the caption and description.
+* Under After, add a one-line key naming the arrow rule and the marks the map uses, then two or three sentences that walk the main path in arrow order, naming the changed parts and the phases that make them. The RPI Workflow canvas shows the walk-through under the map.
+
+The full key reads `Key: arrows point from a part to what it uses; dotted arrows, tests and docs; dashed border, new; thick border, changed; dotted border, removed, in Before only; each tag names the phases that make the change.` Leave out the words for anything the map does not use.
 
 ### Marks
 
@@ -302,15 +324,20 @@ classDef changed stroke-width:3px
 classDef removed stroke-dasharray: 2 3,stroke-width:2px
 ```
 
-Apply `new` to new parts and new boxes, `changed` to changed parts, and `removed` to removed parts in Before. Do not add fills, text colors, fonts, an `%%{init}%%` line, or front matter. Without fills, every part keeps the renderer's light, dark, or high-contrast theme colors, and a diagram-level `fontFamily` makes Mermaid 11 and 12 draw labels in a serif fallback font. The tag words carry each mark's meaning for screen readers and forced colors, where a border style alone may not show.
+Apply `new` to new parts and new boxes, `changed` to changed parts, and `removed` to removed parts in Before. Do not add fills, text colors, fonts, an `%%{init}%%` line, or front matter. Without fills, every part keeps the renderer's light, dark, or high-contrast theme colors, and a diagram-level `fontFamily` makes Mermaid 11 and 12 draw labels in a serif fallback font. The tag words carry each mark's meaning for screen readers and forced colors, where a border style alone may not show. Conversational decision diagrams follow the same marks and likewise set no fills or fonts.
 
-### Arrows, size, and accessibility
+### Check the map
 
-* Label arrows with short verbs when the relationship is not obvious. Use dotted arrows (`-.->`) for documentation and tests and solid arrows (`-->`) otherwise.
-* Keep the map to about 3 to 6 boxes and 15 parts. Merge parts that connect the same way, such as several document kinds that all feed one reader, into one part.
-* Start each diagram with `accTitle:` and `accDescr:` lines after `flowchart LR` or `flowchart TD`, so screen readers announce what the map shows; the RPI Workflow canvas uses them as the caption and description.
-* When a preview is available, such as the VS Code Markdown preview, check the rendered labels, marks, boxes, and arrows in light and dark modes. Otherwise record that rendering was not checked.
-* Conversational decision diagrams follow the same marks and likewise set no fills or fonts.
+Before the critique, check each diagram and fix it until every answer is yes:
+
+1. Does it answer the one question its `accTitle` names?
+2. Does it hold at most about 10 parts and 4 boxes, with unchanged parts only where a changed part connects to them?
+3. Does every arrow have an active verb, and does every arrow point from the part that acts?
+4. Do arrows run from box to box in one direction, apart from tests and docs?
+5. Does every new and changed part have a bold name, one short clause, and a tag naming real phases?
+6. Does Before appear only because connections change?
+7. Do the key and the walk-through follow After?
+8. When a preview is available, such as the VS Code Markdown preview, do labels, box titles, marks, and arrows read in light and dark without overlapping? Otherwise record that rendering was not checked.
 
 ### Phase lines
 
@@ -318,26 +345,26 @@ Phases carry no diagram of their own. After each phase's `Dependencies:` block, 
 
 ### Example change map
 
-An illustrative Before and After for a plan whose P01 adds a summary class to a sync script and whose P02 removes a legacy summary writer:
+An illustrative map for a plan whose P01 adds a summary class in a new file and changes `Build-Manifest` to use it, and whose P02 removes the legacy summary writer and updates the sync tests. P02 removes a part and its connection, so the map has a Before:
 
 ```mermaid
 flowchart LR
-    accTitle: Before: how plugin sync writes the manifest
-    accDescr: The sync script builds the manifest and calls a legacy summary writer; a test checks the build.
+    accTitle: Before: plugin sync calls a legacy summary writer
+    accDescr: The sync tests check the sync script, which writes the manifest and calls a legacy summary writer.
+    subgraph tests["`<code>scripts/tests/plugins/</code>`"]
+        test["`**<code>Sync-PluginManifest.Tests.ps1</code>**
+        changed · P02`"]
+    end
     subgraph sync["`<code>scripts/plugins/Sync-PluginManifest.ps1</code>`"]
         build["`**<code>Build-Manifest</code>**
         changed · P01`"]
         legacy["`**<code>Write-LegacySummary</code>**
         removed · P02`"]
     end
-    subgraph tests["`<code>scripts/tests/plugins/</code>`"]
-        test["`**<code>Sync-PluginManifest.Tests.ps1</code>**
-        changed · P02`"]
-    end
     manifest["`<code>plugin.json</code>`"]
+    test -.->|checks| build
     build -->|writes| manifest
     build -->|calls| legacy
-    test -.->|checks| build
     classDef changed stroke-width:3px
     classDef removed stroke-dasharray: 2 3,stroke-width:2px
     class build,test changed
@@ -346,34 +373,39 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    accTitle: After: plugin sync with a summary class
-    accDescr: The sync script builds the manifest and a new summary class, which replaces the legacy summary writer; the test checks both.
+    accTitle: After: plugin sync builds its summary with a new class
+    accDescr: The sync tests check the sync script, which writes the manifest and builds its summary with a new PluginSyncSummary class.
+    subgraph tests["`<code>scripts/tests/plugins/</code>`"]
+        test["`**<code>Sync-PluginManifest.Tests.ps1</code>**
+        covers the summary
+        changed · P02`"]
+    end
     subgraph sync["`<code>scripts/plugins/Sync-PluginManifest.ps1</code>`"]
         build["`**<code>Build-Manifest</code>**
+        builds the summary
         changed · P01`"]
     end
     subgraph summary["`<code>scripts/plugins/PluginSyncSummary.psm1</code>
     new file · P01`"]
         cls["`**<code>PluginSyncSummary</code>**
+        holds the summary
         new · P01`"]
     end
-    subgraph tests["`<code>scripts/tests/plugins/</code>`"]
-        test["`**<code>Sync-PluginManifest.Tests.ps1</code>**
-        changed · P02`"]
-    end
     manifest["`<code>plugin.json</code>`"]
-    build -->|writes| manifest
-    build -->|builds| cls
     test -.->|checks| build
+    build -->|writes| manifest
+    build -->|builds the summary with| cls
     classDef new stroke-dasharray: 6 4,stroke-width:2px
     classDef changed stroke-width:3px
     class summary,cls new
     class build,test changed
 ```
 
-Key: dashed border, new; thick border, changed; dotted border, removed, in Before only; each tag names the phases that make the change.
+Key: arrows point from a part to what it uses; dotted arrows, tests and docs; dashed border, new; thick border, changed; dotted border, removed, in Before only; each tag names the phases that make the change.
 
-In this example, P01's line reads `Changes in the map: Build-Manifest, and the new PluginSyncSummary class in its own file`, and P02's reads `Changes in the map: removes Write-LegacySummary and updates the sync tests`.
+The sync tests check `Build-Manifest`, which writes `plugin.json` and now builds its summary with the new `PluginSyncSummary` class (P01). `Write-LegacySummary` goes, and the tests cover the summary instead (P02).
+
+In this example, P01's line reads `Changes in the map: Build-Manifest, and the new PluginSyncSummary class in its own file`, and P02's reads `Changes in the map: removes Write-LegacySummary and updates the sync tests`. If the plan kept `Write-LegacySummary` and only changed `Build-Manifest` in place, the map would have After alone.
 
 ## Planning conversation
 
