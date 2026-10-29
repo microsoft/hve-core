@@ -160,9 +160,9 @@ describe('renderInline', () => {
 
     it('labels a bare address by its host and page when asked, and keeps the full address as its title', () => {
         const root = document.createElement('td');
-        root.appendChild(renderInline('Microsoft Learn, "Maximum Path Length Limitation", https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation;', { shortUrls: true }));
+        root.appendChild(renderInline('Microsoft Learn, "Maximum Path Length Limitation", https://learn.microsoft.com/windows/win32/fileio/maximum-file-path-limitation;', { shortUrls: true }));
         const [link] = tags(root, 'a');
-        assert.equal(link.getAttribute('href'), 'https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation');
+        assert.equal(link.getAttribute('href'), 'https://learn.microsoft.com/windows/win32/fileio/maximum-file-path-limitation');
         assert.match(link.textContent, /^learn\.microsoft\.com\/…\/maximum-file-path-limitation/);
         assert.equal(elements(link).filter((el) => el.localName === 'use' && el.getAttribute('href') === '#i-globe').length, 1, 'one globe per link');
         assert.match(root.textContent, /^Microsoft Learn, "Maximum Path Length Limitation", /);
