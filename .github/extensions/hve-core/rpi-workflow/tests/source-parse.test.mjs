@@ -171,11 +171,22 @@ describe('plan and critique', () => {
             'Key: arrows point from a part to what it uses; thick border, changed.', '',
             'The form saves drafts first (P01).', 'Then the sync engine sends them (P02).', '',
             '<!-- a note for the agent -->', '',
+            '<!<!-- a -->-- a comment that removing another one completes -->', '',
             'Conflicts wait for a person.', '',
             '<!-- rpi:phase id=P01 -->', '### [ ] P01: One', '', 'Goals:', '* g', '',
         ].join('\n');
         assert.equal(parsePlan(text).walkthrough, 'The form saves drafts first (P01).\nThen the sync engine sends them (P02).\n\nConflicts wait for a person.');
         assert.equal(parsePlan('# RPI Plan: x\n\n## Phase Checklist\n\n### [ ] P01: One\n\nGoals:\n* g\n').walkthrough, '');
+    });
+
+    it('stays fast on deeply nested comment openers in the walk-through', () => {
+        const nested = `${'<!'.repeat(40000)}-- x -->${'-- -->'.repeat(40000)}`;
+        const text = ['# RPI Plan: x', '', '## Phase Checklist', '', '### After', '', '```mermaid', 'flowchart LR', '    a["A"]', '```', '', nested, ''].join('\n');
+        const started = performance.now();
+        parsePlan(text);
+        const ms = performance.now() - started;
+        // Bounded removal passes keep this to a few milliseconds; removing one layer per pass takes seconds.
+        assert.ok(ms < 500, `${Math.round(ms)} ms`);
     });
 
     it('reads requirements, decisions, readiness, critique dispositions, and follow-ups', () => {

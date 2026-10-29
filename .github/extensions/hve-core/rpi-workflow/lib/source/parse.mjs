@@ -395,6 +395,25 @@ function requirementsFrom(block, kind) {
     return listItems(block).map((item) => re.exec(item)).filter(Boolean).map((match) => ({ id: match[1], kind, text: match[2].trim() }));
 }
 
+/** Most comment-removal passes, so a hostile run of nested comment openers stays linear. */
+const MAX_COMMENT_PASSES = 8;
+
+/**
+ * Text without HTML comments. Removing a comment can join the text around it into a new
+ * comment, so removal repeats until nothing changes, at most `MAX_COMMENT_PASSES` times.
+ *
+ * @param {string} text
+ */
+function withoutComments(text) {
+    let current = text;
+    for (let pass = 0; pass < MAX_COMMENT_PASSES; pass += 1) {
+        const next = current.replace(/<!--[\s\S]*?-->/g, '');
+        if (next === current) break;
+        current = next;
+    }
+    return current;
+}
+
 /**
  * The prose after the first `mermaid` block of a map section, which walks the map in words,
  * without HTML comments or the paragraph that starts with `Key:`.
@@ -408,7 +427,7 @@ function walkthroughOf(body) {
     const fence = lines[open].trim().match(/^(`{3,}|~{3,})/)[1];
     let close = open + 1;
     while (close < lines.length && !(lines[close].trim().startsWith(fence) && !/[^`~]/.test(lines[close].trim()))) close += 1;
-    return lines.slice(close + 1).join('\n').replace(/<!--[\s\S]*?-->/g, '').split(/\n\s*\n/)
+    return withoutComments(lines.slice(close + 1).join('\n')).split(/\n\s*\n/)
         .map((paragraph) => paragraph.trim()).filter((paragraph) => paragraph && !/^Key:/i.test(paragraph)).join('\n\n');
 }
 
