@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Reference"
 pagination_label: Reference
 author: Microsoft
-ms.date: 2026-10-18
+ms.date: 2026-10-27
 ms.topic: overview
 keywords:
   - reference
