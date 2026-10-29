@@ -297,6 +297,60 @@ stimuli:
         name: skill-vscode-playwright-bleed-detection-scope-language
         config:
           pattern: '(?i)(scrape|web|vs\s*code|news)'
+  - name: skill-hve-slides-knowledge
+    prompt: |
+      Describe what the `hve-slides` skill produces and how its authoring and
+      render-only modes differ.
+    tags:
+      category: behavior-conformance
+      skill: hve-slides
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-slides-knowledge-skill-attribution
+        config:
+          pattern: '(?i)(hve-slides|html|slide|deck)'
+      - type: output-matches
+        name: skill-hve-slides-knowledge-scope-language
+        config:
+          pattern: '(?i)(author|render|standalone|offline)'
+  - name: skill-hve-slides-tool-trigger
+    prompt: |
+      I already have an authored slide deck source folder and need a single
+      offline HTML file I can share. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: hve-slides
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-slides-tool-trigger-skill-attribution
+        config:
+          pattern: '(?i)(hve-slides|slide|deck|render)'
+      - type: output-matches
+        name: skill-hve-slides-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(html|standalone|offline|render)'
+  - name: skill-hve-slides-bleed-detection
+    prompt: |
+      I need to fix the formatting of an existing Microsoft Word document.
+      Does the `hve-slides` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: hve-slides
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-slides-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill)'
+      - type: output-matches
+        name: skill-hve-slides-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(word|document|formatting)'
   - name: skill-hve-demo-material-knowledge
     prompt: |
       Describe what the `hve-demo-material` skill produces for each level and
