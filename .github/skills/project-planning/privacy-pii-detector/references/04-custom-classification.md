@@ -1,0 +1,325 @@
+---
+title: Custom Classification
+description: Project-level configuration for custom PII types, tier overrides, suppressions, and data catalog integration
+---
+
+# Custom Classification
+
+This reference defines the `.pii-config.yml` schema that projects place in their repository root to customize PII detection. The configuration allows teams to bring their own data classification without modifying the skill's core taxonomy.
+
+## Configuration file location
+
+The detector looks for `.pii-config.yml` at the repository root. If absent, the skill uses its built-in taxonomy and industry overlays without customization.
+
+```
+my-project/
+├── .pii-config.yml          ← project-level customization
+├── src/
+├── ...
+```
+
+## Schema
+
+```yaml
+# .pii-config.yml
+version: "1.0"
+
+# Industry context (activates the matching overlay)
+industry: "telco"  # Options: telco, healthcare, financial, or omit for core-only
+
+# Custom PII types specific to this organization
+custom_types:
+  - id: "PII-C001"
+    name: "Employee Badge ID"
+    description: "Internal badge number used for physical access"
+    tier: "T1"
+    detection_patterns:
+      - "*badgeId*"
+      - "*badge_number*"
+      - "*accessCardId*"
+    required_controls:
+      - "encryption_at_rest"
+      - "access_control"
+      - "retention_policy"
+
+  - id: "PII-C002"
+    name: "Vehicle Registration"
+    description: "Customer vehicle registration plate number"
+    tier: "T1"
+    detection_patterns:
+      - "*registration*"
+      - "*plateNumber*"
+      - "*vehicleReg*"
+    format_patterns:
+      - "[A-Z]{1,3}\\d{1,4}[A-Z]{0,3}"  # AU format
+    required_controls:
+      - "encryption_at_rest"
+      - "output_masking"
+
+# Override sensitivity tiers for built-in types
+tier_overrides:
+  - pii_type: "PII-002"       # Email
+    new_tier: "T2"            # Upgrade from T1 to T2
+    justification: "Our org handles whistleblower emails requiring enhanced protection"
+
+  - pii_type: "PII-006"       # IP address
+    new_tier: "T2"
+    justification: "Regulatory requirement to treat IP as sensitive in our jurisdiction"
+
+# Additional controls beyond tier defaults
+additional_controls:
+  - pii_type: "PII-002"       # Email
+    controls:
+      - "audit_logging"       # Add audit logging requirement for email
+      - "purpose_binding"
+
+  - pii_type: "PII-023"       # Core payment card; use PII-300 with the financial overlay
+    controls:
+      - "tokenization"        # Require tokenization (beyond default encryption)
+
+# Suppress false positives
+suppressions:
+  - pattern: "address"
+    context: "memory_address"
+    reason: "Our 'address' fields in kernel module refer to memory addresses, not postal"
+    files:
+      - "src/kernel/**"
+      - "src/drivers/**"
+
+  - pattern: "phone"
+    context: "phone_type_enum"
+    reason: "PhoneType enum values (MOBILE, LANDLINE) are not PII"
+    files:
+      - "src/models/enums.py"
+
+  - pattern: "patient*"
+    context: "test_fixtures"
+    reason: "Test fixtures use synthetic patient data clearly marked as non-production"
+    files:
+      - "tests/**"
+      - "fixtures/**"
+
+# Data catalog integration (import existing classification)
+catalog_import:
+  # Microsoft Purview
+  purview:
+    enabled: false
+    # Planned: live Purview label retrieval is not implemented yet.
+    # label_mapping is applied only to labels already present in code or config.
+    label_mapping:
+      "Highly Confidential": "T3"
+      "Confidential": "T2"
+      "General": "T1"
+
+  # Custom CSV/JSON import
+  file_import:
+    enabled: false
+    path: "docs/data-classification.csv"
+    # CSV must have columns: field_name, pii_type, tier, description
+    # Imported entries are treated as custom_types
+
+# Retention schedule overrides (per data category)
+retention_overrides:
+  - pii_type: "PII-002"       # Email
+    retention_days: 730       # 2 years (org policy)
+    justification: "Contractual requirement for 2-year email retention"
+
+  - pii_type: "PII-106"       # CDR (telco)
+    retention_days: 730       # 2 years (Australian metadata retention)
+    justification: "Telecommunications (Interception and Access) Act 1979 s 187C"
+```
+
+## Schema field reference
+
+### `version`
+
+Required. Schema version. Currently `"1.0"`.
+
+### `industry`
+
+Optional. Activates the matching industry overlay. Values: `telco`, `healthcare`, `financial`. Omit to use only core taxonomy + custom types.
+
+### `custom_types`
+
+Optional. Array of organization-specific PII types not in the core taxonomy.
+
+| Field                | Required | Description                                               |
+|----------------------|----------|-----------------------------------------------------------|
+| `id`                 | Yes      | Unique ID in format `PII-C<NNN>` (C prefix = custom)      |
+| `name`               | Yes      | Human-readable name                                       |
+| `description`        | Yes      | What this data type is                                    |
+| `tier`               | Yes      | Sensitivity tier: `T1`, `T2`, or `T3`                     |
+| `detection_patterns` | Yes      | Glob patterns for field/variable names (case-insensitive) |
+| `format_patterns`    | No       | Regex patterns for format validation detection            |
+| `required_controls`  | Yes      | Controls from the control matrix that must be present     |
+
+### `tier_overrides`
+
+Optional. Override the default sensitivity tier for a built-in PII type.
+
+| Field           | Required | Description                                     |
+|-----------------|----------|-------------------------------------------------|
+| `pii_type`      | Yes      | PII taxonomy ID to override (e.g., `PII-002`)   |
+| `new_tier`      | Yes      | New tier assignment: `T1`, `T2`, or `T3`        |
+| `justification` | Yes      | Why this override exists (documented for audit) |
+
+### `additional_controls`
+
+Optional. Add controls beyond the tier default for specific PII types.
+
+| Field      | Required | Description                                               |
+|------------|----------|-----------------------------------------------------------|
+| `pii_type` | Yes      | PII taxonomy ID                                           |
+| `controls` | Yes      | Array of additional control names from the control matrix |
+
+### `suppressions`
+
+Optional. Suppress known false positive detections.
+
+| Field     | Required | Description                                                            |
+|-----------|----------|------------------------------------------------------------------------|
+| `pattern` | Yes      | The detection pattern to suppress                                      |
+| `context` | Yes      | Why it's a false positive (e.g., `memory_address`, `test_fixtures`)    |
+| `reason`  | Yes      | Human-readable justification                                           |
+| `files`   | No       | Glob patterns limiting suppression scope. If omitted, applies globally |
+
+### `catalog_import`
+
+Optional. Import classification from external data catalogs.
+
+#### `purview`
+
+Live Purview label retrieval is planned but not implemented. The skill does not call Purview, and setting `enabled: true` does not fetch labels. The detector applies `label_mapping` only to sensitivity labels already present in code or configuration, and notes in the assessment scope when `enabled: true` is set.
+
+| Field           | Required         | Description                                       |
+|-----------------|------------------|---------------------------------------------------|
+| `enabled`       | Yes              | Reserved for planned Purview import; keep `false` |
+| `label_mapping` | Yes (if enabled) | Maps Purview sensitivity labels to PII tiers      |
+
+#### `file_import`
+
+| Field     | Required         | Description                                      |
+|-----------|------------------|--------------------------------------------------|
+| `enabled` | Yes              | Whether to import from a local file              |
+| `path`    | Yes (if enabled) | Relative path to CSV or JSON classification file |
+
+### `retention_overrides`
+
+Optional. Override retention expectations for specific PII types.
+
+| Field            | Required | Description                                                    |
+|------------------|----------|----------------------------------------------------------------|
+| `pii_type`       | Yes      | PII taxonomy ID                                                |
+| `retention_days` | Yes      | Maximum retention in days                                      |
+| `justification`  | Yes      | Why this retention period (regulatory reference or org policy) |
+
+## Resolution order
+
+The detector classifies each field with the resolution order in [00 PII Taxonomy](00-pii-taxonomy.md#resolution-order):
+
+1. **Suppressions** — if the field matches a suppression, skip it.
+2. **Custom types** — check project-defined types first.
+3. **Industry overlay** — apply industry-specific types when the industry is configured or inferred.
+4. **Core taxonomy** — fall back to the built-in classification.
+5. **Tier overrides** — apply org-specific tier changes to the resolved type, including overlay types.
+
+An overlay type that matches a field supersedes any core type on the same field. Custom type `detection_patterns` follow the [Matching rules](01-detection-patterns.md#matching-rules).
+
+### Per-type configuration matching
+
+Match `tier_overrides`, `additional_controls`, and `retention_overrides` by exact equality with the final resolved `pii_type`. Apply this rule whether the industry is configured or inferred. An entry keyed on a core ID does not transfer to an overlay or custom type that supersedes it.
+
+For example, `cardNumber` resolves to PII-300 with the financial overlay. Use PII-300 for all three configuration sections; PII-023 entries apply only to fields that still resolve to the core payment-card type. If a custom type wins instead, use that custom ID.
+
+When a core-ID entry would have matched a field but its type was superseded, add a detection review item with that detection's ID, the affected configuration section, and the resolved ID the user should configure. Continue verification with the resolved type's defaults and matching configuration entries; do not silently transfer or claim to apply the superseded entry.
+
+This financial-overlay example applies all three settings to `cardNumber`:
+
+```yaml
+version: "1.0"
+industry: "financial"
+
+tier_overrides:
+  - pii_type: "PII-300"
+    new_tier: "T3"
+    justification: "Organization policy requires the highest control tier for PAN"
+
+additional_controls:
+  - pii_type: "PII-300"
+    controls:
+      - "tokenization"
+
+retention_overrides:
+  - pii_type: "PII-300"
+    retention_days: 30
+    justification: "Organization policy limits PAN retention to 30 days"
+```
+
+These illustrative organization policies do not change the legal classification of PAN or authorize storage prohibited by an industry rule.
+
+## Control resolution
+
+For each detected PII type, required controls are determined by:
+
+1. Base controls from `02-control-expectations.md` for the effective tier.
+2. Plus custom type `required_controls` and `additional_controls` matching the resolved ID.
+3. Industry overlay controls (if applicable).
+
+Evaluate retention using `retention_overrides` matching that same resolved ID. When no override matches, keep the applicable default retention expectations.
+
+## Example: Telco company with custom classification
+
+```yaml
+version: "1.0"
+industry: "telco"
+
+custom_types:
+  - id: "PII-C001"
+    name: "Network Slice ID"
+    description: "5G network slice identifier linked to subscriber"
+    tier: "T2"
+    detection_patterns:
+      - "*sliceId*"
+      - "*networkSlice*"
+      - "*nssai*"
+    required_controls:
+      - "encryption_at_rest"
+      - "access_control"
+      - "audit_logging"
+
+tier_overrides:
+  - pii_type: "PII-104"       # MAC address
+    new_tier: "T2"
+    justification: "Persistent device tracking via MAC requires enhanced controls per our DPO guidance"
+
+suppressions:
+  - pattern: "address"
+    context: "network_address"
+    reason: "Network address fields in routing tables are infrastructure, not postal addresses"
+    files:
+      - "src/routing/**"
+      - "src/network/**"
+
+retention_overrides:
+  - pii_type: "PII-106"       # CDR
+    retention_days: 730
+    justification: "Australian Telecommunications (Interception and Access) Act metadata retention"
+```
+
+## Validation
+
+The skill validates `.pii-config.yml` at the start of Phase 1 (Industry context). Invalid configurations produce a finding:
+
+```yaml
+finding:
+  id: "PII-GAP-CONFIG-001"
+  severity: "LOW"
+  title: "Invalid .pii-config.yml: <specific error>"
+  remediation: "Fix the configuration error; detection proceeds with defaults"
+```
+
+The detector does not halt on invalid config — it falls back to defaults and reports the config issue as a LOW finding.
+
+---
+
+Configuration schema is original content (CC BY 4.0). The `.pii-config.yml` pattern follows the convention established by `.adr-config.yml` in the ADR Creator skill.
