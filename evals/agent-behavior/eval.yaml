@@ -7449,6 +7449,112 @@ stimuli:
     name: interrupted-review-keeps-canonical-record
     config:
       pattern: (?i)^\s*Recovery:[ \t]*resume-existing[ \t]*\r?\nEvidence:[ \t]*canonical\s*$
+- name: rpi-agent-canvas-provider-ambiguity
+  prompt: |
+    This is a contained, response-only canvas-policy regression, not native
+    RPI execution. Read `policy/rpi-agent.agent.md`. A capability lookup for
+    hve-core-rpi-workflow reports multiple providers:
+    plugin:hve-core:rpi-workflow and project:rpi-workflow. No Canvas decision
+    exists. Choose the next action and provider arguments for lookup and
+    opening. Return exactly three lines: `Action: retry|abandon`,
+    `Lookup provider: <id>`, and `Open provider: <id>`. Do not call canvas tools
+    or write files. If the file cannot be read, report the task as blocked
+    without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+      dest: policy/rpi-agent.agent.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    shape: rpi-canvas-policy
+    prompt_sha256: 4e9662db8c78af95e830da97e750cc317d2fe07a5eaf394d79134ec5fd9382d6
+    agent: rpi-agent
+  graders:
+  - type: output-matches
+    name: retry-with-consistent-project-provider
+    config:
+      pattern: (?i)^\s*Action:[ \t]*retry[ \t]*\r?\nLookup provider:[ \t]*project:rpi-workflow[ \t]*\r?\nOpen provider:[ \t]*project:rpi-workflow\s*$
+- name: rpi-agent-canvas-provider-retention
+  prompt: |
+    This is a contained, response-only canvas-policy regression, not native
+    RPI execution. Read `policy/rpi-agent.agent.md`. The saved Canvas decision
+    records instance rpi-map and extensionId plugin:hve-core:rpi-workflow.
+    The user asks to bring that panel back. The host still offers both
+    plugin:hve-core:rpi-workflow and project:rpi-workflow. Select the instance
+    and provider. Return exactly two lines: `Instance: <id>` and
+    `Provider: <id>`. Do not call canvas tools or write files. If the file
+    cannot be read, report the task as blocked without inventing its
+    declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+      dest: policy/rpi-agent.agent.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    shape: rpi-canvas-policy
+    prompt_sha256: ea2824bb2e721263be27c3d3fb3db6d4765c9fa8ea2b436c0c42eb2f33c332a8
+    agent: rpi-agent
+  graders:
+  - type: output-matches
+    name: reopen-with-retained-provider-and-instance
+    config:
+      pattern: (?i)^\s*Instance:[ \t]*rpi-map[ \t]*\r?\nProvider:[ \t]*plugin:hve-core:rpi-workflow\s*$
+- name: rpi-agent-canvas-provider-failure
+  prompt: |
+    This is a contained, response-only canvas-policy regression, not native
+    RPI execution. Read `policy/rpi-agent.agent.md`. No Canvas decision exists.
+    After resolving provider ambiguity, the provider-qualified open fails
+    because the extension is disconnected; the host recommends reloading the
+    extension. There is no new evidence for another attempt. Decide whether
+    to retry immediately, what the user must hear, whether RPI work can
+    continue, and whether to record a current Canvas decision. Return exactly
+    four lines: `Retry: yes|no`, `Report: silent|reason-and-recovery`,
+    `RPI: continue|stop`, and `Record current canvas: yes|no`. Do not call
+    canvas tools or write files. If the file cannot be read, report the task
+    as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+      dest: policy/rpi-agent.agent.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    shape: rpi-canvas-policy
+    prompt_sha256: b3193abbfdedfdeba7d6274247d6b988a13eb0e49b6335a6532d5dd4db25a5ae
+    agent: rpi-agent
+  graders:
+  - type: output-matches
+    name: report-failure-without-blocking-or-false-success
+    config:
+      pattern: (?i)^\s*Retry:[ \t]*no[ \t]*\r?\nReport:[ \t]*reason-and-recovery[ \t]*\r?\nRPI:[ \t]*continue[ \t]*\r?\nRecord current canvas:[ \t]*no\s*$
+- name: rpi-agent-canvas-plugin-only
+  prompt: |
+    This is a contained, response-only canvas-policy regression, not native
+    RPI execution. Read `policy/rpi-agent.agent.md`. In a downstream workspace
+    the only host-reported provider for hve-core-rpi-workflow is
+    plugin:hve-core:rpi-workflow. A saved Canvas decision from another host
+    names project:rpi-workflow, which is not offered here. Choose the provider
+    for opening and the evidence to retain after success. Return exactly two
+    lines: `Open provider: <id>` and `Saved provider: <id>`. Do not call canvas
+    tools or write files. If the file cannot be read, report the task as
+    blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/hve-core/rpi-agent.agent.md
+      dest: policy/rpi-agent.agent.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    shape: rpi-canvas-policy
+    prompt_sha256: e9f059c3abbe570fc7c077c04a7605c246affb8277e25c3f44c5b5eddf82dbc5
+    agent: rpi-agent
+  graders:
+  - type: output-matches
+    name: use-offered-plugin-instead-of-stale-project
+    config:
+      pattern: (?i)^\s*Open provider:[ \t]*plugin:hve-core:rpi-workflow[ \t]*\r?\nSaved provider:[ \t]*plugin:hve-core:rpi-workflow\s*$
 - name: rpi-plan-critic-conformance-d89dd31d
   prompt: |
     This is a contained, response-only critic-contract scenario, not a native
