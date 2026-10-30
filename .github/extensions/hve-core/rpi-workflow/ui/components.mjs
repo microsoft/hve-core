@@ -36,6 +36,26 @@ export function disclosure(ctx, key, className, summary, ...content) {
     return h('details', { class: className, open: ctx.ui.openDetails.has(key), ontoggle: (event) => ctx.act.setDetailsOpen(key, event.target.open) }, h('summary', { text: summary, dataset: { key: `summary-${key}` } }), content);
 }
 
+/** Page-local information detail; changing it does not change the session or send input. */
+export function presentationControl(ctx) {
+    return h('label', { class: 'presentation-control' }, h('span', { text: 'View' }),
+        h('select', { 'aria-label': 'Information detail', dataset: { key: 'presentation' }, onchange: (event) => ctx.act.setPresentation(event.target.value) },
+            h('option', { value: 'focused', selected: ctx.ui.presentation !== 'full', text: 'Focused' }),
+            h('option', { value: 'full', selected: ctx.ui.presentation === 'full', text: 'Full detail' })));
+}
+
+/** Opens a containing focused row before navigation or editor focus, retaining its expansion. */
+export function revealRow(element, act) {
+    const section = element?.closest('.row[data-disclosure]');
+    if (!section) return;
+    act.setDetailsOpen(section.dataset.disclosure, true);
+    section.classList.remove('is-folded');
+    section.querySelector('.row-text').hidden = false;
+    const margin = section.querySelector('.row-margin');
+    if (margin) margin.hidden = false;
+    section.querySelector('.row-toggle')?.setAttribute('aria-expanded', 'true');
+}
+
 /**
  * A disclosure that builds its content only while open, for long artifact text. Its summary
  * is an h4, so the section is reachable by heading and its own headings nest below it.
@@ -125,6 +145,7 @@ export function decisionsRow(ctx, phase) {
     const notes = notesFor(ctx, [rowId]);
     return row(ctx, {
         id: rowId, idLabel: null, title: 'Decisions', level: 2,
+        secondary: waiting === 0,
         badges: [waiting ? badge({ icon: 'hand', label: `${waiting} ${waiting === 1 ? 'needs' : 'need'} you`, tone: 'attention' }) : chip(plural(decisions.length, 'decision'), 'muted')],
         actions: rowActions(ctx, { rowId }),
         body: [
@@ -139,7 +160,7 @@ export function decisionsRow(ctx, phase) {
  * A document row: header, text column, and a margin for that row's annotations.
  *
  * @param {any} ctx
- * @param {{ id: string, idLabel?: string, title: string, badges?: any[], actions?: any[], body: any[], margin?: any[], className?: string, level?: number }} spec
+ * @param {{ id: string, idLabel?: string, title: string, badges?: any[], actions?: any[], body: any[], margin?: any[], className?: string, level?: number, secondary?: boolean }} spec
  */
 export function row(ctx, spec) {
     const titleId = `row-${spec.id}-title`;
@@ -164,6 +185,30 @@ export function row(ctx, spec) {
             (spec.actions ?? []).length ? h('span', { class: 'row-actions' }, spec.actions) : null),
         h('div', { class: 'row-text' }, spec.body)),
     margin.length ? h('aside', { class: 'row-margin', 'aria-label': `Notes for ${spec.idLabel ?? spec.id}` }, margin) : null);
+    const needsInput = Array.from(section.querySelectorAll('.decision')).some((card) => card.classList.contains('is-needs-input'));
+    // An open form stays exposed even if its row would otherwise be supporting detail.
+    if (spec.secondary && ctx.ui.presentation !== 'full' && !needsInput && !section.querySelector('textarea')) {
+        const key = `row:${ctx.ui.phase}:${spec.id}`;
+        const open = ctx.ui.openDetails.has(key);
+        const body = section.querySelector('.row-text');
+        const aside = section.querySelector('.row-margin');
+        body.setAttribute('id', `row-${spec.id}-body`);
+        body.hidden = !open;
+        if (aside) {
+            aside.setAttribute('id', `row-${spec.id}-margin`);
+            aside.hidden = !open;
+        }
+        section.dataset.disclosure = key;
+        if (!open) section.classList.add('is-folded');
+        const heading = section.querySelector('.row-title');
+        heading.textContent = '';
+        heading.appendChild(h('button', {
+            type: 'button', class: 'row-toggle', dataset: { key: `row-toggle-${spec.id}` },
+            'aria-expanded': String(open),
+            'aria-controls': `row-${spec.id}-body${aside ? ` row-${spec.id}-margin` : ''}`,
+            onclick: () => ctx.act.toggleRow(key),
+        }, icon('chevron'), h('span', { text: spec.title })));
+    }
     return section;
 }
 

@@ -53,6 +53,7 @@ export function renderView(ctx) {
         const event = [...review.history].reverse().find((item) => item.subject === finding.id);
         rows.push(row(ctx, {
             id: finding.id, title: finding.title,
+            secondary: finding.decision === 'resolved' || finding.decision === 'rejected',
             badges: [badge(known(SEVERITY, finding.severity), { strong: true }), finding.route ? chip(`Route: ${ROUTE[finding.route] ?? finding.route}`, 'muted') : null],
             actions: rowActions(ctx, { rowId: finding.id, ask: true }),
             body: [
@@ -79,6 +80,7 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'history', idLabel: null, title: 'Decision history', level: 2,
+        secondary: true,
         body: [h('p', { class: 'meta', text: 'Append-only. The latest event for a subject is current.' }), h('ol', { class: 'timeline' }, review.history.map((event) => h('li', { class: 'timeline-item', dataset: { item: event.id }, tabindex: '-1' },
             h('span', { class: 'timeline-dot', 'aria-hidden': 'true' }),
             h('p', { class: 'timeline-head' }, h('span', { class: 'id-chip', text: event.id }), /^RV-\d{3}$/.test(event.subject) ? idChip(event.subject, ctx.act.navigate) : h('strong', { text: event.subject }), badge(FINDING_DECISION[event.status] ?? { icon: 'info', label: event.status, tone: 'muted' }), timeEl(event.at, ctx.now)),

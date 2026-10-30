@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, clear, decisionAlias, fullTime, h, icon, idTag, PHASE_META, PHASE_STATUS, plural, relTime, sr } from './dom.mjs';
-import { confirmPress, disclosure, filePreview, hasMarginHome, reviewSheet, sendItems, sessionTree, steerPanel, waitingCount } from './components.mjs';
+import { confirmPress, disclosure, filePreview, hasMarginHome, presentationControl, revealRow, reviewSheet, sendItems, sessionTree, steerPanel, waitingCount } from './components.mjs';
 import { editorButton, sourceProblem, sourceSheet } from './source-view.mjs';
 import { anchorAt, installAnchorHandle } from './anchors.mjs';
 import { notConnectedView } from './connect-view.mjs';
@@ -48,6 +48,7 @@ const state = {
     /** Sessions in the workspace, loaded when the session menu opens. */
     sessions: { loading: false, error: null, list: null, skipped: [] },
     ui: {
+        presentation: 'focused',
         phase: null,
         highlight: null,
         editing: null,
@@ -322,6 +323,7 @@ function focusEditor(sectionId) {
     if (section?.doc && PHASES.includes(section.doc) && state.ui.phase !== section.doc) setPhase(section.doc);
     window.requestAnimationFrame(() => {
         const area = $(`edit-${sectionId}`);
+        revealRow(area, act);
         area?.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
         area?.focus({ preventScroll: true });
     });
@@ -382,6 +384,7 @@ function navigate(ref, phaseOverride, options = {}) {
             announce(`${ref} is not shown in ${PHASE_META[phase].label}.`);
             return;
         }
+        revealRow(element, act);
         if ($('steer').contains(element) && $('steer').inert) openSteer();
         if (widened) announce(`Showing all tasks to reach ${ref}.`);
         // The pinned board is always in view; scrolling to it would move the page under it.
@@ -986,6 +989,19 @@ const act = {
         if (open) state.ui.openDetails.add(key);
         else state.ui.openDetails.delete(key);
     },
+    toggleRow(key) {
+        act.setDetailsOpen(key, !state.ui.openDetails.has(key));
+        render();
+    },
+    setPresentation(value) {
+        if (value !== 'focused' && value !== 'full') {
+            reportFailure('Unknown information detail. Choose Focused or Full detail.');
+            return;
+        }
+        state.ui.presentation = value;
+        render();
+        announce(value === 'full' ? 'Full detail: supporting rows are expanded.' : 'Focused: supporting rows can be expanded by their headings.');
+    },
     /** Opens the composer anchored to a row, or to a part of it with `detail` from the hover button or menu. */
     anchorComposer(rowId, closeSheet = false, detail = {}) {
         if (closeSheet) $('fileSheet').close();
@@ -1482,6 +1498,10 @@ function renderContextBar() {
     // The file and time are the shown document's, which may be an earlier one.
     const record = viewContext(phase).data.session.phases[phase];
     const meta = PHASE_STATUS[record.status] ?? PHASE_STATUS.upcoming;
+    const artifact = record.artifact ? h('span', { class: 'context-artifact' },
+        h('code', { class: 'context-path', title: record.artifact, text: record.artifact }),
+        button('Copy artifact path', { iconName: 'copy', hideLabel: true, onClick: () => act.copy(record.artifact) }),
+        editorButton(context(), record.artifact, null, 'open-artifact')) : null;
     // The agent's next step shows where it works; the Live control follows it from anywhere.
     const side = session.session.activePhase === phase && session.session.nextAction
         ? h('p', { class: 'next-action' }, icon('arrow-right'), h('span', { text: session.session.nextAction }))
@@ -1505,11 +1525,9 @@ function renderContextBar() {
             h('span', { class: 'history-nav', role: 'group', 'aria-label': 'Back and forward' }, travelButton('back', back), travelButton('forward', forward)),
             h('h2', { class: 'context-title' }, icon(PHASE_META[phase].icon), PHASE_META[phase].label),
             badge(meta),
+            presentationControl(context()),
             documentSwitcher(phase),
-            record.artifact ? h('span', { class: 'context-artifact' },
-                h('code', { class: 'context-path', title: record.artifact, text: record.artifact }),
-                button('Copy artifact path', { iconName: 'copy', hideLabel: true, onClick: () => act.copy(record.artifact) }),
-                editorButton(context(), record.artifact, null, 'open-artifact')) : null,
+            artifact && state.ui.presentation === 'focused' ? disclosure(context(), `source-${phase}`, 'context-source', 'Source file', artifact) : artifact,
             record.updatedAt ? h('span', { class: 'meta', title: session.source?.kind === 'rpi' ? `The file last changed ${fullTime(record.updatedAt)}. The canvas reads it again whenever it changes.` : fullTime(record.updatedAt) }, 'Updated ', relTime(record.updatedAt, context().now)) : null),
         side ? h('div', { class: 'context-side' }, side) : null,
     ].filter(Boolean));
@@ -1922,6 +1940,7 @@ function watchOffsets() {
 }
 
 function renderPage() {
+    document.documentElement.dataset.presentation = state.ui.presentation;
     if (state.notConnected) {
         renderNotConnected();
         return;

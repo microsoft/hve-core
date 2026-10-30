@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, and send it your input
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-29
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -51,6 +51,14 @@ A canvas opened from a list doesn't know your session yet, so it shows Not conne
 Choose **Ask the agent**, which sends a one-line request naming this canvas to the chat, or **Copy request** to paste it yourself. The page changes as soon as the agent connects it. **Show the sample session** opens a made-up session with every phase filled in, which is a safe place to try things.
 
 ## Find Your Way Around
+
+The **View** selector in the document's context bar starts on **Focused**. It keeps summaries, pending decisions, risks, validation, and required work expanded. Supporting rows show their titles and status badges; select a heading to read its detail.
+
+Choose **Full detail** to expand the supporting rows for close reading or comparison. No information is removed. Task details, evidence chips, and record sections still have their own controls. Following an ID opens its containing row, and an open editor or pending decision form stays visible.
+
+Your choice follows you across phases and loops while the page remains open. Reloading starts Focused again. In Focused, **Source file** reveals the artifact path and its actions, and narrow headers keep the primary action labels visible.
+
+The screenshots below show expanded content; use Full detail or expand individual headings to compare those views.
 
 The canvas has four regions, numbered here on the example's Research phase:
 

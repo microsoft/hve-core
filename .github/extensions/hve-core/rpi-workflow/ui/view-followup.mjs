@@ -42,6 +42,9 @@ export function renderView(ctx) {
     }));
     rows.push(row(ctx, {
         id: 'followups', idLabel: null, title: 'Ranked follow-ups', level: 2,
+        secondary: !followUps.items.some((item) => item.required),
+        badges: followUps.items.length && !followUps.items.some((item) => item.required)
+            ? [badge({ icon: 'info', label: `${followUps.items.length} optional`, tone: 'muted' })] : [],
         body: [h('p', { class: 'meta', text: 'Ranked by dependency and acceptance impact. Required items keep the session open; optional items never block completion.' }),
             h('ol', { class: 'followup-list' }, followUps.items.map((item) => h('li', { class: ['followup', item.required ? 'is-required' : null], dataset: { item: item.id }, tabindex: '-1' },
                 h('span', { class: 'rank', 'aria-hidden': 'true', text: String(item.rank) }),
@@ -54,6 +57,6 @@ export function renderView(ctx) {
                         button('Skip', { iconName: 'dash-circle', onClick: () => ctx.act.requestTask(item.id, `Skip ${item.id} (${item.title}).`) })) : null))))],
         margin: notesFor(ctx, followUps.items.map((item) => item.id)).map((item) => marginNote(ctx, item)),
     }));
-    rows.push(row(ctx, { id: 'session-loops', idLabel: null, title: 'Loops in this session', level: 2, body: sessionLoops(ctx) }));
+    rows.push(row(ctx, { id: 'session-loops', idLabel: null, title: 'Loops in this session', level: 2, secondary: true, body: sessionLoops(ctx) }));
     return rows;
 }

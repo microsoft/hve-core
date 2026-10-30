@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-29
 ms.topic: reference
 keywords:
   - canvas
@@ -34,6 +34,16 @@ The canvas adapts to the phase you view:
   * Then come changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers.
 * Review: an assessment with severity counts, findings with expected and observed behavior side by side, the agent's decisions with Question this decision, and the decision history
 * Follow-up: ranked follow-ups with Select and Skip, and the loops in this session as a tree, parent first
+
+### Information Detail
+
+The context bar's **View** selector starts on **Focused**. Summaries, risks, current work, pending decision forms, validation, and required follow-ups remain expanded. Supporting findings, covered requirements, maps, resolved review findings, and history have expandable headings. Empty implementation sections and optional-only follow-ups can fold too.
+
+Choose **Full detail** to expand those supporting rows for close reading or comparison. The existing task, evidence, and record disclosures still work independently. Neither mode removes content or changes the session, decisions, or feedback delivery.
+
+The choice lasts for the open page, including phase and loop changes; reloading starts Focused again. Individual row expansions survive view switches and re-renders. Following an ID opens its containing row before moving focus, and a row with a pending decision or open editor stays exposed.
+
+In Focused, **Source file** opens the artifact path and its copy/editor actions. Narrow headers retain the primary action labels. Panel toggles remain under your control in either view.
 
 Every document is a sequence of rows. A row's margin holds its annotations: decision cards, research lanes, your comments, and the agent's notes. On narrow canvases the annotations follow the row text.
 IDs such as `C22` or `P01-T02` link wherever they appear, and each kind of ID has its own color. Hover over one to preview the whole item, and its icon says whether a click goes to the item or opens it in place.
