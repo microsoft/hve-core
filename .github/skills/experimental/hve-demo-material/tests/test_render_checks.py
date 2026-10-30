@@ -13,6 +13,7 @@ import wave
 from pathlib import Path
 
 import pytest
+import render_checks
 from render_checks import (
     LEVELS,
     STYLE_TEMPLATE,
@@ -30,6 +31,8 @@ from render_checks import (
     check_style,
     deck_accessibility_problems,
     evaluate,
+    install_files,
+    jpeg_dimensions,
     level_touched,
     load_curriculum,
     main,
@@ -2069,3 +2072,146 @@ class TestCaptionEvidenceContracts:
             if problem
             else report["problems"] == []
         )
+
+
+def _jpeg(width: int, height: int) -> bytes:
+    """Build the smallest JPEG whose SOF0 segment ``jpeg_dimensions`` parses."""
+    return (
+        b"\xff\xd8"
+        + b"\xff\xc0\x00\x0b\x08"
+        + height.to_bytes(2, "big")
+        + width.to_bytes(2, "big")
+        + b"\x01\x01\x11\x00"
+        + b"\xff\xd9"
+    )
+
+
+class TestInstallFiles:
+    """Staged replacement of named output files with rollback."""
+
+    def test_given_named_files_when_installed_then_only_those_replaced(self, tmp_path):
+        # Arrange
+        (tmp_path / "keep.txt").write_text("unrelated", encoding="utf-8")
+        (tmp_path / "report.json").write_text("old", encoding="utf-8")
+
+        # Act
+        install_files(tmp_path, {"report.json": b"new", "added.txt": b"added"})
+
+        # Assert
+        assert (tmp_path / "report.json").read_bytes() == b"new"
+        assert (tmp_path / "added.txt").read_bytes() == b"added"
+        assert (tmp_path / "keep.txt").read_text(encoding="utf-8") == "unrelated"
+        assert not list(tmp_path.glob(".render-stage-*"))
+
+    def test_given_later_replace_fails_when_installed_then_prior_state_restored(
+        self, tmp_path, mocker
+    ):
+        # Arrange
+        (tmp_path / "keep.txt").write_text("unrelated", encoding="utf-8")
+        (tmp_path / "existing.json").write_text("old", encoding="utf-8")
+        real = os.replace
+        calls = []
+
+        def replace(source, target):
+            calls.append(target)
+            if len(calls) == 3:
+                raise OSError("simulated replace failure")
+            return real(source, target)
+
+        mocker.patch.object(render_checks.os, "replace", side_effect=replace)
+
+        # Act
+        with pytest.raises(OSError, match="simulated replace failure"):
+            install_files(
+                tmp_path,
+                {"existing.json": b"new", "added.txt": b"added", "last.txt": b"x"},
+            )
+
+        # Assert
+        assert (tmp_path / "existing.json").read_text(encoding="utf-8") == "old"
+        assert not (tmp_path / "added.txt").exists()
+        assert not (tmp_path / "last.txt").exists()
+        assert (tmp_path / "keep.txt").read_text(encoding="utf-8") == "unrelated"
+        assert not list(tmp_path.glob(".render-stage-*"))
+
+    @pytest.mark.parametrize("name", ["../escape.txt", "nested/file.txt", ".."])
+    def test_given_invalid_name_when_installed_then_raises(self, tmp_path, name):
+        # Act & Assert
+        with pytest.raises(CheckError, match="Invalid output filename"):
+            install_files(tmp_path, {name: b"x"})
+
+    def test_given_directory_at_target_when_installed_then_raises(self, tmp_path):
+        # Arrange
+        (tmp_path / "report.json").mkdir()
+
+        # Act & Assert
+        with pytest.raises(CheckError, match="Output is not a regular file"):
+            install_files(tmp_path, {"report.json": b"x"})
+
+
+class TestJpegDimensions:
+    """Frame size parsing without an image dependency."""
+
+    def test_given_sof_segment_when_parsed_then_width_and_height(self):
+        # Act
+        result = jpeg_dimensions(_jpeg(1920, 1080))
+
+        # Assert
+        assert result == (1920, 1080)
+
+    def test_given_marker_padding_and_app_segment_when_parsed_then_skips_them(self):
+        # Arrange
+        data = _jpeg(640, 480)
+        data = data[:2] + b"\xff\xff\xe0\x00\x04ab" + data[2:]
+
+        # Act
+        result = jpeg_dimensions(data)
+
+        # Assert
+        assert result == (640, 480)
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            b"\x89PNG\r\n\x1a\n",
+            b"\xff\xd8\xff\xd9",
+            b"\xff\xd8\xff\xc0\x00\x40",
+            b"\xff\xd8\x00",
+        ],
+        ids=["not-jpeg", "no-frame", "truncated-segment", "no-marker"],
+    )
+    def test_given_unusable_data_when_parsed_then_raises(self, data):
+        # Act & Assert
+        with pytest.raises(CheckError):
+            jpeg_dimensions(data)
+
+
+class TestReadOnlyCommands:
+    """The levels and changed subcommands."""
+
+    def test_given_levels_command_when_run_then_prints_curriculum(self, capsys):
+        # Act
+        code = main(["levels"])
+
+        # Assert
+        assert code == 0
+        assert json.loads(capsys.readouterr().out) == json.loads(
+            json.dumps(load_curriculum())
+        )
+
+    def test_given_forced_changed_command_when_run_then_prints_levels(
+        self, tmp_path, capsys
+    ):
+        # Arrange
+        index = tmp_path / "index.json"
+        index.write_text("{}", encoding="utf-8")
+        expected = changed_levels(load_curriculum(), {}, tmp_path, True)
+
+        # Act
+        code = main(
+            ["changed", "--index", str(index), "--repo", str(tmp_path), "--force"]
+        )
+
+        # Assert
+        assert code == 0
+        assert capsys.readouterr().out.split() == expected

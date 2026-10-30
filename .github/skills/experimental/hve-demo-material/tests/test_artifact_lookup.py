@@ -4,13 +4,18 @@
 
 import hashlib
 import json
+import os
+import urllib.error
 from datetime import datetime, timedelta, timezone
 
+import artifact_lookup
 import pytest
 from artifact_lookup import (
     PAGE_SIZE,
     ArtifactLookupError,
+    GitHubApi,
     assemble_site,
+    fetch_url,
     find_artifact,
     main,
     recover_site,
@@ -324,7 +329,7 @@ class TestFindArtifact:
         assert json.loads(capsys.readouterr().out)["run-id"] == "1"
 
 
-def _published(levels=("L100",)):
+def _published(levels=("L100",), revision=""):
     index = {
         "schema_version": "demo-material-site/v2",
         "levels": {
@@ -343,7 +348,7 @@ def _published(levels=("L100",)):
     for level in levels:
         entry = index["levels"][level]
         for path in index["levels"][level]["files"].values():
-            files[f"{SITE}demo-material/{path}"] = f"body of {path}".encode()
+            files[f"{SITE}demo-material/{path}"] = f"body of {path}{revision}".encode()
         prefix = f"{SITE}demo-material/{level}/"
         raw_name = f"hve-demo-{level}.raw.mp4"
         files[prefix + raw_name] = b"raw assembly"
@@ -434,15 +439,45 @@ def _published(levels=("L100",)):
     return {f"{SITE}demo-material/index.json": json.dumps(index).encode(), **files}
 
 
+def _write_bundle(root, levels=("L100",), revision="", index=True):
+    """Write a published bundle under root, optionally without its index."""
+    for url, body in _published(levels, revision).items():
+        relative = url.removeprefix(f"{SITE}demo-material/")
+        if relative == "index.json" and not index:
+            continue
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
+
+
+def _snapshot(root):
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+
+
+def _fail_replace_call(mocker, module, number):
+    """Make only the given os.replace call fail, delegating every other call."""
+    real = os.replace
+    calls = []
+
+    def replace(source, target):
+        calls.append(target)
+        if len(calls) == number:
+            raise OSError("simulated replace failure")
+        return real(source, target)
+
+    return mocker.patch.object(module.os, "replace", side_effect=replace)
+
+
 class TestAssembleSite:
     def test_given_no_valid_render_when_assembled_then_records_attempted_run(
         self, tmp_path
     ):
         site = tmp_path / "site"
-        for url, body in _published().items():
-            path = site / url.removeprefix(f"{SITE}demo-material/")
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(body)
+        _write_bundle(site)
         renders = tmp_path / "renders"
         renders.mkdir()
 
@@ -452,6 +487,237 @@ class TestAssembleSite:
         assert first["latest_attempted_author_run_id"] == "7"
         assert second["latest_attempted_author_run_id"] == "7"
         assert second["levels"]["L100"]["author_run_id"] == "1"
+
+    def test_given_fresh_site_when_assembled_then_level_installed(self, tmp_path):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(renders, index=False)
+
+        result = assemble_site(site, renders, "b" * 40, "7", "8")
+
+        assert list(result["levels"]) == ["L100"]
+        assert result["levels"]["L100"]["render_run_id"] == "8"
+        assert result["levels"]["L100"]["rendered_at"]
+        assert (site / "L100" / "hve-demo-L100.mp4").read_bytes() == (
+            b"body of L100/hve-demo-L100.mp4"
+        )
+        assert not list(site.glob(".delivery-*"))
+
+    def test_given_existing_site_when_new_level_assembled_then_both_listed(
+        self, tmp_path
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        _write_bundle(renders, ("L200",), index=False)
+
+        result = assemble_site(site, renders, "b" * 40, "7", "8")
+
+        assert list(result["levels"]) == ["L100", "L200"]
+        assert result["levels"]["L100"]["author_run_id"] == "1"
+        assert result["levels"]["L200"]["author_run_id"] == "7"
+
+    def test_given_replace_fails_when_level_reinstalled_then_prior_files_restored(
+        self, tmp_path, mocker
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        _write_bundle(renders, revision=" v2", index=False)
+        before = _snapshot(site)
+        _fail_replace_call(mocker, artifact_lookup, 3)
+
+        with pytest.raises(OSError, match="simulated replace failure"):
+            assemble_site(site, renders, "b" * 40, "7", "8")
+
+        assert _snapshot(site) == before
+        assert not list(site.glob(".delivery-*"))
+
+    def test_given_replace_fails_when_new_level_installed_then_added_files_removed(
+        self, tmp_path, mocker
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        _write_bundle(renders, ("L200",), index=False)
+        before = _snapshot(site)
+        _fail_replace_call(mocker, artifact_lookup, 3)
+
+        with pytest.raises(OSError, match="simulated replace failure"):
+            assemble_site(site, renders, "b" * 40, "7", "8")
+
+        assert _snapshot(site) == before
+        assert not list((site / "L200").iterdir())
+        assert not list(site.glob(".delivery-*"))
+
+    def test_given_invalid_render_when_level_reassembled_then_failure_recorded(
+        self, tmp_path
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        _write_bundle(renders, revision=" v2", index=False)
+        (renders / "L100" / "render-result.json").write_text("{}", encoding="utf-8")
+
+        result = assemble_site(site, renders, "b" * 40, "7", "8")
+
+        entry = result["levels"]["L100"]
+        assert entry["author_run_id"] == "1"
+        assert entry["last_failed_attempt"]["author_run_id"] == "7"
+        assert entry["last_failed_attempt"]["render_run_id"] == "8"
+        assert (site / "L100" / "hve-demo-L100.mp4").read_bytes() == (
+            b"body of L100/hve-demo-L100.mp4"
+        )
+
+    def test_given_malformed_provenance_when_assembled_then_raises_without_changes(
+        self, tmp_path
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        _write_bundle(renders, ("L200",), index=False)
+        before = _snapshot(site)
+
+        with pytest.raises(ArtifactLookupError, match="render provenance is invalid"):
+            assemble_site(site, renders, "x", "7", "8")
+
+        assert _snapshot(site) == before
+
+    def test_given_unindexed_site_files_when_assembled_then_raises(self, tmp_path):
+        site = tmp_path / "site"
+        site.mkdir()
+        (site / "stray.html").write_text("kept", encoding="utf-8")
+        renders = tmp_path / "renders"
+        _write_bundle(renders, index=False)
+
+        with pytest.raises(ArtifactLookupError, match="Unindexed site files exist"):
+            assemble_site(site, renders, "b" * 40, "7", "8")
+
+        assert (site / "stray.html").read_text(encoding="utf-8") == "kept"
+
+    @pytest.mark.parametrize("name", ["L900", "notes.txt"])
+    def test_given_unexpected_render_entry_when_assembled_then_raises(
+        self, tmp_path, name
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        if name.endswith(".txt"):
+            renders.mkdir()
+            (renders / name).write_text("x", encoding="utf-8")
+        else:
+            (renders / name).mkdir(parents=True)
+
+        with pytest.raises(ArtifactLookupError, match="unexpected render directory"):
+            assemble_site(site, renders, "b" * 40, "7", "8")
+
+    def test_given_symlinked_render_when_assembled_then_raises(self, tmp_path):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        real = tmp_path / "elsewhere"
+        _write_bundle(site)
+        _write_bundle(real, index=False)
+        renders.mkdir()
+        try:
+            (renders / "L100").symlink_to(real / "L100", target_is_directory=True)
+        except OSError:
+            pytest.skip("symlinks are unavailable on this platform")
+
+        with pytest.raises(ArtifactLookupError, match="non-regular bundle path"):
+            assemble_site(site, renders, "b" * 40, "7", "8")
+
+
+def _http_error(code):
+    return urllib.error.HTTPError("https://example.test", code, "status", None, None)
+
+
+def _response(mocker, body):
+    response = mocker.MagicMock()
+    response.__enter__.return_value.read.return_value = body
+    return response
+
+
+class TestGitHubApi:
+    def test_given_malformed_repository_when_created_then_raises(self):
+        with pytest.raises(ArtifactLookupError, match="owner/name"):
+            GitHubApi("token", "not a repository", "https://api.github.com")
+
+    def test_given_response_when_get_then_decodes_json_with_query(self, mocker):
+        urlopen = mocker.patch(
+            "artifact_lookup.urllib.request.urlopen",
+            return_value=_response(mocker, b'{"total_count": 1}'),
+        )
+        api = GitHubApi("token", "contoso/widgets", "https://api.github.com/")
+
+        result = api.get("/actions/runs", {"per_page": 5})
+
+        assert result == {"total_count": 1}
+        request = urlopen.call_args.args[0]
+        assert request.full_url == (
+            "https://api.github.com/repos/contoso/widgets/actions/runs?per_page=5"
+        )
+
+    def test_given_not_found_when_get_then_empty(self, mocker):
+        mocker.patch(
+            "artifact_lookup.urllib.request.urlopen", side_effect=_http_error(404)
+        )
+        api = GitHubApi("token", "contoso/widgets", "https://api.github.com")
+
+        assert api.get("/actions/runs") == {}
+
+    @pytest.mark.parametrize(
+        ("error", "message"),
+        [
+            (_http_error(500), "returned 500"),
+            (urllib.error.URLError("down"), "failed"),
+        ],
+    )
+    def test_given_request_error_when_get_then_raises(self, mocker, error, message):
+        mocker.patch("artifact_lookup.urllib.request.urlopen", side_effect=error)
+        api = GitHubApi("token", "contoso/widgets", "https://api.github.com")
+
+        with pytest.raises(ArtifactLookupError, match=message):
+            api.get("/actions/runs")
+
+    def test_given_invalid_json_when_get_then_raises(self, mocker):
+        mocker.patch(
+            "artifact_lookup.urllib.request.urlopen",
+            return_value=_response(mocker, b"not json"),
+        )
+        api = GitHubApi("token", "contoso/widgets", "https://api.github.com")
+
+        with pytest.raises(ArtifactLookupError, match="failed"):
+            api.get("/actions/runs")
+
+
+class TestFetchUrl:
+    def test_given_response_when_fetched_then_body(self, mocker):
+        mocker.patch(
+            "artifact_lookup.urllib.request.urlopen",
+            return_value=_response(mocker, b"payload"),
+        )
+
+        assert fetch_url("https://example.test/index.json") == b"payload"
+
+    def test_given_not_found_when_fetched_then_none(self, mocker):
+        mocker.patch(
+            "artifact_lookup.urllib.request.urlopen", side_effect=_http_error(404)
+        )
+
+        assert fetch_url("https://example.test/index.json") is None
+
+    @pytest.mark.parametrize(
+        ("error", "message"),
+        [
+            (_http_error(503), "returned 503"),
+            (urllib.error.URLError("down"), "failed"),
+        ],
+    )
+    def test_given_request_error_when_fetched_then_raises(self, mocker, error, message):
+        mocker.patch("artifact_lookup.urllib.request.urlopen", side_effect=error)
+
+        with pytest.raises(ArtifactLookupError, match=message):
+            fetch_url("https://example.test/index.json")
 
 
 class TestRecoverSite:
