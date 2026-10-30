@@ -2117,7 +2117,7 @@ class TestInstallFiles:
                 raise OSError("simulated replace failure")
             return real(source, target)
 
-        mocker.patch.object(render_checks.os, "replace", side_effect=replace)
+        mocker.patch("render_checks.os.replace", side_effect=replace)
 
         # Act
         with pytest.raises(OSError, match="simulated replace failure"):

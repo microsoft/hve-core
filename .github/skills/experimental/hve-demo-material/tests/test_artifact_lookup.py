@@ -457,7 +457,7 @@ def _snapshot(root):
     }
 
 
-def _fail_replace_call(mocker, module, number):
+def _fail_replace_call(mocker, module_name, number):
     """Make only the given os.replace call fail, delegating every other call."""
     real = os.replace
     calls = []
@@ -468,7 +468,7 @@ def _fail_replace_call(mocker, module, number):
             raise OSError("simulated replace failure")
         return real(source, target)
 
-    return mocker.patch.object(module.os, "replace", side_effect=replace)
+    return mocker.patch(f"{module_name}.os.replace", side_effect=replace)
 
 
 class TestAssembleSite:
@@ -524,7 +524,7 @@ class TestAssembleSite:
         _write_bundle(site)
         _write_bundle(renders, revision=" v2", index=False)
         before = _snapshot(site)
-        _fail_replace_call(mocker, artifact_lookup, 3)
+        _fail_replace_call(mocker, "artifact_lookup", 3)
 
         with pytest.raises(OSError, match="simulated replace failure"):
             assemble_site(site, renders, "b" * 40, "7", "8")
@@ -540,7 +540,7 @@ class TestAssembleSite:
         _write_bundle(site)
         _write_bundle(renders, ("L200",), index=False)
         before = _snapshot(site)
-        _fail_replace_call(mocker, artifact_lookup, 3)
+        _fail_replace_call(mocker, "artifact_lookup", 3)
 
         with pytest.raises(OSError, match="simulated replace failure"):
             assemble_site(site, renders, "b" * 40, "7", "8")
