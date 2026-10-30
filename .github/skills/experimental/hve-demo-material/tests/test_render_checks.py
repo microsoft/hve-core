@@ -13,7 +13,6 @@ import wave
 from pathlib import Path
 
 import pytest
-import render_checks
 from render_checks import (
     LEVELS,
     STYLE_TEMPLATE,
