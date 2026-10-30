@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "1.0.0",
+  "source": {
+    "dataset": "phamquiluan/RCAEval",
+    "revision": "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "license": "MIT",
+    "sourceUrl": "https://huggingface.co/datasets/phamquiluan/RCAEval",
+    "licenseCard": {
+      "path": "README.md",
+      "objectId": "ffea80ee16798b1cbe9997a4132c3d55bf3c75e3"
+    },
+    "caseIndex": {
+      "path": "cases.parquet",
+      "sha256": "c49a288920dbba2e8e724679a14636d5c7eb2b45426bba14007ef79a6c0ab1bb",
+      "size": 29500
+    }
+  },
+  "cases": [
+    {
+      "neutralId": "case-01",
+      "sourcePath": "re1ob_adservice_cpu_1",
+      "trialOrder": 1,
+      "modalities": [
+        "metrics"
+      ],
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "6a57189142bd8e3a693bc7972bd8cb104ef1830e",
+          "sha256": "392017698b9b1df43c5b9a5e96dfb9c19676348d67d2ee6a4ad2061abe729112",
+          "size": 10
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "b63e39684bb89cfd8bd34b18ac6f478ea4e564a3",
+          "sha256": "464dcc215afe145d37f8b107ea291df7ffc0691756d375c54ddc1c09d0a2ac74",
+          "size": 368024
+        }
+      ]
+    },
+    {
+      "neutralId": "case-02",
+      "sourcePath": "re2ob_checkoutservice_delay_1",
+      "trialOrder": 2,
+      "modalities": [
+        "metrics",
+        "logs",
+        "traces"
+      ],
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "ac78589b4127ea2c4c889cf19032f30c1091d1d8",
+          "sha256": "5b8132d68105c187d8aad124f7af4a8bdee399082a1fbf35f2f58aa9d1229d55",
+          "size": 10
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "05c2845cbb3ed38222bfa01d397db97fada4f65f",
+          "sha256": "f3645724f7c021ba532deea938049a575b75d265e1e0535038f5ea5fbb854b16",
+          "size": 350672
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "635011e97d4e8b49dcc3051d510cef32f0005d28",
+          "sha256": "3a428e2e4792c6ceecd1e47c770477887b7c14c175347ac52b28011595d23088",
+          "size": 161729
+        },
+        {
+          "name": "traces.parquet",
+          "objectId": "eaee3b2265d2bd9da5abad06681d62aa3c23f9cb",
+          "sha256": "a86818c7ab72aa360c3d81aafd9c4dc6a4da0ef75204cbf3a0c70d07a1fd44da",
+          "size": 10233639
+        }
+      ]
+    },
+    {
+      "neutralId": "case-03",
+      "sourcePath": "re3ob_cartservice_f1_1",
+      "trialOrder": 3,
+      "modalities": [
+        "metrics",
+        "logs",
+        "traces"
+      ],
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "28bfb5984a5d336ecfb0a43e922fd84d7dff9854",
+          "sha256": "3acf7c7b4c1388a39a895006b4963c0ae10f60eba4efc6590f5728e60d5a0567",
+          "size": 10
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "62da67ab134a7e8573b93787f9e7c78d6a437b5d",
+          "sha256": "daba5217f71f5a595e28cf9d5a3bda414d6e0cfaf19aa754a24aad9c14677a63",
+          "size": 117073
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "985ed8580ff822ae85fd8c310987e514000445c1",
+          "sha256": "f48dbce429636dfabb33f5695f0992d91c92b97c4b3031cfe0606a37bf49221c",
+          "size": 148622
+        },
+        {
+          "name": "traces.parquet",
+          "objectId": "25f14a6bb719f9632016a027563d7f2b7f43ac8e",
+          "sha256": "13bb4dfddce23145579f9189e125d72463b5045348dfb6f6cf247b21b4f43cfa",
+          "size": 4094874
+        }
+      ]
+    },
+    {
+      "neutralId": "case-04",
+      "sourcePath": "re2ss_user_loss_1",
+      "trialOrder": 4,
+      "modalities": [
+        "metrics",
+        "logs"
+      ],
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "ba1efd02e5ba9c790fab332c0f3214e563f08125",
+          "sha256": "5121fac8647a74d81625c334e4e7b841f1a4cbd6c810444f533f8cd1854324e9",
+          "size": 10
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "6d5315ad80054b146a2de97715eef8d91a6eb8f7",
+          "sha256": "f5de66bfd598edfff7833bcc23ac7065f3a15082815f16d6a800570affa5b029",
+          "size": 608605
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "654debb4f8ecce3da5e5777c01989befb02a2bf3",
+          "sha256": "529070cd91ec1436f37ecaf14568623f3b76fb269212be66505b2aeca3e1d5ee",
+          "size": 161371
+        }
+      ]
+    },
+    {
+      "neutralId": "case-05",
+      "sourcePath": "re3tt_ts-auth-service_f2_4",
+      "trialOrder": 5,
+      "modalities": [
+        "metrics",
+        "logs",
+        "traces"
+      ],
+      "files": [
+        {
+          "name": "inject_time.txt",
+          "objectId": "deaff518168a14c4c6ff081cd169588a4dd0a0a4",
+          "sha256": "f5acb2ceebd33a50d61c5d5fce9dff58f730b8f4eb4ffe3b12f435688253c075",
+          "size": 10
+        },
+        {
+          "name": "logs.parquet",
+          "objectId": "454c87f01918ebcf4843d7760f34c7235f817657",
+          "sha256": "3305db7b2332b7a85a4526002883c774c5a67e921eb32dcdd74744c27ae94743",
+          "size": 188890
+        },
+        {
+          "name": "metrics.parquet",
+          "objectId": "c4ed2d4b560ba10aa95bfeb7186a4faa3836d658",
+          "sha256": "5fbb13acf53b8bc73cd30b7fdb1054f1e55fb4f7a3209bbc1992a83a03aaeba8",
+          "size": 731695
+        },
+        {
+          "name": "traces.parquet",
+          "objectId": "96295c965d6d3e553a97b061c362ac248025f783",
+          "sha256": "06dd9fe84aa894a6c536fb15fa6f4e5a7c8e9f1dd895f784fa5dc8fc773e5240",
+          "size": 1214819
+        }
+      ]
+    }
+  ]
+}

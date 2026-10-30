@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-10-07
+ms.date: 2026-10-20
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -17,6 +17,7 @@ evals/
 ├── script-validation/    copilot-sdk evals testing deterministic scripts
 ├── baseline-equivalence/ parameterized baseline-vs-customized equivalence suite
 ├── behavior-conformance/ Tier 3 advisory conformance for instructions and skill behavior
+├── rca-real-world/       blinded RCAEval case contract, runbook, and sanitized evidence
 └── skill-hygiene/        vally lint structural checks for .github/skills/
 ```
 

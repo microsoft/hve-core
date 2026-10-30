@@ -322,6 +322,26 @@ jobs:
       matrix:
         directory: ${{ fromJson(needs.discover-node-projects.outputs.directories) }}
 
+  rca-harness-tests:
+    name: RCA Harness Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      - name: Run deterministic RCA harness tests
+        run: npm run test:rca-eval
+
   accessibility-browser-smoke:
     name: Accessibility Browser Smoke
     runs-on: ubuntu-24.04
@@ -912,6 +932,7 @@ jobs:
       - copilot-otel-runtime-tests
       - discover-node-projects
       - node-tests
+      - rca-harness-tests
       - accessibility-browser-smoke
       - fuzz-tests
       - pip-audit
