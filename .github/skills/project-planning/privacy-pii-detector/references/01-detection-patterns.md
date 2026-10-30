@@ -151,7 +151,17 @@ logger.info(f"Payment processed for user_id={user.id}")
 | MEDIUM     | Probable PII (naming match but ambiguous context)          | Report as NEEDS_REVIEW                                         |
 | LOW        | Possible PII (indirect inference or weak signal)           | Report as NEEDS_REVIEW                                         |
 
-NEEDS_REVIEW detections are listed for confirmation and do not produce control-gap findings until a reviewer or surrounding context confirms them.
+The method and naming tables give initial confidence, not a permanent ceiling. Before control verification, reassess each MEDIUM detection against evidence for the same field and data flow.
+
+Promote MEDIUM to HIGH when independent evidence confirms both the resolved PII type and its link to an individual. Examples include:
+
+- A payroll schema linking `salary` to an employee record confirms PII-024; a numeric column named `salary` alone does not.
+- An authentication model linking `username` to an individual account confirms PII-008; a generic display label alone does not.
+- A classification annotation or type-specific validator corroborates an API parameter or SDK argument, and its call site shows that the value belongs to an individual.
+
+Explicit reviewer confirmation may also promote a detection when it identifies the field, its PII type, and its use for an individual. Record the initial signal and the corroborating code location or reviewer confirmation in the detection's `evidence`, then set `confidence` to HIGH and verify controls for its resolved type and effective tier.
+
+Repeated naming matches, a generic string/number schema, or an installed SDK without a traced personal-data argument do not independently confirm PII. Keep uncorroborated MEDIUM and LOW detections as NEEDS_REVIEW; they do not produce control-gap findings.
 
 ## Language-specific hints
 

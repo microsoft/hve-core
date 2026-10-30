@@ -73,7 +73,7 @@ additional_controls:
       - "audit_logging"       # Add audit logging requirement for email
       - "purpose_binding"
 
-  - pii_type: "PII-023"       # Payment card
+  - pii_type: "PII-023"       # Core payment card; use PII-300 with the financial overlay
     controls:
       - "tokenization"        # Require tokenization (beyond default encryption)
 
@@ -225,13 +225,47 @@ The detector classifies each field with the resolution order in [00 PII Taxonomy
 
 An overlay type that matches a field supersedes any core type on the same field. Custom type `detection_patterns` follow the [Matching rules](01-detection-patterns.md#matching-rules).
 
+### Per-type configuration matching
+
+Match `tier_overrides`, `additional_controls`, and `retention_overrides` by exact equality with the final resolved `pii_type`. Apply this rule whether the industry is configured or inferred. An entry keyed on a core ID does not transfer to an overlay or custom type that supersedes it.
+
+For example, `cardNumber` resolves to PII-300 with the financial overlay. Use PII-300 for all three configuration sections; PII-023 entries apply only to fields that still resolve to the core payment-card type. If a custom type wins instead, use that custom ID.
+
+When a core-ID entry would have matched a field but its type was superseded, add a detection review item with that detection's ID, the affected configuration section, and the resolved ID the user should configure. Continue verification with the resolved type's defaults and matching configuration entries; do not silently transfer or claim to apply the superseded entry.
+
+This financial-overlay example applies all three settings to `cardNumber`:
+
+```yaml
+version: "1.0"
+industry: "financial"
+
+tier_overrides:
+  - pii_type: "PII-300"
+    new_tier: "T3"
+    justification: "Organization policy requires the highest control tier for PAN"
+
+additional_controls:
+  - pii_type: "PII-300"
+    controls:
+      - "tokenization"
+
+retention_overrides:
+  - pii_type: "PII-300"
+    retention_days: 30
+    justification: "Organization policy limits PAN retention to 30 days"
+```
+
+These illustrative organization policies do not change the legal classification of PAN or authorize storage prohibited by an industry rule.
+
 ## Control resolution
 
 For each detected PII type, required controls are determined by:
 
 1. Base controls from `02-control-expectations.md` for the effective tier.
-2. Plus any `additional_controls` from the config.
+2. Plus custom type `required_controls` and `additional_controls` matching the resolved ID.
 3. Industry overlay controls (if applicable).
+
+Evaluate retention using `retention_overrides` matching that same resolved ID. When no override matches, keep the applicable default retention expectations.
 
 ## Example: Telco company with custom classification
 

@@ -22,8 +22,10 @@ detection:
     element: "<field/variable/column name>"
   context: "<brief description of how PII is used>"
   confidence: "HIGH | MEDIUM | LOW"
-  evidence: "<code snippet or pattern that triggered detection>"
+  evidence: "<initial signal and, if promoted, corroborating location or reviewer confirmation>"
 ```
+
+Record the final confidence after applying [Detection confidence levels](01-detection-patterns.md#detection-confidence-levels). A promoted HIGH detection proceeds to control verification; detections that remain MEDIUM or LOW stay in `review_items`.
 
 ## Control gap finding
 

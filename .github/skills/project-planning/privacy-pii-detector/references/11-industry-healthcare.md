@@ -21,17 +21,19 @@ Apply this overlay when the codebase contains:
 |---------|-------------------------------|-------------------------------------------------------|------|-----------------------------------------------------------------------|
 | PII-200 | Medical record number (MRN)   | Facility-assigned patient identifier                  | T2   | HIPAA §164.514, My Health Records Act                                 |
 | PII-201 | Diagnosis/condition           | ICD codes, SNOMED terms, clinical descriptions        | T3   | HIPAA, GDPR Art. 9 (health data)                                      |
-| PII-202 | Medication/prescription       | Medication names, dosages, prescribing provider       | T2   | HIPAA                                                                 |
-| PII-203 | Lab result                    | Test values, reference ranges, interpretations        | T2   | HIPAA                                                                 |
+| PII-202 | Medication/prescription       | Medication names, dosages, prescribing provider       | T3   | HIPAA, GDPR Art. 9(1)                                                 |
+| PII-203 | Lab result                    | Test values, reference ranges, interpretations        | T3   | HIPAA, GDPR Art. 9(1)                                                 |
 | PII-204 | Clinical note                 | Free-text clinician documentation                     | T3   | HIPAA (may contain any PII)                                           |
-| PII-205 | Medical image                 | X-ray, MRI, CT with embedded patient metadata (DICOM) | T2   | HIPAA, DICOM de-identification                                        |
+| PII-205 | Medical image                 | X-ray, MRI, CT with embedded patient metadata (DICOM) | T3   | HIPAA, GDPR Art. 9(1), DICOM de-identification                        |
 | PII-206 | Genetic/genomic data          | DNA sequences, variants, pharmacogenomics             | T3   | GDPR Art. 9, GINA, state genetic privacy laws                         |
 | PII-207 | Mental health record          | Psychiatric notes, therapy records                    | T3   | HIPAA psychotherapy notes (45 CFR 164.508(a)(2)), stricter state laws |
 | PII-208 | Substance use disorder record | Addiction treatment, rehabilitation                   | T3   | 42 CFR Part 2 (US), enhanced protections                              |
 | PII-209 | Insurance/payer ID            | Health plan member ID, group number                   | T2   | HIPAA                                                                 |
 | PII-210 | Provider NPI                  | National Provider Identifier (treating clinician)     | T1   | Public data but links to patient context                              |
 | PII-211 | Consent/advance directive     | Patient treatment preferences, DNR status             | T2   | Varies by jurisdiction                                                |
-| PII-212 | Disability information        | Functional limitations, accommodation needs           | T2   | ADA, GDPR Art. 9                                                      |
+| PII-212 | Disability information        | Functional limitations, accommodation needs           | T3   | ADA, GDPR Art. 9(1)                                                   |
+
+Medication, lab results, medical images, and disability information linked to an identifiable person reveal health status and default to T3. Pseudonymization or removal of DICOM metadata alone does not establish anonymity or justify a lower tier. Apply the core taxonomy's anonymized-data exclusion only when evidence establishes that the data cannot be re-identified.
 
 ## Healthcare detection patterns
 

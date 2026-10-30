@@ -17,21 +17,23 @@ Apply this overlay when the codebase contains:
 
 ## Telco-specific PII types
 
-| ID      | PII Type                 | Description                                                  | Tier | Regulatory anchor                            |
-|---------|--------------------------|--------------------------------------------------------------|------|----------------------------------------------|
-| PII-100 | IMEI                     | International Mobile Equipment Identity (15-digit device ID) | T2   | GDPR Art. 4(1), ePrivacy                     |
-| PII-101 | IMSI                     | International Mobile Subscriber Identity (SIM identity)      | T2   | GDPR Art. 4(1), ePrivacy                     |
-| PII-102 | MSISDN                   | Mobile subscriber number (phone number in E.164 format)      | T1   | GDPR Art. 4(1)                               |
-| PII-103 | SIM serial (ICCID)       | Integrated Circuit Card ID                                   | T2   | ePrivacy Directive                           |
-| PII-104 | MAC address              | Device network hardware identifier                           | T1   | GDPR Recital 30                              |
-| PII-105 | Cell tower ID (CGI)      | Cell Global Identity — user location via network             | T2   | ePrivacy Art. 9, GDPR Art. 9 (if continuous) |
-| PII-106 | CDR (Call Detail Record) | Who called whom, when, duration, cell tower                  | T2   | Metadata Retention laws, ePrivacy            |
-| PII-107 | SMS/MMS content          | Message body content                                         | T3   | Interception laws, ePrivacy Art. 5           |
-| PII-108 | Voicemail content        | Recorded voice messages                                      | T3   | ePrivacy Art. 5                              |
-| PII-109 | Network location history | Sequence of cell attachments over time                       | T2   | GDPR Art. 9 (movement patterns)              |
-| PII-110 | Subscriber profile       | Plan type, usage patterns, credit status                     | T1   | Contextual                                   |
-| PII-111 | Device fingerprint       | Handset model, OS version, IMEI + behavioral signals         | T2   | ePrivacy, GDPR Recital 30                    |
-| PII-112 | Roaming data             | Visited networks, international movement                     | T2   | Cross-border transfer triggers               |
+| ID      | PII Type                 | Description                                                  | Tier | Regulatory anchor                  |
+|---------|--------------------------|--------------------------------------------------------------|------|------------------------------------|
+| PII-100 | IMEI                     | International Mobile Equipment Identity (15-digit device ID) | T2   | GDPR Art. 4(1), ePrivacy           |
+| PII-101 | IMSI                     | International Mobile Subscriber Identity (SIM identity)      | T2   | GDPR Art. 4(1), ePrivacy           |
+| PII-102 | MSISDN                   | Mobile subscriber number (phone number in E.164 format)      | T1   | GDPR Art. 4(1)                     |
+| PII-103 | SIM serial (ICCID)       | Integrated Circuit Card ID                                   | T2   | ePrivacy Directive                 |
+| PII-104 | MAC address              | Device network hardware identifier                           | T1   | GDPR Recital 30                    |
+| PII-105 | Cell tower ID (CGI)      | Cell Global Identity — user location via network             | T2   | GDPR Art. 4(1), ePrivacy Art. 9    |
+| PII-106 | CDR (Call Detail Record) | Who called whom, when, duration, cell tower                  | T2   | Metadata Retention laws, ePrivacy  |
+| PII-107 | SMS/MMS content          | Message body content                                         | T3   | Interception laws, ePrivacy Art. 5 |
+| PII-108 | Voicemail content        | Recorded voice messages                                      | T3   | ePrivacy Art. 5                    |
+| PII-109 | Network location history | Sequence of cell attachments over time                       | T2   | GDPR Art. 4(1), ePrivacy Art. 9    |
+| PII-110 | Subscriber profile       | Plan type, usage patterns, credit status                     | T1   | Contextual                         |
+| PII-111 | Device fingerprint       | Handset model, OS version, IMEI + behavioral signals         | T2   | ePrivacy, GDPR Recital 30          |
+| PII-112 | Roaming data             | Visited networks, international movement                     | T2   | Cross-border transfer triggers     |
+
+Location data is personal data under GDPR Art. 4(1), not automatically a special category under GDPR Art. 9. ePrivacy Art. 9 addresses location data other than traffic data; traffic data has separate rules under ePrivacy Art. 6. Continuous tracking can support inferences about health, religion, or other special categories. Assess such evidenced inferences separately under the applicable core type; keep the raw location types above at T2.
 
 ## Telco detection patterns
 

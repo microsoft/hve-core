@@ -7,7 +7,7 @@ metadata:
   authors: "Microsoft (detection taxonomy and control framework); NIST (PII definition from SP 800-122); GDPR (personal data definition from Art. 4); OAIC (Australian PI definition from Privacy Act 1988)"
   spec_version: "1.0"
   framework_revision: "1.0.0"
-  last_updated: "2026-10-27"
+  last_updated: "2026-10-30"
   content_based_on: "https://doi.org/10.6028/NIST.SP.800-122; https://gdpr-info.eu/art-4-gdpr/; https://www.oaic.gov.au/privacy/your-privacy-rights/what-is-personal-information"
 ---
 
@@ -87,7 +87,7 @@ Do not use for:
 
 ### Phase 1: Industry context
 
-1. Look for `.pii-config.yml` at the repository root. If present, load custom types, tier overrides, suppressions, and retention overrides.
+1. Look for `.pii-config.yml` at the repository root. If present, load custom types, tier overrides, additional controls, suppressions, and retention overrides.
 2. Determine which industry overlay applies. If the config specifies `industry:`, load that overlay. If not specified, infer from:
 - Package dependencies (e.g., `hl7`, `fhir` → healthcare; `stripe`, `plaid` → financial)
 - Domain terminology in code comments and documentation
@@ -101,14 +101,15 @@ For each file in scope:
 1. Apply detection patterns from `01-detection-patterns.md`.
 2. Apply industry-specific patterns from the applicable overlay.
 3. Resolve each field to one PII type using the resolution order in `00-pii-taxonomy.md`.
-4. Record each detection with location, PII type, confidence level, and evidence.
+4. Evaluate corroborating evidence using the [Detection confidence levels](references/01-detection-patterns.md#detection-confidence-levels), including promotion from MEDIUM to HIGH.
+5. Record each detection with location, resolved PII type, effective tier, final confidence level, and evidence, including the basis for any promotion.
 
-Only HIGH-confidence detections proceed to control verification. MEDIUM and LOW detections are reported as NEEDS_REVIEW for confirmation.
+Only HIGH-confidence detections, whether initially HIGH or promoted with recorded confirmation, proceed to control verification. Detections that remain MEDIUM or LOW are reported as NEEDS_REVIEW for confirmation.
 
 ### Phase 3: Control verification
 
-For each confirmed PII type:
-1. Look up required controls from `02-control-expectations.md` based on sensitivity tier.
+For each HIGH-confidence detection (a confirmed PII instance):
+1. Resolve required controls from `02-control-expectations.md` for the effective tier, plus applicable industry and custom controls, using [Control resolution](references/04-custom-classification.md#control-resolution). Apply per-type configuration to the resolved ID only.
 2. Search the codebase for evidence that each required control is implemented.
 3. Record control status: PRESENT, ABSENT, PARTIAL, or NEEDS_REVIEW, using the sufficiency rules in `02-control-expectations.md`.
 

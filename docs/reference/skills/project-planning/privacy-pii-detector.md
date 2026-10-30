@@ -57,3 +57,10 @@ backlog item. Controls that live outside the repository, such as a breach
 notification plan, are listed as NEEDS_REVIEW for confirmation instead of
 failing. The assessment summary ends with an overall verdict of `PROTECTED`,
 `GAPS_FOUND`, or `UNPROTECTED`.
+
+A MEDIUM-confidence match, such as `salary`, reaches control verification when
+independent evidence links it to personal data, such as an employee payroll
+schema, or a reviewer confirms that use. Without confirmation it remains a
+review item. If the financial overlay resolves `cardNumber` to PII-300, key
+custom tier, control, and retention settings on PII-300 rather than the
+superseded core PII-023.
