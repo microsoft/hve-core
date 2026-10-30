@@ -1966,6 +1966,10 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'wrong-error-rate'; Expected = $false; Bound = $true; Codes = 'error-rate-mismatch' }
     @{ Variant = 'concurrent-failures'; Expected = $false; Bound = $true; Codes = 'missing-sample-size,review-outcome-mismatch,wrong-decision' }
     @{ Variant = 'invalid-review-record'; Expected = $false; Bound = $true; Codes = 'invalid-review-record' }
+    @{ Variant = 'combined-malformed-fields'; Expected = $false; Bound = $true; Codes = 'missing-latency-reduction,missing-sample-size,review-outcome-mismatch' }
+    @{ Variant = 'oversized-outcome'; Expected = $false; Bound = $false; Codes = 'oversized-input' }
+    @{ Variant = 'oversized-results'; Expected = $false; Bound = $true; Codes = 'oversized-input' }
+    @{ Variant = 'read-before-field-errors'; Expected = $false; Bound = $true; Codes = 'read-error' }
   ) {
     $workspace = Join-Path $TestDrive "outcome-$Variant"
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/experiment-designer.yml'))
@@ -1986,7 +1990,8 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       if ($Variant -eq 'invalidated') { $data = $data.Replace('0.5 percent', '2 percent'); $errors = '2'; $verdict = 'invalidated'; $decision = 'no-go' }
       Set-Content $resultsPath $data
     }
-    if ($Variant -eq 'missing-results') { Remove-Item $resultsPath }
+    if ($Variant -in @('missing-results', 'read-before-field-errors')) { Remove-Item $resultsPath }
+    if ($Variant -eq 'oversized-results') { Set-Content -LiteralPath $resultsPath -Value ('x' * 100001) -NoNewline }
     if ($Variant -eq 'malformed-results') { Set-Content $resultsPath '{}' }
     if ($Variant -eq 'invalid-review-record') {
       $reviewPath = Join-Path $workspace '.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md'
@@ -2036,6 +2041,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       'missing-review-execution' = @('Review execution'); 'missing-review-outcome' = @('Review outcome')
       'missing-latency-reduction' = @('Latency reduction'); 'missing-sample-size' = @('Sample size'); 'missing-error-rate' = @('Error rate')
       'missing-both-review-fields' = @('Review execution', 'Review outcome'); 'concurrent-failures' = @('Sample size')
+      'combined-malformed-fields' = @('Sample size')
     }
     if ($removedLabels.ContainsKey($Variant)) {
       $body = (@($body -split "`n") | Where-Object { $line = $_; -not @($removedLabels[$Variant] | Where-Object { $line.StartsWith("${_}:") }) }) -join "`n"
@@ -2049,6 +2055,8 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     if ($Variant -eq 'wrong-sample-size') { $body = $body.Replace('Sample size: 100', 'Sample size: 90') }
     if ($Variant -eq 'wrong-error-rate') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.7%') }
     if ($Variant -eq 'concurrent-failures') { $body = $body.Replace('Review outcome: Accepted', 'Review outcome: Complete').Replace('Downstream decision: go', 'Downstream decision: no-go') }
+    if ($Variant -eq 'combined-malformed-fields') { $body = $body.Replace('Latency reduction: 24%', 'Latency reduction: unknown').Replace('Review outcome: Accepted', 'Review outcome: Complete') }
+    if ($Variant -eq 'read-before-field-errors') { $body = $body.Replace('Outcome: validated', 'Outcome: invalidated') }
     if ($Variant -like 'actual-*') {
       $controls = Get-Content -Raw (Join-Path $PSScriptRoot 'fixtures/specs/final-two-output-controls.json') | ConvertFrom-Json
       $layout = if ($Variant -in @('actual-result-first', 'actual-wrong-annotation-value', 'actual-wrong-context')) { 'result-first' } else { 'criteria-first' }
@@ -2109,6 +2117,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       if ($Variant -eq 'formula-wrong-raw') { $body = $body.Replace('Batched median latency: 76 ms', 'Batched median latency: 80 ms') }
     }
     $document = $body + "`n" + ($bindings -join "`n")
+    if ($Variant -eq 'oversized-outcome') { $document = 'x' * 100001 }
     if ($Variant -eq 'crlf') { $document = $document.Replace("`n", "`r`n") }
     if ($Variant -ne 'missing-outcome') { [System.IO.File]::WriteAllText((Join-Path $session 'outcome.md'), $document) }
     $meaning = Invoke-ObservationGrader -Partial 'experiment-designer' -Name 'experiment-outcome-separates-status-and-verdict' -Reply '' -Workspace $workspace

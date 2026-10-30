@@ -79,7 +79,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             ($script:RepairCases[2].rubric -join ' ') | Should -Match 'authority stays in the ADR and with the user'
         }
 
-        It 'Stages the demo agent with its relative instruction import and curriculum available' {
+        It 'Stages the demo agent with its filename instruction declaration and curriculum available' {
             $case = $script:RepairCases[0]
             $base = Join-Path $script:RepoRoot 'evals/agent-behavior'
             $agent = @($case.agent_environment.files | Where-Object dest -EQ '.github/agents/experimental/hve-demo-material.agent.md')
@@ -90,7 +90,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $instruction | Should -HaveCount 1
             (Join-Path $base $instruction[0].src) | Should -Exist
             $text = Get-Content $agentPath -Raw
-            $text | Should -Match '#file:../../instructions/shared/plain-language.instructions.md'
+            $text | Should -Match ([regex]::Escape('Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.'))
             $case.agent_environment.skills | Should -Contain '../../.github/skills/experimental/hve-demo-material'
             foreach ($skill in $case.agent_environment.skills) {
                 (Join-Path $base "$skill/SKILL.md") | Should -Exist
@@ -99,6 +99,50 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $case.prompt | Should -Match 'Read.*\.github/agents/experimental/hve-demo-material\.agent\.md'
             $case.prompt | Should -Match 'planning only'
             $case.prompt | Should -Match 'Return the plan prose'
+        }
+
+        It 'Uses one filename declaration throughout existing policy-delivery surfaces' {
+            $paths = @(
+                '.github/copilot-instructions.md'
+                '.github/instructions/hve-core/writing-style.instructions.md'
+                Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot '.github/agents') -Recurse -File -Filter '*.agent.md' |
+                    ForEach-Object { [System.IO.Path]::GetRelativePath($script:RepoRoot, $_.FullName) }
+                Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot '.github/skills') -Recurse -File -Filter 'SKILL.md' |
+                    Where-Object { $_.FullName -ne (Join-Path $script:RepoRoot '.github/skills/project-planning/privacy-by-design/SKILL.md') } |
+                    ForEach-Object { [System.IO.Path]::GetRelativePath($script:RepoRoot, $_.FullName) }
+            )
+            $declaration = 'Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.'
+            foreach ($path in $paths) {
+                $text = Get-Content -LiteralPath (Join-Path $script:RepoRoot $path) -Raw
+                [regex]::Matches($text, [regex]::Escape($declaration)).Count | Should -Be 1 -Because $path
+                $text | Should -Not -Match '#file:\S*plain-language\.instructions\.md' -Because $path
+            }
+        }
+
+        It 'Retains loaded-policy, unavailable-policy and exact-format safeguards at every declaration' {
+            $paths = @(
+                Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot '.github') -Recurse -File -Filter '*.md' |
+                    Where-Object { $_.Name -like '*.agent.md' -or $_.Name -eq 'SKILL.md' -or $_.Name -eq 'copilot-instructions.md' -or $_.Name -eq 'writing-style.instructions.md' }
+            )
+            foreach ($path in $paths) {
+                $text = Get-Content -LiteralPath $path.FullName -Raw
+                if ($text -notmatch '(?m)^Follow all instructions from plain-language\.instructions\.md') { continue }
+                $paragraph = [regex]::Match($text, '(?m)^Follow all instructions from plain-language\.instructions\.md[^\r\n]*(?:\r?\n[^\r\n]+)*').Value
+                $paragraph | Should -Match 'plain, direct language' -Because $path.Name
+                $paragraph | Should -Match 'necessary technical terms' -Because $path.Name
+                $paragraph | Should -Match 'exact output formats' -Because $path.Name
+                $paragraph | Should -Match 'not already loaded' -Because $path.Name
+                $paragraph | Should -Match 'If unavailable, keep this default and continue the task' -Because $path.Name
+            }
+        }
+
+        It 'Preserves the single canonical policy body without automatic file-pattern attachment' {
+            $text = Get-Content -LiteralPath (Join-Path $script:RepoRoot '.github/instructions/shared/plain-language.instructions.md') -Raw
+            $body = [regex]::Replace($text, '(?s)\A---\r?\n.*?\r?\n---\r?\n', '').Replace("`r`n", "`n")
+            $hash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::UTF8.GetBytes($body)))
+            $hash | Should -BeExactly '0F50C7332CC683F349C97F3928FB20D0A810B1EC9E6032E464A80FDD490B7A19'
+            $text | Should -Match '(?m)^name: Plain Language\r?$'
+            $text | Should -Not -Match '(?m)^applyTo:'
         }
 
         It 'Keeps file presence separate from semantics and the supplemental response check' {

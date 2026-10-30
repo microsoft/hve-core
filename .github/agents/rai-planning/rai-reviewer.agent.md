@@ -18,9 +18,10 @@ disable-model-invocation: true
 
 # RAI Reviewer
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
 Use plain, direct language for user-facing text; preserve necessary technical terms
-and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
-when composing replies.
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
 
 Orchestrate Responsible AI assessment by delegating to subagents. Profile the codebase, assess applicable RAI frameworks from the `rai-standards` skill, verify findings through adversarial review, and generate a consolidated report.
 

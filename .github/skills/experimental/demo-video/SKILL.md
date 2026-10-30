@@ -11,10 +11,10 @@ metadata:
 
 # Demo Video Assembly Skill
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
 Use plain, direct language for user-facing text; preserve necessary technical terms
-and exact output formats. Before composing any user-facing reply or generated prose,
-read the shared `Plain Language` instruction by name unless already loaded.
-Apply it throughout the task. If unavailable, keep this default and continue the task.
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
 
 This skill assembles a narrated demo video from ordered visual segments and matching narration audio. It is designed for first-pass walkthrough videos that combine captured prototype frames or clips with per-segment voiceover WAV files.
 

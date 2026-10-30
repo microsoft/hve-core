@@ -146,6 +146,96 @@ Follow #file:../../instructions/sample/house.instructions.md and use `skill-one`
         { Get-AgentDeclaredDependency -RepoRoot $script:DepRoot -AgentRelativePath '.github/agents/sample/absent.agent.md' } |
             Should -Throw -ExpectedMessage '*does not exist*'
     }
+
+    It 'Resolves only explicit unfenced declarations: <Label>' -ForEach @(
+        @{ Label = 'filename'; Body = "Follow all instructions from house.instructions.md for all user-facing text, documentation, or responses."; Expected = 1 }
+        @{ Label = 'duplicate path'; Body = "Follow all instructions from house.instructions.md for all user-facing text, documentation, or responses.`nSee #file:../../instructions/sample/house.instructions.md"; Expected = 1 }
+        @{ Label = 'bare mention and placeholder'; Body = 'See `house.instructions.md` and `.instructions.md` for examples.'; Expected = 0 }
+        @{ Label = 'quoted example'; Body = '> Follow all instructions from house.instructions.md for all user-facing text, documentation, or responses.'; Expected = 0 }
+        @{ Label = 'fenced and commented examples'; Body = "``````text`nFollow all instructions from house.instructions.md for all user-facing text, documentation, or responses.`n```````n~~~text`nFollow all instructions from house.instructions.md for all user-facing text, documentation, or responses.`n~~~~`n<!--`nFollow all instructions from house.instructions.md for all user-facing text, documentation, or responses.`n-->"; Expected = 0 }
+        @{ Label = 'root shadow'; Body = 'Follow all instructions from house.instructions.md for all user-facing text, documentation, or responses.'; Expected = 1; Shadow = $true }
+        @{ Label = 'missing candidate'; Body = 'Follow all instructions from missing.instructions.md for all user-facing text, documentation, or responses.'; ExpectedError = '*exactly one match*found 0*' }
+        @{ Label = 'ambiguous candidate'; Body = 'Follow all instructions from house.instructions.md for all user-facing text, documentation, or responses.'; ExpectedError = '*exactly one match*found 2*'; Duplicate = $true }
+        @{ Label = 'outside-only candidate'; Body = 'Follow all instructions from outside.instructions.md for all user-facing text, documentation, or responses.'; ExpectedError = '*exactly one match*found 0*'; Outside = $true }
+        @{ Label = 'linked instructions root'; Body = 'Follow all instructions from house.instructions.md for all user-facing text, documentation, or responses.'; ExpectedError = '*symbolic link or reparse point*'; LinkRoot = $true }
+    ) {
+        param($Label, $Body, $Expected, $ExpectedError, $Shadow, $Duplicate, $Outside, $LinkRoot)
+
+        $root = Join-Path $TestDrive ([Guid]::NewGuid().ToString('N'))
+        New-AgentFixture -Root $root
+        $instructionRoot = Join-Path $root '.github/instructions'
+        $house = Join-Path $instructionRoot 'sample/house.instructions.md'
+        New-Item -ItemType Directory -Path (Split-Path $house) -Force | Out-Null
+        Set-Content -LiteralPath $house -Value 'House rules.'
+        $agent = '.github/agents/sample/declaration.agent.md'
+        Set-Content -LiteralPath (Join-Path $root $agent) -Value $Body
+        if ($Shadow) {
+            Set-Content -LiteralPath (Join-Path $root 'house.instructions.md') -Value 'Not the policy.'
+        }
+        if ($Duplicate) {
+            New-Item -ItemType Directory -Path (Join-Path $instructionRoot 'other') | Out-Null
+            Copy-Item -LiteralPath $house -Destination (Join-Path $instructionRoot 'other/house.instructions.md')
+        }
+        if ($Outside) {
+            Set-Content -LiteralPath (Join-Path $root 'outside.instructions.md') -Value 'Outside approved instructions.'
+        }
+        $linkedRoot = $false
+        if ($LinkRoot) {
+            $target = Join-Path $TestDrive ([Guid]::NewGuid().ToString('N'))
+            Move-Item -LiteralPath $instructionRoot -Destination $target
+            try {
+                $kind = if ($IsWindows) { 'Junction' } else { 'SymbolicLink' }
+                New-Item -ItemType $kind -Path $instructionRoot -Target $target -ErrorAction Stop | Out-Null
+                $linkedRoot = $true
+            }
+            catch {
+                Set-ItResult -Skipped -Because 'the platform or account cannot create directory links'
+                return
+            }
+        }
+        try {
+            if ($ExpectedError) {
+                { Get-AgentDeclaredDependency -RepoRoot $root -AgentRelativePath $agent } |
+                    Should -Throw -ExpectedMessage $ExpectedError
+            }
+            else {
+                $dependencies = Get-AgentDeclaredDependency -RepoRoot $root -AgentRelativePath $agent
+                @($dependencies.Instructions).Count | Should -Be $Expected
+                if ($Expected) {
+                    $dependencies.Instructions | Should -BeExactly @('.github/instructions/sample/house.instructions.md')
+                }
+            }
+        }
+        finally {
+            if ($linkedRoot) { [System.IO.Directory]::Delete($instructionRoot) }
+        }
+    }
+
+    It 'Materializes the exact canonical bytes once for mixed declaration forms' {
+        $root = Join-Path $TestDrive 'declaration-materialization'
+        New-AgentFixture -Root $root
+        $relative = '.github/instructions/sample/house.instructions.md'
+        $policy = Join-Path $root $relative
+        New-Item -ItemType Directory -Path (Split-Path $policy) -Force | Out-Null
+        [System.IO.File]::WriteAllBytes($policy, [System.Text.Encoding]::UTF8.GetBytes("House rules.`nExact bytes.`n"))
+        Set-Content -LiteralPath (Join-Path $root '.github/agents/sample/declared.agent.md') -Value @'
+Follow all instructions from house.instructions.md for all user-facing text, documentation, or responses.
+See #file:../../instructions/sample/house.instructions.md
+'@
+        $workspace = Join-Path $TestDrive 'declaration-workspace'
+        $result = New-CustomizedEnvironment -RepoRoot $root -Agent 'declared' -WorkspacePath $workspace -SkillDirPath (Join-Path $TestDrive 'declaration-skills')
+        @($result.Applied | Where-Object { $_ -eq $relative }).Count | Should -Be 1
+        (Get-FileHash -LiteralPath (Join-Path $workspace $relative)).Hash | Should -BeExactly (Get-FileHash -LiteralPath $policy).Hash
+    }
+
+    It 'Resolves the canonical shared policy for every repository agent' {
+        $agentsRoot = Join-Path $script:RepoRoot '.github/agents'
+        foreach ($agent in Get-ChildItem -LiteralPath $agentsRoot -Recurse -File -Filter '*.agent.md') {
+            $relative = [System.IO.Path]::GetRelativePath($script:RepoRoot, $agent.FullName).Replace('\', '/')
+            $dependencies = Get-AgentDeclaredDependency -RepoRoot $script:RepoRoot -AgentRelativePath $relative
+            $dependencies.Instructions | Should -Contain '.github/instructions/shared/plain-language.instructions.md' -Because $relative
+        }
+    }
 }
 
 Describe 'Get-AgentSurfaceSkill' -Tag 'Unit' {

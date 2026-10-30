@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding and communication guidelines for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-26
+ms.date: 2026-10-29
 ms.topic: reference
 keywords:
   - copilot
@@ -20,7 +20,7 @@ direct communication reminders and load shared instructions.
 
 ## How Instructions Work
 
-1. Instruction files declare which file patterns they apply to using `applyTo`
+1. File-scoped instruction files declare their matching patterns using `applyTo`
    in frontmatter
 2. GitHub Copilot reads instructions when editing matching files
 3. Suggestions follow the documented standards automatically
@@ -55,17 +55,19 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 |----------------------------------------------------------------------------------|--------------------------------------------------------------------|--------------------------------------------|
 | [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)           | `**/*.md`                                                          | Markdown formatting standards              |
 | [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md) | `**/*.md`                                                          | Voice, tone, and language conventions      |
-| [shared/plain-language.instructions.md](shared/plain-language.instructions.md)   | Explicit import or by-name read                                    | Plain-language replies and generated prose |
+| [shared/plain-language.instructions.md](shared/plain-language.instructions.md)   | Requested by filename                                              | Plain-language replies and generated prose |
 | [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards           |
 | [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)             | `docs/**`                                                          | Docusaurus documentation authoring         |
 
 The short Plain Language rule covers questions, progress updates, explanations,
 summaries, and generated prose while preserving necessary technical terms and
-exact output formats. Root instructions and agents use relative imports, and
-skills read it by name unless already loaded; all retain a direct reminder.
-The shared rule has no automatic file attachment, avoiding an extra always-on
-copy alongside those entry points. Installing the plugin alone does not prove
-the rule was included in a particular chat request.
+exact output formats. Root instructions, agents, skills and Markdown writing
+guidance request `plain-language.instructions.md` by filename. Read it only
+when not already loaded; if unavailable, keep the direct default and continue.
+The shared rule has no `applyTo` file-pattern attachment, avoiding an extra
+always-on copy alongside those entry points. Its description supports
+task-relevant discovery, but mentioning or installing the file does not prove
+that its full content was included in a particular request.
 
 ### Git and Workflow
 

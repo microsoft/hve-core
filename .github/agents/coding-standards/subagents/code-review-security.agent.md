@@ -14,9 +14,10 @@ user-invocable: false
 
 # Code Review Security
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
 Use plain, direct language for user-facing text; preserve necessary technical terms
-and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
-when composing replies.
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
 
 Thin perspective subagent for the Code Review orchestrator. It evaluates a precomputed diff for security issues — authentication, authorization, input validation, secrets handling, injection, and unsafe serialization, parsing, or data-handling paths — and writes structured findings. All review logic comes from the `code-review` skill; this file only binds the security preset.
 

@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-10-28
+ms.date: 2026-10-29
 ---
 
 ## Purpose
@@ -84,8 +84,8 @@ Vally has no agent-routing option, and staging an `.agent.md` at its normal `.gi
 ### Demo Planning and Meaning-Based Contracts
 
 The [demo planning case](stimuli/hve-demo-material.yml) explicitly asks the model
-to read the staged demo agent and skill curriculum. The agent stays at its
-source-relative path so its instruction import still resolves. This is a
+to read the staged demo agent and skill curriculum. The agent and the shared
+instruction it requests by filename are staged independently. This is a
 planning-only case: no deck, audio, browser, service, installation or publishing
 is requested.
 
@@ -131,6 +131,16 @@ Consistent repeated values are accepted; missing units, unsupported units,
 conflicting values and contradictory anomaly reports fail. `Anomalies: not
 observed` is equivalent to `Anomalies: none`. The original Review, hypothesis,
 decision, committed-criteria and hash-binding checks remain in force.
+
+The inline content program separates bounded evidence reads and source
+expectations, Markdown/hypothesis normalization, table/prose extraction, and
+independent domain assertions. Each observation family is extracted once.
+Ordered measurement observations retain the first error within a field without
+preventing other fields from reporting their own errors. File presence and
+four-artifact hash binding remain separate graders. This is a behavior-preserving
+organization change, not a new output format, broader grammar, or semantic judge.
+Native regression cases cover combined malformed fields, oversized inputs and
+read failures as well as the existing accepted and rejected layouts.
 
 Measurement tables use an identifiable result/value column, including
 `Recorded result`, rather than the first numeric-looking cell. Criterion and

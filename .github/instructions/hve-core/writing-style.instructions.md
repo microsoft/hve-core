@@ -7,7 +7,11 @@ applyTo: '**/*.md'
 
 These instructions define writing style, voice, and tone conventions for markdown content. Apply these conventions to maintain consistency and authenticity across documentation.
 
-Apply #file:../shared/plain-language.instructions.md to user-facing prose. The guidance below adds Markdown-specific voice and presentation conventions.
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+The guidance below adds Markdown-specific voice and presentation conventions.
 
 ## Voice and Tone
 

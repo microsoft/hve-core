@@ -14,9 +14,10 @@ tools:
 
 # Vally Test Author
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
 Use plain, direct language for user-facing text; preserve necessary technical terms
-and exact output formats. Apply #file:../../../instructions/shared/plain-language.instructions.md
-when composing replies.
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
 
 Authors Vally conformance test stimuli for prompts, instructions, agents, and skills in two modes: `from-artifact` and `corpus-import`. Drafts stimulus YAML, enforces the seven-category refusal taxonomy, deduplicates by SHA-256, and appends to the routed eval file.
 

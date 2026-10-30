@@ -1,6 +1,6 @@
 ---
 name: Plain Language
-description: "Use when composing any user-facing reply or generated prose, including questions, progress updates, explanations, and summaries."
+description: "Apply plain-language.instructions.md when composing user-facing text, documentation, or responses, including questions, progress updates, explanations, and summaries."
 ---
 
 # Plain Language

@@ -1,9 +1,9 @@
 ---
 title: Plain Language
-description: "Use when composing any user-facing reply or generated prose, including questions, progress updates, explanations, and summaries."
+description: "Apply plain-language.instructions.md when composing user-facing text, documentation, or responses, including questions, progress updates, explanations, and summaries."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-26
+ms.date: 2026-10-29
 ms.topic: reference
 keywords:
   - instruction
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Use when composing any user-facing reply or generated prose, including questions, progress updates, explanations, and summaries.
+Apply plain-language.instructions.md when composing user-facing text, documentation, or responses, including questions, progress updates, explanations, and summaries.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -33,11 +33,13 @@ generated prose. Write for a capable colleague who does not know HVE's internal
 labels. Keep necessary technical terms and exact names, commands, schema keys,
 required headings, and verbatim disclosures.
 
-The rule has no automatic file attachment. Root instructions and active agents
-import it through relative paths, and skills read it by name unless already
-loaded; all retain a short direct reminder. This avoids an extra always-on copy
-alongside the entry-point guidance. Installing HVE or finding this instruction
-in an inventory does not prove that its full content reached a particular request.
+The rule has no `applyTo` file-pattern attachment. Root instructions, active
+agents, skills and Markdown writing guidance request
+`plain-language.instructions.md` by filename. Read it only when not already
+loaded; if unavailable, keep the direct default and continue. Its description
+supports task-relevant discovery without an extra always-on copy. Mentioning
+the filename, installing HVE or finding the instruction in an inventory does
+not prove that its full content reached a particular request.
 
 For a task that requires machine-only output, follow that format without an
 extra explanation. Use the

@@ -78,9 +78,10 @@ handoffs:
 
 # Backlog Manager
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
 Use plain, direct language for user-facing text; preserve necessary technical terms
-and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
-when composing replies.
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
 
 Unified orchestrator for backlog and work-management across Azure DevOps, GitHub, and Jira. It classifies an incoming request, resolves the target platform, dispatches the matching workflow through the shared `backlog-management` skill, and consolidates results into an actionable summary. Beyond core backlog workflows (discovery, triage, execution, single-item), it performs workflow-neutral GitHub backlog grooming, handles Azure DevOps build and pipeline info, coordinates sprint and task planning, and routes PRD-to-work-item planning to the `Functional Planner` agent.
 

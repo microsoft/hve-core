@@ -19,9 +19,10 @@ disable-model-invocation: true
 
 # SSSC Reviewer
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
 Use plain, direct language for user-facing text; preserve necessary technical terms
-and exact output formats. Apply #file:../../instructions/shared/plain-language.instructions.md
-when composing replies.
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
 
 Review a repository's supply-chain security posture and produce an evidence-based report. Focus on posture assessment, standards alignment, and concrete remediation guidance rather than creating implementation plans or backlog items by default.
 

@@ -9,10 +9,10 @@ disable-model-invocation: true
 
 # Risk Register Generator
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
 Use plain, direct language for user-facing text; preserve necessary technical terms
-and exact output formats. Before composing any user-facing reply or generated prose,
-read the shared `Plain Language` instruction by name unless already loaded.
-Apply it throughout the task. If unavailable, keep this default and continue the task.
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
 
 > [!CAUTION]
 > This skill is an **assistive tool only** and does not replace professional security and risk management tooling or qualified human review. All generated risk registers, risk scores, and mitigation strategies must be reviewed and validated by qualified security and risk professionals before use. AI outputs may contain inaccuracies, miss critical risks, or produce assessments that are incomplete or inappropriate for your environment.
