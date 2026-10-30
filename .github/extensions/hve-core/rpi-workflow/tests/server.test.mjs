@@ -7,6 +7,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { after, afterEach, before, describe, it } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { agentEditSection, createFeedback, ModelError, recordActivity, recordInterpretation, takeFeedback, upsertDecision } from '../lib/model.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
@@ -560,7 +561,7 @@ describe('the canvas key', () => {
 describe('static files', () => {
     it('serves every UI module, so no import fails in the page', async () => {
         const { STATIC_FILES } = await import('../lib/server.mjs');
-        const uiDir = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'ui');
+        const uiDir = fileURLToPath(new URL('../ui/', import.meta.url));
         const modules = (await fs.readdir(uiDir)).filter((name) => name.endsWith('.mjs'));
         const missing = modules.filter((name) => !Object.prototype.hasOwnProperty.call(STATIC_FILES, `/ui/${name}`));
         assert.deepEqual(missing, []);

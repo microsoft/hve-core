@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
+import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { createFeedback } from '../lib/model.mjs';
 import {
     createFollower,
@@ -113,16 +114,18 @@ after(async () => {
 });
 
 describe('workspace and contained reads', () => {
-    it('finds the tracking folder from the first usable candidate', async () => {
+    it('finds the tracking folder from the first usable candidate', async (t) => {
         assert.deepEqual(workspace, { root, tracking: path.join(root, '.copilot-tracking') });
         await assert.rejects(resolveWorkspace([path.join(tmp, 'nowhere'), 'relative/path']), { code: 'source_unavailable' });
-        const linked = path.join(tmp, 'linked');
-        await fs.mkdir(linked);
-        await fs.symlink(path.join(root, '.copilot-tracking'), path.join(linked, '.copilot-tracking'));
-        await assert.rejects(resolveWorkspace([linked]), { code: 'source_unavailable' }, 'a linked tracking folder is refused');
+        await t.test('refuses a linked tracking folder', async (t) => {
+            const linked = path.join(tmp, 'linked');
+            await fs.mkdir(linked);
+            if (!(await symlinkOrSkip(t, path.join(root, '.copilot-tracking'), path.join(linked, '.copilot-tracking'), 'dir'))) return;
+            await assert.rejects(resolveWorkspace([linked]), { code: 'source_unavailable' });
+        });
     });
 
-    it('reads only regular Markdown and JSON files inside the tracking folder', async () => {
+    it('reads only regular Markdown and JSON files inside the tracking folder', async (t) => {
         const plan = await readContained(workspace, PATHS.plan);
         assert.equal(plan.path, PATHS.plan);
         assert.match(plan.text, /^<!-- markdownlint/);
@@ -133,10 +136,12 @@ describe('workspace and contained reads', () => {
         await assert.rejects(inspectContained(workspace, 'README.md'), { code: 'source_outside' });
         await assert.rejects(inspectContained(workspace, '.copilot-tracking/plans/2026-01-15/missing.md'), { code: 'source_not_found' });
         await assert.rejects(inspectContained(workspace, '.copilot-tracking/plans/2026-01-15/notes.txt'), { code: 'source_invalid' });
-        await fs.symlink(path.join(tmp, 'outside.md'), path.join(root, '.copilot-tracking/plans/2026-01-15/linked.md'));
-        await assert.rejects(inspectContained(workspace, '.copilot-tracking/plans/2026-01-15/linked.md'), { code: 'source_invalid' });
         await fs.writeFile(path.join(root, '.copilot-tracking/plans/2026-01-15/huge.md'), Buffer.alloc(MAX_FILE_BYTES + 1, 'a'));
         await assert.rejects(inspectContained(workspace, '.copilot-tracking/plans/2026-01-15/huge.md'), { code: 'source_too_large' });
+        await t.test('refuses a linked document', async (t) => {
+            if (!(await symlinkOrSkip(t, path.join(tmp, 'outside.md'), path.join(root, '.copilot-tracking/plans/2026-01-15/linked.md'), 'file'))) return;
+            await assert.rejects(inspectContained(workspace, '.copilot-tracking/plans/2026-01-15/linked.md'), { code: 'source_invalid' });
+        });
     });
 });
 
@@ -164,7 +169,7 @@ describe('sessions in the workspace', () => {
         assert.equal(resolved.taskId, CHILD_TASK);
     });
 
-    it('accepts only state files in a session folder, for input and for links', async () => {
+    it('accepts only state files in a session folder, for input and for links', async (t) => {
         const dir = path.join(tmp, 'contain');
         await writeFixtureWorkspace(dir);
         const ws = await resolveWorkspace([dir]);
@@ -172,26 +177,32 @@ describe('sessions in the workspace', () => {
         await writeJson(dir, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json', { task_id: 'flat' });
         await writeJson(dir, '.copilot-tracking/rpi-sessions/2026-01-15/s/deep/too-deep-state.json', { task_id: 'deep' });
         await fs.writeFile(path.join(tmp, 'outside-state.json'), JSON.stringify({ task_id: 'outside' }));
-        await fs.symlink(path.join(tmp, 'outside-state.json'), path.join(dir, `${SESSION_DIR}/linked-state.json`));
         await assert.rejects(inspectState(ws, '.copilot-tracking/plans/2026-01-15/stray-state.json'), { code: 'source_outside' });
         await assert.rejects(inspectState(ws, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'), { code: 'source_outside' }, 'the layout before session folders');
         await assert.rejects(inspectState(ws, '.copilot-tracking/rpi-sessions/2026-01-15/s/deep/too-deep-state.json'), { code: 'source_outside' });
         await assert.rejects(inspectState(ws, '../outside-state.json'), { code: 'source_outside' });
-        await assert.rejects(inspectState(ws, `${SESSION_DIR}/linked-state.json`), { code: 'source_invalid' }, 'a symlink');
         await assert.rejects(inspectState(ws, PATHS.plan), { code: 'source_invalid' }, 'not a state file');
         await assert.rejects(resolveState(ws, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'), { code: 'source_outside' });
 
-        await writeJson(dir, `${SESSION_DIR}/linked-child-state.json`, { task_id: 'linked-child', parent_task: { task_id: 'elsewhere', state_path: `${SESSION_DIR}/linked-state.json` } });
         await writeJson(dir, `${SESSION_DIR}/stray-child-state.json`, { task_id: 'stray-child', parent_task: { task_id: 'stray', state_path: '.copilot-tracking/plans/2026-01-15/stray-state.json' } });
         await writeJson(dir, PATHS.rootState, { ...ROOT_STATE, child_tasks: [...ROOT_STATE.child_tasks, { task_id: 'outside', state_path: '../outside-state.json' }] });
         const tree = await sessionTreeOf(ws, await loadState(ws, PATHS.rootState));
-        assert.deepEqual(tree.tasks.map((task) => task.id).sort(), [CHILD_TASK, 'linked-child', 'stray-child', ROOT_TASK].sort(), 'every readable member appears once, and the linked file is not one');
+        assert.deepEqual(tree.tasks.map((task) => task.id).sort(), [CHILD_TASK, 'stray-child', ROOT_TASK].sort(), 'every readable member appears once');
         assert.deepEqual([...tree.warnings].sort(), [
-            `linked-child continues elsewhere, which could not be read: ${SESSION_DIR}/linked-state.json is not a regular file.`,
             'stray-child continues stray, which could not be read: .copilot-tracking/plans/2026-01-15/stray-state.json is outside .copilot-tracking/rpi-sessions.',
             'trail-maps lists child outside, whose state file is missing.',
         ]);
-        assert.ok(tree.warnings.some((text) => /trail-maps lists child outside, whose state file is missing/.test(text)), tree.warnings.join('\n'));
+        await t.test('refuses linked state files and reports linked parents', async (t) => {
+            if (!(await symlinkOrSkip(t, path.join(tmp, 'outside-state.json'), path.join(dir, `${SESSION_DIR}/linked-state.json`), 'file'))) return;
+            await assert.rejects(inspectState(ws, `${SESSION_DIR}/linked-state.json`), { code: 'source_invalid' });
+            await writeJson(dir, `${SESSION_DIR}/linked-child-state.json`, { task_id: 'linked-child', parent_task: { task_id: 'elsewhere', state_path: `${SESSION_DIR}/linked-state.json` } });
+            const linkedTree = await sessionTreeOf(ws, await loadState(ws, PATHS.rootState));
+            assert.deepEqual(linkedTree.tasks.map((task) => task.id).sort(), [CHILD_TASK, 'linked-child', 'stray-child', ROOT_TASK].sort(), 'the linked file is not a member');
+            assert.deepEqual([...linkedTree.warnings].sort(), [
+                `linked-child continues elsewhere, which could not be read: ${SESSION_DIR}/linked-state.json is not a regular file.`,
+                ...tree.warnings,
+            ].sort());
+        });
     });
 
     it('builds the session tree from the links, with the shown task marked', async () => {
@@ -244,17 +255,19 @@ describe('sessions in the workspace', () => {
         assert.equal(scan.states.length, 3);
     });
 
-    it('reads the branch and repository when the git files are there', async () => {
+    it('reads the branch and repository when the git files are there', async (t) => {
         assert.equal(await readGit(root), null);
         await fs.mkdir(path.join(root, '.git'));
         await fs.writeFile(path.join(root, '.git', 'HEAD'), 'ref: refs/heads/feat/offline-maps\n');
         await fs.writeFile(path.join(root, '.git', 'config'), '[core]\n\tbare = false\n[remote "origin"]\n\turl = git@github.com:contoso/trails.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n');
         assert.deepEqual(await readGit(root), { repository: 'contoso/trails', branch: 'feat/offline-maps' });
-        const linkedRoot = path.join(tmp, 'linked-git-root');
-        await fs.mkdir(path.join(linkedRoot, '.git'), { recursive: true });
-        await fs.writeFile(path.join(tmp, 'outside-head'), 'ref: refs/heads/elsewhere\n');
-        await fs.symlink(path.join(tmp, 'outside-head'), path.join(linkedRoot, '.git', 'HEAD'));
-        assert.equal(await readGit(linkedRoot), null, 'a linked HEAD is not read');
+        await t.test('does not read a linked HEAD', async (t) => {
+            const linkedRoot = path.join(tmp, 'linked-git-root');
+            await fs.mkdir(path.join(linkedRoot, '.git'), { recursive: true });
+            await fs.writeFile(path.join(tmp, 'outside-head'), 'ref: refs/heads/elsewhere\n');
+            if (!(await symlinkOrSkip(t, path.join(tmp, 'outside-head'), path.join(linkedRoot, '.git', 'HEAD'), 'file'))) return;
+            assert.equal(await readGit(linkedRoot), null);
+        });
     });
 
     it('derives store IDs that fit the store pattern and never match the sample', () => {

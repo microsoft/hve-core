@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-10-29
+ms.date: 2026-10-30
 ms.topic: reference
 keywords:
   - canvas
@@ -375,6 +375,8 @@ The extension has no dependencies beyond Node.js built-ins and the host-provided
 ```bash
 npm run test:extensions
 ```
+
+On hosts without symbolic-link permission, only the link-specific tests are skipped with an explicit reason. Other workspace and source-route checks still run. Hosts that permit symbolic links, including the Linux CI runner, exercise the link refusal checks.
 
 The UI renders from files read on each request, so a page reload shows UI changes. Changes under `lib/` or `extension.mjs` need an extension reload; ask the agent to reload extensions, then reopen the canvas.
 
