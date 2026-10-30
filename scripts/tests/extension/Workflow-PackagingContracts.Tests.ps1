@@ -2900,16 +2900,15 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
         $source | Should -Match '(?m)^  skip-bots: \["dependabot\[bot\]"\]\r?$'
     }
 
-    It 'Hands authored demo content to the render through a filtered workflow_run' {
+    It 'Hands authored demo content to the render through a scheduled pickup' {
         $render = Get-WorkflowDocument -Name 'demo-material-render.yml'
-        $render['on'].Contains('workflow_run') | Should -BeTrue
-        @($render['on']['workflow_run']['workflows']) | Should -Be @('Demo Material Author')
-        @($render['on']['workflow_run']['branches']) | Should -Be @('main')
-        @($render['on']['workflow_run']['types']) | Should -Be @('completed')
+        $render['on'].Contains('workflow_run') | Should -BeFalse
+        @($render['on']['schedule'] | ForEach-Object { $_['cron'] }) | Should -Be @('47 3 * * *', '47 5 * * 1')
         $render['on']['workflow_dispatch']['inputs'].Contains('author-run-id') | Should -BeTrue
         $resolve = Get-NamedJobStep -Document $render -JobName 'resolve' -StepName 'Resolve author run and render mode'
         $resolveScript = [string]$resolve['with']['script']
-        $resolveScript | Should -Match 'authorRun = context\.payload\.workflow_run'
+        $resolveScript | Should -Match 'authorRun = await findPendingAuthorRun\(\)'
+        $resolveScript | Should -Match 'workflow_id: "demo-material-author\.lock\.yml"'
         $resolveScript | Should -Match 'authorRun\.path !== "\.github/workflows/demo-material-author\.lock\.yml"'
         $resolveScript | Should -Match 'authorRun\.head_branch !== defaultBranch'
         $resolveScript | Should -Match 'demo-material-content-v2-\$\{authorRun\.id\}'

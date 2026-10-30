@@ -366,6 +366,14 @@ def assemble_site(
         raise ArtifactLookupError(
             "No valid delivery; refusing an empty site publication"
         )
+    # Records attempted author runs even when no level is recorded, so a scheduled
+    # pickup does not select the same author run again.
+    if re.fullmatch(r"[0-9]+", author_run_id):
+        attempted = str(index.get("latest_attempted_author_run_id", ""))
+        if not re.fullmatch(r"[0-9]+", attempted) or int(author_run_id) > int(
+            attempted
+        ):
+            index["latest_attempted_author_run_id"] = author_run_id
     index.update(generated_at=now, render_run_id=render_run_id)
     descriptor, temporary = tempfile.mkstemp(prefix=".site-index-", dir=site)
     try:

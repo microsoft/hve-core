@@ -8,15 +8,11 @@
 name: Demo Material Render
 
 on:
-  workflow_run:
-    workflows:
-      - Demo Material Author
-    branches:
-      - main
-    types:
-      - completed
   schedule:
-    - cron: '47 3 * * 1'
+    # Daily: render the oldest successful author run the render index has not recorded.
+    - cron: '47 3 * * *'
+    # Weekly, after Monday's pickup: force authoring for failed or unpublished levels.
+    - cron: '47 5 * * 1'
   workflow_dispatch:
     inputs:
       author-run-id:
@@ -102,7 +98,7 @@ jobs:
 
       - name: Select failed or unpublished levels
         id: retry
-        if: ${{ github.event_name == 'schedule' }}
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '47 5 * * 1' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -128,6 +124,8 @@ jobs:
           PREVIOUS_CREATED_AT: ${{ steps.previous.outputs.created-at }}
           PUBLISHED_STATUS: ${{ steps.published.outputs.status }}
           RETRY_LEVELS: ${{ steps.retry.outputs.levels }}
+          SCHEDULE: ${{ github.event.schedule }}
+          RENDER_INDEX: ${{ runner.temp }}/retry-index/index.json
         with:
           script: |
             const refreshAfterMs = Number(process.env.REFRESH_AFTER_DAYS) * 86400000;
@@ -143,14 +141,49 @@ jobs:
               return matches.length === 1 ? matches[0] : null;
             };
 
+            const findPendingAuthorRun = async () => {
+              const fs = require("fs");
+              const index = fs.existsSync(process.env.RENDER_INDEX)
+                ? JSON.parse(fs.readFileSync(process.env.RENDER_INDEX, "utf8"))
+                : {};
+              const entries = index && typeof index.levels === "object" && index.levels
+                ? Object.values(index.levels)
+                : [];
+              const recorded = entries
+                .flatMap((entry) => [entry?.author_run_id, entry?.last_failed_attempt?.author_run_id])
+                .concat(index?.latest_attempted_author_run_id)
+                .filter((id) => /^[0-9]+$/.test(String(id ?? "")))
+                .map(Number);
+              const lastRecorded = recorded.length ? Math.max(...recorded) : 0;
+              const since = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo,
+                workflow_id: "demo-material-author.lock.yml",
+                branch: defaultBranch,
+                status: "success",
+                created: `>=${since}`,
+                per_page: 100,
+              });
+              // Oldest first so no authored run is skipped; without recorded history, newest first.
+              const pending = data.workflow_runs
+                .filter((run) => run.id > lastRecorded)
+                .sort((a, b) => (lastRecorded ? a.id - b.id : b.id - a.id));
+              for (const run of pending) {
+                if (await findArtifact(run.id, `demo-material-content-v2-${run.id}`)) {
+                  return run;
+                }
+              }
+              return null;
+            };
+
             const previousCreatedAt = process.env.PREVIOUS_CREATED_AT;
             const stale = previousCreatedAt
               ? Date.now() - Date.parse(previousCreatedAt) > refreshAfterMs
               : process.env.PUBLISHED_STATUS === "recovered";
 
             let authorRun = null;
-            if (context.eventName === "workflow_run") {
-              authorRun = context.payload.workflow_run;
+            if (context.eventName === "schedule" && process.env.SCHEDULE === "47 3 * * *") {
+              authorRun = await findPendingAuthorRun();
             } else if (context.eventName === "workflow_dispatch" && process.env.DISPATCH_AUTHOR_RUN_ID) {
               if (!/^[0-9]+$/.test(process.env.DISPATCH_AUTHOR_RUN_ID)) {
                 throw new Error("author-run-id must be a numeric run ID");

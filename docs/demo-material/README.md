@@ -2,7 +2,7 @@
 title: Demo Material
 description: Levelled HVE Core training decks, silent CI videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-29
 ms.topic: overview
 mdx:
   format: mdx
@@ -69,8 +69,9 @@ source documents changed:
   agent writes new slide content for changed, failed, or unpublished levels.
   When every level is current and published, the agent does not run.
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
-   workflow starts when an author run finishes authoring; it waits for that run to
-   complete and checks it before building. It builds each authored level into a
+   workflow runs daily. It picks up the oldest successful author run that the
+   render index has not recorded yet and checks it before building, so new
+   material appears within a day of authoring. It builds each authored level into a
   HTML deck and a silent video from matching exported slide frames, then
    scores the checks a machine can verify: timing paired to every slide, absence
    of an audio stream, the video landing inside the

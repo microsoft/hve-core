@@ -10,9 +10,13 @@ BeforeAll {
 }
 
 Describe 'demo material workflow chaining' -Tag 'Unit' {
-    It 'renders only completed Demo Material Author runs on main' {
-        $script:Render | Should -Match '(?ms)^on:\r?\n  workflow_run:\r?\n    workflows:\r?\n      - Demo Material Author\r?\n    branches:\r?\n      - main\r?\n    types:\r?\n      - completed'
-        $script:Render | Should -Match 'authorRun = context\.payload\.workflow_run'
+    It 'picks up Demo Material Author runs on a daily schedule instead of workflow_run' {
+        $script:Render | Should -Not -Match '(?m)^  workflow_run:'
+        $script:Render | Should -Match "(?m)^    - cron: '47 3 \* \* \*'"
+        $script:Render | Should -Match "(?m)^    - cron: '47 5 \* \* 1'"
+        $script:Render | Should -Match 'process\.env\.SCHEDULE === "47 3 \* \* \*"'
+        $script:Render | Should -Match 'workflow_id: "demo-material-author\.lock\.yml"'
+        $script:Render | Should -Match "if: \$\{\{ github\.event_name == 'schedule' && github\.event\.schedule == '47 5 \* \* 1' \}\}"
     }
 
     It 'does not poll or dispatch rendering from the author workflow' {

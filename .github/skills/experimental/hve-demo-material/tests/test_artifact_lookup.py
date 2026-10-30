@@ -10,6 +10,7 @@ import pytest
 from artifact_lookup import (
     PAGE_SIZE,
     ArtifactLookupError,
+    assemble_site,
     find_artifact,
     main,
     recover_site,
@@ -56,6 +57,84 @@ def _bundle(run_id, expired=False, prefix="demo-material-site"):
     return {"id": run_id * 10, "name": f"{prefix}-{run_id}", "expired": expired}
 
 
+def _resolve_steps():
+    from pathlib import Path
+
+    import yaml
+
+    workflow = (
+        Path(__file__).resolve().parents[5]
+        / ".github/workflows/demo-material-render.yml"
+    )
+    return yaml.safe_load(workflow.read_text(encoding="utf-8"))["jobs"]["resolve"][
+        "steps"
+    ]
+
+
+def _author_run(run_id):
+    return {
+        "id": run_id,
+        "status": "completed",
+        "conclusion": "success",
+        "path": ".github/workflows/demo-material-author.lock.yml",
+        "head_branch": "main",
+        "head_sha": "a" * 40,
+    }
+
+
+def _run_resolve(context, author_runs, content_run_ids, env):
+    """Run the resolve script under Node with a stubbed GitHub client."""
+    import os
+    import shutil
+    import subprocess
+
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Existing Node is required for contained workflow routing")
+    script = next(
+        step["with"]["script"]
+        for step in _resolve_steps()
+        if step.get("id") == "resolve"
+    )
+    runs = {run["id"]: run for run in author_runs}
+    harness = (
+        "const output = {}; const core = {"
+        "setOutput:(key,value)=>output[key]=value,notice:()=>{}};"
+        f"const context={json.dumps(context)};"
+        f"const runs={json.dumps(runs)};"
+        f"const contentRuns=new Set({json.dumps(content_run_ids)});"
+        'const github={rest:{repos:{get:async()=>({data:{default_branch:"main"}})},'
+        "actions:{listWorkflowRunArtifacts:()=>{},"
+        "listWorkflowRuns:async()=>({data:{workflow_runs:Object.values(runs).sort((a,b)=>b.id-a.id)}}),"
+        "getWorkflowRun:async({run_id})=>({data:runs[run_id]})}},"
+        "paginate:async(_,{run_id})=>contentRuns.has(run_id)"
+        "?[{id:run_id*10,name:`demo-material-content-v2-${run_id}`,expired:false}]:[]};"
+        "const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;"
+        f'new AsyncFunction("github","context","core",{json.dumps(script)})'
+        "(github,context,core)"
+        ".then(()=>console.log(JSON.stringify(output))).catch(error=>{console.error(error);process.exit(1)});"
+    )
+    result = subprocess.run(
+        [node, "-e", harness],
+        capture_output=True,
+        text=True,
+        check=True,
+        env={
+            # Node cannot initialize on Windows without SYSTEMROOT.
+            **{k: os.environ[k] for k in ("SYSTEMROOT",) if k in os.environ},
+            "DISPATCH_AUTHOR_RUN_ID": "",
+            "RETRY_LEVELS": "",
+            "REFRESH_AFTER_DAYS": "60",
+            "PREVIOUS_CREATED_AT": datetime.now(timezone.utc).isoformat(),
+            "PUBLISHED_STATUS": "",
+            "SCHEDULE": "",
+            "RENDER_INDEX": "",
+            **env,
+        },
+    )
+    return json.loads(result.stdout)
+
+
 class TestRenderEventRouting:
     @pytest.mark.parametrize(
         "author_run_id,expected", [("7", "render"), ("", "refresh")]
@@ -63,20 +142,7 @@ class TestRenderEventRouting:
     def test_given_usable_bundle_and_absent_index_when_resolved_then_skips_retry_fetch(
         self, author_run_id, expected
     ):
-        import os
-        import shutil
-        import subprocess
-        from pathlib import Path
-
-        import yaml
-
-        workflow = (
-            Path(__file__).resolve().parents[5]
-            / ".github/workflows/demo-material-render.yml"
-        )
-        steps = yaml.safe_load(workflow.read_text(encoding="utf-8"))["jobs"]["resolve"][
-            "steps"
-        ]
+        steps = _resolve_steps()
         retry_names = {
             "Find the latest render index",
             "Download the latest render index",
@@ -88,50 +154,86 @@ class TestRenderEventRouting:
         assert all(
             "github.event_name == 'schedule'" in step["if"] for step in retry_steps
         )
-        node = shutil.which("node")
-        if not node:
-            pytest.skip("Existing Node is required for contained workflow routing")
-        script = next(
-            step["with"]["script"] for step in steps if step.get("id") == "resolve"
+        output = _run_resolve(
+            {"eventName": "workflow_dispatch", "repo": {}, "payload": {}},
+            [_author_run(7)],
+            [7],
+            {"DISPATCH_AUTHOR_RUN_ID": author_run_id},
         )
-        author_run = {
-            "id": 7,
-            "status": "completed",
-            "conclusion": "success",
-            "path": ".github/workflows/demo-material-author.lock.yml",
-            "head_branch": "main",
-            "head_sha": "a" * 40,
-        }
-        context = {"eventName": "workflow_dispatch", "repo": {}, "payload": {}}
-        harness = (
-            "const output = {}; const core = {"
-            "setOutput:(key,value)=>output[key]=value,notice:()=>{}};"
-            f"const context={json.dumps(context)};"
-            'const github={rest:{repos:{get:async()=>({data:{default_branch:"main"}})},'
-            "actions:{listWorkflowRunArtifacts:()=>{},"
-            f"getWorkflowRun:async()=>({{data:{json.dumps(author_run)}}})}}}},"
-            'paginate:async()=>[{id:9,name:"demo-material-content-v2-7",expired:false}]};'
-            "const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;"
-            f'new AsyncFunction("github","context","core",{json.dumps(script)})'
-            "(github,context,core)"
-            ".then(()=>console.log(JSON.stringify(output))).catch(error=>{console.error(error);process.exit(1)});"
+        assert output["mode"] == expected
+
+    @pytest.mark.parametrize(
+        "recorded,content_runs,expected",
+        [
+            (5, [6, 7, 9], "6"),
+            (5, [7, 9], "7"),
+            (None, [6, 7, 9], "9"),
+            (9, [6, 7, 9], None),
+        ],
+    )
+    def test_given_daily_schedule_when_resolved_then_picks_unrecorded_author_run(
+        self, tmp_path, recorded, content_runs, expected
+    ):
+        index = tmp_path / "index.json"
+        if recorded is not None:
+            index.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "demo-material-site/v2",
+                        "levels": {
+                            "L100": {"author_run_id": "4"},
+                            "L200": {
+                                "author_run_id": "3",
+                                "last_failed_attempt": {"author_run_id": str(recorded)},
+                            },
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+        output = _run_resolve(
+            {"eventName": "schedule", "repo": {}, "payload": {}},
+            [_author_run(run_id) for run_id in (4, 6, 7, 9)],
+            content_runs,
+            {"SCHEDULE": "47 3 * * *", "RENDER_INDEX": str(index)},
         )
-        result = subprocess.run(
-            [node, "-e", harness],
-            capture_output=True,
-            text=True,
-            check=True,
-            env={
-                # Node cannot initialize on Windows without SYSTEMROOT.
-                **{k: os.environ[k] for k in ("SYSTEMROOT",) if k in os.environ},
-                "DISPATCH_AUTHOR_RUN_ID": author_run_id,
-                "RETRY_LEVELS": "",
-                "REFRESH_AFTER_DAYS": "60",
-                "PREVIOUS_CREATED_AT": datetime.now(timezone.utc).isoformat(),
-                "PUBLISHED_STATUS": "",
-            },
+        if expected is None:
+            assert output["mode"] != "render"
+        else:
+            assert output["mode"] == "render"
+            assert output["author-run-id"] == expected
+
+    def test_given_weekly_schedule_when_resolved_then_does_not_pick_up(self, tmp_path):
+        output = _run_resolve(
+            {"eventName": "schedule", "repo": {}, "payload": {}},
+            [_author_run(9)],
+            [9],
+            {"SCHEDULE": "47 5 * * 1", "RENDER_INDEX": str(tmp_path / "index.json")},
         )
-        assert json.loads(result.stdout)["mode"] == expected
+        assert output["mode"] != "render"
+
+    def test_given_attempted_run_unrecorded_by_levels_when_resolved_then_picks_newer(
+        self, tmp_path
+    ):
+        index = tmp_path / "index.json"
+        index.write_text(
+            json.dumps(
+                {
+                    "schema_version": "demo-material-site/v2",
+                    "latest_attempted_author_run_id": "6",
+                    "levels": {"L100": {"author_run_id": "4"}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        output = _run_resolve(
+            {"eventName": "schedule", "repo": {}, "payload": {}},
+            [_author_run(run_id) for run_id in (4, 6, 7)],
+            [6, 7],
+            {"SCHEDULE": "47 3 * * *", "RENDER_INDEX": str(index)},
+        )
+        assert output["mode"] == "render"
+        assert output["author-run-id"] == "7"
 
 
 class TestFindArtifact:
@@ -330,6 +432,26 @@ def _published(levels=("L100",)):
             }
         )
     return {f"{SITE}demo-material/index.json": json.dumps(index).encode(), **files}
+
+
+class TestAssembleSite:
+    def test_given_no_valid_render_when_assembled_then_records_attempted_run(
+        self, tmp_path
+    ):
+        site = tmp_path / "site"
+        for url, body in _published().items():
+            path = site / url.removeprefix(f"{SITE}demo-material/")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(body)
+        renders = tmp_path / "renders"
+        renders.mkdir()
+
+        first = assemble_site(site, renders, "b" * 40, "7", "8")
+        second = assemble_site(site, renders, "b" * 40, "5", "9")
+
+        assert first["latest_attempted_author_run_id"] == "7"
+        assert second["latest_attempted_author_run_id"] == "7"
+        assert second["levels"]["L100"]["author_run_id"] == "1"
 
 
 class TestRecoverSite:
