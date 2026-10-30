@@ -298,6 +298,7 @@ export function renderView(ctx) {
     const taskOrder = tasks.map((task) => task.id).filter((id) => byTask.has(id)).concat([...byTask.keys()].filter((id) => !tasks.some((task) => task.id === id)));
     rows.push(row(ctx, {
         id: 'changes', idLabel: null, title: 'Changes', level: 2,
+        secondary: impl.changes.length === 0,
         actions: rowActions(ctx, { sectionId: 'changes-summary', rowId: 'changes' }),
         body: [sectionBody(ctx, 'changes-summary'), impl.changes.length
             ? taskOrder.map((taskId) => h('section', { class: 'group', 'aria-labelledby': `changes-${taskId ?? 'unlinked'}` },
@@ -318,6 +319,7 @@ export function renderView(ctx) {
     const kinds = ['plan-change', 'follow-up', 'annotation', 'local'].filter((kind) => impl.discoveries.some((item) => item.kind === kind));
     rows.push(row(ctx, {
         id: 'discoveries', idLabel: null, title: 'Discoveries and plan updates', level: 2,
+        secondary: impl.discoveries.length === 0,
         body: [impl.discoveries.length
             ? kinds.map((kind) => h('section', { class: 'group', 'aria-labelledby': `discoveries-${kind}` },
                 h('h4', { class: 'group-head', id: `discoveries-${kind}` }, icon(DISCOVERY_KIND[kind].icon, { className: `tone-${DISCOVERY_KIND[kind].tone}-fg` }), h('span', { text: DISCOVERY_KIND[kind].label }), h('span', { class: 'count', text: String(impl.discoveries.filter((item) => item.kind === kind).length) })),
@@ -328,6 +330,7 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'alignment', idLabel: null, title: 'Business alignment', level: 2,
+        secondary: impl.alignment.length === 0,
         body: [impl.alignment.length ? impl.alignment.map((entry) => h('div', { class: 'alignment', dataset: { item: entry.id }, tabindex: '-1' },
             h('p', { class: 'discovery-head' }, badge(ALIGNMENT[entry.alignment] ?? ALIGNMENT.clarification), h('span', { class: 'id-chip', text: entry.id }), h('strong', { text: entry.requirement })),
             h('dl', { class: 'facts' },

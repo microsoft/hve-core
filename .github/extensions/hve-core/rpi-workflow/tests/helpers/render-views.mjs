@@ -19,6 +19,7 @@ const MODULES = {
 /** UI state matching ui/app.mjs at load, for one viewed phase. */
 export function initialUi(phase) {
     return {
+        presentation: 'focused',
         phase,
         highlight: null,
         editing: null,

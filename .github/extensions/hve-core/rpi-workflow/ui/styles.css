@@ -1867,6 +1867,40 @@ details > summary:hover {
   color: var(--rw-fg-muted);
 }
 
+.presentation-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rw-fg-muted);
+  font: var(--rw-t-meta);
+}
+
+.presentation-control select {
+  max-width: 100%;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid var(--rw-border-control);
+  border-radius: 4px;
+  background: var(--rw-bg);
+  color: var(--rw-fg);
+  font: inherit;
+}
+
+.context-source {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.context-source > summary {
+  cursor: pointer;
+  color: var(--rw-fg-muted);
+}
+
+.context-source[open] > .context-artifact {
+  display: flex;
+  margin-top: 6px;
+}
+
 /* Back and forward retrace the places the reader moved to, across phases and tasks. */
 .history-nav {
   display: inline-flex;
@@ -2042,6 +2076,38 @@ details > summary:hover {
 
 .row-title.is-major {
   font: var(--rw-t-h2);
+}
+
+.row-toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.row-toggle .icon {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.row-toggle[aria-expanded="true"] > .icon {
+  transform: rotate(90deg);
+}
+
+.row.is-folded {
+  grid-template-columns: minmax(0, 1fr);
+  padding-block: 16px;
+}
+
+.row.is-folded .row-head {
+  margin-bottom: 0;
 }
 
 .row-badges {
@@ -5391,6 +5457,45 @@ kbd {
 }
 
 @media (max-width: 720px) {
+  [data-presentation="focused"] .topbar {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "toggle identity"
+      "actions actions"
+      "rail rail";
+  }
+
+  [data-presentation="focused"] .top-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  [data-presentation="focused"] .top-actions > .icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  [data-presentation="focused"] #needsBtn,
+  [data-presentation="focused"] #sendBtn {
+    padding-inline: 6px;
+    margin-inline-end: 1px;
+  }
+
+  [data-presentation="focused"] #liveBtn {
+    margin-inline-end: 1px;
+  }
+
+  [data-presentation="focused"] #needsLabel,
+  [data-presentation="focused"] #sendLabel,
+  [data-presentation="focused"] #liveLabel {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
   #needsLabel,
   #sendLabel {
     position: absolute;

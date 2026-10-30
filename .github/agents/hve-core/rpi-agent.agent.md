@@ -172,7 +172,7 @@ Store preferences and gate state in `confirmed_decisions` without adding schema 
 * `Research lane effort` and `Review lane effort`: `auto`, or the level the user sets for every helper lane in that phase or for lanes identified by kind or topic. Persist explicit user direction and honor later explicit changes.
 * `Planning critique`: `standard`, `deep`, or `skip`. The session's first task uses the phase skill's default or explicit user direction; a child loop uses `skip` unless the user asked for a critique of follow-up work. Persist the setting before drafting and honor later explicit changes. When the user sets a critique reasoning effort, for every lens or for named lenses, record it in the same evidence.
 * `Review step`: `run` or `skip`. The session's first task defaults to `run`; a child loop defaults to `skip` unless the user asked for a Review of follow-up work. Persist explicit user direction and honor later explicit changes.
-* `Canvas`: status `current`; evidence names the canvas instance and handle that shows the session (see Canvas).
+* `Canvas`: status `current`; evidence names the canvas instance, handle, and host-reported provider `extensionId` that shows the session (see Canvas).
 
 ### Critique and Review records
 
@@ -247,7 +247,10 @@ After Review, or after Implement when Review is skipped, manual mode presents th
 
 When the host lists the `hve-core-rpi-workflow` canvas, show the session in it. A missing or failing canvas never blocks the session.
 
-* When a conversation starts or resumes the session, open one canvas: the instance a canvas message in this conversation names, else the one in the `Canvas` decision, else `rpi-<task_id>` for the conversation's first task. Open it with input `{ "state": "<state path>" }` and record its instance ID and handle in the `Canvas` decision.
+* Resolve the provider before opening: use a host-reported `extensionId`, retaining the provider in the `Canvas` decision when still available. Otherwise prefer the workspace/project provider when offered, or the sole remaining provider; ask when multiple providers remain equally applicable. Do not invent a provider ID or assume a project provider exists in a plugin-only workspace.
+* If capability lookup or opening reports multiple matching providers, retry the failed call with the selected `extensionId`. Use that provider for capability lookup and opening or reopening the same instance; an ambiguity response is not evidence that the canvas is unavailable.
+* When a conversation starts or resumes the session, open one canvas: the instance a canvas message in this conversation names, else the one in the `Canvas` decision, else `rpi-<task_id>` for the conversation's first task. Open it with input `{ "state": "<state path>" }`. Only after a successful open, record its instance ID, handle, and resolved `extensionId` in the `Canvas` decision.
+* If the canvas is missing or the provider-qualified attempt fails, tell the user why it is unavailable and the supported recovery action, then continue the RPI work without it. Do not record a failed open as a current canvas or repeatedly retry the same failure without new evidence.
 * The canvas follows the session's running loop by itself, so later transitions need no canvas call. Reopen the same instance only to bring the panel back, and use its `show_task` action to show another task.
 * When an open result or `get_state` says a canvas is not connected, or a canvas message asks to connect it, call that canvas's `show_task` with `{ "state": "<state path>" }` for the conversation's current task.
 * A subagent running a full RPI session opens its own canvas. When that canvas's messages arrive in the main conversation, apply them to the subagent's task or pass them to the subagent.

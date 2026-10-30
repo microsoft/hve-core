@@ -153,6 +153,7 @@ export function renderView(ctx) {
     const changing = Object.values(plan.diagram?.phaseNodes ?? {}).flat();
     if (plan.diagram) rows.push(row(ctx, {
         id: 'change-map', idLabel: null, title: 'Change map', level: 2,
+        secondary: true,
         body: [
             h('div', { class: 'map-controls' },
                 hasBefore ? h('fieldset', { class: 'segmented compact' }, h('legend', { class: 'visually-hidden', text: 'Diagram' }),
@@ -188,6 +189,7 @@ export function renderView(ctx) {
     }
     rows.push(row(ctx, {
         id: 'requirements', idLabel: null, title: 'Requirements', level: 2,
+        secondary: plan.requirements.every((requirement) => coverage.get(requirement.id).length > 0),
         body: [table('Requirement coverage', ['ID', 'Requirement', 'Covered by'], plan.requirements.map((req) => [
             h('span', { class: 'id-chip', dataset: { item: req.id }, tabindex: '-1', text: req.id }), mdInline(ctx, req.text, { doc: 'plan' }),
             coverage.get(req.id).length ? h('span', { class: 'chip-row' }, coverage.get(req.id).map((id) => idChip(id, ctx.act.navigate))) : badge({ icon: 'alert', label: 'Not covered', tone: 'danger' }),
@@ -196,6 +198,7 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'critique', idLabel: null, title: 'Critique', level: 2,
+        secondary: !critique || (!critique.run && critique.findings.length === 0),
         badges: runBadge(critique, true) ? [runBadge(critique, true)] : critique?.verdict ? [badge({ icon: critique.verdict === 'Pass' ? 'check' : 'pencil', label: `Verdict: ${critique.verdict}`, tone: critique.verdict === 'Pass' ? 'success' : 'attention' })] : [],
         body: critique ? [
             critique.lenses?.length ? h('ol', { class: 'lens-list', 'aria-label': 'Critique lenses' }, critique.lenses.map((lens) => h('li', { class: ['lens-item', `is-${lens.status.replace(' ', '-')}`] }, badge(LENS_STATUS[lens.status] ?? LENS_STATUS.complete), h('span', { class: 'lens-name', text: lens.lens })))) : null,
