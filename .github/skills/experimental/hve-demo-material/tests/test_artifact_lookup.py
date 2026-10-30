@@ -8,7 +8,6 @@ import os
 import urllib.error
 from datetime import datetime, timedelta, timezone
 
-import artifact_lookup
 import pytest
 from artifact_lookup import (
     PAGE_SIZE,
