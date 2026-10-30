@@ -28,6 +28,7 @@ The primary artifact serves the end user as well as downstream RPI agents. Put i
 * Put the goal, audience, boundaries, criteria, requested output, and answerable questions in Scope and Questions. A limitation that qualifies the bottom line also belongs in the summary so a reader does not mistake a bounded result for a universal claim.
 * Use Recommendation and Alternatives for the selected approach and trade-offs in `convergence` mode. In other modes, present the current decision state and viable choices without forcing a recommendation.
 * Use Decisions and Feedback for confirmed, proposed, deferred, and unresolved decisions plus concrete requests for criticism, suggestions, or confirmation. Use Risks and Open Questions for remaining risks, evidence gaps, and potential further research.
+* Number decision groups `D1`, `D2`, and so on. For each decision that needs the user's input, add the template's detail block after the table: the row's D number and a short title as a heading, a one-line question, one option per line, marking one `(recommended)` only when evidence supports a recommendation and the output mode allows one, and optional context.
 * Keep Planning Readiness and Next Step as the canonical continuation record for users and RPI parents. Record decision participation there and keep execution status, Research disposition, and Planning Readiness distinct.
 * Keep the full explanation in one owning section; summaries and decisions may refer to it without copying its detail. The Research Record retains only method, extension and participation provenance, cycle detail, canonical evidence, and the self-check.
 * Refresh affected user-facing sections after synthesis and after any material finding, decision, risk, or readiness change.
@@ -113,7 +114,7 @@ For each `user-owned` or `user-retained` group:
 1. Persist the pending group and its evidence before conversation.
 2. Present the primary research artifact and relevant source files as Markdown links. Explain the decision, why it matters now, viable choices and consequences, evidence-backed recommendation when available, uncertainty, and readiness effect in plain language.
 3. Add a compact Mermaid diagram in the conversation only when a relationship, sequence, or trade-off would otherwise be difficult to understand. The diagram supplements the explanation and does not replace accessible prose.
-4. Ask with the question tool, one concise question per decision, using fixed options plus freeform input when useful.
+4. Ask with the question tool, one concise question per decision, using fixed options plus freeform input when useful. Offer `Answered in the canvas` while a canvas shows the session, as the skill's Flow step 9 describes.
 5. Persist the answer, evidence or user source, resulting decision, affected findings, and readiness effect before presenting the next group.
 
 Agent-owned decisions, the unavailable-tool fallback, and the no-walkthrough case follow the skill's Flow step 9.
@@ -216,8 +217,8 @@ Maintain the primary artifact as the authoritative synthesized record.
 
 * Keep reader-oriented claims understandable on their own and connect each material claim to the detailed record with evidence IDs.
 * Assign every material result exactly one evidence state in Findings: unverified hypothesis or conjecture, partially supported claim, evidence-backed finding, weakened or disproved claim, or unresolved possibility. Confidence does not replace evidence state.
-* Keep codebase and external evidence in one Evidence Log. Add `C1`, `C2`, and onward for codebase evidence; each includes a workspace-relative path with a heading or symbol, tool category, claim, confidence, and provenance note. Use stable locators rather than maintained line numbers.
-* Add `W1`, `W2`, and onward for external evidence; each includes source title, URL, retrieval date, version or date, claim, confidence, and provenance note.
+* Keep codebase and external evidence in one Evidence Log. Add `C1`, `C2`, and onward for codebase evidence; each includes a workspace-relative path with a heading or symbol, tool category, claim, confidence, and provenance note. Write each location as the path followed by its heading or symbol in backticks, such as `src/drafts/store.ts` `saveDraft`, and separate several locations with semicolons. Use stable locators rather than maintained line numbers.
+* Add `W1`, `W2`, and onward for external evidence; each includes source title, URL, retrieval date, version or date, claim, confidence, and provenance note. Write the source as a Markdown link whose text is the title, such as `[Storage quotas](https://developer.mozilla.org/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria)`.
 * Map every material finding to one or more research questions and evidence IDs. Keep sourced facts separate from inferences.
 * Prefer current primary or official sources for external facts. When a material claim needs corroboration, use independent credible evidence where available and record conflicts and their resolution criteria.
 * For code-only research, omit `W#` rows. Do not invent external sources or URLs.

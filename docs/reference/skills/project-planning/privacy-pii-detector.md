@@ -1,9 +1,9 @@
 ---
 title: privacy-pii-detector
 description: "Automated PII/PI detection and privacy control verification for codebases. Scans for personal information processing patterns, classifies by sensitivity tier and industry, verifies protective controls exist, and raises findings when controls are missing. Use when you need to detect PII in code without privacy expertise."
-sidebar_position: 12
+sidebar_position: 13
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-10-30
 ms.topic: reference
 keywords:
   - skill

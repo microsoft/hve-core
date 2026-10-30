@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-16
+ms.date: 2026-10-28
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -124,21 +124,44 @@ Key findings:
    .copilot-tracking/reviews/plans/2025-01-28/blob-storage-plan-critique.md
    ```
 
-5. Verify the plan structure. The plan opens with an executive summary and a diagrammed `## Phase Checklist`; supporting sections such as decisions, readiness, requirements, and sources follow it:
+5. Verify the plan structure. The plan opens with an executive summary and a `## Phase Checklist` that starts with the change map: an After diagram of the result, grouped by where changes land, with each change tagged by its phases, and a Before only when the plan changes how parts connect. Supporting sections such as decisions, readiness, requirements, and sources follow it:
 
 ````markdown
 ## Phase Checklist
 
+### After
+
 ```mermaid
 flowchart LR
-    client["src/storage/blob_client.py"]
-    writer["src/pipeline/writers/blob_writer.py"]
-    factory["src/pipeline/factory.py"]
-    writer -->|uploads through| client
+    accTitle: After: pipeline output streams to Azure Blob Storage
+    accDescr: The factory builds a blob writer that uploads through a new storage client, beside the file writer it already builds.
+    subgraph pipeline["`<code>src/pipeline/</code>`"]
+        factory["`**<code>factory.py</code>**
+        builds the configured writer
+        changed · P03`"]
+        files["`<code>writers/file_writer.py</code>`"]
+        writer["`**<code>writers/blob_writer.py</code>**
+        streams output to blobs
+        new · P02`"]
+    end
+    subgraph storage["`<code>src/storage/blob_client.py</code>
+    new file · P01`"]
+        client["`**<code>BlobStorageClient</code>**
+        uploads to a container
+        new · P01`"]
+    end
+    factory -->|constructs| files
     factory -->|constructs| writer
-    classDef new stroke-dasharray: 5 5
-    class client,writer new
+    writer -->|uploads through| client
+    classDef new stroke-dasharray: 6 4,stroke-width:2px
+    classDef changed stroke-width:3px
+    class storage,client,writer new
+    class factory changed
 ```
+
+Key: arrows point from a part to what it uses; dashed border, new; thick border, changed; each tag names the phases that make the change.
+
+The factory now builds the writer the configuration names (P03): the existing file writer or a new blob writer (P02), which uploads through the new `BlobStorageClient` (P01). The plan removes nothing, so the map has no Before.
 
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: Storage Client Setup
@@ -149,16 +172,7 @@ Goals:
 Dependencies:
 * None
 
-```mermaid
-flowchart LR
-    client["src/storage/blob_client.py"]
-    writer["src/pipeline/writers/blob_writer.py"]
-    factory["src/pipeline/factory.py"]
-    writer -->|uploads through| client
-    factory -->|constructs| writer
-    classDef phase fill:#fff3bf,stroke:#f08c00,stroke-width:2px
-    class client phase
-```
+Changes in the map: the new `src/storage/blob_client.py` file and its `BlobStorageClient`.
 
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: Create BlobStorageClient class
@@ -413,6 +427,8 @@ After Review, an automatic session presents ranked follow-up choices alongside *
 
 Both modes persist one JSON state record with the task identity, mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups, so a later conversation can resume from the recorded phase.
 
+When your host shows canvases, the agent also opens the [RPI Workflow canvas](rpi-workflow-canvas) on the session. In either mode, you can read each phase there as it is written, answer the decisions the agent leaves to you, and queue input for its next checkpoint.
+
 ## Resuming a Long Lifecycle
 
 A long lifecycle can accumulate context. Resume from the durable RPI artifact set rather than relying on a conversation transcript:
@@ -432,6 +448,7 @@ See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the ag
 * [RPI Overview](./) - Understand the workflow
 * [Why the RPI Workflow Works](why-rpi) - Understand the rationale for phase separation
 * [Context Engineering](context-engineering) - Why context management matters
+* [RPI Workflow Canvas](rpi-workflow-canvas) - Follow and steer a session phase by phase beside the chat
 
 ---
 

@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-28
 ms.topic: overview
 keywords:
   - hve core
@@ -95,6 +95,7 @@ Research, Plan, Implement, Review (RPI) decomposes complex engineering tasks int
 * [Why RPI?](rpi/why-rpi.md) explains the problem statement and design rationale
 * [RPI overview](rpi/) introduces RPI Agent and the direct `rpi-*` phase skills
 * [Using Together](rpi/using-together.md) describes phase coordination and durable handoffs
+* [RPI Workflow Canvas](rpi/rpi-workflow-canvas.md) shows a session phase by phase beside the chat, where you answer the agent's decisions and send it input
 
 **[RPI Documentation →](rpi/)**
 
