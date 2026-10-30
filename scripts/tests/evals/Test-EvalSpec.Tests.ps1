@@ -18,6 +18,319 @@ BeforeAll {
 }
 
 Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
+    Context 'Plain-language evaluation repair contracts' {
+        BeforeAll {
+            $script:AgentSpec = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/eval.yaml') -Raw)
+            $script:SkillSpec = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/skill-quality/eval.yaml') -Raw)
+            $script:InstructionSpec = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/behavior-conformance/instructions.eval.yaml') -Raw)
+            $demo = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/hve-demo-material.yml') -Raw)
+            $prd = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/prd-builder.yml') -Raw)
+            $script:RepairCases = @(
+                $demo.stimuli | Where-Object name -EQ 'hve-demo-material-class-recipe'
+                $prd.stimuli | Where-Object name -EQ 'prd-builder-research-blocked'
+                $script:SkillSpec.stimuli | Where-Object name -EQ 'architecture-review-record-and-authority'
+            )
+        }
+
+        It 'Retains case identity, classifications, suite thresholds, runs and judge defaults' {
+            $script:RepairCases.name | Should -Be @(
+                'hve-demo-material-class-recipe', 'prd-builder-research-blocked', 'architecture-review-record-and-authority'
+            )
+            $script:RepairCases[0].tags.category | Should -Be 'agent-behavior'
+            $script:RepairCases[1].tags.scenario | Should -Be 'prd-research-blocked'
+            $script:RepairCases[2].tags.skill | Should -Be 'architecture-review'
+            foreach ($case in $script:RepairCases) {
+                $case.tags.ContainsKey('advisory') | Should -BeFalse
+            }
+            $script:AgentSpec.defaults.runs | Should -Be 5
+            $script:AgentSpec.defaults.timeout | Should -Be '300s'
+            $script:AgentSpec.defaults.judge_model | Should -Be 'claude-sonnet-5'
+            $script:SkillSpec.defaults.runs | Should -Be 3
+            $script:SkillSpec.defaults.ContainsKey('judge_model') | Should -BeFalse
+            $script:InstructionSpec.defaults.runs | Should -Be 3
+            $script:InstructionSpec.defaults.timeout | Should -Be '120s'
+            foreach ($spec in @($script:AgentSpec, $script:SkillSpec)) {
+                $spec.scoring.threshold | Should -Be 0.7
+            }
+            $script:InstructionSpec.ContainsKey('scoring') | Should -BeFalse
+        }
+
+        It 'Uses one conjunctive binary prompt judge per semantic case without a model override' {
+            $expectedNames = @('hve-demo-material-class-recipe-content', 'prd-research-blocked-contract', 'architecture-review-contract')
+            for ($i = 0; $i -lt $script:RepairCases.Count; $i++) {
+                $case = $script:RepairCases[$i]
+                $judges = @($case.graders | Where-Object type -EQ 'prompt')
+                $judges | Should -HaveCount 1
+                $judges[0].name | Should -Be $expectedNames[$i]
+                $judges[0].config.scoring | Should -Be 'binary'
+                $judges[0].config.threshold | Should -Be 0.85
+                $judges[0].config.ContainsKey('model') | Should -BeFalse
+                ($case.rubric -join ' ') | Should -Match 'All criteria are mandatory'
+                ($case.rubric -join ' ') | Should -Match 'equivalent wording'
+                ($case.rubric -join ' ') | Should -Match 'prompt echoes'
+            }
+            ($script:RepairCases[0].rubric -join ' ') | Should -Match '4 to 6 minutes.*Azure AI Speech.*tts-voiceover'
+            ($script:RepairCases[0].rubric -join ' ') | Should -Match 'deck-export.*narration.*MP4.*duration validation'
+            ($script:RepairCases[1].rubric -join ' ') | Should -Match 'open question or unvalidated assumption.*does-not-satisfy'
+            ($script:RepairCases[1].rubric -join ' ') | Should -Match 'Stop only.*unrelated work may continue'
+            ($script:RepairCases[2].rubric -join ' ') | Should -Match 'scope.*E1.*option A.*assumptions.*trade-offs'
+            ($script:RepairCases[2].rubric -join ' ') | Should -Match 'reliability and cost.*budget approval.*limit'
+            ($script:RepairCases[2].rubric -join ' ') | Should -Match 'dispositions.*decision owners.*persist.*before.*handoff'
+            ($script:RepairCases[2].rubric -join ' ') | Should -Match 'authority stays in the ADR and with the user'
+        }
+
+        It 'Stages the demo agent with its filename instruction declaration and curriculum available' {
+            $case = $script:RepairCases[0]
+            $base = Join-Path $script:RepoRoot 'evals/agent-behavior'
+            $agent = @($case.agent_environment.files | Where-Object dest -EQ '.github/agents/experimental/hve-demo-material.agent.md')
+            $agent | Should -HaveCount 1
+            $agentPath = Join-Path $base $agent[0].src
+            $agentPath | Should -Exist
+            $instruction = @($case.agent_environment.files | Where-Object dest -EQ '.github/instructions/shared/plain-language.instructions.md')
+            $instruction | Should -HaveCount 1
+            (Join-Path $base $instruction[0].src) | Should -Exist
+            $text = Get-Content $agentPath -Raw
+            $text | Should -Match ([regex]::Escape('Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.'))
+            $case.agent_environment.skills | Should -Contain '../../.github/skills/experimental/hve-demo-material'
+            foreach ($skill in $case.agent_environment.skills) {
+                (Join-Path $base "$skill/SKILL.md") | Should -Exist
+                (Join-Path $base "$skill/references/curriculum.md") | Should -Exist
+            }
+            $case.prompt | Should -Match 'Read.*\.github/agents/experimental/hve-demo-material\.agent\.md'
+            $case.prompt | Should -Match 'planning only'
+            $case.prompt | Should -Match 'Return the plan prose'
+        }
+
+        It 'Uses one filename declaration throughout existing policy-delivery surfaces' {
+            $paths = @(
+                '.github/copilot-instructions.md'
+                '.github/instructions/hve-core/writing-style.instructions.md'
+                Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot '.github/agents') -Recurse -File -Filter '*.agent.md' |
+                    ForEach-Object { [System.IO.Path]::GetRelativePath($script:RepoRoot, $_.FullName) }
+                Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot '.github/skills') -Recurse -File -Filter 'SKILL.md' |
+                    Where-Object { $_.FullName -ne (Join-Path $script:RepoRoot '.github/skills/project-planning/privacy-by-design/SKILL.md') } |
+                    ForEach-Object { [System.IO.Path]::GetRelativePath($script:RepoRoot, $_.FullName) }
+            )
+            $declaration = 'Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.'
+            foreach ($path in $paths) {
+                $text = Get-Content -LiteralPath (Join-Path $script:RepoRoot $path) -Raw
+                [regex]::Matches($text, [regex]::Escape($declaration)).Count | Should -Be 1 -Because $path
+                $text | Should -Not -Match '#file:\S*plain-language\.instructions\.md' -Because $path
+            }
+        }
+
+        It 'Retains loaded-policy, unavailable-policy and exact-format safeguards at every declaration' {
+            $paths = @(
+                Get-ChildItem -LiteralPath (Join-Path $script:RepoRoot '.github') -Recurse -File -Filter '*.md' |
+                    Where-Object { $_.Name -like '*.agent.md' -or $_.Name -eq 'SKILL.md' -or $_.Name -eq 'copilot-instructions.md' -or $_.Name -eq 'writing-style.instructions.md' }
+            )
+            foreach ($path in $paths) {
+                $text = Get-Content -LiteralPath $path.FullName -Raw
+                if ($text -notmatch '(?m)^Follow all instructions from plain-language\.instructions\.md') { continue }
+                $paragraph = [regex]::Match($text, '(?m)^Follow all instructions from plain-language\.instructions\.md[^\r\n]*(?:\r?\n[^\r\n]+)*').Value
+                $paragraph | Should -Match 'plain, direct language' -Because $path.Name
+                $paragraph | Should -Match 'necessary technical terms' -Because $path.Name
+                $paragraph | Should -Match 'exact output formats' -Because $path.Name
+                $paragraph | Should -Match 'not already loaded' -Because $path.Name
+                $paragraph | Should -Match 'If unavailable, keep this default and continue the task' -Because $path.Name
+            }
+        }
+
+        It 'Preserves the single canonical policy body without automatic file-pattern attachment' {
+            $text = Get-Content -LiteralPath (Join-Path $script:RepoRoot '.github/instructions/shared/plain-language.instructions.md') -Raw
+            $body = [regex]::Replace($text, '(?s)\A---\r?\n.*?\r?\n---\r?\n', '').Replace("`r`n", "`n")
+            $hash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::UTF8.GetBytes($body)))
+            $hash | Should -BeExactly '0F50C7332CC683F349C97F3928FB20D0A810B1EC9E6032E464A80FDD490B7A19'
+            $text | Should -Match '(?m)^name: Plain Language\r?$'
+            $text | Should -Not -Match '(?m)^applyTo:'
+        }
+
+        It 'Keeps file presence separate from semantics and the supplemental response check' {
+            $case = $script:RepairCases[0]
+            $case.graders | Should -HaveCount 3
+            $file = @($case.graders | Where-Object type -EQ 'file-exists')
+            $file | Should -HaveCount 1
+            $file[0].name | Should -Be 'hve-demo-material-class-recipe-plan-exists'
+            $file[0].config.path | Should -Be '.copilot-tracking/demo-material/synthetic-l100-plan.md'
+            $supplement = @($case.graders | Where-Object name -EQ 'hve-demo-material-class-recipe-no-source-edit')
+            $supplement | Should -HaveCount 1
+            $supplement[0].type | Should -Be 'output-matches'
+            $supplement[0].config.negate | Should -BeTrue
+        }
+
+        It 'Retains exactly 18 labeled synthetic controls without claiming semantic calibration' {
+            $controls = (Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/plain-language-repair-controls.json') -Raw | ConvertFrom-Json).controls
+            $controls | Should -HaveCount 18
+            @($controls.id | Sort-Object -Unique) | Should -HaveCount 18
+            foreach ($case in $script:RepairCases) {
+                $group = @($controls | Where-Object subject -EQ $case.name)
+                $group | Should -HaveCount 6
+                @($group | Where-Object expected -EQ $true) | Should -HaveCount 2
+                @($group | Where-Object expected -EQ $false) | Should -HaveCount 4
+            }
+            foreach ($control in $controls) {
+                $control.expected | Should -BeOfType ([bool])
+                $control.answer | Should -Not -BeNullOrEmpty
+                $control.rationale | Should -Not -BeNullOrEmpty
+            }
+        }
+
+        It 'Clarifies architecture disposition knowledge without giving the answer categories' {
+            $case = $script:RepairCases[2]
+            $case.prompt | Should -Match '(?s)allowed kinds.*disposition.*each confirmed focus area'
+            $case.prompt | Should -Match 'do not perform a review'
+            $case.prompt | Should -Match '(?s)do not.*invent.*pillar.*findings.*budget approval'
+            $case.prompt | Should -Not -Match '(?i)no.finding|unassessed'
+            $case.graders | Should -HaveCount 1
+            $case.graders[0].name | Should -Be 'architecture-review-contract'
+            $case.graders[0].config.ContainsKey('model') | Should -BeFalse
+        }
+
+        It 'Retains actual numeric layouts and separate architecture calibration expectations' {
+            $fixture = Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/final-two-output-controls.json') -Raw | ConvertFrom-Json
+            $fixture.outcomes | Should -HaveCount 4
+            @($fixture.outcomes.id | Sort-Object -Unique) | Should -HaveCount 4
+            $fixture.outcomes[0].body | Should -Match '\| Measure \| Precommitted criterion \| Recorded result \| Evaluation \|'
+            $fixture.outcomes[1].body | Should -Match '\| Measure \| Result \| Criterion \| Comparison \|'
+            ($fixture.outcomes | Where-Object id -EQ 'raw-latency-pair').body | Should -Match '\| Unbatched median latency \| 100 ms \|'
+            ($fixture.outcomes | Where-Object id -EQ 'formula-first').body | Should -Match '\(100 - 76\) / 100 \* 100 = 24%'
+            foreach ($outcome in $fixture.outcomes) {
+                $outcome.body | Should -Match '(?:Median latency reduction|Unbatched median latency)'
+                $outcome.body | Should -Match '(?:100 synthetic requests|\| Synthetic requests \| 100 \||Synthetic requests: 100)'
+                $outcome.body | Should -Not -Match '(?i)C:\\Users|\.copilot-tracking/research|sessionID|rubric_scores'
+            }
+            $fixture.architectureSubject | Should -Be 'architecture-review-record-and-authority'
+            $fixture.architecture | Should -HaveCount 10
+            @($fixture.architecture.id | Sort-Object -Unique) | Should -HaveCount 10
+            @($fixture.architecture | Where-Object expected -EQ $true) | Should -HaveCount 4
+            @($fixture.architecture | Where-Object expected -EQ $false) | Should -HaveCount 6
+            foreach ($control in $fixture.architecture) {
+                $control.expected | Should -BeOfType ([bool])
+                $control.answer | Should -Not -BeNullOrEmpty
+                $control.rationale | Should -Not -BeNullOrEmpty
+            }
+        }
+
+        It 'Judges architecture recording requirements without requiring an executed assessment' {
+            $case = $script:RepairCases[2]
+            $case.prompt | Should -Match 'ownership requirements.*user authority'
+            $rubric = $case.rubric -join ' '
+            $rubric | Should -Match 'do not demand an actual assessed disposition'
+            $rubric | Should -Match 'ownership must be recorded'
+            $rubric | Should -Match 'user as the human decision owner'
+            $rubric | Should -Match 'each criterion against its own evidence'
+        }
+
+        It 'Separates ordinary RPI questions from workflow state and progression' {
+            $agent = Get-Content -Raw (Join-Path $script:RepoRoot '.github/agents/hve-core/rpi-agent.agent.md')
+            $agent | Should -Match '## Applicability'
+            $agent | Should -Match '(?s)ordinary questions.*answer directly.*self-introductions.*phase headings.*unsolicited task redirection'
+            $agent | Should -Match 'Do not recover, create, or update task or session tracking state'
+            $agent | Should -Match 'Preserve platform-required identity disclosures'
+            $agent | Should -Match '(?s)active task.*side question.*already-authorized work.*recorded mode and progression boundary'
+            $agent | Should -Match 'For workflow work, follow the active phase skill'
+            $agent | Should -Match 'Immediately persist the current state'
+        }
+
+        It 'Resolves actual planner caps and observes missing versus present demo files without an executor' {
+            $probe = @'
+const { pathToFileURL } = await import('node:url');
+const path = await import('node:path');
+const fs = await import('node:fs/promises');
+const root = process.argv[1];
+const workspace = process.argv[2];
+const moduleAt = name => import(pathToFileURL(path.join(root, 'node_modules', '@microsoft', 'vally', 'dist', name)).href);
+const { loadEvalSpec } = await moduleAt('eval/loader.js');
+const { planRun } = await moduleAt('pipeline/plan.js');
+const { ProjectContext } = await moduleAt('config/context.js');
+const { FileExistsGrader } = await moduleAt('graders/static/file-exists-grader.js');
+const filePath = path.join(root, 'evals', 'behavior-conformance', 'instructions.eval.yaml');
+const spec = await loadEvalSpec(filePath);
+const names = ['instruction-plain-language-direct-research', 'instruction-plain-language-machine-output'];
+spec.stimuli = spec.stimuli.filter(s => names.includes(s.name));
+const plan = await planRun({
+    variants: [{ name: 'local', specs: [{ filePath, spec }] }],
+    models: [undefined], projectCtx: await ProjectContext.load(root), skipGrade: true,
+    getExecutor: () => ({ name: 'copilot-sdk', execute() { throw new Error('Executor must not run'); } })
+});
+if (plan.evals.some(e => e.failure)) throw new Error('Local timeout planning failed');
+const config = JSON.parse(process.argv[3]);
+await fs.mkdir(workspace, { recursive: true });
+const grader = new FileExistsGrader();
+const trajectory = { workDir: workspace, output: config.path };
+const absent = await grader.grade({ config, trajectory });
+const file = path.join(workspace, config.path);
+await fs.mkdir(path.dirname(file), { recursive: true });
+await fs.writeFile(file, 'Synthetic presence fixture, not semantic evidence.');
+const present = await grader.grade({ config, trajectory });
+console.log(JSON.stringify({ items: plan.items.map(i => ({ name: i.stimulus.name, timeout: i.run.timeout })), absent: absent.passed, present: present.passed }));
+'@
+            $config = ($script:RepairCases[0].graders | Where-Object type -EQ 'file-exists').config | ConvertTo-Json -Compress
+            $json = & node --input-type=module -e $probe $script:RepoRoot (Join-Path $TestDrive 'demo-presence') $config
+            $LASTEXITCODE | Should -Be 0
+            $result = $json | ConvertFrom-Json
+            $research = @($result.items | Where-Object name -EQ 'instruction-plain-language-direct-research')
+            $short = @($result.items | Where-Object name -EQ 'instruction-plain-language-machine-output')
+            $research | Should -HaveCount 3
+            $short | Should -HaveCount 3
+            foreach ($item in $research) { $item.timeout | Should -Be 300000 }
+            foreach ($item in $short) { $item.timeout | Should -Be 120000 }
+            $result.absent | Should -BeFalse
+            $result.present | Should -BeTrue
+            $case = @($script:InstructionSpec.stimuli | Where-Object name -EQ 'instruction-plain-language-direct-research')[0]
+            $case.tags.advisory | Should -Be 'true'
+            $case.constraints.max_duration | Should -Be '300s'
+            $case.constraints.ContainsKey('max_agent_duration') | Should -BeFalse
+        }
+    }
+
+    Context 'Unreadable-base semantic contract' {
+        BeforeAll {
+            $partial = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/code-review.yml') -Raw)
+            $script:FallbackCase = @($partial.stimuli | Where-Object name -EQ 'code-review-business-alignment-unreadable-base-fallback')[0]
+            $script:FallbackControls = Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/post-repair-grader-controls.json') -Raw | ConvertFrom-Json
+        }
+
+        It 'Keeps one binary judge under the existing natural-language scenario' {
+            $script:FallbackCase.graders | Should -HaveCount 1
+            $grader = $script:FallbackCase.graders[0]
+            $grader.name | Should -Be 'code-review-unreadable-base-contract'
+            $grader.type | Should -Be 'prompt'
+            $grader.config.scoring | Should -Be 'binary'
+            $grader.config.threshold | Should -Be 0.85
+            $grader.config.ContainsKey('model') | Should -BeFalse
+            $script:FallbackCase.tags.category | Should -Be 'agent-behavior'
+            $script:FallbackCase.tags.ContainsKey('advisory') | Should -BeFalse
+            $script:FallbackCase.prompt | Should -Match 'response-only'
+            $script:FallbackCase.agent_environment.files.dest | Should -Contain '.github/copilot-instructions.md'
+        }
+
+        It 'Requires every baseline relationship and rejects contradictory clearance' {
+            $rubric = $script:FallbackCase.rubric -join ' '
+            $rubric | Should -Match '(?s)(?=.*one bounded)(?=.*unchanged)(?=.*FR-008)(?=.*baseline is head)'
+            $rubric | Should -Match 'FR-007.*removed pre-change.*baseline diff'
+            $rubric | Should -Match 'FR-009.*unavailable.*unassessed.*cannot.*clear drift'
+            $rubric | Should -Match 'All criteria are mandatory'
+            $rubric | Should -Match 'equivalent wording.*clause order'
+            $rubric | Should -Match 'contradictory.*even if correct phrases'
+            $rubric | Should -Match 'prompt echoes.*unavailable-policy.*live review'
+        }
+
+        It 'Retains eight labeled controls as calibration inputs, not measured verdicts' {
+            $script:FallbackControls.subject | Should -Be $script:FallbackCase.name
+            $controls = $script:FallbackControls.controls
+            $controls | Should -HaveCount 8
+            @($controls.id | Sort-Object -Unique) | Should -HaveCount 8
+            @($controls | Where-Object expected -EQ $true) | Should -HaveCount 2
+            @($controls | Where-Object expected -EQ $false) | Should -HaveCount 6
+            foreach ($control in $controls) {
+                $control.expected | Should -BeOfType ([bool])
+                $control.answer | Should -Not -BeNullOrEmpty
+                $control.rationale | Should -Not -BeNullOrEmpty
+            }
+        }
+    }
+
     Context 'Valid fixtures' {
         It 'Reports zero errors for valid-minimal.yaml' {
             $path = Join-Path $script:ValidFixturesRoot 'valid-minimal.yaml'

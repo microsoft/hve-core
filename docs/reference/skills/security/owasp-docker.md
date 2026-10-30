@@ -3,7 +3,7 @@ title: owasp-docker
 description: "OWASP Docker Top 6 knowledge base for identifying, assessing, and remediating Docker container security risks."
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-15
 ms.topic: reference
 keywords:
   - skill

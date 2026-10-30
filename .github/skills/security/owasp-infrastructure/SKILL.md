@@ -14,6 +14,11 @@ metadata:
 
 # OWASP® Infrastructure Top 10 — Skill Entry
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 This `SKILL.md` is the **entrypoint** for the OWASP Infrastructure Top 10 skill.
 
 The skill encodes the **OWASP Infrastructure Security Top 10 (2024)** as structured,

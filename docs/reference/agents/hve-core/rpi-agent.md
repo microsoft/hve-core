@@ -1,9 +1,9 @@
 ---
 title: RPI Agent
-description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
+description: "Coordinate one task through Research, Plan, Implement, Review, and Follow-up. Answer ordinary questions directly without starting a workflow."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-10-28
 ms.topic: reference
 keywords:
   - agent
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination.
+Coordinate one task through Research, Plan, Implement, Review, and Follow-up. Answer ordinary questions directly without starting a workflow.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -33,6 +33,11 @@ Select `RPI Agent` when one task should move through Research, Plan, Implement, 
 It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record per task so a later conversation can resume from the recorded phase. Every task a conversation works on keeps its state in one session folder, `.copilot-tracking/rpi-sessions/<date>/<session>/<task>-state.json`, named after the session, and parent and child state files link to each other. Research, plans, critiques, changes, and reviews stay in their own dated folders.
 
 When the host offers the RPI Workflow canvas, the agent opens it once per conversation to show the session, the canvas follows each new loop in the same panel, and what you send from the canvas reaches the agent as your direction. The [RPI Workflow Canvas](../../../rpi/rpi-workflow-canvas) guide shows how to use it. When the host can rename chats, the agent names the chat after the session.
+
+Ordinary questions receive direct answers without workflow introductions, intake
+or session-state writes. Reading or launching the agent alone does not create a
+task. During an active task, a side question does not change the recorded task,
+mode or progression boundary; the agent continues only already-authorized work.
 
 Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts. They skip the plan critique and Review unless you ask for them on follow-up work. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
 

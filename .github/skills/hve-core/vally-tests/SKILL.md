@@ -14,6 +14,11 @@ metadata:
 
 # Vally Tests Skill
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Purpose
 
 This skill authors Vally conformance tests for the four supported artifact kinds in this repository: prompts, instructions, agents, and skills. Each test exercises a documented behavior the artifact already claims and routes the result through an appropriate Vally grader so failures are explainable. Test authoring is bounded by a refusal taxonomy that keeps the skill out of adversarial, harmful, or policy-evasion territory.

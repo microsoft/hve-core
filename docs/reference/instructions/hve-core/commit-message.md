@@ -3,7 +3,7 @@ title: Hve Core/Commit Message
 description: "Commit message format and conventions. Use when writing, generating, or reviewing a commit message or creating a Git commit."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-22
+ms.date: 2026-10-26
 ms.topic: reference
 keywords:
   - instruction
@@ -16,7 +16,7 @@ keywords:
 |-------------|----------------------------------------------------------------|
 | Kind        | instruction                                                    |
 | Source      | `.github/instructions/hve-core/commit-message.instructions.md` |
-| Invocation  | Applied automatically                                          |
+| Invocation  | Included through explicit reference                            |
 | Interactive | No                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 

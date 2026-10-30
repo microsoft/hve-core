@@ -12,6 +12,11 @@ metadata:
 
 # DT Figma Export
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Export Design Thinking artifacts from `.copilot-tracking/dt/{project-slug}/` to a FigJam board or Figma Design file using the official `figma` MCP server, so a team can review them collaboratively. FigJam boards are the default: a whiteboarding surface for sticky notes, text, shapes, connectors, and diagrams. Figma Design files suit teams that want structured frames with auto-layout for higher-fidelity output.

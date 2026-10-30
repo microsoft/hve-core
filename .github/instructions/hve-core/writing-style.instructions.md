@@ -1,11 +1,17 @@
 ---
-description: "Writing style conventions for voice, tone, and language in markdown content"
+description: "Use for Markdown-specific voice, tone, and presentation alongside the shared Plain Language instruction."
 applyTo: '**/*.md'
 ---
 
 # Writing Style Instructions
 
 These instructions define writing style, voice, and tone conventions for markdown content. Apply these conventions to maintain consistency and authenticity across documentation.
+
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+The guidance below adds Markdown-specific voice and presentation conventions.
 
 ## Voice and Tone
 
@@ -40,18 +46,18 @@ Use these conventions for guides, tutorials, how-tos, and developer-facing conte
 
 Vocabulary choices affect clarity and reader engagement:
 
-* Use rich, varied vocabulary to avoid repetitive word choices within close proximity
+* Prefer familiar, precise words and use the same term consistently for the same concept
 * Choose precise terms over vague alternatives; prefer specificity
 * Match vocabulary complexity to the audience without sacrificing accuracy
-* Avoid jargon unless the audience expects it; define terms when introducing them
+* Use technical terms when they add precision; explain unfamiliar terms when introducing them
 
 ## Sentence Structure
 
 Sentence variety improves readability:
 
-* Vary sentence length deliberately
-* Use longer, more complex sentences for narrative explanations and context-setting
-* Use shorter, punchy sentences for step-by-step instructions and emphasis
+* Choose sentence length to keep each idea easy to follow
+* Break complex explanations into short sentences and concrete examples
+* Keep step-by-step instructions concise
 * Maintain clarity regardless of sentence complexity
 * Avoid run-on sentences; break complex ideas into digestible parts
 * Use parallel structure in lists and comparisons
@@ -106,7 +112,7 @@ Avoid meta-commentary about the document itself. Start with the content directly
 Organize content to help readers find and understand information:
 
 * Use structured sections with clear headings to organize content logically
-* Lead with context before diving into details
+* Lead with the result or answer, then provide context before further details
 * Group related information together
 * Provide transitions between major sections when helpful
 

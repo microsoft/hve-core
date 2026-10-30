@@ -10,6 +10,11 @@ metadata:
 
 # Demo Setup
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Overview
 
 Creates demo-ready prototypes by guiding you through a simulated Design Thinking Coach session with a customer persona, then scaffolding a hi-fi prototype. The skill generates a customer persona brief with realistic conversation seeds, accelerates through DT Methods 1 through 6 with simulated customer dialogue, and scaffolds a runnable hi-fi prototype directly at Method 7. The result is a complete, runnable demo with a presenter's walkthrough guide and a video script for recording.

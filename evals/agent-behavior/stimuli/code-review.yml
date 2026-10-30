@@ -604,6 +604,11 @@ stimuli:
       only in added lines. Explain the one current-source read the Step 7
       fallback permits and the baseline treatment for FR-007, FR-008, and
       FR-009. Do not claim the comparison ran.
+    rubric:
+      - Permit only one bounded current-source read for owner metadata and FR-008 that the persisted diff demonstrates are unchanged. Their comparison baseline is head, not edited current text for a modified passage.
+      - For FR-007, use the diff's removed pre-change lines as the comparison source with baseline diff. Do not substitute its edited current text.
+      - For added-only FR-009, the baseline is unavailable and the passage remains unassessed as a proposed source update. Its added text cannot establish alignment or clear drift.
+      - All criteria are mandatory. Accept equivalent wording and any clause order. Fail any incorrect or contradictory read permission, baseline or clearance claim even if correct phrases also appear. Do not credit prompt echoes, unavailable-policy excuses or claims that a live review or comparison ran.
     agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
@@ -614,18 +619,11 @@ stimuli:
     tags:
       category: agent-behavior
     graders:
-      - type: output-matches
-        name: fallback-allows-one-bounded-unchanged-read
+      - type: prompt
+        name: code-review-unreadable-base-contract
         config:
-          pattern: '(?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))'
-      - type: output-matches
-        name: fallback-uses-removed-lines-for-modified-passage
-        config:
-          pattern: '(?is)(?:FR-007|modified passage)[^.\r\n]{0,180}(?:removed|pre-change)[^.\r\n]{0,100}(?:line|text|baseline)|(?:removed|pre-change)[^.\r\n]{0,140}(?:line|text|baseline)[^.\r\n]{0,100}(?:FR-007|modified passage)'
-      - type: output-matches
-        name: fallback-leaves-added-only-passage-unassessed
-        config:
-          pattern: '(?is)(?:FR-009|added-only|only in added lines)[^.\r\n]{0,180}(?:unavailable|unassessed|not assessed)(?=[^.\r\n]*(?:never|not|cannot|does not)[^.\r\n]{0,120}(?:clear|prove|establish))?'
+          scoring: binary
+          threshold: 0.85
 
   - name: code-review-business-alignment-possible-drift-shape
     prompt: |

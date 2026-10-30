@@ -9,6 +9,11 @@ disable-model-invocation: true
 
 # Incident Response Assistant
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 > [!CAUTION]
 > This skill is an **assistive tool only** and does not replace professional incident management platforms, security tooling, or qualified human review.
 > All generated triage assessments, diagnostic queries, mitigation recommendations, and root cause analysis documentation must be reviewed and validated by qualified operations and security professionals before use.

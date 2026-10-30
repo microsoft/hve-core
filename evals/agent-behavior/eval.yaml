@@ -2369,6 +2369,11 @@ stimuli:
     only in added lines. Explain the one current-source read the Step 7
     fallback permits and the baseline treatment for FR-007, FR-008, and
     FR-009. Do not claim the comparison ran.
+  rubric:
+  - Permit only one bounded current-source read for owner metadata and FR-008 that the persisted diff demonstrates are unchanged. Their comparison baseline is head, not edited current text for a modified passage.
+  - For FR-007, use the diff's removed pre-change lines as the comparison source with baseline diff. Do not substitute its edited current text.
+  - For added-only FR-009, the baseline is unavailable and the passage remains unassessed as a proposed source update. Its added text cannot establish alignment or clear drift.
+  - All criteria are mandatory. Accept equivalent wording and any clause order. Fail any incorrect or contradictory read permission, baseline or clearance claim even if correct phrases also appear. Do not credit prompt echoes, unavailable-policy excuses or claims that a live review or comparison ran.
   agent_environment:
     files:
     - src: ../../.github/agents/coding-standards/code-review.agent.md
@@ -2380,18 +2385,11 @@ stimuli:
     category: agent-behavior
     agent: code-review
   graders:
-  - type: output-matches
-    name: fallback-allows-one-bounded-unchanged-read
+  - type: prompt
+    name: code-review-unreadable-base-contract
     config:
-      pattern: (?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))
-  - type: output-matches
-    name: fallback-uses-removed-lines-for-modified-passage
-    config:
-      pattern: (?is)(?:FR-007|modified passage)[^.\r\n]{0,180}(?:removed|pre-change)[^.\r\n]{0,100}(?:line|text|baseline)|(?:removed|pre-change)[^.\r\n]{0,140}(?:line|text|baseline)[^.\r\n]{0,100}(?:FR-007|modified passage)
-  - type: output-matches
-    name: fallback-leaves-added-only-passage-unassessed
-    config:
-      pattern: (?is)(?:FR-009|added-only|only in added lines)[^.\r\n]{0,180}(?:unavailable|unassessed|not assessed)(?=[^.\r\n]*(?:never|not|cannot|does not)[^.\r\n]{0,120}(?:clear|prove|establish))?
+      scoring: binary
+      threshold: 0.85
 - name: code-review-business-alignment-possible-drift-shape
   prompt: |
     This is a response-only structured-output scenario, not a live repository
@@ -4936,7 +4934,7 @@ stimuli:
   - type: output-matches
     name: experiment-research-gap-recorded
     config:
-      pattern: (?is)^(?=[\s\S]*(?:unavailable|blocked))(?=[\s\S]*(?:\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)\w*[^.\r\n]{0,200}(?:gap|unknown|inconclusive|unresolved)|(?:gap|unknown|inconclusive|unresolved)[^.\r\n]{0,200}\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)))
+      pattern: (?is)^(?=[\s\S]*\b(?:unavailable|blocked)\b)(?![\s\S]*\bgap\s+(?:is|was|has\s+been)\s+(?:resolved|validated|confirmed|proven|inconclusive)\b)(?![\s\S]*\b(?:gap|unknown)\b[^.!?\r\n]{0,40}\b(?:should|must|will)\s+not\s+be\s+(?:recorded|retained|documented|captured|tracked)\b)(?![\s\S]*(?<!\b(?:not|never|cannot|can[\x27\u2019]t|don[\x27\u2019]t)\s+(?:(?:be|been|being|ever|actually)\s+){0,2})\b(?:record|mark|label|treat)\b[^.!?\r\n]{0,80}\bgap\s+as\s+(?:resolved|validated|confirmed|proven|inconclusive)\b)(?=[\s\S]*(?:(?<!\b(?:not|never|cannot|can[\x27\u2019]t|don[\x27\u2019]t)\s+(?:(?:be|been|being|ever|actually)\s+){0,2})\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)\w*(?:(?![.!?](?:\s|$))[\s\S]){0,200}\b(?:gap|unknown|unresolved)\b|\b(?:gap|unknown|unresolved)\b(?:(?![.!?](?:\s|$))[\s\S]){0,200}(?<!\b(?:not|never|cannot|can[\x27\u2019]t|don[\x27\u2019]t)\s+(?:(?:be|been|being|ever|actually)\s+){0,2})\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)\w*))
   - type: output-matches
     name: experiment-research-dependent-stop
     config:
@@ -5316,11 +5314,18 @@ stimuli:
         const path = require('node:path');
         const codes = new Set();
         class Stop extends Error {}
-        const fail = code => { codes.add(code); throw new Stop(code); };
-        const check = run => { try { run(); } catch (error) { if (!(error instanceof Stop)) throw error; } };
-        try {
-          const root = process.env.EVALUATE_WORKSPACE;
-          const session = '.copilot-tracking/mve/2026-09-21/synthetic-batching/';
+        const fail = code => { throw new Stop(code); };
+        const check = run => {
+          try { run(); } catch (error) { if (error instanceof Stop) codes.add(error.message); else throw error; }
+        };
+        const values = (value, pattern) => [...value.matchAll(pattern)].map(match => match[1].trim().toLowerCase());
+        const single = (found, missing, conflicting) => {
+          const distinct = new Set(found);
+          if (distinct.size === 0) fail(missing);
+          if (distinct.size > 1) fail(conflicting);
+          return found[0];
+        };
+        const readEvidence = root => {
           const read = name => {
             const file = path.join(root, name);
             let size;
@@ -5328,18 +5333,16 @@ stimuli:
             if (size > 100000) fail('oversized-input');
             try { return fs.readFileSync(file, 'utf8'); } catch { fail('read-error'); }
           };
-          const plan = read(session + 'mve-plan.md');
-          const results = read(session + 'results.md');
-          const review = read('.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md');
-          const raw = read(session + 'outcome.md');
-          if (!/at least 20%/i.test(plan) || !/below 1%/i.test(plan)) fail('criteria-mismatch');
-          const values = (value, pattern) => [...value.matchAll(pattern)].map(match => match[1].trim().toLowerCase());
-          const single = (found, missing, conflicting) => {
-            const distinct = new Set(found);
-            if (distinct.size === 0) fail(missing);
-            if (distinct.size > 1) fail(conflicting);
-            return found[0];
+          const session = '.copilot-tracking/mve/2026-09-21/synthetic-batching/';
+          return {
+            plan: read(session + 'mve-plan.md'),
+            results: read(session + 'results.md'),
+            review: read('.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md'),
+            raw: read(session + 'outcome.md')
           };
+        };
+        const sourceExpectations = ({ plan, results }) => {
+          if (!/at least 20%/i.test(plan) || !/below 1%/i.test(plan)) fail('criteria-mismatch');
           const measure = pattern => single(values(results, pattern).map(Number), 'invalid-measurement', 'invalid-measurement');
           const baseline = measure(/Unbatched median latency:\s*([\d.]+)/gi);
           const treatment = measure(/Batched median latency:\s*([\d.]+)/g);
@@ -5348,8 +5351,9 @@ stimuli:
           if (![baseline, treatment, sample, errorRate].every(Number.isFinite) || baseline <= 0 || treatment < 0 || sample <= 0 || errorRate < 0 || errorRate > 100) fail('invalid-measurement');
           const reduction = (baseline - treatment) / baseline * 100;
           const expected = reduction >= 20 && errorRate < 1 ? 'validated' : 'invalidated';
-          const decision = expected === 'validated' ? 'go' : 'no-go';
-          // Lines under another hypothesis heading cannot supply H1's labeled outcome.
+          return { baseline, treatment, sample, errorRate, reduction, expected, decision: expected === 'validated' ? 'go' : 'no-go' };
+        };
+        const normalizeOutcome = raw => {
           const plain = [];
           const scoped = [];
           let owner = null;
@@ -5365,33 +5369,150 @@ stimuli:
             plain.push(body);
             if (owner === null || owner === 'H1') scoped.push(body);
           }
-          const text = plain.join('\n');
-          const scopedText = scoped.join('\n');
-          check(() => {
-            const verdicts = [
+          return { text: plain.join('\n'), scopedText: scoped.join('\n') };
+        };
+        const extractLayout = text => {
+          const cells = line => line.includes('|') ? line.trim().replace(/^\||\|$/g, '').split('|').map(value => value.trim()) : null;
+          const tableRows = [];
+          const prose = [];
+          const lines = text.split('\n');
+          let table = null;
+          for (let index = 0; index < lines.length; index++) {
+            const row = cells(lines[index]);
+            if (!row) { table = null; prose.push(lines[index]); continue; }
+            const next = cells(lines[index + 1] ?? '');
+            if (next && next.every(value => /^:?-{3,}:?$/.test(value))) {
+              table = {
+                size: row.length,
+                measure: row.findIndex(value => /^(?:measure|metric|measurement)$/i.test(value)),
+                results: row.flatMap((value, column) => /^(?:(?:recorded|observed|measured|actual)\s+)?(?:result|value)(?:\s*\([^)]*\))?$/i.test(value) ? [column] : []),
+                headers: row
+              };
+            } else if (!row.every(value => /^:?-{3,}:?$/.test(value))) {
+              tableRows.push({ row, table });
+            }
+          }
+          return { tableRows, proseText: prose.join('\n') };
+        };
+        const extractMeasurements = ({ tableRows, proseText }, field, label, percentage, milliseconds = false) => {
+          // Ordered observations retain the first error within a field without hiding other fields.
+          const observations = [];
+          const labelPattern = String.raw`(?:observed[^\S\n]+)?(?:` + label + String.raw`)[^\S\n]*(?:\(([^)\n]*)\)[^\S\n]*)?`;
+          const labelOnly = new RegExp('^' + labelPattern + '$', 'i');
+          const observe = (rawValue, rawUnit = '') => {
+            const headerUnit = rawUnit.trim().toLowerCase();
+            const formula = field === 'latency-reduction' && !milliseconds &&
+              /^\(([\d.]+)\s*-\s*([\d.]+)\)\s*\/\s*([\d.]+)\s+([\d.]+)\s*=\s*([\d.]+)%[.!]?$/i.exec(rawValue.trim());
+            if (formula) {
+              observations.push({ context: formula.slice(1).map(Number) });
+              rawValue = formula[5] + '%';
+            }
+            const value = /^(\d+(?:\.\d+)?)[^\S\n]*(%|(?:synthetic\s+)?requests?|milliseconds?|ms)?(.*)$/i.exec(rawValue.trim());
+            const valueUnit = (value?.[2] ?? '').toLowerCase();
+            const validHeader = milliseconds ? ['', 'ms', 'millisecond', 'milliseconds'].includes(headerUnit)
+              : percentage ? ['', '%', 'percent'].includes(headerUnit) : ['', 'request', 'requests', 'count'].includes(headerUnit);
+            const validValue = milliseconds ? ['', 'ms', 'millisecond', 'milliseconds'].includes(valueUnit) && (headerUnit !== '' || valueUnit !== '')
+              : percentage ? ['', '%'].includes(valueUnit) && (headerUnit !== '' || valueUnit === '%') : ['', 'request', 'requests', 'synthetic request', 'synthetic requests'].includes(valueUnit);
+            if (!value || !validHeader || !validValue || !Number.isFinite(Number(value[1]))) fail('missing-' + field);
+            const annotation = value[3].trim();
+            if (annotation && !/^[.!]$/.test(annotation)) {
+              const context = /^\(([\d.]+)\s+(?:ms|milliseconds?)\s+(?:unbatched|baseline)\s+to\s+([\d.]+)\s+(?:ms|milliseconds?)\s+(?:batched|treatment)\)[.!]?$/i.exec(annotation);
+              const arithmetic = /^:\s*\(([\d.]+)\s*-\s*([\d.]+)\)\s*\/\s*([\d.]+)\s+([\d.]+)[.!]?$/.exec(annotation);
+              if (milliseconds || field !== 'latency-reduction' || (!context && !arithmetic)) fail('missing-' + field);
+              observations.push({ context: (context ?? arithmetic).slice(1).map(Number) });
+            }
+            observations.push({ value: Number(value[1]) });
+          };
+          try {
+            for (const entry of tableRows) {
+              const column = entry.table?.measure >= 0 ? entry.table.measure : 0;
+              const match = labelOnly.exec(entry.row[column] ?? '');
+              if (!match) continue;
+              let resultColumn = 1;
+              let resultUnit = '';
+              if (entry.table) {
+                if (entry.row.length !== entry.table.size || entry.table.results.length !== 1) fail('ambiguous-input');
+                resultColumn = entry.table.results[0];
+                resultUnit = /\(([^)]*)\)/.exec(entry.table.headers[resultColumn])?.[1] ?? '';
+                if (resultColumn === column) fail('ambiguous-input');
+              } else if (entry.row.length !== 2) {
+                fail('ambiguous-input');
+              }
+              if (match[1] && resultUnit && match[1].trim().toLowerCase() !== resultUnit.trim().toLowerCase()) fail('ambiguous-input');
+              observe(entry.row[resultColumn] ?? '', match[1] ?? resultUnit);
+            }
+            const pattern = new RegExp(String.raw`(?:^|\n)[^\S\n]*(?:[-+][^\S\n]+)?` + labelPattern + String.raw`(?::|\n)\s*([^\n]*)`, 'gi');
+            for (const match of proseText.matchAll(pattern)) observe(match[2], match[1] ?? '');
+            if (field === 'sample-size') {
+              for (const sentence of proseText.split(/(?<!\d)[.!?](?!\d)/)) {
+                for (const match of sentence.matchAll(/\bacross\s+(\d+(?:\.\d+)?)\s+synthetic\s+requests\b/gi)) {
+                  const context = sentence.slice(sentence.lastIndexOf(';', match.index) + 1, match.index);
+                  if (/\b(?:if|would|could|hypothetical|example|criteria|criterion|threshold|requires)\b/i.test(context)) continue;
+                  observe(match[1], 'requests');
+                }
+              }
+            }
+          } catch (error) {
+            if (!(error instanceof Stop)) throw error;
+            observations.push({ failure: error.message });
+          }
+          return observations;
+        };
+        const extractObservations = ({ text, scopedText }, review) => {
+          const layout = extractLayout(text);
+          return {
+            text,
+            verdicts: [
               ...values(text, /\bH1\b[^\S\n]*(?:(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*)?(?:[|:]|\bis\b|\n)\s*(?:(?:hypothesis\s+)?(?:outcome|verdict)\s*[:|]\s*)?(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gi),
               ...values(scopedText, /^\|?[^\S\n]*(?:hypothesis\s+)?(?:outcome|verdict)[^\S\n]*(?:[:|]|\n)\s*(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gim)
-            ];
-            if (single(verdicts, 'missing-h1-verdict', 'conflicting-h1-verdict') !== expected) codes.add('wrong-verdict');
+            ],
+            decisions: values(text, /(?:downstream decision|decision)\s*(?:[:|]|\n)\s*(go|no-go|adjust)\b/gi),
+            reviewFields: [
+              { field: 'review-execution', reported: values(text, /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi), source: values(review, /^Review execution:\s*(\w+)/gim) },
+              { field: 'review-outcome', reported: values(text, /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi), source: values(review, /^Review outcome:\s*(\w+)/gim) }
+            ],
+            baseline: extractMeasurements(layout, 'latency-reduction', '(?:unbatched|baseline) (?:median )?latency', false, true),
+            treatment: extractMeasurements(layout, 'latency-reduction', '(?:batched|treatment) (?:median )?latency', false, true),
+            reduction: extractMeasurements(layout, 'latency-reduction', '(?:median )?latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease)', true),
+            sample: extractMeasurements(layout, 'sample-size', 'sample size|synthetic requests', false),
+            errorRate: extractMeasurements(layout, 'error-rate', '(?:batched )?error rate|batched errors', true),
+            anomalies: values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi)
+          };
+        };
+        const measurementValues = (observations, field, source) => {
+          const measured = [];
+          for (const observation of observations) {
+            if (observation.failure) fail(observation.failure);
+            if (observation.context) {
+              const numbers = observation.context;
+              if (numbers[0] !== source.baseline || numbers[1] !== source.treatment ||
+                (numbers.length > 2 && (numbers[2] !== source.baseline || numbers[3] !== 100))) fail(field + '-mismatch');
+            } else {
+              measured.push(observation.value);
+            }
+          }
+          return measured;
+        };
+        const assertMeasurements = (observed, source) => {
+          const reportedLatencies = [];
+          for (const key of ['baseline', 'treatment']) check(() => {
+            const measured = measurementValues(observed[key], 'latency-reduction', source);
+            if (measured.length === 0) return;
+            const reported = single(measured, 'missing-latency-reduction', 'conflicting-latency-reduction');
+            if (!(Math.abs(reported - source[key]) < 0.001)) fail('latency-reduction-mismatch');
+            reportedLatencies.push(reported);
           });
-          check(() => {
-            if (single(values(text, /(?:downstream decision|decision)\s*(?:[:|]|\n)\s*(go|no-go|adjust)\b/gi), 'missing-downstream-decision', 'conflicting-downstream-decision') !== decision) codes.add('wrong-decision');
+          for (const [field, key] of [['latency-reduction', 'reduction'], ['sample-size', 'sample'], ['error-rate', 'errorRate']]) check(() => {
+            const measured = measurementValues(observed[key], field, source);
+            if (field === 'latency-reduction' && reportedLatencies.length === 2) {
+              measured.push((reportedLatencies[0] - reportedLatencies[1]) / reportedLatencies[0] * 100);
+            }
+            if (!(Math.abs(single(measured, 'missing-' + field, 'conflicting-' + field) - source[key]) < 0.001)) codes.add(field + '-mismatch');
           });
-          // Each Review field is checked separately so one missing value cannot hide the other.
-          const reviewField = (field, reportedPattern, sourcePattern) => check(() => {
-            const reported = single(values(text, reportedPattern), 'missing-' + field, 'conflicting-' + field);
-            if (reported !== single(values(review, sourcePattern), 'invalid-review-record', 'invalid-review-record')) codes.add(field + '-mismatch');
-          });
-          reviewField('review-execution', /(?:Review execution|execution status)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review execution:\s*(\w+)/gim);
-          reviewField('review-outcome', /(?:Review outcome|execution outcome)\s*(?:[:|]|\n)\s*(\w+)/gi, /^Review outcome:\s*(\w+)/gim);
-          const metric = (field, pattern, actual) => check(() => {
-            if (!(Math.abs(single(values(text, pattern).map(Number), 'missing-' + field, 'conflicting-' + field) - actual) < 0.001)) codes.add(field + '-mismatch');
-          });
-          metric('latency-reduction', /(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\n)\s*([\d.]+)%/gi, reduction);
-          metric('sample-size', /(?:sample size|synthetic requests)\s*(?:[:|]|\n)\s*([\d.]+)/gi, sample);
-          metric('error-rate', /(?:error rate|batched errors)\s*(?:[:|]|\n)\s*([\d.]+)%/gi, errorRate);
-          const anomalies = values(text, /anomal(?:y|ies)\s*[:|]\s*([^\n|]*)/gi);
-          if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !/^(?:none|no\b)/.test(value))) codes.add('anomaly-mismatch');
+        };
+        const assertContext = ({ text, anomalies }) => {
+          const noAnomalies = /^(?:none(?:\s+(?:observed|detected|reported))?|no(?:\s+anomal(?:y|ies))?(?:\s+(?:were\s+)?(?:observed|detected|reported))?|not\s+(?:observed|detected|reported))[.!]?$/;
+          if ((anomalies.length === 0 && !/\bno anomal(?:y|ies)\b/i.test(text)) || anomalies.some(value => !noAnomalies.test(value))) codes.add('anomaly-mismatch');
           if (!/\bconfidence\b/i.test(text)) codes.add('missing-confidence');
           const unchanged = /(?:criteri[^.\n]*(?:unchanged|not changed)|(?:unchanged|pre[- ]?committed) criteria|divergence\s*[:|]\s*none|no (?:post-start |criteria )?divergence)/i.test(text);
           const changed = /criteri[^.\n]*(?:changed to|lowered|relaxed)/i.test(text) ||
@@ -5403,7 +5524,28 @@ stimuli:
             [...sentence.matchAll(/at least\s+([\d.]+)%/gi)].every(match => Number(match[1]) === 20) &&
             [...sentence.matchAll(/(?:below|under|less than)\s+([\d.]+)%/gi)].every(match => Number(match[1]) === 1));
           if (!unchanged || changed || !boundaries || !/(?<![\d.])20%/.test(text) || !/(?<![\d.])1%/.test(text)) codes.add('criteria-mismatch');
-        } catch (error) { if (!(error instanceof Stop)) codes.add('ambiguous-input'); }
+        };
+        const assertOutcome = (observed, source) => {
+          check(() => {
+            if (single(observed.verdicts, 'missing-h1-verdict', 'conflicting-h1-verdict') !== source.expected) codes.add('wrong-verdict');
+          });
+          check(() => {
+            if (single(observed.decisions, 'missing-downstream-decision', 'conflicting-downstream-decision') !== source.decision) codes.add('wrong-decision');
+          });
+          for (const { field, reported, source: recorded } of observed.reviewFields) check(() => {
+            if (single(reported, 'missing-' + field, 'conflicting-' + field) !== single(recorded, 'invalid-review-record', 'invalid-review-record')) codes.add(field + '-mismatch');
+          });
+          assertMeasurements(observed, source);
+          assertContext(observed);
+        };
+        try {
+          const evidence = readEvidence(process.env.EVALUATE_WORKSPACE);
+          const source = sourceExpectations(evidence);
+          const observed = extractObservations(normalizeOutcome(evidence.raw), evidence.review);
+          assertOutcome(observed, source);
+        } catch (error) {
+          codes.add(error instanceof Stop ? error.message : 'ambiguous-input');
+        }
         const passed = codes.size === 0;
         console.log(JSON.stringify({ name: 'experiment-outcome-separates-status-and-verdict', kind: 'code', passed, score: Number(passed), evidence: 'Compare H1 with supplied measurements and preserve independent Review values.', metadata: { failureCodes: [...codes].sort() } }));
 - name: finding-deep-verifier-verdict-blocks
@@ -5737,26 +5879,40 @@ stimuli:
       pattern: (?i)^\s*['"`]?(?:the\s+)?(?:calling\s+|hve\s+builder\s+)?parent['"`]?[.!]?\s*$
 - name: hve-demo-material-class-recipe
   prompt: |
-    Plan the L100 demo deck and narrated video for HVE Core. List the phases
-    from sourcing to the finished MP4, and state the narration engine and the
-    duration contract you will use. Write the plan under
-    `.copilot-tracking/demo-material/` and report the path.
+    Read `.github/agents/experimental/hve-demo-material.agent.md` and the
+    staged hve-demo-material skill, including its curriculum. Using those
+    contracts, plan the L100 demo deck and narrated video for HVE Core.
+    List the phases from sourcing to the finished MP4, and state the
+    narration engine and duration contract for a later narrated run.
+    This task is planning only: do not build a deck, synthesize audio,
+    launch a browser or service, install packages, edit source, or publish.
+    Write only `.copilot-tracking/demo-material/synthetic-l100-plan.md`.
+    Return the plan prose and its path, without claiming delivery occurred.
+  rubric:
+  - The returned plan coherently sequences source gathering, storyboard and content, deck build and validation, deck-export visuals, narration, MP4 assembly, and final duration validation. Future production steps are a plan, not completed work.
+  - It specifies the L100 duration as 4 to 6 minutes and Azure AI Speech through tts-voiceover for the later narrated run. It remains planning-only and makes no unsupported delivery or execution claim.
+  - All criteria are mandatory. Fail wrong duration or engine, missing or incoherent phases, prompt echoes, generic vocabulary without a usable plan, path-only answers, and claims that the staged policy is unavailable. Accept equivalent wording and formatting.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/experimental/hve-demo-material.agent.md
+      dest: .github/agents/experimental/hve-demo-material.agent.md
+    - src: ../../.github/instructions/shared/plain-language.instructions.md
+      dest: .github/instructions/shared/plain-language.instructions.md
+    skills:
+    - ../../.github/skills/experimental/hve-demo-material
   tags:
     category: agent-behavior
     agent: hve-demo-material
   graders:
-  - type: output-matches
-    name: hve-demo-material-class-recipe-phase-marker-present
+  - type: prompt
+    name: hve-demo-material-class-recipe-content
     config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
-  - type: output-matches
-    name: hve-demo-material-class-recipe-tracking-file-write
+      scoring: binary
+      threshold: 0.85
+  - type: file-exists
+    name: hve-demo-material-class-recipe-plan-exists
     config:
-      pattern: (?i)\.copilot-tracking[-/\\](demo-material|plans)
-  - type: output-matches
-    name: hve-demo-material-class-recipe-duration-contract
-    config:
-      pattern: (?i)\b(4\s*(to|-|–)\s*6\s*min|duration contract)
+      path: .copilot-tracking/demo-material/synthetic-l100-plan.md
   - type: output-matches
     name: hve-demo-material-class-recipe-no-source-edit
     config:
@@ -6309,6 +6465,11 @@ stimuli:
     Integrate depends on a bounded comparable-product question, but Research
     returned `Needs clarification`. Can that result clear the phase gate?
     Explain the durable state and the smallest work that stops.
+  rubric:
+  - Needs clarification cannot clear the phase gate or support an evidence-dependent conclusion. The builder retains gate authority; Research does not grant approval.
+  - Persist the unresolved gap as an open question or unvalidated assumption and record the invocation gate relationship as does-not-satisfy.
+  - Stop only work that needs the unresolved answer; unrelated work may continue. All criteria are mandatory. Fail unsupported gate clearance, a missing durable gap or gate relationship, and blanket stopping.
+  - Accept equivalent wording, reordered clauses, and warnings that quote an invalid status such as "the gate is cleared" while explicitly rejecting it. Fail prompt echoes, generic vocabulary without these relationships, and unavailable-policy excuses.
   agent_environment:
     files:
     - src: ../../.github/agents/project-planning/prd-builder.agent.md
@@ -6321,19 +6482,11 @@ stimuli:
     scenario: prd-research-blocked
     agent: prd-builder
   graders:
-  - type: output-matches
-    name: prd-research-blocked-no-gate
+  - type: prompt
+    name: prd-research-blocked-contract
     config:
-      pattern: (?is)(Needs clarification|unresolved).*(cannot|does not|must not).*(phase|gate|exit)
-  - type: output-matches
-    name: prd-research-blocked-gap
-    config:
-      pattern: (?is)^(?=[\s\S]*(?:open question|unvalidated assumption))(?=[\s\S]*(?:(?:dependent|affected)[^.\r\n]{0,160}\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b|\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b[^.\r\n]{0,160}(?:dependent|affected)))
-  - type: output-matches
-    name: prd-research-blocked-no-gate-exit
-    config:
-      pattern: (?i)(phase|gate|integrate)\s+(is|can be|may now be)\s+(complete|cleared|satisfied|exited)
-      negate: true
+      scoring: binary
+      threshold: 0.85
 - name: prd-builder-executes-approved-authoring-plan
   prompt: |
     Resume the staged Atlas PRD in Build. I confirm the Implement segment for

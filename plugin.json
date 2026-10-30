@@ -132,6 +132,7 @@
     ".github/instructions/shared/coaching-patterns.instructions.md",
     ".github/instructions/shared/content-policy-citation.instructions.md",
     ".github/instructions/shared/disclaimer-language.instructions.md",
+    ".github/instructions/shared/plain-language.instructions.md",
     ".github/instructions/shared/planner-identity-base.instructions.md",
     ".github/instructions/shared/telemetry-overlay.instructions.md",
     ".github/instructions/shared/untrusted-content-boundary.instructions.md"

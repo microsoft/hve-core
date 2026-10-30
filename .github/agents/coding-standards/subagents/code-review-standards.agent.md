@@ -14,6 +14,11 @@ user-invocable: false
 
 # Code Review Standards
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Thin perspective subagent for the Code Review orchestrator. It evaluates a precomputed diff against project-defined coding standards traceable to loaded `coding-standards` skills, and writes structured findings. All review logic comes from the `code-review` skill; this file only binds the standards preset and the skill-trace rule.
 
 ## Skill Reference Contract

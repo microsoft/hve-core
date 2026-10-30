@@ -8,6 +8,11 @@ metadata:
 
 # TTS Voice Over Skill
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Generates per-slide WAV voice-over files from YAML `speaker_notes` using Azure AI Speech neural voices with SSML pronunciation control.
 
 ## Overview
@@ -209,4 +214,3 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | Authored slide animations missing after embedding    | `embed_audio.py` replaces existing `p:timing` with narration timing; re-apply animations in PowerPoint after embedding audio.                                             |
 | Slides no longer advance on click after embedding    | `embed_audio.py` sets `advClick="0"` for auto-advance. To re-enable, select all slides in PowerPoint and check **Advance Slide > On Mouse Click** in the Transitions tab. |
 | Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                                                           |
-

@@ -11,6 +11,11 @@ user-invocable: false
 
 # BRD Quality Reviewer
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Assess a BRD draft against the requirements taxonomy and standards rubric in a single read-only pass, then emit both the per-standard findings payload and the aggregated quality report. Never modify repository files.
 
 ## Purpose
