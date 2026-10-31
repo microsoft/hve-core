@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas
 description: Canvas extension for following and steering RPI sessions through research, planning, implementation, review, and follow-up
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-30
 ms.topic: reference
 keywords:
   - canvas
@@ -34,6 +34,16 @@ The canvas adapts to the phase you view:
   * Then come changes grouped by task with files and validation, discoveries grouped by kind with their plan updates, business alignment, and blockers.
 * Review: an assessment with severity counts, findings with expected and observed behavior side by side, the agent's decisions with Question this decision, and the decision history
 * Follow-up: ranked follow-ups with Select and Skip, and the loops in this session as a tree, parent first
+
+### Information Detail
+
+The context bar's **View** selector starts on **Focused**. Summaries, risks, current work, pending decision forms, validation, and required follow-ups remain expanded. Supporting findings, covered requirements, maps, resolved review findings, and history have expandable headings. Empty implementation sections and optional-only follow-ups can fold too.
+
+Choose **Full detail** to expand those supporting rows for close reading or comparison. The existing task, evidence, and record disclosures still work independently. Neither mode removes content or changes the session, decisions, or feedback delivery.
+
+The choice lasts for the open page, including phase and loop changes; reloading starts Focused again. Individual row expansions survive view switches and re-renders. Following an ID opens its containing row before moving focus, and a row with a pending decision or open editor stays exposed.
+
+In Focused, **Source file** opens the artifact path and its copy/editor actions. Narrow headers retain the primary action labels. Panel toggles remain under your control in either view.
 
 Every document is a sequence of rows. A row's margin holds its annotations: decision cards, research lanes, your comments, and the agent's notes. On narrow canvases the annotations follow the row text.
 IDs such as `C22` or `P01-T02` link wherever they appear, and each kind of ID has its own color. Hover over one to preview the whole item, and its icon says whether a click goes to the item or opens it in place.
@@ -189,6 +199,8 @@ Canvases are an experimental Copilot feature. The canvas renders wherever canvas
 The canvas ships in the hve-core Copilot plugin. The hve-core VS Code extension does not carry canvases.
 
 Sessions started in the hve-core repository also load the canvas from the project entry `.github/extensions/rpi-workflow/extension.mjs`, which imports this packaged extension. When the hve-core plugin is also installed, the host can list two providers for `hve-core-rpi-workflow`. Both run the same module; pass the `extensionId` the host reports, such as `project:rpi-workflow`, when it asks which one to open.
+
+The RPI Agent retries an ambiguous capability lookup or open with a host-reported `extensionId`, keeps a still-available saved provider, and otherwise prefers the workspace/project provider when offered. It records the provider after a successful open and reuses it when reopening. A plugin-only workspace uses its offered provider, not an assumed project ID. If the provider-qualified attempt fails, the agent reports the reason and recovery action while continuing without the canvas.
 
 ## Open the Canvas
 
@@ -365,6 +377,8 @@ The extension has no dependencies beyond Node.js built-ins and the host-provided
 ```bash
 npm run test:extensions
 ```
+
+On hosts without symbolic-link permission, only the link-specific tests are skipped with an explicit reason. Other workspace and source-route checks still run. Hosts that permit symbolic links, including the Linux CI runner, exercise the link refusal checks.
 
 The UI renders from files read on each request, so a page reload shows UI changes. Changes under `lib/` or `extension.mjs` need an extension reload; ask the agent to reload extensions, then reopen the canvas.
 

@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, and send it your input
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-30
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -51,6 +51,14 @@ A canvas opened from a list doesn't know your session yet, so it shows Not conne
 Choose **Ask the agent**, which sends a one-line request naming this canvas to the chat, or **Copy request** to paste it yourself. The page changes as soon as the agent connects it. **Show the sample session** opens a made-up session with every phase filled in, which is a safe place to try things.
 
 ## Find Your Way Around
+
+The **View** selector in the document's context bar starts on **Focused**. It keeps summaries, pending decisions, risks, validation, and required work expanded. Supporting rows show their titles and status badges; select a heading to read its detail.
+
+Choose **Full detail** to expand the supporting rows for close reading or comparison. No information is removed. Task details, evidence chips, and record sections still have their own controls. Following an ID opens its containing row, and an open editor or pending decision form stays visible.
+
+Your choice follows you across phases and loops while the page remains open. Reloading starts Focused again. In Focused, **Source file** reveals the artifact path and its actions, and narrow headers keep the primary action labels visible.
+
+The screenshots below show expanded content; use Full detail or expand individual headings to compare those views.
 
 The canvas has four regions, numbered here on the example's Research phase:
 
@@ -200,12 +208,15 @@ Single-key shortcuts pause while you type, and the shortcut list has a switch th
 |----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | No canvas menu, or the RPI Workflow canvas is not listed | Check `chat.canvases.enabled`, start a new session with the Copilot harness, and send a message. Install the hve-core plugin; the VS Code extension does not carry canvases. |
 | The RPI Agent did not open the canvas                    | Ask the agent to open the RPI Workflow canvas. If it never opens the canvas by itself, update the hve-core plugin, because an older RPI Agent may not.                       |
+| The host reports multiple matching canvas providers      | Ask the agent to retry lookup or opening with a host-reported `extensionId`, such as `project:rpi-workflow` when offered, and reuse that provider when reopening.            |
 | The canvas says Not connected                            | Choose **Ask the agent** or **Copy request**.                                                                                                                                |
 | The canvas stopped moving with the agent                 | Following stopped when you chose another phase or started typing. Press **Follow agent** or `f`.                                                                             |
 | Review and send says it cannot send                      | The host does not accept messages from extensions. Use **Queue**, and the agent collects your items at its next checkpoint.                                                  |
 | An item stays at Sent                                    | Some hosts do not report pickups. The read-back still arrives.                                                                                                               |
 | **Open in VS Code** is missing                           | The canvas shows that button only when it finds VS Code. Use **Copy path**, or read the file in the canvas.                                                                  |
 | A list of problems appears above the phase               | The canvas names what it cannot read in the session's files. The RPI Agent fixes the files it is writing.                                                                    |
+
+The repository project entry and an installed plugin can both provide the canvas. The agent keeps a saved provider if still available; otherwise it prefers an offered workspace/project provider. If that attempt fails, it reports the reason and recovery action and continues the RPI session without a canvas.
 
 The [canvas README](https://github.com/microsoft/hve-core/blob/main/.github/extensions/hve-core/rpi-workflow/README.md) covers the agent actions, storage, security, and known limitations.
 

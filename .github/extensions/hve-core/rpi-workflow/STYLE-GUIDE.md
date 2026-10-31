@@ -2,7 +2,7 @@
 title: RPI Workflow Canvas Style Guide
 description: Visual language, interaction grammar, and accessibility requirements for the hve-core RPI Workflow canvas
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-29
 ms.topic: reference
 keywords:
   - canvas
@@ -179,6 +179,14 @@ One family carries the interface; monospace is reserved for IDs, paths, code, an
 ## Document Rows and Margins
 
 Every document is a sequence of rows. A row is one section or item (a finding, task, change, or review finding) with two columns: the text column and the margin column. The margin holds that row's annotations: decision cards, agent notes, the person's comments, and research lanes. Annotations never drift away from their row; on narrow layouts they follow the text.
+
+The context bar offers a labeled View selector: Focused by default, or Full detail. This is page-local presentation state, retained across phase and loop changes but reset on reload. It does not change the session or panel preferences.
+
+* Focused gives explicitly secondary rows one disclosure button in their heading, preserving the ID and badges while the body and annotations fold together. Expanded state and controlled regions are exposed by the button.
+* Full detail expands those rows without resetting the person's focused-view expansions or the existing nested task, evidence, and record controls.
+* Pending decision cards and open text editors prevent a row from folding. Phase renderers also keep blocked questions, uncovered requirements, critique concerns, validation, and required follow-ups expanded.
+* Following an ID or opening an editor reveals its containing row before scrolling or focusing. The row remains open on subsequent updates.
+* Focused places the artifact path under Source file and keeps primary action words visible in narrow headers. Utility controls remain available and can wrap instead of clipping.
 
 * Row header: ID chip (monospace, for example `D2` or `P02-T01`), title, status badges, then row actions. The chip, title, and badges wrap together in the first column, and the actions keep to the top of their own column, so a long title never moves them. Row actions (Suggest an edit, Comment, and on review findings Ask the agent) are icon buttons with names and tooltips. They show while the row is hovered or holds focus, and always on devices without hover.
 * Evidence chips (`C5`, `W2`) are buttons. Activating one expands an evidence detail directly below the chip row with the claim, source, confidence, and retrieval date; activating it again collapses it.

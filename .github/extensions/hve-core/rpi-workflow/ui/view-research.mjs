@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { badge, button, chip, confidenceMeta, EVIDENCE_STATE, h, icon, idChip, PRIORITY, riskTypeMeta, timeEl } from './dom.mjs';
-import { decisionCard, decisionsRow, DECISION_ROWS, evidenceChips, marginNote, md, mdInline, notesFor, recordSections, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
+import { decisionCard, decisionsRow, DECISION_ROWS, disclosure, evidenceChips, marginNote, md, mdInline, notesFor, recordSections, row, rowActions, sectionBody, table, traceStrip } from './components.mjs';
 import { evidenceSource } from './source-view.mjs';
 
 /** Research view: summary, unknowns, questions, findings with decision margins, alternatives, risks, and the record. */
@@ -37,7 +37,10 @@ export function lanesCard(ctx, filter) {
     if (filter && !lanes.length) {
         return null;
     }
-    return h('article', { class: ['card', 'lanes-card'] },
+    if (!lanes.length && ctx.ui.presentation !== 'full') {
+        return button('Ask for more research', { iconName: 'plus', attrs: { 'data-key': 'ask-research' }, onClick: () => ctx.act.anchorComposer(null) });
+    }
+    const card = h('article', { class: ['card', 'lanes-card'] },
         h('header', { class: 'card-head' }, icon('search', { className: 'card-icon' }), h('h4', { class: 'card-title', text: filter ? 'Research on this finding' : 'Research lanes' }), chip(String(lanes.length))),
         lanes.length
             ? h('ul', { class: 'lane-list' },
@@ -48,6 +51,9 @@ export function lanesCard(ctx, filter) {
                     h('p', { class: 'meta' }, [lane.effort ? `Effort ${lane.effort}` : null, timeEl(lane.updatedAt, ctx.now)].filter(Boolean).flatMap((part, index) => (index ? [' · ', part] : [part]))))))
             : h('p', { class: 'empty', text: 'No research lanes yet. Ask for more research in a comment, and the agent can start a lane.' }),
         filter ? null : h('div', { class: 'btn-row' }, button('Ask for more research', { iconName: 'plus', attrs: { 'data-key': 'ask-research' }, onClick: () => ctx.act.anchorComposer(null) })));
+    return ctx.ui.presentation !== 'full'
+        ? disclosure(ctx, `lanes-${filter ?? 'all'}`, 'record', `Research activity (${lanes.length})`, card)
+        : card;
 }
 
 export function outline(ctx) {
@@ -89,6 +95,7 @@ export function renderView(ctx) {
 
     rows.push(row(ctx, {
         id: 'questions', idLabel: null, title: 'Questions', level: 2, badges: [chip(`${research.questions.filter((q) => q.status === 'answered').length} of ${research.questions.length} answered`, 'muted')],
+        secondary: !research.questions.some((question) => question.status === 'blocked'),
         body: [h('ol', { class: 'question-list' }, research.questions.map((question) => h('li', { class: 'question', dataset: { item: question.id }, tabindex: '-1' },
             h('span', { class: 'id-chip', text: question.id }),
             h('span', { class: 'question-text' }, mdInline(ctx, question.text, { doc: 'research' })),
@@ -100,6 +107,7 @@ export function renderView(ctx) {
         const sectionId = `finding-${finding.id.toLowerCase()}`;
         rows.push(row(ctx, {
             id: finding.id, title: finding.title,
+            secondary: true,
             badges: [badge(EVIDENCE_STATE[finding.state]), finding.confidence ? badge(confidenceMeta(finding.confidence), { prefix: 'Confidence', strong: true }) : null],
             actions: rowActions(ctx, { sectionId, rowId: finding.id }),
             body: [sectionBody(ctx, sectionId), h('p', { class: 'meta answers' }, 'Answers ', finding.questions.map((id) => idChip(id, ctx.act.navigate))), evidenceChips(ctx, finding.id, finding.evidence), traceStrip(ctx, finding.id)],
