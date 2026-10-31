@@ -8,15 +8,11 @@
 name: Demo Material Render
 
 on:
-  workflow_run:
-    workflows:
-      - Demo Material Author
-    branches:
-      - main
-    types:
-      - completed
   schedule:
-    - cron: '47 3 * * 1'
+    # Daily: render the oldest successful author run the render index has not recorded.
+    - cron: '47 3 * * *'
+    # Weekly, after Monday's pickup: force authoring for failed or unpublished levels.
+    - cron: '47 5 * * 1'
   workflow_dispatch:
     inputs:
       author-run-id:
@@ -68,7 +64,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 "${LOOKUP}" find --workflow demo-material-render.yml \
-            --artifact-prefix demo-material-site \
+            --artifact-prefix demo-material-site-v2 \
             --exclude-run-id "${GITHUB_RUN_ID}" --github-output "${GITHUB_OUTPUT}"
 
       - name: Find the latest render index
@@ -80,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 "${LOOKUP}" find --workflow demo-material-render.yml \
-            --artifact-prefix demo-material-index \
+            --artifact-prefix demo-material-index-v2 \
             --exclude-run-id "${GITHUB_RUN_ID}" --github-output "${GITHUB_OUTPUT}"
 
       - name: Download the latest render index
@@ -102,7 +98,7 @@ jobs:
 
       - name: Select failed or unpublished levels
         id: retry
-        if: ${{ github.event_name == 'schedule' }}
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '47 5 * * 1' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -128,6 +124,8 @@ jobs:
           PREVIOUS_CREATED_AT: ${{ steps.previous.outputs.created-at }}
           PUBLISHED_STATUS: ${{ steps.published.outputs.status }}
           RETRY_LEVELS: ${{ steps.retry.outputs.levels }}
+          SCHEDULE: ${{ github.event.schedule }}
+          RENDER_INDEX: ${{ runner.temp }}/retry-index/index.json
         with:
           script: |
             const refreshAfterMs = Number(process.env.REFRESH_AFTER_DAYS) * 86400000;
@@ -143,14 +141,49 @@ jobs:
               return matches.length === 1 ? matches[0] : null;
             };
 
+            const findPendingAuthorRun = async () => {
+              const fs = require("fs");
+              const index = fs.existsSync(process.env.RENDER_INDEX)
+                ? JSON.parse(fs.readFileSync(process.env.RENDER_INDEX, "utf8"))
+                : {};
+              const entries = index && typeof index.levels === "object" && index.levels
+                ? Object.values(index.levels)
+                : [];
+              const recorded = entries
+                .flatMap((entry) => [entry?.author_run_id, entry?.last_failed_attempt?.author_run_id])
+                .concat(index?.latest_attempted_author_run_id)
+                .filter((id) => /^[0-9]+$/.test(String(id ?? "")))
+                .map(Number);
+              const lastRecorded = recorded.length ? Math.max(...recorded) : 0;
+              const since = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo,
+                workflow_id: "demo-material-author.lock.yml",
+                branch: defaultBranch,
+                status: "success",
+                created: `>=${since}`,
+                per_page: 100,
+              });
+              // Oldest first so no authored run is skipped; without recorded history, newest first.
+              const pending = data.workflow_runs
+                .filter((run) => run.id > lastRecorded)
+                .sort((a, b) => (lastRecorded ? a.id - b.id : b.id - a.id));
+              for (const run of pending) {
+                if (await findArtifact(run.id, `demo-material-content-v2-${run.id}`)) {
+                  return run;
+                }
+              }
+              return null;
+            };
+
             const previousCreatedAt = process.env.PREVIOUS_CREATED_AT;
             const stale = previousCreatedAt
               ? Date.now() - Date.parse(previousCreatedAt) > refreshAfterMs
               : process.env.PUBLISHED_STATUS === "recovered";
 
             let authorRun = null;
-            if (context.eventName === "workflow_run") {
-              authorRun = context.payload.workflow_run;
+            if (context.eventName === "schedule" && process.env.SCHEDULE === "47 3 * * *") {
+              authorRun = await findPendingAuthorRun();
             } else if (context.eventName === "workflow_dispatch" && process.env.DISPATCH_AUTHOR_RUN_ID) {
               if (!/^[0-9]+$/.test(process.env.DISPATCH_AUTHOR_RUN_ID)) {
                 throw new Error("author-run-id must be a numeric run ID");
@@ -170,7 +203,7 @@ jobs:
                 core.setOutput("mode", "skip");
                 return;
               }
-              const content = await findArtifact(authorRun.id, `demo-material-content-${authorRun.id}`);
+              const content = await findArtifact(authorRun.id, `demo-material-content-v2-${authorRun.id}`);
               if (!content) {
                 core.notice("Author run produced no content artifact; nothing to render.");
                 core.setOutput("mode", "skip");
@@ -233,15 +266,15 @@ jobs:
           for path in root.rglob("*"):
               if path.is_symlink():
                   raise SystemExit(f"symlink in authored content: {path}")
-              if path.is_file() and not allowed.match(path.relative_to(root).as_posix()):
+              if path.is_file() and (not allowed.fullmatch(path.relative_to(root).as_posix()) or path.stat().st_size > 1048576):
                   raise SystemExit(f"unexpected file in authored content: {path}")
           provenance = json.loads((root / "provenance.json").read_text(encoding="utf-8"))
-          if (provenance.get("schema_version") != "demo-material-content/v1"
+          if (provenance.get("schema_version") != "demo-material-content/v2"
                   or provenance.get("author_run_id") != os.environ["AUTHOR_RUN_ID"]
                   or provenance.get("source_sha") != os.environ["SOURCE_SHA"]):
               raise SystemExit("content provenance is not bound to the author run")
           levels = provenance.get("levels", [])
-          if not all(re.fullmatch(r"L[1-4]00", level) and (root / level / "content").is_dir()
+          if not isinstance(levels, list) or not levels or not all(isinstance(level, str) for level in levels) or len(levels) != len(set(levels)) or not all(re.fullmatch(r"L[1-4]00", level) and (root / level / "content").is_dir()
                      for level in levels):
               raise SystemExit(f"invalid level list in provenance: {levels}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
@@ -327,19 +360,21 @@ jobs:
         with:
           node-version-file: .node-version
 
-      - name: Install LibreOffice and FFmpeg
+      - name: Install FFmpeg
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libreoffice-impress ffmpeg
+          sudo apt-get install -y --no-install-recommends ffmpeg
 
       - name: Install Chromium for the HTML deck check and live capture
         shell: bash
+        env:
+          UV_PROJECT_ENVIRONMENT: ${{ env.LEVEL_DIR }}/.venv/vscode-playwright
         run: |
           set -euo pipefail
-          uv sync --directory .github/skills/experimental/vscode-playwright
-          uv run --directory .github/skills/experimental/vscode-playwright \
+          uv sync --frozen --directory .github/skills/experimental/vscode-playwright
+          uv run --frozen --directory .github/skills/experimental/vscode-playwright \
             playwright install --with-deps chromium
 
       - name: Install VS Code CLI for live capture
@@ -368,7 +403,7 @@ jobs:
             --level-dir "${LEVEL_DIR}" \
             --workspace "${GITHUB_WORKSPACE}" \
             --narration none \
-            --html-deck-template "${GITHUB_WORKSPACE}/.github/skills/hve-slides/templates/deck"
+            --slides-skill-root "${GITHUB_WORKSPACE}/.github/skills/experimental/hve-slides"
 
       - name: Collect render outputs
         if: ${{ always() }}
@@ -379,16 +414,22 @@ jobs:
           set -euo pipefail
           mkdir -p "${OUT}/${LEVEL}"
           for rel in \
-            "output/hve-demo-${LEVEL}.pptx" \
             "output/hve-demo-${LEVEL}.mp4" \
+            "output/hve-demo-${LEVEL}.raw.mp4" \
             "output/hve-demo-${LEVEL}.vtt" \
             "output/hve-demo-${LEVEL}.html" \
             output/index.html \
             output/render-result.json \
             output/captures.json \
             output/html-deck-check.json \
-            research/source-register.md \
-            manifest.yml; do
+            output/html-deck-build.json \
+            output/open-captions.json \
+            output/manifest.yml \
+            research/source-register.md; do
+            if [[ -L "${LEVEL_DIR}/${rel}" ]]; then
+              echo "::error::Symlink in render output: ${rel}"
+              exit 1
+            fi
             if [[ -f "${LEVEL_DIR}/${rel}" ]]; then
               cp "${LEVEL_DIR}/${rel}" "${OUT}/${LEVEL}/$(basename "${rel}")"
             fi
@@ -398,7 +439,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: demo-material-level-${{ matrix.level }}-${{ github.run_id }}
+          name: demo-material-level-v2-${{ matrix.level }}-${{ github.run_id }}
           path: ${{ runner.temp }}/render-out
           retention-days: 7
           if-no-files-found: warn
@@ -439,7 +480,7 @@ jobs:
         if: ${{ needs.resolve.outputs.mode == 'render' }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: demo-material-level-*-${{ github.run_id }}
+          pattern: demo-material-level-v2-*-${{ github.run_id }}
           merge-multiple: true
           path: ${{ runner.temp }}/renders
 
@@ -454,79 +495,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${SITE}" "${RENDERS}"
-          python3 - <<'PY'
-          import json, os, re, shutil
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          site = Path(os.environ["SITE"])
-          renders = Path(os.environ["RENDERS"])
-          now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-          index_path = site / "index.json"
-          index = json.loads(index_path.read_text(encoding="utf-8")) if index_path.is_file() else {}
-          if index.get("schema_version") != "demo-material-site/v1":
-              index = {"schema_version": "demo-material-site/v1", "levels": {}}
-          published = ("pptx", "mp4", "vtt", "html")
-
-          for level_dir in sorted(p for p in renders.iterdir() if re.fullmatch(r"L[1-4]00", p.name)):
-              level = level_dir.name
-              result_path = level_dir / "render-result.json"
-              result = json.loads(result_path.read_text(encoding="utf-8")) if result_path.is_file() else {}
-              files = {ext: level_dir / f"hve-demo-{level}.{ext}" for ext in published}
-              entry = index["levels"].get(level, {})
-              attempt = {
-                  "render_run_id": os.environ["RENDER_RUN_ID"],
-                  "author_run_id": os.environ["AUTHOR_RUN_ID"],
-                  "source_sha": os.environ["SOURCE_SHA"],
-                  "at": now,
-                  "checks": result.get("checks", {}),
-              }
-              silent_delivery = (
-                  result.get("narration_engine") == "none"
-                  and result.get("checks", {}).get("T-11", {}).get("result") == "pass"
-              )
-              if result.get("ok") is True and silent_delivery and all(f.is_file() for f in files.values()) and (level_dir / "index.html").is_file():
-                  target = site / level
-                  shutil.rmtree(target, ignore_errors=True)
-                  target.mkdir(parents=True)
-                  for name in [f.name for f in files.values()] + ["index.html", "render-result.json", "source-register.md"]:
-                      if (level_dir / name).is_file():
-                          shutil.copy2(level_dir / name, target / name)
-                  entry = {
-                      **attempt,
-                      "rendered_at": now,
-                      "narration_engine": result.get("narration_engine"),
-                      "timing_basis": result.get("timing_basis"),
-                      "capture_profile": result.get("capture_profile"),
-                      "measured_duration_minutes": result.get("measured_duration_minutes"),
-                      "files": {
-                          **{ext: f"{level}/hve-demo-{level}.{ext}" for ext in published},
-                          "page": f"{level}/index.html",
-                      },
-                  }
-                  print(f"{level}: published")
-              else:
-                  entry["last_failed_attempt"] = attempt
-                  print(f"{level}: render did not pass; keeping the previous files")
-              index["levels"][level] = entry
-
-          index["generated_at"] = now
-          index["render_run_id"] = os.environ["RENDER_RUN_ID"]
-          allowed = re.compile(
-              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt|html)|index\.html|render-result\.json|source-register\.md))$"
-          )
-          for path in site.rglob("*"):
-              if path.is_symlink() or (path.is_file() and not allowed.match(path.relative_to(site).as_posix())):
-                  raise SystemExit(f"unexpected file in site bundle: {path}")
-          index_path.write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
-          PY
+            python3 "${LOOKUP}" assemble-site --target "${SITE}" --renders "${RENDERS}"
           mkdir -p "${RUNNER_TEMP}/index"
           cp "${SITE}/index.json" "${RUNNER_TEMP}/index/index.json"
 
       - name: Upload the site bundle
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: demo-material-site-${{ github.run_id }}
+          name: demo-material-site-v2-${{ github.run_id }}
           path: ${{ runner.temp }}/site
           retention-days: 90
           if-no-files-found: error
@@ -534,7 +510,7 @@ jobs:
       - name: Upload the site index
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: demo-material-index-${{ github.run_id }}
+          name: demo-material-index-v2-${{ github.run_id }}
           path: ${{ runner.temp }}/index
           retention-days: 90
           if-no-files-found: error

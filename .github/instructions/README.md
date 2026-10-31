@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-22
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - copilot
@@ -141,7 +141,6 @@ The instructions below are scoped to specific planning agents and their `.copilo
 | File                                                                                                 | Applies To                    | Purpose                             |
 |------------------------------------------------------------------------------------------------------|-------------------------------|-------------------------------------|
 | [experimental/experiment-designer.instructions.md](experimental/experiment-designer.instructions.md) | `**/.copilot-tracking/mve/**` | MVE experiment designer conventions |
-| [experimental/pptx.instructions.md](experimental/pptx.instructions.md)                               | `**/.copilot-tracking/ppt/**` | PowerPoint builder conventions      |
 
 Mural workflow rules (bootstrap, seeding, writeback, writing style, destinations, and log hygiene) are on-demand references in the `mural` skill rather than instruction files, so they load only when a workflow uses Mural.
 
@@ -216,8 +215,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── python-tests.instructions.md
 │   └── uv-projects.instructions.md
 ├── experimental/                     # Experimental workflows
-│   ├── experiment-designer.instructions.md
-│   └── pptx.instructions.md
+│   └── experiment-designer.instructions.md
 ├── hve-core/                         # HVE Core workflow
 │   ├── commit-message.instructions.md
 │   ├── copilot-tracking.instructions.md

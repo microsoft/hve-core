@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: MIT
 """Tests for render_checks module."""
 
+import hashlib
+import html
 import json
 import os
 import shutil
 import subprocess
 import sys
 import wave
-import zipfile
 from pathlib import Path
 
 import pytest
@@ -29,6 +30,8 @@ from render_checks import (
     check_style,
     deck_accessibility_problems,
     evaluate,
+    install_files,
+    jpeg_dimensions,
     level_touched,
     load_curriculum,
     main,
@@ -45,6 +48,7 @@ from render_checks import (
     validate_scripted_render,
     verify_open_captions,
 )
+from test_artifact_lookup import SITE, _published
 
 _MINI_CURRICULUM = """# Curriculum
 
@@ -103,8 +107,23 @@ def _write_slides(level_dir: Path, count: int, notes: str = "one two three") -> 
         _write_wav(level_dir / "audio" / f"slide-{number:03d}.wav", 2.0)
 
 
-_P = "http://schemas.openxmlformats.org/presentationml/2006/main"
-_A = "http://schemas.openxmlformats.org/drawingml/2006/main"
+_SLIDES_ROOT = Path(__file__).resolve().parents[2] / "hve-slides"
+_THEME = (_SLIDES_ROOT / "templates/deck/theme.css").read_text(encoding="utf-8")
+_COMPONENTS = (_SLIDES_ROOT / "templates/deck/components.css").read_text(
+    encoding="utf-8"
+)
+_LAYOUT = (Path(__file__).resolve().parents[1] / "templates/html-deck.css").read_text(
+    encoding="utf-8"
+)
+_STYLED_HTML = (
+    '<style data-bundled-source="vendor/reveal.css">\n.reveal {}\n</style>'
+    f'<style data-bundled-source="theme.css">\n{_THEME}\n</style>'
+    '<style data-bundled-source="components.css">\n'
+    + _COMPONENTS.rstrip()
+    + "\n"
+    + _LAYOUT
+    + "\n</style>"
+)
 
 
 def _write_deck(
@@ -114,33 +133,25 @@ def _write_deck(
     titled: bool = True,
     picture_descr: str | None = None,
 ) -> None:
-    """Write the minimal PPTX parts that deck_accessibility_problems reads."""
-    lang = f"<dc:language>{language}</dc:language>" if language else ""
-    core = (
-        '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/'
-        '2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">'
-        f"{lang}</cp:coreProperties>"
-    )
-    ph = '<p:ph type="title"/>' if titled else ""
-    title = (
-        f'<p:sp><p:nvSpPr><p:cNvPr id="2" name="T"/><p:cNvSpPr/><p:nvPr>{ph}'
-        "</p:nvPr></p:nvSpPr><p:txBody><a:p><a:r><a:t>Title</a:t></a:r></a:p>"
-        "</p:txBody></p:sp>"
-    )
+    """Write minimal HTML with the same title/language/alternative fixtures."""
+    lang = f' lang="{html.escape(language)}"' if language else ""
     pic = (
-        f'<p:pic><p:nvPicPr><p:cNvPr id="3" name="Picture" descr="{picture_descr}"/>'
-        "</p:nvPicPr></p:pic>"
+        f'<div role="img" aria-label="{html.escape(picture_descr)}"></div>'
         if picture_descr is not None
         else ""
     )
-    with zipfile.ZipFile(path, "w") as archive:
-        archive.writestr("docProps/core.xml", core)
-        for number in range(1, slides + 1):
-            archive.writestr(
-                f"ppt/slides/slide{number}.xml",
-                f'<p:sld xmlns:p="{_P}" xmlns:a="{_A}"><p:cSld><p:spTree>'
-                f"{title}{pic}</p:spTree></p:cSld></p:sld>",
-            )
+    sections = []
+    for number in range(1, slides + 1):
+        title = f"Slide title {number}"
+        heading = f"<h2>{title}</h2>" if titled else ""
+        sections.append(
+            f'<section id="slide-{number}" data-title="{title}">'
+            f"{heading}{pic}</section>"
+        )
+    path.write_text(
+        f"<html{lang}><head>{_STYLED_HTML}</head><body>{''.join(sections)}</body></html>",
+        encoding="utf-8",
+    )
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -318,7 +329,9 @@ class TestScriptedRenderPreflight:
         bin_dir.mkdir()
         uv = bin_dir / "uv"
         uv.write_text(
-            f'#!/bin/sh\ncd "$3"\nshift 4\nexec "{sys.executable}" "$@"\n',
+            '#!/bin/sh\nwhile [ "$1" != "python" ]; do '
+            'if [ "$1" = "--directory" ]; then cd "$2"; shift; fi; shift; done\nshift\n'
+            f'exec "{sys.executable}" "$@"\n',
             encoding="utf-8",
         )
         uv.chmod(0o755)
@@ -341,7 +354,6 @@ class TestScriptedRenderPreflight:
                 animation,
                 "--narration",
                 "none",
-                "--no-html-deck",
             ],
             capture_output=True,
             text=True,
@@ -401,7 +413,9 @@ class TestChangedLevels:
         base = _git(repo, "rev-parse", "HEAD")
         (repo / "docs" / "d.md").write_text("changed", encoding="utf-8")
         _git(repo, "commit", "-q", "-am", "change")
-        index = {"levels": {level: {"source_sha": base} for level in LEVELS}}
+        index = json.loads(next(iter(_published(LEVELS).values())))
+        for entry in index["levels"].values():
+            entry["source_sha"] = base
 
         # Act
         result = changed_levels(parse_curriculum(_MINI_CURRICULUM), index, repo)
@@ -412,7 +426,9 @@ class TestChangedLevels:
     def test_given_unknown_sha_when_checked_then_level_selected(self, repo):
         # Arrange
         head = _git(repo, "rev-parse", "HEAD")
-        index = {"levels": {level: {"source_sha": head} for level in LEVELS}}
+        index = json.loads(next(iter(_published(LEVELS).values())))
+        for entry in index["levels"].values():
+            entry["source_sha"] = head
         index["levels"]["L200"]["source_sha"] = "0" * 40
 
         # Act
@@ -424,7 +440,9 @@ class TestChangedLevels:
     def test_given_force_when_checked_then_all_levels(self, repo):
         # Arrange
         head = _git(repo, "rev-parse", "HEAD")
-        index = {"levels": {level: {"source_sha": head} for level in LEVELS}}
+        index = json.loads(next(iter(_published(LEVELS).values())))
+        for entry in index["levels"].values():
+            entry["source_sha"] = head
 
         # Act
         result = changed_levels(
@@ -471,42 +489,35 @@ class TestCheckStyle:
 
     def test_given_template_with_substitutions_when_checked_then_pass(self):
         # Arrange
-        template = STYLE_TEMPLATE.read_text(encoding="utf-8")
-        style = template.replace(
-            '"<deck title for this level and topic>"', '"HVE Core L100"'
-        ).replace("[<every slide number in this deck>]", "[1, 2, 3]")
+        style = _STYLED_HTML
 
         # Act
-        result = check_style(style, template)
+        result = check_style(style, _THEME, _COMPONENTS)
 
         # Assert
         assert result["result"] == "pass"
 
     def test_given_changed_fixed_field_when_checked_then_fail(self):
         # Arrange
-        template = STYLE_TEMPLATE.read_text(encoding="utf-8")
-        style = template.replace(
-            "corner_radius_inches: 0.06", "corner_radius_inches: 0.15"
-        )
+        style = _STYLED_HTML.replace(_THEME, _THEME + "\nbody { margin: 4px; }")
 
         # Act
-        result = check_style(style, template)
+        result = check_style(style, _THEME, _COMPONENTS)
 
         # Assert
         assert result["result"] == "fail"
-        assert "fixed field" in result["evidence"]
+        assert "theme.css differs" in result["evidence"]
 
     def test_given_colour_outside_palette_when_checked_then_fail(self):
         # Arrange
-        template = STYLE_TEMPLATE.read_text(encoding="utf-8")
-        style = template.replace('"#C9CDD6"', '"#9CA3AF"')
+        style = _STYLED_HTML.replace(_THEME, _THEME + "\nbody { color: #9CA3AF; }")
 
         # Act
-        result = check_style(style, template)
+        result = check_style(style, _THEME, _COMPONENTS)
 
         # Assert
         assert result["result"] == "fail"
-        assert "#9CA3AF" in result["evidence"]
+        assert "theme.css differs" in result["evidence"]
 
 
 class TestCheckCaptures:
@@ -575,6 +586,10 @@ class TestEvaluate:
     def _english_subtitles(self, mocker):
         mocker.patch("render_checks.subtitle_languages", return_value=["eng"])
         mocker.patch("render_checks.open_caption_evidence_problems", return_value=[])
+        mocker.patch(
+            "render_checks.check_html_deck",
+            return_value={"result": "pass", "evidence": "matching HTML/frame fixture"},
+        )
 
     @pytest.mark.parametrize("probe", [measure_minutes, subtitle_languages])
     def test_given_no_ffprobe_when_probed_then_none(self, tmp_path, mocker, probe):
@@ -586,7 +601,31 @@ class TestEvaluate:
         assert probe(mp4) is None
 
     def _level(self, tmp_path, level="L100", mocker=None):
+        import yaml
+
         _write_slides(tmp_path, 3)
+        (tmp_path / "manifest.yml").write_text(
+            yaml.safe_dump(
+                {
+                    "schema_version": 6,
+                    "renderer": "hve-slides",
+                    "format": "html",
+                    "level": level,
+                    "deliverables": {
+                        "html_deck": f"output/hve-demo-{level}.html",
+                        "mp4": f"output/hve-demo-{level}.mp4",
+                        "raw_assembly": f"output/hve-demo-{level}.raw.mp4",
+                        "captions": f"output/hve-demo-{level}.vtt",
+                        "transcript_page": "output/index.html",
+                        "open_caption_evidence": "output/open-captions.json",
+                        "html_build_evidence": "output/html-deck-build.json",
+                        "html_frame_evidence": "output/html-deck-check.json",
+                        "render_result": "output/render-result.json",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
         (tmp_path / "output").mkdir()
         (tmp_path / "output" / f"hve-demo-{level}.mp4").write_bytes(b"mp4")
         (tmp_path / "output" / "segments.yml").write_text(
@@ -599,7 +638,7 @@ class TestEvaluate:
         (tmp_path / "content" / "global" / "style.yaml").write_text(
             style, encoding="utf-8"
         )
-        _write_deck(tmp_path / "output" / f"hve-demo-{level}.pptx", 3)
+        _write_deck(tmp_path / "output" / f"hve-demo-{level}.html", 3)
         (tmp_path / "output" / f"hve-demo-{level}.vtt").write_text(
             build_captions(tmp_path), encoding="utf-8"
         )
@@ -614,13 +653,15 @@ class TestEvaluate:
         mocker.patch("render_checks.measure_minutes", return_value=5.0)
 
         # Act
-        result = evaluate("L100", level_dir, load_curriculum())
+        result = evaluate(
+            "L100", level_dir, load_curriculum(), slides_skill_root=_SLIDES_ROOT
+        )
 
         # Assert
         assert result["ok"] is True, result["checks"]
         assert result["capture_profile"] == "deck-export"
         assert result["total_word_count"] == 9
-        assert set(result["checks"]) == {"T-04", "T-07", "T-08", "T-09"}
+        assert set(result["checks"]) == {"T-04", "T-07", "T-08", "T-09", "T-10"}
 
     def test_given_live_level_without_captures_when_evaluated_then_not_ok(
         self, tmp_path, mocker
@@ -630,7 +671,9 @@ class TestEvaluate:
         mocker.patch("render_checks.measure_minutes", return_value=9.0)
 
         # Act
-        result = evaluate("L300", level_dir, load_curriculum())
+        result = evaluate(
+            "L300", level_dir, load_curriculum(), slides_skill_root=_SLIDES_ROOT
+        )
 
         # Assert
         assert result["ok"] is False
@@ -646,7 +689,11 @@ class TestEvaluate:
 
         # Act
         result = evaluate(
-            "L300", level_dir, load_curriculum(), capture_profile="deck-export"
+            "L300",
+            level_dir,
+            load_curriculum(),
+            capture_profile="deck-export",
+            slides_skill_root=_SLIDES_ROOT,
         )
 
         # Assert
@@ -661,7 +708,17 @@ class TestEvaluate:
         mocker.patch("render_checks.measure_minutes", return_value=7.0)
 
         # Act
-        rc = main(["evaluate", "--level", "L100", "--level-dir", str(level_dir)])
+        rc = main(
+            [
+                "evaluate",
+                "--level",
+                "L100",
+                "--level-dir",
+                str(level_dir),
+                "--slides-skill-root",
+                str(_SLIDES_ROOT),
+            ]
+        )
 
         # Assert
         assert rc == 1
@@ -669,23 +726,20 @@ class TestEvaluate:
 
 
 class TestContentPalette:
-    """Tests for the content half of T-08."""
+    """Tests for additional demo styling in T-08."""
 
     def test_given_content_colour_outside_palette_when_checked_then_fail(self):
         # Arrange
-        template = STYLE_TEMPLATE.read_text(encoding="utf-8")
+        style = _STYLED_HTML.replace(
+            _LAYOUT, _LAYOUT + ".slide-002 { color: #10B981; }\n"
+        )
 
         # Act
-        result = check_style(
-            template,
-            template,
-            {"slide-001": 'font_color: "#F8F8FC"', "slide-002": 'fill: "#10B981"'},
-        )
+        result = check_style(style, _THEME, _COMPONENTS)
 
         # Assert
         assert result["result"] == "fail"
-        assert "slide-002" in result["evidence"]
-        assert "slide-001" not in result["evidence"]
+        assert "outside the permitted image rules" in result["evidence"]
 
 
 class TestOnScreenText:
@@ -737,36 +791,26 @@ class TestSilentTiming:
         site = tmp_path / "site"
         prior = site / "L100"
         prior.mkdir(parents=True)
-        (prior / "hve-demo-L100.mp4").write_bytes(b"previous passing video")
-        (site / "index.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": "demo-material-site/v1",
-                    "levels": {
-                        "L100": {
-                            "source_sha": "prior",
-                            "files": {"mp4": "L100/hve-demo-L100.mp4"},
-                        }
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
+        fixture = _published()
+        for url, body in fixture.items():
+            path = site / url.removeprefix(f"{SITE}demo-material/")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(body)
+        previous_video = (prior / "hve-demo-L100.mp4").read_bytes()
         renders = tmp_path / "renders"
         candidate = renders / "L100"
         candidate.mkdir(parents=True)
-        for extension in ("mp4", "pptx", "vtt", "html"):
-            (candidate / f"hve-demo-L100.{extension}").write_bytes(b"new render")
-        (candidate / "index.html").write_text("Transcript", encoding="utf-8")
+        for file in prior.iterdir():
+            shutil.copyfile(file, candidate / file.name)
+        (candidate / "hve-demo-L100.mp4").write_bytes(b"new render")
+        caption_evidence = json.loads((candidate / "open-captions.json").read_text())
+        caption_evidence["video_sha256"] = hashlib.sha256(b"new render").hexdigest()
+        (candidate / "open-captions.json").write_text(json.dumps(caption_evidence))
+        report = json.loads((candidate / "render-result.json").read_text())
+        report["narration_engine"] = engine
+        report["checks"]["T-11"]["result"] = audio_check
         (candidate / "render-result.json").write_text(
-            json.dumps(
-                {
-                    "ok": True,
-                    "narration_engine": engine,
-                    "timing_basis": "notes-word-count",
-                    "checks": {"T-11": {"result": audio_check}},
-                }
-            ),
+            json.dumps(report),
             encoding="utf-8",
         )
 
@@ -779,7 +823,10 @@ class TestSilentTiming:
                 ),
                 "SITE": str(site),
                 "RENDERS": str(renders),
-                "SOURCE_SHA": "candidate",
+                "SOURCE_SHA": "b" * 40,
+                "LOOKUP": str(
+                    Path(__file__).resolve().parents[1] / "scripts/artifact_lookup.py"
+                ),
                 "AUTHOR_RUN_ID": "1",
                 "RENDER_RUN_ID": "2",
                 "RUNNER_TEMP": str(tmp_path),
@@ -790,7 +837,7 @@ class TestSilentTiming:
 
         entry = json.loads((site / "index.json").read_text())["levels"]["L100"]
         assert (prior / "hve-demo-L100.mp4").read_bytes() == (
-            b"new render" if published else b"previous passing video"
+            b"new render" if published else previous_video
         )
         if published:
             assert entry["narration_engine"] == "none"
@@ -1658,7 +1705,7 @@ class TestDeckAccessibility:
 
     def test_given_accessible_deck_when_checked_then_no_problems(self, tmp_path):
         # Arrange
-        deck = tmp_path / "deck.pptx"
+        deck = tmp_path / "deck.html"
         _write_deck(deck, 2, picture_descr="VS Code editor")
 
         # Act / Assert
@@ -1675,7 +1722,7 @@ class TestDeckAccessibility:
     )
     def test_given_gap_when_checked_then_reported(self, tmp_path, kwargs, problem):
         # Arrange
-        deck = tmp_path / "deck.pptx"
+        deck = tmp_path / "deck.html"
         _write_deck(deck, 1, **kwargs)
 
         # Act
@@ -1688,7 +1735,7 @@ class TestDeckAccessibility:
         # Arrange
         _write_slides(tmp_path, 1)
         (tmp_path / "output").mkdir()
-        _write_deck(tmp_path / "output" / "hve-demo-L100.pptx", 1)
+        _write_deck(tmp_path / "output" / "hve-demo-L100.html", 1)
 
         # Act
         result = check_accessibility("L100", tmp_path)
@@ -1705,7 +1752,7 @@ class TestAccessibilityDelivery:
         _write_slides(tmp_path, 2, notes="First sentence. Second one.")
         output = tmp_path / "output"
         output.mkdir()
-        _write_deck(output / "hve-demo-L100.pptx", 2)
+        _write_deck(output / "hve-demo-L100.html", 2)
         (output / "hve-demo-L100.mp4").write_bytes(b"mp4")
         (output / "hve-demo-L100.vtt").write_text(
             build_captions(tmp_path), encoding="utf-8"
@@ -2024,3 +2071,146 @@ class TestCaptionEvidenceContracts:
             if problem
             else report["problems"] == []
         )
+
+
+def _jpeg(width: int, height: int) -> bytes:
+    """Build the smallest JPEG whose SOF0 segment ``jpeg_dimensions`` parses."""
+    return (
+        b"\xff\xd8"
+        + b"\xff\xc0\x00\x0b\x08"
+        + height.to_bytes(2, "big")
+        + width.to_bytes(2, "big")
+        + b"\x01\x01\x11\x00"
+        + b"\xff\xd9"
+    )
+
+
+class TestInstallFiles:
+    """Staged replacement of named output files with rollback."""
+
+    def test_given_named_files_when_installed_then_only_those_replaced(self, tmp_path):
+        # Arrange
+        (tmp_path / "keep.txt").write_text("unrelated", encoding="utf-8")
+        (tmp_path / "report.json").write_text("old", encoding="utf-8")
+
+        # Act
+        install_files(tmp_path, {"report.json": b"new", "added.txt": b"added"})
+
+        # Assert
+        assert (tmp_path / "report.json").read_bytes() == b"new"
+        assert (tmp_path / "added.txt").read_bytes() == b"added"
+        assert (tmp_path / "keep.txt").read_text(encoding="utf-8") == "unrelated"
+        assert not list(tmp_path.glob(".render-stage-*"))
+
+    def test_given_later_replace_fails_when_installed_then_prior_state_restored(
+        self, tmp_path, mocker
+    ):
+        # Arrange
+        (tmp_path / "keep.txt").write_text("unrelated", encoding="utf-8")
+        (tmp_path / "existing.json").write_text("old", encoding="utf-8")
+        real = os.replace
+        calls = []
+
+        def replace(source, target):
+            calls.append(target)
+            if len(calls) == 3:
+                raise OSError("simulated replace failure")
+            return real(source, target)
+
+        mocker.patch("render_checks.os.replace", side_effect=replace)
+
+        # Act
+        with pytest.raises(OSError, match="simulated replace failure"):
+            install_files(
+                tmp_path,
+                {"existing.json": b"new", "added.txt": b"added", "last.txt": b"x"},
+            )
+
+        # Assert
+        assert (tmp_path / "existing.json").read_text(encoding="utf-8") == "old"
+        assert not (tmp_path / "added.txt").exists()
+        assert not (tmp_path / "last.txt").exists()
+        assert (tmp_path / "keep.txt").read_text(encoding="utf-8") == "unrelated"
+        assert not list(tmp_path.glob(".render-stage-*"))
+
+    @pytest.mark.parametrize("name", ["../escape.txt", "nested/file.txt", ".."])
+    def test_given_invalid_name_when_installed_then_raises(self, tmp_path, name):
+        # Act & Assert
+        with pytest.raises(CheckError, match="Invalid output filename"):
+            install_files(tmp_path, {name: b"x"})
+
+    def test_given_directory_at_target_when_installed_then_raises(self, tmp_path):
+        # Arrange
+        (tmp_path / "report.json").mkdir()
+
+        # Act & Assert
+        with pytest.raises(CheckError, match="Output is not a regular file"):
+            install_files(tmp_path, {"report.json": b"x"})
+
+
+class TestJpegDimensions:
+    """Frame size parsing without an image dependency."""
+
+    def test_given_sof_segment_when_parsed_then_width_and_height(self):
+        # Act
+        result = jpeg_dimensions(_jpeg(1920, 1080))
+
+        # Assert
+        assert result == (1920, 1080)
+
+    def test_given_marker_padding_and_app_segment_when_parsed_then_skips_them(self):
+        # Arrange
+        data = _jpeg(640, 480)
+        data = data[:2] + b"\xff\xff\xe0\x00\x04ab" + data[2:]
+
+        # Act
+        result = jpeg_dimensions(data)
+
+        # Assert
+        assert result == (640, 480)
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            b"\x89PNG\r\n\x1a\n",
+            b"\xff\xd8\xff\xd9",
+            b"\xff\xd8\xff\xc0\x00\x40",
+            b"\xff\xd8\x00",
+        ],
+        ids=["not-jpeg", "no-frame", "truncated-segment", "no-marker"],
+    )
+    def test_given_unusable_data_when_parsed_then_raises(self, data):
+        # Act & Assert
+        with pytest.raises(CheckError):
+            jpeg_dimensions(data)
+
+
+class TestReadOnlyCommands:
+    """The levels and changed subcommands."""
+
+    def test_given_levels_command_when_run_then_prints_curriculum(self, capsys):
+        # Act
+        code = main(["levels"])
+
+        # Assert
+        assert code == 0
+        assert json.loads(capsys.readouterr().out) == json.loads(
+            json.dumps(load_curriculum())
+        )
+
+    def test_given_forced_changed_command_when_run_then_prints_levels(
+        self, tmp_path, capsys
+    ):
+        # Arrange
+        index = tmp_path / "index.json"
+        index.write_text("{}", encoding="utf-8")
+        expected = changed_levels(load_curriculum(), {}, tmp_path, True)
+
+        # Act
+        code = main(
+            ["changed", "--index", str(index), "--repo", str(tmp_path), "--force"]
+        )
+
+        # Assert
+        assert code == 0
+        assert capsys.readouterr().out.split() == expected

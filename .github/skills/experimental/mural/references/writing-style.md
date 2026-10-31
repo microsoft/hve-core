@@ -50,7 +50,6 @@ Hydration is multi-call (no `expand` / `include` in the Mural API). Use the widg
 | `instructions-file`  | Parent area title; tags; widget URL; spatial neighbors (for cluster context)    |
 | `adr`                | Parent area title; tags; widget URL; spatial neighbors (for option set context) |
 | `living-document`    | Parent area title; tags; widget URL; freshness window context                   |
-| `powerpoint-deck`    | Parent area title; tags; widget URL; image-asset URLs for any embedded media    |
 | `next-workshop-seed` | Full chain plus lineage marker; preserves run_id for downstream traceability    |
 | `unactioned`         | Parent area title; tags; widget URL; rationale captured by Slot 2 adjudication  |
 

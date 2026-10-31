@@ -20,7 +20,8 @@ Usage::
         --captions VTT --output JSON
     python render_checks.py check-open-caption-evidence --video MP4 \
         --captions VTT --evidence JSON
-    python render_checks.py evaluate --level L100 --level-dir DIR [--html-deck]
+    python render_checks.py evaluate --level L100 --level-dir DIR \
+        --slides-skill-root ROOT
 
 ``levels`` and ``changed`` use only the standard library so a runner can call
 them before any environment is synced.
@@ -39,12 +40,11 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
 import wave
-import xml.etree.ElementTree as ET
-import zipfile
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -61,15 +61,9 @@ LIVE_LEVELS = frozenset({"L300", "L400"})
 # A change under any of these paths rebuilds every level.
 SHARED_TRIGGER_PATHS = (
     ".github/skills/experimental/hve-demo-material/",
+    ".github/skills/experimental/hve-slides/",
     ".github/agents/experimental/hve-demo-material.agent.md",
     "docs/getting-started/tts-voiceover.md",
-)
-
-SUBSTITUTABLE_STYLE_FIELDS = (
-    ("metadata", "title"),
-    ("metadata", "subject"),
-    ("metadata", "keywords"),
-    ("themes", 0, "slides"),
 )
 
 MIN_LIVE_CAPTURES = 2
@@ -93,21 +87,30 @@ def ffprobe_command() -> str:
     return os.environ.get("FFPROBE_COMMAND", "ffprobe")
 
 
-TEXT_KEYS = ("text", "title", "subtitle", "label", "heading", "description")
-TEXT_LIST_KEYS = ("bullets", "items", "segments", "paragraphs", "rows", "cells")
-
-_NS = {
-    "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
-    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
-    "dc": "http://purl.org/dc/elements/1.1/",
-    "adec": "http://schemas.microsoft.com/office/drawing/2017/decorative",
-}
+TEXT_KEYS = (
+    "text",
+    "title",
+    "subtitle",
+    "label",
+    "heading",
+    "description",
+    "content",
+    "bullet",
+)
+TEXT_LIST_KEYS = (
+    "bullets",
+    "items",
+    "segments",
+    "paragraphs",
+    "rows",
+    "cells",
+    "content",
+)
 _IMAGE_FILE_NAME = re.compile(r"\.(png|jpe?g|gif|bmp|svg|webp)$", re.IGNORECASE)
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 MIN_SOURCE_WIDTH = 1920
 MIN_SOURCE_HEIGHT = 1080
 
-_HEX_COLOUR = re.compile(r"#[0-9A-Fa-f]{6}\b")
 _DURATION = re.compile(r"(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+minutes")
 _BACKTICK_PATH = re.compile(r"`([^`]+)`")
 _SLIDE_DIR = re.compile(r"^slide-(\d{3})$")
@@ -115,6 +118,75 @@ _SLIDE_DIR = re.compile(r"^slide-(\d{3})$")
 
 class CheckError(ValueError):
     """Raised when inputs are missing or malformed."""
+
+
+def checked_path(path: Path, root: Path | None = None) -> Path:
+    """Reject links, special files and paths outside an approved root.
+
+    Missing leaves are allowed for outputs. Concurrent hostile local writers
+    remain outside this check's guarantees.
+    """
+    path = path.absolute()
+    if ".." in path.parts:
+        raise CheckError(f"Parent traversal is not allowed: {path}")
+    for parent in (*reversed(path.parents), path):
+        try:
+            info = parent.lstat()
+        except FileNotFoundError:
+            continue
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or getattr(info, "st_file_attributes", 0) & 0x400
+            or not (stat.S_ISREG(info.st_mode) or stat.S_ISDIR(info.st_mode))
+        ):
+            raise CheckError(
+                f"Expected an ordinary file or directory, not a link: {parent}"
+            )
+    if root is not None and not path.is_relative_to(checked_path(root)):
+        raise CheckError(f"Path is outside the approved root {root}: {path}")
+    return path
+
+
+def install_files(output: Path, files: dict[str, bytes]) -> None:
+    """Replace only named flat files, with staged writes and rollback.
+
+    Unrelated files and directories are preserved. Cleanup is nonrecursive and
+    limited to this invocation's staging files.
+    """
+    output = checked_path(output)
+    for name in files:
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or name in (".", ".."):
+            raise CheckError(f"Invalid output filename: {name}")
+        target = checked_path(output / name, output)
+        if target.exists() and not target.is_file():
+            raise CheckError(f"Output is not a regular file: {target}")
+    output.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix=".render-stage-", dir=output))
+    installed: list[str] = []
+    saved: set[str] = set()
+    try:
+        for name, data in files.items():
+            (stage / name).write_bytes(data)
+            target = checked_path(output / name, output)
+            if target.exists():
+                (stage / f"backup-{name}").write_bytes(target.read_bytes())
+                saved.add(name)
+        try:
+            for name in files:
+                os.replace(stage / name, checked_path(output / name, output))
+                installed.append(name)
+        except (OSError, KeyboardInterrupt):
+            for name in reversed(installed):
+                if name in saved:
+                    os.replace(stage / f"backup-{name}", output / name)
+                else:
+                    (output / name).unlink()
+            raise
+    finally:
+        for name in files:
+            (stage / name).unlink(missing_ok=True)
+            (stage / f"backup-{name}").unlink(missing_ok=True)
+        stage.rmdir()
 
 
 def _section(text: str, heading: str) -> list[str]:
@@ -214,13 +286,24 @@ def changed_levels(
     A level with no recorded ``source_sha`` in ``index``, or whose recorded
     commit cannot be diffed, is treated as changed.
     """
-    recorded = index.get("levels", {}) if isinstance(index, dict) else {}
+    from artifact_lookup import SITE_SCHEMA, valid_entry
+
+    schema = index.get("schema_version") if isinstance(index, dict) else None
+    if schema not in (None, SITE_SCHEMA, "demo-material-site/v1"):
+        raise CheckError("Unknown render index schema; preserve it and investigate")
+    recorded = (
+        index.get("levels", {})
+        if isinstance(index, dict) and schema == SITE_SCHEMA
+        else {}
+    )
     selected = []
     for level in LEVELS:
         entry = recorded.get(level) if isinstance(recorded, dict) else None
         base = entry.get("source_sha") if isinstance(entry, dict) else None
         if (
             force
+            or not valid_entry(level, entry)
+            or isinstance(entry.get("last_failed_attempt"), dict)
             or not isinstance(base, str)
             or not re.fullmatch(r"[0-9a-f]{40}", base)
         ):
@@ -234,20 +317,47 @@ def changed_levels(
 
 def slide_numbers(content_dir: Path) -> list[int]:
     """Return the sorted slide numbers found under ``content_dir``."""
+    content_dir = checked_path(content_dir)
     numbers = []
     for child in content_dir.iterdir() if content_dir.is_dir() else ():
-        match = _SLIDE_DIR.match(child.name)
-        if match and (child / "content.yaml").is_file():
-            numbers.append(int(match.group(1)))
+        if not child.name.startswith("slide-"):
+            continue
+        match = _SLIDE_DIR.fullmatch(child.name)
+        if not match or int(match.group(1)) == 0:
+            raise CheckError(f"Expected slide-NNN with a positive number: {child.name}")
+        source = checked_path(child / "content.yaml", content_dir)
+        if not source.is_file():
+            raise CheckError(f"Missing slide content: {source}")
+        numbers.append(int(match.group(1)))
     return sorted(numbers)
 
 
 def validate_scripted_render(
-    level: str, level_dir: Path, capture: str, animation: str = "none"
+    level: str,
+    level_dir: Path,
+    capture: str,
+    animation: str = "none",
+    slides_skill_root: Path | None = None,
 ) -> None:
     """Reject inputs that the deck-frame scripted renderer cannot preserve."""
     import yaml
 
+    level_dir = checked_path(level_dir)
+    for root in (SKILL_ROOT, slides_skill_root):
+        if root is not None and level_dir.is_relative_to(checked_path(root)):
+            raise CheckError("Level outputs must not be inside a skill installation")
+    for relative in (
+        "output",
+        "frames/deck",
+        "audio",
+        "html-deck",
+        "output/html-deck-build.json",
+        "output/html-deck-check.json",
+        "output/render-result.json",
+        "output/captures.json",
+        f"output/hve-demo-{level}.html",
+    ):
+        checked_path(level_dir / relative, level_dir)
     if level in {"L100", "L200"} and capture != "deck-export":
         raise CheckError(f"{level} requires capture: deck-export")
     if animation != "none":
@@ -344,57 +454,47 @@ def build_segments(level_dir: Path, output_name: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _get(data, path):
-    for key in path:
-        if isinstance(key, int):
-            if not isinstance(data, list) or len(data) <= key:
-                return None
-        elif not isinstance(data, dict):
-            return None
-        data = data[key] if isinstance(key, int) else data.get(key)
-    return data
-
-
-def _strip(data, path):
-    """Remove the value at ``path`` in place when present."""
-    parent = _get(data, path[:-1])
-    key = path[-1]
-    if isinstance(parent, dict):
-        parent.pop(key, None)
-
-
-def check_style(
-    style_text: str, template_text: str, content: dict[str, str] | None = None
-) -> dict:
-    """Score T-08: fixed style fields match the template, and every colour in
-    the style file and in each slide's ``content.yaml`` is in the pinned
-    palette."""
-    import yaml
-
-    palette = {colour.upper() for colour in _HEX_COLOUR.findall(template_text)}
-    outside = sorted({c.upper() for c in _HEX_COLOUR.findall(style_text)} - palette)
-    content_outside = {
-        name: sorted({c.upper() for c in _HEX_COLOUR.findall(text)} - palette)
-        for name, text in sorted((content or {}).items())
-    }
-    content_outside = {name: found for name, found in content_outside.items() if found}
-    style = yaml.safe_load(style_text)
-    template = yaml.safe_load(template_text)
-    for path in SUBSTITUTABLE_STYLE_FIELDS:
-        _strip(style, path)
-        _strip(template, path)
-    fixed_match = style == template
-    passed = fixed_match and not outside and not content_outside
+def check_style(deck_html: str, theme_css: str, components_css: str) -> dict:
+    """Score T-08 from actual bundled CSS, allowing only embedded-image rules."""
+    styles = re.findall(
+        r'<style data-bundled-source="([^"]+)">\n([\s\S]*?)\n</style>', deck_html
+    )
+    bundled = dict(styles)
     evidence = []
-    if not fixed_match:
-        evidence.append("a fixed field differs from templates/style.yaml")
-    if outside:
-        evidence.append(f"colours outside the pinned palette: {', '.join(outside)}")
-    for name, found in content_outside.items():
-        evidence.append(f"{name} uses colours outside the palette: {', '.join(found)}")
+    if len(styles) != 3 or set(bundled) != {
+        "vendor/reveal.css",
+        "theme.css",
+        "components.css",
+    }:
+        evidence.append("expected exactly the canonical three bundled stylesheets")
+    if bundled.get("theme.css") != theme_css:
+        evidence.append("bundled theme.css differs from the canonical HVE Slides theme")
+    prefix = (
+        components_css.rstrip()
+        + "\n"
+        + (SKILL_ROOT / "templates/html-deck.css").read_text(encoding="utf-8")
+    )
+    components = bundled.get("components.css", "")
+    if not components.startswith(prefix):
+        evidence.append(
+            "bundled components.css differs from the permitted template/layout"
+        )
+    else:
+        image_rules = components[len(prefix) :]
+        if not re.fullmatch(
+            r"(?:\.shot-\d+-\d+ \{ background-image: "
+            r'url\("data:image/(?:png|jpeg);base64,[A-Za-z0-9+/]+=*"\); \}\n)*',
+            image_rules,
+        ):
+            evidence.append(
+                "components.css contains styling outside the permitted image rules"
+            )
+    if len(re.findall(r"<style\b", deck_html, re.I)) != len(styles):
+        evidence.append("additional untracked styling in HTML")
     return {
-        "result": "pass" if passed else "fail",
-        "evidence": "; ".join(evidence) or "fixed fields and palette match",
+        "result": "fail" if evidence else "pass",
+        "evidence": "; ".join(evidence)
+        or "delivered HTML uses canonical HVE Slides theme and permitted demo styling",
     }
 
 
@@ -513,8 +613,21 @@ def load_slides(content_dir: Path) -> list[tuple[int, dict]]:
     slides = []
     for number in slide_numbers(content_dir):
         path = content_dir / f"slide-{number:03d}" / "content.yaml"
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        slides.append((number, data if isinstance(data, dict) else {}))
+        try:
+            data = yaml.safe_load(
+                checked_path(path, content_dir).read_text(encoding="utf-8")
+            )
+        except yaml.YAMLError as error:
+            raise CheckError(f"Invalid slide YAML: {path}") from error
+        if not isinstance(data, dict):
+            raise CheckError(f"Slide content must be a mapping: {path}")
+        if "slide_number" in data and (
+            type(data["slide_number"]) is not int or data["slide_number"] != number
+        ):
+            raise CheckError(f"slide_number must match directory {path.parent.name}")
+        if "id" in data and data["id"] != f"slide-{number}":
+            raise CheckError(f"Slide id must be slide-{number}: {path}")
+        slides.append((number, data))
     return slides
 
 
@@ -540,14 +653,14 @@ def on_screen_text(slide: dict) -> list[str]:
                     found.append(f"Image: {node['alt']}")
                 return
             for name, value in node.items():
-                if name in TEXT_KEYS and isinstance(value, str):
-                    found.append(value)
+                if name in TEXT_KEYS and type(value) in (str, int, float):
+                    found.append(str(value))
                 elif isinstance(value, (dict, list)):
                     walk(value, name)
         elif isinstance(node, list):
             for item in node:
-                if isinstance(item, str) and key in TEXT_LIST_KEYS:
-                    found.append(item)
+                if type(item) in (str, int, float) and key in TEXT_LIST_KEYS:
+                    found.append(str(item))
                 else:
                     walk(item, key)
 
@@ -707,12 +820,15 @@ def style_metadata(level_dir: Path) -> dict:
     """Return the ``metadata`` mapping of the level's style file, or ``{}``."""
     import yaml
 
-    style_file = level_dir / "content" / "global" / "style.yaml"
+    style_file = checked_path(
+        level_dir / "content" / "global" / "style.yaml", level_dir
+    )
     if not style_file.is_file():
         return {}
     style = yaml.safe_load(style_file.read_text(encoding="utf-8")) or {}
-    metadata = style.get("metadata") if isinstance(style, dict) else None
-    return metadata if isinstance(metadata, dict) else {}
+    if not isinstance(style, dict) or not isinstance(style.get("metadata", {}), dict):
+        raise CheckError("style.yaml and its metadata must be mappings")
+    return style.get("metadata", {})
 
 
 def validate_media_timeline(level_dir: Path, video: Path) -> None:
@@ -789,11 +905,7 @@ def build_transcript_page(
         if narration_engine == "none"
         else ""
     )
-    slides_link = (
-        f' &middot; <a href="{stem}.html">Open the slides (HTML)</a>'
-        if (level_dir / "output" / f"{stem}.html").is_file()
-        else ""
-    )
+    slides_link = f' &middot; <a href="{stem}.html">Open the slides (HTML)</a>'
     sections = []
     for number, slide in load_slides(level_dir / "content"):
         slide_title = str(slide.get("title") or f"Slide {number}")
@@ -825,51 +937,72 @@ def build_transcript_page(
         f'<track kind="captions" src="{stem}.vtt" srclang="{esc(language[:2])}" '
         'label="English"></video>'
         f'<p><a href="{stem}.mp4">Download the video (MP4)</a> &middot; '
-        f'<a href="{stem}.pptx">Download the deck (PowerPoint)</a> &middot; '
         f'<a href="{stem}.vtt">Download the captions (WebVTT)</a>{slides_link}</p>'
         f"<h2>Transcript</h2>{''.join(sections)}</main></body></html>\n"
     )
 
 
-def deck_accessibility_problems(pptx: Path, language: str | None) -> list[str]:
-    """Return the deck's missing slide titles, alt text, and language."""
+class _DeckParser(HTMLParser):
+    """Read static HTML slide identity, headings, alternatives and language."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.language = ""
+        self.slides: list[dict] = []
+        self.current: dict | None = None
+        self.heading = False
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "html":
+            self.language = attributes.get("lang") or ""
+        if tag == "section" and str(attributes.get("id", "")).startswith("slide-"):
+            self.current = {
+                "id": attributes["id"],
+                "title": attributes.get("data-title", ""),
+                "heading": "",
+                "images": [],
+            }
+            self.slides.append(self.current)
+        if self.current is not None:
+            if tag in ("h1", "h2"):
+                self.heading = True
+            if tag == "img" or attributes.get("role") == "img":
+                self.current["images"].append(attributes)
+
+    def handle_endtag(self, tag):
+        if tag == "section":
+            self.current = None
+        if tag in ("h1", "h2"):
+            self.heading = False
+
+    def handle_data(self, data):
+        if self.current is not None and self.heading:
+            self.current["heading"] += data
+
+
+def deck_accessibility_problems(deck: Path, language: str | None) -> list[str]:
+    """Return HTML slide title, image-alternative and document-language gaps."""
+    parser = _DeckParser()
+    parser.feed(checked_path(deck).read_text(encoding="utf-8"))
     problems = []
-    with zipfile.ZipFile(pptx) as archive:
-        names = archive.namelist()
-        declared = None
-        if "docProps/core.xml" in names:
-            core = ET.fromstring(archive.read("docProps/core.xml"))
-            declared = core.findtext("dc:language", namespaces=_NS)
-        if not declared:
-            problems.append("document language is not set")
-        elif language and declared != language:
-            problems.append(f"document language is {declared}, expected {language}")
-        slides = sorted(
-            (int(match.group(1)), name)
-            for name in names
-            if (match := re.fullmatch(r"ppt/slides/slide(\d+)\.xml", name))
-        )
-        for number, name in slides:
-            root = ET.fromstring(archive.read(name))
-            titled = any(
-                (ph := sp.find("p:nvSpPr/p:nvPr/p:ph", _NS)) is not None
-                and ph.get("type") in ("title", "ctrTitle")
-                and "".join(t.text or "" for t in sp.iter(f"{{{_NS['a']}}}t")).strip()
-                for sp in root.iter(f"{{{_NS['p']}}}sp")
-            )
-            if not titled:
-                problems.append(f"slide {number} has no title")
-            for pic in root.iter(f"{{{_NS['p']}}}pic"):
-                c_nv_pr = pic.find("p:nvPicPr/p:cNvPr", _NS)
-                if c_nv_pr is None:
-                    continue
-                descr = (c_nv_pr.get("descr") or "").strip()
-                decorative = c_nv_pr.find(".//adec:decorative", _NS) is not None
-                if not decorative and (not descr or _IMAGE_FILE_NAME.search(descr)):
-                    problems.append(
-                        f"slide {number} image {c_nv_pr.get('name')!r} has no "
-                        "alternative text"
-                    )
+    if not parser.language:
+        problems.append("document language is not set")
+    elif language and parser.language != language:
+        problems.append(f"document language is {parser.language}, expected {language}")
+    if not parser.slides:
+        problems.append("HTML deck contains no slides")
+    for number, slide in enumerate(parser.slides, 1):
+        if not slide["heading"].strip():
+            problems.append(f"slide {number} has no title")
+        elif normalized_text(slide["heading"]) != normalized_text(slide["title"]):
+            problems.append(f"slide {number} title does not match its visible heading")
+        for image in slide["images"]:
+            alt = image.get("aria-label") or image.get("alt") or ""
+            if image.get("aria-hidden") != "true" and (
+                not alt.strip() or _IMAGE_FILE_NAME.search(alt)
+            ):
+                problems.append(f"slide {number} image has no alternative text")
     return problems
 
 
@@ -996,6 +1129,71 @@ def _sha256(path: Path) -> str:
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def jpeg_dimensions(data: bytes) -> tuple[int, int]:
+    """Read JPEG frame dimensions without introducing an image dependency."""
+    if not data.startswith(b"\xff\xd8"):
+        raise CheckError("Frame is not a JPEG")
+    position = 2
+    while position < len(data):
+        if data[position] != 0xFF:
+            break
+        while position < len(data) and data[position] == 0xFF:
+            position += 1
+        if position >= len(data):
+            break
+        marker = data[position]
+        position += 1
+        if marker in (0xD9, 0xDA):
+            break
+        if marker == 0x01 or 0xD0 <= marker <= 0xD7:
+            continue
+        if position + 2 > len(data):
+            break
+        length = int.from_bytes(data[position : position + 2], "big")
+        if length < 2 or position + length > len(data):
+            break
+        if (
+            marker
+            in {
+                0xC0,
+                0xC1,
+                0xC2,
+                0xC3,
+                0xC5,
+                0xC6,
+                0xC7,
+                0xC9,
+                0xCA,
+                0xCB,
+                0xCD,
+                0xCE,
+                0xCF,
+            }
+            and length >= 8
+        ):
+            height = int.from_bytes(data[position + 3 : position + 5], "big")
+            width = int.from_bytes(data[position + 5 : position + 7], "big")
+            if width and height:
+                return width, height
+            break
+        position += length
+    raise CheckError("JPEG frame dimensions are missing or malformed")
+
+
+def content_digest(level_dir: Path) -> str:
+    """Bind rendered evidence to all current content files without following links."""
+    root = checked_path(level_dir / "content", level_dir)
+    digest = hashlib.sha256()
+    for candidate in sorted(root.rglob("*")):
+        candidate = checked_path(candidate, root)
+        if candidate.is_file():
+            digest.update(
+                candidate.relative_to(root).as_posix().encode("utf-8") + b"\0"
+            )
+            digest.update(_sha256(candidate).encode("ascii") + b"\0")
     return digest.hexdigest()
 
 
@@ -1270,10 +1468,22 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
         problems.append("transcript page missing")
     else:
         problems += transcript_problems(level_dir, page.read_text(encoding="utf-8"))
-    deck = output / f"hve-demo-{level}.pptx"
+    deck = output / f"hve-demo-{level}.html"
     if deck.is_file():
         language = style_metadata(level_dir).get("language")
         problems += deck_accessibility_problems(deck, language)
+        parsed = _DeckParser()
+        parsed.feed(deck.read_text(encoding="utf-8"))
+        expected = [
+            (f"slide-{n}", normalized_text(slide.get("title", "")))
+            for n, slide in load_slides(level_dir / "content")
+        ]
+        if [
+            (slide["id"], normalized_text(slide["title"])) for slide in parsed.slides
+        ] != expected:
+            problems.append(
+                "HTML slide IDs/titles do not match canonical content order"
+            )
     else:
         problems.append("deck missing")
     return {
@@ -1287,10 +1497,11 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
 
 def check_html_deck(level: str, level_dir: Path) -> dict:
     """Score T-10: a single-file HTML deck that starts offline and fits."""
-    output = level_dir / "output"
+    output = checked_path(level_dir / "output", level_dir)
     problems = []
-    deck = output / f"hve-demo-{level}.html"
-    slides = len(slide_numbers(level_dir / "content"))
+    deck = checked_path(output / f"hve-demo-{level}.html", output)
+    slide_ids = [f"slide-{n}" for n in slide_numbers(level_dir / "content")]
+    slides = len(slide_ids)
     if not deck.is_file():
         problems.append("HTML deck missing")
     else:
@@ -1301,15 +1512,73 @@ def check_html_deck(level: str, level_dir: Path) -> dict:
             problems.append(f"HTML deck does not hold all {slides} slides")
         if re.search(r'<link rel="stylesheet"|<script defer src=', page):
             problems.append("HTML deck still references sibling files")
-    build = output / "html-deck-build.json"
+    build = checked_path(output / "html-deck-build.json", output)
     if build.is_file():
-        missing = json.loads(build.read_text(encoding="utf-8")).get("missing_images")
-        problems += [f"image not embedded: {path}" for path in missing or []]
-    browser = output / "html-deck-check.json"
+        record = json.loads(build.read_text(encoding="utf-8"))
+        if not isinstance(record, dict):
+            record = {}
+        problems += [
+            f"image not embedded: {path}" for path in record.get("missing_images", [])
+        ]
+        if (
+            record.get("schema_version") != 2
+            or record.get("renderer") != "hve-slides"
+            or record.get("format") != "html"
+        ):
+            problems.append("incompatible HTML build evidence")
+        if record.get("slide_ids") != slide_ids or record.get(
+            "content_sha256"
+        ) != content_digest(level_dir):
+            problems.append("HTML build evidence does not match current content")
+    else:
+        problems.append("HTML build evidence missing")
+    browser = checked_path(output / "html-deck-check.json", output)
     if not browser.is_file():
         problems.append("offline browser check not run")
     else:
         result = json.loads(browser.read_text(encoding="utf-8"))
+        if not isinstance(result, dict):
+            result = {}
+        if (
+            result.get("schema_version") != 2
+            or result.get("renderer") != "hve-slides"
+            or result.get("format") != "html"
+        ):
+            problems.append("incompatible offline browser evidence")
+        if not deck.is_file() or result.get("html_sha256") != _sha256(deck):
+            problems.append("offline evidence does not match delivered HTML")
+        if not slide_ids or result.get("slide_ids") != slide_ids:
+            problems.append("offline evidence has missing or mismatched slide IDs")
+        if build.is_file() and result.get("build_sha256") != _sha256(build):
+            problems.append("offline evidence does not match HTML build evidence")
+        if any(
+            result.get(key)
+            for key in ("overflowing_slides", "errors", "external_requests")
+        ):
+            problems.append("offline evidence contains unresolved browser findings")
+        frames = result.get("frames")
+        if not isinstance(frames, list) or len(frames) != len(slide_ids):
+            problems.append("ordered frame evidence missing or incomplete")
+        else:
+            for slide_id, frame in zip(slide_ids, frames, strict=True):
+                try:
+                    if (
+                        not isinstance(frame, dict)
+                        or frame.get("slide_id") != slide_id
+                        or not isinstance(frame.get("path"), str)
+                    ):
+                        raise CheckError(f"frame identity mismatch for {slide_id}")
+                    path = checked_path(level_dir / frame["path"], level_dir / "frames")
+                    name = f"slide-{int(slide_id.removeprefix('slide-')):03d}.jpg"
+                    if path.name != name or frame.get("sha256") != _sha256(path):
+                        raise CheckError(f"frame hash/path mismatch for {slide_id}")
+                    if (frame.get("width"), frame.get("height")) != (
+                        1920,
+                        1080,
+                    ) or jpeg_dimensions(path.read_bytes()) != (1920, 1080):
+                        raise CheckError(f"frame dimensions mismatch for {slide_id}")
+                except (CheckError, OSError) as error:
+                    problems.append(str(error))
         if result.get("result") != "pass":
             detail = (
                 result.get("overflowing_slides")
@@ -1335,11 +1604,11 @@ def evaluate(
     curriculum: dict[str, dict],
     capture_profile: str | None = None,
     narration_engine: str = "azure",
-    html_deck: bool = False,
+    slides_skill_root: Path | None = None,
 ) -> dict:
     """Score the machine-verifiable criteria for one rendered level.
 
-    ``html_deck`` adds T-10 when the render built the HTML slide deck.
+    HTML is mandatory; missing renderer or browser evidence never opts out.
     """
     if level not in curriculum:
         raise CheckError(f"unknown level {level}")
@@ -1352,37 +1621,77 @@ def evaluate(
         if captures_file.is_file()
         else None
     )
-    style_file = level_dir / "content" / "global" / "style.yaml"
     minutes = measure_minutes(level_dir / "output" / f"hve-demo-{level}.mp4")
     checks = {"T-04": check_segments(level_dir)}
     if live:
         checks["T-05"], checks["T-06"] = check_captures(captures)
     checks["T-07"] = check_duration(minutes, contract)
-    content = {
-        f"slide-{number:03d}": (
-            level_dir / "content" / f"slide-{number:03d}" / "content.yaml"
-        ).read_text(encoding="utf-8")
-        for number in slide_numbers(level_dir / "content")
-    }
-    checks["T-08"] = (
-        check_style(
-            style_file.read_text(encoding="utf-8"),
-            STYLE_TEMPLATE.read_text(encoding="utf-8"),
-            content,
-        )
-        if style_file.is_file()
-        else {"result": "deferred", "evidence": "content/global/style.yaml missing"}
-    )
+    deck = checked_path(level_dir / "output" / f"hve-demo-{level}.html", level_dir)
+    if slides_skill_root is None:
+        checks["T-08"] = {
+            "result": "deferred",
+            "evidence": "resolved hve-slides root missing",
+        }
+    else:
+        template = checked_path(slides_skill_root / "templates/deck")
+        try:
+            checks["T-08"] = check_style(
+                deck.read_text(encoding="utf-8"),
+                checked_path(template / "theme.css", template).read_text(
+                    encoding="utf-8"
+                ),
+                checked_path(template / "components.css", template).read_text(
+                    encoding="utf-8"
+                ),
+            )
+        except OSError as error:
+            checks["T-08"] = {"result": "deferred", "evidence": str(error)}
     checks["T-09"] = check_accessibility(level, level_dir)
     if narration_engine == "none":
         checks["T-11"] = check_audio_mode(
             level_dir / "output" / f"hve-demo-{level}.mp4", narration_engine
         )
         checks["T-04"]["evidence"] += "; WAVs provide silent timing, not narration"
-    if html_deck:
-        checks["T-10"] = check_html_deck(level, level_dir)
-    return {
-        "schema_version": 1,
+    checks["T-10"] = check_html_deck(level, level_dir)
+    import yaml
+
+    manifest_path = checked_path(level_dir / "manifest.yml", level_dir)
+    if not manifest_path.is_file():
+        manifest_path = checked_path(level_dir / "output/manifest.yml", level_dir)
+    manifest = (
+        yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        if manifest_path.is_file()
+        else {}
+    )
+    expected_outputs = {
+        "html_deck": f"output/hve-demo-{level}.html",
+        "mp4": f"output/hve-demo-{level}.mp4",
+        "raw_assembly": f"output/hve-demo-{level}.raw.mp4",
+        "captions": f"output/hve-demo-{level}.vtt",
+        "transcript_page": "output/index.html",
+        "open_caption_evidence": "output/open-captions.json",
+        "html_build_evidence": "output/html-deck-build.json",
+        "html_frame_evidence": "output/html-deck-check.json",
+        "render_result": "output/render-result.json",
+    }
+    deliverables = (
+        manifest.get("deliverables", {}) if isinstance(manifest, dict) else {}
+    )
+    manifest_valid = (
+        isinstance(manifest, dict)
+        and manifest.get("schema_version") == 6
+        and manifest.get("renderer") == "hve-slides"
+        and manifest.get("format") == "html"
+        and manifest.get("level") == level
+        and isinstance(deliverables, dict)
+        and deliverables == expected_outputs
+    )
+    result = {
+        "schema_version": 2,
+        "renderer": "hve-slides",
+        "format": "html",
+        "manifest_schema_version": 6 if manifest_valid else None,
+        "manifest_valid": manifest_valid,
         "level": level,
         "capture_profile": "live" if live else "deck-export",
         "narration_engine": narration_engine,
@@ -1393,8 +1702,28 @@ def evaluate(
         "measured_duration_minutes": round(minutes, 2) if minutes else None,
         "contract_duration_minutes": {"min": contract["min"], "max": contract["max"]},
         "checks": checks,
-        "ok": all(check["result"] == "pass" for check in checks.values()),
+        "ok": manifest_valid
+        and all(check["result"] == "pass" for check in checks.values()),
     }
+    if manifest_valid:
+        validation = manifest.setdefault("validation", {})
+        if not isinstance(validation, dict):
+            raise CheckError("manifest.validation must be a mapping")
+        validation["machine_checks"] = checks
+        validation["deck"] = (
+            "deferred"
+            if all(checks[key]["result"] == "pass" for key in ("T-08", "T-09", "T-10"))
+            else "fail"
+        )
+        validation["video"] = "pass" if result["ok"] else "fail"
+        # Machine scoring does not grant human delivery approval or visual review.
+        manifest["state"] = "Deferred"
+        install_files(
+            level_dir / "output",
+            {"manifest.yml": yaml.safe_dump(manifest, sort_keys=False).encode("utf-8")},
+        )
+        result["manifest_sha256"] = _sha256(level_dir / "output/manifest.yml")
+    return result
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1421,6 +1750,7 @@ def build_parser() -> argparse.ArgumentParser:
     preflight.add_argument(
         "--animation", choices=("none", "characters"), default="none"
     )
+    preflight.add_argument("--slides-skill-root", type=Path)
     captions = sub.add_parser("captions", help="Write WebVTT captions")
     captions.add_argument("--level-dir", type=Path, required=True)
     captions.add_argument("--output", type=Path, required=True)
@@ -1458,7 +1788,9 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_cmd.add_argument("--capture", choices=("live", "deck-export"))
     evaluate_cmd.add_argument("--narration", choices=("azure", "none"), default="azure")
     evaluate_cmd.add_argument(
-        "--html-deck", action="store_true", help="Score T-10 for the HTML deck"
+        "--slides-skill-root",
+        type=Path,
+        help="Resolved trusted hve-slides installation for T-08",
     )
     return parser
 
@@ -1481,7 +1813,11 @@ def main(argv: list[str] | None = None) -> int:
             return EXIT_SUCCESS
         if args.command == "scripted-preflight":
             validate_scripted_render(
-                args.level, args.level_dir, args.capture, args.animation
+                args.level,
+                args.level_dir,
+                args.capture,
+                args.animation,
+                args.slides_skill_root,
             )
             return EXIT_SUCCESS
         if args.command == "silent-timing":
@@ -1535,7 +1871,7 @@ def main(argv: list[str] | None = None) -> int:
             load_curriculum(),
             capture_profile=args.capture,
             narration_engine=args.narration,
-            html_deck=args.html_deck,
+            slides_skill_root=args.slides_skill_root,
         )
         print(json.dumps(result, indent=2))
         return EXIT_SUCCESS if result["ok"] else EXIT_FAILURE
@@ -1544,7 +1880,6 @@ def main(argv: list[str] | None = None) -> int:
         OSError,
         json.JSONDecodeError,
         wave.Error,
-        zipfile.BadZipFile,
     ) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return EXIT_FAILURE

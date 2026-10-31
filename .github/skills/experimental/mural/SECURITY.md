@@ -2,7 +2,7 @@
 title: Mural Skill Security Model
 description: STRIDE threat model for the Mural skill covering browser callback, Mural API egress, on-disk cache, caller input, and Azure SAS uploads
 author: microsoft/hve-core
-ms.date: 2026-10-09
+ms.date: 2026-10-28
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -369,6 +369,10 @@ The skill exposes Mural operations through local CLI commands. The caller proces
 ### Local destination control plane
 
 The registry loader uses `yaml.safe_load`, rejects malformed or unsafe entries, and applies the optional override by destination identifier before dispatch. Destination and action intent must both be explicit. The dispatcher can invoke only an adapter supplied by the caller and contains no real destination-system adapter.
+
+The shipped registry and projection map contain no presentation destination.
+Removing the reserved route adds no HTML executor or alias and changes no
+generic dispatch, credential, source-hydration or metadata-writeback authority.
 
 Hydration treats widget text as untrusted source data, preserves `text` and `htmlText`, and keeps derived hierarchy, tag, lineage, authorship, and partial-state metadata in separate fields. Existing-widget writeback accepts only `tags`, `hyperlink`, and `parentId`. Local test-double evidence does not establish native Mural behavior or real destination effectiveness.
 

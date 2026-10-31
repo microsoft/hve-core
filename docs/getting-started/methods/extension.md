@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-27
 ms.topic: how-to
 keywords:
   - extension
@@ -101,7 +101,7 @@ The extension provides all HVE Core components:
 | Chat Agents         | RPI Agent, code-review, adr-creation                                    |
 | User-invoked skills | `/git-commit`, `/pull-request` for GitHub or Azure DevOps, `/git-merge` |
 | Instructions        | markdown, python-script, commit-message                                 |
-| Skills              | rpi-research, pr-reference, video-to-gif                                |
+| Skills              | rpi-research, pr-reference, demo-video                                  |
 
 HVE Core no longer ships prompt files. [Retired Prompt Commands](../package-migration.md#retired-prompt-commands) maps each former prompt command to its replacement.
 

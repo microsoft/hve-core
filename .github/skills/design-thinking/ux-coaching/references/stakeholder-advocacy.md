@@ -61,4 +61,4 @@ Stop when the disagreement is about values or priorities rather than facts. More
 
 ## Downstream handoff
 
-Additional precondition: the case exists and the practitioner has separately authored presentation material from it. That downstream capability consumes presentation material, not raw coaching output, so naming it earlier would point the practitioner at something that cannot yet accept their input. When the eligibility rule in [coaching-state.md](coaching-state.md) is satisfied, name `powerpoint` once as a downstream capability. This skill does not build the deck.
+No downstream presentation capability ships with this skill's package for an advocacy case. Do not name or invoke one. This skill does not build the deck.

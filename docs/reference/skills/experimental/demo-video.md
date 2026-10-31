@@ -3,7 +3,7 @@ title: demo-video
 description: Assemble ordered frames or clips with narration and optional synchronized scene transitions into an MP4 via FFmpeg
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-29
 ms.topic: reference
 keywords:
   - skill

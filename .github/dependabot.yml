@@ -11,7 +11,7 @@ updates:
   # starter's lockfile. A deck update changes its embedded library, so rebuild
   # that deck's bundle with `npm run slides:build` before merging.
   - /slides/*
-  - /.github/skills/hve-slides/templates/deck
+  - /.github/skills/experimental/hve-slides/templates/deck
   groups:
     npm-dependencies:
       patterns:
@@ -64,13 +64,432 @@ updates:
   schedule:
     day: monday
     interval: weekly
+# One uv entry per project: a multi-directory uv entry runs security updates
+# against only its first directory. Add or remove an entry with each project.
 - commit-message:
     include: scope
     prefix: chore
-  directories:
-  - /.github/skills/**
-  - /scripts/evals/moderation
-  - /scripts/tools/*
+  directory: /.github/skills/accessibility/accessibility
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/data-science-engineering/data-catalog
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/data-science-engineering/dataops
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/data-science-engineering/evaluation-design
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/data-science-engineering/feasibility
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/experimental/copilot-otel-metrics
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/experimental/customer-card-render
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/experimental/demo-video
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/experimental/hve-demo-material
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/experimental/mural
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/experimental/tts-voiceover
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/experimental/vscode-playwright
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/hve-core/architecture-diagrams
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/hve-core/vally-tests
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/project-planning/adr-author
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/project-planning/gitlab
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/project-planning/jira
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/project-planning/security-planning
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /.github/skills/security/vex
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /scripts/evals/moderation
+  groups:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /scripts/tools/pip-audit
   groups:
     security-updates:
       applies-to: security-updates

@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Agent Systems Catalog"
 pagination_label: Agent Systems Catalog
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-27
 ms.topic: overview
 keywords:
   - github copilot
@@ -69,7 +69,7 @@ Five agents handle evaluation dataset creation, data specification generation, J
 
 ## Experimental
 
-Exploratory agents for emerging workflows. Includes the Experiment Designer for minimum viable experiment (MVE) coaching and the PowerPoint Builder for YAML-driven slide deck generation.
+Exploratory agents for emerging workflows. Includes the Experiment Designer for minimum viable experiment (MVE) coaching.
 
 ## DevOps Quality
 

@@ -12,7 +12,7 @@ Generates per-slide WAV voice-over files from YAML `speaker_notes` using Azure A
 
 ## Overview
 
-This skill reads `content.yaml` files from a PowerPoint skill content directory, extracts `speaker_notes` fields, applies acronym aliases for correct pronunciation of technical terms, and produces one WAV file per slide. Supports dry-run mode for SSML template verification without Azure credentials.
+This skill reads `content.yaml` files from a slide content directory (`slide-NNN/content.yaml`), extracts `speaker_notes` fields, applies acronym aliases for correct pronunciation of technical terms, and produces one WAV file per slide. Supports dry-run mode for SSML template verification without Azure credentials.
 
 Synthesis uses Azure AI Speech neural voices, including the HD voices such as `en-US-Andrew:DragonHDLatestNeural`. HD voices are offered in a subset of Azure regions; check the [Speech service regions](https://learn.microsoft.com/azure/ai-services/speech-service/regions) before choosing `SPEECH_REGION`.
 
@@ -65,11 +65,9 @@ Generate voice-over WAV files:
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
 
-Embed audio into a PPTX deck:
-
-```bash
-uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output deck-narrated.pptx
-```
+Use `demo-video` to combine the WAV files with approved frames or clips.
+Use `hve-slides` for HTML presentations and `hve-demo-material` for the
+HTML/frame/MP4/caption workflow. Audio embedding into presentation files is retired.
 
 ## Parameters Reference
 
@@ -91,21 +89,6 @@ Omit `--slide` to synthesize the whole deck.
 | `--lexicon`           | path    | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
 | `--collapse-newlines` | flag    | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
 | `--verbose` / `-v`    | flag    | `false`                             | Enable verbose (DEBUG) logging output                                                      |
-
-### embed_audio.py
-
-Embeds WAV files into corresponding PPTX slides and adds narration timing
-XML so PowerPoint recognizes the audio for video export via
-**File > Export > Create a Video > Use Recorded Timings and Narrations**.
-
-| Parameter          | Type | Default           | Description                           |
-|:-------------------|:-----|:------------------|:--------------------------------------|
-| `--input`          | path | *(required)*      | Source PPTX file path                 |
-| `--audio-dir`      | path | `voice-over`      | Directory with slide-NNN.wav          |
-| `--output`         | path | `*-narrated.pptx` | Output PPTX file path                 |
-| `--verbose` / `-v` | flag | `false`           | Enable verbose (DEBUG) logging output |
-
-Each WAV file maps to a slide by the number in its name, so `slide-1.wav` and `slide-001.wav` both map to slide 1. When two files map to the same slide, embedding stops with an error and writes no output. WAV files numbered past the last slide are ignored with a warning. An unreadable WAV file is reported, its slide is left unchanged, and the remaining slides are still embedded.
 
 ## Script Reference
 
@@ -134,15 +117,6 @@ whose line breaks are otherwise spoken as pauses):
 uv run scripts/generate_voiceover.py \
   --content-dir content \
   --collapse-newlines
-```
-
-Embed generated audio:
-
-```bash
-uv run scripts/embed_audio.py \
-  --input slide-deck/presentation.pptx \
-  --audio-dir voice-over \
-  --output slide-deck/presentation-narrated.pptx
 ```
 
 ## Acronym Lexicon
@@ -179,9 +153,9 @@ Each slide produces an SSML document:
 </speak>
 ```
 
-## Integration with PowerPoint Skill
+## Content Directory Contract
 
-This skill reads from the PowerPoint skill's content directory structure:
+This skill reads a slide content directory with this structure:
 
 ```text
 content/
@@ -196,17 +170,12 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 
 ## Troubleshooting
 
-| Issue                                                | Solution                                                                                                                                                                  |
-|:-----------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                                                                   |
-| `SPEECH_REGION must be set`                          | Export `SPEECH_REGION` with an approved Azure region. Synthesis has no default region.                                                                                    |
-| `Multiple WAV files map to slide N`                  | Remove the duplicate WAV files (for example `slide-1.wav` beside `slide-001.wav`) and rerun `embed_audio.py`.                                                             |
-| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes.                                            |
-| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                                                                       |
-| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                                                                     |
-| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                                                                     |
-| Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                                                                      |
-| Authored slide animations missing after embedding    | `embed_audio.py` replaces existing `p:timing` with narration timing; re-apply animations in PowerPoint after embedding audio.                                             |
-| Slides no longer advance on click after embedding    | `embed_audio.py` sets `advClick="0"` for auto-advance. To re-enable, select all slides in PowerPoint and check **Advance Slide > On Mouse Click** in the Transitions tab. |
-| Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                                                           |
+| Issue                                                | Solution                                                                                                                       |
+|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
+| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                        |
+| `SPEECH_REGION must be set`                          | Export `SPEECH_REGION` with an approved Azure region. Synthesis has no default region.                                         |
+| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
+| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                            |
+| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                          |
+| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
 

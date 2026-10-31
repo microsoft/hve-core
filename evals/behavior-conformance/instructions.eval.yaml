@@ -1067,27 +1067,6 @@ stimuli:
         config:
           pattern: "(?i)@secure|secure\\(\\)|\\bno\\s+defaults?\\b"
 
-  - name: instruction-pptx-conformance
-    prompt: |
-      You are building a PowerPoint deck and authoring content under
-      `.copilot-tracking/ppt/quarterly-review/`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what conventions does it require for the agent, subagent,
-      and powerpoint skill workflows?
-    tags:
-      category: behavior-conformance
-      instruction: pptx
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-pptx-conformance-applyto-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/ppt/|/ppt/|pptx\\.instructions\\.md"
-      - type: output-matches
-        name: instruction-pptx-conformance-scope-language
-        config:
-          pattern: "(?i)powerpoint|slide|deck|design\\s+rule|convention|skill"
-
   - name: instruction-coaching-patterns-conformance
     prompt: |
       You are beginning a capture-mode planning conversation and writing

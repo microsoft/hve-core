@@ -6,7 +6,7 @@ description: 'Open destination registry for Mural extractor writeback: registere
 
 Action-item destinations are an open registry of named adapters. The extractor core does not change when a new destination is added; the new adapter is registered in the data file and the writeback applies the registered tag.
 
-The Mural skill provides an effect-free control plane for this registry. `load_destination_registry` validates the base and optional override with `yaml.safe_load`; `DispatchRequest` requires explicit destination and action intent; and `dispatch_destination` calls only an adapter injected by the owning caller. The skill does not import or implement GitHub, Jira, Azure DevOps, ADR, document, PowerPoint, or workshop-seed adapters.
+The Mural skill provides an effect-free control plane for this registry. `load_destination_registry` validates the base and optional override with `yaml.safe_load`; `DispatchRequest` requires explicit destination and action intent; and `dispatch_destination` calls only an adapter injected by the owning caller. The skill does not import or implement GitHub, Jira, Azure DevOps, ADR, document, or workshop-seed adapters.
 
 ## Registry data file
 
@@ -27,7 +27,7 @@ Every extracted action item carries `intent ∈ {create, mutate, append, no-op}`
 
 | Intent   | Adapter behavior                                                                    |
 |----------|-------------------------------------------------------------------------------------|
-| `create` | Adapter creates a new artifact (work item, ADR, instructions file, deck section).   |
+| `create` | Adapter creates a new artifact (work item, ADR, instructions file or document).     |
 | `mutate` | Adapter modifies an existing artifact identified by `hyperlink` or query.           |
 | `append` | Adapter appends to a living document section identified by `hyperlink` or anchor.   |
 | `no-op`  | Adapter records the rationale for not actioning (audit-only, `unactioned` adapter). |
@@ -42,7 +42,6 @@ Loop closure is parameterized per destination. Each adapter declares its `loop_c
 * `instructions-file` → manual or sample-based confirmation that downstream code follows the instruction.
 * `adr` → status check (`Accepted` and not `Superseded`).
 * `living-document` → last-updated within the configured freshness window.
-* `powerpoint-deck` → export confirmation (downstream telemetry deferred).
 * `next-workshop-seed` → artifact presence check in the downstream workshop's seed bundle.
 * `unactioned` → rationale survived review (no-op with audit).
 
@@ -68,7 +67,7 @@ Reserved-tag protection rules in [writeback-hygiene.md](writeback-hygiene.md) ap
 
 ## v1 retro coverage
 
-The retro v1 wedge ships with the first three adapters (`backlog-item`, `instructions-file`, `adr`) plus the `unactioned` sink. Other adapters in the registry (`living-document`, `powerpoint-deck`, `next-workshop-seed`) are reserved for subsequent workshop families.
+The retro v1 wedge ships with the first three adapters (`backlog-item`, `instructions-file`, `adr`) plus the `unactioned` sink. Other adapters in the registry (`living-document`, `next-workshop-seed`) are reserved for subsequent workshop families.
 
 ## Override file
 

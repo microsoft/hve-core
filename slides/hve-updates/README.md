@@ -1,7 +1,7 @@
 ---
 title: HVE Core updates deck
 description: Interactive HTML presentation of HVE Core changes from April to October 2026.
-ms.date: 2026-10-22
+ms.date: 2026-10-27
 ---
 
 ## Build and present
@@ -36,10 +36,11 @@ Diagram descriptions expose node meanings and relationships as text.
 
 ## Create or update decks
 
-Use the repository-only [HVE Slides skill](../../.github/skills/hve-slides/SKILL.md)
+Use the [HVE Slides skill](../../.github/skills/experimental/hve-slides/SKILL.md)
 to update this presentation or create another HVE-related deck under `slides/`.
 It covers source research, slide writing, visual examples, editing, validation
-and local sharing. It is not included in the HVE Core plugin.
+and local sharing. The same skill is packaged for plugin/VSIX users and supports
+render-only delivery from already-authored sources.
 
 ```text
 /hve-slides deck=slides/hve-updates mode=update
@@ -103,7 +104,7 @@ Run `npm run slides:check` from the repository root to verify source-to-bundle p
 without rewriting the committed HTML. It fails on missing, stale, or orphaned bundles.
 
 The source build uses the repository's canonical bundler under
-`.github/skills/hve-slides/templates/deck/`. Keep the checkout available when rebuilding;
+`.github/skills/experimental/hve-slides/templates/deck/`. Keep the checkout available when rebuilding;
 `bundle.mjs` in this deck is a thin wrapper around that implementation. The generated
 HTML remains independent of the repository and skill files.
 

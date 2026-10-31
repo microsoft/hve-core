@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Security Documentation"
 pagination_label: Security Documentation
 author: Microsoft
-ms.date: 2026-10-23
+ms.date: 2026-10-29
 ms.topic: overview
 keywords:
   - security
@@ -43,9 +43,8 @@ Skills whose shipped scripts make network requests, handle credentials, parse co
 | **jira**                                        | REST CLI; environment credentials                                                                                                                                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/jira/SECURITY.md)              |
 | **gitlab**                                      | REST CLI; environment credentials; git-remote subprocess                                                                                                          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/gitlab/SECURITY.md)            |
 | **mural** (experimental)                        | REST CLI; embedded MCP server; OAuth token store                                                                                                                  | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/mural/SECURITY.md)                 |
-| **tts-voiceover** (experimental)                | Azure Speech egress; key/Entra credentials; SSML + PPTX parsing                                                                                                   | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SECURITY.md)         |
+| **tts-voiceover** (experimental)                | Azure Speech egress; key/Entra credentials; SSML + YAML parsing                                                                                                   | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SECURITY.md)         |
 | **accessibility**                               | Arbitrary-URL scan egress; `npx @axe-core/cli` subprocess                                                                                                         | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/accessibility/accessibility/SECURITY.md)        |
-| **powerpoint** (experimental)                   | Opt-in author-Python `content-extra.py` execution; LibreOffice/MuPDF parsing                                                                                      | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/powerpoint/SECURITY.md)            |
 | **video-to-gif** (experimental)                 | Local CLI (bash + PowerShell); FFmpeg/ffprobe subprocess                                                                                                          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SECURITY.md)          |
 | **copilot-otel-metrics** (experimental)         | Diff-approved global settings write; loopback OTLP ingest into a container stack; local-API query helpers; generated Azure collector and infrastructure templates | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/SECURITY.md)  |
 | **gh-code-scanning**                            | GitHub code-scanning read via `gh` CLI subprocess                                                                                                                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/gh-code-scanning/SECURITY.md)          |
@@ -55,6 +54,12 @@ Skills whose shipped scripts make network requests, handle credentials, parse co
 | **hve-core-installer**                          | Local PowerShell + Bash file copy into a target repository; `jq`, `git`, VS Code CLI subprocesses                                                                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/installer/hve-core-installer/SECURITY.md)       |
 | **session-log-canvas-update** (repository only) | Local Node.js CLI; installed or operator-named session event schema parsing; operator-selected `--indexer` module import; one fixed baseline write                | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/session-log-canvas-update/SECURITY.md)          |
 | **hve-demo-material** (experimental)            | GitHub REST and Pages client with `GITHUB_TOKEN`; deck and video render writes; `node`, `npm`, `ffmpeg`, `git` subprocesses                                       | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/SECURITY.md)     |
+
+HVE Slides uses one packaged skill for authoring and render-only delivery:
+
+| Skill                     | Runtime surface                                                                       | Security model                                                                                                    |
+|---------------------------|---------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| hve-slides (experimental) | Caller-owned scaffolding, trusted workspace Node builds and standalone HTML rendering | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-slides/SECURITY.md) |
 
 ## Security Posture
 

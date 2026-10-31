@@ -2,7 +2,7 @@
 title: HVE Demo Material Skill Security Model
 description: STRIDE threat model for the hve-demo-material skill organized by assets, adversaries, and trust buckets (GitHub API client and token, published site recovery, deck source generation, external program orchestration, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-03
+ms.date: 2026-10-28
 ms.topic: reference
 estimated_reading_time: 16
 keywords:
@@ -19,23 +19,23 @@ keywords:
 
 This document records the STRIDE threat model for the hve-demo-material skill (`scripts/artifact_lookup.py`, `scripts/html_deck.py`, `scripts/render-level.sh`, `scripts/render_checks.py`, and `scripts/check_html_deck.py`). The model is organized by trust bucket: GitHub API client and token handling (B1), Published site recovery and staging (B2), Deck source generation from authored content (B3), External program orchestration (B4), and CLI caller process and filesystem (B5). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
 
-The skill renders levelled demo decks and narrated videos from authored slide content. `artifact_lookup.py` finds CI artifacts through the GitHub REST API using `GITHUB_TOKEN`, or recovers the published bundle over HTTPS. `html_deck.py` turns slide content into an HVE Slides source folder and reads local git metadata. `render_checks.py` writes captions, a transcript page, and the segments manifest, runs fixed-argument `ffprobe` and `git diff` calls, and scores the machine-verifiable criteria. `check_html_deck.py` opens the bundled deck in headless Chromium with the network disabled. `render-level.sh` orchestrates `uv`, `npm`, `node`, and `ffmpeg`, calls both Python checks, and calls sibling skills (powerpoint, tts-voiceover, demo-video, vscode-playwright). Scope note: the HVE Slides starter (`bundle.mjs` and the deck runtime it bundles) and the sibling skills' scripts, including `capture_vscode.py`, were not reviewed for this model and are treated as trust boundaries (G-SUP-2).
+The skill renders HTML decks and narrated or silent videos. `artifact_lookup.py` reads GitHub artifacts/Pages. The adapter generates data-only source; the trusted loaded HVE Slides CLI bundles it. The offline browser serves only those HTML bytes on an intercepted origin, rejects external requests, blocks service workers/WebSockets/popups, and exports ordered JPEG canvas frames. `render_checks.py` verifies hashes, dimensions, styling, captions and media evidence. Narration, assembly and live capture use the retained tts-voiceover, demo-video and vscode-playwright entrypoints with caller-owned environments. Their implementations and host binaries remain trust boundaries (G-SUP-2).
 
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
 
 ## Executive Summary
 
-The hve-demo-material skill makes outbound HTTPS requests (GitHub REST API with a bearer token, and unauthenticated GitHub Pages downloads), writes decks, frames, audio, video, captions, transcript pages, and downloaded bundle files to caller-chosen directories, deletes and recreates a deck source directory, runs `node`, `npm`, `ffmpeg`, `ffprobe`, `uv`, and `git` with paths derived from the level directory and workspace, and opens the generated deck in headless Chromium with the network disabled. Subprocess calls use argument lists or quoted expansions with no `eval` and no `shell=True`. Published-bundle file names are restricted to a fixed allowlist pattern, a recorded commit is passed to `git diff` only when it is 40 hex characters, YAML is read with `yaml.safe_load`, generated HTML and caption text is escaped, the transcript page carries a content security policy, and citation paths are sanitized. Residual risk concentrates in unvalidated endpoint and redirect handling for the token, unconfined image paths, unguarded directory deletion, execution of a caller-selected HTML deck template, a Chromium launched with Playwright's default sandbox setting, and unpinned runtime dependencies.
+The adapter rejects unsupported meaningful content and confines image/source writes with link checks and fixed-file rollback. HTML scoring requires current content/build/browser/frame identity. The shell no longer executes a source-supplied bundler or recursively deletes the source directory. Chromium enables its sandbox and serves only the standalone bytes; failures do not install partial frames. Residual risk includes token endpoint/redirect handling, unbounded input size, local filesystem races, unclassified private content and operator-selected host/skill identity. Hashes provide local consistency, not signed attestations or independent visual-quality proof.
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                                                                                           |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| Runtime surface    | GitHub REST API and Pages downloads; local file writes and deletes; node, npm, ffmpeg, ffprobe, uv, git subprocesses; offline headless Chromium |
-| Trust buckets      | B1 API client and token, B2 site recovery, B3 deck generation, B4 program orchestration, B5 caller and files                                    |
-| Credentials        | GITHUB_TOKEN read from the environment and sent as a bearer header; Azure Speech credentials only inherited                                     |
-| Network egress     | api.github.com (or GITHUB_API_URL), the repository's GitHub Pages site, the npm registry during npm ci                                          |
-| Open residual gaps | 11 (InfoDisc-Med: token endpoint and redirect handling; EoP-Med: caller-selected template executed by node, Chromium without its sandbox)       |
+| Dimension       | Value                                                                                                                                           |
+|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| Runtime surface | GitHub REST API and Pages downloads; local file writes and deletes; node, npm, ffmpeg, ffprobe, uv, git subprocesses; offline headless Chromium |
+| Trust buckets   | B1 API client and token, B2 site recovery, B3 deck generation, B4 program orchestration, B5 caller and files                                    |
+| Credentials     | GITHUB_TOKEN read from the environment and sent as a bearer header; Azure Speech credentials only inherited                                     |
+| Network egress  | api.github.com (or GITHUB_API_URL), the repository's GitHub Pages site, the npm registry during npm ci                                          |
+| Residual gaps   | Token endpoint/redirect handling, input size, private content, local races and operator-managed runtime/skill provenance                        |
 
 ## Contents
 
@@ -57,10 +57,10 @@ The hve-demo-material skill makes outbound HTTPS requests (GitHub REST API with 
 
 1. `scripts/artifact_lookup.py` — `find` pages through completed workflow runs and artifacts on the GitHub REST API with `GITHUB_TOKEN`; `recover` downloads the published bundle over HTTPS using `index.json` as the file list. Standard library only.
 2. `scripts/html_deck.py` — maps a level's slide YAML and manifest sources to an HVE Slides source folder, embeds images as CSS data URLs, and runs read-only `git` queries to build citation links.
-3. `scripts/render-level.sh` — validates arguments, then runs live capture, deck build, validation and export, narration, MP4 assembly, HTML deck bundling, captions, and scoring by calling `uv`, `npm`, `node`, `ffmpeg`, `render_checks.py`, `check_html_deck.py`, and the sibling skills' wrappers.
+3. `scripts/render-level.sh`: rejects unsupported character/clip inputs, obtains required live captures, generates HTML through trusted HVE Slides, checks/exports frames, generates WAVs, assembles/finalizes media, and scores delivery. Frozen Python environments live under the level, not skill installations.
 4. `scripts/render_checks.py` — reads the level contracts and pinned sources from `references/curriculum.md`; `levels` and `changed` use only the standard library, and `changed` diffs against a recorded 40-hex commit; `segments`, `captions`, and `transcript` write the demo-video segments manifest, WebVTT captions, and an escaped transcript page; `evaluate` scores criteria T-04 to T-10 by reading local files and running `ffprobe`.
-5. `scripts/check_html_deck.py` — opens the bundled single-file HTML deck from `file://` in headless Chromium through Playwright with the network disabled, steps through every slide, and writes a JSON result. It runs in the vscode-playwright environment.
-6. Out of review scope (G-SUP-2): the HVE Slides starter (`bundle.mjs` and the deck runtime it bundles) and the powerpoint, tts-voiceover, demo-video, and vscode-playwright scripts, including `capture_vscode.py`.
+5. `scripts/check_html_deck.py`: offline sandboxed Chromium receives only the standalone HTML on a synthetic intercepted origin. It checks readiness/assets/order/overflow and optionally exports 1920x1080 JPEG frames with hash-bound schema2 evidence, using the existing Playwright project.
+6. External trust boundaries (G-SUP-2): HVE Slides canonical modules/runtime and retained narration, media and live-capture skills. Their local security models own their internal controls.
 
 ### Data Flow
 
@@ -72,12 +72,12 @@ flowchart TD
         RENDER["render-level.sh"]
         CHECKS["render_checks.py"]
         BROWSERCHK["check_html_deck.py"]
-        OUT["Level dir: PPTX / MP4 / VTT / HTML / frames / audio / results"]
+        OUT["Level dir: HTML / MP4 / VTT / frames / audio / evidence"]
     end
     subgraph INPUT["Authored Inputs (may be upstream-generated)"]
         CONTENT["Slide YAML, manifest, capture plan, images"]
         WS["Workspace repository (git metadata)"]
-        TPL["HVE Slides template (bundle.mjs, .npmrc)"]
+        TPL["Trusted loaded HVE Slides skill and template"]
     end
     subgraph REMOTE["Remote Services"]
         GHAPI["GitHub REST API"]
@@ -103,13 +103,13 @@ flowchart TD
     RENDER -->|"argv / quoted expansion"| NODE
     RENDER -->|"argv"| CHECKS
     RENDER -->|"deck path"| BROWSERCHK
-    TPL -->|"executed by node"| NODE
+    TPL -->|"trusted renderer CLI; source programs not imported"| NODE
     NODE -->|"HTTPS (npm ci)"| NPM
     CHECKS -->|"fixed argv, no shell"| FFPROBE
     CHECKS -->|"git diff base...HEAD, 40-hex base"| GIT
     CHECKS -->|"writes VTT, transcript, results"| OUT
-    BROWSERCHK -->|"file:// with network disabled"| CHROMIUM
-    BROWSERCHK -->|"writes check result"| OUT
+    BROWSERCHK -->|"only HTML bytes; intercepted origin; sandbox and offline"| CHROMIUM
+    BROWSERCHK -->|"staged frames and hash-bound result"| OUT
     RENDER -->|"mp4 + vtt, argv"| FFMPEG
     RENDER -->|"speaker notes via sibling skill"| AZURE
     FFMPEG -->|"writes captioned MP4"| OUT
@@ -124,7 +124,7 @@ flowchart TD
 │ TRUST BOUNDARY: Operator Workstation / CI Runner                    │
 │  ┌──────────────────┐  ┌──────────────┐  ┌───────────────────────┐  │
 │  │ artifact_lookup  │  │ html_deck    │  │ render-level.sh       │  │
-│  │ (token in env)   │  │ (rmtree)     │  │ (node/npm/ffmpeg/uv)  │  │
+│  │ (token in env)   │  │ (rollback)   │  │ (node/npm/ffmpeg/uv)  │  │
 │  └──────────────────┘  └──────────────┘  └───────────────────────┘  │
 │                    Level directory (caller-chosen)                  │
 └───────┬─────────────────────┬───────────────────────┬───────────────┘
@@ -154,21 +154,21 @@ flowchart TD
 | A3 | Authored level content                 | Command lifetime | Slide YAML, speaker notes, manifest, capture plan, and referenced images; may originate from an upstream pipeline fed by untrusted material.                                            |
 | A4 | Captured frames and narration audio    | Command lifetime | Live VS Code captures and speaker-note audio; can contain confidential on-screen material; notes are sent to Azure Speech under `azure`.                                                |
 | A5 | Published bundle and artifact metadata | Per-invocation   | `index.json` and level files on GitHub Pages; run and artifact identifiers from the GitHub API.                                                                                         |
-| A6 | Rendered outputs                       | Command lifetime | PPTX, MP4, WebVTT, transcript page, `segments.yml`, single-file HTML deck, `render-result.json`, and `html-deck-check.json` under the level directory.                                  |
-| A7 | Level directory and surrounding files  | Persistent       | Target of `rm -rf`, `shutil.rmtree`, `mv`, `ffmpeg -y`, and `write_bytes` overwrites.                                                                                                   |
+| A6 | Rendered outputs                       | Command lifetime | HTML, MP4, WebVTT, transcript, segments, JPEG frames and build/browser/media evidence under the level directory                                                                         |
+| A7 | Level directory and surrounding files  | Persistent       | Adapter uses checked fixed-file rollback writes; shell cleanup and other media writes remain separate controls.                                                                         |
 | A8 | HVE Slides template                    | Per-invocation   | `bundle.mjs`, `package.json`, `package-lock.json`, and `.npmrc` copied into the deck folder and executed or consumed by node and npm; its deck runtime also runs in the Chromium check. |
 | A9 | Host binaries                          | Per-invocation   | `node`, `npm`, `uv`, `ffmpeg`, `ffprobe`, `git`, and the Chromium that Playwright launches, resolved from the caller's PATH or the Playwright browser install.                          |
 
 ## Adversaries
 
-| Id    | Adversary                                   | In-scope mitigations                                                                                                                                                                                                                                                                                                                                                                  |
-|-------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Hostile or malformed authored content       | Slide YAML and the manifest are read with `yaml.safe_load`; all generated text and attributes pass through `html.escape`, including caption and transcript text; manifest source paths are rejected when absolute, backslashed, drive-prefixed, or containing `.` or `..` segments. Image paths are not confined (G-INF-1).                                                           |
-| ADV-b | Spoofed or compromised API or site endpoint | The site URL must start with `https://` and every request has a 60 s timeout. `GITHUB_API_URL` is not validated and redirects use urllib defaults (G-TLS-1).                                                                                                                                                                                                                          |
-| ADV-c | Hostile published bundle                    | `index.json` must be JSON with the `demo-material-site/v1` schema; levels must match `L[1-4]00`; every listed path must match the fixed `SITE_FILE` pattern, which blocks traversal and unexpected names. `render_checks.py changed` passes a recorded `source_sha` to `git diff` only when it is exactly 40 hex characters. File content is not verified against a digest (G-TAM-3). |
-| ADV-d | Hostile template or dependency              | `npm ci` runs with `--ignore-scripts` against the template's lockfile, and the Chromium check opens the bundle with the network disabled and fails on any external request. The template's `bundle.mjs` and `.npmrc` are still executed or honored, and its deck runtime runs in the browser (G-EOP-1, G-EOP-2, G-SUP-1).                                                             |
-| ADV-e | Hostile workspace repository                | Only fixed read-only git subcommands run (`remote get-url origin`, `rev-parse HEAD`) with a 30 s timeout. Only owner and repository name survive into the deck, so credentials in the remote URL are dropped, and the commit must be 40 hex characters.                                                                                                                               |
-| ADV-f | Hostile caller controlling argv or env      | Level, narration, and capture values are validated by regex; level and workspace directories are resolved with `cd && pwd`; all expansions are quoted. Output and deck directories are caller-controlled and not confined (G-TAM-1, G-TAM-2).                                                                                                                                         |
+| Id    | Adversary                                   | In-scope mitigations                                                                                                                                                                                                                                                                                                      |
+|-------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Hostile or malformed authored content       | Safe YAML parsing, escaped text/attributes, validated identities and mappings, confined image reads with link refusal; approved-root content still requires disclosure review (G-INF-1).                                                                                                                                  |
+| ADV-b | Spoofed or compromised API or site endpoint | The site URL must start with `https://` and every request has a 60 s timeout. `GITHUB_API_URL` is not validated and redirects use urllib defaults (G-TLS-1).                                                                                                                                                              |
+| ADV-c | Hostile published bundle                    | v2 identities, fixed file inventories, SHA-256 and linked HTML/media evidence are checked. Known obsolete metadata can select regeneration but cannot supply delivery files. Unsigned publisher authenticity remains a residual (G-TAM-3).                                                                                |
+| ADV-d | Hostile template or dependency              | `npm ci` runs with `--ignore-scripts` against the template's lockfile, and the Chromium check opens the bundle with the network disabled and fails on any external request. The template's `bundle.mjs` and `.npmrc` are still executed or honored, and its deck runtime runs in the browser (G-EOP-1, G-EOP-2, G-SUP-1). |
+| ADV-e | Hostile workspace repository                | Only fixed read-only git subcommands run (`remote get-url origin`, `rev-parse HEAD`) with a 30 s timeout. Only owner and repository name survive into the deck, so credentials in the remote URL are dropped, and the commit must be 40 hex characters.                                                                   |
+| ADV-f | Hostile caller controlling argv or env      | Quoted arguments, validated modes, caller-owned roots and link/refusal checks limit writes. Concurrent local races and trusted installation identity remain operator responsibilities.                                                                                                                                    |
 
 ## Bucket B1: GitHub API client and token handling
 
@@ -216,12 +216,13 @@ flowchart TD
 ### Spoofing
 
 * The site URL must start with `https://`; the default is derived from `GITHUB_REPOSITORY` as `https://<owner>.github.io/<name>/`. A caller-supplied `--site-url` may name any HTTPS host (G-TLS-1).
-* `index.json` must carry the `demo-material-site/v1` schema or recovery fails with an error.
+* Full recovery requires `demo-material-site/v2`, complete per-level identities and a nonempty delivery. Index-only detection recognizes known obsolete v1 metadata solely to select regeneration; it never downloads or publishes old delivery files.
 
 ### Tampering
 
-* Each path listed by `index.json`, plus the optional per-level files, must match the fixed `SITE_FILE` pattern (`L[1-4]00/` followed by one of a short set of file names), so traversal and arbitrary file names are rejected before any write.
-* Required files that are missing abort recovery so a partial bundle is never staged. Downloaded bytes are written verbatim and are not verified against a digest, and the pattern's `$` anchor tolerates a trailing newline (G-TAM-3, G-TAM-2).
+* Fixed file inventories use full-match validation and link/reparse/special-file refusal. Recovery verifies per-file SHA-256; deployment repeats delivery checks for renderer/schema, HTML/build/frame evidence and caption/raw/final media hashes. Missing or incompatible evidence stops deployment instead of resetting the index.
+* Bundle merges retain prior compatible levels on failed renders and roll back failed file replacements. Unknown or obsolete site content requires explicit preservation/migration; it is never recursively deleted. Hashes detect inconsistent bytes but do not authenticate a compromised publisher (G-TAM-3).
+* Full recovery requires an empty caller-owned target, so a failed later download cannot overwrite existing local media. Level installation includes its index replacement in the rollback boundary; index-only refreshes use atomic replacement.
 
 ### Repudiation
 
@@ -241,11 +242,11 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                     | Likelihood | Impact | Residual Risk | Status                          |
-|--------------------------------------------|------------|--------|---------------|---------------------------------|
-| Path traversal through hostile index.json  | Low        | High   | Low           | Mitigated (SITE_FILE allowlist) |
-| Tampered bundle restaged and republished   | Low        | Med    | Low           | Partially Mitigated (G-TAM-3)   |
-| Oversized download exhausts memory or disk | Low        | Low    | Low           | Accepted (G-DOS-1)              |
+| Threat                                     | Likelihood | Impact | Residual Risk | Status                                                                |
+|--------------------------------------------|------------|--------|---------------|-----------------------------------------------------------------------|
+| Path traversal through hostile index.json  | Low        | High   | Low           | Mitigated (SITE_FILE allowlist)                                       |
+| Tampered bundle restaged and republished   | Low        | Med    | Low           | Hash/schema/evidence checks; publisher authenticity remains (G-TAM-3) |
+| Oversized download exhausts memory or disk | Low        | Low    | Low           | Accepted (G-DOS-1)                                                    |
 
 ## Bucket B3: Deck source generation from authored content
 
@@ -259,23 +260,24 @@ flowchart TD
 
 * Slide and manifest YAML is read with `yaml.safe_load`; all slide text, titles, chapters, and `aria-label` values are escaped with `html.escape(quote=True)`, and `content.js` is emitted with `json.dumps(ensure_ascii=True)` and `<` escaped.
 * `render_checks.py` also reads slide, style, and segment YAML with `yaml.safe_load`, escapes caption cue text with `html.escape(quote=False)`, escapes every authored value in the transcript page with `html.escape`, and gives that page a content security policy of `default-src 'none'; media-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'`, so authored text cannot add markup or load remote resources. The policy covers the transcript page only; the bundled deck's own policy comes from the HVE Slides starter and was not reviewed (G-SUP-2).
-* `deck_dir` is removed with `shutil.rmtree` when it exists and nothing confines it to the level directory (G-TAM-1).
+* The adapter confines `deck_dir` to the caller's level outside `content/` and skill installations. `checked_path` rejects traversal, symlinks, reparse points and special files. Existing generated files need a matching ownership record and prior hashes; edited/unowned sources require a new destination. `install_files` stages fixed filenames with rollback and nonrecursive cleanup. Concurrent hostile local writers remain a residual risk (G-TAM-1).
+* Unsupported elements, connectors, ambiguous list/table mappings, inconsistent IDs and missing meaningful images fail instead of silently losing content. T-08 compares actual bundled CSS with the canonical HVE Slides theme and permitted demo layout, not YAML palette metadata.
 
 ### Repudiation
 
-* Missing images and the slide and source counts are recorded in `demo-material-build.json`; build errors exit non-zero with an `ERROR:` message.
-* `render_checks.py evaluate` records a pass, fail, or deferred result with evidence for each check from T-04 to T-10 in `render-result.json` and exits non-zero unless every check passes. A missing offline-browser result scores T-10 as a failure rather than a pass.
+* `demo-material-build.json` version 2 records renderer/format, ordered IDs, content SHA-256 and source/template file hashes. Missing images fail before output installation.
+* `render-result.json` version 2 requires HTML for every level. T-10 rejects absent or incompatible browser/build records and mismatched content/HTML/build hashes. Records are local evidence, not signed attestations. T-09 parses static HTML titles, alternatives and language alongside retained caption/transcript checks.
 
 ### Information Disclosure
 
-* `_image` resolves the `path` of an image element relative to the slide directory without a containment check and accepts absolute paths and symlinks. Any readable file whose name ends in `.png`, `.jpg`, or `.jpeg` is base64-embedded in the single-file HTML deck (G-INF-1).
+* Image paths must be plain relative paths inside `content/`, resolving from the slide or content root. Absolute paths, traversal and link/reparse ancestors are rejected. Nondecorative PNG/JPEG images require descriptive alternatives and are embedded as data. Content under the approved root still requires disclosure review (G-INF-1, G-INF-2).
 * Manifest source paths are rejected when absolute, backslashed, drive-prefixed, or containing `.`, `..`, or empty segments, then percent-encoded into the citation URL.
 * The transcript page lists every slide's title, on-screen text, and narration, so it republishes whatever the deck says (G-INF-2).
 
 ### Denial of Service
 
 * Not applicable at the generator layer beyond input size: images are read fully and embedded, and there is no per-image or per-deck size cap (G-DOS-1).
-* The accessibility check opens the built PPTX with `zipfile` and parses its members with the standard library `xml.etree.ElementTree`, with no limit on member size or entity expansion, and reads WAV headers with the `wave` module. These inputs are produced earlier in the same run (G-DOS-1).
+* Accessibility reads HTML through the standard-library `HTMLParser`, not an archive/XML presentation parser. HTML, YAML and embedded images remain memory-bound inputs without a total size cap; WAV header parsing remains (G-DOS-1).
 
 ### Elevation of Privilege
 
@@ -283,13 +285,13 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                           | Likelihood | Impact | Residual Risk | Status                             |
-|--------------------------------------------------|------------|--------|---------------|------------------------------------|
-| Unconfined image path discloses host image files | Low        | Med    | Low           | Open (G-INF-1)                     |
-| HTML or script injection through slide text      | Low        | Med    | Low           | Mitigated (html.escape, safe_load) |
-| HTML or caption injection through authored text  | Low        | Med    | Low           | Mitigated (html.escape, CSP)       |
-| Credential leakage through citation remote URL   | Low        | Med    | Low           | Mitigated (owner/repo only)        |
-| Unintended deletion through --deck-dir           | Low        | High   | Med           | Open (G-TAM-1)                     |
+| Threat                                          | Likelihood | Impact | Residual Risk | Status                                                             |
+|-------------------------------------------------|------------|--------|---------------|--------------------------------------------------------------------|
+| Image paths disclose unrelated host files       | Low        | Med    | Low           | Mitigated by containment and link refusal (G-INF-1)                |
+| HTML or script injection through slide text     | Low        | Med    | Low           | Mitigated (html.escape, safe_load)                                 |
+| HTML or caption injection through authored text | Low        | Med    | Low           | Mitigated (html.escape, CSP)                                       |
+| Credential leakage through citation remote URL  | Low        | Med    | Low           | Mitigated (owner/repo only)                                        |
+| Unintended deletion through --deck-dir          | Low        | High   | Low           | Adapter uses bounded rollback writes; local races remain (G-TAM-1) |
 
 ## Bucket B4: External program orchestration
 
@@ -298,7 +300,7 @@ flowchart TD
 ### Spoofing
 
 * Programs resolve through the caller's PATH, so the identity of `node`, `npm`, `uv`, `ffmpeg`, `ffprobe`, and `git` is an operator responsibility. `check_html_deck.py` launches the Chromium that Playwright provides, which is likewise an operator-managed binary (G-SUP-1).
-* `--html-deck-template` selects the directory whose `bundle.mjs`, `package.json`, and `.npmrc` are used; the default is the HVE Slides starter next to the skills folder (G-EOP-1).
+* `--slides-skill-root` names the trusted loaded HVE Slides installation. Its canonical renderer runs in Node; authored content cannot supply a build program. Verifying installation provenance remains an operator responsibility (G-EOP-1).
 
 ### Tampering
 
@@ -308,35 +310,34 @@ flowchart TD
 
 ### Repudiation
 
-* Each stage logs a `==>` progress line, failures abort the run, and `render-result.json` plus `captures.json` and `html-deck-check.json` record outcomes. A failed HTML deck check is logged but does not stop the run.
-* `check_html_deck.py` writes pass or fail with the slide count, overflowing slides, external requests, and page errors to `html-deck-check.json`, and exits non-zero on failure.
+* Each stage logs progress; failed offline export stops before narration/assembly. Browser evidence records actual HTML/build digests, ordered IDs, frame paths/digests/dimensions and findings. T-10 rechecks frame bytes and rejects non-pass or mismatched evidence. Retained frame ownership after failure is not current acceptance evidence.
 
 ### Information Disclosure
 
 * The script never prints credentials, but child programs inherit the whole environment, including any `GITHUB_TOKEN` or Azure Speech values present. Under `narration: azure`, speaker notes are sent to the configured Azure Speech region by the tts-voiceover sibling skill, and live captures can show confidential workspace content (G-INF-2).
 * `npm ci` contacts the npm registry named by the template's lockfile and `.npmrc`.
-* `check_html_deck.py` opens the deck from `file://` in a browser context created with `offline=True` and records any request other than the deck itself or a `data:` URL as a failure, so the check also detects a deck that reaches for remote resources.
+* Chromium receives one main-document response on a synthetic intercepted HTTPS origin. All other requests are aborted, service workers blocked, WebSockets closed, and popups/dialogs rejected. It receives no filesystem root. Embedded images are decoded before capture; external attempts fail the result.
 
 ### Denial of Service
 
-* No timeouts bound `node`, `npm`, `ffmpeg`, the `git diff` and `ffprobe` calls in `render_checks.py`, or the sibling skills, so a pathological input or hung process stalls the run. The Chromium check waits 20 s for the deck to report ready and otherwise relies on Playwright's default timeouts (G-DOS-1).
+* Chromium launch, navigation, asset readiness and capture use bounded 20-second waits. Frame bytes are staged in memory until all slides pass, so total content/frame memory remains unbounded. Node/npm and scorer subprocesses still rely on host job limits (G-DOS-1).
 
 ### Elevation of Privilege
 
-* `npm ci` runs with `--ignore-scripts`, which stops dependency lifecycle scripts, but `node bundle.mjs` executes the template's own code with the caller's privileges (G-EOP-1).
-* `check_html_deck.py` calls `playwright.chromium.launch()` with no options. Playwright's documented default for `chromium_sandbox` is `False`, so the Chromium sandbox is off while the browser renders a deck built from authored content, including embedded images, and runs the HVE Slides runtime JavaScript, offline and from `file://` (G-EOP-2).
+* `npm ci --ignore-scripts` runs only in generated source; the renderer CLI runs from the trusted skill rather than importing a supplied program. A substituted trusted installation is still executable code (G-EOP-1).
+* Chromium explicitly enables `chromium_sandbox=True`. Missing sandbox support fails rather than disabling it. Offline interception limits egress, not every browser-engine vulnerability (G-EOP-2).
 * `ffmpeg` receives the locally produced MP4 and the WebVTT file generated from speaker notes. Both paths are absolute and the arguments are fixed.
 
 ### Risk Rating
 
-| Threat                                                   | Likelihood | Impact | Residual Risk | Status                          |
-|----------------------------------------------------------|------------|--------|---------------|---------------------------------|
-| Hostile template code executed by node                   | Low        | High   | Med           | Open (G-EOP-1)                  |
-| Chromium renderer exploit through a hostile deck         | Low        | High   | Med           | Open (G-EOP-2)                  |
-| Dependency or binary substitution                        | Low        | High   | Med           | Open (G-SUP-1)                  |
-| Confidential material in captures or narration           | Med        | Med    | Med           | Partially Mitigated (G-INF-2)   |
-| Command injection through level or workspace paths       | Low        | High   | Low           | Mitigated (quoting, validation) |
-| Option injection through a recorded commit in index.json | Low        | Med    | Low           | Mitigated (40-hex check)        |
+| Threat                                                   | Likelihood | Impact | Residual Risk | Status                                                                             |
+|----------------------------------------------------------|------------|--------|---------------|------------------------------------------------------------------------------------|
+| Substituted trusted skill executed by Node               | Low        | High   | Med           | Imported-source execution removed; trusted installation identity remains (G-EOP-1) |
+| Chromium renderer exploit through a hostile deck         | Low        | High   | Low           | Sandbox and isolated origin enabled; keep browser patched (G-EOP-2)                |
+| Dependency or binary substitution                        | Low        | High   | Med           | Open (G-SUP-1)                                                                     |
+| Confidential material in captures or narration           | Med        | Med    | Med           | Partially Mitigated (G-INF-2)                                                      |
+| Command injection through level or workspace paths       | Low        | High   | Low           | Mitigated (quoting, validation)                                                    |
+| Option injection through a recorded commit in index.json | Low        | Med    | Low           | Mitigated (40-hex check)                                                           |
 
 ## Bucket B5: CLI caller process and filesystem
 
@@ -349,8 +350,8 @@ The caller controls argv, environment, and the output locations (`--target`, `--
 ### Tampering
 
 * `artifact_lookup.py` appends `key=value` lines to the caller-chosen `--github-output` file without stripping newlines from API-derived values, so a hostile API response could add extra output keys (G-TAM-2). `recover` creates parent directories and overwrites files under `--target` without symlink checks.
-* `render-level.sh` removes and recreates `${LEVEL_DIR}/html-deck` with `rm -rf`, and `html_deck.py` removes `--deck-dir` with `shutil.rmtree` (G-TAM-1).
-* `render_checks.py captions` and `check_html_deck.py` create parent directories for and overwrite the caller-chosen `--output` file, while `segments` and `transcript` write fixed names under `<level-dir>/output/`. None of these confines the path.
+* Source and frame writes use path/link checks and fixed-file rollback without recursive deletion. Frame regeneration refuses unowned, edited or obsolete directory contents. Check-only evidence is caller-selected; export evidence stays beside the deck under the approved level. Local check-to-write races remain (G-TAM-1).
+* Caption/media operations retain their existing staged finalization and rollback contracts. Scripted rendering uses caller-owned Python environments and quoted fixed paths; independently invoked media helpers still require trusted caller paths.
 
 ### Repudiation
 
@@ -379,19 +380,19 @@ The caller controls argv, environment, and the output locations (`--target`, `--
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                                                                                                                                                          | Severity        | Status                                                                                                                                           |
-|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| G-TLS-1 | `GITHUB_API_URL` and `--site-url` are not restricted by scheme or host (the API URL accepts `http://`), and the API client keeps urllib's default redirect handling, which forwards the `Authorization` header on a cross-host redirect, so the bearer token could reach an unintended host.                 | InfoDisc-Med    | Run only where the runner sets `GITHUB_API_URL`; use a least-privilege read-only token; planned fix is to require HTTPS and an allowlisted host. |
-| G-INF-1 | An image `path` in slide content is not confined to the slide directory and follows absolute paths and symlinks, so any readable `.png`, `.jpg`, or `.jpeg` file can be embedded in the HTML deck.                                                                                                           | InfoDisc-Low    | Review slide content from untrusted authors; render untrusted content in an isolated account.                                                    |
-| G-INF-2 | Live captures, frames, narration, and the generated transcript page can contain confidential workspace content, and nothing redacts them before a human-configured pipeline publishes them. Under `azure`, speaker notes leave the host.                                                                     | InfoDisc-Med    | Rely on the delivery approval step; use approved regions and avoid confidential material in captures and notes.                                  |
-| G-TAM-1 | `html_deck.py` removes `--deck-dir` with `shutil.rmtree` and `render-level.sh` runs `rm -rf` on `<level-dir>/html-deck`, with no check that the target lies under the level directory.                                                                                                                       | Tampering-Med   | Pass only generated paths under the level directory; planned fix is a containment check before deletion.                                         |
-| G-TAM-2 | `--github-output` values are written without newline stripping, `--workflow` is interpolated into the API path unquoted, and the `SITE_FILE` pattern uses `$`, which tolerates a trailing newline.                                                                                                           | Tampering-Low   | Use a trusted API endpoint; planned fix is `fullmatch`, path quoting, and single-line output values.                                             |
-| G-TAM-3 | Recovered bundle files are checked only by name pattern and TLS, with no digest verification, and the bundle is restaged for redeployment.                                                                                                                                                                   | Tampering-Low   | Restrict who can alter the Pages site; planned fix is a digest list in `index.json` verified before staging.                                     |
-| G-DOS-1 | API and download responses are read fully with no size cap, pagination has no page cap, embedded images have no size cap, PPTX members and XML are read without limits in the accessibility check, and `node`, `npm`, `ffmpeg`, `ffprobe`, `git diff`, and sibling skills run without timeouts.              | DoS-Low         | Run under CI job timeouts and resource limits.                                                                                                   |
-| G-EOP-1 | `--html-deck-template` selects a directory whose `bundle.mjs` is executed by `node`, whose `.npmrc` and `package.json` drive `npm ci`, and whose bundled runtime then runs in the Chromium check; `--ignore-scripts` does not cover the template's own code.                                                 | EoP-Med         | Use only the repository's HVE Slides starter or a reviewed template; run untrusted templates in an isolated container.                           |
-| G-EOP-2 | `check_html_deck.py` launches Chromium with default options, and Playwright's default for `chromium_sandbox` is off, so a renderer exploit through a hostile deck or an embedded image runs without the browser sandbox.                                                                                     | EoP-Med         | Run the render on a disposable runner or container; planned fix is `chromium_sandbox=True` where the runner supports it.                         |
-| G-SUP-1 | `npm ci` and `uv run` fetch dependencies at render time, the Chromium that Playwright launches is a host-installed browser binary, and `node`, `npm`, `uv`, `ffmpeg`, `ffprobe`, and `git` are operator-installed and unpinned.                                                                              | SupplyChain-Med | Rely on lockfiles; pin and patch host binaries through the runner image.                                                                         |
-| G-SUP-2 | The HVE Slides starter (`bundle.mjs` and the deck runtime it bundles) and the sibling skills' scripts (powerpoint, tts-voiceover, demo-video, vscode-playwright, including `capture_vscode.py`) were not reviewed for this model; claims about them come from skill documentation and are not verified here. | SupplyChain-Low | Review these components and extend this model; follow the powerpoint skill's model and the demo-video model once published.                      |
+| Id      | Gap                                                                                                                                                                                                                                                                                          | Severity        | Status                                                                                                                                           |
+|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| G-TLS-1 | `GITHUB_API_URL` and `--site-url` are not restricted by scheme or host (the API URL accepts `http://`), and the API client keeps urllib's default redirect handling, which forwards the `Authorization` header on a cross-host redirect, so the bearer token could reach an unintended host. | InfoDisc-Med    | Run only where the runner sets `GITHUB_API_URL`; use a least-privilege read-only token; planned fix is to require HTTPS and an allowlisted host. |
+| G-INF-1 | Image content under the approved content root may still be confidential; path checks cannot classify it.                                                                                                                                                                                     | InfoDisc-Low    | Outside-root and symlink reads mitigated; review approved-root images before delivery.                                                           |
+| G-INF-2 | Live captures, frames, narration, and the generated transcript page can contain confidential workspace content, and nothing redacts them before a human-configured pipeline publishes them. Under `azure`, speaker notes leave the host.                                                     | InfoDisc-Med    | Rely on the delivery approval step; use approved regions and avoid confidential material in captures and notes.                                  |
+| G-TAM-1 | Concurrent hostile local writers can race path checks and replacements.                                                                                                                                                                                                                      | Tampering-Low   | Recursive source cleanup removed; source/frame ownership and rollback controls mitigate accidental replacement. Isolate local writers.           |
+| G-TAM-2 | The caller-controlled workflow identifier is interpolated into an API path without quoting.                                                                                                                                                                                                  | Tampering-Low   | File inventories use full-match validation and GitHub outputs reject newlines; use trusted workflow identifiers and API endpoints.               |
+| G-TAM-3 | A compromised publisher can replace content and its unsigned digest list together.                                                                                                                                                                                                           | Tampering-Low   | Per-file SHA-256, schema and linked evidence are checked during recovery/deployment; retain publisher access controls.                           |
+| G-DOS-1 | API/download responses, HTML, YAML and embedded images have no total size cap; pagination has no page cap; node/npm/media/git and sibling processes can outlive their intended run without host limits.                                                                                      | DoS-Low         | Run under job timeouts and memory/disk limits.                                                                                                   |
+| G-EOP-1 | The caller-selected trusted HVE Slides installation runs with Node privileges; a substituted installation can execute code.                                                                                                                                                                  | EoP-Med         | Source-supplied build programs are not imported. Verify trusted skill provenance.                                                                |
+| G-EOP-2 | Browser-engine vulnerabilities remain despite offline routing and the Chromium sandbox.                                                                                                                                                                                                      | EoP-Low         | Sandbox is explicitly enabled; unavailable support fails. Patch browsers and isolate render hosts.                                               |
+| G-SUP-1 | `npm ci` and `uv run` fetch dependencies at render time, the Chromium that Playwright launches is a host-installed browser binary, and `node`, `npm`, `uv`, `ffmpeg`, `ffprobe`, and `git` are operator-installed and unpinned.                                                              | SupplyChain-Med | Rely on lockfiles; pin and patch host binaries through the runner image.                                                                         |
+| G-SUP-2 | HVE Slides, narration, assembly and live-capture implementations are separate trust boundaries, not certified by this model.                                                                                                                                                                 | SupplyChain-Low | Follow their security models and verify installed revisions; no runtime certification is implied here.                                           |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

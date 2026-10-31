@@ -2757,13 +2757,13 @@ Describe 'Node test discovery and selection for Copilot extensions' -Tag 'Unit' 
 
     It 'Does not select the canvas update skill lane for <Path>' -ForEach @(
         @{ Path = '.github/skills/session-log-canvas-update-extra/SKILL.md' }
-        @{ Path = '.github/skills/hve-slides/scripts/build-decks.mjs' }
+        @{ Path = '.github/skills/experimental/hve-slides/scripts/build-decks.mjs' }
     ) {
         $Path | Should -Not -Match $script:CanvasUpdatePattern
     }
 
     It 'Keeps the slide deck branch and the JS-family default' {
-        $script:NodeSelection | Should -Match ([regex]::Escape("startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory)"))
+        $script:NodeSelection | Should -Match ([regex]::Escape("startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory)"))
         $script:NodeSelection | Should -Match "\|\| '' \}\}$"
     }
 }
@@ -2900,19 +2900,18 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
         $source | Should -Match '(?m)^  skip-bots: \["dependabot\[bot\]"\]\r?$'
     }
 
-    It 'Hands authored demo content to the render through a filtered workflow_run' {
+    It 'Hands authored demo content to the render through a scheduled pickup' {
         $render = Get-WorkflowDocument -Name 'demo-material-render.yml'
-        $render['on'].Contains('workflow_run') | Should -BeTrue
-        @($render['on']['workflow_run']['workflows']) | Should -Be @('Demo Material Author')
-        @($render['on']['workflow_run']['branches']) | Should -Be @('main')
-        @($render['on']['workflow_run']['types']) | Should -Be @('completed')
+        $render['on'].Contains('workflow_run') | Should -BeFalse
+        @($render['on']['schedule'] | ForEach-Object { $_['cron'] }) | Should -Be @('47 3 * * *', '47 5 * * 1')
         $render['on']['workflow_dispatch']['inputs'].Contains('author-run-id') | Should -BeTrue
         $resolve = Get-NamedJobStep -Document $render -JobName 'resolve' -StepName 'Resolve author run and render mode'
         $resolveScript = [string]$resolve['with']['script']
-        $resolveScript | Should -Match 'authorRun = context\.payload\.workflow_run'
+        $resolveScript | Should -Match 'authorRun = await findPendingAuthorRun\(\)'
+        $resolveScript | Should -Match 'workflow_id: "demo-material-author\.lock\.yml"'
         $resolveScript | Should -Match 'authorRun\.path !== "\.github/workflows/demo-material-author\.lock\.yml"'
         $resolveScript | Should -Match 'authorRun\.head_branch !== defaultBranch'
-        $resolveScript | Should -Match 'demo-material-content-\$\{authorRun\.id\}'
+        $resolveScript | Should -Match 'demo-material-content-v2-\$\{authorRun\.id\}'
 
         $author = Get-WorkflowDocument -Name 'demo-material-author.lock.yml'
         $author['jobs'].Contains('dispatch-render') | Should -BeFalse
