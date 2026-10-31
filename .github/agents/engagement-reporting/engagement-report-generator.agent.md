@@ -1,12 +1,6 @@
 ---
 name: Engagement Report Generator
 description: Coordinates source-grounded engagement reports, review, optional Council critique, and Outlook draft creation.
-argument-hint: "Report type and reporting period"
-agents:
-  - Engagement Report Council Arbiter
-  - Engagement Report Council Critic
-  - Engagement Report Outlook Drafter
-  - Engagement Report Reviewer
 tools:
   - agent
   - read
@@ -30,6 +24,7 @@ tools:
   - github/issue_read
   - github/search_pull_requests
   - github/pull_request_read
+  - skill
 disable-model-invocation: true
 skills:
   - engagement-report-conventions

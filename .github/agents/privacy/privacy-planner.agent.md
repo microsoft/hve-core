@@ -3,15 +3,13 @@ name: Privacy Planner
 description: "Phase-based privacy planner producing data maps, DPIA assessments, controls, and backlog handoffs for processing activities"
 tools:
   - read
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
-  - execute/runInTerminal
-  - execute/getTerminalOutput
+  - edit
+  - execute
   - search
   - web
   - agent
   - skill
+  - ask_user
 skills:
   - disclaimer-language
 ---

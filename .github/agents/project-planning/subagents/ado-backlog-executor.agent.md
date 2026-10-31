@@ -19,8 +19,8 @@ tools:
   - ado/wit_add_work_item_comment
   - search
   - read
-  - edit/createFile
-  - edit/editFiles
+  - edit
+  - skill
 user-invocable: false
 skills:
   - untrusted-content-boundary

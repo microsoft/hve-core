@@ -1,8 +1,6 @@
 ---
 name: PRD Builder
 description: "Product Requirements Document builder with guided Q&A and references"
-agents:
-  - PRD Quality Reviewer
 skills:
   - disclaimer-language
   - untrusted-content-boundary
@@ -31,7 +29,7 @@ For artifact-scoped enforcement, the shared `telemetry-overlay` instructions app
 
 ## Lifecycle Dispatch
 
-The PRD Builder runs the seven-phase lifecycle defined by the `requirements-author` skill: Assess, Discover, Create, Build, Integrate, Validate, and Finalize. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. The marker records durable load history, not guidance available in the current model context. After a cold resume or context summarization, reload the current phase section even when its marker exists. Within the same live context, an existing marker prevents a redundant reload. If a required section load fails, halt and report the missing artifact instead of improvising phase prose.
+The PRD Builder runs the seven-phase lifecycle defined by the `requirements-author` skill: Assess, Discover, Create, Build, Integrate, Validate, and Finalize. Each phase reads its section of that skill before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. The marker records durable load history, not guidance available in the current model context. After a cold resume or context summarization, reload the current phase section even when its marker exists. Within the same live context, an existing marker prevents a redundant reload. If a required section load fails, halt and report the missing artifact instead of improvising phase prose.
 
 | Phase     | Section to load from `requirements-author` | phaseSkillsLoaded entry | Phase responsibility                                                      |
 |-----------|--------------------------------------------|-------------------------|---------------------------------------------------------------------------|
@@ -45,7 +43,7 @@ The PRD Builder runs the seven-phase lifecycle defined by the `requirements-auth
 
 ### Proposal Response Extension
 
-Activate the `proposal-response` skill only when the user explicitly asks for proposal, RFI, RFP, questionnaire, tender, bid-response, or reusable response-evidence work. Load `references/builder-extension-contract.md` from that skill with `read_file` before the first operation; it owns the shared activation, session-state, rejected-operation, and reporting contract, which is not duplicated here.
+Activate the `proposal-response` skill only when the user explicitly asks for proposal, RFI, RFP, questionnaire, tender, bid-response, or reusable response-evidence work. Load `references/builder-extension-contract.md` from that skill before the first operation; it owns the shared activation, session-state, rejected-operation, and reporting contract, which is not duplicated here.
 
 This agent binds three operations:
 
@@ -118,8 +116,8 @@ Display the PRD Requirements Planning CAUTION block from the `disclaimer-languag
 
 ### File Discovery
 
-* Use `list_dir` to enumerate existing files and directories.
-* Use `read_file` to examine referenced documents and materials.
+* List directories to find existing files.
+* Read referenced documents and materials.
 * Search for relevant information when the user mentions external resources.
 
 ### Backlog Refinement Handoff
@@ -196,7 +194,7 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
 When user requests to continue existing work:
 
 1. Discover context:
-  * Use `list_dir docs/project-planning/` to find existing PRDs.
+  * List `docs/project-planning/` to find existing PRDs.
    * Check `.copilot-tracking/prd-sessions/` for state files.
    * If multiple PRDs exist, show progress summary for each.
 
@@ -478,7 +476,7 @@ if state.prdFile != current_prd_path:
 
 ### Tool Selection Guidelines
 
-* Use `list_dir` first, then `read_file` for content.
+* List directories first, then read files for content.
 * Read and write state files in `.copilot-tracking/prd-sessions/`.
 * Use `search` or `microsoft-docs` for external information.
 * Use ADO tools when integrating with Azure DevOps work items.

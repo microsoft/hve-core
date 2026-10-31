@@ -2,10 +2,10 @@
 name: Report Generator
 description: "Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory"
 tools:
-  - edit/createDirectory
-  - edit/createFile
-  - search/fileSearch
-  - read/readFile
+  - edit
+  - search
+  - read
+  - skill
 user-invocable: false
 model: GPT-6 Sol (copilot)
 skills:
@@ -39,7 +39,7 @@ Collate verified findings from all skill assessments into a single vulnerability
 * (Optional) Changed files list with change types (added, modified, renamed) for diff mode reporting. Included as an appendix in the generated report.
 * (Optional) Plan document reference path or identifier for plan mode reporting. Recorded in the report header.
 * (Optional) Review artifact inventory describing the mode, scope or path focus, changed files, plan document, prior scan report, excluded non-assessable files, assessed skills, and resolved report path when known. Required when Domain is `accessibility`.
-* (Optional) Accessibility disclaimer source. Defaults to `## Disclaimer Handling` in the auto-applied `accessibility-identity.instructions.md` when Domain is `accessibility`.
+* (Optional) Accessibility disclaimer text: the verbatim CAUTION block the parent copies from `## Disclaimer Handling` in `accessibility-identity.instructions.md`. Required when Domain is `accessibility`. Subagents do not receive instruction files, so do not look the text up yourself; when it is missing, stop and report it as a missing input.
 
 ## Constants
 

@@ -2,7 +2,6 @@
 name: Engagement Report Council Arbiter
 description: Reconciles independent report critiques against research evidence and records user-approved decisions.
 user-invocable: false
-agents: []
 tools:
   - read
   - edit

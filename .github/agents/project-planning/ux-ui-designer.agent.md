@@ -3,22 +3,12 @@ name: UX UI Designer
 description: 'Route UX practitioners between focused coaching, evidence-labelled asset production, inclusion decisions, design intent, and external design surfaces'
 tools:
   - read
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
-  - execute/runInTerminal
-  - execute/getTerminalOutput
+  - edit
+  - execute
   - search
   - web
-handoffs:
-  - label: "Build PRD"
-    agent: PRD Builder
-    prompt: "Create or refine a Product Requirements Document for this initiative using the research produced in this session."
-    send: true
-  - label: "🔍 Research Topic"
-    agent: RPI Agent
-    prompt: "Activate `rpi-research` for the current technical-feasibility question before any planning or implementation."
-    send: true
+  - skill
+  - ask_user
 skills:
   - untrusted-content-boundary
 ---

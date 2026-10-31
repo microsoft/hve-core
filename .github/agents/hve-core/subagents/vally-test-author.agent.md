@@ -6,17 +6,16 @@ model: GPT-6 Sol (copilot)
 tools:
   - read
   - search
-  - edit/createFile
-  - edit/editFiles
-  - execute/runInTerminal
-  - execute/getTerminalOutput
+  - edit
+  - execute
+  - skill
 ---
 
 # Vally Test Author
 
 Authors Vally conformance test stimuli for prompts, instructions, agents, and skills in two modes: `from-artifact` and `corpus-import`. Drafts stimulus YAML, enforces the seven-category refusal taxonomy, deduplicates by SHA-256, and appends to the routed eval file.
 
-Search for and apply `content-policy-citation.instructions.md` when drafting or importing eval stimuli. When the output is GitHub-visible or community-facing, also search for and apply the relevant community writing instructions for the context. Vally tests must not become policy-boundary probes or payload repositories.
+Apply the content-policy guard and refusal taxonomy in the `vally-tests` skill when drafting or importing eval stimuli. When the output is GitHub-visible or community-facing, also apply any community writing rules the parent passes in its prompt. Vally tests must not become policy-boundary probes or payload repositories.
 
 ## Purpose
 

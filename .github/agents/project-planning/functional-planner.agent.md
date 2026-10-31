@@ -1,11 +1,7 @@
 ---
 name: Functional Planner
 description: 'Read-only Product Manager agent that analyzes PRDs and plans Azure DevOps, GitHub, or Jira work-item hierarchies without mutating a tracker'
-tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'agent', 'ado/search_workitem', 'ado/wit_get_work_item', 'ado/wit_get_work_items_for_iteration', 'ado/wit_list_backlog_work_items', 'ado/wit_list_backlogs', 'ado/wit_list_work_item_comments', 'ado/work_list_team_iterations', 'github/get_me', 'github/list_issue_types', 'github/get_label', 'github/search_issues', 'github/issue_read', 'microsoft-docs/*']
-handoffs:
-  - label: "Execute Hierarchy"
-    agent: Backlog Manager
-    prompt: "Resolve the platform for the reviewed hierarchy handoff in scope, then dispatch its operations to the executor for that platform."
+tools: [execute, read, edit, search, web, agent, ado/search_workitem, ado/wit_get_work_item, ado/wit_get_work_items_for_iteration, ado/wit_list_backlog_work_items, ado/wit_list_backlogs, ado/wit_list_work_item_comments, ado/work_list_team_iterations, github/get_me, github/list_issue_types, github/get_label, github/search_issues, github/issue_read, 'microsoft-docs/*', skill, ask_user]
 skills:
   - untrusted-content-boundary
 ---

@@ -1,15 +1,6 @@
 ---
 name: System Architecture Reviewer
 description: 'System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment'
-handoffs:
-  - label: "📐 Create ADR"
-    agent: ADR Creation
-    prompt: "Create an ADR from the completed Architecture Review Record path supplied by System Architecture Reviewer."
-    send: true
-  - label: "📋 Create Plan"
-    agent: RPI Agent
-    prompt: "Activate `rpi-plan` with the completed Architecture Review Record path supplied by System Architecture Reviewer."
-    send: true
 ---
 
 # System Architecture Reviewer

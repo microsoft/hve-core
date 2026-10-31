@@ -1,22 +1,15 @@
 ---
 name: RAI Planner
 description: "Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff"
-handoffs:
-  - label: "Security Planner"
-    agent: Security Planner
-    prompt: "Start security planning in capture entry mode for this project."
-    send: true
 tools:
   - read
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
-  - execute/runInTerminal
-  - execute/getTerminalOutput
+  - edit
+  - execute
   - search
   - web
   - agent
   - skill
+  - ask_user
 skills:
   - disclaimer-language
   - untrusted-content-boundary

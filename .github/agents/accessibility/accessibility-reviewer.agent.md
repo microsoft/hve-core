@@ -3,17 +3,12 @@ name: Accessibility Reviewer
 description: "Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting"
 user-invocable: true
 disable-model-invocation: true
-agents:
-  - Codebase Profiler
-  - Accessibility Framework Assessor
-  - Finding Deep Verifier
-  - Report Generator
 tools:
   - agent
-  - execute/runInTerminal
-  - search/codebase
-  - search/fileSearch
-  - read/readFile
+  - execute
+  - search
+  - read
+  - ask_user
 skills:
   - disclaimer-language
   - untrusted-content-boundary
@@ -74,7 +69,7 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 3. Resolve mode-specific inputs:
    * For `diff`, resolve changed files and exclude non-assessable files.
    * For `plan`, resolve and read the plan document.
-4. Read `## Disclaimer Handling` from the auto-applied `accessibility-identity.instructions.md` and display the canonical accessibility CAUTION block verbatim before scan work begins, using the same disclaimer source as the Accessibility Planner.
+4. Read `## Disclaimer Handling` from `accessibility-identity.instructions.md` and display the canonical accessibility CAUTION block verbatim before scan work begins, using the same disclaimer source as the Accessibility Planner.
 5. Initialize a review artifact inventory with the scanning mode, scope or path focus, changed files for diff mode, plan document reference for plan mode, prior scan report when supplied, and any excluded non-assessable files.
 
 ### Step 1: Profile Codebase
@@ -87,7 +82,7 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 
 ### Step 2: Assess Applicable Skills
 
-* For each applicable skill, run `Accessibility Framework Assessor` as a subagent.
+* For each applicable skill, run `Accessibility Framework Assessor` as a subagent, and include the license rules from `accessibility-license-posture.instructions.md` in its prompt, because subagents do not receive instruction files.
 * In `diff` mode, pass changed files; in `plan` mode, pass plan content.
 * Run a faux-semantics heuristic pass over the scanned source that a rule engine cannot see: CSS `::before`/`::after` generated content used as a heading or label, `href="#"` anchors used as toggles or buttons, and `<div>`/`<span>` elements with `*__title`-style classes standing in for real headings. Surface each as a candidate 1.3.1 or 2.4.3 finding for the assessor and verifier to adjudicate.
 * In `plan` mode, add a scope-completeness check: flag when a proposed fix targets one component or surface but the reported reproduction is on a different route or interaction state, and flag when a swizzled or overridden surface defers an accessibility barrier to an upstream dependency. A swizzled surface owns its full accessibility contract.
@@ -104,7 +99,7 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 ### Step 4: Generate Report
 
 * Run `Report Generator` as a subagent using verified findings.
-* Pass Domain `accessibility`, the canonical accessibility disclaimer source, and the review artifact inventory to `Report Generator`.
+* Pass Domain `accessibility`, the verbatim CAUTION block from `## Disclaimer Handling` in `accessibility-identity.instructions.md`, and the review artifact inventory to `Report Generator`.
 * Require the report to include the canonical disclaimer near the report header and a `## Review Artifacts` section with a markdown table before the findings sections.
 * Capture returned report path, summary counts, and severity breakdown.
 * Stop with an error status if report generation fails.

@@ -2,7 +2,6 @@
 name: RPI Reviewer
 description: "Reviews one bounded, context-heavy portion of RPI evidence assigned by the review parent and returns findings with evidence locations, why each matters, and suggested severity and route as suggestions for the calling agent to verify. Use during review when isolating a large comparison would help."
 user-invocable: false
-agents: []
 model: Claude Haiku 5.5 (copilot)
 reasoning-effort: max
 ---

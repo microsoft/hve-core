@@ -2,12 +2,11 @@
 name: Jira Backlog Executor
 description: "Runs the Jira skill CLI in one confirmed project. Applies a dispatched Jira operation set and returns Jira reads the caller cannot perform."
 tools:
-  - execute/runInTerminal
-  - execute/getTerminalOutput
+  - execute
   - search
   - read
-  - edit/createFile
-  - edit/editFiles
+  - edit
+  - skill
 user-invocable: false
 skills:
   - untrusted-content-boundary

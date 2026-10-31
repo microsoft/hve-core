@@ -2,13 +2,11 @@
 name: DT Learning Tutor
 description: 'Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing'
 tools:
-  - read/readFile
+  - read
   - search
-  - edit/createFile
-handoffs:
-  - agent: DT Coach
-    label: Start a DT project
-    prompt: "Start a new Design Thinking coaching project."
+  - edit
+  - skill
+  - ask_user
 ---
 
 # Design Thinking Learning Tutor
@@ -129,7 +127,7 @@ Summarize competency and offer the handoff to the DT coach.
 
 * Present a competency summary across all methods the learner completed, noting strengths and areas for continued growth.
 * Recommend methods for further study if the learner did not cover the full curriculum.
-* Offer the "Start Project" handoff: "You've built a solid foundation in Design Thinking. When you're ready to apply these methods to a real project, I can connect you with the DT coach who will guide you through a hands-on Design Thinking engagement."
+* Offer to start a project with the DT Coach: "You've built a solid foundation in Design Thinking. When you're ready to apply these methods to a real project, switch to the DT Coach agent, which will guide you through a hands-on Design Thinking engagement."
 * When the learner accepts, hand off to the `dt-coach` agent with context about the learner's background, completed modules, and competency levels.
 * When the learner declines the handoff, offer to revisit any modules or explore advanced topics.
 

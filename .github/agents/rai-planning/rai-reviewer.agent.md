@@ -1,17 +1,13 @@
 ---
 name: RAI Reviewer
 description: "Responsible AI standards assessment orchestrator for codebase profiling and RAI findings reporting against NIST AI RMF, the AI STRIDE overlay, and the EU AI Act"
-agents:
-  - Codebase Profiler
-  - RAI Skill Assessor
-  - Finding Deep Verifier
-  - Report Generator
 tools:
   - agent
-  - execute/runInTerminal
-  - search/codebase
-  - search/fileSearch
-  - read/readFile
+  - execute
+  - search
+  - read
+  - skill
+  - ask_user
 user-invocable: true
 disable-model-invocation: true
 skills:
@@ -83,7 +79,7 @@ All frameworks resolve to reference files owned by the `rai-standards` skill.
 
 ### Step 2: Assess Applicable Frameworks
 
-* For each applicable framework, run `RAI Skill Assessor` as a subagent, passing the framework name and the codebase profile.
+* For each applicable framework, run `RAI Skill Assessor` as a subagent, passing the framework name, the codebase profile, and the license rules from `rai-license-posture.instructions.md`, because subagents do not receive instruction files.
 * In `diff` mode, pass changed files; in `plan` mode, pass plan content.
 * Collect findings across successful framework assessments.
 

@@ -3,16 +3,13 @@ name: Privacy Reviewer
 description: "Privacy-focused reviewer orchestrator for assessment planning, evidence review, and report generation"
 user-invocable: true
 disable-model-invocation: true
-agents:
-  - Privacy Planner
 tools:
   - agent
-  - execute/runInTerminal
-  - search/codebase
-  - search/fileSearch
-  - read/readFile
-  - edit/createFile
-  - edit/editFiles
+  - execute
+  - search
+  - read
+  - edit
+  - ask_user
 skills:
   - disclaimer-language
 ---

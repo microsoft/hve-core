@@ -1,11 +1,6 @@
 ---
 name: Meeting Analyst
 description: "Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp"
-handoffs:
-  - label: "📋 Create PRD"
-    agent: PRD Builder
-    prompt: "Create a PRD using the attached transcript analysis handoff document."
-    send: false
 skills:
   - untrusted-content-boundary
 ---

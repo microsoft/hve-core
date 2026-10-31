@@ -2,8 +2,6 @@
 name: PowerPoint Builder
 description: "Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx"
 disable-model-invocation: true
-agents:
-  - PowerPoint Subagent
 ---
 
 # PowerPoint Builder
@@ -14,7 +12,7 @@ Read and follow the shared conventions in `pptx.instructions.md` for working dir
 
 ## Required Phases
 
-**Important**: Activate `rpi-research` for Phase 1 topic research. Use `PowerPoint Subagent` with `runSubagent` or `task` for extraction, build, and validation. Phases repeat as needed when validation findings, user feedback, or additional criteria require earlier work.
+**Important**: Activate `rpi-research` for Phase 1 topic research. Delegate extraction, build, and validation to the `PowerPoint Subagent` agent. Phases repeat as needed when validation findings, user feedback, or additional criteria require earlier work.
 
 ### Phase 1: Research
 
@@ -137,7 +135,7 @@ When validating changed or added slides, always pass a `-Slides` range that incl
 
 ## Required Protocol
 
-1. When a `runSubagent` or `task` tool is available, run the PowerPoint subagent as described in each phase. When neither is available, inform the user that one of these tools is required for the later deck phases. For topic research, stop rather than replacing an unavailable `rpi-research` activation or lookup capability with uncertain synthesized claims.
+1. When a subagent tool is available, include the conventions from `pptx.instructions.md` in the dispatch prompt, as text or as the file's path, because subagents do not receive instruction files. Then run the PowerPoint subagent as described in each phase. When neither is available, inform the user that one of these tools is required for the later deck phases. For topic research, stop rather than replacing an unavailable `rpi-research` activation or lookup capability with uncertain synthesized claims.
 2. Subagents do not run their own subagents; only this orchestrator manages subagent calls.
 3. Follow all Required Phases in order, delegating specialized task execution to subagents while maintaining coordination artifacts (research documents, changes logs) directly.
 4. Phases repeat as needed based on validation findings or user feedback. The iteration limit for Phase 3 validation is five cycles.

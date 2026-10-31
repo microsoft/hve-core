@@ -2,10 +2,8 @@
 name: Skill Assessor
 description: "Assesses a single security skill against the codebase and returns structured findings"
 tools:
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
+  - search
+  - read
 user-invocable: false
 ---
 

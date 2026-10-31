@@ -4,8 +4,7 @@ description: "Gathers candidate sources for one bounded research question and re
 user-invocable: false
 model: Claude Haiku 5.5 (copilot)
 reasoning-effort: max
-tools: [execute/runInTerminal, read, agent, edit, search, web, 'microsoft-docs/*']
-agents: []
+tools: [execute, read, agent, edit, search, web, 'microsoft-docs/*']
 ---
 
 # RPI Researcher

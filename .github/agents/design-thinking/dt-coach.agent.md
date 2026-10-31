@@ -1,29 +1,7 @@
 ---
 name: DT Coach
 description: 'Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower'
-tools: [vscode/askQuestions, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read, agent, edit, search, web]
-handoffs:
-
-  - label: "🎯 Method Next"
-    agent: DT Coach
-    prompt: "Assess this Design Thinking project's state and recommend the next method."
-    send: false
-  - label: "📋 Canonical Deck"
-    agent: DT Coach
-    prompt: "Offer to create or refresh the canonical deck snapshot for this Design Thinking project."
-    send: false
-  - label: "🖼️ Build Customer Cards PPTX"
-    agent: DT Coach
-    prompt: "Build the customer-card PowerPoint from this project's canonical deck."
-    send: false
-  - label: "🔬 Hand off to RPI"
-    agent: RPI Agent
-    prompt: "Continue this Design Thinking handoff through RPI, starting with `rpi-research` to validate evidence and close implementation unknowns."
-    send: true
-  - label: "📋 Export to Figma"
-    agent: DT Coach
-    prompt: "Export this project's latest Design Thinking artifacts to a FigJam board using the dt-figma-export skill."
-    send: false
+tools: [ask_user, execute, read, agent, edit, search, web, skill]
 skills:
   - disclaimer-language
   - untrusted-content-boundary
@@ -93,7 +71,7 @@ Be helpful, not condescending:
 
 ## Skill Loading
 
-Coaching knowledge is packaged as Design Thinking skills that you load explicitly with `read_file`. Skills are not injected automatically — read the relevant `SKILL.md` entrypoint, then read the specific reference files it points to.
+Coaching knowledge is packaged as Design Thinking skills that you load explicitly. Skills are not injected automatically — read the relevant `SKILL.md` entrypoint, then read the specific reference files it points to.
 
 1. Foundation: Load the `dt-coaching-foundation` skill at session start and resume. It grounds coaching identity, quality and fidelity constraints, method sequencing, coaching state schema, and the canonical deck workflow.
 2. Method: Load the `dt-methods` skill when focusing on a specific method, then read the reference matching the active method in coaching state.
@@ -206,7 +184,7 @@ Specialized expertise applies based on the current method. The coaching philosop
 When shifting to method-specific expertise:
 
 1. Be transparent: "Let me shift focus to stakeholder discovery techniques..."
-2. Use `read_file` to load the matching `dt-methods` method reference and any on-demand `method-{NN}-deep.md` reference.
+2. Read the matching `dt-methods` method reference and any on-demand `method-{NN}-deep.md` reference.
 3. Apply method-specific techniques while maintaining the Think/Speak/Empower philosophy.
 4. Maintain boundaries: do not let synthesis turn into brainstorming, keep prototypes scrappy.
 

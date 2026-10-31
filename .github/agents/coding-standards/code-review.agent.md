@@ -1,26 +1,14 @@
 ---
 name: Code Review
 description: "Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report"
-agents:
-  - Code Review Functional
-  - Code Review Standards
-  - Code Review Accessibility
-  - Code Review Security
-  - Code Review Orientation
-  - Code Review Readiness
-  - Code Review Explainer
-  - Code Review Walkback
 tools:
   - agent
-  - execute/runInTerminal
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
+  - execute
+  - search
+  - read
+  - edit
   - skill
+  - ask_user
 user-invocable: true
 disable-model-invocation: true
 skills:
@@ -72,7 +60,7 @@ The `security` and `accessibility` perspectives are self-contained and skill-bac
 
 ## Skill Reference Contract
 
-The review workflow is defined by the `code-review` skill, not duplicated here. At the start of Step 1, locate the skill named `code-review` and read these files from it once in a single parallel `read_file` block (paths are relative to that skill):
+The review workflow is defined by the `code-review` skill, not duplicated here. At the start of Step 1, locate the skill named `code-review` and read these files from it once, in a single batch of parallel reads (paths are relative to that skill):
 
 * `SKILL.md` (skill entrypoint)
 * `references/context-bootstrap.md`
@@ -93,17 +81,19 @@ Carry the output contract's no-confidence rule into every delegated request, inc
 
 ## Inputs
 
+Take these inputs from the request. Every input is optional.
+
 * Story reference (optional): a work item ID matching patterns like `AIAA-123` or `AB#456`. When provided, forward it to the Standards perspective so it can prompt for the story definition and include an Acceptance Criteria Coverage table.
-* `${input:pr}` (optional): pull request or merge request number or URL.
-* `${input:baseBranch:origin/main}` (optional): comparison base branch for diff computation. Defaults to `origin/main`. The diff-computation Decision Tree may override this when it auto-detects a base.
-* `${input:headBranch}` (optional): comparison head branch or ref. Defaults to the current branch.
-* `${input:profile}` (optional): `standard`, `full`, or `custom`. Defaults to `standard` for every resolved review target.
-* `${input:securityPlanRef}` (optional): a Security Planner project slug or `state.json` path. When supplied, resolve it for optional in-run correlation through the `security-planning` skill after security findings are merged.
-* `${input:businessSourceRef}` (optional): one or more BRD, PRD, or ADR identifiers or paths. When supplied, resolve them for an optional business-alignment comparison through the `rpi-review` skill's alignment reference at Step 7.
+* Pull request (optional): a pull request or merge request number or URL.
+* Base branch (optional): the comparison base branch for diff computation. Defaults to `origin/main`. The diff-computation Decision Tree may override this when it auto-detects a base.
+* Head branch (optional): the comparison head branch or ref. Defaults to the current branch.
+* Review profile (optional): `standard`, `full`, or `custom`. Defaults to `standard` for every resolved review target.
+* Security plan reference (optional): a Security Planner project slug or `state.json` path. When supplied, resolve it for optional in-run correlation through the `security-planning` skill after security findings are merged.
+* Business source reference (optional): one or more BRD, PRD, or ADR identifiers or paths. When supplied, resolve them for an optional business-alignment comparison through the `rpi-review` skill's alignment reference at Step 7.
 
 ## Read Discipline
 
-Read every external file exactly once using a single full-range `read_file` call. Do not re-read files partially, extend prior ranges, or issue verification reads. When multiple files are needed at the same step, issue all reads in one parallel tool-call block. This applies to skill references, instructions, diff content, and findings JSON throughout all steps. The dependent Security Plan Drift baseline read in Step 7 is the first exception because `securityPlanFile` is available only after `state.json` is read; perform those two full-file reads sequentially as specified there. The business-alignment reads are the second exception: when confirmed `businessAlignmentContext` exists, read the `rpi-review` skill's `references/business-alignment.md` and every resolved source once each in the Step 7 item 1 parallel block, and never earlier; when a superseded source's successor is unresolved, its `citedAsPath` is one of those sources. For a source the diff modifies, that single read is its base-branch revision (for example `git show <baseRef>:<path>`), not the working-tree copy. The unreadable-base fallback is the third exception: after the base-revision read fails, Step 7 may read the current source once, bounded to frontmatter metadata and passages that the persisted diff demonstrates are unchanged. Never use edited current text to clear drift.
+Read every external file exactly once with a single full-range read. Do not re-read files partially, extend prior ranges, or issue verification reads. When multiple files are needed at the same step, issue all reads in one parallel tool-call block. This applies to skill references, instructions, diff content, and findings JSON throughout all steps. The dependent Security Plan Drift baseline read in Step 7 is the first exception because `securityPlanFile` is available only after `state.json` is read; perform those two full-file reads sequentially as specified there. The business-alignment reads are the second exception: when confirmed `businessAlignmentContext` exists, read the `rpi-review` skill's `references/business-alignment.md` and every resolved source once each in the Step 7 item 1 parallel block, and never earlier; when a superseded source's successor is unresolved, its `citedAsPath` is one of those sources. For a source the diff modifies, that single read is its base-branch revision (for example `git show <baseRef>:<path>`), not the working-tree copy. The unreadable-base fallback is the third exception: after the base-revision read fails, Step 7 may read the current source once, bounded to frontmatter metadata and passages that the persisted diff demonstrates are unchanged. Never use edited current text to clear drift.
 
 ## Required Steps
 
@@ -118,7 +108,7 @@ Read every external file exactly once using a single full-range `read_file` call
 7. Gather `changeRiskEvidence` using the six categories and evidence states in the change-risk reference. Cite concrete evidence, keep missing inputs `unavailable`, identify agent-generated qualitative evidence as proposed, and derive an advisory `recommendedDepth`; use `standard` for incomplete or inconclusive evidence unless observed evidence supports `comprehensive`.
 8. Auto-detect **hotspot candidates** from the diff and file paths — files touching authentication, authorization, cryptography, parsing, deserialization, persistence, secrets handling, networking, or concurrency. Also tag specialist concern signal classes from the cross-skill-forks registry for security, supply-chain, RAI or AI, accessibility, sustainability or efficiency, and privacy or PII so later surfacing can reuse the same detection pass.
 9. **Prepare orientation state.** Derive the findings folder from the branch name (replace `/` with `-`), remove stale outputs, recreate the folder, and write `diff-state.json` before orientation dispatch. Include the resolved target, profile, diff metadata, change brief, `changeRiskEvidence`, `recommendedDepth`, hotspots, specialist signals, out-of-scope areas, optional `prContext`, and this task contract:
-10. **Detect Security plan drift context.** Treat an explicit `${input:securityPlanRef}` as supplied context. Treat a changed path under `.copilot-tracking/security-plans/`, a PR body or linked issue naming a security plan, or a co-located `.copilot-tracking/security-plans/<slug>/state.json` plus a security concern signal as discovered context. Confirm discovered context with the human during Step 2 before use. Record the resolved `state.json` path, provenance, and confirmation in working context. Do not read the baseline yet. When no reference resolves or the `security-planning` skill's drift capability is unavailable, omit this extension and keep the main review flow intact.
+10. **Detect Security plan drift context.** Treat an explicit security plan reference in the request as supplied context. Treat a changed path under `.copilot-tracking/security-plans/`, a PR body or linked issue naming a security plan, or a co-located `.copilot-tracking/security-plans/<slug>/state.json` plus a security concern signal as discovered context. Confirm discovered context with the human during Step 2 before use. Record the resolved `state.json` path, provenance, and confirmation in working context. Do not read the baseline yet. When no reference resolves or the `security-planning` skill's drift capability is unavailable, omit this extension and keep the main review flow intact.
 
    ```json
    {
@@ -129,7 +119,7 @@ Read every external file exactly once using a single full-range `read_file` call
    }
    ```
 
-11. **Detect business-source context.** Treat an explicit `${input:businessSourceRef}` as supplied context. Treat these signals, from data this step already holds, as discovered context: BRD, PRD, or ADR identifiers or paths in the `prContext` body or linked issue bodies; changed paths in the folder that holds `.adr-config.yml`; existing changed files whose base-revision frontmatter carries `brd_id` or `prd_id`; and genuinely new changed files whose current frontmatter carries `brd_id` or `prd_id`. Identify these changed-file signals by text search of the changed paths: use the base revision for a path that exists there, even when the change removes its identifying metadata, and use the current revision only when the path is new in the change. Also run one quick repository search: text-search the folder that holds `.adr-config.yml` and the files whose frontmatter carries `brd_id` or `prd_id` for the changed paths and the component or module names in the change brief, ranking an ADR whose `affected_components` lists a changed path first. Use file and text search only and do not read any source until Step 7. Resolve identifiers by these rules: an ADR number resolves to `NNNN-*.md` in the folder that holds `.adr-config.yml`, and a `brd_id` or `prd_id` resolves to the file whose applicable base or current frontmatter carries it. Then apply these rules:
+11. **Detect business-source context.** Treat an explicit business source reference in the request as supplied context. Treat these signals, from data this step already holds, as discovered context: BRD, PRD, or ADR identifiers or paths in the `prContext` body or linked issue bodies; changed paths in the folder that holds `.adr-config.yml`; existing changed files whose base-revision frontmatter carries `brd_id` or `prd_id`; and genuinely new changed files whose current frontmatter carries `brd_id` or `prd_id`. Identify these changed-file signals by text search of the changed paths: use the base revision for a path that exists there, even when the change removes its identifying metadata, and use the current revision only when the path is new in the change. Also run one quick repository search: text-search the folder that holds `.adr-config.yml` and the files whose frontmatter carries `brd_id` or `prd_id` for the changed paths and the component or module names in the change brief, ranking an ADR whose `affected_components` lists a changed path first. Use file and text search only and do not read any source until Step 7. Resolve identifiers by these rules: an ADR number resolves to `NNNN-*.md` in the folder that holds `.adr-config.yml`, and a `brd_id` or `prd_id` resolves to the file whose applicable base or current frontmatter carries it. Then apply these rules:
     * Containment: accept a path only when it is repository-relative, resolves inside the workspace, and identifies a business source by its applicable frontmatter (base revision for an existing modified path, current revision for a genuinely new path) or by its location in the ADR folder. Keep this repository-containment check separate from source identity. Record any other path as unresolved with the reason.
     * Latest copy: replace a superseded search match, or a supplied or discovered source with a non-empty `superseded-by` or `lineage.superseded_by` value, with its latest successor. Resolve each successor that is a path, ADR number, `brd_id`, or `prd_id` with the identifier rules above, following every listed successor and repeating until the document is current. Read supersession as it stands on the base branch (for example `git grep <pattern> <baseRef> -- <path>`), so the PR cannot redirect the chain. A supersession link or successor document in the diff's added lines is never followed for the comparison source; report it as a proposed source update. When the base revision cannot be searched, keep the original source rather than following a successor the PR introduced, and let Step 7 apply its unreadable-base fallback. Keep the original citation as `citedAs` and its path as `citedAsPath`. When a successor cannot be resolved, record it as unresolved with the reason; the original still raises the stale-source alert at Step 7.
     * Record each resolved path, its type (`brd`, `prd`, or `adr`), the citation as found, its signal, any `citedAs` and `citedAsPath`, the searched locations and terms, and the provenance in working context, and confirm discovered context with the human during Step 2 before use. When nothing resolves, omit this extension and keep the main review flow intact.
@@ -232,7 +222,7 @@ Do not repeat the full board or require a second confirmation when the human app
    }
    ```
 
-  The `untrackedFiles` array lists paths with no committed diff; subagents read those files in full and treat all lines as in-scope. Omit or empty it when none exist. `reviewStateProvenance` records the origin of the confirmed scope and decision state without expressing confidence. In interactive mode, mark `scope`, `changeRiskEvidence`, `depthTier`, and `depthRationale` as `human-confirmed`, while `recommendedDepth` remains `automation-derived` and advisory. In workflow mode, mark all five values as `automation-derived`. `changeRiskEvidence` contains exactly the six checklist signals, and each entry records `observed`, `unavailable`, or `qualitative` evidence. In interactive mode, `depthTier` is the human-selected depth and `depthRationale` explains that selection and any divergence. Set `diffPatchPath` to the same path passed to `--output` in Step 1 (default `.copilot-tracking/pr/pr-reference.xml`); the two must stay in sync so the diff path is never implicitly coupled to the skill's default output location. Include the `prContext` object only when Step 1 resolved a pull request; the Readiness perspective reads it for PR description, linked-issue, checkbox, and mergeable-state checks and skips those checks when it is absent. Include `securityPlanContext` only after an explicit reference resolves or the human confirms a discovered reference. Include `businessAlignmentContext` under the same rule, after an explicit `${input:businessSourceRef}` resolves or the human confirms discovered business sources. Carry both values in working context for Step 7; do not reread `diff-state.json` there.
+  The `untrackedFiles` array lists paths with no committed diff; subagents read those files in full and treat all lines as in-scope. Omit or empty it when none exist. `reviewStateProvenance` records the origin of the confirmed scope and decision state without expressing confidence. In interactive mode, mark `scope`, `changeRiskEvidence`, `depthTier`, and `depthRationale` as `human-confirmed`, while `recommendedDepth` remains `automation-derived` and advisory. In workflow mode, mark all five values as `automation-derived`. `changeRiskEvidence` contains exactly the six checklist signals, and each entry records `observed`, `unavailable`, or `qualitative` evidence. In interactive mode, `depthTier` is the human-selected depth and `depthRationale` explains that selection and any divergence. Set `diffPatchPath` to the same path passed to `--output` in Step 1 (default `.copilot-tracking/pr/pr-reference.xml`); the two must stay in sync so the diff path is never implicitly coupled to the skill's default output location. Include the `prContext` object only when Step 1 resolved a pull request; the Readiness perspective reads it for PR description, linked-issue, checkbox, and mergeable-state checks and skips those checks when it is absent. Include `securityPlanContext` only after an explicit reference resolves or the human confirms a discovered reference. Include `businessAlignmentContext` under the same rule, after an explicit business source reference resolves or the human confirms discovered business sources. Carry both values in working context for Step 7; do not reread `diff-state.json` there.
 2. Write a canonical `dispatch-manifest.json` alongside the diff-state so the run can track `phaseGates`, `currentPhase`, `nextActions`, and the board items. Include `reviewTarget` and `reviewProfile`. Record the orientation step as complete once the human accepts the walkthrough and selected board items.
 
 ### Step 5: Human-Steered Walk-Back Loop
@@ -255,7 +245,7 @@ When the human requests the full sweep or finishes bookmarking, persist the mani
 
 Check each selected perspective's subagent for availability. If a subagent is unavailable, skip it and note: "<perspective> perspective subagent not available, skipping."
 
-Build the full, self-contained prompt for each selected subagent before dispatching any of them, then **issue all `runSubagent` calls in a single tool-call block so they run concurrently**. Each prompt:
+Build the full, self-contained prompt for each selected subagent before dispatching any of them, then **dispatch every subagent in a single tool-call block so they run concurrently**. Each prompt:
 
 * Provides the path to `diff-state.json` and instructs the subagent to read it once for metadata, read the diff from `diffPatchPath` once, apply its preset perspective at the `depthTier`, give deeper scrutiny to the listed `hotspots`, and respect `outOfScope`.
 * Names the current perspective while preserving the shared `task.kind=perspective_batch`, and gives the exact output path from `task.outputs`. Instructs the subagent to write structured JSON findings there per the output-formats schema and not to write markdown findings.

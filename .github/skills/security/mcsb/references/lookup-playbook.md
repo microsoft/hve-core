@@ -29,7 +29,7 @@ Output: .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{component-name}-mcs
 
 Response format: return findings as a markdown document with Applicable Controls, Findings, and Recommendations sections, each control identified by its MCSB control ID and mapped back to a domain in [00-control-index.md](00-control-index.md).
 
-Execution constraints: complete research within a single invocation and do not delegate to additional subagents. When neither `runSubagent` nor `task` is available, inform the user that one of these tools is required; do not synthesize per-service control mappings from training data.
+Execution constraints: complete research within a single invocation and do not delegate to additional subagents. When no subagent tool is available, inform the user that one of these tools is required; do not synthesize per-service control mappings from training data.
 
 ## Reconciling results
 

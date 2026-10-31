@@ -1,19 +1,13 @@
 ---
 description: "Evidence-based reviewer for repository supply-chain security posture with audit, diff, and plan review modes"
 name: SSSC Reviewer
-argument-hint: "[mode={audit|diff|plan}] [scope=path/to/dir] [report=path/to/scan-report.json] [product=pkg:npm/@org/name]"
-agents:
-  - Codebase Profiler
-  - Supply Chain Skill Assessor
-  - Finding Deep Verifier
-  - CVE Analyzer
 tools:
   - agent
-  - execute/runInTerminal
-  - search/codebase
-  - search/fileSearch
-  - read/readFile
+  - execute
+  - search
+  - read
   - skill
+  - ask_user
 user-invocable: true
 disable-model-invocation: true
 skills:
