@@ -5184,7 +5184,7 @@ stimuli:
           negate: true
   - name: skill-outcome-hypothesis-caution-reference-unavailable
     prompt: |
-      The shared `disclaimer-language.instructions.md` reference, including its
+      The shared `disclaimer-language` skill, including its
       `Outcome-Hypothesis` section, cannot be read. What may the
       `outcome-hypothesis` skill deliver in create or assess mode?
     environment:

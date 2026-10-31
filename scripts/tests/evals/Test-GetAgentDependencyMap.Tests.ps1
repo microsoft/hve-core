@@ -70,7 +70,7 @@ Describe 'Get-AgentDependencyMap.ps1' -Tag 'Unit' {
             $script:Record.instructions | Should -Contain '.github/instructions/minimal.instructions.md'
         }
 
-        It 'Resolves #file: directives to subagent entries' {
+        It 'Resolves agents named in the body to subagent entries' {
             $script:Record.subagents | Should -Contain '.github/agents/minimal-coll/subagents/minimal-subagent.agent.md'
         }
 

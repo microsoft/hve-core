@@ -113,16 +113,14 @@ name: helper
 Uses `skill-three` for its work.
 '@
 
-        # Declares an instruction by relative path and a subagent by frontmatter name,
-        # which are the two forms real agents use.
+        # Declares an instruction by relative path and a subagent by display name in the
+        # body, which are the forms real agents use.
         Set-Content -LiteralPath (Join-Path $agentsDir 'agent-parent.agent.md') -Encoding UTF8 -Value @'
 ---
 name: Agent Parent
-agents:
-  - helper
 ---
 
-Follow #file:../../instructions/sample/house.instructions.md and use `skill-one`.
+Follow [house rules](../../instructions/sample/house.instructions.md), use `skill-one`, and delegate checks to the helper agent.
 '@
     }
 
@@ -135,7 +133,7 @@ Follow #file:../../instructions/sample/house.instructions.md and use `skill-one`
         $d.Instructions | Should -Contain '.github/instructions/sample/house.instructions.md'
     }
 
-    It 'Resolves a subagent declared by frontmatter name' {
+    It 'Resolves a subagent named in the body' {
         $d = Get-AgentDeclaredDependency -RepoRoot $script:DepRoot -AgentRelativePath '.github/agents/sample/agent-parent.agent.md'
         $d.Subagents | Should -Contain '.github/agents/sample/subagents/helper.agent.md'
     }
@@ -165,11 +163,9 @@ Uses `skill-three` for its work.
         Set-Content -LiteralPath (Join-Path $agentsDir 'agent-parent.agent.md') -Encoding UTF8 -Value @'
 ---
 name: Agent Parent
-agents:
-  - helper
 ---
 
-Use `skill-one`.
+Use `skill-one` and delegate checks to the helper agent.
 '@
     }
 

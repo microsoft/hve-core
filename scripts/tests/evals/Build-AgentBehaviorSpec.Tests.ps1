@@ -64,7 +64,7 @@ Describe 'Code review native editing contract' -Tag 'Unit' {
     $Frontmatter = [regex]::Match($Content, '\A---\r?\n(.*?)\r?\n---', 'Singleline')
     $Frontmatter.Success | Should -BeTrue
     $Agent = ConvertFrom-Yaml -Yaml $Frontmatter.Groups[1].Value
-    $Agent.tools | Should -Contain 'edit/editFiles'
+    $Agent.tools | Should -Contain 'edit'
   }
 
   It 'Checks resumed-review preservation for <Scenario>' -Tag 'NativeEditGrader' -ForEach @(

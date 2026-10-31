@@ -22,15 +22,15 @@ BeforeAll {
 }
 
 Describe 'Get-AgentColdStartSet' -Tag 'Unit' {
-    It 'Sums the agent and its recursive #file: imports once each' {
-        $root = Join-Path $TestDrive 'recursive'
-        New-TestFile $root '.github/agents/a/x.agent.md' 'see #file:../../instructions/one.instructions.md and #file:../../instructions/one.instructions.md.'
-        New-TestFile $root '.github/instructions/one.instructions.md' 'chain #file:./two.instructions.md:'
-        New-TestFile $root '.github/instructions/two.instructions.md' 'leaf'
+    It 'Sums the agent and its preloaded skills once each' {
+        $root = Join-Path $TestDrive 'preload'
+        New-TestFile $root '.github/agents/a/x.agent.md' "---`nskills:`n  - one`n  - two`n  - one`n---`nbody"
+        New-TestFile $root '.github/skills/shared/one/SKILL.md' 'one'
+        New-TestFile $root '.github/skills/pkg/two/SKILL.md' 'two'
 
         $set = Get-AgentColdStartSet -RepoRoot $root -AgentPath '.github/agents/a/x.agent.md'
 
-        @($set.Files.Path) | Should -Be @('.github/agents/a/x.agent.md', '.github/instructions/one.instructions.md', '.github/instructions/two.instructions.md')
+        @($set.Files.Path) | Should -Be @('.github/agents/a/x.agent.md', '.github/skills/pkg/two/SKILL.md', '.github/skills/shared/one/SKILL.md')
         $set.Issues | Should -HaveCount 0
         $set.Bytes | Should -Be ([long](($set.Files | ForEach-Object { $_.Bytes }) | Measure-Object -Sum).Sum)
     }
@@ -42,22 +42,23 @@ Describe 'Get-AgentColdStartSet' -Tag 'Unit' {
         (Get-AgentColdStartSet -RepoRoot $root -AgentPath '.github/agents/x.agent.md').Bytes | Should -Be 4
     }
 
-    It 'Ignores prose that mentions #file: without a path' {
+    It 'Does not follow #file: directives, which load nothing in Copilot' {
         $root = Join-Path $TestDrive 'prose'
-        New-TestFile $root '.github/agents/x.agent.md' 'When a `#file:` import did not resolve, read the owner.'
+        New-TestFile $root '.github/agents/x.agent.md' 'see #file:../instructions/one.instructions.md'
+        New-TestFile $root '.github/instructions/one.instructions.md' 'unused'
 
         $set = Get-AgentColdStartSet -RepoRoot $root -AgentPath '.github/agents/x.agent.md'
         $set.Files | Should -HaveCount 1
         $set.Issues | Should -HaveCount 0
     }
 
-    It 'Reports an unresolved #file: target' {
+    It 'Reports an unresolved preloaded skill' {
         $root = Join-Path $TestDrive 'missing'
-        New-TestFile $root '.github/agents/x.agent.md' 'see #file:../instructions/gone.instructions.md'
+        New-TestFile $root '.github/agents/x.agent.md' "---`nskills: [gone]`n---`nbody"
 
         $set = Get-AgentColdStartSet -RepoRoot $root -AgentPath '.github/agents/x.agent.md'
         $set.Issues | Should -HaveCount 1
-        $set.Issues[0] | Should -Match 'gone\.instructions\.md'
+        $set.Issues[0] | Should -Match "preloaded skill 'gone'"
     }
 
     It 'Reports a missing agent' {
@@ -67,14 +68,15 @@ Describe 'Get-AgentColdStartSet' -Tag 'Unit' {
 }
 
 Describe 'Get-AlwaysOnInstructionPath' -Tag 'Unit' {
-    It 'Returns only instructions whose applyTo attaches to every file' {
+    It 'Returns instructions with no applyTo or an applyTo that attaches to every file' {
         $root = Join-Path $TestDrive 'always-on'
         New-TestFile $root '.github/instructions/all.instructions.md' "---`napplyTo: '**'`n---`nbody"
         New-TestFile $root '.github/instructions/mixed.instructions.md' "---`napplyTo: '**/*.md, **/*'`n---`nbody"
+        New-TestFile $root '.github/instructions/none.instructions.md' "---`ndescription: 'inlined'`n---`nbody"
         New-TestFile $root '.github/instructions/scoped.instructions.md' "---`napplyTo: '**/*.ps1'`n---`nbody"
 
         $paths = Get-AlwaysOnInstructionPath -RepoRoot $root | ForEach-Object { Split-Path -Leaf $_ }
-        $paths | Should -Be @('all.instructions.md', 'mixed.instructions.md')
+        $paths | Should -Be @('all.instructions.md', 'mixed.instructions.md', 'none.instructions.md')
     }
 }
 

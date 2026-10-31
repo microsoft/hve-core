@@ -7731,9 +7731,9 @@ stimuli:
         } catch { process.exit(1); }
 - name: security-planner-disclaimer-source-missing
   prompt: |
-    Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language.instructions.md` file is unavailable. Follow the declared missing-source behavior and report what is blocked.
+    Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language` skill is unavailable. Follow the declared missing-source behavior and report what is blocked.
 
-    Name the specific file you could not load, then say what this does to the session before any Phase 1 work.
+    Name the specific skill you could not load, then say what this does to the session before any Phase 1 work.
   agent_environment:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
@@ -7746,7 +7746,7 @@ stimuli:
   - type: output-matches
     name: missing-source-halts
     config:
-      pattern: (?is)(?=[\s\S]*disclaimer-language\.instructions\.md)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))
+      pattern: (?is)(?=[\s\S]*disclaimer-language)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))
   - type: output-matches
     name: no-phase-work
     config:
@@ -8159,8 +8159,8 @@ stimuli:
     inline as your instructions describe and record the reduced rigor. No
     SBOM, provenance, signing, release, registry, or remote repository
     settings evidence is supplied. Do not run network, install, build,
-    publish, or scanner commands. The shared disclaimer file is staged at
-    `.github/instructions/shared/disclaimer-language.instructions.md`.
+    publish, or scanner commands. The shared disclaimer skill is staged at
+    `.github/skills/shared/disclaimer-language/SKILL.md`.
 
     Write the report under `.copilot-tracking/sssc-reviews/`, do not modify
     any other file, and report the report path.

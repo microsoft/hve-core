@@ -8,16 +8,17 @@
     Enforces cold-start byte budgets for agents in the planning chain.
 
 .DESCRIPTION
-    For each agent in the budgets file, sums the bytes of the agent file, every file
-    reached through `#file:` directives (followed recursively and resolved relative to
-    the file that contains the directive), and every instruction file whose `applyTo`
-    is always-on (`**` or `**/*`). Byte counts normalize CRLF to LF so results match
-    across platforms.
+    For each agent in the budgets file, sums the bytes of what the Copilot agent harness
+    loads when the agent starts: the agent file, the SKILL.md of every skill named in its
+    `skills` list, and every instruction file that loads into every main session (no
+    `applyTo`, or an `applyTo` of `**` or `**/*`). Skills the agent activates by name
+    load later and are not counted, and `#file:` directives load nothing. Byte counts
+    normalize CRLF to LF so results match across platforms.
 
     An agent above its `ceiling` fails. An agent above its `target` but at or below the
-    ceiling passes with a warning. A missing agent or an unresolved `#file:` target is
-    an error. This is a static proxy for host cold-start loading; it does not model
-    host-specific `applyTo` matching against open editor files.
+    ceiling passes with a warning. A missing agent or an unresolved preloaded skill is an
+    error. This is a static proxy for host cold-start loading; it does not model
+    host-specific `applyTo` matching against files read during the session.
 
 .PARAMETER RepoRoot
     Repository root. Defaults to the git top level.
@@ -89,7 +90,10 @@ function ConvertTo-RepoRelativePath {
 function Get-AlwaysOnInstructionPath {
     <#
     .SYNOPSIS
-        Lists instruction files whose applyTo attaches to every file.
+        Lists instruction files that load into every main session.
+    .DESCRIPTION
+        Copilot inlines instructions that have no applyTo into every main session. An applyTo of
+        '**' or '**/*' attaches as soon as any file is read, so those count as always-on too.
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
@@ -108,7 +112,10 @@ function Get-AlwaysOnInstructionPath {
         $frontmatter = [regex]::Match($content, '(?s)\A---\r?\n(.*?)\r?\n---')
         if (-not $frontmatter.Success) { continue }
         $applyTo = [regex]::Match($frontmatter.Groups[1].Value, '(?m)^applyTo:\s*(.+?)\s*$')
-        if (-not $applyTo.Success) { continue }
+        if (-not $applyTo.Success) {
+            $file.FullName
+            continue
+        }
         $patterns = $applyTo.Groups[1].Value.Trim().Trim("'", '"') -split ','
         if (@($patterns | Where-Object { $_.Trim() -in @('**', '**/*') }).Count -gt 0) {
             $file.FullName
@@ -118,10 +125,42 @@ function Get-AlwaysOnInstructionPath {
     return @($alwaysOn | Sort-Object)
 }
 
+function Get-PreloadedSkillName {
+    <#
+    .SYNOPSIS
+        Reads the skill names an agent preloads through its frontmatter skills list.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Content
+    )
+
+    $frontmatter = [regex]::Match($Content, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if (-not $frontmatter.Success) { return @() }
+    $yaml = $frontmatter.Groups[1].Value
+
+    $flow = [regex]::Match($yaml, '(?m)^skills:\s*\[(.*?)\]\s*$')
+    if ($flow.Success) {
+        return @($flow.Groups[1].Value -split ',' | ForEach-Object { $_.Trim().Trim("'", '"') } | Where-Object { $_ })
+    }
+
+    $block = [regex]::Match($yaml, '(?m)^skills:\s*\r?\n((?:[ \t]*-[^\r\n]*\r?\n?)+)')
+    if (-not $block.Success) { return @() }
+    return @([regex]::Matches($block.Groups[1].Value, '(?m)^[ \t]*-\s*(.+?)\s*$') | ForEach-Object { $_.Groups[1].Value.Trim("'", '"') })
+}
+
 function Get-AgentColdStartSet {
     <#
     .SYNOPSIS
         Resolves the files an agent loads at cold start and their normalized byte counts.
+    .DESCRIPTION
+        The set is the agent file, the SKILL.md of every skill named in its skills list, and the
+        always-on instructions. Skills an agent activates by name load later and are not counted.
+        `#file:` directives load nothing in Copilot, so they are not followed; the portability
+        linter reports them.
     .OUTPUTS
         [hashtable] @{ Files = @(@{ Path; Bytes }); Bytes; Issues }
     #>
@@ -141,7 +180,6 @@ function Get-AgentColdStartSet {
     $issues = [System.Collections.Generic.List[string]]::new()
     $files = [System.Collections.Generic.List[object]]::new()
     $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $queue = [System.Collections.Generic.Queue[string]]::new()
 
     $agentFullPath = [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $AgentPath))
     if (-not (Test-Path -Path $agentFullPath -PathType Leaf)) {
@@ -149,27 +187,26 @@ function Get-AgentColdStartSet {
         return @{ Files = @(); Bytes = [long]0; Issues = $issues.ToArray() }
     }
 
-    $queue.Enqueue($agentFullPath)
-    foreach ($instruction in $AlwaysOnInstructions) { $queue.Enqueue([System.IO.Path]::GetFullPath($instruction)) }
+    $members = [System.Collections.Generic.List[string]]::new()
+    $members.Add($agentFullPath)
 
-    while ($queue.Count -gt 0) {
-        $current = $queue.Dequeue()
-        if (-not $seen.Add($current)) { continue }
-
-        $relative = ConvertTo-RepoRelativePath -RepoRoot $RepoRoot -Path $current
-        $files.Add(@{ Path = $relative; Bytes = (Get-NormalizedByteCount -Path $current) })
-
-        $content = [System.IO.File]::ReadAllText($current)
-        foreach ($match in [regex]::Matches($content, '#file:([^\s`''"()\[\]<>,]+)')) {
-            $target = $match.Groups[1].Value.TrimEnd('.', ':', ';')
-            $resolved = [System.IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $current) $target))
-            if (Test-Path -Path $resolved -PathType Leaf) {
-                $queue.Enqueue($resolved)
-            }
-            else {
-                $issues.Add("Unresolved #file: target '$target' in $relative")
-            }
+    $skillRoot = Join-Path $RepoRoot '.github/skills'
+    foreach ($name in Get-PreloadedSkillName -Content ([System.IO.File]::ReadAllText($agentFullPath))) {
+        $skillFile = $null
+        if (Test-Path -Path $skillRoot -PathType Container) {
+            $skillFile = Get-ChildItem -Path $skillRoot -Recurse -File -Filter 'SKILL.md' |
+                Where-Object { $_.Directory.Name -eq $name } |
+                Select-Object -First 1
         }
+        if ($skillFile) { $members.Add($skillFile.FullName) }
+        else { $issues.Add("Unresolved preloaded skill '$name' in $AgentPath") }
+    }
+
+    foreach ($instruction in $AlwaysOnInstructions) { $members.Add([System.IO.Path]::GetFullPath($instruction)) }
+
+    foreach ($member in $members) {
+        if (-not $seen.Add($member)) { continue }
+        $files.Add(@{ Path = (ConvertTo-RepoRelativePath -RepoRoot $RepoRoot -Path $member); Bytes = (Get-NormalizedByteCount -Path $member) })
     }
 
     $total = [long]0

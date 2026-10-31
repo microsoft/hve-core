@@ -41,6 +41,20 @@ Describe 'Test-ArtifactPathPortability classification' -Tag 'Unit' {
         $result.Findings[0].Reason | Should -Not -BeNullOrEmpty
     }
 
+    It 'Reports #file: directives outside inline code and allows inline mentions' {
+        $repo = Join-Path $TestDrive 'file-directive'
+        $content = "See #file:../../instructions/example.instructions.md for details.`nNever add ``#file:`` imports to agents."
+        New-PortableArtifactFixture -RepoRoot $repo -RelativePath '.github/agents/example/fixture.agent.md' -Content $content
+
+        $result = Test-ArtifactPathPortability -RepoRoot $repo
+
+        $result.Passed | Should -BeFalse
+        $result.Findings | Should -HaveCount 1
+        $result.Findings[0].Line | Should -Be 1
+        $result.Findings[0].Reference | Should -Be '#file:../../instructions/example.instructions.md'
+        $result.Findings[0].Reason | Should -Match 'Copilot agent harness'
+    }
+
     It 'Ignores sanctioned syntax and demonstrably descriptive masked regions' {
         $repo = Join-Path $TestDrive 'sanctioned'
         $content = @'

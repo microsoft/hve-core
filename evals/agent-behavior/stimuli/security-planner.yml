@@ -124,9 +124,9 @@ stimuli:
 
   - name: security-planner-disclaimer-source-missing
     prompt: |
-      Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language.instructions.md` file is unavailable. Follow the declared missing-source behavior and report what is blocked.
+      Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language` skill is unavailable. Follow the declared missing-source behavior and report what is blocked.
 
-      Name the specific file you could not load, then say what this does to the session before any Phase 1 work.
+      Name the specific skill you could not load, then say what this does to the session before any Phase 1 work.
     agent_environment:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
@@ -138,8 +138,8 @@ stimuli:
       - type: output-matches
         name: missing-source-halts
         config:
-          # Order-insensitive: still requires the exact filename, an unavailability signal, and a halt signal.
-          pattern: '(?is)(?=[\s\S]*disclaimer-language\.instructions\.md)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))'
+          # Order-insensitive: still requires the exact skill name, an unavailability signal, and a halt signal.
+          pattern: '(?is)(?=[\s\S]*disclaimer-language)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))'
       - type: output-matches
         name: no-phase-work
         config:
