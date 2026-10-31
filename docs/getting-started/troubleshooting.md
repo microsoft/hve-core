@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Solutions for common HVE Core extension, plugin, and selective clone installation problems
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-28
 ms.topic: troubleshooting
 keywords: [troubleshooting, FAQ, installation, hve-core, selective clone, registry, proxy]
 estimated_reading_time: 6
@@ -66,6 +66,17 @@ Errors appear after updating VS Code or one of the HVE extensions, or agents ref
 3. Keep the proxy address out of every tracked file, and use restore commands only. Commands that resolve dependencies write the proxy's own URLs into the lockfile.
 
 See [Install behind a restricted network](../contributing/validation#install-behind-a-restricted-network) for per-platform setup and the rules for adding a dependency.
+
+### RPI Workflow Canvas Not Available
+
+The RPI Agent never opens the RPI Workflow canvas, or the canvas does not appear in your host's canvas list.
+
+#### Solutions
+
+1. Install the `hve-core` plugin. The VS Code extension does not carry canvases, and VS Code picks up a plugin that the Copilot CLI installed. See [CLI Plugins](methods/cli-plugins).
+2. In VS Code, turn on `chat.canvases.enabled`, start a new local session with the Copilot harness, and send a message before you open the canvas menus.
+3. In the Copilot CLI, turn on experimental features with `--experimental` or `/experimental on`.
+4. For problems inside the canvas, such as a Not connected page, see [Troubleshooting](../rpi/rpi-workflow-canvas#troubleshooting) in the canvas guide.
 
 ## Installation FAQ
 

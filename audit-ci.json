@@ -3,6 +3,30 @@
   "moderate": true,
   "allowlist": [
     {
+      "GHSA-g3hv-75wg-m249|minimatch>": {
+        "active": true,
+        "notes": "Advisory root node for the minimatch 3.x installs below. No patched 3.x release exists; the fix (>= 11.0.1) drops the callable CommonJS default export these consumers require. All other minimatch consumers are overridden to 11.0.3."
+      }
+    },
+    {
+      "GHSA-g3hv-75wg-m249|*serve-handler>minimatch*": {
+        "active": true,
+        "notes": "Docusaurus dev server dependency serve-handler pins minimatch 3.1.5 and calls its CommonJS default export; no patched 3.x release exists."
+      }
+    },
+    {
+      "GHSA-g3hv-75wg-m249|*@eslint/config-array>minimatch*": {
+        "active": true,
+        "notes": "eslint 9 dependency @eslint/config-array 0.21 requires minimatch ^3 and calls its CommonJS default export; no patched 3.x release exists."
+      }
+    },
+    {
+      "GHSA-g3hv-75wg-m249|*@eslint/eslintrc>minimatch*": {
+        "active": true,
+        "notes": "eslint 9 dependency @eslint/eslintrc 3 requires minimatch ^3 and calls its CommonJS default export; no patched 3.x release exists."
+      }
+    },
+    {
       "GHSA-vfj7-8cjw-p6xm": {
         "active": true,
         "notes": "No patched braces release is available (affects <= 3.0.3); markdownlint-cli2, Docusaurus, and webpack tooling transitively require braces via micromatch and chokidar."
