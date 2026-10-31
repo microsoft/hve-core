@@ -65,7 +65,7 @@ When a stable profile is needed, select High, Medium, or Low from the responsibi
 * Medium covers semantic discovery, architecture, authoring, research, and calibrated review. Declare `model:` only when the artifact must run at a predictable profile regardless of the session, for example a fresh-context reviewer that should not inherit a Low parent.
 * Low covers bounded, literal, mechanical execution. Declaring `model:` is common here, because pinning a fast, low-cost model is the point.
 
-Agent and subagent frontmatter accepts only a single scalar string for `model:`; the Copilot CLI's frontmatter parser rejects an array value and drops the artifact entirely. Use the exact model-picker name with the `(copilot)` suffix.
+HVE Core accepts only a single scalar string for agent and subagent `model:`. Copilot CLI versions before the fix for [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133) rejected an array and dropped the artifact, and the HVE Core model linter still reports an array as an error. Use the exact model-picker name with the `(copilot)` suffix.
 
 ### Resolve current model names
 

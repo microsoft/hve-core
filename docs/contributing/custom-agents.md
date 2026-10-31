@@ -124,7 +124,7 @@ model: GPT-6 Sol (copilot)
 # (no model property)
 ```
 
-Do not use a YAML array for `model` (for example, a list of fallback models). The Copilot CLI's frontmatter parser rejects an array with `model: Expected string, received array` and drops the agent entirely, making it unavailable ([github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133)).
+Do not use a YAML array for `model` (for example, a list of fallback models). Copilot CLI versions before the fix for [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133) rejected an array with `model: Expected string, received array` and dropped the agent, and the HVE Core model linter still reports an array as an error.
 
 Run `npm run lint:models` to validate model references against the catalog. It also reports an array-form `model` on an agent as an error.
 

@@ -299,7 +299,8 @@ Specifies a preferred AI model as a single string. When omitted, a subagent inhe
 model: GPT-6 Sol (copilot)
 ```
 
-The [official custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration) defines `model` as `string` for GitHub.com, the Copilot CLI, and supported IDEs, and HVE Core's frontmatter schema accepts only a string. The Copilot CLI's frontmatter parser rejects an array of fallback models with `model: Expected string, received array` and drops the agent entirely ([github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133)).
+The [official custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration) defines `model` as `string` for GitHub.com, the Copilot CLI, and supported IDEs, and HVE Core's frontmatter schema accepts only a string.
+Copilot CLI versions before the fix for [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133) rejected an array of fallback models with `model: Expected string, received array` and dropped the agent, so a single value is the portable choice.
 
 Omit `model` unless the agent needs a stable Medium or Low profile; High-responsibility agents inherit the user's selection. Low, such as `GPT-6 Luna (copilot)`, fits bounded, literal, mechanical execution, and Medium, such as `GPT-6 Sol (copilot)`, fits semantic discovery, authoring, or calibrated review. Resolve current model names from GitHub's Copilot model documentation rather than copying them from another agent.
 Accepted models are those in `scripts/linting/model-catalog.json` whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate.

@@ -110,7 +110,7 @@ Model references in frontmatter use the VS Code display name with vendor suffix,
 model: Claude Haiku 4.5 (copilot)
 ```
 
-The `(copilot)` suffix is required. Do not use an array of fallback models: the Copilot CLI's frontmatter parser rejects an array and drops the agent. Run `npm run lint:models` to validate all model references against the catalog; it also reports an array-form `model` on an agent as an error.
+The `(copilot)` suffix is required. Do not use an array of fallback models. Copilot CLI versions before the fix for [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133) rejected an array and dropped the agent, and HVE Core keeps a single value so every client loads it. Run `npm run lint:models` to validate all model references against the catalog; it also reports an array-form `model` on an agent as an error.
 
 ### Model Selection (Optional)
 
