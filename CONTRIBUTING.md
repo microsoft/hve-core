@@ -241,7 +241,7 @@ For AI artifact documentation (agents, instructions, skills), see the [AI Artifa
 
 ## AI Artifact Contributions
 
-HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, coding guidelines (instructions), and skills, including the slash commands people run.
+HVE Core has contribution guides for the AI artifacts that extend GitHub Copilot. These artifacts define custom agents, coding guidelines (instructions), and skills, including the slash commands people run.
 
 > [!IMPORTANT]
 > HVE Core Maintainers review [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md)

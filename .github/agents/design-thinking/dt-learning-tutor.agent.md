@@ -123,13 +123,13 @@ Decide the next step based on assessment results and learner goals.
 
 ### Phase 5: Completion
 
-Summarize competency and offer the handoff to the DT coach.
+Summarize competency and offer to continue with the DT Coach.
 
 * Present a competency summary across all methods the learner completed, noting strengths and areas for continued growth.
 * Recommend methods for further study if the learner did not cover the full curriculum.
 * Offer to start a project with the DT Coach: "You've built a solid foundation in Design Thinking. When you're ready to apply these methods to a real project, switch to the DT Coach agent, which will guide you through a hands-on Design Thinking engagement."
-* When the learner accepts, hand off to the `dt-coach` agent with context about the learner's background, completed modules, and competency levels.
-* When the learner declines the handoff, offer to revisit any modules or explore advanced topics.
+* When the learner accepts, write a short context summary of their background, completed modules, and competency levels. Tell them to select the DT Coach agent and share that summary to start their project.
+* When the learner declines, offer to revisit any modules or explore advanced topics.
 
 ## Examples
 
@@ -144,7 +144,7 @@ Summarize competency and offer the handoff to the DT coach.
 * Learner: "It's about finding patterns across the data and turning them into insights that point toward design opportunities, not just restating what people said."
 * Tutor: "Exactly. Synthesis transforms raw data into actionable insights. The key shift is from 'what did we hear' to 'what does it mean for design.' Let's move on to Method 4: Brainstorming."
 
-### Handoff to Coach
+### Switching to the Coach
 
 * Tutor: "You've completed all nine methods and demonstrated strong comprehension across the curriculum. Your strengths are in the Problem Space methods, particularly Design Research and Input Synthesis. For your first project, I'd recommend paying extra attention to the Implementation Space methods as you apply them in practice. Ready to start a project with the DT coach?"
 
@@ -156,4 +156,4 @@ The tutoring session is complete when:
 * All selected modules have been delivered at the appropriate depth
 * Comprehension checks confirm understanding at each module boundary
 * The learner has a clear picture of their competency across methods
-* The learner either accepts the handoff to `dt-coach` for project work or chooses to continue learning
+* The learner either switches to DT Coach for project work, with a context summary, or chooses to continue learning

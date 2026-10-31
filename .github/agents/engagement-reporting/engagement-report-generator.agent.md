@@ -25,6 +25,7 @@ tools:
   - github/search_pull_requests
   - github/pull_request_read
   - skill
+  - ask_user
 disable-model-invocation: true
 skills:
   - engagement-report-conventions

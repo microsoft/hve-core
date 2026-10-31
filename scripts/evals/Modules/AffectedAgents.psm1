@@ -323,9 +323,10 @@ function Build-ParentAgentNameIndex {
 
     .DESCRIPTION
     Parent agents name their subagents by display name in the body, because the
-    Copilot subagent tool selects agents by name. Longer names match first and
-    are blanked, so 'Report Generator' does not match inside
-    'Engagement Report Generator'.
+    Copilot subagent tool selects agents by name. Only the body is scanned, so
+    frontmatter keys such as a parent's own `name` never count as a mention.
+    Longer names match first and are blanked, so 'Report Generator' does not
+    match inside 'Engagement Report Generator'.
 
     .OUTPUTS
     [hashtable] keyed (case-insensitively) by the display name a parent body
@@ -358,7 +359,9 @@ function Build-ParentAgentNameIndex {
         $slug = $file.Name -replace '\.agent\.md$', ''
         if (-not $slug) { continue }
 
-        $scan = [System.IO.File]::ReadAllText($file.FullName)
+        $raw = [System.IO.File]::ReadAllText($file.FullName)
+        $frontmatter = [regex]::Match($raw, '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)')
+        $scan = if ($frontmatter.Success -and $frontmatter.Index -eq 0) { $raw.Substring($frontmatter.Length) } else { $raw }
         foreach ($name in $orderedNames) {
             $pattern = '(?<![\w-])' + [regex]::Escape($name) + '(?![\w-])'
             if (-not [regex]::IsMatch($scan, $pattern)) { continue }

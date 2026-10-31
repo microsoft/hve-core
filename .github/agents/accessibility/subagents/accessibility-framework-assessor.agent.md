@@ -4,6 +4,7 @@ description: "Assesses accessibility framework scopes through the consolidated A
 tools:
   - search
   - read
+  - skill
 user-invocable: false
 skills:
   - untrusted-content-boundary
@@ -29,12 +30,13 @@ Assess the requested accessibility framework or reference scope per invocation. 
 * (Optional) Changed files list for diff-mode scoped assessment.
 * (Optional) Plan document content for plan-mode assessment.
 * (Optional) Conformance scope filter (for example, WCAG levels `A`, `AA`, or `AAA`; Section 508 chapters; EN 301 549 clauses) to limit which success criteria are evaluated.
+* (Optional) Accessibility disclaimer text: the verbatim CAUTION block, required only when the invocation requests standalone, user-facing output.
 
 ## Constants
 
 Skill resolution: Resolve the requested framework or phase through the consolidated Accessibility skill reference contract. Let that skill own its entrypoint and internal framework or phase reference paths; do not duplicate those paths in this assessor.
 
-Disclaimer source: The parent `Accessibility Reviewer` displays the canonical accessibility disclaimer from `## Disclaimer Handling` in `accessibility-identity.instructions.md` before scan work begins, and the generated report includes that same disclaimer near the report header. This assessor must not emit a second disclaimer during normal parent-orchestrated runs. If an invocation explicitly requests standalone, user-facing assessor output outside the parent reviewer flow, prepend the canonical accessibility CAUTION block verbatim before the SKILL_FINDINGS_V1 or PLAN_FINDINGS_V1 sections.
+Disclaimer source: The parent `Accessibility Reviewer` displays the canonical accessibility disclaimer from `## Disclaimer Handling` in `accessibility-identity.instructions.md` before scan work begins, and the generated report includes that same disclaimer near the report header. This assessor must not emit a second disclaimer during normal parent-orchestrated runs. If an invocation explicitly requests standalone, user-facing assessor output outside the parent reviewer flow, prepend the canonical accessibility CAUTION block that the invocation supplies, verbatim, before the SKILL_FINDINGS_V1 or PLAN_FINDINGS_V1 sections. Subagents do not receive instruction files, so do not look the block up yourself; when the invocation omits it, report the accessibility disclaimer text as a missing input instead of producing standalone output.
 
 ### Status Values
 

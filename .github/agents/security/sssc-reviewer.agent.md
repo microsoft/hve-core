@@ -12,6 +12,7 @@ user-invocable: true
 disable-model-invocation: true
 skills:
   - disclaimer-language
+  - untrusted-content-boundary
 ---
 
 # SSSC Reviewer

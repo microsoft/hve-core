@@ -4,6 +4,7 @@ description: "Scans the repository to build a technology profile and select appl
 tools:
   - search
   - read
+  - skill
 user-invocable: false
 model: GPT-6 Sol (copilot)
 ---

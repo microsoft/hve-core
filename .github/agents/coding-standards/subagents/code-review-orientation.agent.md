@@ -5,6 +5,7 @@ tools:
   - search
   - read
   - edit
+  - skill
 user-invocable: false
 ---
 

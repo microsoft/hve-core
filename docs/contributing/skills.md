@@ -150,7 +150,7 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization'
 | Purpose    | Controls whether Copilot automatically loads the skill via semantic matching                                 |
 | Default    | `false`                                                                                                      |
 | When false | Copilot loads the skill automatically when the task description semantically matches the `description` field |
-| When true  | Skill loads only when a user types its `/skill-name` slash command at the start of a message                 |
+| When true  | Skill loads only when a user types its `/skill-name` slash command                                           |
 | Use case   | Set `true` for skills with high token cost or niche applicability that should not load automatically         |
 
 **`argument-hint`** (string, optional)
@@ -206,7 +206,7 @@ Recognized metadata fields:
 | `false`          | `false`                    | No       | Yes              | Semantic match, `skills:` preload, or activation by name            |
 | `false`          | `true`                     | No       | No               | Neither the `/` menu nor the model loads it; avoid this combination |
 
-In VS Code, plugin installs prefix the plugin name to the slash command, so HVE Core's Research skill appears as `/hve-core:rpi-research`. Skills copied into a project's own `.github/skills` folder appear without the prefix, as `/rpi-research`. In Copilot CLI, a manual-only skill does not run when a sentence names it, and non-interactive `copilot -p` runs cannot reach it ([github/copilot-cli#4438](https://github.com/github/copilot-cli/issues/4438)).
+In VS Code, plugin installs prefix the plugin name to the slash command, so HVE Core's Research skill appears as `/hve-core:rpi-research`. Skills copied into a project's own `.github/skills` folder appear without the prefix, as `/rpi-research`.
 
 ### Frontmatter Example with Optional Fields
 

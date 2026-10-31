@@ -12,6 +12,7 @@ tools:
   - ask_user
 skills:
   - disclaimer-language
+  - untrusted-content-boundary
 ---
 
 # Security Planner
@@ -184,7 +185,7 @@ When the security plan identifies supply chain concerns (dependency management, 
 
 If the security plan introduced architectural mitigations, trust-boundary changes, or control-placement decisions worth preserving, you may want to capture them as ADRs. The ADR Creator agent (`from-planner-handoff` entry mode) accepts a Security Planner handoff directly.
 
-After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `npm run security:sign -- -SessionPath '.copilot-tracking/security-plans/{project-slug}' -ManifestName 'security-manifest.json'` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign. Set `signingRequested` to `true` and record the manifest location in `signingManifestPath`.
+After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, run `npm run security:sign -- -SessionPath '.copilot-tracking/security-plans/{project-slug}' -ManifestName 'security-manifest.json'` in the terminal to generate a SHA-256 manifest and optionally sign with cosign. Set `signingRequested` to `true` and record the manifest location in `signingManifestPath`.
 
 Human-review exit reminder: a qualified security reviewer signs off on the final plan, handoff artifacts, generated work items, acceptance criteria, and any RAI or SSSC dispatch recommendations before backlog creation.
 

@@ -55,7 +55,7 @@ Some agents or skills are missing from the agent picker or `/` command list in C
 3. For a clone listed in `.github/copilot/settings.json`, check that each path is a literal folder inside the checkout and that the workspace folder is trusted. Copilot rejects absolute paths, `~`, environment variables, globs, and paths that leave the checkout.
 4. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, instructions, and complete skills were copied.
 5. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/skills/` directories.
-6. Agents cannot start skills that set `disable-model-invocation: true`, such as `git-commit`. Type the skill's slash command at the start of a message instead.
+6. Agents cannot start skills that set `disable-model-invocation: true`, such as `git-commit`. Type the skill's slash command instead.
 
 ### Instructions Not Applied
 

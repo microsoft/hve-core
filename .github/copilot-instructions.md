@@ -96,12 +96,12 @@ The Copilot agent harness does not load `#file:` directives, so artifacts reach 
   * Roles (`docs/hve-guide/roles/`) - Role-specific guides for engineers, leads, architects, and other contributors.
 * Getting Started (`docs/getting-started/`) - Installation and first workflow guides with multiple setup methods.
 * RPI (`docs/rpi/`) - Research, Plan, Implement, Review, and Follow-up workflow documentation.
-* Contributing (`docs/contributing/`) - Guidelines for instructions, prompts, agents, and AI artifacts.
-* Templates (`docs/templates/`) - Templates for custom agents, instructions, and prompts.
+* Contributing (`docs/contributing/`) - Guidelines for instructions, skills, agents, and AI artifacts.
+* Templates (`docs/templates/`) - Output, plan, and record templates that agents and skills use.
 
 ### Documentation Templates
 
-Templates for agent and prompt outputs are stored in `docs/templates/`:
+Templates for agent and skill outputs are stored in `docs/templates/`:
 
 * `docs/templates/full-review-output-format.md` - Code review full output format.
 * `docs/templates/standards-review-output-format.md` - Standards review output format.
@@ -140,11 +140,11 @@ Parent agents name subagents by their `name` value, such as Code Review Function
 
 The plugin manifest owns plugin and VSIX composition:
 
-* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, prompts, instructions, and distributable skills discovered from tracked `.github` paths. The manifest declares no hooks. Hooks support was removed with the telemetry hook, so a committed `hooks` field is reported as drift rather than preserved. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
+* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, instructions, and distributable skills discovered from tracked `.github` paths. The manifest declares no hooks. Hooks support was removed with the telemetry hook, so a committed `hooks` field is reported as drift rather than preserved. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
 * After adding, changing, moving, or removing a distributable artifact, run `npm run plugin:sync` to update the manifest. Run `npm run plugin:validate` to check manifest drift, marketplace parity and containment, and component coverage.
 * The installable plugin root is the repository root. Artifact discovery remains limited to package-scoped `.github` paths; do not materialize a copied plugin tree or create a repository-root `plugins/` directory.
 * Run `npm run extension:prepare` or `npm run extension:prepare:prerelease` to refresh the single `extension/package.json` and `extension/README.md`. Stable and PreRelease contain the same component set.
-* After adding, changing, moving, or removing a documentable agent, prompt, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
+* After adding, changing, moving, or removing a documentable agent, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
 * Run `npm run plugin:validate` to confirm the manifest, one-entry locator, and component coverage are correct.
 <!-- </project-structure> -->
 
@@ -196,7 +196,7 @@ The Documentation agent scans these directories for documentation coverage analy
 * `docs/` - Primary documentation tree.
 * `scripts/` - Script-level markdown files and inline documentation.
 * `extension/` - Extension packaging documentation.
-* `.github/` - Agent, prompt, instruction, and skill documentation.
+* `.github/` - Agent, instruction, and skill documentation.
 
 Validation commands for documentation quality:
 

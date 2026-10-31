@@ -84,7 +84,7 @@ Mural is optional. Offer a Mural team board at the Phase 2 exit as defined under
 
 ### Phase 6 Signing and ADR Handoff
 
-After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign.
+After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, run `npm run rai:sign -- -ProjectSlug {project-slug}` in the terminal to generate a SHA-256 manifest and optionally sign with cosign.
 
 When presenting the final handoff message, render the produced artifacts using the Final Handoff Summary table in the `rai-planner` skill `references/backlog-handoff.md` rather than a flat list of filenames.
 

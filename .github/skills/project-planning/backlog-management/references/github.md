@@ -224,7 +224,7 @@ Confirm a label exists with `mcp_github_get_label` before applying it. A reposit
 
 GitHub backlog output is often visible to external contributors, so outbound comments carry extra guardrails beyond the core sanitization guards.
 
-Honor [community-interaction.md](community-interaction.md) in this skill and `content-policy-citation.instructions.md`. Read community-interaction before composing a comment visible to external contributors. `content-policy-citation.instructions.md` is a separately packaged instruction that applies through its own `applyTo` attachment; its filename here is provenance, not a path reference.
+Honor [community-interaction.md](community-interaction.md) in this skill and `content-policy-citation.instructions.md`. Read community-interaction before composing a comment visible to external contributors. `content-policy-citation.instructions.md` is a separately packaged instruction that the agent running this skill reads by name. When a subagent writes the comment, the parent passes its rules in the dispatch prompt, because subagents receive no instructions. Its filename here is provenance, not a path reference.
 
 * When an operation produces a comment visible to external contributors (closure, information request, acknowledgment, redirect), the comment body follows the scenario templates in [community-interaction.md](community-interaction.md).
 * When GitHub-visible text references a suspected content-policy or terms-of-service concern, apply `content-policy-citation.instructions.md` before the API call. Public comments and issue bodies use neutral wording and must not include classification labels, rationale, quoted snippets, paraphrases, or payload examples.

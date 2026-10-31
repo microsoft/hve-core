@@ -118,8 +118,7 @@ Two fields decide who can start a skill:
 | `true`           | `true`                     | Yes           | No                       |
 | `false`          | `false`                    | No            | Yes                      |
 
-Set `disable-model-invocation: true` when only a person should start the command, as HVE Core does for `git-commit` and `git-merge`. A manual-only skill runs only when you type its slash command at the start of a message. In Copilot CLI, asking for one by name in a sentence fails, and non-interactive `copilot -p` runs cannot reach it ([github/copilot-cli#4438](https://github.com/github/copilot-cli/issues/4438)).
-Because only the slash command loads such a skill, an agent cannot activate it either. Leave the field unset for a skill that agents should use.
+Set `disable-model-invocation: true` when only a person should start the command, as HVE Core does for `git-commit` and `git-merge`. A manual-only skill runs only when you type its slash command, so an agent cannot activate it either. Leave the field unset for a skill that agents should use.
 
 Set `user-invocable: false` for a skill that supports agents and needs no command of its own. HVE Core's `disclaimer-language` skill works this way: agents preload it, and it stays out of the `/` menu.
 

@@ -99,7 +99,7 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 ## Entry Modes
 
-The SSSC Planner supports four entry modes. Select the SSSC Planner agent and describe your starting point, or use the SSSC Planner handoff from a Security Planner session; the agent resolves the mode from your request, supplied artifacts, or the handoff.
+The SSSC Planner supports four entry modes. Select the SSSC Planner agent and describe your starting point, including when a Security Planner session recommends it; the agent resolves the mode from your request and supplied artifacts.
 
 | Mode               | How to start                                         | Starting point                                             |
 |--------------------|------------------------------------------------------|------------------------------------------------------------|
@@ -119,11 +119,11 @@ The SSSC Planner supports four entry modes. Select the SSSC Planner agent and de
 
 ## Quick Start
 
-1. Open the prompt picker and select one of the four SSSC prompt files (Capture, From-PRD, From-BRD, or From-Security-Plan).
+1. Select **SSSC Planner** in the agent picker and name the entry mode, Capture, From-PRD, From-BRD, or From-Security-Plan, or let the agent pick it from your request and the files you supply.
 2. Provide a project slug when prompted (or let the agent generate one).
 3. Answer the scoping questions. The agent asks 3-5 questions per turn until each phase is complete.
 4. Review the generated backlog items and adjust autonomy tiers as needed.
-5. Follow the backlog manager handoff in Phase 6 to create work items in ADO or GitHub.
+5. After Phase 6, select the **Backlog Manager** agent to create work items in ADO or GitHub from the planner's backlog handoff.
 
 > [!IMPORTANT]
 > Start each new SSSC plan in a fresh chat session. Use `/clear` to reset context if you need to restart.

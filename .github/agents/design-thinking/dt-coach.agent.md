@@ -331,7 +331,7 @@ After closing, do not introduce new methods or major topics. If the user re-enga
 * Before any generation or build action, load the `dt-coaching-foundation` skill and read `references/canonical-deck.md` in full.
 * Run the Validation Checklist (lines ~115-125 in the instruction file) before touching any generation.
 * Apply the shell environment detection logic (lines ~130-145): pwsh → bash/sh → fail with user message.
-* On Windows, when building customer cards with `invoke-pptx-pipeline.sh`, do not use `execute/runInTerminal` for the `.sh` command. Use the bash terminal protocol from the `dt-coaching-foundation` skill's `references/canonical-deck.md` with `execute/getTerminalOutput` and `execute/sendToTerminal`.
+* On Windows, do not run `invoke-pptx-pipeline.sh` through the default PowerShell shell when building customer cards. Follow the Bash Runtime Path in the `dt-coaching-foundation` skill's `references/canonical-deck.md`: run the `.sh` command in a bash terminal such as Git Bash or WSL, and read its output until the prompt returns.
 * Never skip the asset-readiness check before an automatic offer.
 * Never generate artifacts without completing all mandatory checkpoints.
 * Record all offers and responses in coaching state.

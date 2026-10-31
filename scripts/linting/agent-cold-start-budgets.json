@@ -9,17 +9,17 @@
     ".github/agents/design-thinking/dt-coach.agent.md": {
       "target": 39000,
       "ceiling": 43000,
-      "rationale": "Measured 38,890 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills."
+      "rationale": "Measured 38,921 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills."
     },
     ".github/agents/privacy/privacy-planner.agent.md": {
-      "target": 18000,
-      "ceiling": 20000,
-      "rationale": "Measured 17,191 bytes: the agent plus the preloaded disclaimer-language skill. planner-identity and privacy-standards, which holds privacy-identity, load by name and are not counted."
+      "target": 19000,
+      "ceiling": 21000,
+      "rationale": "Measured 18,826 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. planner-identity and privacy-standards, which holds privacy-identity, load by name and are not counted."
     },
     ".github/agents/project-planning/adr-creation.agent.md": {
-      "target": 24000,
-      "ceiling": 27000,
-      "rationale": "Measured 23,390 bytes: the agent plus the preloaded disclaimer-language skill. adr-author, which holds adr-identity, loads by name and is not counted."
+      "target": 26000,
+      "ceiling": 29000,
+      "rationale": "Measured 25,025 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. adr-author, which holds adr-identity, loads by name and is not counted."
     },
     ".github/agents/project-planning/brd-builder.agent.md": {
       "target": 37000,
@@ -34,17 +34,17 @@
     ".github/agents/rai-planning/rai-planner.agent.md": {
       "target": 30000,
       "ceiling": 33000,
-      "rationale": "Measured 29,122 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. planner-identity and rai-planner, which holds rai-identity, load by name and are not counted."
+      "rationale": "Measured 29,107 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. planner-identity and rai-planner, which holds rai-identity, load by name and are not counted."
     },
     ".github/agents/security/security-planner.agent.md": {
-      "target": 46000,
-      "ceiling": 51000,
-      "rationale": "Measured 45,522 bytes: the agent plus the preloaded disclaimer-language skill, about 14,000 bytes of it. planner-identity and security-planning load by name and are not counted."
+      "target": 48000,
+      "ceiling": 53000,
+      "rationale": "Measured 47,142 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills, about 15,500 bytes of them. planner-identity and security-planning load by name and are not counted."
     },
     ".github/agents/security/sssc-planner.agent.md": {
-      "target": 42000,
-      "ceiling": 47000,
-      "rationale": "Measured 41,575 bytes: the agent plus the preloaded disclaimer-language skill. planner-identity loads by name and is not counted."
+      "target": 44000,
+      "ceiling": 49000,
+      "rationale": "Measured 43,198 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. planner-identity loads by name and is not counted."
     }
   }
 }

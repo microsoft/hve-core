@@ -15,6 +15,7 @@ tools:
   - ask_user
 skills:
   - disclaimer-language
+  - untrusted-content-boundary
 ---
 
 # SSSC Planner
@@ -131,7 +132,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 6: Review and Handoff
 
-Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-planner.instructions.md`. Finalize the consolidated SSSC plan markdown at `ssscPlanFile` (`.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`) as the primary durable deliverable — completing its phase table, executive summary, posture snapshot, and handoff links per the Plan Markdown Finalization protocol in `sssc-planner.instructions.md`. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `pwsh scripts/security/Sign-PlannerArtifacts.ps1 -SessionPath '.copilot-tracking/sssc-plans/{project-slug}' -ManifestName 'sssc-manifest.json'` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign. End the workflow with the end-of-workflow completion summary — a `📦 Artifacts Generated` table listing every artifact produced this session with its path and status, followed by the posture recap and `⚡ Ready for Backlog Creation` next steps — per the Completion Summary protocol in `sssc-planner.instructions.md`.
+Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-planner.instructions.md`. Finalize the consolidated SSSC plan markdown at `ssscPlanFile` (`.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`) as the primary durable deliverable — completing its phase table, executive summary, posture snapshot, and handoff links per the Plan Markdown Finalization protocol in `sssc-planner.instructions.md`. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `pwsh scripts/security/Sign-PlannerArtifacts.ps1 -SessionPath '.copilot-tracking/sssc-plans/{project-slug}' -ManifestName 'sssc-manifest.json'` in the terminal to generate a SHA-256 manifest and optionally sign with cosign. End the workflow with the end-of-workflow completion summary — a `📦 Artifacts Generated` table listing every artifact produced this session with its path and status, followed by the posture recap and `⚡ Ready for Backlog Creation` next steps — per the Completion Summary protocol in `sssc-planner.instructions.md`.
 
 Human-review exit reminder: a qualified supply chain security reviewer signs off on the final assessment, Scorecard projections, and backlog handoff artifacts before backlog creation.
 

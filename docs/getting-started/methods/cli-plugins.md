@@ -156,11 +156,9 @@ Skills run a specific workflow and produce structured output. Agent mode keeps t
 > Skills that do not require an agent context work directly from the default mode.
 
 Manual-only skills such as `git-commit`, `git-merge`, and `git-setup` set
-`disable-model-invocation: true`, so agents never start them for you. They run
-when you type their slash command at the start of a message. In Copilot CLI,
-asking for one by name in a sentence does not load it, and non-interactive
-`copilot -p` runs cannot reach it
-([github/copilot-cli#4438](https://github.com/github/copilot-cli/issues/4438)).
+`disable-model-invocation: true`, so agents never start them for you. For their
+status in Copilot CLI, see
+[github/copilot-cli#4438](https://github.com/github/copilot-cli/issues/4438).
 
 ### Example: Research Workflow
 

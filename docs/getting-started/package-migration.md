@@ -189,33 +189,33 @@ These commands became skills with the same name, so the slash command still work
 * `/synth-data-generate`
 
 > [!NOTE]
-> Every skill in this list except `/dt-figma-export` sets `disable-model-invocation: true`, so agents do not start it for you. Type its slash command at the start of a message to run it. In Copilot CLI, asking for one of these skills by name in a sentence does not load it, and `copilot -p` runs cannot reach it. [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode) tracks the limitation.
+> Every skill in this list except `/dt-figma-export` sets `disable-model-invocation: true`, so agents do not start it for you; type its slash command to run it. For Copilot CLI support, see [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode).
 
 ### Security and supply chain
 
-| Retired command            | Replacement                                                                                                                                                   |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `/security-review`         | The `Security Reviewer` agent, which defaults to `audit` mode and accepts the same `mode`, `scope`, `targetSkill`, and `plan` inputs                          |
-| `/security-review-llm`     | The `Security Reviewer` agent; ask for an LLM and agentic review, which sets `skills=owasp-llm,owasp-agentic`                                                 |
-| `/security-review-web`     | The `Security Reviewer` agent; ask for a web application review, which sets `targetSkill=owasp-top-10`                                                        |
-| `/security-review-sbd`     | The `Security Reviewer` agent; ask for a Secure by Design review, which sets `targetSkill=secure-by-design`                                                   |
-| `/security-capture`        | The `Security Planner` agent; start without a PRD or BRD to use `capture` mode                                                                                |
-| `/security-plan-from-prd`  | The `Security Planner` agent; ask to start from your PRD or BRD to use `from-prd` mode                                                                        |
-| `/sssc-capture`            | The `SSSC Planner` agent; start without a PRD, BRD, or security plan to use `capture` mode                                                                    |
-| `/sssc-from-prd`           | The `SSSC Planner` agent; ask to start from your PRD to use `from-prd` mode                                                                                   |
-| `/sssc-from-brd`           | The `SSSC Planner` agent; ask to start from your BRD to use `from-brd` mode                                                                                   |
-| `/sssc-from-security-plan` | The `SSSC Planner` agent; ask to extend a completed security plan to use `from-security-plan` mode, or use the SSSC Planner handoff in the `Security Planner` |
-| `/vex-implement`           | The `SSSC Planner` agent; ask to plan VEX for your project. It plans the stand-up as backlog work rather than changing the project                            |
-| `/vex-scan`                | The `SSSC Reviewer` agent; ask for a VEX scan, optionally with `scope` and `product`                                                                          |
-| `/vex-triage`              | The `SSSC Reviewer` agent; ask to triage an existing Trivy, OSV-Scanner, or SPDX report, and attach it or pass `report=<path>`                                |
+| Retired command            | Replacement                                                                                                                                             |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/security-review`         | The `Security Reviewer` agent, which defaults to `audit` mode and accepts the same `mode`, `scope`, `targetSkill`, and `plan` inputs                    |
+| `/security-review-llm`     | The `Security Reviewer` agent; ask for an LLM and agentic review, which sets `skills=owasp-llm,owasp-agentic`                                           |
+| `/security-review-web`     | The `Security Reviewer` agent; ask for a web application review, which sets `targetSkill=owasp-top-10`                                                  |
+| `/security-review-sbd`     | The `Security Reviewer` agent; ask for a Secure by Design review, which sets `targetSkill=secure-by-design`                                             |
+| `/security-capture`        | The `Security Planner` agent; start without a PRD or BRD to use `capture` mode                                                                          |
+| `/security-plan-from-prd`  | The `Security Planner` agent; ask to start from your PRD or BRD to use `from-prd` mode                                                                  |
+| `/sssc-capture`            | The `SSSC Planner` agent; start without a PRD, BRD, or security plan to use `capture` mode                                                              |
+| `/sssc-from-prd`           | The `SSSC Planner` agent; ask to start from your PRD to use `from-prd` mode                                                                             |
+| `/sssc-from-brd`           | The `SSSC Planner` agent; ask to start from your BRD to use `from-brd` mode                                                                             |
+| `/sssc-from-security-plan` | The `SSSC Planner` agent; ask to extend a completed security plan to use `from-security-plan` mode, including when the `Security Planner` recommends it |
+| `/vex-implement`           | The `SSSC Planner` agent; ask to plan VEX for your project. It plans the stand-up as backlog work rather than changing the project                      |
+| `/vex-scan`                | The `SSSC Reviewer` agent; ask for a VEX scan, optionally with `scope` and `product`                                                                    |
+| `/vex-triage`              | The `SSSC Reviewer` agent; ask to triage an existing Trivy, OSV-Scanner, or SPDX report, and attach it or pass `report=<path>`                          |
 
 ### Responsible AI
 
-| Retired command                | Replacement                                                                                                                                                     |
-|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `/rai-capture`                 | The `RAI Planner` agent; start without a PRD or security plan to use `capture` mode                                                                             |
-| `/rai-plan-from-prd`           | The `RAI Planner` agent; ask to start from your PRD or BRD to use `from-prd` mode                                                                               |
-| `/rai-plan-from-security-plan` | The `RAI Planner` agent; ask to start from a completed security plan to use `from-security-plan` mode, or use the RAI Planner handoff in the `Security Planner` |
+| Retired command                | Replacement                                                                                                                                                |
+|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/rai-capture`                 | The `RAI Planner` agent; start without a PRD or security plan to use `capture` mode                                                                        |
+| `/rai-plan-from-prd`           | The `RAI Planner` agent; ask to start from your PRD or BRD to use `from-prd` mode                                                                          |
+| `/rai-plan-from-security-plan` | The `RAI Planner` agent; ask to start from a completed security plan to use `from-security-plan` mode, including when the `Security Planner` recommends it |
 
 ### Design Thinking
 

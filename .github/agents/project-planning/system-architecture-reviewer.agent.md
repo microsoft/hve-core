@@ -156,9 +156,9 @@ ADR creation criteria: document decisions when they involve:
 
 Save ADRs under `docs/decisions/` using ISO date-prefixed filenames (`YYYY-MM-DD-short-title.md`). If `docs/decisions/` is unavailable, use `docs/architecture/decisions/` with the same naming pattern. Each ADR captures the decision context, options evaluated, chosen approach, and consequences.
 
-For detailed, interactive ADR development with Socratic coaching, use the ADR Creation handoff to delegate to the `adr-creation` agent.
+For detailed, interactive ADR development with Socratic coaching, suggest that the user select the ADR Creator agent.
 
-Before invoking the handoff, persist the completed Architecture Review Record and supply its workspace-relative path. Add each resulting ADR path to the record; do not duplicate the ADR decision inside the review.
+Before suggesting it, persist the completed Architecture Review Record and give its workspace-relative path for ADR Creator to start from. Add each resulting ADR path to the record; do not duplicate the ADR decision inside the review.
 
 ### Step 6: Identify Escalation Points
 
@@ -181,4 +181,4 @@ An architecture review is complete when:
 * Research recommendations have evidence IDs and reviewer dispositions, and blocked current-fact gaps remain explicit limits.
 * ADRs are created for each significant architectural decision.
 * Escalation points are identified for decisions requiring human judgment.
-* ADR Creation and RPI Plan handoffs name the completed Architecture Review Record path rather than relying on chat context.
+* Next-step suggestions for ADR Creator or the `rpi-plan` skill name the completed Architecture Review Record path rather than relying on chat context.

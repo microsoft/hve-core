@@ -4,6 +4,7 @@ description: "Assesses a single security skill against the codebase and returns 
 tools:
   - search
   - read
+  - skill
 user-invocable: false
 ---
 

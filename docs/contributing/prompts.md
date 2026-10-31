@@ -65,9 +65,9 @@ A user then types `/release-notes from=v3.1.0 format=text`, and the skill reads 
 Two optional fields control invocation. The [Invocation Control Matrix](skills.md#invocation-control-matrix) in Contributing Skills covers every combination.
 
 * `user-invocable` defaults to `true`, which lists the skill in the `/` menu. Set it to `false` to hide the slash command.
-* `disable-model-invocation: true` stops Copilot from loading the skill on its own, so the skill runs only when a user types its slash command at the start of a message. HVE Core sets it on skills with side effects, such as `git-commit`, `git-merge`, and `git-setup`.
+* `disable-model-invocation: true` stops Copilot from loading the skill on its own, so the skill runs only when a user types its slash command. HVE Core sets it on skills with side effects, such as `git-commit`, `git-merge`, and `git-setup`.
 
-Manual-only skills have limits in Copilot CLI: naming one inside a sentence does not run it, and non-interactive `copilot -p` runs cannot reach it ([github/copilot-cli#4438](https://github.com/github/copilot-cli/issues/4438)). Leave `disable-model-invocation` unset unless the skill must never start without an explicit command.
+Leave `disable-model-invocation` unset unless the skill must never start without an explicit command.
 
 ## Invoke the Command
 

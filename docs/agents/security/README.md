@@ -117,11 +117,11 @@ The Security Planner supports two entry modes. Select the Security Planner agent
 
 ## Quick Start
 
-1. Open the prompt picker and select **Security Capture** or **Security Plan from PRD**.
+1. Select **Security Planner** in the agent picker and name the entry mode, Capture or From-PRD (which also takes a BRD), or let the agent pick it from your request and the files you supply.
 2. Provide a project slug when prompted (or let the agent generate one).
 3. Answer the scoping questions. The agent asks 3-5 questions per turn until each phase is complete.
 4. Review the generated backlog items and adjust autonomy tiers as needed.
-5. If AI/ML components were detected, follow the RAI Planner handoff in Phase 6.
+5. If AI/ML components were detected, select the **RAI Planner** agent when the Security Planner recommends it in Phase 6.
 
 > [!IMPORTANT]
 > Start each new security plan in a fresh chat session. Use `/clear` to reset context if you need to restart.

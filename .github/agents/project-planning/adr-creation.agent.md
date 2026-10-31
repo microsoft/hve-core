@@ -12,6 +12,7 @@ tools:
   - ask_user
 skills:
   - disclaimer-language
+  - untrusted-content-boundary
 ---
 
 # ADR Creator
