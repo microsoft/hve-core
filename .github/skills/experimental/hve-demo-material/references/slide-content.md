@@ -28,7 +28,9 @@ from the reviewed YAML without starting a demo or inventing narration.
   `id` must equal `slide-N`, the HTML ID without zero padding.
 * `content/global/style.yaml` carries deck `metadata.title`, `subject`,
   `keywords` and `language`. Language defaults to `en-US`; a slide may declare
-  its own valid `language` tag. All text is escaped, not interpreted as markup.
+  its own valid `language` tag, which the deck section and transcript passage
+  carry. Fixed English presenter controls and transcript labels stay marked
+  English. All text is escaped, not interpreted as markup.
 * `citations` is an optional list of paths from the level's manifest source
   register. Without it, the slide cites the resolved level sources. Plain
   relative repository paths only; invalid entries fail rather than disappear.
@@ -80,10 +82,16 @@ theme. Color alone must not carry a relationship; express it in words.
 ## Evidence
 
 The adapter writes `demo-material-build.json` version 2 with renderer
-`hve-slides`, format `html`, ordered slide IDs, content digest and source/template
-file digests. Copy it to `output/html-deck-build.json` after bundling. Browser
+`hve-slides`, format `html`, level, ordered slide IDs, content digest, resolved
+citation sources and link base, source/template file digests, and a
+`generation_sha256` over those rendering inputs. The generated deck embeds the
+same generation in `<meta name="hve-demo-generation">`. Copy the record to
+`output/html-deck-build.json` after bundling. Frame export and T-10 reject a deck
+whose embedded generation differs from the record, or a record whose content or
+resolved sources no longer match the level. Browser
 evidence binds the actual HTML and build record hashes to ordered slide IDs and
-exported frame hashes/dimensions. Missing, stale or failed evidence prevents
+exported frame hashes/dimensions. Frames and `html-deck-check.json` install as one
+transaction. Missing, stale or failed evidence prevents
 acceptance. T-08 compares delivered CSS with the canonical theme and permitted
 demo layout; YAML palette declarations alone prove nothing about rendered HTML.
 

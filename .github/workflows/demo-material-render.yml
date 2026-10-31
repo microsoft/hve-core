@@ -19,6 +19,11 @@ on:
         description: 'Demo Material Author run to render (default: refresh the latest bundle)'
         required: false
         type: string
+      migrate-from-v1:
+        description: 'Maintainer-approved first v2 bundle while the site still serves v1 (requires author-run-id; see docs/demo-material/v2-migration.md)'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: demo-material-render
@@ -49,6 +54,7 @@ jobs:
       content-artifact-id: ${{ steps.resolve.outputs.content-artifact-id }}
       previous-artifact-id: ${{ steps.previous.outputs.artifact-id }}
       previous-run-id: ${{ steps.previous.outputs.run-id }}
+      published-status: ${{ steps.published.outputs.status }}
     steps:
       - name: Checkout the lookup script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -121,6 +127,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           DISPATCH_AUTHOR_RUN_ID: ${{ inputs.author-run-id }}
+          MIGRATE_FROM_V1: ${{ inputs.migrate-from-v1 }}
           PREVIOUS_CREATED_AT: ${{ steps.previous.outputs.created-at }}
           PUBLISHED_STATUS: ${{ steps.published.outputs.status }}
           RETRY_LEVELS: ${{ steps.retry.outputs.levels }}
@@ -129,6 +136,16 @@ jobs:
         with:
           script: |
             const refreshAfterMs = Number(process.env.REFRESH_AFTER_DAYS) * 86400000;
+            // Migration renders one named author run while Pages still serves v1.
+            const migrate = process.env.MIGRATE_FROM_V1 === "true";
+            if (migrate) {
+              if (context.eventName !== "workflow_dispatch" || !process.env.DISPATCH_AUTHOR_RUN_ID) {
+                throw new Error("migrate-from-v1 requires a workflow_dispatch with author-run-id");
+              }
+              if (process.env.PUBLISHED_STATUS !== "obsolete") {
+                throw new Error("migrate-from-v1 applies only while the published site is demo-material-site/v1 and no v2 bundle artifact exists");
+              }
+            }
             const { data: repository } = await github.rest.repos.get({ ...context.repo });
             const defaultBranch = repository.default_branch;
 
@@ -156,16 +173,26 @@ jobs:
                 .map(Number);
               const lastRecorded = recorded.length ? Math.max(...recorded) : 0;
               const since = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
-              const { data } = await github.rest.actions.listWorkflowRuns({
-                ...context.repo,
-                workflow_id: "demo-material-author.lock.yml",
-                branch: defaultBranch,
-                status: "success",
-                created: `>=${since}`,
-                per_page: 100,
-              });
+              // Runs arrive newest first; stop paging once a page reaches recorded history.
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRuns,
+                {
+                  ...context.repo,
+                  workflow_id: "demo-material-author.lock.yml",
+                  branch: defaultBranch,
+                  status: "success",
+                  created: `>=${since}`,
+                  per_page: 100,
+                },
+                (response, done) => {
+                  if (lastRecorded && response.data.some((run) => run.id <= lastRecorded)) {
+                    done();
+                  }
+                  return response.data;
+                },
+              );
               // Oldest first so no authored run is skipped; without recorded history, newest first.
-              const pending = data.workflow_runs
+              const pending = runs
                 .filter((run) => run.id > lastRecorded)
                 .sort((a, b) => (lastRecorded ? a.id - b.id : b.id - a.id));
               for (const run of pending) {
@@ -199,13 +226,17 @@ jobs:
                   authorRun.path !== ".github/workflows/demo-material-author.lock.yml" ||
                   authorRun.head_branch !== defaultBranch ||
                   !/^[0-9a-f]{40}$/.test(authorRun.head_sha)) {
-                core.notice("Author run is not a successful default-branch Demo Material Author run; nothing to render.");
+                const message = "Author run is not a successful default-branch Demo Material Author run; nothing to render.";
+                if (migrate) throw new Error(message);
+                core.notice(message);
                 core.setOutput("mode", "skip");
                 return;
               }
               const content = await findArtifact(authorRun.id, `demo-material-content-v2-${authorRun.id}`);
               if (!content) {
-                core.notice("Author run produced no content artifact; nothing to render.");
+                const message = "Author run produced no content artifact; nothing to render.";
+                if (migrate) throw new Error(message);
+                core.notice(message);
                 core.setOutput("mode", "skip");
                 return;
               }
@@ -425,6 +456,7 @@ jobs:
             output/html-deck-build.json \
             output/open-captions.json \
             output/manifest.yml \
+            output/public-manifest.yml \
             research/source-register.md; do
             if [[ -L "${LEVEL_DIR}/${rel}" ]]; then
               echo "::error::Symlink in render output: ${rel}"
@@ -469,8 +501,9 @@ jobs:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/site
 
+      # An approved migration starts from an empty v2 site instead of the v1 bundle.
       - name: Recover the published bundle
-        if: ${{ needs.resolve.outputs.previous-artifact-id == '' }}
+        if: ${{ needs.resolve.outputs.previous-artifact-id == '' && !(inputs.migrate-from-v1 && needs.resolve.outputs.published-status == 'obsolete') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -492,10 +525,17 @@ jobs:
           SOURCE_SHA: ${{ needs.resolve.outputs.source-sha }}
           AUTHOR_RUN_ID: ${{ needs.resolve.outputs.author-run-id }}
           RENDER_RUN_ID: ${{ github.run_id }}
+          MIGRATE_FROM_V1: ${{ inputs.migrate-from-v1 }}
         run: |
           set -euo pipefail
           mkdir -p "${SITE}" "${RENDERS}"
-            python3 "${LOOKUP}" assemble-site --target "${SITE}" --renders "${RENDERS}"
+          require=()
+          if [[ "${MIGRATE_FROM_V1:-false}" == "true" ]]; then
+            # The first v2 bundle replaces the whole site, so every level must pass.
+            require=(--require-levels L100 L200 L300 L400)
+          fi
+          python3 "${LOOKUP}" assemble-site --target "${SITE}" --renders "${RENDERS}" \
+            ${require[@]+"${require[@]}"}
           mkdir -p "${RUNNER_TEMP}/index"
           cp "${SITE}/index.json" "${RUNNER_TEMP}/index/index.json"
 

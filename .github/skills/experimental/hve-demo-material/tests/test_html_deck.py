@@ -4,6 +4,7 @@
 
 import hashlib
 import json
+import os
 import sys
 import types
 from pathlib import Path
@@ -21,21 +22,33 @@ from html_deck import (
     main,
     slide_markup,
 )
-from render_checks import CheckError, build_transcript_page, content_digest
+from render_checks import (
+    GENERATION_META,
+    CheckError,
+    build_transcript_page,
+    content_digest,
+    generation_digest,
+)
 from render_checks import check_html_deck as t10
 from test_render_checks import _jpeg
 
 _TEMPLATE_INDEX = """<!doctype html>
 <html lang="en">
 <head>
+  <meta charset="utf-8">
   <title>HTML slide deck</title>
   <link rel="stylesheet" href="components.css">
 </head>
 <body>
+  <a class="skip-link" href="#presenter-controls">Skip to presentation controls</a>
+  <div id="startup" role="status">Loading the presentation.</div>
+  <noscript>Enable JavaScript for the presentation controls.</noscript>
     <main class="slides" tabindex="0" aria-label="Presentation">
       <section id="opening" data-title="Welcome">starter</section>
     </main>
   <nav id="presenter-controls"><span id="chapter-label">Introduction</span></nav>
+  <div id="announcement" class="sr-only" aria-live="polite"></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title"></dialog>
 </body>
 </html>
 """
@@ -194,6 +207,50 @@ class TestSlideMarkup:
         assert "<td>1 min</td>" in markup
         assert '<div class="card-grid"><article class="panel"><h3>A</h3>' in markup
 
+    @pytest.mark.parametrize(
+        "positions",
+        [({}, {}), ({"top": 2.0, "left": 0.5}, {"top": 2.1, "left": 4.0})],
+        ids=["unpositioned", "positioned-same-row"],
+    )
+    def test_given_step_sharing_row_with_text_when_mapped_then_rendered_in_order(
+        self, tmp_path, positions
+    ):
+        slide = {
+            "title": "Setup",
+            "elements": [
+                {"type": "textbox", "text": "Before you start", **positions[0]},
+                {
+                    "type": "numbered_step",
+                    "label": "Open the workspace",
+                    **positions[1],
+                },
+                {"type": "numbered_step", "label": "Run setup", **positions[1]},
+            ],
+        }
+
+        markup = slide_markup(2, slide, tmp_path, [], [])
+
+        lead = markup.index("Before you start")
+        steps = markup.index(
+            '<ol class="demo-steps"><li><strong>Open the workspace</strong></li>'
+            "<li><strong>Run setup</strong></li></ol>"
+        )
+        assert lead < steps
+
+    def test_given_unsupported_type_in_mixed_row_when_mapped_then_raises(
+        self, tmp_path
+    ):
+        slide = {
+            "title": "Setup",
+            "elements": [
+                {"type": "numbered_step", "label": "Open"},
+                {"type": "chart", "text": "Unsupported"},
+            ],
+        }
+
+        with pytest.raises(CheckError, match="Unsupported element type 'chart'"):
+            slide_markup(2, slide, tmp_path, [], [])
+
     def test_given_wrapped_sentence_when_mapped_then_one_paragraph(self, tmp_path):
         slide = {
             "title": "Intro",
@@ -292,6 +349,57 @@ class TestBuildDeckSource:
         summary = json.loads((deck / BUILD_SUMMARY).read_text(encoding="utf-8"))
         assert summary["slides"] == 2 and summary["missing_images"] == []
         assert summary["sources"] > 0
+        assert summary["level"] == "L100"
+        assert summary["render_inputs"]["link_base"] == _BASE
+        assert summary["generation_sha256"] == generation_digest(
+            summary["content_sha256"],
+            summary["render_inputs"],
+            summary["template_files"],
+        )
+        assert GENERATION_META.format(summary["generation_sha256"]) in (
+            deck / "index.html"
+        ).read_text(encoding="utf-8")
+
+    def test_given_non_english_metadata_when_built_then_chrome_stays_english(
+        self, tmp_path, template
+    ):
+        level_dir = tmp_path / "L100"
+        _slide(level_dir, 1, {"title": "Bienvenue"})
+        _slide(level_dir, 2, {"title": "Hello", "language": "en-GB"})
+        style = level_dir / "content" / "global" / "style.yaml"
+        style.parent.mkdir(parents=True, exist_ok=True)
+        style.write_text("metadata:\n  language: fr\n", encoding="utf-8")
+
+        deck = build_deck_source("L100", level_dir, template, level_dir / "out")
+
+        page = (deck / "index.html").read_text(encoding="utf-8")
+        assert '<html lang="fr">' in page
+        for marker in (
+            '<a class="skip-link" lang="en"',
+            '<div id="startup" role="status" lang="en">',
+            '<noscript lang="en">',
+            '<nav id="presenter-controls" lang="en"',
+            '<div id="announcement" lang="en"',
+            '<dialog id="detail-dialog" lang="en"',
+        ):
+            assert marker in page
+        assert 'id="slide-1" data-title="Bienvenue" lang="fr"' in page
+        assert 'id="slide-2" data-title="Hello" lang="en-GB"' in page
+
+    def test_given_template_without_chrome_marker_when_built_then_raises(
+        self, tmp_path, template
+    ):
+        index = template / "index.html"
+        index.write_text(
+            index.read_text(encoding="utf-8").replace("<noscript>", "<div>"),
+            encoding="utf-8",
+        )
+        _slide(tmp_path / "L100", 1, {"title": "One"})
+
+        with pytest.raises(CheckError, match="template chrome changed: <noscript"):
+            build_deck_source(
+                "L100", tmp_path / "L100", template, tmp_path / "L100/out"
+            )
 
     def test_given_no_link_base_when_built_then_no_citations(self, tmp_path, template):
         level_dir = tmp_path / "L100"
@@ -628,6 +736,30 @@ def browser(monkeypatch):
     return options
 
 
+def _certified_build(level_dir, slide_ids, content_sha256=None, sources=None):
+    """Return a build record for current inputs and its HTML generation meta."""
+    content = content_sha256 or content_digest(level_dir)
+    inputs = {
+        "sources": level_sources("L100", level_dir) if sources is None else sources,
+        "link_base": None,
+    }
+    templates = {"index.html": "0" * 64}
+    generation = generation_digest(content, inputs, templates)
+    record = {
+        "schema_version": 2,
+        "renderer": "hve-slides",
+        "format": "html",
+        "level": "L100",
+        "slide_ids": slide_ids,
+        "content_sha256": content,
+        "render_inputs": inputs,
+        "template_files": templates,
+        "generation_sha256": generation,
+        "missing_images": [],
+    }
+    return record, GENERATION_META.format(generation)
+
+
 def _export_level(tmp_path, content_sha256=None):
     level_dir = tmp_path / "L100"
     (level_dir / "content").mkdir(parents=True)
@@ -635,14 +767,8 @@ def _export_level(tmp_path, content_sha256=None):
     output = level_dir / "output"
     output.mkdir()
     deck = output / "hve-demo-L100.html"
-    deck.write_bytes(b"<!doctype html><title>Deck</title>")
-    build = {
-        "schema_version": 2,
-        "renderer": "hve-slides",
-        "format": "html",
-        "slide_ids": ["slide-1"],
-        "content_sha256": content_sha256 or content_digest(level_dir),
-    }
+    build, meta = _certified_build(level_dir, ["slide-1"], content_sha256)
+    deck.write_text(f"<!doctype html>{meta}<title>Deck</title>", encoding="utf-8")
     (output / "html-deck-build.json").write_text(json.dumps(build), encoding="utf-8")
     return level_dir, deck
 
@@ -857,6 +983,60 @@ class TestCheckDeckWithFakeBrowser:
         assert evidence["retained_frames"][0]["path"] == "frames/deck/slide-001.jpg"
 
 
+class TestCheckDeckGenerationAndTransaction:
+    """Frame export binds HTML to its build and commits frames with evidence."""
+
+    def test_given_html_from_another_generation_when_exported_then_refused(
+        self, tmp_path, browser
+    ):
+        level_dir, deck = _export_level(tmp_path)
+        deck.write_text(
+            "<!doctype html>" + GENERATION_META.format("f" * 64), encoding="utf-8"
+        )
+
+        with pytest.raises(CheckError, match="not generated from this build"):
+            check_deck(deck, level_dir / "frames" / "deck", level_dir)
+
+        assert browser.launches == 0
+
+    def test_given_changed_sources_when_exported_then_refused(self, tmp_path, browser):
+        level_dir, deck = _export_level(tmp_path)
+        (level_dir / "manifest.yml").write_text(
+            "sources:\n  - path: docs/changed.md\n", encoding="utf-8"
+        )
+
+        with pytest.raises(CheckError, match="current citation sources"):
+            check_deck(deck, level_dir / "frames" / "deck", level_dir)
+
+    def test_given_evidence_write_fails_when_reexported_then_prior_frames_kept(
+        self, tmp_path, browser, monkeypatch
+    ):
+        level_dir, deck = _export_level(tmp_path)
+        assert _export(level_dir, deck) == 0
+        frame = level_dir / "frames" / "deck" / "slide-001.jpg"
+        record = deck.parent / "html-deck-check.json"
+        prior_frame, prior_record = frame.read_bytes(), record.read_bytes()
+        monkeypatch.setattr(
+            _FakeLocator,
+            "screenshot",
+            lambda self, **kwargs: _jpeg(1920, 1080)[:-2] + b"\x00\xff\xd9",
+        )
+        real_replace = os.replace
+
+        def failing_replace(source, target):
+            if Path(target).name == "html-deck-check.json":
+                raise OSError("disk full")
+            return real_replace(source, target)
+
+        monkeypatch.setattr("render_checks.os.replace", failing_replace)
+
+        code = _export(level_dir, deck)
+
+        assert code == 1
+        assert frame.read_bytes() == prior_frame
+        assert record.read_bytes() == prior_record
+
+
 class TestCheckDeckExportGuards:
     """Guards that run in the browser session or after it, before frames install."""
 
@@ -956,25 +1136,16 @@ class TestT10:
         body = "".join(
             f'<section id="slide-{n}"></section>' for n in range(1, sections + 1)
         )
+        record, meta = _certified_build(
+            level_dir, [f"slide-{n}" for n in range(1, sections + 1)]
+        )
         (level_dir / "output" / "hve-demo-L100.html").write_text(
-            f'<html><body>{body}<script type="application/json" '
+            f'<html><head>{meta}</head><body>{body}<script type="application/json" '
             'id="hve-slide-metadata">{}</script></body></html>',
             encoding="utf-8",
         )
         build = level_dir / "output/html-deck-build.json"
-        build.write_text(
-            json.dumps(
-                {
-                    "schema_version": 2,
-                    "renderer": "hve-slides",
-                    "format": "html",
-                    "slide_ids": [f"slide-{n}" for n in range(1, sections + 1)],
-                    "content_sha256": content_digest(level_dir),
-                    "missing_images": [],
-                }
-            ),
-            encoding="utf-8",
-        )
+        build.write_text(json.dumps(record), encoding="utf-8")
         frames = []
         for number in range(1, sections + 1):
             frame = level_dir / f"frames/deck/slide-{number:03d}.jpg"
@@ -1016,6 +1187,41 @@ class TestT10:
         level_dir = self._level(tmp_path)
         self._publish(level_dir)
         assert t10("L100", level_dir)["result"] == "pass"
+
+    def test_given_newer_build_record_for_older_html_when_scored_then_fail(
+        self, tmp_path
+    ):
+        level_dir = self._level(tmp_path)
+        self._publish(level_dir)
+        deck = level_dir / "output/hve-demo-L100.html"
+        older = deck.read_bytes()
+        _slide(level_dir, 1, {"title": "S1", "speaker_notes": "Revised body."})
+        self._publish(level_dir)
+        deck.write_bytes(older)
+        check = level_dir / "output/html-deck-check.json"
+        evidence = json.loads(check.read_text(encoding="utf-8"))
+        evidence["html_sha256"] = hashlib.sha256(older).hexdigest()
+        check.write_text(json.dumps(evidence), encoding="utf-8")
+
+        result = t10("L100", level_dir)
+
+        assert result["result"] == "fail"
+        assert "not generated from this build evidence" in result["evidence"]
+
+    def test_given_changed_citation_sources_when_scored_then_fail(self, tmp_path):
+        level_dir = self._level(tmp_path)
+        (level_dir / "manifest.yml").write_text(
+            "sources:\n  - path: docs/a.md\n", encoding="utf-8"
+        )
+        self._publish(level_dir)
+        (level_dir / "manifest.yml").write_text(
+            "sources:\n  - path: docs/b.md\n", encoding="utf-8"
+        )
+
+        result = t10("L100", level_dir)
+
+        assert result["result"] == "fail"
+        assert "current citation sources" in result["evidence"]
 
     def test_given_problems_when_scored_then_each_reported(self, tmp_path):
         level_dir = self._level(tmp_path, slides=3)

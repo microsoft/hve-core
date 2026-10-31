@@ -3,7 +3,7 @@ title: HVE Slides Skill Security Model
 description: STRIDE model for slide authoring, trusted workspace builds and caller-owned HTML rendering.
 author: microsoft/hve-core
 ms.topic: reference
-ms.date: 2026-10-27
+ms.date: 2026-10-31
 keywords: [security, stride, html, slides]
 estimated_reading_time: 5
 ---
@@ -146,7 +146,7 @@ Source files are loaded into memory. There is no aggregate size or process-memor
 
 ### Elevation of Privilege
 
-The CLI statically imports its own modules rather than caller `build.mjs`. Authored JavaScript remains inert during Node bundling. A compromised installed module or interpreter already has the operator's authority.
+The CLI statically imports its own modules rather than caller `build.mjs`. Authored JavaScript remains inert during Node bundling. Render-only dependency restoration for imported source uses `npm ci --ignore-scripts --no-audit --no-fund`, so source-supplied `preinstall`, `install` and `postinstall` scripts never run; a regression test runs the documented command against a lifecycle-script sentinel. The restored packages and the lockfile's registry remain caller-supplied inputs. A compromised installed module or interpreter already has the operator's authority.
 
 ### Risk Rating
 

@@ -153,40 +153,58 @@ def install_files(output: Path, files: dict[str, bytes]) -> None:
     Unrelated files and directories are preserved. Cleanup is nonrecursive and
     limited to this invocation's staging files.
     """
-    output = checked_path(output)
-    for name in files:
-        if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or name in (".", ".."):
-            raise CheckError(f"Invalid output filename: {name}")
-        target = checked_path(output / name, output)
-        if target.exists() and not target.is_file():
-            raise CheckError(f"Output is not a regular file: {target}")
-    output.mkdir(parents=True, exist_ok=True)
-    stage = Path(tempfile.mkdtemp(prefix=".render-stage-", dir=output))
-    installed: list[str] = []
-    saved: set[str] = set()
-    try:
-        for name, data in files.items():
-            (stage / name).write_bytes(data)
+    install_file_sets([(output, files)])
+
+
+def install_file_sets(groups: list[tuple[Path, dict[str, bytes]]]) -> None:
+    """Replace named flat files across directories as one transaction.
+
+    Every group is staged and backed up before any replacement. When any
+    replacement fails, every file already replaced in every group is restored,
+    so related files such as frames and their ownership record commit together.
+    """
+    checked: list[tuple[Path, dict[str, bytes]]] = []
+    for output, files in groups:
+        output = checked_path(output)
+        for name in files:
+            if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or name in (".", ".."):
+                raise CheckError(f"Invalid output filename: {name}")
             target = checked_path(output / name, output)
-            if target.exists():
-                (stage / f"backup-{name}").write_bytes(target.read_bytes())
-                saved.add(name)
+            if target.exists() and not target.is_file():
+                raise CheckError(f"Output is not a regular file: {target}")
+        checked.append((output, files))
+    stages: list[Path] = []
+    installed: list[tuple[Path, Path, str]] = []
+    saved: set[tuple[Path, str]] = set()
+    try:
+        for output, files in checked:
+            output.mkdir(parents=True, exist_ok=True)
+            stage = Path(tempfile.mkdtemp(prefix=".render-stage-", dir=output))
+            stages.append(stage)
+            for name, data in files.items():
+                (stage / name).write_bytes(data)
+                target = checked_path(output / name, output)
+                if target.exists():
+                    (stage / f"backup-{name}").write_bytes(target.read_bytes())
+                    saved.add((output, name))
         try:
-            for name in files:
-                os.replace(stage / name, checked_path(output / name, output))
-                installed.append(name)
+            for (output, files), stage in zip(checked, stages, strict=True):
+                for name in files:
+                    os.replace(stage / name, checked_path(output / name, output))
+                    installed.append((output, stage, name))
         except (OSError, KeyboardInterrupt):
-            for name in reversed(installed):
-                if name in saved:
+            for output, stage, name in reversed(installed):
+                if (output, name) in saved:
                     os.replace(stage / f"backup-{name}", output / name)
                 else:
                     (output / name).unlink()
             raise
     finally:
-        for name in files:
-            (stage / name).unlink(missing_ok=True)
-            (stage / f"backup-{name}").unlink(missing_ok=True)
-        stage.rmdir()
+        for (_, files), stage in zip(checked, stages, strict=False):
+            for name in files:
+                (stage / name).unlink(missing_ok=True)
+                (stage / f"backup-{name}").unlink(missing_ok=True)
+            stage.rmdir()
 
 
 def _section(text: str, heading: str) -> list[str]:
@@ -879,6 +897,16 @@ def transcript_on_screen(slide: dict, title: str) -> list[str]:
     ]
 
 
+def _english(language: str) -> bool:
+    return language.lower().split("-")[0] == "en"
+
+
+def slide_language(slide: dict, default: str) -> str:
+    """Return the slide's authored language tag, or ``default``."""
+    language = slide.get("language")
+    return language if isinstance(language, str) and language.strip() else default
+
+
 def build_transcript_page(
     level: str,
     level_dir: Path,
@@ -900,27 +928,34 @@ def build_transcript_page(
     )
     length = f" &middot; {minutes:.1f} minutes" if minutes else ""
     stem = f"hve-demo-{level}"
+    page_en = "" if _english(language) else ' lang="en"'
     narration_notice = (
-        "<p>Silent video: no voiceover. The transcript contains the authored notes.</p>"
+        f"<p{page_en}>Silent video: no voiceover. "
+        "The transcript contains the authored notes.</p>"
         if narration_engine == "none"
         else ""
     )
     slides_link = f' &middot; <a href="{stem}.html">Open the slides (HTML)</a>'
+    # Fixed English labels are tagged only inside non-English containers.
     sections = []
     for number, slide in load_slides(level_dir / "content"):
         slide_title = str(slide.get("title") or f"Slide {number}")
+        lang = slide_language(slide, language)
+        en = "" if _english(lang) else ' lang="en"'
+        label = f"<span{en}>Slide {number}:</span>" if en else f"Slide {number}:"
         shown = transcript_on_screen(slide, slide_title)
         on_screen = (
-            "<h4>On screen</h4><ul>"
+            f"<h4{en}>On screen</h4><ul>"
             + "".join(f"<li>{esc(text)}</li>" for text in shown)
             + "</ul>"
             if shown
             else ""
         )
         sections.append(
-            f'<section aria-labelledby="slide-{number}">'
-            f'<h3 id="slide-{number}">Slide {number}: {esc(slide_title)}</h3>'
-            f"{on_screen}<h4>Narration</h4><p>{esc(notes_text(slide))}</p></section>"
+            f'<section aria-labelledby="slide-{number}" lang="{esc(lang)}">'
+            f'<h3 id="slide-{number}">{label} {esc(slide_title)}</h3>'
+            f"{on_screen}<h4{en}>Narration</h4>"
+            f"<p>{esc(notes_text(slide))}</p></section>"
         )
     return (
         f'<!doctype html><html lang="{esc(language)}"><head><meta charset="utf-8">'
@@ -930,15 +965,15 @@ def build_transcript_page(
         "form-action 'none'\">"
         f"<title>{esc(title)}: video and transcript</title>"
         f"<style>{_PAGE_STYLE}</style></head><body><main>"
-        '<p><a href="../../docs/demo-material/">Back to Demo Material</a></p>'
-        f"<h1>{esc(title)}</h1><p>{esc(level)}{length}</p>"
+        f'<p{page_en}><a href="../../docs/demo-material/">Back to Demo Material</a></p>'
+        f"<h1>{esc(title)}</h1><p{page_en}>{esc(level)}{length}</p>"
         f"{narration_notice}"
         f'<video controls preload="metadata"><source src="{stem}.mp4" type="video/mp4">'
         f'<track kind="captions" src="{stem}.vtt" srclang="{esc(language[:2])}" '
         'label="English"></video>'
-        f'<p><a href="{stem}.mp4">Download the video (MP4)</a> &middot; '
+        f'<p{page_en}><a href="{stem}.mp4">Download the video (MP4)</a> &middot; '
         f'<a href="{stem}.vtt">Download the captions (WebVTT)</a>{slides_link}</p>'
-        f"<h2>Transcript</h2>{''.join(sections)}</main></body></html>\n"
+        f"<h2{page_en}>Transcript</h2>{''.join(sections)}</main></body></html>\n"
     )
 
 
@@ -1197,6 +1232,126 @@ def content_digest(level_dir: Path) -> str:
     return digest.hexdigest()
 
 
+MANIFEST_PATHS = ("manifest.yml", "output/manifest.yml")
+GENERATION_META = '<meta name="hve-demo-generation" content="{}">'
+_GENERATION_META = re.compile(
+    r'<meta name="hve-demo-generation" content="([0-9a-f]{64})">'
+)
+
+
+def _safe_source_path(path: object) -> str | None:
+    text = str(path).strip() if isinstance(path, str) else ""
+    parts = text.split("/")
+    if not text or text.startswith("/") or ":" in text or "\\" in text:
+        return None
+    if any(part in ("", ".", "..") for part in parts):
+        return None
+    return text
+
+
+def level_sources(level: str, level_dir: Path) -> list[str]:
+    """Return the level's resolved source paths.
+
+    Reads the manifest's source register when one exists, so a dynamic topic
+    cites what it actually used, and falls back to the curriculum's pinned
+    sources for the level. Invalid paths fail rather than disappearing.
+    """
+    import yaml
+
+    for name in MANIFEST_PATHS:
+        manifest = checked_path(level_dir / name, level_dir)
+        if not manifest.is_file():
+            continue
+        data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
+        entries = data.get("sources") if isinstance(data, dict) else None
+        if entries is not None and not isinstance(entries, list):
+            raise CheckError(
+                f"Invalid source register in {name}; sources must be a list"
+            )
+        paths = [
+            _safe_source_path(entry.get("path"))
+            for entry in entries or []
+            if isinstance(entry, dict)
+        ]
+        if entries is not None and (
+            not isinstance(entries, list) or len(paths) != len(entries) or None in paths
+        ):
+            raise CheckError(
+                f"Invalid source register in {name}; "
+                "use plain repository-relative paths"
+            )
+        resolved = list(dict.fromkeys(path for path in paths if path))
+        if resolved:
+            return resolved
+    return list(load_curriculum().get(level, {}).get("sources", []))
+
+
+def generation_digest(
+    content_sha256: object, render_inputs: object, template_files: object
+) -> str:
+    """Return the identity of one HTML generation from every rendering input.
+
+    Covers authored content, the resolved citation sources and link base, and
+    the template files, so evidence for one generation cannot certify another.
+    """
+    payload = json.dumps(
+        {
+            "content_sha256": content_sha256,
+            "render_inputs": render_inputs,
+            "template_files": template_files,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def html_generation(page: str) -> str | None:
+    """Return the single generation identity embedded in delivered HTML."""
+    matches = _GENERATION_META.findall(page)
+    return matches[0] if len(matches) == 1 else None
+
+
+def build_record_problems(
+    level: str, level_dir: Path, record: dict, page: str | None
+) -> list[str]:
+    """Return why a build record does not certify ``page`` for current inputs.
+
+    The record must match current content and resolved sources, its generation
+    must equal the digest of its recorded inputs, and the delivered HTML must
+    embed that same generation.
+    """
+    problems = []
+    if record.get("level") != level:
+        problems.append("HTML build evidence is for a different level")
+    if record.get("content_sha256") != content_digest(level_dir):
+        problems.append("HTML build evidence does not match current content")
+    inputs = record.get("render_inputs")
+    templates = record.get("template_files")
+    if not isinstance(inputs, dict) or not isinstance(templates, dict):
+        problems.append("HTML build evidence lacks its render inputs")
+    else:
+        try:
+            sources = level_sources(level, level_dir)
+        except (CheckError, OSError, ValueError) as error:
+            problems.append(f"cannot resolve current sources: {error}")
+        else:
+            if inputs.get("sources") != sources:
+                problems.append(
+                    "HTML build evidence does not match current citation sources"
+                )
+        if record.get("generation_sha256") != generation_digest(
+            record.get("content_sha256"), inputs, templates
+        ):
+            problems.append("HTML build generation does not match its inputs")
+    if page is not None and (
+        html_generation(page) is None
+        or html_generation(page) != record.get("generation_sha256")
+    ):
+        problems.append("Delivered HTML was not generated from this build evidence")
+    return problems
+
+
 def verify_open_captions(
     control: Path,
     finalized: Path,
@@ -1366,7 +1521,12 @@ class _TranscriptParser(HTMLParser):
         if tag == "track":
             self.tracks.append(attributes)
         elif tag == "section":
-            self._section = {"heading": "", "on_screen": [], "narration": ""}
+            self._section = {
+                "heading": "",
+                "on_screen": [],
+                "narration": "",
+                "lang": attributes.get("lang") or "",
+            }
             self.sections.append(self._section)
             self._part = ""
         elif self._section is not None:
@@ -1407,6 +1567,7 @@ def transcript_problems(level_dir: Path, page: str) -> list[str]:
     if not any(track.get("kind") == "captions" for track in parser.tracks):
         problems.append("transcript page has no captions track")
     slides = load_slides(level_dir / "content")
+    language = str(style_metadata(level_dir).get("language") or "en-US")
     if len(parser.sections) != len(slides):
         problems.append(
             f"transcript has {len(parser.sections)} sections for {len(slides)} slides"
@@ -1430,6 +1591,8 @@ def transcript_problems(level_dir: Path, page: str) -> list[str]:
             for name in expected
             if expected[name] != found[name]
         ]
+        if section["lang"] != slide_language(slide, language):
+            problems.append(f"transcript slide {number} language does not match")
     return problems
 
 
@@ -1526,10 +1689,14 @@ def check_html_deck(level: str, level_dir: Path) -> dict:
             or record.get("format") != "html"
         ):
             problems.append("incompatible HTML build evidence")
-        if record.get("slide_ids") != slide_ids or record.get(
-            "content_sha256"
-        ) != content_digest(level_dir):
+        if record.get("slide_ids") != slide_ids:
             problems.append("HTML build evidence does not match current content")
+        problems += build_record_problems(
+            level,
+            level_dir,
+            record,
+            deck.read_text(encoding="utf-8") if deck.is_file() else None,
+        )
     else:
         problems.append("HTML build evidence missing")
     browser = checked_path(output / "html-deck-check.json", output)
@@ -1591,6 +1758,50 @@ def check_html_deck(level: str, level_dir: Path) -> dict:
         "evidence": "; ".join(problems)
         or "single-file deck with every slide, started offline, no slide overflows",
     }
+
+
+PUBLIC_MANIFEST_FIELDS = ("schema_version", "renderer", "format", "level", "state")
+PUBLIC_NARRATION_FIELDS = (
+    "engine",
+    "timing_basis",
+    "measured_duration_minutes",
+    "contract_duration_minutes",
+)
+
+
+def public_manifest(manifest: dict) -> dict:
+    """Return the allowlisted manifest projection that public bundles publish.
+
+    Keeps delivery identity, modes, output names and check results only.
+    Operational fields such as research artifacts, source roots, execution
+    logs, approvals and free-form notes stay in the internal manifest.
+    """
+    public = {key: manifest[key] for key in PUBLIC_MANIFEST_FIELDS if key in manifest}
+    if isinstance(manifest.get("deliverables"), dict):
+        public["deliverables"] = {
+            str(key): str(value) for key, value in manifest["deliverables"].items()
+        }
+    visuals = manifest.get("visuals")
+    if isinstance(visuals, dict) and "capture_profile" in visuals:
+        public["visuals"] = {"capture_profile": visuals["capture_profile"]}
+    narration = manifest.get("narration")
+    if isinstance(narration, dict):
+        public["narration"] = {
+            key: narration[key] for key in PUBLIC_NARRATION_FIELDS if key in narration
+        }
+    validation = manifest.get("validation")
+    if isinstance(validation, dict):
+        checks = validation.get("machine_checks")
+        public["validation"] = {
+            key: validation[key] for key in ("deck", "video") if key in validation
+        }
+        if isinstance(checks, dict):
+            public["validation"]["machine_checks"] = {
+                str(key): {"result": value.get("result")}
+                for key, value in checks.items()
+                if isinstance(value, dict)
+            }
+    return public
 
 
 def default_capture_profile(level: str) -> str:
@@ -1718,11 +1929,22 @@ def evaluate(
         validation["video"] = "pass" if result["ok"] else "fail"
         # Machine scoring does not grant human delivery approval or visual review.
         manifest["state"] = "Deferred"
+        # The full manifest stays internal; public bundles carry the projection.
         install_files(
             level_dir / "output",
-            {"manifest.yml": yaml.safe_dump(manifest, sort_keys=False).encode("utf-8")},
+            {
+                "manifest.yml": yaml.safe_dump(manifest, sort_keys=False).encode(
+                    "utf-8"
+                ),
+                "public-manifest.yml": yaml.safe_dump(
+                    public_manifest(manifest), sort_keys=False
+                ).encode("utf-8"),
+            },
         )
         result["manifest_sha256"] = _sha256(level_dir / "output/manifest.yml")
+        result["public_manifest_sha256"] = _sha256(
+            level_dir / "output/public-manifest.yml"
+        )
     return result
 
 

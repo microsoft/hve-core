@@ -44,6 +44,7 @@ from render_checks import (
     publish_generation,
     style_metadata,
     subtitle_languages,
+    transcript_problems,
     validate_media_timeline,
     validate_scripted_render,
     verify_open_captions,
@@ -662,6 +663,40 @@ class TestEvaluate:
         assert result["capture_profile"] == "deck-export"
         assert result["total_word_count"] == 9
         assert set(result["checks"]) == {"T-04", "T-07", "T-08", "T-09", "T-10"}
+
+    def test_given_operational_manifest_fields_when_evaluated_then_public_excludes(
+        self, tmp_path, mocker
+    ):
+        import yaml
+
+        level_dir = self._level(tmp_path)
+        manifest = yaml.safe_load((level_dir / "manifest.yml").read_text())
+        sentinel = "C:/Users/alice/Customers/CASE-4821"
+        manifest.update(
+            research_artifact=f"{sentinel}/research.md",
+            source_roots=[sentinel],
+            audience="internal pilot",
+            evidence={"execution_logs": [f"{sentinel}/run.log"]},
+            approvals={"delivery": "pending"},
+        )
+        (level_dir / "manifest.yml").write_text(yaml.safe_dump(manifest))
+        mocker.patch("render_checks.measure_minutes", return_value=5.0)
+
+        result = evaluate(
+            "L100", level_dir, load_curriculum(), slides_skill_root=_SLIDES_ROOT
+        )
+
+        public = level_dir / "output" / "public-manifest.yml"
+        assert sentinel not in public.read_text(encoding="utf-8")
+        assert sentinel in (level_dir / "output/manifest.yml").read_text()
+        projection = yaml.safe_load(public.read_text(encoding="utf-8"))
+        assert projection["level"] == "L100"
+        assert projection["deliverables"]["html_deck"] == "output/hve-demo-L100.html"
+        assert set(projection["validation"]["machine_checks"]["T-10"]) == {"result"}
+        assert (
+            result["public_manifest_sha256"]
+            == hashlib.sha256(public.read_bytes()).hexdigest()
+        )
 
     def test_given_live_level_without_captures_when_evaluated_then_not_ok(
         self, tmp_path, mocker
@@ -1698,6 +1733,57 @@ class TestTranscriptPage:
         assert "<b>hi</b>" not in page
         assert '<html lang="en-US">' in page
         assert "Slide 1: Slide title 1" in page
+        assert '<section aria-labelledby="slide-1" lang="en-US">' in page
+        assert '<span lang="en">' not in page
+
+    def test_given_french_slide_in_english_deck_when_built_then_section_is_french(
+        self, tmp_path, mocker
+    ):
+        _write_slides(tmp_path, 2)
+        french = tmp_path / "content" / "slide-002" / "content.yaml"
+        french.write_text(
+            french.read_text(encoding="utf-8") + "language: fr\n", encoding="utf-8"
+        )
+        mocker.patch("render_checks.measure_minutes", return_value=None)
+
+        page = build_transcript_page("L100", tmp_path)
+
+        assert '<section aria-labelledby="slide-1" lang="en-US">' in page
+        assert '<section aria-labelledby="slide-2" lang="fr">' in page
+        assert '<span lang="en">Slide 2:</span> Slide title 2' in page
+        assert '<h4 lang="en">Narration</h4>' in page
+        assert transcript_problems(tmp_path, page) == []
+
+    def test_given_french_metadata_when_built_then_english_chrome_tagged(
+        self, tmp_path, mocker
+    ):
+        _write_slides(tmp_path, 1)
+        style = tmp_path / "content" / "global" / "style.yaml"
+        style.parent.mkdir(parents=True)
+        style.write_text("metadata:\n  language: fr\n", encoding="utf-8")
+        mocker.patch("render_checks.measure_minutes", return_value=None)
+
+        page = build_transcript_page("L100", tmp_path, narration_engine="none")
+
+        assert '<html lang="fr">' in page
+        assert '<h2 lang="en">Transcript</h2>' in page
+        assert '<p lang="en">Silent video' in page
+        assert '<p lang="en"><a href="../../docs/demo-material/">' in page
+
+    def test_given_section_language_dropped_when_checked_then_reported(
+        self, tmp_path, mocker
+    ):
+        _write_slides(tmp_path, 1)
+        slide = tmp_path / "content" / "slide-001" / "content.yaml"
+        slide.write_text(
+            slide.read_text(encoding="utf-8") + "language: fr\n", encoding="utf-8"
+        )
+        mocker.patch("render_checks.measure_minutes", return_value=None)
+        page = build_transcript_page("L100", tmp_path).replace(' lang="fr"', "")
+
+        assert "transcript slide 1 language does not match" in transcript_problems(
+            tmp_path, page
+        )
 
 
 class TestDeckAccessibility:
@@ -1798,7 +1884,7 @@ class TestAccessibilityDelivery:
         level_dir = self._level(tmp_path, mocker)
         page = level_dir / "output" / "index.html"
         text = page.read_text(encoding="utf-8")
-        start = text.index('<section aria-labelledby="slide-2">')
+        start = text.index('<section aria-labelledby="slide-2"')
         page.write_text(text[:start] + text[text.index("</section>", start) + 10 :])
 
         result = check_accessibility("L100", level_dir)

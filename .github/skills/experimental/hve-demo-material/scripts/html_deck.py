@@ -37,17 +37,19 @@ import sys
 import urllib.parse
 from pathlib import Path
 
-import yaml
 from render_checks import (
     EXIT_FAILURE,
     EXIT_SUCCESS,
+    GENERATION_META,
     LEVELS,
     SKILL_ROOT,
     CheckError,
+    _safe_source_path,
     checked_path,
     content_digest,
+    generation_digest,
     install_files,
-    load_curriculum,
+    level_sources,
     load_slides,
     normalized_text,
     notes_text,
@@ -66,7 +68,15 @@ COPIED_FILES = (
     "LICENSE",
 )
 BUILD_SUMMARY = "demo-material-build.json"
-MANIFEST_PATHS = ("manifest.yml", "output/manifest.yml")
+# Fixed English presenter chrome stays English when the authored language differs.
+ENGLISH_CHROME = (
+    '<a class="skip-link"',
+    '<div id="startup" role="status"',
+    "<noscript",
+    '<nav id="presenter-controls"',
+    '<div id="announcement"',
+    '<dialog id="detail-dialog"',
+)
 _GITHUB_REMOTE = re.compile(
     r"^(?:https://(?:[^@/]+@)?github\.com/|git@github\.com:|ssh://git@github\.com/)"
     r"([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$"
@@ -474,21 +484,15 @@ def slide_markup(
             return _image(elem, slide_dir, f"shot-{number}-{len(css)}", css, missing)
         raise CheckError(f"Slide {number}: unsupported element {kind!r}")
 
-    for row in rows:
-        row.sort(key=lambda unit: (unit[1], unit[2]))
-        row_elements = [unit[3] for unit in row]
-        if all(e.get("type") == "numbered_step" for e in row_elements):
-            for elem in row_elements:
-                description = elem.get("description")
-                detail = f"<span>{_esc(description)}</span>" if description else ""
-                steps.append(
-                    f"<li><strong>{_esc(elem.get('label', ''))}</strong>{detail}</li>"
-                )
-            continue
+    def flush_steps() -> None:
+        nonlocal steps, lead_open
         if steps:
             parts.append('<ol class="demo-steps">' + "".join(steps) + "</ol>")
             steps = []
             lead_open = False
+
+    def emit_blocks(row_elements: list[dict]) -> None:
+        nonlocal lead_open
         panels = [e for e in row_elements if is_frame(e) or e.get("type") == "card"]
         if len(panels) > 1 and len(panels) == len(row_elements):
             parts.append(
@@ -508,9 +512,34 @@ def slide_markup(
                 + "</div>"
             )
         else:
-            parts += [block(e) for e in row_elements]
-    if steps:
-        parts.append('<ol class="demo-steps">' + "".join(steps) + "</ol>")
+            parts.extend(block(e) for e in row_elements)
+
+    for row in rows:
+        row.sort(key=lambda unit: (unit[1], unit[2]))
+        # Consecutive numbered steps form one list; other runs keep row grouping.
+        run: list[dict] = []
+        for elem in [unit[3] for unit in row] + [None]:
+            is_step = elem is not None and elem.get("type") == "numbered_step"
+            if run and (
+                elem is None or is_step != (run[0].get("type") == "numbered_step")
+            ):
+                if run[0].get("type") == "numbered_step":
+                    for step in run:
+                        description = step.get("description")
+                        detail = (
+                            f"<span>{_esc(description)}</span>" if description else ""
+                        )
+                        steps.append(
+                            f"<li><strong>{_esc(step.get('label', ''))}</strong>"
+                            f"{detail}</li>"
+                        )
+                else:
+                    flush_steps()
+                    emit_blocks(run)
+                run = []
+            if elem is not None:
+                run.append(elem)
+    flush_steps()
     if citations:
         parts.append(f'<p class="footnote">Sources: {_esc("; ".join(citations))}</p>')
     notes = notes_text(slide)
@@ -554,51 +583,6 @@ def workspace_blob_base(workspace: Path) -> str | None:
     remote = _git(workspace, "remote", "get-url", "origin")
     commit = _git(workspace, "rev-parse", "HEAD")
     return github_blob_base(remote, commit) if remote and commit else None
-
-
-def _safe_source_path(path: object) -> str | None:
-    text = str(path).strip() if isinstance(path, str) else ""
-    parts = text.split("/")
-    if not text or text.startswith("/") or ":" in text or "\\" in text:
-        return None
-    if any(part in ("", ".", "..") for part in parts):
-        return None
-    return text
-
-
-def level_sources(level: str, level_dir: Path) -> list[str]:
-    """Return the level's resolved source paths.
-
-    Reads the manifest's source register when one exists, so a dynamic topic
-    cites what it actually used, and falls back to the curriculum's pinned
-    sources for the level. Invalid paths fail rather than disappearing.
-    """
-    for name in MANIFEST_PATHS:
-        manifest = checked_path(level_dir / name, level_dir)
-        if not manifest.is_file():
-            continue
-        data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
-        entries = data.get("sources") if isinstance(data, dict) else None
-        if entries is not None and not isinstance(entries, list):
-            raise CheckError(
-                f"Invalid source register in {name}; sources must be a list"
-            )
-        paths = [
-            _safe_source_path(entry.get("path"))
-            for entry in entries or []
-            if isinstance(entry, dict)
-        ]
-        if entries is not None and (
-            not isinstance(entries, list) or len(paths) != len(entries) or None in paths
-        ):
-            raise CheckError(
-                f"Invalid source register in {name}; "
-                "use plain repository-relative paths"
-            )
-        resolved = list(dict.fromkeys(path for path in paths if path))
-        if resolved:
-            return resolved
-    return list(load_curriculum().get(level, {}).get("sources", []))
 
 
 def build_deck_source(
@@ -734,10 +718,28 @@ def build_deck_source(
         "<title>HTML slide deck</title>", f"<title>{_esc(title)}</title>", 1
     )
     page = re.sub(r'<html lang="[^"]*">', f'<html lang="{language}">', page, count=1)
+    for marker in ENGLISH_CHROME:
+        if page.count(marker) != 1:
+            raise CheckError(f"HVE Slides template chrome changed: {marker}")
+        page = page.replace(marker, f'{marker} lang="en"', 1)
     first_chapter = _esc(str(slides[0][1].get("section") or level))
     page = page.replace(
         '<span id="chapter-label">Introduction</span>',
         f'<span id="chapter-label">{first_chapter}</span>',
+        1,
+    )
+    content_sha256 = content_digest(level_dir)
+    render_inputs = {"sources": source_paths, "link_base": repo_url}
+    template_files = {
+        name: hashlib.sha256((template / name).read_bytes()).hexdigest()
+        for name in (*COPIED_FILES, "index.html", "components.css")
+    }
+    generation = generation_digest(content_sha256, render_inputs, template_files)
+    if page.count('<meta charset="utf-8">') != 1:
+        raise CheckError("HVE Slides template head is missing its charset meta")
+    page = page.replace(
+        '<meta charset="utf-8">',
+        '<meta charset="utf-8">\n  ' + GENERATION_META.format(generation),
         1,
     )
 
@@ -775,19 +777,19 @@ def build_deck_source(
                 "schema_version": 2,
                 "renderer": "hve-slides",
                 "format": "html",
+                "level": level,
                 "slides": len(slides),
                 "slide_ids": [f"slide-{n}" for n, _ in slides],
-                "content_sha256": content_digest(level_dir),
+                "content_sha256": content_sha256,
+                "render_inputs": render_inputs,
+                "generation_sha256": generation,
                 "missing_images": missing,
                 "sources": len(source_paths),
                 "source_files": {
                     name: hashlib.sha256(data).hexdigest()
                     for name, data in files.items()
                 },
-                "template_files": {
-                    name: hashlib.sha256((template / name).read_bytes()).hexdigest()
-                    for name in (*COPIED_FILES, "index.html", "components.css")
-                },
+                "template_files": template_files,
             },
             indent=2,
         )

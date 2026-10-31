@@ -28,10 +28,12 @@ import sys
 from pathlib import Path
 
 from render_checks import (
+    LEVELS,
     CheckError,
+    build_record_problems,
     checked_path,
     content_digest,
-    install_files,
+    install_file_sets,
     jpeg_dimensions,
 )
 
@@ -89,12 +91,17 @@ _CURRENT_SLIDE = """() => {
 
 
 def check_deck(
-    deck: Path, frames_dir: Path | None = None, level_dir: Path | None = None
+    deck: Path,
+    frames_dir: Path | None = None,
+    level_dir: Path | None = None,
+    pending: dict[Path, dict[str, bytes]] | None = None,
 ) -> dict:
-    """Inspect a deck and optionally install a complete ordered frame set.
+    """Inspect a deck and optionally export a complete ordered frame set.
 
     Export requires a caller-owned level root. Existing unowned/stale frames
-    are preserved with an actionable failure, never recursively removed.
+    are preserved with an actionable failure, never recursively removed. When
+    ``pending`` is supplied, passing frames are added to it for the caller to
+    commit together with their evidence; otherwise they are installed here.
     """
     from playwright.sync_api import Error as PlaywrightError
     from playwright.sync_api import sync_playwright
@@ -118,10 +125,22 @@ def check_deck(
             build_record.get("schema_version") != 2
             or build_record.get("renderer") != "hve-slides"
             or build_record.get("format") != "html"
-            or build_record.get("content_sha256") != content_digest(level_dir)
         ):
             raise CheckError(
                 "Current HTML build evidence is required before frame export"
+            )
+        level = build_record.get("level")
+        problems = (
+            build_record_problems(
+                level, level_dir, build_record, payload.decode("utf-8", "replace")
+            )
+            if level in LEVELS
+            else ["HTML build evidence names no level"]
+        )
+        if problems:
+            raise CheckError(
+                "Current HTML build evidence is required before frame export: "
+                + "; ".join(problems)
             )
     requests: list[str] = []
     errors: list[str] = []
@@ -308,7 +327,10 @@ def check_deck(
                     "Unowned, edited or obsolete frames exist; "
                     "preserve/archive the directory before regenerating"
                 )
-        install_files(frames_dir, frames)
+        if pending is None:
+            install_file_sets([(frames_dir, frames)])
+        else:
+            pending[frames_dir] = frames
     return {
         "schema_version": 2,
         "renderer": "hve-slides",
@@ -356,17 +378,29 @@ def main(argv: list[str] | None = None) -> int:
         )
         if not isinstance(previous, dict):
             previous = {}
+        pending: dict[Path, dict[str, bytes]] = {}
         try:
-            result = check_deck(args.deck, args.frames_dir, args.level_dir)
+            result = check_deck(args.deck, args.frames_dir, args.level_dir, pending)
         except (OSError, ValueError, ImportError) as error:
+            pending.clear()
             result = {"result": "fail", "errors": [str(error)]}
         if not result.get("frames"):
             result["retained_frames"] = previous.get("frames") or previous.get(
                 "retained_frames", []
             )
-        install_files(
-            output.parent,
-            {output.name: (json.dumps(result, indent=2) + "\n").encode("utf-8")},
+        # Frames and their ownership record commit or roll back together.
+        install_file_sets(
+            [
+                *pending.items(),
+                (
+                    output.parent,
+                    {
+                        output.name: (json.dumps(result, indent=2) + "\n").encode(
+                            "utf-8"
+                        )
+                    },
+                ),
+            ]
         )
     except (OSError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)

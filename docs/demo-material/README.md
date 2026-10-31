@@ -69,9 +69,11 @@ source documents changed:
   agent writes new slide content for changed, failed, or unpublished levels.
   When every level is current and published, the agent does not run.
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
-   workflow runs daily. It picks up the oldest successful author run that the
-   render index has not recorded yet and checks it before building, so new
-   material appears within a day of authoring. It builds each authored level into a
+   workflow attempts a daily pickup of one eligible successful author run:
+   normally the oldest run the render index has not recorded, or the newest
+   run when no history exists. A backlog of author runs, schedule delays,
+   failed checks, and the first v2 publication can each delay new material, so
+   the schedule is not a publication deadline. It builds each authored level into a
   HTML deck and a silent video from matching exported slide frames, then
    scores the checks a machine can verify: timing paired to every slide, absence
    of an audio stream, the video landing inside the
@@ -101,9 +103,10 @@ cannot certify a new delivery. The catalog hides obsolete or incomplete links.
 
 The first v2 publication requires explicit maintainer approval and preservation
 of existing published media. Recovery/deployment stop on incompatible old bundles
-rather than resetting the index or publishing an empty directory. Archive or
-preserve the existing site outside the replacement deployment, verify new outputs,
-then authorize the migration; this source change performs no publication.
+rather than resetting the index or publishing an empty directory. The
+[v2 migration runbook](v2-migration) gives the maintainer-owned procedure:
+inventory, archive, the `migrate-from-v1` render, validation, publication, and
+rollback criteria. This source change performs no publication.
 
 The [build index](pathname:///demo-material/index.json) records, for each level,
 the commit it was built from, when it was rendered, its measured length, and the

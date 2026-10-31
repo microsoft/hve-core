@@ -372,3 +372,26 @@ test('installed reveal.js must match the deck pin before bundling', async t => {
   fs.writeFileSync(path.join(root, 'node_modules/reveal.js/package.json'), JSON.stringify({ version: '6.0.2' }));
   assert.equal(await readRevealVersion(root), '6.0.2');
 });
+
+test('authored titles, notes and chapters keep their slide language in English controls', () => {
+  const script = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  for (const pattern of [
+    /chapterLabel\.lang = slideLanguage\(current\)/,
+    /required\('#announcement'\)\.replaceChildren\([^;]*authored\(current\.dataset\.title, current\)\)/,
+    /title\.replaceChildren\('Sources \/ ', authored\(current\.dataset\.title, current\)\)/,
+    /title\.replaceChildren\('Notes \/ ', authored\(current\.dataset\.title, current\)\)/,
+    /paragraph\.append\(notes \? authored\(notes, current\)/,
+    /button\.append\(authored\(section\.dataset\.title, section\)\)/
+  ]) assert.match(script, pattern);
+});
+
+test('the bundled startup notice is replaced when it declares its language', async () => {
+  const { createStandaloneHtml } = await import('./bundle.mjs');
+  const page = '<!doctype html><html lang="fr"><head><link rel="stylesheet" href="theme.css">\n'
+    + '<script defer src="deck.js"></script></head><body>'
+    + '<div id="startup" role="status" lang="en">Run npm ci</div></body></html>';
+  const assets = new Map([['theme.css', 'body {}'], ['deck.js', 'void 0;']]);
+  const output = createStandaloneHtml(page, assets, 'Fixture notice');
+  assert.match(output, /<div id="startup" role="status" lang="en">Loading the presentation\./);
+  assert.doesNotMatch(output, /Run npm ci/);
+});

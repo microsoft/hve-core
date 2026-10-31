@@ -2,7 +2,7 @@
 title: HVE Demo Material Skill Security Model
 description: STRIDE threat model for the hve-demo-material skill organized by assets, adversaries, and trust buckets (GitHub API client and token, published site recovery, deck source generation, external program orchestration, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-10-28
+ms.date: 2026-10-31
 ms.topic: reference
 estimated_reading_time: 16
 keywords:
@@ -222,7 +222,7 @@ flowchart TD
 
 * Fixed file inventories use full-match validation and link/reparse/special-file refusal. Recovery verifies per-file SHA-256; deployment repeats delivery checks for renderer/schema, HTML/build/frame evidence and caption/raw/final media hashes. Missing or incompatible evidence stops deployment instead of resetting the index.
 * Bundle merges retain prior compatible levels on failed renders and roll back failed file replacements. Unknown or obsolete site content requires explicit preservation/migration; it is never recursively deleted. Hashes detect inconsistent bytes but do not authenticate a compromised publisher (G-TAM-3).
-* Full recovery requires an empty caller-owned target, so a failed later download cannot overwrite existing local media. Level installation includes its index replacement in the rollback boundary; index-only refreshes use atomic replacement.
+* Full recovery requires an empty caller-owned target, so a failed later download cannot overwrite existing local media. Level installation includes its index replacement in the rollback boundary. Every `index.json` write, including index-only recovery and the final assembly update, stages a sibling temporary file and uses `os.replace`, so an interrupted write leaves the previous index intact. Downloaded media files in full recovery are written directly into the empty target and are validated as a set before use.
 
 ### Repudiation
 
@@ -231,6 +231,7 @@ flowchart TD
 ### Information Disclosure
 
 * Requests to the site carry no `Authorization` header and no credentials. The token is never used by `recover`.
+* Public bundles carry `public-manifest.yml`, an allowlisted projection of delivery identity, modes, output names and check results. The full manifest, including research artifact paths, source roots, execution logs and approvals, stays in the short-lived level artifact and is never copied into the site inventory.
 
 ### Denial of Service
 
@@ -266,7 +267,7 @@ flowchart TD
 ### Repudiation
 
 * `demo-material-build.json` version 2 records renderer/format, ordered IDs, content SHA-256 and source/template file hashes. Missing images fail before output installation.
-* `render-result.json` version 2 requires HTML for every level. T-10 rejects absent or incompatible browser/build records and mismatched content/HTML/build hashes. Records are local evidence, not signed attestations. T-09 parses static HTML titles, alternatives and language alongside retained caption/transcript checks.
+* `render-result.json` version 2 requires HTML for every level. T-10 rejects absent or incompatible browser/build records and mismatched content/HTML/build hashes. The build record's generation identity covers authored content, resolved citation sources and link base, and template hashes; the delivered HTML must embed that same identity, and frame export and T-10 recompute current content and sources before accepting it. Records are local evidence, not signed attestations. T-09 parses static HTML titles, alternatives and language alongside retained caption/transcript checks.
 
 ### Information Disclosure
 
@@ -310,7 +311,7 @@ flowchart TD
 
 ### Repudiation
 
-* Each stage logs progress; failed offline export stops before narration/assembly. Browser evidence records actual HTML/build digests, ordered IDs, frame paths/digests/dimensions and findings. T-10 rechecks frame bytes and rejects non-pass or mismatched evidence. Retained frame ownership after failure is not current acceptance evidence.
+* Each stage logs progress; failed offline export stops before narration/assembly. Browser evidence records actual HTML/build digests, ordered IDs, frame paths/digests/dimensions and findings. T-10 rechecks frame bytes and rejects non-pass or mismatched evidence. Frames and their ownership record install as one transaction, so a failed evidence write restores the previous frames. Retained frame ownership after failure is not current acceptance evidence.
 
 ### Information Disclosure
 

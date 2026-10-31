@@ -59,11 +59,12 @@ EXIT_FAILURE = 1
 ARTIFACT_RETENTION_DAYS = 90
 PAGE_SIZE = 100
 REQUEST_TIMEOUT_S = 60
+REJECTION_REASON_CHARS = 300
 SITE_SCHEMA = "demo-material-site/v2"
 CONTENT_SCHEMA = "demo-material-content/v2"
 SITE_FILE = re.compile(
     r"L[1-4]00/(hve-demo-L[1-4]00\.(?:raw\.mp4|mp4|vtt|html)|index\.html"
-    r"|render-result\.json|source-register\.md|manifest\.yml"
+    r"|render-result\.json|source-register\.md|public-manifest\.yml"
     r"|html-deck-(?:build|check)\.json|open-captions\.json)"
 )
 EVIDENCE_FILES = (
@@ -71,7 +72,7 @@ EVIDENCE_FILES = (
     "html-deck-build.json",
     "html-deck-check.json",
     "open-captions.json",
-    "manifest.yml",
+    "public-manifest.yml",
     "source-register.md",
 )
 LEVELS = ("L100", "L200", "L300", "L400")
@@ -100,6 +101,20 @@ def safe_path(root: Path, relative: str = "") -> Path:
         ):
             raise ArtifactLookupError(f"non-regular bundle path: {candidate.name}")
     return path
+
+
+def atomic_write_bytes(path: Path, data: bytes) -> None:
+    """Replace ``path`` through a staged sibling file and ``os.replace``.
+
+    An interrupted write leaves the previous file intact.
+    """
+    descriptor, temporary = tempfile.mkstemp(prefix=".index-", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(data)
+        os.replace(temporary, path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
 
 
 def file_hash(path: Path) -> str:
@@ -168,7 +183,8 @@ def validate_delivery(root: Path, level: str) -> dict:
         or result.get("format") != "html"
         or result.get("manifest_schema_version") != 6
         or result.get("level") != level
-        or result.get("manifest_sha256") != file_hash(paths["manifest.yml"])
+        or result.get("public_manifest_sha256")
+        != file_hash(paths["public-manifest.yml"])
         or result.get("ok") is not True
         or result.get("narration_engine") != "none"
         or result.get("timing_basis") != "notes-word-count"
@@ -264,12 +280,66 @@ def validate_site(root: Path) -> dict:
     return index
 
 
+def rejection_reason(error: Exception) -> str:
+    """Return a bounded, path-free description of why a delivery was rejected."""
+    if isinstance(error, OSError) and not isinstance(error, ArtifactLookupError):
+        text = f"{type(error).__name__}: {error.strerror or 'I/O failure'}"
+    else:
+        text = " ".join(str(error).split()) or type(error).__name__
+    return text[:REJECTION_REASON_CHARS]
+
+
+def candidate_checks(root: Path) -> dict | None:
+    """Return a candidate's per-check results for diagnostics only.
+
+    Only check IDs and result strings are kept; evidence text is dropped. The
+    value never certifies a delivery.
+    """
+    try:
+        result = json.loads(
+            safe_path(root, "render-result.json").read_text(encoding="utf-8")
+        )
+    except (ArtifactLookupError, OSError, ValueError):
+        return None
+    checks = result.get("checks") if isinstance(result, dict) else None
+    if not isinstance(checks, dict):
+        return None
+    return {
+        key: {"result": value["result"]}
+        for key, value in checks.items()
+        if re.fullmatch(r"T-[0-9]{2}", str(key))
+        and isinstance(value, dict)
+        and isinstance(value.get("result"), str)
+    }
+
+
 def assemble_site(
-    site: Path, renders: Path, source_sha: str, author_run_id: str, render_run_id: str
+    site: Path,
+    renders: Path,
+    source_sha: str,
+    author_run_id: str,
+    render_run_id: str,
+    require_levels: tuple[str, ...] = (),
 ) -> dict:
-    """Merge validated levels without discarding previous compatible media."""
+    """Merge validated levels without discarding previous compatible media.
+
+    ``require_levels`` makes assembly all-or-nothing for those levels: any
+    missing or rejected required level fails before the site is written.
+    """
     site = safe_path(site)
     renders = safe_path(renders)
+    for level in require_levels:
+        if level not in LEVELS:
+            raise ArtifactLookupError(f"unknown required level: {level}")
+        candidate = safe_path(renders, level)
+        if not candidate.is_dir():
+            raise ArtifactLookupError(f"required level has no render: {level}")
+        try:
+            validate_delivery(candidate, level)
+        except (ArtifactLookupError, OSError, ValueError) as error:
+            raise ArtifactLookupError(
+                f"required level {level} rejected: {rejection_reason(error)}"
+            ) from error
     index_path = safe_path(site, "index.json")
     if index_path.exists():
         index = validate_site(site)
@@ -293,9 +363,20 @@ def assemble_site(
         }
         try:
             result = validate_delivery(candidate, level)
-        except (ArtifactLookupError, OSError, ValueError):
+        except (ArtifactLookupError, OSError, ValueError) as error:
+            # Prior delivery files stay selected; the rejection stays diagnosable.
+            reason = rejection_reason(error)
+            print(
+                f"WARNING: {level} delivery rejected "
+                f"(render run {render_run_id}): {reason}",
+                file=sys.stderr,
+            )
             if level in index["levels"]:
-                index["levels"][level]["last_failed_attempt"] = attempt
+                failed = {**attempt, "reason": reason}
+                checks = candidate_checks(candidate)
+                if checks is not None:
+                    failed["checks"] = checks
+                index["levels"][level]["last_failed_attempt"] = failed
             continue
         entry = {
             **attempt,
@@ -375,13 +456,7 @@ def assemble_site(
         ):
             index["latest_attempted_author_run_id"] = author_run_id
     index.update(generated_at=now, render_run_id=render_run_id)
-    descriptor, temporary = tempfile.mkstemp(prefix=".site-index-", dir=site)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            stream.write(json.dumps(index, indent=2) + "\n")
-        os.replace(temporary, index_path)
-    finally:
-        Path(temporary).unlink(missing_ok=True)
+    atomic_write_bytes(index_path, (json.dumps(index, indent=2) + "\n").encode())
     return validate_site(site)
 
 
@@ -534,7 +609,7 @@ def recover_site(
     ):
         target = safe_path(target)
         target.mkdir(parents=True, exist_ok=True)
-        safe_path(target, "index.json").write_bytes(body)
+        atomic_write_bytes(safe_path(target, "index.json"), body)
         return {"status": "obsolete", "levels": list(LEVELS), "files": 1}
     if not isinstance(index, dict) or index.get("schema_version") != SITE_SCHEMA:
         raise ArtifactLookupError("published index.json has an unknown schema")
@@ -566,7 +641,7 @@ def recover_site(
         )
     target.mkdir(parents=True, exist_ok=True)
     if index_only:
-        safe_path(target, "index.json").write_bytes(body)
+        atomic_write_bytes(safe_path(target, "index.json"), body)
         return {"status": "recovered", "levels": levels, "files": 1}
     written = 1
     for path in dict.fromkeys(required):
@@ -582,7 +657,7 @@ def recover_site(
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(content)
         written += 1
-    safe_path(target, "index.json").write_bytes(body)
+    atomic_write_bytes(safe_path(target, "index.json"), body)
     validate_site(target)
     return {"status": "recovered", "levels": levels, "files": written}
 
@@ -660,6 +735,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     assemble.add_argument("--target", type=Path, required=True)
     assemble.add_argument("--renders", type=Path, required=True)
+    assemble.add_argument(
+        "--require-levels",
+        nargs="+",
+        choices=LEVELS,
+        default=[],
+        help="Fail without writing unless every listed level passes",
+    )
     return parser
 
 
@@ -698,6 +780,7 @@ def main(argv: list[str] | None = None, api=None) -> int:
                 os.environ.get("SOURCE_SHA", ""),
                 os.environ.get("AUTHOR_RUN_ID", ""),
                 os.environ.get("RENDER_RUN_ID", ""),
+                tuple(args.require_levels),
             )
         else:
             if args.index.is_file():

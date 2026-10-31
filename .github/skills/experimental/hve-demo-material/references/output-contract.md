@@ -42,6 +42,9 @@ render-only mode; no deck subagent or guessed checkout path is used.
 
 Store required HTML at `output/hve-demo-{{level}}.html`, video at
 `output/hve-demo-{{level}}.mp4`, and the manifest at `output/manifest.yml`.
+Scoring also writes `output/public-manifest.yml`, the allowlisted projection that
+public site bundles publish in place of the full manifest; keep operational
+details such as research paths and execution logs in `manifest.yml` only.
 Retain `output/html-deck-build.json` and `output/html-deck-check.json`.
 Export 1920x1080 slide-canvas images to `frames/deck/slide-NNN.jpg`, with ordered
 IDs and hashes bound to the delivered HTML. HTML and video frames share the

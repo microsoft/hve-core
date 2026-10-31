@@ -5,6 +5,7 @@
 import hashlib
 import json
 import os
+import shutil
 import urllib.error
 from datetime import datetime, timedelta, timezone
 
@@ -18,6 +19,7 @@ from artifact_lookup import (
     find_artifact,
     main,
     recover_site,
+    rejection_reason,
     retry_levels,
 )
 
@@ -86,8 +88,13 @@ def _author_run(run_id):
     }
 
 
-def _run_resolve(context, author_runs, content_run_ids, env):
-    """Run the resolve script under Node with a stubbed GitHub client."""
+def _run_resolve(context, author_runs, content_run_ids, env, page_size=100):
+    """Run the resolve script under Node with a stubbed GitHub client.
+
+    ``paginate`` serves workflow runs newest first in pages of ``page_size``
+    and honors the map function's ``done`` callback; ``_pages`` in the result
+    counts the run pages read.
+    """
     import os
     import shutil
     import subprocess
@@ -102,17 +109,25 @@ def _run_resolve(context, author_runs, content_run_ids, env):
     )
     runs = {run["id"]: run for run in author_runs}
     harness = (
-        "const output = {}; const core = {"
+        "const output = {_pages:0}; const core = {"
         "setOutput:(key,value)=>output[key]=value,notice:()=>{}};"
         f"const context={json.dumps(context)};"
         f"const runs={json.dumps(runs)};"
+        f"const pageSize={page_size};"
         f"const contentRuns=new Set({json.dumps(content_run_ids)});"
+        "const listWorkflowRuns=async()=>{throw new Error('use paginate');};"
         'const github={rest:{repos:{get:async()=>({data:{default_branch:"main"}})},'
-        "actions:{listWorkflowRunArtifacts:()=>{},"
-        "listWorkflowRuns:async()=>({data:{workflow_runs:Object.values(runs).sort((a,b)=>b.id-a.id)}}),"
+        "actions:{listWorkflowRunArtifacts:()=>{},listWorkflowRuns,"
         "getWorkflowRun:async({run_id})=>({data:runs[run_id]})}},"
-        "paginate:async(_,{run_id})=>contentRuns.has(run_id)"
-        "?[{id:run_id*10,name:`demo-material-content-v2-${run_id}`,expired:false}]:[]};"
+        "paginate:async(route,{run_id},map)=>{"
+        "if(route!==listWorkflowRuns)return contentRuns.has(run_id)"
+        "?[{id:run_id*10,name:`demo-material-content-v2-${run_id}`,expired:false}]:[];"
+        "const all=Object.values(runs).sort((a,b)=>b.id-a.id);"
+        "let stop=false;const seen=[];"
+        "for(let i=0;i<all.length&&!stop;i+=pageSize){output._pages++;"
+        "const page=all.slice(i,i+pageSize);"
+        "seen.push(...(map?map({data:page},()=>{stop=true;}):page));}"
+        "return seen;}};"
         "const AsyncFunction=Object.getPrototypeOf(async()=>{}).constructor;"
         f'new AsyncFunction("github","context","core",{json.dumps(script)})'
         "(github,context,core)"
@@ -240,6 +255,83 @@ class TestRenderEventRouting:
         assert output["author-run-id"] == "7"
 
 
+class TestRenderPaginationAndMigration:
+    def test_given_oldest_pending_run_beyond_first_page_when_resolved_then_picked(
+        self, tmp_path
+    ):
+        index = tmp_path / "index.json"
+        index.write_text(
+            json.dumps(
+                {
+                    "schema_version": "demo-material-site/v2",
+                    "levels": {"L100": {"author_run_id": "100"}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        runs = [_author_run(run_id) for run_id in range(100, 106)]
+
+        output = _run_resolve(
+            {"eventName": "schedule", "repo": {}, "payload": {}},
+            runs,
+            [101, 102],
+            {"SCHEDULE": "47 3 * * *", "RENDER_INDEX": str(index)},
+            page_size=2,
+        )
+
+        assert output["author-run-id"] == "101"
+        assert output["_pages"] == 3
+
+    def test_given_migration_dispatch_while_v1_published_when_resolved_then_renders(
+        self,
+    ):
+        output = _run_resolve(
+            {"eventName": "workflow_dispatch", "repo": {}, "payload": {}},
+            [_author_run(7)],
+            [7],
+            {
+                "DISPATCH_AUTHOR_RUN_ID": "7",
+                "MIGRATE_FROM_V1": "true",
+                "PUBLISHED_STATUS": "obsolete",
+                "PREVIOUS_CREATED_AT": "",
+            },
+        )
+
+        assert output["mode"] == "render"
+
+    @pytest.mark.parametrize(
+        ("env", "content_runs", "message"),
+        [
+            ({"PUBLISHED_STATUS": "obsolete"}, [7], "requires a workflow_dispatch"),
+            (
+                {"DISPATCH_AUTHOR_RUN_ID": "7", "PUBLISHED_STATUS": "recovered"},
+                [7],
+                "applies only while the published site",
+            ),
+            (
+                {"DISPATCH_AUTHOR_RUN_ID": "7", "PUBLISHED_STATUS": "obsolete"},
+                [],
+                "produced no content artifact",
+            ),
+        ],
+        ids=["no-author-run", "not-v1", "no-content"],
+    )
+    def test_given_invalid_migration_dispatch_when_resolved_then_fails(
+        self, env, content_runs, message
+    ):
+        import subprocess
+
+        with pytest.raises(subprocess.CalledProcessError) as raised:
+            _run_resolve(
+                {"eventName": "workflow_dispatch", "repo": {}, "payload": {}},
+                [_author_run(7)],
+                content_runs,
+                {"MIGRATE_FROM_V1": "true", "PREVIOUS_CREATED_AT": "", **env},
+            )
+
+        assert message in raised.value.stderr
+
+
 class TestFindArtifact:
     def test_given_bundle_beyond_twenty_bundleless_runs_when_found_then_returned(self):
         runs = [_run(1000 - i, days_ago=i * 0.3) for i in range(150)]
@@ -351,7 +443,7 @@ def _published(levels=("L100",), revision=""):
         prefix = f"{SITE}demo-material/{level}/"
         raw_name = f"hve-demo-{level}.raw.mp4"
         files[prefix + raw_name] = b"raw assembly"
-        files[prefix + "manifest.yml"] = b"schema_version: 6\n"
+        files[prefix + "public-manifest.yml"] = b"schema_version: 6\n"
         files[prefix + "source-register.md"] = b"Source register"
         build = {
             "schema_version": 2,
@@ -403,8 +495,8 @@ def _published(levels=("L100",), revision=""):
                 "manifest_schema_version": 6,
                 "renderer": "hve-slides",
                 "format": "html",
-                "manifest_sha256": hashlib.sha256(
-                    files[prefix + "manifest.yml"]
+                "public_manifest_sha256": hashlib.sha256(
+                    files[prefix + "public-manifest.yml"]
                 ).hexdigest(),
                 "level": level,
                 "ok": True,
@@ -502,6 +594,23 @@ class TestAssembleSite:
         )
         assert not list(site.glob(".delivery-*"))
 
+    def test_given_internal_manifest_in_render_when_assembled_then_not_published(
+        self, tmp_path
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(renders, index=False)
+        sentinel = "C:/Users/alice/Customers/CASE-4821/research.md"
+        (renders / "L100" / "manifest.yml").write_text(
+            f"research_artifact: {sentinel}\n", encoding="utf-8"
+        )
+
+        assemble_site(site, renders, "b" * 40, "7", "8")
+
+        assert "manifest.yml" not in [path.name for path in site.rglob("*")]
+        assert all(sentinel.encode() not in body for body in _snapshot(site).values())
+        assert (site / "L100" / "public-manifest.yml").is_file()
+
     def test_given_existing_site_when_new_level_assembled_then_both_listed(
         self, tmp_path
     ):
@@ -567,6 +676,82 @@ class TestAssembleSite:
         assert (site / "L100" / "hve-demo-L100.mp4").read_bytes() == (
             b"body of L100/hve-demo-L100.mp4"
         )
+
+    def test_given_failed_checks_when_level_reassembled_then_reason_logged_and_kept(
+        self, tmp_path, capsys
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        _write_bundle(renders, revision=" v2", index=False)
+        result_file = renders / "L100" / "render-result.json"
+        result = json.loads(result_file.read_text(encoding="utf-8"))
+        result.update(ok=False)
+        result["checks"]["T-10"] = {"result": "fail", "evidence": "C:/private/path"}
+        result_file.write_text(json.dumps(result), encoding="utf-8")
+
+        index = assemble_site(site, renders, "b" * 40, "7", "8")
+
+        failed = index["levels"]["L100"]["last_failed_attempt"]
+        assert "non-pass or incompatible render evidence" in failed["reason"]
+        assert failed["checks"]["T-10"] == {"result": "fail"}
+        assert "C:/private/path" not in json.dumps(index)
+        assert "WARNING: L100 delivery rejected (render run 8)" in (
+            capsys.readouterr().err
+        )
+
+    def test_given_unpublished_level_rejected_when_assembled_then_logged(
+        self, tmp_path, capsys
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(site)
+        _write_bundle(renders, ("L200",), index=False)
+        (renders / "L200" / "render-result.json").write_text("{", encoding="utf-8")
+
+        index = assemble_site(site, renders, "b" * 40, "7", "8")
+
+        assert "L200" not in index["levels"]
+        assert "WARNING: L200 delivery rejected (render run 8)" in (
+            capsys.readouterr().err
+        )
+
+    def test_given_os_error_when_reason_built_then_path_omitted(self):
+        error = FileNotFoundError(2, "No such file", "/home/runner/private/x.json")
+
+        assert rejection_reason(error) == "FileNotFoundError: No such file"
+
+    def test_given_required_levels_all_pass_when_assembled_then_installed(
+        self, tmp_path
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(renders, ("L100", "L200"), index=False)
+
+        result = assemble_site(
+            site, renders, "b" * 40, "7", "8", require_levels=("L100", "L200")
+        )
+
+        assert list(result["levels"]) == ["L100", "L200"]
+
+    @pytest.mark.parametrize("broken", ["missing", "rejected"])
+    def test_given_required_level_unavailable_when_assembled_then_nothing_written(
+        self, tmp_path, broken
+    ):
+        site = tmp_path / "site"
+        renders = tmp_path / "renders"
+        _write_bundle(renders, ("L100", "L200"), index=False)
+        if broken == "missing":
+            shutil.rmtree(renders / "L200")
+        else:
+            (renders / "L200" / "render-result.json").write_text("{}", "utf-8")
+
+        with pytest.raises(ArtifactLookupError, match="required level"):
+            assemble_site(
+                site, renders, "b" * 40, "7", "8", require_levels=("L100", "L200")
+            )
+
+        assert not site.exists() or not any(site.iterdir())
 
     def test_given_malformed_provenance_when_assembled_then_raises_without_changes(
         self, tmp_path
@@ -783,6 +968,28 @@ class TestRecoverSite:
 
         assert result["files"] == 1
         assert not (tmp_path / "L100").exists()
+
+    @pytest.mark.parametrize(
+        "body",
+        [None, b'{"schema_version": "demo-material-site/v1", "levels": {}}'],
+        ids=["current", "obsolete"],
+    )
+    def test_given_replace_fails_when_index_only_recovered_then_prior_index_kept(
+        self, tmp_path, mocker, body
+    ):
+        published = _published()
+        if body is not None:
+            published[f"{SITE}demo-material/index.json"] = body
+        (tmp_path / "index.json").write_bytes(b"prior index")
+        mocker.patch(
+            "artifact_lookup.os.replace", side_effect=OSError("interrupted write")
+        )
+
+        with pytest.raises(OSError, match="interrupted write"):
+            recover_site(SITE, tmp_path, fetch=published.get, index_only=True)
+
+        assert (tmp_path / "index.json").read_bytes() == b"prior index"
+        assert [path.name for path in tmp_path.iterdir()] == ["index.json"]
 
 
 class TestRetryLevels:

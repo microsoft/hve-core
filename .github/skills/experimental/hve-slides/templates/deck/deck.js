@@ -68,6 +68,14 @@
     let motionEnabled = false;
     let ready = false;
     const announce = text => { required('#announcement').textContent = text; };
+    // Authored text keeps its slide's language inside fixed-language controls.
+    const slideLanguage = section => section.closest('[lang]')?.getAttribute('lang') || '';
+    function authored(text, section) {
+      const span = element('span', '', text);
+      const lang = slideLanguage(section);
+      if (lang) span.lang = lang;
+      return span;
+    }
 
     // Replacing the demo body moves focus, and a screen reader speaks that focus
     // change immediately. A polite region updated in the same task is superseded
@@ -170,13 +178,15 @@
       });
       document.title = `${current.dataset.title} | ${config.title}`;
       required('#slide-count').textContent = `${index + 1} / ${sections.length}`;
-      required('#chapter-label').textContent = current.dataset.chapter;
+      const chapterLabel = required('#chapter-label');
+      chapterLabel.textContent = current.dataset.chapter;
+      chapterLabel.lang = slideLanguage(current);
       previous.disabled = index === 0;
       next.disabled = index === sections.length - 1;
       if ((focused === previous && previous.disabled) || (focused === next && next.disabled)) {
         (previous.disabled ? next.disabled ? overview : next : previous).focus();
       } else if (focused instanceof Element && focused.closest('section[inert]')) overview.focus();
-      announce(`Slide ${index + 1} of ${sections.length}. ${current.dataset.title}`);
+      required('#announcement').replaceChildren(`Slide ${index + 1} of ${sections.length}. `, authored(current.dataset.title, current));
       if (readingView) window.scrollTo(0, 0);
     }
     function updateReadingView() {
@@ -210,19 +220,23 @@
       const current = deck.getCurrentSlide();
       const title = required('#dialog-title');
       if (kind === 'sources') {
-        title.textContent = `Sources / ${current.dataset.title}`;
+        title.replaceChildren('Sources / ', authored(current.dataset.title, current));
         const ids = sourceIds(current);
         dialogContent.append(element('p', '', config.sourceNote));
         dialogContent.append(ids.length ? sourceList(ids) : element('p', '', 'No sources assigned to this slide.'));
       } else if (kind === 'notes') {
-        title.textContent = `Notes / ${current.dataset.title}`;
-        dialogContent.append(element('p', '', current.querySelector('.notes')?.textContent || 'No presenter notes for this slide.'));
+        title.replaceChildren('Notes / ', authored(current.dataset.title, current));
+        const notes = current.querySelector('.notes')?.textContent;
+        const paragraph = element('p');
+        paragraph.append(notes ? authored(notes, current) : 'No presenter notes for this slide.');
+        dialogContent.append(paragraph);
         dialogContent.append(element('p', 'source-note', 'Recipients can read all bundled notes.'));
       } else if (kind === 'overview') {
         title.textContent = 'Slide index';
         const list = element('div', 'slide-index');
         sections.forEach((section, index) => {
-          const button = element('button', '', `${index + 1}. ${section.dataset.title}`);
+          const button = element('button', '', `${index + 1}. `);
+          button.append(authored(section.dataset.title, section));
           button.type = 'button';
           if (section === current) button.setAttribute('aria-current', 'page');
           button.addEventListener('click', () => { dialog.close(); deck.slide(index); });

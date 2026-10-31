@@ -135,7 +135,7 @@ export function createStandaloneHtml(html, assets, license, metadata, { revealVe
   if ((document.match(/<\/body>/gi) || []).length !== 1) throw new Error('The deck must have exactly one closing body tag.');
 
   document = document.replace(
-    /(<div id="startup" role="status">)[\s\S]*?(<\/div>)/,
+    /(<div id="startup" role="status"(?: lang="[A-Za-z-]+")?>)[\s\S]*?(<\/div>)/,
     '$1Loading the presentation. If it does not open, download the complete HTML file and open it in a browser with JavaScript enabled.$2'
   );
   const notices = `<template id="bundled-third-party-notices"><pre>${escapeHtml(license)}</pre></template>`;

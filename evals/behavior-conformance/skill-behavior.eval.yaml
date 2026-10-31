@@ -7126,6 +7126,13 @@ stimuli:
       branch: generation-failure
       advisory: "true"
     graders:
+      - type: tool-calls
+        name: skill-dt-canonical-deck-generation-failure-generator-observed
+        config:
+          required:
+            - name: "^powershell$"
+              command: 'generate_cards\.py'
+              result: "(?i)Synthetic customer-card YAML generation failure"
       - type: output-matches
         name: skill-dt-canonical-deck-generation-failure-thin-evidence
         config:
