@@ -1,4 +1,4 @@
-# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat pathspecs reinitializ ETSI summarise
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat pathspecs reinitializ ETSI summarise aidiscoverycards
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
@@ -6,7 +6,8 @@ description: >
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, and
-  outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
+  outcome-hypothesis skill updates, plus AI Discovery Cards workshop boundaries.
+  Each tool-trigger stimulus uses at least two
   graders with AND logic, and the suite-level scoring threshold gates the
   aggregate pass rate across stimuli.
 type: capability
@@ -8696,6 +8697,126 @@ stimuli:
         config:
           pattern: '(?i)(do not write|without writing|not write).{0,120}(critique|artifact)'
 
+  - name: skill-ai-discovery-cards-knowledge
+    prompt: |
+      Read the staged `ai-discovery-cards` skill. Explain its workshop purpose
+      and identify the authoritative source for the material it uses.
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/ai-discovery-cards
+    tags:
+      category: behavior-conformance
+      skill: ai-discovery-cards
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-ai-discovery-cards-knowledge-purpose
+        config:
+          pattern: '(?i)(ideation|ideate|brainstorming|solution\s+exploration)'
+      - type: output-matches
+        name: skill-ai-discovery-cards-knowledge-source
+        config:
+          pattern: '(?i)(AI\s+Discovery\s+Cards\s+Workshop\s+Facilitation\s+Guide|aka\.ms/aidiscoverycards)'
+
+  - name: skill-ai-discovery-cards-tool-trigger
+    prompt: |
+      Our workshop has a validated persona, user needs, insights, and How
+      Might We questions. Participants now want inspiration for agentic
+      possibilities without committing to an architecture. Which available
+      skill should the facilitator use, and what workshop aid does it offer?
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/ai-discovery-cards
+    tags:
+      category: behavior-conformance
+      skill: ai-discovery-cards
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: skill-invocation
+        name: skill-ai-discovery-cards-tool-trigger-routing
+        config:
+          required:
+            - ai-discovery-cards
+      - type: output-matches
+        name: skill-ai-discovery-cards-tool-trigger-workshop-aid
+        config:
+          pattern: '(?i)\bAI\s+Discovery\s+Cards\b'
+
+  - name: skill-ai-discovery-cards-bleed-detection
+    prompt: |
+      We are starting a Design Thinking workshop. We have not identified
+      stakeholders, user needs, a problem statement, or a desired outcome.
+      Using the staged `ai-discovery-cards` skill, advise the facilitator
+      on the next step and whether to introduce its workshop aid now.
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/ai-discovery-cards
+    tags:
+      category: behavior-conformance
+      skill: ai-discovery-cards
+      shape: bleed-detection
+      advisory: "true"
+    rubric:
+      - >
+        Defer recommending or using AI Discovery Cards until problem framing
+        is established. Return to the active Design Thinking method to clarify
+        stakeholders, user needs, and the desired outcome instead of inventing
+        an AI need or beginning solution ideation.
+    graders:
+      - type: prompt
+        name: skill-ai-discovery-cards-framing-before-ideation
+        config:
+          prompt: |
+            Score high only when the response postpones introducing the cards
+            and gives an actionable problem-framing next step in the active
+            Design Thinking method. Score low if it recommends cards now,
+            invents a need for AI, starts card-led ideation, merely repeats the
+            scenario, or says the staged skill cannot be found. Mentioning that
+            the cards may be useful after framing is complete is acceptable.
+          threshold: 0.7
+
+  - name: skill-ai-discovery-cards-unavailable-guide
+    prompt: |
+      Our workshop has validated user needs and How Might We questions and is
+      ready for divergent brainstorming. The external facilitation guide for
+      the staged `ai-discovery-cards` skill is unavailable in this session,
+      and no card text has been supplied. Without browsing, explain what
+      card-specific material you can provide and how the facilitator should
+      proceed.
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/ai-discovery-cards
+    tags:
+      category: behavior-conformance
+      skill: ai-discovery-cards
+      shape: knowledge
+      branch: unavailable-guide
+      advisory: "true"
+    rubric:
+      - >
+        Explicitly acknowledge that card content cannot be verified without
+        the official guide and do not fabricate or extrapolate card names,
+        descriptions, or capabilities. Ask for the authoritative guide or
+        supplied excerpts before giving card-specific guidance. Generic
+        ideation facilitation is acceptable only if not presented as card
+        content.
+    graders:
+      - type: prompt
+        name: skill-ai-discovery-cards-no-fabricated-content
+        config:
+          prompt: |
+            Score high only when the response acknowledges the missing
+            authoritative card source, supplies no invented card content,
+            and asks for the official guide or excerpts before providing
+            card-specific material. Score low if it invents or extrapolates
+            card names, descriptions, or capabilities, including suggestions
+            labeled as likely or illustrative cards, claims to have consulted
+            the unavailable guide, merely repeats the scenario, or says the
+            staged skill cannot be found. General brainstorming advice is
+            acceptable when clearly distinguished from official card content.
+          threshold: 0.7
   - name: skill-privacy-by-design-unknown-only-seven-principles
     prompt: |
       Use the staged privacy-by-design skill for a response-only assessment of a synthetic EU/Australian subscriber profile service. The boundary is its account API and personal-data store; the sole stored category is subscriber profile data. For each of the seven principles, one applicable checklist item has no supporting or contradictory evidence and no deficiency has been established. The retention schedule, backup purge and applicable common jurisdictional obligations also lack evidence. Provide the full finding-schema summary and seven principle records with counts, evidence requests, severity, citations and any appropriate handoff. Do not fetch external facts or change files.
