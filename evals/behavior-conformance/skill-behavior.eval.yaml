@@ -7127,7 +7127,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: tool-calls
-        name: skill-dt-canonical-deck-generation-failure-generator-observed
+        name: skill-dt-canonical-deck-generation-failure-tool-observed
         config:
           required:
             - name: "^powershell$"
