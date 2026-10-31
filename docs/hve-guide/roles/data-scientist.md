@@ -3,7 +3,7 @@ title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - data science
@@ -18,7 +18,7 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
 > For selective clone adoption, choose notebook generation, dashboard, data specification, Python environment, and research components that match your analytics workflow. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 

@@ -3,14 +3,14 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - git-ignored
   - installation
   - github copilot
   - devcontainer
-estimated_reading_time: 6
+estimated_reading_time: 7
 ---
 
 Git-Ignored Folder installation places HVE Core inside your project in a `.hve-core/` folder that's excluded from version control. This is ideal for solo developers using devcontainers who want a self-contained setup.
@@ -33,26 +33,28 @@ Git-Ignored Folder installation places HVE Core inside your project in a `.hve-c
 
 ## How It Works
 
-HVE Core is cloned into a `.hve-core/` folder inside your project. The folder is added to `.gitignore` so it doesn't pollute your repository.
+HVE Core is cloned into a `.hve-core/` folder inside your project. The folder is added to `.gitignore` so it doesn't pollute your repository. Copilot can use the copy in two ways: install the folder as a plugin from source (Option A), or, because the folder sits inside your checkout, declare its folders in `.github/copilot/settings.json` (Option B).
 
 ```text
 my-project/
 ├── .devcontainer/
 │   └── devcontainer.json    # postCreateCommand clones HVE Core
+├── .github/
+│   └── copilot/
+│       └── settings.json    # Option B only: declares the .hve-core folders
 ├── .hve-core/               # Git-ignored, contains HVE Core
-│   └── .github/
-│       ├── agents/
-│       ├── instructions/
-│       └── skills/
+│   ├── .github/
+│   │   ├── agents/
+│   │   ├── instructions/
+│   │   └── skills/
+│   └── plugin.json          # Plugin manifest used by Option A
 ├── .gitignore               # Includes .hve-core/
-├── .vscode/
-│   └── settings.json        # Points to .hve-core paths
 └── src/
 ```
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
+To use HVE Core without keeping a clone, install the `hve-core` plugin as described in [Install the Plugin](../install#install-the-plugin). For guided installation-method selection, MCP configuration, or copying selected components into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to install from a git-ignored folder.
 
 ## Manual Setup
 
@@ -89,45 +91,43 @@ if [ ! -d "$HVE_CORE_FOLDER" ]; then
 fi
 ```
 
-### Step 3: Update VS Code Settings
+### Step 3: Connect the Copy to Copilot
 
-Create or update `.vscode/settings.json`:
+Use one route at a time: pick one of the two options below, and don't also install the VS Code extension or the marketplace plugin. Copilot doesn't remove copies that arrive by different routes, so a second route lists agents more than once in the subagent list.
+
+> [!NOTE]
+> If you set `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` for HVE Core in `.vscode/settings.json` or your devcontainer settings, remove those entries. Copilot doesn't need them.
+
+#### Option A: Install the Folder as a Plugin
+
+A plugin installed from the `.hve-core` folder carries the full set: agents, skills, and path-specific instructions. HVE Core keeps `plugin.json` at its repository root, so `.hve-core` is the plugin folder.
+
+1. Run **Chat: Open Customizations** from the Command Palette to open the Agent Customizations editor, and select **Plugins**.
+2. Select the add (`+`) button next to **User** or **Workspace**.
+3. Enter the local path to your project's `.hve-core` folder.
+
+**Chat: Install Plugin from Source** in the Command Palette does the same. This option works wherever the VS Code host can read the folder. Inside a devcontainer, confirm that `hve-core` appears on the **Plugins** page before you rely on the install.
+
+#### Option B: Declare the Folders in Repository Settings
+
+Create `.github/copilot/settings.json` at your project root:
 
 ```json
 {
-  "chat.agentFilesLocations": {
-    ".hve-core/.github/agents/ado": true,
-    ".hve-core/.github/agents/data-science": true,
-    ".hve-core/.github/agents/design-thinking": true,
-    ".hve-core/.github/agents/github": true,
-    ".hve-core/.github/agents/project-planning": true,
-    ".hve-core/.github/agents/hve-core": true,
-    ".hve-core/.github/agents/hve-core/subagents": true,
-    ".hve-core/.github/agents/security": true
-  },
-  "chat.instructionsFilesLocations": {
-    ".hve-core/.github/instructions/ado": true,
-    ".hve-core/.github/instructions/coding-standards": true,
-    ".hve-core/.github/instructions/github": true,
-    ".hve-core/.github/instructions/hve-core": true,
-    ".hve-core/.github/instructions/shared": true
-  },
-  "chat.agentSkillsLocations": {
-    ".hve-core/.github/skills": true,
-    ".hve-core/.github/skills/accessibility": true,
-    ".hve-core/.github/skills/shared": true,
-    ".hve-core/.github/skills/coding-standards": true,
-    ".hve-core/.github/skills/data-science": true,
-    ".hve-core/.github/skills/design-thinking": true,
-    ".hve-core/.github/skills/hve-core": true,
-    ".hve-core/.github/skills/installer": true,
-    ".hve-core/.github/skills/project-planning": true,
-    ".hve-core/.github/skills/rai": true,
-    ".hve-core/.github/skills/rpi": true,
-    ".hve-core/.github/skills/security": true
-  }
+  "agentDirectories": [".hve-core/.github/agents"],
+  "skillDirectories": [".hve-core/.github/skills"],
+  "instructionDirectories": [".hve-core/.github/instructions"]
 }
 ```
+
+These limits apply:
+
+* Paths must be literal folders inside the checkout. Copilot rejects absolute paths, `~`, environment variables, globs, and paths that leave the checkout.
+* The folders load only when the workspace folder is trusted.
+* Copilot finds agents and skills nested by package under each folder, so you don't list package folders one by one.
+* Copilot inlines instructions that have no `applyTo`. Whether path-specific instructions (those with `applyTo`) load from these folders isn't confirmed yet, so use Option A when you need them.
+
+A committed settings file applies to everyone who opens the repository, while the `.hve-core` folder exists only on your machine. If you work solo and don't want to commit the settings file, use Option A.
 
 ### Step 4: Automate with Devcontainer
 
@@ -143,10 +143,11 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 
 ### Step 5: Validate Installation
 
-1. Rebuild your devcontainer (`Ctrl+Shift+P` → "Dev Containers: Rebuild Container")
-2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-3. Click the agent picker dropdown
-4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
+1. Rebuild your devcontainer (`Ctrl+Shift+P` → "Dev Containers: Rebuild Container").
+2. For Option B, make sure the workspace folder is trusted.
+3. Open GitHub Copilot Chat (`Ctrl+Alt+I`) in a session that uses the Copilot harness, which is the default.
+4. Open the agent picker and confirm `RPI Agent` is listed.
+5. Type `/` and confirm HVE Core skills appear. With Option A, skills carry the plugin name as a prefix, such as `/hve-core:rpi-research`. With Option B, look for skills such as `/rpi-research` or `/hve-core:rpi-research`.
 
 ## Complete Devcontainer Example
 
@@ -155,47 +156,11 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
   "name": "My Project with HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
-  "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core",
-
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "chat.agentFilesLocations": {
-          ".hve-core/.github/agents/ado": true,
-          ".hve-core/.github/agents/data-science": true,
-          ".hve-core/.github/agents/design-thinking": true,
-          ".hve-core/.github/agents/github": true,
-          ".hve-core/.github/agents/project-planning": true,
-          ".hve-core/.github/agents/hve-core": true,
-          ".hve-core/.github/agents/hve-core/subagents": true,
-          ".hve-core/.github/agents/security": true
-        },
-        "chat.instructionsFilesLocations": {
-          ".hve-core/.github/instructions/ado": true,
-          ".hve-core/.github/instructions/coding-standards": true,
-          ".hve-core/.github/instructions/github": true,
-          ".hve-core/.github/instructions/hve-core": true,
-          ".hve-core/.github/instructions/shared": true
-        },
-        "chat.agentSkillsLocations": {
-          ".hve-core/.github/skills": true,
-          ".hve-core/.github/skills/accessibility": true,
-          ".hve-core/.github/skills/shared": true,
-          ".hve-core/.github/skills/coding-standards": true,
-          ".hve-core/.github/skills/data-science": true,
-          ".hve-core/.github/skills/design-thinking": true,
-          ".hve-core/.github/skills/hve-core": true,
-          ".hve-core/.github/skills/installer": true,
-          ".hve-core/.github/skills/project-planning": true,
-          ".hve-core/.github/skills/rai": true,
-          ".hve-core/.github/skills/rpi": true,
-          ".hve-core/.github/skills/security": true
-        }
-      }
-    }
-  }
+  "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core"
 }
 ```
+
+The devcontainer needs no VS Code settings for HVE Core. Connect the copy with Option A or Option B from [Step 3](#step-3-connect-the-copy-to-copilot).
 
 ## Updating HVE Core
 
@@ -205,6 +170,8 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 cd .hve-core
 git pull
 ```
+
+After the pull, run **Developer: Reload Window** from the Command Palette so new chat sessions pick up the change. With Option A, if the change still doesn't show up, select **Check for and Apply Updates** on the **Plugins** page.
 
 ### Auto-update on container rebuild
 
@@ -230,11 +197,15 @@ The `postCreateCommand` re-clones on each container creation. To update, rebuild
 ls .hve-core/.github/agents
 ```
 
-#### Check settings are applied
+#### Check the plugin or settings file
 
-1. Open Command Palette (`Ctrl+Shift+P`)
-2. Type "Preferences: Open Workspace Settings (JSON)"
-3. Verify the paths are correct
+* For Option A, confirm `hve-core` appears on the **Plugins** page of the Agent Customizations editor
+* For Option B, confirm the paths in `.github/copilot/settings.json` start with `.hve-core/.github/` and that the workspace folder is trusted
+* Run **Developer: Reload Window** from the Command Palette, then start a new chat session
+
+### Agents Appear More Than Once
+
+HVE Core is arriving through more than one route, and Copilot doesn't remove copies that arrive by different routes. Keep Option A or Option B and remove the other. If you also installed the VS Code extension or the `hve-core` plugin from the marketplace, remove that too.
 
 ### Folder Not Ignored by Git
 
@@ -272,15 +243,17 @@ The clone only happens if the folder doesn't exist. To force update:
 
 ## Limitations
 
-| Aspect           | Status                                                             |
-|------------------|--------------------------------------------------------------------|
-| Devcontainers    | ✅  Designed for this                                               |
-| Codespaces       | ⚠️  Works but not optimal (use [Codespaces method](codespaces.md)) |
-| Team sharing     | ⚠️  Each developer clones separately                               |
-| Portable paths   | ✅  Relative paths work                                             |
-| Version pinning  | ⚠️  Manual (modify clone command)                                  |
-| Disk usage       | ⚠️  Per-project copy                                               |
-| Setup complexity | ✅  Simple                                                          |
+| Aspect                     | Status                                                             |
+|----------------------------|--------------------------------------------------------------------|
+| Devcontainers              | ✅  Designed for this                                               |
+| Codespaces                 | ⚠️  Works but not optimal (use [Codespaces method](codespaces.md)) |
+| Team sharing               | ⚠️  Each developer clones separately                               |
+| Portable paths             | ✅  Option B uses relative paths inside the checkout                |
+| Path-specific instructions | ⚠️  Load with Option A; not confirmed with Option B                |
+| Workspace trust            | ⚠️  Option B folders load only in a trusted workspace folder       |
+| Version pinning            | ⚠️  Manual (modify clone command)                                  |
+| Disk usage                 | ⚠️  Per-project copy                                               |
+| Setup complexity           | ✅  Simple                                                          |
 
 ## Next Steps
 

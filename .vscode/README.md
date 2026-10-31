@@ -2,7 +2,7 @@
 title: VS Code Workspace Settings and MCP Servers
 description: What the repository's VS Code settings configure and how to enable the sample MCP servers for Copilot sessions
 author: Microsoft
-ms.date: 2026-10-30
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - mcp

@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -12,17 +12,18 @@ keywords:
   - codespaces
   - devcontainer
   - enterprise fork
-estimated_reading_time: 8
+  - plugin from source
+estimated_reading_time: 7
 ---
 
-Forking HVE Core lets your enterprise customize agents, instructions, and skills for your organization while staying connected to upstream improvements. Multi-root workspaces bring that fork into any project workspace, giving teams a portable configuration that works across Local VS Code, Devcontainers, and Codespaces.
+Forking HVE Core lets your enterprise customize agents, instructions, and skills for your organization while staying connected to upstream improvements. A multi-root workspace opens that fork next to your project in one VS Code window, so you can read and edit both. Copilot loads the fork once you install its root folder as a plugin from source.
 
 ## When to Use This Method
 
 ✅ **Use this when:**
 
 * Your enterprise maintains a fork of HVE Core with org-specific customizations
-* You need a single configuration that works across Local VS Code, Devcontainers, and Codespaces
+* You want the fork open beside your project while you work
 * Teams share a common set of customized agents, skills, and instructions
 * You want to pull upstream improvements on your own schedule
 
@@ -33,7 +34,9 @@ Forking HVE Core lets your enterprise customize agents, instructions, and skills
 
 ## How It Works
 
-Your enterprise forks the `microsoft/hve-core` repository, adds org-specific agents, prompts, and instructions, then uses a `.code-workspace` file to bring that fork into any project as a secondary root. VS Code treats the fork as part of your project, making all paths work correctly.
+Your enterprise forks the `microsoft/hve-core` repository and adds org-specific agents, skills, and instructions, as described in [Forking and Extending HVE Core](../../customization/forking.md). Developers clone the fork, and a `.code-workspace` file opens the clone as a second root folder next to the project.
+
+The workspace file only arranges folders and holds no customization settings. The fork keeps `plugin.json` at its root, as HVE Core does, so you install the clone's root folder as a plugin from source and Copilot loads the fork from there.
 
 ```text
 ┌──────────────────────────────────────────────────┐
@@ -42,7 +45,8 @@ Your enterprise forks the `microsoft/hve-core` repository, adds org-specific age
 │  📁 My Project (primary)                         │
 │     └── Your application code                    │
 │  📁 HVE Core Fork (secondary)                    │
-│     └── .github/agents, prompts, instructions    │
+│     └── plugin.json (plugin manifest)            │
+│     └── .github/agents, skills, instructions     │
 │     └── Org-specific customizations              │
 └──────────────────────────────────────────────────┘
          ↑
@@ -51,11 +55,13 @@ Your enterprise forks the `microsoft/hve-core` repository, adds org-specific age
    microsoft/hve-core (upstream)
          ↓  sync on your schedule
    your-org/hve-core (fork)
+         ↓  install the clone as a plugin from source
+   Copilot loads the fork's agents, skills, and instructions
 ```
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
+If your organization does not need its own fork, install the `hve-core` plugin instead, as described in [Install the Plugin](../install#install-the-plugin). For guided installation-method selection, MCP configuration, or copying selected components into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to set up the fork, the workspace, and the plugin install.
 
 ## Manual Setup
 
@@ -63,7 +69,7 @@ Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemN
 
 If your organization has not already forked HVE Core, create a fork of `microsoft/hve-core` under your org's GitHub account. Then clone your fork.
 
-#### Local VS Code
+#### VS Code on Your Machine
 
 ```bash
 # Clone your org's fork next to your project
@@ -75,15 +81,14 @@ cd hve-core
 git remote add upstream https://github.com/microsoft/hve-core.git
 ```
 
-**Codespaces/Devcontainer:** Your fork will be cloned automatically (see Step 3).
+In Codespaces or a devcontainer, Step 3 clones the fork for you.
 
 ### Step 2: Create the Workspace File
 
-Create `.devcontainer/hve-core.code-workspace` in your project:
+Create `.devcontainer/hve-core.code-workspace` in your project to list the two folders to open.
 
-> [!IMPORTANT]
-> Use the actual clone path (not the folder display name) as the prefix in `chat.*Locations` settings.
-> Folder display names do not resolve reliably as path prefixes.
+> [!NOTE]
+> If an earlier setup added `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` entries for HVE Core to your workspace file or `.vscode/settings.json`, remove them. Copilot does not need them.
 
 #### Codespaces / Devcontainer
 
@@ -101,42 +106,6 @@ Use the absolute clone path:
       "path": "/workspaces/hve-core"
     }
   ],
-  "settings": {
-    "chat.agentFilesLocations": {
-      "/workspaces/hve-core/.github/agents/ado": true,
-      "/workspaces/hve-core/.github/agents/data-science": true,
-      "/workspaces/hve-core/.github/agents/design-thinking": true,
-      "/workspaces/hve-core/.github/agents/github": true,
-      "/workspaces/hve-core/.github/agents/project-planning": true,
-      "/workspaces/hve-core/.github/agents/hve-core": true,
-      "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
-      "/workspaces/hve-core/.github/agents/security": true,
-      "My Project/.github/agents": true
-    },
-    "chat.instructionsFilesLocations": {
-      "/workspaces/hve-core/.github/instructions/ado": true,
-      "/workspaces/hve-core/.github/instructions/coding-standards": true,
-      "/workspaces/hve-core/.github/instructions/github": true,
-      "/workspaces/hve-core/.github/instructions/hve-core": true,
-      "/workspaces/hve-core/.github/instructions/shared": true,
-      "My Project/.github/instructions": true
-    },
-    "chat.agentSkillsLocations": {
-      "/workspaces/hve-core/.github/skills": true,
-      "/workspaces/hve-core/.github/skills/accessibility": true,
-      "/workspaces/hve-core/.github/skills/shared": true,
-      "/workspaces/hve-core/.github/skills/coding-standards": true,
-      "/workspaces/hve-core/.github/skills/data-science": true,
-      "/workspaces/hve-core/.github/skills/design-thinking": true,
-      "/workspaces/hve-core/.github/skills/hve-core": true,
-      "/workspaces/hve-core/.github/skills/installer": true,
-      "/workspaces/hve-core/.github/skills/project-planning": true,
-      "/workspaces/hve-core/.github/skills/rai": true,
-      "/workspaces/hve-core/.github/skills/rpi": true,
-      "/workspaces/hve-core/.github/skills/security": true,
-      "My Project/.github/skills": true
-    }
-  },
   "extensions": {
     "recommendations": [
       "github.copilot",
@@ -146,7 +115,7 @@ Use the absolute clone path:
 }
 ```
 
-#### Local VS Code
+#### VS Code on Your Machine
 
 Use the relative clone path from the workspace file's directory:
 
@@ -161,33 +130,7 @@ Use the relative clone path from the workspace file's directory:
       "name": "HVE Core Fork",
       "path": "../../hve-core"
     }
-  ],
-  "settings": {
-    "chat.agentFilesLocations": {
-      "../../hve-core/.github/agents/ado": true,
-      "../../hve-core/.github/agents/data-science": true,
-      "../../hve-core/.github/agents/hve-core": true,
-      "../../hve-core/.github/agents/hve-core/subagents": true
-    },
-    "chat.instructionsFilesLocations": {
-      "../../hve-core/.github/instructions/hve-core": true,
-      "../../hve-core/.github/instructions/shared": true
-    },
-    "chat.agentSkillsLocations": {
-      "../../hve-core/.github/skills": true,
-      "../../hve-core/.github/skills/accessibility": true,
-      "../../hve-core/.github/skills/coding-standards": true,
-      "../../hve-core/.github/skills/data-science": true,
-      "../../hve-core/.github/skills/design-thinking": true,
-      "../../hve-core/.github/skills/hve-core": true,
-      "../../hve-core/.github/skills/installer": true,
-      "../../hve-core/.github/skills/project-planning": true,
-      "../../hve-core/.github/skills/rai": true,
-      "../../hve-core/.github/skills/rpi": true,
-      "../../hve-core/.github/skills/security": true,
-      "../../hve-core/.github/skills/shared": true
-    }
-  }
+  ]
 }
 ```
 
@@ -220,25 +163,37 @@ Update `.devcontainer/devcontainer.json` to clone your org's fork:
 > [!WARNING]
 > You must open the `.code-workspace` file, not the folder.
 
-* `File` → `Open Workspace from File...` → select `hve-core.code-workspace` (Local)
+* `File` → `Open Workspace from File...` → select `hve-core.code-workspace` (on your machine)
 * Run `code .devcontainer/hve-core.code-workspace` in terminal (Codespaces)
 
 > [!NOTE]
-> The dev container spec has no `workspaceFile` property, so Codespaces and devcontainers always open in single-folder mode. You must manually switch to the workspace file after the container starts. For Codespaces without a fork, the [Codespaces method](codespaces.md) avoids this extra step by configuring settings directly in `devcontainer.json`.
+> The dev container spec has no `workspaceFile` property, so Codespaces and devcontainers always open in single-folder mode. You must manually switch to the workspace file after the container starts. For Codespaces without a fork, see the [Codespaces method](codespaces.md).
 
 The VS Code title bar should show your workspace name, not just the folder name.
 
+### Step 5: Install the Fork as a Plugin
+
+The workspace puts the fork in the Explorer. To have Copilot load it, install the clone's root folder, the one that holds `plugin.json`, as a plugin from source:
+
+1. Run **Chat: Open Customizations** from the Command Palette to open the Agent Customizations editor, and select **Plugins**.
+2. Select the add (`+`) button next to **User**.
+3. Enter the clone's folder path: `/path/to/your-projects/hve-core` on your machine, or `/workspaces/hve-core` in Codespaces or a devcontainer.
+
+Running **Chat: Install Plugin from Source** from the Command Palette (`Ctrl+Shift+P`) does the same. In Codespaces or a devcontainer, confirm that `hve-core` appears on the **Plugins** page of the Agent Customizations editor before you rely on the install.
+
+> [!IMPORTANT]
+> Use one install route at a time. When the same content arrives through more than one route, for example this plugin and the HVE Core VS Code extension, Copilot lists agents more than once in the subagent list and does not remove the copies.
+
 ## Path Resolution
 
-Use the actual clone path as the prefix in `chat.*Locations` settings:
+The `path` field of each folder entry tells VS Code where that folder is on disk. The `name` field is the label shown in the Explorer sidebar.
 
-| Path Style    | Example                                 | Recommended  |
-|---------------|-----------------------------------------|--------------|
-| Absolute path | `"/workspaces/hve-core/.github/agents"` | ✅ Codespaces |
-| Relative path | `"../../hve-core/.github/agents"`       | ✅ Local      |
-| Folder name   | `"HVE Core Fork/.github/agents"`        | ❌ Unreliable |
+| Path Style    | Example                  | Recommended                    |
+|---------------|--------------------------|--------------------------------|
+| Absolute path | `"/workspaces/hve-core"` | ✅ Codespaces and devcontainers |
+| Relative path | `"../../hve-core"`       | ✅ VS Code on your machine      |
 
-Folder display names (`"name"` field) label roots in the Explorer sidebar but do not resolve reliably as path prefixes in `chat.*Locations` settings. Always use the filesystem path from the folder's `"path"` field instead.
+A relative path resolves from the directory that holds the workspace file, so from `.devcontainer/` the value `../../hve-core` points at a sibling of your project. The plugin install in Step 5 takes the clone's folder path, not its `name`.
 
 ## Keeping Your Fork Updated
 
@@ -271,32 +226,30 @@ git push origin main
 }
 ```
 
+A pull updates the files on disk. Run **Developer: Reload Window** afterward so new chat sessions pick up the change. If the change still does not show up, open the **Plugins** page in the Agent Customizations editor and select **Check for and Apply Updates** (the refresh icon), or run **Chat: Update Plugins**.
+
 ## Verification
 
 After setup, verify HVE Core is working:
 
-1. Check the Explorer sidebar shows both folders
-2. Open Copilot Chat (`Ctrl+Alt+I`)
-3. Click the agent picker dropdown
-4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
+1. Check that the Explorer sidebar shows both folders.
+2. Confirm that `hve-core` appears on the **Plugins** page of the Agent Customizations editor.
+3. Run **Developer: Reload Window**, then open Copilot Chat (`Ctrl+Alt+I`) with the Copilot harness, which is the VS Code default.
+4. Open the agent picker and confirm `RPI Agent` is listed.
+5. Type `/` and confirm skills such as `/hve-core:rpi-research` appear. VS Code prefixes a plugin's skills with the plugin name.
 
 ## Troubleshooting
 
-### Agents not appearing
+### Agents Not Appearing
 
-* Confirm the workspace is open by checking that the title bar shows the workspace name
-* Ensure `path` values in `.code-workspace` point to the correct locations
-* Reload the window with `Ctrl+Shift+P` → "Developer: Reload Window"
+* Confirm that `hve-core` appears on the **Plugins** page. If it does not, repeat Step 5 with the path of the folder that holds `plugin.json`.
+* Run **Developer: Reload Window** and start a new chat session.
 
-### "Folder not found" error
+### "Folder Not Found" Error
 
-* For local setups, verify HVE Core is cloned at the relative path specified
+* Ensure `path` values in the workspace file point to the correct locations
+* On your machine, verify HVE Core is cloned at the relative path specified
 * For Codespaces, check that `onCreateCommand` ran successfully in creation logs
-
-### Settings not applying
-
-* Folder settings override workspace settings, so check for conflicts at the folder level
-* Use the actual clone path (absolute or relative) in `chat.*Locations` settings, not folder display names
 
 ## Next Steps
 

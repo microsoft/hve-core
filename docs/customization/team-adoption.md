@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - governance
@@ -10,14 +10,51 @@ keywords:
   - onboarding
   - naming conventions
   - change management
-estimated_reading_time: 7
+  - copilot plugin
+estimated_reading_time: 8
 ---
 
 ## Recommended Starting Point
 
-Start team adoption with the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the complete managed component set across all team members.
-When the team is ready for clone-based methods, ask an agent to use the included `hve-core-installer` skill. It evaluates the environment, recommends peer clone, submodule, git-ignored, or another method, guides MCP configuration, and supports a complete or custom selection across agents, instructions, and distributable skill directories.
-Move to direct clone setup only when artifact modification is required beyond what the installer provides.
+Start with the `hve-core` plugin, which carries every agent, skill, and
+instruction. To give the whole team the same setup, commit
+`.github/copilot/settings.json` to your repository so the Copilot harness offers
+the plugin to everyone who opens it:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "hve-core": {
+      "source": {
+        "source": "github",
+        "repo": "microsoft/hve-core"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "hve-core@hve-core": true
+  }
+}
+```
+
+Each person can still turn the plugin off on the **Plugins** page.
+[Offer the Plugin to Your Team](../getting-started/install#offer-the-plugin-to-your-team)
+explains the file, and [Install the Plugin](../getting-started/install#install-the-plugin)
+covers installing it directly in VS Code or Copilot CLI.
+
+When your repository should own a customized subset, ask an agent to use the
+included `hve-core-installer` skill. It copies the components you choose into
+your `.github` folders, as described in
+[Adopt Selected Components](../getting-started/install#adopt-selected-components),
+and it can also recommend an install route and set up MCP servers. Teams that pin
+a version or change HVE Core itself can
+[work from a clone](../getting-started/install#work-from-a-clone).
+
+The [VS Code extension](../getting-started/install#use-the-vs-code-extension)
+also installs HVE Core from the Marketplace, but its instructions may not reach
+Copilot sessions, so prefer the plugin when your team relies on them. Settle on
+one route for the whole team: Copilot keeps copies that arrive by different
+routes, and each agent then appears more than once.
 
 ## Adoption Strategy
 
@@ -26,28 +63,31 @@ with simpler artifacts before advancing to complex ones.
 
 ### Phase 1: Instructions
 
-Start with instructions files. They require the least effort and deliver
-immediate value by shaping Copilot's behavior for every conversation. Write
-two or three instructions covering your team's coding standards, commit message
-format, or PR conventions.
+Start with instructions files. They take the least effort and pay off quickly:
+each one applies your team's conventions whenever Copilot reads or edits files
+that match its `applyTo` pattern. Write two or three covering your team's coding
+standards, test conventions, or documentation style. Give each one an `applyTo`
+pattern, because an instructions file without one loads into every session.
 
-### Phase 2: Agents and Prompts
+### Phase 2: Agents and Slash Commands
 
 Once the team is comfortable with instructions, introduce custom agents for
 repeatable workflows (code reviews, research tasks, implementation patterns)
-and prompts for one-shot operations (generating boilerplate, formatting
-outputs).
+and user-invocable skills for one-shot operations that people start with a
+slash command (generating boilerplate, formatting outputs). The Copilot harness
+does not load prompt files, so build these entry points as skills.
+[Reusable Slash Commands](prompts.md) shows how.
 
 ### Phase 3: Skills and Shared Distribution
 
-Package domain knowledge into skills for complex, multi-step workflows. Place related artifacts under package-scoped `.github` paths and synchronize root `plugin.json` for managed distribution, or use selective cloning for a repository-owned subset.
+Package domain knowledge into skills for complex, multi-step workflows. Place related artifacts under package-scoped `.github` paths and synchronize root `plugin.json` for managed distribution, or copy a selected subset into your repository with the `hve-core-installer` skill.
 
 ### Measuring Adoption Progress
 
 Track adoption through observable indicators:
 
 * Number of team members using custom agents in daily work
-* Frequency of instructions and prompt invocations
+* Frequency of skill invocations
 * Reduction in repetitive manual tasks
 * Quality improvements in generated code and documentation
 
@@ -58,13 +98,12 @@ glance. Follow kebab-case patterns throughout.
 
 ### File Naming Patterns
 
-| Artifact Type  | Pattern                                        | Example                         |
-|----------------|------------------------------------------------|---------------------------------|
-| Instructions   | `{topic}.instructions.md`                      | `python-script.instructions.md` |
-| Agents         | `{workflow}.agent.md`                          | `code-review.agent.md`          |
-| Prompts        | `{action}.prompt.md`                           | `generate-tests.prompt.md`      |
-| Skills         | `{skill-name}/SKILL.md`                        | `pr-reference/SKILL.md`         |
-| Manifest paths | Plugin manifest and `docs/plugins/hve-core.md` | `agents/ado/example.agent.md`   |
+| Artifact Type  | Pattern                                        | Example                               |
+|----------------|------------------------------------------------|---------------------------------------|
+| Instructions   | `{topic}.instructions.md`                      | `python-script.instructions.md`       |
+| Agents         | `{workflow}.agent.md`                          | `code-review.agent.md`                |
+| Skills         | `{skill-name}/SKILL.md`                        | `pr-reference/SKILL.md`               |
+| Manifest paths | Plugin manifest and `docs/plugins/hve-core.md` | `.github/agents/ado/example.agent.md` |
 
 ### Namespace IDs
 
@@ -77,19 +116,19 @@ Namespace IDs serve as conventional directory names throughout `.github/` and mu
 ### Directory Organization
 
 Place artifacts under their namespace ID in the appropriate `.github/`
-subdirectory:
+subdirectory. Copilot finds artifacts in these folders at any depth, so a new
+namespace needs no settings:
 
 ```text
 .github/
   agents/{package-id}/
   instructions/{package-id}/
-  prompts/{package-id}/
   skills/{package-id}/
 ```
 
-Artifacts at the root of `.github/agents/`, `.github/instructions/`,
-`.github/prompts/`, or `.github/skills/` (without a subdirectory) are treated
-as repo-specific and excluded from plugin membership and extension packaging.
+Artifacts at the root of `.github/agents/`, `.github/instructions/`, or
+`.github/skills/` (without a subdirectory) are treated as repo-specific and
+excluded from plugin membership and extension packaging.
 
 ## Governance Model
 
@@ -126,8 +165,8 @@ follows priority order:
 
 ### Step-by-Step Onboarding
 
-1. Point new members to the [Getting Started](../getting-started/README.md)
-   guide for installation.
+1. Confirm that the repository default offers new members the plugin, or point
+   them to [Installing HVE Core](../getting-started/install).
 2. Walk through a first interaction using an existing agent (the RPI workflow
    is a good starting point).
 3. Show how instructions files shape Copilot behavior by editing one together.
@@ -146,7 +185,8 @@ exercise. A simple coding-style instruction works well:
 3. Review HVE Builder's review verdict and host validation result
 4. Continue the approved improve run if actionable findings require source
   changes
-5. Test by opening a Copilot chat and verifying the instructions influence
+5. Run **Developer: Reload Window**, open a new Copilot chat, and work on a file
+   that matches the `applyTo` pattern to confirm the instructions influence
    responses
 6. Submit the file for review following the team's PR process
 
@@ -185,7 +225,7 @@ To deprecate an artifact:
 1. Use `hve-builder` improve mode to add a deprecation notice pointing to the replacement.
 2. Announce the deprecation and provide a migration timeline.
 3. Move the artifact under `.github/deprecated/` when it should leave managed distribution.
-4. Run `npm run plugin:sync` and `npm run plugin:validate`; the manifest change removes it from Stable and PreRelease together.
+4. Run `npm run plugin:sync` and `npm run plugin:validate`; the manifest change removes it from the plugin and from both extension channels.
 5. Remove the archived artifact after the agreed transition period.
 
 ## Role-Based Adoption Paths
@@ -202,7 +242,7 @@ starting points and progression for each of the nine roles.
 ### TPM (Technical Program Manager)
 
 1. Use the RPI workflow to research and document project status
-2. Create prompts for generating status reports and risk summaries
+2. Create slash-command skills for generating status reports and risk summaries
 3. Build an agent that tracks cross-team dependencies
 
 ### Tech Lead
@@ -221,7 +261,7 @@ starting points and progression for each of the nine roles.
 ### Data Scientist
 
 1. Create instructions for notebook conventions and data handling
-2. Build prompts for exploratory data analysis patterns
+2. Build slash-command skills for exploratory data analysis patterns
 3. Package statistical methodology into a skill with reference
   datasets
 
@@ -233,7 +273,7 @@ starting points and progression for each of the nine roles.
 
 ### Business PM (Product Manager)
 
-1. Use prompts to generate user story drafts from requirements
+1. Create slash-command skills that draft user stories from requirements
 2. Create an agent for requirements analysis
 3. Build a Design Thinking workflow with custom agents
 
@@ -259,7 +299,7 @@ starting points and progression for each of the nine roles.
 
 * Artifact count: track the number of instructions, agents, and skills over time
 * Invocation frequency: monitor how often team members activate custom agents
-  and prompts
+  and skills
 * Error reduction: measure before-and-after rates for common mistakes the
   customizations target
 * Onboarding velocity: compare time-to-productivity for members who use HVE

@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-13
+ms.date: 2026-10-31
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -129,14 +129,14 @@ The Security Planner supports two entry modes. Select the Security Planner agent
 ## Prerequisites
 
 * HVE Core installed in one of these hosts:
-  * VS Code with GitHub Copilot Chat and the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * VS Code with the `hve-core` plugin ([Install the Plugin](../../getting-started/install.md#install-the-plugin)) or the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
   * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 
 Either install delivers the Security Planner with the skills it uses, including `rpi-research` for Phase 3 standards lookups, and the RAI Planner and SSSC Planner it hands off to.
 There is no separate security extension.
-In Copilot CLI, plugin instructions are not auto-applied; see [Instructions are not auto-applied from plugins](../../getting-started/methods/cli-plugins.md#instructions-are-not-auto-applied-from-plugins).
-To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the Security Planner agent, the `security-planning`, `owasp-top-10`, `owasp-llm`, `rpi-research`, and `backlog-templates` skills, the security `identity` and `standards-mapping` instructions, and the shared `coaching-patterns` and `disclaimer-language` instructions.
+The planner reads its security `identity` instructions by name at session start, so it does not depend on `applyTo` matching.
+To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the Security Planner agent; the `security-planning`, `owasp-top-10`, `owasp-llm`, `rpi-research`, `backlog-templates`, `planner-identity`, and `disclaimer-language` skills; the security `identity` and `standards-mapping` instructions; and the shared `coaching-patterns` instructions.
 
 ## Next Steps
 

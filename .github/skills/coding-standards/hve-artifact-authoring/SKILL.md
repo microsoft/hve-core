@@ -1,23 +1,23 @@
 ---
 name: hve-artifact-authoring
 description: >
-  Create and validate HVE Core agents, prompts, instructions, and skills with current frontmatter,
+  Create and validate HVE Core agents, instructions, and skills with current frontmatter,
   package membership, delegation, tracking, documentation, and validation conventions. Use when
   authoring a GitHub Copilot customization artifact in this repository.
-argument-hint: "[targets=...] [artifact-type=agent|prompt|instruction|skill] [requirements=...]"
+argument-hint: "[targets=...] [artifact-type=agent|instruction|skill] [requirements=...]"
 license: MIT
 user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-09-26"
+  last_updated: "2026-10-31"
 ---
 
 # HVE Artifact Authoring
 
 ## Goal
 
-Create agents, prompts, instructions, and skills that follow HVE Core's current authoring,
+Create agents, instructions, and skills that follow HVE Core's current authoring,
 distribution, documentation, and validation contracts. Use the `hve-builder` skill when the work
 requires lifecycle-managed authoring, a review pass, or host validation.
 
@@ -27,13 +27,15 @@ Choose each artifact from its responsibility and activation model.
 
 | Artifact                         | Responsibility                                                | Activation                         |
 |----------------------------------|---------------------------------------------------------------|------------------------------------|
-| Prompt (`.prompt.md`)            | Parameterized user entry point                                | Slash invocation                   |
 | Agent (`.agent.md`)              | User-selected workflow or isolated subagent work              | Agent picker or parent dispatch    |
 | Instruction (`.instructions.md`) | Conventions applied to matching paths                         | `applyTo` glob                     |
 | Skill (`SKILL.md`)               | Reusable workflow, domain knowledge, references, or utilities | Semantic match or slash invocation |
 
-Keep reusable behavior in a skill. Add a thin prompt or agent only when it provides a distinct
-entry point. Delegate isolated work only when the dispatch cost is justified.
+Keep reusable behavior in a skill. The Copilot harness does not load prompt files (`.prompt.md`),
+so build a parameterized entry point as a user-invocable skill: its slash command takes the
+prompt's place, `argument-hint` shows its arguments, and the body names each input. Add a thin
+agent only when it provides a distinct entry point. Delegate isolated work only when the dispatch
+cost is justified.
 
 ## Flow
 
@@ -42,7 +44,6 @@ entry point. Delegate isolated work only when the dispatch cost is justified.
 2. Search for an existing artifact that can be reused or extended before creating another one.
 3. Select the matching bundled starter asset when the caller wants a new artifact:
    * `assets/agent-template.md`
-   * `assets/prompt-template.md`
    * `assets/instruction-template.md`
    * `assets/skill-template.md`
 4. Replace every placeholder and remove unused optional fields. Do not copy a starter unchanged.
@@ -64,7 +65,10 @@ Read `references/frontmatter-schemas.md` before selecting fields.
 * Write `description` as concise capability and routing metadata.
 * Use only fields supported for the artifact type.
 * Treat agent and subagent `tools` configuration as a user-managed opaque boundary.
-* Keep agent and subagent `model` values scalar. Prompt model fallback lists remain prompt-only.
+* Keep agent and subagent `model` values scalar.
+* Preload the skills an agent needs when it starts with `skills:`. Do not add `handoffs`, `agents`,
+  or `argument-hint` to an agent; the Copilot harness does not support them, and
+  `npm run lint:frontmatter` rejects them.
 * Set `user-invocable: false` for background-only subagents.
 * Use `applyTo` only on instruction files.
 
@@ -92,8 +96,10 @@ A parent dispatch defines:
 * Stage gate
 * Consuming later step
 
-Use an explicit `agents` array for a fixed subagent allowlist. Omit `agents` when access is
-intentionally unrestricted. Use `agents: []` when no nested dispatch is allowed.
+Name each subagent in the parent's body by its `name` value; the Copilot subagent tool dispatches
+by name. Leave `agent` out of a subagent's `tools` list when it must not dispatch further.
+Subagents receive no custom instructions, so the dispatch prompt or a preloaded skill carries the
+rules they need.
 
 ## Tracking Contract
 

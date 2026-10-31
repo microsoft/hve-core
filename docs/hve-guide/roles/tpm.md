@@ -3,7 +3,7 @@ title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - TPM
@@ -18,7 +18,7 @@ This guide is for you if you drive project planning, manage requirements, coordi
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
 > For selective clone adoption, choose requirements, agile coaching, backlog-management, and delivery-planning components that match your program. Backlog management is not split by tracker: one set of components resolves Azure DevOps, GitHub, or Jira at runtime. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 

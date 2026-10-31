@@ -34,11 +34,11 @@ Report component types and target collisions before copying.
 Copy a component selection from the HVE-Core source into the target project.
 
 ```powershell
-./scripts/component-copy.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -SelectionName custom -Component @('agents/hve-core/rpi-agent.md', 'commands/hve-core/rpi.md', 'rules/hve-core/copilot-tracking.instructions.md', 'skills/rpi/rpi-plan')
+./scripts/component-copy.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -SelectionName custom -Component @('agents/hve-core/rpi-agent.md', 'rules/hve-core/copilot-tracking.instructions.md', 'skills/rpi/rpi-plan')
 ```
 
 ```bash
-./scripts/component-copy.sh ./lib/hve-core . custom agents/hve-core/rpi-agent.md commands/hve-core/rpi.md rules/hve-core/copilot-tracking.instructions.md skills/rpi/rpi-plan
+./scripts/component-copy.sh ./lib/hve-core . custom agents/hve-core/rpi-agent.md rules/hve-core/copilot-tracking.instructions.md skills/rpi/rpi-plan
 ```
 
 Preserve components the user chose to keep during collision resolution.

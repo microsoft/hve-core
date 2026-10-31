@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - SRE
@@ -25,7 +25,7 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
 > For selective clone adoption, choose infrastructure-as-code standards, incident response, supply chain security, and investigation components that match your operational responsibilities. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 

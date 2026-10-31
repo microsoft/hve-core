@@ -1,9 +1,9 @@
 ---
 title: HVE Core Identity and Channels
-description: Understand the single HVE Core identity, its Copilot CLI plugin registration, and its VS Code extension PreRelease and Stable channels
+description: Understand the single HVE Core identity, its Copilot plugin registration, and its VS Code extension PreRelease and Stable channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: overview
 keywords:
   - packages
@@ -17,9 +17,9 @@ HVE Core publishes one plugin named `hve-core` and one VS Code extension named `
 
 Root `plugin.json` is the deterministic membership authority for both products. `.github/plugin/marketplace.json` contains one `hve-core` locator whose relative source is the repository root; it does not repeat component membership. Plugin clients resolve root README and LICENSE, while the VSIX packages `extension/README.md` and `extension/LICENSE`.
 
-## Copilot CLI Plugin
+## Copilot Plugin
 
-The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`. There are no PreRelease or Stable plugin channels. A marketplace refresh followed by a plugin update resolves current `main` content from the repository root, with artifact discovery bounded to package-scoped `.github` paths. Plugin content from `main` has no published-release assurance.
+The plugin has one registration, `microsoft/hve-core`, which tracks `main` in both VS Code and Copilot CLI. There are no PreRelease or Stable plugin channels. A marketplace refresh followed by a plugin update resolves current `main` content from the repository root, with artifact discovery bounded to package-scoped `.github` paths. Plugin content from `main` has no published-release assurance.
 
 ## VS Code Extension Channels
 
@@ -62,7 +62,7 @@ The sync policy includes tracked package-scoped artifacts that match canonical p
 
 ## Copilot Marketplace Registration
 
-Register the marketplace and install the plugin:
+In VS Code, install the plugin from the Agent Customizations editor as described in [Install the Plugin](install#install-the-plugin). In Copilot CLI, register the marketplace and install the plugin:
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
@@ -85,15 +85,13 @@ For a smaller repository-owned footprint, use the installer to copy all manifest
 
 ## After Installation
 
-With the VS Code extension installed:
+With the plugin installed:
 
 1. Agents appear in the Copilot Chat agent picker.
 2. Instructions apply to matching files through their `applyTo` patterns.
-3. Skills become available for semantic or explicit invocation, and user-invocable skills appear as slash commands.
+3. Skills become available for semantic or explicit invocation, and user-invocable skills appear as slash commands. In VS Code, plugin skills carry the plugin name as a prefix, such as `/hve-core:rpi-research`.
 
-Copilot CLI plugins expose agents and skills, but plugin-contained
-instructions are not auto-applied. See [Copilot CLI Plugin](methods/cli-plugins#instructions-are-not-auto-applied-from-plugins)
-for the host-specific limitation.
+The VS Code extension delivers the same agents and skills to Copilot sessions, but its instructions may not reach them. Use the plugin when you rely on path-specific instructions. See [Use the VS Code Extension](install#use-the-vs-code-extension).
 
 The `hve-core` plugin includes `RPI Agent` and the `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
 

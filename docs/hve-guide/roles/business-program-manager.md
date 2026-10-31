@@ -3,7 +3,7 @@ title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - BPM
@@ -21,7 +21,7 @@ This guide is for you if you define business outcomes, manage stakeholder alignm
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
 > For selective clone adoption, choose the business requirements, product advisory, agile coaching, and research components that match your program. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 

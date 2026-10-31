@@ -59,7 +59,7 @@ Use a subagent when the host needs a specialized independent review dimension or
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 * Model fit: `model:` is optional and omitted by default; an omitted extension subagent inherits the invoking parent's model. Declare it only when the extension needs a stable Medium or Low profile, and resolve the current model name by the procedure in [artifact-types.md](artifact-types.md). A High responsibility omits `model:` unless the caller supplies one.
-* Host registration: verify both that the host discovers the agent and that the invoking parent permits dispatch. For plugin distribution, the plugin manifest declares component membership; a marketplace entry locates the plugin. Parent `agents:` restrictions are a separate constraint, and omission permits access only where the target host documents that behavior.
+* Host registration: verify both that the host discovers the agent and lists it for subagent dispatch, and that the invoking parent can dispatch, which in Copilot means `agent` is in the parent's tools list. Copilot leaves agents marked `disable-model-invocation: true` out of the subagent list. For plugin distribution, the plugin manifest declares component membership; a marketplace entry locates the plugin.
 
 Example frontmatter, inheriting the parent's model:
 
@@ -79,7 +79,7 @@ A team installs hve-builder as a library and wants every Terraform module they a
 
 1. They add `terraform.instructions.md` with `applyTo: "**/*.tf, **/*.tfvars"`. When hve-builder authors or edits a `.tf` file, that instruction auto-applies with no change to hve-builder.
 2. They add a `terraform-module-author` skill whose `description` names Terraform modules. When a request mentions Terraform modules, semantic skill activation loads the skill as an overlay.
-3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name, and register it in their parent agent's `agents:` list. hve-builder does not auto-load it; supplied metadata or an `rpi-research` extension survey identifies it, and the lifecycle dispatches it by name during the review pass alongside its own review of the candidate.
+3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name. hve-builder does not auto-load it; supplied metadata or an `rpi-research` extension survey identifies it, and the lifecycle dispatches it by name during the review pass alongside its own review of the candidate.
 
 The instruction and skill become eligible through normal discovery; the subagent becomes reachable because its routing description and host registration expose it. The caller still decides whether each extension is in scope and what authority it receives. Bounded reads of known target instructions and supplied extension metadata remain lifecycle-stage work; only open-ended extension surveys enter `rpi-research`.
 
@@ -107,7 +107,7 @@ That makes the description the entire contract as far as the phase is concerned.
 * State what the phase gives it and what it returns. For a subagent, say that it returns suggestions, proposals, or source pointers for the phase to verify, and that it writes nothing.
 * Keep it concise and within the host's description limits. Detail belongs in the body; the description only has to let the phase decide correctly and call correctly.
 
-A subagent that extends an RPI phase is advisory: it may gather, compare, or propose, but the phase assigns identifiers, classifies evidence, decides, and writes the artifact. Declare `agents: []` unless nested dispatch is intended, and omit `model:` unless a stable Low or Medium profile is needed.
+A subagent that extends an RPI phase is advisory: it may gather, compare, or propose, but the phase assigns identifiers, classifies evidence, decides, and writes the artifact. Leave `agent` out of its tools list unless nested dispatch is intended, and omit `model:` unless a stable Low or Medium profile is needed.
 
 ### Worked example: an internal corpus for `rpi-research` and `rpi-plan`
 
@@ -144,11 +144,11 @@ Example frontmatter:
 name: Acme Corpus Research Helper
 description: "Searches the Acme internal corpus for one bounded research question and returns source pointers, excerpts, and brief relevance notes as suggestions; writes nothing. Use during research when a question concerns Acme services; pass the question, scope, exclusions, and requested return kind."
 user-invocable: false
-agents: []
+tools: [read, search, skill]
 ---
 ```
 
-The subagent activates the `acme-corpus-research-planning` skill for its corpus instructions rather than repeating them, so the corpus knowledge has one source of truth. It omits `model:` so it inherits the invoking context's model.
+The subagent activates the `acme-corpus-research-planning` skill for its corpus instructions rather than repeating them, so the corpus knowledge has one source of truth; `skill` in its tools list lets it do so. Its list has no `agent`, so it cannot dispatch further. It omits `model:` so it inherits the invoking context's model.
 
 A planning-side subagent is rarely needed because `rpi-plan` drafts phases itself and the skill already supplies the citations that drafting needs. When a team wants one, for example a subagent that proposes task breakdowns from an internal estimation model, its description must say it is used during planning or with `rpi-plan`, state when the planner should call it and what to pass, and say that it returns a proposal the planner verifies and writes itself.
 

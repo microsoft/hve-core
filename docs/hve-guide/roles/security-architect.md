@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - security
@@ -25,7 +25,7 @@ This guide is for you if you perform security model analysis, build security pla
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
 > For selective clone adoption, choose security planning, supply chain assessment, Responsible AI, risk, and research components that match your review scope. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 

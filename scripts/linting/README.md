@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-30
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - powershell
@@ -590,7 +590,7 @@ The linting directory also contains these scripts that are not covered in the ea
 | `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                                                                                       |
 | `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                                                                                     |
 | `Validate-AssetDocs.ps1`           | Validate asset documentation coverage, orphans, sync, structure, and authored completeness                                                                            |
-| `Test-AgentColdStartBudget.ps1`    | Enforce cold-start byte budgets (agent file, recursive `#file:` imports, and always-on instructions) for the planning-chain agents in `agent-cold-start-budgets.json` |
+| `Test-AgentColdStartBudget.ps1`    | Enforce cold-start byte budgets (agent file, preloaded `SKILL.md` files, and always-on instructions) for the planning-chain agents in `agent-cold-start-budgets.json` |
 | `Validate-DesignIntent.ps1`        | Validate Design Intent Records and their generated verification artifacts                                                                                             |
 | `Sync-DesignIntentSchema.ps1`      | Copy the canonical Design Intent schema into the accessibility skill runtime package                                                                                  |
 

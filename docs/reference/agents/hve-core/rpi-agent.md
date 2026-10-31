@@ -38,10 +38,10 @@ Child tasks inherit your participation preferences and unresolved work, but own 
 
 It offers two modes:
 
-| Mode        | Behavior                                                                                                                                                                                                                                                                                                                       |
-|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `manual`    | Walks you through the active phase's artifacts and waits for an explicit next-phase request, a `/rpi-*` command, or a phase handoff. You own every material decision.                                                                                                                                                          |
-| `automatic` | An explicit automatic request or **Full Auto** selection starts automatic progression without another mode question. The agent makes ordinary decisions and runs required in-scope follow-ups through new RPI loops until the requested outcome is complete. Explicitly retained decisions and progression limits still apply. |
+| Mode        | Behavior                                                                                                                                                                                                                                                                                                                  |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `manual`    | Walks you through the active phase's artifacts and waits for an explicit next-phase request or a `/rpi-*` command. You own every material decision.                                                                                                                                                                       |
+| `automatic` | An explicit automatic request, such as "full auto", starts automatic progression without another mode question. The agent makes ordinary decisions and runs required in-scope follow-ups through new RPI loops until the requested outcome is complete. Explicitly retained decisions and progression limits still apply. |
 
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
 
@@ -58,8 +58,8 @@ Reach for a different asset when:
 
 1. Select **RPI Agent** from the chat agent picker.
 2. Describe the task, or supply an issue or PR reference, a task slug, or an existing artifact path. An explicit anchor identifies the task; a new conversation alone does not resume earlier work.
-3. In manual mode, the agent walks you through each phase's artifacts and asks whether to refine the work or advance. Request the next phase in your answer, use the **Research**, **Plan**, **Implement**, and **Review** handoffs, or invoke the matching `/rpi-*` command.
-4. To switch to automatic mode, select **Full Auto** or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, choose one of the four options below. Every question includes freeform input.
+3. In manual mode, the agent walks you through each phase's artifacts and asks whether to refine the work or advance. Request the next phase in your answer or invoke the matching `/rpi-*` command.
+4. To switch to automatic mode, ask for "full auto" or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, choose one of the four options below. Every question includes freeform input.
 5. When a retained decision or exceptional confirmation pauses the session, answer the question; the session resumes automatically.
 6. In automatic mode, the agent continues required in-scope follow-ups from Research in a child task, honoring your decision preferences. Each child has its own plan and implementation evidence, and runs no critique or Review unless you ask. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
 
@@ -70,7 +70,7 @@ The opening question is "How would you like us to work on this?":
 * Research and plan with me: the agent researches and plans with questions where needed, then explains the artifacts and stops before Implementation so you can refine the research and plan together.
 * Work through each phase with me: the agent asks about unclear decisions, explains each phase's artifacts, and waits for you to choose when to advance.
 
-You can retain follow-up selection through the second option or a custom answer. Use the ranked handoffs or answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
+You can retain follow-up selection through the second option or a custom answer. Answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
 
 With the stop-before-Implementation option, the agent completes Planning, including its critique unless you skipped it and its decision gates, then returns to manual mode in Plan. It walks you through the research and plan, including trade-offs and readiness, and offers refinement or an explicit Implementation request. Iteration preserves the task and its planning decisions. Resuming the conversation alone does not start Implementation.
 
@@ -96,7 +96,7 @@ Session: manual mode, Research phase, task blob-storage
 ## Next Steps
 
 Would you like to refine the research or move to Planning? You can also enter a different next step.
-To continue, request Planning in your answer, run `/rpi-plan`, or select the Plan handoff.
+To continue, request Planning in your answer or run `/rpi-plan`.
 ```
 
 To delegate progression and ordinary decisions explicitly:

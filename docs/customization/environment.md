@@ -8,6 +8,7 @@ keywords:
   - devcontainer
   - vs code settings
   - mcp servers
+  - mcp.json
   - environment
 estimated_reading_time: 6
 ---
@@ -122,12 +123,12 @@ Add custom setup steps to these scripts or create new scripts referenced from
 ## VS Code Settings
 
 Workspace-level settings in `.vscode/settings.json` configure editor behavior,
-Copilot customization discovery, and validation tools. These settings apply to
-everyone who opens the workspace.
+schema validation, and commit message generation. These settings apply to
+everyone who opens the workspace in VS Code.
 
 ### Key Settings
 
-The workspace configures several critical behaviors:
+The workspace sets these editor behaviors:
 
 ```json
 {
@@ -139,40 +140,33 @@ The workspace configures several critical behaviors:
 }
 ```
 
-### Copilot Discovery Paths
+### Copilot Discovery
 
-VS Code discovers customization files through `chat.*FilesLocations` settings.
-Each entry maps a directory path to `true` to enable scanning:
+Copilot finds agents under `.github/agents/`, skills under `.github/skills/`, and
+instructions under `.github/instructions/` at any folder depth. A new package
+folder needs no settings:
 
-```json
-{
-  "chat.instructionsFilesLocations": {
-    ".github/instructions/hve-core": true,
-    ".github/instructions/coding-standards": true
-  },
-  "chat.agentFilesLocations": {
-    ".github/agents/hve-core": true,
-    ".github/agents/hve-core/subagents": true
-  },
-  "chat.agentSkillsLocations": {
-    ".github/skills": true,
-    ".github/skills/accessibility": true,
-    ".github/skills/coding-standards": true,
-    ".github/skills/data-science": true,
-    ".github/skills/design-thinking": true,
-    ".github/skills/hve-core": true,
-    ".github/skills/installer": true,
-    ".github/skills/project-planning": true,
-    ".github/skills/rai": true,
-    ".github/skills/rpi": true,
-    ".github/skills/security": true,
-    ".github/skills/shared": true
-  }
-}
+```text
+.github/
+  agents/{package-id}/{name}.agent.md
+  instructions/{package-id}/{name}.instructions.md
+  skills/{package-id}/{skill-name}/SKILL.md
 ```
 
-When you add a new collection directory, register it in these settings so Copilot
-discovers your customizations.
+VS Code keeps its list of path-specific instructions for the life of the window.
+After you add or edit instruction files, run **Developer: Reload Window** so new
+chat sessions pick up the change.
+
+Leave the `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and
+`chat.agentSkillsLocations` settings out of the workspace. They are editor-only:
+VS Code forwards files from those folders to Copilot sessions, but Copilot CLI
+and the GitHub Copilot app do not read them. An entry that points at HVE Core
+also loads it a second time next to any install route, so remove such entries
+if your settings still have them.
+
+To load customizations from a folder elsewhere in the checkout, such as an HVE
+Core submodule, declare its folders in `.github/copilot/settings.json` as
+described in [Work From a Clone](../getting-started/install#work-from-a-clone).
 
 ### YAML Schema Validation
 
@@ -193,54 +187,54 @@ YAML extension (`redhat.vscode-yaml`) is installed.
 
 ### Commit Message Instructions
 
-Copilot uses a dedicated instructions file for generating commit messages:
+VS Code's commit message generation follows the same conventions file that the
+`/git-commit` skill uses:
 
 ```json
 {
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "file": ".github/instructions/hve-core/commit-message.instructions.md"
+      "file": ".github/skills/hve-core/git-commit/references/commit-message.md"
     }
   ]
 }
 ```
 
-You can add your own commit message instructions file or replace this reference
-to match your team's commit conventions.
+Point this setting at your own file to match your team's commit conventions.
 
 ## MCP Server Integration
 
-Model Context Protocol (MCP) servers extend Copilot's capabilities by connecting
-it to external tools and data sources. MCP servers run alongside VS Code and
-provide additional context, actions, or integrations that Copilot can invoke
-during conversations.
+Model Context Protocol (MCP) servers connect Copilot to external tools and data
+sources. Agents use them for extra context and to take actions in those systems
+during a session.
 
 ### Configuration
 
-MCP servers are configured in `.vscode/mcp.json` at the workspace level:
+Copilot reads MCP servers from `.mcp.json` at the workspace root. The file holds
+one top-level `mcpServers` object. Stdio servers have `command` and `args`, and
+HTTP servers have `"type": "http"` and a `url`. Copilot also reads each person's
+`~/.copilot/mcp-config.json` (or `$COPILOT_HOME/mcp-config.json`), which uses the
+same format, for servers that belong outside the workspace.
 
-```json
-{
-  "servers": {
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
-    }
-  }
-}
-```
+HVE Core ships `.mcp.json.sample` at the repository root with the WorkIQ and
+Figma servers that some of its agents use. To turn them on, copy the sample to
+`.mcp.json` and delete the servers you don't need. `.gitignore` excludes
+`.mcp.json`, so your copy stays out of commits.
+
+Copilot includes a GitHub MCP server, so leave `github` out of `.mcp.json`.
+Agents whose tools lists name `github/<tool>` use the built-in server.
 
 ### Adding Team-Specific MCP Servers
 
-To integrate your team's tools, add server entries to the `servers` object.
-Each server needs a unique key, a type, and connection details:
+Add an entry to the `mcpServers` object for each of your team's servers. Each
+entry needs a unique key and its connection details:
 
 ```json
 {
-  "servers": {
-    "github": {
+  "mcpServers": {
+    "figma": {
       "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
+      "url": "https://mcp.figma.com/mcp"
     },
     "contoso-api": {
       "type": "http",
@@ -250,8 +244,19 @@ Each server needs a unique key, a type, and connection details:
 }
 ```
 
-MCP servers enable agents to interact with issue trackers, CI/CD pipelines,
-databases, and other systems your team relies on.
+The key is the server name that agents use in their `tools` lists, as
+`contoso-api/<tool>` or `contoso-api/*`.
+
+Keep tokens out of the file. When a server needs a secret, reference an
+environment variable written as `${NAME}` in the server's `env` values or HTTP
+headers, and set the variable outside the repository. The format has no
+`${input:...}` prompts. If your team still keeps servers in `.vscode/mcp.json`,
+VS Code forwards them to Copilot sessions except those that use `${input:...}`
+or `${command:...}`, so move those servers to `.mcp.json`.
+
+MCP servers let agents work with issue trackers, CI/CD pipelines, databases, and
+other systems your team relies on. [MCP Server Configuration](../getting-started/mcp-configuration)
+covers the servers HVE Core agents use.
 
 ## Coding Agent Environment
 
@@ -348,7 +353,8 @@ Steps to customize:
 2. Add a kubectl installation step to `on-create.sh`
 3. Mirror both installations in `copilot-setup-steps.yml`
 4. Add the Terraform VS Code extension to the DevContainer extensions list
-5. Register any IaC-specific instruction paths in `.vscode/settings.json`
+5. Add IaC instruction files under `.github/instructions/`, where Copilot finds
+   them without any settings
 
 ### Engineer
 
@@ -358,7 +364,8 @@ Copilot to reference their internal MCP server during code reviews.
 Steps to customize:
 
 1. Add the API testing tool to `on-create.sh` and `copilot-setup-steps.yml`
-2. Configure the internal MCP server in `.vscode/mcp.json`
+2. Add the internal MCP server to `.mcp.json` at the workspace root, with any
+   token read from an environment variable
 3. Add workspace settings for any new extensions the team requires
 4. Create an instructions file that teaches Copilot about the team's API
    conventions

@@ -2,7 +2,7 @@
 title: Managing the HVE Core Plugin Manifest
 description: Maintain the single HVE Core plugin and VSIX membership through the canonical manifest
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - marketplace
@@ -14,9 +14,17 @@ estimated_reading_time: 6
 
 ## Manifest Authority
 
-Root `plugin.json` is the operational distribution definition for the one `hve-core` plugin and VSIX. Its `agents`, `commands`, `rules`, and `skills` arrays are deterministic repository-relative outputs of tracked path and license classification under `.github`. The manifest declares no `hooks` field.
+Root `plugin.json` is the operational distribution definition for the one `hve-core` plugin and VSIX. Its `agents`, `commands`, `rules`, `skills`, and `extensions` arrays are deterministic repository-relative outputs of tracked path and license classification under `.github`. The manifest declares no `hooks` field.
 
-`.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.`. It owns locator metadata only and must not repeat component arrays or package policy.
+| Field        | Lists                                                                                                      | Included in     |
+|--------------|------------------------------------------------------------------------------------------------------------|-----------------|
+| `agents`     | Agent files (`.agent.md`)                                                                                  | Plugin and VSIX |
+| `commands`   | Prompt files (`.prompt.md`); empty, because HVE Core ships none and the Copilot harness does not load them | Plugin and VSIX |
+| `rules`      | Instruction files (`.instructions.md`)                                                                     | Plugin and VSIX |
+| `skills`     | Distributable skill folders                                                                                | Plugin and VSIX |
+| `extensions` | Canvas extension package folders                                                                           | Plugin only     |
+
+`.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.`. It owns locator metadata only and must not repeat component arrays or package policy. Because a fork keeps both `plugin.json` and this locator, it can serve as its own marketplace, as described in [Distribute Your Fork](forking#distribute-your-fork).
 
 ## Add Or Change A Component
 
@@ -32,7 +40,9 @@ A manifest path maps directly to canonical source beneath `.github`. Do not add 
 
 Manifest synchronization discovers every convention-matching tracked artifact. Plugin validation checks deterministic ordering, locator parity and containment, declared component coverage, and hooks.
 
-Stable and PreRelease are VS Code extension channels with the same complete components. They differ only in source ownership, cadence, version, and VS Code Marketplace channel behavior. The Copilot CLI plugin has one registration that tracks `main`.
+The plugin has one registration, `microsoft/hve-core`, which tracks `main`. Stable and PreRelease are VS Code extension channels with the same components. They differ only in source ownership, cadence, version, and VS Code Marketplace channel behavior.
+
+The VSIX carries the manifest's agents, instructions, and skills, without canvases. VS Code forwards the extension's agents and skills to Copilot sessions, but its instructions may not reach them, so use the plugin when you need every component.
 
 ## Hooks
 
@@ -40,7 +50,7 @@ The plugin manifest declares no hooks. Hooks are not copied during selective ins
 
 ## Validation and Package Staging
 
-Ordinary validation reads canonical `.github` sources and never creates a repository-root `plugins/` tree. Extension preparation refreshes the single `extension/package.json` and `extension/README.md`. Packaging creates one VSIX.
+Ordinary validation reads canonical `.github` sources and never creates a repository-root `plugins/` tree. Extension preparation reads the manifest's `agents`, `commands`, `rules`, and `skills` fields, writes them as the extension's `chatAgents`, `chatPromptFiles`, `chatInstructions`, and `chatSkills` contributions, and refreshes the single `extension/package.json` and `extension/README.md`. It ignores `extensions`. Packaging creates one VSIX.
 
 Use these checks for package changes:
 
@@ -56,7 +66,7 @@ npm run test:ps -- -TestPath scripts/tests/extension/
 
 The installer resolves all components from root `plugin.json`. Users can copy the complete manifest or a custom selection; the installer converts repository-relative `.github/...` declarations to its selection form without changing canonical target paths.
 
-Schema version 2 records `selection.profile` and `selection.components`. File records track selected components without package identity. The installer copies agents, prompts, instructions, and complete distributable skill directories while preserving source-relative paths.
+Schema version 2 records `selection.profile` and `selection.components`. File records track selected components without package identity. The installer copies agents, instructions, and complete distributable skill directories into the target repository's `.github` folders while preserving source-relative paths, and Copilot discovers the copies there without settings. [Adopt Selected Components](../getting-started/install#adopt-selected-components) walks through the installer.
 
 ---
 

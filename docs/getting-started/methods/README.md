@@ -1,41 +1,44 @@
 ---
 title: Setup Methods
-description: Detailed guides for each HVE Core installation and workspace configuration method
+description: Guides for each way to install HVE Core and load it in the Copilot agent harness
 sidebar_label: Overview
 sidebar_custom_props:
   accessibleName: "Overview: Setup Methods"
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-31
 ms.topic: overview
 keywords:
   - setup
   - installation
   - workspace
   - configuration
+  - copilot plugin
 estimated_reading_time: 3
 ---
 
-HVE Core supports multiple setup methods. Choose the approach that fits your environment and workflow. Start with the VS Code extension for the fastest zero-configuration path. For MCP setup or selective clone adoption, ask an agent to use the included `hve-core-installer` skill.
+HVE Core installs several ways. The Copilot Plugin is the starting point: it carries every agent, skill, and instruction and works in VS Code and Copilot CLI. The other methods suit teams that pin a version, customize components, or work in containers. For MCP setup or selective component adoption, ask an agent to use the included `hve-core-installer` skill.
 
 ## Available Methods
 
-| Method                                | Best For                                  | Complexity |
-|---------------------------------------|-------------------------------------------|------------|
-| [VS Code Extension](extension.md)     | Quick start, individual developers        | Low        |
-| [Multi-Root Workspace](multi-root.md) | Teams with shared configuration           | Medium     |
-| [Git Submodule](submodule.md)         | Pinned versions, CI integration           | Medium     |
-| [Peer Clone](peer-clone.md)           | Side-by-side development and contribution | Medium     |
-| [Mounted Workspace](mounted.md)       | Container and remote environments         | Medium     |
-| [Git-Ignored Clone](git-ignored.md)   | Local-only customization                  | Low        |
-| [Codespaces](codespaces.md)           | Cloud-based development                   | Low        |
-| [CLI Plugins](cli-plugins.md)         | Terminal-first workflows                  | Medium     |
+| Method                                | Best For                                   | How Copilot Loads It                      | Complexity |
+|---------------------------------------|--------------------------------------------|-------------------------------------------|------------|
+| [Copilot Plugin](cli-plugins.md)      | Most people, in VS Code or Copilot CLI     | Plugin                                    | Low        |
+| [VS Code Extension](extension.md)     | Marketplace installs with release channels | VS Code extension forwarding              | Low        |
+| [Git Submodule](submodule.md)         | Pinned versions for a team                 | Repository settings                       | Medium     |
+| [Git-Ignored Clone](git-ignored.md)   | Local-only customization                   | Plugin from source or repository settings | Low        |
+| [Peer Clone](peer-clone.md)           | Side-by-side development and contribution  | Plugin from source                        | Medium     |
+| [Multi-Root Workspace](multi-root.md) | Editing HVE Core next to your project      | Plugin from source                        | Medium     |
+| [Mounted Workspace](mounted.md)       | Sharing one host copy with containers      | Repository settings                       | Medium     |
+| [Codespaces](codespaces.md)           | Cloud-based development                    | Repository default or settings            | Low        |
+
+To offer HVE Core to everyone who opens a repository without copying any files, commit the plugin defaults described in [Offer the Plugin to Your Team](../install#offer-the-plugin-to-your-team).
 
 ## Which Method Should You Choose?
 
-Start with the **VS Code Extension** if you want the fastest path. Move to **Multi-Root Workspace** or **Git Submodule** when your team needs shared, version-controlled configuration.
+Start with the **Copilot Plugin**. Move to a **Git Submodule** when your team needs a pinned, version-controlled copy, or adopt selected components when your repository should own a customized subset. Use one method at a time: Copilot keeps copies that arrive by different routes, and each agent then appears more than once.
 
-See the [Getting Started](../README.md) guide for the recommended onboarding sequence.
+[Comparing Setup Methods](comparison.md) puts every method side by side. See the [Getting Started](../README.md) guide for the recommended onboarding sequence.
 
 ---
 

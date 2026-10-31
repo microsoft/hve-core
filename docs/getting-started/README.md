@@ -7,11 +7,11 @@ sidebar_custom_props:
   accessibleName: "Overview: Getting Started with HVE Core"
 pagination_label: Getting Started with HVE Core
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - github copilot
-  - multi-root workspace
+  - copilot plugin
   - setup
   - getting started
 estimated_reading_time: 5
@@ -19,12 +19,11 @@ estimated_reading_time: 5
 
 You've installed HVE Core. What now?
 
-The honest answer: you can start using agents immediately, and some of them
-will produce good results right away. But the real power of HVE Core is a
-methodology called RPI (Research, Plan, Implement, Review) that changes how you
-collaborate with AI. Instead of asking AI to "write the code," you ask it to
-research first, plan second, implement third, and review last. The constraint
-changes everything.
+You can start using agents immediately, and some of them will produce good
+results right away. Most of HVE Core's value, though, comes from a methodology
+called RPI (Research, Plan, Implement, Review) that changes how you collaborate
+with AI. Instead of asking AI to "write the code," you ask it to research first,
+plan second, implement third, and review last.
 
 This guide walks you through four steps, each building on the last:
 
@@ -42,10 +41,10 @@ This guide walks you through four steps, each building on the last:
 > for a coordinated lifecycle, or use `/rpi-research`, `/rpi-plan`,
 > `/rpi-implement`, and `/rpi-review` for direct phase work.
 
-Need installation help? See the [Installation Guide](install.md) for all
-methods, or install the
-[VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
-for the quickest path.
+Need installation help? The [Installation Guide](install.md) covers every
+route. The quickest is the
+[Copilot plugin](methods/cli-plugins.md), which works in VS Code and
+Copilot CLI.
 
 Review [HVE Core Identity and Channels](packages.md) to choose a source channel or selective clone adoption.
 
@@ -55,15 +54,15 @@ Review [HVE Core Identity and Channels](packages.md) to choose a source channel 
 
 #### Agent not available
 
-* Ensure GitHub Copilot extension is installed and active
+* Ensure GitHub Copilot is installed and you are signed in
 * Reload VS Code window: `Ctrl+Shift+P` → "Developer: Reload Window"
-* Check that hve-core is accessible (cloned or configured correctly)
+* Check that HVE Core is installed: the plugin appears on the **Plugins** page of the Agent Customizations editor, or the extension shows as installed in the Extensions view
 
 #### Copilot not discovering customizations
 
-* For Multi-Root: Ensure you opened the `.code-workspace` file, not just the folder
-* Verify `chat.agentFilesLocations` points to the correct path
-* Check the window title shows the workspace name
+* Reload the window after you install, update, or edit HVE Core files, then start a new chat session
+* For a clone listed in `.github/copilot/settings.json`, check that each path is a literal folder inside the checkout and that the workspace folder is trusted
+* Remove `chat.*Locations` entries that point at HVE Core from an earlier setup, and keep only one install route
 
 #### Git or clone errors
 
@@ -99,7 +98,7 @@ For projects requiring user-centered requirements discovery before implementatio
 
 ## See Also
 
-* [Installation Guide](install.md) - Full decision matrix for all installation methods
+* [Installation Guide](install.md) - Every install route and how to choose one
 * [MCP Configuration](mcp-configuration.md) - Configure Model Context Protocol servers
 * [Role Guides](../hve-guide/roles/) - Find your role-specific guide
 

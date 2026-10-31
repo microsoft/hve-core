@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension and find replacements for retired slash commands
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - migration
@@ -189,7 +189,7 @@ These commands became skills with the same name, so the slash command still work
 * `/synth-data-generate`
 
 > [!NOTE]
-> Every skill in this list except `/dt-figma-export` sets `disable-model-invocation: true`, so agents do not start it for you and Copilot CLI does not run it yet. Use these skills from VS Code until the CLI supports them. [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode) tracks the limitation.
+> Every skill in this list except `/dt-figma-export` sets `disable-model-invocation: true`, so agents do not start it for you. Type its slash command at the start of a message to run it. In Copilot CLI, asking for one of these skills by name in a sentence does not load it, and `copilot -p` runs cannot reach it. [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode) tracks the limitation.
 
 ### Security and supply chain
 

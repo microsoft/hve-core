@@ -4,12 +4,12 @@ description: Phase 7 component installation and the Phase 7 upgrade mode for the
 ---
 <!-- markdownlint-disable-file -->
 
-## Phase 7: Component Installation (Optional)
+## Phase 7: Component Installation
 
 > [!IMPORTANT]
 > Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported. The Bash scripts require `jq`.
 
-After Phase 6 completes, offer users the option to copy HVE-Core components into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
+Phase 7 carries out native repository adoption. After Phase 5 validates the source clone, copy the components the user selects into the project's `.github/agents`, `.github/skills`, and `.github/instructions` folders. Copilot discovers the copies natively, and the repository owns them. The source clone stays unconnected to Copilot. When this phase finishes, proceed to Phase 6.
 
 A component is one agent, prompt, instruction, or complete skill declared by root `plugin.json`. Every Phase 7 operation validates its component paths against that manifest before writing. The manifest uses repository-relative `.github/...` paths; component selections use installer form and map to canonical target paths without flattening:
 
@@ -24,9 +24,11 @@ A component is one agent, prompt, instruction, or complete skill declared by roo
 
 Hooks are never copied by this phase. Skills copy as complete directories, minus local environment and cache directories (`tests`, `.venv`, `.hypothesis`, `node_modules`, `__pycache__`, `.ruff_cache`, `.pytest_cache`).
 
+The Copilot harness does not load prompt files (`.prompt.md`), so a copied prompt has no effect in Copilot sessions. HVE-Core's entry points are skills used as slash commands.
+
 ### Skip Condition
 
-If user selected **Extension Quick Install** (Option 1) in Phase 2, skip Phase 7 entirely. Extension installation bundles all components automatically.
+Skip Phase 7 for the plugin, team default, extension, and clone routes. Those routes already deliver HVE-Core, and copying components as well would install the same content through a second route.
 
 ### Checkpoint 6: Component Selection
 
@@ -34,10 +36,11 @@ Present the component selection prompt:
 
 <!-- <component-selection-prompt> -->
 ```text
-📂 Component Installation (Optional)
+📂 Component Installation
 
-HVE-Core publishes agents, instructions, and skills.
-Copying them into your repository enables local customization and offline use.
+I'll copy HVE-Core agents, instructions, and skills into your
+repository's .github folders. Copilot discovers the copies natively,
+and your repository owns them.
 
 Options:
   [1] Install every component declared by the HVE Core plugin
@@ -52,7 +55,7 @@ User input handling:
 
 * "1", "all", "complete" → Select every agent, prompt, instruction, and skill declared by root `plugin.json`; set the selection name to `all`
 * "2", "choose", "custom", "components" → Proceed to the Custom Selection sub-flow
-* "3", "skip", "none", "no" → Skip to the final success report
+* "3", "skip", "none", "no" → Skip to Phase 6 without copying anything
 * Unclear response → Ask for clarification
 
 ### Custom Selection Sub-Flow
@@ -74,7 +77,7 @@ Reject a component that is absent from the converted manifest membership before 
 
 ### Upstream Source Verification
 
-For Methods 3 (Mounted) and 5 (Multi-Root), verify the pre-existing clone before collision detection or component copy. This is an advisory trust signal, not proof of repository integrity, and it must not silently reject an intentional fork or local development clone.
+For Methods 3 (Mounted) and 5 (Multi-Root), and for a clone the user already had, verify the pre-existing clone before collision detection or component copy. This is an advisory trust signal, not proof of repository integrity, and it must not silently reject an intentional fork or local development clone.
 
 Run the read-only check against the resolved HVE-Core source path:
 
@@ -225,7 +228,7 @@ Created .hve-tracking.json for upgrade tracking
   Modified files will prompt before overwriting.
   Use 'eject' to take ownership of any component.
 
-Proceeding to final success report...
+Proceeding to post-installation setup...
 ```
 <!-- </component-copy-success> -->
 
@@ -371,6 +374,6 @@ Updated: [N] files
 Skipped: [M] files (kept local or ejected)
 Version: v[OLD] → v[NEW]
 
-Proceeding to final success report...
+Proceeding to post-installation setup...
 ```
 <!-- </upgrade-success> -->
