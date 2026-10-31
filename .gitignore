@@ -436,8 +436,10 @@ FodyWeavers.xsd
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
-!.vscode/mcp.json.sample
 !.vscode/README.md
+
+# Personal MCP server configuration copied from .mcp.json.sample
+/.mcp.json
 
 # Local History for Visual Studio Code
 .history/
