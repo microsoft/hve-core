@@ -86,7 +86,7 @@ customer_card_render:
 * `method`: integer 1-9 indicating the active method.
 * `space`: derived from method number. Methods 1-3 map to `problem`, 4-6 to `solution`, 7-9 to `implementation`.
 * `phase`: free-text label describing the current step within the method (e.g., "stakeholder mapping", "interview planning", "theme clustering", "prototype testing").
-* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See `shared/disclaimer-language.instructions.md` (Design Thinking Coaching section).
+* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See the `disclaimer-language` skill (Design Thinking Coaching section).
 
 #### Hint Calibration
 

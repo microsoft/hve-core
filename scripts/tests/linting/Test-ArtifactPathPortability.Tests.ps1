@@ -124,7 +124,7 @@ On Windows, use `$env:TEMP\palette.png`.
         $repo = Join-Path $TestDrive 'provenance'
         $literal = 'source: .github/skills/rai/rai-standards/SKILL.md'
         New-PortableArtifactFixture -RepoRoot $repo -RelativePath '.github/agents/rai-planning/rai-planner.agent.md' -Content $literal
-        New-PortableArtifactFixture -RepoRoot $repo -RelativePath '.github/instructions/rai-planning/rai-identity.instructions.md' -Content $literal
+        New-PortableArtifactFixture -RepoRoot $repo -RelativePath '.github/skills/project-planning/rai-planner/references/rai-identity.md' -Content $literal
         New-PortableArtifactFixture -RepoRoot $repo -RelativePath '.github/agents/example/fixture.agent.md' -Content $literal
 
         $result = Test-ArtifactPathPortability -RepoRoot $repo

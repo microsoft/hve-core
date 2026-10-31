@@ -6,6 +6,8 @@ agents: []
 tools:
   - read
   - edit
+skills:
+  - engagement-report-conventions
 ---
 
 # Engagement Report Council Arbiter

@@ -1,12 +1,12 @@
 ---
 name: privacy-standards
 description: "Privacy planning reference for data-flow reasoning, standards mapping, and DPIA thresholds"
-license: CC-BY-4.0 AND CC-BY-SA-3.0
+license: CC-BY-4.0 AND CC-BY-SA-3.0 AND MIT
 user-invocable: false
 metadata:
   authors: "NIST (Privacy Framework and NISTIR 8062); GDPR and CCPA/CPRA sources; OWASP (privacy risks); Microsoft (planning synthesis)"
   spec_version: "NIST Privacy Framework v1.0; NISTIR 8062; GDPR; CCPA/CPRA; OWASP Top 10 Privacy Risks"
-  last_updated: "2026-06-26"
+  last_updated: "2026-10-30"
   content_based_on: "https://www.nist.gov/privacy-framework; https://doi.org/10.6028/NIST.IR.8062; https://gdpr-info.eu; https://oag.ca.gov/privacy/ccpa; https://owasp.org/www-project-top-10-privacy-risks/"
 ---
 
@@ -34,6 +34,7 @@ The frontmatter expression is the conjunction of every license present in the pa
 | `references/ccpa-cpra.md`                  | CC-BY-4.0    | Paraphrase of CCPA/CPRA, not reproduced                     |
 | `references/dpia-thresholds.md`            | CC-BY-4.0    | Repository-original planning synthesis                      |
 | `references/data-governance-controls.md`   | CC-BY-4.0    | Repository-original planning synthesis                      |
+| `references/privacy-identity.md`           | MIT          | Repository-original Privacy Planner identity protocol       |
 | `SKILL.md` and remaining package content   | CC-BY-4.0    | Repository-original                                         |
 
 ## Framework index
@@ -46,6 +47,7 @@ The frontmatter expression is the conjunction of every license present in the pa
 - Operational references:
   - [DPIA threshold heuristics](references/dpia-thresholds.md)
   - [Data governance controls for release readiness](references/data-governance-controls.md)
+- [Privacy Planner identity protocol](references/privacy-identity.md): read at the start of every Privacy Planner session for the six phases, state, resume, and question cadence
 
 ## Privacy planning heuristics
 

@@ -774,7 +774,7 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 Describe 'Offline lexical grader contracts' -Tag 'Unit' {
   BeforeAll {
     $script:LexicalEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
-    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/instructions/shared/disclaimer-language.instructions.md')
+    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md')
     $script:SecurityCaution = [regex]::Match($disclaimers, '(?s)## Security Planning\s+(.*?)(?=\r?\n## )').Groups[1].Value.Trim()
     $script:StaticGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
     $script:StaticGraderProbe = @'
@@ -1982,7 +1982,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       'no-contradictory-findings', 'sssc-reviewer-class-recipe-no-source-edit')
     @($stimulus.graders | Where-Object { $_.Contains('weight') }) | Should -HaveCount 0
     $mounts = @($stimulus.agent_environment.files)
-    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/instructions/shared/disclaimer-language.instructions.md',
+    @($mounts.dest) | Should -Be @('.github/copilot-instructions.md', '.github/skills/shared/disclaimer-language/SKILL.md',
       'subject/package.json', 'subject/.github/workflows/release.yml', 'subject/Dockerfile')
     @($mounts.dest | Where-Object { $_ -like '.copilot-tracking/*' }) | Should -HaveCount 0
     foreach ($mount in $mounts) { Test-Path -LiteralPath (Join-Path $script:ObservationRoot $mount.src) -PathType Leaf | Should -BeTrue -Because $mount.src }
@@ -2561,7 +2561,7 @@ Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
     $script:RaiReviewerPartial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($script:RaiReviewerPartialPath))
     $script:RaiReviewerFixturePath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/fixtures/rai-reviewer-audit-copilot-instructions.md'
     $script:RaiReviewerFixture = [System.IO.File]::ReadAllText($script:RaiReviewerFixturePath)
-    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/instructions/shared/disclaimer-language.instructions.md'
+    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/skills/shared/disclaimer-language/SKILL.md'
     $script:DisclaimerSource = [System.IO.File]::ReadAllText($disclaimerPath)
     $script:RaiReviewerSmoke = $script:RaiReviewerPartial['stimuli'] |
       Where-Object { $_['name'] -eq 'rai-reviewer-class-recipe' }

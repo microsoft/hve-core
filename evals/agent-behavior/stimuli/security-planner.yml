@@ -29,8 +29,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: fixtures/security-planner-disclaimer-null-state.json
           dest: .copilot-tracking/security-plans/cadence-null/state.json
     tags:
@@ -53,8 +53,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: fixtures/security-planner-disclaimer-shown-state.json
           dest: .copilot-tracking/security-plans/cadence-shown/state.json
     tags:
@@ -86,8 +86,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: fixtures/security-planner-disclaimer-shown-state.json
           dest: .copilot-tracking/security-plans/cadence-shown/state.json
     tags:
@@ -159,8 +159,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: fixtures/security-phase6/sample-service-state.json
           dest: .copilot-tracking/security-plans/sample-service/state.json
         - src: fixtures/security-phase6/sample-service-security-plan.md
@@ -202,8 +202,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: fixtures/security-phase6/sample-service-state.json
           dest: .copilot-tracking/security-plans/sample-service/state.json
         - src: fixtures/security-phase6/sample-service-security-plan.md
@@ -268,8 +268,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: ../../.github/instructions/security/identity.instructions.md
           dest: .github/instructions/security/identity.instructions.md
     tags:

@@ -22,8 +22,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: fixtures/sssc-smoke/package.fixture.json
           dest: subject/package.json
         - src: fixtures/sssc-smoke/release-workflow.fixture
@@ -251,8 +251,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/security/vex-generation.instructions.md
-          dest: .github/instructions/security/vex-generation.instructions.md
+        - src: ../../.github/skills/security/vex/references/vex-generation.md
+          dest: .github/skills/security/vex/references/vex-generation.md
       skills:
         - ../../.github/skills/security/vex
     tags:
@@ -280,8 +280,8 @@ stimuli:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/security/vex-generation.instructions.md
-          dest: .github/instructions/security/vex-generation.instructions.md
+        - src: ../../.github/skills/security/vex/references/vex-generation.md
+          dest: .github/skills/security/vex/references/vex-generation.md
       skills:
         - ../../.github/skills/security/vex
     tags:

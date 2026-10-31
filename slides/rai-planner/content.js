@@ -20,7 +20,7 @@
     },
     'rai-identity': {
       title: 'RAI identity instructions',
-      url: `${blob}.github/instructions/rai-planning/rai-identity.instructions.md`,
+      url: `${blob}.github/skills/project-planning/rai-planner/references/rai-identity.md`,
       note: 'Phase transitions, framework selection, reference processing and resume behavior.'
     },
     'planner-skill': {
@@ -65,7 +65,7 @@
     },
     disclaimer: {
       title: 'Disclaimer language instructions',
-      url: `${blob}.github/instructions/shared/disclaimer-language.instructions.md`,
+      url: `${blob}.github/skills/shared/disclaimer-language/SKILL.md`,
       note: 'The RAI Planning CAUTION block shown before the first question and at exit points.'
     },
     'state-schema': {

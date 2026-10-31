@@ -3,6 +3,9 @@ name: PRD Builder
 description: "Product Requirements Document builder with guided Q&A and references"
 agents:
   - PRD Quality Reviewer
+skills:
+  - disclaimer-language
+  - untrusted-content-boundary
 ---
 
 # PRD Builder Instructions
@@ -101,7 +104,7 @@ When the PRD benefits from an architecture or network diagram, use the `architec
 
 ## Disclaimer Acknowledgment
 
-Display the PRD Requirements Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever the active `.copilot-tracking/prd-sessions/<prd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
+Display the PRD Requirements Planning CAUTION block from the `disclaimer-language` skill verbatim once per session, before any phase work, whenever the active `.copilot-tracking/prd-sessions/<prd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
 
 ## File Management
 

@@ -6,6 +6,8 @@ agents: []
 tools:
   - read
   - WorkIQ-Mail-MCP-Server/CreateDraftMessage
+skills:
+  - engagement-report-conventions
 ---
 
 # Engagement Report Outlook Drafter

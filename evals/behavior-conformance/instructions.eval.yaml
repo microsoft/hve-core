@@ -1455,8 +1455,8 @@ stimuli:
       Read policy files only; do not inspect repository state or execute commands.
     agent_environment: &git-merge-instruction-environment
       files:
-        - src: ../../.github/instructions/hve-core/git-merge.instructions.md
-          dest: .github/instructions/hve-core/git-merge.instructions.md
+        - src: ../../.github/skills/hve-core/git-merge/references/merge-conventions.md
+          dest: .github/skills/hve-core/git-merge/references/merge-conventions.md
     simulation: &git-merge-instruction-no-shell
       tool_overrides:
         powershell: &git-merge-instruction-shell-denied

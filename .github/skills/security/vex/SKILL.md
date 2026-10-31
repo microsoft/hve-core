@@ -1,7 +1,7 @@
 ---
 name: vex
 description: OpenVEX v0.2.0 specification reference plus VEX management playbooks - Brought to you by microsoft/hve-core.
-license: Apache-2.0 AND CC-BY-4.0
+license: Apache-2.0 AND CC-BY-4.0 AND MIT
 user-invocable: false
 metadata:
   authors: "OpenVEX Community; microsoft/hve-core"
@@ -75,6 +75,8 @@ Products use [Package URL (PURL)](https://github.com/package-url/purl-spec) form
    evidence requirements per status, and forbidden transitions.
 3. [CVE Data Sources](references/cve-data-sources.md): OSV.dev, NVD, and GitHub Advisory Database
    API references with licensing posture.
+4. [VEX Generation Rules](references/vex-generation.md): evidence requirements, confidence routing,
+   forbidden transitions, and report templates for agents that produce or edit VEX documents.
 
 ## Skill layout
 
@@ -99,6 +101,7 @@ of them; the table states which license actually governs each file.
 | `references/openvex-schema.md`                       | Apache-2.0 | Derived from OpenVEX spec |
 | `references/vex-status-logic.md`                     | Apache-2.0 | Derived from OpenVEX spec |
 | `references/cve-data-sources.md`                     | CC-BY-4.0  | hve-core-authored         |
+| `references/vex-generation.md`                       | MIT        | hve-core-authored         |
 | `SKILL.md`, playbooks, and remaining package content | CC-BY-4.0  | hve-core-authored         |
 
 ### Third-Party Attribution

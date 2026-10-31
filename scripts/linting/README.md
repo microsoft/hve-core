@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-22
+ms.date: 2026-10-30
 ms.topic: reference
 keywords:
   - powershell
@@ -584,7 +584,7 @@ The linting directory also contains these scripts that are not covered in the ea
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                                                                                    |
 | `Validate-HookManifests.ps1`       | Validate package-scoped hook manifests under `.github/hooks/`                                                                                                         |
-| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                                                                                          |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction and skill templates                                                                                |
 | `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                                                                                         |
 | `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows                                                                  |
 | `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                                                                                       |
@@ -704,11 +704,11 @@ fires once.
 #### `Validate-PlannerArtifacts.ps1`
 
 Validates that AI artifact footers and planner disclaimers are present in
-instruction files, based on the artifact-classification tiers declared in
+instruction and skill files, based on the artifact-classification tiers declared in
 `.github/config/footer-with-review.yml`.
 
 Disclaimer text is not duplicated in config: the script parses
-`.github/instructions/shared/disclaimer-language.instructions.md`, splits it on
+`.github/skills/shared/disclaimer-language/SKILL.md`, splits it on
 H2 headings, and derives each disclaimer from that section's `[!CAUTION]`
 blockquote. The first word of the heading becomes the disclaimer key, so
 `## RAI Planning` maps to `rai-planner` and `rai-full-disclaimer`.
@@ -738,10 +738,10 @@ blockquote markers, so line wrapping does not affect matching.
 
 ##### Parameters
 
-* `-Paths` (string[]) - Directories to scan (default: `.github/instructions`)
+* `-Paths` (string[]) - Directories to scan (default: `.github/instructions` and `.github/skills`)
 * `-ExcludePaths` (string[]) - Glob patterns to exclude from scanning
 * `-FooterConfigPath` (string) - Footer config path (default: `.github/config/footer-with-review.yml`)
-* `-DisclaimerSourcePath` (string) - Canonical disclaimer markdown path (default: `.github/instructions/shared/disclaimer-language.instructions.md`)
+* `-DisclaimerSourcePath` (string) - Canonical disclaimer markdown path (default: `.github/skills/shared/disclaimer-language/SKILL.md`)
 * `-FailOnMissing` (switch) - Treat missing footers and disclaimers as failures
 * `-OutputPath` (string) - JSON results path (default: `logs/ai-artifact-results.json`)
 

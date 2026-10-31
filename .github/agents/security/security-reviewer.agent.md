@@ -13,8 +13,11 @@ tools:
   - search/codebase
   - search/fileSearch
   - read/readFile
+  - skill
 user-invocable: true
 disable-model-invocation: true
+skills:
+  - disclaimer-language
 ---
 
 # Security Reviewer
@@ -30,7 +33,7 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 
 ## TM7 Generation Workflow
 
-Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
+Follow the human-in-the-loop contract in the `security-planning` skill's `references/tm7-generation-workflow.md` for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
 
 ## Inputs
 
@@ -262,7 +265,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 * When mode is `audit` or `diff`, display the audit/diff scan completion format with verification counts, finding counts, assessed skills, and the report file path.
 * When mode is `plan`, display the plan scan completion format with risk counts, assessed skills, and the report file path.
 * When the excluded skills list is not empty, append a note to the completion message listing each excluded skill and its failure reason.
-* After the completion summary, display the Security-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
+* After the completion summary, display the Security-Review CAUTION block from the `disclaimer-language` skill verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
 
 ### Step 6: Correlate a Supplied Security Plan Baseline
 

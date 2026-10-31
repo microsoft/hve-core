@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-10-28
+ms.date: 2026-10-30
 ms.topic: guide
 keywords:
   - copilot
@@ -268,7 +268,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Creates:** Merged review artifacts in a normalized branch folder:
 
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in `review-artifacts.instructions.md`)
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in the `code-review` skill's `references/review-artifacts.md`)
 * `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/metadata.json` (review metadata record)
 
 **Workflow:** Context Bootstrap → Human Scope Confirmation → Perspective + Depth Selection → Prepare Dispatch State → Dispatch Selected Perspectives → Merge and Persist

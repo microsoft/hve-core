@@ -31,6 +31,8 @@ tools:
   - github/search_pull_requests
   - github/pull_request_read
 disable-model-invocation: true
+skills:
+  - engagement-report-conventions
 ---
 
 # Engagement Report Generator

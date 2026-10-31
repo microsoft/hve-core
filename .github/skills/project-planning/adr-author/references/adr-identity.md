@@ -1,6 +1,5 @@
 ---
 description: 'ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and canonical state.json schema for Architecture Decision Record authoring sessions'
-applyTo: '**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/docs/planning/adrs/**/.adr-config.yml'
 ---
 
 # ADR Creator Identity

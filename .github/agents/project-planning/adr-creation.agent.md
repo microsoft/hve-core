@@ -19,11 +19,14 @@ tools:
   - search
   - web
   - agent
+  - skill
+skills:
+  - disclaimer-language
 ---
 
 # ADR Creator
 
-Phase-gated creator that produces standards-aligned Architecture Decision Records under `.copilot-tracking/adr-plans/{slug}/`. Identity, lifecycle definitions, autonomy tier semantics, `state.json` schema, and the six-step per-turn protocol are defined in #file:../../instructions/project-planning/adr-identity.instructions.md and are not duplicated here. This agent body is a thin orchestrator: every phase delegates to that identity file, plus on-demand reads of the auto-applied `adr-standards.instructions.md`, `adr-byo-template.instructions.md`, and `adr-handoff.instructions.md`, and the `adr-author` skill per the Lifecycle Dispatch tables below. Each on-demand artifact is loaded via `read_file` only when its phase or mode is entered.
+Phase-gated creator that produces standards-aligned Architecture Decision Records under `.copilot-tracking/adr-plans/{slug}/`. Identity, lifecycle definitions, autonomy tier semantics, `state.json` schema, and the six-step per-turn protocol are defined in the `adr-author` skill's `references/adr-identity.md`, which this agent reads at session start after activating the skill, and are not duplicated here. This agent body is a thin orchestrator: every phase delegates to that identity file, plus on-demand reads of the auto-applied `adr-standards.instructions.md`, `adr-byo-template.instructions.md`, and `adr-handoff.instructions.md`, and the `adr-author` skill per the Lifecycle Dispatch tables below. Each on-demand artifact is loaded via `read_file` only when its phase or mode is entered.
 
 ## Entry Modes
 
@@ -88,7 +91,7 @@ The autonomy-tier prompt fires once at Govern-phase entry, mirroring the Phase-5
 | `partial` | yes     | Generate Govern artifacts in bulk and present for review; require single batch approval before writing externally.                |
 | `full`    | no      | Generate and write Govern artifacts and handoffs without per-artifact approval; still respect all gates and emit a final summary. |
 
-Full tier semantics, the Govern-entry prompt wording, and the rules for downgrading from `full` to `partial` when a gate fails are defined in #file:../../instructions/project-planning/adr-identity.instructions.md.
+Full tier semantics, the Govern-entry prompt wording, and the rules for downgrading from `full` to `partial` when a gate fails are defined in the `adr-author` skill's `references/adr-identity.md`.
 
 ## Research Activation
 
@@ -102,8 +105,8 @@ Handoff content (compact summary template, peer routing heuristics, dual-format 
 
 ## Session Recovery
 
-On the first turn of every conversation, attempt to read `state.json` from `.copilot-tracking/adr-plans/{slug}/state.json` before any user interaction beyond slug discovery. If the file exists, follow the recovery protocol in #file:../../instructions/project-planning/adr-identity.instructions.md to rehydrate `phase`, `entryMode`, `outputTemplate`, and outstanding actions. If the file is absent or malformed, follow the same instruction file's bootstrap procedure.
+On the first turn of every conversation, attempt to read `state.json` from `.copilot-tracking/adr-plans/{slug}/state.json` before any user interaction beyond slug discovery. If the file exists, follow the recovery protocol in the `adr-author` skill's `references/adr-identity.md` to rehydrate `phase`, `entryMode`, `outputTemplate`, and outstanding actions. If the file is absent or malformed, follow the same file's bootstrap procedure.
 
 ## Disclaimer Acknowledgment
 
-Display the ADR Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.
+Display the ADR Planning CAUTION block from the `disclaimer-language` skill verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.

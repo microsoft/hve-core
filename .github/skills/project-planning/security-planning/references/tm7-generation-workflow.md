@@ -1,6 +1,5 @@
 ---
 description: "Human-in-the-loop contract for TM7 threat-model generation and the native Windows TMT feedback loop"
-applyTo: '.github/agents/security/security-planner.agent.md, .github/agents/security/security-reviewer.agent.md'
 ---
 
 # TM7 Generation Workflow

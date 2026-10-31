@@ -1,6 +1,5 @@
 ---
 description: 'Community interaction voice, tone, and response templates for GitHub-facing agents and prompts'
-applyTo: '**/.github/agents/project-planning/backlog-manager.agent.md, **/.github/agents/project-planning/subagents/github-backlog-executor.agent.md, **/.github/skills/project-planning/backlog-management/references/github.md'
 ---
 
 # Community Interaction Guidelines

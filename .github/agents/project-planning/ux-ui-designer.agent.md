@@ -19,6 +19,8 @@ handoffs:
     agent: RPI Agent
     prompt: "Activate `rpi-research` for the current technical-feasibility question before any planning or implementation."
     send: true
+skills:
+  - untrusted-content-boundary
 ---
 
 # UX/UI Designer

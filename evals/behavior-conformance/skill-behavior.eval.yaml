@@ -4803,8 +4803,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4830,8 +4830,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4865,8 +4865,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4893,8 +4893,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4924,8 +4924,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4946,8 +4946,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -4973,8 +4973,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5002,8 +5002,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5037,8 +5037,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5067,8 +5067,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5095,8 +5095,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5121,8 +5121,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5142,8 +5142,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5164,8 +5164,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5212,8 +5212,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5239,8 +5239,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5269,8 +5269,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5295,8 +5295,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5436,8 +5436,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -5466,8 +5466,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/outcome-hypothesis
       files:
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: skills/shared/disclaimer-language/SKILL.md
     tags:
       category: behavior-conformance
       skill: outcome-hypothesis
@@ -7171,8 +7171,8 @@ stimuli:
       files:
         - src: ../../.github/skills/hve-core/git-commit
           dest: .github/skills/hve-core/git-commit
-        - src: ../../.github/instructions/hve-core/commit-message.instructions.md
-          dest: .github/instructions/hve-core/commit-message.instructions.md
+        - src: ../../.github/skills/hve-core/git-commit/references/commit-message.md
+          dest: .github/skills/hve-core/git-commit/references/commit-message.md
     tags:
       category: behavior-conformance
       skill: git-commit
@@ -7341,8 +7341,8 @@ stimuli:
       files:
         - src: ../../.github/skills/hve-core/git-merge
           dest: .github/skills/hve-core/git-merge
-        - src: ../../.github/instructions/hve-core/git-merge.instructions.md
-          dest: .github/instructions/hve-core/git-merge.instructions.md
+        - src: ../../.github/skills/hve-core/git-merge/references/merge-conventions.md
+          dest: .github/skills/hve-core/git-merge/references/merge-conventions.md
     simulation: &git-push-no-shell
       tool_overrides:
         powershell: &git-push-denied-shell
@@ -7983,8 +7983,8 @@ stimuli:
           dest: .github/skills/hve-core/pull-request
         - src: ../../.github/skills/hve-core/git-merge
           dest: .github/skills/hve-core/git-merge
-        - src: ../../.github/instructions/hve-core/git-merge.instructions.md
-          dest: .github/instructions/hve-core/git-merge.instructions.md
+        - src: ../../.github/skills/hve-core/git-merge/references/merge-conventions.md
+          dest: .github/skills/hve-core/git-merge/references/merge-conventions.md
     simulation: *git-push-success
     tags:
       category: behavior-conformance
