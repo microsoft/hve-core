@@ -3537,8 +3537,8 @@ console.log(JSON.stringify(results));
     }
     @{
       Slug = 'security-planner'; Scenario = 'security-planner-from-prd-no-artifacts'; Grader = 'security-planner-from-prd-attribution'; Echo = $true
-      Accept = @('OWASP ASVS • OWASP Top 10 • NIST SSDF', "Frameworks:`n- **OWASP ASVS** (Application Security Verification Standard)`n- **OWASP Top 10**`n- **NIST SSDF** (Secure Software Development Framework)")
-      Reject = @('OWASP ASVS • OWASP Top 10', 'Frameworks: NIST SSDF and OWASP ASVS.')
+      Accept = @("OWASP ASVS $([char]0x2022) OWASP Top 10 $([char]0x2022) NIST SSDF", "Frameworks:`n- **OWASP ASVS** (Application Security Verification Standard)`n- **OWASP Top 10**`n- **NIST SSDF** (Secure Software Development Framework)")
+      Reject = @("OWASP ASVS $([char]0x2022) OWASP Top 10", 'Frameworks: NIST SSDF and OWASP ASVS.')
     }
     @{
       # The prompt names both session paths, so this presence check cannot reject a prompt echo.
