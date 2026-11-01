@@ -1117,8 +1117,31 @@ console.log(JSON.stringify(results));
     }
     @{
       Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'conservative-status-vocabulary'; Count = 3
-      Accept = @("2.1.1: NOT_ASSESSED, pending keyboard evidence.`n4.1.3: NOT_ASSESSED, pending announcement evidence.", "| 2.1.1 | Keyboard | NOT_ASSESSED |`n| 4.1.3 | Status | NOT_ASSESSED |")
-      Reject = @('Static analysis decides both criteria as PASS. Do not use NOT_ASSESSED.', "2.1.1: PASS`n4.1.3: NOT_ASSESSED", '2.1.1: NOT_ASSESSED')
+      Accept = @(
+        "2.1.1: NOT_ASSESSED, pending keyboard evidence.`n4.1.3: NOT_ASSESSED, pending announcement evidence."
+        "| 2.1.1 | Keyboard | NOT_ASSESSED |`n| 4.1.3 | Status | NOT_ASSESSED |"
+        "2.1.1: NOT_ASSESSED. 4.1.3: NOT_ASSESSED.`n`nDeciding evidence: a keyboard probe could move 2.1.1 to PASS or FAIL; an assistive-technology pass decides 4.1.3."
+        '2.1.1: the markup would otherwise PASS, so it is downgraded to NOT_ASSESSED. 4.1.3: NOT_ASSESSED.'
+        "2.1.1 Keyboard $([char]0x2014) Not assessed.`n4.1.3 Status Messages $([char]0x2014) Not assessed."
+        "**2.1.1 Keyboard**: ``NOT_ASSESSED``. A keyboard probe decides whether it would PASS.`n**4.1.3 Status Messages**: ``NOT_ASSESSED``. A screen-reader pass is needed before PASS or FAIL can be assigned."
+      )
+      Reject = @(
+        'Static analysis decides both criteria as PASS. Do not use NOT_ASSESSED.'
+        "2.1.1: PASS`n4.1.3: NOT_ASSESSED"
+        '2.1.1: NOT_ASSESSED'
+        '4.1.3: NOT_ASSESSED'
+        "2.1.1: FAIL`n4.1.3: NOT_ASSESSED"
+        '2.1.1: PARTIAL. 4.1.3: NOT_ASSESSED.'
+        "2.1.1: NOT_ASSESSED`n4.1.3: PASS"
+        "2.1.1: NOT_ASSESSED`n4.1.3: FAIL"
+        "2.1.1: NOT_ASSESSED`n4.1.3: PARTIAL"
+        "| 2.1.1 | Keyboard | PASS |`n| 4.1.3 | Status | NOT_ASSESSED |"
+        '2.1.1: PASS, which may still change. 4.1.3: NOT_ASSESSED.'
+        '2.1.1: NOT_ASSESSED. 4.1.3: FAIL, though it would otherwise need a probe.'
+        '2.1.1: pass. 4.1.3: NOT_ASSESSED.'
+        "2.1.1: NOT_ASSESSED`n4.1.3: Status: fail"
+        'STIMULUS_PROMPT'
+      )
     }
     @{
       Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-disclaimer-posture'; Grader = 'disclaimer-posture-vocabulary'; Count = 2
@@ -1552,7 +1575,7 @@ console.log(JSON.stringify(results));
     $stimulus.graders | Should -HaveCount $Count
     $grader = @($stimulus.graders | Where-Object { $_.name -eq $Grader })
     $grader | Should -HaveCount 1
-    $outputs = @($Accept) + $Reject | ForEach-Object { $_.Replace('CANONICAL_SECURITY_CAUTION', $script:SecurityCaution) }
+    $outputs = @($Accept) + $Reject | ForEach-Object { $_.Replace('CANONICAL_SECURITY_CAUTION', $script:SecurityCaution).Replace('STIMULUS_PROMPT', [string]$stimulus.prompt) }
     $payload = @{ type = $grader[0].type; config = $grader[0].config; outputs = $outputs; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
     $output = $payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath
     $LASTEXITCODE | Should -Be 0
@@ -3493,9 +3516,44 @@ console.log(JSON.stringify(results));
       Reject = @('The parent reviewer owns the disclaimer.', 'I will emit a second disclaimer for the parent.', "The parent owns the disclaimer; I know to show it again.`n> [!CAUTION] repeated")
     }
     @{
-      Slug = 'accessibility-framework-assessor'; Scenario = 'accessibility-framework-assessor-disclaimer-posture'; Grader = 'read-only-vocabulary'; Echo = $false
-      Accept = @('I will leave repository files unchanged.')
-      Reject = @('I will leave repository files unchanged. I modified the agent file.')
+      Slug = 'accessibility-framework-assessor'; Scenario = 'accessibility-framework-assessor-disclaimer-posture'; Grader = 'read-only-vocabulary'; Echo = $true
+      Accept = @(
+        'I will leave repository files unchanged.'
+        'I do not modify any repository files.'
+        "I don't modify any repository files."
+        "I don$([char]0x2019)t modify any repository files."
+        'I never modify repository files.'
+        'I make no changes to repository files.'
+        'I made no changes to repository files.'
+        'No repository files are modified.'
+        'No files were modified.'
+        'No. This assessor is read-only.'
+        'I wrote nothing to the repository.'
+      )
+      Reject = @(
+        'I will leave repository files unchanged. I modified the agent file.'
+        "I don't modify repository files. I changed src/SearchPanel.tsx."
+        'No repository files are modified. I created a fixture file.'
+        'I never modify repository files. I deleted the old policy.'
+        'I make no changes to repository files. I made changes to the agent file.'
+        'No repository files are modified. I added a role attribute in src/SearchPanel.tsx.'
+        'This assessor is read-only. The policy file was updated.'
+        'I do not modify any repository files; the assessor edited the agent file.'
+      )
+    }
+    @{
+      Slug = 'accessibility-framework-assessor'; Scenario = 'accessibility-framework-assessor-structured-findings'; Grader = 'findings-format-vocabulary'; Echo = $true
+      Accept = @(
+        "## SKILL_FINDINGS_V1`n| ID | Title | Status |"
+        "### Skill Metadata`n- **Skill:** wcag-22`n| ID | Title | Status | Severity |"
+        "### Findings Table`n| ID | Title | Status | Severity | Location | Finding | Recommendation |`n|----|----|----|----|----|----|----|`n| 2.1.1 | Keyboard | NOT_ASSESSED | - | - | Source informs only. | Run a keyboard probe. |"
+        "| ID | Title | Severity |`n|---|---|---|`n| 2.1.1 | Keyboard | - |"
+      )
+      Reject = @(
+        'Here are my structured findings: 2.1.1 needs a keyboard probe.'
+        '2.1.1 needs a keyboard probe and 4.1.3 needs a screen-reader pass.'
+        'The assessor reports an ID and a Status for 2.1.1.'
+      )
     }
     @{
       Slug = 'accessibility-framework-assessor'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'method-adequacy-vocabulary'; Echo = $true

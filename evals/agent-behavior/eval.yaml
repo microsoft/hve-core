@@ -64,7 +64,7 @@ stimuli:
   - type: output-matches
     name: findings-format-vocabulary
     config:
-      pattern: (?i)(SKILL_FINDINGS_V1|success criterion|success criteria|structured findings)
+      pattern: (?im)(SKILL_FINDINGS_V1|^#{1,6}\s*(?:Skill\s+Metadata|Findings\s+Table)\b|^\s*\|(?:[^\n]*\|)?\s*(?:ID|Status)\s*\|)
   - type: output-matches
     name: status-vocabulary
     config:
@@ -121,10 +121,44 @@ stimuli:
         try {
           const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
           const output = input.trajectory.output.replace(/[*`]/g, '');
-          const entries = [...output.matchAll(/\b(2\.1\.1|4\.1\.3)\b([\s\S]*?)(?=\b(?:2\.1\.1|4\.1\.3)\b|$)/g)];
+          // Each criterion owns the text from its mention to the next criterion mention.
+          const mentions = [...output.matchAll(/\b(2\.1\.1|4\.1\.3)\b/g)].map(m => ({ criterion: m[1], index: m.index }));
+          const owner = index => {
+            let found = null;
+            for (const m of mentions) { if (m.index <= index) found = m.criterion; }
+            return found;
+          };
+          // A PASS, FAIL, or PARTIAL is an outcome, not an assignment, when a hedge precedes it in its clause.
+          const hedged = index => {
+            const before = output.slice(0, index);
+            const boundaries = [...before.matchAll(/[.;:!?](?=\s|$)|[|\n]/g)];
+            const clause = before.slice(boundaries.length ? boundaries[boundaries.length - 1].index + 1 : 0);
+            return /\b(?:could|would|would-be|may|might|can|cannot|once|otherwise|until|unless|if|whether|before|after|pending)\b/i.test(clause);
+          };
+          const assigned = new Map();
+          const assign = (index, status) => {
+            const criterion = owner(index);
+            if (!criterion) return;
+            if (!assigned.has(criterion)) assigned.set(criterion, new Map());
+            assigned.get(criterion).set(index, status);
+          };
+          for (const m of output.matchAll(/\bnot[_ ]assessed\b/gi)) assign(m.index, 'NOT_ASSESSED');
+          for (const m of output.matchAll(/\b(PASS|FAIL|PARTIAL)\b/g)) {
+            if (!hedged(m.index)) assign(m.index, m[1]);
+          }
+          // Any-case statuses count only in an assignment position: table cell, criterion label, or Status field.
+          const positions = [
+            /\|\s*(pass|fail|partial)\s*\|/gi,
+            /\b(?:2\.1\.1|4\.1\.3)\b[^\n|.:]{0,40}?[:\u2014\u2013-]\s*(pass|fail|partial)\b/gi,
+            /\bstatus\s*[:=]\s*(pass|fail|partial)\b/gi
+          ];
+          for (const pattern of positions) {
+            for (const m of output.matchAll(pattern)) {
+              assign(m.index + m[0].toLowerCase().lastIndexOf(m[1].toLowerCase()), m[1].toUpperCase());
+            }
+          }
           const valid = ['2.1.1', '4.1.3'].every(criterion => {
-            const blocks = entries.filter(entry => entry[1] === criterion);
-            const statuses = blocks.map(entry => /\b(NOT_ASSESSED|PASS|FAIL|PARTIAL)\b/.exec(entry[2])?.[1]).filter(Boolean);
+            const statuses = [...(assigned.get(criterion) ?? new Map()).values()];
             return statuses.length > 0 && statuses.every(status => status === 'NOT_ASSESSED');
           });
           process.exit(valid ? 0 : 1);
@@ -155,7 +189,7 @@ stimuli:
   - type: output-matches
     name: read-only-vocabulary
     config:
-      pattern: (?is)^(?=[\s\S]*(?:read[- ]only|no\s+file\s+(?:changes|modifications)|(?:do(?:es)?\s+not|will\s+not|won[\x27\u2019]t)\s+(?:modify|edit|write)|\b(?:leave|keep)\s+(?:(?:the|all|any|repository|workspace)\s+)*files?\s+unchanged\b|\bfiles?\s+(?:remain|stay)\s+unchanged\b))(?![\s\S]*\bI\s+(?:modified|edited|wrote|updated)\b)
+      pattern: (?is)^(?=[\s\S]*(?:read[- ]only|no\s+file\s+(?:changes|modifications)|(?:do(?:es)?\s+not|will\s+not|won[\x27\u2019]t|do(?:es)?n[\x27\u2019]t|never)\s+(?:modify|edit|write|change|touch)|\b(?:make|makes|made)\s+no\s+(?:changes|modifications|edits)\b|\b(?:wrote|changed|modified|edited)\s+(?:nothing|no\s+files?)\b|\bnothing\s+(?:was|is|will\s+be|gets)\s+(?:modified|changed|edited|written)\b|\bno\s+(?:[\w.\/-]+\s+){0,2}files?\s+(?:are|were|is|was|will\s+be|get)\s+(?:modified|changed|edited|written|touched)\b|\b(?:leave|keep)\s+(?:(?:the|all|any|repository|workspace)\s+)*files?\s+unchanged\b|\bfiles?\s+(?:remain|stay)\s+unchanged\b))(?![\s\S]*(?:\bI\s+(?:have\s+)?(?:modified|edited|wrote|updated|changed|created|deleted|added|removed|saved)\b(?!\s+(?:no|nothing|none)\b)|\bI\s+(?:have\s+)?made\s+(?!no\b|zero\b)(?:\w+\s+)?(?:changes|edits|modifications)\b|\bthe\s+(?:assessor|agent|subagent)\s+(?:has\s+)?(?:modified|edited|wrote|updated|changed|created|deleted|added|removed|saved)\b|(?<!\b(?:no|nothing|none\s+of\s+the|not\s+any)\s+(?:[\w.\/-]+\s+){0,3})\b(?:was|were|has\s+been|have\s+been)\s+(?:modified|edited|updated|changed|created|deleted|written|added|removed|saved)\b))
 - name: accessibility-framework-assessor-absent-runtime-evidence
   prompt: |
     This is an isolated behavior-contract scenario. Do not call tools. Assess
