@@ -3463,8 +3463,8 @@ console.log(JSON.stringify(results));
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-blocked-write-recovery'; Grader = 'remedy-described'; Echo = $true
-      Accept = @('To clear it, redact the identifier column.', 'Redact the flagged values and rescan; a clean scan lets the write proceed.')
-      Reject = @('The write is blocked.', 'Remove the file entirely.')
+      Accept = @('To clear it, redact the identifier column.', 'Redact the flagged values and rescan; a clean scan lets the write proceed.', 'Redact or replace the connection string at line 12, then rescan.', 'Your options are to redact the connection string at that location and rescan; or stop.')
+      Reject = @('The write is blocked.', 'Remove the file entirely.', 'Options: redact sensitive data and rescan, or stop.', "I won't redact the connection string at line 12 for you.")
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-ev02-valid-resume'; Grader = 'restored-active-and-paused-work'; Echo = $true
