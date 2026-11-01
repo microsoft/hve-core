@@ -888,6 +888,28 @@ console.log(JSON.stringify(results));
     foreach ($result in $results | Select-Object -Skip $accept.Count) { $result.passed | Should -BeFalse }
   }
 
+  It 'Accepts the delivered pipeline summary in any sentence order' -Tag 'AdvisoryRepair' {
+    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/data-science-engineering-coach.yml'))
+    $stimulus = $specification.stimuli | Where-Object name -eq 'data-science-engineering-coach-produces-rpi-pipeline-delivery'
+    $grader = @($stimulus.graders | Where-Object name -eq 'data-science-rpi-customer-output-produced')
+    $grader | Should -HaveCount 1
+    $grader[0].type | Should -Be 'file-matches'
+    $accept = @(
+      "# Pipeline summary`n`nValidate the event identifier before transformation. Quarantine invalid records without changing accepted records. Emit a bounded rejected-record count after each run."
+      'Invalid records are quarantined; accepted records stay unchanged. Each run emits a bounded rejected record count. The event identifier is validated first.'
+    )
+    $reject = @(
+      'Validate the event identifier. Emit a rejected-record count.'
+      'ORIGINAL-CONTENT-PRESERVED'
+    )
+    $payload = @{ type = $grader[0].type; config = $grader[0].config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    $results | Should -HaveCount ($accept.Count + $reject.Count)
+    foreach ($result in $results | Select-Object -First $accept.Count) { $result.passed | Should -BeTrue }
+    foreach ($result in $results | Select-Object -Skip $accept.Count) { $result.passed | Should -BeFalse }
+  }
+
   It 'Keeps one complete UX routing prerequisite and evidence-label authority' -Tag 'GuidanceRepair' {
     $agent = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/agents/project-planning/ux-ui-designer.agent.md')
     $mural = ($agent -split '### Mural', 2)[1].Split('## Cross-agent collaboration')[0]
@@ -3602,6 +3624,112 @@ console.log(JSON.stringify(results));
         'Metric selection is not owned by evaluation-design. Research verifies current facts.',
         'evaluation-design keeps the job while Research picks the metrics. Research verifies current facts.',
         'Metric selection stays with `evaluation-design`.'
+      )
+    }
+    @{
+      Slug = 'code-review'; Scenario = 'code-review-branch-diff-standard-profile'; Grader = 'branch-diff-standard-profile'; Echo = $true
+      Accept = @(
+        "Target: branch feature/auth against main (pre-PR). Profile: standard.`n`n| Perspective | Why |`n|---|---|`n| readiness | packaging and validation evidence |`n| standards | repository skills |`n| functional | auth logic |"
+        'Standard profile for the feature/auth branch diff. Recommended perspectives: functional, standards, and readiness.'
+        'Branch diff ready. I recommend readiness first, then functional and standards, under the standard profile.'
+      )
+      Reject = @(
+        'Branch feature/auth uses the standard profile with functional and standards perspectives.'
+        'Recommended perspectives: functional, standards, readiness.'
+        'Standard review of feature/auth: functional only.'
+      )
+    }
+    @{
+      # The prompt names orientation, separation, and findings, so the sibling profile grader carries the echo check.
+      Slug = 'code-review'; Scenario = 'code-review-pull-request-standard-profile'; Grader = 'orientation-separated'; Echo = $false
+      Accept = @(
+        "## Orientation`nPR 42 changes the parser. This walkthrough is factual and contains no findings.`n`n## Recommended perspectives`nfunctional, standards, readiness"
+        'Recommended dispatch: functional, standards, readiness. The orientation above is a separate, factual stage.'
+        'Factual orientation: three files changed. Findings come only after you confirm the perspectives.'
+      )
+      Reject = @(
+        'Recommended perspectives: functional, standards, readiness.'
+        "## Orientation`nThe parser has a null-handling bug (High)."
+      )
+    }
+    @{
+      # The prompt requests both labels, so this presence check cannot reject a prompt echo.
+      Slug = 'code-review'; Scenario = 'code-review-no-business-context-default'; Grader = 'no-business-context-orientation-and-board'; Echo = $false
+      Accept = @(
+        "## Dispatch board`n| # | Area | Status |`n|---|---|---|`n| 1 | formatDate | changed |`n`n$('Context line. ' * 400)`n## Orientation`nOne function changed."
+        "**Orientation:** formatDate now trims the time.`n`n**Recommended perspectives:** functional, standards."
+        'Walkthrough: one export changed. Proposed dispatch: functional and standards.'
+      )
+      Reject = @(
+        'Recommended perspectives: functional, standards.'
+        'Orientation: one export changed.'
+      )
+    }
+    @{
+      Slug = 'code-review'; Scenario = 'code-review-business-alignment-supersession-reroute'; Grader = 'reroute-reports-successor-as-proposed-update'; Echo = $true
+      Accept = @(
+        'Step 7 compares against claims-prd.md at the base branch. The added claims-prd-v2.md and the new superseded_by link are a proposed source update, not the comparison source.'
+        "Successor handling:`n- claims-prd-v2.md is added in this PR.`n- I report it as a proposed update for the owner to confirm."
+        'The supersession link is developer-confirmed only; it does not redirect the comparison.'
+      )
+      Reject = @(
+        'The successor claims-prd-v2.md is not a proposed update; it replaces the source.'
+        'Step 7 compares against claims-prd.md at the base branch.'
+        'The successor claims-prd-v2.md becomes the comparison source.'
+      )
+    }
+    @{
+      Slug = 'code-review'; Scenario = 'code-review-business-alignment-unreadable-base-fallback'; Grader = 'fallback-allows-one-bounded-unchanged-read'; Echo = $true
+      Accept = @(
+        'Step 7 may read the current PRD once, bounded to the owner metadata and FR-008, which the diff shows are unchanged.'
+        'The fallback allows a single read of the current source, restricted to frontmatter metadata and passages outside every changed hunk such as FR-008.'
+        'One head-revision read is permitted, limited to the unchanged owner field and FR-008.'
+        'Only one read of the working-tree copy is allowed, confined to the demonstrably unchanged owner metadata and FR-008.'
+      )
+      Reject = @(
+        'Step 7 reads the current source once for FR-007, FR-008, and FR-009.'
+        'Step 7 may read the current PRD, bounded to the owner metadata and FR-008, which are unchanged.'
+        'Read the current source once, limited to FR-007.'
+      )
+    }
+    @{
+      Slug = 'security-planner'; Scenario = 'security-planner-disclaimer-shown-resume'; Grader = 'no-duplicate-session-start-notice'; Echo = $true
+      Accept = @(
+        'The session-start notice count is unchanged at 1.'
+        'No duplicate session-start-disclaimer notice was added.'
+        'The session-start disclaimer notice count remains one.'
+        'I did not add a new session-start notice; there is still 1.'
+      )
+      Reject = @(
+        'I appended a second session-start notice, so the count is now 2.'
+        'The timestamp is unchanged.'
+      )
+    }
+    @{
+      # The prompt states the disclaimer was already shown, which this grader has always accepted.
+      Slug = 'security-planner'; Scenario = 'security-planner-disclaimer-shown-resume'; Grader = 'normal-resume-suppresses-replay'; Echo = $false
+      Accept = @(
+        'Because the disclaimer was already shown, I will not display it again.'
+        "I won't redisplay the full disclaimer on a normal resume."
+        'The full disclaimer is not repeated.'
+        'No replay of the disclaimer happens on resume.'
+      )
+      Reject = @(
+        'Here is the full disclaimer again before Phase 1.'
+      )
+    }
+    @{
+      # The prompt itself states the unchanged job and planner-state rule, so the file graders carry the echo check.
+      Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-reconciles-rpi-pipeline-results'; Grader = 'data-science-rpi-control-returns-to-same-job'; Echo = $false
+      Accept = @(
+        "Control returns to the pipeline job, which stays episodic. I didn't adopt the planner's state."
+        'pipeline remains active and episodic; no planner state or job change was applied.'
+        'The episodic pipeline job remains active. Planner-owned state.json was not adopted.'
+      )
+      Reject = @(
+        'pipeline remains active and episodic. Planner state was adopted.'
+        'The episodic pipeline job was replaced by analysis. No planner state was adopted.'
+        "The episodic pipeline job remains active. I adopted the planner's state."
       )
     }
   ) {

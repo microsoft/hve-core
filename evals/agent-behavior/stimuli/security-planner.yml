@@ -64,7 +64,7 @@ stimuli:
       - type: output-matches
         name: normal-resume-suppresses-replay
         config:
-          pattern: '(?is)(not repeat|suppress|skip|already shown|no (?:automatic )?redisplay)'
+          pattern: '(?is)(?:not\s+(?:be\s+)?(?:repeat\w*|redisplay\w*|replay\w*|shown\s+again|displayed\s+again)|\b(?:will\s+not|won[\x27\u2019]t|do\s+not|don[\x27\u2019]t|does\s+not|doesn[\x27\u2019]t)\s+(?:repeat|redisplay|replay|(?:show|display)\s+(?:it|the\s+(?:full\s+)?disclaimer)\s+again)\b|suppress|skip|already\s+(?:shown|displayed)|\bno\s+(?:automatic\s+)?(?:redisplay|replay|repeat)\b|\bwithout\s+(?:redisplay|replay|repeat)\w*)'
       - type: output-matches
         name: existing-timestamp-preserved
         config:
@@ -72,7 +72,8 @@ stimuli:
       - type: output-matches
         name: no-duplicate-session-start-notice
         config:
-          pattern: '(?is)(no duplicate|not add|unchanged|remain(?:s|ed)? (?:at )?(?:one|1)).{0,250}session-start-disclaimer|session-start-disclaimer.{0,250}(no duplicate|not add|unchanged|(?:one|1))'
+          # Accepts the noticeType token or the prompt's plain "session-start notice" wording.
+          pattern: '(?is)(?:\bno\s+(?:duplicate|new|additional|second)\b|\bnot\s+(?:add|added|append|appended|duplicate|duplicated|increase|increased|change|changed)\b|\bunchanged\b|\b(?:remain|remains|remained|stays|stayed|still)\s+(?:at\s+)?(?:one|1)\b)[\s\S]{0,250}?session-start(?:-disclaimer|\s+(?:disclaimer\s+)?notice)|session-start(?:-disclaimer|\s+(?:disclaimer\s+)?notice)[\s\S]{0,250}?(?:\bno\s+(?:duplicate|new|additional|second)\b|\bnot\s+(?:add|added|append|appended|duplicate|duplicated|increase|increased|change|changed)\b|\bunchanged\b|\b(?:one|1)\b)'
       - type: output-matches
         name: no-full-disclaimer-replay
         config:

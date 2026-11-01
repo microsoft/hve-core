@@ -430,7 +430,8 @@ stimuli:
       - type: output-matches
         name: no-business-context-orientation-and-board
         config:
-          pattern: '(?is)(orientation|walkthrough).{0,4000}(dispatch\s+board|recommended dispatch)|(dispatch\s+board|recommended dispatch).{0,4000}(orientation|walkthrough)'
+          # Order- and distance-independent: both the orientation and the dispatch board or its recommended perspectives appear.
+          pattern: '(?is)^(?=[\s\S]*\b(?:orientation|walkthrough)\b)(?=[\s\S]*\b(?:dispatch\s+board|(?:recommended|proposed)\s+(?:dispatch|perspectives))\b)'
       - type: output-matches
         name: no-unsolicited-business-alignment
         config:
@@ -554,7 +555,8 @@ stimuli:
       - type: output-matches
         name: reroute-reports-successor-as-proposed-update
         config:
-          pattern: '(?i)(?:^|[.!?;\n])(?=(?:[^.!?;\n]|\.(?=\w))*(?:claims-prd-v2|successor|supersession link|superseded_by))(?=(?:[^.!?;\n]|\.(?=\w))*(?:(?<!(?:\bnot|n[\x27\u2019]t)\s(?:an?\s)?)proposed (?:source )?update|(?<!(?:\bnot|n[\x27\u2019]t)\s)developer[- ]confirmed))'
+          # Order-independent: the successor and its non-negated proposed-update or developer-confirmed label; the negated sibling guards the comparison source.
+          pattern: '(?is)^(?=[\s\S]*(?:claims-prd-v2|successor|supersession\s+link|superseded_by))(?=[\s\S]*(?:(?<!(?:\bnot|n[\x27\u2019]t)\s(?:an?\s)?)proposed\s+(?:source\s+)?update|(?<!(?:\bnot|n[\x27\u2019]t)\s)developer[- ]confirmed))'
       - type: output-matches
         name: reroute-not-compared-against-pr-successor
         config:
@@ -617,7 +619,8 @@ stimuli:
       - type: output-matches
         name: fallback-allows-one-bounded-unchanged-read
         config:
-          pattern: '(?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))'
+          # One current-revision read in the same sentence, a stated bound, unchanged scope, and the unchanged owner metadata or FR-008.
+          pattern: '(?is)^(?=[\s\S]*(?:\b(?:one|once|single)\b[^.\r\n]{0,240}\b(?:current|head|working[- ]tree)\b|\b(?:current|head|working[- ]tree)\b[^.\r\n]{0,240}\b(?:one|once|single)\b))(?=[\s\S]*(?:\bbounded\b|\blimited\b|\brestricted\b|\bconfined\b|\bscoped\b|\b(?:only|solely|just)\s+(?:to|for|the)\b))(?=[\s\S]*(?:unchanged|outside\s+(?:every\s+|the\s+)?(?:changed\s+)?hunk|outside\s+(?:the\s+)?diff))(?=[\s\S]*(?:owner|FR-008|metadata))'
       - type: output-matches
         name: fallback-uses-removed-lines-for-modified-passage
         config:
@@ -679,7 +682,8 @@ stimuli:
       - type: output-matches
         name: orientation-separated
         config:
-          pattern: '(?is)(orientation|walkthrough).{0,500}(stage|separate|before|factual|no findings).{0,1000}(finding|perspective|dispatch)'
+          # Order-independent: an orientation, a statement that it is factual or separate, and the later findings or dispatch step.
+          pattern: '(?is)^(?=[\s\S]*\b(?:orientation|walkthrough)\b)(?=[\s\S]*(?:\bseparate\w*|\bseparation\b|\bstage\b|\bfactual\b|\bno\s+findings\b|\bnot\s+(?:a\s+)?findings?\b|\b(?:before|after)\s+(?:any\s+)?(?:findings|you\s+confirm)\b|\bfindings\s+(?:come|follow|start)\b))(?=[\s\S]*\b(?:findings?|perspectives?|dispatch)\b)'
       - type: output-matches
         name: code-review-pull-request-standard-profile-human-confirmation
         config:
@@ -705,7 +709,8 @@ stimuli:
       - type: output-matches
         name: branch-diff-standard-profile
         config:
-          pattern: '(?is)(branch|feature/auth|pre-PR).{0,800}(standard).{0,1200}(functional).{0,1000}(standards).{0,1000}(readiness)'
+          # Order-independent: the standard profile recommends functional, standards, and readiness in any order.
+          pattern: '(?is)^(?=[\s\S]*(?:\bbranch\b|feature/auth|pre-PR))(?=[\s\S]*\bstandard\b)(?=[\s\S]*\bfunctional\b)(?=[\s\S]*\bstandards\b)(?=[\s\S]*\breadiness\b)'
       - type: output-matches
         name: no-required-pr-metadata
         config:

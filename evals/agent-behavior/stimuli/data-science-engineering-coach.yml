@@ -705,7 +705,8 @@ stimuli:
         name: data-science-rpi-customer-output-produced
         config:
           path: docs/data/synthetic-pipeline-output.md
-          pattern: '(?is)event identifier.*quarantine.*invalid.*rejected-record count'
+          # Order-independent: the accepted design's three obligations in any sentence order.
+          pattern: '(?is)^(?=[\s\S]*event[- ]identifier)(?=[\s\S]*quarantine\w*)(?=[\s\S]*\binvalid\b)(?=[\s\S]*rejected[- ]record\s+count)'
       - type: program
         name: data-science-rpi-produced-pointers-preserve-job
         config:
@@ -780,7 +781,7 @@ stimuli:
       - type: output-matches
         name: data-science-rpi-control-returns-to-same-job
         config:
-          pattern: '(?is)(?=.*\bpipeline\b)(?=.*\bepisodic\b)(?=.*\b(?:unchanged|remains|return control|still active)\b)(?=.*(?:\b(?:no|not|without|never)\b[^\r\n.!?]*(?:planner state|state\.json)|(?:planner state|state\.json)[^\r\n.!?]*\b(?:not|never)\b)).*'
+          pattern: '(?is)(?=.*\bpipeline\b)(?=.*\bepisodic\b)(?=.*\b(?:unchanged|remains|stays\s+active|return(?:s|ed)?\s+control|control\s+returns|still\s+active)\b)(?=.*(?:(?:\b(?:no|not|without|never)\b|n[\x27\u2019]t\b)[^\r\n.!?]*(?:planner(?:[\x27\u2019]s|-owned)?\s+state|state\.json)|(?:planner(?:[\x27\u2019]s|-owned)?\s+state|state\.json)[^\r\n.!?]*\b(?:not|never)\b)).*'
 
   - name: data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable
     prompt: |
