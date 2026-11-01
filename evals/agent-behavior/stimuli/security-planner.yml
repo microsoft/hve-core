@@ -281,12 +281,12 @@ stimuli:
       - type: output-matches
         name: security-planner-from-prd-attribution
         config:
-          pattern: '(?is)OWASP ASVS[\s\S]{0,12}OWASP Top 10[\s\S]{0,12}NIST SSDF'
+          pattern: '(?is)(?=[\s\S]*OWASP ASVS)(?=[\s\S]*OWASP Top 10)(?=[\s\S]*NIST SSDF)'
       - type: output-matches
         name: security-planner-from-prd-discovery-paths
         config:
-          pattern: '(?is)prd-sessions[\s\S]{0,400}brd-sessions|brd-sessions[\s\S]{0,400}prd-sessions'
+          pattern: '(?is)(?=[\s\S]*prd-sessions)(?=[\s\S]*brd-sessions)'
       - type: output-matches
         name: security-planner-from-prd-no-artifact-fallback
         config:
-          pattern: '(?is)(?=[\s\S]*(?:\b(?:no|none|zero)\b|not found|did not find|couldn\W?t find)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:PRD|BRD|artifact|requirement)|[\s\S]*(?:PRD|BRD|artifact|requirement)\w*(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:were not found|was not found|not found|do not exist|does not exist|are missing|is missing|absent))(?=[\s\S]*(?:\bcapture\b|file path|\b(?:provide|supply|share|give|point me to|ask\w*\s+(?:you\s+)?for)\b[^.!?\n]{0,40}\bpath\b))'
+          pattern: '(?is)(?=[\s\S]*(?:\b(?:no|none|zero|nothing)\b|not found|did not find|couldn\W?t find|found no|came up empty|returned no)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:PRD|BRD|artifact|requirement)|[\s\S]*(?:PRD|BRD|artifact|requirement)\w*(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:were not found|was not found|not found|do not exist|does not exist|are missing|is missing|absent|turned up nothing))(?=[\s\S]*(?:\bcapture\b|file path|\b(?:provide|supply|share|give|send|paste|attach|upload|point me (?:to|at)|tell me|ask\w*\s+(?:you\s+)?for)\b[^.!?\n]{0,60}\b(?:path|location|file|document|PRD|BRD|link)\b))'

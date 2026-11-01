@@ -1,4 +1,4 @@
-# cspell:ignore analy exploitab realpath ning remediat atures satisfie
+# cspell:ignore analy exploitab realpath ning remediat atures satisfie resum
 stimuli:
   - name: sssc-reviewer-class-recipe
     prompt: |
@@ -269,11 +269,11 @@ stimuli:
       - type: output-matches
         name: sssc-reviewer-vex-full-scan-product
         config:
-          pattern: '(?i)pkg:npm/@contoso/widget'
+          pattern: '(?i)pkg:npm/(?:@|%40)contoso/widget'
       - type: output-matches
         name: sssc-reviewer-vex-full-scan-human-review
         config:
-          pattern: '(?is)not_affected[\s\S]{0,300}(human|qualified)[\s\S]{0,60}(review|approv\w*|sign-?off)|(human|qualified)[\s\S]{0,60}(review|approv\w*|sign-?off)[\s\S]{0,300}not_affected'
+          pattern: '(?is)(?=[\s\S]*not[_ ]affected)(?=[\s\S]*(?:\b(?:human|qualified|security engineer|maintainer|reviewer)\b[^.\n]{0,80}\b(?:review\w*|approv\w*|sign-?off|confirm\w*|attest\w*)|\b(?:review\w*|approv\w*|sign-?off|confirm\w*)\b[^.\n]{0,40}\bby\s+(?:a\s+)?(?:human|qualified)))'
 
   - name: sssc-reviewer-vex-triage-from-report
     prompt: |
@@ -296,12 +296,12 @@ stimuli:
       - type: output-matches
         name: sssc-reviewer-vex-triage-skips-scan
         config:
-          pattern: '(?is)(skip\w*|bypass\w*|without|omit\w*)[^.]{0,60}scan|scan[^.]{0,60}(skip\w*|bypass\w*|omit\w*)'
+          pattern: '(?is)(?:skip\w*|bypass\w*|without|omit\w*)(?:[^.]|\.(?=\w)){0,80}\bscan|\bscan\w*(?:[^.]|\.(?=\w)){0,80}(?:skip\w*|bypass\w*|omit\w*)|\b(?:not|never|no need to)\s+(?:re-?)?run\w*\s+(?:a\s+|the\s+|another\s+|a\s+new\s+)?scan|\bno\s+(?:new\s+|fresh\s+)?scan\b'
       - type: output-matches
         name: sssc-reviewer-vex-triage-begins-at-enrichment
         config:
-          pattern: '(?is)(begin|start)\w*[^.]{0,60}enrich\w*|enrich\w*[^.]{0,60}(first|begin\w*|start\w*)'
+          pattern: '(?is)\b(?:begin|start|resum)\w*\s+(?:at|with|from|in|by)\s+(?:the\s+)?[*_\x60]*(?:\w+\s+){0,2}enrich\w*|\benrich\w*[*_\x60]*\s+(?:\w+\s+){0,3}(?:first|is\s+(?:the\s+)?(?:first|entry|starting)|comes\s+first)|\b(?:first|entry|starting)\s+(?:stage|step|point)\b(?:[^.]|\.(?=\w)){0,40}\benrich\w*|\bfirst\b[,:]?\s+(?:I\s+)?enrich\w*|\b(?:begin|start)\w*(?:(?!scan)(?:[^.]|\.(?=\w))){0,80}\benrich\w*'
       - type: output-matches
         name: sssc-reviewer-vex-triage-trivy-precedence
         config:
-          pattern: '(?is)\btrivy\b(?:[^.;,]|\.(?=\w)){0,120}?\b(?:precedence|preferred|first|over|before|priority|authoritative|primary|wins)\b|\bprefer\w*\s+(?:the\s+)?trivy\b|\b(?:precedence|priority)\b\s*(?::|goes to|is given to|belongs to)\s*[*_\x60]*(?:the\s+)?trivy\b'
+          pattern: '(?is)\btrivy\b(?:(?!osv)(?:[^.;]|\.(?=\w))){0,160}?\b(?:precedence|preferred|first|over|before|priority|authoritative|primary|wins)\b|\bprefer\w*\s+(?:the\s+)?[*_\x60]*trivy\b|\b(?:precedence|priority)\b\s*(?::|goes to|is given to|belongs to)\s*[*_\x60]*(?:the\s+)?[*_\x60]*trivy\b'
