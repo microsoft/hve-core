@@ -1,9 +1,9 @@
 ---
 title: rai-planner
 description: "On-demand RAI planner reference pack covering Phase 1 capture, Phase 2 risk classification and the optional Mural board bootstrap, Phase 5 impact assessment, and Phase 6 review and backlog handoff."
-sidebar_position: 14
+sidebar_position: 15
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - skill

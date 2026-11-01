@@ -1,5 +1,5 @@
 ---
-description: 'Commit message format and conventions'
+description: "Commit message format and conventions. Use when writing, generating, or reviewing a commit message or creating a Git commit."
 ---
 
 # Commit Message Guidelines

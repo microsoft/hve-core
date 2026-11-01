@@ -74,7 +74,7 @@ AfterAll {
     Remove-Item -Path $script:TempDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Describe 'Get-FileChanges' {
+Describe 'Get-FileChanges' -Tag 'Unit' {
     Context 'All change types' {
         It 'Returns all four changed files when filtering by All' {
             $changes = Get-FileChanges -XmlPath $script:FixturePath -FilterType 'All'
@@ -160,6 +160,234 @@ index a1b2c3d..d4e5f6a 100644
             $changes = Get-FileChanges -XmlPath $script:RenameFixture -FilterType 'All'
             $changes[0].Type | Should -Be 'Renamed'
             $changes[0].Path | Should -Be 'old/path.ts -> new/path.ts'
+        }
+    }
+
+    Context 'Header-like text inside diff content' {
+        BeforeAll {
+            $diffLines = @'
+diff --git a/docs/headers.md b/docs/headers.md
+index 1111111..2222222 100644
+--- a/docs/headers.md
++++ b/docs/headers.md
+@@ -1,3 +1,3 @@
+ diff --git a/path/to/file b/path/to/file
+-old line
++diff --git a/x b/x
+  diff --git a/edge b/edge
+diff --git a/docs/added-note.md b/docs/added-note.md
+index 3333333..4444444 100644
+--- a/docs/added-note.md
++++ b/docs/added-note.md
+@@ -1,2 +1,2 @@
+ new file mode 100644
+-old line
++new line
+diff --git a/docs/deleted-note.md b/docs/deleted-note.md
+index 5555555..6666666 100644
+--- a/docs/deleted-note.md
++++ b/docs/deleted-note.md
+@@ -1 +1 @@
+-old line
++deleted file mode 100644
+diff --git a/docs/renamed-note.md b/docs/renamed-note.md
+index 7777777..8888888 100644
+--- a/docs/renamed-note.md
++++ b/docs/renamed-note.md
+@@ -1,2 +1,2 @@
+ rename from docs/old-note.md
+-old line
++new line
+diff --git a/src/gone.ts b/src/gone.ts
+deleted file mode 100644
+index 9999999..0000000
+--- a/src/gone.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-// new file mode 100644
+diff --git a/src/fresh.ts b/src/fresh.ts
+new file mode 100644
+index 0000000..1212121
+--- /dev/null
++++ b/src/fresh.ts
+@@ -0,0 +1 @@
++// deleted file mode 100644
+diff --git a/src/old-name.ts b/src/new-name.ts
+similarity index 90%
+rename from src/old-name.ts
+rename to src/new-name.ts
+index 1313131..1414141 100644
+--- a/src/old-name.ts
++++ b/src/new-name.ts
+@@ -1 +1 @@
+-old line
++new line
+'@ -split '\r?\n'
+
+            # generate.sh writes the diff unindented; generate.ps1 indents each line by two spaces
+            $writeFixture = {
+                param([string]$Name, [string[]]$Lines, [string]$NewLine)
+                $path = Join-Path $TestDrive $Name
+                $xml = @('<commit_history>', '  <full_diff>') + $Lines + @('  </full_diff>', '</commit_history>')
+                Set-Content -Path $path -Value ($xml -join $NewLine) -NoNewline
+                return $path
+            }
+            $script:HeaderTextFixtures = @{
+                Unindented = & $writeFixture 'header-text.xml' $diffLines "`n"
+                Indented   = & $writeFixture 'header-text-indented.xml' ($diffLines | ForEach-Object { "  $_" }) "`r`n"
+            }
+        }
+
+        It 'Lists only files with a real diff header, typed from header lines (<Fixture>)' -ForEach @(
+            @{ Fixture = 'Unindented' }
+            @{ Fixture = 'Indented' }
+        ) {
+            $changes = Get-FileChanges -XmlPath $script:HeaderTextFixtures[$Fixture]
+            @($changes | ForEach-Object { "$($_.Path)=$($_.Type)" }) | Should -Be @(
+                'docs/added-note.md=Modified'
+                'docs/deleted-note.md=Modified'
+                'docs/headers.md=Modified'
+                'docs/renamed-note.md=Modified'
+                'src/fresh.ts=Added'
+                'src/gone.ts=Deleted'
+                'src/old-name.ts -> src/new-name.ts=Renamed'
+            )
+        }
+
+        It 'Keeps modified files when excluding deleted files (<Fixture>)' -ForEach @(
+            @{ Fixture = 'Unindented' }
+            @{ Fixture = 'Indented' }
+        ) {
+            $changes = Get-FileChanges -XmlPath $script:HeaderTextFixtures[$Fixture] -ExcludeFilterType @('Deleted')
+            @($changes.Path) | Should -Be @(
+                'docs/added-note.md'
+                'docs/deleted-note.md'
+                'docs/headers.md'
+                'docs/renamed-note.md'
+                'src/fresh.ts'
+                'src/old-name.ts -> src/new-name.ts'
+            )
+        }
+    }
+
+    Context 'Header-like text inside commit messages' {
+        BeforeAll {
+            $phantom = @(
+                'diff --git a/phantom.txt b/phantom.txt'
+                'new file mode 100644'
+            )
+            $diffLines = @(
+                'diff --git a/src/real.ts b/src/real.ts'
+                'index 1111111..2222222 100644'
+                '--- a/src/real.ts'
+                '+++ b/src/real.ts'
+                '@@ -1 +1 @@'
+                '-old line'
+                '+new line'
+            )
+
+            # generate.sh writes commits and diff at column 0; generate.ps1 indents both by two spaces.
+            # git log writes no newline after the last entry, so generate.sh closes </commits> on that line.
+            $writeFixture = {
+                param([string]$Name, [string]$Prefix, [string]$NewLine, [string[]]$BodyLines, [bool]$JoinClose = $false)
+                $path = Join-Path $TestDrive $Name
+                $commitLines = @('<commit hash="abc1234" date="2026-01-15"><message><subject><![CDATA[fix: probe]]></subject><body><![CDATA[Body line') +
+                    $BodyLines +
+                    @(']]></body></message></commit>')
+                $entries = @($commitLines | ForEach-Object { "$Prefix$_" })
+                $closeLines = @('  </commits>', '', '  <full_diff>')
+                if ($JoinClose) {
+                    $entries[-1] += $closeLines[0]
+                    $closeLines = $closeLines[1..2]
+                }
+                $xml = @('<commit_history>', '  <commits>') + $entries + $closeLines +
+                    ($diffLines | ForEach-Object { "$Prefix$_" }) +
+                    @('  </full_diff>', '</commit_history>')
+                Set-Content -Path $path -Value ($xml -join $NewLine) -NoNewline
+                return $path
+            }
+
+            # Bodies are not escaped, so one can also repeat the markers that frame the diff block
+            $bareMarkers = @('</commits>', '<full_diff>')
+            $generatorMarkers = @('  </commits>', '', '  <full_diff>')
+            $script:CommitTextFixtures = @{
+                Unindented             = & $writeFixture 'commit-text.xml' '' "`n" $phantom
+                Indented               = & $writeFixture 'commit-text-indented.xml' '  ' "`r`n" $phantom
+                ClosedOnLastCommitLine = & $writeFixture 'commit-text-joined.xml' '' "`n" $phantom $true
+                BareMarkers            = & $writeFixture 'commit-text-bare.xml' '' "`n" ($bareMarkers + $phantom)
+                BareMarkersIndented    = & $writeFixture 'commit-text-bare-indented.xml' '  ' "`r`n" ($bareMarkers + $phantom)
+                GeneratorMarkers       = & $writeFixture 'commit-text-markers.xml' '' "`n" ($generatorMarkers + $phantom)
+            }
+        }
+
+        It 'Ignores diff headers written in commit bodies (<Fixture>)' -ForEach @(
+            @{ Fixture = 'Unindented' }
+            @{ Fixture = 'Indented' }
+            @{ Fixture = 'ClosedOnLastCommitLine' }
+            @{ Fixture = 'BareMarkers' }
+            @{ Fixture = 'BareMarkersIndented' }
+            @{ Fixture = 'GeneratorMarkers' }
+        ) {
+            $changes = Get-FileChanges -XmlPath $script:CommitTextFixtures[$Fixture]
+            @($changes | ForEach-Object { "$($_.Path)=$($_.Type)" }) | Should -Be @('src/real.ts=Modified')
+        }
+    }
+
+    Context 'Full-diff opening tags inside hunk context' {
+        It 'Preserves files before a context tag (<Fixture>)' -ForEach @(
+            @{ Fixture = 'unindented-lf-middle'; Prefix = ''; NewLine = "`n"; AtEnd = $false; IncludeCommits = $true }
+            @{ Fixture = 'unindented-lf-end'; Prefix = ''; NewLine = "`n"; AtEnd = $true; IncludeCommits = $true }
+            @{ Fixture = 'unindented-crlf-middle'; Prefix = ''; NewLine = "`r`n"; AtEnd = $false; IncludeCommits = $true }
+            @{ Fixture = 'unindented-crlf-end'; Prefix = ''; NewLine = "`r`n"; AtEnd = $true; IncludeCommits = $true }
+            @{ Fixture = 'indented-lf-middle'; Prefix = '  '; NewLine = "`n"; AtEnd = $false; IncludeCommits = $true }
+            @{ Fixture = 'indented-lf-end'; Prefix = '  '; NewLine = "`n"; AtEnd = $true; IncludeCommits = $true }
+            @{ Fixture = 'indented-crlf-middle'; Prefix = '  '; NewLine = "`r`n"; AtEnd = $false; IncludeCommits = $true }
+            @{ Fixture = 'indented-crlf-end'; Prefix = '  '; NewLine = "`r`n"; AtEnd = $true; IncludeCommits = $true }
+            @{ Fixture = 'no-commits-lf-middle'; Prefix = ''; NewLine = "`n"; AtEnd = $false; IncludeCommits = $false }
+            @{ Fixture = 'no-commits-lf-end'; Prefix = ''; NewLine = "`n"; AtEnd = $true; IncludeCommits = $false }
+            @{ Fixture = 'no-commits-crlf-middle'; Prefix = ''; NewLine = "`r`n"; AtEnd = $false; IncludeCommits = $false }
+            @{ Fixture = 'no-commits-crlf-end'; Prefix = ''; NewLine = "`r`n"; AtEnd = $true; IncludeCommits = $false }
+        ) {
+            $diffLines = @(
+                'diff --git a/docs/a.md b/docs/a.md'
+                'index 1111111..2222222 100644'
+                '--- a/docs/a.md'
+                '+++ b/docs/a.md'
+                '@@ -1,3 +1,3 @@'
+            )
+            $diffLines += if ($AtEnd) {
+                @(' before', '-old line', '+new line', '  <full_diff>')
+            } else {
+                @('  <full_diff>', '-old line', '+new line', ' after')
+            }
+            $diffLines += @(
+                'diff --git a/src/after.ts b/src/after.ts'
+                'new file mode 100644'
+                'index 0000000..3333333'
+                '--- /dev/null'
+                '+++ b/src/after.ts'
+                '@@ -0,0 +1 @@'
+                '+new content'
+            )
+
+            $xml = @('<commit_history>')
+            if ($IncludeCommits) {
+                $xml += '  <commits>'
+                $entry = "${Prefix}" + '<commit hash="abc1234" date="2026-01-15"><message><subject><![CDATA[update]]></subject><body><![CDATA[]]></body></message></commit>'
+                # The Bash generator appends the closing tag to the final commit line.
+                $xml += if ($Prefix -eq '') { @("$entry  </commits>") } else { @($entry, '  </commits>') }
+            }
+            $xml += @('', '  <full_diff>') +
+                @($diffLines | ForEach-Object { "$Prefix$_" }) +
+                @('  </full_diff>', '</commit_history>')
+            $path = Join-Path $TestDrive "$Fixture.xml"
+            Set-Content -LiteralPath $path -Value ($xml -join $NewLine) -NoNewline
+
+            $changes = Get-FileChanges -XmlPath $path
+            @($changes | ForEach-Object { "$($_.Path)=$($_.Type)" }) | Should -Be @(
+                'docs/a.md=Modified'
+                'src/after.ts=Added'
+            )
         }
     }
 

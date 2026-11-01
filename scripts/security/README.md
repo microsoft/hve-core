@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-10-13
+ms.date: 2026-10-26
 ms.topic: reference
 keywords:
   - powershell
@@ -142,6 +142,11 @@ releases.
 #### Features
 
 * Queries GitHub API for latest releases of pinned actions
+* Checks pinned PowerShell modules (the `psModules` array in `tool-checksums.json`)
+  against the PowerShell Gallery OData v2 API using `Get-PSModuleStaleness`, and
+  reports stale modules alongside stale actions
+* Honors `HVE_PSGALLERY_REPOSITORY` to query a PowerShell Gallery mirror or test
+  double instead of the public Gallery
 * Supports multiple output formats (JSON, Azure DevOps, GitHub, console)
 * Configurable maximum age threshold
 * Batch GraphQL queries for efficient API usage
@@ -767,11 +772,12 @@ Shared class definitions imported using `using module` syntax:
 
 Shared utility functions used across security scripts:
 
-| Function                  | Purpose                                                                   |
-|---------------------------|---------------------------------------------------------------------------|
-| `Write-SecurityLog`       | Outputs timestamped, color-coded log entries with optional CI annotations |
-| `ConvertTo-SecuritySarif` | Builds a SARIF 2.1.0 document for a homegrown security control            |
-| `Get-WorkflowActionStep`  | Returns matching workflow steps with their line, ref, and `with:` inputs  |
+| Function                  | Purpose                                                                                               |
+|---------------------------|-------------------------------------------------------------------------------------------------------|
+| `Write-SecurityLog`       | Outputs timestamped, color-coded log entries with optional CI annotations                             |
+| `Get-PSGalleryApiBase`    | Returns the PowerShell Gallery OData v2 base URL, or the `HVE_PSGALLERY_REPOSITORY` override when set |
+| `ConvertTo-SecuritySarif` | Builds a SARIF 2.1.0 document for a homegrown security control                                        |
+| `Get-WorkflowActionStep`  | Returns matching workflow steps with their line, ref, and `with:` inputs                              |
 
 ## tool-checksums.json schema
 

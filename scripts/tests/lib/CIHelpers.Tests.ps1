@@ -41,6 +41,113 @@ Describe 'ConvertTo-AzureDevOpsEscaped' -Tag 'Unit' {
     }
 }
 
+Describe 'ConvertTo-MarkdownEscaped' -Tag 'Unit' {
+    It 'Returns an empty string for null and empty input' {
+        ConvertTo-MarkdownEscaped -Value $null | Should -Be ''
+        ConvertTo-MarkdownEscaped -Value '' | Should -Be ''
+    }
+
+    It 'Leaves plain alphanumeric text unchanged' {
+        ConvertTo-MarkdownEscaped -Value 'plain text 123' | Should -Be 'plain text 123'
+    }
+
+    It 'Neutralizes code spans, links, and emphasis' {
+        ConvertTo-MarkdownEscaped -Value '`x` [a](https://evil.example) *b* _c_' |
+            Should -Be '\`x\` \[a\]\(https\://evil\.example\) \*b\* \_c\_'
+    }
+
+    It 'Escapes table pipes, raw HTML, and mentions' {
+        ConvertTo-MarkdownEscaped -Value '|<img src=x>@team' | Should -Be '\|\<img src=x\>\@team'
+    }
+
+    It 'Escapes a backslash so it cannot cancel the escape of a following backtick' {
+        ConvertTo-MarkdownEscaped -Value 'x\`[y](z)' | Should -Be 'x\\\`\[y\]\(z\)'
+    }
+
+    It 'Drops invisible bidirectional and zero-width characters' {
+        $result = ConvertTo-MarkdownEscaped -Value "a$([char]0x202E)b$([char]0x200B)c"
+        # String -Be ignores zero-width code points, so assert on the ordinal length too.
+        $result.Length | Should -Be 3
+        [string]::Equals($result, 'abc', [StringComparison]::Ordinal) | Should -BeTrue
+    }
+
+    It 'Collapses line breaks so a value cannot start a new block' {
+        ConvertTo-MarkdownEscaped -Value "a`r`n# heading`n- item" | Should -Be 'a \# heading \- item'
+    }
+}
+
+Describe 'Format-StaleDependencyLine' -Tag 'Unit' {
+    BeforeAll {
+        $script:Good = [pscustomobject]@{
+            File           = '.github/workflows/ci.yml'
+            Name           = 'actions/checkout'
+            CurrentVersion = 'a' * 40
+            LatestVersion  = 'b' * 40
+            DaysOld        = 45
+        }
+        $script:Hostile = [pscustomobject]@{
+            File           = 'x`](https://evil.example)'
+            Name           = 'a/b`` [click](https://evil.example) ``'
+            CurrentVersion = "v1`n## injected"
+            LatestVersion  = '1.0|<script>'
+            DaysOld        = '3`4'
+        }
+    }
+
+    It 'Renders an action entry as code spans in the issue style' {
+        Format-StaleDependencyLine -Dependency $script:Good -Style Issue |
+            Should -Be ('- **' + '\.github/workflows/ci\.yml' + ':** `actions/checkout@' + ('a' * 40) + '` - 45 days old (latest: `' + ('b' * 40) + '`)')
+    }
+
+    It 'Renders plain text in the summary style' {
+        Format-StaleDependencyLine -Dependency $script:Good -Style Summary |
+            Should -Be ('- **\.github/workflows/ci\.yml**: actions/checkout\@' + ('a' * 40) + ' (45 days old, latest: ' + ('b' * 40) + ')')
+    }
+
+    It 'Accepts action sub-paths and tool or module names' -ForEach @(
+        @{ Name = 'github/codeql-action/analyze' }
+        @{ Name = 'gitleaks' }
+        @{ Name = 'PSScriptAnalyzer' }
+    ) {
+        $dep = $script:Good.PSObject.Copy()
+        $dep.Name = $Name
+        Format-StaleDependencyLine -Dependency $dep -Style Issue | Should -Match ([regex]::Escape('`' + $Name + '@'))
+    }
+
+    It 'Replaces identifiers outside the grammar and keeps hostile text inert (<_>)' -ForEach @('Issue', 'Summary') {
+        $line = Format-StaleDependencyLine -Dependency $script:Hostile -Style $_
+        $line | Should -Not -Match 'evil\.example\)'
+        $line | Should -Not -Match "`n"
+        $line | Should -Not -Match '<script>'
+        $line | Should -Not -Match '(?<!\\)\['
+        $line | Should -Not -Match 'click'
+        $line | Should -Match 'invalid value omitted'
+        $line | Should -Match '^- \*\*'
+    }
+
+    It 'Rejects an identifier with a trailing line break (<_>)' -ForEach @('Issue', 'Summary') {
+        $dep = $script:Good.PSObject.Copy()
+        $dep.Name = "actions/checkout`n"
+        $line = Format-StaleDependencyLine -Dependency $dep -Style $_
+        $line | Should -Match 'invalid value omitted'
+        $line | Should -Not -Match "`n"
+    }
+
+    It 'Keeps a backslash-then-backtick File value from opening a code span (<_>)' -ForEach @('Issue', 'Summary') {
+        $dep = $script:Good.PSObject.Copy()
+        $dep.File = 'a\`b'
+        $line = Format-StaleDependencyLine -Dependency $dep -Style $_
+        $line | Should -Match ([regex]::Escape('a\\\`b'))
+    }
+
+    It 'Escapes a hostile File field in both styles (<_>)' -ForEach @('Issue', 'Summary') {
+        $dep = $script:Good.PSObject.Copy()
+        $dep.File = 'x`](https://evil.example)'
+        $line = Format-StaleDependencyLine -Dependency $dep -Style $_
+        $line | Should -Match ([regex]::Escape('x\`\]\(https\://evil\.example\)'))
+    }
+}
+
 Describe 'Get-StandardTimestamp' -Tag 'Unit' {
     It 'Returns a string' {
         Get-StandardTimestamp | Should -BeOfType [string]

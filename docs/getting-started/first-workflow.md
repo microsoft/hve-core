@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-28
 ms.topic: tutorial
 keywords:
   - getting started
@@ -229,6 +229,11 @@ this prompt:
 
 RPI Agent coordinates the applicable skills without requiring manual agent
 switches between phases.
+
+If your host shows canvases, the agent also opens the RPI Workflow canvas,
+where you can watch this task move through each phase and answer the decisions
+it leaves to you. The [RPI Workflow Canvas](../rpi/rpi-workflow-canvas.md) guide
+shows this same task in the canvas, from research to follow-up.
 
 ## What You Learned
 

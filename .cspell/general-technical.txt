@@ -1265,6 +1265,11 @@ underrepresent
 misdescribe
 
 # Security & Compliance
+Cavoukian
+centricity
+organisational
+rollups
+rulemaking
 antimalware
 auditable
 auditability

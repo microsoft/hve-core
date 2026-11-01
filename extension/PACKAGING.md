@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-15
 ms.topic: reference
 ---
 
@@ -184,16 +184,13 @@ flowchart TB
 First, prepare the extension manifest from the plugin manifest:
 
 ```bash
-# Discover components and update package.json (Stable channel)
+# Discover components and update package.json
 pwsh ./scripts/extension/Prepare-Extension.ps1
 
 # Or use npm script
 npm run extension:prepare
 
-# For PreRelease channel
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
-
-# Or use npm script
+# Channel-neutral alias of extension:prepare
 npm run extension:prepare:prerelease
 ```
 
@@ -391,8 +388,8 @@ observations, not results of local packaging or documentation validation.
 Package for the pre-release channel with the `-PreRelease` switch:
 
 ```bash
-# Prepare the PreRelease channel
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
+# Prepare (channel-neutral)
+pwsh ./scripts/extension/Prepare-Extension.ps1
 # Or use npm script
 npm run extension:prepare:prerelease
 
@@ -448,7 +445,7 @@ Root `plugin.json` defines the complete extension membership. `.github/plugin/ma
 Prepare and package directly:
 
 ```powershell
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel Stable
+pwsh ./scripts/extension/Prepare-Extension.ps1
 pwsh ./scripts/extension/Package-Extension.ps1
 ```
 

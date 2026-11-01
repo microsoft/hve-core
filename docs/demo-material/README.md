@@ -2,8 +2,10 @@
 title: Demo Material
 description: Levelled HVE Core training decks, silent CI videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-28
 ms.topic: overview
+mdx:
+  format: mdx
 keywords:
   - demo material
   - training
@@ -24,7 +26,7 @@ for each of four depth levels. Each level targets a different audience and
 builds on the one before it. The catalog reads the published build index and
 shows links only when that level has a complete passing bundle.
 
-<!-- markdownlint-disable-next-line MD033 -->
+{/*<!-- markdownlint-disable-next-line MD033 -->*/}
 <DemoMaterialCatalog />
 
 L100 and L200 videos show the deck slides. L300 and L400 add live VS Code
@@ -101,7 +103,7 @@ result of every check, including the most recent failed attempt.
 > publication. Review a deck before presenting it to an external audience. An
 > unavailable level exposes no media links until its first successful render.
 
-<!-- markdownlint-disable MD036 -->
+{/*<!-- markdownlint-disable MD036 -->*/}
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->
+{/*<!-- markdownlint-enable MD036 -->*/}

@@ -13,7 +13,8 @@ This overlay applies the repository-wide [Licensing Posture](../hve-core/licensi
 |--------------------------------------|-------------------------------------|-----------------------------------------------------------------------------|
 | NIST AI RMF 1.0                      | Public domain (US government works) | Verbatim permitted with NIST attribution; paraphrase preferred              |
 | EU AI Act, Regulation (EU) 2024/1689 | Open legal text                     | Paraphrase-first with attribution to the official EU source                 |
-| OWASP AI / OWASP Top 10              | Creative Commons (CC BY)            | Paraphrase and link; reproduce only the minimum necessary, with attribution |
+| OWASP AI Exchange                    | Creative Commons (CC0 1.0)          | Verbatim permitted; preserve attribution for provenance                     |
+| OWASP Top 10                         | Creative Commons (CC BY)            | Paraphrase and link; reproduce only the minimum necessary, with attribution |
 | ISO 42001, ISO 27005, ISO/IEC 42030  | Restricted standards (cite-only)    | Never reproduced; cite the official catalog page only                       |
 
 ## RAI-specific rules
@@ -25,7 +26,7 @@ This overlay applies the repository-wide [Licensing Posture](../hve-core/licensi
 
 * NIST AI RMF 1.0: <https://www.nist.gov/itl/ai-risk-management-framework>
 * EU AI Act, Regulation (EU) 2024/1689: <https://eur-lex.europa.eu/eli/reg/2024/1689/oj>
-* OWASP AI: <https://owasp.org/www-project-ai-security-and-privacy-guide/>
+* OWASP AI Exchange: <https://owasp.org/projects/ai-exchange>
 * OWASP Top 10: <https://owasp.org/www-project-top-ten/>
 * ISO 42001: <https://www.iso.org/standard/42001>
 * ISO 27005: <https://www.iso.org/standard/80585.html>

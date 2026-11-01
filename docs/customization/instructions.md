@@ -2,7 +2,7 @@
 title: Customizing with Instructions
 description: Configure Copilot behavior using copilot-instructions.md and instruction files with applyTo targeting and stacking patterns
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-26
 ms.topic: how-to
 keywords:
   - instructions
@@ -72,12 +72,13 @@ Organization follows a collection subdirectory convention:
 .github/instructions/
 ├── coding-standards/
 │   ├── python-script.instructions.md
-│   └── typescript.instructions.md
+│   └── typescript/
+│       └── typescript-doc-comments.instructions.md
 ├── hve-core/
 │   ├── markdown.instructions.md
 │   └── writing-style.instructions.md
 └── shared/
-    └── cross-package.instructions.md
+    └── untrusted-content-boundary.instructions.md
 ```
 
 Every instruction file requires YAML frontmatter with at least a `description` field. The
@@ -100,7 +101,7 @@ applying repository conventions and preserving the approved write boundary:
 
 ```text
 Use hve-builder with mode=create,
-targets=.github/instructions/coding-standards/typescript.instructions.md, and
+targets=.github/instructions/coding-standards/typescript/typescript.instructions.md, and
 requirements="Follow the existing Python instruction as a structural reference
 and target TypeScript source files precisely".
 ```
@@ -158,13 +159,17 @@ Narrow patterns produce more relevant guidance. Prefer `'**/*.test.ts'` over `'*
 
 ## Instruction Stacking
 
-When you edit a file that matches multiple instruction files, Copilot loads all matching files and merges their guidance. The stacking order follows specificity:
+When you edit a file that matches multiple instruction files, Copilot loads all matching files and combines their guidance. Applicable instruction sources are additive, and no source outranks another:
 
-1. **`copilot-instructions.md`** loads first as the global baseline.
-2. **Broad `applyTo` patterns** (like `'**'`) load next.
-3. **Specific `applyTo` patterns** (like `'**/*.test.py'`) layer on top.
+1. **`copilot-instructions.md`** applies as the repository-wide baseline.
+2. **Broad `applyTo` patterns** (like `'**'`) apply to every file they match.
+3. **Specific `applyTo` patterns** (like `'**/*.test.py'`) apply *alongside* the broader ones, not instead of them.
 
-When instructions conflict, the more specific file takes precedence. For example, if a global instruction says "use tabs" but a Python-specific instruction says "use 4-space indentation," the Python rule wins when editing `.py` files.
+Because the guidance is combined rather than ranked, a contradiction between two matching files is not resolved for you.
+[VS Code's guidance](https://code.visualstudio.com/docs/agent-customization/custom-instructions#_resolve-conflicting-instructions) is explicit:
+do not depend on a file order or precedence rule to resolve conflicts, and do not assume that one source overrides the others.
+Resolve contradictions at their source instead - remove the duplicate guidance, or narrow the `applyTo` patterns
+so that the two files no longer match the same file.
 
 Practical stacking example:
 
@@ -173,7 +178,7 @@ Practical stacking example:
 * Both activate when you edit any Markdown file, and their guidance combines
 
 > [!NOTE]
-> Instruction stacking is additive. Avoid placing contradictory rules in files with overlapping `applyTo` patterns. When overlap is unavoidable, the more specific pattern prevails.
+> Instruction stacking is additive. Avoid placing contradictory rules in files with overlapping `applyTo` patterns, because overlapping patterns create ambiguity that no precedence rule will settle. To see which instructions were applied to a response, expand its **References** section.
 
 ## Role Scenarios
 
