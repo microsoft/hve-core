@@ -204,7 +204,8 @@ without a durable write.
    carryover.
 3. Gloss the lifecycle class and the proposed disposition in plain language
    before asking for confirmation, so the user does not need the internal
-   vocabulary to decide. Say that continuous work stays available and keeps
+   vocabulary to decide. Name each class, even when the user asks for plain
+   language, and say that continuous work stays available and keeps
    accumulating, that bounded work can be paused now and picked up later at the
    same phase, and that episodic work finishes as a single completed unit and
    is only re-entered on a new request. Say what the proposed disposition means
