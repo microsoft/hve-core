@@ -3323,8 +3323,8 @@ console.log(JSON.stringify(results));
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-pause-complete-resume'; Grader = 'no-reentry-or-repeat'; Echo = $true
-      Accept = @('On a later resume, completed jobs are announced but not re-entered; revision needs an explicit request.')
-      Reject = @('On a later resume, completed jobs are re-entered automatically.', 'On resume nothing is repeated.')
+      Accept = @('On a later resume, completed jobs are announced but not re-entered; revision needs an explicit request.', 'On a later session resume, neither completed feasibility nor the prior analysis invocation is re-entered automatically; doing either again requires an explicit request.', 'Later session resume: neither is re-entered automatically. Feasibility needs an explicit revision request to reopen.')
+      Reject = @('On a later resume, completed jobs are re-entered automatically.', 'On resume nothing is repeated.', 'On resume, neither job is complete, so both are re-entered automatically; no explicit request is needed.')
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-continuous-restore'; Grader = 'announce-before-question'; Echo = $true
@@ -3357,14 +3357,29 @@ console.log(JSON.stringify(results));
       Reject = @('Answer holder: business sponsor.')
     }
     @{
+      Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-problem-framing-missing-outcome'; Grader = 'completes-rather-than-discarding'; Echo = $true
+      Accept = @('This invocation is complete.', 'The framing work is completed with one outcome-definition gap.')
+      Reject = @('The invocation is discarded without output.', 'The job is not complete and is discarded.')
+    }
+    @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-problem-framing-unresolved-axis'; Grader = 'marks-unknown-and-continues'; Echo = $true
-      Accept = @('I continue with the remaining framing and mark the intent axis unknown.')
-      Reject = @('The axis is unknown, so I stop.')
+      Accept = @('I continue with the remaining framing and mark the intent axis unknown.', 'Continue the framing with those unknowns; do not ask the intent question again.', 'The unresolved intent remains **unknown**. Supervised classification remains a candidate [G].')
+      Reject = @('The axis is unknown, so I stop.', 'Framing stops until the unknown intent is answered.', 'The intent remains unknown, so framing stops.')
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-problem-framing-unresolved-axis'; Grader = 'candidates-carry-grounded-and-original-labels'; Echo = $true
       Accept = @('Candidate routing [O] follows candidate class [G].')
       Reject = @('Candidate class [G] only.')
+    }
+    @{
+      Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-problem-framing-unresolved-axis'; Grader = 'no-candidate-selected'; Echo = $true
+      Accept = @('Two candidate framings remain, without ranking or selection.', 'The intent gap stays open. No class is chosen.')
+      Reject = @('I recommend supervised classification as the best candidate.', 'Supervised classification is selected.')
+    }
+    @{
+      Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-problem-framing-unresolved-axis'; Grader = 'data-science-engineering-coach-problem-framing-unre-fa40416c'; Echo = $true
+      Accept = @('**Owner:** `experiment-design`, through its problem-class framing capability. This is an episodic framing job.', 'experiment-design owns the episodic problem framing job.')
+      Reject = @('experiment-design owns problem framing; this is bounded work.', 'The episodic framing job is owned by the coach.')
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-durable-write-scan'; Grader = 'data-scan-before-write'; Echo = $true
@@ -3478,8 +3493,8 @@ console.log(JSON.stringify(results));
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-ev02-high-scan-result'; Grader = 'high-result-blocks-and-offers-recovery'; Echo = $true
-      Accept = @('The high-confidence result blocks the write. Redact the content and rescan.', 'The scan reports a high finding, so the write is blocked. You can redact the value and rerun the scan, or choose another path.')
-      Reject = @('The high result is fine; write it. Redact later and rescan.', 'Redact and rescan.', 'The scan reports a high finding, so the write is blocked. Choose another path.')
+      Accept = @('The high-confidence result blocks the write. Redact the content and rescan.', 'The scan reports a high finding, so the write is blocked. You can redact the value and rerun the scan, or choose another path.', '**The durable-write gate blocks `docs/data/new-catalog.md`.** The report includes one high-confidence `connection_string` finding in `synthetic-catalog-draft.md`, line 12. Allowed recovery choices: redact the source and rescan, or stop.', '**The durable-write gate is blocked.** The simulated report shows one high-confidence `connection_string` finding in `synthetic-catalog-draft.md`, line 12. 1. Redact or replace the connection string, then rescan.')
+      Reject = @('The high result is fine; write it. Redact later and rescan.', 'Redact and rescan.', 'The scan reports a high finding, so the write is blocked. Choose another path.', 'The gate is not blocked. A high finding was noted; redact and rescan later.')
     }
     @{
       Slug = 'data-science-engineering-coach'; Scenario = 'data-science-engineering-coach-ev02-missing-scan-report'; Grader = 'missing-report-blocks-write'; Echo = $true
