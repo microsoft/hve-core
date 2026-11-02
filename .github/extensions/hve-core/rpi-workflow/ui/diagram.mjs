@@ -688,6 +688,28 @@ export function markLegend(source) {
     return MARKS.filter((mark) => marks.has(mark)).flatMap((mark) => [h('span', { class: `legend-swatch is-${mark}` }), ` ${MARK_WORDS[mark]} `]);
 }
 
+/** A corner mark: a check for done, a dot for in progress, a hollow circle for still needed. */
+function cornerMark(state, cx, cy) {
+    const mark = svg('g', { class: `diagram-mark is-${state}` });
+    mark.append(svg('circle', { cx, cy, r: 7 }));
+    if (state === 'done') mark.append(svg('path', { d: `M${cx - 3} ${cy}l2 2 4-4`, class: 'diagram-mark-glyph' }));
+    else if (state === 'active') mark.append(svg('circle', { cx, cy, r: 2.5, class: 'diagram-mark-glyph' }));
+    return mark;
+}
+
+/**
+ * The corner mark a change map draws for a progress state, as a small standalone drawing for a legend.
+ * Decorative: the legend's words name each state.
+ *
+ * @param {'done' | 'active' | 'needed'} state
+ * @returns {SVGSVGElement}
+ */
+export function progressMark(state) {
+    const root = svg('svg', { class: 'legend-mark', viewBox: '-8.5 -8.5 17 17', width: 12, height: 12, 'aria-hidden': 'true', focusable: 'false' });
+    root.append(cornerMark(state, 0, 0));
+    return root;
+}
+
 const PROGRESS_WORDS = { done: 'done', active: 'in progress', needed: 'still needed' };
 
 /**
@@ -744,6 +766,15 @@ export function renderDiagram(source, options) {
     const marker = svg('marker', { id: `${options.idPrefix}-arrow`, viewBox: '0 0 10 10', refX: '9', refY: '5', markerWidth: '7', markerHeight: '7', orient: 'auto-start-reverse' });
     marker.append(svg('path', { d: 'M0 0L10 5L0 10z', class: 'diagram-arrow' }));
     defs.append(marker);
+    // Done parts' forced-colors hatch: one pattern per fill, since pattern lines take their color from the pattern.
+    const hatchId = (onHighlight) => `${options.idPrefix}-hatch${onHighlight ? '-highlight' : ''}`;
+    if ([...progress.values()].includes('done')) {
+        for (const onHighlight of [false, true]) {
+            const pattern = svg('pattern', { id: hatchId(onHighlight), patternUnits: 'userSpaceOnUse', width: '6', height: '6', patternTransform: 'rotate(45)' });
+            pattern.append(svg('path', { d: 'M0 0V6', class: `diagram-hatch-line${onHighlight ? ' is-on-highlight' : ''}` }));
+            defs.append(pattern);
+        }
+    }
     root.append(defs);
     const ordered = [...frames.values()].sort((a, b) => a.depth - b.depth);
     for (const frame of ordered) {
@@ -785,19 +816,16 @@ export function renderDiagram(source, options) {
             : { class: classes });
         if (box.cut && !selectable.has(id)) group.append(fullLabel(`${node.label}${changeWords(node)}`));
         group.append(svg('rect', { x: box.x, y: box.y, width: box.width, height: box.height, rx: 6 }));
+        // A path, not a rect, so the part's rect rules never override its fill or give it a stroke or dash. The fill is an
+            // attribute because the canvas's style-src policy blocks inline styles. Shown only in forced colors.
+        if (state === 'done') {
+            const onHighlight = highlight.has(id) || node.classes.has('phase');
+            group.append(svg('path', { d: roundedRect(box.x, box.y, box.width, box.height, 6), class: 'diagram-hatch', fill: `url(#${hatchId(onHighlight)})`, 'aria-hidden': 'true' }));
+        }
         box.lines.forEach((line, index) => {
             group.append(textLine(line, { x: box.x + box.width / 2, y: box.y + 22 + index * NODE_LINE, 'text-anchor': 'middle', ...(index >= box.tagFrom ? { class: 'diagram-tag' } : {}) }));
         });
-        if (state) {
-            // A corner mark: a check for done, a dot for in progress, a hollow circle for still needed.
-            const mark = svg('g', { class: `diagram-mark is-${state}` });
-            const cx = box.x + box.width - 2;
-            const cy = box.y + 2;
-            mark.append(svg('circle', { cx, cy, r: 7 }));
-            if (state === 'done') mark.append(svg('path', { d: `M${cx - 3} ${cy}l2 2 4-4`, class: 'diagram-mark-glyph' }));
-            else if (state === 'active') mark.append(svg('circle', { cx, cy, r: 2.5, class: 'diagram-mark-glyph' }));
-            group.append(mark);
-        }
+        if (state) group.append(cornerMark(state, box.x + box.width - 2, box.y + 2));
         // Browsers do not outline an SVG group, so a selectable part draws its own focus ring, 2px wide and 2px out.
         if (selectable.has(id)) group.append(svg('path', { d: roundedRect(box.x - 3, box.y - 3, box.width + 6, box.height + 6, 9), class: 'diagram-focus' }));
         root.append(group);

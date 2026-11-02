@@ -14,8 +14,10 @@ export const TIMING = Object.freeze({ showHover: 500, showFocus: 300, hide: 300,
 export const MAX_DEPTH = 5;
 
 /**
- * @typedef {{ id: string, trigger: any, parent: number, locked: boolean, arming: boolean }} Preview
- * `parent` is the index of the preview holding the trigger, or -1 for the page.
+ * @typedef {{ id: string, trigger: any, parent: number, locked: boolean, arming: boolean, hoverPins: boolean, unpinned: boolean }} Preview
+ * `parent` is the index of the preview holding the trigger, or -1 for the page. `hoverPins` is
+ * false for a preview that pins only on purpose, such as a change-map part's. `unpinned` marks a
+ * preview the person unpinned, which hovering never pins again until it closes.
  */
 
 /**
@@ -72,7 +74,7 @@ export function createPreviewState(options) {
 
     function arm(index) {
         const entry = stack[index];
-        if (!entry || entry.locked) return;
+        if (!entry || entry.locked || !entry.hoverPins || entry.unpinned) return;
         stopArming();
         entry.arming = true;
         lockTimer = setTimer(() => {
@@ -86,10 +88,10 @@ export function createPreviewState(options) {
         }, timing.lock);
     }
 
-    function open(trigger, id, parent, via) {
+    function open(trigger, id, parent, via, hoverPins) {
         cancelPending();
         truncate(parent);
-        stack.push({ id, trigger, parent, locked: false, arming: false });
+        stack.push({ id, trigger, parent, locked: false, arming: false, hoverPins, unpinned: false });
         if (via === 'pointer') arm(stack.length - 1);
         emit();
         return stack.length - 1;
@@ -118,16 +120,17 @@ export function createPreviewState(options) {
          * unless it sits in a preview that is not locked yet.
          *
          * @param {any} trigger
-         * @param {{ id: string, parent: number, via: 'pointer' | 'focus' }} details
+         * @param {{ id: string, parent: number, via: 'pointer' | 'focus', hoverPins?: boolean }} details
+         *   `hoverPins: false` opens a preview that hovering never pins.
          */
-        enter(trigger, { id, parent, via }) {
+        enter(trigger, { id, parent, via, hoverPins = true }) {
             const existing = indexOf(trigger);
             if (existing !== -1) {
                 cancelHide(existing);
                 for (let index = stack[existing].parent; index >= 0; index = stack[index].parent) cancelHide(index);
                 if (via === 'pointer' && !stack[existing].locked && !stack[existing].arming) {
                     arm(existing);
-                    emit();
+                    if (stack[existing].arming) emit();
                 }
                 return;
             }
@@ -135,7 +138,7 @@ export function createPreviewState(options) {
             for (let index = parent; index >= 0; index = stack[index].parent) cancelHide(index);
             if (pending?.trigger === trigger) return;
             cancelPending();
-            pending = { trigger, timer: setTimer(() => open(trigger, id, parent, via), via === 'focus' ? timing.showFocus : timing.showHover) };
+            pending = { trigger, timer: setTimer(() => open(trigger, id, parent, via, hoverPins), via === 'focus' ? timing.showFocus : timing.showHover) };
         },
 
         /** The pointer or focus left an ID; its unlocked preview hides unless the pointer reaches it. */
@@ -153,7 +156,7 @@ export function createPreviewState(options) {
             const entry = stack[index];
             if (entry && !entry.locked && !entry.arming) {
                 arm(index);
-                emit();
+                if (entry.arming) emit();
             }
         },
 
@@ -170,13 +173,13 @@ export function createPreviewState(options) {
          * Down Arrow does. Returns the preview's index, or -1 when nesting is not allowed.
          *
          * @param {any} trigger
-         * @param {{ id: string, parent: number }} details
+         * @param {{ id: string, parent: number, hoverPins?: boolean }} details
          */
-        lock(trigger, { id, parent }) {
+        lock(trigger, { id, parent, hoverPins = true }) {
             let index = indexOf(trigger);
             if (index === -1) {
                 if (!canNestFrom(parent)) return -1;
-                index = open(trigger, id, parent, 'focus');
+                index = open(trigger, id, parent, 'focus', hoverPins);
             }
             const entry = stack[index];
             cancelHide(index);
@@ -185,6 +188,19 @@ export function createPreviewState(options) {
             truncate(index);
             emit();
             return index;
+        },
+
+        /**
+         * Unpins the preview at `index`: it stays open, closes the previews nested in it, hides on
+         * the next leave, and hovering does not pin it again until it closes.
+         */
+        unlock(index) {
+            const entry = stack[index];
+            if (!entry?.locked) return;
+            entry.locked = false;
+            entry.unpinned = true;
+            truncate(index);
+            emit();
         },
 
         /** Closes the newest preview and returns it, or null when none is open. */

@@ -121,6 +121,83 @@ describe('locking', () => {
     });
 });
 
+describe('pinning only on purpose', () => {
+    const part = { id: 'part:after:store', parent: -1, via: 'pointer', hoverPins: false };
+
+    it('never pins a change-map part\'s preview from hovering the part or the preview, and hides it once the pointer leaves both', () => {
+        const { clock, previews, ids } = setup();
+        previews.enter('store', part);
+        clock.advance(TIMING.showHover + TIMING.lock * 2);
+        assert.deepEqual(ids(), ['part:after:store']);
+        assert.equal(previews.stack[0].arming, false, 'no ring fills');
+        assert.equal(previews.stack[0].hoverPins, false, 'the builder can tell it pins only on purpose');
+        previews.leave('store');
+        previews.enterPreview(0);
+        clock.advance(TIMING.lock * 2);
+        assert.deepEqual(ids(), ['part:after:store']);
+        previews.enter('store', part);
+        clock.advance(TIMING.lock * 2);
+        assert.deepEqual(ids(), ['part:after:store'], 'returning to the part does not pin it either');
+        previews.leave('store');
+        previews.leavePreview(0);
+        clock.advance(TIMING.hide);
+        assert.deepEqual(ids(), []);
+    });
+
+    it('still pins a change-map part\'s preview at once on purpose', () => {
+        const { clock, previews, ids } = setup();
+        previews.enter('store', part);
+        clock.advance(TIMING.showHover);
+        previews.lock('store', part);
+        assert.deepEqual(ids(), ['part:after:store*']);
+        previews.leave('store');
+        clock.advance(TIMING.hide * 10);
+        assert.deepEqual(ids(), ['part:after:store*']);
+    });
+
+    it('unpins a pinned preview, keeping it open, closing its nested previews, and hiding it on the next leave', () => {
+        const { clock, previews, ids } = setup();
+        previews.lock('c22', { id: 'C22', parent: -1 });
+        previews.lock('q1', { id: 'Q1', parent: 0 });
+        assert.deepEqual(ids(), ['C22*', 'Q1*']);
+        previews.unlock(0);
+        assert.deepEqual(ids(), ['C22'], 'nesting needs a pinned parent');
+        previews.leavePreview(0);
+        clock.advance(TIMING.hide);
+        assert.deepEqual(ids(), []);
+    });
+
+    it('keeps an unpinned ID preview unpinned while hovered, until it closes and opens again', () => {
+        const { clock, previews, ids } = setup();
+        previews.enter('c22', { id: 'C22', parent: -1, via: 'pointer' });
+        clock.advance(TIMING.showHover + TIMING.lock);
+        assert.deepEqual(ids(), ['C22*']);
+        previews.unlock(0);
+        assert.equal(previews.stack[0].unpinned, true);
+        previews.enterPreview(0);
+        clock.advance(TIMING.lock * 2);
+        previews.enter('c22', { id: 'C22', parent: -1, via: 'pointer' });
+        clock.advance(TIMING.lock * 2);
+        assert.deepEqual(ids(), ['C22'], 'hovering the ID or the preview does not pin it again');
+        assert.equal(previews.stack[0].arming, false);
+        previews.closeAll();
+        previews.enter('c22', { id: 'C22', parent: -1, via: 'pointer' });
+        clock.advance(TIMING.showHover + TIMING.lock);
+        assert.deepEqual(ids(), ['C22*'], 'a fresh preview arms again');
+    });
+
+    it('ignores unpinning a preview that is not pinned', () => {
+        const { clock, previews, changes, ids } = setup();
+        previews.enter('q1', { id: 'Q1', parent: -1, via: 'focus' });
+        clock.advance(TIMING.showFocus);
+        const before = changes.length;
+        previews.unlock(0);
+        previews.unlock(3);
+        assert.equal(changes.length, before);
+        assert.deepEqual(ids(), ['Q1']);
+    });
+});
+
 describe('nesting', () => {
     it('nests only from a locked preview', () => {
         const { clock, previews, ids } = setup();
