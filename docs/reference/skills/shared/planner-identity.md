@@ -36,5 +36,18 @@ planners.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Say you started an RAI assessment in one chat and pick it up in a new one the
+next day. Select the RAI Planner and ask it to continue the assessment for your
+project. The planner activates this skill by name and follows its recovery
+steps:
+
+1. It reads `.copilot-tracking/rai-plans/<project>/state.json` for the project
+   slug and current phase.
+2. If `disclaimerShownAt` is `null`, it shows the RAI disclaimer again and
+   records the time.
+3. It reads the artifacts in the project folder and rebuilds context from them,
+   since the earlier chat is not available.
+4. It resumes with a short summary of the recovered state and the next task.
+
+You know recovery worked when that summary names the phase recorded in
+`state.json` and the next unfinished task in it.

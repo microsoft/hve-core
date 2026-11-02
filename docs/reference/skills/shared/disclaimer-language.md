@@ -36,5 +36,19 @@ that goes with it.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The Security Planner preloads this skill along with the untrusted-content
+boundary:
+
+```yaml
+skills:
+  - disclaimer-language
+  - untrusted-content-boundary
+```
+
+When you start a new security plan, the planner shows the `Security Planning`
+CAUTION block word for word before any phase work begins. It then records the
+time in `disclaimerShownAt` in
+`.copilot-tracking/security-plans/<project>/state.json`. Resuming the plan in a
+later chat skips the full disclaimer, because that timestamp is already set. To
+confirm the first display, check that `disclaimerShownAt` holds a timestamp
+after the planner's first response.
