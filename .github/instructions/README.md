@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-22
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - copilot
@@ -212,9 +212,17 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   │   └── rust-tests.instructions.md
 │   ├── terraform/
 │   │   └── terraform.instructions.md
+│   ├── typescript/
+│   │   └── typescript-doc-comments.instructions.md
 │   ├── python-script.instructions.md
 │   ├── python-tests.instructions.md
 │   └── uv-projects.instructions.md
+├── design-thinking/
+│   └── dt-coach-telemetry.instructions.md
+├── engagement-reporting/
+│   ├── data-handling.instructions.md
+│   ├── style-guide.instructions.md
+│   └── terminology.instructions.md
 ├── experimental/                     # Experimental workflows
 │   ├── experiment-designer.instructions.md
 │   └── pptx.instructions.md
@@ -234,7 +242,9 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── adr-handoff.instructions.md
 │   ├── adr-identity.instructions.md
 │   ├── adr-standards.instructions.md
-│   └── community-interaction.instructions.md
+│   ├── backlog-guardrails.instructions.md
+│   ├── community-interaction.instructions.md
+│   └── github-backlog-grooming.instructions.md
 ├── rai-planning/                     # Responsible AI planning
 │   ├── rai-identity.instructions.md
 │   └── rai-license-posture.instructions.md
@@ -242,6 +252,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── identity.instructions.md
 │   ├── sssc-planner.instructions.md
 │   ├── standards-mapping.instructions.md
+│   ├── tm7-generation-workflow.instructions.md
 │   ├── vex-generation.instructions.md
 │   └── vex-standards.instructions.md
 ├── shared/                           # Shared across packages
@@ -251,6 +262,8 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── planner-identity-base.instructions.md
 │   ├── telemetry-overlay.instructions.md
 │   └── untrusted-content-boundary.instructions.md
+├── ci-owned-validation.instructions.md
+├── dependency-feeds.instructions.md
 ├── docusaurus-edits.instructions.md
 ├── pull-request.instructions.md
 ├── skill-security-model.instructions.md
