@@ -92,6 +92,18 @@ Describe 'Get-AgentSkillReference' -Tag 'Unit' {
     It 'Returns an empty set for a missing agent file' {
         @(Get-AgentSkillReference -RepoRoot $script:FixtureRoot -AgentFilePath '.github/agents/sample/absent.agent.md').Count | Should -Be 0
     }
+
+    It 'Resolves preloaded skills from a block list with comments' {
+        $agentPath = Join-Path $script:FixtureRoot '.github/agents/sample/agent-commented.agent.md'
+        Set-Content -LiteralPath $agentPath -Value "---`nname: Commented`nskills:`n  # preloaded`n  - skill-one`n`n  - skill-three # last`n---`n`nBody." -Encoding UTF8
+        try {
+            $skills = @(Get-AgentSkillReference -RepoRoot $script:FixtureRoot -AgentFilePath '.github/agents/sample/agent-commented.agent.md')
+            $skills | Should -Be @('.github/skills/alpha/skill-one', '.github/skills/beta/skill-three')
+        }
+        finally {
+            Remove-Item -LiteralPath $agentPath -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 Describe 'Get-AgentDeclaredDependency' -Tag 'Unit' {

@@ -82,6 +82,33 @@ Describe 'Get-AgentDependencyMap.ps1' -Tag 'Unit' {
         }
     }
 
+    Context 'Commented frontmatter lists' {
+        It 'Resolves skills and instructions declared in lists with comments' {
+            $agentPath = Join-Path $script:TestRoot '.github/agents/minimal-coll/commented-agent.agent.md'
+            Set-Content -LiteralPath $agentPath -Value "---`ndescription: Commented fixture agent.`nskills: [fixture-skill] # preloads`ninstructions:`n  # declared`n  - .github/instructions/minimal.instructions.md`n---`n`nBody." -Encoding UTF8
+            $skillDir = Join-Path $script:TestRoot '.github/skills/pkg/fixture-skill'
+            New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value 'Fixture skill.' -Encoding UTF8
+
+            & $script:ScriptPath -RepoRoot $script:TestRoot -OutputPath $script:OutputPath 3>$null 6>$null
+
+            $record = (Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json).'commented-agent'
+            $record.skills | Should -Contain '.github/skills/pkg/fixture-skill/SKILL.md'
+            $record.instructions | Should -Contain '.github/instructions/minimal.instructions.md'
+            $record.warnings | Should -HaveCount 0
+        }
+
+        It 'Records a warning when frontmatter cannot be parsed' {
+            $agentPath = Join-Path $script:TestRoot '.github/agents/minimal-coll/malformed-agent.agent.md'
+            Set-Content -LiteralPath $agentPath -Value "---`nskills: [one`nname: : :`n---`n`nBody." -Encoding UTF8
+
+            & $script:ScriptPath -RepoRoot $script:TestRoot -OutputPath $script:OutputPath 3>$null 6>$null
+
+            $record = (Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json).'malformed-agent'
+            ($record.warnings -join "`n") | Should -Match 'frontmatter not parsed'
+        }
+    }
+
     Context 'Warnings on missing references' {
         It 'Records a warning for an unresolved reference but still exits successfully' {
             $warnings = $null

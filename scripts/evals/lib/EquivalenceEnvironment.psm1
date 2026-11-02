@@ -33,6 +33,8 @@
 
 Set-StrictMode -Version Latest
 
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
+
 function Get-AgentSkillReference {
     <#
     .SYNOPSIS
@@ -83,16 +85,12 @@ function Get-AgentSkillReference {
 
     $Frontmatter = [regex]::Match($Body, '(?s)\A---\r?\n(.*?)\r?\n---')
     if ($Frontmatter.Success) {
-        $Preloaded = [System.Collections.Generic.List[string]]::new()
-        $Flow = [regex]::Match($Frontmatter.Groups[1].Value, '(?m)^skills:\s*\[(.*?)\]\s*$')
-        if ($Flow.Success) {
-            foreach ($Item in ($Flow.Groups[1].Value -split ',')) { $Preloaded.Add($Item.Trim().Trim("'", '"')) }
+        $Preloaded = @()
+        try {
+            $Preloaded = @(Get-YamlFrontmatterList -Yaml $Frontmatter.Groups[1].Value -Field 'skills')
         }
-        else {
-            $Block = [regex]::Match($Frontmatter.Groups[1].Value, '(?m)^skills:\s*\r?\n((?:[ \t]*-[^\r\n]*\r?\n?)+)')
-            if ($Block.Success) {
-                foreach ($Item in [regex]::Matches($Block.Groups[1].Value, '(?m)^[ \t]*-\s*(.+?)\s*$')) { $Preloaded.Add($Item.Groups[1].Value.Trim("'", '"')) }
-            }
+        catch {
+            Write-Warning "Unreadable frontmatter in ${AgentFilePath}: $($_.Exception.Message)"
         }
         foreach ($SkillName in $Preloaded) {
             if ($Available.ContainsKey($SkillName)) { [void]$Resolved.Add($Available[$SkillName]) }

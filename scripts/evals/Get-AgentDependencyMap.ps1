@@ -53,6 +53,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/ArtifactHelpers.psm1') -Force
+
 function Resolve-RepoRoot {
     [CmdletBinding()]
     [OutputType([string])]
@@ -101,41 +103,21 @@ function Read-AgentFile {
 }
 
 function Get-FrontmatterListField {
+    <#
+    .SYNOPSIS
+        Reads a list field, such as `skills` or `instructions`, from agent frontmatter.
+    .DESCRIPTION
+        Parses the frontmatter as YAML, so comments, blank lines, and quoting don't change
+        the result. Throws when the frontmatter is not valid YAML.
+    #>
     [CmdletBinding()]
     [OutputType([string[]])]
     param(
-        [Parameter(Mandatory)] [string]$Frontmatter,
+        [Parameter(Mandatory)] [AllowEmptyString()] [string]$Frontmatter,
         [Parameter(Mandatory)] [string]$Field
     )
 
-    $results = New-Object System.Collections.Generic.List[string]
-    $lines = $Frontmatter -split "`r?`n"
-    $inList = $false
-    foreach ($line in $lines) {
-        if (-not $inList) {
-            if ($line -match "^$Field\s*:\s*\[(.*)\]\s*$") {
-                # Flow style: field: [a, b, c]
-                $items = $matches[1] -split ','
-                foreach ($item in $items) {
-                    $t = $item.Trim().Trim('"').Trim("'")
-                    if ($t) { $results.Add($t) }
-                }
-                return $results.ToArray()
-            }
-            if ($line -match "^$Field\s*:\s*$") {
-                $inList = $true
-                continue
-            }
-        } else {
-            if ($line -match '^\s*-\s*(.+?)\s*$') {
-                $results.Add($matches[1].Trim().Trim('"').Trim("'"))
-            } elseif ($line -match '^\S') {
-                # Next top-level key; stop.
-                break
-            }
-        }
-    }
-    return $results.ToArray()
+    return @(Get-YamlFrontmatterList -Yaml $Frontmatter -Field $Field)
 }
 
 function Find-ReferenceMatches {
@@ -334,12 +316,21 @@ foreach ($file in $agentFiles) {
     $sourceDir = Split-Path -Parent $file.FullName
 
     # Frontmatter list fields
-    foreach ($ref in (Get-FrontmatterListField -Frontmatter $parsed.Frontmatter -Field 'instructions')) {
+    $declaredInstructions = @()
+    $declaredSkills = @()
+    try {
+        $declaredInstructions = @(Get-FrontmatterListField -Frontmatter $parsed.Frontmatter -Field 'instructions')
+        $declaredSkills = @(Get-FrontmatterListField -Frontmatter $parsed.Frontmatter -Field 'skills')
+    }
+    catch {
+        $warnings.Add("frontmatter not parsed: $($_.Exception.Message)")
+    }
+    foreach ($ref in $declaredInstructions) {
         $resolved = Resolve-RefToFiles -RepoRoot $resolvedRoot -Ref $ref -SourceDir $sourceDir
         if ($resolved.Count -eq 0) { $warnings.Add("instructions ref not resolved: $ref") }
         foreach ($r in $resolved) { [void]$instructions.Add($r) }
     }
-    foreach ($ref in (Get-FrontmatterListField -Frontmatter $parsed.Frontmatter -Field 'skills')) {
+    foreach ($ref in $declaredSkills) {
         if ($skillIndex.ContainsKey($ref)) { [void]$skills.Add($skillIndex[$ref]); continue }
         $resolved = Resolve-RefToFiles -RepoRoot $resolvedRoot -Ref $ref -SourceDir $sourceDir
         if ($resolved.Count -eq 0) { $warnings.Add("skills ref not resolved: $ref") }

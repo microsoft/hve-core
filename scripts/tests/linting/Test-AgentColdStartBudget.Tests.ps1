@@ -61,6 +61,43 @@ Describe 'Get-AgentColdStartSet' -Tag 'Unit' {
         $set.Issues[0] | Should -Match "preloaded skill 'gone'"
     }
 
+    It 'Reads preloads from <Name>' -ForEach @(
+        @{ Name = 'a flow list with a trailing comment'; Frontmatter = "skills: [one, 'two'] # preloads" }
+        @{ Name = 'a block list with comments and blank lines'; Frontmatter = "skills:`n  # first`n  - one`n`n  # second`n  - two" }
+    ) {
+        $root = Join-Path $TestDrive "commented-$([guid]::NewGuid())"
+        New-TestFile $root '.github/agents/x.agent.md' "---`n$Frontmatter`nname: x`n---`nbody"
+        New-TestFile $root '.github/skills/shared/one/SKILL.md' 'one'
+        New-TestFile $root '.github/skills/pkg/two/SKILL.md' 'two'
+
+        $set = Get-AgentColdStartSet -RepoRoot $root -AgentPath '.github/agents/x.agent.md'
+
+        @($set.Files.Path) | Should -Be @('.github/agents/x.agent.md', '.github/skills/pkg/two/SKILL.md', '.github/skills/shared/one/SKILL.md')
+        $set.Issues | Should -HaveCount 0
+    }
+
+    It 'Reports an unresolved preloaded skill in <Name>' -ForEach @(
+        @{ Name = 'a flow list with a trailing comment'; Frontmatter = 'skills: [gone] # preloads' }
+        @{ Name = 'a block list with comments'; Frontmatter = "skills:`n  # preloaded`n  - gone" }
+    ) {
+        $root = Join-Path $TestDrive "unresolved-$([guid]::NewGuid())"
+        New-TestFile $root '.github/agents/x.agent.md' "---`n$Frontmatter`n---`nbody"
+
+        $set = Get-AgentColdStartSet -RepoRoot $root -AgentPath '.github/agents/x.agent.md'
+        $set.Issues | Should -HaveCount 1
+        $set.Issues[0] | Should -Match "preloaded skill 'gone'"
+    }
+
+    It 'Reports malformed frontmatter as an issue and still counts the agent' {
+        $root = Join-Path $TestDrive 'malformed'
+        New-TestFile $root '.github/agents/x.agent.md' "---`nskills: [one`nname: : :`n---`nbody"
+
+        $set = Get-AgentColdStartSet -RepoRoot $root -AgentPath '.github/agents/x.agent.md'
+        $set.Issues | Should -HaveCount 1
+        $set.Issues[0] | Should -Match 'Unreadable frontmatter in \.github/agents/x\.agent\.md'
+        @($set.Files.Path) | Should -Be @('.github/agents/x.agent.md')
+    }
+
     It 'Reports a missing agent' {
         $set = Get-AgentColdStartSet -RepoRoot (Join-Path $TestDrive 'empty') -AgentPath '.github/agents/none.agent.md'
         $set.Issues[0] | Should -Match 'Agent not found'

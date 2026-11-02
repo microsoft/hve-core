@@ -51,6 +51,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/ArtifactHelpers.psm1') -Force
+
 #region Functions
 
 function Get-NormalizedByteCount {
@@ -129,6 +131,9 @@ function Get-PreloadedSkillName {
     <#
     .SYNOPSIS
         Reads the skill names an agent preloads through its frontmatter skills list.
+    .DESCRIPTION
+        Parses the frontmatter as YAML, so comments, blank lines, and quoting don't change
+        the result. Throws when the frontmatter is not valid YAML.
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
@@ -140,16 +145,7 @@ function Get-PreloadedSkillName {
 
     $frontmatter = [regex]::Match($Content, '(?s)\A---\r?\n(.*?)\r?\n---')
     if (-not $frontmatter.Success) { return @() }
-    $yaml = $frontmatter.Groups[1].Value
-
-    $flow = [regex]::Match($yaml, '(?m)^skills:\s*\[(.*?)\]\s*$')
-    if ($flow.Success) {
-        return @($flow.Groups[1].Value -split ',' | ForEach-Object { $_.Trim().Trim("'", '"') } | Where-Object { $_ })
-    }
-
-    $block = [regex]::Match($yaml, '(?m)^skills:\s*\r?\n((?:[ \t]*-[^\r\n]*\r?\n?)+)')
-    if (-not $block.Success) { return @() }
-    return @([regex]::Matches($block.Groups[1].Value, '(?m)^[ \t]*-\s*(.+?)\s*$') | ForEach-Object { $_.Groups[1].Value.Trim("'", '"') })
+    return @(Get-YamlFrontmatterList -Yaml $frontmatter.Groups[1].Value -Field 'skills')
 }
 
 function Get-AgentColdStartSet {
@@ -191,7 +187,14 @@ function Get-AgentColdStartSet {
     $members.Add($agentFullPath)
 
     $skillRoot = Join-Path $RepoRoot '.github/skills'
-    foreach ($name in Get-PreloadedSkillName -Content ([System.IO.File]::ReadAllText($agentFullPath))) {
+    $preloaded = @()
+    try {
+        $preloaded = @(Get-PreloadedSkillName -Content ([System.IO.File]::ReadAllText($agentFullPath)))
+    }
+    catch {
+        $issues.Add("Unreadable frontmatter in ${AgentPath}: $($_.Exception.Message)")
+    }
+    foreach ($name in $preloaded) {
         $skillFile = $null
         if (Test-Path -Path $skillRoot -PathType Container) {
             $skillFile = Get-ChildItem -Path $skillRoot -Recurse -File -Filter 'SKILL.md' |
