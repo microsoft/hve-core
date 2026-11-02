@@ -59,7 +59,7 @@ Use a subagent when the host needs a specialized independent review dimension or
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 * Model fit: `model:` is optional and omitted by default; an omitted extension subagent inherits the invoking parent's model. Declare it only when the extension needs a stable Medium or Low profile, and resolve the current model name by the procedure in [artifact-types.md](artifact-types.md). A High responsibility omits `model:` unless the caller supplies one.
-* Host registration: verify both that the host discovers the agent and lists it for subagent dispatch, and that the invoking parent can dispatch, which in Copilot means `agent` is in the parent's tools list. Copilot leaves agents marked `disable-model-invocation: true` out of the subagent list. For plugin distribution, the plugin manifest declares component membership; a marketplace entry locates the plugin.
+* Host registration: verify that the host discovers the agent, lists it for subagent dispatch, and lets the invoking parent dispatch it, using availability the host exposes or runtime capability evidence the caller supplies. Don't inspect the parent's `tools` configuration; the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md) rules that out. When neither kind of evidence is available, record the registration check as deferred rather than passed. Copilot leaves agents marked `disable-model-invocation: true` out of the subagent list. For plugin distribution, the plugin manifest declares component membership; a marketplace entry locates the plugin.
 
 Example frontmatter, inheriting the parent's model:
 
@@ -71,7 +71,7 @@ user-invocable: false
 ---
 ```
 
-When you author a standalone subagent before its registration exists, do not invent a parent to register it. Record the exact pending manifest or parent permission, its owner, and the check that confirms it. In hve-core, root `plugin.json` owns component membership and the plugin marketplace file in the repository's GitHub configuration directory is only a locator; `npm run plugin:validate` checks distribution consistency, not live host activation. Leave dispatch readiness incomplete until host visibility and parent permission are confirmed.
+When you author a standalone subagent before its registration exists, do not invent a parent to register it. Record the exact pending manifest entry or parent dispatch access, its owner, and the check that confirms it. In hve-core, root `plugin.json` owns component membership and the plugin marketplace file in the repository's GitHub configuration directory is only a locator; `npm run plugin:validate` checks distribution consistency, not live host activation. Leave dispatch readiness incomplete until host or caller evidence confirms host visibility and the parent's ability to dispatch.
 
 ## Worked example
 
@@ -107,7 +107,7 @@ That makes the description the entire contract as far as the phase is concerned.
 * State what the phase gives it and what it returns. For a subagent, say that it returns suggestions, proposals, or source pointers for the phase to verify, and that it writes nothing.
 * Keep it concise and within the host's description limits. Detail belongs in the body; the description only has to let the phase decide correctly and call correctly.
 
-A subagent that extends an RPI phase is advisory: it may gather, compare, or propose, but the phase assigns identifiers, classifies evidence, decides, and writes the artifact. Leave `agent` out of its tools list unless nested dispatch is intended, and omit `model:` unless a stable Low or Medium profile is needed.
+A subagent that extends an RPI phase is advisory: it may gather, compare, or propose, but the phase assigns identifiers, classifies evidence, decides, and writes the artifact. Its body states whether it dispatches other subagents, and an advisory helper normally doesn't. Omit `model:` unless a stable Low or Medium profile is needed.
 
 ### Worked example: an internal corpus for `rpi-research` and `rpi-plan`
 
@@ -148,11 +148,11 @@ tools: [read, search, skill]
 ---
 ```
 
-The subagent activates the `acme-corpus-research-planning` skill for its corpus instructions rather than repeating them, so the corpus knowledge has one source of truth; `skill` in its tools list lets it do so. Its list has no `agent`, so it cannot dispatch further. It omits `model:` so it inherits the invoking context's model.
+The subagent activates the `acme-corpus-research-planning` skill for its corpus instructions rather than repeating them, so the corpus knowledge has one source of truth. Its body says it dispatches no other subagents. The `tools:` list is its author's configuration, which HVE Builder reproduces as given. It omits `model:` so it inherits the invoking context's model.
 
 A planning-side subagent is rarely needed because `rpi-plan` drafts phases itself and the skill already supplies the citations that drafting needs. When a team wants one, for example a subagent that proposes task breakdowns from an internal estimation model, its description must say it is used during planning or with `rpi-plan`, state when the planner should call it and what to pass, and say that it returns a proposal the planner verifies and writes itself.
 
-Register each subagent using the host discovery and parent-permission checks in Authoring a discoverable extension subagent. Distribution membership alone does not establish live dispatch readiness; record any deferred registration explicitly.
+Register each subagent using the host registration check in Authoring a discoverable extension subagent. Distribution membership alone does not establish live dispatch readiness; record any deferred registration explicitly.
 
 ## Safety boundary
 
