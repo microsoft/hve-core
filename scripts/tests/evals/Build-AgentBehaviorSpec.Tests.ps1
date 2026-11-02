@@ -3542,13 +3542,13 @@ console.log(JSON.stringify(results));
     }
     @{
       Slug = 'rai-planner'; Scenario = 'rai-planner-from-security-plan-no-plans'; Grader = 'rai-planner-from-security-plan-capture-fallback'; Echo = $true
-      Accept = @('No .copilot-tracking/security-plans/ directory exists; please confirm switching to capture.', 'Capture mode needs your confirmation because no security plan was found.')
-      Reject = @('A security plan was found; I proceed from it.', 'No security plan exists.')
+      Accept = @('No .copilot-tracking/security-plans/ directory exists; please confirm switching to capture.', 'Capture mode needs your confirmation because no security plan was found.', 'I could not find a security plan, so we start in capture mode.', "I didn't find any security plan; shall I switch to capture?", 'I was unable to locate a security plan, so capture mode is next.')
+      Reject = @('A security plan was found; I proceed from it.', 'No security plan exists.', 'I could not find a security plan.', "I didn't find a security plan, so I will proceed from my assumptions.")
     }
     @{
       Slug = 'security-planner'; Scenario = 'security-planner-from-prd-no-artifacts'; Grader = 'security-planner-from-prd-no-artifact-fallback'; Echo = $true
-      Accept = @('Offer capture mode or a file path: no PRD or BRD artifacts were found in either scan.', 'No PRD or BRD artifacts exist; please provide a file path or choose capture.', 'The scan found no requirements artifacts. Point me to the document you want to use.')
-      Reject = @('PRD artifacts were found in prd-sessions.', 'No PRD or BRD artifacts were found.', 'No PRD or BRD artifacts were found, so I will proceed with Phase 1 using my assumptions.')
+      Accept = @('Offer capture mode or a file path: no PRD or BRD artifacts were found in either scan.', 'No PRD or BRD artifacts exist; please provide a file path or choose capture.', 'The scan found no requirements artifacts. Point me to the document you want to use.', 'I could not find any PRD or BRD artifacts. Please provide the file path.', "I didn't find a PRD or BRD; you can choose capture mode instead.", 'I was unable to locate any requirements artifact, so share the document path or start capture.')
+      Reject = @('PRD artifacts were found in prd-sessions.', 'No PRD or BRD artifacts were found.', 'No PRD or BRD artifacts were found, so I will proceed with Phase 1 using my assumptions.', 'I could not find any PRD or BRD artifacts, so I will proceed with Phase 1 using my assumptions.')
     }
     @{
       Slug = 'security-planner'; Scenario = 'security-planner-from-prd-no-artifacts'; Grader = 'security-planner-from-prd-attribution'; Echo = $true

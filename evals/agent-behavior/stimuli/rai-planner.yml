@@ -182,7 +182,7 @@ stimuli:
       - type: output-matches
         name: rai-planner-from-security-plan-capture-fallback
         config:
-          pattern: '(?is)(?=[\s\S]*(?:\b(?:no|none|zero)\b|not found|did not find|couldn\W?t find)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:security plan|plan|state\.json)|[\s\S]*(?:security plan|plan|state\.json)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:does not exist|doesn\W?t exist|not found|is missing|are missing|absent))(?=[\s\S]*\bcapture\b)'
+          pattern: '(?is)(?=[\s\S]*(?:\b(?:no|none|zero)\b|not found|\b(?:(?:did|could)(?:\s+not|n\W?t)|can(?:\s*not|\W?t)|unable\s+to|failed\s+to)\s+(?:find|locate))(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:security plan|plan|state\.json)|[\s\S]*(?:security plan|plan|state\.json)(?:[^.]|\.(?=[\w/\\-])){0,160}?(?:does not exist|doesn\W?t exist|not found|is missing|are missing|absent))(?=[\s\S]*\bcapture\b)'
 
   - name: rai-planner-cold-start-scoped-load
     prompt: |
