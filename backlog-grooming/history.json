@@ -1,5 +1,15 @@
 [
   {
+    "slug": "2026-11-02-0788c634",
+    "completed_at": "2026-11-02T11:02:16.435Z",
+    "sweep_id": "0788c63405201901e007b486a04c5bbe7226528766a598c803415f70479a5110",
+    "aggregate_digest": "87d4f40b507249167f27e52de1b94909510d352dde237edff83d36eaed5923c7",
+    "assessed": 169,
+    "deferred": 1,
+    "total_snapshot_count": 170,
+    "source_run_id": "41432782295"
+  },
+  {
     "slug": "2026-09-11-0ced9fe7",
     "completed_at": "2026-09-11T03:15:22.517Z",
     "sweep_id": "0ced9fe772c0958c0f239c293d012d0b059a220d73ff94473ba976158543f874",
