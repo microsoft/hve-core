@@ -3,7 +3,7 @@ title: hve-artifact-authoring
 description: "Create and validate HVE Core agents, instructions, and skills with current frontmatter, package membership, delegation, tracking, documentation, and validation conventions. Use when authoring a GitHub Copilot customization artifact in this repository."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - skill
@@ -28,9 +28,11 @@ Create and validate HVE Core agents, instructions, and skills with current front
 
 ## When to use it
 
-Use this skill to select, create, and validate an HVE Core agent, prompt, instruction, or skill.
+Use this skill to select, create, and validate an HVE Core agent, instruction, or skill.
 It provides starter assets, current frontmatter boundaries, package synchronization steps, and
-targeted validation ownership.
+targeted validation ownership. HVE Core no longer accepts prompt files. An entry point that
+used to be a prompt is now a user-invocable skill, as
+[Contributing Slash Commands](../../../contributing/prompts) explains.
 
 Use the `hve-builder` skill instead when the task requires lifecycle-managed creation,
 a review pass, or host validation.
