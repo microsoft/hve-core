@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - package
@@ -14,7 +14,7 @@ keywords:
 HVE Core is the single plugin and extension identity for all distributable HVE Core content.
 
 > [!CAUTION]
-> HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and use the VS Code extension or a pinned selective clone when reproducible, release-gated source is required. The plugin tracks `main` in both VS Code and Copilot CLI, and `main` has no release gate or release attestation.
+> HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and use the VS Code extension or a pinned clone when reproducible, release-gated source is required. The plugin tracks `main` in both VS Code and Copilot CLI, and `main` has no release gate or release attestation.
 
 Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
 
@@ -38,7 +38,7 @@ copilot plugin install hve-core@hve-core
 
 VS Code also discovers plugins that Copilot CLI installs, and it shows the plugin's skills with the plugin name as a prefix, such as `/hve-core:rpi-research`.
 
-Install the extension as `ise-hve-essentials.hve-core`. VS Code forwards the extension's agents and skills to Copilot sessions, but its instructions may not reach them, so use the plugin when you rely on path-specific instructions. For a repository-owned subset, use `hve-core-installer` to choose all manifest components or a custom selection. The installer records `selection.profile` and `selection.components` in `.hve-tracking.json` and does not copy hooks.
+Install the extension as `ise-hve-essentials.hve-core`. VS Code forwards the extension's agents and skills to Copilot sessions, but its instructions may not reach them, so use the plugin when you rely on path-specific instructions. For a repository-owned copy, use `hve-core-installer` to copy every manifest component. The installer records `selection.profile` and `selection.components` in `.hve-tracking.json` and does not copy hooks.
 
 The full repository-relative path inventory remains machine-readable in root `plugin.json`. Agent, instruction, and skill reference pages are available under `docs/reference/`.
 

@@ -46,7 +46,7 @@ route. The quickest is the
 [Copilot plugin](methods/cli-plugins.md), which works in VS Code and
 Copilot CLI.
 
-Review [HVE Core Identity and Channels](packages.md) to choose a source channel or selective clone adoption.
+Review [HVE Core Identity and Channels](packages.md) to choose a source channel or repository adoption.
 
 ## Troubleshooting
 

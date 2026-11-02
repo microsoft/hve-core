@@ -61,7 +61,7 @@ The workspace file only arranges folders and holds no customization settings. Th
 
 ## Quick Start
 
-If your organization does not need its own fork, install the `hve-core` plugin instead, as described in [Install the Plugin](../install#install-the-plugin). For guided installation-method selection, MCP configuration, or copying selected components into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to set up the fork, the workspace, and the plugin install.
+If your organization does not need its own fork, install the `hve-core` plugin instead, as described in [Install the Plugin](../install#install-the-plugin). For guided installation-method selection, MCP configuration, or copying HVE Core into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to set up the fork, the workspace, and the plugin install.
 
 ## Manual Setup
 

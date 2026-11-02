@@ -6,7 +6,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Setup Methods"
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: overview
 keywords:
   - setup
@@ -17,7 +17,7 @@ keywords:
 estimated_reading_time: 3
 ---
 
-HVE Core installs several ways. The Copilot Plugin is the starting point: it carries every agent, skill, and instruction and works in VS Code and Copilot CLI. The other methods suit teams that pin a version, customize components, or work in containers. For MCP setup or selective component adoption, ask an agent to use the included `hve-core-installer` skill.
+HVE Core installs several ways. The Copilot Plugin is the starting point: it carries every agent, skill, and instruction and works in VS Code and Copilot CLI. The other methods suit teams that pin a version, customize components, or work in containers. For MCP setup or a repository copy, ask an agent to use the included `hve-core-installer` skill.
 
 ## Available Methods
 
@@ -36,7 +36,7 @@ To offer HVE Core to everyone who opens a repository without copying any files, 
 
 ## Which Method Should You Choose?
 
-Start with the **Copilot Plugin**. Move to a **Git Submodule** when your team needs a pinned, version-controlled copy, or adopt selected components when your repository should own a customized subset. Use one method at a time: Copilot keeps copies that arrive by different routes, and each agent then appears more than once.
+Start with the **Copilot Plugin**. Move to a **Git Submodule** when your team needs a pinned, version-controlled copy, or copy HVE Core into your repository when it should own and customize the files. Use one method at a time: Copilot keeps copies that arrive by different routes, and each agent then appears more than once.
 
 [Comparing Setup Methods](comparison.md) puts every method side by side. See the [Getting Started](../README.md) guide for the recommended onboarding sequence.
 

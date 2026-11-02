@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -136,7 +136,7 @@ The Security Planner supports two entry modes. Select the Security Planner agent
 Either install delivers the Security Planner with the skills it uses, including `rpi-research` for Phase 3 standards lookups, and the RAI Planner and SSSC Planner it hands off to.
 There is no separate security extension.
 The planner reads its security `identity` instructions by name at session start, so it does not depend on `applyTo` matching.
-To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the Security Planner agent; the `security-planning`, `owasp-top-10`, `owasp-llm`, `rpi-research`, `backlog-templates`, `planner-identity`, and `disclaimer-language` skills; the security `identity` and `standards-mapping` instructions; and the shared `coaching-patterns` instructions.
+To copy HVE Core into your repository instead, see [Copy HVE Core Into Your Repository](../../getting-started/install.md#copy-hve-core-into-your-repository). The installer copies every component, including Security Planner and the skills and instructions it loads.
 
 ## Next Steps
 

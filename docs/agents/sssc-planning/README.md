@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -139,7 +139,7 @@ The SSSC Planner supports four entry modes. Select the SSSC Planner agent and de
 Either install delivers the SSSC Planner with the skills it uses, including `supply-chain-security` for assessment references and `rpi-research` for WAF and CAF runtime lookups.
 There is no separate security extension.
 The planner reads its `sssc-planner` instructions by name at session start, so it does not depend on `applyTo` matching.
-To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md) and include the SSSC Planner agent; the `supply-chain-security`, `rpi-research`, `planner-identity`, and `disclaimer-language` skills (plus `vex` for VEX planning); the security `sssc-planner` instructions; and the shared `coaching-patterns` instructions.
+To copy HVE Core into your repository instead, see [Copy HVE Core Into Your Repository](../../getting-started/install.md#copy-hve-core-into-your-repository). The installer copies every component, including SSSC Planner and the skills and instructions it loads.
 
 ## Next Steps
 

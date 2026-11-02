@@ -1,15 +1,15 @@
 ---
 title: Troubleshooting
-description: Solutions for common HVE Core plugin, extension, and selective clone installation problems
+description: Solutions for common HVE Core plugin, extension, and repository copy installation problems
 sidebar_position: 8
 author: Microsoft
 ms.date: 2026-11-02
 ms.topic: troubleshooting
-keywords: [troubleshooting, FAQ, installation, hve-core, copilot plugin, selective clone, registry, proxy]
+keywords: [troubleshooting, FAQ, installation, hve-core, copilot plugin, repository copy, registry, proxy]
 estimated_reading_time: 7
 ---
 
-This page covers common installation problems and answers frequently asked questions about the HVE Core plugin, the VS Code extension, and selective clone adoption.
+This page covers common installation problems and answers frequently asked questions about the HVE Core plugin, the VS Code extension, and repository adoption.
 
 ## Common Installation Problems
 
@@ -54,7 +54,7 @@ Some agents or skills are missing from the agent picker or `/` command list in C
 2. Check the route you used. Plugin components appear on the **Plugins** page of the Agent Customizations editor. Components copied into your repository load from its `.github/agents`, `.github/skills`, and `.github/instructions` folders, at any depth.
 3. Copilot Chat loads workspace-scoped agents only when a folder or workspace is open. Opening a single file does not activate workspace agents.
 4. For a clone listed in `.github/copilot/settings.json`, check that each path is a literal folder inside the checkout and that the workspace folder is trusted. Copilot rejects absolute paths, `~`, environment variables, globs, and paths that leave the checkout.
-5. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, instructions, and complete skills were copied.
+5. If you copied HVE Core into your repository, inspect `.hve-tracking.json` schema version 2 and confirm that the recorded agents, instructions, and complete skills were copied.
 6. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/skills/` directories.
 7. Agents cannot start skills that set `disable-model-invocation: true`, such as `git-commit`. Type the skill's slash command instead.
 

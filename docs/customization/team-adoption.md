@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - governance
@@ -42,10 +42,10 @@ Each person can still turn the plugin off on the **Plugins** page.
 explains the file, and [Install the Plugin](../getting-started/install#install-the-plugin)
 covers installing it directly in VS Code or Copilot CLI.
 
-When your repository should own a customized subset, ask an agent to use the
-included `hve-core-installer` skill. It copies the components you choose into
+When your repository should own and customize its HVE Core files, ask an agent
+to use the included `hve-core-installer` skill. It copies every component into
 your `.github` folders, as described in
-[Adopt Selected Components](../getting-started/install#adopt-selected-components),
+[Copy HVE Core Into Your Repository](../getting-started/install#copy-hve-core-into-your-repository),
 and it can also recommend an install route and set up MCP servers. Teams that pin
 a version or change HVE Core itself can
 [work from a clone](../getting-started/install#work-from-a-clone).
@@ -80,7 +80,7 @@ does not load prompt files, so build these entry points as skills.
 
 ### Phase 3: Skills and Shared Distribution
 
-Package domain knowledge into skills for complex, multi-step workflows. Place related artifacts under package-scoped `.github` paths and synchronize root `plugin.json` for managed distribution, or copy a selected subset into your repository with the `hve-core-installer` skill.
+Package domain knowledge into skills for complex, multi-step workflows. Place related artifacts under package-scoped `.github` paths and synchronize root `plugin.json` for managed distribution, or copy HVE Core into your repository with the `hve-core-installer` skill.
 
 ### Measuring Adoption Progress
 
@@ -249,7 +249,7 @@ starting points and progression for each of the nine roles.
 
 1. Write instructions for architecture decision conventions
 2. Create a code review agent that enforces team standards
-3. Establish a reviewed custom selection that captures your team's workflow
+3. Document which HVE Core agents and skills fit your team's workflow
 
 ### Security Architect
 

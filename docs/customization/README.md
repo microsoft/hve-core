@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: overview
 sidebar_position: 1
 sidebar_label: Overview
@@ -21,22 +21,21 @@ estimated_reading_time: 5
 
 Your installation method determines which customization options are available.
 
-| Customization Level       |     Plugin      | Selected Components | Clone or Fork |
-|---------------------------|:---------------:|:-------------------:|:-------------:|
-| VS Code Settings          |       Yes       |         Yes         |      Yes      |
-| copilot-instructions.md   |       Yes       |         Yes         |      Yes      |
-| .instructions.md files    | Yes (your repo) |         Yes         |      Yes      |
-| Choose a component subset |       No        |         Yes         |      Yes      |
-| Modify HVE Core agents    |       No        |         Yes         |      Yes      |
-| Modify HVE Core skills    |       No        |         Yes         |      Yes      |
-| Build system changes      |       No        |         No          |      Yes      |
-| Fork and extend           |       No        |         No          |      Yes      |
+| Customization Level     |     Plugin      | Repository Copy | Clone or Fork |
+|-------------------------|:---------------:|:---------------:|:-------------:|
+| VS Code Settings        |       Yes       |       Yes       |      Yes      |
+| copilot-instructions.md |       Yes       |       Yes       |      Yes      |
+| .instructions.md files  | Yes (your repo) |       Yes       |      Yes      |
+| Modify HVE Core agents  |       No        |       Yes       |      Yes      |
+| Modify HVE Core skills  |       No        |       Yes       |      Yes      |
+| Build system changes    |       No        |       No        |      Yes      |
+| Fork and extend         |       No        |       No        |      Yes      |
 
 The Plugin column also applies to a repository default and to the VS Code extension.
 
 Start with the [plugin](../getting-started/install#install-the-plugin), which installs every agent, skill, and instruction. A [repository default](../getting-started/install#offer-the-plugin-to-your-team) in `.github/copilot/settings.json` offers the plugin to everyone who opens your repository.
 
-When your repository should own a customized subset, ask an agent to use the included `hve-core-installer` skill. It [copies the components you select](../getting-started/install#adopt-selected-components) (agents, instructions, and complete skill directories) into your `.github` folders with their repository-relative paths and does not copy hooks. The skill can also recommend an install route and set up MCP servers.
+When your repository should own and customize its HVE Core files, ask an agent to use the included `hve-core-installer` skill. It [copies every component](../getting-started/install#copy-hve-core-into-your-repository) (agents, instructions, and complete skill directories) into your `.github` folders with their repository-relative paths and does not copy hooks. The skill can also recommend an install route and set up MCP servers.
 
 The [VS Code extension](../getting-started/install#use-the-vs-code-extension) is another option, but its instructions may not reach Copilot sessions. For full artifact modification, [work from a clone](../getting-started/install#work-from-a-clone) or fork the repository.
 

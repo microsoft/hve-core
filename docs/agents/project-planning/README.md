@@ -3,7 +3,7 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: concept
 keywords:
   - project planning
@@ -93,7 +93,7 @@ See the [Security Planning](../security/README.md) guide for the workflow, opera
 
 ## Prerequisites
 
-* HVE Core installed in one of these hosts. Either install delivers every agent on this page, including Security Planner. To adopt selected components from a clone instead, see the [Installation Guide](../../getting-started/install.md).
+* HVE Core installed in one of these hosts. Either install delivers every agent on this page, including Security Planner. To copy HVE Core into your repository instead, see [Copy HVE Core Into Your Repository](../../getting-started/install.md#copy-hve-core-into-your-repository).
   * VS Code with the `hve-core` plugin ([Install the Plugin](../../getting-started/install.md#install-the-plugin)) or the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
   * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For BRD/PRD builders: a writable `.copilot-tracking/` directory for session state persistence

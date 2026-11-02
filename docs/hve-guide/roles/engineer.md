@@ -3,7 +3,7 @@ title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - engineer
@@ -20,7 +20,7 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 > [!TIP]
 > Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
-> For clone-based setup, use the included `hve-core-installer` skill to choose the complete manifest or a custom selection that includes RPI and language-specific coding components. See the [Installation Guide](../../getting-started/install.md).
+> To copy HVE Core into your repository, use the included `hve-core-installer` skill. It copies the full set, including the RPI and language-specific coding components. See the [Installation Guide](../../getting-started/install.md).
 
 1. Researches codebase patterns, external APIs, and architecture before you write code
 2. Creates structured implementation plans with step-by-step task breakdowns

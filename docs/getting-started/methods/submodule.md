@@ -53,7 +53,7 @@ your-project/
 
 If your team doesn't need a pinned version, use the `hve-core` plugin instead: commit the [plugin defaults](#plugin-as-a-team-default), or have each person install it as described in [Install the Plugin](../install#install-the-plugin).
 
-For guided installation-method selection, MCP configuration, or copying selected components into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to set up the submodule.
+For guided installation-method selection, MCP configuration, or copying HVE Core into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to set up the submodule.
 
 ## Manual Setup
 

@@ -3,7 +3,7 @@ title: HVE Core Identity and Channels
 description: Understand the single HVE Core identity, its Copilot plugin registration, and its VS Code extension PreRelease and Stable channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: overview
 keywords:
   - packages
@@ -79,9 +79,9 @@ copilot plugin update hve-core@hve-core
 If you registered a release-channel or tag ref earlier, follow
 [Replace an Earlier Registration](methods/cli-plugins#replace-an-earlier-registration).
 
-## Selective Clone Adoption
+## Repository Adoption
 
-For a smaller repository-owned footprint, use the installer to copy all manifest components or a selected subset. Schema version 2 records `selection.profile` and `selection.components`, does not assign package ownership, and never copies hooks.
+For a repository-owned copy, use the installer to copy every manifest component. Schema version 2 records `selection.profile` and `selection.components`, does not assign package ownership, and never copies hooks.
 
 ## After Installation
 

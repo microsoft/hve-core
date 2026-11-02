@@ -2,7 +2,7 @@
 title: Managing the HVE Core Plugin Manifest
 description: Maintain the single HVE Core plugin and VSIX membership through the canonical manifest
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - marketplace
@@ -46,7 +46,7 @@ The VSIX carries the manifest's agents, instructions, and skills, without canvas
 
 ## Hooks
 
-The plugin manifest declares no hooks. Hooks are not copied during selective installation.
+The plugin manifest declares no hooks. Hooks are not copied during repository adoption.
 
 ## Validation and Package Staging
 
@@ -62,11 +62,13 @@ npm run test:ps -- -TestPath scripts/tests/plugins/
 npm run test:ps -- -TestPath scripts/tests/extension/
 ```
 
-## Selective Adoption
+## Repository Adoption
 
-The installer resolves all components from root `plugin.json`. Users can copy the complete manifest or a custom selection; the installer converts repository-relative `.github/...` declarations to its selection form without changing canonical target paths.
+The installer resolves all components from root `plugin.json` and copies the complete manifest, because agents load skills and instructions by name and a partial set can leave an agent without what it needs. It converts repository-relative `.github/...` declarations to its component form without changing canonical target paths.
 
-Schema version 2 records `selection.profile` and `selection.components`. File records track selected components without package identity. The installer copies agents, instructions, and complete distributable skill directories into the target repository's `.github` folders while preserving source-relative paths, and Copilot discovers the copies there without settings. [Adopt Selected Components](../getting-started/install#adopt-selected-components) walks through the installer.
+Schema version 2 records `selection.profile` and `selection.components`. New installs record the `all` profile. Installs from earlier versions may record `custom` with the components picked then, and upgrades replay that list. File records track installed components without package identity.
+
+The installer copies agents, instructions, and complete distributable skill directories into the target repository's `.github` folders while preserving source-relative paths, and Copilot discovers the copies there without settings. [Copy HVE Core Into Your Repository](../getting-started/install#copy-hve-core-into-your-repository) walks through the installer.
 
 ---
 

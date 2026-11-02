@@ -91,7 +91,7 @@ This method requires a multi-phase workflow:
 
 If you don't need one clone shared across projects, install the `hve-core` plugin instead, as described in [Install the Plugin](../install#install-the-plugin). To offer the plugin to everyone who opens your repository, commit the defaults described in [Offer the Plugin to Your Team](../install#offer-the-plugin-to-your-team).
 
-To copy selected components into your repository's own `.github` folders, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for the mounted setup.
+To copy HVE Core into your repository's own `.github` folders, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for the mounted setup.
 
 ## Manual Setup
 

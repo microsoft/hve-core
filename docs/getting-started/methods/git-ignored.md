@@ -54,7 +54,7 @@ my-project/
 
 ## Quick Start
 
-To use HVE Core without keeping a clone, install the `hve-core` plugin as described in [Install the Plugin](../install#install-the-plugin). For guided installation-method selection, MCP configuration, or copying selected components into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to install from a git-ignored folder.
+To use HVE Core without keeping a clone, install the `hve-core` plugin as described in [Install the Plugin](../install#install-the-plugin). For guided installation-method selection, MCP configuration, or copying HVE Core into your project, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below to install from a git-ignored folder.
 
 ## Manual Setup
 

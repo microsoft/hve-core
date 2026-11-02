@@ -3,7 +3,7 @@ title: Comparing Setup Methods
 description: Decision matrix, decision tree, and side-by-side comparison for choosing how to install HVE Core for the Copilot agent harness
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - installation
@@ -22,7 +22,7 @@ Three questions narrow down the method:
 
 1. Do you need to pin or change HVE Core files?
    * No: install the plugin, or offer it to your team through repository settings
-   * Yes: adopt selected components or keep a clone
+   * Yes: copy HVE Core into your repository or keep a clone
 2. Solo or team development?
    * Solo: just you, no version control of HVE Core needed
    * Team: multiple people who need a reproducible setup
@@ -33,18 +33,18 @@ Three questions narrow down the method:
 
 ## Decision Matrix
 
-| Need                                         | Team | Updates              | Recommended Method                                             |
-|----------------------------------------------|------|----------------------|----------------------------------------------------------------|
-| The full set with the least setup            | Any  | Auto, follows `main` | [Copilot Plugin](cli-plugins.md) ⭐                             |
-| The same setup for everyone in a repository  | Team | Auto, follows `main` | [Repository default](../install#offer-the-plugin-to-your-team) |
-| Marketplace release channels                 | Any  | Auto                 | [VS Code Extension](extension.md)                              |
-| A customized subset owned by your repository | Team | Controlled           | [Selected components](../install#adopt-selected-components)    |
-| A pinned version                             | Team | Controlled           | [Git Submodule](submodule.md)                                  |
-| Local customization without a container      | Solo | Manual               | [Peer Directory Clone](peer-clone.md)                          |
-| Local customization in a devcontainer        | Solo | Manual               | [Git-Ignored Folder](git-ignored.md)                           |
-| Codespaces                                   | Any  | Depends on the route | [GitHub Codespaces](codespaces.md)                             |
-| Editing HVE Core next to your project        | Solo | Manual               | [Multi-Root Workspace](multi-root.md)                          |
-| One host copy shared by containers           | Solo | Manual               | [Mounted Directory](mounted.md)                                |
+| Need                                        | Team | Updates              | Recommended Method                                               |
+|---------------------------------------------|------|----------------------|------------------------------------------------------------------|
+| The full set with the least setup           | Any  | Auto, follows `main` | [Copilot Plugin](cli-plugins.md) ⭐                               |
+| The same setup for everyone in a repository | Team | Auto, follows `main` | [Repository default](../install#offer-the-plugin-to-your-team)   |
+| Marketplace release channels                | Any  | Auto                 | [VS Code Extension](extension.md)                                |
+| A customized copy owned by your repository  | Team | Controlled           | [Repository copy](../install#copy-hve-core-into-your-repository) |
+| A pinned version                            | Team | Controlled           | [Git Submodule](submodule.md)                                    |
+| Local customization without a container     | Solo | Manual               | [Peer Directory Clone](peer-clone.md)                            |
+| Local customization in a devcontainer       | Solo | Manual               | [Git-Ignored Folder](git-ignored.md)                             |
+| Codespaces                                  | Any  | Depends on the route | [GitHub Codespaces](codespaces.md)                               |
+| Editing HVE Core next to your project       | Solo | Manual               | [Multi-Root Workspace](multi-root.md)                            |
+| One host copy shared by containers          | Solo | Manual               | [Mounted Directory](mounted.md)                                  |
 
 ## Quick Decision Tree
 
@@ -57,7 +57,7 @@ Want every teammate to get HVE Core from the repository?
 └─ Pinned to a version ─────────────► Git Submodule
 
 Need to customize HVE Core?
-├─ Repository owns the copies ──────► Selected components
+├─ Repository owns the copies ──────► Repository copy
 ├─ Local VS Code only ──────────────► Peer Directory Clone
 ├─ Local devcontainer ──────────────► Git-Ignored Folder
 └─ Codespaces ──────────────────────► GitHub Codespaces
@@ -74,7 +74,7 @@ Copilot reaches HVE Core through a plugin, through the project's own `.github` f
 |----------------------|-----------------------------------------------------------|-----------------------------------------------|----------------------|
 | Copilot Plugin       | Plugin                                                    | Yes                                           | Follows `main`       |
 | Repository default   | Plugin, offered by `.github/copilot/settings.json`        | Yes                                           | Follows `main`       |
-| Selected components  | The project's own `.github` folders                       | Yes                                           | Your repository      |
+| Repository copy      | The project's own `.github` folders                       | Yes                                           | Your repository      |
 | VS Code Extension    | VS Code extension forwarding                              | May not reach Copilot sessions                | Marketplace channels |
 | Git Submodule        | Folders listed in repository settings                     | Not confirmed                                 | Pinned commit        |
 | Git-Ignored Folder   | Plugin from source, or folders in repository settings     | Yes as a plugin, not confirmed from settings  | Manual `git pull`    |
@@ -87,7 +87,7 @@ Use one method at a time. Copilot keeps copies that arrive by different routes, 
 
 ## Still Not Sure?
 
-Start with the [Copilot Plugin](cli-plugins.md). If you outgrow it, move to selected components or a clone method, and uninstall the plugin when you switch.
+Start with the [Copilot Plugin](cli-plugins.md). If you outgrow it, move to a repository copy or a clone method, and uninstall the plugin when you switch.
 
 For detailed documentation on each method, see the [Setup Methods Overview](.).
 

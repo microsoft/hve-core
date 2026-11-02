@@ -9,7 +9,7 @@ description: Phase 7 component installation and the Phase 7 upgrade mode for the
 > [!IMPORTANT]
 > Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported. The Bash scripts require `jq`.
 
-Phase 7 carries out native repository adoption. After Phase 5 validates the source clone, copy the components the user selects into the project's `.github/agents`, `.github/skills`, and `.github/instructions` folders. Copilot discovers the copies natively, and the repository owns them. The source clone stays unconnected to Copilot. When this phase finishes, proceed to Phase 6.
+Phase 7 carries out native repository adoption. After Phase 5 validates the source clone, copy every HVE-Core component into the project's `.github/agents`, `.github/skills`, and `.github/instructions` folders. Phase 7 copies the full set because agents load skills and instructions by name, and a partial set can leave an agent without what it needs to start. Copilot discovers the copies natively, and the repository owns them. The source clone stays unconnected to Copilot. When this phase finishes, proceed to Phase 6.
 
 A component is one agent, prompt, instruction, or complete skill declared by root `plugin.json`. Every Phase 7 operation validates its component paths against that manifest before writing. The manifest uses repository-relative `.github/...` paths; component selections use installer form and map to canonical target paths without flattening:
 
@@ -38,33 +38,28 @@ Present the component selection prompt:
 ```text
 📂 Component Installation
 
-I'll copy HVE-Core agents, instructions, and skills into your
+I'll copy every HVE-Core agent, instruction, and skill into your
 repository's .github folders. Copilot discovers the copies natively,
 and your repository owns them.
 
 Options:
   [1] Install every component declared by the HVE Core plugin
-  [2] Choose components from the HVE Core plugin
-  [3] Skip component installation
+  [2] Skip component installation
 
-Your choice? (1/2/3)
+Your choice? (1/2)
 ```
 <!-- </component-selection-prompt> -->
 
 User input handling:
 
 * "1", "all", "complete" → Select every agent, prompt, instruction, and skill declared by root `plugin.json`; set the selection name to `all`
-* "2", "choose", "custom", "components" → Proceed to the Custom Selection sub-flow
-* "3", "skip", "none", "no" → Skip to Phase 6 without copying anything
+* "2", "skip", "none", "no" → Skip to Phase 6 without copying anything
+* A request to pick individual components → Explain that Phase 7 copies the full set because a partial set can leave agents without the skills and instructions they load, then offer the two options again
 * Unclear response → Ask for clarification
-
-### Custom Selection Sub-Flow
-
-When the user selects option 2, read root `plugin.json` from the HVE-Core source at `$hveCoreBasePath`. Present the declared components grouped by kind. Convert canonical repository-relative manifest paths to installer paths before passing them to collision detection or component copy.
 
 ### Selection Resolution
 
-Resolve the chosen component list before any confirmation or write. Use these deterministic conversions:
+Resolve the component list before any confirmation or write. For a new install, read root `plugin.json` from the HVE-Core source at `$hveCoreBasePath` and take every declared component. In upgrade mode, take the recorded components. Convert canonical repository-relative manifest paths to installer paths with these deterministic conversions before collision detection or component copy:
 
 | Manifest declaration                                          | Installer component path                 |
 |---------------------------------------------------------------|------------------------------------------|
@@ -114,7 +109,7 @@ COLLISION_TARGETS=<comma-separated target-relative paths>
 
 ### Confirmation Prompt
 
-Present every selected component before any write.
+Present every component before any write.
 
 <!-- <component-confirmation-prompt> -->
 ```text
@@ -172,7 +167,7 @@ Keeping a skill keeps its whole target directory.
 
 After confirmation and collision resolution, execute the copy.
 
-**PowerShell:** Run [scripts/component-copy.ps1](../scripts/component-copy.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-SelectionName` (`all` or `custom`), and `-Component`. Add `-KeepExisting -Collisions <component paths>` for kept components.
+**PowerShell:** Run [scripts/component-copy.ps1](../scripts/component-copy.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-SelectionName` (`all` for a new install, or the recorded profile in upgrade mode), and `-Component`. Add `-KeepExisting -Collisions <component paths>` for kept components.
 
 **Bash:** Run [scripts/component-copy.sh](../scripts/component-copy.sh) with the HVE-Core base path, target root, selection name, and component paths as arguments, in that order. Set `KEEP_EXISTING=true` and `COLLISIONS_FILE=<newline-delimited component paths>` for kept components.
 
@@ -207,7 +202,7 @@ The copy writes `.hve-tracking.json` at the target root using schema version 2:
 ```
 <!-- </tracking-manifest> -->
 
-Files are keyed by target-relative path. The `selection` object records only the profile label and installed component paths; file entries carry component ownership, and no package identity or absolute target root is stored. There is no version 1 compatibility layer: a missing or unsupported `schemaVersion` fails before any target change with clean-reinstall guidance.
+Files are keyed by target-relative path. New installs record the `all` profile with every component path. Installs from earlier installer versions may record `custom` with the components picked then, as in the example, and upgrade mode replays them. The `selection` object records only the profile label and installed component paths; file entries carry component ownership, and no package identity or absolute target root is stored. There is no version 1 compatibility layer: a missing or unsupported `schemaVersion` fails before any target change with clean-reinstall guidance.
 
 ### Component Copy Success Report
 
@@ -246,7 +241,7 @@ At Phase 7 start, check for an existing manifest.
 
 Output keys: `UPGRADE_MODE`, and when a manifest exists, `INSTALLED_VERSION`, `SOURCE_VERSION`, `VERSION_CHANGED`, `INSTALLED_PROFILE`, and `INSTALLED_COMPONENTS`. An unsupported `schemaVersion` fails with clean-reinstall guidance.
 
-Replay `INSTALLED_COMPONENTS` after validating each recorded path against the current root `plugin.json` membership. Pass the recorded profile as `-SelectionName` or the Bash selection-name argument. If any recorded component is no longer declared, stop and ask the user to choose a current component set before writing.
+Replay `INSTALLED_COMPONENTS` after validating each recorded path against the current root `plugin.json` membership. Pass the recorded profile as `-SelectionName` or the Bash selection-name argument. If any recorded component is no longer declared, stop before writing, list the components that are gone, and offer to upgrade to the full current set with the `all` profile or to skip the upgrade.
 
 ### Upgrade Prompt
 

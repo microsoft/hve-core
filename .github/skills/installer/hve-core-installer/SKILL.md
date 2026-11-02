@@ -1,6 +1,6 @@
 ---
 name: hve-core-installer
-description: 'Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, selective component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup'
+description: 'Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, a full component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup'
 compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access. The Bash component scripts require jq.'
 license: MIT
 metadata:
@@ -11,7 +11,7 @@ metadata:
 
 # HVE-Core Installer Skill
 
-Decision-driven installer for HVE-Core in VS Code's Copilot agent harness. It recommends the HVE-Core plugin first, then a team default in `.github/copilot/settings.json`, then native repository adoption, which copies selected components into the project's own `.github` folders.
+Decision-driven installer for HVE-Core in VS Code's Copilot agent harness. It recommends the HVE-Core plugin first, then a team default in `.github/copilot/settings.json`, then native repository adoption, which copies every HVE-Core component into the project's own `.github` folders.
 
 The VS Code extension remains an editor option. A clone is a storage choice that Copilot uses as a plugin from source or, for a copy inside the project's checkout, through folders declared in `.github/copilot/settings.json`. The skill also validates the result and configures MCP servers.
 
@@ -36,7 +36,7 @@ The Installer persona handles all detection and execution. After installation co
 | 4     | Installation Methods                    | Clone HVE-Core and, for the clone route, connect the clone to Copilot                        |
 | 5     | Validation                              | Verify the clone before it is used                                                           |
 | 6     | Post-Installation Setup                 | Configure gitignore and MCP servers, then reload the window and check Copilot Chat           |
-| 7     | Component Installation                  | Native adoption: copy selected components into the project's `.github` folders               |
+| 7     | Component Installation                  | Native adoption: copy every component into the project's `.github` folders                   |
 
 Flow paths:
 
@@ -127,7 +127,7 @@ I add .github/copilot/settings.json so Copilot offers the plugin
 to everyone who opens this repository.
 
 **Option 3: Copy into This Repository**
-I copy the agents, skills, and instructions you pick into your
+I copy every HVE-Core agent, skill, and instruction into your
 .github folders. Your repository owns the copies.
 
 **Option 4: VS Code Extension**
@@ -154,7 +154,7 @@ User input handling:
 Recommend a route other than the plugin when:
 
 * A team wants Copilot to offer HVE-Core to everyone who opens the repository (Option 2)
-* The repository should own a selected set of components and customize them (Option 3)
+* The repository should own and customize its copy of HVE-Core (Option 3)
 * The user needs a pinned copy of HVE-Core or plans to edit HVE-Core itself (Option 5)
 
 ### Plugin Route

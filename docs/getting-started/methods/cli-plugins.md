@@ -3,7 +3,7 @@ title: Copilot Plugin
 description: Install the complete hve-core plugin in VS Code's Copilot harness or in Copilot CLI
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - copilot plugin
@@ -28,7 +28,7 @@ The `hve-core` plugin installs the complete HVE Core component set: agents, skil
 ❌ **Consider alternatives when:**
 
 * Your team needs a pinned version → [Git Submodule](submodule)
-* Your repository should own a customized subset → [Adopt Selected Components](../install#adopt-selected-components)
+* Your repository should own and customize its copy → [Copy HVE Core Into Your Repository](../install#copy-hve-core-into-your-repository)
 * You want Marketplace release channels → [VS Code Extension](extension)
 
 ## Prerequisites

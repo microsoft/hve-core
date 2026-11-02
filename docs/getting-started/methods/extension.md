@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the Marketplace and learn which components reach Copilot sessions
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - extension
@@ -27,7 +27,7 @@ The HVE Core extension, `ise-hve-essentials.hve-core`, installs HVE Core from th
 ❌ **Consider alternatives when:**
 
 * You need path-specific instructions in Copilot sessions, or canvases → [Copilot Plugin](cli-plugins)
-* You need to customize agents, skills, or instructions → [Adopt Selected Components](../install#adopt-selected-components) or [Git-Ignored Folder](git-ignored)
+* You need to customize agents, skills, or instructions → [Copy HVE Core Into Your Repository](../install#copy-hve-core-into-your-repository) or [Git-Ignored Folder](git-ignored)
 * Your team needs to version control HVE Core → [Git Submodule](submodule)
 * You're contributing to HVE Core or testing an unpublished branch → [Peer Directory Clone](peer-clone)
 
@@ -183,13 +183,13 @@ To offer HVE Core to everyone who opens a particular repository instead, commit 
 
 **Goal:** Start with the extension and add customization as needs grow
 
-**Solution:** Use the included installer skill to copy selected components into your repository
+**Solution:** Use the included installer skill to copy HVE Core into your repository
 
 #### Steps
 
 1. Start with the HVE Core extension for the complete managed component set
 2. When you need MCP configuration or repository-owned components, ask an agent to use the included `hve-core-installer` skill
-3. Choose the complete manifest or a custom selection and review component paths and collisions before the copy
+3. Review component paths and collisions before the installer copies the full set
 4. Uninstall the extension once your repository has its copies, so agents do not appear twice
 
 ## Troubleshooting
@@ -243,19 +243,19 @@ If you have the extension and another route, such as the plugin or a clone, each
 1. Extensions view → Find "HVE Core"
 2. Click "Update" button
 
-## Need MCP Configuration or Selective Adoption?
+## Need MCP Configuration or a Repository Copy?
 
-The extension includes the `hve-core-installer` skill. Ask an agent to use it when you need MCP guidance, help choosing an install route, or a smaller component set owned by your repository.
+The extension includes the `hve-core-installer` skill. Ask an agent to use it when you need MCP guidance, help choosing an install route, or a copy of HVE Core owned by your repository.
 
 1. Ask an agent to use `hve-core-installer`.
-2. Choose the complete manifest or a custom selection for adoption.
+2. Confirm that the installer copies every component into your repository.
 3. Review agents, instructions, distributable skill directories, and collisions before anything is written.
 
 | Capability                  | HVE Core Extension | Installer Skill                    |
 |-----------------------------|-------------------:|------------------------------------|
-| Complete managed content    |                Yes | Available for selective adoption   |
+| Complete managed content    |                Yes | Copied into your repository        |
 | MCP configuration guidance  |                 No | Curated server templates           |
-| Multi-kind custom selection |                 No | Agents, instructions, skills       |
+| Repository-owned copies     |                 No | Agents, instructions, skills       |
 | Installation route guidance |                 No | Plugin, clone, and settings routes |
 
 > [!NOTE]
@@ -279,7 +279,7 @@ For retired plugin or extension identities, start with [Migrate to the HVE Core 
 2. Install the [Copilot Plugin](cli-plugins)
 3. Reload the window and verify that agents appear in Copilot Chat
 
-To customize HVE Core instead, follow [Adopt Selected Components](../install#adopt-selected-components) or a clone method such as [Peer Directory Clone](peer-clone).
+To customize HVE Core instead, follow [Copy HVE Core Into Your Repository](../install#copy-hve-core-into-your-repository) or a clone method such as [Peer Directory Clone](peer-clone).
 
 ## Limitations
 

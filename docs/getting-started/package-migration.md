@@ -3,14 +3,14 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension and find replacements for retired slash commands
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - migration
   - hve-core
   - copilot plugin
   - vscode extension
-  - selective clone
+  - repository copy
   - retired packages
   - retired commands
   - prompt files
@@ -67,16 +67,16 @@ Select the channel offered by the HVE Core extension page in VS Code. A
 published channel release carries the associated release assurance; client
 channel-switch behavior must be confirmed in the installed host.
 
-## Selective Clone Adaptation
+## Repository Adoption
 
-Use clone-based selective adoption when the complete plugin is broader than your repository needs.
+Copy HVE Core into your repository when the repository should own and review its HVE Core files.
 
 1. Pin or clone the HVE Core source version you intend to adopt.
-2. Invoke `hve-core-installer` and choose all manifest components or a subset.
-3. Review the selected components and collisions before allowing writes.
+2. Invoke `hve-core-installer`, which copies every manifest component.
+3. Review the components and collisions before allowing writes.
 4. Review the resulting `.hve-tracking.json` manifest before committing adopted files.
 
-The installer preserves repository-relative paths for every copied component. A selected skill includes its complete distributable directory, excluding local tests, environments, and caches. Hooks are plugin runtime configuration and are not copied into the target repository.
+The installer preserves repository-relative paths for every copied component. Each skill includes its complete distributable directory, excluding local tests, environments, and caches. Hooks are plugin runtime configuration and are not copied into the target repository.
 
 Schema version 2 stores `selection.profile` and `selection.components`. File records identify component ownership without package identity, and hooks are not copied. Existing schema version 1 tracking files are not upgraded in place: remove `.hve-tracking.json` and run a clean installation. Because the one-plugin manifest no longer declares per-component maturity, new schema version 2 file records use the schema-default `stable` value.
 
@@ -256,7 +256,7 @@ migration commands.
 
 ## Verify the Result
 
-Confirm the plugin's agents, instructions, and skills are available in the host. For selective clones, verify `.hve-tracking.json` records the intended profile and components. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
+Confirm the plugin's agents, instructions, and skills are available in the host. For a repository copy, verify that `.hve-tracking.json` records the profile and components you expect. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
 
 ---
 

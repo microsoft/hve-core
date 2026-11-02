@@ -1,11 +1,11 @@
 ---
 title: Installing HVE Core
-description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, selected components, the VS Code extension, or a clone
+description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, a repository copy, the VS Code extension, or a clone
 sidebar_position: 2
 author: Microsoft
 ms.date: 2026-11-02
 ms.topic: how-to
-keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, selective clone]
+keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, repository copy]
 estimated_reading_time: 7
 ---
 
@@ -19,13 +19,13 @@ VS Code shows a session's harness at the start of its chat title. To switch, sta
 
 ## Choose an Install Route
 
-| Route                                                | What you get                                                   | Choose it when                                  |
-|------------------------------------------------------|----------------------------------------------------------------|-------------------------------------------------|
-| [Plugin](#install-the-plugin) ⭐                      | Every agent, skill, and instruction, following `main`          | You want the full set in VS Code or Copilot CLI |
-| [Repository default](#offer-the-plugin-to-your-team) | The plugin offered to everyone who opens a repository          | Your team wants one setup without copying files |
-| [Selected components](#adopt-selected-components)    | Copies of the components you pick, owned by your repository    | You customize HVE Core or keep only a subset    |
-| [VS Code extension](#use-the-vs-code-extension)      | Agents and skills from the VS Code Marketplace                 | You manage editor tools through the Marketplace |
-| [A clone](#work-from-a-clone)                        | A pinned or editable copy, loaded as a plugin or from settings | You pin a version, contribute, or test a branch |
+| Route                                                  | What you get                                                   | Choose it when                                  |
+|--------------------------------------------------------|----------------------------------------------------------------|-------------------------------------------------|
+| [Plugin](#install-the-plugin) ⭐                        | Every agent, skill, and instruction, following `main`          | You want the full set in VS Code or Copilot CLI |
+| [Repository default](#offer-the-plugin-to-your-team)   | The plugin offered to everyone who opens a repository          | Your team wants one setup without copying files |
+| [Repository copy](#copy-hve-core-into-your-repository) | Copies of every component, owned by your repository            | You customize HVE Core in your repository       |
+| [VS Code extension](#use-the-vs-code-extension)        | Agents and skills from the VS Code Marketplace                 | You manage editor tools through the Marketplace |
+| [A clone](#work-from-a-clone)                          | A pinned or editable copy, loaded as a plugin or from settings | You pin a version, contribute, or test a branch |
 
 ⭐ Most people should start with the plugin.
 
@@ -89,16 +89,18 @@ Commit `.github/copilot/settings.json` to a repository to offer HVE Core to ever
 
 The Copilot harness treats this file as the repository's plugin defaults. Each person can still turn the plugin off on the **Plugins** page, and enterprise-managed settings take precedence. The key under `extraKnownMarketplaces` must be `hve-core` because that is the marketplace's name.
 
-## Adopt Selected Components
+## Copy HVE Core Into Your Repository
 
-Copilot finds agents, skills, and instructions in a project's `.github/agents`, `.github/skills`, and `.github/instructions` folders without any settings. If your repository should own its HVE Core files, copy the components you want into those folders with the `hve-core-installer` skill, which ships with the plugin and the extension. Ask an agent to use it, and it walks you through four steps:
+Copilot finds agents, skills, and instructions in a project's `.github/agents`, `.github/skills`, and `.github/instructions` folders without any settings. If your repository should own its HVE Core files, copy them into those folders with the `hve-core-installer` skill, which ships with the plugin and the extension. Ask an agent to use it, and it walks you through four steps:
 
 1. Clone or pin the HVE Core version to adopt.
-2. Choose every component declared by root `plugin.json`, or select a subset.
+2. Confirm that the installer copies every component declared by root `plugin.json`.
 3. Review component kinds and collisions before anything is written.
 4. Choose automatic source updates or a controlled pinned version.
 
-The installer copies agents, instructions, and complete skill directories with their repository-relative paths and records the result in `.hve-tracking.json` (schema version 2). Once your repository has its copies, uninstall the plugin or extension so Copilot does not load HVE Core twice.
+The installer copies the full set because agents load skills and instructions by name, and a partial set can leave an agent without what it needs to start. An earlier install that recorded a smaller set keeps upgrading that set.
+
+Agents, instructions, and complete skill directories keep their repository-relative paths, and the installer records the result in `.hve-tracking.json` (schema version 2). Once your repository has its copies, uninstall the plugin or extension so Copilot does not load HVE Core twice.
 
 ## Use the VS Code Extension
 

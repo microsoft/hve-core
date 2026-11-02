@@ -1,6 +1,6 @@
 ---
 title: hve-core-installer
-description: "Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, selective component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup"
+description: "Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, a full component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup"
 sidebar_position: 1
 author: Microsoft
 ms.date: 2026-11-02
@@ -23,15 +23,15 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, selective component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup
+Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, a full component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
 Use this skill to choose, set up, and check an HVE-Core installation for the
 Copilot agent harness. It offers five routes in order: the plugin, a repository
-default in `.github/copilot/settings.json`, copying selected components into
-the repository, the VS Code extension, and a clone. Clone-based methods suit
+default in `.github/copilot/settings.json`, copying every component into the
+repository, the VS Code extension, and a clone. Clone-based methods suit
 customization, shared version control, or controlled updates. Re-running can
 validate an existing setup or offer an upgrade rather than assuming a new
 installation is needed. It removes `chat.*Locations` entries from an earlier
@@ -59,7 +59,7 @@ authorization stop the relevant step; they are not a completed installation.
 For the plugin route instead, expect the exact Agent Customizations editor steps
 or `/plugin` commands to run yourself, then a check that `RPI Agent` and
 `/hve-core:rpi-research` appear after a reload. Post-installation options and
-selective component copying remain separate choices; component collisions and
+copying HVE-Core into the repository remain separate choices; component collisions and
 upgrades require their prescribed confirmations. Keep credentials private and
 never treat rollback guidance as permission to delete an existing repository or
 customized files.
