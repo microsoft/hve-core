@@ -162,7 +162,10 @@ Leave the `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and
 VS Code forwards files from those folders to Copilot sessions, but Copilot CLI
 and the GitHub Copilot app do not read them. An entry that points at HVE Core
 also loads it a second time next to any install route, so remove such entries
-if your settings still have them.
+if your settings still have them. Switch to the Copilot harness and confirm HVE
+Core loads there first, as
+[Use One Route at a Time](../getting-started/install#use-one-route-at-a-time)
+describes.
 
 To load customizations from a folder elsewhere in the checkout, such as an HVE
 Core submodule, declare its folders in `.github/copilot/settings.json` as

@@ -3,7 +3,7 @@ title: hve-core-installer
 description: "Decision-driven HVE-Core installer for the Copilot harness: the plugin, a team default in repository settings, selective component copy into the repository, the VS Code extension, and clone-based storage, with environment detection, validation, and MCP setup"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - skill
@@ -33,8 +33,9 @@ Copilot agent harness. It offers five routes in order: the plugin, a repository
 default in `.github/copilot/settings.json`, copying selected components into
 the repository, the VS Code extension, and a clone. Clone-based methods suit
 customization, shared version control, or controlled updates. Re-running can
-validate an existing setup, clean up `chat.*Locations` entries from an earlier
-setup, or offer an upgrade rather than assuming a new installation is needed.
+validate an existing setup or offer an upgrade rather than assuming a new
+installation is needed. It removes `chat.*Locations` entries from an earlier
+setup only after a Copilot session shows HVE-Core.
 
 Clone-based methods need Git and network access; Bash component scripts also
 need `jq`. Detection begins with consent, and changes to

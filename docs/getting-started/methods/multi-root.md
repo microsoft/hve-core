@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -88,7 +88,7 @@ In Codespaces or a devcontainer, Step 3 clones the fork for you.
 Create `.devcontainer/hve-core.code-workspace` in your project to list the two folders to open.
 
 > [!NOTE]
-> If an earlier setup added `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` entries for HVE Core to your workspace file or `.vscode/settings.json`, remove them. Copilot does not need them.
+> If an earlier setup added `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` entries for HVE Core to your workspace file or `.vscode/settings.json`, remove them. Copilot does not need them. Switch to the Copilot harness and confirm HVE Core loads there before you remove them, as [Use One Route at a Time](../install#use-one-route-at-a-time) describes.
 
 #### Codespaces / Devcontainer
 

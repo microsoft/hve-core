@@ -81,7 +81,7 @@ Upon consent, look for HVE-Core content that is already installed:
 * `.hve-tracking.json` at the workspace root means components were copied into the repository. Offer to upgrade them through native adoption, which runs Phase 7 in upgrade mode.
 * `.github/copilot/settings.json` that enables `hve-core@hve-core` or declares folders from an HVE-Core clone means the team default or a declared clone is in place.
 * Ask whether the user has installed the HVE-Core plugin or the HVE Core extension.
-* VS Code settings that list HVE-Core folders come from an earlier version of this installer. Offer the cleanup below.
+* VS Code settings that list HVE-Core folders come from an earlier version of this installer. Note the files that hold them. Phase 6 offers the cleanup below once the user confirms HVE-Core in a Copilot session.
 
 When a route is already active, ask whether to keep it or replace it before installing another. Then proceed to Phase 2.
 
@@ -89,12 +89,21 @@ When a route is already active, ask whether to keep it or replace it before inst
 
 Earlier versions of this installer added HVE-Core folders to `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, `chat.agentSkillsLocations`, `chat.promptFilesLocations`, and `chat.hookFilesLocations`. Those settings are editor-only: VS Code forwards files from those locations, but Copilot CLI and the GitHub Copilot app do not read them. Kept beside a new route, they deliver the same content twice.
 
+HVE-Core supports only the Copilot harness. VS Code's Local harness doesn't load the `skills:` preloads that HVE-Core agents depend on, and removing these settings while the user still works in Local hides the agents Local found through them. Offer the cleanup only after the user confirms both of these:
+
+* Their chat sessions use the Copilot harness. VS Code shows the harness at the start of the chat title.
+* A Copilot session shows HVE-Core, using the agent and skill checks from the final completion report in Phase 6.
+
+When the user is still on Local, explain that HVE-Core supports only the Copilot harness and that they switch by starting a new chat and selecting **Copilot** in the **Session Target** control before the first prompt. Keep the settings until the user confirms both points, and report "⏭️ Kept earlier location settings until a Copilot session shows HVE-Core".
+
 Look in `.vscode/settings.json`, any `.code-workspace` file, and the `customizations.vscode.settings` block of `.devcontainer/devcontainer.json` for entries whose paths point into an HVE-Core clone, such as `../hve-core`, `.hve-core`, `/workspaces/hve-core`, or `lib/hve-core`. For each file with such entries:
 
 1. Show the user the HVE-Core entries it holds.
 2. Get approval under Checkpoint 3 (see Authorization Guardrails).
 3. Remove only the HVE-Core entries. Remove a setting only when it has no entries left, and leave unrelated entries alone.
 4. Report "✅ Removed earlier HVE-Core location settings from [file]", or "⏭️ Kept earlier location settings in [file]" when the user declines.
+
+After removing entries, ask the user to run **Developer: Reload Window** and repeat the agent and skill checks, so they confirm that the installed route, not the old settings, delivers HVE-Core.
 
 ## Phase 2: Install Route Selection
 
@@ -523,7 +532,7 @@ Provide targeted guidance when steps fail:
 | **Settings update failed**       | Verify `.github/copilot/settings.json` is valid JSON and check write permissions                                         |
 | **Declared folders not loading** | Trust the workspace folder; declared folders load only in a trusted folder and must be literal paths inside the checkout |
 | **Agents listed twice**          | More than one route is installed; keep one route and remove the others                                                   |
-| **Agents or skills missing**     | Run **Developer: Reload Window**, then start a new chat session                                                          |
+| **Agents or skills missing**     | Confirm the chat uses the Copilot harness, run **Developer: Reload Window**, then start a new chat session               |
 <!-- </error-recovery> -->
 
 ## Rollback

@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Solutions for common HVE Core plugin, extension, and selective clone installation problems
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: troubleshooting
 keywords: [troubleshooting, FAQ, installation, hve-core, copilot plugin, selective clone, registry, proxy]
 estimated_reading_time: 7
@@ -20,7 +20,7 @@ You installed, updated, or edited HVE Core files, but new chat sessions still be
 #### Solutions
 
 1. Run the `Developer: Reload Window` command from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`). VS Code keeps its list of path-specific instructions for the life of the window, so new chat sessions see instruction changes only after a reload.
-2. Start a new chat session after the reload.
+2. Start a new chat session after the reload, and check that Copilot appears at the start of its title. HVE Core supports only the Copilot harness.
 
 ### Plugin Not Loading After Install
 
@@ -50,12 +50,13 @@ Some agents or skills are missing from the agent picker or `/` command list in C
 
 #### Solutions
 
-1. Check the route you used. Plugin components appear on the **Plugins** page of the Agent Customizations editor. Components copied into your repository load from its `.github/agents`, `.github/skills`, and `.github/instructions` folders, at any depth.
-2. Copilot Chat loads workspace-scoped agents only when a folder or workspace is open. Opening a single file does not activate workspace agents.
-3. For a clone listed in `.github/copilot/settings.json`, check that each path is a literal folder inside the checkout and that the workspace folder is trusted. Copilot rejects absolute paths, `~`, environment variables, globs, and paths that leave the checkout.
-4. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, instructions, and complete skills were copied.
-5. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/skills/` directories.
-6. Agents cannot start skills that set `disable-model-invocation: true`, such as `git-commit`. Type the skill's slash command instead.
+1. Check the harness. VS Code shows it at the start of the chat title. HVE Core supports only Copilot, and a Local session doesn't show the agents in package folders. If the title shows Local, start a new chat and select **Copilot** in the **Session Target** control. [Use the Copilot Harness](install#use-the-copilot-harness) explains why.
+2. Check the route you used. Plugin components appear on the **Plugins** page of the Agent Customizations editor. Components copied into your repository load from its `.github/agents`, `.github/skills`, and `.github/instructions` folders, at any depth.
+3. Copilot Chat loads workspace-scoped agents only when a folder or workspace is open. Opening a single file does not activate workspace agents.
+4. For a clone listed in `.github/copilot/settings.json`, check that each path is a literal folder inside the checkout and that the workspace folder is trusted. Copilot rejects absolute paths, `~`, environment variables, globs, and paths that leave the checkout.
+5. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, instructions, and complete skills were copied.
+6. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/skills/` directories.
+7. Agents cannot start skills that set `disable-model-invocation: true`, such as `git-commit`. Type the skill's slash command instead.
 
 ### Instructions Not Applied
 

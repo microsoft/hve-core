@@ -3,13 +3,19 @@ title: Installing HVE Core
 description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, selected components, the VS Code extension, or a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, selective clone]
 estimated_reading_time: 7
 ---
 
 HVE Core is a library of agents, skills, and instructions for GitHub Copilot. It targets the Copilot agent harness, which VS Code uses for chat sessions by default and which also runs Copilot CLI. Pick one install route, check that HVE Core loaded, and add `.copilot-tracking/` to your project's `.gitignore`.
+
+## Use the Copilot Harness
+
+HVE Core supports only the Copilot harness. VS Code's Local harness doesn't load the skills that HVE Core agents preload through their `skills:` frontmatter, so the agents can't run there as written. Earlier releases worked in Local, which makes this a breaking change for anyone still using it.
+
+VS Code shows a session's harness at the start of its chat title. To switch, start a new chat and select **Copilot** in the **Session Target** control before you send the first prompt. [Choose an agent harness](https://code.visualstudio.com/docs/agents/run/agent-harnesses) covers the options.
 
 ## Choose an Install Route
 
@@ -131,11 +137,15 @@ Each path must be a literal folder inside the checkout. Copilot rejects absolute
 
 Copilot does not remove copies that arrive by different routes. If you install the plugin and the extension, or the plugin and a declared clone, each agent appears more than once in the subagent list. Keep one route and remove the others.
 
-Earlier HVE Core guides set `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and `chat.agentSkillsLocations` in VS Code settings. Copilot CLI and the GitHub Copilot app ignore those settings, and VS Code still forwards their folders to Copilot sessions, which loads HVE Core a second time next to any route above. Remove entries that point at HVE Core.
+Earlier HVE Core guides set `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and `chat.agentSkillsLocations` in VS Code settings. Copilot CLI and the GitHub Copilot app ignore those settings, and VS Code still forwards their folders to Copilot sessions, which loads HVE Core a second time next to any route above. Remove them in this order:
+
+1. Switch to the Copilot harness, as [Use the Copilot Harness](#use-the-copilot-harness) describes. If you remove the settings while your sessions still use Local, the agents Local found through them disappear from its picker.
+2. Install one route above and confirm that it works in a Copilot session, using [Check That It Works](#check-that-it-works).
+3. Remove the entries that point at HVE Core, reload the window, and run the same checks again.
 
 ## Check That It Works
 
-1. Open Copilot Chat in VS Code. New chat sessions use the Copilot harness by default.
+1. Open Copilot Chat in VS Code and confirm that Copilot appears at the start of the chat title. New chats use the Copilot harness by default. If the title shows Local, start a new chat and select **Copilot** in the **Session Target** control.
 2. Open the agent picker and confirm `RPI Agent` is listed.
 3. Type `/` and confirm HVE Core skills appear. Skills from the plugin carry the plugin name as a prefix, such as `/hve-core:rpi-research`. Skills copied into your repository appear without it, such as `/rpi-research`.
 
@@ -163,7 +173,7 @@ Contributors who change HVE Core itself work in a fork:
 
 3. Open the folder in VS Code. A devcontainer configuration is included for containerized development.
 
-Copilot discovers the repository's own agents, skills, and instructions when you open the clone, so you need no other route while you work in it. If the plugin or extension is also installed, disable it while you develop so agents do not appear twice. The [Contributing Guide](../contributing/) covers pull request and development conventions.
+Copilot discovers the repository's own agents, skills, and instructions when you open the clone, so you need no other route while you work in it. Work in Copilot harness sessions here too. The workspace settings no longer list the package agent folders, so a Local session doesn't show those agents. If the plugin or extension is also installed, disable it while you develop so agents do not appear twice. The [Contributing Guide](../contributing/) covers pull request and development conventions.
 
 ## Distribution Identity and Channels
 

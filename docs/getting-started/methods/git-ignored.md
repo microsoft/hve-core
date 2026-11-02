@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -96,7 +96,7 @@ fi
 Use one route at a time: pick one of the two options below, and don't also install the VS Code extension or the marketplace plugin. Copilot doesn't remove copies that arrive by different routes, so a second route lists agents more than once in the subagent list.
 
 > [!NOTE]
-> If you set `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` for HVE Core in `.vscode/settings.json` or your devcontainer settings, remove those entries. Copilot doesn't need them.
+> If you set `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` for HVE Core in `.vscode/settings.json` or your devcontainer settings, remove those entries. Copilot doesn't need them. Switch to the Copilot harness and confirm HVE Core loads there before you remove them, as [Use One Route at a Time](../install#use-one-route-at-a-time) describes.
 
 #### Option A: Install the Folder as a Plugin
 

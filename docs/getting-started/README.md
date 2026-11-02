@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Getting Started with HVE Core"
 pagination_label: Getting Started with HVE Core
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -54,6 +54,7 @@ Review [HVE Core Identity and Channels](packages.md) to choose a source channel 
 
 #### Agent not available
 
+* Confirm the chat uses the Copilot harness: Copilot appears at the start of the chat title. HVE Core doesn't support VS Code's Local harness
 * Ensure GitHub Copilot is installed and you are signed in
 * Reload VS Code window: `Ctrl+Shift+P` → "Developer: Reload Window"
 * Check that HVE Core is installed: the plugin appears on the **Plugins** page of the Agent Customizations editor, or the extension shows as installed in the Extensions view
@@ -62,7 +63,7 @@ Review [HVE Core Identity and Channels](packages.md) to choose a source channel 
 
 * Reload the window after you install, update, or edit HVE Core files, then start a new chat session
 * For a clone listed in `.github/copilot/settings.json`, check that each path is a literal folder inside the checkout and that the workspace folder is trusted
-* Remove `chat.*Locations` entries that point at HVE Core from an earlier setup, and keep only one install route
+* After a Copilot session shows HVE Core from your install route, remove `chat.*Locations` entries that point at HVE Core from an earlier setup, and keep only one install route
 
 #### Git or clone errors
 

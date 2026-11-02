@@ -6,7 +6,7 @@ description: Phase 6 post-installation setup for the hve-core installer.
 
 ## Phase 6: Post-Installation Setup
 
-This phase applies to every install route. All routes converge here for consistent post-installation configuration, and the final completion report at the end of this phase is the last step of every route.
+This phase applies to every install route. All routes converge here for consistent post-installation configuration. The final completion report at the end of this phase is the last step of every route, followed only by the earlier location settings cleanup when Phase 1 found those settings.
 
 ### Checkpoint 4: Gitignore Configuration
 
@@ -259,7 +259,7 @@ When HVE-Core is installed as a plugin, from the marketplace or from source, VS 
 
 ▶️ Next Steps:
 1. Run "Developer: Reload Window" from the Command Palette (Ctrl+Shift+P)
-2. Open Copilot Chat (`Ctrl+Alt+I`) with the Copilot harness and open the agent picker
+2. Open Copilot Chat (`Ctrl+Alt+I`), confirm Copilot appears at the start of the chat title, and open the agent picker
 3. Confirm [agent check]
 4. Type / and confirm [skill check]
 
@@ -269,6 +269,7 @@ When HVE-Core is installed as a plugin, from the marketplace or from source, VS 
 
 If the user reports a missing or repeated agent or skill:
 
+* Confirm the session uses the Copilot harness. When the chat title starts with Local, HVE-Core agents can't run as written there. Have the user start a new chat and select **Copilot** in the **Session Target** control.
 * Confirm the user reloaded the window after the last install, update, or edit. VS Code keeps the list of path-specific instructions for the life of the window, and new chat sessions pick up changes after **Developer: Reload Window**.
 * For the team default, check on the **Plugins** page that `hve-core` is turned on.
 * For folders declared in `.github/copilot/settings.json`, confirm that the workspace folder is trusted.
@@ -282,3 +283,7 @@ For **Extension** installations, also include:
 For the full set, uninstall the extension and run this skill again
 to install the plugin (Option 1). Use one route at a time.
 ```
+
+### Earlier Location Settings
+
+When Phase 1 found HVE-Core entries in the `chat.*Locations` settings, offer the Earlier Location Settings Cleanup from the skill's Phase 1 after the user confirms the agent and skill checks above in a Copilot session. Don't offer it earlier. Until then, those settings may be the only way the user's current sessions find HVE-Core.

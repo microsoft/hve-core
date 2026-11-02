@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - git submodule
@@ -89,7 +89,7 @@ Create `.github/copilot/settings.json` at your project root and list the submodu
 Commit the file so the settings apply to everyone who opens the repository. Your project's own `.github/agents`, `.github/skills`, and `.github/instructions` folders need no entries, because Copilot discovers them without settings.
 
 > [!NOTE]
-> If you set `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` for HVE Core in `.vscode/settings.json` or your devcontainer settings, remove those entries. Copilot doesn't need them.
+> If you set `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` for HVE Core in `.vscode/settings.json` or your devcontainer settings, remove those entries. Copilot doesn't need them. Switch to the Copilot harness and confirm HVE Core loads there before you remove them, as [Use One Route at a Time](../install#use-one-route-at-a-time) describes.
 
 Keep these limits in mind:
 

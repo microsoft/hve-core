@@ -3,7 +3,7 @@ title: GitHub Codespaces Installation
 description: Set up HVE Core in GitHub Codespaces with committed plugin defaults or a cloned copy
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - codespaces
@@ -72,6 +72,7 @@ These steps set up the plugin defaults. Use one install route at a time: when HV
 
 > [!NOTE]
 > If you added `chat.*Locations` settings for HVE Core, such as `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations`, remove them from `.vscode/settings.json` and from `customizations.vscode.settings` in `devcontainer.json`. Copilot does not need them, and VS Code still forwards files from those locations, which adds a second route.
+> Switch to the Copilot harness and confirm HVE Core loads there before you remove them, as [Use One Route at a Time](../install#use-one-route-at-a-time) describes.
 
 ### Step 1: Add Plugin Defaults
 

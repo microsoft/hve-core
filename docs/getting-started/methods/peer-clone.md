@@ -3,7 +3,7 @@ title: Peer Directory Clone Installation
 description: Clone HVE Core next to your project and install it in VS Code as a plugin from source
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - peer directory
@@ -51,7 +51,7 @@ projects/
 A project can also list customization folders in `.github/copilot/settings.json`, but only folders inside the project checkout. A sibling folder such as `../hve-core` is outside the checkout and cannot be listed there, so this method installs it as a plugin.
 
 > [!NOTE]
-> If an earlier setup added `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` entries for HVE Core to `.vscode/settings.json`, remove them. Copilot does not need them.
+> If an earlier setup added `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, or `chat.agentSkillsLocations` entries for HVE Core to `.vscode/settings.json`, remove them. Copilot does not need them. Switch to the Copilot harness and confirm HVE Core loads there before you remove them, as [Use One Route at a Time](../install#use-one-route-at-a-time) describes.
 
 ## Quick Start
 
