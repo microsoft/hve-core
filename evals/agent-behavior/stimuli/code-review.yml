@@ -390,7 +390,7 @@ stimuli:
       - type: output-matches
         name: waits-for-findings
         config:
-          pattern: '(?is)^(?![\s\S]*\b(?:not|never)\s+(?:after|once|until)\b)(?![\s\S]*(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b)(?![\s\S]*\b(?:correlate|run\s+(?:drift\s+)?correlation)\s+now\b)(?=[\s\S]*(?:(?:drift|correlation|correlate|correlated|correlating)[^.\r\n]{0,200}\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)|\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)[^.\r\n]{0,200}(?:drift|correlation|correlate|correlated|correlating)))'
+          pattern: '(?is)^(?![\s\S]*\b(?:not|never)\s+(?:after|once|until|if|when)\b)(?![\s\S]*(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b)(?![\s\S]*\b(?:correlate|run\s+(?:drift\s+)?correlation)\s+now\b)(?=[\s\S]*(?:(?:drift|correlation|correlate|correlated|correlating)[^.\r\n]{0,200}\b(?:after|once|until|(?<!\beven\s)(?:if|when))\b[^.\r\n]{0,200}(?:findings|security perspective)|\b(?:after|once|until|(?<!\beven\s)(?:if|when))\b[^.\r\n]{0,200}(?:findings|security perspective)[^.\r\n]{0,200}(?:drift|correlation|correlate|correlated|correlating)))'
       - type: output-matches
         name: no-premature-drift-output
         config:

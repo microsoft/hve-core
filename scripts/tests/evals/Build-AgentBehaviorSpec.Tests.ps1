@@ -1210,12 +1210,18 @@ console.log(JSON.stringify(results));
         'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
         "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
         "I haven$([char]0x2019)t actually finished the correlation. I will correlate drift after security findings arrive.",
-        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
+        'I have not yet found drift. Drift correlation will run once the security findings arrive.',
+        'Optional drift correlation becomes eligible only if the Security perspective is selected, completes, and its findings are available for merge.',
+        'Correlation becomes eligible only when the security perspective has run and its findings are available.',
+        'If the security perspective returns findings, drift correlation becomes eligible in Step 7.')
       Reject = @('Drift correlation results: control drift found. Findings: two. Confirm once reviewed.',
         'I will run drift correlation now, not after the security perspective returns findings.',
         'I completed drift correlation. After security findings arrive, I will correlate again.',
         "I haven't completed drift correlation. I performed the drift correlation. After security findings arrive, I will correlate again.",
-        'Orientation and dispatch board confirm drift correlation and findings after.')
+        'Orientation and dispatch board confirm drift correlation and findings after.',
+        'Drift correlation should start now, not when the security perspective returns findings.',
+        'Drift correlation starts now, even when no security findings exist.',
+        'Drift correlation ran even if no security findings exist.')
     }
     @{
       Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'no-premature-drift-output'; Count = 3
