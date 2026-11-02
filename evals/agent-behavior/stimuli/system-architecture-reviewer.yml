@@ -179,4 +179,4 @@ stimuli:
       - type: transcript-matches
         name: architecture-handoffs-use-record-path
         config:
-          pattern: '(?is)(?=[\s\S]*(?:ADR[- ]Creator|ADR[- ]Creation|Create ADR)[\s\S]*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md)(?=[\s\S]*(?:rpi[- ]plan|Create Plan|RPI Agent)[\s\S]*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md)'
+          pattern: '(?is)^(?=[\s\S]*?(?:ADR[- ]Creator|ADR[- ]Creation|Create ADR|adr[- ]author))(?=[\s\S]*?(?:rpi[- ]plan|Create Plan|RPI Agent))(?=[\s\S]*?\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md)'

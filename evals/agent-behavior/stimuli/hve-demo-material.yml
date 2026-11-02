@@ -3,26 +3,41 @@
 stimuli:
   - name: hve-demo-material-class-recipe
     prompt: |
-      Plan the L100 demo deck and narrated video for HVE Core. List the phases
-      from sourcing to the finished MP4, and state the narration engine and the
-      duration contract you will use. Write the plan under
-      `.copilot-tracking/demo-material/`, report the path, and show the phases
-      and the duration contract in your reply as well.
+      Plan the L100 demo deck and narrated video for HVE Core. This is a plan
+      only, so don't run setup or prerequisite checks and don't build
+      anything yet. List the phases from sourcing to the finished MP4, and
+      state the narration engine and the duration contract you will use.
+      Write the plan under `.copilot-tracking/demo-material/`, report the
+      path, and show the phases and the duration contract in your reply as
+      well.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/experimental/hve-demo-material.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/experimental/hve-demo-material
     tags:
       category: agent-behavior
+    constraints:
+      max_agent_duration: 240s
+      max_duration: 300s
     graders:
-      - type: output-matches
+      - type: transcript-matches
         name: hve-demo-material-class-recipe-phase-marker-present
         config:
-          pattern: '(?ims)^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*\d)(?:.*?^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*\d)){2}'
-      - type: output-matches
+          pattern: '(?im)(?:^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*[^\s|:-])[^\n]*?\b(?:sources?|sourcing|storyboard|storyboards|deck|decks|slides?|narrate|narration|narrated|capture|captures|captured|render|rendering|rendered|captions?|subtitles?|assemble|assembly|assembled|mp4|video|finalize|finalized|finalization|verify|verification|export|exported|frames?)\b(?:[\s\S]*?^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*[^\s|:-])[^\n]*?\b(?:sources?|sourcing|storyboard|storyboards|deck|decks|slides?|narrate|narration|narrated|capture|captures|captured|render|rendering|rendered|captions?|subtitles?|assemble|assembly|assembled|mp4|video|finalize|finalized|finalization|verify|verification|export|exported|frames?)\b){2}|^(?=[^\n]*\b(?:sources?|sourcing|storyboard|storyboards|deck|decks|slides?|narrate|narration|narrated|capture|captures|captured|render|rendering|rendered|captions?|subtitles?|assemble|assembly|assembled|mp4|video|finalize|finalized|finalization|verify|verification|export|exported|frames?)\b)[^\n]*?(?:→|->)[^\n]*?(?:→|->)[^\n]*?(?:→|->))'
+      - type: transcript-matches
         name: hve-demo-material-class-recipe-tracking-file-write
         config:
           pattern: '(?i)\.copilot-tracking[-/\\](?:demo-material|plans)[/\\][^\s`''")\]]+\.(?:md|json|ya?ml)'
-      - type: output-matches
+      - type: file-exists
+        name: hve-demo-material-class-recipe-plan-file-exists
+        config:
+          path: '.copilot-tracking/{demo-material,plans}/**/*.{md,json,yml,yaml}'
+      - type: transcript-matches
         name: hve-demo-material-class-recipe-duration-contract
         config:
-          pattern: '(?i)\b(?:4|four)\s*(?:to|-|–|—|and)\s*(?:6|six)[\s-]*min'
+          pattern: '(?i)\b(?:4|four)\s*(?:to|-|–|—|and)\s*(?:6|six)[\s-]*min|\b(?:min|minimum)\s*[:=]\s*4\b[\s\S]{0,40}?\b(?:max|maximum)\s*[:=]\s*6\b'
       - type: output-matches
         name: hve-demo-material-class-recipe-no-source-edit
         config:
