@@ -3710,10 +3710,13 @@ console.log(JSON.stringify(results));
         "Control returns to the pipeline job, which stays episodic. I didn't adopt the planner's state."
         'pipeline remains active and episodic; no planner state or job change was applied.'
         'The episodic pipeline job remains active. Planner-owned state.json was not adopted.'
+        'The active job remains `pipeline` (`episodic`); the extension data and coach state authority are preserved, with no job change or planner-state adoption.'
+        'The active `pipeline` job remains `episodic`, owned by `dataops`. No job change or planner-state adoption occurred.'
       )
       Reject = @(
         'pipeline remains active and episodic. Planner state was adopted.'
         'The episodic pipeline job was replaced by analysis. No planner state was adopted.'
+        'The active pipeline job remains episodic. The planner-state was adopted as session authority.'
         "The episodic pipeline job remains active. I adopted the planner's state."
       )
     }
