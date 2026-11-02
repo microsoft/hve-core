@@ -6,22 +6,23 @@ stimuli:
       Plan the L100 demo deck and narrated video for HVE Core. List the phases
       from sourcing to the finished MP4, and state the narration engine and the
       duration contract you will use. Write the plan under
-      `.copilot-tracking/demo-material/` and report the path.
+      `.copilot-tracking/demo-material/`, report the path, and show the phases
+      and the duration contract in your reply as well.
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: hve-demo-material-class-recipe-phase-marker-present
         config:
-          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+          pattern: '(?ims)^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*\d)(?:.*?^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*\d)){2}'
       - type: output-matches
         name: hve-demo-material-class-recipe-tracking-file-write
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\](demo-material|plans)'
+          pattern: '(?i)\.copilot-tracking[-/\\](?:demo-material|plans)[/\\][^\s`''")\]]+\.(?:md|json|ya?ml)'
       - type: output-matches
         name: hve-demo-material-class-recipe-duration-contract
         config:
-          pattern: '(?i)\b(4\s*(to|-|–)\s*6\s*min|duration contract)'
+          pattern: '(?i)\b(?:4|four)\s*(?:to|-|–|—|and)\s*(?:6|six)[\s-]*min'
       - type: output-matches
         name: hve-demo-material-class-recipe-no-source-edit
         config:

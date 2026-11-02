@@ -5740,7 +5740,8 @@ stimuli:
     Plan the L100 demo deck and narrated video for HVE Core. List the phases
     from sourcing to the finished MP4, and state the narration engine and the
     duration contract you will use. Write the plan under
-    `.copilot-tracking/demo-material/` and report the path.
+    `.copilot-tracking/demo-material/`, report the path, and show the phases
+    and the duration contract in your reply as well.
   tags:
     category: agent-behavior
     agent: hve-demo-material
@@ -5748,15 +5749,15 @@ stimuli:
   - type: output-matches
     name: hve-demo-material-class-recipe-phase-marker-present
     config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
+      pattern: (?ims)^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*\d)(?:.*?^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*\d)){2}
   - type: output-matches
     name: hve-demo-material-class-recipe-tracking-file-write
     config:
-      pattern: (?i)\.copilot-tracking[-/\\](demo-material|plans)
+      pattern: (?i)\.copilot-tracking[-/\\](?:demo-material|plans)[/\\][^\s`'")\]]+\.(?:md|json|ya?ml)
   - type: output-matches
     name: hve-demo-material-class-recipe-duration-contract
     config:
-      pattern: (?i)\b(4\s*(to|-|–)\s*6\s*min|duration contract)
+      pattern: (?i)\b(?:4|four)\s*(?:to|-|–|—|and)\s*(?:6|six)[\s-]*min
   - type: output-matches
     name: hve-demo-material-class-recipe-no-source-edit
     config:
@@ -8539,11 +8540,11 @@ stimuli:
   - type: output-matches
     name: arch-research-unavailable-stops
     config:
-      pattern: (?is)(unavailable|blocked|unresolved).*(stop|pause|cannot|do not).*(recommend|conclusion|dependent)
+      pattern: (?is)(?:\b(?:cannot|can not|will not|do not|unable to|not able to|should not|can't|can’t|won't|won’t|don't|don’t|should(?:n['’]t))\b[^.?!\n]{0,60}\b(?:recommend|recommends|recommended|recommending|recommendation|recommendations|choose|pick|select|conclude|concludes|concluded|conclusion|conclusions)\b|\b(?:recommend|recommends|recommended|recommending|recommendation|recommendations|conclude|concludes|concluded|conclusion|conclusions|decision|choice)\b[^.?!\n]{0,80}\b(?:stop|stops|stopped|pause|pauses|paused|blocked|halt|halts|halted|on hold|wait|waits|deferred)\b|\b(?:stop|stops|pause|pauses|block|blocks|halt|halts|hold|holds)\b[^.?!\n]{0,60}\b(?:recommend|recommends|recommended|recommending|recommendation|recommendations|conclude|concludes|concluded|conclusion|conclusions|decision|choice)\b)
   - type: output-matches
     name: arch-research-unavailable-no-memory
     config:
-      pattern: (?is)(training data|model memory).*(not|cannot|do not|instead of|substitute|substituting)
+      pattern: (?is)(?:\b(?:training data|model memory|memory)\b[^.?!\n]{0,80}\b(?:not|cannot|will not|do not|is not|instead of|substitute|substitutes|substituting|substitution|unreliable|insufficient|can't|can’t|won't|won’t|don't|don’t|isn't|isn’t)\b|\b(?:not|cannot|will not|do not|should not|refuse|decline|can't|can’t|won't|won’t|don't|don’t|should(?:n['’]t))\b[^.?!\n]{0,80}\b(?:training data|model memory|memory)\b)
   - type: output-matches
     name: arch-research-unavailable-no-current-fact-claim
     config:
@@ -8622,8 +8623,9 @@ stimuli:
     recommendation `C1`. Preserve evidence `E1` and the staged Research
     artifact path. Perform the review now, write the canonical
     Architecture Review Record for synthetic date `2026-09-21` with a
-    disposition for both focus areas, then prepare the existing ADR Creation
-    and RPI Plan handoffs from that record.
+    disposition for both focus areas, then suggest the next steps for
+    recording the decision in an ADR and for planning the work, each
+    starting from that record.
   agent_environment:
     files:
     - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
@@ -8653,7 +8655,7 @@ stimuli:
   - type: transcript-matches
     name: architecture-handoffs-use-record-path
     config:
-      pattern: (?is)(ADR Creation|Create ADR).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md.*(RPI Plan|Create Plan).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md
+      pattern: (?is)(?=[\s\S]*(?:ADR[- ]Creator|ADR[- ]Creation|Create ADR)[\s\S]*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md)(?=[\s\S]*(?:rpi[- ]plan|Create Plan|RPI Agent)[\s\S]*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md)
 - name: ux-ui-designer-problem-framing-route
   prompt: |
     Project `operations-dashboard`: help me work out what the actual problem is
