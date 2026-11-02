@@ -1,9 +1,9 @@
 ---
 title: rpi-walkthrough
 description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, a deep review before explaining, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed."
-sidebar_position: 7
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - skill
