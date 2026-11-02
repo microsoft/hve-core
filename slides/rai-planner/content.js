@@ -19,8 +19,8 @@
       note: 'The six phases, approval points, entry modes, saved state and write boundaries.'
     },
     'rai-identity': {
-      title: 'RAI identity protocol',
-      url: `${blob}.github/skills/project-planning/rai-planner/references/rai-identity.md`,
+      title: 'RAI identity instructions',
+      url: `${blob}.github/instructions/rai-planning/rai-identity.instructions.md`,
       note: 'Phase transitions, framework selection, reference processing and resume behavior.'
     },
     'planner-skill': {
@@ -64,8 +64,8 @@
       note: 'Evidence review of a codebase, diff or plan, separate from the Planner conversation.'
     },
     disclaimer: {
-      title: 'Disclaimer language skill',
-      url: `${blob}.github/skills/shared/disclaimer-language/SKILL.md`,
+      title: 'Disclaimer language instructions',
+      url: `${blob}.github/instructions/shared/disclaimer-language.instructions.md`,
       note: 'The RAI Planning CAUTION block shown before the first question and at exit points.'
     },
     'state-schema': {
