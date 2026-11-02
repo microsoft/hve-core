@@ -69,6 +69,7 @@ export async function sanitizeRun(repositoryRoot: string, runId: string): Promis
           "repository-root", "user-home", "credential-patterns",
         ])],
         replacements: artifact.redactionManifest.replacements + redacted.replacements,
+        notices: [...(artifact.redactionManifest.notices ?? []), ...redacted.notices],
       },
     });
     await writeJson(join(sessionRoot, "session-artifact.json"), sanitized);

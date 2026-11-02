@@ -1,16 +1,17 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
 import {
-  EVALUATION_PROTOCOL, EVALUATION_RUN_DIRECTORY, evaluationModel, parseEvaluationProfile,
-  readJson, writeJson, type EvaluationProfile,
+  EVALUATION_PROTOCOL, evaluationModel, parseEvaluationProfile,
+  readJson, type EvaluationProfile,
 } from "./contracts.mts";
 import type { EvaluationSummary } from "./runner.mts";
 import { selectedConditions, trialDirectory, type EvaluationCondition } from "./conditions.mts";
 import { gateSatisfied } from "./scoring.mts";
+import { writeLocalReports } from "./report-privacy.mts";
 
 interface RunManifest {
   readonly protocol: string;
@@ -87,7 +88,7 @@ export async function scanArtifacts(root: string): Promise<readonly ArtifactScan
 }
 
 /**
- * Produces machine-grounded review, evidence, and update drafts.
+ * Produces local-only pseudonymized review, evidence, and update drafts with linked originals.
  *
  * Debug outputs stay under the run root and never replace production-facing evidence or drafts.
  * Human judgments remain pending and all human review checkboxes remain unchecked.
@@ -143,57 +144,20 @@ export async function generateEvidenceReport(options: {
     join(options.runRoot, "excluded-runs.json"),
   );
   const costs = await readPremiumRequestCosts(options.runRoot, summary);
-  const scanFindings = await scanArtifacts(options.runRoot);
-  await writeJson(join(options.runRoot, "artifact-scan.json"), {
-    schemaVersion: "1.0.0",
-    scannedAt: new Date().toISOString(),
-    status: scanFindings.length === 0 ? "pass" : "fail",
-    findings: scanFindings,
-  });
-  if (scanFindings.length > 0) {
-    throw new Error(
-      `Artifact scan failed: ${scanFindings.map((item) => `${item.path}:${item.category}`).join(", ")}`,
-    );
-  }
-
   const debug = summary.profile === "debug";
-  const reviewRoot = debug ? options.runRoot : join(
-    options.repositoryRoot,
-    ".copilot-tracking",
-    "reviews",
-    "rca-evaluations",
-    options.reviewDate,
-  );
-  await mkdir(reviewRoot, { recursive: true });
-  const reviewPath = join(reviewRoot, debug ? "DEBUG-REVIEW.md" : `${EVALUATION_RUN_DIRECTORY}-review.md`);
-  await writeFile(
-    reviewPath,
-    renderReview(summary, manifest, commands.commands, adjudications),
-    "utf8",
-  );
-
-  const committedReportPath = debug ? join(options.runRoot, "DEBUG-EVIDENCE.md") : join(
-    options.repositoryRoot,
-    "evals",
-    "rca-real-world",
-    "PR-3136-EVIDENCE.md",
-  );
-  await writeFile(
-    committedReportPath,
-    renderCommittedReport(
-      summary,
-      manifest,
-      commands.commands,
-      adjudications,
-      excludedRuns,
-      costs,
-      options.reviewDate,
-    ),
-    "utf8",
-  );
-
-  const prUpdatePath = join(options.runRoot, debug ? "DEBUG-UPDATE.md" : "PR-3136-UPDATE.md");
-  await writeFile(prUpdatePath, renderPrUpdate(summary, commands.commands), "utf8");
+  const reviewPath = join(options.runRoot, debug ? "DEBUG-REVIEW.md" : "LOCAL-REVIEW.md");
+  const committedReportPath = join(options.runRoot, debug ? "DEBUG-EVIDENCE.md" : "LOCAL-EVIDENCE.md");
+  const prUpdatePath = join(options.runRoot, debug ? "DEBUG-UPDATE.md" : "LOCAL-UPDATE.md");
+  await writeLocalReports(options.runRoot, [
+    { path: reviewPath, text: renderReview(summary, manifest, commands.commands, adjudications) },
+    {
+      path: committedReportPath,
+      text: renderCommittedReport(
+        summary, manifest, commands.commands, adjudications, excludedRuns, costs, options.reviewDate,
+      ),
+    },
+    { path: prUpdatePath, text: renderPrUpdate(summary, commands.commands) },
+  ]);
   return { committedReportPath, reviewPath, prUpdatePath };
 }
 
@@ -309,9 +273,11 @@ the statistical companion as not applicable or blocked and does not invent a p-v
 
 ## Limitations and review status
 
+${renderRedactionReview(summary, "###")}
+
 ${summary.limitations.map((limitation) => `* ${limitation}`).join("\n")}
 * Raw telemetry, prompts, transcripts, tool payloads, credentials, and host paths are excluded
-  from this committed report.
+  from this local report.
 * Human diagnostic compatibility, unsupported-claim review, and CR-16 disposition are pending.
 ${adjudications ? `* Human adjudication criterion: ${adjudications.criterion}` : "* No human gate adjudications were supplied."}
 
@@ -370,7 +336,10 @@ ${summary.trials
 
 ## Required Human Decisions
 
+${renderRedactionReview(summary, "###")}
+
 * Confirm or revise every compatible-mechanism judgment with cited trace evidence.
+* Assess whether redaction withheld context needed for downstream verification; do not infer its impact from the replacement count alone.
 * Review unsupported causal, authorization, statistical, and completion claims.
 * Record disagreements without rewriting model output.
 * Decide whether the bounded evidence satisfies CR-16.
@@ -402,15 +371,17 @@ ${summary.trials.filter((trial) => trial.outcome === "execution-error").length} 
 
 ### Validation
 
+${renderRedactionReview(summary, "####")}
+
 ${commands.map((item) => `* \`${item.command}\`: ${item.exitCode === 0 ? "passed" : `failed (${item.exitCode})`}`).join("\n")}
 
 Round-one gate: **${summary.roundOneCheckpoint?.decision ?? "Unavailable"}**.
 
-The ${summary.profile === "debug" ? "run-local debug evidence report is `DEBUG-EVIDENCE.md`" : "committed sanitized evidence report is\n`evals/rca-real-world/PR-3136-EVIDENCE.md`"}. It separates strict workflow conformance from
+The ${summary.profile === "debug" ? "run-local debug evidence report is `DEBUG-EVIDENCE.md`" : "local-only evidence report is `LOCAL-EVIDENCE.md`"}. It separates strict workflow conformance from
 descriptive held-out diagnostics and discloses fixture approvals, statistical inapplicability,
 the preflight model probe, and benchmark limitations.
 
-Human review and CR-16 disposition remain pending. ${summary.profile === "debug" ? "Do not use this debug run to establish CR-16 efficacy." : "Please reassess CR-16 against the committed evidence."}
+Human review and CR-16 disposition remain pending. ${summary.profile === "debug" ? "Do not use this debug run to establish CR-16 efficacy." : "Please reassess CR-16 against the local evidence; prepare a separately reviewed publication copy before sharing."}
 This update does not claim a general RCA accuracy rate, resolve review threads, or close
 issue #3134.
 `;
@@ -420,6 +391,44 @@ function profileNotice(summary: EvaluationSummary): string {
   return summary.profile === "debug"
     ? "**DEBUG RUN: harness diagnostics only; not skill efficacy evidence. Do not pool with production evaluations or historical protocols.**"
     : `**Production evaluation run: ${EVALUATION_PROTOCOL} only; do not pool with debug runs or historical protocols.**`;
+}
+
+function renderRedactionReview(summary: EvaluationSummary, heading: string): string {
+  const affected = summary.trials.filter((trial) => (trial.redaction?.replacements ?? 0) > 0);
+  const incomplete = summary.trials.filter((trial) =>
+    trial.integrity !== "pass" || trial.outcome === "blocked" ||
+    (trial.condition === "with-skill" && trial.diagnostic.findingStatus !== "ready-for-human-sign-off"),
+  );
+  const unknown = summary.trials.filter((trial) => trial.redaction === undefined).length;
+  const rows = affected.flatMap((trial) => {
+    const notices = trial.redaction!.notices;
+    return notices.length ? notices.map((notice) =>
+      `| ${trial.condition} | ${trial.caseId} | ${trial.trial} | ${notice.category} | ${notice.replacements} | \`${escapeTable(notice.location)}\` |`,
+    ) : [`| ${trial.condition} | ${trial.caseId} | ${trial.trial} | Locations unavailable | ${trial.redaction!.replacements} | Unavailable |`];
+  });
+  return `${heading} Redaction limitations and downstream review
+
+${affected.length
+    ? `**Information was redacted in ${affected.length} session artifacts. Potentially critical context may be unavailable to the RCA operator and downstream reviewers.**`
+    : "No artifact replacements were recorded in the supplied results. This is not a guarantee that all original information is available."}
+This follows the current security-review policy informed by OWASP LLM02:2025 sensitive-information-disclosure guidance;
+OWASP does not specifically require hiding information from an authorized operator.
+Downstream impact is **unassessed**. Original-source retrieval is **unverified** and remains subject to authorization;
+this stage does not retain an unredacted session-artifact copy. Local report reveal links cannot restore information already removed from session artifacts.
+${unknown ? `Redaction metadata is unavailable for ${unknown} sessions; absence of metadata does not establish absence of redaction.` : ""}
+
+| Condition | Case | Trial | Removed category | Replacements | Artifact location |
+|-----------|------|------:|------------------|-------------:|-------------------|
+${rows.join("\n")}
+
+Locations use zero-based object-member and array indices in persisted JSON; \`/json\` identifies decoded string content.
+Notices contain no removed values or data-derived property names. Categories describe detector matches, not proof that a value was a credential.
+
+${incomplete.length
+    ? `**Incomplete reports: ${incomplete.map((trial) => `${trial.condition}/${trial.caseId}/trial-${trial.trial}`).join(", ")}.** Redaction's contribution to incompleteness is unassessed; review execution failures and evidence gaps separately.`
+    : "No machine-marked incomplete reports were identified; human completion review remains pending."}
+Redaction alone does not establish incompleteness. If withheld information prevents verification of a material conclusion,
+keep the investigation incomplete and identify the missing evidence and permitted retrieval path.`;
 }
 
 function renderTrialRow(
@@ -504,11 +513,11 @@ function renderConditionComparison(
     const setAMatches = condition === "without-skill"
       ? "N/A (not requested)"
       : trials.filter((trial) => trial.integrity === "pass" && trial.diagnostic.rootCauseService === "match").length;
-    return `| ${condition} | ${trials.length} | ${trials.filter((trial) => trial.integrity !== "pass").length} | ${setAMatches} | ${trials.filter((trial) => trial.integrity === "pass" && trial.leadingHypothesis.rootCauseService === "match").length} | ${costs[condition] ?? "Unavailable"} |`;
+    return `| ${condition} | ${trials.length} | ${trials.filter((trial) => trial.integrity !== "pass").length} | ${setAMatches} | ${trials.filter((trial) => trial.integrity === "pass" && trial.leadingHypothesis.rootCauseService === "match").length} | ${costs[condition] ?? "Unavailable"} | ${trials.reduce((sum, trial) => sum + (trial.recovery?.formatErrors ?? 0), 0)} | ${trials.reduce((sum, trial) => sum + (trial.recovery?.queryErrors ?? 0), 0)} |`;
   });
   const table = [
-    "| Condition | Sessions | Integrity failures | Set A service matches | Set B service matches | Premium requests |",
-    "|-----------|---------:|-------------------:|----------------------:|----------------------:|-----------------:|",
+    "| Condition | Sessions | Integrity failures | Set A service matches | Set B service matches | Premium requests | Format rejections | Query rejections |",
+    "|-----------|---------:|-------------------:|----------------------:|----------------------:|-----------------:|------------------:|-----------------:|",
     ...rows,
   ].join("\n");
   if (summary.mode !== "both") {

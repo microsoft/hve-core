@@ -11,6 +11,37 @@ import { test } from "node:test";
 
 import { writeJson } from "../../../evals/rca-real-world/contracts.mts";
 import { handleMcpMessage } from "../../../evals/rca-real-world/mcp-server.mts";
+import { createEvidenceTools } from "../../../evals/rca-real-world/evidence-tools.mts";
+
+test("MCP returns structured request rejections after approval and before reading evidence", async () => {
+  let consumed = 0;
+  let persisted = 0;
+  const harness = createEvidenceTools({
+    caseRoot: join("logs", "nonexistent-mcp-request-validation-fixture"),
+    ledger: { consume: () => { consumed++; return "fixture-approval"; } },
+  });
+  const response = await handleMcpMessage(JSON.stringify({
+    jsonrpc: "2.0", id: "invalid-query", method: "tools/call",
+    params: {
+      name: "aggregate_metrics", arguments: { startTime: 1700000000, endTime: 1700000300, service: " " },
+    },
+  }), harness.tools, async () => { persisted++; });
+  assert.equal(response?.id, "invalid-query");
+  const payload = response?.result;
+  assert.ok(payload && typeof payload === "object" && "isError" in payload);
+  assert.equal(payload.isError, true);
+  assert.ok("content" in payload && Array.isArray(payload.content));
+  const content: unknown = payload.content[0];
+  assert.ok(content && typeof content === "object" && "text" in content && typeof content.text === "string");
+  const rejected = JSON.parse(content.text);
+  assert.equal(rejected.error.code, "invalid-tool-parameters");
+  assert.equal(rejected.error.evidenceReturned, false);
+  assert.match(rejected.error.message, /service/);
+  assert.equal(consumed, 1);
+  assert.equal(persisted, 1);
+  assert.equal(harness.traces[0]?.status, "query-error");
+  assert.equal(harness.traces[0]?.resultHash, undefined);
+});
 
 test("uses null IDs for parse failures and rejects invalid JSON-RPC request shapes", async () => {
   const parseError = await handleMcpMessage("{invalid-json", [], async () => undefined);

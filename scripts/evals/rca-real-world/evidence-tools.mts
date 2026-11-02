@@ -3,6 +3,7 @@
 
 import { createReadStream } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 
 import { resolveInside, sha256, stableJson, type Modality } from "./contracts.mts";
@@ -13,7 +14,7 @@ import {
   type MetricColumnMap,
   type MetricIdentity,
 } from "./metric-schema.mts";
-import { COMMUNICATION_LIMITS, CommunicationError } from "./communication.mts";
+import { COMMUNICATION_LIMITS } from "./communication.mts";
 
 export interface EvidenceToolTrace {
   readonly sequence: number;
@@ -22,13 +23,60 @@ export interface EvidenceToolTrace {
   readonly normalizedParameters: Readonly<Record<string, unknown>>;
   readonly approvalId?: string;
   readonly requestId?: string;
-  readonly status: "executed" | "blocked" | "error";
+  readonly status: "executed" | "blocked" | "error" | "query-error";
   readonly startedAt: string;
   readonly completedAt: string;
   readonly resultHash?: string;
   readonly error?: string;
+  readonly errorCode?: EvidenceRequestError["code"];
 }
 
+const MAX_TIME_WINDOW_SECONDS = 3600;
+const TIME_WINDOW_CONSTRAINT =
+  `Use finite epoch numbers or numeric strings in matching epoch-second or epoch-millisecond units. endTime must be greater than startTime. Each window is at most ${MAX_TIME_WINDOW_SECONDS} seconds (${MAX_TIME_WINDOW_SECONDS * 1000} milliseconds), including each separate baseline and post-onset window. Metrics/logs use epoch seconds; traces use epoch milliseconds.`;
+
+/** A request violates the tool contract; no source was read and correction needs a new exact approval. */
+export class EvidenceRequestError extends Error {
+  readonly code: "invalid-tool-parameters" | "invalid-time-window" | "time-window-too-large";
+
+  constructor(
+    code: EvidenceRequestError["code"],
+    message: string,
+  ) {
+    super(message);
+    this.code = code;
+    this.name = "EvidenceRequestError";
+  }
+}
+
+/** An approved query exceeded the advertised time span before reading a source. */
+export class EvidenceWindowLimitError extends EvidenceRequestError {
+  constructor(maximumSpan: number, unit: string) {
+    super("time-window-too-large",
+      `Evidence time window exceeds the ${maximumSpan} ${unit} limit. Narrow the window and request a new exact approval.`);
+    this.name = "EvidenceWindowLimitError";
+  }
+}
+
+/** Replays the shared request contract without reading evidence or consuming approvals. */
+export function evidenceRequestError(
+  tool: string, parameters: Readonly<Record<string, unknown>>,
+): EvidenceRequestError | undefined {
+  const definition = createEvidenceTools({
+    caseRoot: "",
+    ledger: { consume: () => { throw new Error("Request validation cannot consume approvals"); } },
+  }).tools.find((candidate) => candidate.name === tool);
+  if (!definition) return undefined;
+  try {
+    validateEvidenceParameters(definition, parameters);
+  } catch (error) {
+    if (!(error instanceof EvidenceRequestError)) throw error;
+    return error;
+  }
+  return undefined;
+}
+
+/** Source availability and scan completion are independent of page delivery completeness. */
 export interface EvidenceToolResult {
   readonly source: Modality | "incident";
   readonly rowCount: number;
@@ -36,6 +84,17 @@ export interface EvidenceToolResult {
   readonly truncated: boolean;
   readonly sourceComplete: boolean;
   readonly empty: boolean;
+  readonly availability: "available" | "unavailable";
+  readonly availabilityReason?: string;
+  readonly pageComplete: boolean;
+  readonly nextCursor?: string;
+  readonly nonProgress?: boolean;
+  readonly oversizedRow?: {
+    readonly matchOffset: number;
+    readonly rowBytes: number;
+    readonly requiredResultBytes: number;
+    readonly reason: string;
+  };
   readonly data: unknown;
 }
 
@@ -51,17 +110,36 @@ export interface ApprovalConsumer {
   requestId?(approvalId: string): string | undefined;
 }
 
-/** Validates the exposed tool schema before any member of an approval batch executes. */
+/** Enforces the advertised schema and cross-field rules before any evidence source is accessed. */
 export function validateEvidenceParameters(tool: ToolDefinition, parameters: Readonly<Record<string, unknown>>): void {
   const properties = tool.parameters.properties as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
   const required = tool.parameters.required as readonly string[];
   if (Object.keys(parameters).some((key) => !Object.hasOwn(properties, key)) ||
       required.some((key) => !Object.hasOwn(parameters, key))) {
-    throw new CommunicationError("invalid-tool-parameters", `Invalid required or additional parameters for ${tool.name}`);
+    throw new EvidenceRequestError("invalid-tool-parameters", `Invalid required or additional parameters for ${tool.name}`);
   }
-  for (const [key, value] of Object.entries(parameters)) {
-    if (!matchesSchema(value, properties[key]!)) {
-      throw new CommunicationError("invalid-tool-parameters", `Invalid ${tool.name} parameter: ${key}`);
+  for (const [key, schema] of Object.entries(properties)) {
+    if (!Object.hasOwn(parameters, key)) continue;
+    const value = parameters[key];
+    if (!matchesSchema(value, schema)) {
+      throw new EvidenceRequestError("invalid-tool-parameters",
+        `Invalid ${tool.name} parameter: ${key}. ${String(schema.description ?? "Follow the advertised parameter schema.")}`);
+    }
+  }
+  const windows = tool.name === "compare_metrics" ? [
+    { startTime: parameters.baselineStartTime, endTime: parameters.baselineEndTime },
+    { startTime: parameters.postStartTime, endTime: parameters.postEndTime },
+  ] : Object.hasOwn(properties, "startTime") ? [parameters] : [];
+  const parsedWindows = windows.map((window) => requireTimeWindow(window));
+  if (new Set(parsedWindows.map((window) => window.unit)).size > 1) {
+    throw new EvidenceRequestError("invalid-time-window",
+      "Baseline and post-onset windows must use matching epoch units");
+  }
+  if (parameters.cursor !== undefined) {
+    const offset = Number.parseInt(String(parameters.cursor).slice(0, 16), 16);
+    if (!Number.isSafeInteger(offset) || offset < 1) {
+      throw new EvidenceRequestError("invalid-tool-parameters",
+        "Invalid cursor offset. Copy nextCursor from a previous result without modification.");
     }
   }
 }
@@ -73,7 +151,8 @@ function matchesSchema(value: unknown, schema: Readonly<Record<string, unknown>>
   if (schema.type === "string") {
     return typeof value === "string" &&
       (typeof schema.minLength !== "number" || value.length >= schema.minLength) &&
-      (typeof schema.maxLength !== "number" || value.length <= schema.maxLength);
+      (typeof schema.maxLength !== "number" || value.length <= schema.maxLength) &&
+      (typeof schema.pattern !== "string" || new RegExp(schema.pattern).test(value));
   }
   if (schema.type !== "number" && schema.type !== "integer") return false;
   return typeof value === "number" && Number.isFinite(value) &&
@@ -91,6 +170,7 @@ const MAX_RESULT_BYTES = COMMUNICATION_LIMITS.resultBytes;
  *
  * Every handler consumes an exact fixture approval before reading evidence and returns coverage,
  * truncation, row-count, and empty-result metadata. Files outside `caseRoot` are unreachable.
+ * Continuation cursors survive tool reconstruction for the same absolute case path and exact query.
  */
 export function createEvidenceTools(options: {
   readonly caseRoot: string;
@@ -100,6 +180,88 @@ export function createEvidenceTools(options: {
   const traces: EvidenceToolTrace[] = [];
   const clock = options.clock ?? (() => new Date());
   let calls = 0;
+
+  const page = async (
+    tool: string,
+    source: "logs" | "traces",
+    parameters: Record<string, unknown>,
+    window: ReturnType<typeof requireTimeWindow>,
+    predicate: (row: Record<string, unknown>) => boolean,
+    literal?: string,
+  ): Promise<EvidenceToolResult> => {
+    const limit = requireLimit(parameters.limit);
+    const { cursor, ...query } = parameters;
+    const scope = sha256(stableJson({ caseRoot: resolve(options.caseRoot), tool, query }));
+    // Opaque cursors carry a safe-integer offset and a 192-bit scope checksum, not authorization.
+    const cursorAt = (nextOffset: number): string =>
+      nextOffset.toString(16).padStart(16, "0") +
+      sha256(stableJson({ scope, offset: nextOffset })).slice(0, 48);
+    let offset = 0;
+    if (cursor !== undefined) {
+      if (typeof cursor !== "string" || !/^[0-9a-f]{64}$/.test(cursor)) {
+        throw new Error("Invalid cursor or cursor does not match the exact tool/query");
+      }
+      offset = Number.parseInt(cursor.slice(0, 16), 16);
+      if (!Number.isSafeInteger(offset) || offset < 1 || cursorAt(offset) !== cursor) {
+        throw new Error("Invalid cursor or cursor does not match the exact tool/query");
+      }
+    }
+    const coverage = await sourceCoverage(options.caseRoot, source);
+    if (!coverage.available) return unavailable(source);
+    const rows: Record<string, unknown>[] = [];
+    let retainedBytes = 0;
+    const selected = await selectRows(
+      resolveInside(options.caseRoot, `${source}.jsonl`),
+      parameters,
+      0,
+      predicate,
+      (row, matchOffset) => {
+        if (matchOffset < offset || rows.length >= limit ||
+            retainedBytes > MAX_RESULT_BYTES) return;
+        rows.push(row);
+        retainedBytes += Buffer.byteLength(stableJson(row), "utf8");
+      },
+    );
+    if (offset > selected.matched) throw new Error("Cursor offset exceeds matching evidence");
+    const build = (count: number): EvidenceToolResult => {
+      const pageRows = rows.slice(0, count);
+      const complete = offset + count === selected.matched;
+      const groups = new Map<string, number>();
+      if (source === "traces") pageRows.forEach((row) => addTraceGroup(groups, row));
+      return {
+        ...result(source, selected.scanned, selected.matched, !complete,
+          source === "logs"
+            ? { window, literal: literal ?? null, rows: pageRows }
+            : {
+              window, groups: renderTraceGroups(groups), representativeRows: pageRows,
+              summaryScope: "page",
+            },
+          coverage.complete),
+        pageComplete: complete,
+        ...(!complete && count > 0 ? { nextCursor: cursorAt(offset + count) } : {}),
+      };
+    };
+    let count = rows.length;
+    let candidate = build(count);
+    while (count > 0 && Buffer.byteLength(stableJson(candidate), "utf8") > MAX_RESULT_BYTES) {
+      count -= 1;
+      candidate = build(count);
+    }
+    if (count === 0 && rows.length > 0) {
+      const requiredResultBytes = Buffer.byteLength(stableJson(build(1)), "utf8");
+      return {
+        ...candidate,
+        nonProgress: true,
+        oversizedRow: {
+          matchOffset: offset,
+          rowBytes: Buffer.byteLength(stableJson(rows[0]), "utf8"),
+          requiredResultBytes,
+          reason: "A complete row and its page summary exceed the byte limit; narrow the query. No evidence was skipped.",
+        },
+      };
+    }
+    return candidate;
+  };
 
   const execute = async (
     tool: string,
@@ -116,6 +278,7 @@ export function createEvidenceTools(options: {
         throw new Error(`Evidence call limit exceeded (${MAX_CALLS})`);
       }
       approvalId = options.ledger.consume(tool, operation, normalizedParameters);
+      validateEvidenceParameters(tools.find((candidate) => candidate.name === tool)!, normalizedParameters);
       const result = await action();
       const serialized = stableJson(result);
       if (Buffer.byteLength(serialized, "utf8") > MAX_RESULT_BYTES) {
@@ -142,18 +305,17 @@ export function createEvidenceTools(options: {
         normalizedParameters,
         approvalId,
         requestId: approvalId ? options.ledger.requestId?.(approvalId) : undefined,
-        status: approvalId ? "error" : "blocked",
+        status: approvalId ? error instanceof EvidenceRequestError ? "query-error" : "error" : "blocked",
         startedAt,
         completedAt: clock().toISOString(),
         error: error instanceof Error ? error.message : String(error),
+        ...(error instanceof EvidenceRequestError ? { errorCode: error.code } : {}),
       });
       throw error;
     }
   };
 
-  return {
-    traces,
-    tools: [
+  const tools: readonly ToolDefinition[] = [
       {
         name: "read_incident_scope",
         description:
@@ -161,7 +323,6 @@ export function createEvidenceTools(options: {
         parameters: objectSchema({}),
         handler: (parameters) =>
           execute("read_incident_scope", "read", parameters, async () => {
-            requireExactKeys(parameters, []);
             const incident = JSON.parse(
               await readFile(resolveInside(options.caseRoot, "incident.json"), "utf8"),
             ) as unknown;
@@ -190,21 +351,22 @@ export function createEvidenceTools(options: {
       {
         name: "aggregate_metrics",
         description:
-          "Aggregate numeric metric values over a bounded time window with optional exact service and metric filters. Returns units when present and row counts.",
+          `Aggregate numeric metric values over a bounded time window with optional exact service and metric filters. Returns units when present and row counts. ${TIME_WINDOW_CONSTRAINT}`,
         parameters: objectSchema(
           {
             startTime: scalarSchema(),
             endTime: scalarSchema(),
-            service: { type: "string", maxLength: 128 },
-            metric: { type: "string", maxLength: 256 },
+            service: filterSchema(128),
+            metric: filterSchema(256),
           },
           ["startTime", "endTime"],
         ),
         handler: (parameters) =>
           execute("aggregate_metrics", "aggregate", parameters, async () => {
-            requireAllowedKeys(parameters, ["startTime", "endTime", "service", "metric"]);
             const window = requireTimeWindow(parameters);
             const filters = metricFilters(parameters);
+            const coverage = await sourceCoverage(options.caseRoot, "metrics");
+            if (!coverage.available) return unavailable("metrics");
             const columns = await readMetricColumns(options.caseRoot);
             const rows = await selectRows(
               resolveInside(options.caseRoot, "metrics.jsonl"),
@@ -219,22 +381,22 @@ export function createEvidenceTools(options: {
               rows.matched,
               false,
               { window, aggregates },
-              rows.scanned > 0,
+              coverage.complete,
             );
           }),
       },
       {
         name: "compare_metrics",
         description:
-          "Compare bounded baseline and post-onset metric windows, ranking field changes with units and row counts. Optional service and metric filters use exact, case-insensitive identities from row fields or the prepared column mapping.",
+          `Compare bounded baseline and post-onset metric windows, ranking field changes with units and row counts. Optional service and metric filters use exact, case-insensitive identities from row fields or the prepared column mapping. ${TIME_WINDOW_CONSTRAINT}`,
         parameters: objectSchema(
           {
             baselineStartTime: scalarSchema(),
             baselineEndTime: scalarSchema(),
             postStartTime: scalarSchema(),
             postEndTime: scalarSchema(),
-            service: { type: "string", maxLength: 128 },
-            metric: { type: "string", maxLength: 256 },
+            service: filterSchema(128),
+            metric: filterSchema(256),
             limit: { type: "integer", minimum: 1, maximum: 50 },
           },
           [
@@ -246,15 +408,6 @@ export function createEvidenceTools(options: {
         ),
         handler: (parameters) =>
           execute("compare_metrics", "compare", parameters, async () => {
-            requireAllowedKeys(parameters, [
-              "baselineStartTime",
-              "baselineEndTime",
-              "postStartTime",
-              "postEndTime",
-              "service",
-              "metric",
-              "limit",
-            ]);
             const baselineWindow = requireTimeWindow({
               startTime: parameters.baselineStartTime,
               endTime: parameters.baselineEndTime,
@@ -264,6 +417,8 @@ export function createEvidenceTools(options: {
               endTime: parameters.postEndTime,
             });
             const filters = metricFilters(parameters);
+            const coverage = await sourceCoverage(options.caseRoot, "metrics");
+            if (!coverage.available) return unavailable("metrics");
             const columns = await readMetricColumns(options.caseRoot);
             const matchesMetric = (row: Record<string, unknown>) =>
               metricValues(row, columns, filters).length > 0;
@@ -295,103 +450,65 @@ export function createEvidenceTools(options: {
                 postOnsetRowCount: postOnset.matched,
                 comparisons,
               },
-              baseline.scanned > 0 || postOnset.scanned > 0,
+              coverage.complete,
             );
           }),
       },
       {
         name: "search_logs",
         description:
-          "Retrieve incident-centered logs over a required bounded time window, optionally filtering by one escaped literal and exact service. Returns at most 100 rows with coverage and truncation metadata.",
+          `Retrieve bounded logs in source order, at most 100 complete rows within the byte limit. Continue with nextCursor as cursor and the identical query in a new approved call; unavailable and oversized non-progress results are explicit. ${TIME_WINDOW_CONSTRAINT}`,
         parameters: objectSchema(
           {
-            literal: { type: "string", minLength: 1, maxLength: 256 },
+            literal: filterSchema(256),
             startTime: scalarSchema(),
             endTime: scalarSchema(),
-            service: { type: "string", maxLength: 128 },
+            service: filterSchema(128),
             limit: { type: "integer", minimum: 1, maximum: MAX_RESULT_ROWS },
+            cursor: cursorSchema(),
           },
           ["startTime", "endTime"],
         ),
         handler: (parameters) =>
           execute("search_logs", "search", parameters, async () => {
-            requireAllowedKeys(parameters, ["literal", "startTime", "endTime", "service", "limit"]);
             const window = requireTimeWindow(parameters);
             const literal =
               parameters.literal === undefined
                 ? undefined
                 : requireString(parameters.literal, "literal").toLowerCase();
-            const limit = requireLimit(parameters.limit);
-            const rows = await selectRows(
-              resolveInside(options.caseRoot, "logs.jsonl"),
-              parameters,
-              limit + 1,
+            return page("search_logs", "logs", parameters, window,
               (row) =>
                 literal === undefined || stableJson(row).toLowerCase().includes(literal),
-            );
-            const truncated = rows.rows.length > limit;
-            return result(
-              "logs",
-              rows.scanned,
-              rows.matched,
-              truncated,
-              { window, literal: literal ?? null, rows: rows.rows.slice(0, limit) },
-              rows.scanned > 0,
+              literal,
             );
           }),
       },
       {
         name: "summarize_traces",
         description:
-          "Summarize bounded trace evidence by service and status with optional duration threshold. Returns at most 100 representative rows.",
+          `Retrieve bounded traces in source order with complete page-local service/status summaries. At most 100 full rows fit the byte limit; continue using nextCursor as cursor with an identical newly approved query. Oversized rows return explicit non-progress. ${TIME_WINDOW_CONSTRAINT}`,
         parameters: objectSchema(
           {
             startTime: scalarSchema(),
             endTime: scalarSchema(),
-            service: { type: "string", maxLength: 128 },
-            status: { type: "string", maxLength: 64 },
+            service: filterSchema(128),
+            status: filterSchema(64),
             minimumDuration: { type: "number", minimum: 0 },
             limit: { type: "integer", minimum: 1, maximum: MAX_RESULT_ROWS },
+            cursor: cursorSchema(),
           },
           ["startTime", "endTime"],
         ),
         handler: (parameters) =>
           execute("summarize_traces", "summarize", parameters, async () => {
-            requireAllowedKeys(parameters, [
-              "startTime",
-              "endTime",
-              "service",
-              "status",
-              "minimumDuration",
-              "limit",
-            ]);
             const window = requireTimeWindow(parameters);
-            const limit = requireLimit(parameters.limit);
-            const groups = new Map<string, number>();
-            const rows = await selectRows(
-              resolveInside(options.caseRoot, "traces.jsonl"),
-              parameters,
-              limit + 1,
+            return page("summarize_traces", "traces", parameters, window,
               (row) => matchesStatusAndDuration(row, parameters),
-              (row) => addTraceGroup(groups, row),
-            );
-            const truncated = rows.rows.length > limit;
-            return result(
-              "traces",
-              rows.scanned,
-              rows.matched,
-              truncated,
-              {
-                window,
-                groups: renderTraceGroups(groups),
-                representativeRows: rows.rows.slice(0, limit),
-              },
-              rows.scanned > 0,
             );
           }),
       },
-    ],
-  };
+    ];
+  return { tools, traces };
 }
 
 async function selectRows(
@@ -399,7 +516,7 @@ async function selectRows(
   parameters: Readonly<Record<string, unknown>>,
   resultLimit: number,
   additionalPredicate: (row: Record<string, unknown>) => boolean = () => true,
-  onMatch: (row: Record<string, unknown>) => void = () => undefined,
+  onMatch: (row: Record<string, unknown>, matchOffset: number) => void = () => undefined,
 ): Promise<{
   readonly rows: Record<string, unknown>[];
   readonly scanned: number;
@@ -415,11 +532,14 @@ async function selectRows(
     }
     scanned += 1;
     const row = JSON.parse(line) as Record<string, unknown>;
+    if (row === null || typeof row !== "object" || Array.isArray(row)) {
+      throw new Error("Evidence JSONL rows must be objects");
+    }
     if (!matchesCommonFilters(row, parameters) || !additionalPredicate(row)) {
       continue;
     }
     matched += 1;
-    onMatch(row);
+    onMatch(row, matched - 1);
     if (rows.length < resultLimit) {
       rows.push(row);
     }
@@ -619,13 +739,13 @@ function addTraceGroup(groups: Map<string, number>, row: Readonly<Record<string,
     findString(row, ["service", "service_name", "serviceName", "container_name"]) || "unknown";
   const status =
     findString(row, ["status", "status_code", "statusCode", "http_status_code"]) || "unknown";
-  const key = `${service}|${status}`;
+  const key = JSON.stringify([service, status]);
   groups.set(key, (groups.get(key) ?? 0) + 1);
 }
 
 function renderTraceGroups(groups: ReadonlyMap<string, number>): unknown {
   return [...groups.entries()].map(([key, count]) => {
-    const [service, status] = key.split("|");
+    const [service, status] = JSON.parse(key) as [string, string];
     return { service, status, count };
   });
 }
@@ -645,7 +765,43 @@ function result(
     truncated,
     sourceComplete,
     empty: matchedRowCount === 0,
+    availability: "available",
+    pageComplete: !truncated,
     data,
+  };
+}
+
+/**
+ * Requires prepared coverage and readable advertised stores; absent modalities alone are unavailable.
+ */
+async function sourceCoverage(caseRoot: string, source: Modality): Promise<{
+  available: boolean;
+  complete: boolean;
+}> {
+  const text = await readFile(resolveInside(caseRoot, "source-coverage.json"), "utf8");
+  const coverage = JSON.parse(text) as { sources?: unknown };
+  if (!coverage || !Array.isArray(coverage.sources) ||
+      coverage.sources.some((item: unknown) =>
+        !item || typeof item !== "object" ||
+        !["metrics", "logs", "traces"].includes((item as { modality: string }).modality))) {
+    throw new Error("Invalid source coverage");
+  }
+  const entry = coverage.sources.find((item: { modality: string }) => item.modality === source);
+  if (entry && ((entry.complete !== undefined && typeof entry.complete !== "boolean") ||
+      (entry.truncated !== undefined && typeof entry.truncated !== "boolean"))) {
+    throw new Error("Invalid source coverage completeness");
+  }
+  return {
+    available: entry !== undefined,
+    complete: entry !== undefined && entry.complete !== false && entry.truncated !== true,
+  };
+}
+
+function unavailable(source: Modality): EvidenceToolResult {
+  return {
+    ...result(source, 0, 0, false, {}, false),
+    availability: "unavailable",
+    availabilityReason: "Source modality is absent from source-coverage.json",
   };
 }
 
@@ -653,26 +809,6 @@ function normalizeParameters(
   parameters: Readonly<Record<string, unknown>>,
 ): Readonly<Record<string, unknown>> {
   return JSON.parse(stableJson(parameters)) as Record<string, unknown>;
-}
-
-function requireAllowedKeys(
-  parameters: Readonly<Record<string, unknown>>,
-  allowed: readonly string[],
-): void {
-  const extras = Object.keys(parameters).filter((key) => !allowed.includes(key));
-  if (extras.length > 0) {
-    throw new Error(`Unsupported parameters: ${extras.join(", ")}`);
-  }
-}
-
-function requireExactKeys(
-  parameters: Readonly<Record<string, unknown>>,
-  expected: readonly string[],
-): void {
-  requireAllowedKeys(parameters, expected);
-  if (Object.keys(parameters).length !== expected.length) {
-    throw new Error("Missing required parameters");
-  }
 }
 
 function requireString(value: unknown, name: string): string {
@@ -734,6 +870,12 @@ function findTimestamp(row: Readonly<Record<string, unknown>>): number {
 }
 
 function comparable(value: unknown): number {
+  const parsed = timeValue(value);
+  if (parsed !== undefined) return parsed;
+  throw new Error(`Invalid time value: ${String(value)}`);
+}
+
+function timeValue(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
   }
@@ -747,7 +889,7 @@ function comparable(value: unknown): number {
       return parsed;
     }
   }
-  throw new Error(`Invalid time value: ${String(value)}`);
+  return undefined;
 }
 
 function objectSchema(
@@ -758,7 +900,27 @@ function objectSchema(
 }
 
 function scalarSchema(): Readonly<Record<string, unknown>> {
-  return { anyOf: [{ type: "number" }, { type: "string", maxLength: 64 }] };
+  return { description: TIME_WINDOW_CONSTRAINT, anyOf: [
+    { type: "number" },
+    {
+      type: "string", minLength: 1, maxLength: 64,
+      pattern: "^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$",
+    },
+  ] };
+}
+
+function filterSchema(maxLength: number): Readonly<Record<string, unknown>> {
+  return {
+    type: "string", minLength: 1, maxLength, pattern: "\\S",
+    description: "Use a non-empty string containing at least one non-whitespace character.",
+  };
+}
+
+function cursorSchema(): Readonly<Record<string, unknown>> {
+  return {
+    type: "string", minLength: 64, maxLength: 64, pattern: "^[0-9a-f]{64}$",
+    description: "Copy nextCursor unchanged from the same tool, case and exact query. The first 16 hex digits encode a positive safe-integer offset; the rest bind the cursor to its query.",
+  };
 }
 
 function inferMetricUnit(field: string): string {
@@ -786,15 +948,28 @@ function requireTimeWindow(parameters: Readonly<Record<string, unknown>>): {
   readonly endTime: number;
   readonly unit: "epoch seconds" | "epoch milliseconds";
 } {
-  const startTime = comparable(parameters.startTime);
-  const endTime = comparable(parameters.endTime);
+  const startTime = Number(parameters.startTime);
+  const endTime = Number(parameters.endTime);
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) {
+    throw new EvidenceRequestError("invalid-time-window", "Time values must be finite epoch numbers or numeric strings");
+  }
   if (endTime <= startTime) {
-    throw new Error("endTime must be greater than startTime");
+    throw new EvidenceRequestError("invalid-time-window", "endTime must be greater than startTime");
+  }
+  if ((startTime > 100_000_000_000) !== (endTime > 100_000_000_000)) {
+    throw new EvidenceRequestError("invalid-time-window", "startTime and endTime must use matching epoch units");
   }
   const unit = startTime > 100_000_000_000 ? "epoch milliseconds" : "epoch seconds";
-  const maximumSpan = unit === "epoch milliseconds" ? 3_600_000 : 3_600;
-  if (endTime - startTime > maximumSpan) {
-    throw new Error(`Evidence time window exceeds the ${maximumSpan}-unit limit`);
-  }
+  const error = windowSpanError(startTime, endTime);
+  if (error) throw error;
   return { startTime, endTime, unit };
+}
+
+function windowSpanError(startTime: number, endTime: number): EvidenceWindowLimitError | undefined {
+  const milliseconds = startTime > 100_000_000_000;
+  const maximumSpan = MAX_TIME_WINDOW_SECONDS * (milliseconds ? 1000 : 1);
+  if (endTime - startTime > maximumSpan) {
+    return new EvidenceWindowLimitError(maximumSpan, milliseconds ? "millisecond" : "second");
+  }
+  return undefined;
 }

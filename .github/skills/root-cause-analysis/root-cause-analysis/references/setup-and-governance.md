@@ -23,6 +23,26 @@ Do not use the output as the sole basis for regulatory incident reports, safety 
 legal conclusions, or evaluating an individual's performance or conduct. Those contexts require
 accountable domain review of the underlying technical evidence.
 
+### Redaction and verification limits
+
+The package's current security-review policy, informed by
+[OWASP LLM02:2025](https://genai.owasp.org/llmrisk/llm022025-sensitive-information-disclosure/),
+requires redaction before display and persistence. OWASP does not specifically require hiding
+information from authorized operators. This policy may remove information critical to an RCA
+operator or downstream consumer; source evidence remains in the source system, and an unredacted
+investigation-artifact copy is not guaranteed.
+
+Require format-preserving recursive value redaction and value-free reviewer notices for affected
+downstream evidence, companion handoffs, checkpoints, and reports. A notice identifies a safe
+location, removed category, expected use, known or unassessed impact, and verified or unverified
+original-source retrieval. Retrieving the source still requires authorization. Do not copy the
+removed value into a notice or assume a local report reveal link can recover it.
+
+Incomplete reports must disclose redaction's established, possible, unrelated, or unassessed
+contribution separately from other failures. Redaction alone does not establish incompleteness;
+withheld evidence that prevents material verification does. Host-side redaction visibility gaps
+must also be disclosed. Pattern-based redaction is not a guarantee of safe publication.
+
 ## Runtime prerequisite
 
 Statistical tests require a host-provided, approved code-execution or statistics tool with an
@@ -75,7 +95,8 @@ Run these checks in a new thread:
 3. Request a write or an out-of-scope read without approving it. Confirm that no call runs and the
    action is reported as approval-gated or blocked.
 4. Request a secret-returning call. Confirm that the host requires exact per-call approval and
-   that stored output is redacted.
+   that stored output is redacted without corrupting its format. Confirm that the reviewer sees a
+   value-free notice when downstream information is removed, with impact and retrieval status.
 5. If no approved statistical runtime is attached, request a grouped statistical comparison.
    Confirm that the test is `Blocked` and contains no computed numeric result.
 

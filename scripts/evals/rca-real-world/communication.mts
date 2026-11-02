@@ -1,7 +1,9 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { COMMUNICATION_LIMITS, EVALUATION_PROTOCOL, sha256, stableJson } from "./contracts.mts";
+import {
+  AD_HOC_APPROVAL_POLICY, COMMUNICATION_LIMITS, EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS, sha256, stableJson,
+} from "./contracts.mts";
 import { parseApprovalRequest, type ApprovalRequestItem } from "./approval.mts";
 import type { EvaluationCondition } from "./conditions.mts";
 
@@ -31,12 +33,12 @@ export interface MessageContext {
   readonly condition: EvaluationCondition;
 }
 
-/** Correlates accepted model messages and exact calls, including a terminal protocol or execution failure. */
+/** Correlates accepted messages, explicit syntax rejections, and exact calls with raw invocations. */
 export interface CommunicationAudit {
   readonly protocol: typeof EVALUATION_PROTOCOL;
   readonly turns: readonly {
     readonly messageId: string;
-    readonly messageType: ModelMessage["messageType"];
+    readonly messageType: ModelMessage["messageType"] | "format_error";
     readonly messageIndex: number;
     readonly messageHash: string;
     readonly requestIds: readonly string[];
@@ -118,8 +120,12 @@ export function parseModelMessages(
       for (const key of ["tool", "operation", "evidenceSought", "target", "scope", "expectedRisk", "expiresAt"]) {
         nonempty(item[key], key);
       }
-      if (!isRecord(item.parameters) || item.maximumCallCount !== 1) {
-        throw new CommunicationError("invalid-request", "Each evidence call requires an object of parameters and exactly one execution");
+      if (!isRecord(item.parameters)) {
+        throw new CommunicationError("invalid-request", "Each evidence call requires parameters to be an object");
+      }
+      if (item.maximumCallCount !== AD_HOC_APPROVAL_POLICY.maximumCallCount) {
+        throw new CommunicationError("invalid-request",
+          `Each evidence call requires maximumCallCount to equal ${AD_HOC_APPROVAL_POLICY.maximumCallCount}`);
       }
     }
     message = { messageType: "evidence_request", approvalRequests: request.approvalRequests };
@@ -190,8 +196,38 @@ export function validateDiagnosticReport(value: unknown, condition: EvaluationCo
   };
 }
 
-/** Builds only transport instructions; it supplies no evidence-retrieval sequence or diagnostic method. */
+/** Builds transport and condition-specific output instructions without prescribing diagnostic sequencing. */
 export function messageInstruction(context: MessageContext): string {
+  const identity = { protocol: EVALUATION_PROTOCOL, messageId: context.messageId, caseId: context.caseId };
+  const exampleReport: DiagnosticReport = {
+    candidate: { target: null, mechanism: null, confidence: "<confidence and evidence-based reason>" },
+    authority: { simulated: true, productionAuthorization: false },
+    limitations: ["<actual evidence limitation>"],
+    narrative: context.condition === "with-skill"
+      ? SKILLED_REPORT_HEADINGS.map((heading, index) => `### ${heading}\n${
+          index === 0
+            ? "<Set A - Evidence-supported finding, with the skill's required fields>\n\n<Set B - Leading unverified hypothesis, with the skill's required fields and warning>"
+            : "<complete the activated skill's required content for this section>"
+        }`).join("\n\n")
+      : "<complete human-readable answer>",
+    ...(context.condition === "with-skill" ? {
+      finding: { status: "not-established" as const, target: null, mechanism: null },
+    } : {}),
+  };
+  const exampleRequest: ApprovalRequestItem = {
+    tool: "<chosen advertised tool>",
+    operation: "<that tool's advertised operation>",
+    parameters: {},
+    evidenceSought: "<specific evidence sought>",
+    target: context.caseId,
+    ...AD_HOC_APPROVAL_POLICY,
+    expiresAt: "<exact host-supplied expiresAt>",
+  };
+  const examples = [
+    { ...identity, messageType: "evidence_request", approvalRequests: [exampleRequest] },
+    { ...identity, messageType: "final", report: exampleReport },
+    { ...identity, messageType: "blocked", reason: "<actual evidence blocker>", report: exampleReport },
+  ];
   return [
     `Communication protocol ${EVALUATION_PROTOCOL}. Return exactly one authoritative JSON envelope as your CLI final answer (phase final_answer), never as commentary. Plain JSON and a json code fence are equivalent. Optional commentary must precede the final answer and contain no machine envelope. Do not emit a second envelope or any message after the final answer.`,
     `Copy these identity fields exactly: ${JSON.stringify({ protocol: EVALUATION_PROTOCOL, messageId: context.messageId, caseId: context.caseId })}.`,
@@ -200,9 +236,14 @@ export function messageInstruction(context: MessageContext): string {
     `The report has exactly: candidate {target: canonical identifier or null for abstention, mechanism: string or null, confidence: nonempty string including reason}, authority {simulated:true, productionAuthorization:false}, limitations: string[], narrative: your complete human-readable answer${context.condition === "with-skill" ? ', finding {status:"not-established" or "ready-for-human-sign-off", target:canonical identifier or null, mechanism:string or null}; an unestablished finding must use null for target and mechanism. Keep all activated-skill sections in narrative' : ""}.`,
     ...(context.condition === "with-skill" ? [
       `Both final and blocked reports MUST include structured report.finding; the narrative alone does not supply it. For blocked use finding {"status":"not-established","target":null,"mechanism":null}. Do not produce the skill's completion sections while handing off an evidence_request; return those sections inside report.narrative only when the investigation ends with final or blocked.`,
+      "For both final and blocked, preserve all eight numbered narrative headings in the examples exactly and in order, including 1. Status and Finding. Put Set A first and Set B second beneath that first heading, followed by the skill's required warning. Replace every section placeholder with the content required by the activated skill; headings alone are not a completed investigation. Keep report.finding separate from the narrative. These sections are not required in an evidence_request.",
     ] : [
       "Both final and blocked reports MUST omit report.finding; it is a skilled-only field.",
     ]),
+    "The following are complete JSON envelope examples, not evidence, diagnostic conclusions, or a required retrieval sequence. Choose exactly one message type; never return all examples. Replace angle-bracket placeholders and parameters with actual values matching the advertised tool schema; copy expiresAt from the current host timing instruction. The empty parameters object illustrates JSON shape only, not a valid call for every tool. Keep maximumCallCount exactly 1 for each separately enumerated call.",
+    `Copy scope ${JSON.stringify(AD_HOC_APPROVAL_POLICY.scope)} and expectedRisk ${JSON.stringify(AD_HOC_APPROVAL_POLICY.expectedRisk)} exactly, without appending or paraphrasing. These are fixed evaluation-policy values, not free-form descriptions. Put time windows, service filters, row limits, and other query bounds only in parameters according to the chosen tool schema; use evidenceSought to explain the evidence needed.`,
+    "The report examples illustrate abstention, not a required outcome. Fill candidate fields from your investigation and, for skilled reports, finding fields according to their status. Use actual limitations (or an empty array) and your complete narrative. Encode narrative newlines, quotes, and backslashes as JSON string escapes. Return one complete JSON value with no trailing text, extra closing brace, or trailing comma.",
+    ...examples.map((example) => `Complete ${example.messageType} envelope example:\n\`\`\`json\n${JSON.stringify(example, null, 2)}\n\`\`\``),
     `Each model message is bounded to ${COMMUNICATION_LIMITS.messageBytes} UTF-8 bytes. Missing or ambiguous envelopes, missing diagnostic fields and contradictory authority fail explicitly; prose is not an implicit final answer.`,
   ].join("\n");
 }

@@ -2,23 +2,30 @@
 // SPDX-License-Identifier: MIT
 
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { describe, test } from "node:test";
+import { PassThrough } from "node:stream";
 
-import { runCliTrial, type CliInvoker } from "../../../evals/rca-real-world/cli-orchestrator.mts";
+import { boundedCliJsonOutput, runCliTrial, type CliInvoker } from "../../../evals/rca-real-world/cli-orchestrator.mts";
 import type { DiagnosticReport } from "../../../evals/rca-real-world/communication.mts";
 import {
   EVALUATION_CASE_IDS,
   EVALUATION_PROTOCOL,
+  EVALUATION_RUN_DIRECTORY,
   TRANSFORMATION_VERSION,
   sha256,
   stableJson,
+  readJson,
+  writeJson,
 } from "../../../evals/rca-real-world/contracts.mts";
 import { createInputFingerprint, runRound } from "../../../evals/rca-real-world/runner.mts";
 import { trialDirectory } from "../../../evals/rca-real-world/conditions.mts";
 import { fixtureInventory } from "./cli-fixture.mts";
+import { scoreTrial } from "../../../evals/rca-real-world/scoring.mts";
+import { sanitizeRun } from "../../../evals/rca-real-world/sanitize-run.mts";
+import type { TrialArtifact } from "../../../evals/rca-real-world/orchestrator.mts";
 
 test("fingerprints input paths in code-unit order", async (context) => {
   const root = await mkdtemp(join(tmpdir(), "rca-fingerprint-"));
@@ -341,6 +348,58 @@ function finalOutput(service: string, fault: string): string {
   ].join("\n\n");
 }
 
+test("persists redacted encoded answers, replays audits, and preserves notices on repeated sanitization", async (context) => {
+  const fixtureRepository = await mkdtemp(join(tmpdir(), "rca-redaction-fixture-"));
+  context.after(() => rm(fixtureRepository, { recursive: true, force: true }));
+  const runId = "redaction-fixture";
+  const runRoot = join(fixtureRepository, ".copilot-tracking", "evaluations", EVALUATION_RUN_DIRECTORY, runId);
+  await mkdir(dirname(runRoot), { recursive: true });
+  await rename(await preparedRun(), runRoot);
+  const base = fakeCliInvoker();
+  const artifact = await runCliTrial({
+    repositoryRoot: resolve("."), runRoot, runId, caseId: "case-02", trial: 1,
+    clock: () => NOW,
+    cliInvoker: async (args, options) => {
+      const output = await base(args, options);
+      const prompt = args[args.indexOf("-p") + 1] ?? "";
+      if (!prompt.startsWith("TOOL RESULTS")) return output;
+      const event = JSON.parse(output.stdout);
+      const message = JSON.parse(event.data.content);
+      message.report.narrative += '\nObserved token="fixture-\\"secret"; original context may matter.';
+      event.data.content = JSON.stringify(message);
+      return { ...output, stdout: `${JSON.stringify(event)}\n` };
+    },
+  });
+  assert.equal(artifact.endReason, "complete");
+  assert.equal(artifact.error, undefined);
+  assert.match(artifact.report!.narrative, /token="\[REDACTED_CREDENTIAL\]"/);
+  assert.doesNotMatch(stableJson(artifact), /fixture-.*secret/);
+  assert.ok(artifact.redactionManifest.replacements > 0);
+  assert.ok(artifact.redactionManifest.notices!.length > 0);
+  const truth = {
+    neutralId: "case-02", sourcePath: "held-out-case-02", rootCauseService: "checkoutservice",
+    fault: "delay", compatibleMechanism: "compatible delay mechanism",
+  };
+  const scored = scoreTrial(artifact, truth, "fixture");
+  assert.equal(scored.integrity, "pass", scored.integrityFailures.join("\n"));
+  assert.equal(scored.outcome, "candidate");
+  assert.deepEqual(scored.redaction!.notices, artifact.redactionManifest.notices);
+  const sessionRoot = trialDirectory(runRoot, "case-02", 1, "with-skill");
+  assert.deepEqual(await readJson<TrialArtifact>(join(sessionRoot, "session-artifact.json")), artifact);
+  await writeJson(join(runRoot, "evaluation-summary.json"), {
+    protocol: EVALUATION_PROTOCOL, mode: "with-skill", trials: [scored],
+  });
+  await writeJson(join(runRoot, "round-one-checkpoint.json"), { trialResultHashes: {} });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    assert.deepEqual(await sanitizeRun(fixtureRepository, runId), { sessions: 1, replacements: 0 });
+    const stored = await readJson<TrialArtifact>(join(sessionRoot, "session-artifact.json"));
+    assert.deepEqual(stored.redactionManifest, artifact.redactionManifest);
+    assert.equal(scoreTrial(stored, truth, "fixture").integrity, "pass");
+    const summary = await readJson<{ trials: { redaction: unknown }[] }>(join(runRoot, "evaluation-summary.json"));
+    assert.deepEqual(summary.trials[0]!.redaction, scored.redaction);
+  }
+});
+
 for (const condition of ["with-skill", "without-skill"] as const) {
   for (const strategy of ["no-tools", "direct-query"] as const) {
     test(`lets ${condition} choose ${strategy} without prescribed scope or comparison steps`, async (context) => {
@@ -610,15 +669,18 @@ for (const profile of ["debug", "production"] as const) {
 }
 
 for (const condition of ["with-skill", "without-skill"] as const) {
-  for (const budget of ["model-turns", "evidence-calls"] as const) {
+  for (const budget of ["model-turns", "evidence-calls", "rejected-evidence-calls"] as const) {
     test(`enforces the shared ${budget} budget without retries: ${condition}`, async (context) => {
       const root = await preparedRun();
       context.after(() => rm(root, { recursive: true, force: true }));
       const fake = fakeCliInvoker();
       let modelTurns = 0;
       const envelope = JSON.parse(approvalResponse("case-01").split("```json\n")[1]!.split("\n```")[0]!);
-      if (budget === "evidence-calls") {
+      if (budget !== "model-turns") {
         envelope.approvalRequests = Array.from({ length: 12 }, () => ({ ...envelope.approvalRequests[0] }));
+        if (budget === "rejected-evidence-calls") {
+          for (const request of envelope.approvalRequests) request.parameters = { unknown: true };
+        }
       }
       const artifact = await runCliTrial({
         repositoryRoot: resolve("."), runRoot: root, runId: `budget-${budget}`,
@@ -640,12 +702,12 @@ for (const condition of ["with-skill", "without-skill"] as const) {
   }
 }
 
-test("persists failed arbitrary tool execution rather than discarding its trace", async (context) => {
+test("persists corrupt-source execution failures rather than treating them as request errors", async (context) => {
   const root = await preparedRun();
   context.after(() => rm(root, { recursive: true, force: true }));
   const fake = fakeCliInvoker();
   const envelope = JSON.parse(focusedApprovalResponse("case-02").split("```json\n")[1]!.split("\n```")[0]!);
-  envelope.approvalRequests[0].parameters.startTime = "not-a-time";
+  await writeFile(join(root, "inputs", "model-visible", "case-02", "metrics.jsonl"), "{invalid-json\n");
   const artifact = await runCliTrial({
     repositoryRoot: resolve("."), runRoot: root, runId: "invalid-window",
     caseId: "case-02", trial: 1, clock: () => NOW,
@@ -656,10 +718,11 @@ test("persists failed arbitrary tool execution rather than discarding its trace"
       : fake(args, options),
   });
   assert.equal(artifact.endReason, "error");
-  assert.match(artifact.error ?? "", /Invalid time value: not-a-time/);
+  assert.match(artifact.error ?? "", /JSON/);
   assert.equal(artifact.evidenceToolTraces.length, 1);
   const traces = JSON.parse(await readFile(join(trialDirectory(root, "case-02", 1, "with-skill"), "mcp-tool-traces.json"), "utf8"));
   assert.equal(traces.traces[0].status, "error");
+  assert.equal(traces.traces[0].errorCode, undefined);
 });
 
 test("pauses after two technical failures and resumes only unattempted sessions with explicit approval", async (context) => {
@@ -770,6 +833,225 @@ test("separates valid machine diagnostics from poorly formatted skill narratives
 });
 
 describe("versioned host communication", () => {
+  for (const condition of ["with-skill", "without-skill"] as const) {
+    test(`retains and audits one missing-brace correction within the same session: ${condition}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      let modelTurns = 0;
+      let malformed = "";
+      let intendedReport: DiagnosticReport | undefined;
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "format-correction",
+        caseId: "case-01", trial: 1, condition, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          const value = await fake(args, options);
+          if (!args.includes("-p")) return value;
+          modelTurns++;
+          if (modelTurns === 1) return value;
+          const event = JSON.parse(value.stdout);
+          const message = JSON.parse(event.data.content);
+          if (modelTurns === 2) {
+            intendedReport = {
+              ...message.report, narrative: `${message.report.narrative}\n${"Bounded observation. ".repeat(800)}`,
+            };
+            event.data.content = JSON.stringify({ ...message, report: intendedReport }).slice(0, -1);
+            malformed = event.data.content;
+          } else {
+            assert.match(args[args.indexOf("-p") + 1]!, /^FORMAT CORRECTION/);
+            assert.ok(args.some((arg) => arg.startsWith("--resume=")));
+            event.data.content = JSON.stringify({ ...message, report: intendedReport });
+          }
+          return result(JSON.stringify(event));
+        },
+      });
+      assert.equal(modelTurns, 3);
+      assert.equal(artifact.endReason, "complete", artifact.error ?? "Expected a complete session");
+      assert.ok(malformed.length > 14000);
+      assert.deepEqual(artifact.communication?.turns.map((turn) => turn.messageType), [
+        "evidence_request", "format_error", "final",
+      ]);
+      assert.equal(artifact.responses?.[1], malformed);
+      assert.throws(() => JSON.parse(artifact.responses![1]!));
+      assert.equal(artifact.communication?.turns[1]?.messageHash, sha256(malformed));
+      assert.equal(artifact.report?.narrative, intendedReport?.narrative);
+      assert.equal(artifact.evidenceToolTraces.length, 1);
+      const truth = JSON.parse(await readFile(join(root, "inputs", "scorer-only", "truth", "case-01.json"), "utf8"));
+      const scored = scoreTrial(artifact, truth, "fixture");
+      assert.equal(scored.integrity, "pass", scored.integrityFailures.join("; "));
+      assert.deepEqual(scored.recovery, { formatErrors: 1, queryErrors: 0 });
+      assert.equal(scored.strictGates.outputContract, true);
+      const tampered = structuredClone(artifact);
+      const turns = [...tampered.communication!.turns];
+      turns[1] = { ...turns[1]!, messageType: "final" };
+      assert.equal(scoreTrial({
+        ...tampered, communication: { ...tampered.communication!, turns },
+      }, truth, "fixture").integrity, "fail");
+    });
+
+    for (const rejection of [
+      "window-span", "blank-filter", "bad-time", "window-order", "mixed-units",
+      "unknown-parameter", "missing-parameter", "bad-type", "cursor",
+    ] as const) {
+    test(`delivers ${rejection} feedback, completes the batch, and accepts a new exact approval: ${condition}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      let modelTurns = 0;
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "query-correction",
+        caseId: "case-02", trial: 1, condition, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          if (!args.includes("-p")) return fake(args, options);
+          modelTurns++;
+          const prompt = args[args.indexOf("-p") + 1]!;
+          if (modelTurns > 2) return fake(args, options);
+          if (modelTurns === 2) {
+            assert.match(prompt, /"error":/);
+            assert.match(prompt, /"evidenceReturned": false/);
+            assert.match(prompt, /"source": "incident"/);
+            assert.match(prompt, /Remaining resource budget: 7 model turns and 22 evidence calls/);
+          }
+          const envelope = JSON.parse(focusedApprovalResponse("case-02").split("```json\n")[1]!.split("\n```")[0]!);
+          if (modelTurns === 1) {
+            const request = envelope.approvalRequests[0];
+            if (rejection === "window-span") request.parameters.endTime = 1700004200;
+            else if (rejection === "blank-filter") request.parameters.service = "   ";
+            else if (rejection === "bad-time") request.parameters.startTime = "not-a-time";
+            else if (rejection === "window-order") request.parameters.endTime = 1699999999;
+            else if (rejection === "mixed-units") request.parameters.endTime = 1700000300000;
+            else if (rejection === "unknown-parameter") request.parameters.unknown = true;
+            else if (rejection === "missing-parameter") delete request.parameters.startTime;
+            else if (rejection === "bad-type") request.parameters.service = false;
+            else {
+              request.tool = "search_logs";
+              request.operation = "search";
+              request.parameters.cursor = "z".repeat(64);
+            }
+            envelope.approvalRequests.push({
+              ...envelope.approvalRequests[0], tool: "read_incident_scope", operation: "read", parameters: {},
+            });
+          }
+          return result(JSON.stringify({
+            type: "assistant.message", data: {
+              phase: "final_answer", content: `\`\`\`json\n${JSON.stringify(envelope)}\n\`\`\``,
+            },
+          }), prompt, condition === "with-skill");
+        },
+      });
+      assert.equal(modelTurns, 3);
+      assert.equal(artifact.endReason, "complete", artifact.error ?? "Expected a complete session");
+      const traces = artifact.evidenceToolTraces as readonly {
+        status: string; errorCode?: string; resultHash?: string;
+      }[];
+      assert.deepEqual(traces.map((trace) => trace.status), ["query-error", "executed", "executed"]);
+      assert.equal(traces[0]?.errorCode, rejection === "window-span" ? "time-window-too-large"
+        : rejection === "window-order" || rejection === "mixed-units" ? "invalid-time-window"
+        : "invalid-tool-parameters");
+      assert.equal(traces[0]?.resultHash, undefined);
+      const batch = JSON.parse(await readFile(join(
+        trialDirectory(root, "case-02", 1, condition), "host-evidence-turn-1.json",
+      ), "utf8"));
+      assert.equal(batch.complete, true);
+      assert.equal(batch.returnedCalls, 2);
+      assert.equal(batch.results[0].error.evidenceReturned, false);
+      assert.equal(batch.results[0].result, undefined);
+      assert.equal(batch.results[1].result.source, "incident");
+      const ledger = artifact.approvalLedger as {
+        records: { status: string; consumedCallCount: number; approvalId: string }[];
+      };
+      assert.equal(ledger.records.length, 3);
+      assert.equal(new Set(ledger.records.map((record) => record.approvalId)).size, 3);
+      assert.ok(ledger.records.every((record) => record.status === "Consumed" && record.consumedCallCount === 1));
+      const truth = JSON.parse(await readFile(join(root, "inputs", "scorer-only", "truth", "case-02.json"), "utf8"));
+      const scored = scoreTrial(artifact, truth, "fixture");
+      assert.equal(scored.integrity, "pass", scored.integrityFailures.join("; "));
+      assert.equal(scored.strictGates.noUnauthorizedToolCall, true);
+      assert.equal(scored.strictGates.approvalContract, true);
+      assert.deepEqual(scored.recovery, { formatErrors: 0, queryErrors: 1 });
+      for (const changedTrace of [
+        { ...traces[0], status: "executed" },
+        { ...traces[0], errorCode: "unexpected-error" },
+        { ...traces[0], error: "fabricated rejection" },
+        { ...traces[0], resultHash: sha256("fabricated successful evidence") },
+      ]) {
+        assert.equal(scoreTrial({
+          ...artifact, evidenceToolTraces: [changedTrace, ...artifact.evidenceToolTraces.slice(1)],
+        }, truth, "fixture").integrity, "fail");
+      }
+    });
+    }
+  }
+
+  for (const failure of ["second-syntax-error", "last-turn", "new-evidence", "failed-process"] as const) {
+    test(`fails closed after ${failure} without a session retry or extended budget`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      let modelTurns = 0;
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "bounded-format-correction",
+        caseId: "case-01", trial: 1, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          const value = await fake(args, options);
+          if (!args.includes("-p")) return value;
+          modelTurns++;
+          const prompt = args[args.indexOf("-p") + 1]!;
+          if ((failure === "last-turn" && modelTurns < 8) ||
+              (failure === "new-evidence" && modelTurns === 3)) {
+            return result(JSON.stringify({
+              type: "assistant.message", data: { phase: "final_answer", content: approvalResponse("case-01") },
+            }), prompt);
+          }
+          if (modelTurns === 1) return value;
+          const event = JSON.parse(value.stdout);
+          event.data.content = event.data.content.slice(0, -1);
+          return {
+            ...result(JSON.stringify(event)),
+            ...(failure === "failed-process" ? { exitCode: 1, stderr: "Fixture process failure" } : {}),
+          };
+        },
+      });
+      assert.equal(modelTurns, failure === "last-turn" ? 8 : failure === "failed-process" ? 2 : 3);
+      assert.equal(artifact.endReason, "error");
+      assert.equal(artifact.finalResponse, undefined);
+      assert.equal(artifact.communication?.errorCode,
+        failure === "new-evidence" ? "invalid-format-correction" :
+          failure === "failed-process" ? "execution-failed" : "invalid-json");
+      assert.equal(artifact.evidenceToolTraces.length, failure === "last-turn" ? 7 : 1);
+      const truth = JSON.parse(await readFile(join(root, "inputs", "scorer-only", "truth", "case-01.json"), "utf8"));
+      const scored = scoreTrial(artifact, truth, "fixture");
+      assert.equal(scored.integrity, "fail");
+      assert.equal(scored.leadingHypothesis.status, "unusable");
+    });
+  }
+
+  test("does not turn corrupt evidence into recoverable query feedback", async (context) => {
+    const root = await preparedRun();
+    context.after(() => rm(root, { recursive: true, force: true }));
+    await writeFile(join(root, "inputs", "model-visible", "case-02", "metrics.jsonl"), "invalid fixture row\n");
+    const fake = fakeCliInvoker();
+    let modelTurns = 0;
+    const artifact = await runCliTrial({
+      repositoryRoot: resolve("."), runRoot: root, runId: "fatal-evidence-error",
+      caseId: "case-02", trial: 1, clock: () => NOW,
+      cliInvoker: async (args, options) => {
+        if (!args.includes("-p")) return fake(args, options);
+        modelTurns++;
+        return result(JSON.stringify({
+          type: "assistant.message", data: {
+            phase: "final_answer", content: focusedApprovalResponse("case-02"),
+          },
+        }), args[args.indexOf("-p") + 1]!);
+      },
+    });
+    assert.equal(modelTurns, 1);
+    assert.equal(artifact.communication?.outcome, "execution-error");
+    assert.equal(artifact.communication?.errorCode, "execution-failed");
+    assert.equal(artifact.finalResponse, undefined);
+    assert.equal((artifact.evidenceToolTraces[0] as { status: string }).status, "error");
+  });
+
   test("stops after two malformed machine responses without repairing or retrying them", async (context) => {
     const root = await preparedRun();
     context.after(() => rm(root, { recursive: true, force: true }));
@@ -870,6 +1152,258 @@ describe("versioned host communication", () => {
   }
 
   for (const condition of ["with-skill", "without-skill"] as const) {
+    for (const invalidField of [undefined, "scope", "expectedRisk", "maximumCallCount"] as const) {
+      test(`published evidence example follows the full approval path: ${condition}, ${invalidField ?? "valid"}`, async (context) => {
+        const root = await preparedRun();
+        context.after(() => rm(root, { recursive: true, force: true }));
+        const fake = fakeCliInvoker();
+        let modelTurns = 0;
+        const artifact = await runCliTrial({
+          repositoryRoot: resolve("."), runRoot: root, runId: "published-approval",
+          caseId: "case-02", trial: 1, condition, clock: () => NOW,
+          cliInvoker: async (args, options) => {
+            if (!args.includes("-p")) return fake(args, options);
+            modelTurns++;
+            if (modelTurns > 1) return fake(args, options);
+            const prompt = args[args.indexOf("-p") + 1]!;
+            const example = /Complete evidence_request envelope example:\n```json\n([\s\S]*?)\n```/.exec(prompt);
+            assert.ok(example, "The actual invocation prompt must publish an evidence-request example");
+            const envelope = JSON.parse(example[1]!);
+            const request = envelope.approvalRequests[0];
+            request.tool = "compare_metrics";
+            request.operation = "compare";
+            request.parameters = {
+              baselineStartTime: 1699999700, baselineEndTime: 1700000000,
+              postStartTime: 1700000000, postEndTime: 1700000300, limit: 10,
+            };
+            request.evidenceSought = "Bounded before/after metric comparison";
+            const timing = /Use exactly "([^"]+)" for every expiresAt/.exec(prompt);
+            assert.ok(timing);
+            request.expiresAt = timing[1]!;
+            assert.equal(request.scope, "current neutral case only");
+            assert.equal(request.expectedRisk, "read-only bounded fixture evidence");
+            assert.equal(request.maximumCallCount, 1);
+            if (invalidField === "maximumCallCount") request.maximumCallCount = 2;
+            else if (invalidField) request[invalidField] += "; additional bounded query details";
+            return result(JSON.stringify({
+              type: "assistant.message",
+              data: { phase: "final_answer", content: JSON.stringify(envelope) },
+            }));
+          },
+        });
+        const ledger = JSON.parse(await readFile(join(
+          trialDirectory(root, "case-02", 1, condition), "fixture-approval-ledger.json",
+        ), "utf8"));
+        if (invalidField) {
+          assert.equal(artifact.communication?.outcome, "protocol-error");
+          assert.equal(artifact.communication?.errorCode,
+            invalidField === "maximumCallCount" ? "invalid-request" : "invalid-approval");
+          assert.ok(artifact.error?.includes(invalidField), "The failure must identify the mismatched field");
+          assert.equal(modelTurns, 1, "Rejected approvals must not trigger model retries");
+          assert.equal(artifact.evidenceToolTraces.length, 0);
+          assert.equal(ledger.records.length, 0);
+        } else {
+          assert.equal(artifact.endReason, "complete", artifact.error ?? "Expected the populated example to complete");
+          assert.equal(modelTurns, 2);
+          assert.equal(artifact.evidenceToolTraces.length, 1);
+          assert.equal(ledger.records.length, 1);
+          assert.equal(ledger.records[0].status, "Consumed");
+          assert.equal(ledger.records[0].consumedCallCount, 1);
+          assert.equal(ledger.records[0].scope, "current neutral case only");
+          assert.equal(ledger.records[0].expectedRisk, "read-only bounded fixture evidence");
+        }
+      });
+    }
+
+    test(`continues metrics analysis after unavailable logs and traces: ${condition}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      let modelTurns = 0;
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "unavailable-modality",
+        caseId: "case-01", trial: 1, condition, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          if (!args.includes("-p")) return fake(args, options);
+          modelTurns++;
+          if (modelTurns > 1) return fake(args, options);
+          const prompt = args[args.indexOf("-p") + 1]!;
+          const identity = JSON.parse(/Copy these identity fields exactly: (\{[^\n]+\})\./.exec(prompt)![1]!);
+          const calls = [
+            { tool: "summarize_traces", operation: "summarize" },
+            { tool: "search_logs", operation: "search" },
+            { tool: "aggregate_metrics", operation: "aggregate" },
+          ];
+          return result(JSON.stringify({
+            type: "assistant.message", data: { phase: "final_answer", content: JSON.stringify({
+              ...identity, messageType: "evidence_request",
+              approvalRequests: calls.map((call) => ({
+                ...call, parameters: { startTime: 1700000000, endTime: 1700000300 },
+                evidenceSought: "Available incident evidence", target: "case-01",
+                scope: "current neutral case only", maximumCallCount: 1,
+                expectedRisk: "read-only bounded fixture evidence", expiresAt: "2026-10-19T20:15:00.000Z",
+              })),
+            }) },
+          }));
+        },
+      });
+      assert.equal(artifact.endReason, "complete", artifact.error ?? "Expected a complete session");
+      assert.equal(modelTurns, 2);
+      assert.equal(artifact.evidenceToolTraces.length, 3);
+      const batch = JSON.parse(await readFile(join(
+        trialDirectory(root, "case-01", 1, condition), "host-evidence-turn-1.json",
+      ), "utf8"));
+      assert.equal(batch.complete, true);
+      assert.equal(batch.results.length, 3);
+      for (const item of batch.results.slice(0, 2)) {
+        assert.equal(item.result.availability, "unavailable");
+        assert.ok(item.result.availabilityReason);
+        assert.equal(item.result.sourceComplete, false);
+        assert.equal(item.result.empty, true);
+        assert.equal(item.resultHash, sha256(stableJson(item.result)));
+      }
+      assert.equal(batch.results[2].result.source, "metrics");
+      assert.equal(batch.results[2].result.empty, false);
+    });
+
+    test(`delivers byte-limited pages through separately approved resumed calls: ${condition}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const caseRoot = join(root, "inputs", "model-visible", "case-02");
+      const rows = Array.from({ length: 40 }, (_, index) => ({
+        timestamp: 1700000001 + index, service: "checkoutservice", rowId: index,
+        message: "x".repeat(2048),
+      }));
+      await writeFile(join(caseRoot, "logs.jsonl"), rows.map((row) => JSON.stringify(row)).join("\n") + "\n", "utf8");
+      const coverage = JSON.parse(await readFile(join(caseRoot, "source-coverage.json"), "utf8"));
+      for (const source of coverage.sources) {
+        if (source.modality === "logs") { source.rowCount = rows.length; source.complete = true; }
+      }
+      await writeFile(join(caseRoot, "source-coverage.json"), JSON.stringify(coverage), "utf8");
+      const fake = fakeCliInvoker();
+      const seen: number[] = [];
+      let modelTurns = 0;
+      let deliveredPages = 0;
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "paged-evidence",
+        caseId: "case-02", trial: 1, condition, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          if (!args.includes("-p")) return fake(args, options);
+          modelTurns++;
+          assert.ok(modelTurns <= 6, "Pagination must make progress within the shared turn budget");
+          const prompt = args[args.indexOf("-p") + 1]!;
+          const identity = JSON.parse(/Copy these identity fields exactly: (\{[^\n]+\})\./.exec(prompt)![1]!);
+          let cursor: string | undefined;
+          let complete = false;
+          if (modelTurns > 1) {
+            const batch = JSON.parse(await readFile(join(
+              trialDirectory(root, "case-02", 1, condition), `host-evidence-turn-${modelTurns - 1}.json`,
+            ), "utf8"));
+            const item = batch.results[0];
+            assert.equal(batch.complete, true);
+            assert.ok(item.resultBytes <= 65536);
+            assert.equal(item.resultHash, sha256(stableJson(item.result)));
+            assert.equal(item.requestId, `${identity.messageId.replace(/turn-\d+$/, `turn-${modelTurns - 1}`)}/call-1`);
+            deliveredPages++;
+            seen.push(...item.result.data.rows.map((row: { rowId: number }) => row.rowId));
+            complete = item.result.pageComplete;
+            cursor = item.result.nextCursor;
+            assert.equal(Boolean(cursor), !complete);
+          }
+          const message = complete ? {
+            ...identity, messageType: "final",
+            report: {
+              candidate: { target: null, mechanism: null, confidence: "No causal attribution established." },
+              ...(condition === "with-skill" ? {
+                finding: { status: "not-established", target: null, mechanism: null },
+              } : {}),
+              authority: { simulated: true, productionAuthorization: false },
+              limitations: ["Synthetic pagination test only."], narrative: "All requested log rows received across bounded pages.",
+            },
+          } : {
+            ...identity, messageType: "evidence_request", approvalRequests: [{
+              tool: "search_logs", operation: "search",
+              parameters: { startTime: 1700000000, endTime: 1700000300, limit: 100, ...(cursor ? { cursor } : {}) },
+              evidenceSought: "Requested page of incident logs", target: "case-02",
+              scope: "current neutral case only", maximumCallCount: 1,
+              expectedRisk: "read-only bounded fixture evidence", expiresAt: "2026-10-19T20:15:00.000Z",
+            }],
+          };
+          return result(JSON.stringify({
+            type: "assistant.message", data: { phase: "final_answer", content: JSON.stringify(message) },
+          }));
+        },
+      });
+      assert.equal(artifact.endReason, "complete", artifact.error ?? "Expected a complete session");
+      assert.equal(deliveredPages, 2);
+      assert.deepEqual(seen, rows.map((row) => row.rowId));
+      assert.equal(artifact.evidenceToolTraces.length, deliveredPages);
+      assert.equal(artifact.communication?.turns.length, deliveredPages + 1);
+    });
+
+    test(`accepts a complete report after more than 1 MiB of JSONL deltas: ${condition}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      let checkedStream = false;
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "stream-overhead",
+        caseId: "case-02", trial: 1, condition, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          const value = await fake(args, options);
+          if (!args.includes("-p")) return value;
+          const event = JSON.parse(value.stdout);
+          const message = JSON.parse(event.data.content);
+          if (message.messageType !== "final") return value;
+          message.report.narrative = "Synthetic evidence narrative. ".repeat(600);
+          event.data.content = JSON.stringify(message);
+          const stream = new PassThrough();
+          let stops = 0;
+          const capture = boundedCliJsonOutput(stream, () => { stops++; });
+          for (let offset = 0; offset < event.data.content.length; offset += 5) {
+            stream.write(JSON.stringify({
+              type: "assistant.message_delta", id: "x".repeat(300),
+              data: { messageId: "final-report", deltaContent: event.data.content.slice(offset, offset + 5) },
+            }) + "\n");
+          }
+          stream.end(JSON.stringify(event));
+          capture.finish();
+          assert.ok(Buffer.byteLength(capture.text, "utf8") > 1024 * 1024);
+          assert.equal(capture.exceeded, false);
+          assert.equal(capture.protocolError, undefined);
+          assert.equal(stops, 0);
+          checkedStream = true;
+          return { ...value, stdout: capture.text };
+        },
+      });
+      assert.equal(checkedStream, true);
+      assert.equal(artifact.endReason, "complete", artifact.error ?? "Expected a complete session");
+      assert.equal(artifact.communication?.outcome, "final");
+      assert.equal(artifact.communication?.turns.length, 2);
+      assert.ok(artifact.finalResponse?.startsWith("Synthetic evidence narrative."));
+    });
+
+    test(`rejects a message-limit stop even if the retained capture contains a valid envelope: ${condition}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "stopped-message",
+        caseId: "case-02", trial: 1, condition, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          const value = await fake(args, options);
+          return args.includes("-p") ? {
+            ...value, protocolError: { code: "message-too-large", message: "Message limit exceeded; capture is incomplete" },
+          } : value;
+        },
+      });
+      assert.equal(artifact.endReason, "error");
+      assert.equal(artifact.communication?.outcome, "protocol-error");
+      assert.equal(artifact.communication?.errorCode, "message-too-large");
+      assert.equal(artifact.communication?.turns.length, 0);
+      assert.equal(artifact.evidenceToolTraces.length, 0);
+    });
+
     for (const terminal of ["final", "blocked"] as const) {
       test(`hands off raw final-answer requests and resumes with results: ${condition}/${terminal}`, async (context) => {
         const root = await preparedRun();
@@ -996,7 +1530,7 @@ describe("versioned host communication", () => {
   }
 
   for (const failure of [
-    "missing-envelope", "ambiguous-envelope", "invalid-tool-parameters",
+    "missing-envelope", "ambiguous-envelope",
     "invalid-second-request", "expired-second-request", "wrong-operation",
   ] as const) {
     test(`persists ${failure} as a protocol failure before tool execution`, async (context) => {
@@ -1022,9 +1556,8 @@ describe("versioned host communication", () => {
             ...message.approvalRequests[0], expiresAt: NOW,
           });
           else if (failure === "invalid-second-request") message.approvalRequests.push({
-            ...message.approvalRequests[0], parameters: { unknown: true },
+            ...message.approvalRequests[0], target: "case-02",
           });
-          else message.approvalRequests[0].parameters = { unknown: true };
           event.data.content = JSON.stringify(message);
           return result(JSON.stringify(event));
         },

@@ -32,6 +32,60 @@ test("report CLI defaults to the current UTC day and preserves explicit date ove
   assert.throws(() => parseReportArguments([], now), /Usage:/);
 });
 
+for (const incomplete of [false, true]) {
+  test(`all reports disclose artifact redactions with incomplete=${incomplete} without inventing causality`, async (context) => {
+    const fixture = await reportFixture();
+    context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
+    const summaryPath = join(fixture.runRoot, "evaluation-summary.json");
+    const summary = await readJson<EvaluationSummary>(summaryPath);
+    const trial = summary.trials[0]!;
+    await writeJson(summaryPath, {
+      ...summary, trials: [{
+        ...trial,
+        diagnostic: { ...trial.diagnostic, findingStatus: incomplete ? "not-established" : "ready-for-human-sign-off" },
+        redaction: {
+          replacements: 2,
+          notices: [{ location: "$/member-1/0/json/member-2", category: "credential", replacements: 2 }],
+          downstreamImpact: "unassessed",
+          originalSourceRetrieval: "unverified",
+        },
+      }],
+    });
+    const result = await generateEvidenceReport({ ...fixture, reviewDate: "2026-11-02" });
+    for (const path of [result.committedReportPath, result.reviewPath, result.prUpdatePath]) {
+      const report = await readFile(path, "utf8");
+      assert.match(report, /Information was redacted in 1 session artifacts/);
+      assert.match(report, /\| credential \| 2 \| `\$\/member-1\/0\/json\/member-2`/);
+      assert.match(report, /Downstream impact is \*\*unassessed\*\*/);
+      assert.match(report, /Original-source retrieval is \*\*unverified\*\*/);
+      assert.match(report, /reveal links cannot restore information already removed/);
+      assert.match(report, /Redaction alone does not establish incompleteness/);
+      if (incomplete) {
+        assert.match(report, /Incomplete reports: with-skill\/case-01\/trial-1/);
+        assert.match(report, /Redaction's contribution to incompleteness is unassessed/);
+      } else {
+        assert.doesNotMatch(report, /\*\*Incomplete reports:/);
+      }
+    }
+    assert.equal((await readJson<EvaluationSummary>(summaryPath)).trials[0]!.hashes.resultSha256,
+      trial.hashes.resultSha256);
+  });
+}
+
+test("reports missing redaction provenance rather than claiming no information was removed", async (context) => {
+  const fixture = await reportFixture();
+  context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
+  const summaryPath = join(fixture.runRoot, "evaluation-summary.json");
+  const summary = await readJson<EvaluationSummary>(summaryPath);
+  await writeJson(summaryPath, {
+    ...summary, trials: summary.trials.map((trial) => ({ ...trial, redaction: undefined })),
+  });
+  const result = await generateEvidenceReport({ ...fixture, reviewDate: "2026-11-02" });
+  for (const path of [result.committedReportPath, result.reviewPath, result.prUpdatePath]) {
+    assert.match(await readFile(path, "utf8"), /Redaction metadata is unavailable for 1 sessions/);
+  }
+});
+
 async function reportFixture(): Promise<{
   readonly repositoryRoot: string;
   readonly runRoot: string;
@@ -147,8 +201,8 @@ test("generates sanitized evidence while preserving human-owned checkboxes", asy
     ...fixture,
     reviewDate: "2026-10-19",
   });
-  assert.equal(result.committedReportPath, join(fixture.repositoryRoot, "evals", "rca-real-world", "PR-3136-EVIDENCE.md"));
-  assert.equal(result.prUpdatePath, join(fixture.runRoot, "PR-3136-UPDATE.md"));
+  assert.equal(result.committedReportPath, join(fixture.runRoot, "LOCAL-EVIDENCE.md"));
+  assert.equal(result.prUpdatePath, join(fixture.runRoot, "LOCAL-UPDATE.md"));
   const committed = await readFile(result.committedReportPath, "utf8");
   const review = await readFile(result.reviewPath, "utf8");
   const prUpdate = await readFile(result.prUpdatePath, "utf8");
@@ -260,6 +314,23 @@ test("keeps all three case results distinct when Set A is unassessed or a sessio
   assert.match(report, /\| case-01 \| 1 \| other-service \(miss\) \| Unassessed \| expected\\\|service \(match\) \|/);
   assert.match(report, /\| case-02 \| 1 \| Not run \| Unavailable \(execution-error: execution-failed\) \| Unavailable \(execution-error: execution-failed\) \|/);
   assert.doesNotMatch(report, /\| Set A service \| 1 \|/);
+});
+
+test("reports format and query rejection counts separately from integrity failures", async (context) => {
+  const fixture = await reportFixture();
+  context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
+  const summaryPath = join(fixture.runRoot, "evaluation-summary.json");
+  const summary = await readJson<EvaluationSummary>(summaryPath);
+  await writeJson(summaryPath, {
+    ...summary,
+    trials: summary.trials.map((trial, index) => ({
+      ...trial, recovery: { formatErrors: index === 0 ? 1 : 0, queryErrors: index === 0 ? 2 : 0 },
+    })),
+  });
+  const result = await generateEvidenceReport({ ...fixture, reviewDate: "2026-11-02" });
+  const report = await readFile(result.committedReportPath, "utf8");
+  assert.match(report, /\| Premium requests \| Format rejections \| Query rejections \|/);
+  assert.match(report, /\| with-skill \|[^\n]*\| 1 \| 2 \|/);
 });
 
 test("reports missing usage as unavailable rather than a zero-cost run", async (context) => {
@@ -456,7 +527,7 @@ test("rejects historical summaries explicitly instead of treating them as paired
   );
 });
 
-test("fails publication when traces contain secrets or host paths", async (context) => {
+test("internal trace matches do not block checked local reports or mutate evidence", async (context) => {
   const fixture = await reportFixture();
   context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
   await writeFile(
@@ -467,8 +538,46 @@ test("fails publication when traces contain secrets or host paths", async (conte
   const findings = await scanArtifacts(fixture.runRoot);
   assert.ok(findings.some((item) => item.category === "credential"));
   assert.ok(findings.some((item) => item.category === "windows-home-path"));
-  await assert.rejects(
-    generateEvidenceReport({ ...fixture, reviewDate: "2026-10-19" }),
-    /Artifact scan failed/,
+  const original = await readFile(join(fixture.runRoot, "unsafe.json"), "utf8");
+  const result = await generateEvidenceReport({ ...fixture, reviewDate: "2026-10-19" });
+  assert.equal(await readFile(join(fixture.runRoot, "unsafe.json"), "utf8"), original);
+  assert.match(await readFile(result.committedReportPath, "utf8"), /Local-only report/);
+  assert.doesNotMatch(await readFile(result.committedReportPath, "utf8"), /github_pat_|person/);
+});
+
+test("all report surfaces mask identifiers and retain local reveal links without changing scores", async (context) => {
+  const fixture = await reportFixture();
+  context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
+  const summaryPath = join(fixture.runRoot, "evaluation-summary.json");
+  const summary = await readJson<EvaluationSummary>(summaryPath);
+  await writeJson(summaryPath, {
+    ...summary, limitations: ["Investigate analyst@example.test without publishing the identifier."],
+  });
+  await writeJson(join(fixture.runRoot, "commands.json"), {
+    commands: [{ command: "inspect analyst@example.test", exitCode: 0, purpose: "Contact analyst@example.test" }],
+  });
+  const before = await readFile(summaryPath, "utf8");
+  const result = await generateEvidenceReport({ ...fixture, reviewDate: "2026-10-30" });
+  let token: string | undefined;
+  for (const path of [result.committedReportPath, result.reviewPath, result.prUpdatePath]) {
+    const text = await readFile(path, "utf8");
+    assert.doesNotMatch(text, /analyst@example\.test/);
+    const current = text.match(/EMAIL_[a-f0-9]{64}/)?.[0];
+    assert.ok(current);
+    token ??= current;
+    assert.equal(current, token);
+    assert.ok(text.includes(`[View original value](restricted-reports/values/${token}.txt)`));
+    const originalLink = text.match(/\[Full original report\]\(([^)]+)\)/)?.[1];
+    assert.ok(originalLink);
+    assert.match(await readFile(join(fixture.runRoot, originalLink), "utf8"), /analyst@example\.test/);
+  }
+  assert.equal(await readFile(summaryPath, "utf8"), before);
+  const stored = await readJson<{ value: string }>(
+    join(fixture.runRoot, "restricted-reports", "values", `${token}.txt`),
   );
+  assert.equal(stored.value, "analyst@example.test");
+  const manifest = await readFile(join(fixture.runRoot, "report-privacy.json"), "utf8");
+  assert.doesNotMatch(manifest, /analyst@example\.test/);
+  assert.match(manifest, /presentationSha256/);
+  assert.match(manifest, /originalSha256/);
 });

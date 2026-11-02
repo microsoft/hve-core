@@ -2,7 +2,7 @@
 title: RCAEval real-world RCA evaluation
 description: Compare skilled and skill-free RCA on five blinded RCAEval cases with bounded evidence tools
 author: HVE Core Team
-ms.date: 2026-10-29
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - root cause analysis
@@ -19,6 +19,14 @@ controlled RCAEval fault-injection cases. Both conditions run by default, using 
 model profile, cases, evidence-tool contracts, turn limits, timeouts, and credit limits. Workflow
 conformance is measured separately from held-out diagnostic results. The selected cases do not
 represent organic production incidents or a statistically representative benchmark.
+
+## Recorded evaluation snapshots
+
+* [2026-11-02 paired debug snapshot](PR-3136-DEBUG-2026-11-02.md) captures the completed
+  `ad-hoc-v7` run, both conditions, case mappings, provenance, failures, and unresolved review.
+  Its [machine-readable results](PR-3136-DEBUG-2026-11-02.json) contain all 30 trial records.
+* [Earlier evidence](PR-3136-EVIDENCE.md) describes a different, skilled-only evaluation.
+  Preserve it as historical evidence; do not combine its results with the paired debug snapshot.
 
 ## Field investigations versus evaluation trials
 
@@ -47,6 +55,27 @@ No RCAEval telemetry or transformed telemetry is committed to this repository. T
 case contract records source paths only for preparation and provenance. Generated data remains
 under the gitignored evaluation evidence root.
 
+### Current case selection
+
+For newly prepared runs, `case-04` uses `re1tt_ts-travel-service_mem_3` in the pinned
+dataset revision. It replaces `re2ss_user_loss_1`, whose logs contained email-shaped strings.
+The replacement was the first email-free draw among three cases randomly sampled without
+replacement from the 730 cases outside the existing five-case selection. All source files
+were downloaded, identity-verified, and scanned; Parquet text was scanned after decoding,
+using the report scanner's email-address expression. The replacement's 961 metric rows and
+injection-time file contained no matches. No telemetry values were rewritten, and the report
+safety scan remains unchanged.
+
+This is a metrics-only Train Ticket memory-fault case, not a modality-equivalent replacement
+for the previous Sock Shop network-loss case. The current selection therefore has two
+metrics-only cases and three metrics/logs/traces cases, with no Sock Shop case. Comparisons
+across the old and new selections must disclose this case-mix change.
+
+Use a fresh run ID after this contract change. Historical prepared inputs, scores, and evidence
+remain associated with their original case selection and must not be overwritten or rescored
+as the replacement. Replacing `case-04` does not certify the other cases as email-free; in
+particular, earlier runs also encountered email-shaped strings in `case-03`.
+
 ## Metric identities
 
 Preparation preserves source column names and writes a per-case `metric-columns.json` mapping
@@ -73,7 +102,7 @@ The preparation command creates two separate roots:
 * `model-visible/` contains neutrally named incident metadata and deterministic evidence stores.
 * `scorer-only/` contains source provenance, hashes, and held-out service and fault labels.
 
-The `ad-hoc-v3` protocol compares two ad hoc investigations in the same Copilot CLI host.
+The `ad-hoc-v7` protocol compares two ad hoc investigations in the same Copilot CLI host.
 Each condition runs in a fresh temporary workspace and independent model session. Only the
 `with-skill` condition receives the three packaged RCA skills. The `without-skill` condition
 receives no skill bundle, no custom agent, and no RCA reasoning procedure. Both receive the
@@ -119,13 +148,77 @@ it resumes the same session with results. The model must not emit a second envel
 evidence unavailable merely because results have not arrived before the request handoff.
 Execution, redaction validation, and scoring use the same phase-aware decoder.
 
+Both conditions receive complete `evidence_request`, `final`, and `blocked` JSON envelope
+examples serialized from objects with `JSON.stringify`. The examples carry the current case and
+invocation identity; only skilled report examples include `finding`. Tool, operation, parameters,
+expiry, and narrative placeholders must be replaced with actual values. The examples demonstrate
+transport shape without prescribing a retrieval sequence or diagnostic outcome. Regression tests
+extract the published examples and validate each through the production message and CLI decoders,
+including rejection of an extra trailing closing brace. Populated evidence-request examples also
+pass through the host's approval validation, simulated ledger, and deterministic fixture execution.
+This is prompt guidance, not generation-time JSON-schema enforcement. JSONL CLI output does not
+constrain the model's JSON. A sole `final_answer` with malformed JSON that identifies itself as
+`final` or `blocked` can receive one explicit format-correction turn in the same session.
+The host retains the rejected text and capture, records a `format_error` audit turn and its hash,
+and asks for the same intended report with corrected syntax and the next invocation identity.
+It does not append braces, repair text, or accept a malformed report. The correction cannot
+request new evidence; a second syntax rejection or an exhausted turn budget fails the session.
+Identity, field, authority, phase, size, approval, and execution violations remain fatal.
+The scorer replays both the rejection and replacement from stored captures. Trial results retain
+`recovery.formatErrors` and `recovery.queryErrors`; report tables expose both rejection counts,
+including on failed sessions. A valid corrected report is not evidence that the first answer was valid
+or that the correction preserved every diagnostic claim; human review can compare both texts.
+
 An evidence request contains exact `approvalRequests`; the host validates the complete batch's
-tool names, operations, parameter schemas, scope, call counts, and expiries before execution.
+tool names, operations, scope, call counts, and expiries before any call executes.
+Each approved call then validates its parameters against the same schema advertised to the model,
+plus shared cross-field rules, before accessing any evidence source. Direct tool execution and
+MCP calls enforce that same request contract.
+Each request must copy `scope: "current neutral case only"`, `maximumCallCount: 1`, and
+`expectedRisk: "read-only bounded fixture evidence"` exactly. Scope and risk are fixed policy
+values, not free-form descriptions; time windows, service filters, row limits, and other query
+bounds belong in `parameters` according to the chosen tool schema. The prompt, examples,
+execution validator, and scorer share these policy values. Scope and risk mismatches identify
+the failing field explicitly without relaxing the boundary or retrying the model.
 Every call receives a host-generated request ID linking the accepted message, approval ledger,
 execution trace, and result. The host simulates approval and returns complete result envelopes
 without suggesting the next diagnostic step. Results retain byte counts, hashes, row counts,
 coverage, truncation, and partial-execution metadata. This interface and safety policy are shared
 scaffolding, not an unrestricted chat baseline.
+
+Modalities absent from the source-coverage inventory return `availability: "unavailable"` and
+an `availabilityReason`, with `empty: true` and `sourceComplete: false`. This is a delivered
+evidence result, not a technical session failure. Malformed coverage, unreadable stores, and
+missing stores for advertised modalities remain explicit execution errors.
+
+Every query window is limited to 3,600 seconds (3,600,000 milliseconds). Metrics and logs use
+epoch seconds; traces use epoch milliseconds. Baseline and post-onset windows are bounded
+separately and must use matching units. Timestamp inputs are finite epoch numbers or numeric
+strings, not date strings or blank text. Optional filters must contain a non-whitespace character.
+Tool descriptions and parameter schemas advertise the constraints used at runtime.
+Approved schema violations return an explicit `error` with `code: "invalid-tool-parameters"`;
+invalid window ordering, non-finite numeric strings, or mixed units return
+`code: "invalid-time-window"`. An overlong window returns `code: "time-window-too-large"`.
+Every request rejection includes `evidenceReturned: false`. Its trace has
+`status: "query-error"` and its approval is consumed;
+the failed query counts against the evidence-call budget but is not successful evidence.
+Other independently approved calls in the batch still run. The model may request a corrected,
+newly approved query within the existing budgets or report the gap; the host never narrows or
+reissues a query itself. Scoring recomputes the rejection using the same request contract and
+exact approved parameters before accepting its audit. Unknown tools, operation or scope
+mismatches, authorization failures, cursor case/query checksum mismatches, malformed stores,
+I/O errors, and unknown runtime exceptions still terminate the session.
+
+`search_logs` and `summarize_traces` return complete rows in deterministic store order, bounded
+by both the requested row limit and the serialized UTF-8 byte limit. `pageComplete` describes
+completion of the matching query, independently of source coverage in `sourceComplete`.
+When more rows remain, `nextCursor` permits a new, separately approved call using the same tool
+and exact query parameters plus `cursor`. Cursors are bound to their query and case; they are
+not authorization. Each page consumes the same shared evidence-call and model-turn budgets.
+The model chooses whether to request additional pages; the host never retrieves them automatically.
+Trace `groups` have `summaryScope: "page"` and summarize only that page's representative rows.
+An individual row that cannot fit returns explicit `nonProgress` and `oversizedRow` metadata
+rather than a clipped row, a silently skipped match, or a cursor that repeats without progress.
 
 A final or blocked envelope contains structured candidate fields, explicit simulated-authority
 flags, limitations, and the complete human-readable narrative. A null candidate target explicitly
@@ -136,17 +229,31 @@ fields are protocol failures, not abstentions. A blocked outcome requires a reas
 Both skilled `final` and `blocked` reports require `report.finding`; a blocked report must use
 `{"status":"not-established","target":null,"mechanism":null}`. A finding described only in the
 narrative does not satisfy this field. Baseline reports must omit `finding`.
-A model can finish without tools or after any evidence batch. No protocol repair makes a model
-call or retries a failed session automatically.
+Skilled `final` and `blocked` examples also provide the eight canonical numbered narrative
+headings. Set A and Set B belong under `1. Status and Finding`, followed by the skill's warning.
+The scorer and scaffold share the same heading list; a failed heading check identifies the
+missing titles. This does not relax the gate or replace the required section content with
+headings alone. The baseline receives no skilled narrative scaffold.
+A model can finish without tools or after any evidence batch. The single syntax-correction
+opportunity consumes a model turn, usage, and wall time within the existing limits. No failed
+session is retried automatically, and historical responses or scores are never repaired.
 
 Each session allows at most eight model turns and 24 evidence calls, with a 240-second per-turn
 timeout, a 15-minute investigation wall-time budget, and the CLI's 100-credit session limit.
 Each tool result is bounded to 64 KiB, a complete delivered evidence batch to 256 KiB, and each
 public assistant message to 256 KiB of UTF-8. Complete prompts are bounded to 512 KiB, CLI stdout
-to 1 MiB, and CLI stderr to 64 KiB. Oversized content fails explicitly; a stopped CLI capture is
-marked incomplete, and retained evidence is never silently clipped or presented as complete
-delivery. Batch `complete` records execution completeness, while `delivery.status` distinguishes
-ready, partial, and oversized payloads.
+to 10 MiB, and CLI stderr to 64 KiB. The larger stdout allowance covers JSONL event wrappers,
+streaming deltas, and echoed inputs; it is not a larger assistant-message or model-context budget.
+The host parses events incrementally and checks public-message bytes independently, including
+accumulated deltas per message. It retains the bounded raw audit and still requires a complete
+final-answer event; deltas cannot substitute for an authoritative envelope.
+An exceeded stream or message limit stops the producer and marks the capture incomplete.
+Execution and scoring reject stopped captures even if they contain an otherwise valid envelope.
+Retained evidence is never silently clipped or presented as complete delivery. Requests must
+also fit the shared batch and prompt budgets; individual result limits do not reserve space for
+an arbitrarily large batch. Batch `complete` records that every requested call has an outcome
+(including explicit query rejections), not that every call returned evidence, while
+`delivery.status` distinguishes ready, partial, and oversized payloads.
 Selected-message hashes are computed against redacted stored payloads. Continuation validates
 persisted result identities, profiles, and terminal outcomes before starting another model call.
 Raw results, hashes, per-turn responses, cumulative usage captures, and exact approvals are
@@ -247,7 +354,7 @@ remain in each trial result; compatibility and unsupported claims require human 
 
 Earlier runs used prescribed scope, pre/post-comparison, and focused-query stages; some also
 requested a two-category baseline. Those saved outputs do not establish ad hoc performance.
-Start a new run ID for `ad-hoc-v3`; continuation of older protocols, including `ad-hoc-v2`, is rejected. The immutable
+Start a new run ID for `ad-hoc-v7`; continuation of older protocols, including `ad-hoc-v6`, is rejected. The immutable
 input fingerprint also rejects changed prompts or scoring. Preserve prior evidence and do not
 pool old and new protocols, or debug and production results, as one experiment.
 
@@ -349,17 +456,78 @@ Raw inputs, transcripts, tool traces, approvals, scores, and manifests are writt
   sessions/without-skill/<case-id>/trial-<n>/
 ```
 
-The committed `PR-3136-EVIDENCE.md` report contains only sanitized outcomes, immutable input and
-artifact hashes, commands, limitations, and human-review status. It excludes raw telemetry,
-credentials, host paths, personal data, and unredacted tool payloads.
+Generate local reports without starting another model session:
+
+```powershell
+npm run rca-eval:report -- --run-id <run-id>
+```
+
+Reporting renders full drafts first, then pseudonymizes supported sensitive patterns in the
+assembled reports. Matches in internal traces do not block reporting and source evidence,
+integrity hashes, and scores are not rewritten. Debug reports retain their `DEBUG-EVIDENCE.md`,
+`DEBUG-REVIEW.md`, and `DEBUG-UPDATE.md` names. Production-profile reports now use
+`LOCAL-EVIDENCE.md`, `LOCAL-REVIEW.md`, and `LOCAL-UPDATE.md` under the run directory.
+The report command no longer writes tracked evidence or a publication-ready PR update.
+The returned `committedReportPath` field now identifies the run-local evidence report.
+
+Emails, supported credential forms, captured environment values, and home-path patterns receive
+run-scoped HMAC-SHA-256 pseudonyms. Repeated exact values retain the same pseudonym across the
+three reports and subsequent regeneration. Different runs use independently generated keys.
+Case and encoding differences are not silently merged. Common percent, HTML-entity, and Unicode
+escape encodings are inspected; a line with a remaining encoded match is withheld as a whole,
+while the rest of the report remains available. Detection is pattern-based and does not
+guarantee anonymity or cover every sensitive fact, identifier, or encoding.
+
+Every report includes links to its full original and to the original values indexed by its
+pseudonyms. Originals are retained as content-addressed text files under `restricted-reports/`;
+the same folder holds the persistent `pseudonym-key` and `values/`. The `report-privacy.json`
+manifest records transformation version, replacement counts, withheld lines, and separate
+original/presentation hashes, without copying original values. All presentation copies are
+checked before writing; masking or validation errors never fall back to presenting raw drafts.
+
+> [!WARNING]
+> These reports and reveal links are local-only, not safe to commit, publish, or redistribute.
+> Access relies on existing OS file permissions, not an authenticated evidence viewer.
+> Restrict the run directory to authorized investigators before generating reports.
+> POSIX creation modes restrict new private files where supported; Windows access depends on
+> existing ACLs. Gitignore and the `restricted-reports` name are not access controls.
+
+Raw drafts are not printed to the terminal. Do not copy the raw folder, its key, or linked values
+into chat, shared logs, or a publication bundle. Retention and disposal follow the investigation's
+approved policy; no automatic deletion is performed. Retain the key while stable pseudonyms
+are needed. A public report requires a separately reviewed copy without local reveal links.
+Existing historical evidence files are not retroactively sanitized or removed.
 
 The CLI runner and the retrospective sanitizer use the shared
 [`redaction.mts`](../../scripts/evals/rca-real-world/redaction.mts) helper for session artifacts.
 It collects the OS home directory, `HOME`, and `USERPROFILE`; the runners also supply the repository
 root and exact temporary workspace. Redaction handles slash variants and JSON-escaped paths,
 replaces longer paths before their parents, and retains home-pattern and credential fallbacks.
+It traverses JSON values rather than editing serialized JSON syntax. Structural keys, arrays,
+unaffected values, and types are preserved. Valid embedded JSON, whole JSON fences, and JSONL
+captures are decoded recursively and re-encoded only when changed; malformed content is not
+silently repaired. Sensitive structural keys require a separate approved schema transformation.
 The sanitizer cannot infer a past temporary workspace or a different host's custom home directory;
 those historical artifacts still need review before sharing.
+
+Session artifacts record value-free `redactionManifest.notices` with category, replacement count,
+and zero-based member/index location; `/json` marks decoded string content. Locations omit
+data-derived keys. Both runners and the sanitizer retain notices, scoring projects them into the
+result, and all three local reports disclose affected sessions and locations. Impact on downstream
+verification is `unassessed`, and original-source retrieval is `unverified`; a detector match does
+not prove the value was a credential. Reports with missing metadata disclose that gap.
+
+> [!IMPORTANT]
+> The current security-review policy, informed by OWASP LLM02:2025, may remove critical context
+> even from the authorized RCA operator. This is not an OWASP mandate to hide data from that
+> operator. No unredacted session-artifact copy is retained by this stage. Report-presentation
+> reveal links restore only what reached the report, not earlier artifact redactions.
+> Incomplete reports state that redaction's contribution is unassessed rather than attributing
+> unrelated failures to masking. Human reviewers must assess material evidence loss and permitted
+> source retrieval; masking alone does not invalidate a diagnosis.
+
+The format-preserving redaction and disclosure contract uses protocol `ad-hoc-v7`. Use fresh run
+IDs; do not pool or rewrite earlier protocol runs.
 
 ## Interpretation limits
 

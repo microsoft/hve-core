@@ -12,9 +12,10 @@ import {
   type ApprovalLedgerArtifact,
   type FixtureApprovalRecord,
 } from "./approval.mts";
-import { writeJson } from "./contracts.mts";
+import { stableJson, writeJson } from "./contracts.mts";
 import {
   createEvidenceTools,
+  EvidenceRequestError,
   type ApprovalConsumer,
   type EvidenceToolTrace,
   type ToolDefinition,
@@ -142,7 +143,9 @@ export async function handleMcpRequest(
         content: [
           {
             type: "text",
-            text: error instanceof Error ? error.message : String(error),
+            text: error instanceof EvidenceRequestError
+              ? stableJson({ error: { code: error.code, message: error.message, evidenceReturned: false } })
+              : error instanceof Error ? error.message : String(error),
           },
         ],
         isError: true,

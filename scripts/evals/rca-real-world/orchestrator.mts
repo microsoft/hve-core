@@ -12,6 +12,8 @@ import {
   type ApprovalRequestItem,
 } from "./approval.mts";
 import {
+  AD_HOC_APPROVAL_POLICY,
+  COMMUNICATION_LIMITS,
   EXPECTED_CONTEXT_TIER,
   EVALUATION_CASE_IDS,
   EXPECTED_MODEL,
@@ -27,7 +29,7 @@ import {
   type ApprovalConsumer,
   type ToolDefinition,
 } from "./evidence-tools.mts";
-import { redactArtifact } from "./redaction.mts";
+import { redactArtifact, type RedactionNotice } from "./redaction.mts";
 import { RCA_SKILL_NAMES, trialDirectory, type EvaluationCondition } from "./conditions.mts";
 import type { CliIsolation } from "./cli-isolation.mts";
 import { CommunicationError, EVIDENCE_OPERATIONS, type CommunicationAudit, type DiagnosticReport } from "./communication.mts";
@@ -103,6 +105,7 @@ export interface TrialArtifact {
   readonly redactionManifest: {
     readonly applied: readonly string[];
     readonly replacements: number;
+    readonly notices?: readonly RedactionNotice[];
   };
 }
 
@@ -274,6 +277,7 @@ export async function runTrial(options: RunTrialOptions): Promise<TrialArtifact>
     redactionManifest: {
       applied: ["repository-root", "user-home", "temporary-workspace", "credential-patterns"],
       replacements: redacted.replacements,
+      notices: redacted.notices,
     },
   };
   await writeJson(join(sessionRoot, "session-artifact.json"), artifact);
@@ -326,7 +330,10 @@ export function buildAdHocPrompt(
     `Incident metadata:\n${stableJson(incident).trim()}`,
     "Tool interface: an evidence_request envelope contains approvalRequests. Each entry must enumerate tool, operation, parameters, evidenceSought, target, scope, maximumCallCount, expectedRisk, and expiresAt.",
     "Return an evidence_request as the CLI final answer and end that invocation. The host runs validated calls only after the process returns, then resumes the investigation with results. A pending request is a handoff, not an evidence blocker.",
-    `Use target "${caseId}", scope "current neutral case only", maximumCallCount 1, and expectedRisk "read-only bounded fixture evidence". Requests are validated before the host simulates approval and executes the exact calls. No writes, shells, network clients, other cases, or wildcards are permitted.`,
+    `Evidence results have a ${COMMUNICATION_LIMITS.resultBytes}-byte UTF-8 limit, complete batches ${COMMUNICATION_LIMITS.batchBytes} bytes, and complete prompts ${COMMUNICATION_LIMITS.promptBytes} bytes. Keep request batches within these shared delivery budgets.`,
+    "An unavailable modality returns availability=unavailable with an availabilityReason, not a failed investigation. Paginated tools return pageComplete and optional nextCursor. To continue, request the same tool and exact query parameters plus that cursor under a new approval. Each page counts as an evidence call; you choose whether further pages are needed. sourceComplete describes source coverage, not page completion. nonProgress and oversizedRow explicitly identify a row that cannot fit; do not treat it as an empty result or retry the same query unchanged. Trace summaries with summaryScope=page describe only that page's representative rows.",
+    "An approved request that violates the advertised parameter schema or time-window rules returns error.code invalid-tool-parameters, invalid-time-window, or time-window-too-large, not evidence. It consumes its exact approval and one evidence call. You may correct the request under a new exact approval within the remaining budgets, or report the gap. Cursor case/query binding failures remain fatal. A sole malformed terminal JSON answer may receive one explicit format-correction turn within the same budgets; all original messages remain audited. Other protocol and execution failures remain fatal.",
+    `Use target "${caseId}", scope ${JSON.stringify(AD_HOC_APPROVAL_POLICY.scope)}, maximumCallCount ${AD_HOC_APPROVAL_POLICY.maximumCallCount}, and expectedRisk ${JSON.stringify(AD_HOC_APPROVAL_POLICY.expectedRisk)}. Copy scope and expectedRisk exactly; do not append query details. Put query bounds in parameters. Requests are validated before the host simulates approval and executes the exact calls. No writes, shells, network clients, other cases, or wildcards are permitted.`,
     "You may finish without requesting any tools. Follow the communication contract, not prose markers, to identify completion.",
     approvalTimingInstruction(now),
     `Available tools:\n${stableJson(tools.map(({ name, description, parameters }) => ({

@@ -12,17 +12,32 @@ export const EVALUATION_RUN_DIRECTORY = "rcaeval-three-case";
 export const EXPECTED_MODEL = "gpt-5.6-sol";
 export const EXPECTED_REASONING_EFFORT = "medium";
 export const EXPECTED_CONTEXT_TIER = "default";
-export const EVALUATION_PROTOCOL = "ad-hoc-v3";
+export const EVALUATION_PROTOCOL = "ad-hoc-v7";
 export const COMMUNICATION_LIMITS = {
   modelTurns: 8, evidenceCalls: 24, approvalsPerBatch: 12, resultRows: 100,
   resultBytes: 64 * 1024, batchBytes: 256 * 1024, messageBytes: 256 * 1024,
-  promptBytes: 512 * 1024, stdoutBytes: 1024 * 1024, stderrBytes: 64 * 1024,
-  turnMs: 240_000, sessionMs: 15 * 60 * 1000, aiCredits: 100,
+  promptBytes: 512 * 1024, stdoutBytes: 10 * 1024 * 1024, stderrBytes: 64 * 1024,
+  turnMs: 240_000, sessionMs: 15 * 60 * 1000, aiCredits: 100, formatCorrections: 1,
 } as const;
 export const EVIDENCE_OPERATIONS: Readonly<Record<string, string>> = {
   read_incident_scope: "read", aggregate_metrics: "aggregate", compare_metrics: "compare",
   search_logs: "search", summarize_traces: "summarize",
 };
+export const AD_HOC_APPROVAL_POLICY = {
+  scope: "current neutral case only",
+  maximumCallCount: 1,
+  expectedRisk: "read-only bounded fixture evidence",
+} as const;
+export const SKILLED_REPORT_HEADINGS = [
+  "1. Status and Finding",
+  "2. Source Coverage",
+  "3. Hypotheses Tested",
+  "4. Executed Tests and Evidence",
+  "5. Causal Account and Gate",
+  "6. Actions and Open Decisions",
+  "7. Authorization and Execution Audit",
+  "8. Resume Checkpoint",
+] as const;
 
 /** Separates harness debugging from production-model evaluation evidence. */
 export type EvaluationProfile = "debug" | "production";

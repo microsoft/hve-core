@@ -4,9 +4,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { PassThrough } from "node:stream";
-import { boundedCliOutput, parseCliEvents, parseCliResponse } from "../../../evals/rca-real-world/cli-orchestrator.mts";
+import { boundedCliJsonOutput, boundedCliOutput, parseCliEvents, parseCliResponse } from "../../../evals/rca-real-world/cli-orchestrator.mts";
 import { parseApprovalRequest } from "../../../evals/rca-real-world/approval.mts";
-import { EVALUATION_PROTOCOL } from "../../../evals/rca-real-world/contracts.mts";
+import { EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS } from "../../../evals/rca-real-world/contracts.mts";
 import {
   COMMUNICATION_LIMITS, messageInstruction, parseModelMessages, validateDiagnosticReport,
   type DiagnosticReport,
@@ -80,6 +80,88 @@ for (const limit of [COMMUNICATION_LIMITS.stdoutBytes, COMMUNICATION_LIMITS.stde
     stream.end();
   });
 }
+
+for (const condition of ["with-skill", "without-skill"] as const) {
+  test(`accepts more than 1 MiB of streaming wrappers with small useful text: ${condition}`, () => {
+    const stream = new PassThrough();
+    let stops = 0;
+    const capture = boundedCliJsonOutput(stream, () => { stops++; });
+    const delta = JSON.stringify({
+      type: "assistant.message_delta", id: "x".repeat(300),
+      data: { messageId: "response-1", deltaContent: "abcde" },
+    }) + "\n";
+    for (let index = 0; index < 3249; index++) stream.write(delta);
+    const { finding, ...baselineReport } = report;
+    const message = JSON.stringify({
+      ...identity, messageType: "final", report: condition === "with-skill" ? report : baselineReport,
+    });
+    const event = JSON.stringify({ type: "assistant.message", data: { phase: "final_answer", content: message } });
+    stream.end(event);
+    capture.finish();
+    assert.ok(Buffer.byteLength(capture.text, "utf8") > 1024 * 1024);
+    assert.ok(Buffer.byteLength(capture.text, "utf8") < COMMUNICATION_LIMITS.stdoutBytes);
+    assert.equal(capture.exceeded, false);
+    assert.equal(capture.protocolError, undefined);
+    assert.equal(stops, 0);
+    assert.equal(parseCliResponse(parseCliEvents(capture.text), { ...context, condition }).message.messageType, "final");
+  });
+}
+
+test("streaming text limits count UTF-8 bytes per message, not total commentary or wrapper bytes", () => {
+  const stream = new PassThrough();
+  let stops = 0;
+  const capture = boundedCliJsonOutput(stream, () => { stops++; });
+  const delta = (messageId: string, deltaContent: string) => JSON.stringify({
+    type: "assistant.message_delta", data: { messageId, deltaContent },
+  }) + "\r\n";
+  const atLimit = "\u03bb".repeat(COMMUNICATION_LIMITS.messageBytes / 2);
+  const encoded = Buffer.from(delta("first", atLimit));
+  const unicodeStart = encoded.indexOf(Buffer.from("\u03bb"));
+  stream.write(encoded.subarray(0, unicodeStart + 1));
+  stream.write(encoded.subarray(unicodeStart + 1));
+  stream.write(delta("second", atLimit));
+  assert.equal(Boolean(capture.protocolError), false);
+  stream.write(delta("second", "x"));
+  stream.write(delta("second", "ignored"));
+  assert.equal(capture.protocolError?.code, "message-too-large");
+  assert.equal(capture.exceeded, false);
+  assert.equal(stops, 1);
+  assert.throws(() => parseCliResponse(parseCliEvents(capture.text), context), /byte limit/);
+  stream.end();
+  capture.finish();
+  assert.equal(stops, 1);
+});
+
+for (const newline of ["\n", ""]) {
+  test(`rejects oversized complete public messages independently of deltas (${newline ? "newline" : "EOF"})`, () => {
+    const stream = new PassThrough();
+    let stops = 0;
+    const capture = boundedCliJsonOutput(stream, () => { stops++; });
+    stream.end(JSON.stringify({
+      type: "assistant.message",
+      data: { phase: "final_answer", content: "x".repeat(COMMUNICATION_LIMITS.messageBytes + 1) },
+    }) + newline);
+    capture.finish();
+    assert.equal(capture.protocolError?.code, "message-too-large");
+    assert.equal(stops, 1);
+  });
+}
+
+test("retains a bounded incomplete audit when raw JSONL exceeds 10 MiB without a complete event", () => {
+  const stream = new PassThrough();
+  let stops = 0;
+  const capture = boundedCliJsonOutput(stream, () => { stops++; });
+  const atLimit = "x".repeat(COMMUNICATION_LIMITS.stdoutBytes);
+  stream.write(atLimit);
+  assert.equal(capture.exceeded, false);
+  stream.write("x");
+  stream.end("ignored after overflow");
+  capture.finish();
+  assert.equal(capture.exceeded, true);
+  assert.equal(capture.text, atLimit);
+  assert.equal(stops, 1);
+  assert.equal(capture.protocolError, undefined);
+});
 
 test("rejects multiple authoritative messages rather than choosing or merging them", () => {
   const final = JSON.stringify({ ...identity, messageType: "final", report });
@@ -219,4 +301,63 @@ test("transport instructions distinguish a request handoff from final and blocke
   const baseline = messageInstruction({ ...context, condition: "without-skill" });
   assert.match(baseline, /Both final and blocked reports MUST omit report.finding/);
   assert.doesNotMatch(baseline, /Keep all activated-skill sections/);
+  for (const heading of SKILLED_REPORT_HEADINGS) assert.ok(!baseline.includes(heading));
+  assert.doesNotMatch(baseline, /Set A|Set B|eight numbered narrative headings/);
 });
+
+for (const condition of ["with-skill", "without-skill"] as const) {
+  for (const messageId of [context.messageId, 'invocation "quoted"\\path\nnext-line']) {
+    test(`published JSON examples pass production parsers: ${condition}, ${JSON.stringify(messageId)}`, () => {
+      const exampleContext = { ...context, condition, messageId };
+      const guidance = messageInstruction(exampleContext);
+      const examples = [...guidance.matchAll(/```json\n([\s\S]*?)\n```/g)].map((match) => match[1]!);
+      assert.equal(examples.length, 3);
+      assert.deepEqual(examples.map((text) => JSON.parse(text).messageType), ["evidence_request", "final", "blocked"]);
+      for (const text of examples) {
+        const value = JSON.parse(text);
+        assert.equal(value.messageId, messageId);
+        assert.equal(value.caseId, context.caseId);
+        assert.equal(value.protocol, EVALUATION_PROTOCOL);
+        for (const answer of [text, `\`\`\`json\n${text}\n\`\`\``]) {
+          const parsed = parseModelMessages([answer], exampleContext).message;
+          const cliParsed = parseCliResponse([cliMessage(answer, "final_answer")], exampleContext).message;
+          assert.deepEqual(cliParsed, parsed);
+          if (parsed.messageType === "evidence_request") {
+            assert.equal(parsed.approvalRequests.length, 1);
+            assert.equal(parsed.approvalRequests[0]!.maximumCallCount, 1);
+            assert.equal(parsed.approvalRequests[0]!.target, context.caseId);
+            assert.equal(parsed.approvalRequests[0]!.scope, "current neutral case only");
+            assert.equal(parsed.approvalRequests[0]!.expectedRisk, "read-only bounded fixture evidence");
+          } else {
+            assert.equal(Object.hasOwn(parsed.report, "finding"), condition === "with-skill");
+            if (condition === "with-skill") {
+              const narrative = parsed.report.narrative;
+              const headings = [...narrative.matchAll(/^### (.+)$/gm)].map((match) => match[1]);
+              assert.deepEqual(headings, SKILLED_REPORT_HEADINGS);
+              assert.ok(narrative.indexOf("Set A - Evidence-supported finding") >
+                narrative.indexOf(SKILLED_REPORT_HEADINGS[0]));
+              assert.ok(narrative.indexOf("Set B - Leading unverified hypothesis") >
+                narrative.indexOf("Set A - Evidence-supported finding"));
+              assert.ok(narrative.indexOf("Set B - Leading unverified hypothesis") <
+                narrative.indexOf(SKILLED_REPORT_HEADINGS[1]));
+            } else {
+              for (const heading of SKILLED_REPORT_HEADINGS) assert.ok(!parsed.report.narrative.includes(heading));
+            }
+            if (parsed.messageType === "blocked") {
+              assert.equal(parsed.report.candidate.target, null);
+              assert.ok(parsed.reason);
+            }
+          }
+        }
+        const malformed = `${text}}`;
+        for (const parse of [
+          () => parseModelMessages([malformed], exampleContext),
+          () => parseCliResponse([cliMessage(malformed, "final_answer")], exampleContext),
+        ]) {
+          assert.throws(parse, (error: unknown) =>
+            error instanceof Error && "code" in error && error.code === "invalid-json");
+        }
+      }
+    });
+  }
+}

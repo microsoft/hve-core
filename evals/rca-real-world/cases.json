@@ -112,30 +112,23 @@
     },
     {
       "neutralId": "case-04",
-      "sourcePath": "re2ss_user_loss_1",
+      "sourcePath": "re1tt_ts-travel-service_mem_3",
       "trialOrder": 4,
       "modalities": [
-        "metrics",
-        "logs"
+        "metrics"
       ],
       "files": [
         {
           "name": "inject_time.txt",
-          "objectId": "ba1efd02e5ba9c790fab332c0f3214e563f08125",
-          "sha256": "5121fac8647a74d81625c334e4e7b841f1a4cbd6c810444f533f8cd1854324e9",
+          "objectId": "7e85a2ab759cb9de6145286cbddb6b7aecdf684f",
+          "sha256": "3a41e8ea116be3bf35575551c244637d5f8218bb35f4345c04b67bff2c487347",
           "size": 10
         },
         {
-          "name": "logs.parquet",
-          "objectId": "6d5315ad80054b146a2de97715eef8d91a6eb8f7",
-          "sha256": "f5de66bfd598edfff7833bcc23ac7065f3a15082815f16d6a800570affa5b029",
-          "size": 608605
-        },
-        {
           "name": "metrics.parquet",
-          "objectId": "654debb4f8ecce3da5e5777c01989befb02a2bf3",
-          "sha256": "529070cd91ec1436f37ecaf14568623f3b76fb269212be66505b2aeca3e1d5ee",
-          "size": 161371
+          "objectId": "288f70d5ba51606c0d95f7daa05b5de09f812b6a",
+          "sha256": "c2c3f202aa9334877325e55388876f92117cac7c4defa0e19706b86f9f75a20b",
+          "size": 525731
         }
       ]
     },

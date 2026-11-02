@@ -11,6 +11,7 @@ import {
   createSchedule,
   evaluationModel,
   parseEvaluationProfile,
+  readJson,
   resolveInside,
   stableJson,
   validateContract,
@@ -117,6 +118,24 @@ test("validates the exact neutral case order", () => {
     validateContract(reversed).map((item) => item.neutralId),
     ["case-01", "case-02", "case-03", "case-04", "case-05"],
   );
+});
+
+test("pins the email-free metrics-only replacement for future case-04 preparations", async () => {
+  const contract = await readJson<EvaluationContract>(resolve(
+    import.meta.dirname, "..", "..", "..", "..", "evals", "rca-real-world", "cases.json",
+  ));
+  const cases = validateContract(contract);
+  const replacement = cases.find((item) => item.neutralId === "case-04");
+  assert.ok(replacement);
+  assert.equal(contract.source.revision, "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e");
+  assert.equal(replacement.sourcePath, "re1tt_ts-travel-service_mem_3");
+  assert.deepEqual(replacement.modalities, ["metrics"]);
+  assert.deepEqual(replacement.files.map((file) => file.name), ["inject_time.txt", "metrics.parquet"]);
+  assert.equal(
+    replacement.files.find((file) => file.name === "metrics.parquet")?.sha256,
+    "c2c3f202aa9334877325e55388876f92117cac7c4defa0e19706b86f9f75a20b",
+  );
+  assert.ok(cases.every((item) => item.sourcePath !== "re2ss_user_loss_1"));
 });
 
 test("rejects malformed source identities and modality drift", () => {

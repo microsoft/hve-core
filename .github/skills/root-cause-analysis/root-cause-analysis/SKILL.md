@@ -6,7 +6,7 @@ compatibility: "Requires an Agent Skills host with all three RCA skills installe
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-10-20"
+  last_updated: "2026-11-02"
 ---
 
 # Root Cause Analysis
@@ -162,6 +162,33 @@ technical disagreement in the investigation record rather than rewriting the evi
   delete temporary exports when their approved retention expires.
 * Explain system conditions, not individual blame. For regulated, safety-critical, legal, or
   personnel matters, require accountable domain review of the technical findings.
+
+### Redaction Limitations and Review Notices
+
+The current security-review policy requires redaction before display and persistence, informed by
+OWASP LLM02:2025 sensitive-information-disclosure guidance. This is the package's policy choice,
+not an OWASP requirement to hide information from an authorized operator. It can remove context
+that is critical to the operator, a companion skill, or later verification. Original evidence stays
+in its source system; a complete unredacted investigation-artifact copy is not guaranteed.
+
+Redact structured values recursively rather than substituting over serialized JSON syntax.
+Preserve structural keys, arrays, unaffected types, and valid encoded JSON when transforming it.
+Do not silently repair malformed evidence or claim pattern detection covers every sensitive value.
+If a structural key itself is sensitive, use an approved format-aware transformation and disclose
+the schema change rather than leaking it or claiming the original contract was preserved.
+
+Whenever information expected to be used downstream is redacted, show the reviewer a value-free
+notice and attach it to the affected evidence, test, or artifact. Include a safe locator, removed
+category, expected consumer or use, known impact or `Unassessed`, and original-source retrieval
+status and authorization requirements. Never repeat the removed value in the notice. Propagate
+the notice into affected companion handoffs, checkpoints, and reports. If the host does not expose
+what it redacted, disclose that visibility gap instead of inventing details.
+
+For every incomplete RCA report, state whether redaction contributed, may have contributed, was
+unrelated, or has an unassessed relationship to incompleteness, according to available evidence.
+Keep execution failures and other evidence gaps distinct. Masking alone does not make an RCA
+incomplete; withheld information that prevents a material verification does. Continue all safe,
+authorized work that remains possible and identify missing evidence without claiming completion.
 
 ## Investigation Record
 

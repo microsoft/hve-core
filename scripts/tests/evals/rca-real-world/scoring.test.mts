@@ -10,9 +10,9 @@ import {
   evaluateRoundOne, gateSatisfied, scorePersistedTrial, scoreTrial, type HeldOutTruth, type TrialResult,
 } from "../../../evals/rca-real-world/scoring.mts";
 import type { TrialArtifact } from "../../../evals/rca-real-world/orchestrator.mts";
-import { EVALUATION_PROTOCOL, sha256, stableJson, writeJson } from "../../../evals/rca-real-world/contracts.mts";
+import { EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS, sha256, stableJson, writeJson } from "../../../evals/rca-real-world/contracts.mts";
 import {
-  parseModelMessages, type CommunicationAudit, type DiagnosticReport,
+  messageInstruction, parseModelMessages, type CommunicationAudit, type DiagnosticReport,
 } from "../../../evals/rca-real-world/communication.mts";
 import {
   FixtureApprovalLedger, type ApprovalRequestItem, type ApprovalLedgerArtifact,
@@ -186,6 +186,33 @@ test("uses structured diagnostics without headings and never extracts prose gues
   assert.equal(result.strictGates.honestEvidenceGaps, false);
   assert.equal(result.strictGates.statisticalApplicability, false);
 });
+
+for (const missing of SKILLED_REPORT_HEADINGS) {
+  test(`identifies the exact missing workflow heading: ${missing}`, () => {
+    const report = diagnostic("with-skill", output().replace(`### ${missing}`, "### Other section"));
+    const result = scoreTrial(artifact({ report }), truth, "fixture");
+    assert.equal(result.integrity, "pass");
+    assert.equal(result.strictGates.outputContract, false);
+    assert.equal(result.strictGateEvidence.outputContract, `Missing required workflow headings: ${missing}.`);
+  });
+}
+
+for (const condition of ["with-skill", "without-skill"] as const) {
+  for (const terminal of ["final", "blocked"] as const) {
+    test(`published ${terminal} scaffold satisfies its condition's output shape: ${condition}`, () => {
+      const context = { messageId: "scaffold-example", caseId: "case-01", condition };
+      const guidance = messageInstruction(context);
+      const examples = [...guidance.matchAll(/```json\n([\s\S]*?)\n```/g)].map((match) => match[1]!);
+      const example = examples.find((text) => JSON.parse(text).messageType === terminal);
+      assert.ok(example);
+      const parsed = parseModelMessages([example], context).message;
+      assert.ok(parsed.messageType !== "evidence_request");
+      const result = scoreTrial(artifact({ condition, report: parsed.report, terminal, noTools: true }), truth, "fixture");
+      assert.equal(result.integrity, "pass");
+      assert.equal(result.strictGates.outputContract, true);
+    });
+  }
+}
 
 test("baseline has a single structured candidate with no skilled finding or workflow requirements", () => {
   const value = artifact({ condition: "without-skill", report: diagnostic("without-skill", "A bounded best guess.") });
@@ -376,6 +403,22 @@ test("distinguishes valid blocked reports from technical protocol and execution 
 });
 
 for (const condition of ["with-skill", "without-skill"] as const) {
+  for (const change of [
+    { outputLimitExceeded: true },
+    { protocolError: { code: "message-too-large", message: "Capture incomplete" } },
+  ]) {
+    test(`rejects incomplete captures despite a valid final envelope: ${condition}/${Object.keys(change)[0]}`, () => {
+      const value = artifact({ condition, noTools: true });
+      const capture = value.cliCapture.turn1;
+      assert.ok(capture && typeof capture === "object");
+      Object.assign(capture, change);
+      const result = scoreTrial(value, truth, "fixture");
+      assert.equal(result.integrity, "fail");
+      assert.equal(result.leadingHypothesis.status, "unusable");
+      assert.throws(() => rebindRedactedCommunication(value), /incomplete CLI capture/);
+    });
+  }
+
   for (const phase of ["commentary", "analysis", undefined]) {
     test(`scoring and redaction reject captured envelope phase ${String(phase)}: ${condition}`, () => {
       const value = artifact({ condition, noTools: true });
@@ -402,7 +445,7 @@ test("checks all public responses for leakage and validates exact profile proven
   } };
   assert.equal(scoreTrial(debug, truth, "fixture").integrity, "pass");
   assert.equal(scoreTrial(debug, truth, "fixture").profile, "debug");
-  for (const protocol of ["ad-hoc-v1", "ad-hoc-v2", undefined]) {
+  for (const protocol of ["ad-hoc-v1", "ad-hoc-v2", "ad-hoc-v3", undefined]) {
     assert.equal(scoreTrial({ ...value, protocol }, truth, "fixture").integrity, "fail");
   }
   assert.equal(scoreTrial({ ...debug, requestedProfile: {
@@ -428,7 +471,7 @@ test("refuses persisted historical rescoring without changing prior result bytes
   await mkdir(sessionRoot, { recursive: true });
   await writeJson(join(sessionRoot, "trial-result.json"), { historical: "retain byte-for-byte" });
   const before = await readFile(join(sessionRoot, "trial-result.json"), "utf8");
-  for (const protocol of ["ad-hoc-v1", "ad-hoc-v2"]) {
+  for (const protocol of ["ad-hoc-v1", "ad-hoc-v2", "ad-hoc-v3"]) {
     await writeJson(join(sessionRoot, "session-artifact.json"), { ...artifact(), protocol });
     await assert.rejects(scorePersistedTrial({
       runRoot, caseId: "case-01", trial: 1, condition: "with-skill",
