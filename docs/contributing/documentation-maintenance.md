@@ -3,7 +3,7 @@ title: Documentation Maintenance
 description: How the automated ms.date freshness system detects and flags stale documentation for review
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-11-03
 ms.topic: reference
 keywords:
   - documentation
@@ -27,6 +27,8 @@ The system runs in two contexts:
 | Pull request validation | Checks only the files changed in the PR and fails if any stale files are found.                                |
 | Weekly scheduled scan   | Scans all documentation files on Monday mornings and opens GitHub issues for any file exceeding the threshold. |
 
+The check itself is implemented once as the reusable workflow `.github/workflows/msdate-freshness-check.yml`. Both contexts call that workflow with different inputs.
+
 ## How It Works
 
 The `Invoke-MsDateFreshnessCheck.ps1` script reads each file's frontmatter, extracts `ms.date`, and computes the age in days. Files older than the threshold are reported as stale. Results write to:
@@ -35,6 +37,10 @@ The `Invoke-MsDateFreshnessCheck.ps1` script reads each file's frontmatter, extr
 * `logs/msdate-summary.md`: human-readable Markdown summary uploaded to the Actions job summary
 
 The PR check uses `changed-files-only: true` so contributors only see annotations for the files they actually touched. The weekly scan runs without this filter to find all outdated content across the repository.
+
+On pull requests the check runs in *range* mode against the immutable `base-sha` and `head-sha` commits resolved by the `change-range` job, so only the files touched by the PR are scanned. When no verified change range is available, the workflow falls back to a repository-wide scan and reports the outcome as advisory (`::warning::`) instead of failing the job.
+
+The scan covers every `*.md` file in the repository except the `node_modules`, `.git`, `logs`, `.copilot-tracking`, and `plugins` directories and the `CHANGELOG.md` file.
 
 ## Fixing Stale Documentation
 
@@ -55,6 +61,9 @@ The freshness check exposes these parameters:
 |----------------------------|---------|------------------------------------------------------------------|
 | `staleness-threshold-days` | 90      | Days since `ms.date` before a file is considered stale           |
 | `changed-files-only`       | false   | When true, only checks files changed relative to the base branch |
+| `soft-fail`                | false   | When true, stale documents are reported but the job still succeeds |
+| `change-mode`              | full    | `range` checks only the files changed between `base-sha` and `head-sha`; `full` checks the whole repository |
+| `base-sha` / `head-sha`    | (empty) | Immutable commit IDs used in `range` mode; required when `change-mode` is `range` |
 
 The PR validation workflow configures the check with `changed-files-only: true`. The weekly scan uses `changed-files-only: false` with default threshold to catch all stale files.
 
@@ -62,7 +71,7 @@ To adjust the threshold repository-wide, update the `staleness-threshold-days` v
 
 ## Issue Automation
 
-The weekly scan feeds into `create-stale-docs-issues.yml`, which uses idempotent issue creation to avoid duplicates. Each stale file generates at most one open issue, identified by a hidden automation marker in the issue body:
+The weekly scan feeds into `create-stale-docs-issues.yml`, which uses idempotent issue creation to avoid duplicates. The freshness check runs as a blocking job in `weekly-validation.yml`; the issue creation job only starts when that job fails (`needs: msdate-freshness` with `if: failure()`). It downloads the `msdate-freshness-results` artifact, which the reusable workflow retains for 30 days, and reads `logs/msdate-freshness-results.json` from it. Each stale file generates at most one open issue, identified by a hidden automation marker in the issue body:
 
 ```text
 <!-- automation:stale-docs:{file-path} -->
@@ -81,6 +90,10 @@ The script skips files with no frontmatter block. Stale detection requires a val
 ### Date format errors
 
 Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse and the file will be skipped with a warning.
+
+### PR check annotates files you did not touch
+
+When the workflow cannot resolve a verified change range it scans the whole repository and reports advisory warnings. That is expected behaviour and not a stale-document regression.
 
 ### PR check annotations not appearing
 
