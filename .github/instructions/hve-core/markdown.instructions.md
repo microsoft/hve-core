@@ -263,7 +263,7 @@ See <https://example.com> and [Docs](https://example.com/docs).
 <!-- <example-tables> -->
 ```markdown
 | Column A | Column B | Column C |
-|----------|----------|----------|
+| -------- | -------- | -------- |
 | Short    | Medium   | Longer   |
 | A        | BB       | CCC      |
 ```
