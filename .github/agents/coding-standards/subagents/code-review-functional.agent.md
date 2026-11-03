@@ -14,6 +14,11 @@ user-invocable: false
 
 # Code Review Functional
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Thin perspective subagent for the Code Review orchestrator. It evaluates a precomputed diff for functional correctness — logic errors, edge cases, error handling, concurrency, and contract violations — and writes structured findings. All review logic comes from the `code-review` skill; this file only binds the functional preset.
 
 ## Skill Reference Contract

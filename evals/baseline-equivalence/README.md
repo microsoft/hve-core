@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-10-01
+ms.date: 2026-11-02
 ---
 
 ## Purpose
@@ -86,12 +86,22 @@ A single comparison record carries those statistics in its `summary`, which vall
 When the file holds one record per shard, each shard's `summary` covers only its own trials, so `Measure-CompareTrials` recomputes the statistics from the per-trial scores across all records with vally's formula: the arithmetic mean, a two-sided 95% Student-t interval, and the share of trials with a positive score.
 A complete sharded run therefore reports the same per-model statistics as a serial run. If any non-errored trial lacks a numeric score, complete `summary` intervals are instead combined conservatively.
 The statistics always describe the trials that were observed; missing trials fail the run as data-quality violations.
-The driver aggregates one JSONL per model into a single JSON summary; the summary is the contract every downstream consumer reads. It carries `schemaVersion: "2.1.0"`, and consumers reject an unsupported major version rather than reading absent fields as zeros.
+The driver aggregates one JSONL per model into a single JSON summary. Live summaries
+carry `schemaVersion: "2.2.0"`; required invariant diagnostics must be present
+rather than silently inferred from absent fields. A genuine failed measurement
+is valid evidence with a failing outcome, not a missing or malformed envelope.
+
+The table below describes isolated producer output. Combined-model output uses
+a closed projection of validated scalar identities, statistics and gates plus
+`perModelEvidence`. It does not forward free-text diagnostics, comparison-log
+paths, variants, execution/invocation objects or arbitrary calibration metadata.
+Original producer artifacts remain the detailed source. The aggregate primary
+`model` label is not failure attribution: use the per-model rows.
 The compare invocation deliberately omits `--fail-on-regression`. Comparison is report-only calibration evidence until a later decision defines a degradation margin, confidence level, inequality, and missing-bound behavior from valid post-launch data.
 
 | Field                                                                | Type         | Meaning                                                                                                                                                                                         |
 |----------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `schemaVersion`                                                      | string       | Reporting contract version. `2.1.0` is the current contract; consumers fail loudly on an unsupported major                                                                                      |
+| `schemaVersion`                                                      | string       | Reporting contract version. `2.2.0` requires bounded invariant diagnostics; absent required fields fail explicitly                                                                              |
 | `agent`                                                              | string       | Agent slug under test (matches `-Agent`)                                                                                                                                                        |
 | `tier`                                                               | string       | `devloop` (one-model advisory), `calibration` (two-model report-only comparison), or `ci`; deterministic and structural evidence remains authoritative outside devloop                          |
 | `model`                                                              | string       | Primary model for the run: `devloop` resolves one model; `calibration` and `ci` run the fixed `gpt-6-luna` and `claude-sonnet-5` pair                                                           |
@@ -123,6 +133,38 @@ The compare invocation deliberately omits `--fail-on-regression`. Comparison is 
 Authoritative evidence is derived by `Get-EquivalenceGateResults` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1); the exact rule is documented below.
 
 `meanScore` and `winRate` are unweighted diagnostics, not pooled estimates.
+
+### Bounded invariant evidence
+
+An isolated producer's `invariantDiagnostics` has `evaluated`, `failed`,
+`omittedFailureCount` and `failures`. Each failure row contains only the
+configured `stimulus`, `grader`, `variant: baseline` and positive integer
+`count`. Rows are grouped and sorted, with at most 20 per model.
+`sum(failures.count) + omittedFailureCount` equals `failed`, which equals
+the summary's `invariantFailures`. Overflow does not change the verdict.
+
+Combined and serial fixed-pair summaries retain exactly one `perModelEvidence`
+row per configured model. Each row has its model, verdict, comparison-pair count,
+run-health, data-quality and invocation counters, plus invariant diagnostics.
+Named invariant checks and comparison pairs are different populations:
+assertion pass/fail fields refer to measured invariant checks, never comparison
+pairs minus operational errors. A failed baseline pair contributes one failed
+spec even if several invariants or both models fail.
+One model's positive comparison population cannot turn another required model's
+empty-population failure into success. An explicit not-required result is
+permitted only by a valid canonical plan that says baseline execution is not required.
+
+No-signal results fail structurally without inventing a named invariant.
+Fresh and cached baselines are re-tallied identically. Changing the authored
+prompt or grader changes the content cache key; a cached failure cannot turn
+into success through omission of its diagnostics.
+
+The `rust-fn-syntax` invariant is a lexical declaration floor. It accepts the
+supported lifetime, generic, raw-identifier, Unicode, visibility and multiline
+forms without prescribing an argument type. It does not parse all Rust, compile
+code, verify types or prove string reversal. An identity or empty-string body
+can pass that floor; response-quality grading remains separately advisory.
+No generated code is executed by this check.
 
 ### Lint commands
 
@@ -181,7 +223,7 @@ The driver separates authoritative evidence from report-only comparison through 
 
 **Authoritative evidence.** Deterministic invariants, successful agent invocation, run health, and structural population quality determine `equivalenceGate` and `verdict`.
 
-* `runs <= 0` or `dataQualityViolations > 0`: `fail` at **every** tier, including `devloop`. An incomplete comparison cannot evidence equivalence regardless of who runs it, and the summary is left on disk so the cause can be diagnosed from `compareLogs` and the sibling `--output` JSONL.
+* `runs <= 0` or `dataQualityViolations > 0`: `fail` at **every** tier, including `devloop`. An incomplete comparison cannot evidence equivalence regardless of who runs it. Use bounded per-model evidence for public diagnosis; raw comparison logs and trajectories remain runner-local.
 * `invocationFailures > 0` contributes to structural data-quality failure. Every expected customized `model|stimulus|trial` identity requires one successful exact-path agent-file read with non-empty RPI Agent content.
 * `invariantFailures > 0` or `runHealthFailures > 0`: `warn` on `devloop`; `fail` on `calibration` and `ci`.
 * An empty equivalent population fails closed at every tier.
@@ -209,6 +251,13 @@ Each entry in [stimuli.yml](stimuli.yml) uses these keys:
 
 A grader may run without gating. Omitting it from `invariants` while leaving it in `graders` keeps it executing and keeps its per-trial result in the run output, but removes it from the verdict.
 
+The `multi-turn-confirm-action` question supplies a hypothetical code-review
+proposal within the prompt. It does not assume an unstaged previous conversation
+or claim that a real rename occurred. The same question appears in the canonical,
+baseline, customized second turn and comparison specs. Its `mentions-loadconfig`
+invariant remains an exact identifier check; self-reference guards and gating
+policy are unchanged.
+
 That split exists because invariants are read from the baseline run only: a grader that records how the *uncustomized* model chose to respond cannot distinguish "the customization layer changed behavior" from "the underlying model answered differently," which is the only question this suite asks.
 `asks-clarifying-question` and `mentions-print-paren` report under that rule.
 `mentions-scripts-or-deps` still gates, because its stimulus reads a file the seed workspace provides and intermittent failure means the read itself is unreliable.
@@ -220,6 +269,12 @@ Trajectory invariants live at the spec level (not per stimulus) and apply across
 ## Customized Disallow Guards
 
 The 35-stimulus corpus is entirely equivalent-policy. `customized_disallow` guards on the instruction-bleed stimuli detect unsolicited RPI Agent self-reference while leaving comparison report-only. Complete delivery evidence showed that the removed customization-boundary guards measured lifecycle phase behavior rather than nominal model non-degradation. Agent behavior testing owns those implementation and scope contracts.
+
+Ordinary customized answers should not introduce the workflow persona, start
+intake or create session state merely because the agent was loaded. An active
+workflow can answer a side question without changing its task, mode or authorized
+progression. These behavior expectations do not turn individual report-only
+guards into authoritative gates.
 
 This framing is intentional. The suite is not a free-form quality grader; it asks the narrow question "does customization change anything beyond what we said it would?" Curated allowances keep the question crisp.
 

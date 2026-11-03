@@ -113,7 +113,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
         It 'Declares the reporting contract version' {
             # Consumers reject an unsupported major version rather than reading absent
             # fields as zeros, so the dry-run summary must carry it too.
-            $script:Summary.schemaVersion | Should -Be '2.1.0'
+            $script:Summary.schemaVersion | Should -Be '2.2.0'
         }
 
         It 'Carries no legacy A/B keys' {
@@ -927,10 +927,11 @@ defaults:
         $summary.runHealthFailures | Should -Be 2
         $summary.runs | Should -Be 0
         $summary.verdict | Should -Be 'fail'
-        @($summary.phaseTimings.phase) | Should -Contain 'materialize'
-        @($summary.phaseTimings.phase) | Should -Contain 'baseline-eval'
-        @($summary.phaseTimings.phase) | Should -Contain 'customized-eval'
-        @($summary.phaseTimings.phase) | Should -Contain 'compare'
+        $summary.perModelEvidence | Should -HaveCount 2
+        foreach ($row in $summary.perModelEvidence) {
+            $row.runHealthFailures | Should -Be 1
+            $row.runs | Should -Be 0
+        }
         $LASTEXITCODE | Should -Be 1
 
         $calls = @(Get-Content -LiteralPath $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
@@ -951,32 +952,64 @@ defaults:
         $calls = @(Get-Content $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
         @($calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -match '[/\\]baseline[/\\]' }) | Should -HaveCount 2
         $summary = Get-Content $script:StubOutputPath -Raw | ConvertFrom-Json
-        $summary.executionDiagnostics | Should -HaveCount 2
-        @($summary.executionDiagnostics | Where-Object variant -EQ 'baseline') | Should -HaveCount 0
+        $summary.perModelEvidence | Should -HaveCount 2
+        foreach ($row in $summary.perModelEvidence) {
+            $row.invariantDiagnostics.evaluated | Should -Be 1
+        }
+        $summary.PSObject.Properties.Name | Should -Not -Contain 'executionDiagnostics'
     }
 
     It 'Publishes per-variant executor categories and retains the failing gate' {
         $env:STUB_VALLY_BASELINE_MODE = 'executor-error'
         $env:STUB_VALLY_CUSTOMIZED_MODES = 'executor-error'
 
-        & $script:ScriptPath -Tier 'calibration' -RepoRoot $script:StubRepoRoot -OutputPath $script:StubOutputPath -NoBaselineCache *> $null
+        & $script:ScriptPath -Tier 'calibration' -CalibrationModel 'gpt-6-luna' -RepoRoot $script:StubRepoRoot -OutputPath $script:StubOutputPath -NoBaselineCache *> $null
         $exitCode = $LASTEXITCODE
         $text = Get-Content $script:StubOutputPath -Raw
         $summary = $text | ConvertFrom-Json
 
-        $summary.executionDiagnostics | Should -HaveCount 4
+        $summary.executionDiagnostics | Should -HaveCount 2
         foreach ($diagnostic in $summary.executionDiagnostics) {
             $diagnostic.exitCode | Should -Be 1
             $diagnostic.attempt | Should -Be 1
             $diagnostic.erroredTrials | Should -Be 1
             $diagnostic.errors[0].category | Should -Be 'model-unavailable'
         }
-        @($summary.executionDiagnostics.model | Sort-Object -Unique) | Should -Be @('claude-sonnet-5', 'gpt-6-luna')
+        @($summary.executionDiagnostics.model | Sort-Object -Unique) | Should -Be @('gpt-6-luna')
         @($summary.executionDiagnostics.variant | Sort-Object -Unique) | Should -Be @('baseline', 'customized')
         $text | Should -Not -Match 'synthetic-private|example\.invalid|Bearer'
         $summary.invocationFailures | Should -BeGreaterThan 0
         $summary.verdict | Should -Be 'fail'
         $exitCode | Should -Be 1
+    }
+
+    It 'Distinguishes named checks from a fresh <Mode> baseline' -Tag 'BoundedDriver' -ForEach @(
+        @{ Mode = 'invocation-pass'; Evaluated = 1 }
+        @{ Mode = 'silent-crash'; Evaluated = 0 }
+    ) {
+        $env:STUB_VALLY_BASELINE_MODE = $Mode
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'invocation-pass'
+        $env:STUB_VALLY_COMPARE_MODE = 'pass'
+        & $script:ScriptPath -Tier 'calibration' -CalibrationModel 'gpt-6-luna' -RepoRoot $script:StubRepoRoot `
+            -OutputPath $script:StubOutputPath -NoBaselineCache *> $null
+        $summary = Get-Content $script:StubOutputPath -Raw | ConvertFrom-Json
+        $summary.schemaVersion | Should -Be '2.2.0'
+        $summary.invariantDiagnostics.evaluated | Should -Be $Evaluated
+        $summary.invariantDiagnostics.failed | Should -Be 0
+        $summary.invariantFailures | Should -Be 0
+        if ($Evaluated -eq 0) {
+            $summary.dataQualityViolations | Should -BeGreaterThan 0
+            $summary.verdict | Should -Be 'fail'
+        }
+    }
+
+    It 'Changes the baseline content key when only its grader changes' -Tag 'BoundedDriver' {
+        $path = Join-Path $TestDrive 'content-key.yaml'
+        'name: test; grader: old' | Set-Content $path
+        $before = Get-StimulusContentHash -SpecPath $path
+        Get-StimulusContentHash -SpecPath $path | Should -Be $before
+        'name: test; grader: new' | Set-Content $path
+        Get-StimulusContentHash -SpecPath $path | Should -Not -Be $before
     }
 
     It 'Materializes the customization surface where the spec reads it' {
@@ -1022,6 +1055,7 @@ defaults:
         & $script:ScriptPath `
             -Agent 'rpi-agent' `
             -Tier 'calibration' `
+            -CalibrationModel 'gpt-6-luna' `
             -RepoRoot $script:StubRepoRoot `
             -OutputPath $script:StubOutputPath `
             -NoBaselineCache *> $null
@@ -1038,8 +1072,8 @@ defaults:
         $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-6-luna' -and $_.variant -eq 'customized' })
         $executionAttempts.attempt | Should -Be @(1, 2)
         $summary.invocationFailures | Should -Be 0
-        $baselineCalls.Count | Should -Be 2
-        $customizedCalls.Count | Should -Be 3
+        $baselineCalls.Count | Should -Be 1
+        $customizedCalls.Count | Should -Be 2
     }
 
     It 'Retries an eligible customized GPT executor-error batch and makes the retry authoritative' {
@@ -1051,6 +1085,7 @@ defaults:
         & $script:ScriptPath `
             -Agent 'rpi-agent' `
             -Tier 'calibration' `
+            -CalibrationModel 'gpt-6-luna' `
             -RepoRoot $script:StubRepoRoot `
             -OutputPath $script:StubOutputPath `
             -NoBaselineCache *> $null
@@ -1077,6 +1112,7 @@ defaults:
         & $script:ScriptPath `
             -Agent 'rpi-agent' `
             -Tier 'calibration' `
+            -CalibrationModel 'gpt-6-luna' `
             -RepoRoot $script:StubRepoRoot `
             -OutputPath $script:StubOutputPath `
             -NoBaselineCache *> $null
@@ -1087,7 +1123,7 @@ defaults:
         $gptAttempts.Count | Should -Be 1
         $gptAttempts[0].reasonCode | Should -Be 'no-exact-read'
         $summary.invocationFailures | Should -BeGreaterThan 0
-        [int](Get-Content -LiteralPath $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH -Raw) | Should -Be 2
+        [int](Get-Content -LiteralPath $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH -Raw) | Should -Be 1
     }
 
     It 'Fails closed without reusing attempt one when the retry creates no run' {
@@ -1099,6 +1135,7 @@ defaults:
         & $script:ScriptPath `
             -Agent 'rpi-agent' `
             -Tier 'calibration' `
+            -CalibrationModel 'gpt-6-luna' `
             -RepoRoot $script:StubRepoRoot `
             -OutputPath $script:StubOutputPath `
             -NoBaselineCache *> $null

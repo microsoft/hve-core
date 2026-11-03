@@ -13,6 +13,11 @@ user-invocable: false
 
 # Jira Backlog Executor
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Purpose
 
 Apply one dispatched set of Jira operations, or return a dispatched set of Jira reads, and report a structured result. `Backlog Manager` resolves the platform, confirms the destination, sanitizes content, and establishes the autonomy tier before dispatch. This agent executes; it does not re-decide any of that.

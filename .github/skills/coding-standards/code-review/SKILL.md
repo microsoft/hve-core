@@ -11,6 +11,11 @@ metadata:
 
 # Code Review Skill Entry
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 This `SKILL.md` is the entrypoint for the Code Review skill.
 
 The skill provides a reusable review workflow for pull requests, branch diffs, and local changes across functional, standards, accessibility, security, and readiness perspectives. It separates the review target and profile from perspective and depth selection, and centralizes change-brief preparation, severity normalization, and output contracts so review agents stay thin and consistent.

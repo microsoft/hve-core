@@ -1032,22 +1032,109 @@ jobs:
 
             // Consume the single summary produced by authoritative fan-in.
             const summaries = [];
+            let invalidEvidence = false;
             if (fs.existsSync(root)) {
               for (const dir of fs.readdirSync(root)) {
                 const summaryPath = path.join(root, dir, 'eval-summary.json');
                 if (fs.existsSync(summaryPath)) {
                   try {
                     summaries.push(JSON.parse(fs.readFileSync(summaryPath, 'utf8')));
-                  } catch (err) {
-                    console.log(`Skipping unparseable summary: ${summaryPath} (${err.message})`);
+                  } catch {
+                    invalidEvidence = true;
                   }
                 }
               }
             }
 
+            const integer = value => Number.isSafeInteger(value) && value >= 0 && value <= 2147483647;
+            const fields = (value, names) => value !== null && typeof value === 'object' &&
+              !Array.isArray(value) && Object.keys(value).length === names.length &&
+              Object.keys(value).every(key => names.includes(key));
+            const identifier = value => typeof value === 'string' && /^[a-z0-9][a-z0-9-]{0,127}$/.test(value);
+            const baselineFields = ['schemaVersion', 'agent', 'tier', 'verdict', 'equivalenceGate',
+              'documentedDivergenceGate', 'exitCode', 'trials', 'assertionsPassed', 'assertionsFailed',
+              'advisoryAssertionsFailed', 'invariantFailures', 'runHealthFailures', 'divergenceGuardFailures',
+              'dataQualityViolations', 'invocationFailures', 'equivalentTrials', 'perModelEvidence', 'resultsPath'];
+            const validBaseline = entry => {
+              if (!fields(entry, baselineFields) || entry.schemaVersion !== '2.2.0' ||
+                  entry.agent !== 'rpi-agent' || entry.tier !== 'calibration' ||
+                  !['pass', 'fail'].includes(entry.verdict) || entry.equivalenceGate !== entry.verdict ||
+                  entry.documentedDivergenceGate !== 'report-only' ||
+                  entry.resultsPath !== 'logs/baseline-equivalence-rpi-agent.json' ||
+                  !Array.isArray(entry.perModelEvidence) || entry.perModelEvidence.length !== 2) return false;
+              for (const key of ['exitCode', 'trials', 'assertionsPassed', 'assertionsFailed',
+                'advisoryAssertionsFailed', 'invariantFailures', 'runHealthFailures',
+                'divergenceGuardFailures', 'dataQualityViolations', 'invocationFailures', 'equivalentTrials']) {
+                if (!integer(entry[key])) return false;
+              }
+              const models = entry.perModelEvidence.map(row => row?.model);
+              if (models.join(',') !== 'claude-sonnet-5,gpt-6-luna') return false;
+              let evaluated = 0;
+              const totals = { runs: 0, failed: 0, runHealthFailures: 0, dataQualityViolations: 0, invocationFailures: 0 };
+              for (const row of entry.perModelEvidence) {
+                if (!fields(row, ['model', 'verdict', 'runs', 'runHealthFailures', 'dataQualityViolations',
+                  'invocationFailures', 'invariantDiagnostics']) || !['pass', 'fail'].includes(row.verdict)) return false;
+                for (const key of ['runs', 'runHealthFailures', 'dataQualityViolations', 'invocationFailures']) {
+                  if (!integer(row[key])) return false;
+                  totals[key] += row[key];
+                }
+                const diagnostic = row.invariantDiagnostics;
+                if (!fields(diagnostic, ['evaluated', 'failed', 'omittedFailureCount', 'failures']) ||
+                    !integer(diagnostic.evaluated) || !integer(diagnostic.failed) ||
+                    !integer(diagnostic.omittedFailureCount) || diagnostic.failed > diagnostic.evaluated ||
+                    !Array.isArray(diagnostic.failures) || diagnostic.failures.length > 20) return false;
+                let failed = diagnostic.omittedFailureCount;
+                let previous = '';
+                for (const item of diagnostic.failures) {
+                  if (!fields(item, ['variant', 'stimulus', 'grader', 'count']) || item.variant !== 'baseline' ||
+                      !identifier(item.stimulus) || !identifier(item.grader) || !integer(item.count) || item.count === 0) return false;
+                  const key = `${item.stimulus}||${item.grader}`;
+                  if (key <= previous) return false;
+                  previous = key;
+                  failed += item.count;
+                }
+                if (failed !== diagnostic.failed || (row.verdict === 'pass' &&
+                    (failed > 0 || row.runs === 0 || row.runHealthFailures > 0 ||
+                     row.dataQualityViolations > 0 || row.invocationFailures > 0))) return false;
+                evaluated += diagnostic.evaluated;
+                totals.failed += failed;
+              }
+              const failedGate = entry.trials === 0 || entry.equivalentTrials === 0 || totals.failed > 0 ||
+                totals.runHealthFailures > 0 || totals.dataQualityViolations > 0 ||
+                entry.perModelEvidence.some(row => row.verdict === 'fail');
+              return entry.verdict === (failedGate ? 'fail' : 'pass') &&
+                entry.trials === totals.runs && entry.invariantFailures === totals.failed &&
+                entry.runHealthFailures === totals.runHealthFailures && entry.dataQualityViolations === totals.dataQualityViolations &&
+                entry.invocationFailures === totals.invocationFailures && entry.equivalentTrials <= entry.trials &&
+                entry.exitCode === Number(entry.verdict === 'fail') &&
+                entry.assertionsFailed === totals.failed && entry.assertionsPassed === evaluated - totals.failed;
+            };
+            const baselines = [];
+            if (summaries.length === 1) {
+              const summary = summaries[0];
+              if (summary?.schemaVersion !== '1.1.0' || !Array.isArray(summary.equivalence) ||
+                  !Array.isArray(summary.perArtifact) || !Array.isArray(summary.producers) ||
+                  !summary.totals || !['artifacts', 'specs', 'assertionsPassed', 'assertionsFailed', 'failedSpecs', 'durationMs']
+                    .every(key => integer(summary.totals[key]))) {
+                invalidEvidence = true;
+              } else {
+                for (const entry of summary.equivalence) {
+                  if (!validBaseline(entry)) invalidEvidence = true;
+                  else baselines.push(entry);
+                }
+                if (baselines.length > 1) invalidEvidence = true;
+                if (summary.producers.includes('equivalence') !== (baselines.length === 1) ||
+                    summary.totals.failedSpecs < baselines.filter(entry => entry.verdict === 'fail').length) {
+                  invalidEvidence = true;
+                }
+              }
+            }
             let body;
-            if (summaries.length === 0) {
-              body = `${marker}\n## Eval Execution\n\n⚠️ No eval summary was produced.`;
+            if (invalidEvidence || summaries.length !== 1) {
+              body = `${marker}\n## Eval Execution\n\nReport withheld: current-run evidence failed validation. No current result is published.`;
+              const head = context.payload.pull_request.head?.sha;
+              if (typeof head === 'string' && /^[a-f0-9]{40}$/.test(head)) body += `\n\nHead: \`${head}\``;
+              core.setFailed('Eval report evidence is unavailable or invalid; report withheld.');
             } else {
               const totals = { artifacts: 0, specs: 0, assertionsPassed: 0, assertionsFailed: 0, failedSpecs: 0 };
               const artifacts = [];
@@ -1086,6 +1173,10 @@ jobs:
                 blockingTotal += blocking;
                 advisoryTotal += advisory;
                 toleratedTotal += tolerated;
+              }
+              for (const entry of baselines) {
+                blockingTotal += entry.invariantFailures;
+                advisoryTotal += entry.advisoryAssertionsFailed;
               }
 
               // Only `failedSpecs` gates the PR. When nothing blocks merge but advisory
@@ -1139,7 +1230,30 @@ jobs:
                 lines.push('>');
                 lines.push('> Token columns are advisory means per trial reported by the model provider. They vary between trials and never gate this PR.');
               } else {
-                lines.push('No changed AI artifacts required evaluation.');
+                lines.push(baselines.length > 0
+                  ? 'No ordinary changed-artifact rows were produced; baseline evidence is shown below.'
+                  : 'No changed AI artifacts required evaluation.');
+              }
+              if (baselines.length > 0) {
+                lines.push('', '### Baseline evidence', '',
+                  '| Model | Variant | Outcome | Comparison pairs | Invariant checks | Failed invariants | Run health | Structural | Omitted failures |',
+                  '|-------|---------|---------|------------------|------------------|-------------------|------------|------------|------------------|');
+                for (const entry of baselines) {
+                  for (const row of entry.perModelEvidence) {
+                    const d = row.invariantDiagnostics;
+                    lines.push(`| ${row.model} | baseline | ${row.verdict} | ${row.runs} | ${d.evaluated} | ${d.failed} | ${row.runHealthFailures} | ${row.dataQualityViolations} | ${d.omittedFailureCount} |`);
+                  }
+                }
+                lines.push('', '| Model | Stimulus | Invariant | Failures |',
+                  '|-------|----------|-----------|----------|');
+                for (const entry of baselines) {
+                  for (const row of entry.perModelEvidence) {
+                    for (const item of row.invariantDiagnostics.failures) {
+                      lines.push(`| ${row.model} | ${item.stimulus} | ${item.grader} | ${item.count} |`);
+                    }
+                  }
+                }
+                lines.push('', 'Comparison pairs and invariant checks are different populations. Semantic baseline quality and comparison preferences remain advisory.');
               }
 
               body = lines.join('\n');
@@ -1149,8 +1263,13 @@ jobs:
             const issue_number = context.payload.pull_request.number;
             const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
             const existing = comments.find((c) => c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
-            } else {
-              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            try {
+              if (existing) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+              } else {
+                await github.rest.issues.createComment({ owner, repo, issue_number, body });
+              }
+            } catch {
+              core.setFailed('Unable to publish the eval report; an earlier comment may remain.');
+              throw new Error('Eval report publication failed.');
             }

@@ -107,7 +107,7 @@ stimuli:
     graders:
       - type: output-matches
         name: rust-fn-syntax
-        config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}
+        config: {pattern: '(?s)\bfn\s+(?:r#)?[^\s(<>{};,]+\s*(?:<[^{};]*>)?\s*\('}
       - type: prompt
         name: code-reverse-string-rust-response-quality
         config: {prompt: "Does the response define a Rust function that reverses a string?"}
@@ -282,7 +282,7 @@ stimuli:
 
   - name: multi-turn-confirm-action
     constraints: *agent-time-limit
-    prompt: "Earlier we agreed to rename the function `readSettings` to `loadConfig`. Confirm that `loadConfig` is the new name and list one rationale."
+    prompt: "In a hypothetical code review, a function that loads configuration is proposed to be renamed to `loadConfig`. Confirm that proposed name and give one rationale; do not claim a prior conversation or an actual code change."
     tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches

@@ -381,8 +381,9 @@ function Get-AssetInvocation {
         Returns a structured descriptor of the invocation mechanism for an asset so
         documentation generation can render consistent "how to invoke" guidance.
         Agents surface in the chat agent picker under their display name; prompts run
-        as slash commands; instructions apply automatically to files matching their
-        applyTo glob. Skills are classified from their own frontmatter: a skill that
+        as slash commands; instructions with an applyTo glob apply automatically,
+        while instructions without a glob are included through explicit references.
+        Skills are classified from their own frontmatter: a skill that
         is user-invocable is reachable as a slash command, and one that also sets
         disable-model-invocation is reachable that way only.
 
@@ -449,6 +450,9 @@ function Get-AssetInvocation {
             }
             else {
                 ''
+            }
+            if ([string]::IsNullOrWhiteSpace($applyTo)) {
+                return @{ Mechanism = 'explicit-reference'; Token = '' }
             }
             return @{ Mechanism = 'auto-applied'; Token = $applyTo }
         }
@@ -679,6 +683,7 @@ function Format-AssetInvocation {
             if ([string]::IsNullOrWhiteSpace($token)) { return 'Applied automatically' }
             return "Applied automatically to $tick$token$tick"
         }
+        'explicit-reference' { return 'Included through explicit reference' }
         'skill-user-only' { return "Invoked directly as $tick$token$tick; model invocation is disabled, so agents do not load it" }
         'skill-user-and-load' { return "Invoked directly as $tick$token$tick, or loaded on demand by referencing agents" }
         'skill-load' { return 'Loaded on demand by referencing agents' }

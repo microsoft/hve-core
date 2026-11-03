@@ -26,6 +26,11 @@ disable-model-invocation: true
 
 # Code Review
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Orchestrator that reviews pull requests, branch diffs, and local changes by first resolving the review target and profile, then building a factual orientation walkthrough and letting the human steer a bookmark → dispatch → walk-back loop before merging perspective findings into one report. The run is prompt-first and human-gated: it bootstraps the change context once, confirms scope with the human, produces the orientation walkthrough, presents a dispatch board, lets the human choose which items to inspect and how deeply, dispatches each chosen perspective to a thin skill-backed subagent, and consolidates the findings.
 
 Perspective selection (which lanes run) and depth level (how deeply each lane verifies) are independent choices. Selecting `full` runs every perspective; the depth tier applies the same verification rigor to whichever perspectives were selected.

@@ -1,3 +1,7 @@
+plugins:
+  grader:
+    - ./scripts/evals/graders/strict-prompt.mjs
+
 paths:
   evals: evals
   results: evals/results
@@ -53,4 +57,3 @@ suites:
     description: Behavioral conformance regression suite for the SSSC Planner agent
     filter:
       category: agent-conformance-sssc-planner
-

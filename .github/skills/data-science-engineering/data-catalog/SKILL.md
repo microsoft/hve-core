@@ -12,6 +12,11 @@ metadata:
 
 # Data Catalog Workflow
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Produce a customer-readable Markdown catalog whose YAML frontmatter is a valid `DS_CATALOG_V1` machine contract. Preserve uncertainty explicitly so inferred or assumed relationships never appear confirmed.

@@ -1,14 +1,13 @@
 # cspell:ignore duplicat occlu
 name: behavior-conformance-instructions
 description: >
-  Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
+  Advisory-tier behavior conformance evals for high-signal
   instructions in `.github/instructions/**` (covers ADO, coding-standards,
   engagement reporting, experimental, GitHub, hve-core, Jira, privacy, RAI
-  planning, security, and shared scopes). Each stimulus prompts the model
-  to identify the instruction that applies in a given working context and
-  asserts both `applyTo` path evidence and instruction-specific scope
-  vocabulary. Per DD-05, this is an advisory tier and grader false-positives
-  are absorbed by design.
+  planning, security, and shared scopes). Most stimuli identify the applicable
+  instruction and check scope vocabulary. Plain-language stimuli also assess
+  generated replies, returned prose, and exact technical output through
+  semantic and deterministic graders. Per DD-05, failures remain advisory.
 type: capability
 defaults:
   runs: 3
@@ -1982,3 +1981,189 @@ stimuli:
         name: typescript-doc-comments-exempt-declarations
         config:
           pattern: '(?m)(?=[\s\S]*^[^\w\n]*E\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*F\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*G\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*H\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*I\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)'
+
+  - name: instruction-plain-language-entry-explanation
+    prompt: |
+      Use the hve-builder skill for an explanation only. No authoring, review,
+      or validation is requested. A batch import added twelve rows and skipped
+      three whose identifiers were already stored. It skips every row whose
+      identifier is already stored on later runs too. Explain the result and
+      what idempotent means for a retry of this batch. Do not edit files.
+    rubric:
+      - The final answer explains that twelve rows were added and three were already present, and that retrying this same batch does not add duplicate rows because stored identifiers are skipped. It explains idempotent through that concrete effect instead of replacing it with another unexplained technical term.
+      - Judge the final explanatory response, not quoted instructions or a statement that the skill was loaded. A reader unfamiliar with HVE workflow labels can understand the result. Repeating the request, reporting only workflow status, claiming unavailable instructions prevent an answer, or starting an authoring lifecycle fails.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+      files:
+        - src: ../../.github/skills/hve-core/hve-builder
+          dest: .github/skills/hve-core/hve-builder
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: plain-language
+      advisory: "true"
+      prompt_sha256: 62ef6719cf9d029a011bb12042d25cc7a7dd1699400dc851922ea0332768ff57
+    graders:
+      - type: prompt
+        name: plain-language-entry-explanation-clarity
+        config:
+          scoring: binary
+          threshold: 0.85
+  - name: instruction-plain-language-decision-question
+    prompt: |
+      Draft the question we should show a project owner choosing a deployment
+      time. Deploying now interrupts an upload in progress. Waiting until the
+      upload finishes takes fifteen minutes and avoids that interruption.
+      Both choices deploy the same code. Explain the practical choice and ask
+      one question without choosing for the owner. Return the question text;
+      do not invoke an interactive question tool or take any external action.
+    rubric:
+      - The final draft explains both practical choices and their consequences, including the fifteen-minute wait, then asks one answerable question. It does not choose for the owner, invent another trade-off, or require familiarity with internal decision or workflow labels.
+      - Judge the drafted question itself. A copied request, a checklist of missing decisions, an announcement that a question was asked, or an unavailable-artifact response fails.
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: plain-language
+      advisory: "true"
+      prompt_sha256: 4810cac81c0676dcbc0c98f4473c0ec88cc1149f717606f786a8591a9760d43c
+    graders:
+      - type: prompt
+        name: plain-language-decision-question-clarity
+        config:
+          scoring: binary
+          threshold: 0.85
+  - name: instruction-plain-language-progress-and-summary
+    prompt: |
+      Draft a progress update and a final summary for this synthetic run,
+      without performing the work: the same configuration problem affected
+      three files. Two files were corrected and their targeted tests passed.
+      The third file still needs its owner to choose a replacement value.
+      Show the two messages and make clear what still needs attention.
+    rubric:
+      - "Both drafted messages explain the work in familiar terms: two affected files are corrected and their targeted tests passed, while the third awaits its owner's replacement-value choice. The final summary does not claim all three files or the full task are complete."
+      - Judge the two message bodies, not a description of how updates should be written. Unexplained internal status labels, a repeated request without the messages, an unavailable-artifact response, or a claim that tools actually ran fails.
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: plain-language
+      advisory: "true"
+      prompt_sha256: f8409179dd6bf892be5a181516c8eeda1e654a624c41fb3d6d47b70780372c26
+    graders:
+      - type: prompt
+        name: plain-language-progress-summary-clarity
+        config:
+          scoring: binary
+          threshold: 0.85
+  - name: instruction-plain-language-generated-prose
+    prompt: |
+      Read config/export.yaml. Create docs/export-retention.md explaining to
+      a new project colleague how long exported files are retained and where
+      to change that setting. Preserve the configuration key and exporter
+      module path exactly. Report the duration as digits followed by days.
+      Show the authored document's prose in your final
+      response, not only its path or a completion message. Change no other file.
+    rubric:
+      - Judge the authored prose returned in the final response. It directly explains that exported files are retained for 45 days and identifies exporter.retention_days in config/export.yaml as the setting. It preserves src/export/csv_exporter.py and makes the explanation understandable without HVE-specific workflow vocabulary.
+      - A file path, completion acknowledgment, quoted request, unavailable-artifact response, or explanation that omits the retention duration fails. This judge assesses returned prose; deterministic file checks separately assess the document's required facts and names.
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-research-closeout/export-config.txt
+          dest: config/export.yaml
+    tags:
+      category: behavior-conformance
+      instruction: plain-language
+      advisory: "true"
+      prompt_sha256: 1eab4c53b3c22ab06395590e47a32a01a5ba4c00fd11ca073521a439d7691a5b
+    graders:
+      - type: prompt
+        name: plain-language-generated-prose-clarity
+        config:
+          scoring: binary
+          threshold: 0.85
+      - type: file-matches
+        name: plain-language-document-retention-facts
+        config:
+          path: docs/export-retention.md
+          pattern: (?is)(?=[\s\S]*\b45\s+days?\b)(?=[\s\S]*retention_days)(?=[\s\S]*config/export\.yaml)(?=[\s\S]*src/export/csv_exporter\.py)
+  - name: instruction-plain-language-machine-output
+    prompt: |
+      Read config/export.yaml and return only one JSON object with exactly
+      two fields: retention_days as the configured integer and source as the
+      configured exporter module path. Use the literal path spelling from the
+      file. Add no Markdown fences, introduction, or explanation. Do not edit files.
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-research-closeout/export-config.txt
+          dest: config/export.yaml
+    tags:
+      category: behavior-conformance
+      instruction: plain-language
+      advisory: "true"
+      prompt_sha256: 1d62fcff906d326fe3407c58b267ff575ddd742968a43637013ce2d12f7c4410
+    graders:
+      - type: output-matches
+        name: plain-language-exact-machine-output
+        config:
+          pattern: (?s)^\s*\{\s*(?:"retention_days"\s*:\s*45\s*,\s*"source"\s*:\s*"src/export/csv_exporter\.py"|"source"\s*:\s*"src/export/csv_exporter\.py"\s*,\s*"retention_days"\s*:\s*45)\s*\}\s*$
+  - name: instruction-plain-language-direct-research
+    prompt: |
+      Use the rpi-research skill for a standalone task named
+      synthetic-plain-language-export-retention. Use evidence date 2026-10-02
+      and write the primary research artifact to
+      .copilot-tracking/research/2026-10-02/synthetic-plain-language-export-retention-research.md.
+      Output mode is research-only and the scope is final, so do not ask
+      questions. Research how long exported files are retained in
+      config/export.yaml. Report the duration as digits followed by days.
+      Change no file other than the research artifact.
+    rubric:
+      - The final response leads with the direct answer that exported files are retained for 45 days, cites config/export.yaml, and remains understandable without interpreting internal research labels. It follows the skill's required response structure while keeping routine workflow status in the research artifact.
+      - Judge the final user-facing answer. Repeating the task, giving only an artifact link, reporting only readiness or disposition fields, or claiming the staged skill is unavailable fails. This is a staged source-skill scenario, not proof of installed-host instruction discovery.
+    agent_environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+      files:
+        - src: ../../.github/skills/rpi/rpi-research
+          dest: .github/skills/rpi/rpi-research
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking-location.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking-location.instructions.md
+        - src: fixtures/rpi-research-closeout/export-config.txt
+          dest: config/export.yaml
+        - src: fixtures/rpi-research-closeout/csv-exporter.txt
+          dest: src/export/csv_exporter.py
+    tags:
+      category: behavior-conformance
+      instruction: plain-language
+      advisory: "true"
+      prompt_sha256: d9a5479707855bf92e1429678c6ef96ef384ca3edde967a1956f1abe392ce21c
+    constraints:
+      max_duration: 300s
+    graders:
+      - type: prompt
+        name: plain-language-direct-research-clarity
+        config:
+          scoring: binary
+          threshold: 0.85
+      - type: output-matches
+        name: plain-language-research-retention-answer
+        config:
+          pattern: (?i)\b45\s+days?\b
+      - type: file-exists
+        name: plain-language-research-artifact-written
+        config:
+          path: .copilot-tracking/research/2026-10-02/synthetic-plain-language-export-retention-research.md

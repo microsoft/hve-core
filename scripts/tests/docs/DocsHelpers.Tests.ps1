@@ -253,8 +253,15 @@ Describe 'Get-AssetInvocation' -Tag 'Unit' {
         $invocation.Token | Should -Be '**/*.md'
     }
 
-    It 'Reports an instruction with no applyTo as auto-applied with an empty token' {
-        (Get-AssetInvocation -Kind 'instruction' -Name 'markdown').Token | Should -Be ''
+    It 'Reports an instruction without an applyTo glob as explicitly referenced' -ForEach @(
+        @{ Frontmatter = @{} }
+        @{ Frontmatter = @{ applyTo = '' } }
+        @{ Frontmatter = @{ applyTo = '   ' } }
+    ) {
+        $invocation = Get-AssetInvocation -Kind 'instruction' -Name 'plain-language' -Frontmatter $Frontmatter
+
+        $invocation.Mechanism | Should -Be 'explicit-reference'
+        $invocation.Token | Should -Be ''
     }
 
     It 'Reports a skill as user-invocable and model-loadable by default' {
@@ -390,6 +397,13 @@ Describe 'Format-AssetInvocation' -Tag 'Unit' {
     It 'Renders the auto-applied mechanism without a glob' {
         Format-AssetInvocation -Invocation @{ Mechanism = 'auto-applied'; Token = '' } |
             Should -Be 'Applied automatically'
+    }
+
+    It 'Renders an instruction without an applyTo glob as explicitly referenced' {
+        $invocation = Get-AssetInvocation -Kind 'instruction' -Name 'plain-language'
+
+        Format-AssetInvocation -Invocation $invocation |
+            Should -Be 'Included through explicit reference'
     }
 
     It 'Renders the delegated subagent mechanism' {

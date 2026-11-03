@@ -11,6 +11,11 @@ user-invocable: false
 
 # RAI Skill Assessor
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Assess exactly one Responsible AI framework per invocation. Read all reference material for that framework from the `rai-standards` skill, then analyze the codebase or plan document against those references and return structured findings.
 
 ## Purpose

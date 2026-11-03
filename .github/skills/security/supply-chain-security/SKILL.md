@@ -7,6 +7,11 @@ user-invocable: true
 
 # Supply Chain Security
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 This skill packages the durable software supply chain security (SSSC) reference material: open-standard catalogs, the combined capabilities inventory, and the classification taxonomies used to assess a repository's posture and turn gaps into prioritized work items.
 
 ## When to use

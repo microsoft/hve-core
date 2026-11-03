@@ -21,7 +21,7 @@ BeforeAll {
         )
 
         return [ordered]@{
-            schemaVersion = '2.1.0'; agent = 'rpi-agent'; tier = 'calibration'; model = $Model
+            schemaVersion = '2.2.0'; agent = 'rpi-agent'; tier = 'calibration'; model = $Model
             runs = $Runs; ties = $Ties; baselineWins = $BaselineWins; treatmentWins = $TreatmentWins
             meanScore = $MeanScore; ciLow = $CiLow; ciHigh = $CiHigh; winRate = $WinRate
             invariantFailures = 0; runHealthFailures = 0; executionDiagnostics = @(@{ model = $Model })
@@ -33,6 +33,7 @@ BeforeAll {
             comparisonStatus = 'report-only'; dataQualityDiagnostics = @("$Model-diagnostic")
             equivalenceGate = 'pass'; documentedDivergenceGate = 'report-only'; verdict = 'pass'
             variants = @{ subject = 'rpi-agent' }; compareLogs = @("$Model.log")
+            invariantDiagnostics = @{ evaluated = 84; failed = 0; omittedFailureCount = 0; failures = @() }
         }
     }
 
@@ -64,6 +65,20 @@ BeforeAll {
             producerExitCode = $ProducerExitCode
             summary = $Summary
         } | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $Path -Encoding utf8NoBOM
+    }
+
+    function Write-NotRequiredPlan {
+        param([string]$Path, [bool]$Required = $false)
+        $payload = [ordered]@{
+            schemaVersion = '1.1.0'
+            manifestDigests = [ordered]@{ changedArtifacts = 'sha256:a'; changedSpecs = 'sha256:b' }
+            baseline = [ordered]@{ required = $Required; reason = 'test-plan'; models = @() }
+            ordinaryShards = @(); expectedProducers = @('prompt')
+        }
+        $plan = [ordered]@{}
+        foreach ($key in $payload.Keys) { $plan[$key] = $payload[$key] }
+        $plan.planDigest = Get-AgentEvalValueDigest -Value $payload
+        $plan | ConvertTo-Json -Depth 20 | Set-Content $Path
     }
 }
 
@@ -112,11 +127,82 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
         $fragment.equivalence[0].trials | Should -Be 210
     }
 
+    It 'Preserves a valid failed <FailedModel> outcome with producer exit <ExitCode>' -ForEach @(
+        @{ FailedModel = 'gpt-6-luna'; ExitCode = 1 }
+        @{ FailedModel = 'claude-sonnet-5'; ExitCode = 1 }
+        @{ FailedModel = 'both'; ExitCode = 1 }
+        @{ FailedModel = 'gpt-6-luna'; ExitCode = 99 }
+    ) {
+        foreach ($model in @('gpt-6-luna', 'claude-sonnet-5')) {
+            $summary = New-TestSummary -Model $model
+            $failed = $FailedModel -in @($model, 'both')
+            if ($failed) {
+                $summary.invariantFailures = 1
+                $summary.invariantDiagnostics.failed = 1
+                $summary.invariantDiagnostics.failures = @(@{
+                    variant = 'baseline'; stimulus = 'code-reverse-string-rust'; grader = 'rust-fn-syntax'; count = 1
+                })
+                $summary.verdict = 'fail'
+                $summary.equivalenceGate = 'fail'
+            }
+            $summary.compareLogs = @('do-not-publish-this-fixture')
+            $path = if ($model -eq 'gpt-6-luna') { $script:GptPath } else { $script:ClaudePath }
+            Write-TestEnvelope -Path $path -Model $model -ProducerExitCode $(if ($failed) { $ExitCode } else { 0 }) -Summary $summary
+        }
+        $statusPath = Join-Path $TestDrive 'measured-status.json'
+        & $script:ScriptPath -EnvelopePath $script:ClaudePath, $script:GptPath -ExpectedWorkflowRunId '12345' `
+            -ExpectedWorkflowRunAttempt 1 -ExpectedHeadSha '0123456789abcdef0123456789abcdef01234567' `
+            -OutputPath $script:OutputPath -EvalSummaryPath $script:EvalSummaryPath -StatusPath $statusPath
+        $LASTEXITCODE | Should -Be 1
+        (Get-Content $statusPath -Raw | ConvertFrom-Json).category | Should -Be 'evidence'
+        $combinedText = Get-Content $script:OutputPath -Raw
+        $combined = $combinedText | ConvertFrom-Json
+        $combined.runs | Should -Be 210
+        $combined.perModelEvidence | Should -HaveCount 2
+        @($combined.perModelEvidence | Where-Object verdict -EQ 'fail').Count | Should -Be $(if ($FailedModel -eq 'both') { 2 } else { 1 })
+        $combinedText | Should -Not -Match 'do-not-publish|compareLogs|dataQualityDiagnostics|variants'
+        $fragment = Get-Content $script:EvalSummaryPath -Raw | ConvertFrom-Json
+        $fragment.totals.failedSpecs | Should -Be 1
+        $fragment.equivalence[0].exitCode | Should -Be 1
+        $fragment.equivalence[0].assertionsPassed | Should -Be (168 - $combined.invariantFailures)
+        $fragment.equivalence[0].dataQualityViolations | Should -Be 0
+    }
+
+    It 'Rejects invalid <Mutation> diagnostics without leaving an old healthy fragment' -ForEach @(
+        @{ Mutation = 'unknown identity' }
+        @{ Mutation = 'count mismatch' }
+        @{ Mutation = 'missing diagnostics' }
+        @{ Mutation = 'exit contradiction' }
+    ) {
+        $summary = New-TestSummary -Model 'gpt-6-luna'
+        switch ($Mutation) {
+            'unknown identity' {
+                $summary.invariantDiagnostics.failures = @(@{
+                    variant = 'baseline'; stimulus = 'do-not-publish-this-fixture'; grader = 'rust-fn-syntax'; count = 1
+                })
+            }
+            'count mismatch' { $summary.invariantDiagnostics.failed = 1 }
+            'missing diagnostics' { $summary.Remove('invariantDiagnostics') }
+        }
+        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -Summary $summary `
+            -ProducerExitCode $(if ($Mutation -eq 'exit contradiction') { 1 } else { 0 })
+        '{}' | Set-Content $script:OutputPath
+        '{}' | Set-Content $script:EvalSummaryPath
+        $status = Join-Path $TestDrive 'invalid-status.json'
+        & $script:ScriptPath -EnvelopePath $script:GptPath, $script:ClaudePath -ExpectedWorkflowRunId '12345' `
+            -ExpectedWorkflowRunAttempt 1 -ExpectedHeadSha '0123456789abcdef0123456789abcdef01234567' `
+            -OutputPath $script:OutputPath -EvalSummaryPath $script:EvalSummaryPath -StatusPath $status 2>$null
+        $LASTEXITCODE | Should -Be 1
+        (Get-Content $status -Raw | ConvertFrom-Json).category | Should -Be 'contract'
+        Test-Path $script:EvalSummaryPath | Should -BeFalse
+        Test-Path $script:OutputPath | Should -BeFalse
+    }
+
     It 'weights model means and win rates by contributed trials' {
         Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -DriverRunId 'gpt-run' `
-            -Summary (New-TestSummary -Model 'gpt-6-luna' -Runs 100 -MeanScore 0.2 -WinRate 0.2)
+            -Summary (New-TestSummary -Model 'gpt-6-luna' -Runs 100 -Ties 75 -MeanScore 0.2 -WinRate 0.2)
         Write-TestEnvelope -Path $script:ClaudePath -Model 'claude-sonnet-5' -DriverRunId 'claude-run' `
-            -Summary (New-TestSummary -Model 'claude-sonnet-5' -Runs 50 -MeanScore -0.1 -WinRate 0.05)
+            -Summary (New-TestSummary -Model 'claude-sonnet-5' -Runs 50 -Ties 25 -MeanScore -0.1 -WinRate 0.05)
 
         & $script:ScriptPath `
             -EnvelopePath $script:GptPath, $script:ClaudePath `
@@ -131,13 +217,27 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
     }
 
     It 'writes an explicit not-required reporting fragment without envelopes' {
-        & $script:ScriptPath -NotRequired -OutputPath $script:OutputPath -EvalSummaryPath $script:EvalSummaryPath
+        $planPath = Join-Path $TestDrive 'not-required-plan.json'
+        Write-NotRequiredPlan -Path $planPath
+        & $script:ScriptPath -NotRequired -PlanPath $planPath -OutputPath $script:OutputPath -EvalSummaryPath $script:EvalSummaryPath
 
         $LASTEXITCODE | Should -Be 0
         (Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json).status | Should -Be 'not-required'
         $fragment = Get-Content -LiteralPath $script:EvalSummaryPath -Raw | ConvertFrom-Json
         $fragment.equivalenceStatus | Should -Be 'not-required'
         $fragment.totals.specs | Should -Be 0
+    }
+
+    It 'Does not let not-required evidence bypass a <PlanState> canonical plan' -ForEach @(
+        @{ PlanState = 'required' }, @{ PlanState = 'missing' }, @{ PlanState = 'corrupt' }
+    ) {
+        $planPath = Join-Path $TestDrive 'rejected-not-required-plan.json'
+        if ($PlanState -eq 'corrupt') { '{}' | Set-Content $planPath }
+        elseif ($PlanState -eq 'required') { Write-NotRequiredPlan -Path $planPath -Required $true }
+        & $script:ScriptPath -NotRequired -PlanPath $planPath -OutputPath $script:OutputPath `
+            -EvalSummaryPath $script:EvalSummaryPath 2>$null
+        $LASTEXITCODE | Should -Be 1
+        Test-Path $script:EvalSummaryPath | Should -BeFalse
     }
 
     It 'discovers the exact model pair from an envelope directory' {
@@ -197,6 +297,10 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
         $summary.verdict = 'fail'
         $summary.equivalenceGate = 'fail'
         $summary.invariantFailures = 1
+        $summary.invariantDiagnostics.failed = 1
+        $summary.invariantDiagnostics.failures = @(@{
+            variant = 'baseline'; stimulus = 'code-reverse-string-rust'; grader = 'rust-fn-syntax'; count = 1
+        })
         Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -ProducerExitCode 1 -Summary $summary
 
         & $script:ScriptPath `
@@ -209,7 +313,9 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
         (Get-Content -LiteralPath (Join-Path (Split-Path $script:EvalSummaryPath) 'merge-status.json') -Raw | ConvertFrom-Json).category | Should -Be 'evidence'
         $fragment = Get-Content -LiteralPath $script:EvalSummaryPath -Raw | ConvertFrom-Json
         $fragment.totals.failedSpecs | Should -Be 1
-        $fragment.equivalenceStatus | Should -Be 'failed-evidence'
+        $fragment.equivalenceStatus | Should -Be 'complete'
+        $fragment.equivalence[0].invariantFailures | Should -Be 1
+        $fragment.equivalence[0].dataQualityViolations | Should -Be 0
     }
 
     It 'rejects mismatched <Field>' -ForEach @(
@@ -266,6 +372,91 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         Import-Module powershell-yaml -ErrorAction Stop
         $script:EvalWorkflow = ConvertFrom-Yaml $script:Workflow
         $script:Caller = Get-Content (Join-Path $PSScriptRoot '../../../.github/workflows/pr-validation.yml') -Raw | ConvertFrom-Yaml
+    }
+
+    It 'Renders only validated baseline report data for <Scenario>' -ForEach @(
+        @{ Scenario = 'gpt failure' }, @{ Scenario = 'claude failure' },
+        @{ Scenario = 'unsafe row' }, @{ Scenario = 'missing evidence' },
+        @{ Scenario = 'api failure' }
+    ) {
+        $summaries = @(
+            foreach ($model in @('gpt-6-luna', 'claude-sonnet-5')) {
+                $summary = New-TestSummary -Model $model
+                $failedModel = if ($Scenario -eq 'claude failure') { 'claude-sonnet-5' } else { 'gpt-6-luna' }
+                if ($model -eq $failedModel) {
+                    $summary.invariantFailures = 1
+                    $summary.verdict = 'fail'
+                    $summary.equivalenceGate = 'fail'
+                    $summary.invariantDiagnostics.failed = 1
+                    $summary.invariantDiagnostics.failures = @(@{
+                        variant = 'baseline'; stimulus = 'code-reverse-string-rust'; grader = 'rust-fn-syntax'; count = 1
+                    })
+                }
+                [pscustomobject]$summary
+            }
+        )
+        $combined = Merge-BaselineModelSummary -Summary $summaries
+        $fragment = New-EvalSummaryFragment -Summary ([pscustomobject]$combined)
+        $aggregate = [ordered]@{
+            schemaVersion = '1.1.0'; producers = @('equivalence'); totals = $fragment.totals
+            perArtifact = @(); equivalence = $fragment.equivalence
+        }
+        if ($Scenario -eq 'unsafe row') {
+            $failedRow = @($aggregate.equivalence[0].perModelEvidence | Where-Object verdict -EQ 'fail')[0]
+            $failedRow.invariantDiagnostics.failures[0].answer = 'do-not-publish-this-fixture'
+        }
+        $inputPath = Join-Path $TestDrive 'report-input.json'
+        $aggregate | ConvertTo-Json -Depth 50 | Set-Content $inputPath
+        $scriptPath = Join-Path $TestDrive 'report-script.js'
+        ($script:EvalWorkflow.jobs['eval-report'].steps | Where-Object name -EQ 'Post aggregated eval summary comment').with.script |
+            Set-Content $scriptPath
+        $probe = @'
+const fs = await import('node:fs');
+const path = await import('node:path');
+const source = fs.readFileSync(process.argv[1], 'utf8');
+const input = fs.readFileSync(process.argv[2], 'utf8');
+const scenario = process.argv[3];
+const bodies = [], failures = [];
+const fakeFs = { existsSync: () => scenario !== 'missing evidence', readdirSync: () => ['eval-authoritative'], readFileSync: () => input };
+const github = { rest: { issues: {
+    listComments: async () => ({ data: [{ id: 1, body: '<!-- eval-execute-summary --> Old passed report' }] }),
+    updateComment: async value => { if (scenario === 'api failure') throw new Error('do-not-publish-this-fixture'); bodies.push(value.body); },
+    createComment: async value => { bodies.push(value.body); }
+} } };
+const context = { repo: { owner: 'example', repo: 'example' }, payload: { pull_request: { number: 42, head: { sha: 'a'.repeat(40) } } } };
+const core = { setFailed: value => failures.push(value) };
+let error = null;
+try {
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    await new AsyncFunction('require', 'github', 'context', 'core', source)(
+        name => { if (name === 'fs') return fakeFs; if (name === 'path') return path; throw new Error('Unexpected dependency'); },
+        github, context, core);
+} catch (caught) { error = caught.message; }
+console.log(JSON.stringify({ bodies, failures, error }));
+'@
+        $output = & node --input-type=module -e $probe $scriptPath $inputPath $Scenario
+        $LASTEXITCODE | Should -Be 0
+        $result = $output | ConvertFrom-Json
+        $output | Should -Not -Match 'do-not-publish-this-fixture'
+        if ($Scenario -in @('gpt failure', 'claude failure')) {
+            $result.failures | Should -HaveCount 0
+            $result.bodies | Should -HaveCount 1
+            $result.bodies[0] | Should -Match 'Baseline evidence'
+            $model = if ($Scenario -eq 'claude failure') { 'claude-sonnet-5' } else { 'gpt-6-luna' }
+            $result.bodies[0] | Should -Match "\| $model \| baseline \| fail \| 105 \| 84 \| 1 \|"
+            $result.bodies[0] | Should -Not -Match 'No changed AI artifacts required evaluation'
+        }
+        else {
+            @($result.failures).Count | Should -BeGreaterThan 0
+            if ($Scenario -eq 'api failure') {
+                $result.error | Should -Be 'Eval report publication failed.'
+            }
+            else {
+                $result.bodies | Should -HaveCount 1
+                $result.bodies[0] | Should -Match 'Report withheld'
+                $result.bodies[0] | Should -Not -Match 'Status.*Passed'
+            }
+        }
     }
 
     It 'passes the aggregate immutable range-or-full contract' {

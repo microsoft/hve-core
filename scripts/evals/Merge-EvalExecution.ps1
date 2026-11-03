@@ -33,6 +33,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'lib/EquivalenceParsing.psm1') -Force
 
 function Write-EvalFanInJson {
     [CmdletBinding()]
@@ -130,15 +131,61 @@ function Merge-EvalSummaryValue {
                 }
             }
         }
+        else {
+                if ($summaryItem.equivalenceStatus -cne 'complete' -or @($summaryItem.equivalence).Count -ne 1) {
+                    throw 'Required baseline measurement is incomplete.'
+                }
+                $entry = $summaryItem.equivalence[0]
+                $allowed = @('schemaVersion', 'agent', 'tier', 'verdict', 'equivalenceGate',
+                    'documentedDivergenceGate', 'exitCode', 'trials', 'assertionsPassed', 'assertionsFailed',
+                    'advisoryAssertionsFailed', 'invariantFailures', 'runHealthFailures', 'divergenceGuardFailures',
+                    'dataQualityViolations', 'invocationFailures', 'equivalentTrials', 'perModelEvidence', 'resultsPath')
+                if (@($entry.PSObject.Properties).Count -ne $allowed.Count -or
+                    @($entry.PSObject.Properties.Name | Where-Object { $_ -cnotin $allowed }).Count -gt 0 -or
+                    $entry.tier -cne 'calibration' -or $entry.resultsPath -cne 'logs/baseline-equivalence-rpi-agent.json') {
+                    throw 'Invalid baseline reporting fields.'
+                }
+                if (@($summaryItem.perArtifact).Count -ne 0 -or @($summaryItem.perSpec).Count -ne 0 -or
+                    @($summaryItem.kindFilter).Count -ne 1 -or @($summaryItem.kindFilter)[0] -cne 'equivalence' -or
+                    $summaryItem.totals.artifacts -ne 0 -or $summaryItem.totals.specs -ne 0) {
+                    throw 'Invalid baseline reporting population.'
+                }
+                $counters = @($entry.exitCode, $entry.assertionsPassed, $entry.assertionsFailed,
+                    $entry.advisoryAssertionsFailed, $entry.divergenceGuardFailures,
+                    $summaryItem.totals.artifacts, $summaryItem.totals.specs,
+                    $summaryItem.totals.assertionsPassed, $summaryItem.totals.assertionsFailed,
+                    $summaryItem.totals.failedSpecs, $summaryItem.totals.durationMs)
+                foreach ($value in $counters) {
+                    if ($value -isnot [ValueType] -or $value -is [bool] -or
+                        -not [double]::IsFinite([double]$value) -or [double]$value -lt 0 -or
+                        [double]$value -gt [int]::MaxValue -or [math]::Truncate([double]$value) -ne [double]$value) {
+                        throw 'Invalid baseline reporting counter.'
+                    }
+                }
+                $rows = @(Assert-BaselineInvariantEvidence -Summary $entry -Models @($Plan.baseline.models) -TrialProperty trials)
+                $evaluated = [long]0
+                foreach ($row in $rows) { $evaluated += $row.invariantDiagnostics.evaluated }
+                $failed = $entry.verdict -ne 'pass'
+                if ($entry.exitCode -ne [int]$failed -or $entry.assertionsFailed -ne $entry.invariantFailures -or
+                    $entry.assertionsPassed -ne ($evaluated - $entry.invariantFailures) -or
+                    $summaryItem.totals.failedSpecs -ne [int]$failed -or
+                    $summaryItem.totals.assertionsPassed -ne $entry.assertionsPassed -or
+                    $summaryItem.totals.assertionsFailed -ne $entry.assertionsFailed) {
+                    throw 'Baseline reporting counters do not reconcile.'
+                }
+                $entry | Add-Member -NotePropertyName perModelEvidence -NotePropertyValue $rows -Force
+        }
         foreach ($name in @($totals.Keys)) { $totals[$name] += [int]$summaryItem.totals.$name }
         $totals.failedSpecs += [Math]::Max(0, $integrityFailures - [int]$summaryItem.totals.failedSpecs)
         foreach ($item in @($summaryItem.perArtifact)) { $perArtifact.Add($item) }
         foreach ($item in @($summaryItem.perSpec)) { $perSpec.Add($item) }
         foreach ($item in @($summaryItem.equivalence)) { $equivalence.Add($item) }
-        foreach ($item in @($summaryItem.phaseTimings)) { $phaseTimings.Add($item) }
+        if ($producer -cne 'equivalence') {
+            foreach ($item in @($summaryItem.phaseTimings)) { $phaseTimings.Add($item) }
+        }
     }
     return [ordered]@{
-        schemaVersion = '1.0.0'; planDigest = $Plan.planDigest; producers = @($expectedFanIn | Sort-Object)
+        schemaVersion = '1.1.0'; planDigest = $Plan.planDigest; producers = @($expectedFanIn | Sort-Object)
         totals = $totals
         perArtifact = @($perArtifact | Sort-Object kind, artifactId)
         perSpec = @($perSpec | Sort-Object specPath, tag)

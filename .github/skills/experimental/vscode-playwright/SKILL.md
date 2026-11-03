@@ -11,6 +11,11 @@ metadata:
 
 # VS Code and Browser Capture Skill
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Captures VS Code editor views, code walkthroughs, and Copilot Chat examples, and
 records self-contained browser animation scenes as silent WebM clips.
 

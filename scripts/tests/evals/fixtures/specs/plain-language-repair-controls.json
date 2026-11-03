@@ -1,0 +1,130 @@
+{
+  "controls": [
+    {
+      "id": "demo-correct",
+      "subject": "hve-demo-material-class-recipe",
+      "expected": true,
+      "rationale": "Complete source-to-video plan with the required duration, engine and planning boundary.",
+      "answer": "Planning only; no deck, audio or video has been produced. Gather HVE Core sources, then make the storyboard and speaker notes. Build and validate the deck, export its frames, synthesize narration with Azure AI Speech through tts-voiceover, assemble the frames and narration into an MP4, and validate its final duration against L100's 4 to 6 minutes. The plan is at .copilot-tracking/demo-material/synthetic-l100-plan.md."
+    },
+    {
+      "id": "demo-reordered",
+      "subject": "hve-demo-material-class-recipe",
+      "expected": true,
+      "rationale": "Equivalent prose leads with runtime and engine instead of phase markers.",
+      "answer": "The later narrated L100 video must last four to six minutes, using tts-voiceover with Azure AI Speech. First resolve the HVE Core sources and budget the storyboard and notes. Next build and check the deck and export slide images. Then create narration, combine it with those images into the MP4 and measure the result against the runtime range. These are future steps only, not delivered artifacts. The only output now is the plan at .copilot-tracking/demo-material/synthetic-l100-plan.md."
+    },
+    {
+      "id": "demo-wrong-duration",
+      "subject": "hve-demo-material-class-recipe",
+      "expected": false,
+      "rationale": "An otherwise coherent plan uses the wrong L100 range.",
+      "answer": "Planning only, with the plan at .copilot-tracking/demo-material/synthetic-l100-plan.md. Gather sources, storyboard and draft notes, build and validate the deck, export frames, generate Azure AI Speech narration with tts-voiceover, assemble the MP4 and check final runtime. The L100 contract is 8 to 10 minutes. No media has been produced."
+    },
+    {
+      "id": "demo-wrong-engine",
+      "subject": "hve-demo-material-class-recipe",
+      "expected": false,
+      "rationale": "An otherwise coherent plan substitutes an unsupported narration engine.",
+      "answer": "This is only the plan at .copilot-tracking/demo-material/synthetic-l100-plan.md. Gather sources, create storyboard and notes, build and validate the deck, export its frames, generate narration with an offline speech engine instead of Azure AI Speech, assemble the MP4 and measure its L100 runtime of 4 to 6 minutes. No production steps have run."
+    },
+    {
+      "id": "demo-missing-phases",
+      "subject": "hve-demo-material-class-recipe",
+      "expected": false,
+      "rationale": "Correct duration and engine do not replace the required sourcing-to-MP4 sequence.",
+      "answer": "The plan is at .copilot-tracking/demo-material/synthetic-l100-plan.md. L100 takes 4 to 6 minutes and uses Azure AI Speech through tts-voiceover. This is planning only; no media is delivered."
+    },
+    {
+      "id": "demo-prompt-echo",
+      "subject": "hve-demo-material-class-recipe",
+      "expected": false,
+      "rationale": "Repeating the requested task supplies neither a usable plan nor its policy facts.",
+      "answer": "Plan the L100 demo deck and narrated video for HVE Core. List the phases from sourcing to the finished MP4, state the narration engine and duration contract, and report .copilot-tracking/demo-material/synthetic-l100-plan.md."
+    },
+    {
+      "id": "prd-correct",
+      "subject": "prd-builder-research-blocked",
+      "expected": true,
+      "rationale": "Preserves the gate, durable gap, invocation relationship and narrow stop scope.",
+      "answer": "No. Needs clarification cannot clear Integrate's phase gate or support a conclusion needing that evidence; the builder still owns its gate. Persist the unresolved question as an open question or unvalidated assumption and record does-not-satisfy for the Research invocation's gate relationship. Pause only the work that needs the answer. Unrelated work can continue."
+    },
+    {
+      "id": "prd-quoted-warning",
+      "subject": "prd-builder-research-blocked",
+      "expected": true,
+      "rationale": "Reordered clauses and a correctly rejected quoted status are acceptable.",
+      "answer": "Keep unrelated tasks moving, but hold the work that needs the unanswered comparable-product question. Save that gap as an unvalidated assumption and set the invocation relationship to does-not-satisfy. Saying 'the gate is cleared' would be wrong: Needs clarification cannot establish phase exit or evidence-dependent conclusions. Gate authority remains with the builder, not Research."
+    },
+    {
+      "id": "prd-clears-gate",
+      "subject": "prd-builder-research-blocked",
+      "expected": false,
+      "rationale": "Durable gap bookkeeping cannot justify gate clearance.",
+      "answer": "Needs clarification can clear Integrate's gate now, although the builder owns the final verdict. Save the unresolved question as an open question and mark the invocation does-not-satisfy. Stop only work needing its answer; unrelated work continues."
+    },
+    {
+      "id": "prd-loses-gap",
+      "subject": "prd-builder-research-blocked",
+      "expected": false,
+      "rationale": "Correct gate and stop decisions omit the durable unresolved evidence.",
+      "answer": "Needs clarification cannot clear the phase gate or support evidence-dependent conclusions; the builder retains authority. Mark the invocation does-not-satisfy, but discard the unresolved question instead of recording an open question or unvalidated assumption. Pause only work needing the answer, not unrelated work."
+    },
+    {
+      "id": "prd-blanket-stop",
+      "subject": "prd-builder-research-blocked",
+      "expected": false,
+      "rationale": "Correct gate and gap handling do not permit stopping unrelated work.",
+      "answer": "Needs clarification cannot clear the phase gate or support evidence-dependent conclusions. The builder owns the gate. Save the gap as an open question and record does-not-satisfy. Halt all PRD work, including unrelated tasks, until Research returns."
+    },
+    {
+      "id": "prd-missing-relationship",
+      "subject": "prd-builder-research-blocked",
+      "expected": false,
+      "rationale": "The durable invocation-to-gate relationship is independently required.",
+      "answer": "Needs clarification cannot clear the phase gate or support evidence-dependent conclusions; the builder owns the gate. Persist the gap as an open question, but leave the invocation's gate relationship unrecorded. Stop only work needing the unresolved answer; unrelated work continues."
+    },
+    {
+      "id": "architecture-correct",
+      "subject": "architecture-review-record-and-authority",
+      "expected": true,
+      "rationale": "Complete record and handoff contract preserves evidence and decision authority.",
+      "answer": "For confirmed scope synthetic-queue, preserve E1's recommendation of option A, its rationale and trade-offs, and separate assumptions from verified context. Give reliability and cost each a finding, examined-no-finding or unassessed disposition with limits. Record reviewer acceptance, revision, rejection or deferral with rationale and evidence, and name decision owners. Final budget approval remains unresolved and limits the recommendation. Complete and persist the record before an ADR or RPI Plan handoff and pass its path as evidence. The review record preserves analysis, not decision authority: that stays with the ADR and user."
+    },
+    {
+      "id": "architecture-reordered",
+      "subject": "architecture-review-record-and-authority",
+      "expected": true,
+      "rationale": "Authority and limits may precede scope and evidence without losing meaning.",
+      "answer": "The user and ADR keep decision authority; a review record cannot approve in their place. Budget approval is still open, so preserve that limit. Before handing off to an ADR or RPI Plan, finish and save the record and supply its path. Capture decision owners, reviewer dispositions and their reasons linked to evidence, and assumptions separately from facts. Within confirmed synthetic-queue scope, retain the trade-offs and E1-backed recommendation for option A. Both cost and reliability need an explicit finding, a no-finding assessment, or an unassessed result with its limit."
+    },
+    {
+      "id": "architecture-transfers-authority",
+      "subject": "architecture-review-record-and-authority",
+      "expected": false,
+      "rationale": "A complete record cannot replace ADR and user decision authority.",
+      "answer": "Preserve synthetic-queue scope, E1's option A recommendation with rationale and trade-offs, separate assumptions from facts, and give reliability and cost explicit assessed dispositions. Retain unresolved budget approval as a limit and record reviewers' dispositions, evidence and decision owners. Save the complete record before an ADR or RPI Plan handoff and pass its path. The review record now overrides both the ADR and user as the final decision authority."
+    },
+    {
+      "id": "architecture-missing-pillar",
+      "subject": "architecture-review-record-and-authority",
+      "expected": false,
+      "rationale": "Mentioning both focus areas does not give both a review disposition.",
+      "answer": "The confirmed synthetic-queue scope covers reliability and cost. Preserve E1's option A recommendation, rationale, trade-offs and assumptions separately from facts. Record a reliability finding, but leave cost without any disposition or limit. Budget approval stays unresolved as a recommendation limit. Record reviewer dispositions, rationale, evidence and decision owners. Persist the complete record before ADR or RPI Plan handoff and supply its path. Authority stays with the ADR and user, not the record."
+    },
+    {
+      "id": "architecture-invents-budget",
+      "subject": "architecture-review-record-and-authority",
+      "expected": false,
+      "rationale": "The record must not turn unresolved budget approval into approval.",
+      "answer": "Retain confirmed synthetic-queue scope, E1's option A recommendation, rationale and trade-offs, with assumptions distinct from verified context. Give reliability and cost explicit dispositions and record reviewer dispositions, evidence and decision owners. Assume final budget approval is granted and remove it as a limit. Complete and save the record before ADR or RPI Plan handoff and pass its path; decision authority remains in the ADR and with the user, not the review record."
+    },
+    {
+      "id": "architecture-premature-handoff",
+      "subject": "architecture-review-record-and-authority",
+      "expected": false,
+      "rationale": "Correct record contents cannot justify handoff before persistence.",
+      "answer": "Retain synthetic-queue scope, E1's option A recommendation, rationale, trade-offs and assumptions separately from facts. Give reliability and cost explicit dispositions, retain unresolved budget approval as a limit, and record reviewer dispositions with rationale, evidence and decision owners. Authority stays with the ADR and user, not the record. Invoke the ADR or RPI Plan handoff now without a record path, then finish and persist the record afterward."
+    }
+  ]
+}

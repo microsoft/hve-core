@@ -1,8 +1,8 @@
 ---
 title: GitHub Copilot Instructions
-description: Repository-specific coding guidelines and conventions for GitHub Copilot
+description: Repository-specific coding and communication guidelines for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-22
+ms.date: 2026-10-29
 ms.topic: reference
 keywords:
   - copilot
@@ -14,13 +14,13 @@ estimated_reading_time: 5
 
 ## GitHub Copilot Instructions
 
-Repository-specific guidelines that GitHub Copilot automatically applies when
-editing files. Instructions ensure consistent code style and conventions across
-the codebase.
+Repository-specific guidance for code changes and user-facing communication.
+File patterns select editing guidance; active agents and skills also carry
+direct communication reminders and load shared instructions.
 
 ## How Instructions Work
 
-1. Instruction files declare which file patterns they apply to using `applyTo`
+1. File-scoped instruction files declare their matching patterns using `applyTo`
    in frontmatter
 2. GitHub Copilot reads instructions when editing matching files
 3. Suggestions follow the documented standards automatically
@@ -51,12 +51,23 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 ### Documentation and Content
 
-| File                                                                             | Applies To                                                         | Purpose                               |
-|----------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------|
-| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)           | `**/*.md`                                                          | Markdown formatting standards         |
-| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md) | `**/*.md`                                                          | Voice, tone, and language conventions |
-| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards      |
-| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)             | `docs/**`                                                          | Docusaurus documentation authoring    |
+| File                                                                             | Applies To                                                         | Purpose                                    |
+|----------------------------------------------------------------------------------|--------------------------------------------------------------------|--------------------------------------------|
+| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)           | `**/*.md`                                                          | Markdown formatting standards              |
+| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md) | `**/*.md`                                                          | Voice, tone, and language conventions      |
+| [shared/plain-language.instructions.md](shared/plain-language.instructions.md)   | Requested by filename                                              | Plain-language replies and generated prose |
+| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards           |
+| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)             | `docs/**`                                                          | Docusaurus documentation authoring         |
+
+The short Plain Language rule covers questions, progress updates, explanations,
+summaries, and generated prose while preserving necessary technical terms and
+exact output formats. Root instructions, agents, skills and Markdown writing
+guidance request `plain-language.instructions.md` by filename. Read it only
+when not already loaded; if unavailable, keep the direct default and continue.
+The shared rule has no `applyTo` file-pattern attachment, avoiding an extra
+always-on copy alongside those entry points. Its description supports
+task-relevant discovery, but mentioning or installing the file does not prove
+that its full content was included in a particular request.
 
 ### Git and Workflow
 
@@ -248,6 +259,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── coaching-patterns.instructions.md
 │   ├── content-policy-citation.instructions.md
 │   ├── disclaimer-language.instructions.md
+│   ├── plain-language.instructions.md
 │   ├── planner-identity-base.instructions.md
 │   ├── telemetry-overlay.instructions.md
 │   └── untrusted-content-boundary.instructions.md

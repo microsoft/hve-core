@@ -309,7 +309,7 @@ function New-DryRunSummary {
     )
 
     return [ordered]@{
-        schemaVersion            = '2.1.0'
+        schemaVersion            = '2.2.0'
         agent                    = $Agent
         tier                     = $Tier
         model                    = $Model
@@ -1220,6 +1220,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $invocationFailures = 0
         $comparisonCalibration = [System.Collections.Generic.List[object]]::new()
         $phaseTimings = [System.Collections.Generic.List[object]]::new()
+        $perModelEvidence = [System.Collections.Generic.List[object]]::new()
         $vallyCommandPath = $null
 
         # Policy and invariant membership come from the canonical library, because the
@@ -1228,7 +1229,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $canonicalPolicy = $canonical.Policy
         $canonicalInvariants = @($canonical.Invariants)
         $canonicalGuards = @($canonical.Guards)
-        $invariantManifest = $canonical.InvariantManifest
+        $invariantManifest = Get-CanonicalInvariantManifest -Path (Join-Path $resolvedRoot 'evals/baseline-equivalence/stimuli.yml')
         $guardManifest = $canonical.GuardManifest
 
         # Expected result cardinality is the declared grader multiplied by the trials the
@@ -1245,6 +1246,10 @@ if ($MyInvocation.InvocationName -ne '.') {
         $ciHighs = [System.Collections.Generic.List[double]]::new()
 
         foreach ($model in $models) {
+            $modelStart = @{
+                runs = $totalRuns; equivalent = $totalEquivalent; health = $runHealthFailures
+                quality = $dataQualityViolations; invocation = $invocationFailures
+            }
             $aDir = Join-Path $outputRoot "$model/$runId/baseline"
             $bDir = Join-Path $outputRoot "$model/$runId/customized"
             $baselineWorkspacePath = Join-Path $outputRoot "$model/$runId/baseline-workspace"
@@ -1405,7 +1410,6 @@ if ($MyInvocation.InvocationName -ne '.') {
                     # so a baseline that never produced a usable result looked clean.
                     $dataQualityViolations++
                     $dataQualityDiagnostics.Add('Baseline run produced no invariant signal.')
-                    if ($codeA -ne 0) { $invariantFailures++ }
                 }
 
                 # A run whose declared invariant population was incomplete or malformed
@@ -1751,6 +1755,17 @@ if ($MyInvocation.InvocationName -ne '.') {
                     $ciHighs.Add([double]$tally.CiHigh)
                 }
             }
+            $modelGates = Get-EquivalenceGateResults -Runs ($totalRuns - $modelStart.runs) `
+                -EquivalentTotal ($totalEquivalent - $modelStart.equivalent) -InvariantFailures $baselineTally.Failed `
+                -RunHealthFailures ($runHealthFailures - $modelStart.health) `
+                -DataQualityViolations ($dataQualityViolations - $modelStart.quality) -Tier $Tier
+            $perModelEvidence.Add([ordered]@{
+                model = $model; verdict = $modelGates.Verdict; runs = $totalRuns - $modelStart.runs
+                runHealthFailures = $runHealthFailures - $modelStart.health
+                dataQualityViolations = $dataQualityViolations - $modelStart.quality
+                invocationFailures = $invocationFailures - $modelStart.invocation
+                invariantDiagnostics = $baselineTally.InvariantDiagnostics
+            })
         }
 
         $aggregateMeanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
@@ -1779,7 +1794,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             # A breaking contract change. Consumers reject an unsupported major version
             # rather than reading absent fields as zeros, which is how a dropped field
             # previously degraded into a plausible-looking healthy run.
-            schemaVersion            = '2.1.0'
+            schemaVersion            = '2.2.0'
             runId                    = $runId
             agent                    = $Agent
             tier                     = $Tier
@@ -1816,6 +1831,15 @@ if ($MyInvocation.InvocationName -ne '.') {
             variants                 = $variants
             compareLogs              = @($compareLogs)
             phaseTimings             = @($phaseTimings)
+        }
+        if ($models.Count -eq 1) {
+            $summary.invariantDiagnostics = $perModelEvidence[0].invariantDiagnostics
+        }
+        else {
+            $summary.perModelEvidence = @($perModelEvidence | Sort-Object model)
+            $summary = Merge-BaselineModelSummary -Summary @([pscustomobject]$summary) -DriverRunId @($runId) -Manifest $invariantManifest
+            $summary.runId = $runId
+            $verdict = $summary.verdict
         }
 
         Write-SummaryJson -Summary $summary -Path $OutputPath

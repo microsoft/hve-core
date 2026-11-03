@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 327
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 333
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, and
@@ -780,7 +780,7 @@ stimuli:
       - type: output-matches
         name: skill-owasp-cicd-bleed-detection-skill-attribution
         config:
-          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|owasp\s+llm|owasp\s+top\s+10)'
+          pattern: '(?is)^(?!\s*Yes\b)(?![\s\S]*\b(?:actually\s*[,;:]?\s*yes|does\s+apply\s+(?:here|to\s+(?:this|your))|applies\s+(?:here|to\s+(?:this|your)\s+(?:runtime|case|web|prompt))|is\s+(?:the\s+)?(?:right|correct)\s+skill\s+(?:here|for\s+(?:this|your))))(?=[\s\S]*\b(?:ci[\s/-]*cd|pipeline|owasp-cicd)\b)(?=[\s\S]*\b(?:runtime|running|prompt|web|llm)\b)(?=[\s\S]*(?:^\s*No\b|\b(?:does(?:\s+not|n[\x27\u2019]t)\s+apply|not\s+applicable|inapplicable|different\s+skill|outside\s+[^.!?\r\n]{0,60}scope)\b|\b(?:ci[\s/-]*cd|pipeline|owasp-cicd)\b[^.!?\r\n]{0,160}\bnot\s+(?!only\b|just\b)[^.!?\r\n]{0,80}\b(?:runtime|running|prompt|web|llm)\b|\b(?:runtime|running|prompt|web|llm)\b[^.!?\r\n]{0,160}\b(?:rather\s+than|instead\s+of|not)\s+(?:the\s+)?(?:ci[\s/-]*cd|owasp-cicd)\b))'
       - type: output-matches
         name: skill-owasp-cicd-bleed-detection-scope-language
         config:
@@ -8695,6 +8695,204 @@ stimuli:
         name: skill-engagement-report-council-critique-ignore-st-7e8e15df
         config:
           pattern: '(?i)(do not write|without writing|not write).{0,120}(critique|artifact)'
+
+  - name: skill-performance-slo-planner-knowledge
+    prompt: |
+      Read the performance-slo-planner skill. Explain what it produces before
+      a release, how it uses existing product requirements versus missing
+      targets, and what happens after its planning work is done. Answer from
+      the skill without drafting a project plan or running any tests.
+    rubric:
+      - The response describes measurable service indicators and objectives, measurement windows and error budgets, steady/peak/spike/soak traffic, a test matrix, observability, and a prioritized reliability backlog. It explains that supplied PRD requirements are cited rather than       rewritten and missing targets are marked as assumptions for tuning.
+      - It identifies this as planning rather than load-test execution and describes handoff to Azure Load Testing tooling with owning-team validation. A repeated request, unsupported source claim, or statement that the staged skill is unavailable does not satisfy the rubric.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/performance-slo-planner
+      files:
+        - src: ../../.github/skills/project-planning/performance-slo-planner
+          dest: .github/skills/project-planning/performance-slo-planner
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+    tags:
+      category: behavior-conformance
+      skill: performance-slo-planner
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 43892599c60fa186d8c34996de3ec5e5e5c7e3c09dc77d8e83ea4186bf49d63a
+    graders:
+      - type: prompt
+        name: performance-slo-planner-grounded-planning-contract
+        config:
+          scoring: binary
+          threshold: 0.85
+  - name: skill-performance-slo-planner-tool-trigger
+    prompt: |
+      Use performance-slo-planner to plan release readiness for a synthetic
+      report-list journey. Supplied PRD requirements are NFR-LAT: p95 latency
+      at most 200 ms and NFR-AVAIL: successful requests at least 99.9 percent,
+      both over a 30-day rolling window. Steady traffic is 20 requests per
+      second and peak traffic is 100. No spike/soak durations or capacity
+      measurements are known. Preserve those targets and label proposed
+      values as assumptions. Write only
+      .copilot-tracking/performance-plans/2026-10-16-performance-slo-plan.md.
+      Show the authored plan content in the final reply, not only a path.
+      Do not execute load tests or call external services.
+    rubric:
+      - Judge the returned authored plan, not an acknowledgment. It preserves both supplied requirements, distinguishes their measurement window, and derives an availability error budget of 0.1 percent rather than copying an unrelated example's budget. It includes SLOs, a load model, a test matrix, observability hooks, and a prioritized backlog.
+      - Steady and peak rates are retained. Proposed spike/soak durations or capacity assumptions are explicitly labeled, not presented as measured. The plan remains advisory, includes owning-team/professional review, and does not claim a load test was run. Exact file facts are assessed separately; returned-prose judgment is not full semantic file inspection.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/performance-slo-planner
+      files:
+        - src: ../../.github/skills/project-planning/performance-slo-planner
+          dest: .github/skills/project-planning/performance-slo-planner
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+    tags:
+      category: behavior-conformance
+      skill: performance-slo-planner
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: 8376f9720c1c8eb296c81b5d6b3258a9b101549278c2ab70bd079a569ea67318
+    graders:
+      - type: prompt
+        name: performance-slo-planner-authored-plan-meaning
+        config:
+          scoring: binary
+          threshold: 0.85
+      - type: file-matches
+        name: performance-slo-planner-artifact-sections
+        config:
+          path: .copilot-tracking/performance-plans/2026-10-16-performance-slo-plan.md
+          pattern: (?im)(?=[\s\S]*^##\s+SLOs\b)(?=[\s\S]*^##\s+Load model\b)(?=[\s\S]*^##\s+Test matrix\b)(?=[\s\S]*^##\s+Observability hooks\b)(?=[\s\S]*^##\s+Backlog\b)(?=[\s\S]*NFR-LAT)(?=[\s\S]*NFR-AVAIL)
+  - name: skill-performance-slo-planner-bleed-detection
+    prompt: |
+      The performance plan is approved and the team now needs to execute the
+      benchmark against its test environment. Does performance-slo-planner
+      own that execution step? Explain the appropriate handoff using its
+      stated boundary. This is a routing question only; do not run commands,
+      call a service, or create another plan.
+    rubric:
+      - The answer explains that this skill plans performance and reliability work rather than executing load tests, and hands its test matrix to Azure Load Testing tooling or the team using it. It does not claim approval has widened this skill's execution authority.
+      - Judge the actual boundary explanation. A repeated question, unavailable artifact response, or proposal to run benchmarks through this planning skill fails.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/performance-slo-planner
+      files:
+        - src: ../../.github/skills/project-planning/performance-slo-planner
+          dest: .github/skills/project-planning/performance-slo-planner
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+    tags:
+      category: behavior-conformance
+      skill: performance-slo-planner
+      shape: bleed-detection
+      advisory: "true"
+      prompt_sha256: 4b1ec292c43f584985f624dfb3cead0564bd76ec2151bc5d855486ebad145541
+    graders:
+      - type: prompt
+        name: performance-slo-planner-execution-boundary
+        config:
+          scoring: binary
+          threshold: 0.85
+  - name: skill-telemetry-foundations-knowledge
+    prompt: |
+      Read telemetry-foundations. Explain its required resource attributes
+      for spans, how structured logs correlate with an active span, and how
+      metric cardinality should affect attribute placement. Use the skill's
+      exact attribute names where needed. Do not emit telemetry or edit files.
+    rubric:
+      - The answer identifies service.name, service.version, and deployment.environment as required resource-scoped span attributes. It names trace_id and span_id for log correlation, and explains that unbounded dimensions belong in logs or trace exemplars rather than multiplying metric time series.
+      - The response explains the vocabulary rather than choosing an SDK or backend. Quoting only the request or saying the staged source is unavailable fails; equivalent explanatory wording is acceptable.
+    agent_environment:
+      skills:
+        - ../../.github/skills/shared/telemetry-foundations
+      files:
+        - src: ../../.github/skills/shared/telemetry-foundations
+          dest: .github/skills/shared/telemetry-foundations
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+    tags:
+      category: behavior-conformance
+      skill: telemetry-foundations
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 5ffdb6346fa7060e6d9e260b54d3068823998eab42eab372aea6d45a59f91fa0
+    graders:
+      - type: prompt
+        name: telemetry-foundations-resource-and-cardinality-contract
+        config:
+          scoring: binary
+          threshold: 0.85
+  - name: skill-telemetry-foundations-tool-trigger
+    prompt: |
+      Use telemetry-foundations for a synthetic queue worker instrumentation
+      note. The worker consumes queued messages, calls a remote catalog
+      service, records operation duration and queue depth, and has an unbounded
+      event identifier useful only for diagnosis. No SDK or backend is selected.
+      Write only docs/queue-telemetry.md and return its authored prose in the
+      final answer. Explain span kinds, metric instruments and units, bounded
+      attributes, and the handling rule for denylisted fields without including
+      any sample personal values. Do not install packages or emit telemetry.
+    rubric:
+      - Judge the authored prose returned in the reply. It uses a consumer span for queue consumption and a client span for the remote call, propagates context, uses a histogram in seconds for durations, and uses an up-down-counter or justified observable/gauge choice for queue depth. It keeps the unbounded event identifier off metric dimensions.
+      - It keeps vocabulary vendor-agnostic, identifies required resource names consistently with the skill, and applies explicit redaction or omission to denylisted fields rather than allowing raw personal data. It neither chooses an unrequested SDK/backend nor claims telemetry ran. A completion message without the prose fails. File checks separately protect resource-name presence, not full semantic file quality.
+    agent_environment:
+      skills:
+        - ../../.github/skills/shared/telemetry-foundations
+      files:
+        - src: ../../.github/skills/shared/telemetry-foundations
+          dest: .github/skills/shared/telemetry-foundations
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+    tags:
+      category: behavior-conformance
+      skill: telemetry-foundations
+      shape: tool-trigger
+      advisory: "true"
+      prompt_sha256: 230dc23121233b7d60b0bd92725b5d3887aa65b13dab38cf17a2b2048003981e
+    graders:
+      - type: prompt
+        name: telemetry-foundations-instrumentation-note-meaning
+        config:
+          scoring: binary
+          threshold: 0.85
+      - type: file-matches
+        name: telemetry-foundations-note-resource-names
+        config:
+          path: docs/queue-telemetry.md
+          pattern: (?s)(?=[\s\S]*service\.name)(?=[\s\S]*service\.version)(?=[\s\S]*deployment\.environment)
+  - name: skill-telemetry-foundations-bleed-detection
+    prompt: |
+      A teammate wants the telemetry vocabulary reference to select a vendor
+      backend and install its exporter. Does telemetry-foundations decide that
+      choice or carry out the installation? Explain who retains that decision
+      and what useful guidance the skill can still provide. You may read the
+      staged skill, but do not install anything, emit telemetry, or modify
+      files; answer the ownership question only.
+    rubric:
+      - The response states that this is declarative, vendor-agnostic naming and data-shape guidance, not an SDK/exporter/backend selection or installation workflow. The implementing team retains that choice; the skill can still supply OpenTelemetry-aligned conventions.
+      - It does not select a vendor, invent installation steps, claim a package was installed, or treat the request as permission for a different task. Repeating the request or claiming unavailable source fails.
+    agent_environment:
+      skills:
+        - ../../.github/skills/shared/telemetry-foundations
+      files:
+        - src: ../../.github/skills/shared/telemetry-foundations
+          dest: .github/skills/shared/telemetry-foundations
+        - src: ../../.github/instructions/shared/plain-language.instructions.md
+          dest: .github/instructions/shared/plain-language.instructions.md
+    tags:
+      category: behavior-conformance
+      skill: telemetry-foundations
+      shape: bleed-detection
+      advisory: "true"
+      prompt_sha256: acbf8a0b36f4d3d32bd1f915f02948211f8bbae9fc804429988417733bf3492a
+    graders:
+      - type: prompt
+        name: telemetry-foundations-vendor-ownership-boundary
+        config:
+          scoring: binary
+          threshold: 0.85
 
   - name: skill-privacy-by-design-unknown-only-seven-principles
     prompt: |

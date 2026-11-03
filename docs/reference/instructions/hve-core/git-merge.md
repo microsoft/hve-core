@@ -3,7 +3,7 @@ title: Hve Core/Git Merge
 description: "Git integration and explicit ordinary-push authorization. Use when merging, rebasing, resolving conflicts, or pushing a branch."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-10-26
 ms.topic: reference
 keywords:
   - instruction
@@ -16,7 +16,7 @@ keywords:
 |-------------|-----------------------------------------------------------|
 | Kind        | instruction                                               |
 | Source      | `.github/instructions/hve-core/git-merge.instructions.md` |
-| Invocation  | Applied automatically                                     |
+| Invocation  | Included through explicit reference                       |
 | Interactive | No                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 

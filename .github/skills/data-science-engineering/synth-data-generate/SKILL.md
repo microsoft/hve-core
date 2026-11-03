@@ -10,6 +10,11 @@ disable-model-invocation: true
 
 # Synthetic Data Generator
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Generate realistic, comprehensive synthetic data for `subject` in a Jupyter notebook only after the applicable `dataops` synthetic-data operation preflight passes. Use `example_data` when the user supplies an existing data source, schema, or file to use as a strict reference for structure and patterns.

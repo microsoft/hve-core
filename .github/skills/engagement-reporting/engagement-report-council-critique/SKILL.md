@@ -9,6 +9,11 @@ disable-model-invocation: true
 
 # Engagement Report Council Critique
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Review one draft independently against the supplied research. Return evidence-backed findings to the report generator without rewriting or reconciling the report. Use this skill as the manual separate-session fallback named by the engagement-reporting report contract when independent agent runs are unavailable.

@@ -9,6 +9,11 @@ disable-model-invocation: true
 
 # Git Merge and Rebase
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 ## Goal
 
 Run a merge, rebase, or `rebase --onto` sequence from the current branch with explicit inputs, optional review pauses, and a completion summary. Follow every step even when the repository appears clean so results stay consistent and traceable.

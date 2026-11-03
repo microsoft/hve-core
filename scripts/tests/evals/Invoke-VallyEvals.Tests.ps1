@@ -16,6 +16,162 @@ BeforeAll {
     Import-Module powershell-yaml -ErrorAction Stop
 }
 
+Describe 'Complete prompt scorecards' -Tag 'Unit' {
+    BeforeAll {
+        function New-ScorecardFixture {
+            param([string]$Root, [string]$Mutation = 'clean')
+            $spec = Join-Path $script:RepositoryRoot 'evals/agent-behavior/eval.yaml'
+            $config = Get-VallyDiagnosticConfiguration -SpecPath $spec -Tag 'agent=code-review'
+            $name = 'code-review-branch-diff-standard-profile'
+            $inventory = [ordered]@{}
+            $inventory[$name] = [ordered]@{ runs = 1; graders = $config.stimuli[$name].graders }
+            $criteria = @($inventory[$name].graders[0].criteria)
+            $scores = @(foreach ($id in $criteria) {
+                [pscustomobject]@{ criterion = $id; score = 1; reasoning = 'synthetic-private-output' }
+            })
+            $passed = $true
+            switch ($Mutation) {
+                'negative' { $scores[1].score = 0; $passed = $false }
+                'missing' { $scores = @($scores | Select-Object -First 3) }
+                'duplicate' { $scores[3].criterion = $scores[0].criterion }
+                'unknown' { $scores[3].criterion = 'synthetic-private-output' }
+                'extra' {
+                    $scores[1].score = 0
+                    $passed = $false
+                    $scores += [pscustomobject]@{ criterion = 'synthetic-private-output'; score = 1; reasoning = 'synthetic-private-output' }
+                }
+                'contradiction' { $scores[1].score = 0 }
+                'prefixed' { foreach ($score in $scores) { $score.criterion = "[$($score.criterion)] Canonical rubric text." } }
+                'fraction' { $scores[1].score = 0.5 }
+            }
+            $detail = [ordered]@{
+                name = 'branch-standard-profile-contract'; configuredName = 'branch-standard-profile-contract'
+                graderType = 'strict-prompt'; passed = $passed; score = [int]$passed
+                metadata = @{ rubric_scores = $scores }
+            }
+            if ($Mutation -eq 'absent') { $detail.metadata = @{} }
+            $record = [ordered]@{
+                type = 'trial-result'; status = 'success'; trialIndex = 0; itemId = 'scorecard-test'; durationMs = 10
+                trajectory = @{
+                    stimulus = @{ name = $name; prompt = 'Synthetic request.' }; output = 'synthetic-private-output'
+                    endReason = 'completed'; events = @(@{ type = 'assistant_message'; turn = 0; data = @{ content = 'Synthetic answer.' } })
+                }
+                gradeResult = @{ stimulusName = $name; passed = $passed; score = [int]$passed; details = @($detail) }
+            }
+            New-Item -ItemType Directory -Path $Root -Force | Out-Null
+            $record | ConvertTo-Json -Depth 20 -Compress | Set-Content (Join-Path $Root 'results.jsonl')
+            $aggregate = Read-VallyResultsJsonl -RunDir $Root -Threshold 0.7 -ExpectedStimuli $inventory
+            $attempt = [ordered]@{
+                runKey = 'scorecard.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'
+                exitCategory = 'success'; assertionsPassed = $aggregate.assertionsPassed; assertionsFailed = $aggregate.assertionsFailed
+                erroredTrials = $aggregate.errored; observedTrials = $aggregate.trials; recordIssues = $aggregate.recordIssues
+                trials = $aggregate.trialDiagnostics
+                perStimulus = @([ordered]@{
+                    stimulusName = $name; expectedTrials = 1; observedTrials = 1
+                    aggregateScore = $aggregate.perStimulus[$name].aggregateScore
+                    aggregatePassed = $aggregate.perStimulus[$name].aggregatePassed
+                })
+            }
+            $diagnostics = [ordered]@{
+                schemaVersion = $config.schemaVersion; runKey = 'scorecard.yaml'; configurationStatus = $config.status
+                specDigest = $config.specDigest; inputDigest = $config.specDigest; inputDigestScope = 'spec-only'
+                selectionDigest = Get-AgentEvalValueDigest -Value $inventory; checkout = $null
+                executorModel = 'model'; judgeModels = @('claude-sonnet-5'); versions = @{}; threshold = 0.7
+                expectedStimuli = $inventory; selectedAttempt = 1; attempts = @($attempt)
+            }
+            return @{ config = $config; inventory = $inventory; aggregate = $aggregate; diagnostics = $diagnostics; root = $Root }
+        }
+    }
+
+    It 'Requires complete consistent bounded scores for <Mutation>' -Tag 'Scorecard' -ForEach @(
+        @{ Mutation = 'clean'; Valid = $true }, @{ Mutation = 'negative'; Valid = $true },
+        @{ Mutation = 'prefixed'; Valid = $true }, @{ Mutation = 'missing'; Valid = $false },
+        @{ Mutation = 'duplicate'; Valid = $false }, @{ Mutation = 'unknown'; Valid = $false },
+        @{ Mutation = 'extra'; Valid = $false },
+        @{ Mutation = 'contradiction'; Valid = $false }, @{ Mutation = 'absent'; Valid = $false },
+        @{ Mutation = 'fraction'; Valid = $false }
+    ) {
+        $fixture = New-ScorecardFixture -Root (Join-Path $TestDrive $Mutation) -Mutation $Mutation
+        $fixture.config.status | Should -Be 'available'
+        $fixture.config.schemaVersion | Should -Be '2.1.0'
+        $fixture.inventory['code-review-branch-diff-standard-profile'].graders[0].criteria |
+            Should -Be @('target', 'perspectives', 'confirmation', 'honest-scope')
+        $evidence = Test-VallyDiagnosticEvidence -Diagnostics $fixture.diagnostics -RunKey 'scorecard.yaml'
+        $evidence.contractValid | Should -BeTrue
+        $evidence.integrityPassed | Should -Be $Valid
+        if (-not $Valid) {
+            $fixture.aggregate.recordIssues | Should -Contain 'criterion-scorecard-mismatch'
+            $fixture.aggregate.trialDiagnostics[0].graders[0].status | Should -Be 'invalid'
+        }
+        $fixture.aggregate.trialDiagnostics[0].score | Should -Be $(if ($Mutation -in @('negative', 'extra')) { 0 } else { 1 })
+        ($fixture.diagnostics | ConvertTo-Json -Depth 30) | Should -Not -Match 'synthetic-private-output|rubric_scores|reasoning'
+    }
+
+    It 'Rejects a forged scorecard diagnostic with <Mutation>' -Tag 'Scorecard' -ForEach @(
+        @{ Mutation = 'missing field' }, @{ Mutation = 'unknown field' },
+        @{ Mutation = 'unknown identity' }, @{ Mutation = 'boolean' }, @{ Mutation = 'downgrade' },
+        @{ Mutation = 'concealed missing score' }
+    ) {
+        $fixture = New-ScorecardFixture -Root (Join-Path $TestDrive 'forged')
+        $grader = $fixture.diagnostics.attempts[0].trials[0].graders[0]
+        switch ($Mutation) {
+            'missing field' { $grader.Remove('criterionScores') }
+            'unknown field' { $grader.criterionScores[0].reasoning = 'synthetic-private-output' }
+            'unknown identity' { $grader.criterionScores[0].id = 'synthetic-private-output' }
+            'boolean' { $grader.criterionScores[0].score = $true }
+            'downgrade' { $fixture.diagnostics.schemaVersion = '2.0.0' }
+            'concealed missing score' { $grader.criterionScores = @($grader.criterionScores | Select-Object -First 3) }
+        }
+        (Test-VallyDiagnosticEvidence -Diagnostics $fixture.diagnostics -RunKey 'scorecard.yaml').integrityPassed | Should -BeFalse
+    }
+
+    It 'Leaves non-opted-in stimuli on their existing diagnostic contract' -Tag 'Scorecard' {
+        $config = Get-VallyDiagnosticConfiguration -SpecPath (Join-Path $script:RepositoryRoot 'evals/agent-behavior/eval.yaml') -Tag 'agent=rpi-agent'
+        $config.status | Should -Be 'available'
+        $config.schemaVersion | Should -Be '2.0.0'
+        @($config.stimuli.Values.graders | Where-Object { $_.Contains('criteria') }).Count | Should -Be 0
+        $fixture = New-ScorecardFixture -Root (Join-Path $TestDrive 'unscoped') -Mutation missing
+        $fixture.inventory['code-review-branch-diff-standard-profile'].graders[0].Remove('criteria')
+        $aggregate = Read-VallyResultsJsonl -RunDir $fixture.root -Threshold 0.7 -ExpectedStimuli $fixture.inventory
+        $aggregate.recordIssues | Should -HaveCount 0
+        $aggregate.trialDiagnostics[0].graders[0].Contains('criterionScores') | Should -BeFalse
+    }
+}
+
+Describe 'Native grader input identity' -Tag 'Unit' {
+    It 'Binds runtime inputs without publishing ignored evidence: <Case>' -Tag 'Scorecard' -ForEach @(
+        @{ Case = 'project'; Path = '.vally.yaml'; Changed = $true }
+        @{ Case = 'manifest'; Path = 'package.json'; Changed = $true }
+        @{ Case = 'lockfile'; Path = 'package-lock.json'; Changed = $true }
+        @{ Case = 'module'; Path = 'scripts/evals/graders/strict-prompt.mjs'; Changed = $true }
+        @{ Case = 'ignored script'; Path = 'scripts/private.log'; Changed = $false }
+        @{ Case = 'ignored evidence'; Path = '.copilot-tracking/private.txt'; Changed = $false }
+    ) {
+        $root = Join-Path $TestDrive ($Case -replace ' ', '-')
+        New-Item -ItemType Directory -Path $root -Force | Out-Null
+        & git -C $root init --quiet --initial-branch=main
+        $LASTEXITCODE | Should -Be 0
+        & git -C $root config core.autocrlf false
+        $LASTEXITCODE | Should -Be 0
+        Set-Content (Join-Path $root '.gitignore') "*.log`n.copilot-tracking/"
+        foreach ($file in @('.vally.yaml', 'package.json', 'package-lock.json', 'scripts/evals/graders/strict-prompt.mjs')) {
+            $full = Join-Path $root $file
+            New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
+            Set-Content $full 'synthetic input'
+        }
+        & git -C $root add -- .
+        $LASTEXITCODE | Should -Be 0
+        $before = Get-VallyInputDigest -RepoRoot $root
+        $before | Should -Match '^sha256:[a-f0-9]{64}$'
+        $target = Join-Path $root $Path
+        New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+        Set-Content $target 'synthetic-private-output'
+        $after = Get-VallyInputDigest -RepoRoot $root
+        $after | Should -Match '^sha256:[a-f0-9]{64}$'
+        ($before -cne $after) | Should -Be $Changed
+    }
+}
+
 Describe 'VallyRunner module' -Tag 'Unit' {
     BeforeEach {
         $script:WorkRoot = Join-Path $TestDrive ('runner-' + [Guid]::NewGuid())

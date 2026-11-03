@@ -65,6 +65,7 @@ Select every type that has a distinct responsibility. Prefer the simplest viable
 
 ## Writing
 
+* Give agents and skills the same filename-based declaration for `plain-language.instructions.md` plus a brief plain-language default. Read the shared instruction only if not already loaded; retain the default when unavailable. Preserve necessary technical terms and exact output contracts.
 * Use clear professional language and imperative voice for action steps.
 * Prefer concise paragraphs and lists. Avoid all-caps emphasis, manual chain-of-thought requests, repeated directives, exhaustive edge-case lists, and invented numeric limits.
 * Follow the repository Markdown and writing-style instructions. Keep workflow tracking paths out of generated production code, code comments, and documentation strings.

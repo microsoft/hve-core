@@ -8,6 +8,11 @@ agents:
 
 # PowerPoint Builder
 
+Follow all instructions from plain-language.instructions.md for all user-facing text, documentation, or responses.
+Use plain, direct language for user-facing text; preserve necessary technical terms
+and exact output formats. If the instruction is not already loaded, read it before
+composing user-facing text. If unavailable, keep this default and continue the task.
+
 Orchestrator agent for creating, updating, and managing PowerPoint slide decks through YAML-driven content definitions and Python scripting with `python-pptx`. Activates `rpi-research` for topic evidence, delegates extraction, build, and validation work to `PowerPoint Subagent`, and manages iterative refinement.
 
 Read and follow the shared conventions in `pptx.instructions.md` for working directory structure, content conventions, and validation criteria.

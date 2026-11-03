@@ -186,7 +186,7 @@ function Test-EvalChangeSetRelevance {
     foreach ($Change in $ChangeSet.changes) {
         foreach ($Path in @($Change.path, $Change.previousPath)) {
             if (-not $Path) { continue }
-            if ($Path -match '^(evals/|scripts/evals/|\.github/(agents|prompts|instructions|skills)/)') {
+            if ($Path -ceq '.vally.yaml' -or $Path -match '^(evals/|scripts/evals/|\.github/(agents|prompts|instructions|skills)/)') {
                 Write-Host "Eval-relevant change: $Path"
                 return $true
             }
@@ -195,7 +195,7 @@ function Test-EvalChangeSetRelevance {
                     'diff', '--no-ext-diff', '--no-textconv', $ChangeSet.comparisonBase, $ChangeSet.headRef, '--', $Path
                 )
                 $ChangedLines = @($Diff -split '\r?\n' | Where-Object { $_ -match '^[+-]' -and $_ -notmatch '^(\+\+\+|---)' })
-                if ($ChangedLines -match 'vally|"ci:eval:') {
+                if ($ChangedLines -match 'vally|"ci:eval:|"zod"\s*:') {
                     Write-Host "Eval-relevant package change: $Path"
                     return $true
                 }
