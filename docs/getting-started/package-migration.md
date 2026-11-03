@@ -186,10 +186,11 @@ These commands became skills with the same name, so the slash command still work
 * `/git-setup`
 * `/incident-response`
 * `/risk-register`
+* `/rpi`
 * `/synth-data-generate`
 
 > [!NOTE]
-> Every skill in this list except `/dt-figma-export` sets `disable-model-invocation: true`, so agents do not start it for you; type its slash command to run it. For Copilot CLI support, see [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode).
+> Every skill in this list except `/dt-figma-export` and `/rpi` sets `disable-model-invocation: true`, so agents do not start it for you; type its slash command to run it. For Copilot CLI support, see [Skills vs Agent Mode](methods/cli-plugins#skills-vs-agent-mode).
 
 ### Security and supply chain
 
@@ -240,7 +241,6 @@ These commands became skills with the same name, so the slash command still work
 
 | Retired command            | Replacement                                                                                                                                         |
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `/rpi`                     | The `RPI Agent`; describe the task                                                                                                                  |
 | `/pr-review`               | The `Code Review` agent, which reviews the pull request you name or the open one for your branch, and otherwise a branch diff or your local changes |
 | `/git-commit-message`      | `/git-commit mode=message-only`, which writes a message for your staged changes without committing                                                  |
 | `/vally-test-write`        | `/vally-tests mode=from-artifact`, with `files=<path>`                                                                                              |

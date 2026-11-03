@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -417,10 +417,11 @@ For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings
 
 Choose the entry surface that best fits the task.
 
-| Entry surface       | Use it when                                  | Contract                                                                             |
-|---------------------|----------------------------------------------|--------------------------------------------------------------------------------------|
-| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness; asks how you want to work |
-| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work                                    |
+| Entry surface       | Use it when                                              | Contract                                                                                             |
+|---------------------|----------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `/rpi`              | You want multi-phase RPI session coordination            | User-invocable and model-discoverable skill that manages session state, phase skills, and the canvas |
+| `RPI Agent`         | You want a user-selected lifecycle wrapper in the picker | Preloads the `rpi` skill to coordinate applicable phase skills from research readiness               |
+| Direct phase skills | The next responsible action is already known             | Bounded Research, Plan, Implement, or Review work                                                    |
 
 ### Manual and Automatic Mode in RPI Agent
 
@@ -461,7 +462,7 @@ A long lifecycle can accumulate context. Resume from the durable RPI artifact se
 > [!TIP]
 > For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering).
 
-See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the agent's state contract and modes.
+See the [rpi skill reference](../reference/skills/rpi/rpi) and [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the session state contract and modes.
 
 ## Related Guides
 
