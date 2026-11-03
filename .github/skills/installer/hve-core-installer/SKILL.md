@@ -6,7 +6,7 @@ license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-10-02"
+  last_updated: "2026-11-03"
 ---
 
 # HVE-Core Installer Skill
@@ -436,16 +436,58 @@ Provide targeted guidance when steps fail:
 
 ## Rollback
 
-To remove a failed or unwanted installation:
+To remove a failed or unwanted installation. Non-destructive cleanup needs no
+approval; the deleting methods are gated by Checkpoint 4 below.
 
-| Method                   | Cleanup                                                    |
-|--------------------------|------------------------------------------------------------|
-| Extension                | VS Code → Extensions → HVE Core → Uninstall                |
-| 1 (Peer Clone)           | `rm -rf ../hve-core`                                       |
-| 2 (Git-Ignored)          | `rm -rf .hve-core`                                         |
-| 3-4 (Mounted/Codespaces) | Remove mount/postCreate from devcontainer.json             |
-| 5 (Multi-Root)           | Delete `.code-workspace` file                              |
-| 6 (Submodule)            | `git submodule deinit lib/hve-core && git rm lib/hve-core` |
+### Non-destructive cleanup
+
+| Method                   | Cleanup                                        |
+|--------------------------|------------------------------------------------|
+| Extension                | VS Code → Extensions → HVE Core → Uninstall    |
+| 3-4 (Mounted/Codespaces) | Remove mount/postCreate from devcontainer.json |
+| 5 (Multi-Root)           | Delete `.code-workspace` file                  |
+
+### Destructive cleanup — requires Checkpoint 4
+
+These remove a working tree. Methods 1 and 2 delete the clone the installer
+invites users to customize, so any uncommitted local edits are lost
+permanently and `rm -rf` has no undo.
+
+| Method           | Cleanup                                                    | What is lost                                   |
+|------------------|------------------------------------------------------------|------------------------------------------------|
+| 1 (Peer Clone)   | `rm -rf ../hve-core`                                       | The peer clone and any local customizations    |
+| 2 (Git-Ignored)  | `rm -rf .hve-core`                                         | The in-repo clone and any local customizations |
+| 6 (Submodule)    | `git submodule deinit lib/hve-core && git rm lib/hve-core` | The submodule working tree and its gitlink     |
+
+Before running any row in this table, obtain Checkpoint 4 authorization. Prefer
+the non-destructive alternative where it is sufficient: renaming the directory
+(`mv ../hve-core ../hve-core.bak`) keeps the content recoverable and can be
+undone.
+
+### Checkpoint 4: Rollback Authorization
+
+Before any destructive rollback, inspect the target and present the following.
+Run `git status --porcelain` inside the target directory first so the uncommitted
+count is real rather than assumed:
+
+```text
+🗑️ Rollback — Destructive
+
+I will permanently delete:
+• [absolute path of the target directory]
+
+This includes [N] uncommitted change(s) in that directory, which cannot be recovered.
+
+Non-destructive alternative: rename it instead, with
+  mv [target] [target].bak
+
+⚠️ Authorization Required: Do you authorize deleting [target]? (yes/no)
+```
+
+If user declines: "Rollback cancelled. Nothing was deleted."
+
+If the target is not a directory, or is not the path recorded for the selected
+method, stop and report it rather than deleting anything.
 
 Then remove HVE-Core paths from `.vscode/settings.json`.
 
@@ -459,6 +501,11 @@ Checkpoints requiring authorization:
 
 1. Initial Consent (Phase 1) - before starting detection
 2. Settings Authorization (Phase 5, Checkpoint 3) - before editing settings/devcontainer
+3. Rollback Authorization (Rollback, Checkpoint 4) - before any destructive rollback
+
+Never run a destructive rollback command as part of error recovery. "Delete the
+HVE-Core directory and re-run" in the troubleshooting table is advice to the
+user, not an action to take unprompted; it still requires Checkpoint 4.
 
 ## Output Format Requirements
 
