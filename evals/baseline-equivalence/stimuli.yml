@@ -112,7 +112,7 @@ stimuli:
   - name: code-reverse-string-rust
     constraints: *agent-time-limit
     category: code-qa
-    prompt: "Write a Rust function that reverses a string and returns the reversed value."
+    prompt: "Write a Rust function that takes an &str argument and returns a String with its characters reversed."
     invariants: [rust-fn-syntax]
     tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:

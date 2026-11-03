@@ -284,6 +284,79 @@ console.log(JSON.stringify({ items: plan.items.map(i => ({ name: i.stimulus.name
         }
     }
 
+    Context 'Branch-profile and Rust stimulus contracts' {
+        BeforeAll {
+            $partial = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/code-review.yml') -Raw)
+            $script:ProfileCase = @($partial.stimuli | Where-Object name -EQ 'code-review-branch-diff-standard-profile')[0]
+            $script:RustCases = foreach ($path in @(
+                'evals/baseline-equivalence/stimuli.yml'
+                'evals/baseline-equivalence/baseline/eval.yaml'
+                'evals/baseline-equivalence/customized/eval.yaml'
+                'evals/baseline-equivalence/compare.eval.yml'
+            )) {
+                $spec = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot $path) -Raw)
+                @($spec.stimuli | Where-Object name -EQ 'code-reverse-string-rust')[0]
+            }
+        }
+
+        It 'Accepts reordered and detailed profile explanations while requiring every perspective' {
+            $controls = @(
+                @{ output = 'Branch feature/auth uses the standard profile: functional, standards, and readiness.'; expected = $true }
+                @{ output = 'Recommended perspectives: readiness, standards, and functional. The standard profile applies to this branch.'; expected = $true }
+                @{ output = ('Branch feature/auth. ' + ('Factual orientation. ' * 100) + 'Standard profile: functional, standards, readiness.'); expected = $true }
+                @{ output = $script:ProfileCase.prompt; expected = $false }
+                @{ output = 'The review artifact is unavailable; the review is blocked.'; expected = $false }
+                @{ output = 'Branch feature/auth uses standard: standards and readiness.'; expected = $false }
+                @{ output = 'Branch feature/auth uses standard: functional and readiness.'; expected = $false }
+                @{ output = 'Branch feature/auth uses standard: functional and standards.'; expected = $false }
+                @{ output = 'Branch feature/auth uses custom: functional, standards, readiness.'; expected = $false }
+                @{ output = 'Standard profile: functional, standards, readiness.'; expected = $false }
+            )
+            $probe = @'
+const { pathToFileURL } = await import('node:url');
+const path = await import('node:path');
+const root = process.argv[1];
+const modulePath = path.join(root, 'node_modules', '@microsoft', 'vally', 'dist', 'graders', 'static', 'output-matches-grader.js');
+const { OutputMatchesGrader } = await import(pathToFileURL(modulePath).href);
+const config = JSON.parse(process.argv[2]);
+const controls = JSON.parse(process.argv[3]);
+const grader = new OutputMatchesGrader();
+const results = [];
+for (const control of controls) {
+    const result = await grader.grade({ config, trajectory: { output: control.output } });
+    results.push({ passed: result.passed, expected: control.expected });
+}
+console.log(JSON.stringify(results));
+'@
+            $config = ($script:ProfileCase.graders | Where-Object name -EQ 'branch-diff-standard-profile').config | ConvertTo-Json -Compress
+            $json = & node --input-type=module -e $probe $script:RepoRoot $config ($controls | ConvertTo-Json -Compress)
+            $LASTEXITCODE | Should -Be 0
+            $results = @($json | ConvertFrom-Json)
+            $results | Should -HaveCount $controls.Count
+            for ($i = 0; $i -lt $results.Count; $i++) {
+                $results[$i].passed | Should -Be $results[$i].expected -Because "profile control $i must retain its verdict"
+            }
+        }
+
+        It 'States the Rust input and return types consistently across all four fixtures' {
+            $prompts = @($script:RustCases | ForEach-Object {
+                if ($_.ContainsKey('prompt')) { $_.prompt } else { $_.turns[-1] }
+            })
+            $prompts | Should -HaveCount 4
+            @($prompts | Sort-Object -Unique) | Should -HaveCount 1
+            foreach ($prompt in $prompts) {
+                $prompt | Should -Match '&str'
+                $prompt | Should -Match '\bString\b'
+                $prompt | Should -Match 'revers'
+            }
+            $script:RustCases[0].invariants | Should -Contain 'rust-fn-syntax'
+            foreach ($case in $script:RustCases[0..2]) {
+                @($case.graders | Where-Object name -EQ 'rust-fn-syntax') | Should -HaveCount 1
+                @($case.graders | Where-Object type -EQ 'prompt') | Should -HaveCount 1
+            }
+        }
+    }
+
     Context 'Unreadable-base semantic contract' {
         BeforeAll {
             $partial = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/code-review.yml') -Raw)

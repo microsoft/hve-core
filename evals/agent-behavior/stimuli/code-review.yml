@@ -703,7 +703,7 @@ stimuli:
       - type: output-matches
         name: branch-diff-standard-profile
         config:
-          pattern: '(?is)(branch|feature/auth|pre-PR).{0,800}(standard).{0,1200}(functional).{0,1000}(standards).{0,1000}(readiness)'
+          pattern: '(?is)^(?=[\s\S]*(?:\bbranch(?:[_ -]diff)?\b|feature/auth|pre-PR))(?=[\s\S]*\bstandard\b)(?=[\s\S]*\bfunctional\b)(?=[\s\S]*\bstandards\b)(?=[\s\S]*\breadiness\b)'
       - type: output-matches
         name: no-required-pr-metadata
         config:
