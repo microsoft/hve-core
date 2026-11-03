@@ -330,7 +330,11 @@ stimuli:
   - name: multi-turn-confirm-action
     constraints: *agent-time-limit
     category: multi-turn
-    prompt: "You proposed renaming the function to `loadConfig`. Confirm the new name and list one rationale."
+    prompt: "Earlier we agreed to rename the function `readSettings` to `loadConfig`. Confirm that `loadConfig` is the new name and list one rationale."
+    # The prompt states the prior rename instead of attributing an unseen proposal to the
+    # model. The baseline run has no prior turn, and the attributed framing let the
+    # uncustomized model intermittently decline to restate the name, failing
+    # mentions-loadconfig without any customization involved.
     invariants: [mentions-loadconfig]
     tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:

@@ -250,7 +250,7 @@ stimuli:
     constraints: *agent-time-limit
     turns:
       - *agent-launch
-      - "You proposed renaming the function to `loadConfig`. Confirm the new name and list one rationale."
+      - "Earlier we agreed to rename the function `readSettings` to `loadConfig`. Confirm that `loadConfig` is the new name and list one rationale."
     tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:
       - {type: output-matches, name: mentions-loadconfig, config: {pattern: '(?i)loadConfig'}}

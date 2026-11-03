@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-10-07
+ms.date: 2026-10-28
 ms.topic: guide
 keywords:
   - copilot
@@ -105,6 +105,8 @@ subagents, and skills.
 **Modes:** Manual mode stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. The **Full Auto** handoff requests an automatic session; after you confirm whether ordinary Research and Plan decisions are agent-owned or user-retained, the agent continues through Review without routine approval prompts.
 
 After Review, an automatic session offers ranked follow-up choices plus **Stop automatic session** and **Switch to manual mode**. Blockers, required human review, and destructive or externally visible actions still stop for confirmation.
+
+**Canvas:** When the host offers canvases, the agent opens the RPI Workflow canvas on its session, where you follow each phase, answer the agent's decisions, and send it input that it reads back. See the [RPI Workflow Canvas guide](../docs/rpi/rpi-workflow-canvas.md).
 
 **Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not a dispatcher for named specialized task workers. Automatic mode begins only after explicit confirmation and never infers consent from a handoff request. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 

@@ -23,34 +23,62 @@
 
 ## Phase Checklist
 
-<!-- Add both overall diagrams once the phases are stable and before the critique runs. Follow references/planning.md for state comparison and styling; reuse IDs for corresponding elements across all views. -->
-<!-- Reuse the initialization line unchanged in every diagram; before critique, check the emitted fontFamily and fontSize values and correct malformed or nested values to the prescribed strings. -->
+<!-- Add the change map once the phases are stable and before the critique runs. Follow Change map in references/planning.md: one question in at most about 10 parts and 4 boxes, arrows from the part that acts with active verbs, boxes as layers from left to right, a clause and a tag on every new or changed part in After and a tag alone in Before, border marks, and no fills, fonts, init line, front matter, edge IDs, or backticks inside labels. Run its check list. A plan that changes one or two parts and no connections replaces the map with one sentence naming them. -->
 
 ### Before
 
-<!-- Show only evidence-backed pre-change elements and relationships. For greenfield work, show surrounding context or label the capability as absent; identify unknown state rather than inventing it. -->
+<!-- Optional. Keep Before only when the plan changes how parts connect: it removes a part or a connection, or replaces one path with another. Show only the parts that change and the parts they connect to, in After's boxes with After's part IDs. Tag the parts the plan changes or removes, and leave out the parts it adds. Otherwise delete this section. -->
 
 ```mermaid
-%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
 flowchart LR
-    {{existing_node_id}}["{{existing_component_file_contract_or_behavior}}"]
-    {{existing_node_id}} -->|{{existing_relationship}}| {{other_existing_node_id}}
+    accTitle: Before: {{what_the_map_shows_today}}
+    accDescr: {{one_sentence_description_of_the_starting_point}}
+    subgraph {{box_id}}["`<code>{{workspace/relative/path}}</code>`"]
+        {{part_id}}["`<code>{{part_that_stays_the_same}}</code>`"]
+        {{changed_part_id}}["`**<code>{{part_the_plan_changes}}</code>**
+        changed · {{Pxx}}`"]
+        {{removed_part_id}}["`**<code>{{part_the_plan_removes}}</code>**
+        removed · {{Pxx}}`"]
+    end
+    {{part_id}} -->|{{active_verb}}| {{changed_part_id}}
+    {{changed_part_id}} -->|{{active_verb}}| {{removed_part_id}}
+    classDef changed stroke-width:3px
+    classDef removed stroke-dasharray: 2 3,stroke-width:2px
+    class {{changed_part_ids}} changed
+    class {{removed_part_ids}} removed
 ```
 
 ### After
 
-<!-- Show the intended result of all phases. Omit removed elements and obsolete edges; label added nodes with Added: and retain their dashed borders. -->
+<!-- Show the result of all phases. Tag new and changed parts beside the unchanged parts they connect to, and leave out removed parts and obsolete arrows. Point each arrow from the part that acts to the part it acts on, labeled with an active verb. Use flowchart TB only for stacked layers with short box titles. -->
 
 ```mermaid
-%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
 flowchart LR
-    {{node_id}}["{{final_component_file_contract_or_behavior_label}}"]
-    {{node_id}} -->|{{final_relationship}}| {{other_node_id}}
-    classDef new stroke-dasharray: 5 5
-    class {{node_ids_that_do_not_exist_yet}} new
+    accTitle: After: {{what_the_map_shows_once_every_phase_lands}}
+    accDescr: {{one_sentence_description_of_the_result}}
+    subgraph {{box_id}}["`<code>{{workspace/relative/path}}</code>`"]
+        {{part_id}}["`<code>{{part_that_stays_the_same}}</code>`"]
+        {{changed_part_id}}["`**<code>{{changed_part}}</code>**
+        {{what_it_does_after_the_change}}
+        changed · {{Pxx}}`"]
+    end
+    subgraph {{new_box_id}}["`<code>{{new/workspace/relative/path}}</code>
+    new file · {{Pxx}}`"]
+        {{new_part_id}}["`**{{new_part_name}}**
+        {{what_it_does}}
+        new · {{Pxx}}`"]
+    end
+    {{part_id}} -->|{{active_verb}}| {{changed_part_id}}
+    {{changed_part_id}} -->|{{active_verb}}| {{new_part_id}}
+    classDef new stroke-dasharray: 6 4,stroke-width:2px
+    classDef changed stroke-width:3px
+    class {{new_box_id}},{{new_part_id}} new
+    class {{changed_part_ids}} changed
 ```
 
-{{short_prose_explanation_of_the_before_to_after_change}}
+Key: arrows point from a part to what it uses; dotted arrows, tests and docs; dashed border, new; thick border, changed; dotted border, removed, in Before only; each tag names the phases that make the change.
+
+{{two_or_three_sentences_walking_the_main_path_in_arrow_order_naming_the_changed_parts_and_their_phases}}
 
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: {{phase_name}}
@@ -61,19 +89,7 @@ Goals:
 Dependencies:
 * {{phase_dependencies_or_none}}
 
-<!-- Copy After and highlight this phase's changed nodes, preserving new-node labels and dashed borders. For removals, add clearly labeled Before-only context as described in references/planning.md. -->
-
-```mermaid
-%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
-flowchart LR
-    {{same_nodes_and_edges_as_the_after_diagram_with_any_labeled_removal_context}}
-    classDef new stroke-dasharray: 5 5
-    class {{node_ids_that_do_not_exist_yet}} new
-    classDef phase fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px
-    class {{node_ids_this_phase_changes}} phase
-```
-
-Highlighted work: {{nodes_or_relationships_this_phase_changes}}
+Changes in the map: {{plain_words_naming_the_parts_this_phase_adds_changes_or_removes}}
 
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: {{task_name}}
@@ -115,6 +131,17 @@ Keep this as a concise freeform list. Preserve the user's meaning and add source
 | Group  | Decision or feedback item | Status                                                     | Owner                                         | Rationale or input needed          | Evidence           | Planning impact                                |
 |--------|---------------------------|------------------------------------------------------------|-----------------------------------------------|------------------------------------|--------------------|------------------------------------------------|
 | {{D1}} | {{item}}                  | {{confirmed/proposed/deferred/unresolved/input requested}} | {{user/agent/evidence/constraint/downstream}} | {{rationale_or_specific_question}} | {{source_or_none}} | {{affected_Pxx_Txx_requirements_or_readiness}} |
+
+<!-- Optional: add this block after the table for each decision that needs the user's input, using the row's D number; the row stays the record of status, owner, evidence, and impact. Mark one option `(recommended)` only when evidence supports it. Delete the block, or its context line, when no decision needs the user's input; leave no placeholders. -->
+
+#### {{D1}}: {{short_decision_title}}
+
+{{one_line_question}}
+
+* A: {{option_and_its_consequence}}
+* B: {{option_and_its_consequence}}
+
+{{optional_context}}
 
 ## Planning Readiness and Next Step
 
@@ -192,7 +219,7 @@ Record the critique setting, status, verdict, finding dispositions, and any expl
 * Earlier critiques: {{none_or_earlier_critique_paths}}
 * Limitations: {{none_or_run_limitation_interruption_kind_and_next_action}}
 
-<!-- Keep every finding row. A follow-up critique adds rows or updates dispositions without deleting earlier findings. -->
+<!-- When the critique result exists, add a row per finding as open, then update each row as its correction lands. Keep every finding row. A follow-up critique adds rows or updates dispositions without deleting earlier findings. -->
 
 | Critique run and finding | Disposition                                        | Action owner                   | Exact resolving evidence                | Decision route                                     | Plan response or residual risk |
 |--------------------------|----------------------------------------------------|--------------------------------|-----------------------------------------|----------------------------------------------------|--------------------------------|
@@ -204,12 +231,13 @@ Record the critique setting, status, verdict, finding dispositions, and any expl
 * [ ] Confirmed direction, grouped decisions, readiness, goals, scope, requirements, risks, and dependencies are current and consistent with the Phase Checklist.
 * [ ] Planning decision participation and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
 * [ ] Functional and non-functional requirements are current, and every `FR-nnn` and `NFR-nnn` is cited by at least one task's Requirements.
-* [ ] Every `Pxx` has Goals, Dependencies, and a phase diagram that highlights its part of After with any labeled removal context. Every `Pxx-Txx` has Goals, Requirements, Details, References, and Dependencies.
+* [ ] Every `Pxx` has Goals, Dependencies, and a `Changes in the map:` line that matches the tags naming it. Every `Pxx-Txx` has Goals, Requirements, Details, References, and Dependencies.
 * [ ] Task Goals describe observable behavior, capability, or state without prescribing unsupported implementation steps. Details and References ground the implementer; examples are illustrative unless a requirement or contract makes them binding.
 * [ ] Open decisions, risks, and questions live in their tables with the affected `Pxx-Txx` named; no task carries a separate status block.
 * [ ] Code, commands, and symbols use backticks. Existing files and folders are Markdown links whose text is the workspace-relative path and whose destination resolves from this plan file.
-* [ ] Before reflects the evidence-backed pre-change baseline; After reflects the intended result of all phases. Corresponding elements and phase diagrams reuse stable node IDs, with added and removed work distinguishable without color.
-* [ ] Every emitted initialization object has the prescribed string values for themeVariables.fontFamily and themeVariables.fontSize. All diagrams use theme-aware styling, with explicit text colors on custom fills. Dual-theme rendering evidence or its preview limitation is recorded.
+* [ ] The change map answers one question in at most about 10 parts and 4 boxes, with unchanged parts only where a changed part connects to them, or the plan changes one or two parts and no connections and names them in one sentence instead.
+* [ ] Every arrow has an active verb and points from the part that acts, and boxes show where changes land, ordered so arrows run one way. Before appears only because connections change, in After's boxes with After's part IDs, and After shows the intended result of all phases.
+* [ ] Every new, changed, or removed part has its border class and a tag naming real phases; each new or changed part in After has a bold name and one short clause, and each changed or removed part in Before has a bold name and its tag. Each diagram has `accTitle` and `accDescr` and no fills, fonts, `%%{init}%%` line, front matter, edge IDs, or backticks inside labels. The key and walk-through follow After, and rendering in light and dark was checked, or the preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
 * [ ] The critique setting and provenance are recorded. The critique ran on the implementation-ready plan or was skipped by user or parent direction, and every `PC-xxx` has a disposition or accepted residual risk.
 * [ ] Readiness does not rely on a critique that returned no result.
