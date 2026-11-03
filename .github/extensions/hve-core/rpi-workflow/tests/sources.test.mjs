@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, afterEach, before, describe, it } from 'node:test';
 
+import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { createActionHandlers } from '../lib/actions.mjs';
 import { createFeedback, markDelivered } from '../lib/model.mjs';
 import { buildScenario, SCENARIO_ID } from '../lib/scenario.mjs';
@@ -238,24 +239,28 @@ describe('source controller', () => {
         store.close();
     });
 
-    it('opens a task from its state path and refuses paths outside the session folders', async () => {
+    it('opens a task from its state path and refuses paths outside the session folders', async (t) => {
         const store = createStore({ root: path.join(tmp, 'state-store') });
+        t.after(() => store.close());
         const sources = createSourceController({ store });
         const opened = await sources.prepare({ state: PATHS.childState }, { candidates: [root] });
         assert.deepEqual([opened.sessionId, opened.source.taskId, opened.source.sessionKey], ['rpi-trail-maps-fixes', CHILD_TASK, SESSION_KEY]);
         await writeJson(root, '.copilot-tracking/plans/2026-01-15/stray-state.json', { task_id: 'stray' });
         await writeJson(root, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json', { task_id: 'flat' });
         await fs.writeFile(path.join(tmp, 'outside-state.json'), JSON.stringify({ task_id: 'outside' }));
-        await fs.symlink(path.join(tmp, 'outside-state.json'), path.join(root, `.copilot-tracking/rpi-sessions/${SESSION_KEY}/linked-state.json`));
         assert.equal(await codeOf(() => sources.prepare({ state: '.copilot-tracking/plans/2026-01-15/stray-state.json' }, { candidates: [root] })), 'source_outside');
         assert.equal(await codeOf(() => sources.prepare({ state: '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json' }, { candidates: [root] })), 'source_outside');
         assert.equal(await codeOf(() => sources.prepare({ state: '../outside-state.json' }, { candidates: [root] })), 'source_outside');
-        assert.equal(await codeOf(() => sources.prepare({ state: `.copilot-tracking/rpi-sessions/${SESSION_KEY}/linked-state.json` }, { candidates: [root] })), 'source_invalid');
         assert.equal(await codeOf(() => sources.prepare({ state: PATHS.plan }, { candidates: [root] })), 'invalid_input');
         await fs.rm(path.join(root, '.copilot-tracking/plans/2026-01-15/stray-state.json'));
         await fs.rm(path.join(root, '.copilot-tracking/rpi-sessions/2026-01-15/flat-state.json'));
-        await fs.rm(path.join(root, `.copilot-tracking/rpi-sessions/${SESSION_KEY}/linked-state.json`));
-        store.close();
+        await t.test('refuses a linked state file', async (t) => {
+            const state = `.copilot-tracking/rpi-sessions/${SESSION_KEY}/linked-state.json`;
+            const linkPath = path.join(root, state);
+            if (!(await symlinkOrSkip(t, path.join(tmp, 'outside-state.json'), linkPath, 'file'))) return;
+            t.after(() => fs.rm(linkPath));
+            assert.equal(await codeOf(() => sources.prepare({ state }, { candidates: [root] })), 'source_invalid');
+        });
     });
 
     it('follows the running loop, pauses on a manual switch, and resumes', async () => {

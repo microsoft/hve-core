@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it, mock } from 'node:test';
 
+import { symlinkOrSkip } from '../../session-log/tests/helpers.mjs';
 import { buildScenario } from '../lib/scenario.mjs';
 import { createCanvasServer } from '../lib/server.mjs';
 import { createStore } from '../lib/store.mjs';
@@ -31,8 +32,6 @@ before(async () => {
     await write('image.bin', Buffer.from([0x89, 0x50, 0x00, 0x47]));
     await write('long.txt', Array.from({ length: MAX_SOURCE_LINES * 2 }, (_, index) => (index === 7000 ? 'needle' : `line ${index + 1}`)).join('\n'));
     await fs.writeFile(path.join(tmp, 'outside.md'), '# Outside');
-    await fs.symlink(path.join(tmp, 'outside.md'), path.join(root, 'link.md'));
-    await fs.symlink(tmp, path.join(root, 'linked-dir'));
 });
 after(async () => {
     await fs.rm(tmp, { recursive: true, force: true });
@@ -73,9 +72,17 @@ describe('the workspace read boundary', () => {
         assert.equal(await refusal('.npmrc'), 'source_blocked');
     });
 
-    it('refuses symbolic links, linked folders that lead outside, folders, and missing files', async () => {
+    it('refuses symbolic links', async (t) => {
+        if (!(await symlinkOrSkip(t, path.join(tmp, 'outside.md'), path.join(root, 'link.md'), 'file'))) return;
         assert.equal(await refusal('link.md'), 'source_blocked');
+    });
+
+    it('refuses linked folders that lead outside', async (t) => {
+        if (!(await symlinkOrSkip(t, tmp, path.join(root, 'linked-dir'), 'dir'))) return;
         assert.equal(await refusal('linked-dir/outside.md'), 'source_outside');
+    });
+
+    it('refuses folders and missing files', async () => {
         assert.equal(await refusal('src'), 'source_invalid');
         assert.equal(await refusal('src/missing.mjs'), 'source_not_found');
     });

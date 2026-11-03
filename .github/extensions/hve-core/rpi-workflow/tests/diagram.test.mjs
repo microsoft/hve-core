@@ -499,7 +499,7 @@ describe('renderDiagram', () => {
 
 describe('the planning skill\'s change map', () => {
     it('draws the reference\'s Before and After example without falling back to source', () => {
-        const text = readFileSync(REFERENCE, 'utf8');
+        const text = readFileSync(REFERENCE, 'utf8').replace(/\r\n/g, '\n');
         const start = text.indexOf('\n### Example change map\n');
         assert.notEqual(start, -1, 'the reference has an Example change map section');
         const end = text.slice(start + 1).search(/\n#{2,3} /);
