@@ -834,7 +834,8 @@ test("separates valid machine diagnostics from poorly formatted skill narratives
 
 describe("versioned host communication", () => {
   for (const condition of ["with-skill", "without-skill"] as const) {
-    test(`retains and audits one missing-brace correction within the same session: ${condition}`, async (context) => {
+    for (const defect of ["missing-brace", "misplaced-report-field"] as const) {
+    test(`retains and audits one ${defect} correction within the same session: ${condition}`, async (context) => {
       const root = await preparedRun();
       context.after(() => rm(root, { recursive: true, force: true }));
       const fake = fakeCliInvoker();
@@ -852,10 +853,17 @@ describe("versioned host communication", () => {
           const event = JSON.parse(value.stdout);
           const message = JSON.parse(event.data.content);
           if (modelTurns === 2) {
-            intendedReport = {
+            const correctedReport: DiagnosticReport = {
               ...message.report, narrative: `${message.report.narrative}\n${"Bounded observation. ".repeat(800)}`,
             };
-            event.data.content = JSON.stringify({ ...message, report: intendedReport }).slice(0, -1);
+            intendedReport = correctedReport;
+            const field = condition === "with-skill" ? "finding" : "candidate";
+            event.data.content = defect === "missing-brace"
+              ? JSON.stringify({ ...message, report: intendedReport }).slice(0, -1)
+              : JSON.stringify({
+                ...message, [field]: correctedReport[field],
+                report: Object.fromEntries(Object.entries(correctedReport).filter(([key]) => key !== field)),
+              });
             malformed = event.data.content;
           } else {
             assert.match(args[args.indexOf("-p") + 1]!, /^FORMAT CORRECTION/);
@@ -872,7 +880,8 @@ describe("versioned host communication", () => {
         "evidence_request", "format_error", "final",
       ]);
       assert.equal(artifact.responses?.[1], malformed);
-      assert.throws(() => JSON.parse(artifact.responses![1]!));
+      if (defect === "missing-brace") assert.throws(() => JSON.parse(artifact.responses![1]!));
+      else assert.ok(Object.hasOwn(JSON.parse(artifact.responses![1]!), condition === "with-skill" ? "finding" : "candidate"));
       assert.equal(artifact.communication?.turns[1]?.messageHash, sha256(malformed));
       assert.equal(artifact.report?.narrative, intendedReport?.narrative);
       assert.equal(artifact.evidenceToolTraces.length, 1);
@@ -886,6 +895,77 @@ describe("versioned host communication", () => {
       turns[1] = { ...turns[1]!, messageType: "final" };
       assert.equal(scoreTrial({
         ...tampered, communication: { ...tampered.communication!, turns },
+      }, truth, "fixture").integrity, "fail");
+    });
+    }
+
+    test(`corrects extra trailing request brackets before fresh approval and continues collecting evidence: ${condition}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      let modelTurns = 0;
+      let malformed = "";
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "request-format-correction",
+        caseId: "case-02", trial: 1, condition, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          if (!args.includes("-p")) return fake(args, options);
+          modelTurns++;
+          const prompt = args[args.indexOf("-p") + 1]!;
+          if (modelTurns === 1) {
+            const value = await fake(args, options);
+            const event = JSON.parse(value.stdout);
+            event.data.content += "]}";
+            malformed = event.data.content;
+            return result(JSON.stringify(event));
+          }
+          if (modelTurns <= 3) {
+            if (modelTurns === 2) {
+              assert.match(prompt, /^FORMAT CORRECTION/);
+              assert.match(prompt, /same intended evidence_request/);
+              assert.match(prompt, /fresh exact approval/);
+              assert.match(prompt, /Remaining resource budget: 7 model turns and 24 evidence calls/);
+              const ledger = JSON.parse(await readFile(join(
+                trialDirectory(root, "case-02", 1, condition), "fixture-approval-ledger.json",
+              ), "utf8"));
+              assert.equal(ledger.records.length, 0);
+            } else assert.match(prompt, /^TOOL RESULTS/);
+            return result(JSON.stringify({
+              type: "assistant.message", data: { phase: "final_answer", content: approvalResponse("case-02") },
+            }), prompt, condition === "with-skill");
+          }
+          return fake(args, options);
+        },
+      });
+      assert.equal(modelTurns, 4);
+      assert.equal(artifact.error, undefined);
+      assert.equal(artifact.endReason, "complete");
+      assert.deepEqual(artifact.communication?.turns.map((turn) => turn.messageType), [
+        "format_error", "evidence_request", "evidence_request", "final",
+      ]);
+      assert.equal(artifact.responses?.[0], malformed);
+      assert.equal(artifact.communication?.turns[0]?.messageHash, sha256(malformed));
+      assert.deepEqual(artifact.communication?.turns[0]?.requestIds, []);
+      assert.equal(artifact.evidenceToolTraces.length, 2);
+      const ledger = artifact.approvalLedger as {
+        records: { approvalId: string; requestId: string; status: string; consumedCallCount: number }[];
+      };
+      assert.equal(ledger.records.length, 2);
+      assert.equal(new Set(ledger.records.map((record) => record.approvalId)).size, 2);
+      assert.deepEqual(ledger.records.map((record) => record.requestId), [2, 3].map(
+        (turn) => `request-format-correction/${condition}/case-02/trial-1/turn-${turn}/call-1`,
+      ));
+      assert.ok(ledger.records.every((record) => record.status === "Consumed" && record.consumedCallCount === 1));
+      const truth = JSON.parse(await readFile(join(root, "inputs", "scorer-only", "truth", "case-02.json"), "utf8"));
+      const scored = scoreTrial(artifact, truth, "fixture");
+      assert.equal(scored.integrity, "pass", scored.integrityFailures.join("; "));
+      assert.deepEqual(scored.recovery, { formatErrors: 1, queryErrors: 0 });
+      assert.equal(scored.strictGates.approvalContract, true);
+      assert.equal(scored.strictGates.noUnauthorizedToolCall, true);
+      const turns = [...artifact.communication!.turns];
+      turns[0] = { ...turns[0]!, messageHash: sha256("fabricated rejection") };
+      assert.equal(scoreTrial({
+        ...artifact, communication: { ...artifact.communication!, turns },
       }, truth, "fixture").integrity, "fail");
     });
 
@@ -981,6 +1061,58 @@ describe("versioned host communication", () => {
       }
     });
     }
+  }
+
+  for (const failure of [
+    "stale-identity", "wrong-target", "expired-approval", "changed-type", "second-syntax-error", "second-field-error",
+  ] as const) {
+    test(`rejects ${failure} after a malformed evidence request without executing calls`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = fakeCliInvoker();
+      let modelTurns = 0;
+      let rejectedMessageId = "";
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "request-correction-boundary",
+        caseId: "case-01", trial: 1, clock: () => NOW,
+        cliInvoker: async (args, options) => {
+          const value = await fake(args, options);
+          if (!args.includes("-p")) return value;
+          modelTurns++;
+          const prompt = args[args.indexOf("-p") + 1]!;
+          if (modelTurns === 1) {
+            const event = JSON.parse(value.stdout);
+            rejectedMessageId = JSON.parse(event.data.content).messageId;
+            event.data.content += "]}";
+            return result(JSON.stringify(event));
+          }
+          if (failure === "changed-type") return value;
+          const response = result(JSON.stringify({
+            type: "assistant.message", data: { phase: "final_answer", content: approvalResponse("case-01") },
+          }), prompt);
+          const event = JSON.parse(response.stdout);
+          const message = JSON.parse(event.data.content);
+          if (failure === "stale-identity") message.messageId = rejectedMessageId;
+          else if (failure === "wrong-target") message.approvalRequests[0].target = "case-02";
+          else if (failure === "expired-approval") message.approvalRequests[0].expiresAt = NOW.toISOString();
+          else if (failure === "second-field-error") message.unexpected = true;
+          event.data.content = JSON.stringify(message) + (failure === "second-syntax-error" ? "]}" : "");
+          return result(JSON.stringify(event));
+        },
+      });
+      assert.equal(modelTurns, 2);
+      assert.equal(artifact.endReason, "error");
+      assert.equal(artifact.evidenceToolTraces.length, 0);
+      assert.equal(artifact.report, undefined);
+      assert.equal(artifact.communication?.errorCode,
+        failure === "stale-identity" ? "context-mismatch" :
+          failure === "wrong-target" || failure === "expired-approval" ? "invalid-approval" :
+            failure === "changed-type" ? "invalid-format-correction" :
+              failure === "second-syntax-error" ? "invalid-json" :
+                "invalid-fields");
+      const truth = JSON.parse(await readFile(join(root, "inputs", "scorer-only", "truth", "case-01.json"), "utf8"));
+      assert.equal(scoreTrial(artifact, truth, "fixture").integrity, "fail");
+    });
   }
 
   for (const failure of ["second-syntax-error", "last-turn", "new-evidence", "failed-process"] as const) {

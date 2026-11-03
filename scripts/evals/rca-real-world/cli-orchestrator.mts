@@ -105,7 +105,7 @@ export async function runCliTrial(
   let cleanupError: string | undefined;
   let calls = 0;
   let formatCorrections = 0;
-  let correctingFormat = false;
+  let correctingFormat: "evidence_request" | "final" | "blocked" | undefined;
   let successfulInvocation = false;
   const emptyLedger: ApprovalLedgerArtifact = {
     schemaVersion: "1.0.0", authority: "simulated-protocol-fixture",
@@ -183,22 +183,26 @@ export async function runCliTrial(
       });
       if (message.messageType === "format_error") {
         if (formatCorrections >= COMMUNICATION_LIMITS.formatCorrections || turn === MAX_MODEL_TURNS) {
-          throw new CommunicationError("invalid-json", "Malformed terminal JSON; no format-correction opportunity remains");
+          throw new CommunicationError(message.errorCode, "Invalid envelope; no format-correction opportunity remains");
         }
         formatCorrections += 1;
-        correctingFormat = true;
+        correctingFormat = message.intendedMessageType;
         prompt = [
-          `FORMAT CORRECTION for ${options.caseId}: your previous final answer was rejected as invalid-json.`,
-          "Return the same intended final or blocked report as one complete JSON object, using the new identity fields below.",
-          "Correct JSON syntax only: close every object and array, and escape narrative string content. Do not request tools, add evidence, change the diagnostic claims, or treat the rejected answer as accepted.",
+          `FORMAT CORRECTION for ${options.caseId}: your previous final answer was rejected as ${message.errorCode}.`,
+          `Validation error: ${message.errorMessage}`,
+          `Return the same intended ${message.intendedMessageType} envelope as one complete JSON object, using the new identity fields below.`,
+          message.intendedMessageType === "evidence_request"
+            ? "Correct JSON syntax and field placement only. Preserve the intended exact tools, operations, parameters, targets, and scope; do not add calls or broaden collection. Renew expiresAt using the current host timing below. The rejected request authorized and executed nothing; corrected calls require fresh exact approval and validation."
+            : "Correct JSON syntax and field placement only: close every object and array, escape narrative strings, and keep diagnostic fields inside report. Do not request tools, add evidence, change the diagnostic claims, or treat the rejected answer as accepted.",
           "The original answer remains in the audit. This is the only format-correction opportunity; another invalid answer fails the session.",
           `Remaining resource budget: ${MAX_MODEL_TURNS - turn} model turns and ${MAX_EVIDENCE_CALLS - calls} evidence calls. No budget is extended.`,
         ].join("\n\n");
         continue;
       }
-      if (correctingFormat && message.messageType === "evidence_request") {
-        throw new CommunicationError("invalid-format-correction", "A syntax-correction turn cannot request new evidence");
+      if (correctingFormat && message.messageType !== correctingFormat) {
+        throw new CommunicationError("invalid-format-correction", "A format-correction turn must preserve the intended message type");
       }
+      correctingFormat = undefined;
       if (message.messageType !== "evidence_request") {
         report = message.report;
         finalResponse = report.narrative;
@@ -558,11 +562,16 @@ export function parseCliResponse(
   return { ...parsed, messages };
 }
 
-/** Retains a sole malformed terminal answer as an explicit rejection, never as an accepted model report. */
+/** Rejects a sole final-answer envelope's syntax or field layout without accepting or executing it. */
 export function parseCliTurn(
   events: readonly CliJsonEvent[], context: MessageContext,
 ): ReturnType<typeof parseCliResponse> | {
-  readonly message: { readonly messageType: "format_error" };
+  readonly message: {
+    readonly messageType: "format_error";
+    readonly intendedMessageType: "evidence_request" | "final" | "blocked";
+    readonly errorCode: "invalid-json" | "invalid-fields";
+    readonly errorMessage: string;
+  };
   readonly messageIndex: number;
   readonly messageHash: string;
   readonly messages: readonly string[];
@@ -570,13 +579,20 @@ export function parseCliTurn(
   try {
     return parseCliResponse(events, context);
   } catch (error) {
-    if (!(error instanceof CommunicationError) || error.code !== "invalid-json") throw error;
+    if (!(error instanceof CommunicationError) ||
+        (error.code !== "invalid-json" && error.code !== "invalid-fields")) throw error;
     const messages = extractAssistantMessages(events);
     const message = messages[0];
-    if (messages.length !== 1 || message?.phase !== "final_answer" ||
-        !/"messageType"\s*:\s*"(?:final|blocked)"/.test(message.content)) throw error;
+    if (messages.length !== 1 || message?.phase !== "final_answer") throw error;
+    const typeFields = [...message.content.matchAll(/"messageType"\s*:/g)];
+    const intendedMessageType = /"messageType"\s*:\s*"([^"]*)"/.exec(message.content)?.[1];
+    if (typeFields.length !== 1 || (intendedMessageType !== "evidence_request" &&
+        intendedMessageType !== "final" && intendedMessageType !== "blocked")) throw error;
     return {
-      message: { messageType: "format_error" }, messageIndex: 0,
+      message: {
+        messageType: "format_error", intendedMessageType,
+        errorCode: error.code, errorMessage: error.message,
+      }, messageIndex: 0,
       messageHash: sha256(message.content), messages: [message.content],
     };
   }

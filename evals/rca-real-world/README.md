@@ -2,7 +2,7 @@
 title: RCAEval real-world RCA evaluation
 description: Compare skilled and skill-free RCA on five blinded RCAEval cases with bounded evidence tools
 author: HVE Core Team
-ms.date: 2026-11-02
+ms.date: 2026-11-03
 ms.topic: reference
 keywords:
   - root cause analysis
@@ -102,7 +102,7 @@ The preparation command creates two separate roots:
 * `model-visible/` contains neutrally named incident metadata and deterministic evidence stores.
 * `scorer-only/` contains source provenance, hashes, and held-out service and fault labels.
 
-The `ad-hoc-v7` protocol compares two ad hoc investigations in the same Copilot CLI host.
+The `ad-hoc-v8` protocol compares two ad hoc investigations in the same Copilot CLI host.
 Each condition runs in a fresh temporary workspace and independent model session. Only the
 `with-skill` condition receives the three packaged RCA skills. The `without-skill` condition
 receives no skill bundle, no custom agent, and no RCA reasoning procedure. Both receive the
@@ -157,17 +157,23 @@ extract the published examples and validate each through the production message 
 including rejection of an extra trailing closing brace. Populated evidence-request examples also
 pass through the host's approval validation, simulated ledger, and deterministic fixture execution.
 This is prompt guidance, not generation-time JSON-schema enforcement. JSONL CLI output does not
-constrain the model's JSON. A sole `final_answer` with malformed JSON that identifies itself as
-`final` or `blocked` can receive one explicit format-correction turn in the same session.
+constrain the model's JSON. A sole `final_answer` envelope with malformed JSON or invalid field
+placement (`invalid-json` or `invalid-fields`) can receive one explicit format-correction turn
+in the same session. Its message type must be unambiguous: `evidence_request`, `final`, or `blocked`.
 The host retains the rejected text and capture, records a `format_error` audit turn and its hash,
-and asks for the same intended report with corrected syntax and the next invocation identity.
-It does not append braces, repair text, or accept a malformed report. The correction cannot
-request new evidence; a second syntax rejection or an exhausted turn budget fails the session.
-Identity, field, authority, phase, size, approval, and execution violations remain fatal.
+and asks for the same intended message with corrected syntax or field placement and the next
+invocation identity. It does not append braces, move fields, or accept a malformed message.
+The replacement must preserve the message type. A report correction cannot request evidence;
+an evidence-request correction requires fresh exact approval, current expiry, and all normal
+target, scope, parameter, and budget checks before any call executes. After a corrected request,
+the investigation continues normally. The single correction allowance is shared across syntax
+and field errors; a second rejection or an exhausted turn budget fails the session.
+Identity, authority, phase, size, approval, and execution violations remain fatal.
 The scorer replays both the rejection and replacement from stored captures. Trial results retain
 `recovery.formatErrors` and `recovery.queryErrors`; report tables expose both rejection counts,
-including on failed sessions. A valid corrected report is not evidence that the first answer was valid
-or that the correction preserved every diagnostic claim; human review can compare both texts.
+including on failed sessions. A valid corrected message is not evidence that the first answer was
+valid or that the correction preserved every diagnostic claim or requested parameter; human review
+can compare both texts.
 
 An evidence request contains exact `approvalRequests`; the host validates the complete batch's
 tool names, operations, scope, call counts, and expiries before any call executes.
@@ -234,7 +240,7 @@ headings. Set A and Set B belong under `1. Status and Finding`, followed by the 
 The scorer and scaffold share the same heading list; a failed heading check identifies the
 missing titles. This does not relax the gate or replace the required section content with
 headings alone. The baseline receives no skilled narrative scaffold.
-A model can finish without tools or after any evidence batch. The single syntax-correction
+A model can finish without tools or after any evidence batch. The single format-correction
 opportunity consumes a model turn, usage, and wall time within the existing limits. No failed
 session is retried automatically, and historical responses or scores are never repaired.
 
@@ -354,7 +360,7 @@ remain in each trial result; compatibility and unsupported claims require human 
 
 Earlier runs used prescribed scope, pre/post-comparison, and focused-query stages; some also
 requested a two-category baseline. Those saved outputs do not establish ad hoc performance.
-Start a new run ID for `ad-hoc-v7`; continuation of older protocols, including `ad-hoc-v6`, is rejected. The immutable
+Start a new run ID for `ad-hoc-v8`; continuation of older protocols, including `ad-hoc-v7`, is rejected. The immutable
 input fingerprint also rejects changed prompts or scoring. Preserve prior evidence and do not
 pool old and new protocols, or debug and production results, as one experiment.
 
@@ -526,8 +532,9 @@ not prove the value was a credential. Reports with missing metadata disclose tha
 > unrelated failures to masking. Human reviewers must assess material evidence loss and permitted
 > source retrieval; masking alone does not invalidate a diagnosis.
 
-The format-preserving redaction and disclosure contract uses protocol `ad-hoc-v7`. Use fresh run
-IDs; do not pool or rewrite earlier protocol runs.
+The format-preserving redaction and disclosure contract was introduced in `ad-hoc-v7` and is
+retained in `ad-hoc-v8`, which extends bounded envelope correction. Use fresh run IDs; do not
+pool or rewrite earlier protocol runs.
 
 ## Interpretation limits
 

@@ -4,9 +4,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { PassThrough } from "node:stream";
-import { boundedCliJsonOutput, boundedCliOutput, parseCliEvents, parseCliResponse } from "../../../evals/rca-real-world/cli-orchestrator.mts";
+import { boundedCliJsonOutput, boundedCliOutput, parseCliEvents, parseCliResponse, parseCliTurn } from "../../../evals/rca-real-world/cli-orchestrator.mts";
 import { parseApprovalRequest } from "../../../evals/rca-real-world/approval.mts";
-import { EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS } from "../../../evals/rca-real-world/contracts.mts";
+import { EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS, sha256 } from "../../../evals/rca-real-world/contracts.mts";
 import {
   COMMUNICATION_LIMITS, messageInstruction, parseModelMessages, validateDiagnosticReport,
   type DiagnosticReport,
@@ -229,6 +229,51 @@ test("enforces UTF-8 bytes, not character counts, without clipping input", () =>
 });
 
 const cliMessage = (content: string, phase: unknown) => ({ type: "assistant.message", data: { content, phase } });
+
+for (const messageType of ["evidence_request", "final", "blocked"] as const) {
+  for (const defect of ["syntax", "fields"] as const) {
+    test(`classifies one ${messageType} ${defect} rejection without accepting its envelope`, () => {
+      const envelope = messageType === "evidence_request"
+        ? { ...identity, messageType, approvalRequests: [request] }
+        : { ...identity, messageType, report, ...(messageType === "blocked" ? { reason: "Source unavailable." } : {}) };
+      const text = defect === "syntax"
+        ? `${JSON.stringify(envelope)}]}`
+        : JSON.stringify({ ...envelope, unexpected: true });
+      assert.throws(() => parseCliResponse([cliMessage(text, "final_answer")], context));
+      const parsed = parseCliTurn([cliMessage(text, "final_answer")], context);
+      assert.deepEqual(parsed.message, {
+        messageType: "format_error", intendedMessageType: messageType,
+        errorCode: defect === "syntax" ? "invalid-json" : "invalid-fields",
+        errorMessage: defect === "syntax" ? "Machine message contains malformed JSON"
+          : `Expected exactly these fields: protocol, messageId, caseId, messageType, ${
+            messageType === "evidence_request" ? "approvalRequests" : messageType === "blocked" ? "report, reason" : "report"
+          }`,
+      });
+      assert.deepEqual(parsed.messages, [text]);
+      assert.equal(parsed.messageHash, sha256(text));
+    });
+  }
+}
+
+test("format recovery does not reinterpret ambiguous intent, multiple public messages, identity, phase, or authority errors", () => {
+  const malformed = `${approval}]}`;
+  assert.throws(() => parseCliTurn([
+    cliMessage("Collecting evidence.", "commentary"), cliMessage(malformed, "final_answer"),
+  ], context), { code: "invalid-json" });
+  assert.throws(() => parseCliTurn([cliMessage(malformed, "commentary")], context), { code: "invalid-json" });
+  for (const otherType of ['"final"', '"unknown"', "null", "0"]) {
+    const ambiguous = approval.replace(
+      '"messageType":"evidence_request"', `"messageType":${otherType},"messageType":"evidence_request"`,
+    ) + "]}";
+    assert.throws(() => parseCliTurn([cliMessage(ambiguous, "final_answer")], context), { code: "invalid-json" });
+  }
+  const stale = JSON.stringify({ ...identity, messageId: "stale", messageType: "final", report, unexpected: true });
+  assert.throws(() => parseCliTurn([cliMessage(stale, "final_answer")], context), { code: "context-mismatch" });
+  const unauthorized = JSON.stringify({
+    ...identity, messageType: "final", report: { ...report, authority: { simulated: false, productionAuthorization: true } },
+  });
+  assert.throws(() => parseCliTurn([cliMessage(unauthorized, "final_answer")], context), { code: "invalid-authority" });
+});
 
 for (const fenced of [false, true]) {
   test(`CLI handoff accepts one ${fenced ? "fenced" : "raw"} final-answer envelope after commentary`, () => {

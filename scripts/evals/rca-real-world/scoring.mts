@@ -517,6 +517,7 @@ function auditCommunication(artifact: TrialArtifact): {
       throw new Error("terminal report, finalResponse, or session end state is inconsistent");
     }
     let formatErrors = 0;
+    let correctingFormat: "evidence_request" | "final" | "blocked" | undefined;
     for (const [index, rawTurn] of turns.entries()) {
       const turn = asRecord(rawTurn);
       const messageId = `${artifact.runId}/${artifact.condition}/${artifact.caseId}/trial-${artifact.trial}/turn-${index + 1}`;
@@ -545,15 +546,17 @@ function auditCommunication(artifact: TrialArtifact): {
       }
       if (parsed.message.messageType === "format_error") {
         formatErrors += 1;
+        correctingFormat = parsed.message.intendedMessageType;
         if ((audit.outcome === "final" || audit.outcome === "blocked") &&
             (formatErrors > COMMUNICATION_LIMITS.formatCorrections || index === turns.length - 1)) {
-          throw new Error("terminal JSON correction exceeds the shared limit or has no accepted replacement");
+          throw new Error("envelope correction exceeds the shared limit or has no accepted replacement");
         }
         continue;
       }
-      if (formatErrors > 0 && parsed.message.messageType === "evidence_request") {
-        throw new Error("syntax correction cannot authorize further evidence calls");
+      if (correctingFormat && parsed.message.messageType !== correctingFormat) {
+        throw new Error("format correction must preserve the intended message type");
       }
+      correctingFormat = undefined;
       if (parsed.message.messageType !== "evidence_request") {
         if (index !== turns.length - 1 || audit.outcome !== parsed.message.messageType ||
             stableJson(parsed.message.report) !== stableJson(report) ||
