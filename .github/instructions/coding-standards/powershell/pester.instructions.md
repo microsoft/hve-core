@@ -5,7 +5,7 @@ applyTo: '**/*.Tests.ps1'
 
 # Pester Testing Instructions
 
-Pester 5.x is the testing framework for all PowerShell code. Run tests through the repository's test runner (check `package.json` for a test script, or invoke `Invoke-Pester` directly if no runner is configured). Follow the repository's conventions for test execution.
+Pester 6.x is the testing framework for all PowerShell code. Run tests through the repository's test runner (check `package.json` for a test script, or invoke `Invoke-Pester` directly if no runner is configured). Follow the repository's conventions for test execution.
 
 ## Test File Naming
 

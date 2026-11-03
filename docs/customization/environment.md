@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -25,7 +25,7 @@ The DevContainer ships with these tools:
 
 * Node.js 24.21.0 with npm (from `.node-version`)
 * Python 3.12.15 (from `.python-version`)
-* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
+* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 6.2.0
 * Git and GitHub CLI
 * GitHub Copilot CLI (`copilot`)
 * Azure CLI
@@ -266,7 +266,7 @@ The coding agent environment includes:
 
 * Node.js 24.21.0 (from `.node-version`) with npm dependencies from `package.json`
 * Python 3.12.15 (from `.python-version`)
-* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
+* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 6.2.0
 * shellcheck 0.11.0 and zizmor 1.30.1, each pinned with per-architecture
   SHA-256 digests in `copilot-setup-steps.yml`. `npm run
   lint:tool-version-consistency` requires those versions and digests to match
@@ -310,7 +310,7 @@ share most tools but differ intentionally in a few areas.
 | Python 3.12.15          | Yes          | Yes          |
 | PowerShell 7.4          | Yes          | Yes          |
 | PSScriptAnalyzer 1.25.0 | Yes          | Yes          |
-| Pester 5.7.1            | Yes          | Yes          |
+| Pester 6.2.0            | Yes          | Yes          |
 | shellcheck              | Yes          | Yes          |
 | zizmor                  | Yes          | Yes          |
 | cosign                  | Yes          | Yes          |
