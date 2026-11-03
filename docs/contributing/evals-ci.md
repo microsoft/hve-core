@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-26
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - evals
@@ -304,6 +304,59 @@ Eval artifacts therefore publish aggregate results only. These paths are deliber
 | `logs/vally-compare-*.log`       | Raw judge-run output                               |
 
 What is still published covers the summaries that drive the gate and the per-artifact debugging payloads: `logs/eval-summary.json`, `logs/eval-results-*.json`, `logs/baseline-equivalence-*.json`, and the changed-artifact and stimulus-presence manifests. None of these embed model output.
+
+Baseline producer summaries use version `2.2.0`. Their bounded
+`invariantDiagnostics` records configured stimulus/invariant identities and
+counts, not answer text. There are at most 20 grouped failure rows per model;
+`omittedFailureCount` explicitly accounts for overflow. Combined summaries
+preserve both models' actual outcomes in `perModelEvidence` and omit free-text
+or path-bearing source objects. A valid failing envelope remains a measured
+failure with status category `evidence`; malformed, stale or inconsistent
+evidence remains a fail-closed `contract` error.
+
+The authoritative summary uses version `1.1.0` and validates these rows again.
+Its report identifies the actual failing model, not an aggregate primary-model
+label. Comparison pairs, evaluated invariant checks, failed invariants,
+run-health and structural failures have separate counters. The report still
+uses `failedSpecs` for its merge-blocking status. Invalid report evidence
+replaces the marker with a fixed withheld notice and fails the report step;
+no rejected text is included in that notice.
+
+Local regression, live semantic calibration and hosted acceptance are distinct.
+The prose recommendation check uses a conjunctive binary judge, while Rust's
+deterministic baseline check is only a declaration floor. Static checks and
+mocked judge calls do not prove semantic accuracy or a green hosted run.
+Model execution, publication and reruns require their own intended execution
+and provisioned prerequisites; none is inferred from generic local validation.
+
+The branch-profile prose check uses the repository's `strict-prompt` native
+grader, registered through the root project config. The
+[module](../../scripts/evals/graders/strict-prompt.mjs) composes Vally's public
+prompt grader and client with a fixed four-key verdict form. Missing/extra keys,
+non-binary scores and criterion/overall contradictions cannot be accepted by
+its tool validator. Only a validated form is projected to native result details;
+no omitted score or inconsistent overall verdict is repaired.
+
+Registration and native lint do not create a client. Real grading retains the
+native model, provider, read-only evidence policy and timeout/abort controls,
+with an awaited cleanup owner. Existing native protocol reminders are bounded
+before acceptance; no caller-level regrade loop is added. Local tests use fake
+clients, and valid form shape alone does not establish semantic accuracy.
+
+Root project config and dependency inputs participate in run fingerprints.
+Project config changes, native grader code and owned schema dependency changes
+remain evaluation-relevant without broadening every package change into the lane.
+
+The case also opts into complete binary scorecards. Trial
+diagnostic version `2.1.0` records the trusted criterion IDs in the configured
+inventory and numeric `criterionScores` in each grader result. The runner and
+authoritative validator reject missing, duplicate, unknown or contradictory
+scores independently of the native overall verdict. A
+`criterion-scorecard-mismatch` is an evidence-integrity failure, not proof that
+the answer's behavior is wrong. No model reasoning or raw criterion labels are
+published. Non-opted-in checks remain on diagnostic version `2.0.0`; these
+trial-diagnostic versions are separate from baseline and aggregate summary
+versions.
 
 To narrow a failed program grader without a transcript, read its bounded `failureCodes` under `perSpec[].diagnostics.attempts[].trials[].graders[]` in `eval-summary.json`. Only codes from a fixed per-grader vocabulary are published; the [agent-behavior suite guide](https://github.com/microsoft/hve-core/blob/main/evals/agent-behavior/README.md#program-grader-failure-codes) lists the outcome grader's field codes.
 

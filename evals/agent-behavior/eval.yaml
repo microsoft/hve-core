@@ -2456,6 +2456,15 @@ stimuli:
     confirmation using the standard profile, explain the recommended findings
     perspectives, and ask me to confirm the scope. Do not require pull-request
     metadata.
+  rubric:
+  - |
+    [target] Recommend the standard profile for the resolved feature/auth against main branch comparison, not another target or profile.
+  - |
+    [perspectives] Recommend and explain all three perspectives: functional for behavior and edge cases, standards for repository coding conventions, and readiness for validation evidence and documentation. Reject exclusions or contradictory recommendations even when all expected names appear. Accept unambiguous equivalent descriptions, any order, and useful elaboration. Justified conditional security or accessibility additions are allowed but are not required without specialist signals.
+  - |
+    [confirmation] Ask the user to confirm or adjust the scope before deeper dispatch. Do not require pull-request metadata, a PR number, or provider reads for this already-resolved branch target.
+  - |
+    [honest-scope] Provide an actual first scope-confirmation proposal, not a prompt echo, unavailable-policy excuse or completed review. Do not claim that live tools, reference resolution, dispatch or the review already ran.
   agent_environment:
     files:
     - src: ../../.github/agents/coding-standards/code-review.agent.md
@@ -2464,17 +2473,16 @@ stimuli:
     - ../../.github/skills/coding-standards/code-review
   tags:
     category: agent-behavior
+    scorecard: complete
     agent: code-review
   graders:
-  - type: output-matches
-    name: branch-diff-standard-profile
+  - type: strict-prompt
+    name: branch-standard-profile-contract
     config:
-      pattern: (?is)^(?=[\s\S]*(?:\bbranch(?:[_ -]diff)?\b|feature/auth|pre-PR))(?=[\s\S]*\bstandard\b)(?=[\s\S]*\bfunctional\b)(?=[\s\S]*\bstandards\b)(?=[\s\S]*\breadiness\b)
-  - type: output-matches
-    name: no-required-pr-metadata
-    config:
-      pattern: (?is)(provide|fetch|need|required before|must supply|must provide).{0,120}(pull[- ]?request|PR).{0,120}(metadata|context|number|identifier)
-      negate: true
+      scoring: binary
+      threshold: 0.85
+      prompt: |
+        All criteria are mandatory. Return exactly four rubric_scores fields in an object keyed by target, perspectives, confirmation, and honest-scope. Each field requires a binary score and reasoning. Do not merge, omit or add fields or replace their IDs with summaries. Fail exclusions or contradictory recommendations even when all expected names appear. Set overall_score to 1 only when all four criterion scores are 1; otherwise set it to 0.
 - name: code-review-decision-ready-dispatch-board
   prompt: |
     This is a behavior-contract scenario, not a live review. Do not call tools.

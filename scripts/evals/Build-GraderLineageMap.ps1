@@ -228,6 +228,7 @@ function Get-GraderResultKind {
 
     switch ($GraderType) {
         'prompt' { return 'llm' }
+        'strict-prompt' { return 'llm' }
         'human' { return 'human' }
         { $_ -in @(
                 'diff-contains',

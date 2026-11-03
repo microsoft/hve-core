@@ -78,7 +78,7 @@ $script:GeneratorScriptPath = $PSCommandPath
 $script:RegisteredGraderTypes = [System.Collections.Generic.HashSet[string]]::new(
     [System.StringComparer]::OrdinalIgnoreCase
 )
-foreach ($graderType in @('file-exists', 'file-matches', 'output-matches', 'prompt', 'wall-time')) {
+foreach ($graderType in @('file-exists', 'file-matches', 'output-matches', 'prompt', 'strict-prompt', 'wall-time')) {
     [void]$script:RegisteredGraderTypes.Add($graderType)
 }
 

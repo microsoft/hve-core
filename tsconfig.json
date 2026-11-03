@@ -6,8 +6,10 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "strict": true,
+    "allowJs": true,
+    "checkJs": true,
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["scripts/**/*.mts"]
+  "include": ["scripts/**/*.mts", "scripts/evals/graders/strict-prompt.mjs"]
 }

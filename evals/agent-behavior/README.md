@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-10-29
+ms.date: 2026-11-02
 ---
 
 ## Purpose
@@ -122,6 +122,48 @@ passage, and rejects contradictory clearance claims even when correct phrases
 also appear. The eight labeled controls in
 [post-repair-grader-controls.json](../../scripts/tests/evals/fixtures/specs/post-repair-grader-controls.json)
 are inputs for later genuine calibration, not measured judge results.
+
+The branch-diff standard-profile case uses one binary `strict-prompt` judge at `0.85`
+for its complete recommendation contract. It requires the resolved branch
+target, the three default perspectives and their purpose, scope confirmation
+before dispatch, and no PR-metadata prerequisite. Equivalent descriptions,
+ordering and explanation length are accepted; a later exclusion contradicting
+an otherwise correct recommendation fails. Conditional specialist perspectives
+are allowed when justified. This ordinary agent-behavior stimulus remains
+non-advisory, with the existing five trials and `0.7` suite threshold.
+
+The four behavior criteria have stable IDs: `target`, `perspectives`,
+`confirmation`, and `honest-scope`. The
+[native grader module](../../scripts/evals/graders/strict-prompt.mjs), registered in
+[the project config](../../.vally.yaml), reuses Vally's public prompt grader and
+client. Its verdict tool requires an object with exactly those four keys, binary
+scores and an overall pass only when all four pass. It validates the submitted
+overall score rather than replacing an inconsistent verdict.
+
+The module is inert during registration and lint. Each grade owns its native
+client and awaits cleanup, including cancellation and late startup. Client
+startup consumes the existing grading timeout; it does not add another budget.
+Native format-validation reminders remain bounded by the framework default of
+two before a judgment is accepted. They do not authorize caller retries of an
+accepted negative verdict or a calibration mismatch.
+
+The stimulus opts into `scorecard: complete`; after validated native projection,
+the runner independently verifies the same contract. Missing, duplicate, unknown
+or contradictory scores fail evidence integrity even when the native overall
+verdict passes. Incomplete scorecards are not retried until green.
+
+Opted-in trial diagnostics use version `2.1.0`, carrying configured criterion
+IDs and bounded `criterionScores` containing only `id` and `score`. Raw criterion
+labels and reasoning are not published. Other stimuli retain their existing
+`2.0.0` diagnostic contract and behavior.
+
+The [contract controls](../../scripts/tests/evals/fixtures/specs/pr3241-contract-controls.json)
+contain 16 labeled prose answers and 20 Rust declaration-floor answers.
+Native mocked prompt-grader tests verify wiring only. Genuine prose calibration
+grades every fixed answer in three independent rounds with the configured judge,
+requiring agreement with all 48 expected labels, criterion/overall consistency,
+and zero judge errors. This is a bounded contract check, not a population-wide
+accuracy claim. Live judging and hosted acceptance are separate from local tests.
 
 The experiment outcome case keeps deterministic measurement and evidence-binding
 checks. Percentage units may appear in the value or in a label/table header,

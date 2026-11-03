@@ -465,6 +465,7 @@ stimuli:
             @{ Label = 'malformed characters'; GraderName = 'Bad_Name'; ExpectedMessage = '*must contain only lowercase letters, digits, and hyphens*' }
             @{ Label = 'overlength'; GraderName = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; ExpectedMessage = '*must be 60 characters or fewer*' }
             @{ Label = 'grader-type collision'; GraderName = 'prompt'; ExpectedMessage = '*must not equal a registered grader type*' }
+            @{ Label = 'strict grader-type collision'; GraderName = 'strict-prompt'; ExpectedMessage = '*must not equal a registered grader type*' }
         ) {
             Write-Partial -Root $script:TestRoot -Slug 'invalid-grader' -Content @"
 stimuli:

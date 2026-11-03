@@ -149,6 +149,48 @@ Describe 'Immutable eval change selection' -Tag 'Unit' {
         finally { $null = Invoke-FixtureGit @('checkout', '--detach', $script:MergeHead) }
     }
 
+    It 'Tracks owned runtime configuration and schema dependencies: <Case>' -Tag 'StrictRuntime' -ForEach @(
+        @{ Case = 'add'; Expected = $true }
+        @{ Case = 'delete'; Expected = $true }
+        @{ Case = 'rename-in'; Expected = $true }
+        @{ Case = 'rename-out'; Expected = $true }
+        @{ Case = 'zod'; Expected = $true }
+        @{ Case = 'lock-zod'; Expected = $true }
+        @{ Case = 'other dependency'; Expected = $false }
+        @{ Case = 'documentation'; Expected = $false }
+    ) {
+        $null = Invoke-FixtureGit @('checkout', '--detach', $script:Base)
+        try {
+            $package = @{
+                devDependencies = [ordered]@{
+                    '@microsoft/vally-cli' = '0.19.0'
+                    zod = '4.6.7'
+                    ordinary = '1.0'
+                }
+            } | ConvertTo-Json -Depth 4
+            Set-FixtureFile 'package.json' $package
+            Set-FixtureFile 'package-lock.json' $package
+            if ($Case -in @('delete', 'rename-out')) { Set-FixtureFile '.vally.yaml' 'synthetic registration' }
+            if ($Case -eq 'rename-in') { Set-FixtureFile 'previous.yaml' 'synthetic registration' }
+            $base = Save-FixtureCommit 'runtime seed'
+            switch ($Case) {
+                'add' { Set-FixtureFile '.vally.yaml' 'synthetic registration' }
+                'delete' { $null = Invoke-FixtureGit @('rm', '.vally.yaml') }
+                'rename-in' { $null = Invoke-FixtureGit @('mv', 'previous.yaml', '.vally.yaml') }
+                'rename-out' { $null = Invoke-FixtureGit @('mv', '.vally.yaml', 'archived.yaml') }
+                'zod' { Set-FixtureFile 'package.json' ($package.Replace('"4.6.7"', '"4.6.8"')) }
+                'lock-zod' { Set-FixtureFile 'package-lock.json' ($package.Replace('"4.6.7"', '"4.6.8"')) }
+                'other dependency' { Set-FixtureFile 'package.json' ($package.Replace('"1.0"', '"2.0"')) }
+                'documentation' { Set-FixtureFile 'CONTRIBUTING.md' 'runtime notes' }
+            }
+            $head = Save-FixtureCommit 'runtime change'
+            $set = New-EvalChangeSet -RepoRoot $script:Repo -BaseRef $base -HeadRef $head
+            if ($Case -like 'rename-*') { $set.changes[0].status | Should -Be 'R' }
+            Test-EvalChangeSetRelevance -ChangeSet $set -RepoRoot $script:Repo | Should -Be $Expected
+        }
+        finally { $null = Invoke-FixtureGit @('checkout', '--detach', $script:MergeHead) }
+    }
+
     It 'does not suppress package patch failures' {
         $Set = New-EvalChangeSet -RepoRoot $script:Repo -BaseRef $script:Base -HeadRef $script:DocsHead
         $Set.changes = @(@{ status = 'M'; path = 'package.json'; previousPath = $null })

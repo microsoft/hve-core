@@ -175,6 +175,62 @@ function Get-VallySpecThreshold {
     return [double]$threshold.Value
 }
 
+function Get-VallyCriterionScorecard {
+    <#
+    .SYNOPSIS
+    Projects a complete binary scorecard onto trusted criterion identities.
+    .PARAMETER Criteria
+    Configured stable criterion IDs, in rubric order.
+    .PARAMETER Detail
+    Native prompt-grader detail; raw labels and reasoning are never returned.
+    .OUTPUTS
+    Completeness, conjunction consistency, and bounded configured scores.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)][string[]]$Criteria,
+        [AllowNull()]$Detail
+    )
+
+    if ($Criteria.Count -lt 1 -or $Criteria.Count -gt 16 -or
+        @($Criteria | Sort-Object -Unique).Count -ne $Criteria.Count -or
+        @($Criteria | Where-Object { $_ -cnotmatch '^[a-z][a-z-]{0,31}$' }).Count -gt 0) {
+        throw 'Invalid configured scorecard criteria.'
+    }
+    $raw = @()
+    if ($Detail -and $Detail.PSObject.Properties['metadata'] -and $Detail.metadata -and
+        $Detail.metadata.PSObject.Properties['rubric_scores']) {
+        $raw = @($Detail.metadata.rubric_scores)
+    }
+    $complete = $raw.Count -eq $Criteria.Count
+    $scores = [System.Collections.Generic.Dictionary[string, int]]::new([StringComparer]::Ordinal)
+    foreach ($entry in $raw) {
+        $id = if ($entry -and $entry.PSObject.Properties['criterion'] -and $entry.criterion -is [string]) {
+            $entry.criterion.Trim()
+        } else { '' }
+        if ($id -cmatch '^\[([a-z][a-z-]{0,31})\](?:\s|$)') { $id = $Matches[1] }
+        if ($id -cnotin $Criteria -or $scores.ContainsKey($id) -or
+            -not $entry.PSObject.Properties['score'] -or $entry.score -isnot [ValueType] -or
+            $entry.score -is [bool] -or $entry.score -notin @(0, 1)) {
+            $complete = $false
+            continue
+        }
+        $scores.Add($id, [int]$entry.score)
+    }
+    $complete = $complete -and $scores.Count -eq $Criteria.Count
+    $projected = @(
+        foreach ($id in $Criteria) {
+            if ($scores.ContainsKey($id)) { [ordered]@{ id = $id; score = $scores[$id] } }
+        }
+    )
+    $allPass = @($projected | Where-Object score -EQ 0).Count -eq 0
+    $consistent = $complete -and $Detail -and $Detail.passed -is [bool] -and
+        $Detail.score -is [ValueType] -and $Detail.score -isnot [bool] -and
+        $Detail.score -in @(0, 1) -and $Detail.passed -eq $allPass -and $Detail.score -eq [int]$allPass
+    return @{ complete = [bool]$complete; consistent = [bool]$consistent; scores = $projected }
+}
+
 function Get-VallyDiagnosticConfiguration {
     <#
     .SYNOPSIS
@@ -198,6 +254,7 @@ function Get-VallyDiagnosticConfiguration {
         specDigest = $null
         selectionDigest = $null
         judgeModels = @()
+        schemaVersion = '2.0.0'
         stimuli = [System.Collections.Specialized.OrderedDictionary]::new([StringComparer]::Ordinal)
     }
     if (-not (Test-Path -LiteralPath $SpecPath -PathType Leaf)) { return $result }
@@ -235,16 +292,45 @@ function Get-VallyDiagnosticConfiguration {
             $name = [string]$stimulus.name
             if ([string]::IsNullOrWhiteSpace($name) -or $result.stimuli.Contains($name)) { return $result }
             $configuredGraders = if ($stimulus.Contains('graders')) { $stimulus.graders } else { @() }
+            $criteria = @()
+            $completeScorecard = $stimulus.Contains('tags') -and $stimulus.tags.Contains('scorecard')
+            if ($completeScorecard) {
+                if ($stimulus.tags.scorecard -cne 'complete' -or
+                    -not $stimulus.Contains('rubric') -or
+                    @($configuredGraders | Where-Object { $_.type -ceq 'strict-prompt' }).Count -eq 0) {
+                    throw 'Invalid complete-scorecard configuration.'
+                }
+                $criteria = @(
+                    foreach ($criterion in $stimulus.rubric) {
+                        if ($criterion -isnot [string] -or $criterion -cnotmatch '^\[([a-z][a-z-]{0,31})\]\s') {
+                            throw 'Complete scorecards require stable rubric IDs.'
+                        }
+                        $Matches[1]
+                    }
+                )
+                if ($criteria.Count -lt 1 -or $criteria.Count -gt 16 -or
+                    @($criteria | Sort-Object -Unique).Count -ne $criteria.Count) {
+                    throw 'Invalid complete-scorecard inventory.'
+                }
+                $result.schemaVersion = '2.1.0'
+            }
             $graders = @(
                 $index = 0
                 foreach ($grader in $configuredGraders) {
                     $configuredName = if ($grader.Contains('name')) { [string]$grader.name } else { $null }
-                    [ordered]@{
+                    $configured = [ordered]@{
                         name = if ($configuredName) { $configuredName } else { "$($grader.type)-$index" }
                         configuredName = $configuredName
                         type = [string]$grader.type
                         index = $index
                     }
+                    if ($completeScorecard -and $grader.type -ceq 'strict-prompt') {
+                        if (-not $grader.Contains('config') -or $grader.config.scoring -cne 'binary') {
+                            throw 'Complete scorecards require binary strict-prompt grading.'
+                        }
+                        $configured.criteria = $criteria
+                    }
+                    $configured
                     if ($grader.Contains('model')) { [void]$judges.Add([string]$grader.model) }
                     if ($grader.Contains('config') -and $grader.config -is [System.Collections.IDictionary] -and $grader.config.Contains('model')) {
                         [void]$judges.Add([string]$grader.config.model)
@@ -269,7 +355,7 @@ function Get-VallyInputDigest {
     .SYNOPSIS
     Hashes tracked and nonignored evaluation inputs without publishing content.
     .PARAMETER RepoRoot
-    Checkout whose artifacts, fixtures, scripts and lockfile supply the run.
+    Checkout whose artifacts, scripts, project config and dependency inputs supply the run.
     .OUTPUTS
     SHA256 digest of the ordered path and content-hash inventory.
     #>
@@ -277,7 +363,7 @@ function Get-VallyInputDigest {
     [OutputType([string])]
     param([Parameter(Mandatory = $true)][string]$RepoRoot)
 
-    $paths = @(& git -C $RepoRoot -c core.quotepath=false ls-files --cached --others --exclude-standard -- .github evals scripts package-lock.json)
+    $paths = @(& git -C $RepoRoot -c core.quotepath=false ls-files --cached --others --exclude-standard -- .github evals scripts .vally.yaml package.json package-lock.json)
     if ($LASTEXITCODE -ne 0) { return $null }
     $inputs = @(
         foreach ($path in @($paths | Sort-Object -Unique -CaseSensitive)) {
@@ -317,7 +403,7 @@ function Test-VallyDiagnosticEvidence {
         if ($data -isnot [System.Collections.IDictionary] -or
             @($required | Where-Object { -not $data.Contains($_) }).Count -gt 0 -or
             @($data.Keys | Where-Object { $_ -cnotin $required }).Count -gt 0 -or
-            $data.schemaVersion -cne '2.0.0' -or ($RunKey -and $data.runKey -cne $RunKey)) {
+            $data.schemaVersion -cnotin @('2.0.0', '2.1.0') -or ($RunKey -and $data.runKey -cne $RunKey)) {
             throw 'Invalid diagnostic contract.'
         }
         if ($data.configurationStatus -cne 'available') { [void]$issues.Add('configuration-unavailable') }
@@ -343,8 +429,16 @@ function Test-VallyDiagnosticEvidence {
             if ($expected.runs -isnot [long] -and $expected.runs -isnot [int]) { throw 'Invalid trial count.' }
             if ($expected.runs -lt 1) { throw 'Invalid trial count.' }
             foreach ($grader in $expected.graders) {
-                if (@($grader.Keys | Where-Object { $_ -cnotin @('name', 'type', 'configuredName', 'index') }).Count -gt 0 -or
+                if (@($grader.Keys | Where-Object { $_ -cnotin @('name', 'type', 'configuredName', 'index', 'criteria') }).Count -gt 0 -or
                     $grader.name -isnot [string] -or $grader.type -isnot [string]) { throw 'Invalid configured grader.' }
+                if ($grader.Contains('criteria')) {
+                    if ($data.schemaVersion -cne '2.1.0' -or $grader.type -cne 'strict-prompt' -or
+                        $grader.criteria -isnot [array] -or $grader.criteria.Count -lt 1 -or $grader.criteria.Count -gt 16 -or
+                        @($grader.criteria | Sort-Object -Unique).Count -ne $grader.criteria.Count -or
+                        @($grader.criteria | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^[a-z][a-z-]{0,31}$' }).Count -gt 0) {
+                        throw 'Invalid configured scorecard.'
+                    }
+                }
             }
             $expectedTrials += $expected.runs
         }
@@ -367,7 +461,7 @@ function Test-VallyDiagnosticEvidence {
             if ($attempt.erroredTrials -lt $bestErrors) { $bestErrors = $attempt.erroredTrials; $bestOrdinal = $ordinal }
             $attemptIssues = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
             foreach ($category in $attempt.recordIssues) {
-                if ($category -cnotin @('malformed-record', 'invalid-record', 'unknown-record-type', 'invalid-trial-score', 'unexpected-stimulus', 'grader-population-mismatch')) {
+                if ($category -cnotin @('malformed-record', 'invalid-record', 'unknown-record-type', 'invalid-trial-score', 'unexpected-stimulus', 'grader-population-mismatch', 'criterion-scorecard-mismatch')) {
                     throw 'Invalid record category.'
                 }
                 [void]$attemptIssues.Add($category)
@@ -450,6 +544,8 @@ function Test-VallyDiagnosticEvidence {
                 $graderIndex = 0
                 foreach ($grader in $trial.graders) {
                     $graderFields = @('name', 'graderType', 'score', 'passed', 'status', 'failureCodes')
+                    $configured = if ($graderIndex -lt @($expected.graders).Count) { $expected.graders[$graderIndex] } else { $null }
+                    if ($configured -and $configured.Contains('criteria')) { $graderFields += 'criterionScores' }
                     if (@($graderFields | Where-Object { -not $grader.Contains($_) }).Count -gt 0 -or
                         @($grader.Keys | Where-Object { $_ -cnotin $graderFields }).Count -gt 0) { throw 'Invalid grader contract.' }
                     if ($grader.status -cnotin @('success', 'error', 'missing', 'duplicate', 'invalid')) { throw 'Invalid grader category.' }
@@ -468,6 +564,25 @@ function Test-VallyDiagnosticEvidence {
                         $checksPass = $false
                     }
                     if ($grader.passed -ne $true) { $checksPass = $false }
+                    if ($configured -and $configured.Contains('criteria')) {
+                        if ($grader.criterionScores -isnot [array] -or $grader.criterionScores.Count -gt $configured.criteria.Count) {
+                            throw 'Invalid scorecard diagnostic fields.'
+                        }
+                        foreach ($criterion in $grader.criterionScores) {
+                            if ($criterion -isnot [System.Collections.IDictionary] -or $criterion.Count -ne 2 -or
+                                @($criterion.Keys | Where-Object { $_ -cnotin @('id', 'score') }).Count -gt 0 -or
+                                $criterion.id -cnotin $configured.criteria -or
+                                ($criterion.score -isnot [long] -and $criterion.score -isnot [int]) -or $criterion.score -notin @(0, 1)) {
+                                throw 'Invalid scorecard diagnostic value.'
+                            }
+                        }
+                        $complete = (@($grader.criterionScores | ForEach-Object { $_.id }) -join ',') -ceq ($configured.criteria -join ',')
+                        $conjunction = @($grader.criterionScores | Where-Object score -EQ 0).Count -eq 0
+                        if (-not $complete -or $grader.passed -ne $conjunction -or $grader.score -ne [int]$conjunction) {
+                            [void]$attemptIssues.Add('criterion-scorecard-mismatch')
+                            $checksPass = $false
+                        }
+                    }
                     $graderIndex++
                 }
                 if ($trial.allGradersPassed -isnot [bool] -or $trial.allGradersPassed -ne $checksPass) {
@@ -783,7 +898,7 @@ function Read-VallyResultsJsonl {
                         }
                     }
                     $detailPassed = if ($detail -and $detail.PSObject.Properties['passed'] -and $detail.passed -is [bool]) { $detail.passed } else { $null }
-                    [ordered]@{
+                    $projection = [ordered]@{
                         name = [string]$configured.name
                         graderType = [string]$configured.type
                         score = $detailScore
@@ -791,6 +906,15 @@ function Read-VallyResultsJsonl {
                         status = $detailStatus
                         failureCodes = ConvertTo-VallyFailureCodeList -GraderName ([string]$configured.name) -Detail $detail -Passed $detailPassed
                     }
+                    if ($configured.Contains('criteria')) {
+                        $scorecard = Get-VallyCriterionScorecard -Criteria $configured.criteria -Detail $detail
+                        $projection.criterionScores = $scorecard.scores
+                        if (-not $scorecard.complete -or -not $scorecard.consistent) {
+                            $projection.status = 'invalid'
+                            $recordIssues.Add('criterion-scorecard-mismatch')
+                        }
+                    }
+                    $projection
                 }
             }
         )
@@ -1561,7 +1685,7 @@ function Invoke-VallySpec {
         perStimulus      = $aggregate.perStimulus
         failedOrErroredTrials = $aggregate.failedOrErroredTrials
         diagnostics = [ordered]@{
-            schemaVersion = '2.0.0'
+            schemaVersion = $configuration.schemaVersion
             runKey = $RunKey
             configurationStatus = $configuration.status
             specDigest = $configuration.specDigest
@@ -2320,6 +2444,7 @@ function Assert-AgentEvalOwnership {
 
 Export-ModuleMember -Function @(
     'Resolve-VallyRunDir',
+    'Get-VallyCriterionScorecard',
     'Get-VallyDiagnosticConfiguration',
     'Get-VallyInputDigest',
     'Test-VallyDiagnosticEvidence',

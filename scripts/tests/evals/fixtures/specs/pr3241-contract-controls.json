@@ -1,0 +1,292 @@
+{
+  "controls": [
+    {
+      "id": "branch-canonical",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main, I recommend the standard profile: functional checks behavior and edge cases, standards checks project conventions, and readiness checks validation and documentation. No PR metadata is required for this branch comparison. Please confirm or adjust the scope before I dispatch. This is a proposed review, not a completed review.",
+      "expected": true,
+      "rationale": "All three perspectives, the resolved branch target, and the confirmation boundary are explicit."
+    },
+    {
+      "id": "branch-reordered",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "Readiness will check tests and documentation; standards will check repository conventions; functional will check correctness. That is the standard profile for feature/auth against main. If later evidence identifies specialist surfaces, security or accessibility may be added. We can proceed without PR metadata. Confirm these recommendations before dispatch; I have not run the review.",
+      "expected": true,
+      "rationale": "Ordering and justified conditional specialists do not change the required recommendation."
+    },
+    {
+      "id": "branch-expanded",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "The resolved target is feature/auth against main. Before doing any deeper work, the orientation should distinguish observed changes from questions that the later review will investigate. A preliminary signal is not a finding, and an explanation of what might matter must not be presented as a completed assessment. The board should help you decide which changed surfaces deserve attention and which are outside the comparison. The initial explanation may include ordinary context about the change without requiring a pull request to exist. It should leave room for you to correct the interpretation and narrow the intended scope. It must not infer that a particular risk has already been confirmed, and it must not claim to have fetched repository facts in this response-only scenario. This longer explanation provides context rather than replacing your approval of the proposed review. With that context, I recommend the standard profile: functional checks behavior, standards checks coding conventions, and readiness checks validation and documentation. PR metadata is not a prerequisite. Please confirm or adjust this scope before dispatch. No review or reference resolution has run.",
+      "expected": true,
+      "rationale": "Useful elaboration does not impose an arbitrary character-distance failure."
+    },
+    {
+      "id": "branch-plain-language",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "Let's use the standard profile for feature/auth compared with main. The functional review asks whether the change works. The standards review asks whether it follows the project's rules. The readiness review asks whether the tests and documentation support shipping it. We do not need a PR number or PR metadata. Please approve or edit the scope before any deeper review; this reply only proposes it.",
+      "expected": true,
+      "rationale": "Plain explanations with canonical names satisfy the contract."
+    },
+    {
+      "id": "branch-equivalent-wording",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For the feature/auth versus main branch comparison, use the standard profile. I recommend checking logic and edge-case correctness, compliance with repository coding conventions, and delivery readiness through test evidence and documentation. These are the three required review perspectives. No pull-request metadata is needed. Please confirm this scope before I dispatch; I have not performed the review.",
+      "expected": true,
+      "rationale": "Unambiguous descriptions of all three perspectives need not use their exact labels."
+    },
+    {
+      "id": "branch-no-metadata-required",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "No PR metadata is required here: feature/auth against main is already resolved. Recommend standard: functional for correctness, standards for codebase conventions, readiness for tests and documentation. Please confirm or adjust the scope before dispatch. I am not fetching refs or claiming completed findings.",
+      "expected": true,
+      "rationale": "A truthful denial of a metadata prerequisite is not itself a forbidden prerequisite."
+    },
+    {
+      "id": "branch-missing-functional",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main, standard will include standards for coding conventions and readiness for test evidence and docs. No PR metadata is needed. Confirm before dispatch.",
+      "expected": false,
+      "rationale": "The functional perspective is missing."
+    },
+    {
+      "id": "branch-missing-standards",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main, standard will include functional for correctness and readiness for validation and docs. No PR metadata is needed. Confirm before dispatch.",
+      "expected": false,
+      "rationale": "The project-standards perspective is missing."
+    },
+    {
+      "id": "branch-missing-readiness",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main, standard will include functional for correctness and standards for coding rules. No PR metadata is needed. Confirm before dispatch.",
+      "expected": false,
+      "rationale": "The readiness perspective is missing."
+    },
+    {
+      "id": "branch-mixed-contradiction",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main I recommend standard: functional for behavior, standards for conventions, readiness for validation. However, readiness is not needed and will be excluded from this review. No PR metadata is needed. Confirm before dispatch.",
+      "expected": false,
+      "rationale": "A later exclusion contradicts the otherwise complete recommendation."
+    },
+    {
+      "id": "branch-omits-all",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main, standard normally means functional, standards and readiness, but I will omit all three and dispatch no perspectives. Confirm this scope. No PR metadata is needed.",
+      "expected": false,
+      "rationale": "Mentioning the names while omitting the perspectives is not a recommendation."
+    },
+    {
+      "id": "branch-requires-pr",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main, standard includes functional for behavior, standards for conventions and readiness for evidence. First provide the PR number and its metadata; I cannot present scope confirmation until you supply them.",
+      "expected": false,
+      "rationale": "The resolved branch comparison must not depend on PR metadata."
+    },
+    {
+      "id": "branch-wrong-or-missing-target",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "The target is pull request 42, not a branch comparison. Recommend standard: functional for behavior, standards for conventions, readiness for validation. Confirm before dispatch; no additional metadata is needed.",
+      "expected": false,
+      "rationale": "Substituting a PR target omits the required feature/auth against main comparison."
+    },
+    {
+      "id": "branch-custom-profile",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "For feature/auth against main use custom, not standard: functional for behavior, standards for conventions, readiness for validation. No PR metadata is required. Confirm before dispatch.",
+      "expected": false,
+      "rationale": "The scenario requests the standard profile, not a different selected profile."
+    },
+    {
+      "id": "branch-prompt-echo",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "This is a behavior-contract scenario, not a live review. Do not call tools or resolve refs. Assume branch `feature/auth` against `main` is already resolved and its checkout SHA matches. Present the first interactive pre-PR confirmation using the standard profile, explain the recommended findings perspectives, and ask me to confirm the scope. Do not require pull-request metadata.",
+      "expected": false,
+      "rationale": "Repeating the request supplies no recommendation."
+    },
+    {
+      "id": "branch-unavailable",
+      "subject": "code-review-branch-diff-standard-profile",
+      "kind": "branch",
+      "answer": "The review policy is unavailable. I cannot recommend a scope and am blocked.",
+      "expected": false,
+      "rationale": "A blocked non-answer does not satisfy this staged response-only contract."
+    },
+    {
+      "id": "rust-borrowed",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse(s: &str) -> String { s.chars().rev().collect() }",
+      "expected": true,
+      "rationale": "A borrowed-string declaration satisfies the structural floor."
+    },
+    {
+      "id": "rust-owned",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse(s: String) -> String { s.chars().rev().collect() }",
+      "expected": true,
+      "rationale": "The floor does not impose a borrowed argument type."
+    },
+    {
+      "id": "rust-lifetime",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse<'a>(s: &'a str) -> String { s.chars().rev().collect() }",
+      "expected": true,
+      "rationale": "Explicit lifetime parameters do not erase the declaration."
+    },
+    {
+      "id": "rust-nested-generic",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse<S: AsRef<str>>(s: S) -> String { s.as_ref().chars().rev().collect() }",
+      "expected": true,
+      "rationale": "Nested trait-bound generic syntax is within the supported floor."
+    },
+    {
+      "id": "rust-raw-identifier",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn r#reverse(s: &str) -> String { s.chars().rev().collect() }",
+      "expected": true,
+      "rationale": "A raw identifier is still a function name."
+    },
+    {
+      "id": "rust-unicode-identifier",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn r\u00e9verser(s: &str) -> String { s.chars().rev().collect() }",
+      "expected": true,
+      "rationale": "Identifier spelling is not restricted to ASCII by this lexical floor."
+    },
+    {
+      "id": "rust-visibility",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "pub(crate) fn reverse(s: &str) -> String { s.chars().rev().collect() }",
+      "expected": true,
+      "rationale": "Visibility before fn does not change declaration presence."
+    },
+    {
+      "id": "rust-multiline",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse\n(\n    s: &str,\n) -> String {\n    s.chars().rev().collect()\n}",
+      "expected": true,
+      "rationale": "Whitespace and line breaks do not change the floor."
+    },
+    {
+      "id": "rust-where-clause",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse<S>(s: S) -> String where S: AsRef<str> { s.as_ref().chars().rev().collect() }",
+      "expected": true,
+      "rationale": "A where clause is outside the intentionally bounded declaration prefix."
+    },
+    {
+      "id": "rust-fenced",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "Here is the function:\n```rust\nfn reverse(s: &str) -> String { s.chars().rev().collect() }\n```",
+      "expected": true,
+      "rationale": "Markdown fences are ordinary answer formatting."
+    },
+    {
+      "id": "rust-prompt-echo",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "Write a Rust function that reverses a string and returns the reversed value.",
+      "expected": false,
+      "rationale": "The prompt itself contains no function declaration."
+    },
+    {
+      "id": "rust-prose",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "Use chars, reverse the iterator and collect the result.",
+      "expected": false,
+      "rationale": "Algorithm prose alone does not supply a declaration."
+    },
+    {
+      "id": "rust-empty",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "",
+      "expected": false,
+      "rationale": "An empty answer has no declaration."
+    },
+    {
+      "id": "rust-foreign-language",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "function reverse(s) { return [...s].reverse().join(''); }",
+      "expected": false,
+      "rationale": "A JavaScript function is not a Rust declaration."
+    },
+    {
+      "id": "rust-call",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "reverse(\"hello\")",
+      "expected": false,
+      "rationale": "Calling a function does not declare one."
+    },
+    {
+      "id": "rust-missing-name",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn (s: &str) -> String { s.to_owned() }",
+      "expected": false,
+      "rationale": "The declaration prefix requires an identifier."
+    },
+    {
+      "id": "rust-missing-parameters",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse -> String { String::new() }",
+      "expected": false,
+      "rationale": "The declaration prefix requires a parameter-list opener."
+    },
+    {
+      "id": "rust-unavailable",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "The requested artifact is unavailable; no code was produced.",
+      "expected": false,
+      "rationale": "An unavailable-artifact excuse is not a declaration."
+    },
+    {
+      "id": "rust-structure-only-identity",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse(s: &str) -> String { s.to_owned() }",
+      "expected": true,
+      "rationale": "Structure-only pass: this body does not reverse; semantic quality remains a separate advisory check."
+    },
+    {
+      "id": "rust-structure-only-empty",
+      "subject": "code-reverse-string-rust",
+      "kind": "rust",
+      "answer": "fn reverse(s: &str) -> String { String::new() }",
+      "expected": true,
+      "rationale": "Structure-only pass: returning an empty string is not reversal and is not certified by the floor."
+    }
+  ]
+}

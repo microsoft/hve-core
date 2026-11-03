@@ -288,6 +288,7 @@ console.log(JSON.stringify({ items: plan.items.map(i => ({ name: i.stimulus.name
         BeforeAll {
             $partial = ConvertFrom-Yaml (Get-Content (Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/code-review.yml') -Raw)
             $script:ProfileCase = @($partial.stimuli | Where-Object name -EQ 'code-review-branch-diff-standard-profile')[0]
+            $script:ContractControls = (Get-Content (Join-Path $PSScriptRoot 'fixtures/specs/pr3241-contract-controls.json') -Raw | ConvertFrom-Json).controls
             $script:RustCases = foreach ($path in @(
                 'evals/baseline-equivalence/stimuli.yml'
                 'evals/baseline-equivalence/baseline/eval.yaml'
@@ -299,61 +300,130 @@ console.log(JSON.stringify({ items: plan.items.map(i => ({ name: i.stimulus.name
             }
         }
 
-        It 'Accepts reordered and detailed profile explanations while requiring every perspective' {
-            $controls = @(
-                @{ output = 'Branch feature/auth uses the standard profile: functional, standards, and readiness.'; expected = $true }
-                @{ output = 'Recommended perspectives: readiness, standards, and functional. The standard profile applies to this branch.'; expected = $true }
-                @{ output = ('Branch feature/auth. ' + ('Factual orientation. ' * 100) + 'Standard profile: functional, standards, readiness.'); expected = $true }
-                @{ output = $script:ProfileCase.prompt; expected = $false }
-                @{ output = 'The review artifact is unavailable; the review is blocked.'; expected = $false }
-                @{ output = 'Branch feature/auth uses standard: standards and readiness.'; expected = $false }
-                @{ output = 'Branch feature/auth uses standard: functional and readiness.'; expected = $false }
-                @{ output = 'Branch feature/auth uses standard: functional and standards.'; expected = $false }
-                @{ output = 'Branch feature/auth uses custom: functional, standards, readiness.'; expected = $false }
-                @{ output = 'Standard profile: functional, standards, readiness.'; expected = $false }
-            )
+        It 'Keeps the frozen control population and expected-label provenance' -Tag 'ContractProfile' {
+            $script:ContractControls | Should -HaveCount 36
+            @($script:ContractControls.id | Sort-Object -Unique) | Should -HaveCount 36
+            $branch = @($script:ContractControls | Where-Object kind -EQ 'branch')
+            $rust = @($script:ContractControls | Where-Object kind -EQ 'rust')
+            $branch | Should -HaveCount 16
+            @($branch | Where-Object expected) | Should -HaveCount 6
+            $rust | Should -HaveCount 20
+            @($rust | Where-Object expected) | Should -HaveCount 12
+            foreach ($control in $script:ContractControls) {
+                $control.expected | Should -BeOfType ([bool])
+                $control.rationale | Should -Not -BeNullOrEmpty
+                $control.subject | Should -BeIn @('code-review-branch-diff-standard-profile', 'code-reverse-string-rust')
+            }
+        }
+
+        It 'Uses one mandatory binary branch judge without changing suite policy or staging' -Tag 'ContractProfile' {
+            $case = $script:ProfileCase
+            $case.graders | Should -HaveCount 1
+            $case.graders[0].name | Should -Be 'branch-standard-profile-contract'
+            $case.graders[0].type | Should -Be 'strict-prompt'
+            $case.graders[0].config.scoring | Should -Be 'binary'
+            $case.graders[0].config.threshold | Should -Be 0.85
+            $case.graders[0].config.ContainsKey('model') | Should -BeFalse
+            $case.tags.ContainsKey('advisory') | Should -BeFalse
+            $case.tags.scorecard | Should -Be 'complete'
+            $case.rubric | Should -HaveCount 4
+            $ids = @($case.rubric | ForEach-Object {
+                $_ | Should -Match '^\[([a-z-]+)\]'
+                if ($_ -cmatch '^\[([a-z-]+)\]') { $Matches[1] }
+            })
+            $ids | Should -Be @('target', 'perspectives', 'confirmation', 'honest-scope')
+            $case.agent_environment.files.dest | Should -Contain '.github/copilot-instructions.md'
+            $case.agent_environment.skills | Should -Contain '../../.github/skills/coding-standards/code-review'
+            $rubric = ($case.rubric -join ' ') + ' ' + $case.graders[0].config.prompt
+            $rubric | Should -Match 'All criteria are mandatory'
+            $rubric | Should -Match 'contradictory'
+            $rubric | Should -Match 'equivalent descriptions'
+            $rubric | Should -Match 'confirm or adjust'
+            $rubric | Should -Match 'Do not require pull-request metadata'
+            $rubric | Should -Match 'prompt echo'
+            $rubric | Should -Match 'conditional security or accessibility'
+            $rubric | Should -Match 'exactly four rubric_scores'
+        }
+
+        It 'Exercises native binary judge wiring with a mock rather than claiming semantic calibration' -Tag 'ContractProfile' {
             $probe = @'
 const { pathToFileURL } = await import('node:url');
 const path = await import('node:path');
 const root = process.argv[1];
-const modulePath = path.join(root, 'node_modules', '@microsoft', 'vally', 'dist', 'graders', 'static', 'output-matches-grader.js');
-const { OutputMatchesGrader } = await import(pathToFileURL(modulePath).href);
-const config = JSON.parse(process.argv[2]);
-const controls = JSON.parse(process.argv[3]);
-const grader = new OutputMatchesGrader();
+const modulePath = path.join(root, 'scripts', 'evals', 'graders', 'strict-prompt.mjs');
+const { createStrictPromptGrader } = await import(pathToFileURL(modulePath).href);
+const stimulus = JSON.parse(process.argv[2]);
 const results = [];
-for (const control of controls) {
-    const result = await grader.grade({ config, trajectory: { output: control.output } });
-    results.push({ passed: result.passed, expected: control.expected });
+for (const score of [0, 1]) {
+    let calls = 0;
+    let shutdowns = 0;
+    const grader = createStrictPromptGrader(async () => ({ supportsWorkspaceDelivery: true, judge: async request => {
+        calls++;
+        if (!request.userMessage.includes('All criteria are mandatory') ||
+            !request.userMessage.includes('exactly four rubric_scores')) throw new Error('Scorecard instructions were not delivered');
+        const args = { overall_score: score, overall_reasoning: 'Mock wiring only.',
+            rubric_scores: Object.fromEntries(stimulus.rubric.map(text => {
+                const id = text.match(/^\[([a-z-]+)\]/)[1];
+                return [id, { score, reasoning: 'Mock wiring only.' }];
+            })) };
+        const validated = request.tool.parameters.safeParse(args);
+        if (!validated.success) throw new Error('Invalid mock native form.');
+        return { args: validated.data, latencyMs: 1, remindersUsed: 0 };
+    }, shutdown: async () => { shutdowns++; } }));
+    const result = await grader.grade({ config: stimulus.graders[0].config, stimulus,
+        trajectory: { id: 'mock-control', stimulus, events: [], output: 'Synthetic wiring fixture.' } });
+    if (result.status === 'error') throw new Error(result.evidence);
+    results.push({ passed: result.passed, expected: score === 1, calls, shutdowns, details: result.details.length });
 }
 console.log(JSON.stringify(results));
 '@
-            $config = ($script:ProfileCase.graders | Where-Object name -EQ 'branch-diff-standard-profile').config | ConvertTo-Json -Compress
-            $json = & node --input-type=module -e $probe $script:RepoRoot $config ($controls | ConvertTo-Json -Compress)
+            $json = & node --input-type=module -e $probe $script:RepoRoot ($script:ProfileCase | ConvertTo-Json -Depth 20 -Compress)
             $LASTEXITCODE | Should -Be 0
             $results = @($json | ConvertFrom-Json)
-            $results | Should -HaveCount $controls.Count
-            for ($i = 0; $i -lt $results.Count; $i++) {
-                $results[$i].passed | Should -Be $results[$i].expected -Because "profile control $i must retain its verdict"
+            $results | Should -HaveCount 2
+            foreach ($result in $results) {
+                $result.passed | Should -Be $result.expected
+                $result.calls | Should -Be 1
+                $result.shutdowns | Should -Be 1
+                $result.details | Should -Be $script:ProfileCase.rubric.Count
             }
         }
 
-        It 'States the Rust input and return types consistently across all four fixtures' {
+        It 'Keeps the broad Rust prompt and deterministic invariant synchronized' {
             $prompts = @($script:RustCases | ForEach-Object {
                 if ($_.ContainsKey('prompt')) { $_.prompt } else { $_.turns[-1] }
             })
             $prompts | Should -HaveCount 4
             @($prompts | Sort-Object -Unique) | Should -HaveCount 1
             foreach ($prompt in $prompts) {
-                $prompt | Should -Match '&str'
-                $prompt | Should -Match '\bString\b'
-                $prompt | Should -Match 'revers'
+                $prompt | Should -Be 'Write a Rust function that reverses a string and returns the reversed value.'
             }
             $script:RustCases[0].invariants | Should -Contain 'rust-fn-syntax'
             foreach ($case in $script:RustCases[0..2]) {
                 @($case.graders | Where-Object name -EQ 'rust-fn-syntax') | Should -HaveCount 1
                 @($case.graders | Where-Object type -EQ 'prompt') | Should -HaveCount 1
             }
+        }
+
+        It 'Grades all Rust floor controls using the installed native grader' {
+            $probe = @'
+const { pathToFileURL } = await import('node:url');
+const path = await import('node:path');
+const modulePath = path.join(process.argv[1], 'node_modules', '@microsoft', 'vally', 'dist', 'graders', 'static', 'output-matches-grader.js');
+const { OutputMatchesGrader } = await import(pathToFileURL(modulePath).href);
+const config = JSON.parse(process.argv[2]);
+const controls = JSON.parse(process.argv[3]);
+for (const control of controls) {
+    const result = await new OutputMatchesGrader().grade({ config, trajectory: { output: control.answer } });
+    if (result.passed !== control.expected) throw new Error(control.id + ': unexpected floor verdict');
+}
+console.log(controls.length);
+'@
+            $config = ($script:RustCases[0].graders | Where-Object name -EQ 'rust-fn-syntax').config | ConvertTo-Json -Compress
+            $controls = @($script:ContractControls | Where-Object kind -EQ 'rust')
+            $count = & node --input-type=module -e $probe $script:RepoRoot $config ($controls | ConvertTo-Json -Compress)
+            $LASTEXITCODE | Should -Be 0
+            [int]$count | Should -Be 20
         }
     }
 

@@ -43,6 +43,7 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
         @{ GraderType = 'transcript-matches'; ExpectedKind = 'code' }
         @{ GraderType = 'wall-time'; ExpectedKind = 'code' }
         @{ GraderType = 'prompt'; ExpectedKind = 'llm' }
+        @{ GraderType = 'strict-prompt'; ExpectedKind = 'llm' }
         @{ GraderType = 'human'; ExpectedKind = 'human' }
     ) {
         Get-GraderResultKind -GraderType $GraderType | Should -BeExactly $ExpectedKind
