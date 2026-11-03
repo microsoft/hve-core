@@ -117,7 +117,7 @@ Namespace IDs serve as conventional directory names throughout `.github/` and mu
 
 Place artifacts under their namespace ID in the appropriate `.github/`
 subdirectory. Copilot finds artifacts in these folders at any depth, so a new
-namespace needs no settings:
+namespace needs no settings for Copilot sessions:
 
 ```text
 .github/
@@ -125,6 +125,11 @@ namespace needs no settings:
   instructions/{package-id}/
   skills/{package-id}/
 ```
+
+VS Code's Local harness may not find a new namespace's nested agents and skills
+until its folders are listed in your repository's `chat.agentFilesLocations`
+and `chat.agentSkillsLocations` settings, as
+[Copilot Discovery](environment#copilot-discovery) describes.
 
 Artifacts at the root of `.github/agents/`, `.github/instructions/`, or
 `.github/skills/` (without a subdirectory) are treated as repo-specific and

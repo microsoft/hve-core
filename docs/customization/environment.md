@@ -144,7 +144,7 @@ The workspace sets these editor behaviors:
 
 Copilot finds agents under `.github/agents/`, skills under `.github/skills/`, and
 instructions under `.github/instructions/` at any folder depth. A new package
-folder needs no settings:
+folder needs no settings for Copilot sessions:
 
 ```text
 .github/
@@ -157,15 +157,25 @@ VS Code keeps its list of path-specific instructions for the life of the window.
 After you add or edit instruction files, run **Developer: Reload Window** so new
 chat sessions pick up the change.
 
-Leave the `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and
-`chat.agentSkillsLocations` settings out of the workspace. They are editor-only:
-VS Code forwards files from those folders to Copilot sessions, but Copilot CLI
-and the GitHub Copilot app do not read them. An entry that points at HVE Core
-also loads it a second time next to any install route, so remove such entries
-if your settings still have them. Switch to the Copilot harness and confirm HVE
-Core loads there first, as
+This workspace also lists its own `.github` package folders in the
+`chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and
+`chat.agentSkillsLocations` settings for contributors who still use VS Code's
+Local harness, which may not find nested agents and skills without them. HVE
+Core supports only the Copilot harness, as
+[Use the Copilot Harness](../getting-started/install#use-the-copilot-harness)
+explains, so these settings serve as a bridge while contributors switch. They
+are editor-only: VS Code forwards files from those folders to Copilot sessions,
+which already find the folders on their own, and Copilot CLI and the GitHub
+Copilot app do not read them. When you add or rename a package folder, add it to
+the matching setting so Local sessions keep finding it, and list an agent
+package's `subagents` folder as its own entry.
+
+In a project that uses HVE Core, settings entries that point at an HVE Core
+clone, such as `../hve-core` or `lib/hve-core`, load HVE Core a second time next
+to any install route. Remove those entries after you switch to the Copilot
+harness and confirm HVE Core loads there, as
 [Use One Route at a Time](../getting-started/install#use-one-route-at-a-time)
-describes.
+describes. That advice does not apply to this repository's own folders.
 
 To load customizations from a folder elsewhere in the checkout, such as an HVE
 Core submodule, declare its folders in `.github/copilot/settings.json` as
