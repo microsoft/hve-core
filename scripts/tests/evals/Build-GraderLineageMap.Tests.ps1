@@ -24,6 +24,8 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
     }
 
     It 'Rejects replacing mapped code checks with a different result kind' {
+        $realResultKind = Get-Command -Name Get-GraderResultKind -CommandType Function
+        Mock Get-GraderResultKind { & $realResultKind @PesterBoundParameters }
         Mock Get-GraderResultKind { 'llm' } -ParameterFilter { $GraderType -eq 'program' }
         { Invoke-GraderLineageMap -RepoRoot $script:RepoRoot -Check } | Should -Throw '*Mapped current grader*was not found*'
     }
