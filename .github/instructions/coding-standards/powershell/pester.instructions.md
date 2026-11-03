@@ -143,6 +143,18 @@ Mock git {
 }
 ```
 
+In Pester 6, a call throws when no parameter filter matches and no unfiltered default mock exists. Add a default when other calls can reach the mocked command; filtered-only mocks remain valid when every call matches.
+
+Choose an explicit default return value that fits the test's intent. If unmatched calls need the real command, capture it before creating any mocks for it and invoke the captured command:
+
+```powershell
+$realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+Mock Test-Path { & $realTestPath @PesterBoundParameters }
+Mock Test-Path { $false } -ParameterFilter { $Path -like '*.missing' }
+```
+
+Calling the mocked command by its module-qualified name from inside the mock can recurse into the mock. Use the captured command instead. For module-scoped mocks, use the same `-ModuleName` for the default and filtered overrides.
+
 ## Mock Verification
 
 Use `Should -Invoke` to verify mock calls:
