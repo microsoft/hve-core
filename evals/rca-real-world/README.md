@@ -22,6 +22,14 @@ represent organic production incidents or a statistically representative benchma
 
 ## Recorded evaluation snapshots
 
+* [2026-11-04 paired production-model evaluation](PR-3136-PRODUCTION-2026-11-04.md) records
+  the completed `ad-hoc-v10` run using `gpt-5.6-sol`: 30 integrity-valid reports, zero format
+  or query rejections, and 15/15 leading-candidate service matches in each condition.
+  Consumption was 3,360.57570 AI credits, approximately USD 33.61, within the pooled
+  6,000-credit allowance. Its [machine-readable snapshot](PR-3136-PRODUCTION-2026-11-04.json)
+  preserves all 30 trial records. Production denotes the benchmark model profile, not
+  readiness certification; human causal review remains pending. Earlier snapshots stay
+  separate because model, protocol, and budget policies differ.
 * [2026-11-04 paired schema-mode evaluation](PR-3136-DEBUG-2026-11-04.md) records the
   completed `ad-hoc-v9` real-data run: 30 integrity-valid reports, zero format rejections,
   and 15/15 skilled versus 11/15 baseline leading-candidate service matches. The
