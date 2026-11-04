@@ -13,6 +13,7 @@ import {
   EVALUATION_PROTOCOL,
   evaluationModel,
   parseEvaluationProfile,
+  parseReportOutput, type ReportOutput,
   type EvaluationProfile,
   EXPECTED_REASONING_EFFORT,
   TRANSFORMATION_VERSION,
@@ -49,6 +50,8 @@ export interface RunRoundOptions {
   readonly mode?: EvaluationMode;
   /** Defaults to debug for a new run; continuation inherits the immutable manifest profile. */
   readonly profile?: EvaluationProfile;
+  readonly reportOutput?: ReportOutput;
+  readonly runtimeFactory?: Parameters<typeof runCliTrial>[0]["runtimeFactory"];
   /** Requires an explicit coordinator-approved continuation of a technical-failure stop. */
   readonly continueAfterTechnicalStop?: boolean;
   readonly cliInvoker?: CliInvoker;
@@ -71,6 +74,7 @@ export interface EvaluationSummary {
   readonly schemaVersion: "2.0.0";
   readonly protocol: typeof EVALUATION_PROTOCOL;
   readonly profile: EvaluationProfile;
+  readonly reportOutput?: ReportOutput;
   readonly mode: EvaluationMode;
   readonly runId: string;
   readonly sourceRevision: string;
@@ -118,6 +122,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     model?: string;
     reasoningEffort?: string;
     contextTier?: string;
+    reportOutput?: string;
   }>(manifestPath);
   if (priorManifest && (priorManifest.schemaVersion !== "2.0.0" || priorManifest.runId !== options.runId)) {
     throw new Error("A new paired-evaluation run is required for this manifest");
@@ -130,6 +135,10 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
   }
   const profile = parseEvaluationProfile(options.profile ?? priorManifest?.profile ?? "debug");
   const model = evaluationModel(profile);
+  const reportOutput = parseReportOutput(options.reportOutput ?? priorManifest?.reportOutput ?? "prompt");
+  if (priorManifest && priorManifest.reportOutput !== reportOutput) {
+    throw new Error("Report output mode cannot change or be absent after round one");
+  }
   if (priorManifest && (
     priorManifest.profile !== profile || priorManifest.model !== model ||
     priorManifest.reasoningEffort !== EXPECTED_REASONING_EFFORT ||
@@ -141,7 +150,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
   if (priorManifest && priorManifest.mode !== mode) {
     throw new Error("Evaluation conditions cannot change after round one");
   }
-  const expectedResultIdentity = { runId: options.runId, profile, model };
+  const expectedResultIdentity = { runId: options.runId, profile, model, reportOutput };
   const existingResults = await readAllResults(runRoot, mode, expectedResultIdentity);
   if (options.round === 1 && !resuming) {
     try {
@@ -156,6 +165,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       schemaVersion: "2.0.0",
       protocol: EVALUATION_PROTOCOL,
       profile,
+      reportOutput,
       mode,
       runId: options.runId,
       sourceRevision: SOURCE_REVISION,
@@ -246,6 +256,8 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       trial: item.trial,
       condition: item.condition,
       profile,
+      reportOutput,
+      runtimeFactory: options.runtimeFactory,
       cliInvoker: options.cliInvoker,
       clock: options.clock,
     });
@@ -310,6 +322,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     schemaVersion: "2.0.0",
     protocol: EVALUATION_PROTOCOL,
     profile,
+    reportOutput,
     mode,
     runId: options.runId,
     sourceRevision: SOURCE_REVISION,
@@ -325,6 +338,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       `${EVALUATION_CASE_IDS.length} selected cases and the scheduled sessions do not establish a general RCA accuracy rate.`,
       "Approvals are simulated evaluation fixtures and do not establish production authority.",
       `Both conditions use the ${EVALUATION_PROTOCOL} autonomous host-mediated evidence protocol with bounded, simulated per-call approvals.`,
+      `Report output mode is ${reportOutput}; readiness and finalization consume the same existing turn budget in schema mode.`,
       ...(profile === "debug" ? ["Debug run only: these results are harness diagnostics, not skill efficacy evidence."] : []),
       "The baseline receives a minimal diagnostic output schema, not the skill workflow; skill-only gates are not applicable.",
       "Set B service match is the shared primary diagnostic endpoint; Set A diagnosis claims can differ because skill claim-authority gates do not apply to the baseline.",
@@ -382,7 +396,7 @@ async function requireResults(runRoot: string, trial: number, mode: EvaluationMo
 
 async function readAllResults(
   runRoot: string, mode: EvaluationMode,
-  expected: Pick<EvaluationSummary, "runId" | "profile" | "model">,
+  expected: Pick<EvaluationSummary, "runId" | "profile" | "model" | "reportOutput">,
 ): Promise<readonly TrialResult[]> {
   const results: TrialResult[] = [];
   for (const item of createConditionSchedule(3, mode)) {
@@ -394,6 +408,7 @@ async function readAllResults(
       const expectedStatus = technical ? "unusable" : result.outcome === "candidate" ? "candidate" : "abstained";
       if (!result || result.schemaVersion !== "2.0.0" || result.protocol !== EVALUATION_PROTOCOL ||
           result.runId !== expected.runId || result.profile !== expected.profile || result.model !== expected.model ||
+          (result.reportOutput ?? "prompt") !== (expected.reportOutput ?? "prompt") ||
           result.reasoningEffort !== EXPECTED_REASONING_EFFORT || result.contextTier !== EXPECTED_CONTEXT_TIER ||
           result.condition !== item.condition || result.caseId !== item.caseId || result.trial !== item.trial ||
           !["candidate", "abstained", "blocked", "protocol-error", "execution-error"].includes(result.outcome) ||

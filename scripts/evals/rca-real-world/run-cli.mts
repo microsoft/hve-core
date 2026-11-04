@@ -8,6 +8,7 @@ import { createInterface } from "node:readline/promises";
 import { runRound } from "./runner.mts";
 import {
   EVALUATION_RUN_DIRECTORY, parseEvaluationProfile, readJson, writeJson, type EvaluationProfile,
+  parseReportOutput, type ReportOutput,
 } from "./contracts.mts";
 import { parseEvaluationMode, type EvaluationMode } from "./conditions.mts";
 
@@ -17,6 +18,7 @@ export function parseRunArguments(args: readonly string[]): {
   readonly round: 1 | 2 | 3;
   readonly mode?: EvaluationMode;
   readonly profile?: EvaluationProfile;
+  readonly reportOutput?: ReportOutput;
   readonly interactive: boolean;
   readonly continueAfterTechnicalStop: boolean;
 } {
@@ -27,6 +29,7 @@ export function parseRunArguments(args: readonly string[]): {
       round: { type: "string" },
       conditions: { type: "string" },
       profile: { type: "string" },
+      "report-output": { type: "string" },
       interactive: { type: "boolean", default: false },
       "continue-after-technical-stop": { type: "boolean", default: false },
     },
@@ -36,13 +39,14 @@ export function parseRunArguments(args: readonly string[]): {
     !values["run-id"] || !["1", "2", "3"].includes(values.round ?? "") ||
     (round !== 1 && round !== 2 && round !== 3)
   ) {
-    throw new Error("Usage: npm run ci:rca-eval -- --run-id <run-id> --round <1|2|3> [--conditions both|with-skill|without-skill] [--profile debug|production] [--interactive] [--continue-after-technical-stop]");
+    throw new Error("Usage: npm run ci:rca-eval -- --run-id <run-id> --round <1|2|3> [--conditions both|with-skill|without-skill] [--profile debug|production] [--report-output prompt|schema] [--interactive] [--continue-after-technical-stop]");
   }
   return {
     runId: values["run-id"],
     round,
     mode: values.conditions === undefined ? undefined : parseEvaluationMode(values.conditions),
     profile: values.profile === undefined ? undefined : parseEvaluationProfile(values.profile),
+    reportOutput: values["report-output"] === undefined ? undefined : parseReportOutput(values["report-output"]),
     interactive: values.interactive,
     continueAfterTechnicalStop: values["continue-after-technical-stop"],
   };
@@ -123,6 +127,7 @@ if (import.meta.main) {
     round: options.round,
     mode,
     profile,
+    reportOutput: options.reportOutput,
     continueAfterTechnicalStop: options.continueAfterTechnicalStop,
   });
 
@@ -144,7 +149,7 @@ if (import.meta.main) {
     commands: [
       ...existing.commands,
       {
-        command: `node scripts/evals/rca-real-world/run-cli.mts --run-id ${options.runId} --round ${options.round} --conditions ${summary.mode} --profile ${summary.profile}${options.continueAfterTechnicalStop ? " --continue-after-technical-stop" : ""}`,
+        command: `node scripts/evals/rca-real-world/run-cli.mts --run-id ${options.runId} --round ${options.round} --conditions ${summary.mode} --profile ${summary.profile} --report-output ${summary.reportOutput}${options.continueAfterTechnicalStop ? " --continue-after-technical-stop" : ""}`,
         exitCode: paused ? 2 : 0,
         purpose: `Execute and score trial round ${options.round} (${summary.mode})`,
       },

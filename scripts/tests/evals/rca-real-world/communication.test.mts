@@ -27,6 +27,24 @@ const report: DiagnosticReport = {
   limitations: ["Evidence unavailable."], narrative: "An answer without diagnostic Markdown fields.",
 };
 
+test("schema readiness carries no report and cannot authorize post-readiness collection", () => {
+  const schemaContext = { ...context, reportOutput: "schema" as const };
+  const ready = JSON.stringify({ ...identity, messageType: "report_ready", outcome: "final", reason: null });
+  assert.equal(parseModelMessages([ready], schemaContext).message.messageType, "report_ready");
+  assert.throws(() => parseModelMessages([ready], context), /readiness/i);
+  assert.throws(() => parseModelMessages([ready], { ...schemaContext, finalizing: "final" }), /readiness/i);
+  assert.throws(() => parseModelMessages([approval], { ...schemaContext, finalizing: "final" }), /Finalization/);
+  const final = JSON.stringify({ ...identity, messageType: "final", report });
+  assert.throws(() => parseModelMessages([final], schemaContext), /prior matching readiness/);
+  assert.equal(parseModelMessages([final], { ...schemaContext, finalizing: "final" }).message.messageType, "final");
+  assert.throws(() => parseModelMessages([JSON.stringify({
+    ...identity, messageType: "report_ready", outcome: "blocked", reason: "",
+  })], schemaContext), /blocked reason/);
+  assert.throws(() => parseModelMessages([JSON.stringify({
+    ...identity, messageType: "report_ready", outcome: "final", reason: null, report,
+  })], schemaContext), /Expected exactly/);
+});
+
 for (const fenced of [false, true]) {
   test(`recognizes ${fenced ? "fenced" : "raw"} requests before closing commentary`, () => {
     const text = fenced ? `\`\`\`json\n${approval}\n\`\`\`` : approval;
@@ -55,7 +73,7 @@ test("preserves JSON code fences inside a structured narrative", () => {
   const envelope = JSON.stringify({ ...identity, messageType: "final", report: { ...report, narrative } });
   for (const text of [envelope, `\`\`\`json\n${envelope}\n\`\`\``]) {
     const parsed = parseModelMessages([text], context).message;
-    assert.ok(parsed.messageType !== "evidence_request");
+    assert.ok(parsed.messageType !== "evidence_request" && parsed.messageType !== "report_ready");
     assert.equal(parsed.report.narrative, narrative);
   }
 });
@@ -340,7 +358,7 @@ test("transport instructions distinguish a request handoff from final and blocke
   assert.match(skilled, /phase final_answer/);
   assert.match(skilled, /never as commentary/);
   assert.match(skilled, /End the invocation immediately/);
-  assert.match(skilled, /host cannot execute evidence calls until this CLI process returns/);
+  assert.match(skilled, /host cannot execute evidence calls until this model turn ends/);
   assert.match(skilled, /Both final and blocked reports MUST include structured report.finding/);
   assert.match(skilled, /Do not produce the skill's completion sections while handing off/);
   const baseline = messageInstruction({ ...context, condition: "without-skill" });
@@ -365,6 +383,7 @@ for (const condition of ["with-skill", "without-skill"] as const) {
         assert.equal(value.protocol, EVALUATION_PROTOCOL);
         for (const answer of [text, `\`\`\`json\n${text}\n\`\`\``]) {
           const parsed = parseModelMessages([answer], exampleContext).message;
+          assert.notEqual(parsed.messageType, "report_ready");
           const cliParsed = parseCliResponse([cliMessage(answer, "final_answer")], exampleContext).message;
           assert.deepEqual(cliParsed, parsed);
           if (parsed.messageType === "evidence_request") {
@@ -374,6 +393,7 @@ for (const condition of ["with-skill", "without-skill"] as const) {
             assert.equal(parsed.approvalRequests[0]!.scope, "current neutral case only");
             assert.equal(parsed.approvalRequests[0]!.expectedRisk, "read-only bounded fixture evidence");
           } else {
+            assert.ok(parsed.messageType !== "report_ready");
             assert.equal(Object.hasOwn(parsed.report, "finding"), condition === "with-skill");
             if (condition === "with-skill") {
               const narrative = parsed.report.narrative;

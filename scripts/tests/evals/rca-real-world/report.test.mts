@@ -80,6 +80,15 @@ test("reports missing redaction provenance rather than claiming no information w
   await writeJson(summaryPath, {
     ...summary, trials: summary.trials.map((trial) => ({ ...trial, redaction: undefined })),
   });
+
+  test("refuses reports that mix report output modes", async (context) => {
+    const fixture = await reportFixture();
+    context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
+    const path = join(fixture.runRoot, "evaluation-summary.json");
+    const summary = await readJson<EvaluationSummary>(path);
+    await writeJson(path, { ...summary, reportOutput: "schema" });
+    await assert.rejects(generateEvidenceReport({ ...fixture, reviewDate: "2026-11-04" }), /report output modes/);
+  });
   const result = await generateEvidenceReport({ ...fixture, reviewDate: "2026-11-02" });
   for (const path of [result.committedReportPath, result.reviewPath, result.prUpdatePath]) {
     assert.match(await readFile(path, "utf8"), /Redaction metadata is unavailable for 1 sessions/);
@@ -507,13 +516,13 @@ test("rejects mixed profiles, models, and protocols before publishing reports", 
     });
     await assert.rejects(
       generateEvidenceReport({ ...fixture, reviewDate: "2026-10-28" }),
-      /Cannot report mixed or historical profiles, models, or protocols/,
+      /Cannot report mixed or historical profiles, models, protocols, or report output modes/,
     );
   }
   await writeJson(summaryPath, { ...summary, protocol: undefined });
   await assert.rejects(
     generateEvidenceReport({ ...fixture, reviewDate: "2026-10-28" }),
-    /Cannot report mixed or historical profiles, models, or protocols/,
+    /Cannot report mixed or historical profiles, models, protocols, or report output modes/,
   );
 });
 

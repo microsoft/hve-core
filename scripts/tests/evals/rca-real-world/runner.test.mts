@@ -26,6 +26,7 @@ import { fixtureInventory } from "./cli-fixture.mts";
 import { scoreTrial } from "../../../evals/rca-real-world/scoring.mts";
 import { sanitizeRun } from "../../../evals/rca-real-world/sanitize-run.mts";
 import type { TrialArtifact } from "../../../evals/rca-real-world/orchestrator.mts";
+import type { SchemaRuntime } from "../../../evals/rca-real-world/schema-runtime.mts";
 
 test("fingerprints input paths in code-unit order", async (context) => {
   const root = await mkdtemp(join(tmpdir(), "rca-fingerprint-"));
@@ -95,6 +96,221 @@ const faultByCase: Readonly<Record<string, string>> = {
   "case-04": "loss",
   "case-05": "f2",
 };
+
+function schemaRuntimeFixture(options: {
+  readonly condition: "with-skill" | "without-skill";
+  readonly blocked?: boolean;
+  readonly evidenceTurns?: number;
+  readonly missingUsage?: boolean;
+  readonly overBudget?: boolean;
+}) {
+  const requests: { method: string; params: Readonly<Record<string, unknown>> }[] = [];
+  const handlers = new Set<(event: Readonly<Record<string, unknown>>) => void>();
+  let sessionId: unknown;
+  let sends = 0;
+  const runtime: SchemaRuntime = {
+    request: async (method, params = {}) => {
+      requests.push({ method, params });
+      if (method === "models.list") return {
+        models: [{ id: "gpt-5.6-luna", capabilities: { supports: { structured_outputs: true } } }],
+      };
+      if (method === "session.create") {
+        sessionId = params.sessionId;
+        return { sessionId };
+      }
+      if (method !== "session.send") return {};
+      sends += 1;
+      assert.equal(params.sessionId, sessionId);
+      assert.equal(typeof params.prompt, "string");
+      const prompt = String(params.prompt);
+      const identity = JSON.parse(/Copy these identity fields exactly: (\{[^\n]+\})\./.exec(prompt)![1]!);
+      let payload: Record<string, unknown>;
+      if (params.responseFormat !== undefined) {
+        payload = {
+          messageType: options.blocked ? "blocked" : "final",
+          ...(options.blocked ? { reason: "Synthetic evidence blocker" } : {}),
+          report: {
+            candidate: {
+              target: options.blocked ? null : serviceByCase[identity.caseId],
+              mechanism: options.blocked ? null : faultByCase[identity.caseId],
+              confidence: "Tentative; bounded fixture evidence.",
+            },
+            authority: { simulated: true, productionAuthorization: false },
+            ...(options.condition === "with-skill" ? {
+              finding: { status: "not-established", target: null, mechanism: null },
+            } : {}),
+            limitations: ["Human review pending."],
+            narrative: finalOutput(serviceByCase[identity.caseId]!, faultByCase[identity.caseId]!),
+          },
+        };
+      } else if (sends <= (options.evidenceTurns ?? 1)) {
+        const request = JSON.parse(/```json\s*([\s\S]*?)```/.exec(approvalResponse(identity.caseId))![1]!);
+        payload = { messageType: "evidence_request", ...request };
+      } else {
+        payload = { messageType: "report_ready", outcome: options.blocked ? "blocked" : "final",
+          reason: options.blocked ? "Synthetic evidence blocker" : null };
+      }
+      const events = [
+        { type: "assistant.message", data: {
+          phase: "final_answer", content: JSON.stringify({ ...identity, ...payload }), model: "gpt-5.6-luna",
+        } },
+        ...(!options.missingUsage ? [{
+          type: "session.usage_checkpoint", data: { accountingSnapshot: {
+            aiCreditsStatus: "complete", totalPremiumRequestCost: sends,
+            totalNanoAiu: options.overBudget ? 101 * 1e9 : sends * 1e6,
+          } },
+        }] : []),
+        { type: "session.idle", data: {} },
+      ];
+      for (const event of events) for (const handler of handlers) handler(event);
+      return {};
+    },
+    onEvent: (handler) => { handlers.add(handler); return () => { handlers.delete(handler); }; },
+    close: async () => {},
+  };
+  return { runtime, requests };
+}
+
+const schemaPreflight: CliInvoker = async (args, options) => {
+  const inventory = await fixtureInventory(args, options);
+  if (inventory) return inventory;
+  assert.deepEqual(args, ["--version"], "Schema mode must not launch prompt CLI model turns");
+  return { exitCode: 0, stdout: "synthetic-cli", stderr: "", timedOut: false, durationMs: 1 };
+};
+
+test("records schema mode in manifests and inherits it without allowing a switch", async (context) => {
+  const root = await preparedRun();
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const options = {
+    repositoryRoot: resolve("."), runRoot: root, runId: "schema-mode",
+    mode: "without-skill" as const, cliInvoker: schemaPreflight, clock: () => NOW,
+    runtimeFactory: () => schemaRuntimeFixture({ condition: "without-skill" }).runtime,
+  };
+  const first = await runRound({ ...options, round: 1, reportOutput: "schema" });
+  assert.equal(first.reportOutput, "schema");
+  assert.equal(first.roundOneCheckpoint!.decision, "continue", JSON.stringify(first.roundOneCheckpoint));
+  assert.equal((await readJson<{ reportOutput: string }>(join(root, "run-manifest.json"))).reportOutput, "schema");
+  assert.ok(first.trials.every((trial) => trial.reportOutput === "schema"));
+  const second = await runRound({ ...options, round: 2 });
+  assert.equal(second.reportOutput, "schema");
+  await assert.rejects(runRound({ ...options, round: 3, reportOutput: "prompt" }), /Report output mode cannot change/);
+});
+
+test("live integrated schema runner on a synthetic fixture", {
+  skip: process.env.RCA_SCHEMA_RUNNER_SMOKE !== "1", timeout: 600_000,
+}, async () => {
+  const output = process.env.RCA_SCHEMA_RUNNER_SMOKE_OUTPUT;
+  assert.ok(output, "Set RCA_SCHEMA_RUNNER_SMOKE_OUTPUT to a fresh absolute evidence directory");
+  await mkdir(output, { recursive: false });
+  const root = await preparedRun();
+  let failure: unknown;
+  try {
+    const artifact = await runCliTrial({
+      repositoryRoot: resolve("."), runRoot: root, runId: "synthetic-schema-runner",
+      caseId: "case-01", trial: 1, condition: "without-skill", reportOutput: "schema",
+      timeoutMs: 45_000,
+    });
+    const scored = scoreTrial(artifact, {
+      neutralId: "case-01", sourcePath: "held-out-case-01",
+      rootCauseService: "adservice", fault: "cpu", compatibleMechanism: "cpu",
+    }, "synthetic-live-check");
+    await writeJson(join(output, "session-artifact.json"), artifact);
+    await writeJson(join(output, "trial-result.json"), scored);
+    assert.equal(artifact.endReason, "complete", artifact.error);
+    assert.equal(scored.integrity, "pass", scored.integrityFailures.join("; "));
+    assert.ok(artifact.communication!.turns.some((turn) => turn.messageType === "report_ready"));
+    assert.equal(artifact.communication!.turns.at(-1)!.messageType, "final");
+    assert.ok(artifact.communication!.turns.length <= 8);
+    assert.ok(artifact.preflight.isolation!.verified);
+    assert.deepEqual(artifact.preflight.isolation!.enabledSkills, []);
+    assert.ok(artifact.cliCapture![`usageTurn${artifact.communication!.turns.length}`]);
+  } catch (error) {
+    failure = error;
+    throw error;
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await writeJson(join(output, "completion.json"), {
+      status: failure === undefined ? "passed" : "failed",
+      error: failure instanceof Error ? failure.message : undefined,
+      completedAt: new Date().toISOString(), syntheticFixtureRemoved: true,
+    });
+  }
+});
+
+for (const condition of ["with-skill", "without-skill"] as const) {
+  for (const blocked of [false, true]) {
+    test(`integrates schema finalization with approvals and replay: ${condition}/${blocked ? "blocked" : "final"}`, async (context) => {
+      const root = await preparedRun();
+      context.after(() => rm(root, { recursive: true, force: true }));
+      const fake = schemaRuntimeFixture({ condition, blocked });
+      const artifact = await runCliTrial({
+        repositoryRoot: resolve("."), runRoot: root, runId: "schema-integration",
+        caseId: "case-01", trial: 1, condition, reportOutput: "schema",
+        cliInvoker: schemaPreflight, runtimeFactory: () => fake.runtime, clock: () => NOW,
+      });
+      assert.equal(artifact.endReason, "complete", artifact.error);
+      assert.equal(artifact.reportOutput, "schema");
+      assert.deepEqual(artifact.communication!.turns.map((turn) => turn.messageType),
+        ["evidence_request", "report_ready", blocked ? "blocked" : "final"]);
+      assert.equal(artifact.evidenceToolTraces.length, 1);
+      const sends = fake.requests.filter(({ method }) => method === "session.send");
+      assert.deepEqual(sends.map(({ params }) => "responseFormat" in params), [false, false, true]);
+      assert.equal(new Set(sends.map(({ params }) => params.sessionId)).size, 1);
+      assert.equal(fake.requests.filter(({ method }) => method === "session.destroy").length, 1);
+      const score = () => scoreTrial(artifact, {
+        neutralId: "case-01", sourcePath: "held-out-case-01", rootCauseService: "adservice",
+        fault: "cpu", compatibleMechanism: "cpu",
+      }, "fixture-scorer");
+      assert.equal(score().integrity, "pass", JSON.stringify(score()));
+      assert.equal(score().outcome, blocked ? "blocked" : "candidate");
+      assert.equal(score().reportOutput, "schema");
+      const usage = artifact.cliCapture!.usageTurn3 as { totalPremiumRequestCost: number };
+      assert.equal(usage.totalPremiumRequestCost, 3, "Finalization cost must be included exactly once");
+      for (const change of ["schema", "session", "usage", "readiness"] as const) {
+        const tampered = structuredClone(artifact);
+        const captures = tampered.cliCapture! as Record<string, Record<string, unknown>>;
+        if (change === "schema" || change === "session") {
+          const request = captures.turn3!.runtimeRequest as Record<string, unknown>;
+          if (change === "schema") delete request.responseFormatSha256;
+          else request.sessionId = "different-session";
+        } else if (change === "usage") captures.usageTurn3!.totalPremiumRequestCost = 2;
+        else {
+          const capture = captures.turn2!;
+          capture.stdout = String(capture.stdout).replace('"outcome":\\"final\\"', '"outcome":\\"blocked\\"');
+          capture.stdout = String(capture.stdout).replace('report_ready', 'evidence_request');
+        }
+        assert.equal(scoreTrial(tampered, {
+          neutralId: "case-01", sourcePath: "held-out-case-01", rootCauseService: "adservice",
+          fault: "cpu", compatibleMechanism: "cpu",
+        }, "fixture-scorer").integrity, "fail", change);
+      }
+    });
+  }
+}
+
+for (const [label, extra] of [
+  ["reserved finalization turn", { evidenceTurns: 7 }],
+  ["missing usage", { missingUsage: true }],
+  ["AI-credit limit", { overBudget: true }],
+] as const) {
+  test(`schema loop fails closed at ${label}`, async (context) => {
+    const root = await preparedRun();
+    context.after(() => rm(root, { recursive: true, force: true }));
+    const fake = schemaRuntimeFixture({ condition: "without-skill", ...extra });
+    const artifact = await runCliTrial({
+      repositoryRoot: resolve("."), runRoot: root, runId: "schema-budget",
+      caseId: "case-01", trial: 1, condition: "without-skill", reportOutput: "schema",
+      cliInvoker: schemaPreflight, runtimeFactory: () => fake.runtime, clock: () => NOW,
+    });
+    assert.equal(artifact.endReason, "error");
+    assert.equal(artifact.report, undefined);
+    assert.ok(artifact.error);
+    assert.equal(artifact.evidenceToolTraces.length, "evidenceTurns" in extra ? 6 : 0);
+    assert.equal(fake.requests.filter(({ method }) => method === "session.send").length,
+      "evidenceTurns" in extra ? 7 : 1);
+    assert.equal(fake.requests.filter(({ method }) => method === "session.destroy").length, 1);
+  });
+}
 
 async function preparedRun(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "rca-runner-"));

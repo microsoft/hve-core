@@ -206,7 +206,7 @@ for (const condition of ["with-skill", "without-skill"] as const) {
       const example = examples.find((text) => JSON.parse(text).messageType === terminal);
       assert.ok(example);
       const parsed = parseModelMessages([example], context).message;
-      assert.ok(parsed.messageType !== "evidence_request");
+      assert.ok(parsed.messageType !== "evidence_request" && parsed.messageType !== "report_ready");
       const result = scoreTrial(artifact({ condition, report: parsed.report, terminal, noTools: true }), truth, "fixture");
       assert.equal(result.integrity, "pass");
       assert.equal(result.strictGates.outputContract, true);

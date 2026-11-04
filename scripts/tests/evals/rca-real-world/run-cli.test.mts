@@ -6,6 +6,13 @@ import { test } from "node:test";
 
 import { parseRunArguments, selectEvaluationProfile } from "../../../evals/rca-real-world/run-cli.mts";
 
+test("parses report output without replacing the continuation inheritance sentinel", () => {
+  const args = ["--run-id", "fixture", "--round", "1"];
+  assert.equal(parseRunArguments(args).reportOutput, undefined);
+  assert.equal(parseRunArguments([...args, "--report-output", "schema"]).reportOutput, "schema");
+  assert.equal(parseRunArguments([...args, "--report-output", "prompt"]).reportOutput, "prompt");
+  assert.throws(() => parseRunArguments([...args, "--report-output", "other"]), /prompt or schema/);
+});
 test("parses explicit profiles without losing the resume inheritance sentinel", () => {
   const args = ["--run-id", "fixture", "--round", "1"];
   assert.equal(parseRunArguments(args).profile, undefined);

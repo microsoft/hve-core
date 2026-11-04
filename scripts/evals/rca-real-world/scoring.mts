@@ -25,6 +25,7 @@ import {
   COMMUNICATION_LIMITS, CommunicationError, EVIDENCE_OPERATIONS, validateDiagnosticReport,
   type DiagnosticReport,
 } from "./communication.mts";
+import { finalEnvelopeFormat } from "./schema-finalization.mts";
 import { redactApprovalParameters, type ApprovalRequestItem } from "./approval.mts";
 import { parseCliEvents, parseCliTurn } from "./cli-orchestrator.mts";
 import { evidenceRequestError } from "./evidence-tools.mts";
@@ -42,6 +43,7 @@ export interface HeldOutTruth {
 
 /** Preserves workflow conformance, structured diagnostic correctness, and unusable technical outcomes separately. */
 export interface TrialResult {
+  readonly reportOutput?: import("./contracts.mts").ReportOutput;
   readonly schemaVersion: string;
   readonly protocol?: string;
   readonly profile?: EvaluationProfile;
@@ -152,6 +154,9 @@ export function scoreTrial(
   ].join("\n");
   const integrityFailures: string[] = [];
   const profile = artifact.requestedProfile.evaluationProfile;
+  if (artifact.reportOutput !== undefined && artifact.reportOutput !== "prompt" && artifact.reportOutput !== "schema") {
+    integrityFailures.push("unknown report output mode");
+  }
   if (artifact.protocol !== EVALUATION_PROTOCOL) {
     integrityFailures.push(`session protocol is not ${EVALUATION_PROTOCOL}; historical runs cannot be pooled`);
   }
@@ -262,6 +267,7 @@ export function scoreTrial(
   const partial: Omit<TrialResult, "hashes"> = {
     schemaVersion: RESULT_SCHEMA_VERSION,
     protocol: artifact.protocol,
+    reportOutput: artifact.reportOutput ?? "prompt",
     profile,
     runId: artifact.runId,
     sourceRevision: SOURCE_REVISION,
@@ -517,6 +523,9 @@ function auditCommunication(artifact: TrialArtifact): {
       throw new Error("terminal report, finalResponse, or session end state is inconsistent");
     }
     let formatErrors = 0;
+    let finalizing: { readonly outcome: "final" | "blocked"; readonly reason: string | null } | undefined;
+    let priorPremium = 0;
+    let priorNano = 0;
     let correctingFormat: "evidence_request" | "final" | "blocked" | undefined;
     for (const [index, rawTurn] of turns.entries()) {
       const turn = asRecord(rawTurn);
@@ -527,9 +536,44 @@ function auditCommunication(artifact: TrialArtifact): {
           capture.protocolError !== undefined || typeof capture.stdout !== "string") {
         throw new Error("turn identity or successful raw invocation capture is missing");
       }
-      const parsed = parseCliTurn(parseCliEvents(capture.stdout), {
+      const context = {
         messageId, caseId: artifact.caseId, condition: artifact.condition,
-      });
+        reportOutput: artifact.reportOutput, finalizing: finalizing?.outcome,
+      };
+      const rawEvents = parseCliEvents(capture.stdout);
+      if (artifact.reportOutput === "schema") {
+        const request = asRecord(capture.runtimeRequest);
+        const status = asRecord(artifact.preflight.clientStatus);
+        const expectedFormat = finalizing
+          ? finalEnvelopeFormat(context, finalizing.outcome, finalizing.reason ?? undefined) : undefined;
+        if (!request || status?.executionSurface !== "copilot-runtime" ||
+            typeof status.sessionId !== "string" || request.sessionId !== status.sessionId ||
+            request.promptSha256 !== artifact.hashes[`turn${index + 1}PromptSha256`] ||
+            request.responseFormatSha256 !== (expectedFormat ? sha256(stableJson(expectedFormat)) : undefined)) {
+          throw new Error("Runtime session, prompt, or final-only response schema does not match the audit");
+        }
+        if (rawEvents.some((event) => event.type === "tool.execution_start") ||
+            rawEvents.some((event) => event.type === "assistant.message" &&
+              (event.data?.model !== artifact.requestedProfile.model ||
+                (Array.isArray(event.data?.toolRequests) && event.data.toolRequests.length > 0)))) {
+          throw new Error("Runtime invoked tools or changed the requested model");
+        }
+        const checkpoint = rawEvents.filter((event) => event.type === "session.usage_checkpoint").at(-1);
+        const snapshot = asRecord(asRecord(checkpoint?.data)?.accountingSnapshot);
+        const usage = asRecord(captures?.[`usageTurn${index + 1}`]);
+        const nano = snapshot?.totalNanoAiu;
+        const premium = snapshot?.totalPremiumRequestCost;
+        if (snapshot?.aiCreditsStatus !== "complete" ||
+            typeof nano !== "number" || !Number.isSafeInteger(nano) || nano < priorNano ||
+            nano > COMMUNICATION_LIMITS.aiCredits * 1e9 ||
+            typeof premium !== "number" || !Number.isFinite(premium) || premium < priorPremium ||
+            usage?.totalNanoAiu !== nano || usage?.totalPremiumRequestCost !== premium) {
+          throw new Error("Runtime cumulative usage capture is missing, inconsistent, or exceeds budget");
+        }
+        priorNano = nano;
+        priorPremium = premium;
+      }
+      const parsed = parseCliTurn(rawEvents, context);
       publicMessages.push(...parsed.messages);
       if (turn.messageIndex !== parsed.messageIndex || turn.messageHash !== parsed.messageHash ||
           turn.messageType !== parsed.message.messageType) {
@@ -557,12 +601,21 @@ function auditCommunication(artifact: TrialArtifact): {
         throw new Error("format correction must preserve the intended message type");
       }
       correctingFormat = undefined;
-      if (parsed.message.messageType !== "evidence_request") {
+      if (parsed.message.messageType === "report_ready") {
+        if (index >= COMMUNICATION_LIMITS.modelTurns - 1) throw new Error("Readiness left no finalization turn");
+        finalizing = { outcome: parsed.message.outcome, reason: parsed.message.reason };
+        if (index === turns.length - 1 && (audit.outcome === "final" || audit.outcome === "blocked")) {
+          throw new Error("Completed schema session ended with readiness instead of a report");
+        }
+      } else if (parsed.message.messageType !== "evidence_request") {
         if (index !== turns.length - 1 || audit.outcome !== parsed.message.messageType ||
             stableJson(parsed.message.report) !== stableJson(report) ||
-            parsed.message.reason !== audit.reason) {
+            parsed.message.reason !== audit.reason ||
+            (finalizing?.outcome === "blocked" && parsed.message.reason !== finalizing.reason)) {
           throw new Error("terminal envelope does not match the persisted report or outcome");
         }
+      } else if (artifact.reportOutput === "schema" && index >= COMMUNICATION_LIMITS.modelTurns - 2) {
+        throw new Error("Evidence collection consumed the reserved finalization budget");
       } else if (index === turns.length - 1 && (audit.outcome === "final" || audit.outcome === "blocked")) {
         throw new Error("terminal audit turn is not a final or blocked message");
       }

@@ -16,6 +16,7 @@ import { writeLocalReports } from "./report-privacy.mts";
 interface RunManifest {
   readonly protocol: string;
   readonly profile: EvaluationProfile;
+  readonly reportOutput?: import("./contracts.mts").ReportOutput;
   readonly repositoryCommit: string;
   readonly sourceRevision: string;
   readonly model: string;
@@ -111,15 +112,17 @@ export async function generateEvidenceReport(options: {
   if (
     summary.protocol !== EVALUATION_PROTOCOL || manifest.protocol !== summary.protocol ||
     manifest.profile !== profile || summary.model !== evaluationModel(profile) ||
+    (manifest.reportOutput ?? "prompt") !== (summary.reportOutput ?? "prompt") ||
     manifest.model !== summary.model || manifest.reasoningEffort !== summary.reasoningEffort ||
     manifest.contextTier !== summary.contextTier ||
     summary.trials.some((trial) =>
       trial.protocol !== summary.protocol || trial.profile !== profile ||
+      (trial.reportOutput ?? "prompt") !== (summary.reportOutput ?? "prompt") ||
       trial.model !== summary.model || trial.reasoningEffort !== summary.reasoningEffort ||
       trial.contextTier !== summary.contextTier
     )
   ) {
-    throw new Error(`Cannot report mixed or historical profiles, models, or protocols; ${EVALUATION_PROTOCOL} provenance must match`);
+    throw new Error(`Cannot report mixed or historical profiles, models, protocols, or report output modes; ${EVALUATION_PROTOCOL} provenance must match`);
   }
   if (summary.trials.some((trial) =>
     !["candidate", "abstained", "blocked", "protocol-error", "execution-error"].includes(trial.outcome) ||
@@ -219,6 +222,7 @@ Aborted sessions are failures, not completed RCA analyses.
 | Dataset source and license | [phamquiluan/RCAEval](https://huggingface.co/datasets/phamquiluan/RCAEval), MIT |
 | Protocol | \`${summary.protocol}\` |
 | Evaluation profile | \`${summary.profile}\` |
+| Report output | \`${summary.reportOutput ?? "prompt"}\` |
 | Model | \`${manifest.model}\` |
 | Reasoning effort | \`${manifest.reasoningEffort}\` |
 | Context tier | \`${manifest.contextTier}\` |
@@ -312,6 +316,7 @@ ${profileNotice(summary)}
 * Run ID: \`${summary.runId}\`
 * Protocol: \`${summary.protocol}\`
 * Evaluation profile: \`${summary.profile}\`
+* Report output: \`${summary.reportOutput ?? "prompt"}\`
 * Model: \`${summary.model}\`
 * Repository commit: \`${manifest.repositoryCommit}\`
 * Input fingerprint: \`${manifest.inputFingerprint}\`
@@ -361,6 +366,7 @@ ${profileNotice(summary)}
 Executed ${summary.trials.length} blinded sessions across ${caseCount} selected RCAEval fault-injection
 cases using \`${summary.model}\`, medium reasoning effort, and the default context tier.
 Profile: \`${summary.profile}\`. Protocol: \`${summary.protocol}\`.
+Report output: \`${summary.reportOutput ?? "prompt"}\`.
 Condition selection: \`${summary.mode}\`. See the evidence report for condition-separated
 outcomes and matched-pair differences; no general skill-effectiveness claim is implied.
 Outcomes: ${summary.trials.filter((trial) => trial.outcome === "candidate").length} candidates,
@@ -476,6 +482,7 @@ async function readPremiumRequestCosts(
   for (const trial of summary.trials) {
     const artifact = await readJson<{
       protocol?: string;
+      reportOutput?: import("./contracts.mts").ReportOutput;
       requestedProfile?: { evaluationProfile?: EvaluationProfile; model?: string };
       cliCapture?: Readonly<Record<string, unknown>>;
     }>(
@@ -483,6 +490,7 @@ async function readPremiumRequestCosts(
     );
     if (
       artifact.protocol !== summary.protocol ||
+      (artifact.reportOutput ?? "prompt") !== (summary.reportOutput ?? "prompt") ||
       artifact.requestedProfile?.evaluationProfile !== summary.profile ||
       artifact.requestedProfile?.model !== summary.model
     ) {

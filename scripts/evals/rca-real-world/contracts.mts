@@ -12,7 +12,7 @@ export const EVALUATION_RUN_DIRECTORY = "rcaeval-three-case";
 export const EXPECTED_MODEL = "gpt-5.6-sol";
 export const EXPECTED_REASONING_EFFORT = "medium";
 export const EXPECTED_CONTEXT_TIER = "default";
-export const EVALUATION_PROTOCOL = "ad-hoc-v8";
+export const EVALUATION_PROTOCOL = "ad-hoc-v9";
 export const COMMUNICATION_LIMITS = {
   modelTurns: 8, evidenceCalls: 24, approvalsPerBatch: 12, resultRows: 100,
   resultBytes: 64 * 1024, batchBytes: 256 * 1024, messageBytes: 256 * 1024,
@@ -41,6 +41,15 @@ export const SKILLED_REPORT_HEADINGS = [
 
 /** Separates harness debugging from production-model evaluation evidence. */
 export type EvaluationProfile = "debug" | "production";
+
+/** Selects report generation, not evidence-tool behavior; immutable for an evaluation run. */
+export type ReportOutput = "prompt" | "schema";
+
+/** Rejects unsupported output modes without silently falling back to prompt-only generation. */
+export function parseReportOutput(value: string): ReportOutput {
+  if (value !== "prompt" && value !== "schema") throw new Error("Expected report output prompt or schema");
+  return value;
+}
 
 /** Returns the fixed model for a profile; reasoning and context settings are shared. */
 export function evaluationModel(profile: EvaluationProfile): string {

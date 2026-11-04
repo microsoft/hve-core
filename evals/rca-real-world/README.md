@@ -2,7 +2,7 @@
 title: RCAEval real-world RCA evaluation
 description: Compare skilled and skill-free RCA on five blinded RCAEval cases with bounded evidence tools
 author: HVE Core Team
-ms.date: 2026-11-03
+ms.date: 2026-11-04
 ms.topic: reference
 keywords:
   - root cause analysis
@@ -22,6 +22,12 @@ represent organic production incidents or a statistically representative benchma
 
 ## Recorded evaluation snapshots
 
+* [2026-11-04 paired schema-mode evaluation](PR-3136-DEBUG-2026-11-04.md) records the
+  completed `ad-hoc-v9` real-data run: 30 integrity-valid reports, zero format rejections,
+  and 15/15 skilled versus 11/15 baseline leading-candidate service matches. The
+  [machine-readable snapshot](PR-3136-DEBUG-2026-11-04.json) preserves all 30 trial records.
+  This is an official repository evaluation record using the debug profile, not a
+  production-readiness or general efficacy claim; human causal review remains pending.
 * [2026-11-02 paired debug snapshot](PR-3136-DEBUG-2026-11-02.md) captures the completed
   `ad-hoc-v7` run, both conditions, case mappings, provenance, failures, and unresolved review.
   Its [machine-readable results](PR-3136-DEBUG-2026-11-02.json) contain all 30 trial records.
@@ -102,7 +108,7 @@ The preparation command creates two separate roots:
 * `model-visible/` contains neutrally named incident metadata and deterministic evidence stores.
 * `scorer-only/` contains source provenance, hashes, and held-out service and fault labels.
 
-The `ad-hoc-v8` protocol compares two ad hoc investigations in the same Copilot CLI host.
+The `ad-hoc-v9` protocol compares two ad hoc investigations using one selected Copilot host mode.
 Each condition runs in a fresh temporary workspace and independent model session. Only the
 `with-skill` condition receives the three packaged RCA skills. The `without-skill` condition
 receives no skill bundle, no custom agent, and no RCA reasoning procedure. Both receive the
@@ -287,6 +293,32 @@ npm run test:rca-eval
 npm run ci:rca-eval -- --run-id <run-id> --round 1
 ```
 
+### Report generation mode
+
+The default `--report-output prompt` retains prompt-only report formatting. To constrain only
+final report generation, start a fresh run with:
+
+```powershell
+node scripts\evals\rca-real-world\run-cli.mts --run-id <new-run-id> --round 1 --profile debug --report-output schema
+```
+
+Schema mode uses one installed headless-runtime session per investigation. Evidence-request
+messages and host-delivered tool results are not schema-constrained. When ready, the model
+returns a small `report_ready` envelope with outcome `final` or `blocked`, not the report.
+The next send in the same session constrains the complete final envelope, including invocation
+identity and the condition-specific report shape. Existing validation and exact approvals remain
+mandatory. No evidence collection is allowed after readiness, and there is no prompt-only fallback.
+
+Readiness and finalization both count toward the existing eight-turn limit. The host stops
+evidence requests that would consume the reserved finalization turn. Runtime cumulative usage
+includes finalization, and audit replay checks the session identity, outbound schema fingerprint,
+selected message, usage snapshots, and terminal outcome. Missing or incomplete usage is a failure.
+
+Output mode is immutable in the manifest and inherited on continuation. Both conditions use
+the same mode. To disable schema generation, start a different run with `--report-output prompt`;
+do not switch modes in an existing run. Models without advertised schema support fail explicitly.
+See [schema finalization checks](SCHEMA-FINALIZATION.md) for the synthetic test and its limits.
+
 ### Debug and production profiles
 
 On a new interactive run, choose:
@@ -360,7 +392,7 @@ remain in each trial result; compatibility and unsupported claims require human 
 
 Earlier runs used prescribed scope, pre/post-comparison, and focused-query stages; some also
 requested a two-category baseline. Those saved outputs do not establish ad hoc performance.
-Start a new run ID for `ad-hoc-v8`; continuation of older protocols, including `ad-hoc-v7`, is rejected. The immutable
+Start a new run ID for `ad-hoc-v9`; continuation of older protocols, including `ad-hoc-v8`, is rejected. The immutable
 input fingerprint also rejects changed prompts or scoring. Preserve prior evidence and do not
 pool old and new protocols, or debug and production results, as one experiment.
 
@@ -533,7 +565,8 @@ not prove the value was a credential. Reports with missing metadata disclose tha
 > source retrieval; masking alone does not invalidate a diagnosis.
 
 The format-preserving redaction and disclosure contract was introduced in `ad-hoc-v7` and is
-retained in `ad-hoc-v8`, which extends bounded envelope correction. Use fresh run IDs; do not
+retained in `ad-hoc-v9`, which adds optional report-only schema enforcement to the bounded
+envelope correction introduced in `ad-hoc-v8`. Use fresh run IDs; do not
 pool or rewrite earlier protocol runs.
 
 ## Interpretation limits
