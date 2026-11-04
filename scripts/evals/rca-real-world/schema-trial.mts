@@ -18,6 +18,7 @@ export class SchemaTrial {
   private actualSessionId?: string;
   private usage: RuntimeUsage = { totalPremiumRequestCost: 0, totalNanoAiu: 0 };
   private stopped = false;
+  private readonly aiCreditLimit: number;
   private readonly runtime: SchemaRuntime;
   private readonly options: {
     readonly model: string; readonly sessionId: string; readonly workingDirectory: string;
@@ -28,9 +29,14 @@ export class SchemaTrial {
     options: {
       readonly model: string; readonly sessionId: string; readonly workingDirectory: string;
     },
+    aiCreditLimit: number = COMMUNICATION_LIMITS.aiCredits,
   ) {
+    if (!Number.isSafeInteger(aiCreditLimit) || aiCreditLimit <= 0) {
+      throw new Error("AI-credit limit must be a positive safe integer");
+    }
     this.runtime = runtime;
     this.options = options;
+    this.aiCreditLimit = aiCreditLimit;
   }
 
   /** Verifies capability and creates the requested isolated session before any model send. */
@@ -68,7 +74,7 @@ export class SchemaTrial {
     let usage: RuntimeUsage | undefined;
     try {
       if (!this.actualSessionId || this.stopped) throw new Error("Schema trial is not available for another send");
-      if (this.usage.totalNanoAiu >= COMMUNICATION_LIMITS.aiCredits * 1e9) throw new Error("AI-credit budget exhausted");
+      if (this.usage.totalNanoAiu >= this.aiCreditLimit * 1e9) throw new Error("AI-credit budget exhausted");
       await sendRuntimeTurn({
         runtime: this.runtime, sessionId: this.actualSessionId, prompt, timeoutMs, responseFormat, events,
       });
@@ -87,7 +93,7 @@ export class SchemaTrial {
       }
       usage = { totalPremiumRequestCost: premium, totalNanoAiu: nano };
       this.usage = usage;
-      if (nano > COMMUNICATION_LIMITS.aiCredits * 1e9) throw new Error("AI-credit budget exceeded");
+      if (nano > this.aiCreditLimit * 1e9) throw new Error("AI-credit budget exceeded");
     } catch (failure) {
       error = failure instanceof Error ? failure.message : String(failure);
       this.stopped = true;

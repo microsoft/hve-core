@@ -19,7 +19,7 @@ An unsupported model, invalid readiness signal, runtime error, timeout, invalid 
 session cleanup produces an explicit failure. There is no unconstrained fallback or host repair.
 
 The paired evaluation runner offers this boundary with `--report-output schema` under
-`ad-hoc-v9`; `--report-output prompt` remains the default and rollback mode for a fresh run.
+`ad-hoc-v10`; `--report-output prompt` remains the default and rollback mode for a fresh run.
 Its schema mode uses host-mediated exact approvals, not native runtime tool execution.
 Every readiness and finalization send consumes the existing turn budget. Output mode is immutable
 in manifests, scores, and reports. The audit checks the outbound schema fingerprint and same-session

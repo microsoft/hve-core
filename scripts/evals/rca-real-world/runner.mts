@@ -11,7 +11,7 @@ import {
   EVALUATION_CASE_IDS,
   EVALUATION_RUN_DIRECTORY,
   EVALUATION_PROTOCOL,
-  evaluationModel,
+  evaluationModel, evaluationAiCreditLimit, PRODUCTION_RUN_AI_CREDITS,
   parseEvaluationProfile,
   parseReportOutput, type ReportOutput,
   type EvaluationProfile,
@@ -61,7 +61,7 @@ export interface RunRoundOptions {
 /** Persists partial-round progress without granting authority to retry failed sessions. */
 export interface RoundExecutionCheckpoint {
   readonly round: number;
-  readonly status: "complete" | "paused-technical-failures";
+  readonly status: "complete" | "paused-technical-failures" | "paused-ai-credit-budget";
   readonly attemptedSessions: number;
   readonly remainingSessions: number;
   readonly consecutiveTechnicalFailures: number;
@@ -83,6 +83,8 @@ export interface EvaluationSummary {
   readonly contextTier: string;
   readonly trialOrder: ReturnType<typeof createConditionSchedule>;
   readonly trials: readonly TrialResult[];
+  readonly aiCreditsUsed?: number;
+  readonly aiCreditBudget?: number;
   readonly roundExecution?: RoundExecutionCheckpoint;
   readonly roundOneCheckpoint?: {
     readonly decision: "continue" | "pause";
@@ -123,6 +125,8 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     reasoningEffort?: string;
     contextTier?: string;
     reportOutput?: string;
+    sessionAiCreditLimit?: number;
+    aiCreditBudget?: number;
   }>(manifestPath);
   if (priorManifest && (priorManifest.schemaVersion !== "2.0.0" || priorManifest.runId !== options.runId)) {
     throw new Error("A new paired-evaluation run is required for this manifest");
@@ -145,6 +149,12 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     priorManifest.contextTier !== EXPECTED_CONTEXT_TIER
   )) {
     throw new Error("Evaluation profile and model cannot change after round one");
+  }
+  if (priorManifest && (
+    priorManifest.sessionAiCreditLimit !== evaluationAiCreditLimit(profile) ||
+    priorManifest.aiCreditBudget !== (profile === "production" ? PRODUCTION_RUN_AI_CREDITS : undefined)
+  )) {
+    throw new Error("Evaluation AI-credit budget cannot change after round one");
   }
   const mode = parseEvaluationMode(options.mode ?? priorManifest?.mode ?? "both");
   if (priorManifest && priorManifest.mode !== mode) {
@@ -179,6 +189,8 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       packageLockSha256: sha256(await readFile(join(options.repositoryRoot, "package-lock.json"))),
       startedAt: (options.clock ?? (() => new Date()))().toISOString(),
       retries: "none",
+      sessionAiCreditLimit: evaluationAiCreditLimit(profile),
+      ...(profile === "production" ? { aiCreditBudget: PRODUCTION_RUN_AI_CREDITS } : {}),
     });
   } else {
     if (priorManifest?.inputFingerprint !== currentFingerprint) {
@@ -230,12 +242,20 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
   const priorRound = options.round > 1 && !resuming
     ? await readJson<RoundExecutionCheckpoint>(join(runRoot, `round-${options.round - 1}-execution.json`))
     : undefined;
-  if (priorRound?.status === "paused-technical-failures") {
-    throw new Error("The previous round has an unresolved technical-failure stop");
+  if (priorRound && priorRound.status !== "complete") {
+    throw new Error("The previous round has an unresolved stop");
   }
+  let aiCreditsUsed = profile === "production" ? await readRunAiCredits(runRoot, existingResults) : 0;
   let consecutiveTechnicalFailures = priorRound?.consecutiveTechnicalFailures ?? 0;
   let status: RoundExecutionCheckpoint["status"] = "complete";
   for (const item of roundItems.slice(attemptedSessions)) {
+    const aiCreditLimit = profile === "production"
+      ? Math.min(evaluationAiCreditLimit(profile), Math.floor(PRODUCTION_RUN_AI_CREDITS - aiCreditsUsed))
+      : evaluationAiCreditLimit(profile);
+    if (aiCreditLimit <= 0) {
+      status = "paused-ai-credit-budget";
+      break;
+    }
     const sessionPath = join(
       trialDirectory(runRoot, item.caseId, item.trial, item.condition),
       "session-artifact.json",
@@ -257,17 +277,19 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       condition: item.condition,
       profile,
       reportOutput,
+      aiCreditLimit,
       runtimeFactory: options.runtimeFactory,
       cliInvoker: options.cliInvoker,
       clock: options.clock,
     });
-    await scorePersistedTrial({
+    const result = await scorePersistedTrial({
       runRoot,
       caseId: item.caseId,
       trial: item.trial,
       condition: item.condition,
       scorerPath,
     });
+    if (profile === "production") aiCreditsUsed += await readRunAiCredits(runRoot, [result]);
     attemptedSessions += 1;
     consecutiveTechnicalFailures = artifact.endReason === "error" ? consecutiveTechnicalFailures + 1 : 0;
     if (consecutiveTechnicalFailures >= 2) {
@@ -331,6 +353,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     contextTier: EXPECTED_CONTEXT_TIER,
     trialOrder: createConditionSchedule(3, mode),
     trials: results,
+    ...(profile === "production" ? { aiCreditsUsed, aiCreditBudget: PRODUCTION_RUN_AI_CREDITS } : {}),
     roundExecution,
     roundOneCheckpoint,
     limitations: [
@@ -347,6 +370,42 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
   };
   await writeJson(join(runRoot, "evaluation-summary.json"), summary);
   return summary;
+}
+
+/** Reads the latest cumulative cost once per attempted session, including failures; missing accounting stops execution. */
+export async function readRunAiCredits(
+  runRoot: string, results: readonly Pick<TrialResult, "caseId" | "trial" | "condition">[],
+): Promise<number> {
+  let nano = 0;
+  for (const result of results) {
+    const artifact = await readJson<{
+      reportOutput?: ReportOutput;
+      cliCapture?: Readonly<Record<string, unknown>>;
+      endReason?: string;
+      preflight?: { modelAvailable?: boolean };
+    }>(
+      join(trialDirectory(runRoot, result.caseId, result.trial, result.condition), "session-artifact.json"),
+    );
+    if (!artifact.cliCapture) throw new Error("Missing production session accounting captures");
+    const captures = artifact.cliCapture;
+    const turns = Object.keys(captures).filter((key) => /^turn\d+$/.test(key))
+      .sort((left, right) => Number(right.slice(4)) - Number(left.slice(4)));
+    if (turns.length === 0) {
+      if (Object.keys(captures).length !== 0 || artifact.endReason !== "error" ||
+          artifact.preflight?.modelAvailable !== false) {
+        throw new Error("Missing production session model-turn accounting");
+      }
+      continue;
+    }
+    const last = captures[`usageTurn${turns[0]!.slice(4)}`];
+    if (!last || typeof last !== "object" || !("totalNanoAiu" in last) ||
+        typeof last.totalNanoAiu !== "number" || !Number.isSafeInteger(last.totalNanoAiu) || last.totalNanoAiu < 0 ||
+        (artifact.reportOutput !== "schema" && (!("aiCreditsStatus" in last) || last.aiCreditsStatus !== "complete"))) {
+      throw new Error("Cannot continue a production evaluation with missing or invalid cumulative AI-credit usage");
+    }
+    nano += last.totalNanoAiu;
+  }
+  return nano / 1e9;
 }
 
 async function assertPrepared(runRoot: string): Promise<{

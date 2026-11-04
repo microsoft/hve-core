@@ -12,7 +12,8 @@ export const EVALUATION_RUN_DIRECTORY = "rcaeval-three-case";
 export const EXPECTED_MODEL = "gpt-5.6-sol";
 export const EXPECTED_REASONING_EFFORT = "medium";
 export const EXPECTED_CONTEXT_TIER = "default";
-export const EVALUATION_PROTOCOL = "ad-hoc-v9";
+export const EVALUATION_PROTOCOL = "ad-hoc-v10";
+export const PRODUCTION_RUN_AI_CREDITS = 6000;
 export const COMMUNICATION_LIMITS = {
   modelTurns: 8, evidenceCalls: 24, approvalsPerBatch: 12, resultRows: 100,
   resultBytes: 64 * 1024, batchBytes: 256 * 1024, messageBytes: 256 * 1024,
@@ -54,6 +55,11 @@ export function parseReportOutput(value: string): ReportOutput {
 /** Returns the fixed model for a profile; reasoning and context settings are shared. */
 export function evaluationModel(profile: EvaluationProfile): string {
   return profile === "debug" ? "gpt-5.6-luna" : EXPECTED_MODEL;
+}
+
+/** Returns the per-session monitored cutoff; a response can cross it before accounting arrives. */
+export function evaluationAiCreditLimit(profile: EvaluationProfile): number {
+  return profile === "production" ? PRODUCTION_RUN_AI_CREDITS : COMMUNICATION_LIMITS.aiCredits;
 }
 
 /** Parses an exact profile name, rejecting unsupported values rather than silently defaulting. */

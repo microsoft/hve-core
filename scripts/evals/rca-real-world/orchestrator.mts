@@ -81,6 +81,7 @@ export interface TrialArtifact {
   readonly communication?: CommunicationAudit;
   readonly requestedProfile: {
     readonly evaluationProfile?: EvaluationProfile;
+    readonly aiCreditLimit?: number;
     readonly model: string;
     readonly reasoningEffort: string;
     readonly contextTier: string;

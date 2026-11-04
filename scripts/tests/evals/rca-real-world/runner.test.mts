@@ -14,13 +14,15 @@ import {
   EVALUATION_CASE_IDS,
   EVALUATION_PROTOCOL,
   EVALUATION_RUN_DIRECTORY,
+  evaluationAiCreditLimit,
+  PRODUCTION_RUN_AI_CREDITS,
   TRANSFORMATION_VERSION,
   sha256,
   stableJson,
   readJson,
   writeJson,
 } from "../../../evals/rca-real-world/contracts.mts";
-import { createInputFingerprint, runRound } from "../../../evals/rca-real-world/runner.mts";
+import { createInputFingerprint, readRunAiCredits, runRound } from "../../../evals/rca-real-world/runner.mts";
 import { trialDirectory } from "../../../evals/rca-real-world/conditions.mts";
 import { fixtureInventory } from "./cli-fixture.mts";
 import { scoreTrial } from "../../../evals/rca-real-world/scoring.mts";
@@ -103,6 +105,8 @@ function schemaRuntimeFixture(options: {
   readonly evidenceTurns?: number;
   readonly missingUsage?: boolean;
   readonly overBudget?: boolean;
+  readonly model?: string;
+  readonly aiCreditsPerTurn?: readonly number[];
 }) {
   const requests: { method: string; params: Readonly<Record<string, unknown>> }[] = [];
   const handlers = new Set<(event: Readonly<Record<string, unknown>>) => void>();
@@ -112,7 +116,7 @@ function schemaRuntimeFixture(options: {
     request: async (method, params = {}) => {
       requests.push({ method, params });
       if (method === "models.list") return {
-        models: [{ id: "gpt-5.6-luna", capabilities: { supports: { structured_outputs: true } } }],
+        models: [{ id: options.model ?? "gpt-5.6-luna", capabilities: { supports: { structured_outputs: true } } }],
       };
       if (method === "session.create") {
         sessionId = params.sessionId;
@@ -152,12 +156,14 @@ function schemaRuntimeFixture(options: {
       }
       const events = [
         { type: "assistant.message", data: {
-          phase: "final_answer", content: JSON.stringify({ ...identity, ...payload }), model: "gpt-5.6-luna",
+          phase: "final_answer", content: JSON.stringify({ ...identity, ...payload }), model: options.model ?? "gpt-5.6-luna",
         } },
         ...(!options.missingUsage ? [{
           type: "session.usage_checkpoint", data: { accountingSnapshot: {
             aiCreditsStatus: "complete", totalPremiumRequestCost: sends,
-            totalNanoAiu: options.overBudget ? 101 * 1e9 : sends * 1e6,
+            totalNanoAiu: options.aiCreditsPerTurn
+              ? options.aiCreditsPerTurn[sends - 1]! * 1e9
+              : options.overBudget ? 101 * 1e9 : sends * 1e6,
           } },
         }] : []),
         { type: "session.idle", data: {} },
@@ -311,6 +317,120 @@ for (const [label, extra] of [
     assert.equal(fake.requests.filter(({ method }) => method === "session.destroy").length, 1);
   });
 }
+
+for (const limit of [199, 200, 201]) {
+  test(`production schema session enforces a recorded 200-credit remaining allowance at ${limit}`, async (context) => {
+    const root = await preparedRun();
+    context.after(() => rm(root, { recursive: true, force: true }));
+    const fake = schemaRuntimeFixture({
+      condition: "without-skill", model: "gpt-5.6-sol", aiCreditsPerTurn: [70, 100, limit],
+    });
+    const artifact = await runCliTrial({
+      repositoryRoot: resolve("."), runRoot: root, runId: "production-budget",
+      caseId: "case-01", trial: 1, condition: "without-skill", profile: "production",
+      aiCreditLimit: 200,
+      reportOutput: "schema", cliInvoker: schemaPreflight, runtimeFactory: () => fake.runtime,
+      clock: () => NOW,
+    });
+    assert.equal(artifact.requestedProfile.aiCreditLimit, 200);
+    assert.equal(artifact.endReason, limit <= 200 ? "complete" : "error");
+    const scored = scoreTrial(artifact, {
+      neutralId: "case-01", sourcePath: "held-out-case-01", rootCauseService: "adservice",
+      fault: "cpu", compatibleMechanism: "cpu",
+    }, "fixture-scorer");
+    assert.equal(scored.integrity, limit <= 200 ? "pass" : "fail");
+    assert.equal(fake.requests.filter(({ method }) => method === "session.send").length, 3);
+    if (limit > 200) assert.match(artifact.error ?? "", /AI-credit budget exceeded/);
+  });
+}
+
+test("production session can receive a smaller remaining allowance but cannot raise its profile cutoff", async (context) => {
+  const root = await preparedRun();
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const fake = schemaRuntimeFixture({
+    condition: "without-skill", model: "gpt-5.6-sol", aiCreditsPerTurn: [70, 100, 151],
+  });
+  const options = {
+    repositoryRoot: resolve("."), runRoot: root, runId: "remaining-budget",
+    caseId: "case-01", trial: 1, condition: "without-skill" as const, profile: "production" as const,
+    reportOutput: "schema" as const, cliInvoker: schemaPreflight, runtimeFactory: () => fake.runtime,
+    clock: () => NOW,
+  };
+  const artifact = await runCliTrial({ ...options, aiCreditLimit: 150 });
+  assert.equal(artifact.requestedProfile.aiCreditLimit, 150);
+  assert.match(artifact.error ?? "", /AI-credit budget exceeded/);
+  for (const aiCreditLimit of [0, -1, 0.5, 6001, Number.NaN]) {
+    await assert.rejects(runCliTrial({ ...options, aiCreditLimit }), /Session AI-credit limit/);
+  }
+  assert.equal(evaluationAiCreditLimit("debug"), 100);
+  assert.equal(evaluationAiCreditLimit("production"), 6000);
+  assert.equal(PRODUCTION_RUN_AI_CREDITS, 6000);
+});
+
+test("run accounting uses latest cumulative usage once, includes failures, and never falls back to earlier usage", async (context) => {
+  const root = await mkdtemp(join(tmpdir(), "rca-costs-"));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const results = ["case-01", "case-02"].map((caseId) => ({
+    caseId, trial: 1, condition: "with-skill" as const,
+  }));
+  for (const item of results) {
+    const directory = trialDirectory(root, item.caseId, 1, item.condition);
+    await mkdir(directory, { recursive: true });
+    await writeJson(join(directory, "session-artifact.json"), {
+      endReason: item.caseId === "case-02" ? "error" : "complete",
+      reportOutput: "schema",
+      cliCapture: {
+        turn1: {}, turn2: {},
+        usageTurn1: { totalNanoAiu: 40e9 },
+        usageTurn2: { totalNanoAiu: (item.caseId === "case-02" ? 120 : 65) * 1e9 },
+      },
+    });
+  }
+  assert.equal(await readRunAiCredits(root, results), 185);
+  const path = join(trialDirectory(root, "case-02", 1, "with-skill"), "session-artifact.json");
+  for (const cliCapture of [
+    { turn1: {}, turn2: {}, usageTurn1: { totalNanoAiu: 40e9 } },
+    { turn1: {}, usageTurn1: { totalNanoAiu: -1 } },
+    { turn1: {}, usageTurn1: { totalNanoAiu: 1.5 } },
+    { turn1: {}, usageTurn1: { totalNanoAiu: 1e9, aiCreditsStatus: "pending" } },
+    { turn1: {}, usageTurn1: { totalNanoAiu: 1e9 } },
+  ]) {
+    await writeJson(path, { cliCapture });
+    await assert.rejects(readRunAiCredits(root, results), /missing or invalid cumulative/);
+  }
+  await writeJson(path, {});
+  await assert.rejects(readRunAiCredits(root, results), /Missing production session accounting/);
+  await writeJson(path, { endReason: "complete", cliCapture: {} });
+  await assert.rejects(readRunAiCredits(root, results), /Missing production session model-turn accounting/);
+  await writeJson(path, { endReason: "error", preflight: { modelAvailable: false }, cliCapture: {} });
+  assert.equal(await readRunAiCredits(root, results), 65, "A preflight-only failure incurred no model usage");
+});
+
+test("production run stops before another session after its aggregate allowance is crossed", async (context) => {
+  const root = await preparedRun();
+  context.after(() => rm(root, { recursive: true, force: true }));
+  let sessions = 0;
+  const summary = await runRound({
+    repositoryRoot: resolve("."), runRoot: root, runId: "production-run-budget",
+    round: 1, profile: "production", reportOutput: "schema",
+    cliInvoker: schemaPreflight, clock: () => NOW,
+    runtimeFactory: () => {
+      sessions += 1;
+      return schemaRuntimeFixture({
+        condition: "with-skill", model: "gpt-5.6-sol", aiCreditsPerTurn: [6001],
+      }).runtime;
+    },
+  });
+  assert.equal(sessions, 1);
+  assert.equal(summary.roundExecution?.status, "paused-ai-credit-budget");
+  assert.equal(summary.roundExecution.remainingSessions, 9);
+  assert.equal(summary.aiCreditsUsed, 6001);
+  assert.equal(summary.aiCreditBudget, 6000);
+  await assert.rejects(runRound({
+    repositoryRoot: resolve("."), runRoot: root, runId: "production-run-budget",
+    round: 1, continueAfterTechnicalStop: true, cliInvoker: schemaPreflight,
+  }), /eligible technical-failure checkpoint/);
+});
 
 async function preparedRun(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "rca-runner-"));
@@ -862,11 +982,22 @@ for (const profile of ["debug", "production"] as const) {
     context.after(() => rm(root, { recursive: true, force: true }));
     const model = profile === "debug" ? "gpt-5.6-luna" : "gpt-5.6-sol";
     const fake = fakeCliInvoker();
+    const sessionAllowances: number[] = [];
     const base = {
       repositoryRoot: resolve("."), runRoot: root, runId: `profile-${profile}`,
       profile, clock: () => NOW,
       cliInvoker: async (args: readonly string[], options: Parameters<CliInvoker>[1]) => {
-        if (args.includes("-p")) assert.equal(args[args.indexOf("--model") + 1], model);
+        if (args.includes("-p")) {
+          assert.equal(args[args.indexOf("--model") + 1], model);
+          const allowance = Number(args[args.indexOf("--max-ai-credits") + 1]);
+          if (profile === "debug") assert.equal(allowance, 100);
+          else assert.ok(allowance > 0 && allowance <= 6000);
+          if (args.includes("--session-id")) sessionAllowances.push(allowance);
+          await writeJson(args[args.indexOf("--usage-output-file") + 1]!, {
+            aiCreditsStatus: "complete",
+            totalNanoAiu: profile === "production" ? 150e9 : 10e9, totalPremiumRequestCost: 1,
+          });
+        }
         return fake(args, options);
       },
     };
@@ -876,9 +1007,20 @@ for (const profile of ["debug", "production"] as const) {
     const manifest = JSON.parse(await readFile(join(root, "run-manifest.json"), "utf8"));
     assert.equal(manifest.protocol, EVALUATION_PROTOCOL);
     assert.equal(manifest.model, model);
+    assert.equal(manifest.sessionAiCreditLimit, evaluationAiCreditLimit(profile));
+    if (profile === "production") {
+      assert.equal(summary.aiCreditsUsed, 1500);
+      assert.equal(manifest.aiCreditBudget, 6000);
+      assert.deepEqual(sessionAllowances, Array.from({ length: 10 }, (_, index) => 6000 - index * 150));
+      const second = await runRound({ ...base, round: 2 });
+      assert.equal(second.aiCreditsUsed, 3000);
+      assert.equal(sessionAllowances[10], 4500);
+    }
     await assert.rejects(runRound({
       ...base, round: 2, profile: profile === "debug" ? "production" : "debug",
     }), /profile/i);
+    await writeJson(join(root, "run-manifest.json"), { ...manifest, sessionAiCreditLimit: 999 });
+    await assert.rejects(runRound({ ...base, round: 2 }), /budget cannot change/);
     await writeFile(join(root, "run-manifest.json"), stableJson({ ...manifest, protocol: "host-directed" }));
     await assert.rejects(runRound({ ...base, round: 2 }), /protocol|new.*run/i);
   });

@@ -10,7 +10,7 @@ import {
   EXPECTED_CONTEXT_TIER,
   EVALUATION_CASE_IDS,
   EVALUATION_PROTOCOL,
-  evaluationModel,
+  evaluationModel, evaluationAiCreditLimit,
   type EvaluationProfile,
   EXPECTED_REASONING_EFFORT,
   RESULT_SCHEMA_VERSION,
@@ -563,9 +563,12 @@ function auditCommunication(artifact: TrialArtifact): {
         const usage = asRecord(captures?.[`usageTurn${index + 1}`]);
         const nano = snapshot?.totalNanoAiu;
         const premium = snapshot?.totalPremiumRequestCost;
+        const aiCreditLimit = artifact.requestedProfile.aiCreditLimit;
         if (snapshot?.aiCreditsStatus !== "complete" ||
+            typeof aiCreditLimit !== "number" || !Number.isSafeInteger(aiCreditLimit) || aiCreditLimit <= 0 ||
+            aiCreditLimit > evaluationAiCreditLimit(artifact.requestedProfile.evaluationProfile ?? "debug") ||
             typeof nano !== "number" || !Number.isSafeInteger(nano) || nano < priorNano ||
-            nano > COMMUNICATION_LIMITS.aiCredits * 1e9 ||
+            nano > aiCreditLimit * 1e9 ||
             typeof premium !== "number" || !Number.isFinite(premium) || premium < priorPremium ||
             usage?.totalNanoAiu !== nano || usage?.totalPremiumRequestCost !== premium) {
           throw new Error("Runtime cumulative usage capture is missing, inconsistent, or exceeds budget");

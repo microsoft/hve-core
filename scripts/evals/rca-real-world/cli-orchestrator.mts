@@ -15,7 +15,7 @@ import {
 import {
   AD_HOC_APPROVAL_POLICY,
   EXPECTED_CONTEXT_TIER, EVALUATION_CASE_IDS, EXPECTED_REASONING_EFFORT,
-  evaluationModel, resolveInside, sha256, stableJson, writeJson,
+  evaluationModel, evaluationAiCreditLimit, resolveInside, sha256, stableJson, writeJson,
   EVALUATION_PROTOCOL,
   parseReportOutput, type ReportOutput,
 } from "./contracts.mts";
@@ -76,6 +76,7 @@ export async function runCliTrial(
     readonly condition?: EvaluationCondition;
     readonly reportOutput?: ReportOutput;
     readonly runtimeFactory?: (options: { cwd: string; env: NodeJS.ProcessEnv }) => SchemaRuntime;
+    readonly aiCreditLimit?: number;
   },
 ): Promise<TrialArtifact> {
   if (!EVALUATION_CASE_IDS.includes(options.caseId as (typeof EVALUATION_CASE_IDS)[number]) ||
@@ -85,6 +86,11 @@ export async function runCliTrial(
   const clock = options.clock ?? (() => new Date());
   const profile = options.profile ?? "debug";
   const model = evaluationModel(profile);
+  const aiCreditLimit = options.aiCreditLimit ?? evaluationAiCreditLimit(profile);
+  if (!Number.isSafeInteger(aiCreditLimit) || aiCreditLimit <= 0 ||
+      aiCreditLimit > evaluationAiCreditLimit(profile)) {
+    throw new Error("Session AI-credit limit must be positive and within the selected profile limit");
+  }
   const condition = options.condition ?? "with-skill";
   const reportOutput = parseReportOutput(options.reportOutput ?? "prompt");
   const sessionRoot = trialDirectory(options.runRoot, options.caseId, options.trial, condition);
@@ -132,7 +138,8 @@ export async function runCliTrial(
     const incident: unknown = JSON.parse(await readFile(join(caseRoot, "incident.json"), "utf8"));
     let prompt = [
       buildAdHocPrompt(options.caseId, incident, tools, clock()),
-      `Shared resource limits: ${MAX_MODEL_TURNS} model turns, ${MAX_EVIDENCE_CALLS} total evidence calls, ${COMMUNICATION_LIMITS.aiCredits} cumulative AI credits, and ${MAX_SESSION_MS / 60000} minutes wall time. Time-bounded evidence queries are required, but no particular observation window or investigation sequence is prescribed.`,
+      `Shared resource limits: ${MAX_MODEL_TURNS} model turns, ${MAX_EVIDENCE_CALLS} total evidence calls, ${aiCreditLimit} cumulative AI credits, and ${MAX_SESSION_MS / 60000} minutes wall time. Time-bounded evidence queries are required, but no particular observation window or investigation sequence is prescribed.`,
+      `This is a benchmark, not a real incident. The coordinating user has selected ${model} and approved these cost limits for both conditions. Do not ask to switch models within this fixed-profile trial. This does not authorize real evidence collection or replace exact simulated tool approvals.`,
       ...(skillText ? [skillText] : []),
     ].join("\n\n");
     hashes.promptSha256 = sha256(prompt);
@@ -149,7 +156,7 @@ export async function runCliTrial(
     if (reportOutput === "schema") {
       schemaSession = new SchemaTrial((options.runtimeFactory ?? startSchemaRuntime)({ cwd: workspace, env }), {
         model, sessionId, workingDirectory: workspace,
-      });
+      }, aiCreditLimit);
       await schemaSession.start();
     }
     for (let turn = 1; turn <= MAX_MODEL_TURNS; turn += 1) {
@@ -166,12 +173,13 @@ export async function runCliTrial(
       }
       hashes[`turn${turn}PromptSha256`] = sha256(invocationPrompt);
       const timeoutMs = Math.min(options.timeoutMs ?? COMMUNICATION_LIMITS.turnMs, remainingMs);
+      captures[`turn${turn}`] = { pending: true };
       const schemaInvocation = schemaSession ? await schemaSession.send(
         invocationPrompt, timeoutMs,
         finalizing ? finalEnvelopeFormat(context, finalizing.outcome, finalizing.reason ?? undefined) : undefined,
       ) : undefined;
       const invocation = schemaInvocation ?? await invoke([
-        ...commonArgs(workspace, usagePath, model),
+        ...commonArgs(workspace, usagePath, model, aiCreditLimit),
         ...(turn === 1 ? ["--session-id", sessionId] : [`--resume=${sessionId}`]),
         "-p", invocationPrompt,
       ], { cwd: workspace, timeoutMs });
@@ -256,7 +264,7 @@ export async function runCliTrial(
         }
       }
       if (turn >= MAX_MODEL_TURNS - (reportOutput === "schema" ? 1 : 0) || calls + requests.length > MAX_EVIDENCE_CALLS ||
-          (schemaInvocation?.usage && schemaInvocation.usage.totalNanoAiu >= COMMUNICATION_LIMITS.aiCredits * 1e9)) {
+          (schemaInvocation?.usage && schemaInvocation.usage.totalNanoAiu >= aiCreditLimit * 1e9)) {
         throw new Error("Investigation resource budget exhausted before final report");
       }
       const batch = await executeHostBatch({
@@ -310,6 +318,7 @@ export async function runCliTrial(
     requestedProfile: {
       evaluationProfile: profile, model, reasoningEffort: EXPECTED_REASONING_EFFORT,
       contextTier: EXPECTED_CONTEXT_TIER,
+      aiCreditLimit,
     },
     preflight: {
       isolation, modelAvailable: successfulInvocation, reasoningEffortAvailable: successfulInvocation,
@@ -581,13 +590,13 @@ export async function invokeCopilotCli(
   }
 }
 
-function commonArgs(workspace: string, usagePath: string, model: string): readonly string[] {
+function commonArgs(workspace: string, usagePath: string, model: string, aiCreditLimit: number): readonly string[] {
   return [
     "-C", workspace, "--model", model, "--reasoning-effort", EXPECTED_REASONING_EFFORT,
     "--context", EXPECTED_CONTEXT_TIER, "--output-format", "json",
     "--no-custom-instructions", "--no-auto-update", "--disable-client-telemetry",
     "--disable-builtin-mcps", "--disable-mcp-server", "playwright",
-    "--disable-mcp-server", "workiq", "--no-color", "--max-ai-credits", String(COMMUNICATION_LIMITS.aiCredits),
+    "--disable-mcp-server", "workiq", "--no-color", "--max-ai-credits", String(aiCreditLimit),
     "--usage-output-file", usagePath, "--available-tools",
   ];
 }

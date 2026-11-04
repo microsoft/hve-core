@@ -1,12 +1,12 @@
 ---
 name: root-cause-analysis
-description: "Investigate incidents, software defects, and data or process failures by forming falsifiable hypotheses, executing tests against available evidence, and iterating to a verified causal explanation or an explicit evidence blocker. Use when performing root cause analysis, incident investigation, or postmortem analysis."
+description: "Investigate incidents, software defects, and data or process failures by forming falsifiable hypotheses, executing tests against available evidence, and iterating to a verified causal explanation or an explicit evidence blocker. Use when performing root cause analysis, incident investigation, or postmortem analysis, with cost and model choice confirmed before a full investigation."
 license: MIT
 compatibility: "Requires an Agent Skills host with all three RCA skills installed; Azure SRE mode additionally requires authorized read-only Azure SRE connectors."
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-11-02"
+  last_updated: "2026-11-04"
 ---
 
 # Root Cause Analysis
@@ -33,6 +33,29 @@ Use the host's actual tools and existing credentials; the skills grant no access
 extend a host execution limit, schedule themselves, or guarantee a discoverable root cause.
 Before production use, follow `references/setup-and-governance.md` for installation, connector,
 privacy, verification, update, withdrawal, and human-review requirements.
+
+## Cost and Model Choice
+
+Before starting a full real investigation, state the host-selected model, an anticipated AI-credit
+and monetary cost range, and the basis and uncertainty of that estimate. Use current host pricing
+and comparable measured usage when available. Distinguish consumption value from additional
+billing and an estimate from a spending limit; do not present benchmark costs as a real-incident
+price guarantee. If pricing or a defensible estimate is unavailable, say so and agree a spending
+limit before proceeding rather than inventing a price.
+
+Ask whether to continue with the selected model, switch to the debugging model `gpt-5.6-luna`
+when available and current pricing establishes it as cheaper, or pause. If it is already selected,
+offer continue or pause rather than a redundant switch. Wait for the user's choice before evidence collection or
+the hypothesis-test loop. Switching models requires the host's supported control or a manual
+user change; verify the selected model rather than claiming that a prompt changed it. Explain
+that a cheaper model can change diagnostic quality, not just cost.
+
+Record the selected model, estimate and pricing basis, approved spending limit, and retrievable
+user decision in the Investigation record. Reconfirm after a material scope, model, or budget
+change. Honor an existing explicit choice and budget for the same scope, including a fixed-profile
+benchmark, without asking again. Cost consent does not authorize tools, data access, or effects,
+and does not replace the approval contract below. Only host controls can enforce a spending limit;
+disclose when usage is unavailable or a response can cross a monitored cutoff.
 
 ## Host Mode and Evidence Expansion
 

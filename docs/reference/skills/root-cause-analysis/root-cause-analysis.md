@@ -1,9 +1,9 @@
 ---
 title: root-cause-analysis
-description: "Investigate incidents, software defects, and data or process failures by forming falsifiable hypotheses, executing tests against available evidence, and iterating to a verified causal explanation or an explicit evidence blocker. Use when performing root cause analysis, incident investigation, or postmortem analysis."
+description: "Investigate incidents, software defects, and data or process failures by forming falsifiable hypotheses, executing tests against available evidence, and iterating to a verified causal explanation or an explicit evidence blocker. Use when performing root cause analysis, incident investigation, or postmortem analysis, with cost and model choice confirmed before a full investigation."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-19
+ms.date: 2026-11-04
 ms.topic: reference
 keywords:
   - skill
@@ -22,7 +22,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Investigate incidents, software defects, and data or process failures by forming falsifiable hypotheses, executing tests against available evidence, and iterating to a verified causal explanation or an explicit evidence blocker. Use when performing root cause analysis, incident investigation, or postmortem analysis.
+Investigate incidents, software defects, and data or process failures by forming falsifiable hypotheses, executing tests against available evidence, and iterating to a verified causal explanation or an explicit evidence blocker. Use when performing root cause analysis, incident investigation, or postmortem analysis, with cost and model choice confirmed before a full investigation.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -46,6 +46,12 @@ Install and govern the skill with the bundled `references/setup-and-governance.m
 [causal-evidence-likelihood](causal-evidence-likelihood) companion skills provide bounded
 assessments but do not set RCA dispositions. They are internal-only capabilities that fail closed
 without an invocation context from this root workflow.
+
+For a full real investigation, the skill first explains anticipated AI-credit and monetary costs
+and asks whether to keep the selected model, switch to the lower-cost `gpt-5.6-luna` model when
+available, or pause. Estimates depend on evidence volume, investigation length, and current host
+pricing; they are not guaranteed incident prices. Model selection and cost consent do not replace
+evidence-access approvals.
 
 ## Example usage
 

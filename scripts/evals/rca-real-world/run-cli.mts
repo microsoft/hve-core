@@ -143,7 +143,7 @@ if (import.meta.main) {
     schemaVersion: string;
     commands: readonly unknown[];
   }>(commandPath);
-  const paused = summary.roundExecution?.status === "paused-technical-failures";
+  const paused = summary.roundExecution?.status !== undefined && summary.roundExecution.status !== "complete";
   await writeJson(commandPath, {
     schemaVersion: existing.schemaVersion,
     commands: [
@@ -167,10 +167,14 @@ if (import.meta.main) {
       roundOneDecision: summary.roundOneCheckpoint?.decision,
       roundExecution: summary.roundExecution?.status,
       remainingSessions: summary.roundExecution?.remainingSessions,
+      aiCreditsUsed: summary.aiCreditsUsed,
+      aiCreditBudget: summary.aiCreditBudget,
       requiresContinuationApproval: paused,
     })}\n`,
   );
-  if (paused) {
+  if (summary.roundExecution?.status === "paused-ai-credit-budget") {
+    process.stderr.write("Production AI-credit allowance exhausted. Do not continue or raise limits without a newly approved budget and fresh run.\n");
+  } else if (paused) {
     process.stderr.write("Paused after two consecutive technical failures. Ask the user whether to continue before using --continue-after-technical-stop.\n");
   }
   process.exitCode = paused ? 2 : 0;

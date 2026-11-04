@@ -108,7 +108,7 @@ The preparation command creates two separate roots:
 * `model-visible/` contains neutrally named incident metadata and deterministic evidence stores.
 * `scorer-only/` contains source provenance, hashes, and held-out service and fault labels.
 
-The `ad-hoc-v9` protocol compares two ad hoc investigations using one selected Copilot host mode.
+The `ad-hoc-v10` protocol compares two ad hoc investigations using one selected Copilot host mode.
 Each condition runs in a fresh temporary workspace and independent model session. Only the
 `with-skill` condition receives the three packaged RCA skills. The `without-skill` condition
 receives no skill bundle, no custom agent, and no RCA reasoning procedure. Both receive the
@@ -251,7 +251,18 @@ opportunity consumes a model turn, usage, and wall time within the existing limi
 session is retried automatically, and historical responses or scores are never repaired.
 
 Each session allows at most eight model turns and 24 evidence calls, with a 240-second per-turn
-timeout, a 15-minute investigation wall-time budget, and the CLI's 100-credit session limit.
+timeout and a 15-minute investigation wall-time budget. Debug sessions retain a 100-AI-credit
+cutoff. Production sessions share a 6,000-AI-credit allowance across all rounds and both
+conditions, rather than dividing it into equal per-session caps. Each session receives at most
+the remaining whole-credit allowance. Accounting includes failed sessions and finalization, using each session's latest
+cumulative usage once. Missing accounting prevents further production execution.
+
+These are monitored cutoffs, not hard billing caps: usage arrives after a response, which can
+cross a cutoff before the host detects it. A depleted run stops before another session starts.
+At the [published Copilot rate](https://github.com/features/copilot/plans) of $0.01 per AI credit,
+6,000 credits represent $60 of consumption, not necessarily $60 of additional billing.
+Production budget changes require a fresh run; historical results remain frozen.
+The `ad-hoc-v10` protocol records the selected session cutoff and replays its enforcement.
 Each tool result is bounded to 64 KiB, a complete delivered evidence batch to 256 KiB, and each
 public assistant message to 256 KiB of UTF-8. Complete prompts are bounded to 512 KiB, CLI stdout
 to 10 MiB, and CLI stderr to 64 KiB. The larger stdout allowance covers JSONL event wrappers,
@@ -392,7 +403,7 @@ remain in each trial result; compatibility and unsupported claims require human 
 
 Earlier runs used prescribed scope, pre/post-comparison, and focused-query stages; some also
 requested a two-category baseline. Those saved outputs do not establish ad hoc performance.
-Start a new run ID for `ad-hoc-v9`; continuation of older protocols, including `ad-hoc-v8`, is rejected. The immutable
+Start a new run ID for `ad-hoc-v10`; continuation of older protocols, including `ad-hoc-v9`, is rejected. The immutable
 input fingerprint also rejects changed prompts or scoring. Preserve prior evidence and do not
 pool old and new protocols, or debug and production results, as one experiment.
 
