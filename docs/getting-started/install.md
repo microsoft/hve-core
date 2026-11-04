@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install the HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-28
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
@@ -66,6 +66,7 @@ graph LR
 
 * Use the VS Code extension for managed updates in Copilot Chat.
 * Use the `hve-core` plugin for Copilot CLI.
+* Use the `hve-core` plugin for canvases, such as the [RPI Workflow canvas](../rpi/rpi-workflow-canvas). The VS Code extension does not carry canvases, and VS Code picks up a plugin that the Copilot CLI installed.
 * Use selective clone adoption when your repository should own only chosen files.
 
 ## Distribution Identity and Channels

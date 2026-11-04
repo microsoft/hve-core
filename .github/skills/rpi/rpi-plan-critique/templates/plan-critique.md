@@ -6,12 +6,13 @@
 * Task ID: {{task_id}}
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Critique execution: {{Complete_Partial_Blocked_or_Not_produced}}
+* Critique execution: {{started_Complete_Partial_Blocked_or_Not_produced}}
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
 * Critique type: {{initial_or_follow_up}}
 * Earlier critique: {{not_applicable_or_earlier_critique_path}}
 
+<!-- Write this record before the first lens runs, with execution started; execution leaves started only when the record is complete. -->
 <!-- For no assessment, record the limitation and unavailable verdict rather than fabricated coverage or findings. -->
 
 ## Inputs and Criterion Boundary
@@ -23,11 +24,11 @@
 
 ## Lens Assessments
 
-<!-- One row per lens. Use "direct" as the status when the critique parent assessed the lens itself. -->
+<!-- One row per lens, written as queued before the first lens runs. Status moves from queued to in progress to Complete, Partial, or Blocked. Write "direct" as the reasoning effort when the critique parent assessed the lens itself. -->
 
-| Lens     | Scope                        | Reasoning effort and source                          | Status                                 | Candidates                                                          |
-|----------|------------------------------|------------------------------------------------------|----------------------------------------|---------------------------------------------------------------------|
-| {{lens}} | {{phases_tasks_or_sections}} | {{effort}} ({{selected_caller_set_or_host_default}}) | {{Complete_Partial_Blocked_or_direct}} | {{adopted_count}} adopted; {{rejected_count}} rejected: {{reasons}} |
+| Lens     | Scope                        | Reasoning effort and source                                    | Status                                             | Candidates                                                          |
+|----------|------------------------------|----------------------------------------------------------------|----------------------------------------------------|---------------------------------------------------------------------|
+| {{lens}} | {{phases_tasks_or_sections}} | {{effort}} ({{selected_caller_set_or_host_default}}) or direct | {{queued_in_progress_Complete_Partial_or_Blocked}} | {{adopted_count}} adopted; {{rejected_count}} rejected: {{reasons}} |
 
 ## Coverage Assessment
 
@@ -51,6 +52,8 @@
 | {{PC_xxx}}      | {{resolved_still_open_or_superseded}} | {{evidence}} |
 
 ## Findings
+
+<!-- Add each lens's verified findings when that lens finishes, merging a duplicate into the finding already recorded. -->
 
 <!-- rpi:critique id=PC-001 -->
 ### PC-001 [{{Critical_High_Medium_or_Low}}]: {{finding_title}}
