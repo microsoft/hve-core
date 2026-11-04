@@ -216,7 +216,7 @@ test("live integrated schema runner on a synthetic fixture", {
     }, "synthetic-live-check");
     await writeJson(join(output, "session-artifact.json"), artifact);
     await writeJson(join(output, "trial-result.json"), scored);
-    assert.equal(artifact.endReason, "complete", artifact.error);
+    assert.equal(artifact.endReason, "complete", artifact.error ?? "Synthetic schema trial should complete");
     assert.equal(scored.integrity, "pass", scored.integrityFailures.join("; "));
     assert.ok(artifact.communication!.turns.some((turn) => turn.messageType === "report_ready"));
     assert.equal(artifact.communication!.turns.at(-1)!.messageType, "final");
@@ -248,7 +248,7 @@ for (const condition of ["with-skill", "without-skill"] as const) {
         caseId: "case-01", trial: 1, condition, reportOutput: "schema",
         cliInvoker: schemaPreflight, runtimeFactory: () => fake.runtime, clock: () => NOW,
       });
-      assert.equal(artifact.endReason, "complete", artifact.error);
+      assert.equal(artifact.endReason, "complete", artifact.error ?? "Schema fixture trial should complete");
       assert.equal(artifact.reportOutput, "schema");
       assert.deepEqual(artifact.communication!.turns.map((turn) => turn.messageType),
         ["evidence_request", "report_ready", blocked ? "blocked" : "final"]);

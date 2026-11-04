@@ -66,3 +66,5 @@ Live smoke tests are opt-in. Leave both `RCA_SCHEMA_SMOKE` and `RCA_SCHEMA_RUNNE
 to skip them during ordinary tests. Use `--report-output prompt` for a fresh run to disable
 runtime schema enforcement. Do not delete the runtime modules while the runner imports them.
 No dependency manifest, skill, or historical evaluation file was changed by this integration.
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

@@ -89,7 +89,7 @@ for (const condition of ["with-skill", "without-skill"] as const) {
       responses: ["Waiting", "READY_FOR_REPORT", JSON.stringify(report(condition))],
     });
     const result = await runFake(fake.runtime, condition);
-    assert.equal(result.status, "passed", result.error);
+    assert.equal(result.status, "passed", result.error ?? "Schema fixture finalization should pass");
     assert.equal(result.destroyed, true);
     const sends = fake.requests.filter(({ method }) => method === "session.send");
     assert.equal(sends.length, 3);
@@ -204,7 +204,7 @@ test("live synthetic same-session schema finalization", {
       evidence: JSON.stringify(evidence),
     });
     await writeJson(join(evidenceRoot, "result.json"), { ...result, syntheticEvidence: evidence });
-    assert.equal(result.status, "passed", result.error ?? result.cleanupError);
+    assert.equal(result.status, "passed", result.error ?? result.cleanupError ?? "Synthetic schema finalization should pass");
     assert.equal(result.destroyed, true);
     assert.match(result.report!.narrative, new RegExp(nonce));
     assert.ok(result.report!.limitations.some((item) => item.includes("SYNTHETIC_TRACE_UNAVAILABLE")));

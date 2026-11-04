@@ -1680,11 +1680,13 @@ cartservice
 cartstore
 checkoutservice
 emailservice
+frontendservice
 paymentservice
 phamquiluan
 rcaeval
 redactions
 rescored
+rescoring
 shippingservice
 strippable
 unassessable
