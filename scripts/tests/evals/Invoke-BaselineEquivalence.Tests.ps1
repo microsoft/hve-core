@@ -1641,7 +1641,30 @@ Describe 'Invoke-BaselineEquivalence.ps1 (sharded compare)' -Tag 'Unit' {
 
     AfterEach {
         Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
-        Remove-Item Env:STUB_VALLY_MODE, Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_CALL_LOG, Env:STUB_VALLY_COMPARE_COUNT_DIR -ErrorAction SilentlyContinue
+        Remove-Item Env:STUB_VALLY_MODE, Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_CALL_LOG, Env:STUB_VALLY_COMPARE_COUNT_DIR, Env:STUB_VALLY_DIAGNOSTIC_CASE -ErrorAction SilentlyContinue
+    }
+
+    It 'Recovers a transient executor error so the comparison keeps its full population' {
+        $clean = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo'
+        $env:STUB_VALLY_DIAGNOSTIC_CASE = 'transient-error'
+        $recovered = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo'
+
+        $recovered.Summary.runs | Should -Be 12
+        $recovered.Summary.dataQualityViolations | Should -Be $clean.Summary.dataQualityViolations
+        @($recovered.Summary.executionDiagnostics | ForEach-Object erroredTrials) | Should -Be @(1, 1)
+        @($recovered.Summary.phaseTimings | Where-Object worker -EQ 'gpt-6-luna:recovery' | ForEach-Object phase) | Should -Be @('baseline-eval', 'customized-eval')
+        @($recovered.Calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -like '*.recovery-*' }) | Should -HaveCount 2
+        @(Get-ChildItem -LiteralPath (Join-Path $script:ShardRepoRoot 'evals/baseline-equivalence') -Recurse -Force -Filter '.recovery-*') | Should -HaveCount 0
+    }
+
+    It 'Reports partially judged shards without counting them as run-health failures' {
+        $echo = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'echo'
+        $partial = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'partial'
+
+        $partial.Summary.judgeErrors | Should -Be 5
+        $partial.Summary.runs | Should -Be 7
+        $partial.Summary.runHealthFailures | Should -Be $echo.Summary.runHealthFailures
+        $partial.Summary.dataQualityViolations | Should -Be $echo.Summary.dataQualityViolations
     }
 
     It 'Matches the serial comparison tally and summary statistics with five concurrent shards' {
@@ -1698,5 +1721,146 @@ Describe 'Invoke-BaselineEquivalence.ps1 (sharded compare)' -Tag 'Unit' {
         $result.Summary.runHealthFailures | Should -BeGreaterOrEqual 5
         $result.Summary.dataQualityViolations | Should -BeGreaterThan 0
         $result.Summary.verdict | Should -Be 'fail'
+    }
+}
+
+Describe 'Errored trial recovery helpers' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+        Mock Write-Host {}
+
+        function New-RunDirectory {
+            param([string[]]$Lines)
+            $path = Join-Path $TestDrive "run-$([guid]::NewGuid())"
+            New-Item -ItemType Directory -Path $path -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $path 'results.jsonl') -Value $Lines -Encoding utf8NoBOM
+            return $path
+        }
+    }
+
+    Context 'Merge-RecoveredTrial' {
+        BeforeEach {
+            $script:RunLines = @(
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::a::trial-0","evalFilePath":"/spec.yaml","stimulus":"a","trialIndex":0,"totalTrials":2,"status":"success","trajectory":{"id":"t-a0"}}'
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::a::trial-1","evalFilePath":"/spec.yaml","stimulus":"a","trialIndex":1,"totalTrials":2,"status":"error","error":"boom","trajectory":null}'
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::b::trial-1","evalFilePath":"/spec.yaml","stimulus":"b","trialIndex":1,"totalTrials":2,"status":"error","error":"boom","trajectory":null}'
+                '{"type":"run-summary","runId":"run-1","hadExecutionErrors":true,"evals":[{"name":"spec","hadExecutionErrors":true}]}'
+            )
+            $script:RunDir = New-RunDirectory -Lines $script:RunLines
+            New-Item -ItemType Directory -Path (Join-Path $script:RunDir 'sessions') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $script:RunDir 'sessions/events.jsonl') -Value '{}' -Encoding utf8NoBOM
+        }
+
+        It 'Replaces an errored trial under its original identity and keeps the recovered trajectory' {
+            $recovery = New-RunDirectory -Lines @(
+                '{"type":"trial-result","runId":"rec-1","itemId":"copy::a::trial-0","evalFilePath":"/copy.yaml","stimulus":"a","trialIndex":0,"totalTrials":1,"status":"success","trajectory":{"id":"t-rec","Content":1,"content":2}}'
+            )
+
+            $merge = Merge-RecoveredTrial -RunDir $script:RunDir -RecoveryRunDir $recovery -DestinationDir (Join-Path $TestDrive "merged-$([guid]::NewGuid())")
+
+            $merge.Replaced | Should -Be 1
+            $merge.Remaining | Should -Be 1
+            $lines = @(Get-Content -LiteralPath (Join-Path $merge.RunDir 'results.jsonl'))
+            $lines | Should -HaveCount 4
+            $lines[0] | Should -BeExactly $script:RunLines[0]
+            $replacement = $lines[1] | ConvertFrom-Json -AsHashtable
+            $replacement.runId | Should -BeExactly 'run-1'
+            $replacement.itemId | Should -BeExactly 'spec::a::trial-1'
+            $replacement.evalFilePath | Should -BeExactly '/spec.yaml'
+            $replacement.trialIndex | Should -Be 1
+            $replacement.totalTrials | Should -Be 2
+            $replacement.status | Should -BeExactly 'success'
+            $lines[1] | Should -Match '"trajectory":\{"id":"t-rec","Content":1,"content":2\}'
+            $lines[2] | Should -BeExactly $script:RunLines[2]
+            ($lines[3] | ConvertFrom-Json).hadExecutionErrors | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $merge.RunDir 'sessions/events.jsonl') | Should -BeTrue
+            Get-Content -LiteralPath (Join-Path $script:RunDir 'results.jsonl') | Should -Be $script:RunLines
+        }
+
+        It 'Clears the run-summary execution-error flags once every errored trial is recovered' {
+            $recovery = New-RunDirectory -Lines @(
+                '{"type":"trial-result","stimulus":"a","trialIndex":0,"status":"success","trajectory":{"id":"t-a"}}'
+                '{"type":"trial-result","stimulus":"b","trialIndex":0,"status":"error","trajectory":null}'
+                '{"type":"trial-result","stimulus":"b","trialIndex":1,"status":"success","trajectory":{"id":"t-b"}}'
+            )
+
+            $merge = Merge-RecoveredTrial -RunDir $script:RunDir -RecoveryRunDir $recovery -DestinationDir (Join-Path $TestDrive "merged-$([guid]::NewGuid())")
+
+            $merge.Replaced | Should -Be 2
+            $merge.Remaining | Should -Be 0
+            $summary = Get-Content -LiteralPath (Join-Path $merge.RunDir 'results.jsonl') | Select-Object -Last 1 | ConvertFrom-Json
+            $summary.hadExecutionErrors | Should -BeFalse
+            $summary.evals[0].hadExecutionErrors | Should -BeFalse
+            @(Get-ErroredTrialRecord -RunDir $merge.RunDir) | Should -HaveCount 0
+        }
+    }
+
+    Context 'New-RecoveryEvalSpec' {
+        It 'Writes the named stimuli beside the source with anchors resolved and rejects unknown names' {
+            $directory = Join-Path $TestDrive "spec-$([guid]::NewGuid())"
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            $source = Join-Path $directory 'eval.yaml'
+            Set-Content -LiteralPath $source -Encoding utf8NoBOM -Value @'
+name: stub-spec
+defaults:
+  runs: 3
+stimuli:
+  - name: first
+    constraints: &limit {max_agent_duration: 285s}
+    prompt: "First?"
+  - name: second
+    constraints: *limit
+    prompt: "Second?"
+    tags: {advisory: "true"}
+  - name: third
+    prompt: "Third?"
+'@
+
+            $path = New-RecoveryEvalSpec -SpecPath $source -StimulusName @('second', 'third') -Label 'unit'
+
+            $path | Should -BeExactly (Join-Path $directory '.recovery-unit.eval.yaml')
+            $copy = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable
+            $copy.name | Should -BeExactly 'stub-spec'
+            $copy.defaults.runs | Should -Be 3
+            @($copy.stimuli | ForEach-Object { $_.name }) | Should -Be @('second', 'third')
+            $copy.stimuli[0].constraints.max_agent_duration | Should -BeExactly '285s'
+            $copy.stimuli[0].tags.advisory | Should -BeExactly 'true'
+            { New-RecoveryEvalSpec -SpecPath $source -StimulusName @('missing') -Label 'unit-missing' } | Should -Throw
+        }
+    }
+
+    Context 'Invoke-ErroredTrialRecovery' {
+        It 'Leaves a run above the errored-share limit to the gates without re-running it' {
+            Mock Invoke-VallyProcess { throw 'Recovery must not run.' }
+            $errored = foreach ($index in 0..2) {
+                '{{"type":"trial-result","stimulus":"s{0}","trialIndex":0,"status":"error","trajectory":null}}' -f $index
+            }
+            $run = New-RunDirectory -Lines @($errored)
+
+            $result = Invoke-ErroredTrialRecovery -RunDir $run -Arguments @('eval', '--eval-spec', 'spec.yaml', '--output-dir', 'out') `
+                -SpecPath (Join-Path $TestDrive 'spec.yaml') -WorkRoot $TestDrive -Phase 'baseline-eval' -Worker 'gpt-6-luna' -ExpectedTrials 10
+
+            $result.RunDir | Should -BeExactly $run
+            $result.Errored | Should -Be 3
+            $result.Remaining | Should -Be 3
+            Should -Invoke Invoke-VallyProcess -Times 0 -Exactly
+        }
+    }
+
+    Context 'Test-JudgeErrorOnlyCompareFailure' {
+        It 'Returns <Expected> for a shard with <Case>' -ForEach @(
+            @{ Case = 'judged and judge-errored trials'; Expected = $true; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":0,"winner":"tie","score":0,"errored":false},{"trialIndex":1,"errored":true}]}]}') }
+            @{ Case = 'only judge-errored trials'; Expected = $false; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":0,"errored":true}]}]}') }
+            @{ Case = 'no judge error'; Expected = $false; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":0,"winner":"tie","score":0,"errored":false}]}]}') }
+            @{ Case = 'a malformed line'; Expected = $false; Lines = @('{"type":"comparison","stimuli":[{"stimulusName":"a","trials":[{"trialIndex":1,"errored":true},{"trialIndex":0,"winner":"tie"}]}]}', 'not json') }
+        ) {
+            $path = Join-Path $TestDrive "shard-$([guid]::NewGuid()).jsonl"
+            Set-Content -LiteralPath $path -Value $Lines -Encoding utf8NoBOM
+            Test-JudgeErrorOnlyCompareFailure -OutputPath $path | Should -Be $Expected
+        }
+
+        It 'Returns false when the shard wrote no output' {
+            Test-JudgeErrorOnlyCompareFailure -OutputPath (Join-Path $TestDrive 'absent.jsonl') | Should -BeFalse
+        }
     }
 }
