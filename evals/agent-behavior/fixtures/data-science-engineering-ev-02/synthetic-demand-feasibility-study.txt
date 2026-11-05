@@ -1,0 +1,12 @@
+# Synthetic demand feasibility study
+
+Project slug: synthetic-demand
+
+This synthetic study is the durable artifact for the bounded `feasibility` job.
+It contains no customer data.
+
+## Status
+
+* Lifecycle: paused at phase 2.
+* Phase 1 scoping is recorded; phase 2 evidence review has not started.
+* No recommendation has been issued.

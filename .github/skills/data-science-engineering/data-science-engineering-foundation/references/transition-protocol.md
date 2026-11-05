@@ -19,9 +19,18 @@ project or coaching-session identity.
    determines what must happen before leaving it.
 3. Name the source job, destination job, expected carryover, and proposed
    outgoing disposition.
-4. Ask for explicit confirmation. Continue the current job if the user declines
+4. Before asking for confirmation, explain the lifecycle class of each affected
+   job and the proposed disposition in plain language, so the user does not
+   need the internal vocabulary to decide. Name each class with its meaning,
+   even when the user asks for plain language, because later announcements use
+   the class names: continuous work stays available and keeps accumulating,
+   bounded work can be paused now and picked up later at the same phase, and
+   episodic work finishes as a single completed unit and is only re-entered on
+   a new request. Say what the proposed disposition means for returning to the
+   source job later.
+5. Ask for explicit confirmation. Continue the current job if the user declines
    or has not answered.
-5. Resolve the outgoing job by class:
+6. Resolve the outgoing job by class:
    * `episodic`: finish Confirm and use `completed`, or abandon without a
      durable partial output and use `discarded-cleanly`.
    * `bounded`: persist phase and gates and use `paused`, unless its terminal
@@ -29,12 +38,12 @@ project or coaching-session identity.
    * `continuous`: pass the durable-write gate for pending enrichment, persist
      it, and use `flushed`. If the gate blocks, keep the enrichment pending and
      report that the transition cannot complete yet.
-6. Append one `job_log` entry containing timestamp, `from_job`, `to_job`,
+7. Append one `job_log` entry containing timestamp, `from_job`, `to_job`,
    rationale, source class, outgoing disposition, and carryover artifacts.
-7. Update `current` using the session-state mutation rules.
-8. Load the destination's primary skill or confirmed specialist route.
-9. Announce the switch, what carried over, and the destination's next coaching
-   step before asking a destination-specific question.
+8. Update `current` using the session-state mutation rules.
+9. Load the destination's primary skill or confirmed specialist route.
+10. Announce the switch, what carried over, and the destination's next coaching
+    step before asking a destination-specific question.
 
 ## Outgoing dispositions
 

@@ -119,15 +119,27 @@ stimuli:
       category: agent-behavior
       advisory: "true"
       scenario: merge-name-collision
+      threshold-rationale: binary judge replaces a vocabulary list that kept missing valid single-copy wording
+    rubric:
+      - >
+        Load only the repository (.github/skills/) copy of the same-named
+        python-foundational skill, because the Workspace origin takes precedence
+        over the bundled baseline, and do not load or apply the baseline copy.
+        Fail when the reply loads both copies, merges them, or keeps the
+        baseline copy.
     graders:
       - type: output-matches
         name: repository-version-takes-precedence
         config:
           pattern: '(?i)(repository|repo|\.github/skills|customer|version\s*2)'
-      - type: output-matches
+      - type: prompt
         name: single-copy-loaded-baseline-shadowed
         config:
-          pattern: '(?i)(precedence|override|shadow|dedup|suppressed|not\s+loaded|not\s+load|not\s+both|only\s+one|single\s+(copy|version)|one\s+(copy|version))'
+          prompt: |
+            Judge the reply's own loading decision, not the scenario text it
+            restates. Fail when the reply does not state which copy it loads.
+          scoring: binary
+          threshold: 0.5
       - type: output-matches
         name: repository-check-applied
         config:
@@ -166,6 +178,14 @@ stimuli:
       category: agent-behavior
       advisory: "true"
       scenario: merge-content-contradiction
+      threshold-rationale: binary judge replaces a widened arbitration regex that kept missing valid wording
+    rubric:
+      - >
+        Surface the backed finding from each contradicting skill, citing
+        python-foundational and python-legacy by name, and leave the
+        contradiction for a human to settle instead of silently choosing one
+        skill's rule. Fail when the reply picks httpx or requests on its own
+        authority, drops one skill's finding, or applies only one skill.
     graders:
       - type: output-matches
         name: both-contradicting-skills-surfaced
@@ -175,10 +195,15 @@ stimuli:
         name: contradiction-acknowledged
         config:
           pattern: '(?i)(contradict|conflict|disagree|inconsistent|tension|both\s+skills|differ)'
-      - type: output-matches
+      - type: prompt
         name: no-silent-arbitration
         config:
-          pattern: '(?is)^(?![\s\S]*\b(?:I\s+(?:choose|select|apply)|discard\s+(?:the\s+)?(?:other|python-)))(?=[\s\S]*(?:defer|human|reviewer|person\s+to\s+settle|surface\s+both|both\s+findings|each\s+backed\s+finding\s+independently|(?:not|cannot|won[\x27\u2019]t)\s+(?:silently\s+)?(?:arbitrate|resolve|decide|choose|select)\b|(?:remain|left|kept|stays?)\s+(?:explicitly\s+)?(?:unresolved|open)))'
+          prompt: |
+            Judge how the reply itself handles the contradiction, not the
+            scenario text it restates. Fail when the reply does not say how the
+            contradiction is handled.
+          scoring: binary
+          threshold: 0.5
 
   # Origin-precedence and stacking coverage for the Workspace/User/Bundled
   # skill-discovery revision (issue #1901). These assert the "Resolve
@@ -223,11 +248,11 @@ stimuli:
       - type: output-matches
         name: user-tier-takes-precedence
         config:
-          pattern: '(?i)(?:(?<!\b(?:not|never|without)\s)(?:select|load|use|apply|prefer|choose|retain)\s+(?:only\s+|the\s+)?(?:User(?:[-\s](?:profile|origin|tier|copy|version))?|Candidate\s+A)\b|(?:User(?:[-\s](?:profile|origin|tier|copy|version))?|Candidate\s+A)\s+(?:(?:is|was)\s+)?(?:selected|loaded|chosen|wins|takes\s+precedence)\b)'
+          pattern: '(?i)(?:(?<!\b(?:not|never|without)\s|n[\x27\u2019]t\s)\b(?:select|load|use|apply|prefer|choose|retain|keep|pick)\w*\s+(?:only\s+)?(?:the\s+)?[*_\x60]*(?:User(?:[-\s](?:profile|origin|tier|copy|version))?|Candidate\s+A)\b|\bgo(?:ing)?\s+with\s+(?:the\s+)?[*_\x60]*(?:User|Candidate\s+A)\b|[*_\x60]*(?:User(?:[-\s](?:profile|origin|tier|copy|version))?|Candidate\s+A)[*_\x60]*(?:\s*\([^)]{0,40}\))?\s+(?:(?:is|was)\s+(?:the\s+(?:one|copy)\s+)?)?(?:selected|loaded|chosen|kept|wins|takes\s+precedence)\b|\b(?:selected|loaded|chosen|winner|winning|active)(?:\s+(?:copy|skill|version))?\s*[:\u2013\u2014-]\s*[*_\x60]*(?:User|Candidate\s+A)\b)'
       - type: output-matches
         name: single-copy-loaded-bundled-shadowed
         config:
-          pattern: '(?i)(precedence|override|shadow|dedup|suppressed|not\s+loaded|not\s+load|not\s+both|only\s+one|single\s+(copy|version)|one\s+(copy|version))'
+          pattern: '(?i)(precedence|override|shadow|dedup|suppressed|not\s+loaded|not\s+load|not\s+both|only\s+one|single\s+(copy|version)|one\s+(copy|version)|\bunloaded\b|\bexclud\w*|\b(?:skip|drop|ignor)\w*\s+(?:the\s+)?(?:bundled|candidate\s+b))'
       - type: output-matches
         name: user-check-applied
         config:
@@ -263,11 +288,22 @@ stimuli:
       category: agent-behavior
       advisory: "true"
       scenario: merge-unknown-origin-dedup
+      threshold-rationale: binary judge replaces a widened single-copy regex that kept missing valid wording
+    rubric:
+      - >
+        Load only one of the two same-named python-foundational skills, without
+        merging or combining their bodies, because neither origin can be ranked.
+        Fail when the reply loads both copies, merges or combines them, or
+        applies checks from both.
     graders:
-      - type: output-matches
+      - type: prompt
         name: single-copy-no-merge
         config:
-          pattern: '(?is)^(?![\s\S]*(?<!\b(?:not|never|without)\s)\b(?:load|select|use|retain|apply)\s+both\b)(?![\s\S]*(?<!\b(?:not|never|without)\s)\b(?:merge|combine)\s+(?:the\s+)?(?:two|both|their)\s+bodies)(?=[\s\S]*(?:\bonly\s+one\b|\b(?:single|solitary|one)\s+(?:copy|version|body|instance)\b|(?<!\b(?:not|never|without)\s)\b(?:load|select|use|retain|choose)\s+(?:(?:only|exactly|just)\s+)?one\b))'
+          prompt: |
+            Judge the reply's own loading decision, not the scenario text it
+            restates. Fail when the reply does not state how many copies it loads.
+          scoring: binary
+          threshold: 0.5
       - type: output-matches
         name: ambiguous-duplicate-noted
         config:
@@ -354,7 +390,7 @@ stimuli:
       - type: output-matches
         name: waits-for-findings
         config:
-          pattern: '(?is)^(?![\s\S]*\b(?:not|never)\s+(?:after|once|until)\b)(?![\s\S]*(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b)(?![\s\S]*\b(?:correlate|run\s+(?:drift\s+)?correlation)\s+now\b)(?=[\s\S]*(?:(?:drift|correlation|correlate|correlated|correlating)[^.\r\n]{0,200}\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)|\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)[^.\r\n]{0,200}(?:drift|correlation|correlate|correlated|correlating)))'
+          pattern: '(?is)^(?![\s\S]*\b(?:not|never)\s+(?:after|once|until|if|when)\b)(?![\s\S]*(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b)(?![\s\S]*\b(?:correlate|run\s+(?:drift\s+)?correlation)\s+now\b)(?=[\s\S]*(?:(?:drift|correlation|correlate|correlated|correlating)[^.\r\n]{0,200}\b(?:after|once|until|(?<!\beven\s)(?:if|when))\b[^.\r\n]{0,200}(?:findings|security perspective)|\b(?:after|once|until|(?<!\beven\s)(?:if|when))\b[^.\r\n]{0,200}(?:findings|security perspective)[^.\r\n]{0,200}(?:drift|correlation|correlate|correlated|correlating)))'
       - type: output-matches
         name: no-premature-drift-output
         config:
@@ -430,7 +466,8 @@ stimuli:
       - type: output-matches
         name: no-business-context-orientation-and-board
         config:
-          pattern: '(?is)(orientation|walkthrough).{0,4000}(dispatch\s+board|recommended dispatch)|(dispatch\s+board|recommended dispatch).{0,4000}(orientation|walkthrough)'
+          # Order- and distance-independent: both the orientation and the dispatch board or its recommended perspectives appear.
+          pattern: '(?is)^(?=[\s\S]*\b(?:orientation|walkthrough)\b)(?=[\s\S]*\b(?:dispatch\s+board|(?:recommended|proposed)\s+(?:dispatch|perspectives))\b)'
       - type: output-matches
         name: no-unsolicited-business-alignment
         config:
@@ -554,7 +591,8 @@ stimuli:
       - type: output-matches
         name: reroute-reports-successor-as-proposed-update
         config:
-          pattern: '(?i)(?:^|[.!?;\n])(?=(?:[^.!?;\n]|\.(?=\w))*(?:claims-prd-v2|successor|supersession link|superseded_by))(?=(?:[^.!?;\n]|\.(?=\w))*(?:(?<!(?:\bnot|n[\x27\u2019]t)\s(?:an?\s)?)proposed (?:source )?update|(?<!(?:\bnot|n[\x27\u2019]t)\s)developer[- ]confirmed))'
+          # Order-independent: the successor and its non-negated proposed-update or developer-confirmed label; the negated sibling guards the comparison source.
+          pattern: '(?is)^(?=[\s\S]*(?:claims-prd-v2|successor|supersession\s+link|superseded_by))(?=[\s\S]*(?:(?<!(?:\bnot|n[\x27\u2019]t)\s(?:an?\s)?)proposed\s+(?:source\s+)?update|(?<!(?:\bnot|n[\x27\u2019]t)\s)developer[- ]confirmed))'
       - type: output-matches
         name: reroute-not-compared-against-pr-successor
         config:
@@ -617,7 +655,8 @@ stimuli:
       - type: output-matches
         name: fallback-allows-one-bounded-unchanged-read
         config:
-          pattern: '(?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))'
+          # One current-revision read in the same sentence, a stated bound, unchanged scope, and the unchanged owner metadata or FR-008.
+          pattern: '(?is)^(?=[\s\S]*(?:\b(?:one|once|single)\b[^.\r\n]{0,240}\b(?:current|head|working[- ]tree)\b|\b(?:current|head|working[- ]tree)\b[^.\r\n]{0,240}\b(?:one|once|single)\b))(?=[\s\S]*(?:\bbounded\b|\blimited\b|\brestricted\b|\bconfined\b|\bscoped\b|\b(?:only|solely|just)\s+(?:to|for|the)\b))(?=[\s\S]*(?:unchanged|outside\s+(?:every\s+|the\s+)?(?:changed\s+)?hunk|outside\s+(?:the\s+)?diff))(?=[\s\S]*(?:owner|FR-008|metadata))'
       - type: output-matches
         name: fallback-uses-removed-lines-for-modified-passage
         config:
@@ -679,7 +718,8 @@ stimuli:
       - type: output-matches
         name: orientation-separated
         config:
-          pattern: '(?is)(orientation|walkthrough).{0,500}(stage|separate|before|factual|no findings).{0,1000}(finding|perspective|dispatch)'
+          # Order-independent: an orientation, a statement that it is factual or separate, and the later findings or dispatch step.
+          pattern: '(?is)^(?=[\s\S]*\b(?:orientation|walkthrough)\b)(?=[\s\S]*(?:\bseparate\w*|\bseparation\b|\bstage\b|\bfactual\b|\bno\s+findings\b|\bnot\s+(?:a\s+)?findings?\b|\b(?:before|after)\s+(?:any\s+)?(?:findings|you\s+confirm)\b|\bfindings\s+(?:come|follow|start)\b))(?=[\s\S]*\b(?:findings?|perspectives?|dispatch)\b)'
       - type: output-matches
         name: code-review-pull-request-standard-profile-human-confirmation
         config:
@@ -705,7 +745,8 @@ stimuli:
       - type: output-matches
         name: branch-diff-standard-profile
         config:
-          pattern: '(?is)(branch|feature/auth|pre-PR).{0,800}(standard).{0,1200}(functional).{0,1000}(standards).{0,1000}(readiness)'
+          # Order-independent: the standard profile recommends functional, standards, and readiness in any order.
+          pattern: '(?is)^(?=[\s\S]*(?:\bbranch\b|feature/auth|pre-PR))(?=[\s\S]*\bstandard\b)(?=[\s\S]*\bfunctional\b)(?=[\s\S]*\bstandards\b)(?=[\s\S]*\breadiness\b)'
       - type: output-matches
         name: no-required-pr-metadata
         config:

@@ -1,0 +1,19 @@
+# Synthetic demand data catalog
+
+Project slug: synthetic-demand
+
+This synthetic catalog is the durable artifact for the continuous `catalog` job.
+It contains no customer data.
+
+## Entities
+
+| Entity        | Description                                  |
+|---------------|----------------------------------------------|
+| store         | Synthetic retail location identifier         |
+| weekly_demand | Synthetic weekly unit demand per store       |
+
+## Declared relationships
+
+* `weekly_demand.store_id` references `store.store_id`.
+
+Last enriched: 2026-09-02T09:00:00Z
