@@ -208,8 +208,8 @@
     },
     {
       "name": "Pester",
-      "version": "5.7.1",
-      "notes": "PowerShell test framework; required by all *.Tests.ps1 files via #Requires -Modules @{ ModuleName='Pester'; RequiredVersion='5.7.1' }"
+      "version": "6.2.0",
+      "notes": "PowerShell test framework; scripts/tests/Invoke-PesterTests.ps1 imports this exact version from scripts/security/ps-module-versions.json"
     },
     {
       "name": "PSScriptAnalyzer",

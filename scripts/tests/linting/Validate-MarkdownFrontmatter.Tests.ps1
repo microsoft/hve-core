@@ -375,6 +375,8 @@ Describe 'Get-SchemaForFile' -Tag 'Unit' {
             New-Item -ItemType Directory -Path $isolatedDir -Force | Out-Null
             '{"mappings": [], "defaultSchema": "base.schema.json"}' | Set-Content -Path (Join-Path $isolatedDir 'schema-mapping.json')
 
+            $realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+            Mock Test-Path { & $realTestPath @PesterBoundParameters }
             Mock Test-Path { return $false } -ParameterFilter { $Path -like '*\.git' -or $Path -like '*/.git' }
 
             $result = Get-SchemaForFile -FilePath 'test.md' -SchemaDirectory $isolatedDir 3>$null
