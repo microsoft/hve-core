@@ -1359,6 +1359,369 @@ function Invoke-VallyCompareShard {
     return $attempts.ToArray()
 }
 
+function Get-ErroredTrialRecord {
+    <#
+    .SYNOPSIS
+        Lists the executor-errored trials in a run's results.jsonl.
+    .DESCRIPTION
+        A trial that errored before the agent produced a trajectory leaves a hole in
+        every population the evidence gates reconcile. Only `trial-result` records with
+        `status: error`, a stimulus name, and an integer trial index are returned;
+        graded failures and malformed lines stay with the existing gates.
+    .PARAMETER RunDir
+        Run directory holding results.jsonl, or null when the run produced none.
+    .OUTPUTS
+        [pscustomobject[]] Stimulus and TrialIndex for each errored trial.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject[]])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RunDir)) { return @() }
+    $path = Join-Path $RunDir 'results.jsonl'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return @() }
+
+    $errored = [System.Collections.Generic.List[object]]::new()
+    foreach ($line in [System.IO.File]::ReadLines($path)) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            continue
+        }
+        if ($record -isnot [System.Collections.IDictionary] -or $record['type'] -cne 'trial-result' -or $record['status'] -cne 'error') { continue }
+        $stimulus = $record['stimulus']
+        $trialIndex = $record['trialIndex']
+        if ($stimulus -isnot [string] -or [string]::IsNullOrWhiteSpace($stimulus)) { continue }
+        if ($trialIndex -isnot [int] -and $trialIndex -isnot [long]) { continue }
+        $errored.Add([pscustomobject]@{ Stimulus = $stimulus; TrialIndex = [int]$trialIndex })
+    }
+    return $errored.ToArray()
+}
+
+function New-RecoveryEvalSpec {
+    <#
+    .SYNOPSIS
+        Writes a copy of an eval spec that keeps only the named stimuli.
+    .DESCRIPTION
+        Vally selects stimuli by tag, not by name, so recovery runs a filtered copy of
+        the variant spec. The copy sits beside the source because stimulus file sources
+        resolve relative to the spec. It is serialized as JSON, which YAML parsers read
+        unchanged, so anchors are already resolved and scalar types survive exactly.
+    .PARAMETER SpecPath
+        Source eval spec path.
+    .PARAMETER StimulusName
+        Stimulus names to keep.
+    .PARAMETER Label
+        File-name-safe label that makes the copy unique.
+    .OUTPUTS
+        [string] Path of the written spec.
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SpecPath,
+
+        [Parameter(Mandatory)]
+        [string[]]$StimulusName,
+
+        [Parameter(Mandatory)]
+        [ValidatePattern('^[A-Za-z0-9._-]+$')]
+        [string]$Label
+    )
+
+    Import-Module powershell-yaml -ErrorAction Stop | Out-Null
+    $spec = ConvertFrom-Yaml (Get-Content -LiteralPath $SpecPath -Raw -Encoding utf8) -Ordered
+    $wanted = [System.Collections.Generic.HashSet[string]]::new([string[]]@($StimulusName), [System.StringComparer]::Ordinal)
+    $kept = @(@($spec['stimuli']) | Where-Object { $_ -is [System.Collections.IDictionary] -and $wanted.Contains([string]$_['name']) })
+    if ($kept.Count -ne $wanted.Count) {
+        throw "Recovery spec could not find every requested stimulus in '$SpecPath'."
+    }
+    $spec['stimuli'] = $kept
+    $path = Join-Path (Split-Path -Parent $SpecPath) ".recovery-$Label.eval.yaml"
+    if ($PSCmdlet.ShouldProcess($path, 'Write recovery eval spec')) {
+        [System.IO.File]::WriteAllText($path, ($spec | ConvertTo-Json -Depth 100), [System.Text.UTF8Encoding]::new($false))
+    }
+    return $path
+}
+
+function Merge-RecoveredTrial {
+    <#
+    .SYNOPSIS
+        Copies a run directory with errored trials replaced by recovered ones.
+    .DESCRIPTION
+        Each errored trial-result line is replaced by an unused successful trial for the
+        same stimulus from the recovery run. The replacement keeps its own trajectory and
+        grades and takes the errored trial's run, item, file, and trial identity, so every
+        population the evidence gates reconcile stays the one the run declared. Unrecovered
+        errored lines stay in place, and the run-summary line stops reporting execution
+        errors only when none remain.
+    .PARAMETER RunDir
+        Run directory whose errored trials are replaced.
+    .PARAMETER RecoveryRunDir
+        Run directory of the filtered recovery eval, or null when it produced none.
+    .PARAMETER DestinationDir
+        Directory that receives the merged run; replaced when it exists.
+    .OUTPUTS
+        [hashtable] RunDir, Replaced, and Remaining.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RunDir,
+
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RecoveryRunDir,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$DestinationDir
+    )
+
+    $replacements = @{}
+    $recoveryPath = if ([string]::IsNullOrWhiteSpace($RecoveryRunDir)) { $null } else { Join-Path $RecoveryRunDir 'results.jsonl' }
+    if ($recoveryPath -and (Test-Path -LiteralPath $recoveryPath -PathType Leaf)) {
+        foreach ($line in [System.IO.File]::ReadLines($recoveryPath)) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            try {
+                $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+            }
+            catch {
+                continue
+            }
+            if ($record -isnot [System.Collections.IDictionary] -or $record['type'] -cne 'trial-result' -or
+                $record['status'] -cne 'success' -or $record['stimulus'] -isnot [string] -or
+                $record['trajectory'] -isnot [System.Collections.IDictionary]) { continue }
+            if (-not $replacements.ContainsKey($record['stimulus'])) {
+                $replacements[$record['stimulus']] = [System.Collections.Generic.Queue[string]]::new()
+            }
+            $replacements[$record['stimulus']].Enqueue($line)
+        }
+    }
+
+    $jsonOptions = [System.Text.Json.JsonSerializerOptions]::new()
+    $jsonOptions.Encoder = [System.Text.Encodings.Web.JavaScriptEncoder]::UnsafeRelaxedJsonEscaping
+    $merged = [System.Collections.Generic.List[string]]::new()
+    $summaryIndex = -1
+    $replaced = 0
+    $remaining = 0
+    foreach ($line in [System.IO.File]::ReadLines((Join-Path $RunDir 'results.jsonl'))) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            $merged.Add($line)
+            continue
+        }
+        if ($record -is [System.Collections.IDictionary] -and $record['type'] -ceq 'run-summary') {
+            $summaryIndex = $merged.Count
+        }
+        elseif ($record -is [System.Collections.IDictionary] -and $record['type'] -ceq 'trial-result' -and $record['status'] -ceq 'error') {
+            $queue = $replacements[[string]$record['stimulus']]
+            $trialIndex = $record['trialIndex']
+            if ($queue -and $queue.Count -gt 0 -and ($trialIndex -is [int] -or $trialIndex -is [long])) {
+                $node = [System.Text.Json.Nodes.JsonNode]::Parse($queue.Dequeue())
+                foreach ($field in @('runId', 'itemId', 'evalFilePath')) {
+                    if ($record[$field] -is [string]) { $node[$field] = [System.Text.Json.Nodes.JsonValue]::Create([string]$record[$field]) }
+                }
+                $node['trialIndex'] = [System.Text.Json.Nodes.JsonValue]::Create([int]$trialIndex)
+                if ($record['totalTrials'] -is [int] -or $record['totalTrials'] -is [long]) {
+                    $node['totalTrials'] = [System.Text.Json.Nodes.JsonValue]::Create([int]$record['totalTrials'])
+                }
+                $merged.Add($node.ToJsonString($jsonOptions))
+                $replaced++
+                continue
+            }
+            $remaining++
+        }
+        $merged.Add($line)
+    }
+
+    if ($summaryIndex -ge 0 -and $replaced -gt 0 -and $remaining -eq 0) {
+        $summary = [System.Text.Json.Nodes.JsonNode]::Parse($merged[$summaryIndex])
+        $summary['hadExecutionErrors'] = [System.Text.Json.Nodes.JsonValue]::Create($false)
+        $evals = $summary['evals']
+        if ($evals -is [System.Text.Json.Nodes.JsonArray]) {
+            foreach ($entry in $evals) {
+                if ($entry -is [System.Text.Json.Nodes.JsonObject]) { $entry['hadExecutionErrors'] = [System.Text.Json.Nodes.JsonValue]::Create($false) }
+            }
+        }
+        $merged[$summaryIndex] = $summary.ToJsonString($jsonOptions)
+    }
+
+    if (Test-Path -LiteralPath $DestinationDir) {
+        Remove-Item -LiteralPath $DestinationDir -Recurse -Force
+    }
+    Copy-Item -LiteralPath $RunDir -Destination $DestinationDir -Recurse
+    [System.IO.File]::WriteAllLines((Join-Path $DestinationDir 'results.jsonl'), $merged, [System.Text.UTF8Encoding]::new($false))
+    return @{ RunDir = $DestinationDir; Replaced = $replaced; Remaining = $remaining }
+}
+
+function Invoke-ErroredTrialRecovery {
+    <#
+    .SYNOPSIS
+        Re-runs executor-errored trials and splices successful ones into a run copy.
+    .DESCRIPTION
+        Transient executor failures such as rate limits and dropped sessions leave trials
+        without a trajectory, and every population the evidence gates reconcile then reports
+        a hole. When the errored share is at most MaxErroredFraction of the expected
+        trials, only the affected stimuli are re-run through a filtered copy of the spec,
+        and each errored trial is replaced by a successful recovery trial, for at most
+        MaxRounds rounds. A larger share points at the run rather than a transient fault,
+        so it stays with the existing gates. Recovery never fails the caller: an
+        unexpected error leaves the last complete run directory in place.
+    .PARAMETER RunDir
+        Run directory to repair, or null when the run produced none.
+    .PARAMETER Arguments
+        The `vally eval` arguments that produced the run.
+    .PARAMETER SpecPath
+        Absolute path of the spec those arguments name.
+    .PARAMETER WorkRoot
+        Directory that receives recovery runs and merged run copies.
+    .PARAMETER Phase
+        Eval phase that produced the run.
+    .PARAMETER Worker
+        Worker label for progress records.
+    .PARAMETER ExpectedTrials
+        Trial population the run declared.
+    .PARAMETER LogPath
+        Log that recovery invocations append to.
+    .PARAMETER HeartbeatIntervalSeconds
+        Trusted heartbeat interval.
+    .PARAMETER Command
+        Vally command the recovery invocations run.
+    .PARAMETER MaxRounds
+        Recovery rounds allowed.
+    .PARAMETER MaxErroredFraction
+        Largest errored share of ExpectedTrials that is treated as transient.
+    .OUTPUTS
+        [hashtable] RunDir, Errored, Recovered, Remaining, and Attempts.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir,
+
+        [Parameter(Mandatory)]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SpecPath,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$WorkRoot,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('ordinary-eval', 'baseline-eval', 'customized-eval')]
+        [string]$Phase,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Worker,
+
+        [Parameter(Mandatory)]
+        [int]$ExpectedTrials,
+
+        [string]$LogPath,
+
+        [ValidateRange(1, 3600)]
+        [int]$HeartbeatIntervalSeconds = 60,
+
+        [ValidateNotNullOrEmpty()]
+        [string]$Command = 'vally',
+
+        [ValidateRange(1, 5)]
+        [int]$MaxRounds = 2,
+
+        [ValidateRange(0.0, 1.0)]
+        [double]$MaxErroredFraction = 0.2
+    )
+
+    $errored = @(Get-ErroredTrialRecord -RunDir $RunDir)
+    $result = @{ RunDir = $RunDir; Errored = $errored.Count; Recovered = 0; Remaining = $errored.Count; Attempts = @() }
+    if ($errored.Count -eq 0) { return $result }
+    if ($ExpectedTrials -le 0 -or ($errored.Count / $ExpectedTrials) -gt $MaxErroredFraction) {
+        Write-Host "   Trial recovery: $($errored.Count) errored trial(s) exceed the recovery limit; leaving them to the gates" -ForegroundColor Yellow
+        return $result
+    }
+
+    $attempts = [System.Collections.Generic.List[object]]::new()
+    $currentDir = $RunDir
+    $safeWorker = ($Worker -replace '[^A-Za-z0-9._-]', '_')
+    for ($round = 1; $round -le $MaxRounds -and $errored.Count -gt 0; $round++) {
+        $groups = @($errored | Group-Object -Property Stimulus)
+        $runs = [int](($groups | Measure-Object -Property Count -Maximum).Maximum)
+        $outputDir = Join-Path $WorkRoot "$Phase-recovery-$round"
+        $specCopy = $null
+        try {
+            $specCopy = New-RecoveryEvalSpec -SpecPath $SpecPath -StimulusName @($groups.Name) -Label "$Phase-$safeWorker-$round"
+            $recoveryArguments = [System.Collections.Generic.List[string]]::new()
+            for ($i = 0; $i -lt $Arguments.Count; $i++) {
+                $recoveryArguments.Add($Arguments[$i])
+                if ($i + 1 -lt $Arguments.Count -and $Arguments[$i] -ceq '--eval-spec') { $recoveryArguments.Add($specCopy); $i++ }
+                elseif ($i + 1 -lt $Arguments.Count -and $Arguments[$i] -ceq '--output-dir') { $recoveryArguments.Add($outputDir); $i++ }
+            }
+            $recoveryArguments.Add('--runs')
+            $recoveryArguments.Add([string]$runs)
+            Write-Host "   Trial recovery: re-running $($errored.Count) errored trial(s) across $($groups.Count) stimulus/stimuli (round $round)" -ForegroundColor Yellow
+            $process = Invoke-VallyProcess `
+                -Command $Command `
+                -Arguments $recoveryArguments.ToArray() `
+                -LogPath $LogPath `
+                -AppendLog `
+                -Phase $Phase `
+                -Worker "${Worker}:recovery" `
+                -Attempt $round `
+                -HeartbeatIntervalSeconds $HeartbeatIntervalSeconds
+            $attempts.Add([ordered]@{
+                    phase          = $Phase
+                    worker         = $process.Worker
+                    attempt        = $round
+                    elapsedSeconds = [math]::Round($process.ElapsedMilliseconds / 1000, 3)
+                    exitCategory   = $process.ExitCategory
+                })
+            $recoveryRunDir = Resolve-VallyRunDir -OutputDir $outputDir
+            if ($recoveryRunDir) {
+                $merge = Merge-RecoveredTrial -RunDir $currentDir -RecoveryRunDir $recoveryRunDir -DestinationDir (Join-Path $WorkRoot "$Phase-recovered-$round")
+                $currentDir = $merge.RunDir
+                $result.Recovered += $merge.Replaced
+            }
+        }
+        catch {
+            Write-Host "   Trial recovery stopped: $($_.Exception.Message)" -ForegroundColor Yellow
+            break
+        }
+        finally {
+            if ($specCopy -and (Test-Path -LiteralPath $specCopy)) { Remove-Item -LiteralPath $specCopy -Force -ErrorAction SilentlyContinue }
+        }
+        $errored = @(Get-ErroredTrialRecord -RunDir $currentDir)
+    }
+
+    $result.RunDir = $currentDir
+    $result.Remaining = $errored.Count
+    $result.Attempts = $attempts.ToArray()
+    Write-Host "   Trial recovery: $($result.Recovered) of $($result.Errored) errored trial(s) recovered" -ForegroundColor DarkGray
+    return $result
+}
+
 function Invoke-VallySpec {
     <#
     .SYNOPSIS
@@ -1470,6 +1833,21 @@ function Invoke-VallySpec {
             })
 
         $runDir = Resolve-VallyRunDir -OutputDir $attemptOutput
+        $expectedTrials = 0
+        foreach ($expected in @($configuration.stimuli.Values)) { $expectedTrials += [int]$expected.runs }
+        $recovery = Invoke-ErroredTrialRecovery `
+            -RunDir $runDir `
+            -Arguments $vallyArgs `
+            -SpecPath $SpecPath `
+            -WorkRoot (Join-Path $attemptOutput 'recovery') `
+            -Phase 'ordinary-eval' `
+            -Worker $Worker `
+            -ExpectedTrials $expectedTrials `
+            -LogPath $LogPath `
+            -HeartbeatIntervalSeconds $HeartbeatIntervalSeconds `
+            -Command $VallyCommand
+        foreach ($recoveryAttempt in @($recovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
+        $runDir = $recovery.RunDir
         $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold -ExpectedStimuli $configuration.stimuli
 
         $candidate = @{
@@ -2330,6 +2708,10 @@ Export-ModuleMember -Function @(
     'Get-VallyComparisonRecordCount',
     'Test-VallyCompareRetryEligibility',
     'Invoke-VallyCompareShard',
+    'Get-ErroredTrialRecord',
+    'New-RecoveryEvalSpec',
+    'Merge-RecoveredTrial',
+    'Invoke-ErroredTrialRecovery',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
     'Test-SpecOutputModerationBatch',

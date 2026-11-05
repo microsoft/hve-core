@@ -20,7 +20,7 @@ evals/baseline-equivalence/customized/surface/**
 evals/baseline-equivalence/customized/.surface.lock
 # Filtered spec copies for errored-trial recovery. Removed after each recovery
 # round, but a killed run can leave one behind.
-evals/baseline-equivalence/*/.recovery-*.eval.yaml
+evals/**/.recovery-*.eval.yaml
 
 # Generated Copilot plugin packages
 /plugins/

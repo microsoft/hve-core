@@ -755,6 +755,31 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $trial.wallTimeMs | Should -Be 12
         }
 
+        It 'Recovers a transient errored trial inside its attempt and keeps the evidence complete' -Tag 'DiagnosticIntegration' {
+            $specPath = Join-Path $script:WorkRoot 'recoverable.yaml'
+            @{
+                name = 'recoverable'; defaults = @{ runs = 2 }; scoring = @{ threshold = 0.7 }
+                stimuli = @(foreach ($name in @('first', 'second', 'third')) {
+                        @{ name = $name; prompt = $name; graders = @(@{ name = 'check'; type = 'program' }) }
+                    })
+            } | ConvertTo-Yaml | Set-Content $specPath
+            $env:STUB_VALLY_MODE = 'diagnostic'
+            $env:STUB_VALLY_DIAGNOSTIC_CASE = 'transient-error'
+            try {
+                $result = Invoke-VallySpec -SpecPath $specPath -OutputDir (Join-Path $script:WorkRoot 'recoverable-output') `
+                    -Model 'configured-model' -RunKey 'recoverable.yaml' -VallyCommand $script:StubPath -MaxErroredRetries 0
+            }
+            finally { Remove-Item Env:\STUB_VALLY_MODE, Env:\STUB_VALLY_DIAGNOSTIC_CASE -ErrorAction SilentlyContinue }
+
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $result.diagnostics -RunKey 'recoverable.yaml'
+            $evidence.integrityPassed | Should -BeTrue
+            $result.erroredTrials | Should -Be 0
+            $result.trials | Should -Be 6
+            @($result.diagnostics.attempts) | Should -HaveCount 1
+            @($result.phaseTimings | ForEach-Object worker) | Should -Be @('recoverable.yaml', 'recoverable.yaml:recovery')
+            @(Get-ChildItem -LiteralPath $script:WorkRoot -Force -Filter '.recovery-*') | Should -HaveCount 0
+        }
+
         It 'Retains both attempts and selects <Selected> by errors rather than score' -Tag 'Diagnostic' -ForEach @(
             @{ Errors = @(1, 1); Selected = 1; Reason = 'later-tie' }
             @{ Errors = @(1, 0); Selected = 2; Reason = 'more-errors' }
@@ -3643,5 +3668,128 @@ Describe 'Stage 1 equivalence subject selection' -Tag 'Unit' {
 
     It 'Preserves every backlink record for stage 2 indexing' {
         $script:Backlinked.Count | Should -Be 7
+    }
+}
+
+Describe 'Errored trial recovery' -Tag 'Unit' {
+    BeforeAll {
+        Mock Write-Host {} -ModuleName VallyRunner
+
+        function New-RunDirectory {
+            param([string[]]$Lines)
+            $path = Join-Path $TestDrive "run-$([guid]::NewGuid())"
+            New-Item -ItemType Directory -Path $path -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $path 'results.jsonl') -Value $Lines -Encoding utf8NoBOM
+            return $path
+        }
+    }
+
+    Context 'Merge-RecoveredTrial' {
+        BeforeEach {
+            $script:RunLines = @(
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::a::trial-0","evalFilePath":"/spec.yaml","stimulus":"a","trialIndex":0,"totalTrials":2,"status":"success","trajectory":{"id":"t-a0"}}'
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::a::trial-1","evalFilePath":"/spec.yaml","stimulus":"a","trialIndex":1,"totalTrials":2,"status":"error","error":"boom","trajectory":null}'
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::b::trial-1","evalFilePath":"/spec.yaml","stimulus":"b","trialIndex":1,"totalTrials":2,"status":"error","error":"boom","trajectory":null}'
+                '{"type":"run-summary","runId":"run-1","hadExecutionErrors":true,"evals":[{"name":"spec","hadExecutionErrors":true}]}'
+            )
+            $script:RunDir = New-RunDirectory -Lines $script:RunLines
+            New-Item -ItemType Directory -Path (Join-Path $script:RunDir 'sessions') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $script:RunDir 'sessions/events.jsonl') -Value '{}' -Encoding utf8NoBOM
+        }
+
+        It 'Replaces an errored trial under its original identity and keeps the recovered trajectory' {
+            $recovery = New-RunDirectory -Lines @(
+                '{"type":"trial-result","runId":"rec-1","itemId":"copy::a::trial-0","evalFilePath":"/copy.yaml","stimulus":"a","trialIndex":0,"totalTrials":1,"status":"success","trajectory":{"id":"t-rec","Content":1,"content":2}}'
+            )
+
+            $merge = Merge-RecoveredTrial -RunDir $script:RunDir -RecoveryRunDir $recovery -DestinationDir (Join-Path $TestDrive "merged-$([guid]::NewGuid())")
+
+            $merge.Replaced | Should -Be 1
+            $merge.Remaining | Should -Be 1
+            $lines = @(Get-Content -LiteralPath (Join-Path $merge.RunDir 'results.jsonl'))
+            $lines | Should -HaveCount 4
+            $lines[0] | Should -BeExactly $script:RunLines[0]
+            $replacement = $lines[1] | ConvertFrom-Json -AsHashtable
+            $replacement.runId | Should -BeExactly 'run-1'
+            $replacement.itemId | Should -BeExactly 'spec::a::trial-1'
+            $replacement.evalFilePath | Should -BeExactly '/spec.yaml'
+            $replacement.trialIndex | Should -Be 1
+            $replacement.totalTrials | Should -Be 2
+            $replacement.status | Should -BeExactly 'success'
+            $lines[1] | Should -Match '"trajectory":\{"id":"t-rec","Content":1,"content":2\}'
+            $lines[2] | Should -BeExactly $script:RunLines[2]
+            ($lines[3] | ConvertFrom-Json).hadExecutionErrors | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $merge.RunDir 'sessions/events.jsonl') | Should -BeTrue
+            Get-Content -LiteralPath (Join-Path $script:RunDir 'results.jsonl') | Should -Be $script:RunLines
+        }
+
+        It 'Clears the run-summary execution-error flags once every errored trial is recovered' {
+            $recovery = New-RunDirectory -Lines @(
+                '{"type":"trial-result","stimulus":"a","trialIndex":0,"status":"success","trajectory":{"id":"t-a"}}'
+                '{"type":"trial-result","stimulus":"b","trialIndex":0,"status":"error","trajectory":null}'
+                '{"type":"trial-result","stimulus":"b","trialIndex":1,"status":"success","trajectory":{"id":"t-b"}}'
+            )
+
+            $merge = Merge-RecoveredTrial -RunDir $script:RunDir -RecoveryRunDir $recovery -DestinationDir (Join-Path $TestDrive "merged-$([guid]::NewGuid())")
+
+            $merge.Replaced | Should -Be 2
+            $merge.Remaining | Should -Be 0
+            $summary = Get-Content -LiteralPath (Join-Path $merge.RunDir 'results.jsonl') | Select-Object -Last 1 | ConvertFrom-Json
+            $summary.hadExecutionErrors | Should -BeFalse
+            $summary.evals[0].hadExecutionErrors | Should -BeFalse
+            @(Get-ErroredTrialRecord -RunDir $merge.RunDir) | Should -HaveCount 0
+        }
+    }
+
+    Context 'New-RecoveryEvalSpec' {
+        It 'Writes the named stimuli beside the source with anchors resolved and rejects unknown names' {
+            $directory = Join-Path $TestDrive "spec-$([guid]::NewGuid())"
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            $source = Join-Path $directory 'eval.yaml'
+            Set-Content -LiteralPath $source -Encoding utf8NoBOM -Value @'
+name: stub-spec
+defaults:
+  runs: 3
+stimuli:
+  - name: first
+    constraints: &limit {max_agent_duration: 285s}
+    prompt: "First?"
+  - name: second
+    constraints: *limit
+    prompt: "Second?"
+    tags: {advisory: "true"}
+  - name: third
+    prompt: "Third?"
+'@
+
+            $path = New-RecoveryEvalSpec -SpecPath $source -StimulusName @('second', 'third') -Label 'unit'
+
+            $path | Should -BeExactly (Join-Path $directory '.recovery-unit.eval.yaml')
+            $copy = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable
+            $copy.name | Should -BeExactly 'stub-spec'
+            $copy.defaults.runs | Should -Be 3
+            @($copy.stimuli | ForEach-Object { $_.name }) | Should -Be @('second', 'third')
+            $copy.stimuli[0].constraints.max_agent_duration | Should -BeExactly '285s'
+            $copy.stimuli[0].tags.advisory | Should -BeExactly 'true'
+            { New-RecoveryEvalSpec -SpecPath $source -StimulusName @('missing') -Label 'unit-missing' } | Should -Throw
+        }
+    }
+
+    Context 'Invoke-ErroredTrialRecovery' {
+        It 'Leaves a run above the errored-share limit to the gates without re-running it' {
+            Mock Invoke-VallyProcess { throw 'Recovery must not run.' } -ModuleName VallyRunner
+            $errored = foreach ($index in 0..2) {
+                '{{"type":"trial-result","stimulus":"s{0}","trialIndex":0,"status":"error","trajectory":null}}' -f $index
+            }
+            $run = New-RunDirectory -Lines @($errored)
+
+            $result = Invoke-ErroredTrialRecovery -RunDir $run -Arguments @('eval', '--eval-spec', 'spec.yaml', '--output-dir', 'out') `
+                -SpecPath (Join-Path $TestDrive 'spec.yaml') -WorkRoot $TestDrive -Phase 'baseline-eval' -Worker 'gpt-6-luna' -ExpectedTrials 10
+
+            $result.RunDir | Should -BeExactly $run
+            $result.Errored | Should -Be 3
+            $result.Remaining | Should -Be 3
+            Should -Invoke Invoke-VallyProcess -ModuleName VallyRunner -Times 0 -Exactly
+        }
     }
 }

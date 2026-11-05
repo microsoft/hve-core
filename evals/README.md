@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-10-07
+ms.date: 2026-11-05
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -84,6 +84,14 @@ duplicated, malformed, lacks usable grades or contains grader errors. Fan-in che
 contract, ownership, configured populations and aggregate arithmetic rather than
 treating absent diagnostics as success. Legitimate empty producers and the
 separate baseline schema retain their existing meanings.
+
+Within each attempt, a few transient executor errors are recovered before the attempt is
+recorded. When at most 20% of the attempt's expected trials errored without a trajectory,
+the runner re-runs only the affected stimuli through a filtered copy of the spec, written
+beside it as `.recovery-*.eval.yaml` and removed afterward, for up to two rounds. Each
+errored trial is replaced, in a copy of the run directory, by a successful recovery trial
+that takes its identity, so the attempt still reports the configured population. A larger
+share, or an error that survives recovery, stays with the attempt and its integrity check.
 
 Input digests cover the checkout's tracked evaluation artifacts and those not ignored,
 fixtures, scripts and root lockfile. They identify inputs, not agent behavior.
