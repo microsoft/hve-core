@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, a repository copy, the VS Code extension, or a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-04
 ms.topic: how-to
 keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, repository copy]
 estimated_reading_time: 7
@@ -175,7 +175,8 @@ Contributors who change HVE Core itself work in a fork:
 
 3. Open the folder in VS Code. A devcontainer configuration is included for containerized development.
 
-Copilot discovers the repository's own agents, skills, and instructions when you open the clone, so you need no other route while you work in it. Work in Copilot harness sessions here too. The workspace settings no longer list the package agent folders, so a Local session doesn't show those agents. If the plugin or extension is also installed, disable it while you develop so agents do not appear twice. The [Contributing Guide](../contributing/) covers pull request and development conventions.
+Copilot discovers the repository's own agents, skills, and instructions when you open the clone, so you need no other route while you work in it. Work in Copilot harness sessions here too.
+The workspace settings also list the repository's package folders so a Local session still finds its agents while you switch, as [Copilot Discovery](../customization/environment#copilot-discovery) explains. If the plugin or extension is also installed, disable it while you develop so agents do not appear twice. The [Contributing Guide](../contributing/) covers pull request and development conventions.
 
 ## Distribution Identity and Channels
 
