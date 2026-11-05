@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for instructions and skill behavior'
 author: HVE Core Team
-ms.date: 2026-11-01
+ms.date: 2026-11-05
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -21,7 +21,7 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `instructions.eval.yaml`   | 3i   | Advisory | 76      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 338     | `behavior-conformance` | Active (Phase 13) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 339     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
@@ -35,7 +35,7 @@ Stimuli that only checked how a moved instruction attached by `applyTo` were rem
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 338 stimuli across 87 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
+The maintained `skill-behavior.eval.yaml` inventory contains 339 stimuli across 87 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
 
 ### Git publishing evidence boundary
 
@@ -100,6 +100,24 @@ containment lifecycle. Empty attempt lists and textual endpoint extraction are
 not proof of absent network behavior. Non-attesting test seams cannot report
 `Passed`. The command has no owning workflow and never runs as part of this
 advisory suite.
+
+### Figma MCP evidence boundary
+
+Five `dt-figma-export` stimuli exercise write confirmation, declined writes,
+authentication failure, partial placement failure, and rate-limit recovery
+against a local Figma MCP protocol double. Hosted CI cannot load that
+third-party stdio server. Since the Copilot runtime update, every hosted trial
+was cancelled before its first turn, which matches the runtime's managed MCP
+policy blocking non-registry servers for the CI account. Vally cancels any
+session whose MCP server fails to load.
+
+Those stimuli carry `mcp-skill: dt-figma-export` and
+`requires: third-party-mcp` instead of a `skill` backlink, so changed-artifact
+selection skips them. Hosted CI covers the skill through
+`skill-dt-figma-export-server-unavailable`, which checks that the skill stops
+and gives the setup path when no Figma server is available. Run the protocol
+cases locally with `--tag mcp-skill=dt-figma-export` from an account whose MCP
+policy allows local servers.
 
 ## Pipeline integration
 

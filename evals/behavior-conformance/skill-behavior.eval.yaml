@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 338
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 339
   stimuli, including engagement-reporting coverage, Outlook HTML guards, the
   conformance stimuli migrated from retired prompts, and complete branch
   coverage for the RPI, proposal-response, and
@@ -6233,6 +6233,44 @@ stimuli:
         config:
           pattern: '(?i)^\s*[`*''"]*medium[`*''"]*[.!]?\s*$'
 
+  - name: skill-dt-figma-export-server-unavailable
+    prompt: |
+      Follow the staged `dt-figma-export` skill for
+      project-slug=synthetic-shift-handoff, board-title="Synthetic Shift
+      Handoff", method=4, and output-type=figjam. Check Figma availability
+      before any write, then report the outcome.
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/dt-figma-export
+        - ../../.github/skills/design-thinking/dt-coaching-foundation
+        - ../../.github/skills/design-thinking/dt-methods
+      files:
+        - src: fixtures/dt-method-evidence/method-04-ideas.txt
+          dest: .copilot-tracking/dt/synthetic-shift-handoff/coaching-state.md
+    tags:
+      category: behavior-conformance
+      skill: dt-figma-export
+      branch: server-unavailable
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: figma-unavailable-setup-path
+        config:
+          pattern: '(?is)(?:mcp\.figma\.com/mcp|\.mcp\.json)'
+      - type: output-matches
+        name: figma-unavailable-no-export-claim
+        config:
+          pattern: '(?i)(successfully|completed).{0,80}(created|exported|wrote)'
+          negate: true
+
+  # The five stimuli below drive the local Figma MCP protocol double. Hosted CI
+  # cannot load that third-party stdio server: since the Copilot runtime update,
+  # every hosted trial was cancelled before its first turn, which matches the
+  # runtime's managed MCP policy blocking non-registry servers for the CI account,
+  # and vally cancels any session whose MCP server fails to load. They carry
+  # `mcp-skill` instead of a `skill` backlink so changed-artifact selection skips
+  # them, and the server-unavailable stimulus above covers the skill in hosted CI.
+  # Run them locally with `--tag mcp-skill=dt-figma-export`.
   - name: skill-dt-figma-export-conformance
     turns:
       - |
@@ -6274,7 +6312,8 @@ stimuli:
           timeout: 10s
     tags:
       category: behavior-conformance
-      skill: dt-figma-export
+      mcp-skill: dt-figma-export
+      requires: third-party-mcp
       branch: normal
       advisory: "true"
     graders:
@@ -6340,7 +6379,8 @@ stimuli:
           timeout: 10s
     tags:
       category: behavior-conformance
-      skill: dt-figma-export
+      mcp-skill: dt-figma-export
+      requires: third-party-mcp
       branch: authority-consent
       advisory: "true"
     graders:
@@ -6397,7 +6437,8 @@ stimuli:
           timeout: 10s
     tags:
       category: behavior-conformance
-      skill: dt-figma-export
+      mcp-skill: dt-figma-export
+      requires: third-party-mcp
       branch: fail-closed
       advisory: "true"
     graders:
@@ -6461,7 +6502,8 @@ stimuli:
           timeout: 10s
     tags:
       category: behavior-conformance
-      skill: dt-figma-export
+      mcp-skill: dt-figma-export
+      requires: third-party-mcp
       branch: external-write
       advisory: "true"
     graders:
@@ -6534,7 +6576,8 @@ stimuli:
           timeout: 10s
     tags:
       category: behavior-conformance
-      skill: dt-figma-export
+      mcp-skill: dt-figma-export
+      requires: third-party-mcp
       branch: recovery-resume
       advisory: "true"
     graders:
