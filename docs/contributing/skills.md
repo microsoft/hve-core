@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-12
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - skills
@@ -415,7 +415,7 @@ Place test files in a `tests/` subdirectory within the skill directory:
 
 ### PowerShell Tests
 
-PowerShell skill scripts require Pester 5.x tests:
+PowerShell skill scripts require Pester 6.x tests:
 
 * Use `.Tests.ps1` suffix matching the source script name
 * Follow the same conventions as `scripts/tests/` (see [Testing Architecture](../architecture/testing.md))
@@ -494,7 +494,7 @@ Skills may include scripts in any of these supported languages. Each language ha
 | Language   | Script Extension | Test Framework | Linter / Analyzer                           | CI Coverage        |
 |------------|------------------|----------------|---------------------------------------------|--------------------|
 | Bash       | `.sh`            | N/A            | shellcheck                                  | Lint only          |
-| PowerShell | `.ps1`           | Pester 5.x     | PSScriptAnalyzer                            | Full (lint + test) |
+| PowerShell | `.ps1`           | Pester 6.x     | PSScriptAnalyzer                            | Full (lint + test) |
 | Python     | `.py`            | pytest         | ruff (line-length=88, target-version=py311) | Full (lint + test) |
 
 ### Requesting New Language Support

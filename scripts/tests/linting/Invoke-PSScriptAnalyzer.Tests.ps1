@@ -117,6 +117,9 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
 Describe 'PSScriptAnalyzer Module Availability' -Tag 'Unit' {
     Context 'Module not installed' {
         BeforeEach {
+            # Unfiltered Get-Module calls, including PowerShellGet autoload for the Install-Module mock, use the real cmdlet
+            $realGetModule = Get-Command -Name Get-Module -CommandType Cmdlet
+            Mock Get-Module { & $realGetModule @PesterBoundParameters }
             Mock Get-Module { $null } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Install-Module {} -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Import-Module { throw 'Module not found' } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }

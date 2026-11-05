@@ -227,6 +227,8 @@ Describe 'Invoke-ExportSlides' -Tag 'Unit' {
     BeforeAll {
         Mock Get-VenvPythonPath { return $script:PythonStub }
         Mock ConvertTo-SlideImages {}
+        $realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+        Mock Test-Path { & $realTestPath @PesterBoundParameters }
         Mock Test-Path { $false } -ParameterFilter { $Path -like '*slides.pdf' }
     }
 
