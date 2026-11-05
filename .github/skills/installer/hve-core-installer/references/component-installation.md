@@ -59,7 +59,7 @@ User input handling:
 
 ### Selection Resolution
 
-Resolve the component list before any confirmation or write. For a new install, read root `plugin.json` from the HVE-Core source at `$hveCoreBasePath` and take every declared component. In upgrade mode, take the recorded components. Convert canonical repository-relative manifest paths to installer paths with these deterministic conversions before collision detection or component copy:
+Resolve the component list before any confirmation or write. For a new install, and for an upgrade of the `all` profile, read root `plugin.json` from the HVE-Core source at `$hveCoreBasePath` and take every declared component, so an upgrade also copies components added since the recorded install. Upgrade Detection covers other recorded profiles. Convert canonical repository-relative manifest paths to installer paths with these deterministic conversions before collision detection or component copy:
 
 | Manifest declaration                                          | Installer component path                 |
 |---------------------------------------------------------------|------------------------------------------|
@@ -167,7 +167,7 @@ Keeping a skill keeps its whole target directory.
 
 After confirmation and collision resolution, execute the copy.
 
-**PowerShell:** Run [scripts/component-copy.ps1](../scripts/component-copy.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-SelectionName` (`all` for a new install, or the recorded profile in upgrade mode), and `-Component`. Add `-KeepExisting -Collisions <component paths>` for kept components.
+**PowerShell:** Run [scripts/component-copy.ps1](../scripts/component-copy.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-SelectionName` (`all` for a new install and for every upgrade), and `-Component`. Add `-KeepExisting -Collisions <component paths>` for kept components.
 
 **Bash:** Run [scripts/component-copy.sh](../scripts/component-copy.sh) with the HVE-Core base path, target root, selection name, and component paths as arguments, in that order. Set `KEEP_EXISTING=true` and `COLLISIONS_FILE=<newline-delimited component paths>` for kept components.
 
@@ -202,7 +202,7 @@ The copy writes `.hve-tracking.json` at the target root using schema version 2:
 ```
 <!-- </tracking-manifest> -->
 
-Files are keyed by target-relative path. New installs record the `all` profile with every component path. Installs from earlier installer versions may record `custom` with the components picked then, as in the example, and upgrade mode replays them. The `selection` object records only the profile label and installed component paths; file entries carry component ownership, and no package identity or absolute target root is stored. There is no version 1 compatibility layer: a missing or unsupported `schemaVersion` fails before any target change with clean-reinstall guidance.
+Files are keyed by target-relative path. New installs record the `all` profile with every component path. Installs from earlier installer versions may record `custom` with the components picked then, as in the example. Upgrade mode doesn't replay that list; it offers the full current set instead. The `selection` object records only the profile label and installed component paths; file entries carry component ownership, and no package identity or absolute target root is stored. There is no version 1 compatibility layer: a missing or unsupported `schemaVersion` fails before any target change with clean-reinstall guidance.
 
 ### Component Copy Success Report
 
@@ -241,7 +241,10 @@ At Phase 7 start, check for an existing manifest.
 
 Output keys: `UPGRADE_MODE`, and when a manifest exists, `INSTALLED_VERSION`, `SOURCE_VERSION`, `VERSION_CHANGED`, `INSTALLED_PROFILE`, and `INSTALLED_COMPONENTS`. An unsupported `schemaVersion` fails with clean-reinstall guidance.
 
-Replay `INSTALLED_COMPONENTS` after validating each recorded path against the current root `plugin.json` membership. Pass the recorded profile as `-SelectionName` or the Bash selection-name argument. If any recorded component is no longer declared, stop before writing, list the components that are gone, and offer to upgrade to the full current set with the `all` profile or to skip the upgrade.
+Validate each path in `INSTALLED_COMPONENTS` against the current root `plugin.json` membership, and list any recorded component that is no longer declared before writing. Then resolve the upgrade set from `INSTALLED_PROFILE`:
+
+* `all`: take every component the current manifest declares, including components added since the recorded install, and pass `all` as `-SelectionName` or the Bash selection-name argument.
+* Any other profile, such as `custom`: don't replay the recorded list. Agents preload skills and load instructions by name, and a release can add skills that an earlier partial list can't include, so a replayed list can leave agents unable to start. Stop before writing, explain this, and offer to upgrade to the full current set with the `all` profile or to skip the upgrade.
 
 ### Upgrade Prompt
 
