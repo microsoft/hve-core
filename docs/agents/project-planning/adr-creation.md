@@ -3,7 +3,7 @@ title: ADR Creator
 description: Redirect to the canonical ADR Creator agent and identity instructions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-11-03
 ms.topic: tutorial
 keywords:
   - adr creator
