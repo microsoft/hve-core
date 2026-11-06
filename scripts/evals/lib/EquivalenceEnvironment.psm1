@@ -33,17 +33,20 @@
 
 Set-StrictMode -Version Latest
 
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
+
 function Get-AgentSkillReference {
     <#
     .SYNOPSIS
         Returns the skill directories an agent references, by path or by name.
     .DESCRIPTION
-        Agent bodies cite skills two ways. Some use explicit paths such as
-        `.github/skills/<collection>/<skill>/SKILL.md`. Others name the skill in
-        backticks, which is how the RPI agent references `rpi-research` and its peers.
-        Resolving only the path form yields an empty skill set for those agents, which
-        would materialize an empty customization and make the comparison meaningless.
-        Both forms are resolved here against the skills actually present on disk.
+        Agents cite skills three ways. The frontmatter `skills` list preloads skills by
+        name. Bodies use explicit paths such as
+        `.github/skills/<collection>/<skill>/SKILL.md`, or name the skill in backticks,
+        which is how the RPI agent references `rpi-research` and its peers. Resolving
+        only the path form yields an empty skill set for those agents, which would
+        materialize an empty customization and make the comparison meaningless. All
+        three forms are resolved here against the skills actually present on disk.
     .OUTPUTS
         [string[]] Workspace-relative skill directory paths, deduplicated and sorted.
     .PARAMETER RepoRoot
@@ -79,6 +82,20 @@ function Get-AgentSkillReference {
     $Body = Get-Content -LiteralPath $FullPath -Raw
 
     $Resolved = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    $Frontmatter = [regex]::Match($Body, '(?s)\A---\r?\n(.*?)\r?\n---')
+    if ($Frontmatter.Success) {
+        $Preloaded = @()
+        try {
+            $Preloaded = @(Get-YamlFrontmatterList -Yaml $Frontmatter.Groups[1].Value -Field 'skills')
+        }
+        catch {
+            Write-Warning "Unreadable frontmatter in ${AgentFilePath}: $($_.Exception.Message)"
+        }
+        foreach ($SkillName in $Preloaded) {
+            if ($Available.ContainsKey($SkillName)) { [void]$Resolved.Add($Available[$SkillName]) }
+        }
+    }
 
     foreach ($PathMatch in [regex]::Matches($Body, '\.github/skills/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)')) {
         $Candidate = ".github/skills/$($PathMatch.Groups[1].Value)/$($PathMatch.Groups[2].Value)"
@@ -275,9 +292,10 @@ function Get-AgentDeclaredDependency {
     $Body = Get-Content -LiteralPath $FullPath -Raw
     $AgentDir = Split-Path -Parent $AgentRelativePath
 
-    # Cross-kind references resolve relative to the containing file, so a repository
-    # `#file:` path such as `../../instructions/<name>.instructions.md` is normalized
-    # against the agent's own directory rather than assumed to start at the repo root.
+    # Cross-kind references resolve relative to the containing file, so a relative path
+    # such as `../../instructions/<name>.instructions.md` is normalized against the
+    # agent's own directory rather than assumed to start at the repo root. A bare file
+    # name, which is how agents name path-specific instructions, resolves by leaf name.
     $Normalize = {
         param([string]$Reference)
 
@@ -293,6 +311,11 @@ function Get-AgentDeclaredDependency {
 
         foreach ($Candidate in $Candidates) {
             if (Test-Path -LiteralPath (Join-Path $RepoRoot $Candidate) -PathType Leaf) { return $Candidate }
+        }
+        if ($Reference -notmatch '/') {
+            $ByLeaf = Get-ChildItem -LiteralPath (Join-Path $RepoRoot '.github/instructions') -Recurse -File -Filter $Reference -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            if ($ByLeaf) { return $ByLeaf.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/') }
         }
         return $null
     }
@@ -320,20 +343,23 @@ function Get-AgentDeclaredDependency {
         if ($Resolved -and $Resolved -ne $AgentRelativePath) { [void]$Subagents.Add($Resolved) }
     }
 
-    # Frontmatter `agents:` names subagents by stable name rather than by path.
-    $Frontmatter = [regex]::Match($Body, '(?s)\A---\r?\n(.*?)\r?\n---')
-    if ($Frontmatter.Success) {
-        $AgentsBlock = [regex]::Match($Frontmatter.Groups[1].Value, '(?ms)^agents:\s*$(.*?)(?=^\S|\z)')
-        if ($AgentsBlock.Success) {
-            foreach ($Entry in [regex]::Matches($AgentsBlock.Groups[1].Value, '(?m)^\s*-\s*([A-Za-z0-9_.-]+)\s*$')) {
-                $EntryName = $Entry.Groups[1].Value
-                $File = Get-ChildItem -LiteralPath (Join-Path $RepoRoot '.github/agents') -Recurse -File -Filter "$EntryName.agent.md" -ErrorAction SilentlyContinue |
-                    Select-Object -First 1
-                if ($File) {
-                    [void]$Subagents.Add($File.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/'))
-                }
-            }
+    # Agent bodies name subagents by display name, such as Report Generator, because the
+    # Copilot subagent tool selects agents by name.
+    $AgentsRoot = Join-Path $RepoRoot '.github/agents'
+    $NameIndex = @{}
+    foreach ($AgentFile in (Get-ChildItem -LiteralPath $AgentsRoot -Recurse -File -Filter '*.agent.md' -ErrorAction SilentlyContinue)) {
+        $NameMatch = [regex]::Match([System.IO.File]::ReadAllText($AgentFile.FullName), '(?ms)\A---\r?\n.*?^name:\s*["'']?(.+?)["'']?\s*$')
+        if ($NameMatch.Success -and -not $NameIndex.ContainsKey($NameMatch.Groups[1].Value)) {
+            $NameIndex[$NameMatch.Groups[1].Value] = $AgentFile.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
         }
+    }
+    # Longer names match first and are blanked, so 'Report Generator' does not match inside 'Engagement Report Generator'.
+    $Scan = $Body
+    foreach ($Candidate in @($NameIndex.Keys | Sort-Object { $_.Length } -Descending)) {
+        $Pattern = '(?<![\w-])' + [regex]::Escape($Candidate) + '(?![\w-])'
+        if (-not [regex]::IsMatch($Scan, $Pattern)) { continue }
+        if ($NameIndex[$Candidate] -ne $AgentRelativePath) { [void]$Subagents.Add($NameIndex[$Candidate]) }
+        $Scan = [regex]::Replace($Scan, $Pattern, ' ')
     }
 
     return @{

@@ -30,7 +30,7 @@ Instructions for Pester testing conventions
 
 Use these instructions whenever a `.Tests.ps1` file adds or changes Pester
 coverage, fixtures, mocks, or cleanup. They extend the PowerShell conventions
-with repository test layout and Pester 5 patterns; run tests through the
+with repository test layout and Pester 6 patterns; run tests through the
 repository test runner when it is available rather than invoking Pester
 directly.
 

@@ -15,19 +15,19 @@ const packageCards = loadPackageCards(
   path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
 );
 
+// Light-theme token colors raised to at least 4.5:1 against the #f6f8fa code block background.
+const accessibleTokenColors = [
+  ['comment', '#505050'],
+  ['url', '#00756f'],
+  ['string', '#c9105f'],
+];
+
 const accessibleGithubPrismTheme = {
   ...prismThemes.github,
-  styles: prismThemes.github.styles.map((entry) =>
-    entry.types.includes('comment') || entry.types.includes('url')
-      ? {
-          ...entry,
-          style: {
-            ...entry.style,
-            color: entry.types.includes('comment') ? '#505050' : '#00756f',
-          },
-        }
-      : entry,
-  ),
+  styles: prismThemes.github.styles.map((entry) => {
+    const match = accessibleTokenColors.find(([type]) => entry.types.includes(type));
+    return match ? { ...entry, style: { ...entry.style, color: match[1] } } : entry;
+  }),
 };
 
 /** @type {import('@docusaurus/types').Config} */

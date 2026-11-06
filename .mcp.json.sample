@@ -1,11 +1,6 @@
 {
-  "servers": {
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
-    },
+  "mcpServers": {
     "workiq": {
-      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",

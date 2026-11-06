@@ -9,7 +9,7 @@ instructions:
 
 Fixture agent. Writes only into `.copilot-tracking/minfix/`.
 
-Subagent reference: #file:.github/agents/minimal-agent-a/subagents/minimal-subagent.agent.md
+Subagent reference: delegate to the Minimal Subagent agent.
 
 Markdown link: [minimal instructions](.github/instructions/minimal.instructions.md)
 

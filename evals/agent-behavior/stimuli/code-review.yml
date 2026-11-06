@@ -617,7 +617,7 @@ stimuli:
       - type: output-matches
         name: fallback-allows-one-bounded-unchanged-read
         config:
-          pattern: '(?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))'
+          pattern: '(?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read|PRD|document|file|version)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read|PRD|document|file|version)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))'
       - type: output-matches
         name: fallback-uses-removed-lines-for-modified-passage
         config:

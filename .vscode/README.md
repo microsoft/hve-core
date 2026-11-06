@@ -1,8 +1,8 @@
 ---
-title: VS Code MCP Server Configuration
-description: Configuration guide for GitHub MCP server integration with VS Code Copilot
+title: VS Code Workspace Settings and MCP Servers
+description: What the repository's VS Code settings configure and how to enable the sample MCP servers for Copilot sessions
 author: Microsoft
-ms.date: 2026-10-12
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - mcp
@@ -12,104 +12,36 @@ keywords:
 estimated_reading_time: 3
 ---
 
-> **Note:** MCP servers are not enabled by default. The available server configurations are stored in `mcp.json.sample`. To enable them, either rename `mcp.json.sample` to `mcp.json`, or create a new `mcp.json` and copy across only the servers you need.
+## Workspace settings
 
-## Overview
+`settings.json` sets formatting, the YAML and JSON schemas that validate frontmatter and planner state files, and commit message generation. Generated commit messages follow `.github/skills/hve-core/git-commit/references/commit-message.md`, the same conventions the `/git-commit` skill uses.
 
-This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
+Copilot sessions find agents, skills, and instructions in the nested folders under `.github/agents`, `.github/skills`, and `.github/instructions` on their own. VS Code's Local harness may not find agents and skills in nested package folders without help, so `settings.json` lists this repository's package folders in `chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and `chat.agentSkillsLocations` for contributors who still use Local.
 
-## Configuration
+HVE Core supports only the Copilot harness, as [Use the Copilot Harness](../docs/getting-started/install.md#use-the-copilot-harness) explains, so treat these settings as a bridge while you switch. VS Code also forwards files from these folders to Copilot sessions.
 
-The MCP server configuration is provided in `.vscode/mcp.json.sample`.
+When you add or rename a package folder under `.github/agents`, `.github/instructions`, or `.github/skills`, add it to the matching setting, and list an agent package's `subagents` folder as its own entry too. The install guide's advice to remove HVE Core location settings covers other projects whose entries point at an HVE Core clone, not these entries.
 
-> **Note:** If you want to use the recommended GitHub MCP server setup, run `npx @modelcontextprotocol/server-github` and update your `.vscode/mcp.json` accordingly. See the [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server) for details.
+## MCP servers
 
-### Authentication
+MCP servers are off by default. `.mcp.json.sample` at the repository root lists the servers some HVE Core agents use, in the portable format that Copilot sessions read from `.mcp.json` at the workspace root. To turn them on, copy the sample to `.mcp.json` and delete the servers you don't need. `.gitignore` excludes `.mcp.json`, so your copy stays out of commits.
 
-#### Option 1: OAuth (Recommended)
+| Server   | Transport                          | Used by                                                                      |
+|----------|------------------------------------|------------------------------------------------------------------------------|
+| `workiq` | stdio through `npx`, needs Node.js | Meeting Analyst, Engagement Report Generator, and optional RAI Planner steps |
+| `figma`  | HTTP, signs in with OAuth          | The DT Coach's Figma export                                                  |
 
-* Uses VS Code's built-in GitHub authentication
-* No manual token management required
-* Managed via: VS Code → Accounts menu → Manage Trusted MCP Servers
+Copilot includes a GitHub MCP server, so the sample has no `github` entry. Agents whose tools lists name `github/<tool>` use the built-in server. The Azure DevOps backlog agents need an Azure DevOps MCP server that you configure yourself; see [MCP configuration](../docs/getting-started/mcp-configuration.md).
 
-#### Option 2: Personal Access Token
+## Credentials
 
-* Required for GitHub Enterprise Server
-* Set environment variable: `GITHUB_PERSONAL_ACCESS_TOKEN`
-* Generate at: <https://github.com/settings/personal-access-tokens/new>
+Keep tokens out of `.mcp.json`. When a server needs a secret, reference an environment variable as `${NAME}` in its `env` values or HTTP headers, and set the variable in the environment where VS Code runs. The portable format has no `${input:...}` prompts, and VS Code does not forward servers that use them from `.vscode/mcp.json` to Copilot sessions.
 
-### Enterprise Configuration
+## References
 
-For GitHub Enterprise Server:
-
-1. Update `.vscode/mcp.json` with your enterprise URL:
-
-   ```json
-   {
-     "servers": {
-       "github": {
-         "url": "https://your-github-enterprise.com/mcp"
-       }
-     }
-   }
-   ```
-
-2. Set your PAT as an environment variable:
-
-   ```powershell
-   # PowerShell
-   $env:GITHUB_PERSONAL_ACCESS_TOKEN = "your_token_here"
-   ```
-
-   ```bash
-   # Bash/Linux/macOS
-   export GITHUB_PERSONAL_ACCESS_TOKEN="your_token_here"
-   ```
-
-### Required Token Scopes
-
-If using PAT authentication, your token needs:
-
-* `repo` - Full control of private repositories
-* `read:org` - Read org and team membership
-* `user` - Read user profile data
-
-### Usage
-
-Once configured, the MCP server provides:
-
-* Repository operations (file management, search)
-* Branch management
-* Issue management
-* Pull request workflows
-* Code search capabilities
-
-### Security Notes
-
-* Never commit tokens to version control
-* Use OAuth when possible for automatic credential management
-* Rotate PATs regularly
-* Use fine-grained tokens with minimal required permissions
-
-### Troubleshooting
-
-**Server not connecting:**
-
-* Check VS Code version (1.101+ recommended for OAuth)
-* Verify GitHub authentication via Accounts menu
-* For PAT: Verify `GITHUB_PERSONAL_ACCESS_TOKEN` is set
-
-**Permission errors:**
-
-* Ensure token has required scopes
-* Check token hasn't expired
-* Verify repository access permissions
-
-### References
-
-* [VS Code MCP Extension Guide](https://code.visualstudio.com/api/extension-guides/ai/mcp)
-* [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server)
-* [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+* [MCP configuration reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration)
+* [Migrate customizations to the Copilot harness](https://code.visualstudio.com/docs/agent-customization/migrate-customizations)
+* [GitHub MCP Server](https://github.com/github/github-mcp-server)
 
 ---
 
