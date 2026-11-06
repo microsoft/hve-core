@@ -408,6 +408,22 @@ jobs:
           uv run --frozen --directory .github/skills/experimental/vscode-playwright \
             playwright install --with-deps chromium
 
+      # ubuntu-24.04 blocks unprivileged user namespaces through AppArmor; the
+      # Chromium sandbox needs them, so allow them for Playwright Chromium only.
+      - name: Allow the Chromium sandbox for Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo tee /etc/apparmor.d/playwright-chromium > /dev/null <<EOF
+          abi <abi/4.0>,
+          include <tunables/global>
+
+          profile playwright-chromium ${HOME}/.cache/ms-playwright/chromium*/chrome-*/chrome* flags=(unconfined) {
+            userns,
+          }
+          EOF
+          sudo apparmor_parser -r /etc/apparmor.d/playwright-chromium
+
       - name: Install VS Code CLI for live capture
         if: ${{ matrix.level == 'L300' || matrix.level == 'L400' }}
         shell: bash
