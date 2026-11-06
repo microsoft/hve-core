@@ -318,6 +318,55 @@ Describe 'Test-DocHubCompleteness' -Tag 'Unit' {
         $nonExistent = Join-Path $script:TestRoot 'does-not-exist'
         { Test-DocHubCompleteness -RepoRoot $nonExistent } | Should -Throw
     }
+
+    It 'Runs Git lookup from the RepoRoot directory, not the caller current directory'{
+        $repo = $script:CaseDir
+        New-TestHubFixture -RepoRoot $repo -Hub 'instructions'`
+        -ArtifactRelativePath 'bash.instructions.md'`
+        -ReadmeContent "# Instructions `n`n- [bash](bash.instructions.md)`n"
+
+        $script:CapturedLocation = $null
+        Mock Get-ChangedFilesFromGit {
+            $script:CapturedLocation = (Get-Location).path
+            return @('.github/instructions/bash.instructions.md')
+        }
+
+        $otherDir = Join-Path $script:TestRoot 'other-Location'
+        New-Item -ItemType Directory -Force -Path $otherDir | Out-Null
+        Push-Location $otherDir
+        try {
+            $result = Test-DocHubCompleteness -RepoRoot $repo -ChangedFilesOnly
+        }
+        finally {
+            Pop-Location
+        }
+
+        $script:CapturedLocation | Should -Be $repo
+        $result.TotalChecked | Should -Be 1
+    }
+
+    It "Normalize a relative RepoRoot before the Git lookup" {
+        $repo = $script:CaseDir
+        New-TestHubFixture -RepoRoot $repo -Hub 'instructions'`
+        -ArtifactRelativePath 'bash.instructions.md'`
+        -ReadmeContent "#Instructions `n`n-[bash](bash.instructions.md)`n"
+
+        $script:CapturedLocation = $null
+        Mock Get-ChangedFilesFromGit {
+            $script:CapturedLocation = (Get-Location).path
+            return @('.github/instructions/bash.instructions.md')
+        }
+
+        Push-Location $repo
+        try {
+            $result = Test-DocHubCompleteness -RepoRoot '.' -ChangedFilesOnly
+        }
+        finally {
+            Pop-Location
+        }
+        $script:CapturedLocation | Should -Be $repo
+        $result.TotalChecked | Should -Be 1
+    }
 }
 
 

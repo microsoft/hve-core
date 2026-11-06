@@ -215,6 +215,8 @@ function Test-DocHubCompleteness {
         throw "RepoRoot not found or is not a directory: $RepoRoot"
     }
 
+    $absoluteRepoRoot = (Resolve-Path -LiteralPath $RepoRoot).path
+
     $hubDefinitions = @(
         [pscustomobject]@{
             Name           = 'instructions'
@@ -234,11 +236,17 @@ function Test-DocHubCompleteness {
 
     $changedFiles = @()
     if ($ChangedFilesOnly) {
+        $pushed = $false
         try {
+            Push-Location -LiteralPath $absoluteRepoRoot -ErrorAction Stop
+            $pushed = $true
             $changedFiles = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.instructions.md', '*.prompt.md'))
         }
         catch {
             Write-Warning "Failed to detect changed files (falling back to full scan): $($_.Exception.Message)"
+        }
+        finally {
+            if ($pushed) {Pop-Location -ErrorAction SilentlyContinue}
         }
     }
 
@@ -250,7 +258,7 @@ function Test-DocHubCompleteness {
     $hubResults    = @()
 
     foreach ($hub in $hubDefinitions) {
-        $hubResult = Test-HubCompleteness -RepoRoot $RepoRoot -HubDefinition $hub -ChangedFiles $changedFiles
+        $hubResult = Test-HubCompleteness -RepoRoot $absoluteRepoRoot -HubDefinition $hub -ChangedFiles $changedFiles
 
         $hubResults += [pscustomobject]@{
             Name           = $hubResult.Hub
