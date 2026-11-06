@@ -4786,11 +4786,11 @@ stimuli:
       prompt_sha256: e0feae1bcc5b5cbf09b23f10d2bf30081ed9520c78ad00db08deba40ae602400
     graders:
       - type: output-matches
-        name: skill-security-planning-threat-dragon-generation-skill-attribution
+        name: security-planning-threat-dragon-skill-attribution
         config:
           pattern: '(?i)security-planning'
       - type: output-matches
-        name: skill-security-planning-threat-dragon-generation-scope-language
+        name: security-planning-threat-dragon-scope-language
         config:
           pattern: '(?i)(generate_threat_dragon|threat dragon)'
 

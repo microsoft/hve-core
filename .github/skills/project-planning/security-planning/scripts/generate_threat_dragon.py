@@ -733,9 +733,6 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\nInterrupted by user", file=sys.stderr)
         return 130
-    except BrokenPipeError:
-        sys.stderr.close()
-        return EXIT_ERROR
     print(f"Generated {args.output}")
     return EXIT_SUCCESS
 

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 // Runs inside a pinned OWASP Threat Dragon v2.6.2 td.vue checkout. The pytest
-// driver tests/test_threat_dragon_loader.py copies this file and the golden
-// models into td.vue/tests/unit/hve-core-export/ before invoking Jest.
+// driver copies this fixture as a .spec.js file, alongside the golden models,
+// into td.vue/tests/unit/hve-core-export/ before invoking Jest.
 
 import fs from 'fs';
 import path from 'path';

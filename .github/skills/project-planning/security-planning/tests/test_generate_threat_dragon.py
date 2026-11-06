@@ -424,3 +424,25 @@ def test_given_golden_when_loaded_then_it_is_valid_json() -> None:
     # Assert
     assert model["version"] == "2.6.2"
     assert text.endswith("\n") and "\r" not in text
+
+
+@pytest.mark.parametrize(
+    "error", [OSError("write failed"), BrokenPipeError("pipe closed")]
+)
+def test_given_output_error_when_cli_runs_then_reports_error(
+    error: OSError, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Arrange
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT_PATH), str(COMMERCE_SPEC)])
+
+    def fail_generation(_spec: Path, _output: Path) -> None:
+        raise error
+
+    monkeypatch.setattr(generate_threat_dragon, "generate", fail_generation)
+
+    # Act
+    result = generate_threat_dragon.main()
+
+    # Assert
+    assert result == generate_threat_dragon.EXIT_ERROR
+    assert capsys.readouterr().err == f"Error: {error}\n"

@@ -1,7 +1,7 @@
 ---
 title: Threat Dragon Generation Contract
 description: CLI contract, spec-to-native mapping, placement, rendering, and validation rules for exporting a threat-model spec to OWASP Threat Dragon v2.6.2.
-ms.date: 2026-10-06
+ms.date: 2026-11-06
 ms.topic: reference
 ---
 
@@ -265,9 +265,10 @@ Flows always use a `block` target marker. The source marker is `block` only when
 real Threat Dragon v2.6.2 code. It needs Git, Node.js, npm, and network access,
 so it runs only when `THREAT_DRAGON_LOADER=1`. It checks out OWASP Threat Dragon
 at commit `8c0edb2295a1587684324646c8507fd56ba9a197`, runs `npm ci` in `td.vue`,
-and runs `tests/harness/threat-dragon-v2.6.2-loader.spec.js` with that
-checkout's Jest. Set `THREAT_DRAGON_CHECKOUT` to reuse an installed checkout of
-the same commit.
+and copies `tests/harness/threat-dragon-v2.6.2-loader.fixture.js` into that
+checkout as `threat-dragon-v2.6.2-loader.spec.js` for Jest. The fixture suffix
+keeps the external harness out of local Node test discovery. Set
+`THREAT_DRAGON_CHECKOUT` to reuse an installed checkout of the same commit.
 
 The spec asserts native v2 detection with no migration path, no upstream schema
 errors, acceptance by the `THREATMODEL_SELECTED` store mutation, and labels,

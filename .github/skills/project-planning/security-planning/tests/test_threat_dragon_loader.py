@@ -4,8 +4,9 @@
 
 The test needs Git, Node.js, npm, and network access, so it runs only when
 ``THREAT_DRAGON_LOADER=1``. It checks out the pinned upstream commit into a
-temporary directory, installs ``td.vue`` with ``npm ci``, and runs
-``tests/harness/threat-dragon-v2.6.2-loader.spec.js`` with that checkout's Jest.
+temporary directory, installs ``td.vue`` with ``npm ci``, and copies
+``tests/harness/threat-dragon-v2.6.2-loader.fixture.js`` as a ``.spec.js`` file
+for that checkout's Jest. The fixture suffix excludes it from local Node tests.
 
 Set ``THREAT_DRAGON_CHECKOUT`` to an existing checkout of the pinned commit with
 ``td.vue/node_modules`` installed to skip the clone and install. The harness
@@ -24,16 +25,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-HARNESS_SPEC = ROOT / "tests" / "harness" / "threat-dragon-v2.6.2-loader.spec.js"
+HARNESS_FIXTURE = ROOT / "tests" / "harness" / "threat-dragon-v2.6.2-loader.fixture.js"
 GOLDEN_DIR = ROOT / "tests" / "fixtures" / "threat-dragon" / "expected"
 PINNED_COMMIT = "8c0edb2295a1587684324646c8507fd56ba9a197"
 UPSTREAM = "https://github.com/OWASP/threat-dragon.git"
 HARNESS_SUBDIR = Path("td.vue") / "tests" / "unit" / "hve-core-export"
-
-pytestmark = pytest.mark.skipif(
-    os.environ.get("THREAT_DRAGON_LOADER") != "1",
-    reason="set THREAT_DRAGON_LOADER=1 to run the pinned Threat Dragon loader check",
-)
 
 
 def _tool(name: str) -> str:
@@ -73,6 +69,29 @@ def threat_dragon_checkout() -> Iterator[Path]:
         yield checkout
 
 
+def test_given_loader_fixture_when_node_discovers_tests_then_it_is_excluded() -> None:
+    # Arrange
+    node_test_suffixes = (
+        ".test.mjs",
+        ".test.cjs",
+        ".test.js",
+        ".spec.mjs",
+        ".spec.cjs",
+        ".spec.js",
+    )
+
+    # Act
+    discovered = HARNESS_FIXTURE.name.endswith(node_test_suffixes)
+
+    # Assert
+    assert HARNESS_FIXTURE.is_file()
+    assert not discovered
+
+
+@pytest.mark.skipif(
+    os.environ.get("THREAT_DRAGON_LOADER") != "1",
+    reason="set THREAT_DRAGON_LOADER=1 to run the pinned Threat Dragon loader check",
+)
 def test_given_golden_models_when_loaded_by_pinned_threat_dragon_then_they_render(
     threat_dragon_checkout: Path,
 ) -> None:
@@ -88,7 +107,8 @@ def test_given_golden_models_when_loaded_by_pinned_threat_dragon_then_they_rende
     harness_dir = threat_dragon_checkout / HARNESS_SUBDIR
     fixture_dir = harness_dir / "fixtures"
     fixture_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(HARNESS_SPEC, harness_dir / HARNESS_SPEC.name)
+    harness_spec = harness_dir / "threat-dragon-v2.6.2-loader.spec.js"
+    shutil.copy2(HARNESS_FIXTURE, harness_spec)
     goldens = sorted(GOLDEN_DIR.glob("*.json"))
     assert goldens
     for golden in goldens:
@@ -102,7 +122,7 @@ def test_given_golden_models_when_loaded_by_pinned_threat_dragon_then_they_rende
                 _tool("node"),
                 str(jest / "jest.js"),
                 "--runTestsByPath",
-                (HARNESS_SUBDIR.relative_to("td.vue") / HARNESS_SPEC.name).as_posix(),
+                harness_spec.relative_to(threat_dragon_checkout / "td.vue").as_posix(),
                 "--runInBand",
                 "--collectCoverage=false",
             ],
