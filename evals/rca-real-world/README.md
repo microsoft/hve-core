@@ -23,13 +23,15 @@ represent organic production incidents or a statistically representative benchma
 
 ## Recorded evaluation snapshots
 
-* [2026-11-06 paired raw-data debug round](PR-3136-RAW-DEBUG-2026-11-06.md) records
-  the completed `ad-hoc-v12` round: ten integrity-valid reports, zero format or query
-  rejections, and 3/5 skilled versus 0/5 baseline leading-candidate service matches.
-  Consumption was 35.766235 AI credits. Its
-  [machine-readable snapshot](PR-3136-RAW-DEBUG-2026-11-06.json) preserves all ten trial
+* [2026-11-06 paired raw-data debug evaluation](PR-3136-RAW-DEBUG-2026-11-06.md) records
+  three completed `ad-hoc-v12` rounds: 30 attempted sessions, 29 integrity-valid reports,
+  one execution failure, and 5/15 skilled versus 1/15 baseline leading-candidate service
+  matches per scheduled condition session. One format rejection and four query rejections
+  were recorded. Consumption was 116.387373 AI credits. Its
+  [machine-readable snapshot](PR-3136-RAW-DEBUG-2026-11-06.json) preserves all 30 trial
   records without telemetry or private captures. Human causal review remains pending,
-  including a skilled sign-off-readiness claim that missed the held-out service.
+  including six skilled sign-off-readiness claims that missed the held-out service and
+  one logical output-contract gate failure on an integrity-valid report.
   Keep this raw cohort separate from the prepared and production-model snapshots below.
 * [2026-11-04 paired production-model evaluation](PR-3136-PRODUCTION-2026-11-04.md) records
   the completed `ad-hoc-v10` run using `gpt-5.6-sol`: 30 integrity-valid reports, zero format
