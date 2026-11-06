@@ -2,7 +2,7 @@
 title: Execution Workflow
 description: Apply reviewed backlog changes to Azure DevOps, GitHub, or Jira with autonomy gates, dry-run preview, and resumable state
 author: Microsoft
-ms.date: 2026-08-07
+ms.date: 2026-11-06
 ms.topic: tutorial
 keywords:
   - backlog management
@@ -91,7 +91,7 @@ Operations run in dependency order rather than file order: parents before childr
 Execution does not create a new completion summary. It consumes the reviewed handoff in place, checking each operation off as the operation log records it, and writes its per-operation history beside that handoff.
 
 ```text
-<tracking-root>/execution/<scope-name>/
+<tracking-root>/execution/<YYYY-MM-DD>/
 ├── planning-log.md      # Phase tracking and resolved platform
 ├── handoff.md           # The reviewed execution contract, updated in place as operations complete
 ├── handoff-logs.md      # Live per-operation record, the destination binding, and the resume authority
