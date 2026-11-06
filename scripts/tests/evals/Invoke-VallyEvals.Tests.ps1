@@ -728,6 +728,76 @@ Describe 'VallyRunner module' -Tag 'Unit' {
         }
     }
 
+    Context 'Advisory integrity tolerance' {
+        BeforeAll {
+            function New-ToleranceDiagnostic {
+                param([string[]]$Stimuli = @('first'), [int]$Runs = 5, [hashtable]$Errored = @{})
+                $runDir = Join-Path $script:WorkRoot ('tolerance-' + [Guid]::NewGuid())
+                New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+                $inventory = [ordered]@{}
+                foreach ($name in $Stimuli) { $inventory[$name] = [ordered]@{ runs = $Runs; graders = @([ordered]@{ name = 'check'; type = 'program' }) } }
+                $records = @(foreach ($name in $Stimuli) {
+                    foreach ($trialIndex in 0..($Runs - 1)) {
+                        $isErrored = $trialIndex -lt [int]$Errored[$name]
+                        @{ type = 'trial-result'; stimulus = $name; trialIndex = $trialIndex; status = $(if ($isErrored) { 'error' } else { 'success' })
+                            trajectory = $null; gradeResult = $(if ($isErrored) { $null } else {
+                                @{ score = 1; passed = $true; details = @(@{ configuredName = 'check'; graderType = 'program'; score = 1; passed = $true }) }
+                            }) } | ConvertTo-Json -Depth 10 -Compress
+                    }
+                })
+                Set-Content (Join-Path $runDir 'results.jsonl') $records
+                $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli $inventory
+                $total = $Stimuli.Count * $Runs
+                return [ordered]@{ schemaVersion = '2.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+                    inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
+                    versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1
+                    attempts = @([ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'unknown'
+                        assertionsPassed = $total - [int]$aggregate.errored; assertionsFailed = 0; erroredTrials = [int]$aggregate.errored; observedTrials = $total
+                        recordIssues = @(); trials = $aggregate.trialDiagnostics
+                        perStimulus = @(foreach ($name in $Stimuli) {
+                            $graded = [int]$Errored[$name] -lt $Runs
+                            [ordered]@{ stimulusName = $name; expectedTrials = $Runs; observedTrials = $Runs
+                                aggregateScore = $(if ($graded) { 1.0 } else { $null }); aggregatePassed = $(if ($graded) { $true } else { $null }) }
+                        }) }) }
+            }
+        }
+
+        It 'Returns <Reason> for <Case>' -ForEach @(
+            @{ Case = 'one errored trial of five'; Runs = 5; Stimuli = @('first'); Errored = @{ first = 1 }; Advisory = $true; Tolerated = $true; Reason = 'errored-trials-within-allowance' }
+            @{ Case = 'one errored trial of three'; Runs = 3; Stimuli = @('first'); Errored = @{ first = 1 }; Advisory = $true; Tolerated = $true; Reason = 'errored-trials-within-allowance' }
+            @{ Case = 'two errored trials of five'; Runs = 5; Stimuli = @('first'); Errored = @{ first = 2 }; Advisory = $true; Tolerated = $false; Reason = 'too-many-errored-trials' }
+            @{ Case = 'a stimulus without a graded trial'; Runs = 1; Stimuli = @('a', 'b', 'c', 'd', 'e'); Errored = @{ a = 1 }; Advisory = $true; Tolerated = $false; Reason = 'stimulus-errored-every-trial' }
+            @{ Case = 'an authoritative stimulus'; Runs = 5; Stimuli = @('first'); Errored = @{ first = 1 }; Advisory = $false; Tolerated = $false; Reason = 'not-wholly-advisory' }
+        ) {
+            $diagnostics = New-ToleranceDiagnostic -Stimuli $Stimuli -Runs $Runs -Errored $Errored
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics
+            $evidence.contractValid | Should -BeTrue
+            $evidence.integrityPassed | Should -BeFalse
+            $advisoryMap = @{}
+            foreach ($name in $Stimuli) { $advisoryMap[$name] = $Advisory }
+
+            $verdict = Test-VallyAdvisoryIntegrityTolerance -Diagnostics $diagnostics -Integrity $evidence -AdvisoryMap $advisoryMap
+
+            $verdict.tolerated | Should -Be $Tolerated
+            $verdict.reason | Should -Be $Reason
+        }
+
+        It 'Keeps blocking a grading problem on a graded trial beside an errored one' {
+            $diagnostics = New-ToleranceDiagnostic -Runs 5 -Errored @{ first = 1 }
+            $graded = $diagnostics.attempts[0].trials[4]
+            $graded.gradeStatus = 'error'
+            $graded.allGradersPassed = $false
+            $graded.graders[0].status = 'error'
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics
+            $evidence.contractValid | Should -BeTrue
+
+            $verdict = Test-VallyAdvisoryIntegrityTolerance -Diagnostics $diagnostics -Integrity $evidence -AdvisoryMap @{ first = $true }
+
+            $verdict.tolerated | Should -BeFalse
+            $verdict.reason | Should -Be 'graded-trial-issue'
+        }
+    }
+
     Context 'Invoke-VallySpec (stub)' {
         It 'Emits a verifiable complete diagnostic contract using native-shaped records' -Tag 'DiagnosticIntegration' {
             $specPath = Join-Path $script:WorkRoot 'configured.yaml'
@@ -1511,6 +1581,37 @@ Describe 'Invoke-VallyEvals.ps1 entry script' -Tag 'Integration' {
         $summary.perArtifact[0].status | Should -Be 'fail'
         $summary.totals.failedSpecs | Should -Be 1
         $summary.totals.assertionsFailed | Should -Be 0
+    }
+
+    It 'Gates one persistent errored trial of three by advisory posture: advisory=<Advisory>' -Tag 'DiagnosticIntegration' -ForEach @(
+        @{ Advisory = 'true'; ExitCode = 0; Status = 'advisory-fail'; ArtifactStatus = 'advisory-fail'; FailedSpecs = 0 }
+        @{ Advisory = 'false'; ExitCode = 1; Status = 'integrity-failure'; ArtifactStatus = 'fail'; FailedSpecs = 1 }
+    ) {
+        # One errored trial of three exceeds the recovery limit, so the gap reaches the integrity gate.
+        $spec = @{
+            name = 'integrity'; defaults = @{ runs = 3 }; scoring = @{ threshold = 0.7 }
+            stimuli = @(@{ name = 'synthetic'; prompt = 'synthetic'; tags = @{ skill = 'pr-reference'; advisory = $Advisory }
+                graders = @(@{ name = 'check'; type = 'program' }) })
+        } | ConvertTo-Yaml
+        $fx = New-EvalFixture -Artifacts @(@{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }) `
+            -Specs @(@{ Name = 'integrity.yaml'; Yaml = $spec })
+        $env:STUB_VALLY_MODE = 'diagnostic'
+        $env:STUB_VALLY_DIAGNOSTIC_CASE = 'transient-error'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir -RepoRoot $fx.Root -VallyCommand $script:StubPath -SkipInputModeration -SkipOutputModeration *> $null
+            $LASTEXITCODE | Should -Be $ExitCode
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE, Env:\STUB_VALLY_DIAGNOSTIC_CASE -ErrorAction SilentlyContinue
+        }
+        $summary = Get-Content -Raw $fx.SummaryPath | ConvertFrom-Json -Depth 50
+        $summary.perSpec[0].integrity.integrityPassed | Should -BeFalse
+        $summary.perSpec[0].status | Should -Be $Status
+        $summary.perSpec[0].isAdvisory | Should -Be ($Advisory -eq 'true')
+        [bool]$summary.perSpec[0].PSObject.Properties['integrityTolerance'] | Should -Be ($Advisory -eq 'true')
+        $summary.perArtifact[0].status | Should -Be $ArtifactStatus
+        $summary.totals.failedSpecs | Should -Be $FailedSpecs
     }
 
     It 'Warns accurately and still blocks errored trials at the final integrity gate' -Tag 'DiagnosticIntegration' {

@@ -519,6 +519,97 @@ function Test-VallyDiagnosticEvidence {
     }
 }
 
+function Test-VallyAdvisoryIntegrityTolerance {
+    <#
+    .SYNOPSIS
+    Decides whether an advisory-only spec's integrity gap is a few non-systematic errored trials.
+    .DESCRIPTION
+    Advisory verdicts never block a merge, so a spec whose selected stimuli are all advisory
+    reports, rather than blocks on, an evidence gap left only by trials that errored before
+    producing a verdict. Missing, duplicate, or malformed evidence, grading problems on graded
+    trials, more errored trials than the allowance, and a stimulus that errored in every trial
+    still fail integrity.
+    .PARAMETER Diagnostics
+    Versioned diagnostic projection emitted by Invoke-VallySpec.
+    .PARAMETER Integrity
+    Test-VallyDiagnosticEvidence result for the same diagnostics.
+    .PARAMETER AdvisoryMap
+    Per-stimulus advisory flags keyed by stimulus name, as a dictionary or deserialized object.
+    .PARAMETER MaxErroredFraction
+    Largest share of the configured trial population that may have errored. At least one
+    errored trial is always allowed.
+    .OUTPUTS
+    [hashtable] tolerated, reason, erroredTrials, and expectedTrials.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)][AllowNull()]$Diagnostics,
+        [Parameter(Mandatory = $true)][AllowNull()]$Integrity,
+        [AllowNull()]$AdvisoryMap,
+        [ValidateRange(0.0, 1.0)][double]$MaxErroredFraction = 0.2
+    )
+
+    $verdict = @{ tolerated = $false; reason = 'invalid-contract'; erroredTrials = 0; expectedTrials = 0 }
+    $erroredTrialIssues = @('execution-error', 'grading-error', 'invalid-trial-score', 'invalid-grader-result')
+    $isUnitScore = {
+        param($Value)
+        $null -ne $Value -and $Value -isnot [string] -and $Value -isnot [bool] -and
+            [double]::IsFinite([double]$Value) -and $Value -ge 0 -and $Value -le 1
+    }
+    try {
+        $evidence = $Integrity | ConvertTo-Json -Depth 5 -Compress | ConvertFrom-Json -AsHashtable
+        if ($evidence -isnot [System.Collections.IDictionary] -or $evidence['contractValid'] -ne $true) { return $verdict }
+        if ($evidence['integrityPassed'] -eq $true) { $verdict.reason = 'integrity-passed'; return $verdict }
+        if (@($evidence['issues'] | Where-Object { $_ -cnotin $erroredTrialIssues }).Count -gt 0) { $verdict.reason = 'structural-issue'; return $verdict }
+
+        $advisory = @{}
+        if ($AdvisoryMap -is [System.Collections.IDictionary]) {
+            foreach ($key in $AdvisoryMap.Keys) { $advisory[[string]$key] = $AdvisoryMap[$key] }
+        }
+        elseif ($null -ne $AdvisoryMap) {
+            foreach ($property in $AdvisoryMap.PSObject.Properties) { $advisory[$property.Name] = $property.Value }
+        }
+        $data = $Diagnostics | ConvertTo-Json -Depth 50 -Compress | ConvertFrom-Json -AsHashtable -Depth 50
+        $expected = $data['expectedStimuli']
+        if ($expected.Count -eq 0 -or
+            @($expected.Keys | Where-Object { $advisory[$_] -isnot [bool] -or -not $advisory[$_] }).Count -gt 0) {
+            $verdict.reason = 'not-wholly-advisory'
+            return $verdict
+        }
+
+        $selected = @($data['attempts'] | Where-Object { $_['selected'] -eq $true })
+        if ($selected.Count -ne 1) { return $verdict }
+        foreach ($entry in $expected.Values) { $verdict.expectedTrials += [int]$entry['runs'] }
+        $erroredByStimulus = @{}
+        foreach ($trial in @($selected[0]['trials'])) {
+            if ($null -eq $trial['thresholdPassed']) {
+                if ($trial['executionStatus'] -cnotin @('error', 'cancelled')) { $verdict.reason = 'unexplained-missing-verdict'; return $verdict }
+                $verdict.erroredTrials++
+                $erroredByStimulus[[string]$trial['stimulusName']] = 1 + [int]$erroredByStimulus[[string]$trial['stimulusName']]
+                continue
+            }
+            $gradedCleanly = $trial['executionStatus'] -ceq 'success' -and $trial['gradeStatus'] -ceq 'success' -and (& $isUnitScore $trial['score']) -and
+                @($trial['graders'] | Where-Object { $_['status'] -cne 'success' -or $_['passed'] -isnot [bool] -or -not (& $isUnitScore $_['score']) }).Count -eq 0
+            if (-not $gradedCleanly) { $verdict.reason = 'graded-trial-issue'; return $verdict }
+        }
+        if ($verdict.erroredTrials -eq 0) { $verdict.reason = 'no-errored-trials'; return $verdict }
+        $allowance = [math]::Max(1, [int][math]::Floor($MaxErroredFraction * $verdict.expectedTrials))
+        if ($verdict.erroredTrials -gt $allowance) { $verdict.reason = 'too-many-errored-trials'; return $verdict }
+        foreach ($name in $erroredByStimulus.Keys) {
+            if ($erroredByStimulus[$name] -ge [int]$expected[$name]['runs']) { $verdict.reason = 'stimulus-errored-every-trial'; return $verdict }
+        }
+        $verdict.tolerated = $true
+        $verdict.reason = 'errored-trials-within-allowance'
+        return $verdict
+    }
+    catch {
+        $verdict.tolerated = $false
+        $verdict.reason = 'invalid-contract'
+        return $verdict
+    }
+}
+
 function Read-VallyResultsJsonl {
     <#
     .SYNOPSIS
@@ -2760,6 +2851,7 @@ Export-ModuleMember -Function @(
     'Get-VallyDiagnosticConfiguration',
     'Get-VallyInputDigest',
     'Test-VallyDiagnosticEvidence',
+    'Test-VallyAdvisoryIntegrityTolerance',
     'Read-VallyResultsJsonl',
     'Get-VallyExitCategory',
     'Resolve-VallyCommandPath',
