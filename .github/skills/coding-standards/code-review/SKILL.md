@@ -43,6 +43,8 @@ Apply this contract to the review orchestrator, every review subagent, and any d
 9. [Cross-Skill Forks](references/cross-skill-forks.md): specialist review registry and package-aware gating for follow-up reviews.
 10. [Review Targets and Profiles](references/review-targets.md): target resolution, profile expansion, task serialization, and emission identity.
 11. [Change-Risk Evidence Checklist](references/change-risk-model.md): advisory evidence categories for selecting review depth with human confirmation.
+12. [Diff Computation](references/diff-computation.md): decision tree for obtaining the diff, scope rules, large-diff handling, and non-source filtering.
+13. [Review Artifacts](references/review-artifacts.md): persistence protocol for `review.md` and `metadata.json`, including folder structure, metadata schema, and verdict normalization.
 
 ## Skill layout
 

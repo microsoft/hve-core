@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-26
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - security
@@ -18,7 +18,7 @@ estimated_reading_time: 25
 
 HVE Core is an enterprise prompt engineering framework for GitHub Copilot consisting of:
 
-* Markdown-based prompt artifacts (instructions, prompts, agents, skills)
+* Markdown-based prompt artifacts (agents, skills, and instructions)
 * PowerShell automation scripts for linting and validation
 * GitHub Actions CI/CD workflows
 * VS Code extension packaging utilities
@@ -69,7 +69,7 @@ Security relies on defense-in-depth with 25+ automated controls validated throug
 
 HVE Core contains seven primary component categories:
 
-1. **Prompt Engineering Artifacts** (`.github/instructions/`, `.github/prompts/`, `.github/agents/`, `.github/skills/`)
+1. **Prompt Engineering Artifacts** (`.github/agents/`, `.github/skills/`, `.github/instructions/`)
    * Markdown files with YAML frontmatter
    * Consumed by GitHub Copilot during development sessions
    * No executable code execution within prompts
@@ -109,7 +109,7 @@ flowchart TD
    accTitle: HVE Core System Architecture and Data Flow
    accDescr: Developer workstation artifacts, IDE, Copilot, local tools, and containers exchange context and tool calls with GitHub services, repositories, Actions, and security scanning across network boundaries.
     subgraph DEV["Developer Workstation"]
-        ARTIFACTS["HVE Core Artifacts<br/>(.instructions.md, .prompt.md, etc)"]
+        ARTIFACTS["HVE Core Artifacts<br/>(.agent.md, SKILL.md, .instructions.md)"]
         IDE["VS Code IDE"]
         COPILOT["GitHub Copilot Extension"]
         LOCALMCP["Local MCP Servers<br/>(optional)"]
@@ -341,7 +341,7 @@ now covered by CQ-6 and CQ-8: the gate exempts only an input declared `type: boo
 | Field             | Value                                                               |
 |-------------------|---------------------------------------------------------------------|
 | **Category**      | Information Disclosure                                              |
-| **Asset**         | Prompt files, documentation                                         |
+| **Asset**         | Prompt artifacts, documentation                                     |
 | **Threat**        | Internal URLs, API keys, or proprietary patterns exposed in prompts |
 | **Likelihood**    | Low (review process catches obvious cases)                          |
 | **Impact**        | Medium (information leakage)                                        |
@@ -1098,19 +1098,19 @@ External standards are cited inline.
 
 #### OA-15: Scope Upgrade / Consent Phishing
 
-| Field                      | Value                                                                                                                                                                                                                                                                                                                                                                    |
-|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Category**               | Elevation of Privilege                                                                                                                                                                                                                                                                                                                                                   |
-| **Asset**                  | Granted OAuth scope set                                                                                                                                                                                                                                                                                                                                                  |
-| **Threat**                 | Skill (or a future variant) requests broader scopes than required for the task at hand, or an attacker tampers with the scope parameter mid-flow to escalate; consent-phishing pattern is a recognized MITRE ATT&CK technique                                                                                                                                            |
-| **Likelihood**             | Low (skill scope set is hardcoded and minimal)                                                                                                                                                                                                                                                                                                                           |
-| **Impact**                 | High (excessive scope grants enable destructive operations or data exfiltration beyond the user's expected approval)                                                                                                                                                                                                                                                     |
-| **Mitigations**            | Scope is constructed from a hardcoded constant (not user-influenced); destructive operations require an explicit dispatch-time scope re-check (mural-skill-discipline `/memories/repo/`); least-privilege scope set documented in skill `SECURITY.md`; tag-level scopes (`room:read`, `room:write`) are space-delimited and case-sensitive per Mural's documented format |
-| **Residual Risk**          | Low                                                                                                                                                                                                                                                                                                                                                                      |
-| **Status**                 | Mitigated                                                                                                                                                                                                                                                                                                                                                                |
-| **Source**                 | MITRE ATT&CK [T1528](https://attack.mitre.org/techniques/T1528/) (Steal Application Access Token); CAPEC-593 (Session Hijacking); RFC 6819 §5.1.5.1 (Threat: Obtaining Tokens with Wrong Scope); OWASP ASVS V51.2.1 (least-privilege scope)                                                                                                                              |
-| **Trust Boundary Crossed** | Browser ↔ Mural Authorization Server                                                                                                                                                                                                                                                                                                                                     |
-| **Detection**              | Scope diff between requested and granted (if Mural ever emits granted scope in token response); periodic Mural-side scope audit at [https://app.mural.co/account/api](https://app.mural.co/account/api)                                                                                                                                                                  |
+| Field                      | Value                                                                                                                                                                                                                                                                                                                                                                   |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Elevation of Privilege                                                                                                                                                                                                                                                                                                                                                  |
+| **Asset**                  | Granted OAuth scope set                                                                                                                                                                                                                                                                                                                                                 |
+| **Threat**                 | Skill (or a future variant) requests broader scopes than required for the task at hand, or an attacker tampers with the scope parameter mid-flow to escalate; consent-phishing pattern is a recognized MITRE ATT&CK technique                                                                                                                                           |
+| **Likelihood**             | Low (skill scope set is hardcoded and minimal)                                                                                                                                                                                                                                                                                                                          |
+| **Impact**                 | High (excessive scope grants enable destructive operations or data exfiltration beyond the user's expected approval)                                                                                                                                                                                                                                                    |
+| **Mitigations**            | Scope is constructed from a hardcoded constant (not user-influenced); destructive operations require an explicit dispatch-time scope re-check (the `mural` skill's granted-scope check); least-privilege scope set documented in skill `SECURITY.md`; tag-level scopes (`room:read`, `room:write`) are space-delimited and case-sensitive per Mural's documented format |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                                                                                                                                                     |
+| **Status**                 | Mitigated                                                                                                                                                                                                                                                                                                                                                               |
+| **Source**                 | MITRE ATT&CK [T1528](https://attack.mitre.org/techniques/T1528/) (Steal Application Access Token); CAPEC-593 (Session Hijacking); RFC 6819 §5.1.5.1 (Threat: Obtaining Tokens with Wrong Scope); OWASP ASVS V51.2.1 (least-privilege scope)                                                                                                                             |
+| **Trust Boundary Crossed** | Browser ↔ Mural Authorization Server                                                                                                                                                                                                                                                                                                                                    |
+| **Detection**              | Scope diff between requested and granted (if Mural ever emits granted scope in token response); periodic Mural-side scope audit at [https://app.mural.co/account/api](https://app.mural.co/account/api)                                                                                                                                                                 |
 
 #### OA-16: Bearer Token Theft Enabling Cross-Resource Replay
 
@@ -2226,7 +2226,7 @@ HVE Core achieves acceptable security through:
 HVE Core documents integrations with Model Context Protocol servers. This section analyzes the trust posture of each server.
 
 > [!NOTE]
-> GitHub MCP is enabled by default in VS Code when using GitHub Copilot. The other servers are optional and recommended for an optimal HVE Core development experience. See [MCP Configuration](../getting-started/mcp-configuration.md) for setup instructions.
+> Copilot includes a GitHub MCP server, so HVE Core needs no separate `github` server. The other servers are optional, and HVE Core recommends them for development work. See [MCP Configuration](../getting-started/mcp-configuration.md) for setup instructions.
 
 ### Server Summary
 

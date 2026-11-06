@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -51,6 +51,9 @@ For the deeper explanation of how LLM context affects agent behavior, see [Conte
 ## Walkthrough: Adding Azure Blob Storage
 
 Let's walk through adding Azure Blob Storage to a Python data pipeline.
+
+> [!NOTE]
+> The examples use the short command names. With the plugin installed in VS Code, the same skills carry the plugin name as a prefix, such as `/hve-core:rpi-research`.
 
 ### Research Readiness
 
@@ -414,16 +417,33 @@ For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings
 
 Choose the entry surface that best fits the task.
 
-| Entry surface       | Use it when                                  | Contract                                                                     |
-|---------------------|----------------------------------------------|------------------------------------------------------------------------------|
-| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness; manual by default |
-| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work                            |
+| Entry surface       | Use it when                                  | Contract                                                                             |
+|---------------------|----------------------------------------------|--------------------------------------------------------------------------------------|
+| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness; asks how you want to work |
+| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work                                    |
 
 ### Manual and Automatic Mode in RPI Agent
 
-`RPI Agent` starts in manual mode: it stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. Choose **Full Auto** to request an automatic session. The agent asks whether it should resolve ordinary Research and Plan decisions itself or pause for you to retain decisions in either phase, then continues through Review without routine approval prompts. It still stops for blockers, required human review, and any destructive or externally visible action.
+When neither your request nor a resumed session sets how to proceed, `RPI Agent` asks "How would you like us to work on this?" and offers four choices:
 
-After Review, an automatic session presents ranked follow-up choices alongside **Stop automatic session** and **Switch to manual mode**. Selecting a follow-up starts a child task from Research with the completed task recorded as its parent. The session's one critique and Review have already run, so the child skips both unless you ask for them. Review-item decisions are agent-owned in automatic mode unless you explicitly retain them.
+| Choice                          | How the agent proceeds                                                                                                 |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Handle it end to end            | Makes the decisions and works through every phase and needed follow-up until your request is complete                  |
+| Keep going, but check with me   | Works through every phase and needed follow-up automatically, and asks you when a decision or the direction is unclear |
+| Research and plan with me       | Researches and plans with your input, walks you through both, and stops before Implementation                          |
+| Work through each phase with me | Manual mode: asks about unclear decisions, walks you through each phase's artifacts, and waits for you to move on      |
+
+You can also type your own answer, for example to keep only the Plan decisions or to choose follow-up work yourself. A clear request such as "use automatic mode" or "full auto" selects automatic mode without the question.
+
+In manual mode, the agent stays in the active phase until you ask for the next phase or run its command, such as `/rpi-plan`. When a phase finishes, the agent walks you through its artifacts and asks whether to refine the work or move on, and an answer that names the next phase is enough to advance.
+
+In automatic mode, the agent moves through the phases without routine approval prompts, up to the boundary you chose. It still stops for blockers and required human review, and it asks before destructive, hard-to-reverse, shared-system, or externally visible actions.
+
+Whatever the mode, the plan critique and Review each run once per session, in the first task. Ask to skip either one or to run more.
+
+After Review, or after Implement when you skip Review, an automatic session assesses follow-up work. When the agent owns follow-up selection, it starts the highest-ranked required item in a child task and keeps going until your acceptance criteria are met. When you keep that choice, it shows the ranked follow-ups with **Stop automatic session** and **Switch to manual mode**.
+
+A child task starts from Research with the completed task recorded as its parent. It skips the critique and Review unless you ask for them on follow-up work.
 
 Both modes persist one JSON state record with the task identity, mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups, so a later conversation can resume from the recorded phase.
 
@@ -441,7 +461,7 @@ A long lifecycle can accumulate context. Resume from the durable RPI artifact se
 > [!TIP]
 > For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering).
 
-See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the agent's state contract and handoffs.
+See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the agent's state contract and modes.
 
 ## Related Guides
 

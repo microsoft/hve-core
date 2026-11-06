@@ -25,7 +25,7 @@ capture fidelity, and criterion templates, while topic sets the source set.
 4. Copy `templates/style.yaml` to the level's `content/global/style.yaml` and
    substitute only the deck title, subject, keywords, and slide list.
    `references/house-style.md` holds the pinned palette and its rationale.
-5. Build each deck through `PowerPoint Subagent` and validate it, then export
+5. Build each deck through `PowerPoint Subagent`, passing the conventions from `pptx.instructions.md` in its prompt as text or as the file's path, and validate it, then export
    its deterministic frames for any level under `capture: deck-export`.
 6. Use `vscode-playwright` for live VS Code captures for any level under
    `capture: live`. Target files that open in the Monaco text editor, then

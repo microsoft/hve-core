@@ -959,6 +959,8 @@ Describe 'component-copy source and manifest link refusal' -Tag 'Unit' {
         Remove-Item -LiteralPath $manifestLink -Force
         $danglingTarget = Join-Path $script:linkOutside 'dangling-manifest.json'
         New-Item -ItemType SymbolicLink -Path $manifestLink -Target $danglingTarget -ErrorAction Stop | Out-Null
+        $realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+        Mock Test-Path { & $realTestPath @PesterBoundParameters }
         Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -like '*.hve-tracking.json' }
 
         { Invoke-ComponentCopy -Fixture $script:linkFixture -Component @('agents/hve-core/rpi-agent.md') } |

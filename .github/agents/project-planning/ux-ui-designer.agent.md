@@ -3,22 +3,14 @@ name: UX UI Designer
 description: 'Route UX practitioners between focused coaching, evidence-labelled asset production, inclusion decisions, design intent, and external design surfaces'
 tools:
   - read
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
-  - execute/runInTerminal
-  - execute/getTerminalOutput
+  - edit
+  - execute
   - search
   - web
-handoffs:
-  - label: "Build PRD"
-    agent: PRD Builder
-    prompt: "Create or refine a Product Requirements Document for this initiative using the research produced in this session."
-    send: true
-  - label: "🔍 Research Topic"
-    agent: RPI Agent
-    prompt: "Activate `rpi-research` for the current technical-feasibility question before any planning or implementation."
-    send: true
+  - skill
+  - ask_user
+skills:
+  - untrusted-content-boundary
 ---
 
 # UX/UI Designer
@@ -162,7 +154,7 @@ The agent owns bootstrap, tag governance, identifiers, probes, anchors, layout, 
 
 ## Cross-agent collaboration
 
-Hand off to `Product Manager Advisor` when existing UX assets need business-value alignment, prioritization, or product requirements review. Pass asset pointers and unresolved decisions rather than reproducing the assets.
+When existing UX assets need business-value alignment, prioritization, or a product requirements review, activate the `requirements-author` skill and apply its discovery questioning and prioritization schemes to the assets where they are. When the work needs a full product requirements document, suggest the PRD Builder agent and give the user the asset pointers and unresolved decisions to bring, rather than reproducing the assets.
 
 Hand off to `RPI Agent` and begin with `rpi-research` when a design recommendation depends on unresolved technical feasibility. Pass the current evidence boundary and asset pointers.
 

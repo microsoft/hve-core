@@ -6,17 +6,18 @@
 
 <#
 .SYNOPSIS
-    Validates AI artifact footer and disclaimer presence in instruction templates.
+    Validates AI artifact footer and disclaimer presence in instruction and skill templates.
 
 .DESCRIPTION
     Reads footer-with-review.yml for footer text and artifact-classification rules, and
-    parses shared/disclaimer-language.instructions.md as the canonical disclaimer source.
-    Scans instruction files for required footer and disclaimer text based on artifact
+    parses the disclaimer-language skill (.github/skills/shared/disclaimer-language/SKILL.md)
+    as the canonical disclaimer source. Scans instruction and skill files for required footer and disclaimer text based on artifact
     classification rules. Outputs results as JSON and sets CI environment variables on
     failure.
 
 .PARAMETER Paths
-    Directories to scan for instruction files. Defaults to '.github/instructions'.
+    Directories to scan for instruction and skill files. Defaults to '.github/instructions'
+    and '.github/skills'.
 
 .PARAMETER ExcludePaths
     Directories to exclude from scanning.
@@ -25,7 +26,7 @@
     Path to the footer-with-review.yml config file.
 
 .PARAMETER DisclaimerSourcePath
-    Path to the shared disclaimer-language instructions markdown file. The validator
+    Path to the disclaimer-language skill file. The validator
     parses H2 sections and their CAUTION blockquote bodies to derive disclaimer text.
 
 .PARAMETER FailOnMissing
@@ -44,7 +45,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string[]]$Paths = @('.github/instructions'),
+    [string[]]$Paths = @('.github/instructions', '.github/skills'),
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePaths = @(),
@@ -53,7 +54,7 @@ param(
     [string]$FooterConfigPath = '.github/config/footer-with-review.yml',
 
     [Parameter(Mandatory = $false)]
-    [string]$DisclaimerSourcePath = '.github/instructions/shared/disclaimer-language.instructions.md',
+    [string]$DisclaimerSourcePath = '.github/skills/shared/disclaimer-language/SKILL.md',
 
     [Parameter(Mandatory = $false)]
     [switch]$FailOnMissing,
@@ -112,7 +113,7 @@ function Import-FooterConfig {
 function Import-DisclaimerSource {
     <#
     .SYNOPSIS
-    Parses the shared disclaimer-language instructions markdown as the canonical disclaimer source.
+    Parses the disclaimer-language skill markdown as the canonical disclaimer source.
 
     .DESCRIPTION
     Reads the markdown file, splits on H2 headings to identify planner sections,
@@ -122,7 +123,7 @@ function Import-DisclaimerSource {
     the planner key and disclaimer id convention.
 
     .PARAMETER SourcePath
-    Absolute path to the disclaimer-language.instructions.md markdown file.
+    Absolute path to the disclaimer-language skill's SKILL.md file.
 
     .OUTPUTS
     [hashtable] Parsed config shaped as @{ version; source; disclaimers = @{ key = @{ id; label; text } } }.
@@ -503,7 +504,7 @@ function Test-AIArtifactValidation {
     Path to footer-with-review.yml relative to repo root.
 
     .PARAMETER DisclaimerSourcePath
-    Path to the shared disclaimer-language instructions markdown file, relative to repo root.
+    Path to the disclaimer-language skill file, relative to repo root.
 
     .PARAMETER FailOnMissing
     When set, missing footers cause a non-zero exit code.

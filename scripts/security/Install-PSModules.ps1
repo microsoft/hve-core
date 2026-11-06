@@ -28,6 +28,10 @@
     Overridable via PS_MODULE_SCOPE env var.
 .PARAMETER Repository
     PowerShell repository name. Defaults to PSGallery.
+.PARAMETER Module
+    Names of pinned modules to install, matched case-insensitively against the
+    manifest. Defaults to every pinned module. A name the manifest does not pin
+    is an error.
 .PARAMETER Import
     Import each module into the current session after installation.
 .PARAMETER Force
@@ -45,6 +49,9 @@
 .EXAMPLE
     ./scripts/security/Install-PSModules.ps1 -Scope AllUsers -Import
     Installs system-wide and imports (requires elevation on Linux/macOS).
+.EXAMPLE
+    ./scripts/security/Install-PSModules.ps1 -Module PowerShell-Yaml
+    Installs only the pinned PowerShell-Yaml module for the current user.
 .NOTES
     Called by: .github/actions/setup-ps-modules/action.yml
     Called by: .devcontainer/scripts/on-create.sh
@@ -62,6 +69,9 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string]$Repository = 'PSGallery',
+
+    [Parameter(Mandatory = $false)]
+    [string[]]$Module,
 
     [Parameter(Mandatory = $false)]
     [switch]$Import,
@@ -313,6 +323,9 @@ function Invoke-PSModuleInstall {
         [string]$Repository = 'PSGallery',
 
         [Parameter()]
+        [string[]]$Module,
+
+        [Parameter()]
         [switch]$Import,
 
         [Parameter()]
@@ -333,8 +346,16 @@ function Invoke-PSModuleInstall {
     }
 
     $config = Get-Content -Raw $resolvedConfig | ConvertFrom-Json
-    $modules = $config.modules.PSObject.Properties
-    $totalCount = ($modules | Measure-Object).Count
+    $modules = @($config.modules.PSObject.Properties)
+    if ($Module) {
+        $pinnedNames = @($modules | ForEach-Object Name)
+        $unpinned = @($Module | Where-Object { $_ -notin $pinnedNames })
+        if ($unpinned.Count -gt 0) {
+            throw "Module(s) not pinned in ${resolvedConfig}: $($unpinned -join ', ')"
+        }
+        $modules = @($modules | Where-Object { $_.Name -in $Module })
+    }
+    $totalCount = $modules.Count
     $installedCount = 0
     $skippedCount = 0
 
@@ -372,7 +393,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $resolvedConfig = Resolve-ConfigPath -Explicit $ConfigPath
         $resolvedScope = Resolve-Scope -Explicit $Scope
         Invoke-PSModuleInstall -ConfigPath $resolvedConfig -Scope $resolvedScope -Repository $Repository `
-            -MaxAttempts $MaxAttempts -BaseDelaySeconds $BaseDelaySeconds `
+            -Module $Module -MaxAttempts $MaxAttempts -BaseDelaySeconds $BaseDelaySeconds `
             -Import:$Import -Force:$Force
         exit 0
     }

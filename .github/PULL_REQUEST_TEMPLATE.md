@@ -40,7 +40,6 @@ Select all that apply:
 
 * [ ] Reviewed contribution with `hve-builder` and addressed all actionable findings
 * [ ] Copilot instructions (`.github/instructions/*.instructions.md`)
-* [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
 * [ ] Copilot agent (`.github/agents/*.agent.md`)
 * [ ] Copilot skill (`.github/skills/*/SKILL.md`)
 * [ ] Copilot hook (`.github/hooks/*/*.json`)
@@ -64,7 +63,7 @@ Select all that apply:
 <!-- Delete this section if not applicable -->
 
 **User Request:**
-<!-- What natural language request would trigger this agent/prompt/instruction? -->
+<!-- What natural language request would trigger this agent, instruction, or skill? -->
 
 **Execution Flow:**
 <!-- Step-by-step: what happens when invoked? Include tool usage, decision points -->
@@ -79,7 +78,7 @@ For detailed contribution requirements, see:
 
 * Common Standards: [docs/contributing/ai-artifacts-common.md](../docs/contributing/ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
 * Agents: [docs/contributing/custom-agents.md](../docs/contributing/custom-agents.md) - Agent configurations with tools and behavior patterns
-* Prompts: [docs/contributing/prompts.md](../docs/contributing/prompts.md) - Workflow-specific guidance with template variables
+* Slash commands: [docs/contributing/prompts.md](../docs/contributing/prompts.md) - Why reusable slash commands are contributed as skills
 * Instructions: [docs/contributing/instructions.md](../docs/contributing/instructions.md) - Technology-specific standards with glob patterns
 * Skills: [docs/contributing/skills.md](../docs/contributing/skills.md) - Task execution utilities with cross-platform scripts
 
@@ -96,7 +95,7 @@ For detailed contribution requirements, see:
 * [ ] Tests added for new functionality (if applicable)
 
 ### AI Artifact Contributions
-<!-- If contributing an agent, prompt, instruction, or skill, complete these checks -->
+<!-- If contributing an agent, instruction, or skill, complete these checks -->
 * [ ] Used `hve-builder` review mode to review contribution
 * [ ] Addressed all actionable findings from the `hve-builder` review
 * [ ] Verified contribution follows common standards and type-specific requirements

@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-10-28
+ms.date: 2026-10-31
 ms.topic: guide
 keywords:
   - copilot
@@ -102,7 +102,8 @@ subagents, and skills.
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-**Modes:** Manual mode stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. The **Full Auto** handoff requests an automatic session; after you confirm whether ordinary Research and Plan decisions are agent-owned or user-retained, the agent continues through Review without routine approval prompts.
+**Modes:** When your request doesn't say how to proceed, the agent asks how you want to work: handle it end to end, keep going but check with you on unclear decisions, research and plan with you and stop before implementation, or work through each phase with you.
+Asking for "full auto" or "automatic mode" starts an automatic session without the question. Manual mode stays in the active phase until you invoke the next `/rpi-*` command or ask for the next phase. An automatic session continues through Review without routine approval prompts.
 
 After Review, an automatic session offers ranked follow-up choices plus **Stop automatic session** and **Switch to manual mode**. Blockers, required human review, and destructive or externally visible actions still stop for confirmation.
 
@@ -191,7 +192,8 @@ After Review, an automatic session offers ranked follow-up choices plus **Stop a
 
 **Workflow:** Discover → Extract → Synthesize → Handoff
 
-**Critical:** Experimental. Requires the `workiq` MCP server in `.vscode/mcp.json` (not included in the installer skill or curated MCP documentation; see [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup). Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
+**Critical:** Experimental. Requires the `workiq` MCP server in `.mcp.json` (see [MCP Server Configuration](../docs/getting-started/mcp-configuration.md#workiq) and the [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup).
+Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
 
 **Data Sensitivity Warning:** Meeting transcripts retrieved by this agent may contain PII, customer confidential information, and proprietary business data. Analysis files and state files are written to `.copilot-tracking/prd-sessions/` which is gitignored by default when following HVE Core setup guidance, but the files exist **unencrypted on disk**.
 Users are responsible for verifying their repository's `.gitignore` configuration, complying with their organization's data handling policies, and deleting both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files after the PRD handoff is complete. The agent will prompt for deletion at handoff completion, but deletion is the user's responsibility.
@@ -268,7 +270,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Creates:** Merged review artifacts in a normalized branch folder:
 
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in `review-artifacts.instructions.md`)
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in the `code-review` skill's `references/review-artifacts.md`)
 * `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/metadata.json` (review metadata record)
 
 **Workflow:** Context Bootstrap → Human Scope Confirmation → Perspective + Depth Selection → Prepare Dispatch State → Dispatch Selected Perspectives → Merge and Persist

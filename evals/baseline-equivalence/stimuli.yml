@@ -118,7 +118,7 @@ stimuli:
     graders:
       - type: output-matches
         name: rust-fn-syntax
-        config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}
+        config: {pattern: "(?i)\\bfn\\s+\\w+\\s*(?=[^{;]*\\b(?:str|String)\\b)(?:<[^{;()]*>)?\\s*\\("}
       - type: prompt
         name: code-reverse-string-rust-response-quality
         config: {prompt: "Does the response define a Rust function that reverses a string?"}

@@ -20,7 +20,7 @@ Create one local Conventional Commit from whole paths the user selects and confi
 
 ## Message Rules
 
-Generate every message by following the `commit-message` instructions. They own types, scopes, description and body limits, and the footer line. Once generated, the message is authoritative for the commit.
+Generate every message by following [references/commit-message.md](references/commit-message.md). It owns types, scopes, description and body limits, and the footer line. Once generated, the message is authoritative for the commit.
 
 ## Message-Only Mode
 
@@ -76,7 +76,7 @@ Start this flow only when, immediately after the commit is displayed, the user e
 1. Treat the commit just created in this session as the target; do not run history commands to confirm it.
 2. Run `git reset --soft HEAD^` to uncommit while preserving the index and working tree.
 3. For an undo without a new message, print `Commit undone (changes staged, no new commit message requested).` and stop without committing.
-4. For a message change, merge the requested edits into the previous message, correct anything that breaks the commit-message instructions, and commit again with `git commit -F -`.
+4. For a message change, merge the requested edits into the previous message, correct anything that breaks the commit message conventions, and commit again with `git commit -F -`.
 5. Print `Commit message updated successfully:`, a blank line, and the updated message in a fenced `markdown` code block.
 
 Constraints for this flow:

@@ -8,7 +8,7 @@
     {
       "noticeType": "session-start-disclaimer",
       "shownAt": "2026-09-01T12:00:00Z",
-      "source": "disclaimer-language.instructions.md",
+      "source": "disclaimer-language",
       "details": { "phase": "phase1" }
     }
   ],

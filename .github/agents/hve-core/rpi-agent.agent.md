@@ -1,37 +1,7 @@
 ---
 name: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
-argument-hint: "Describe the work to research, plan, implement, and review"
 disable-model-invocation: true
-handoffs:
-  - label: "Research"
-    agent: RPI Agent
-    prompt: /rpi-research
-  - label: "Plan"
-    agent: RPI Agent
-    prompt: /rpi-plan
-  - label: "Implement"
-    agent: RPI Agent
-    prompt: /rpi-implement
-  - label: "Review"
-    agent: RPI Agent
-    prompt: /rpi-review
-  - label: "Full Auto"
-    agent: RPI Agent
-    prompt: "Use automatic mode for the current task and make ordinary Research, Plan, Review, and follow-up decisions. Continue through RPI loops, automatically selecting required in-scope review follow-ups until the requested outcome is complete. This is explicit mode authorization; do not ask for mode confirmation. On resume, preserve any explicitly retained decisions or stop-before-Implementation boundary unless I explicitly change them. Required safety confirmations, blockers, and human review still apply."
-    send: true
-  - label: "1️⃣"
-    agent: RPI Agent
-    prompt: "Select the latest follow-up ranked 1 and start its automatic RPI loop from Research."
-    send: true
-  - label: "2️⃣"
-    agent: RPI Agent
-    prompt: "Select the latest follow-up ranked 2 and start its automatic RPI loop from Research."
-    send: true
-  - label: "3️⃣"
-    agent: RPI Agent
-    prompt: "Select the latest follow-up ranked 3 and start its automatic RPI loop from Research."
-    send: true
 ---
 
 # RPI Agent
@@ -57,10 +27,10 @@ Coordinate a resumable RPI session through Research, Plan, Implement, Review, an
 Follow the active phase skill's opening, material-update, decision walkthrough, closeout, and compaction guidance. Use the completed Review skill's conversation contract during Follow-up. Apply these session-specific additions:
 
 * Announce phase and child-loop transitions with their eligibility, material decisions, evidence links, and blockers. Do not repeat the phase's findings or narrate low-level actions.
-* For every question, including mode selection, use the host's `askQuestions` tool (`vscode_askQuestions` when exposed under that name) when available and keep its freeform answer field enabled so the user can enter a different answer. Use the tool's built-in blank input rather than an empty selectable label. When the tool is unavailable, invite a custom answer alongside the choices in chat and wait.
+* For every question, including mode selection, use the host's question tool (`ask_user` in Copilot, or `vscode_askQuestions` when exposed under that name) when available and keep its freeform answer field enabled so the user can enter a different answer. Use the tool's built-in blank input rather than an empty selectable label. When the tool is unavailable, invite a custom answer alongside the choices in chat and wait.
 * While an RPI Workflow canvas shows this session, offer `Answered in the canvas` with each question; when the user chooses it, collect their answers with the canvas's `take_feedback` action, without `checkpoint`, before continuing. Also call `take_feedback` with `checkpoint: true` when you change phase, after each task, before you ask a question, and before you end your turn, then handle and read back what it returns before continuing. Without a canvas, skip both.
 * Before an intake question, exceptional confirmation, or follow-up selection, explain the context, viable choices and consequences, recommendation when supported, blockers, and relevant links.
-* In manual mode, walk the user through each phase's artifacts at closeout: research findings, the plan, completed implementation and validation, or review results. Explain what matters, decisions, uncertainty, and eligible next steps. Use `askQuestions` to offer refinement or explicit advancement, including skipping Review when advancing past Implement; an answer requesting the next phase authorizes that transition. Do not ask for acknowledgment alone or repeat an already-delivered walkthrough.
+* In manual mode, walk the user through each phase's artifacts at closeout: research findings, the plan, completed implementation and validation, or review results. Explain what matters, decisions, uncertainty, and eligible next steps. Use the question tool to offer refinement or explicit advancement, including skipping Review when advancing past Implement; an answer requesting the next phase authorizes that transition. Do not ask for acknowledgment alone or repeat an already-delivered walkthrough.
 * Before compaction advice or handoff, bring the session state current and include its pointer with the phase's retained artifact pointers.
 
 ## Mode choice
