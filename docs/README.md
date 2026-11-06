@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-06
 ms.topic: overview
 keywords:
   - hve core
@@ -14,15 +14,17 @@ keywords:
 estimated_reading_time: 3
 ---
 
-HVE Core gives your team production-ready agents, coding instructions, and executable skills for GitHub Copilot. You get structured workflows (Research → Plan → Implement), schema-enforced quality gates, and role-specific tooling across 10 engineering disciplines. Install from the VS Code Marketplace and start shipping with AI-assisted engineering in minutes.
+HVE Core gives your team agents, coding instructions, and skills for GitHub Copilot. You get structured Research → Plan → Implement workflows, schema-checked quality gates, and role-specific tooling across 10 engineering disciplines.
 
 ## Choose Your Installation
 
-| Option       | HVE Core Extension                                                                                  | Repository Copy                                                             |
-|--------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| What you get | Every distributable agent, instruction, and skill                                                   | Every agent, instruction, and distributable skill, owned by your repository |
-| Best for     | Teams that want managed updates and the complete content set                                        | Teams that want repository-owned, reviewable copies                         |
-| Start        | [Install HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) | Use the included `hve-core-installer` skill with a pinned or cloned source  |
+Most people should start with the plugin. [Installing HVE Core](getting-started/install.md) compares every route.
+
+| Route                                                                            | What you get                                          | Choose it when                                    |
+|----------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------------------|
+| [Plugin](getting-started/install.md#install-the-plugin) ⭐                        | Every agent, skill, and instruction, following `main` | You want the full set in VS Code or Copilot CLI   |
+| [VS Code extension](getting-started/install.md#use-the-vs-code-extension)        | Agents and skills from the VS Code Marketplace        | You manage editor tools through the Marketplace   |
+| [Repository copy](getting-started/install.md#copy-hve-core-into-your-repository) | Copies of every component, owned by your repository   | Your repository should own and customize HVE Core |
 
 > Not sure which to choose? See the [installation methods comparison](getting-started/methods/comparison.md) for a detailed breakdown.
 
@@ -34,7 +36,7 @@ HVE Core no longer ships prompt files. If you used a former prompt command such 
 
 Get up and running with installation, configuration, and your first AI-assisted workflow.
 
-* [Install HVE Core](getting-started/install.md) covers three setup paths from marketplace extension to developer clone
+* [Install HVE Core](getting-started/install.md) compares the plugin, extension, repository copy, and clone routes
 * [Run your first workflow](getting-started/first-workflow.md) walks through an end-to-end RPI example
 * [Understand the HVE Core identity](getting-started/packages.md) to compare channels and release assurance
 
