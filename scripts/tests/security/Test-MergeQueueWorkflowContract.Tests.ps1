@@ -1039,6 +1039,8 @@ Describe 'Locked dependency audit routing' -Tag 'Unit' {
     }
 
     It 'Rejects failed or empty reusable-workflow lock exports and removes partial requirements' {
+        # The workflow export is mocked; this test lane does not require uv.
+        function uv { }
         $workflow = Get-Content -Raw -LiteralPath (Join-Path $script:WorkflowRoot 'pip-audit.yml') | ConvertFrom-Yaml
         $export = @($workflow['jobs']['pip-audit']['steps'] | Where-Object { $_['name'] -eq 'Export locked dependencies' })[0]
         [string]$export['run'] | Should -Match 'uv export --locked'
