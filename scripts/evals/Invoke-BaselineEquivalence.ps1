@@ -1456,6 +1456,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                     -HeartbeatIntervalSeconds $ComparisonHeartbeatSeconds
                 foreach ($recoveryAttempt in @($baselineRecovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
                 $baselineRunDir = $baselineRecovery.RunDir
+                $codeA = Get-VallyRecoveredExitCode -ExitCode $codeA -Recovery $baselineRecovery -RunDir $baselineRunDir
                 $baselineTally = Measure-DeclaredInvariantFailures -RunDir $baselineRunDir -InvariantNames $canonicalInvariants -ExpectedManifest $invariantManifest -ExpectedTrials $baselineTrials
                 if ($baselineTally.HasSignal) {
                     $invariantFailures += $baselineTally.Failed
@@ -1527,6 +1528,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             $customizedRecovery = Invoke-ErroredTrialRecovery -RunDir $bRunDir @customizedRecoveryParameters
             foreach ($recoveryAttempt in @($customizedRecovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
             $bRunDir = $customizedRecovery.RunDir
+            $codeB = Get-VallyRecoveredExitCode -ExitCode $codeB -Recovery $customizedRecovery -RunDir $bRunDir
             $invocationTally = Measure-AgentInvocationEvidence `
                 -RunDir $bRunDir `
                 -StimulusNames @($canonicalPolicy.Keys) `
@@ -1585,6 +1587,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 $customizedRecovery = Invoke-ErroredTrialRecovery -RunDir $bRunDir @customizedRecoveryParameters
                 foreach ($recoveryAttempt in @($customizedRecovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
                 $bRunDir = $customizedRecovery.RunDir
+                $codeB = Get-VallyRecoveredExitCode -ExitCode $codeB -Recovery $customizedRecovery -RunDir $bRunDir
                 $invocationTally = Measure-AgentInvocationEvidence `
                     -RunDir $bRunDir `
                     -StimulusNames @($canonicalPolicy.Keys) `

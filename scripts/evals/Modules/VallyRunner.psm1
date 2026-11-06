@@ -1722,6 +1722,64 @@ function Invoke-ErroredTrialRecovery {
     return $result
 }
 
+function Get-VallyRecoveredExitCode {
+    <#
+    .SYNOPSIS
+        Returns the exit code a run reports once recovery replaced its errored trials.
+    .DESCRIPTION
+        `vally eval` exits nonzero when any trial errors, so a run whose errored trials
+        were all replaced would otherwise keep a stale failing code. The code is cleared
+        only when recovery replaced every errored trial and the merged run-summary reports
+        no execution, grading, or eval errors. Any other nonzero exit is kept.
+    .PARAMETER ExitCode
+        Exit code of the original `vally eval` invocation.
+    .PARAMETER Recovery
+        Result of Invoke-ErroredTrialRecovery for that run.
+    .PARAMETER RunDir
+        Run directory the recovery returned.
+    .OUTPUTS
+        [int] The effective exit code.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory)]
+        [int]$ExitCode,
+
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [hashtable]$Recovery,
+
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir
+    )
+
+    if ($ExitCode -eq 0 -or $null -eq $Recovery -or [int]$Recovery.Recovered -le 0 -or [int]$Recovery.Remaining -gt 0) { return $ExitCode }
+    if ([string]::IsNullOrWhiteSpace($RunDir)) { return $ExitCode }
+    $path = Join-Path $RunDir 'results.jsonl'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $ExitCode }
+    foreach ($line in [System.IO.File]::ReadLines($path)) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            continue
+        }
+        if ($record -isnot [System.Collections.IDictionary] -or $record['type'] -cne 'run-summary') { continue }
+        if ($record['hadExecutionErrors'] -ne $false -or $record['hadGradingErrors'] -eq $true) { return $ExitCode }
+        foreach ($entry in @($record['evals'])) {
+            if ($entry -is [System.Collections.IDictionary] -and ($entry['hadExecutionErrors'] -eq $true -or $entry['hadGradingErrors'] -eq $true -or $null -ne $entry['error'])) {
+                return $ExitCode
+            }
+        }
+        return 0
+    }
+    return $ExitCode
+}
+
 function Invoke-VallySpec {
     <#
     .SYNOPSIS
@@ -1848,11 +1906,12 @@ function Invoke-VallySpec {
             -Command $VallyCommand
         foreach ($recoveryAttempt in @($recovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
         $runDir = $recovery.RunDir
+        $attemptExitCode = Get-VallyRecoveredExitCode -ExitCode $processResult.ExitCode -Recovery $recovery -RunDir $runDir
         $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold -ExpectedStimuli $configuration.stimuli
 
         $candidate = @{
             attempt   = $attempt
-            exitCode  = $processResult.ExitCode
+            exitCode  = $attemptExitCode
             runDir    = $runDir
             aggregate = $aggregate
             elapsedMs = [int]$processResult.ElapsedMilliseconds
@@ -2712,6 +2771,7 @@ Export-ModuleMember -Function @(
     'New-RecoveryEvalSpec',
     'Merge-RecoveredTrial',
     'Invoke-ErroredTrialRecovery',
+    'Get-VallyRecoveredExitCode',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
     'Test-SpecOutputModerationBatch',

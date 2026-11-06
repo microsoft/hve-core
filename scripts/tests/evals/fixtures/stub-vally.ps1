@@ -544,9 +544,19 @@ $lines = foreach ($r in $records) { $r | ConvertTo-Json -Depth 10 -Compress }
 if ($mode -eq 'typed-pass') {
     $lines += [ordered]@{ type = 'run-summary'; passed = $true } | ConvertTo-Json -Compress
 }
+# Real vally reports execution errors in the run-summary and exits nonzero for them.
+$transientErrors = $mode -eq 'diagnostic' -and @($records | Where-Object { $_.status -eq 'error' }).Count -gt 0
+if ($transientErrors) {
+    $lines += [ordered]@{
+        type = 'run-summary'; passed = $true; hadExecutionErrors = $true; hadGradingErrors = $false
+        evals = @([ordered]@{ name = $specBase; hadExecutionErrors = $true; hadGradingErrors = $false })
+    } | ConvertTo-Json -Depth 5 -Compress
+}
 Set-Content -LiteralPath $resultsPath -Value $lines -Encoding utf8NoBOM
 
 Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub eval ($mode)" -Encoding utf8NoBOM
+
+if ($transientErrors) { exit 1 }
 
 if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }

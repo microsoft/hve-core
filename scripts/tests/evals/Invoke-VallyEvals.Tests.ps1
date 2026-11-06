@@ -773,6 +773,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
 
             $evidence = Test-VallyDiagnosticEvidence -Diagnostics $result.diagnostics -RunKey 'recoverable.yaml'
             $evidence.integrityPassed | Should -BeTrue
+            $result.exitCode | Should -Be 0
             $result.erroredTrials | Should -Be 0
             $result.trials | Should -Be 6
             @($result.diagnostics.attempts) | Should -HaveCount 1
@@ -3790,6 +3791,26 @@ stimuli:
             $result.Errored | Should -Be 3
             $result.Remaining | Should -Be 3
             Should -Invoke Invoke-VallyProcess -ModuleName VallyRunner -Times 0 -Exactly
+        }
+    }
+
+    Context 'Get-VallyRecoveredExitCode' {
+        It 'Returns <Expected> for <Case>' -ForEach @(
+            @{ Case = 'a complete recovery with a clean summary'; Remaining = 0; Summary = '{"type":"run-summary","hadExecutionErrors":false,"hadGradingErrors":false,"evals":[{"hadExecutionErrors":false}]}'; Expected = 0 }
+            @{ Case = 'an errored trial left after recovery'; Remaining = 1; Summary = '{"type":"run-summary","hadExecutionErrors":true,"evals":[]}'; Expected = 1 }
+            @{ Case = 'a summary that still reports grading errors'; Remaining = 0; Summary = '{"type":"run-summary","hadExecutionErrors":false,"hadGradingErrors":true,"evals":[]}'; Expected = 1 }
+            @{ Case = 'an eval-level error'; Remaining = 0; Summary = '{"type":"run-summary","hadExecutionErrors":false,"evals":[{"error":"spec failed to load"}]}'; Expected = 1 }
+            @{ Case = 'a run without a run-summary'; Remaining = 0; Summary = '{"type":"trial-result","stimulus":"a","trialIndex":0,"status":"success"}'; Expected = 1 }
+        ) {
+            $run = New-RunDirectory -Lines @($Summary)
+
+            Get-VallyRecoveredExitCode -ExitCode 1 -Recovery @{ Recovered = 1; Remaining = $Remaining } -RunDir $run | Should -Be $Expected
+        }
+
+        It 'Keeps a nonzero exit when recovery replaced nothing' {
+            $run = New-RunDirectory -Lines @('{"type":"run-summary","hadExecutionErrors":false,"evals":[]}')
+
+            Get-VallyRecoveredExitCode -ExitCode 1 -Recovery @{ Recovered = 0; Remaining = 0 } -RunDir $run | Should -Be 1
         }
     }
 }
