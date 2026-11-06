@@ -80,7 +80,7 @@ The complete plugin includes:
 * Azure DevOps, GitHub, GitLab, and Jira integrations
 * Source-grounded engagement reporting, review, Council critique, and optional
   Outlook draft creation
-* Design Thinking, UX, data science, experimentation, diagrams, PowerPoint, voice-over, and demo media tooling
+* Design Thinking, UX, data science, experimentation, diagrams, voice-over, and demo media tooling
 * Documentation authoring, release workflows, Git operations, and local
   telemetry foundations
 * Session Log canvas for reading Copilot sessions, tool calls, and subagents

@@ -309,14 +309,14 @@ jobs:
       soft-fail: false
       changed-files-only: true
       # Deck tests also read HTML, CSS and JSON sources, so each slide deck and
-      # the hve-slides skill that carries the starter deck run on any change in
-      # their directory. Extension and canvas tests also read UI assets and the
+      # combined authoring/rendering skill run on any change in their source
+      # or shared skill. Extension and canvas tests also read UI assets and the
       # repository project entries beside them, so every extension runs on any
       # change under .github/extensions/. The session-log-canvas-update skill
       # tests its schema baseline against the canvas indexer, so it runs on
       # changes in its directory or under .github/extensions/. Other projects
       # receive '' and keep node-tests.yml's JS-family default.
-      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory) || startsWith(matrix.directory, '.github/extensions/') && '^\.github/extensions/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions)/' || '' }}
+      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/experimental/hve-slides') && format('^{0}/|^\.github/skills/experimental/hve-slides/', matrix.directory) || startsWith(matrix.directory, '.github/extensions/') && '^\.github/extensions/' || matrix.directory == '.github/skills/session-log-canvas-update' && '^\.github/(skills/session-log-canvas-update|extensions)/' || '' }}
     strategy:
       fail-fast: false
       matrix:

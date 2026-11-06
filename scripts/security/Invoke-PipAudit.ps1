@@ -33,7 +33,7 @@
     Scan and fail if any vulnerabilities are found.
 
 .EXAMPLE
-    ./Invoke-PipAudit.ps1 -Path ".github/skills/experimental/powerpoint"
+    ./Invoke-PipAudit.ps1 -Path ".github/skills/experimental/tts-voiceover"
     Scan a specific Python project directory.
 #>
 

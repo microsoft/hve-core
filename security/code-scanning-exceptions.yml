@@ -181,16 +181,6 @@ exceptions:
     reason: gh-aw emits permission blocks without comments and drops comments written in the source
     expires: 2026-12-31
   - tool: zizmor
-    rule: zizmor/dangerous-triggers
-    path: .github/workflows/demo-material-render.yml
-    count: 1
-    kind: platform-limitation
-    upstream: https://github.com/zizmorcore/zizmor/issues/1168
-    issue: 3137
-    owner: WilliamBerryiii
-    reason: workflow_run is required for event-driven rendering and is restricted to completed Demo Material Author runs on main; the resolve job revalidates the workflow path, branch, conclusion, commit SHA, and exact artifact identity before use
-    expires: 2026-12-31
-  - tool: zizmor
     rule: zizmor/undocumented-permissions
     path: .github/workflows/dependency-pr-review.lock.yml
     count: 4
