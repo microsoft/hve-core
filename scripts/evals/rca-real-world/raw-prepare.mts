@@ -124,11 +124,14 @@ export async function prepareRawCases(options: {
         throw new Error(`Invalid or oversized raw source object: ${neutralId}/${name}; cohort is not resampled`);
       }
       const lfs = entry.lfs;
-      if (lfs !== undefined && (lfs === null || typeof lfs !== "object" || !("oid" in lfs) ||
-          typeof lfs.oid !== "string" || !/^[0-9a-f]{64}$/.test(lfs.oid))) {
-        throw new Error(`Raw source identity mismatch: ${neutralId}/${name}`);
+      let identity: { readonly sha256: string } | { readonly objectId: string } = { objectId: entry.oid };
+      if (lfs !== undefined) {
+        if (lfs === null || typeof lfs !== "object" || !("oid" in lfs) ||
+            typeof lfs.oid !== "string" || !/^[0-9a-f]{64}$/.test(lfs.oid)) {
+          throw new Error(`Raw source identity mismatch: ${neutralId}/${name}`);
+        }
+        identity = { sha256: lfs.oid };
       }
-      const identity = lfs !== undefined ? { sha256: lfs.oid } : { objectId: entry.oid };
       const bytes = await downloadAndVerify(fetchImpl, REVISION, sourcePath, {
         name, size: entry.size, ...identity,
       }, originals);
