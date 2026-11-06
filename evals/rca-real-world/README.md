@@ -21,7 +21,61 @@ model profile, cases, evidence-tool contracts, turn limits, timeouts, and credit
 conformance is measured separately from held-out diagnostic results. The selected cases do not
 represent organic production incidents or a statistically representative benchmark.
 
+## Four-evaluation comparison
+
+Each row covers three rounds over five cases: 15 scheduled sessions per condition,
+30 sessions across both conditions. "Features exposed" denotes the prepared evidence
+track, not access to held-out scoring truth. Skilled means the RCA skill was available;
+non-skilled means the skill-free baseline.
+
+| Test | Configuration                                                    | Model          | Sessions per condition | Skilled service matches | Non-skilled service matches | Skilled valid reports | Non-skilled valid reports |
+|------|------------------------------------------------------------------|----------------|-----------------------:|------------------------:|----------------------------:|----------------------:|--------------------------:|
+| 1    | [Debug, features exposed](PR-3136-DEBUG-2026-11-04.md)           | `gpt-5.6-luna` |                     15 |                      15 |                          11 |                    15 |                        15 |
+| 2    | [Production, features exposed](PR-3136-PRODUCTION-2026-11-04.md) | `gpt-5.6-sol`  |                     15 |                      15 |                          15 |                    15 |                        15 |
+| 3    | [Debug, raw data](PR-3136-RAW-DEBUG-2026-11-06.md)               | `gpt-5.6-luna` |                     15 |                       5 |                           1 |                    14 |                        15 |
+| 4    | [Production, raw data](PR-3136-RAW-PRODUCTION-2026-11-06.md)     | `gpt-5.6-sol`  |                     15 |                      14 |                          13 |                    15 |                        15 |
+
+Service matches are the leading-candidate service endpoint (Set B), not established
+causal findings (Set A). Valid reports pass artifact-integrity checks; this does not
+necessarily mean every logical report-contract gate passed. Raw debug includes one
+skilled execution failure with unassessed diagnostics, one baseline abstention, one
+integrity-valid skilled report with an output-contract failure, and six incorrect
+skilled sign-off-readiness claims. The execution failure is not regraded as a diagnostic
+miss. All 15 skilled raw-production findings remain `not-established`, with unassessed
+finding-service scores.
+
+### Recorded consumption
+
+Costs use each session's final cumulative usage once, summed in integer nano-credit
+units before conversion to AI credits.
+
+| Test | Skilled AI credits | Non-skilled AI credits | Total AI credits |
+|------|-------------------:|-----------------------:|-----------------:|
+| 1    |          66.562765 |              42.911051 |       109.473816 |
+| 2    |        1979.097180 |            1381.478520 |      3360.575700 |
+| 3    |          65.425567 |              50.961806 |       116.387373 |
+| 4    |        1838.740440 |            1362.985420 |      3201.725860 |
+
+Test 1 uses the latest November 4 prepared debug snapshot; the November 2 snapshot
+below remains historical, not a fifth category. Tests 1 and 2 share their five prepared
+cases, and tests 3 and 4 share five different raw cases. Protocols are `ad-hoc-v9`,
+`ad-hoc-v10`, and `ad-hoc-v12` respectively; evaluated source states and budget policies
+also differ. This is a descriptive comparison, not a controlled feature-exposure or
+model-only experiment. Repeating five cases does not produce 15 independent cases.
+Do not pool the categories into a single success rate. Human causal,
+mechanism-compatibility, privacy-impact, and completion review remains pending.
+
 ## Recorded evaluation snapshots
+
+* [2026-11-06 paired raw-data production evaluation](PR-3136-RAW-PRODUCTION-2026-11-06.md)
+  records three completed `ad-hoc-v12` rounds using `gpt-5.6-sol`: 30 integrity-valid
+  reports, all applicable strict gates passed, and 14/15 skilled versus 13/15 baseline
+  leading-candidate service matches. There were two recoverable query rejections,
+  no format rejections, and no technical failures. Consumption was 3,201.72586 AI credits
+  within one shared 6,000-credit monitored allowance. Its
+  [machine-readable snapshot](PR-3136-RAW-PRODUCTION-2026-11-06.json) preserves all 30
+  trial records without telemetry or private captures. All skilled findings remain
+  `not-established`; human causal review remains pending.
 
 * [2026-11-06 paired raw-data debug evaluation](PR-3136-RAW-DEBUG-2026-11-06.md) records
   three completed `ad-hoc-v12` rounds: 30 attempted sessions, 29 integrity-valid reports,
