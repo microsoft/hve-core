@@ -2,7 +2,7 @@
 title: Triage Workflow
 description: Classify work items and detect duplicates across Azure DevOps, GitHub, and Jira
 author: Microsoft
-ms.date: 2026-08-07
+ms.date: 2026-11-06
 ms.topic: tutorial
 keywords:
   - backlog management
@@ -63,7 +63,7 @@ Triage candidates are identified from classification state rather than requiring
 ## Output Artifacts
 
 ```text
-<tracking-root>/triage/<scope-name>/
+<tracking-root>/triage/<YYYY-MM-DD>/
 ├── planning-log.md      # Candidates, classification reasoning, phase tracking, and the plan path
 └── triage-plan.md       # Reviewed recommendations, including duplicate candidates and their similarity classification
 ```
