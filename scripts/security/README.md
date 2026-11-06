@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-10-26
+ms.date: 2026-11-05
 ms.topic: reference
 keywords:
   - powershell
@@ -646,15 +646,16 @@ it to `scripts/lib/`.
 
 #### Parameters
 
-| Parameter           | Type     | Default                                                                     | Description                                                             |
-|---------------------|----------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| `-ConfigPath`       | `string` | `scripts/security/ps-module-versions.json` (resolved relative to repo root) | Path to the JSON version manifest                                       |
-| `-Scope`            | `string` | `CurrentUser`                                                               | `Install-Module` scope (`CurrentUser` or `AllUsers`)                    |
-| `-Repository`       | `string` | `PSGallery`                                                                 | PowerShell repository name                                              |
-| `-Import`           | `switch` | `$false`                                                                    | Import each module after install                                        |
-| `-Force`            | `switch` | `$false`                                                                    | Re-install even if the module is already present at the correct version |
-| `-MaxAttempts`      | `int`    | `3`                                                                         | Maximum retry attempts per module                                       |
-| `-BaseDelaySeconds` | `int`    | `10`                                                                        | Initial backoff delay; doubles each retry                               |
+| Parameter           | Type       | Default                                                                     | Description                                                             |
+|---------------------|------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| `-ConfigPath`       | `string`   | `scripts/security/ps-module-versions.json` (resolved relative to repo root) | Path to the JSON version manifest                                       |
+| `-Scope`            | `string`   | `CurrentUser`                                                               | `Install-Module` scope (`CurrentUser` or `AllUsers`)                    |
+| `-Repository`       | `string`   | `PSGallery`                                                                 | PowerShell repository name                                              |
+| `-Module`           | `string[]` | Every pinned module                                                         | Pinned module names to install; an unpinned name is an error            |
+| `-Import`           | `switch`   | `$false`                                                                    | Import each module after install                                        |
+| `-Force`            | `switch`   | `$false`                                                                    | Re-install even if the module is already present at the correct version |
+| `-MaxAttempts`      | `int`      | `3`                                                                         | Maximum retry attempts per module                                       |
+| `-BaseDelaySeconds` | `int`      | `10`                                                                        | Initial backoff delay; doubles each retry                               |
 
 #### Environment variable overrides
 
@@ -682,6 +683,9 @@ Parameters take precedence over environment variables.
 
 # Force reinstall (troubleshooting)
 ./scripts/security/Install-PSModules.ps1 -Force -Import
+
+# Eval jobs: install only the module the eval scripts import
+./scripts/security/Install-PSModules.ps1 -Module PowerShell-Yaml
 ```
 
 ### `Test-PSModulePins.ps1`
