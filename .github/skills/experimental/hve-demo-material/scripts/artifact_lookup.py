@@ -602,15 +602,20 @@ def recover_site(
         raise ArtifactLookupError(
             f"published index.json is not JSON: {error}"
         ) from error
-    if (
+    obsolete = (
         isinstance(index, dict)
         and index.get("schema_version") == "demo-material-site/v1"
-        and index_only
-    ):
+    )
+    if obsolete and index_only:
         target = safe_path(target)
         target.mkdir(parents=True, exist_ok=True)
         atomic_write_bytes(safe_path(target, "index.json"), body)
         return {"status": "obsolete", "levels": list(LEVELS), "files": 1}
+    if obsolete:
+        raise ArtifactLookupError(
+            "published index.json is demo-material-site/v1; complete the v2 "
+            "migration in docs/demo-material/v2-migration.md"
+        )
     if not isinstance(index, dict) or index.get("schema_version") != SITE_SCHEMA:
         raise ArtifactLookupError("published index.json has an unknown schema")
 
