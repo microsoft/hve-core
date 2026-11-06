@@ -963,6 +963,15 @@ class TestRecoverSite:
         with pytest.raises(ArtifactLookupError, match="https"):
             recover_site("http://example.com/", tmp_path, fetch={}.get)
 
+    def test_given_v1_site_when_fully_recovered_then_requires_migration(self, tmp_path):
+        body = b'{"schema_version": "demo-material-site/v1", "levels": {}}'
+        files = {f"{SITE}demo-material/index.json": body}
+
+        with pytest.raises(ArtifactLookupError, match="v2-migration.md"):
+            recover_site(SITE, tmp_path, fetch=files.get)
+
+        assert not any(tmp_path.iterdir())
+
     def test_given_index_only_when_recovered_then_skips_media(self, tmp_path):
         result = recover_site(SITE, tmp_path, fetch=_published().get, index_only=True)
 
