@@ -241,13 +241,13 @@ main() {
 
   echo "Installing uv package manager..."
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
-  UV_VERSION="0.10.9"
+  UV_VERSION="0.13.6"
   if [[ "${ARCH}" == "x86_64" ]]; then
     UV_ARCH="x86_64-unknown-linux-gnu"
-    UV_SHA256="20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594"
+    UV_SHA256="f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
   elif [[ "${ARCH}" == "aarch64" ]]; then
     UV_ARCH="aarch64-unknown-linux-gnu"
-    UV_SHA256="cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a"
+    UV_SHA256="229e194255c7958d86d56e8790d969a6f74736592133f0dfd0076f754c642c1d"
   else
     echo "ERROR: Unsupported architecture for uv: ${ARCH}" >&2
     exit 1
