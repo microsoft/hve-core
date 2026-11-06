@@ -375,6 +375,8 @@ Describe 'Get-SchemaForFile' -Tag 'Unit' {
             New-Item -ItemType Directory -Path $isolatedDir -Force | Out-Null
             '{"mappings": [], "defaultSchema": "base.schema.json"}' | Set-Content -Path (Join-Path $isolatedDir 'schema-mapping.json')
 
+            $realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+            Mock Test-Path { & $realTestPath @PesterBoundParameters }
             Mock Test-Path { return $false } -ParameterFilter { $Path -like '*\.git' -or $Path -like '*/.git' }
 
             $result = Get-SchemaForFile -FilePath 'test.md' -SchemaDirectory $isolatedDir 3>$null
@@ -987,6 +989,31 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
             $result.IsValid | Should -BeFalse
+        }
+    }
+
+    Context 'Agent frontmatter schema' {
+        BeforeAll {
+            $script:AgentSchemaPath = Join-Path $script:SchemaDir 'agent-frontmatter.schema.json'
+        }
+
+        It 'Rejects retired handoffs on an agent' {
+            $frontmatter = @{
+                description = 'test'
+                handoffs    = @(@{ label = 'Next'; agent = 'sample-agent' })
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaPath $script:AgentSchemaPath
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match "Field 'handoffs' is not allowed: Not supported" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Accepts preloaded skills as skill folder names' {
+            $frontmatter = @{
+                description = 'test'
+                skills      = @('disclaimer-language', 'untrusted-content-boundary')
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaPath $script:AgentSchemaPath
+            $result.IsValid | Should -BeTrue
         }
     }
 }

@@ -2,7 +2,7 @@
 title: Dev Container
 description: Pre-configured development environment for HVE Core with all required tools and extensions
 author: HVE Core Team
-ms.date: 2026-10-08
+ms.date: 2026-11-02
 ms.topic: guide
 keywords:
   - devcontainer
@@ -93,7 +93,7 @@ endpoints and credentials out of repository files.
 
 * PSScriptAnalyzer
 * PowerShell-Yaml
-* Pester 5.7.1
+* Pester 6.2.0
 
 ## Pre-installed VS Code Extensions
 

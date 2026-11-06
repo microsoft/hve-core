@@ -9,22 +9,8 @@
   ],
   "properties": {
     "agents": {
-      "oneOf": [
-        {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        {
-          "type": "string",
-          "enum": [
-            "*"
-          ]
-        }
-      ],
-      "default": "*",
-      "description": "List of subagent names allowed to be invoked by this agent. Use '*' to allow all subagents."
+      "not": {},
+      "description": "Not supported by the Copilot agent harness. Name the subagents to use in the agent body; the subagent tool selects agents by name."
     },
     "description": {
       "type": "string",
@@ -36,8 +22,8 @@
       "description": "The name of the custom agent. If not specified, the file name is used"
     },
     "argument-hint": {
-      "type": "string",
-      "description": "Optional hint text shown in the chat input field to guide users on how to interact with the custom agent"
+      "not": {},
+      "description": "Not supported on agents in the Copilot agent harness. Describe expected inputs in the agent body."
     },
     "tools": {
       "type": "array",
@@ -45,6 +31,15 @@
         "type": "string"
       },
       "description": "A list of tool or tool set names available for this custom agent. Can include built-in tools, tool sets, MCP tools, or tools contributed by extensions"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "uniqueItems": true,
+      "description": "Skill names to preload into the agent's context when it starts. Each name must match a skill folder name."
     },
     "model": {
       "type": "string",
@@ -81,37 +76,8 @@
       "description": "When true, prevents other agents from invoking this agent as a subagent. It does not prevent this agent from invoking agents allowed by its agents and tools fields."
     },
     "handoffs": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "label",
-          "agent"
-        ],
-        "properties": {
-          "label": {
-            "type": "string",
-            "description": "The display text shown on the handoff button"
-          },
-          "agent": {
-            "type": "string",
-            "description": "The target agent identifier to switch to"
-          },
-          "prompt": {
-            "type": "string",
-            "description": "The prompt text to send to the target agent"
-          },
-          "model": {
-            "type": "string",
-            "description": "Optional model override for the handoff."
-          },
-          "send": {
-            "type": "boolean",
-            "description": "Optional boolean flag to auto-submit the prompt (default is false)"
-          }
-        }
-      },
-      "description": "Optional list of suggested next actions or prompts to transition between custom agents"
+      "not": {},
+      "description": "Not supported by the Copilot agent harness. Describe the next step or agent to switch to in the agent body."
     }
   },
   "additionalProperties": false

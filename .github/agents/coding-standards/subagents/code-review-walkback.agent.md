@@ -3,13 +3,10 @@ name: Code Review Walkback
 description: "Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item"
 tools:
   - agent
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
+  - search
+  - read
+  - edit
+  - skill
 user-invocable: false
 ---
 
@@ -19,7 +16,7 @@ Thin walk-back subagent for the Code Review orchestrator. It activates `rpi-rese
 
 ## Skill Reference Contract
 
-At the start of the run, locate the skill named `code-review` and read these references from it (paths are relative to that skill) exactly once in a single parallel `read_file` block, then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these references from it (paths are relative to that skill) exactly once, in a single batch of parallel reads, then apply them verbatim:
 
 * `SKILL.md` (skill entrypoint)
 * `references/dispatch-loop.md`

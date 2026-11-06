@@ -7,7 +7,7 @@ description: Authoring skill for Architecture Decision Records (ADRs) supporting
 
 ## Overview
 
-This skill encodes the per-phase authoring conventions for Architecture Decision Records consumed by the ADR Creator agent. It also supports direct invocation when no ADR Creator state file exists. Direct callers first run the session recovery and bootstrap protocol from `adr-identity.instructions.md`: resolve or create `.copilot-tracking/adr-plans/{projectSlug}/state.json`, confirm `entryMode`, `projectSlug`, and `outputTemplate`, then continue at the phase recorded in state. It supports three entry modes and two output templates and converges all of them at the Govern phase, where the final ADR file is written and lineage is updated atomically.
+This skill encodes the per-phase authoring conventions for Architecture Decision Records consumed by the ADR Creator agent. It also supports direct invocation when no ADR Creator state file exists. Direct callers first run the session recovery and bootstrap protocol from [references/adr-identity.md](references/adr-identity.md): resolve or create `.copilot-tracking/adr-plans/{projectSlug}/state.json`, confirm `entryMode`, `projectSlug`, and `outputTemplate`, then continue at the phase recorded in state. It supports three entry modes and two output templates and converges all of them at the Govern phase, where the final ADR file is written and lineage is updated atomically.
 
 Entry modes (`state.entryMode`):
 
@@ -30,7 +30,7 @@ Lifecycle at a glance:
 | `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern       | Shaped by `outputTemplate` (y-statement or madr-v4) |
 | `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern | First ADR + `.adr-config.yml` per the BYO contract  |
 
-The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`), and the canonical `state.json` schema are defined in `adr-identity.instructions.md`. This skill provides the authoring activities and artifact contracts; it does not redefine the state machine.
+The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`), and the canonical `state.json` schema are defined in `references/adr-identity.md`. This skill provides the authoring activities and artifact contracts; it does not redefine the state machine.
 
 ## Frame
 
@@ -43,7 +43,7 @@ Activities:
 - **ASR trigger evaluation** — required when `state.outputTemplate == 'madr-v4'`. Evaluate triggers against the rubric in `adr-standards.instructions.md` and record results in `state.asrTriggers[]`. Defer the rubric and full taxonomy to that file and to `references/asr-trigger-taxonomy.md`.
 - **Diagram-format prompt** — when `state.userPreferences.diagramFormat` is unset, check the architecture-diagrams root state at `.copilot-tracking/architecture-diagrams/state.json`; if that file provides `userPreferences.diagramFormat`, use it. Otherwise ask the user for `ascii` or `mermaid`, persist the answer to `state.userPreferences.diagramFormat`, and persist it to the architecture-diagrams root state for standalone reuse. When a caller, handoff, or existing ADR state already provides `state.userPreferences.diagramFormat`, treat that value as authoritative and do not ask again. Required before Frame can exit.
 
-Hard exit gate (restated from `adr-identity.instructions.md`):
+Hard exit gate (restated from `references/adr-identity.md`):
 
 > The Frame phase cannot advance without all of the following recorded: scope statement, deciders list, decision drivers, ASR triggers determination (when `outputTemplate == 'madr-v4'`), and `userPreferences.diagramFormat`. The user must confirm the Frame summary before advancing.
 
@@ -87,7 +87,7 @@ Activities:
 6. **Final write** — write the ADR to `docs/planning/adrs/{NNNN}-{slug}.md`. The path is derived from the allocator-issued `NNNN` and the slugified ADR title.
 7. **Handoff trigger** — emit the dual-format (ADO + GitHub) work items per `adr-handoff.instructions.md`. This skill stops at handoff emission; routing is the agent's responsibility.
 
-Govern uses the autonomy and disclaimer banners required by `adr-identity.instructions.md` and `shared/disclaimer-language.instructions.md`. Do not duplicate those texts here; load them at runtime.
+Govern uses the autonomy and disclaimer banners required by `references/adr-identity.md` and the `disclaimer-language` skill. Do not duplicate those texts here; load them at runtime.
 
 ## Supersession Lineage Rules (Summary)
 
@@ -144,6 +144,7 @@ Five-step pointer. Full lifecycle, including GP-13 (the `.adr-config.yml` schema
 
 ## References
 
+- `references/adr-identity.md` — ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and the canonical `state.json` schema. Read it at session start.
 - `references/standards-excerpts.md` — MADR v4.0.0 verbatim text and CC0 attribution; Y-Statement attribution; status taxonomy.
 - `references/lineage-rules.md` — Full text of the six supersession rules with edge cases and worked examples.
 - `references/asr-trigger-taxonomy.md` — Full ASR trigger taxonomy, rubric prompts, and examples for each of the eight enum values.
@@ -168,7 +169,7 @@ All scripts treat their working directory as untrusted input. The ADR authoring 
 
 ## Mandatory Load Directives
 
-The ADR Creator agent enforces a phase→section load contract per `adr-identity.instructions.md`. Each phase MUST load its section of this skill before executing phase work, and MUST append the section anchor to `state.phaseSkillsLoaded`:
+The ADR Creator agent enforces a phase→section load contract per `references/adr-identity.md`. Each phase MUST load its section of this skill before executing phase work, and MUST append the section anchor to `state.phaseSkillsLoaded`:
 
 | Phase  | Section anchor | Required `phaseSkillsLoaded` entry |
 |--------|----------------|------------------------------------|
@@ -176,4 +177,4 @@ The ADR Creator agent enforces a phase→section load contract per `adr-identity
 | Decide | `#decide`      | `adr-author#decide`                |
 | Govern | `#govern`      | `adr-author#govern`                |
 
-The agent loads sections via `read_file` against this skill file and records the entry in `state.phaseSkillsLoaded` before any phase work executes. `phaseSkillsLoaded` is durable load history, not proof that the guidance is present in the current model context. Within one live context, re-entering a phase whose section was already read does not require reloading. After a cold start, resume, or context summarization, the agent reloads the current phase section even when its entry is recorded.
+The agent reads sections of this skill file and records the entry in `state.phaseSkillsLoaded` before any phase work executes. `phaseSkillsLoaded` is durable load history, not proof that the guidance is present in the current model context. Within one live context, re-entering a phase whose section was already read does not require reloading. After a cold start, resume, or context summarization, the agent reloads the current phase section even when its entry is recorded.

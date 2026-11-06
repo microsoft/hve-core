@@ -2,6 +2,8 @@
 name: Documentation
 description: "Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill"
 disable-model-invocation: true
+skills:
+  - untrusted-content-boundary
 ---
 
 # Documentation

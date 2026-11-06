@@ -2,7 +2,7 @@
 title: Test Scripts
 description: Pester test runner, changed-file detection, and test directory organization
 author: HVE Core Team
-ms.date: 2026-10-24
+ms.date: 2026-11-02
 ms.topic: reference
 keywords:
   - powershell
@@ -119,7 +119,7 @@ matching test files are still listed on the console.
 
 ### `pester.config.ps1`
 
-Pester 5.x configuration script that defines test execution behavior, coverage
+Pester 6.x configuration script that defines test execution behavior, coverage
 targets, and output paths. See
 [Testing Architecture](../../docs/architecture/testing.md) for configuration
 details.

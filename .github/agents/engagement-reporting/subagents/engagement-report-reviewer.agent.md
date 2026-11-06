@@ -2,10 +2,11 @@
 name: Engagement Report Reviewer
 description: Reviews engagement report drafts for grounding, privacy, audience fit, style, terminology, and continuity.
 user-invocable: false
-agents: []
 tools:
   - read
   - edit
+skills:
+  - engagement-report-conventions
 ---
 
 # Engagement Report Reviewer

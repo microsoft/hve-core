@@ -992,14 +992,24 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
     }
     if (-not $result.integrity.integrityPassed) {
-        $result['status'] = 'integrity-failure'
-        $result['isAdvisory'] = $false
-        if (-not $promotedRunKeys.ContainsKey($runKey)) {
-            $failedSpecs++
-            $promotedRunKeys[$runKey] = $true
+        $tolerance = Test-VallyAdvisoryIntegrityTolerance -Diagnostics $result.diagnostics -Integrity $result.integrity -AdvisoryMap $result.perStimulusAdvisory
+        if ($tolerance.tolerated -and -not $promotedRunKeys.ContainsKey($runKey)) {
+            # Advisory verdicts never block a merge, so a few errored trials in an advisory-only spec are reported, not gated.
+            $result['integrityTolerance'] = $tolerance
+            $result['status'] = 'advisory-fail'
+            $result['isAdvisory'] = $true
+            Write-CIAnnotation -Level Warning -File $specRel -Message "$($tolerance.erroredTrials) of $($tolerance.expectedTrials) trial(s) errored before a verdict in an advisory-only spec; reporting the evidence gap without blocking"
         }
-        Write-CIAnnotation -Level Error -File $specRel -Message "Selected evaluation evidence failed integrity validation"
-        if ($FailFast) { break }
+        else {
+            $result['status'] = 'integrity-failure'
+            $result['isAdvisory'] = $false
+            if (-not $promotedRunKeys.ContainsKey($runKey)) {
+                $failedSpecs++
+                $promotedRunKeys[$runKey] = $true
+            }
+            Write-CIAnnotation -Level Error -File $specRel -Message "Selected evaluation evidence failed integrity validation"
+            if ($FailFast) { break }
+        }
     }
 }
 
@@ -1071,7 +1081,8 @@ if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
                 $promotedRunKeys[$runKey] = $true
             }
         }
-        if ($result.ContainsKey('integrity') -and -not $result.integrity.integrityPassed) {
+        if ($result.ContainsKey('integrity') -and -not $result.integrity.integrityPassed -and
+            -not ($result.ContainsKey('integrityTolerance') -and $result.integrityTolerance.tolerated)) {
             $result.status = 'integrity-failure'
             $result.isAdvisory = $false
         }
@@ -1241,6 +1252,7 @@ foreach ($plan in $artifactPlan) {
     $artifactToleratedFailed = 0
     $artifactHasHardFail = $false
     $artifactHasEvaluatorError = $false
+    $artifactHasToleratedGap = $false
     $artifactFailedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
     $specBreakdown     = [System.Collections.Generic.List[object]]::new()
     $allSpecsRan       = @($plan.specRuns).Count -gt 0
@@ -1287,6 +1299,7 @@ foreach ($plan in $artifactPlan) {
         # A failing spec status (e.g. content moderation) gates even with zero assertion failures.
         if ($specStatus -in $hardFailStatuses) { $artifactHasHardFail = $true }
         if ($specStatus -eq 'evaluator-error') { $artifactHasEvaluatorError = $true }
+        if ($r.ContainsKey('integrityTolerance') -and $r.integrityTolerance.tolerated) { $artifactHasToleratedGap = $true }
 
         # A nonzero exit gates only when the spec is not advisory.
         if ($r.exitCode -ne 0 -and -not $specIsAdvisory -and $artifactExitCode -eq 0) { $artifactExitCode = $r.exitCode }
@@ -1297,7 +1310,7 @@ foreach ($plan in $artifactPlan) {
             }
         }
 
-        $specBreakdown.Add([ordered]@{
+        $specEntry = [ordered]@{
             specPath         = $r.specRel
             tag              = $r.tag
             exitCode         = $r.exitCode
@@ -1317,13 +1330,15 @@ foreach ($plan in $artifactPlan) {
             failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
             diagnostics      = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
             integrity        = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
-        })
+        }
+        if ($r.ContainsKey('integrityTolerance')) { $specEntry['integrityTolerance'] = $r.integrityTolerance }
+        $specBreakdown.Add($specEntry)
     }
 
     $status = if ($artifactHasEvaluatorError) { 'evaluator-error' }
               elseif (-not $allSpecsRan) { 'skipped' }
               elseif ($artifactHasHardFail -or $artifactAuthoritativeFailed -gt 0 -or $artifactExitCode -ne 0) { 'fail' }
-              elseif ($artifactAdvisoryFailed -gt 0) { 'advisory-fail' }
+              elseif ($artifactAdvisoryFailed -gt 0 -or $artifactHasToleratedGap) { 'advisory-fail' }
               else { 'pass' }
     $artifactIsAdvisory = ($status -eq 'advisory-fail')
     # Means derive from summed totals; $null marks a run with no token measurement.
@@ -1403,6 +1418,7 @@ foreach ($runKey in $specResults.Keys) {
     if ($r.ContainsKey('isAdvisory')) { $record['isAdvisory'] = [bool]$r.isAdvisory }
     $record['diagnostics'] = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
     $record['integrity'] = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
+    if ($r.ContainsKey('integrityTolerance')) { $record['integrityTolerance'] = $r.integrityTolerance }
     if ($r.ContainsKey('failedOrErroredTrials')) { $record['failedOrErroredTrials'] = @($r.failedOrErroredTrials) }
     foreach ($field in @('advisoryFailed', 'authoritativeFailed', 'advisoryStimuliFailed', 'authoritativeStimuliFailed', 'toleratedFailed')) {
         if ($r.ContainsKey($field)) { $record[$field] = [int]$r[$field] }
