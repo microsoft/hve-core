@@ -1,9 +1,9 @@
 ---
 title: security-planning
 description: "Security planning and plan-drift analysis for STRIDE, standards, controls, backlog handoff, current findings, TM7 generation, and OWASP Threat Dragon export."
-sidebar_position: 16
+sidebar_position: 17
 author: Microsoft
-ms.date: 2026-10-06
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - skill

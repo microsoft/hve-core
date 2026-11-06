@@ -351,7 +351,7 @@ jobs:
         @($report.Violations) | Should -HaveCount 0
     }
 
-    It 'continues scanning when one workflow file is malformed YAML' {
+    It 'reports a malformed workflow as a finding and keeps scanning the others' {
         $fixturePath = Join-Path $TestDrive 'malformed-yaml'
         New-Item -ItemType Directory -Path $fixturePath -Force | Out-Null
 
@@ -384,8 +384,31 @@ jobs:
         { Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath } | Should -Not -Throw
 
         $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
-        $report.Violations | Should -HaveCount 1
-        $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        $report.Violations | Should -HaveCount 2
+        @($report.Violations | ForEach-Object { $_.Metadata.RuleId } | Sort-Object) |
+            Should -Be @('dangerous-workflow/template-injection', 'dangerous-workflow/unparsed-file')
+        ($report.Violations | Where-Object { $_.Metadata.RuleId -eq 'dangerous-workflow/unparsed-file' }).File | Should -Match 'bad\.yml$'
+    }
+
+    It 'fails closed when the YAML module is unavailable' {
+        $fixturePath = New-DangerousWorkflowFixture -Name 'no-yaml-module' -WorkflowContent @'
+name: clean
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo ok
+'@
+        Mock ConvertFrom-Yaml { throw [System.Management.Automation.CommandNotFoundException]::new("The term 'ConvertFrom-Yaml' is not recognized") }
+
+        $outputPath = Join-Path $TestDrive 'no-yaml-module.sarif'
+        $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format sarif -OutputPath $outputPath -FailOnViolation
+
+        $exitCode | Should -Be 1
+        $sarif = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+        @($sarif.runs[0].results.ruleId) | Should -Be @('dangerous-workflow/unparsed-file')
+        @($sarif.runs[0].tool.driver.rules.id) | Should -Contain 'dangerous-workflow/unparsed-file'
     }
 
     It 'writes SARIF output with the expected rule id and level' {
@@ -407,9 +430,10 @@ jobs:
         $sarif.runs[0].results | Should -HaveCount 1
         $sarif.runs[0].results[0].ruleId | Should -Be 'dangerous-workflow/template-injection'
         $sarif.runs[0].results[0].level | Should -Be 'error'
-        $sarif.runs[0].tool.driver.rules | Should -HaveCount 2
+        $sarif.runs[0].tool.driver.rules | Should -HaveCount 3
         @($sarif.runs[0].tool.driver.rules.id) | Should -Contain 'dangerous-workflow/template-injection'
         @($sarif.runs[0].tool.driver.rules.id) | Should -Contain 'dangerous-workflow/direct-input-interpolation'
+        @($sarif.runs[0].tool.driver.rules.id) | Should -Contain 'dangerous-workflow/unparsed-file'
     }
 
     It 'writes console output for violations' {

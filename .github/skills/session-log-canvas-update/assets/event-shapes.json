@@ -1,0 +1,2969 @@
+{
+  "format": 1,
+  "source": {
+    "package": "@github/copilot-sdk-darwin-arm64",
+    "version": "1.0.24",
+    "platform": null,
+    "captured": "2026-10-23"
+  },
+  "types": {
+    "abort": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.reason": "enum(\"user_initiated\"|\"remote_command\"|\"user_abort\"|\"autopilot_credit_limit\") required"
+      }
+    },
+    "agent.interrupted": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.activity": "enum(\"model_call\"|\"retry_backoff\"|\"tool_call\"|\"background_agent\") required",
+        "data.elapsedMs": "number required",
+        "data.turn": "integer required",
+        "data.model": "string",
+        "data.apiEndpoint": "string",
+        "data.transport": "enum(\"http\"|\"websocket\")",
+        "data.reasoningEffort": "string",
+        "data.cancelPhase": "enum(\"pre_first_token\"|\"mid_stream\")",
+        "data.outputTtftMs": "number",
+        "data.toolNames": "array<string>",
+        "data.toolCallIds": "array<string>",
+        "data.safeToolNames": "array<string>",
+        "data.interruptedAgentCount": "integer"
+      }
+    },
+    "assistant.fusion_phase_activity": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.phaseId": "string required",
+        "data.phaseKind": "enum(\"primary\"|\"judge\"|\"repair\"|\"draft\"|\"critic\"|\"revision\"|\"follow_up\") required",
+        "data.pattern": "enum(\"single\"|\"cascade\"|\"critique\") required",
+        "data.role": "string required",
+        "data.conversationScope": "enum(\"root\"|\"review\") required",
+        "data.activity": "enum(\"model_output\"|\"tool_started\"|\"tool_completed\") required",
+        "data.totalResponseSizeBytes": "integer",
+        "data.toolCallId": "string"
+      }
+    },
+    "assistant.fusion_phase_completed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.phaseId": "string required",
+        "data.phaseKind": "enum(\"primary\"|\"judge\"|\"repair\"|\"draft\"|\"critic\"|\"revision\"|\"follow_up\") required",
+        "data.role": "string required",
+        "data.conversationScope": "enum(\"root\"|\"review\") required",
+        "data.model": "string required",
+        "data.reasoningEffort": "string",
+        "data.status": "enum(\"succeeded\"|\"failed\"|\"cancelled\") required",
+        "data.content": "string required",
+        "data.verdict": "string | null required",
+        "data.durationMs": "number required",
+        "data.usage": "object required",
+        "data.usage.requestCount": "integer required",
+        "data.usage.inputTokens": "integer required",
+        "data.usage.outputTokens": "integer required",
+        "data.usage.cachedTokens": "integer required",
+        "data.usage.cacheWriteTokens": "integer",
+        "data.usage.totalNanoAiu": "number required",
+        "data.projectionMessage": "any",
+        "data.projectionMode": "enum(\"append\"|\"staged\"|\"none\")",
+        "data.stagedTerminal": "object",
+        "data.stagedTerminal.assistantMessage": "any required",
+        "data.stagedTerminal.toolName": "string required",
+        "data.stagedTerminal.toolCallId": "string required",
+        "data.stagedTerminal.arguments": "string required",
+        "data.stagedTerminal.phaseId": "string required",
+        "data.endedWithBackgroundWork": "boolean"
+      }
+    },
+    "assistant.fusion_phase_failed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.phaseId": "string required",
+        "data.phaseKind": "enum(\"primary\"|\"judge\"|\"repair\"|\"draft\"|\"critic\"|\"revision\"|\"follow_up\") required",
+        "data.role": "string required",
+        "data.conversationScope": "enum(\"root\"|\"review\") required",
+        "data.model": "string required",
+        "data.reasoningEffort": "string",
+        "data.status": "enum(\"succeeded\"|\"failed\"|\"cancelled\") required",
+        "data.reason": "string required",
+        "data.durationMs": "number required",
+        "data.usage": "object required",
+        "data.usage.requestCount": "integer required",
+        "data.usage.inputTokens": "integer required",
+        "data.usage.outputTokens": "integer required",
+        "data.usage.cachedTokens": "integer required",
+        "data.usage.cacheWriteTokens": "integer",
+        "data.usage.totalNanoAiu": "number required",
+        "data.errorMessage": "string",
+        "data.degradedToPhaseId": "string"
+      }
+    },
+    "assistant.fusion_phase_started": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.phaseId": "string required",
+        "data.phaseKind": "enum(\"primary\"|\"judge\"|\"repair\"|\"draft\"|\"critic\"|\"revision\"|\"follow_up\") required",
+        "data.pattern": "enum(\"single\"|\"cascade\"|\"critique\") required",
+        "data.role": "string required",
+        "data.conversationScope": "enum(\"root\"|\"review\") required",
+        "data.model": "string required",
+        "data.reasoningEffort": "string"
+      }
+    },
+    "assistant.idle": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.aborted": "boolean"
+      }
+    },
+    "assistant.intent": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.intent": "string required"
+      }
+    },
+    "assistant.message": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.messageId": "string required",
+        "data.originatingMessageId": "string",
+        "data.model": "string",
+        "data.providerId": "string",
+        "data.content": "string required",
+        "data.toolRequests": "array<object>",
+        "data.toolRequests[]": "object",
+        "data.toolRequests[].toolCallId": "string required",
+        "data.toolRequests[].name": "string required",
+        "data.toolRequests[].arguments": "any",
+        "data.toolRequests[].type": "enum(\"function\"|\"custom\")",
+        "data.toolRequests[].toolTitle": "string",
+        "data.toolRequests[].mcpServerName": "string",
+        "data.toolRequests[].mcpToolName": "string",
+        "data.toolRequests[].intentionSummary": "string | null",
+        "data.toolRequests[].caller": "object",
+        "data.reasoningOpaque": "string",
+        "data.reasoningText": "string",
+        "data.reasoningWireField": "string",
+        "data.encryptedContent": "string",
+        "data.phase": "string",
+        "data.chunkIndex": "integer",
+        "data.chunkCount": "integer",
+        "data.outputTokens": "integer",
+        "data.interactionId": "string",
+        "data.requestId": "string",
+        "data.clientRequestId": "string",
+        "data.serviceRequestId": "string",
+        "data.rte": "boolean",
+        "data.apiCallId": "string",
+        "data.serverTools": "object",
+        "data.serverTools.provider": "string required",
+        "data.serverTools.items": "array<any>",
+        "data.serverTools.functionCallNamespaces": "object",
+        "data.serverTools.functionCallNamespaces.*": "string",
+        "data.serverTools.rawContentBlocks": "array<any>",
+        "data.serverTools.advisorModel": "string",
+        "data.reasoningBlocks": "object",
+        "data.reasoningBlocks.provider": "string required",
+        "data.reasoningBlocks.blocks": "array<any>",
+        "data.reasoningBlocks.orderedBlocks": "array<any>",
+        "data.turnId": "string",
+        "data.parentToolCallId": "string",
+        "data.citations": "object",
+        "data.citations.sources": "array<object> required",
+        "data.citations.sources[]": "object",
+        "data.citations.spans": "array<object> required",
+        "data.citations.spans[]": "object",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string"
+      }
+    },
+    "assistant.message_delta": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.messageId": "string required",
+        "data.deltaContent": "string required",
+        "data.parentToolCallId": "string"
+      }
+    },
+    "assistant.message_start": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.messageId": "string required",
+        "data.phase": "string"
+      }
+    },
+    "assistant.reasoning": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.reasoningId": "string required",
+        "data.content": "string required",
+        "data.rte": "boolean"
+      }
+    },
+    "assistant.reasoning_delta": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.reasoningId": "string required",
+        "data.deltaContent": "string required"
+      }
+    },
+    "assistant.server_tool_progress": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.outputIndex": "integer required",
+        "data.kind": "string required",
+        "data.status": "string required"
+      }
+    },
+    "assistant.streaming_delta": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.totalResponseSizeBytes": "integer required"
+      }
+    },
+    "assistant.tool_call_delta": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.toolName": "string",
+        "data.toolType": "enum(\"function\"|\"custom\")",
+        "data.inputDelta": "string required"
+      }
+    },
+    "assistant.turn_end": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.turnId": "string required",
+        "data.model": "string",
+        "data.parentToolCallId": "string"
+      }
+    },
+    "assistant.turn_retry": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.turnId": "string required",
+        "data.model": "string",
+        "data.reason": "string"
+      }
+    },
+    "assistant.turn_start": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.turnId": "string required",
+        "data.model": "string",
+        "data.interactionId": "string",
+        "data.parentToolCallId": "string"
+      }
+    },
+    "assistant.usage": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.aiCreditsStatus": "enum(\"complete\"|\"partial\"|\"unavailable\")",
+        "data.model": "string required",
+        "data.provider": "object",
+        "data.provider.id": "string required",
+        "data.provider.label": "string required",
+        "data.provider.kind": "enum(\"copilot\"|\"loki\") required",
+        "data.modelDisplayName": "string",
+        "data.accounting": "object",
+        "data.accounting.sourceSessionId": "string required",
+        "data.accounting.sequence": "integer required",
+        "data.accounting.usageId": "string required",
+        "data.inputTokens": "integer",
+        "data.outputTokens": "integer",
+        "data.cacheReadTokens": "integer",
+        "data.cacheWriteTokens": "integer",
+        "data.cacheExpiresAt": "string",
+        "data.reasoningTokens": "integer",
+        "data.thinkingDroppedBlocks": "integer",
+        "data.thinkingDroppedReasons": "array<string>",
+        "data.cost": "number",
+        "data.duration": "integer",
+        "data.timeToFirstTokenMs": "number",
+        "data.outputTtftMs": "number",
+        "data.interTokenLatencyMs": "number",
+        "data.initiator": "string",
+        "data.interactionType": "string",
+        "data.isByok": "boolean",
+        "data.byokKind": "string",
+        "data.modelProvider": "string",
+        "data.providerType": "string",
+        "data.isAuto": "boolean",
+        "data.maxPromptTokens": "integer",
+        "data.maxOutputTokens": "integer",
+        "data.acceptedPredictionTokens": "integer",
+        "data.rejectedPredictionTokens": "integer",
+        "data.transport": "enum(\"http\"|\"websocket\")",
+        "data.requestBodyBytes": "integer",
+        "data.requestBodyWireBytes": "integer",
+        "data.requestBodyEncoding": "enum(\"identity\"|\"gzip\"|\"zstd\")",
+        "data.requestBodyCompressionFallback": "enum(\"retried\"|\"disabled\")",
+        "data.requestBodyCompressionFallbackFrom": "enum(\"identity\"|\"gzip\"|\"zstd\")",
+        "data.requestBodyCompressionRejectedStatus": "integer",
+        "data.websocketFallbackReason": "enum(\"connect_failed\"|\"connection_unavailable\"|\"send_failed\"|\"api_error\"|\"transport_failed\")",
+        "data.websocketFallbackAfterMs": "integer",
+        "data.websocketFallbackErrorKind": "enum(\"dns\"|\"tls\"|\"timeout\"|\"connection_refused\"|\"connection_reset\"|\"closed_by_peer\"|\"closed_locally\"|\"not_connected\"|\"http_status\"|\"protocol\"|\"configuration\"|\"other\")",
+        "data.websocketFallbackStatusCode": "integer",
+        "data.websocketFallbackCloseCode": "integer",
+        "data.websocketFallbackReconnectAttempted": "boolean",
+        "data.websocketFallbackStartedThisCall": "boolean",
+        "data.apiCallId": "string",
+        "data.providerCallId": "string",
+        "data.serviceRequestId": "string",
+        "data.rte": "boolean",
+        "data.apiEndpoint": "enum(\"/chat/completions\"|\"/v1/messages\"|\"/responses\"|\"ws:/responses\")",
+        "data.parentToolCallId": "string",
+        "data.quotaSnapshots": "object",
+        "data.quotaSnapshots.*": "object",
+        "data.quotaSnapshots.*.isUnlimitedEntitlement": "boolean required",
+        "data.quotaSnapshots.*.entitlementRequests": "integer required",
+        "data.quotaSnapshots.*.usedRequests": "integer required",
+        "data.quotaSnapshots.*.usageAllowedWithExhaustedQuota": "boolean required",
+        "data.quotaSnapshots.*.overage": "number required",
+        "data.quotaSnapshots.*.overageAllowedWithExhaustedQuota": "boolean required",
+        "data.quotaSnapshots.*.remainingPercentage": "number required",
+        "data.quotaSnapshots.*.resetDate": "string",
+        "data.quotaSnapshots.*.hasQuota": "boolean",
+        "data.quotaSnapshots.*.tokenBasedBilling": "boolean",
+        "data.quotaSnapshots.*.overageEntitlement": "number",
+        "data.copilotUsage": "object",
+        "data.copilotUsage.model": "string",
+        "data.copilotUsage.tokenDetails": "array<object>",
+        "data.copilotUsage.tokenDetails[]": "object",
+        "data.copilotUsage.totalNanoAiu": "number required",
+        "data.reasoningEffort": "string",
+        "data.reasoningSummary": "enum(\"none\"|\"concise\"|\"detailed\")",
+        "data.availableToolCount": "integer",
+        "data.toolTokenCount": "integer",
+        "data.customToolCallCount": "integer",
+        "data.unmatchedToolResultCount": "integer",
+        "data.orphanToolCallCount": "integer",
+        "data.frontierSource": "string",
+        "data.cacheTtlSeconds": "integer",
+        "data.cacheDetailsReported": "boolean",
+        "data.numToolCalls": "integer",
+        "data.toolCounts": "object",
+        "data.toolCounts.*": "integer",
+        "data.finishReason": "string",
+        "data.contentFilterTriggered": "boolean",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string"
+      }
+    },
+    "auto_mode_switch.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.response": "enum(\"yes\"|\"yes_always\"|\"no\") required"
+      }
+    },
+    "auto_mode_switch.requested": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.errorCode": "string",
+        "data.retryAfterSeconds": "integer"
+      }
+    },
+    "capabilities.changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.ui": "object",
+        "data.ui.elicitation": "boolean",
+        "data.ui.mcpApps": "boolean",
+        "data.ui.canvases": "boolean"
+      }
+    },
+    "command.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required"
+      }
+    },
+    "command.execute": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.command": "string required",
+        "data.commandName": "string required",
+        "data.args": "string required"
+      }
+    },
+    "command.queued": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.command": "string required"
+      }
+    },
+    "commands.changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.commands": "array<object> required",
+        "data.commands[]": "object",
+        "data.commands[].name": "string required",
+        "data.commands[].description": "string"
+      }
+    },
+    "elicitation.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.action": "enum(\"accept\"|\"decline\"|\"cancel\")",
+        "data.content": "object",
+        "data.content.*": "any"
+      }
+    },
+    "elicitation.requested": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.toolCallId": "string",
+        "data.elicitationSource": "string",
+        "data.message": "string required",
+        "data.mode": "enum(\"form\"|\"url\")",
+        "data.requestedSchema": "object",
+        "data.requestedSchema.type": "const(\"object\") required",
+        "data.requestedSchema.properties": "object required",
+        "data.requestedSchema.properties.*": "any",
+        "data.requestedSchema.required": "array<string>",
+        "data.url": "string"
+      }
+    },
+    "exit_plan_mode.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.approved": "boolean",
+        "data.selectedAction": "enum(\"exit_only\"|\"interactive\"|\"autopilot\"|\"autopilot_fleet\")",
+        "data.autoApproveEdits": "boolean",
+        "data.feedback": "string"
+      }
+    },
+    "exit_plan_mode.requested": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.summary": "string required",
+        "data.planContent": "string required",
+        "data.actions": "array<enum(\"exit_only\"|\"interactive\"|\"autopilot\"|\"autopilot_fleet\")> required",
+        "data.recommendedAction": "enum(\"exit_only\"|\"interactive\"|\"autopilot\"|\"autopilot_fleet\") required",
+        "data.model": "string"
+      }
+    },
+    "external_tool.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required"
+      }
+    },
+    "external_tool.requested": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.sessionId": "string required",
+        "data.toolCallId": "string required",
+        "data.toolName": "string required",
+        "data.providerId": "string | null",
+        "data.arguments": "any",
+        "data.workingDirectory": "string",
+        "data.traceparent": "string",
+        "data.tracestate": "string"
+      }
+    },
+    "hook.end": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.hookInvocationId": "string required",
+        "data.hookType": "string required",
+        "data.output": "any",
+        "data.success": "boolean required",
+        "data.error": "object",
+        "data.error.message": "string required",
+        "data.error.stack": "string",
+        "data.error.source": "string",
+        "data.parentToolCallId": "string"
+      }
+    },
+    "hook.progress": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.message": "string required",
+        "data.temporary": "boolean"
+      }
+    },
+    "hook.start": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.hookInvocationId": "string required",
+        "data.hookType": "string required",
+        "data.input": "any",
+        "data.parentToolCallId": "string"
+      }
+    },
+    "human_response.recorded": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.toolCallId": "string",
+        "data.actor": "enum(\"human_response\"|\"host_automation\"|\"unknown\") required",
+        "data.response": "object required",
+        "data.response.content": "object",
+        "data.response.content.*": "any",
+        "data.response.message": "string",
+        "data.response.requestedSchema": "object",
+        "data.response.requestedSchema.type": "const(\"object\") required",
+        "data.response.requestedSchema.properties": "object required",
+        "data.response.requestedSchema.required": "array<string>",
+        "data.response.responseKind": "const(\"ask_user\") | const(\"exit_plan_mode\") | const(\"user_input\")",
+        "data.response.question": "string",
+        "data.response.choices": "array<string>",
+        "data.response.allowFreeform": "boolean",
+        "data.response.answer": "string",
+        "data.response.wasFreeform": "boolean",
+        "data.response.summary": "string",
+        "data.response.planContent": "string",
+        "data.response.actions": "array<enum(\"exit_only\"|\"interactive\"|\"autopilot\"|\"autopilot_fleet\")>",
+        "data.response.recommendedAction": "enum(\"exit_only\"|\"interactive\"|\"autopilot\"|\"autopilot_fleet\")",
+        "data.response.approved": "boolean",
+        "data.response.selectedAction": "enum(\"exit_only\"|\"interactive\"|\"autopilot\"|\"autopilot_fleet\")",
+        "data.response.autoApproveEdits": "boolean",
+        "data.response.feedback": "string"
+      }
+    },
+    "mcp_app.tool_call_complete": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required",
+        "data.toolName": "string required",
+        "data.arguments": "object",
+        "data.arguments.*": "any",
+        "data.success": "boolean required",
+        "data.durationMs": "number required",
+        "data.result": "object",
+        "data.result.*": "any",
+        "data.error": "object",
+        "data.error.message": "string required",
+        "data.toolMeta": "object",
+        "data.toolMeta.ui": "object",
+        "data.toolMeta.ui.resourceUri": "string",
+        "data.toolMeta.ui.visibility": "array<string>"
+      }
+    },
+    "mcp.headers_refresh_completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.outcome": "enum(\"headers\"|\"none\"|\"error\"|\"timeout\") required"
+      }
+    },
+    "mcp.headers_refresh_required": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.serverName": "string required",
+        "data.serverUrl": "string required",
+        "data.reason": "enum(\"startup\"|\"ttl-expired\"|\"auth-failed\") required"
+      }
+    },
+    "mcp.oauth_completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.outcome": "enum(\"token\"|\"cancelled\") required"
+      }
+    },
+    "mcp.oauth_recovery_completed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.serverName": "string required",
+        "data.outcome": "enum(\"succeeded\"|\"cancelled\"|\"failed\") required"
+      }
+    },
+    "mcp.oauth_required": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.serverName": "string required",
+        "data.serverUrl": "string required",
+        "data.staticClientConfig": "object",
+        "data.staticClientConfig.clientId": "string required",
+        "data.staticClientConfig.clientSecret": "string",
+        "data.staticClientConfig.publicClient": "boolean",
+        "data.staticClientConfig.grantType": "const(\"client_credentials\")",
+        "data.staticClientConfig.scope": "string",
+        "data.wwwAuthenticateParams": "object",
+        "data.wwwAuthenticateParams.resourceMetadataUrl": "string",
+        "data.wwwAuthenticateParams.scope": "string",
+        "data.wwwAuthenticateParams.error": "string",
+        "data.httpResponse": "object",
+        "data.httpResponse.statusCode": "integer required",
+        "data.httpResponse.headers": "array<object> required",
+        "data.httpResponse.headers[]": "object",
+        "data.httpResponse.body": "string",
+        "data.resourceMetadata": "string",
+        "data.reason": "enum(\"initial\"|\"refresh\"|\"reauth\"|\"upscope\") required",
+        "data.runtimeRefreshSupported": "boolean"
+      }
+    },
+    "mcp.prompts.list_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required"
+      }
+    },
+    "mcp.resources.list_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required"
+      }
+    },
+    "mcp.tools.list_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required"
+      }
+    },
+    "model.call_failure": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.model": "string",
+        "data.parentToolCallId": "string",
+        "data.initiator": "string",
+        "data.apiCallId": "string",
+        "data.providerCallId": "string",
+        "data.serviceRequestId": "string",
+        "data.rte": "boolean",
+        "data.statusCode": "integer",
+        "data.durationMs": "integer",
+        "data.apiEndpoint": "enum(\"/chat/completions\"|\"/v1/messages\"|\"/responses\"|\"ws:/responses\")",
+        "data.transport": "enum(\"http\"|\"websocket\")",
+        "data.failureKind": "enum(\"api\"|\"transport\")",
+        "data.requestBodyBytes": "integer",
+        "data.requestBodyWireBytes": "integer",
+        "data.requestBodyEncoding": "enum(\"identity\"|\"gzip\"|\"zstd\")",
+        "data.requestBodyCompressionFallback": "enum(\"retried\"|\"disabled\")",
+        "data.requestBodyCompressionFallbackFrom": "enum(\"identity\"|\"gzip\"|\"zstd\")",
+        "data.requestBodyCompressionRejectedStatus": "integer",
+        "data.retryAttempt": "integer",
+        "data.websocketFallbackReason": "enum(\"connect_failed\"|\"connection_unavailable\"|\"send_failed\"|\"api_error\"|\"transport_failed\")",
+        "data.websocketFallbackAfterMs": "integer",
+        "data.websocketFallbackErrorKind": "enum(\"dns\"|\"tls\"|\"timeout\"|\"connection_refused\"|\"connection_reset\"|\"closed_by_peer\"|\"closed_locally\"|\"not_connected\"|\"http_status\"|\"protocol\"|\"configuration\"|\"other\")",
+        "data.websocketFallbackStatusCode": "integer",
+        "data.websocketFallbackCloseCode": "integer",
+        "data.websocketFallbackReconnectAttempted": "boolean",
+        "data.websocketFallbackStartedThisCall": "boolean",
+        "data.maxPromptTokens": "integer",
+        "data.maxOutputTokens": "integer",
+        "data.isByok": "boolean",
+        "data.byokKind": "string",
+        "data.modelProvider": "string",
+        "data.providerType": "string",
+        "data.isAuto": "boolean",
+        "data.reasoningEffort": "string",
+        "data.interactionType": "string",
+        "data.source": "enum(\"top_level\"|\"subagent\"|\"mcp_sampling\") required",
+        "data.errorMessage": "string",
+        "data.badRequestKind": "enum(\"bodyless\"|\"structured_error\")",
+        "data.errorCode": "string",
+        "data.errorType": "string",
+        "data.quotaSnapshots": "object",
+        "data.quotaSnapshots.*": "object",
+        "data.quotaSnapshots.*.isUnlimitedEntitlement": "boolean required",
+        "data.quotaSnapshots.*.entitlementRequests": "integer required",
+        "data.quotaSnapshots.*.usedRequests": "integer required",
+        "data.quotaSnapshots.*.usageAllowedWithExhaustedQuota": "boolean required",
+        "data.quotaSnapshots.*.overage": "number required",
+        "data.quotaSnapshots.*.overageAllowedWithExhaustedQuota": "boolean required",
+        "data.quotaSnapshots.*.remainingPercentage": "number required",
+        "data.quotaSnapshots.*.resetDate": "string",
+        "data.quotaSnapshots.*.hasQuota": "boolean",
+        "data.quotaSnapshots.*.tokenBasedBilling": "boolean",
+        "data.quotaSnapshots.*.overageEntitlement": "number",
+        "data.requestFingerprint": "object",
+        "data.requestFingerprint.messageCount": "integer required",
+        "data.requestFingerprint.toolResultMessageCount": "integer required",
+        "data.requestFingerprint.toolCallCount": "integer required",
+        "data.requestFingerprint.namelessToolCallCount": "integer required",
+        "data.requestFingerprint.customToolCallCount": "integer",
+        "data.requestFingerprint.unmatchedToolResultCount": "integer",
+        "data.requestFingerprint.orphanToolCallCount": "integer",
+        "data.requestFingerprint.imagePartCount": "integer required",
+        "data.requestFingerprint.imagePartsMissingMediaType": "integer required",
+        "data.requestFingerprint.imageBytes": "integer",
+        "data.requestFingerprint.reasoningItemCount": "integer",
+        "data.requestFingerprint.encryptedContentBytes": "integer",
+        "data.requestFingerprint.lastMessageRole": "string",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string"
+      }
+    },
+    "model.call_final_result": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.model": "string required",
+        "data.isByok": "boolean",
+        "data.result": "enum(\"success\"|\"http_400\"|\"http_413\"|\"http_429\"|\"http_4xx\"|\"http_5xx\"|\"transport_error\"|\"other_error\") required"
+      }
+    },
+    "model.call_finished": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.turnId": "string required",
+        "data.interactionId": "string",
+        "data.dispatchDurationMs": "number required",
+        "data.outcome": "enum(\"success\"|\"error\"|\"cancelled\"|\"rejected\") required",
+        "data.containsBuiltInFileEditRequest": "boolean",
+        "data.editClassifierVersion": "integer required"
+      }
+    },
+    "model.call_start": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.turnId": "string required",
+        "data.model": "string",
+        "data.previousResponseId": "string",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string",
+        "data.parentToolCallId": "string"
+      }
+    },
+    "pending_messages.modified": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required"
+      }
+    },
+    "permission.assentDetected": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.turnIndex": "integer required"
+      }
+    },
+    "permission.carriedForward": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.toolCallId": "string required",
+        "data.recordId": "string required",
+        "data.decisionSource": "enum(\"assisted_approval\"|\"human_response\"|\"host_policy\"|\"unattended_fallback\"|\"authorization_carry_forward\") required"
+      }
+    },
+    "permission.completed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.toolCallId": "string",
+        "data.recoveryEpisodeId": "string",
+        "data.blocker": "object",
+        "data.blocker.kind": "enum(\"permission_recovery\") required",
+        "data.blocker.reason": "enum(\"permission_required\"|\"repeated_attempt\"|\"attempts_exhausted\"|\"permission_approved\"|\"permission_denied\"|\"responder_unavailable\"|\"equivalent_alternative_succeeded\") required",
+        "data.blocker.resumable": "boolean required",
+        "data.blocker.permissionRecovery": "object required",
+        "data.blocker.permissionRecovery.episodeId": "string required",
+        "data.blocker.permissionRecovery.ownerSessionId": "string",
+        "data.blocker.permissionRecovery.ownerAgentId": "string",
+        "data.blocker.permissionRecovery.status": "enum(\"recovering\"|\"awaiting_approval\"|\"resolved\"|\"blocked\") required",
+        "data.blocker.permissionRecovery.onBlocked": "enum(\"ask\"|\"fail\") required",
+        "data.blocker.permissionRecovery.reason": "enum(\"permission_required\"|\"repeated_attempt\"|\"attempts_exhausted\"|\"permission_approved\"|\"permission_denied\"|\"responder_unavailable\"|\"equivalent_alternative_succeeded\") required",
+        "data.blocker.permissionRecovery.maxAttempts": "integer required",
+        "data.blocker.permissionRecovery.attempts": "array<object> required",
+        "data.result": "object required",
+        "data.result.kind": "const(\"approved\") | const(\"approved-for-location\") | const(\"approved-for-session\") | const(\"approved-read-only-for-session\") | const(\"cancelled\") | const(\"denied-by-content-exclusion-policy\") | const(\"denied-by-permission-request-hook\") | const(\"denied-by-rules\") | const(\"denied-interactively-by-user\") | const(\"denied-no-approval-rule-and-could-not-request-from-user\")",
+        "data.result.managedApprovalHandled": "boolean",
+        "data.result.directories": "array<string>",
+        "data.result.approval": "object",
+        "data.result.approval.kind": "const(\"commands\") | const(\"custom-tool\") | const(\"extension-env-access\") | const(\"extension-management\") | const(\"extension-permission-access\") | const(\"mcp\") | const(\"memory\") | const(\"read\") | const(\"workflow\") | const(\"write\")",
+        "data.result.approval.commandIdentifiers": "array<string>",
+        "data.result.approval.serverName": "string",
+        "data.result.approval.toolName": "string | null",
+        "data.result.approval.operation": "string",
+        "data.result.approval.approvalKey": "string",
+        "data.result.approval.extensionName": "string",
+        "data.result.approval.environmentVariables": "array<string>",
+        "data.result.locationKey": "string",
+        "data.result.reason": "string",
+        "data.result.rules": "array<object>",
+        "data.result.rules[]": "object",
+        "data.result.feedback": "string",
+        "data.result.forceReject": "boolean",
+        "data.result.path": "string",
+        "data.result.message": "string",
+        "data.result.interrupt": "boolean",
+        "data.decisionSource": "enum(\"assisted_approval\"|\"human_response\"|\"host_policy\"|\"unattended_fallback\"|\"authorization_carry_forward\")"
+      }
+    },
+    "permission.contextualAuthorization": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.recordId": "string required",
+        "data.requestId": "string required",
+        "data.turnIndex": "integer required",
+        "data.polarity": "enum(\"grant\"|\"denial\") required",
+        "data.spanStart": "integer required",
+        "data.spanEnd": "integer required"
+      }
+    },
+    "permission.messageAuthorization": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.recordId": "string required",
+        "data.turnIndex": "integer required",
+        "data.polarity": "enum(\"grant\"|\"denial\") required",
+        "data.actionClass": "string required",
+        "data.spanStart": "integer required",
+        "data.spanEnd": "integer required",
+        "data.targetMembers": "array<string>",
+        "data.task": "string",
+        "data.world": "any"
+      }
+    },
+    "permission.messageAuthorizationDegraded": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.turnIndex": "integer required"
+      }
+    },
+    "permission.messageAuthorizationRead": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.turnIndex": "integer required",
+        "data.activatesExtraction": "boolean"
+      }
+    },
+    "permission.requested": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.permissionRequest": "object required",
+        "data.permissionRequest.kind": "const(\"custom-tool\") | const(\"extension-env-access\") | const(\"extension-management\") | const(\"extension-permission-access\") | const(\"hook\") | const(\"mcp\") | const(\"memory\") | const(\"read\") | const(\"shell\") | const(\"url\") | const(\"workflow\") | const(\"write\")",
+        "data.permissionRequest.toolCallId": "string",
+        "data.permissionRequest.managedApprovalRequired": "boolean",
+        "data.permissionRequest.fullCommandText": "string",
+        "data.permissionRequest.intention": "string",
+        "data.permissionRequest.commands": "array<object>",
+        "data.permissionRequest.commands[]": "object",
+        "data.permissionRequest.commandSegments": "array<object>",
+        "data.permissionRequest.commandSegments[]": "object",
+        "data.permissionRequest.possiblePaths": "array<string>",
+        "data.permissionRequest.resolvedWorkingDirectory": "string",
+        "data.permissionRequest.resolvedPaths": "object",
+        "data.permissionRequest.resolvedPaths.*": "string",
+        "data.permissionRequest.possibleUrls": "array<object>",
+        "data.permissionRequest.possibleUrls[]": "object",
+        "data.permissionRequest.hasWriteFileRedirection": "boolean",
+        "data.permissionRequest.canOfferSessionApproval": "boolean",
+        "data.permissionRequest.warning": "string",
+        "data.permissionRequest.requestSandboxBypass": "boolean",
+        "data.permissionRequest.requestSandboxPermissive": "boolean",
+        "data.permissionRequest.requestSandboxBypassReason": "string",
+        "data.permissionRequest.sandboxPathGrant": "object",
+        "data.permissionRequest.sandboxPathGrant.path": "string required",
+        "data.permissionRequest.sandboxPathGrant.deniedPath": "string",
+        "data.permissionRequest.sandboxPathGrant.access": "enum(\"read\"|\"readWrite\") required",
+        "data.permissionRequest.sandboxPathGrant.removedReadonlyPaths": "array<string>",
+        "data.permissionRequest.fileName": "string",
+        "data.permissionRequest.resolvedPath": "string",
+        "data.permissionRequest.diff": "string",
+        "data.permissionRequest.newFileContents": "string",
+        "data.permissionRequest.fileEdits": "array<object>",
+        "data.permissionRequest.fileEdits[]": "object",
+        "data.permissionRequest.path": "string",
+        "data.permissionRequest.serverName": "string",
+        "data.permissionRequest.toolName": "string",
+        "data.permissionRequest.toolTitle": "string",
+        "data.permissionRequest.args": "any",
+        "data.permissionRequest.readOnly": "boolean",
+        "data.permissionRequest.permissionRecommendation": "enum(\"approve\")",
+        "data.permissionRequest.url": "string",
+        "data.permissionRequest.redirectedFrom": "string",
+        "data.permissionRequest.action": "enum(\"store\"|\"vote\")",
+        "data.permissionRequest.subject": "string",
+        "data.permissionRequest.fact": "string",
+        "data.permissionRequest.citations": "string",
+        "data.permissionRequest.direction": "enum(\"upvote\"|\"downvote\")",
+        "data.permissionRequest.reason": "string",
+        "data.permissionRequest.scope": "enum(\"repository\"|\"user\")",
+        "data.permissionRequest.repoNwo": "string",
+        "data.permissionRequest.assistedApproval": "object",
+        "data.permissionRequest.assistedApproval.evaluationId": "string",
+        "data.permissionRequest.assistedApproval.evaluation": "object",
+        "data.permissionRequest.assistedApproval.recommendation": "enum(\"approve\"|\"requireApproval\"|\"excluded\"|\"error\") required",
+        "data.permissionRequest.assistedApproval.reason": "string",
+        "data.permissionRequest.assistedApproval.model": "string",
+        "data.permissionRequest.assistedApproval.failureReason": "enum(\"timeout\"|\"abort\"|\"empty_response\"|\"model_error\"|\"parse_error\")",
+        "data.permissionRequest.toolDescription": "string",
+        "data.permissionRequest.skipPermission": "boolean",
+        "data.permissionRequest.toolArgs": "any",
+        "data.permissionRequest.hookMessage": "string",
+        "data.permissionRequest.operation": "enum(\"run\"|\"author\") | string",
+        "data.permissionRequest.extensionName": "string",
+        "data.permissionRequest.name": "string",
+        "data.permissionRequest.description": "string",
+        "data.permissionRequest.phases": "array<object>",
+        "data.permissionRequest.phases[]": "object",
+        "data.permissionRequest.maxConcurrentSubagents": "integer",
+        "data.permissionRequest.maxTotalSubagents": "integer",
+        "data.permissionRequest.timeoutSeconds": "number",
+        "data.permissionRequest.maxAiCredits": "number",
+        "data.permissionRequest.declaredMaxConcurrentSubagents": "integer",
+        "data.permissionRequest.declaredMaxTotalSubagents": "integer",
+        "data.permissionRequest.declaredTimeoutSeconds": "number",
+        "data.permissionRequest.declaredMaxAiCredits": "number",
+        "data.permissionRequest.approvalKey": "string",
+        "data.permissionRequest.canPersistApproval": "boolean",
+        "data.permissionRequest.capabilities": "array<string>",
+        "data.permissionRequest.environmentVariables": "array<string>",
+        "data.promptRequest": "object",
+        "data.promptRequest.kind": "const(\"commands\") | const(\"custom-tool\") | const(\"extension-env-access\") | const(\"extension-management\") | const(\"extension-permission-access\") | const(\"hook\") | const(\"mcp\") | const(\"memory\") | const(\"path\") | const(\"read\") | const(\"url\") | const(\"workflow\") | const(\"write\")",
+        "data.promptRequest.toolCallId": "string",
+        "data.promptRequest.fullCommandText": "string",
+        "data.promptRequest.intention": "string",
+        "data.promptRequest.commandIdentifiers": "array<string>",
+        "data.promptRequest.canOfferSessionApproval": "boolean",
+        "data.promptRequest.warning": "string",
+        "data.promptRequest.assistedApproval": "object",
+        "data.promptRequest.assistedApproval.evaluationId": "string",
+        "data.promptRequest.assistedApproval.evaluation": "object",
+        "data.promptRequest.assistedApproval.recommendation": "enum(\"approve\"|\"requireApproval\"|\"excluded\"|\"error\") required",
+        "data.promptRequest.assistedApproval.reason": "string",
+        "data.promptRequest.assistedApproval.model": "string",
+        "data.promptRequest.assistedApproval.failureReason": "enum(\"timeout\"|\"abort\"|\"empty_response\"|\"model_error\"|\"parse_error\")",
+        "data.promptRequest.managedApprovalRequired": "boolean",
+        "data.promptRequest.requestSandboxBypass": "boolean",
+        "data.promptRequest.requestSandboxPermissive": "boolean",
+        "data.promptRequest.requestSandboxBypassReason": "string",
+        "data.promptRequest.sandboxPathGrant": "object",
+        "data.promptRequest.sandboxPathGrant.path": "string required",
+        "data.promptRequest.sandboxPathGrant.deniedPath": "string",
+        "data.promptRequest.sandboxPathGrant.access": "enum(\"read\"|\"readWrite\") required",
+        "data.promptRequest.sandboxPathGrant.removedReadonlyPaths": "array<string>",
+        "data.promptRequest.fileName": "string",
+        "data.promptRequest.resolvedPath": "string",
+        "data.promptRequest.diff": "string",
+        "data.promptRequest.newFileContents": "string",
+        "data.promptRequest.fileEdits": "array<object>",
+        "data.promptRequest.fileEdits[]": "object",
+        "data.promptRequest.path": "string",
+        "data.promptRequest.serverName": "string",
+        "data.promptRequest.toolName": "string",
+        "data.promptRequest.toolTitle": "string",
+        "data.promptRequest.args": "any",
+        "data.promptRequest.permissionRecommendation": "enum(\"approve\")",
+        "data.promptRequest.canOfferServerWideApproval": "boolean",
+        "data.promptRequest.url": "string",
+        "data.promptRequest.redirectedFrom": "string",
+        "data.promptRequest.action": "enum(\"store\"|\"vote\")",
+        "data.promptRequest.subject": "string",
+        "data.promptRequest.fact": "string",
+        "data.promptRequest.citations": "string",
+        "data.promptRequest.direction": "enum(\"upvote\"|\"downvote\")",
+        "data.promptRequest.reason": "string",
+        "data.promptRequest.toolDescription": "string",
+        "data.promptRequest.accessKind": "enum(\"read\"|\"shell\"|\"write\")",
+        "data.promptRequest.paths": "array<string>",
+        "data.promptRequest.readOnlyDirectories": "array<string>",
+        "data.promptRequest.toolArgs": "any",
+        "data.promptRequest.hookMessage": "string",
+        "data.promptRequest.operation": "enum(\"run\"|\"author\") | string",
+        "data.promptRequest.extensionName": "string",
+        "data.promptRequest.name": "string",
+        "data.promptRequest.description": "string",
+        "data.promptRequest.phases": "array<object>",
+        "data.promptRequest.phases[]": "object",
+        "data.promptRequest.maxConcurrentSubagents": "integer",
+        "data.promptRequest.maxTotalSubagents": "integer",
+        "data.promptRequest.timeoutSeconds": "number",
+        "data.promptRequest.maxAiCredits": "number",
+        "data.promptRequest.declaredMaxConcurrentSubagents": "integer",
+        "data.promptRequest.declaredMaxTotalSubagents": "integer",
+        "data.promptRequest.declaredTimeoutSeconds": "number",
+        "data.promptRequest.declaredMaxAiCredits": "number",
+        "data.promptRequest.approvalKey": "string",
+        "data.promptRequest.canPersistApproval": "boolean",
+        "data.promptRequest.capabilities": "array<string>",
+        "data.promptRequest.environmentVariables": "array<string>",
+        "data.permissionMode": "enum(\"manual\"|\"assisted\"|\"allow-all\")",
+        "data.agentMode": "enum(\"interactive\"|\"plan\"|\"autopilot\")",
+        "data.ownerSessionId": "string",
+        "data.ownerAgentId": "string",
+        "data.riskAssessment": "any",
+        "data.resolvedByHook": "boolean",
+        "data.recoveryEpisodeId": "string",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string"
+      }
+    },
+    "prompt_cache_break": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.primaryReason": "string required",
+        "data.contributingReasons": "array<string> required",
+        "data.beforeRequest": "any",
+        "data.afterRequest": "any",
+        "data.survivedTokens": "integer required",
+        "data.frontierTokens": "integer required",
+        "data.shortfallTokens": "integer required",
+        "data.retentionRatio": "number required",
+        "data.modelFrom": "string",
+        "data.modelTo": "string",
+        "data.toolsAdded": "array<string>",
+        "data.toolsRemoved": "array<string>",
+        "data.toolsRedefined": "array<string>",
+        "data.toolsAddedRaw": "array<string>",
+        "data.toolsRemovedRaw": "array<string>",
+        "data.toolsRedefinedRaw": "array<string>",
+        "data.toolsRedefinedParts": "array<string>",
+        "data.toolsReordered": "boolean",
+        "data.systemSegmentsChanged": "array<string>",
+        "data.cacheConfigChangedFields": "array<string>",
+        "data.rewriteMessageIndex": "integer",
+        "data.rewriteShape": "string",
+        "data.rewriteSource": "array<string>",
+        "data.agentName": "string"
+      }
+    },
+    "sampling.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required"
+      }
+    },
+    "sampling.requested": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.serverName": "string required",
+        "data.mcpRequestId": "any required"
+      }
+    },
+    "sandbox.decision": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.control": "enum(\"process\"|\"filesystem\"|\"network\"|\"routing\"|\"bypass\"|\"credentials\"|\"platform\")",
+        "data.outcome": "enum(\"resolved\"|\"inactive\"|\"engaged\"|\"succeeded\"|\"failed\"|\"degraded\"|\"denied\"|\"approved\"|\"declined\"|\"allowed\")",
+        "data.toolCallId": "string | null",
+        "data.platform": "enum(\"macos\"|\"linux\"|\"windows\"|\"other\")",
+        "data.backend": "enum(\"seatbelt\"|\"bubblewrap\"|\"process_container\"|\"unsupported\")",
+        "data.policySource": "enum(\"default_policy\"|\"user_policy\")",
+        "data.enforcementPoint": "enum(\"shell\"|\"builtin_filesystem\"|\"search\"|\"web_fetch\"|\"mcp\"|\"lsp\")",
+        "data.readwritePathsCount": "integer",
+        "data.readonlyPathsCount": "integer",
+        "data.deniedPathsCount": "integer",
+        "data.addCurrentWorkingDirectory": "boolean",
+        "data.allowOutbound": "boolean",
+        "data.allowLocalNetwork": "boolean",
+        "data.proxyMode": "enum(\"none\"|\"loopback\"|\"external\")",
+        "data.allowBypass": "boolean",
+        "data.gitAuth": "boolean",
+        "data.ghAuth": "boolean",
+        "data.keychainAccess": "boolean",
+        "data.effectiveFilesystemPolicy": "null | object",
+        "data.effectiveFilesystemPolicy.readwritePaths": "array<string>",
+        "data.effectiveFilesystemPolicy.readonlyPaths": "array<string>",
+        "data.effectiveFilesystemPolicy.deniedPaths": "array<string>",
+        "data.degradationReason": "enum(\"denied_paths_unsupported\"|\"unsupported_platform\") | null",
+        "data.kind": "const(\"access_denied\") | const(\"access_recorded\") | const(\"bypass_decided\") | const(\"enforcement_state\") | const(\"permissive_retry_completed\") | const(\"permissive_retry_decided\") | const(\"policy_resolved\") | const(\"spawn_completed\")",
+        "data.durationMs": "number",
+        "data.attestation": "enum(\"spawn_succeeded\"|\"unsupported\"|\"builtin_policy_checked\") | null",
+        "data.command": "string | null",
+        "data.denialClass": "enum(\"filesystem_read\"|\"filesystem_write\"|\"process_startup\"|\"registry_access\"|\"ipc_access\"|\"process_access\"|\"job_access\"|\"ui_access\"|\"service_access\"|\"network_outbound\"|\"network_local\"|\"network_host\"|…) | null",
+        "data.confidence": "enum(\"captured\"|\"policy_corroborated\"|\"sandbox_reported\"|\"output_classified\") | null",
+        "data.deniedResource": "string | null",
+        "data.processName": "string | null",
+        "data.permissiveSource": "enum(\"approved_retry\"|\"policy\")",
+        "data.source": "enum(\"model_requested\"|\"user_prompted\"|\"prompt_unavailable\")"
+      }
+    },
+    "session_limits_exhausted.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.response": "object required",
+        "data.response.action": "enum(\"add\"|\"set\"|\"unset\"|\"cancel\") required",
+        "data.response.additionalAiCredits": "number",
+        "data.response.maxAiCredits": "number"
+      }
+    },
+    "session_limits_exhausted.requested": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.usedAiCredits": "number required",
+        "data.maxAiCredits": "number required"
+      }
+    },
+    "session.auto_mode_resolved": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.chosenModel": "string required",
+        "data.reasoningBucket": "enum(\"low\"|\"medium\"|\"high\")",
+        "data.categoryScores": "object",
+        "data.categoryScores.*": "number",
+        "data.predictedLabel": "string",
+        "data.confidence": "number",
+        "data.candidateModels": "array<string>",
+        "data.routingMethod": "string",
+        "data.availableModels": "array<string>",
+        "data.fallback": "boolean",
+        "data.fallbackReason": "string",
+        "data.selectionReason": "string",
+        "data.stickyOverride": "boolean",
+        "data.routerLatencyMs": "number",
+        "data.endToEndLatencyMs": "number",
+        "data.chosenShortfall": "number",
+        "data.hasImage": "boolean"
+      }
+    },
+    "session.auto_tier_recommendation": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.recommendedAutoTier": "string required"
+      }
+    },
+    "session.auto_tier_switch_failed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.effectiveAutoTier": "string",
+        "data.requestedAutoTier": "null | string required",
+        "data.reason": "enum(\"policy_rejected\"|\"request_failed\"|\"setup_failed\"|\"unsupported\") required"
+      }
+    },
+    "session.autopilot_objective_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.operation": "enum(\"create\"|\"update\"|\"delete\") required",
+        "data.id": "integer",
+        "data.status": "enum(\"active\"|\"paused\"|\"cap_reached\"|\"completed\")"
+      }
+    },
+    "session.background_tasks_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required"
+      }
+    },
+    "session.binary_asset": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.assetId": "string required",
+        "data.type": "enum(\"image\"|\"resource\") required",
+        "data.mimeType": "string required",
+        "data.byteLength": "integer required",
+        "data.data": "string required",
+        "data.description": "string",
+        "data.metadata": "object",
+        "data.metadata.*": "any"
+      }
+    },
+    "session.canvas.closed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.instanceId": "string required",
+        "data.extensionId": "string required",
+        "data.canvasId": "string required"
+      }
+    },
+    "session.canvas.opened": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.instanceId": "string required",
+        "data.extensionId": "string required",
+        "data.extensionName": "string",
+        "data.canvasId": "string required",
+        "data.icon": "string",
+        "data.title": "string",
+        "data.status": "string",
+        "data.url": "string",
+        "data.input": "any"
+      }
+    },
+    "session.canvas.recorded": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.instanceId": "string required",
+        "data.extensionId": "string required",
+        "data.canvasId": "string required",
+        "data.title": "string",
+        "data.input": "any"
+      }
+    },
+    "session.canvas.registry_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.canvases": "array<object> required",
+        "data.canvases[]": "object",
+        "data.canvases[].extensionId": "string required",
+        "data.canvases[].extensionName": "string",
+        "data.canvases[].canvasId": "string required",
+        "data.canvases[].displayName": "string required",
+        "data.canvases[].description": "string required",
+        "data.canvases[].icon": "string",
+        "data.canvases[].inputSchema": "any",
+        "data.canvases[].actions": "array<object>"
+      }
+    },
+    "session.canvas.removed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.instanceId": "string required",
+        "data.extensionId": "string required",
+        "data.canvasId": "string required"
+      }
+    },
+    "session.canvas.unavailable": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.instanceId": "string required",
+        "data.extensionId": "string required",
+        "data.canvasId": "string required"
+      }
+    },
+    "session.compaction_complete": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.success": "boolean required",
+        "data.outcome": "string",
+        "data.outcomeReason": "string",
+        "data.failureReason": "string",
+        "data.compactionAttemptId": "string",
+        "data.model": "string",
+        "data.initialModel": "string",
+        "data.error": "string",
+        "data.preCompactionTokens": "integer",
+        "data.postCompactionTokens": "integer",
+        "data.preCompactionMessagesLength": "integer",
+        "data.messagesRemoved": "integer",
+        "data.tokensRemoved": "integer",
+        "data.tokenAccountingBasis": "string",
+        "data.customInstructions": "string",
+        "data.summaryContent": "string",
+        "data.responsesReasoning": "object",
+        "data.responsesReasoning.model": "string required",
+        "data.responsesReasoning.initialEffort": "string required",
+        "data.responsesReasoning.effort": "string required",
+        "data.activeWorkflowSummary": "string",
+        "data.behaviorModelId": "string",
+        "data.checkpointNumber": "integer",
+        "data.checkpointPath": "string",
+        "data.compactionTokensUsed": "object",
+        "data.compactionTokensUsed.requestCount": "integer",
+        "data.compactionTokensUsed.aiCreditsStatus": "enum(\"complete\"|\"partial\"|\"unavailable\")",
+        "data.compactionTokensUsed.provider": "object",
+        "data.compactionTokensUsed.provider.id": "string required",
+        "data.compactionTokensUsed.provider.label": "string required",
+        "data.compactionTokensUsed.provider.kind": "enum(\"copilot\"|\"loki\") required",
+        "data.compactionTokensUsed.modelDisplayName": "string",
+        "data.compactionTokensUsed.inputTokens": "integer",
+        "data.compactionTokensUsed.outputTokens": "integer",
+        "data.compactionTokensUsed.cacheReadTokens": "integer",
+        "data.compactionTokensUsed.cacheWriteTokens": "integer",
+        "data.compactionTokensUsed.copilotUsage": "object",
+        "data.compactionTokensUsed.copilotUsage.model": "string",
+        "data.compactionTokensUsed.copilotUsage.tokenDetails": "array<object>",
+        "data.compactionTokensUsed.copilotUsage.totalNanoAiu": "number required",
+        "data.compactionTokensUsed.duration": "integer",
+        "data.compactionTokensUsed.model": "string",
+        "data.requestId": "string",
+        "data.serviceRequestId": "string",
+        "data.systemTokens": "integer",
+        "data.conversationTokens": "integer",
+        "data.toolDefinitionsTokens": "integer",
+        "data.statusCode": "integer",
+        "data.tokenLimit": "integer",
+        "data.targetPromptTokenLimit": "integer",
+        "data.switchTargetModel": "string",
+        "data.trigger": "enum(\"threshold\"|\"context_limit_retry\"|\"manual\"|\"memory_pressure\"|\"model_switch\")"
+      }
+    },
+    "session.compaction_start": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.compactionAttemptId": "string",
+        "data.model": "string",
+        "data.systemTokens": "integer",
+        "data.conversationTokens": "integer",
+        "data.toolDefinitionsTokens": "integer",
+        "data.currentTokens": "integer",
+        "data.tokenLimit": "integer",
+        "data.targetPromptTokenLimit": "integer",
+        "data.switchTargetModel": "string",
+        "data.trigger": "enum(\"threshold\"|\"context_limit_retry\"|\"manual\"|\"memory_pressure\"|\"model_switch\")"
+      }
+    },
+    "session.completion_receipt": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.schemaVersion": "integer required",
+        "data.attempt": "integer required",
+        "data.sourceEventId": "string required",
+        "data.eventRange": "object required",
+        "data.eventRange.startEventId": "string required",
+        "data.eventRange.endEventId": "string required",
+        "data.stopReason": "enum(\"natural\"|\"terminal_tool\"|\"agent_stop_block_limit\") required",
+        "data.finalTool": "object",
+        "data.finalTool.toolCallId": "string required",
+        "data.finalTool.toolName": "string",
+        "data.finalTool.status": "enum(\"success\"|\"failure\"|\"timeout\"|\"rejected\"|\"denied\") required",
+        "data.finalTool.exitCode": "integer",
+        "data.successfulToolCount": "integer required",
+        "data.failedToolCount": "integer required"
+      }
+    },
+    "session.context_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.cwd": "string required",
+        "data.gitRoot": "string",
+        "data.repository": "string",
+        "data.hostType": "enum(\"github\"|\"ado\")",
+        "data.repositoryHost": "string",
+        "data.branch": "string",
+        "data.headCommit": "string",
+        "data.baseCommit": "string",
+        "data.pendingGitContext": "boolean"
+      }
+    },
+    "session.context_cleared": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.initialMessage": "string",
+        "data.messagesCleared": "integer required"
+      }
+    },
+    "session.custom_agents_updated": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.agents": "array<object> required",
+        "data.agents[]": "object",
+        "data.agents[].id": "string required",
+        "data.agents[].name": "string required",
+        "data.agents[].displayName": "string required",
+        "data.agents[].description": "string required",
+        "data.agents[].source": "string required",
+        "data.agents[].tools": "array<string> | null required",
+        "data.agents[].userInvocable": "boolean required",
+        "data.agents[].disableModelInvocation": "boolean",
+        "data.agents[].model": "string",
+        "data.agents[].models": "array<string>",
+        "data.agents[].modelPolicy": "enum(\"preferred\"|\"required\")",
+        "data.warnings": "array<string> required",
+        "data.errors": "array<string> required"
+      }
+    },
+    "session.custom_notification": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.source": "string required",
+        "data.name": "string required",
+        "data.version": "integer",
+        "data.subject": "object",
+        "data.subject.*": "string",
+        "data.payload": "any required"
+      }
+    },
+    "session.error": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.errorType": "string required",
+        "data.errorCode": "string",
+        "data.providerErrorType": "string",
+        "data.providerErrorParam": "string",
+        "data.eligibleForAutoSwitch": "boolean",
+        "data.message": "string required",
+        "data.remediation": "enum(\"sign_in\"|\"switch_account\"|\"show_account\"|\"review_sandbox_policy\"|\"allow_sandbox_outbound\"|\"rewind_conversation\")",
+        "data.stack": "string",
+        "data.statusCode": "integer",
+        "data.providerCallId": "string",
+        "data.serviceRequestId": "string",
+        "data.url": "string"
+      }
+    },
+    "session.extensions_loaded": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.extensions": "array<object> required",
+        "data.extensions[]": "object",
+        "data.extensions[].id": "string required",
+        "data.extensions[].name": "string required",
+        "data.extensions[].source": "enum(\"project\"|\"user\"|\"plugin\"|\"session\") required",
+        "data.extensions[].status": "enum(\"running\"|\"disabled\"|\"failed\"|\"starting\") required"
+      }
+    },
+    "session.extensions.attachments_pushed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.attachments": "array<object> required",
+        "data.attachments[]": "object",
+        "data.attachments[].type": "const(\"blob\") | const(\"directory\") | const(\"extension_context\") | const(\"file\") | const(\"github_actions_job\") | const(\"github_commit\") | const(\"github_file\") | const(\"github_file_diff\") | const(\"github_reference\") | const(\"github_release\") | const(\"github_repository\") | const(\"github_snippet\") | const(\"github_tree_comparison\") | const(\"github_url\") | const(\"selection\")",
+        "data.attachments[].path": "string",
+        "data.attachments[].displayName": "string",
+        "data.attachments[].lineRange": "object",
+        "data.attachments[].mimeType": "string",
+        "data.attachments[].assetId": "string",
+        "data.attachments[].byteLength": "integer",
+        "data.attachments[].omittedReason": "enum(\"too_large\"|\"asset_unavailable\")",
+        "data.attachments[].taggedFilesEntry": "string",
+        "data.attachments[].filePath": "string",
+        "data.attachments[].text": "string",
+        "data.attachments[].selection": "object",
+        "data.attachments[].number": "integer",
+        "data.attachments[].title": "string",
+        "data.attachments[].referenceType": "enum(\"issue\"|\"pr\"|\"discussion\")",
+        "data.attachments[].state": "string",
+        "data.attachments[].url": "string",
+        "data.attachments[].repo": "object",
+        "data.attachments[].oid": "string",
+        "data.attachments[].message": "string",
+        "data.attachments[].tagName": "string",
+        "data.attachments[].name": "string",
+        "data.attachments[].jobId": "integer",
+        "data.attachments[].jobName": "string",
+        "data.attachments[].workflowName": "string",
+        "data.attachments[].conclusion": "string",
+        "data.attachments[].description": "string",
+        "data.attachments[].ref": "string",
+        "data.attachments[].head": "object",
+        "data.attachments[].base": "object",
+        "data.attachments[].data": "string",
+        "data.attachments[].extensionId": "string",
+        "data.attachments[].canvasId": "string",
+        "data.attachments[].instanceId": "string",
+        "data.attachments[].payload": "any",
+        "data.attachments[].capturedAt": "string"
+      }
+    },
+    "session.fusion_change_checkpoint": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.codeChanges": "object required",
+        "data.codeChanges.linesAdded": "integer required",
+        "data.codeChanges.linesRemoved": "integer required",
+        "data.codeChanges.filesModified": "array<string> required"
+      }
+    },
+    "session.fusion_commit_started": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.commitId": "string required",
+        "data.sourcePhaseId": "string required",
+        "data.sourceModel": "string required",
+        "data.kind": "enum(\"text\"|\"terminal_tool\") required",
+        "data.toolCallId": "string | null required"
+      }
+    },
+    "session.fusion_completed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.commitId": "string required",
+        "data.turnId": "string required",
+        "data.syntheticModel": "string required",
+        "data.pattern": "enum(\"single\"|\"cascade\"|\"critique\") required",
+        "data.outcome": "string required",
+        "data.finalSourcePhaseId": "string | null required",
+        "data.finalSourceModel": "string | null required",
+        "data.followUpModel": "string required",
+        "data.degradedReason": "string | null required",
+        "data.phaseCount": "integer required",
+        "data.requestCount": "integer required",
+        "data.inputTokens": "integer required",
+        "data.outputTokens": "integer required",
+        "data.cachedTokens": "integer required",
+        "data.cacheWriteTokens": "integer",
+        "data.totalNanoAiu": "number required",
+        "data.durationMs": "number required",
+        "data.awaitingBackgroundWork": "boolean"
+      }
+    },
+    "session.fusion_handoff": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.sourcePhaseId": "string required",
+        "data.targetPhaseId": "string required",
+        "data.targetModel": "string required",
+        "data.message": "any required"
+      }
+    },
+    "session.fusion_resolved": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.fusionId": "string required",
+        "data.turnId": "string required",
+        "data.contractVersion": "integer required",
+        "data.syntheticModel": "string required",
+        "data.policy": "string required",
+        "data.routeSource": "string",
+        "data.planVersion": "string",
+        "data.policyVersion": "string",
+        "data.modelUniverseVersion": "string",
+        "data.ruleId": "string",
+        "data.selectedRuleId": "string",
+        "data.ruleIndex": "integer",
+        "data.ruleName": "string",
+        "data.scores": "object",
+        "data.scores.reasoning": "number required",
+        "data.scores.codeGen": "number required",
+        "data.scores.debugging": "number required",
+        "data.scores.toolUse": "number required",
+        "data.pattern": "enum(\"single\"|\"cascade\"|\"critique\") required",
+        "data.hint": "string",
+        "data.phasePlan": "array<object>",
+        "data.phasePlan[]": "object",
+        "data.phasePlan[].kind": "enum(\"primary\"|\"judge\"|\"repair\"|\"draft\"|\"critic\"|\"revision\"|\"follow_up\") required",
+        "data.phasePlan[].role": "string required",
+        "data.phasePlan[].scope": "enum(\"root\"|\"review\") required",
+        "data.phasePlan[].conditional": "boolean required",
+        "data.primaryModel": "string required",
+        "data.secondaryModel": "string | null required",
+        "data.judgeModel": "string",
+        "data.repairModel": "string",
+        "data.critics": "array<object>",
+        "data.critics[]": "object",
+        "data.critics[].phaseId": "string required",
+        "data.critics[].model": "string required",
+        "data.critics[].reasoningEffort": "string",
+        "data.fallbackModel": "string required",
+        "data.followUpModel": "string required",
+        "data.followUp": "object",
+        "data.followUp.userTurn": "enum(\"reuse_primary\"|\"reroute\") required",
+        "data.followUp.compactionTurn": "enum(\"reuse_primary\"|\"reroute\") required",
+        "data.routingLatencyMs": "number"
+      }
+    },
+    "session.fusion_route_failed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.attemptId": "string required",
+        "data.syntheticModel": "string required",
+        "data.policy": "string required",
+        "data.reason": "string required",
+        "data.errorMessage": "string",
+        "data.fallbackModel": "string required",
+        "data.routingLatencyMs": "number"
+      }
+    },
+    "session.fusion_route_started": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.attemptId": "string required",
+        "data.turnKind": "enum(\"user\"|\"compaction\") required",
+        "data.syntheticModel": "string",
+        "data.policy": "string"
+      }
+    },
+    "session.handoff": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.handoffTime": "string required",
+        "data.sourceType": "enum(\"remote\"|\"local\") required",
+        "data.repository": "object",
+        "data.repository.owner": "string required",
+        "data.repository.name": "string required",
+        "data.repository.branch": "string",
+        "data.context": "string",
+        "data.summary": "string",
+        "data.remoteSessionId": "string",
+        "data.host": "string"
+      }
+    },
+    "session.idle": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.aborted": "boolean",
+        "data.mode": "enum(\"interactive\"|\"plan\"|\"autopilot\")"
+      }
+    },
+    "session.indexed_search": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.state": "enum(\"disabled\"|\"starting\"|\"enabled\"|\"ready\"|\"failed\")",
+        "data.kind": "const(\"incremental\") | const(\"server_error\") | const(\"startup\") | const(\"status\")",
+        "data.outcome": "enum(\"started\"|\"skipped_below_threshold\"|\"skipped_no_gitroot\"|\"skipped_disabled\"|\"reused_existing\"|\"failed\")",
+        "data.fileCount": "number",
+        "data.startupDurationMs": "number",
+        "data.forcedByEnv": "boolean",
+        "data.warmStart": "boolean",
+        "data.disabledReason": "enum(\"use_tgrep_false\"|\"use_builtin_ripgrep_false\"|\"organization\"|\"organization_policy_auth_pending\"|\"organization_policy_unknown\"|\"virtual_filesystem\"|\"cloud_sync_root\"|\"cloud_sync_detection_failed\"|\"workspace_not_local\")",
+        "data.errorMessage": "string",
+        "data.eligible": "boolean",
+        "data.errorType": "enum(\"spawn_error\"|\"unexpected_exit\"|\"killed_by_signal\")",
+        "data.exitCode": "number",
+        "data.phase": "enum(\"changes_detected\"|\"updated\")",
+        "data.changedFileCount": "number",
+        "data.addedFileCount": "number",
+        "data.deletedFileCount": "number",
+        "data.totalChangeCount": "number",
+        "data.walkDurationMs": "number",
+        "data.updateDurationMs": "number",
+        "data.totalDurationMs": "number"
+      }
+    },
+    "session.info": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.infoType": "string required",
+        "data.message": "string required",
+        "data.url": "string",
+        "data.tip": "string"
+      }
+    },
+    "session.managed_plugin_progress": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.phase": "enum(\"initializing\"|\"installing\"|\"updating\"|\"complete\") required",
+        "data.pluginSpecs": "array<string> required"
+      }
+    },
+    "session.managed_settings_enforced": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.action": "enum(\"bypass_permissions_blocked\") required",
+        "data.escalation": "enum(\"allow_all\"|\"approve_all\"|\"assisted_approval\"|\"unrestricted_paths\"|\"unrestricted_urls\"|\"server_wide_mcp_approval\")",
+        "data.setting": "string required",
+        "data.failClosed": "boolean required",
+        "data.message": "string required"
+      }
+    },
+    "session.managed_settings_resolved": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.permissionsContext": "object",
+        "data.permissionsContext.permissions": "any",
+        "data.permissionsContext.failClosed": "boolean required",
+        "data.source": "enum(\"server\"|\"device\"|\"client\"|\"policyHelper\"|\"mixed\"|\"none\") required",
+        "data.serverManaged": "boolean required",
+        "data.deviceManaged": "boolean required",
+        "data.clientManaged": "boolean",
+        "data.policyHelperManaged": "boolean",
+        "data.failClosed": "boolean required",
+        "data.sandboxEnabledByUndeterminedPolicy": "boolean",
+        "data.bypassPermissionsDisabled": "boolean required",
+        "data.permissionsAllowIntersected": "boolean",
+        "data.managedKeys": "array<string> required",
+        "data.settings": "any"
+      }
+    },
+    "session.mcp_server_needs_reconnect": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required"
+      }
+    },
+    "session.mcp_server_removed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required"
+      }
+    },
+    "session.mcp_server_status_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required",
+        "data.status": "enum(\"connected\"|\"failed\"|\"needs-auth\"|\"pending\"|\"disabled\"|\"stopped\"|\"not_configured\") required",
+        "data.error": "string",
+        "data.errorClassification": "string",
+        "data.configSource": "string"
+      }
+    },
+    "session.mcp_server_tools_loaded": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.serverName": "string required",
+        "data.toolCount": "integer required"
+      }
+    },
+    "session.mcp_servers_loaded": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.servers": "array<object> required",
+        "data.servers[]": "object",
+        "data.servers[].name": "string required",
+        "data.servers[].status": "enum(\"connected\"|\"failed\"|\"needs-auth\"|\"pending\"|\"disabled\"|\"stopped\"|\"not_configured\") required",
+        "data.servers[].source": "enum(\"user\"|\"workspace\"|\"plugin\"|\"builtin\"|\"managed\"|\"account\")",
+        "data.servers[].displayName": "string",
+        "data.servers[].error": "string",
+        "data.servers[].serverMetadata": "object",
+        "data.servers[].transport": "enum(\"stdio\"|\"http\"|\"sse\"|\"memory\")",
+        "data.servers[].pluginName": "string",
+        "data.servers[].pluginVersion": "string"
+      }
+    },
+    "session.memory_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required"
+      }
+    },
+    "session.mode_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.previousMode": "enum(\"interactive\"|\"plan\"|\"autopilot\") required",
+        "data.newMode": "enum(\"interactive\"|\"plan\"|\"autopilot\") required"
+      }
+    },
+    "session.mode_notice_delivered": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.mode": "enum(\"interactive\"|\"plan\"|\"autopilot\") required",
+        "data.content": "string"
+      }
+    },
+    "session.model_change": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.previousModel": "string",
+        "data.newModel": "string required",
+        "data.providerId": "string",
+        "data.previousProviderId": "string",
+        "data.previousReasoningEffort": "string",
+        "data.reasoningEffort": "string | null",
+        "data.reasoningEffortModel": "string",
+        "data.reasoningEffortManaged": "boolean",
+        "data.previousReasoningSummary": "enum(\"none\"|\"concise\"|\"detailed\")",
+        "data.reasoningSummary": "enum(\"none\"|\"concise\"|\"detailed\")",
+        "data.previousVerbosity": "enum(\"low\"|\"medium\"|\"high\")",
+        "data.verbosity": "enum(\"low\"|\"medium\"|\"high\")",
+        "data.contextTier": "enum(\"default\"|\"long_context\") | null",
+        "data.contextTierManaged": "boolean",
+        "data.cause": "string",
+        "data.source": "enum(\"model_command\"|\"settings_command\"|\"config_command\"|\"model_picker\"|\"managed_settings\"|\"repo_settings\"|\"startup\"|\"agent\"|\"plan_mode\"|\"automatic\"|\"changeboarding_shortcut\"|\"sdk\"|…)",
+        "data.previousAutoTier": "string",
+        "data.autoTier": "null | string",
+        "data.autoTierManaged": "boolean"
+      }
+    },
+    "session.model_deselected": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.previousModel": "string required",
+        "data.reason": "enum(\"provider_withdrawn\") required"
+      }
+    },
+    "session.permission_recovery": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.episodeId": "string required",
+        "data.ownerSessionId": "string",
+        "data.ownerAgentId": "string",
+        "data.status": "enum(\"recovering\"|\"awaiting_approval\"|\"resolved\"|\"blocked\") required",
+        "data.onBlocked": "enum(\"ask\"|\"fail\") required",
+        "data.reason": "enum(\"permission_required\"|\"repeated_attempt\"|\"attempts_exhausted\"|\"permission_approved\"|\"permission_denied\"|\"responder_unavailable\"|\"equivalent_alternative_succeeded\") required",
+        "data.maxAttempts": "integer required",
+        "data.attempts": "array<object> required",
+        "data.attempts[]": "object",
+        "data.attempts[].attemptId": "string required",
+        "data.attempts[].toolCallId": "string",
+        "data.attempts[].permissionKind": "string required",
+        "data.attempts[].requestFingerprint": "string required",
+        "data.attempts[].relation": "enum(\"initial\"|\"retry\"|\"alternative\") required",
+        "data.attempts[].disposition": "enum(\"deferred\"|\"prompted\"|\"approved\"|\"denied\"|\"blocked\"|\"succeeded\") required",
+        "data.attempts[].reason": "enum(\"permission_required\"|\"repeated_attempt\"|\"attempts_exhausted\"|\"permission_approved\"|\"permission_denied\"|\"responder_unavailable\"|\"equivalent_alternative_succeeded\") required",
+        "data.attempts[].ordinal": "integer required"
+      }
+    },
+    "session.permissions_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.previousMode": "enum(\"manual\"|\"assisted\"|\"allow-all\")",
+        "data.mode": "enum(\"manual\"|\"assisted\"|\"allow-all\")",
+        "data.assistedApprovalModel": "string"
+      }
+    },
+    "session.plan_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.operation": "enum(\"create\"|\"update\"|\"delete\") required"
+      }
+    },
+    "session.quota_observation": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.observation": "object required",
+        "data.observation.provider": "object required",
+        "data.observation.provider.id": "string required",
+        "data.observation.provider.label": "string required",
+        "data.observation.provider.kind": "enum(\"copilot\"|\"loki\") required",
+        "data.observation.quotaId": "string required",
+        "data.observation.unit": "enum(\"ai_credits\"|\"requests\"|\"tokens\"|\"unknown\") required",
+        "data.observation.accessState": "enum(\"allowed\"|\"denied\"|\"not_required\"|\"unknown\"|\"unavailable\") required",
+        "data.observation.capacityState": "enum(\"available\"|\"exhausted\"|\"unlimited\"|\"not_required\"|\"not_applicable\"|\"unknown\"|\"unavailable\") required",
+        "data.observation.observationKind": "enum(\"account_snapshot\"|\"admission_state\")",
+        "data.observation.quantityKind": "enum(\"authoritative_budget\"|\"advisory_balance\"|\"none\")",
+        "data.observation.acquisitionStatus": "enum(\"succeeded\"|\"unavailable\"|\"failed\")",
+        "data.observation.observedAt": "string",
+        "data.observation.httpStatus": "integer",
+        "data.observation.acquisitionError": "string",
+        "data.observation.budgetMetadata": "object",
+        "data.observation.budgetMetadata.unlimited": "boolean required",
+        "data.observation.budgetMetadata.entitlement": "number required",
+        "data.observation.budgetMetadata.consumed": "number required",
+        "data.observation.budgetMetadata.remainingPercentage": "number required",
+        "data.observation.budgetMetadata.usageAllowedWhenExhausted": "boolean required",
+        "data.observation.budgetMetadata.overage": "number required",
+        "data.observation.budgetMetadata.overageAllowedWhenExhausted": "boolean required",
+        "data.observation.budgetMetadata.resetAtEpochMs": "number",
+        "data.observation.budgetMetadata.resetEstimated": "boolean",
+        "data.observation.budgetMetadata.tokenBasedBilling": "boolean",
+        "data.observation.budgetMetadata.overageLimit": "number",
+        "data.observation.monthlyUsage": "object",
+        "data.observation.monthlyUsage.state": "enum(\"available\"|\"no_policy\"|\"unavailable\"|\"unknown\") required",
+        "data.observation.monthlyUsage.unit": "enum(\"ai_credits\"|\"requests\"|\"tokens\"|\"unknown\") required",
+        "data.observation.monthlyUsage.scope": "enum(\"user\"|\"unknown\") required",
+        "data.observation.monthlyUsage.consumedQuantity": "number",
+        "data.observation.monthlyUsage.queriedAt": "string",
+        "data.observation.monthlyUsage.cycleStart": "string",
+        "data.observation.monthlyUsage.resetOn": "string",
+        "data.observation.compatibilityKey": "string",
+        "data.observation.hasQuota": "boolean | null",
+        "data.observation.entitledQuantity": "integer | null",
+        "data.observation.availableQuantity": "integer | null",
+        "data.observation.reason": "null | string",
+        "data.observation.source": "null | string",
+        "data.observation.service": "null | string"
+      }
+    },
+    "session.remote_steerable_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.remoteSteerable": "boolean required"
+      }
+    },
+    "session.request_body_compression_disabled": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.encoding": "enum(\"identity\"|\"gzip\"|\"zstd\")"
+      }
+    },
+    "session.resume": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.resumeTime": "string required",
+        "data.eventCount": "integer required",
+        "data.eventsFileSizeBytes": "integer",
+        "data.selectedModel": "string",
+        "data.providerId": "string",
+        "data.reasoningEffort": "string",
+        "data.reasoningEffortModel": "string",
+        "data.reasoningEffortManaged": "boolean",
+        "data.reasoningSummary": "enum(\"none\"|\"concise\"|\"detailed\")",
+        "data.verbosity": "enum(\"low\"|\"medium\"|\"high\")",
+        "data.contextTier": "enum(\"default\"|\"long_context\") | null",
+        "data.contextTierManaged": "boolean",
+        "data.autoTier": "string",
+        "data.autoTierManaged": "boolean",
+        "data.sessionLimits": "null | object",
+        "data.sessionLimits.maxAiCredits": "number",
+        "data.context": "object",
+        "data.context.cwd": "string required",
+        "data.context.gitRoot": "string",
+        "data.context.repository": "string",
+        "data.context.hostType": "enum(\"github\"|\"ado\")",
+        "data.context.repositoryHost": "string",
+        "data.context.branch": "string",
+        "data.context.headCommit": "string",
+        "data.context.baseCommit": "string",
+        "data.context.pendingGitContext": "boolean",
+        "data.alreadyInUse": "boolean",
+        "data.sessionWasActive": "boolean",
+        "data.remoteSteerable": "boolean",
+        "data.continuePendingWork": "boolean"
+      }
+    },
+    "session.schedule_cancelled": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.id": "integer required"
+      }
+    },
+    "session.schedule_created": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.id": "integer required",
+        "data.intervalMs": "integer",
+        "data.cron": "string",
+        "data.tz": "string",
+        "data.at": "integer",
+        "data.prompt": "string required",
+        "data.recurring": "boolean",
+        "data.selfPaced": "boolean",
+        "data.displayPrompt": "string",
+        "data.origin": "enum(\"user\"|\"model\")"
+      }
+    },
+    "session.schedule_rearmed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.id": "integer required",
+        "data.nextRunAt": "integer required"
+      }
+    },
+    "session.session_limits_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.sessionLimits": "null | object required",
+        "data.sessionLimits.maxAiCredits": "number"
+      }
+    },
+    "session.shutdown": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolUsageRequestIds": "array<string>",
+        "data.accountingSnapshot": "object",
+        "data.accountingSnapshot.aiCreditsStatus": "enum(\"complete\"|\"partial\"|\"unavailable\")",
+        "data.accountingSnapshot.totalPremiumRequestCost": "number required",
+        "data.accountingSnapshot.totalUserRequests": "integer required",
+        "data.accountingSnapshot.totalNanoAiu": "number",
+        "data.accountingSnapshot.tokenDetails": "object",
+        "data.accountingSnapshot.tokenDetails.*": "object",
+        "data.accountingSnapshot.totalApiDurationMs": "integer required",
+        "data.accountingSnapshot.sessionStartTime": "string required",
+        "data.accountingSnapshot.codeChanges": "object required",
+        "data.accountingSnapshot.codeChanges.linesAdded": "integer required",
+        "data.accountingSnapshot.codeChanges.linesRemoved": "integer required",
+        "data.accountingSnapshot.codeChanges.filesModifiedCount": "integer required",
+        "data.accountingSnapshot.codeChanges.filesModified": "array<string> required",
+        "data.accountingSnapshot.modelMetrics": "object required",
+        "data.accountingSnapshot.modelMetrics.*": "object",
+        "data.accountingSnapshot.providerModelMetrics": "array<object>",
+        "data.accountingSnapshot.providerModelMetrics[]": "object",
+        "data.accountingSnapshot.agentMetrics": "object",
+        "data.accountingSnapshot.agentMetrics.*": "object",
+        "data.accountingSnapshot.currentModel": "string",
+        "data.accountingSnapshot.lastCallInputTokens": "integer required",
+        "data.accountingSnapshot.lastCallOutputTokens": "integer required",
+        "data.providerModelMetrics": "array<object>",
+        "data.providerModelMetrics[]": "object",
+        "data.providerModelMetrics[].provider": "null | object required",
+        "data.providerModelMetrics[].modelId": "string | null required",
+        "data.providerModelMetrics[].modelDisplayName": "string",
+        "data.providerModelMetrics[].metrics": "object required",
+        "data.usageAccountingWatermarks": "object",
+        "data.usageAccountingWatermarks.*": "integer",
+        "data.shutdownType": "enum(\"routine\"|\"error\") required",
+        "data.errorReason": "string",
+        "data.totalPremiumRequests": "number",
+        "data.totalNanoAiu": "number",
+        "data.tokenDetails": "object",
+        "data.tokenDetails.*": "object",
+        "data.tokenDetails.*.tokenCount": "integer required",
+        "data.totalApiDurationMs": "integer required",
+        "data.sessionStartTime": "integer required",
+        "data.eventsFileSizeBytes": "integer",
+        "data.codeChanges": "object required",
+        "data.codeChanges.linesAdded": "integer required",
+        "data.codeChanges.linesRemoved": "integer required",
+        "data.codeChanges.filesModified": "array<string> required",
+        "data.modelMetrics": "object required",
+        "data.modelMetrics.*": "object",
+        "data.modelMetrics.*.requests": "object required",
+        "data.modelMetrics.*.usage": "object required",
+        "data.modelMetrics.*.totalNanoAiu": "number",
+        "data.modelMetrics.*.tokenDetails": "object",
+        "data.agentMetrics": "object",
+        "data.agentMetrics.*": "object",
+        "data.agentMetrics.*.agentName": "string",
+        "data.agentMetrics.*.agentDisplayName": "string",
+        "data.agentMetrics.*.totalApiDurationMs": "integer required",
+        "data.agentMetrics.*.totalNanoAiu": "number required",
+        "data.agentMetrics.*.modelMetrics": "object required",
+        "data.currentModel": "string",
+        "data.currentTokens": "integer",
+        "data.systemTokens": "integer",
+        "data.conversationTokens": "integer",
+        "data.toolDefinitionsTokens": "integer"
+      }
+    },
+    "session.skills_loaded": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.skills": "array<object> required",
+        "data.skills[]": "object",
+        "data.skills[].name": "string required",
+        "data.skills[].commandName": "string",
+        "data.skills[].description": "string required",
+        "data.skills[].source": "enum(\"project\"|\"inherited\"|\"personal-copilot\"|\"personal-agents\"|\"plugin\"|\"custom\"|\"builtin\"|\"sdk\") required",
+        "data.skills[].userInvocable": "boolean required",
+        "data.skills[].enabled": "boolean required",
+        "data.skills[].path": "string",
+        "data.skills[].argumentHint": "string"
+      }
+    },
+    "session.snapshot_rewind": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.upToEventId": "string required",
+        "data.eventsRemoved": "integer required",
+        "data.eventIds": "array<string>"
+      }
+    },
+    "session.start": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.sessionId": "string required",
+        "data.version": "integer required",
+        "data.producer": "string required",
+        "data.copilotVersion": "string required",
+        "data.startTime": "string required",
+        "data.selectedModel": "string",
+        "data.providerId": "string",
+        "data.reasoningEffort": "string",
+        "data.reasoningEffortModel": "string",
+        "data.reasoningEffortManaged": "boolean",
+        "data.reasoningSummary": "enum(\"none\"|\"concise\"|\"detailed\")",
+        "data.verbosity": "enum(\"low\"|\"medium\"|\"high\")",
+        "data.contextTier": "enum(\"default\"|\"long_context\") | null",
+        "data.contextTierManaged": "boolean",
+        "data.autoTier": "string",
+        "data.autoTierManaged": "boolean",
+        "data.sessionLimits": "object",
+        "data.sessionLimits.maxAiCredits": "number",
+        "data.context": "object",
+        "data.context.cwd": "string required",
+        "data.context.gitRoot": "string",
+        "data.context.repository": "string",
+        "data.context.hostType": "enum(\"github\"|\"ado\")",
+        "data.context.repositoryHost": "string",
+        "data.context.branch": "string",
+        "data.context.headCommit": "string",
+        "data.context.baseCommit": "string",
+        "data.context.pendingGitContext": "boolean",
+        "data.githubMcpToolConfig": "object",
+        "data.githubMcpToolConfig.enableAllTools": "boolean",
+        "data.githubMcpToolConfig.additionalToolsets": "array<string>",
+        "data.githubMcpToolConfig.additionalTools": "array<string>",
+        "data.githubMcpToolConfig.enableInsidersMode": "boolean",
+        "data.alreadyInUse": "boolean",
+        "data.remoteSteerable": "boolean",
+        "data.detachedFromSpawningParentSessionId": "string"
+      }
+    },
+    "session.task_complete": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.summary": "string",
+        "data.success": "boolean",
+        "data.outcome": "enum(\"completed\"|\"continue\"|\"blocked\")",
+        "data.reason": "string",
+        "data.objectiveId": "integer",
+        "data.blocker": "object",
+        "data.blocker.kind": "enum(\"permission_recovery\") required",
+        "data.blocker.reason": "enum(\"permission_required\"|\"repeated_attempt\"|\"attempts_exhausted\"|\"permission_approved\"|\"permission_denied\"|\"responder_unavailable\"|\"equivalent_alternative_succeeded\") required",
+        "data.blocker.resumable": "boolean required",
+        "data.blocker.permissionRecovery": "object required",
+        "data.blocker.permissionRecovery.episodeId": "string required",
+        "data.blocker.permissionRecovery.ownerSessionId": "string",
+        "data.blocker.permissionRecovery.ownerAgentId": "string",
+        "data.blocker.permissionRecovery.status": "enum(\"recovering\"|\"awaiting_approval\"|\"resolved\"|\"blocked\") required",
+        "data.blocker.permissionRecovery.onBlocked": "enum(\"ask\"|\"fail\") required",
+        "data.blocker.permissionRecovery.reason": "enum(\"permission_required\"|\"repeated_attempt\"|\"attempts_exhausted\"|\"permission_approved\"|\"permission_denied\"|\"responder_unavailable\"|\"equivalent_alternative_succeeded\") required",
+        "data.blocker.permissionRecovery.maxAttempts": "integer required",
+        "data.blocker.permissionRecovery.attempts": "array<object> required"
+      }
+    },
+    "session.title_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.title": "string required"
+      }
+    },
+    "session.todos_changed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required"
+      }
+    },
+    "session.tools_updated": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.model": "string required"
+      }
+    },
+    "session.truncation": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.tokenLimit": "integer required",
+        "data.preTruncationTokensInMessages": "integer required",
+        "data.preTruncationMessagesLength": "integer required",
+        "data.postTruncationTokensInMessages": "integer required",
+        "data.postTruncationMessagesLength": "integer required",
+        "data.tokensRemovedDuringTruncation": "integer required",
+        "data.messagesRemovedDuringTruncation": "integer required",
+        "data.performedBy": "string required"
+      }
+    },
+    "session.usage_checkpoint": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolUsageRequestIds": "array<string>",
+        "data.totalNanoAiu": "number required",
+        "data.accountingSnapshot": "object",
+        "data.accountingSnapshot.aiCreditsStatus": "enum(\"complete\"|\"partial\"|\"unavailable\")",
+        "data.accountingSnapshot.totalPremiumRequestCost": "number required",
+        "data.accountingSnapshot.totalUserRequests": "integer required",
+        "data.accountingSnapshot.totalNanoAiu": "number",
+        "data.accountingSnapshot.tokenDetails": "object",
+        "data.accountingSnapshot.tokenDetails.*": "object",
+        "data.accountingSnapshot.totalApiDurationMs": "integer required",
+        "data.accountingSnapshot.sessionStartTime": "string required",
+        "data.accountingSnapshot.codeChanges": "object required",
+        "data.accountingSnapshot.codeChanges.linesAdded": "integer required",
+        "data.accountingSnapshot.codeChanges.linesRemoved": "integer required",
+        "data.accountingSnapshot.codeChanges.filesModifiedCount": "integer required",
+        "data.accountingSnapshot.codeChanges.filesModified": "array<string> required",
+        "data.accountingSnapshot.modelMetrics": "object required",
+        "data.accountingSnapshot.modelMetrics.*": "object",
+        "data.accountingSnapshot.providerModelMetrics": "array<object>",
+        "data.accountingSnapshot.providerModelMetrics[]": "object",
+        "data.accountingSnapshot.agentMetrics": "object",
+        "data.accountingSnapshot.agentMetrics.*": "object",
+        "data.accountingSnapshot.currentModel": "string",
+        "data.accountingSnapshot.lastCallInputTokens": "integer required",
+        "data.accountingSnapshot.lastCallOutputTokens": "integer required",
+        "data.providerModelMetrics": "array<object>",
+        "data.providerModelMetrics[]": "object",
+        "data.providerModelMetrics[].provider": "null | object required",
+        "data.providerModelMetrics[].modelId": "string | null required",
+        "data.providerModelMetrics[].modelDisplayName": "string",
+        "data.providerModelMetrics[].metrics": "object required",
+        "data.usageAccountingWatermarks": "object",
+        "data.usageAccountingWatermarks.*": "integer",
+        "data.totalPremiumRequests": "number",
+        "data.modelCacheState": "array<object>",
+        "data.modelCacheState[]": "object",
+        "data.modelCacheState[].modelId": "string required",
+        "data.modelCacheState[].cacheExpiresAt": "string required",
+        "data.modelCacheState[].cacheTtlSeconds": "integer required",
+        "data.promptCacheBreakState": "array<any>"
+      }
+    },
+    "session.usage_info": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.tokenLimit": "integer required",
+        "data.currentTokens": "integer required",
+        "data.messagesLength": "integer required",
+        "data.systemTokens": "integer",
+        "data.conversationTokens": "integer",
+        "data.toolDefinitionsTokens": "integer",
+        "data.isInitial": "boolean"
+      }
+    },
+    "session.usage_record": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.usage": "object required",
+        "data.usage.aiCreditsStatus": "enum(\"complete\"|\"partial\"|\"unavailable\")",
+        "data.usage.model": "string required",
+        "data.usage.provider": "object",
+        "data.usage.provider.id": "string required",
+        "data.usage.provider.label": "string required",
+        "data.usage.provider.kind": "enum(\"copilot\"|\"loki\") required",
+        "data.usage.modelDisplayName": "string",
+        "data.usage.accounting": "object",
+        "data.usage.accounting.sourceSessionId": "string required",
+        "data.usage.accounting.sequence": "integer required",
+        "data.usage.accounting.usageId": "string required",
+        "data.usage.inputTokens": "integer",
+        "data.usage.outputTokens": "integer",
+        "data.usage.cacheReadTokens": "integer",
+        "data.usage.cacheWriteTokens": "integer",
+        "data.usage.cacheExpiresAt": "string",
+        "data.usage.reasoningTokens": "integer",
+        "data.usage.thinkingDroppedBlocks": "integer",
+        "data.usage.thinkingDroppedReasons": "array<string>",
+        "data.usage.cost": "number",
+        "data.usage.duration": "integer",
+        "data.usage.timeToFirstTokenMs": "number",
+        "data.usage.outputTtftMs": "number",
+        "data.usage.interTokenLatencyMs": "number",
+        "data.usage.initiator": "string",
+        "data.usage.interactionType": "string",
+        "data.usage.isByok": "boolean",
+        "data.usage.byokKind": "string",
+        "data.usage.modelProvider": "string",
+        "data.usage.providerType": "string",
+        "data.usage.isAuto": "boolean",
+        "data.usage.maxPromptTokens": "integer",
+        "data.usage.maxOutputTokens": "integer",
+        "data.usage.acceptedPredictionTokens": "integer",
+        "data.usage.rejectedPredictionTokens": "integer",
+        "data.usage.transport": "enum(\"http\"|\"websocket\")",
+        "data.usage.requestBodyBytes": "integer",
+        "data.usage.requestBodyWireBytes": "integer",
+        "data.usage.requestBodyEncoding": "enum(\"identity\"|\"gzip\"|\"zstd\")",
+        "data.usage.requestBodyCompressionFallback": "enum(\"retried\"|\"disabled\")",
+        "data.usage.requestBodyCompressionFallbackFrom": "enum(\"identity\"|\"gzip\"|\"zstd\")",
+        "data.usage.requestBodyCompressionRejectedStatus": "integer",
+        "data.usage.websocketFallbackReason": "enum(\"connect_failed\"|\"connection_unavailable\"|\"send_failed\"|\"api_error\"|\"transport_failed\")",
+        "data.usage.websocketFallbackAfterMs": "integer",
+        "data.usage.websocketFallbackErrorKind": "enum(\"dns\"|\"tls\"|\"timeout\"|\"connection_refused\"|\"connection_reset\"|\"closed_by_peer\"|\"closed_locally\"|\"not_connected\"|\"http_status\"|\"protocol\"|\"configuration\"|\"other\")",
+        "data.usage.websocketFallbackStatusCode": "integer",
+        "data.usage.websocketFallbackCloseCode": "integer",
+        "data.usage.websocketFallbackReconnectAttempted": "boolean",
+        "data.usage.websocketFallbackStartedThisCall": "boolean",
+        "data.usage.apiCallId": "string",
+        "data.usage.providerCallId": "string",
+        "data.usage.serviceRequestId": "string",
+        "data.usage.rte": "boolean",
+        "data.usage.apiEndpoint": "enum(\"/chat/completions\"|\"/v1/messages\"|\"/responses\"|\"ws:/responses\")",
+        "data.usage.parentToolCallId": "string",
+        "data.usage.quotaSnapshots": "object",
+        "data.usage.quotaSnapshots.*": "object",
+        "data.usage.copilotUsage": "object",
+        "data.usage.copilotUsage.model": "string",
+        "data.usage.copilotUsage.tokenDetails": "array<object>",
+        "data.usage.copilotUsage.totalNanoAiu": "number required",
+        "data.usage.reasoningEffort": "string",
+        "data.usage.reasoningSummary": "enum(\"none\"|\"concise\"|\"detailed\")",
+        "data.usage.availableToolCount": "integer",
+        "data.usage.toolTokenCount": "integer",
+        "data.usage.customToolCallCount": "integer",
+        "data.usage.unmatchedToolResultCount": "integer",
+        "data.usage.orphanToolCallCount": "integer",
+        "data.usage.frontierSource": "string",
+        "data.usage.cacheTtlSeconds": "integer",
+        "data.usage.cacheDetailsReported": "boolean",
+        "data.usage.numToolCalls": "integer",
+        "data.usage.toolCounts": "object",
+        "data.usage.toolCounts.*": "integer",
+        "data.usage.finishReason": "string",
+        "data.usage.contentFilterTriggered": "boolean",
+        "data.usage.fusion": "object",
+        "data.usage.fusion.hasUserSteering": "boolean",
+        "data.usage.fusion.fusionId": "string required",
+        "data.usage.fusion.commitId": "string",
+        "data.usage.fusion.syntheticModel": "string required",
+        "data.usage.fusion.policy": "string required",
+        "data.usage.fusion.pattern": "string required",
+        "data.usage.fusion.phaseId": "string",
+        "data.usage.fusion.phaseKind": "string",
+        "data.usage.fusion.role": "string",
+        "data.usage.fusion.sourceModel": "string",
+        "data.usage.fusion.conversationScope": "string",
+        "data.usage.fusion.sourcePhaseId": "string"
+      }
+    },
+    "session.warning": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.warningType": "string required",
+        "data.message": "string required",
+        "data.url": "string",
+        "data.remediation": "enum(\"sign_in\"|\"switch_account\"|\"show_account\"|\"review_sandbox_policy\"|\"allow_sandbox_outbound\"|\"rewind_conversation\")"
+      }
+    },
+    "session.workspace_file_changed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.path": "string required",
+        "data.operation": "enum(\"create\"|\"update\") required"
+      }
+    },
+    "skill.context_delivered": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.content": "string required",
+        "data.source": "string required",
+        "data.interactionId": "string"
+      }
+    },
+    "skill.context_delivered_ref": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.contentId": "string required",
+        "data.prefix": "string",
+        "data.suffix": "string",
+        "data.source": "string required",
+        "data.interactionId": "string"
+      }
+    },
+    "skill.invoked": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.name": "string required",
+        "data.invokedAtTurn": "integer",
+        "data.model": "string",
+        "data.path": "string required",
+        "data.content": "string required",
+        "data.allowedTools": "array<string>",
+        "data.disableModelInvocation": "boolean",
+        "data.source": "string",
+        "data.pluginName": "string",
+        "data.pluginVersion": "string",
+        "data.description": "string",
+        "data.trigger": "enum(\"user-invoked\"|\"agent-invoked\"|\"context-load\")"
+      }
+    },
+    "skill.invoked_ref": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.name": "string required",
+        "data.invokedAtTurn": "integer",
+        "data.model": "string",
+        "data.path": "string required",
+        "data.contentId": "string required",
+        "data.contentLength": "integer required",
+        "data.allowedTools": "array<string>",
+        "data.disableModelInvocation": "boolean",
+        "data.source": "string",
+        "data.pluginName": "string",
+        "data.pluginVersion": "string",
+        "data.description": "string",
+        "data.trigger": "enum(\"user-invoked\"|\"agent-invoked\"|\"context-load\")"
+      }
+    },
+    "subagent.completed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.agentName": "string required",
+        "data.agentDisplayName": "string required",
+        "data.model": "string",
+        "data.firstDispatchedModel": "string",
+        "data.configuredModelPreference": "string",
+        "data.explicitModelOverride": "string",
+        "data.explicitModelMatchesPreference": "boolean",
+        "data.modelOverrideReason": "string",
+        "data.modelSelectionSource": "enum(\"explicit_override\"|\"configured_required\"|\"configured_preference\"|\"complementary_default\"|\"session_inheritance\"|\"agent_definition_default\"|\"runtime_policy\")",
+        "data.configuredModelMatchesActual": "boolean",
+        "data.totalToolCalls": "integer",
+        "data.totalTokens": "integer",
+        "data.durationMs": "integer",
+        "data.cancelled": "boolean"
+      }
+    },
+    "subagent.configured": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.model": "string required",
+        "data.reasoningEffort": "string",
+        "data.contextTier": "string",
+        "data.multiTurn": "boolean required"
+      }
+    },
+    "subagent.deselected": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required"
+      }
+    },
+    "subagent.failed": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.agentName": "string required",
+        "data.agentDisplayName": "string required",
+        "data.error": "string required",
+        "data.model": "string",
+        "data.firstDispatchedModel": "string",
+        "data.configuredModelPreference": "string",
+        "data.explicitModelOverride": "string",
+        "data.explicitModelMatchesPreference": "boolean",
+        "data.modelOverrideReason": "string",
+        "data.modelSelectionSource": "enum(\"explicit_override\"|\"configured_required\"|\"configured_preference\"|\"complementary_default\"|\"session_inheritance\"|\"agent_definition_default\"|\"runtime_policy\")",
+        "data.configuredModelMatchesActual": "boolean",
+        "data.totalToolCalls": "integer",
+        "data.totalTokens": "integer",
+        "data.durationMs": "integer"
+      }
+    },
+    "subagent.selected": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.agentName": "string required",
+        "data.agentDisplayName": "string required",
+        "data.tools": "array<string> | null required"
+      }
+    },
+    "subagent.started": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.agentName": "string required",
+        "data.agentDisplayName": "string required",
+        "data.agentDescription": "string required",
+        "data.model": "string",
+        "data.taskModelSource": "enum(\"task_argument\"|\"subagent_configuration\"|\"custom_agent_definition\"|\"unset\")",
+        "data.modelSelectionSource": "enum(\"explicit_override\"|\"configured_required\"|\"configured_preference\"|\"complementary_default\"|\"session_inheritance\"|\"agent_definition_default\"|\"runtime_policy\")",
+        "data.workflowRunId": "string",
+        "data.parentId": "string",
+        "data.resumable": "boolean",
+        "data.agentType": "string",
+        "data.executionMode": "string"
+      }
+    },
+    "system.message": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.content": "string required",
+        "data.contentBlocks": "array<object>",
+        "data.contentBlocks[]": "object",
+        "data.contentBlocks[].content": "string required",
+        "data.contentBlocks[].isStatic": "boolean",
+        "data.contentBlocks[].cacheBreakpoint": "boolean",
+        "data.interactionId": "string",
+        "data.role": "enum(\"system\"|\"developer\") required",
+        "data.name": "string",
+        "data.metadata": "object",
+        "data.metadata.promptVersion": "string",
+        "data.metadata.variables": "object",
+        "data.metadata.variables.*": "any"
+      }
+    },
+    "system.notification": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.content": "string required",
+        "data.kind": "object required",
+        "data.kind.type": "const(\"agent_completed\") | const(\"agent_idle\") | const(\"instruction_discovered\") | const(\"new_inbox_message\") | const(\"shell_completed\") | const(\"shell_detached_completed\") | const(\"unclassified\") | const(\"workflow_completed\")",
+        "data.kind.agentId": "string",
+        "data.kind.displayName": "string",
+        "data.kind.agentType": "string",
+        "data.kind.status": "enum(\"completed\"|\"failed\") | enum(\"completed\"|\"halted\"|\"paused\"|\"cancelled\"|\"error\")",
+        "data.kind.description": "string",
+        "data.kind.prompt": "string",
+        "data.kind.entryId": "string",
+        "data.kind.senderName": "string",
+        "data.kind.senderType": "string",
+        "data.kind.summary": "string",
+        "data.kind.shellId": "string",
+        "data.kind.exitCode": "integer",
+        "data.kind.sourcePath": "string",
+        "data.kind.triggerFile": "string",
+        "data.kind.triggerTool": "string",
+        "data.kind.runId": "string",
+        "data.kind.workflowName": "string",
+        "data.kind.consumedSubagents": "integer",
+        "data.kind.elapsedMs": "integer",
+        "data.kind.consumedNanoAiu": "integer",
+        "data.kind.attempt": "integer",
+        "data.kind.resultPreview": "string",
+        "data.kind.failure": "any",
+        "data.kind.retryGuidance": "string",
+        "data.kind.pauseInfo": "object",
+        "data.kind.pauseInfo.type": "const(\"checkpoint\") | const(\"user\")",
+        "data.kind.pauseInfo.key": "string",
+        "data.kind.metadata": "any",
+        "data.responsesReasoning": "object",
+        "data.responsesReasoning.model": "string required",
+        "data.responsesReasoning.initialEffort": "string required",
+        "data.responsesReasoning.effort": "string required"
+      }
+    },
+    "tool_search.activated": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.strategy": "string required",
+        "data.toolNames": "array<string> required"
+      }
+    },
+    "tool.execution_complete": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.success": "boolean required",
+        "data.model": "string",
+        "data.toolUsage": "object",
+        "data.toolUsage.requestId": "string required",
+        "data.toolUsage.model": "string required",
+        "data.toolUsage.provider": "object",
+        "data.toolUsage.provider.id": "string required",
+        "data.toolUsage.provider.label": "string required",
+        "data.toolUsage.provider.kind": "enum(\"copilot\"|\"loki\") required",
+        "data.toolUsage.accounting": "object",
+        "data.toolUsage.accounting.sourceSessionId": "string required",
+        "data.toolUsage.accounting.sequence": "integer required",
+        "data.toolUsage.accounting.usageId": "string required",
+        "data.toolUsage.inputTokens": "integer",
+        "data.toolUsage.outputTokens": "integer",
+        "data.toolUsage.totalTokens": "integer",
+        "data.toolUsage.inputTokensDetails": "object",
+        "data.toolUsage.inputTokensDetails.imageTokens": "integer required",
+        "data.toolUsage.inputTokensDetails.textTokens": "integer required",
+        "data.toolUsage.outputTokensDetails": "object",
+        "data.toolUsage.outputTokensDetails.imageTokens": "integer required",
+        "data.toolUsage.outputTokensDetails.textTokens": "integer required",
+        "data.toolUsage.copilotUsage": "object",
+        "data.toolUsage.copilotUsage.model": "string",
+        "data.toolUsage.copilotUsage.tokenDetails": "array<object>",
+        "data.toolUsage.copilotUsage.totalNanoAiu": "number required",
+        "data.toolUsage.quotaSnapshots": "object",
+        "data.toolUsage.quotaSnapshots.*": "any",
+        "data.mcpMeta": "any",
+        "data.interactionId": "string",
+        "data.rte": "boolean",
+        "data.isUserRequested": "boolean",
+        "data.result": "object",
+        "data.result.content": "string required",
+        "data.result.detailedContent": "string",
+        "data.result.contents": "array<object>",
+        "data.result.contents[]": "object",
+        "data.result.binaryResultsForLlm": "array<object>",
+        "data.result.binaryResultsForLlm[]": "object",
+        "data.result.uiResource": "object",
+        "data.result.uiResource.uri": "string required",
+        "data.result.uiResource.mimeType": "string required",
+        "data.result.uiResource.text": "string",
+        "data.result.uiResource.blob": "string",
+        "data.result.uiResource._meta": "object",
+        "data.result.structuredContent": "any",
+        "data.result.citableSources": "array<object>",
+        "data.result.citableSources[]": "object",
+        "data.result.mcpMeta": "any",
+        "data.error": "object",
+        "data.error.message": "string required",
+        "data.error.code": "string",
+        "data.error.remediation": "enum(\"sign_in\"|\"switch_account\"|\"show_account\"|\"review_sandbox_policy\"|\"allow_sandbox_outbound\"|\"rewind_conversation\")",
+        "data.toolTelemetry": "object",
+        "data.toolTelemetry.*": "any",
+        "data.turnId": "string",
+        "data.toolDescription": "object",
+        "data.toolDescription.name": "string required",
+        "data.toolDescription.description": "string",
+        "data.toolDescription._meta": "object",
+        "data.toolDescription._meta.ui": "object",
+        "data.sandboxed": "boolean",
+        "data.shellExecution": "object",
+        "data.shellExecution.exitCode": "integer required",
+        "data.fileEdits": "array<object>",
+        "data.fileEdits[]": "object",
+        "data.fileEdits[].path": "string required",
+        "data.fileEdits[].kind": "enum(\"create\"|\"edit\"|\"delete\") required",
+        "data.parentToolCallId": "string",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string"
+      }
+    },
+    "tool.execution_partial_result": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.partialOutput": "string required"
+      }
+    },
+    "tool.execution_progress": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.progressMessage": "string required",
+        "data.structuredContent": "any"
+      }
+    },
+    "tool.execution_start": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.toolName": "string required",
+        "data.toolTitle": "string",
+        "data.arguments": "any",
+        "data.shellToolInfo": "object",
+        "data.shellToolInfo.possiblePaths": "array<string> required",
+        "data.shellToolInfo.hasWriteFileRedirection": "boolean required",
+        "data.shellToolInfo.displayCommand": "string",
+        "data.model": "string",
+        "data.rte": "boolean",
+        "data.mcpServerName": "string",
+        "data.mcpConfigServerName": "string",
+        "data.mcpToolName": "string",
+        "data.mcpTransport": "enum(\"stdio\"|\"http\"|\"sse\"|\"memory\")",
+        "data.mcpConfigSource": "enum(\"user\"|\"workspace\"|\"plugin\"|\"builtin\"|\"managed\"|\"account\")",
+        "data.turnId": "string",
+        "data.displayVerbatim": "boolean",
+        "data.toolDescription": "object",
+        "data.toolDescription.name": "string required",
+        "data.toolDescription.description": "string",
+        "data.toolDescription._meta": "object",
+        "data.toolDescription._meta.ui": "object",
+        "data.parentToolCallId": "string",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string"
+      }
+    },
+    "tool.shell_output": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.stream": "enum(\"stdout\"|\"stderr\"|\"terminal\")",
+        "data.text": "string required",
+        "data.sequence": "integer required",
+        "data.fusion": "object",
+        "data.fusion.hasUserSteering": "boolean",
+        "data.fusion.fusionId": "string required",
+        "data.fusion.commitId": "string",
+        "data.fusion.syntheticModel": "string required",
+        "data.fusion.policy": "string required",
+        "data.fusion.pattern": "string required",
+        "data.fusion.phaseId": "string",
+        "data.fusion.phaseKind": "string",
+        "data.fusion.role": "string",
+        "data.fusion.sourceModel": "string",
+        "data.fusion.conversationScope": "string",
+        "data.fusion.sourcePhaseId": "string"
+      }
+    },
+    "tool.user_requested": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.toolCallId": "string required",
+        "data.toolName": "string required",
+        "data.arguments": "any"
+      }
+    },
+    "ui.ephemeral_query": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.phase": "enum(\"started\"|\"chunk\"|\"completed\"|\"failed\"|\"aborted\") required",
+        "data.chunk": "string",
+        "data.answer": "string",
+        "data.error": "string"
+      }
+    },
+    "user_input.completed": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.answer": "string",
+        "data.wasFreeform": "boolean"
+      }
+    },
+    "user_input.requested": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.requestId": "string required",
+        "data.question": "string required",
+        "data.choices": "array<string>",
+        "data.allowFreeform": "boolean",
+        "data.toolCallId": "string"
+      }
+    },
+    "user.message": {
+      "ephemeral": false,
+      "fields": {
+        "data": "object required",
+        "data.content": "string required",
+        "data.responsesReasoning": "object",
+        "data.responsesReasoning.model": "string required",
+        "data.responsesReasoning.initialEffort": "string required",
+        "data.responsesReasoning.effort": "string required",
+        "data.messageId": "string",
+        "data.transformedContent": "string",
+        "data.attachments": "array<object>",
+        "data.attachments[]": "object",
+        "data.attachments[].type": "const(\"blob\") | const(\"directory\") | const(\"extension_context\") | const(\"file\") | const(\"github_actions_job\") | const(\"github_commit\") | const(\"github_file\") | const(\"github_file_diff\") | const(\"github_reference\") | const(\"github_release\") | const(\"github_repository\") | const(\"github_snippet\") | const(\"github_tree_comparison\") | const(\"github_url\") | const(\"selection\")",
+        "data.attachments[].path": "string",
+        "data.attachments[].displayName": "string",
+        "data.attachments[].lineRange": "object",
+        "data.attachments[].mimeType": "string",
+        "data.attachments[].assetId": "string",
+        "data.attachments[].byteLength": "integer",
+        "data.attachments[].omittedReason": "enum(\"too_large\"|\"asset_unavailable\")",
+        "data.attachments[].taggedFilesEntry": "string",
+        "data.attachments[].filePath": "string",
+        "data.attachments[].text": "string",
+        "data.attachments[].selection": "object",
+        "data.attachments[].number": "integer",
+        "data.attachments[].title": "string",
+        "data.attachments[].referenceType": "enum(\"issue\"|\"pr\"|\"discussion\")",
+        "data.attachments[].state": "string",
+        "data.attachments[].url": "string",
+        "data.attachments[].repo": "object",
+        "data.attachments[].oid": "string",
+        "data.attachments[].message": "string",
+        "data.attachments[].tagName": "string",
+        "data.attachments[].name": "string",
+        "data.attachments[].jobId": "integer",
+        "data.attachments[].jobName": "string",
+        "data.attachments[].workflowName": "string",
+        "data.attachments[].conclusion": "string",
+        "data.attachments[].description": "string",
+        "data.attachments[].ref": "string",
+        "data.attachments[].head": "object",
+        "data.attachments[].base": "object",
+        "data.attachments[].data": "string",
+        "data.attachments[].extensionId": "string",
+        "data.attachments[].canvasId": "string",
+        "data.attachments[].instanceId": "string",
+        "data.attachments[].payload": "any",
+        "data.attachments[].capturedAt": "string",
+        "data.supportedNativeDocumentMimeTypes": "array<string>",
+        "data.nativeDocumentPathFallbackPaths": "array<string>",
+        "data.source": "string",
+        "data.delivery": "enum(\"idle\"|\"steering\"|\"queued\")",
+        "data.agentMode": "enum(\"interactive\"|\"plan\"|\"autopilot\"|\"shell\")",
+        "data.isAutopilotContinuation": "boolean",
+        "data.interactionId": "string",
+        "data.turnId": "string",
+        "data.parentAgentTaskId": "string"
+      }
+    },
+    "workflow.run_settled": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.runId": "string required",
+        "data.status": "enum(\"completed\"|\"halted\"|\"paused\"|\"cancelled\"|\"error\") required",
+        "data.consumedSubagents": "integer required",
+        "data.consumedNanoAiu": "integer required",
+        "data.elapsedMs": "integer required",
+        "data.failureType": "string"
+      }
+    },
+    "workflow.run_started": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.runId": "string required",
+        "data.workflowName": "string required",
+        "data.attempt": "integer required"
+      }
+    },
+    "workflow.run_updated": {
+      "ephemeral": true,
+      "fields": {
+        "data": "object required",
+        "data.runId": "string required",
+        "data.revision": "integer required"
+      }
+    }
+  }
+}

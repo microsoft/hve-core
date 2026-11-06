@@ -125,6 +125,13 @@ Describe 'Invoke-PesterTests.ps1 parameter forwarding' -Tag 'Unit' {
         # Reset the captured configuration so each test sees a fresh value.
         Remove-Variable -Name CapturedConfig -Scope Global -ErrorAction SilentlyContinue
 
+        $script:RunnerRepoRoot = Join-Path $TestDrive 'runner-repo'
+        $global:RunnerTestRepoRoot = $script:RunnerRepoRoot
+        $PinDirectory = Join-Path $script:RunnerRepoRoot 'scripts/security'
+        New-Item -ItemType Directory -Path $PinDirectory -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../security/ps-module-versions.json') -Destination $PinDirectory
+        Mock git { $global:RunnerTestRepoRoot }
+
         # Intercept Invoke-Pester so the runner does not actually execute tests.
         # Capturing the Configuration argument lets us assert what the runner
         # constructed from its own parameters via pester.config.ps1.
@@ -184,8 +191,75 @@ Describe 'Invoke-PesterTests.ps1 parameter forwarding' -Tag 'Unit' {
         $excludes = Get-FilterArray $global:CapturedConfig.Filter.ExcludeTag
         $excludes | Should -HaveCount 0
     }
+
+    It 'Keeps CI formatting and NUnit output while deferring exit until reports are written' {
+        & $script:RunnerPath -CI
+        $LASTEXITCODE | Should -Be 0
+        $global:CapturedConfig.Run.Exit.Value | Should -BeFalse
+        $global:CapturedConfig.Run.PassThru.Value | Should -BeTrue
+        $global:CapturedConfig.TestResult.Enabled.Value | Should -BeTrue
+        $global:CapturedConfig.TestResult.OutputFormat.Value | Should -Be 'NUnitXml'
+        $global:CapturedConfig.Output.CIFormat.Value | Should -Be 'GithubActions'
+        $FailureJson = Get-Content -LiteralPath (Join-Path $script:RunnerRepoRoot 'logs/pester-failures.json') -Raw
+        $FailureJson | Should -Match '^\[\s*\]\s*$'
+    }
+}
+
+Describe 'CI runner report finalization' -Tag 'Unit' {
+    It 'Finalizes JSON and coverage before exiting <ExpectedExit>' -ForEach @(
+        @{ Case = 'passing'; ExpectedValue = 1; ExpectedExit = 0; FailedCount = 0 }
+        @{ Case = 'failing'; ExpectedValue = 2; ExpectedExit = 1; FailedCount = 1 }
+    ) {
+        $FixtureRoot = Join-Path $TestDrive $Case
+        $TestsRoot = Join-Path $FixtureRoot 'scripts/tests'
+        $CiRoot = Join-Path $FixtureRoot 'scripts/ci'
+        $SecurityRoot = Join-Path $FixtureRoot 'scripts/security'
+        New-Item -ItemType Directory -Path $TestsRoot, $CiRoot, $SecurityRoot -Force | Out-Null
+        Copy-Item -LiteralPath $script:RunnerPath, $script:ConfigPath -Destination $TestsRoot
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../security/ps-module-versions.json') -Destination $SecurityRoot
+        '{"private":true,"scripts":{"test:ps":"pwsh -NoProfile -File scripts/tests/Invoke-PesterTests.ps1"}}' |
+            Set-Content -LiteralPath (Join-Path $FixtureRoot 'package.json')
+        'function Get-RunnerFixtureValue { 1 }' |
+            Set-Content -LiteralPath (Join-Path $CiRoot 'RunnerFixture.ps1')
+        @"
+BeforeAll { . (Join-Path `$PSScriptRoot '../ci/RunnerFixture.ps1') }
+Describe 'Report fixture' -Tag 'Unit' {
+    It 'always passes' { Get-RunnerFixtureValue | Should -Be 1 }
+    It 'matches the requested result' { Get-RunnerFixtureValue | Should -Be $ExpectedValue }
+}
+"@ | Set-Content -LiteralPath (Join-Path $TestsRoot 'RunnerFixture.Tests.ps1')
+
+        Push-Location $FixtureRoot
+        try {
+            $Output = & npm run test:ps -- -CI -CodeCoverage -TestPath scripts/tests/RunnerFixture.Tests.ps1 2>&1
+            $ExitCode = $LASTEXITCODE
+        }
+        finally {
+            Pop-Location
+        }
+
+        $ExitCode | Should -Be $ExpectedExit -Because (($Output | Select-Object -Last 5) -join "`n")
+        $LogsRoot = Join-Path $FixtureRoot 'logs'
+        $Summary = Get-Content -LiteralPath (Join-Path $LogsRoot 'pester-summary.json') -Raw | ConvertFrom-Json
+        $Summary.TotalCount | Should -Be 2
+        $Summary.FailedCount | Should -Be $FailedCount
+        $Summary.PassedCount | Should -Be (2 - $FailedCount)
+        $Summary.CoveragePercent | Should -BeGreaterThan 0
+        $Summary.CoverageTarget | Should -Be 80
+        $Summary.Result | Should -Be $(if ($FailedCount) { 'Failed' } else { 'Passed' })
+        $FailureJson = Get-Content -LiteralPath (Join-Path $LogsRoot 'pester-failures.json') -Raw
+        $FailureJson | Should -Match '^\s*\['
+        $Failures = ConvertFrom-Json -InputObject $FailureJson -NoEnumerate
+        $Failures.Count | Should -Be $FailedCount
+        if ($FailedCount) {
+            $Failures[0].Name | Should -Be 'matches the requested result'
+            $Failures[0].ErrorMessage | Should -Not -BeNullOrEmpty
+        }
+        (Join-Path $LogsRoot 'pester-results.xml') | Should -Exist
+        (Join-Path $LogsRoot 'coverage.xml') | Should -Exist
+    }
 }
 
 AfterAll {
-    Remove-Variable -Name CapturedConfig -Scope Global -ErrorAction SilentlyContinue
+    Remove-Variable -Name CapturedConfig, RunnerTestRepoRoot -Scope Global -ErrorAction SilentlyContinue
 }

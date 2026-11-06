@@ -2,7 +2,7 @@
 title: Design Principles
 description: Design principle rationale and examples for Section 9 of the python-foundational skill
 author: microsoft/hve-core
-ms.date: 2026-07-08
+ms.date: 2026-10-12
 ms.topic: reference
 keywords:
   - python

@@ -46,7 +46,7 @@ Create and update the execution log progressively documenting:
 ### Pre-requisite: Setup
 
 1. Read and follow the `powerpoint` skill instructions in full, including prerequisites and environment recovery.
-2. Read and follow the `pptx.instructions.md` shared instructions.
+2. Follow the shared PowerPoint conventions from `pptx.instructions.md` that the parent passes in its prompt, as text or as the file's path.
 3. Read any additional skill instructions specified in inputs.
 4. Verify the working directory structure exists; create missing directories.
 
@@ -79,7 +79,7 @@ Create or update YAML content files for slides.
    * Use `$color_name` and `$font_name` references resolving against the global style.
    * Create `content-extra.py` when slides require complex drawings beyond what `content.yaml` supports.
    * Organize image files under the slide's `images/` directory.
-5. Verify element positioning follows validation criteria from `pptx.instructions.md`:
+5. Verify element positioning follows validation criteria in the shared PowerPoint conventions:
    * Trace vertical positions to prevent text overlay.
    * Verify width bounds.
    * Maintain minimum margins and element spacing.

@@ -1,0 +1,3041 @@
+/* Copyright (c) 2026 Microsoft Corporation. All rights reserved. */
+/* SPDX-License-Identifier: MIT */
+
+:root {
+  color-scheme: light dark;
+
+  --sl-fb-bg: #ffffff;
+  --sl-fb-bg-subtle: #f6f8fa;
+  --sl-fb-bg-inset: #f6f8fa;
+  --sl-fb-bg-hover: #eff2f5;
+  --sl-fb-bg-selected: #ddf4ff;
+  --sl-fb-fg: #1f2328;
+  --sl-fb-fg-muted: #59636e;
+  --sl-fb-border: #d1d9e0;
+  --sl-fb-border-muted: #e3e8ec;
+  --sl-fb-accent: #0969da;
+  --sl-accent-fg: #ffffff;
+
+  --sl-system: #59636e;
+  --sl-user: #8250df;
+  --sl-assist: #1a7f37;
+  --sl-tool: #bc4c00;
+  --sl-agent: #bf3989;
+  --sl-compact: #127874;
+  --sl-success: #1a7f37;
+  --sl-warning: #9a6700;
+  --sl-danger: #d1242f;
+
+  --sl-shadow: 0 8px 24px rgb(0 0 0 / 0.12), 0 1px 3px rgb(0 0 0 / 0.08);
+  --sl-shadow-float: 0 2px 8px rgb(0 0 0 / 0.16), 0 1px 2px rgb(0 0 0 / 0.12);
+
+  --sl-tok-key: #8250df;
+  --sl-tok-str: #0a3069;
+  --sl-tok-num: #0550ae;
+  --sl-tok-lit: #cf222e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sl-fb-bg: #0d1117;
+    --sl-fb-bg-subtle: #151b23;
+    --sl-fb-bg-inset: #010409;
+    --sl-fb-bg-hover: #1b222c;
+    --sl-fb-bg-selected: #12263f;
+    --sl-fb-fg: #e6edf3;
+    --sl-fb-fg-muted: #9198a1;
+    --sl-fb-border: #30363d;
+    --sl-fb-border-muted: #21262d;
+    --sl-fb-accent: #4493f8;
+    --sl-accent-fg: #0d1117;
+
+    --sl-system: #9198a1;
+    --sl-user: #ab7df8;
+    --sl-assist: #3fb950;
+    --sl-tool: #ffa657;
+    --sl-agent: #db61a2;
+    --sl-compact: #3cbcb0;
+    --sl-success: #3fb950;
+    --sl-warning: #d29922;
+    --sl-danger: #f85149;
+
+    --sl-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+    --sl-shadow-float: 0 2px 8px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
+
+    --sl-tok-key: #d2a8ff;
+    --sl-tok-str: #a5d6ff;
+    --sl-tok-num: #79c0ff;
+    --sl-tok-lit: #ff7b72;
+  }
+}
+
+:root {
+  --sl-bg: var(--background-color-default, var(--sl-fb-bg));
+  --sl-bg-subtle: var(--background-color-muted, var(--sl-fb-bg-subtle));
+  --sl-bg-inset: var(--sl-fb-bg-inset);
+  --sl-bg-hover: var(--sl-fb-bg-hover);
+  --sl-bg-selected: var(--sl-fb-bg-selected);
+  --sl-fg: var(--text-color-default, var(--sl-fb-fg));
+  --sl-fg-muted: var(--text-color-muted, var(--sl-fb-fg-muted));
+  --sl-border: var(--border-color-default, var(--sl-fb-border));
+  --sl-border-muted: var(--border-color-muted, var(--sl-fb-border-muted));
+  --sl-accent: var(--text-color-accent, var(--sl-fb-accent));
+  --sl-focus: var(--sl-accent);
+
+  --sl-font: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+  --sl-mono: ui-monospace, "SF Mono", "Cascadia Code", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sl-ease: cubic-bezier(0.2, 0, 0, 1);
+  --sl-sidebar-w: 280px;
+  --sl-inspector-w: 304px;
+  --sl-panel-bar: 41px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Clip rather than hide so focus and scripts can never scroll the document itself. */
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow: clip;
+  }
+}
+
+body {
+  margin: 0;
+  display: grid;
+  /* A 0-minimum column stops long titles or code from widening the page past the panel. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--sl-bg);
+  color: var(--sl-fg);
+  font: 400 14px/22px var(--sl-font);
+  caret-color: var(--sl-accent);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--sl-accent) 28%, transparent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sl-border) transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: var(--sl-accent);
+  text-underline-offset: 0.2em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: 2px;
+}
+
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -40px;
+  z-index: 50;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--sl-bg);
+  border: 1px solid var(--sl-border);
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+.meta {
+  margin: 0;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--sl-mono);
+  font-size: 12.5px;
+  line-height: 19px;
+}
+
+/* Controls */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--sl-border);
+  border-radius: 6px;
+  background: var(--sl-bg);
+  color: var(--sl-fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms var(--sl-ease), border-color 150ms var(--sl-ease);
+}
+
+.btn:hover {
+  background: var(--sl-bg-hover);
+}
+
+.btn:active {
+  background: var(--sl-bg-selected);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn[aria-busy="true"] {
+  cursor: progress;
+}
+
+.btn[aria-pressed="true"] {
+  background: var(--sl-bg-selected);
+  border-color: color-mix(in srgb, var(--sl-accent) 45%, var(--sl-border));
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: var(--sl-accent);
+  border-color: var(--sl-accent);
+  color: var(--sl-accent-fg);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--sl-accent) 88%, var(--sl-fg));
+}
+
+.btn-icon {
+  width: 28px;
+  padding: 0;
+}
+
+.btn-small {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.link-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--sl-accent);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 8px;
+}
+
+.field-label {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sl-fg-muted);
+}
+
+.field-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--sl-border);
+  border-radius: 6px;
+  background: var(--sl-bg);
+  color: var(--sl-fg-muted);
+}
+
+.field-control:focus-within {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: 1px;
+}
+
+.field-control input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--sl-fg);
+  font: inherit;
+  font-size: 13px;
+}
+
+.tool-step {
+  display: flex;
+  gap: 4px;
+}
+
+/* A recessed track with a raised selected segment. */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sl-fg) 7%, transparent);
+}
+
+.segmented label {
+  position: relative;
+  display: inline-flex;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.segmented span {
+  padding: 1px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--sl-fg-muted);
+  transition: background-color 150ms var(--sl-ease), color 150ms var(--sl-ease);
+}
+
+.segmented label:hover span {
+  color: var(--sl-fg);
+}
+
+.segmented input:checked + span {
+  background: var(--sl-bg);
+  color: var(--sl-fg);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.16);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: 1px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--badge, var(--sl-system)) 12%, transparent);
+  color: var(--sl-fg);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge .icon {
+  width: 12px;
+  height: 12px;
+  color: var(--badge, var(--sl-system));
+}
+
+.badge-current { --badge: var(--sl-accent); }
+.badge-live { --badge: var(--sl-success); }
+.badge-agent { --badge: var(--sl-agent); }
+.badge-warning { --badge: var(--sl-warning); }
+.badge-danger { --badge: var(--sl-danger); }
+
+/* Header */
+
+.topbar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 12px;
+  background: var(--sl-bg-subtle);
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.topbar-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar-title h1 {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-title .meta {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.topbar-actions .refresh-text {
+  margin: 0 4px;
+  white-space: nowrap;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  min-height: 24px;
+  line-height: 18px;
+  border-radius: 999px;
+  border: 1px solid var(--sl-border);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sl-fg);
+  cursor: pointer;
+  transition: background-color 150ms var(--sl-ease), border-color 150ms var(--sl-ease);
+}
+
+/* The chip is the pause control: hovering hints at the action, pressing holds the log still. */
+.status-chip:hover {
+  background: var(--sl-bg-hover);
+}
+
+.status-chip[aria-pressed="true"] {
+  background: var(--sl-bg-selected);
+  border-color: color-mix(in srgb, var(--sl-accent) 45%, var(--sl-border));
+}
+
+.status-chip .icon {
+  width: 12px;
+  height: 12px;
+  color: var(--sl-fg-muted);
+}
+
+.status-chip .status-paused-icon,
+.status-chip[aria-pressed="true"] .status-live-icon {
+  display: none;
+}
+
+.status-chip[aria-pressed="true"] .status-paused-icon {
+  display: block;
+  color: var(--sl-fg);
+}
+
+.status-chip[data-state="live"] .icon { color: var(--sl-success); }
+.status-chip[data-state="idle"] .icon { color: var(--sl-system); }
+.status-chip[data-state="paused"] .icon { color: var(--sl-fg-muted); }
+.status-chip[data-state="stale"] { color: var(--sl-warning); }
+.status-chip[data-state="stale"] .icon { color: var(--sl-warning); }
+.status-chip[data-state="error"] { color: var(--sl-danger); }
+.status-chip[data-state="error"] .icon { color: var(--sl-danger); }
+
+/* Layout */
+
+/*
+ * Three regions: sidebar, log, and inspector. Docked side panels collapse to a 0-width track and the
+ * log takes the space; the tracks animate while panel content keeps its width and is clipped.
+ */
+.layout {
+  --sl-left: var(--sl-sidebar-w);
+  --sl-right: var(--sl-inspector-w);
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--sl-left) minmax(0, 1fr) var(--sl-right);
+  min-height: 0;
+  overflow: hidden;
+  transition: grid-template-columns 200ms var(--sl-ease);
+}
+
+body.sidebar-collapsed .layout {
+  --sl-left: 0px;
+}
+
+/* Dividers between the log and each docked panel. Dragging or arrow keys resize the panel. */
+.splitter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 6;
+  width: 9px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.splitter-left {
+  left: calc(var(--sl-left) - 5px);
+}
+
+.splitter-right {
+  right: calc(var(--sl-right) - 4px);
+}
+
+.splitter::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 3px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background-color 120ms var(--sl-ease);
+}
+
+.splitter:hover::after,
+.splitter.is-active::after {
+  background: color-mix(in srgb, var(--sl-accent) 70%, transparent);
+}
+
+.splitter:focus-visible {
+  outline: none;
+}
+
+.splitter:focus-visible::after {
+  background: var(--sl-focus);
+}
+
+body.is-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+body.is-resizing .layout {
+  transition: none;
+}
+
+body.sidebar-collapsed .splitter-left,
+body.inspector-collapsed .splitter-right {
+  display: none;
+}
+
+body.inspector-collapsed .layout {
+  --sl-right: 0px;
+}
+
+.sidebar,
+.inspector {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--sl-bg-subtle);
+  transition: visibility 0s linear 0s;
+}
+
+.sidebar {
+  grid-column: 1;
+  /* The border takes 1px of the track, so content keeps the rest instead of overflowing. */
+  grid-template-columns: calc(var(--sl-sidebar-w) - 1px);
+  border-right: 1px solid var(--sl-border);
+}
+
+.main-wrap {
+  grid-column: 2;
+}
+
+.inspector {
+  grid-column: 3;
+  grid-row: 1;
+  grid-template-columns: calc(var(--sl-inspector-w) - 1px);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  border-left: 1px solid var(--sl-border);
+}
+
+body.sidebar-collapsed .sidebar,
+body.inspector-collapsed .inspector {
+  visibility: hidden;
+  border-width: 0;
+  transition: visibility 0s linear 200ms;
+}
+
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: var(--sl-panel-bar);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+/* A panel's tab row and its width button share the bar; the tabs keep their own row semantics. */
+.panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding-right: 6px;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.panel-bar > .tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+/* Tighter sidebar tabs leave room for the width button at the sidebar's narrowest width. */
+.sidebar .panel-bar > .tabs {
+  padding-left: 8px;
+}
+
+.sidebar .tab {
+  padding-inline: 8px;
+}
+
+.panel-width {
+  flex: none;
+  min-height: 24px;
+  width: 24px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--sl-fg-muted);
+}
+
+.panel-width:hover {
+  border-color: var(--sl-border);
+  color: var(--sl-fg);
+}
+
+.tab {
+  position: relative;
+  border: 0;
+  border-radius: 6px 6px 0 0;
+  padding: 6px 10px 9px;
+  background: transparent;
+  color: var(--sl-fg-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--sl-fg);
+  background: var(--sl-bg-hover);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--sl-fg);
+  font-weight: 600;
+}
+
+.tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--sl-accent);
+}
+
+/* The inspector's view switch sits under the agent title, shorter than the panel bars. */
+.inspector-tabs {
+  height: 34px;
+}
+
+.inspector-tabs .tab {
+  padding: 4px 10px 7px;
+}
+
+.panel {
+  position: relative;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  min-height: 0;
+}
+
+.panel:focus-visible {
+  outline-offset: -2px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--sl-fg);
+}
+
+/* Section headings collapse their section; the space flows to the sections that stay open. */
+.section-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  margin: 0 0 0 -4px;
+  padding: 0 6px 0 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.section-toggle:hover {
+  background: var(--sl-bg-hover);
+}
+
+.section-toggle .icon {
+  width: 12px;
+  height: 12px;
+  color: var(--sl-fg-muted);
+  transform: rotate(90deg);
+  transition: transform 150ms var(--sl-ease);
+}
+
+.section-toggle[aria-expanded="false"] .icon {
+  transform: none;
+}
+
+.outline-section.is-collapsed,
+.inspector-section.is-collapsed {
+  flex: none;
+  min-height: 0;
+}
+
+/* When the filling section is collapsed, the bounded sections may use the space instead. */
+.panel-outline:has(> .outline-prompts.is-collapsed) > .outline-agents:not(.is-collapsed) {
+  flex: 0 1 auto;
+  max-height: none;
+}
+
+.inspector-body:has(> .tools-section.is-collapsed) > .inspector-section > .short-well {
+  max-height: none;
+}
+
+/* A collapsed panel section keeps only its heading; a collapsed tool entry hides just its tool body. */
+:is(.outline-section, .inspector-section, .context-section).is-collapsed > :not(.panel-heading, .panel-heading-row) {
+  display: none;
+}
+
+:is(.outline-section, .inspector-section, .context-section).is-collapsed > :is(.panel-heading, .panel-heading-row) {
+  margin-bottom: 0;
+}
+
+#detailsContent > .panel-heading:not(:first-child) {
+  margin-top: 16px;
+}
+
+/* Panel toggles fill the panel's side of the icon while that panel is shown. */
+.panel-toggle[aria-expanded="true"] .icon {
+  fill: currentColor;
+  fill-opacity: 0.45;
+}
+
+.heading-count {
+  color: var(--sl-fg-muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  min-height: 24px;
+  margin: 0 0 6px;
+}
+
+/* The heading stays on one line; in a narrow panel its actions move to the next line instead. */
+.panel-heading-row .panel-heading {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.panel-heading-row > :last-child:not(:first-child) {
+  margin-left: auto;
+}
+
+/*
+ * Outline and inspector stack their sections in a column. Each list is a bounded scroll well that
+ * shrinks before the panel itself has to scroll; the panel scrolls only once the wells reach their
+ * minimum heights. Inspector sections size to their content and sit closer together.
+ */
+.panel-outline,
+.inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inspector-body {
+  gap: 12px;
+}
+
+.outline-section,
+.inspector-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: none;
+}
+
+.outline-section > *,
+.inspector-section > * {
+  flex: none;
+}
+
+.outline-agents {
+  flex: 0 1 auto;
+  max-height: 45%;
+  min-height: 112px;
+}
+
+.outline-prompts {
+  flex: 1 1 0;
+  min-height: 168px;
+}
+
+.scroll-well {
+  /* Positioned so visually hidden row labels stay inside the scroll box. */
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 1px solid var(--sl-border-muted);
+  border-radius: 8px;
+  background: var(--sl-bg);
+}
+
+.outline-section > .scroll-well {
+  flex: 0 1 auto;
+  min-height: 64px;
+}
+
+.outline-prompts > .scroll-well {
+  flex: 1 1 auto;
+}
+
+/*
+ * Long Activity sections start from a floor set on the section and share the free height, each
+ * growing no taller than its content; the panel scrolls only when the floors do not fit. A floor
+ * here is a heading and one item. Wells inside keep only a small backstop, so a heading that wraps
+ * in a narrow panel takes height from the well instead of pushing into the next section.
+ */
+.inspector-section:not(.is-collapsed):has(> .short-well > li:nth-child(2)) {
+  flex: 1 1 88px;
+  min-height: 88px;
+  max-height: max-content;
+}
+
+.inspector-section > .short-well {
+  flex: 0 1 auto;
+  min-height: 28px;
+  max-height: 188px;
+}
+
+.list-empty {
+  padding: 6px 8px;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.tools-section {
+  flex: none;
+}
+
+/* A long call list takes a double share of the free height; its floor keeps about three rows. */
+.tools-section:not(.is-collapsed):has(> .tool-index > li:nth-child(5)) {
+  flex: 2 1 228px;
+  min-height: 228px;
+  max-height: max-content;
+}
+
+.tool-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0 0 6px;
+}
+
+.tool-count {
+  margin: 0 0 4px;
+}
+
+.tool-sort {
+  gap: 4px;
+}
+
+.tool-sort[data-order="desc"] .icon {
+  transform: scaleY(-1);
+}
+
+.tools-section > .tool-index {
+  /* Positioned so visually hidden row labels stay inside the scroll box. */
+  position: relative;
+  flex: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 1px solid var(--sl-border-muted);
+  border-radius: 8px;
+  background: var(--sl-bg);
+}
+
+/* Long lists shrink with their section; short lists keep their size. */
+.tools-section > .tool-index:has(> li:nth-child(5)) {
+  flex: 0 1 auto;
+  min-height: 40px;
+}
+
+.nav-item.nav-item-compaction {
+  margin: 2px 0;
+  border: 1px dashed var(--sl-compact);
+  background: color-mix(in srgb, var(--sl-compact) 6%, transparent);
+}
+
+.nav-item.nav-item-compaction:hover {
+  background: color-mix(in srgb, var(--sl-compact) 12%, var(--sl-bg));
+}
+
+.nav-item-compaction .nav-item-name,
+.nav-item-compaction .compaction-icon {
+  color: var(--sl-compact);
+}
+
+.nav-item-compaction .nav-item-name {
+  font-family: var(--sl-font);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.main-wrap {
+  position: relative;
+  display: grid;
+  /* Explicit 0-minimum tracks keep wide content from widening the log column past the panel. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main {
+  grid-row: 2;
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  scroll-padding-top: 48px;
+}
+
+.pinned-prompt:not([hidden]) {
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 24px;
+  border: 0;
+  border-bottom: 1px solid var(--sl-border);
+  background: var(--sl-bg-subtle);
+  color: var(--sl-fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pinned-prompt:hover:not(:disabled) {
+  background: var(--sl-bg-hover);
+}
+
+.pinned-prompt:disabled {
+  color: var(--sl-fg-muted);
+  cursor: default;
+}
+
+.pinned-prompt:disabled .pinned-prompt-text {
+  font-weight: 400;
+}
+
+.pinned-prompt:disabled .icon:last-child {
+  display: none;
+}
+
+.pinned-prompt .icon:first-child {
+  color: var(--sl-user);
+}
+
+.pinned-prompt-time {
+  color: var(--sl-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pinned-prompt-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.scroll-nav {
+  position: absolute;
+  z-index: 3;
+  right: 24px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scroll-nav .btn {
+  position: relative;
+  width: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sl-bg-subtle);
+  box-shadow: var(--sl-shadow-float);
+}
+
+.scroll-nav .btn:hover {
+  background: var(--sl-bg-hover);
+}
+
+.newer-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--sl-accent);
+  color: var(--sl-accent-fg);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.main-inner {
+  margin: 0;
+  padding: 16px 24px 48px;
+}
+
+/* The log takes all the width it is given; running prose keeps a readable measure. */
+.feed .prose > :is(p, ul, ol, blockquote, h1, h2, h3, h4, h5, h6) {
+  max-width: 90ch;
+}
+
+.scrim {
+  display: none;
+}
+
+/* Inspector */
+
+.inspector-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--sl-panel-bar);
+  min-width: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.inspector-title-icon {
+  flex: none;
+  color: var(--sl-agent);
+}
+
+.inspector-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector-role {
+  flex: none;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+}
+
+.inspector-head .badge {
+  flex: none;
+}
+
+.inspector-head .entry-status {
+  flex: none;
+  margin-left: auto;
+}
+
+.agent-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  flex: none;
+}
+
+.overview-description {
+  margin: 0;
+  color: var(--sl-fg-muted);
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+/* Long descriptions show three lines until Show more, keeping what follows in view. */
+.description-clamp:not(.is-open) > .clamp-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.description-toggle {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/*
+ * The preview shares the free height like the other sections, down to its title and about two
+ * lines; once text is cut off, the fade and Expand show there is more. Expanded instructions keep
+ * their full height.
+ */
+.agent-instructions {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.agent-instructions > .io-box {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.agent-instructions .io-head {
+  flex: none;
+}
+
+.instructions-section:not(.is-collapsed):has(.io-box:not(.is-expanded)) {
+  flex: 1 1 100px;
+  min-height: 100px;
+  max-height: max-content;
+}
+
+.instructions-section > .agent-instructions:has(.io-box:not(.is-expanded)) {
+  flex: 0 1 auto;
+}
+
+.agent-instructions .io-box:not(.is-expanded) .io-body {
+  flex: 0 1 auto;
+  min-height: 24px;
+}
+
+.agent-instructions .io-box:not(.is-short, .is-expanded) .io-body {
+  max-height: 120px;
+}
+
+.overview-model {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.overview-model .icon {
+  flex: none;
+  color: var(--sl-fg-muted);
+}
+
+/* Each stat spans two subgrid rows, so labels that wrap keep values aligned across the row. */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: auto;
+  gap: 0 12px;
+  margin: 0;
+}
+
+.stat {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  align-content: end;
+  min-width: 0;
+  padding-bottom: 6px;
+}
+
+.stat-wide {
+  grid-column: span 2;
+}
+
+.stat dt {
+  align-self: end;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.stat dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* Two- and three-line list rows: name and time, then what happened, then supporting detail. */
+.nav-item.rich-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.rich-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rich-row-name {
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rich-row-head .nav-item-time {
+  margin-left: auto;
+}
+
+.rich-row-text {
+  font-size: 12.5px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.rich-row-meta {
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.rich-row-meta.mono {
+  font-family: var(--sl-mono);
+  font-size: 11.5px;
+}
+
+.rich-row-error {
+  color: var(--sl-danger);
+}
+
+.nav-item.rich-row[aria-current="true"] {
+  background: color-mix(in srgb, var(--sl-accent) 8%, transparent);
+}
+
+.compaction-row .compaction-icon,
+.compaction-row .rich-row-name {
+  color: var(--sl-compact);
+}
+
+.compaction-row.status-failed .compaction-icon,
+.compaction-row.status-failed .rich-row-name {
+  color: var(--sl-danger);
+}
+
+.compaction-row.status-running .rich-row-name::after {
+  content: "…";
+}
+
+/* Sidebar lists */
+
+.session-list,
+.nav-list,
+.agent-tree,
+.agent-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.session-item {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sl-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.session-item:hover {
+  background: var(--sl-bg-hover);
+}
+
+.session-item[aria-current="true"] {
+  background: var(--sl-bg-selected);
+}
+
+.session-item-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.session-item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.session-item-cwd {
+  overflow: hidden;
+  font-family: var(--sl-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sl-fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: var(--sl-bg-hover);
+}
+
+.nav-item .icon {
+  width: 12px;
+  height: 12px;
+  align-self: center;
+}
+
+.nav-item-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-item-name {
+  font-family: var(--sl-mono);
+  font-size: 12px;
+  color: var(--sl-fg);
+}
+
+.nav-item-time {
+  flex: none;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-icon-succeeded { color: var(--sl-success); }
+.status-icon-failed { color: var(--sl-danger); }
+.status-icon-running { color: var(--sl-fg-muted); }
+
+.agent-tree ul {
+  margin-left: 12px;
+  padding-left: 8px;
+  border-left: 1px solid var(--sl-border-muted);
+}
+
+.agent-node {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sl-fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-node:hover {
+  background: var(--sl-bg-hover);
+}
+
+.agent-node[aria-current="true"] {
+  background: var(--sl-bg-selected);
+  font-weight: 600;
+}
+
+.agent-node .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--sl-agent);
+}
+
+.agent-node-meta {
+  flex-basis: 100%;
+  padding-left: 20px;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Breadcrumb and agent header */
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.breadcrumb li + li::before {
+  content: "/";
+  margin-right: 4px;
+  color: var(--sl-fg-muted);
+}
+
+.breadcrumb [aria-current="page"] {
+  font-weight: 600;
+}
+
+.agent-header-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.fact dt {
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.fact dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.meter-row {
+  display: grid;
+  gap: 4px;
+}
+
+.meter {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sl-border-muted);
+}
+
+.meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--sl-accent);
+}
+
+.meter-tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--sl-fg-muted);
+}
+
+.meter-tick.compaction {
+  background: var(--sl-compact);
+}
+
+/* Feed */
+
+.feed:focus-visible {
+  outline-offset: 4px;
+}
+
+.feed-notice {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+  background: var(--sl-bg-subtle);
+}
+
+.feed-notice[data-tone="error"] {
+  border-color: color-mix(in srgb, var(--sl-danger) 45%, var(--sl-border));
+}
+
+.load-earlier {
+  display: flex;
+  margin: 0 auto 12px;
+}
+
+.btn-compact {
+  width: 24px;
+  min-height: 24px;
+}
+
+.tool-collapse {
+  align-self: center;
+  border-color: transparent;
+  background: transparent;
+}
+
+.tool-collapse .icon {
+  transition: transform 150ms var(--sl-ease);
+}
+
+.tool-collapse[aria-expanded="true"] .icon {
+  transform: rotate(90deg);
+}
+
+.entry.is-collapsed .tool-body {
+  display: none;
+}
+
+.tool-body {
+  display: grid;
+  gap: 6px;
+}
+
+/* Bounded input and output boxes */
+
+.io-box {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.io-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.io-title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.io-head > .meta:not(.io-note) {
+  white-space: nowrap;
+}
+
+.io-head .io-toggle {
+  flex: none;
+  margin-left: auto;
+}
+
+.io-body {
+  position: relative;
+  max-height: 168px;
+  overflow: hidden;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.io-body .code-well {
+  max-height: none;
+  overflow: visible;
+}
+
+/* Prose in a bounded box reads like the log's messages, inside the same well. */
+.io-body > .prose {
+  padding: 8px 10px;
+  border: 1px solid var(--sl-border-muted);
+  border-radius: 8px;
+  background: var(--sl-bg-inset, var(--sl-bg));
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.io-box.anchor-end:not(.is-expanded) .io-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.io-box:not(.is-expanded):not(.is-short) .io-body::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  height: 32px;
+  pointer-events: none;
+}
+
+.io-box.anchor-start:not(.is-expanded):not(.is-short) .io-body::after {
+  bottom: 1px;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(transparent, var(--sl-bg-inset));
+}
+
+.io-box.anchor-end:not(.is-expanded):not(.is-short) .io-body::after {
+  top: 1px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(var(--sl-bg-inset), transparent);
+}
+
+.io-box.is-short .io-body,
+.io-box.is-expanded .io-body {
+  cursor: auto;
+}
+
+/* Boxes and code wells scroll only while focused (clicked into); otherwise the wheel scrolls the log. */
+.io-box.is-expanded .io-body {
+  max-height: min(70vh, 720px);
+  overflow: hidden;
+}
+
+.io-box.is-expanded .io-body:focus-within {
+  overflow-y: auto;
+}
+
+.io-body:focus-visible,
+.io-box.is-expanded .io-body:focus {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: 1px;
+}
+
+.io-hint {
+  display: none;
+}
+
+.io-box.is-expanded.has-overflow:not(:focus-within) .io-hint {
+  display: inline;
+}
+
+.feed .code-well:not(.io-pre) {
+  overflow-y: hidden;
+}
+
+.feed .code-well:not(.io-pre):focus {
+  overflow-y: auto;
+}
+
+.io-box.tone-error .code-well {
+  border-color: color-mix(in srgb, var(--sl-danger) 45%, var(--sl-border));
+}
+
+.io-box.tone-error .io-title {
+  color: var(--sl-danger);
+}
+
+.io-pending {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tok-key { color: var(--sl-tok-key); }
+.tok-str { color: var(--sl-tok-str); }
+.tok-num { color: var(--sl-tok-num); }
+.tok-bool,
+.tok-null { color: var(--sl-tok-lit); }
+.tok-punc { color: var(--sl-fg-muted); }
+.tok-tag { color: var(--sl-tok-num); }
+
+/* Drill-down rows (hook runs, system prompt sections) */
+
+.drill-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.drill > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.drill > summary::-webkit-details-marker {
+  display: none;
+}
+
+.drill > summary:hover {
+  background: var(--sl-bg-hover);
+}
+
+.drill > summary > .icon:first-child {
+  transition: transform 150ms var(--sl-ease);
+}
+
+.drill[open] > summary > .icon:first-child {
+  transform: rotate(90deg);
+}
+
+.drill-body {
+  display: grid;
+  gap: 6px;
+  padding: 4px 0 8px 22px;
+}
+
+.drill-label {
+  font-weight: 600;
+}
+
+.drill-note {
+  margin: 2px 0 2px 24px;
+}
+
+/* Compaction: a dashed band in its own hue marks where the conversation was summarized. */
+.entry-compaction:not(.compaction-start) {
+  margin: 16px 0;
+  padding: 10px 0;
+  border-block: 1px dashed var(--sl-compact);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--sl-compact) 6%, transparent);
+}
+
+.entry-compaction.compaction-start {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--sl-compact);
+  border-radius: 0;
+}
+
+.entry-compaction .entry-role {
+  font-weight: 600;
+}
+
+.entry-compaction .drill-list {
+  margin-top: 2px;
+}
+
+.share-bar {
+  display: inline-block;
+  width: 72px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sl-border-muted);
+  overflow: hidden;
+}
+
+.share-fill {
+  display: block;
+  height: 100%;
+  background: var(--sl-system);
+}
+
+.sp-body {
+  display: grid;
+  gap: 8px;
+}
+
+.sp-heading {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--sl-fg-muted);
+}
+
+.sp-heading-inline {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+/* Hooks */
+
+.hook-failure {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.hook-failure .icon {
+  flex: none;
+  align-self: center;
+  color: var(--sl-danger);
+}
+
+.hook-runs {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hook-run > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.hook-run > summary::-webkit-details-marker {
+  display: none;
+}
+
+.hook-run > summary:hover {
+  background: var(--sl-bg-hover);
+}
+
+.hook-run > summary > .icon:first-child {
+  transition: transform 150ms var(--sl-ease);
+}
+
+.hook-run[open] > summary > .icon:first-child {
+  transform: rotate(90deg);
+}
+
+.hook-run-body {
+  display: grid;
+  gap: 6px;
+  padding: 4px 0 8px 22px;
+}
+
+.entry {
+  --role: var(--sl-system);
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 8px;
+  padding: 4px 0;
+  border-radius: 6px;
+}
+
+.entry::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--sl-border-muted);
+}
+
+.feed > .entry:first-child::before {
+  top: 12px;
+}
+
+.entry:focus-visible {
+  outline-offset: 0;
+}
+
+.entry.is-new {
+  animation: sl-new 1.2s var(--sl-ease) 1;
+}
+
+@keyframes sl-new {
+  from { background: color-mix(in srgb, var(--sl-accent) 12%, transparent); }
+  to { background: transparent; }
+}
+
+.entry-user { --role: var(--sl-user); margin-top: 24px; }
+.feed > .entry-user:first-child { margin-top: 0; }
+.entry-assistant { --role: var(--sl-assist); }
+.entry-tool { --role: var(--sl-tool); }
+.entry-agent { --role: var(--sl-agent); }
+.entry-warning { --role: var(--sl-warning); }
+.entry-compaction { --role: var(--sl-compact); }
+.entry-error,
+.entry-abort { --role: var(--sl-danger); }
+.entry-turn { margin-top: 12px; }
+
+.marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--role) 14%, var(--sl-bg));
+  color: var(--role);
+}
+
+.marker .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.entry-content {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-height: 22px;
+}
+
+.entry-head h3 {
+  display: inline;
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.entry-role {
+  color: var(--role);
+}
+
+.entry-name {
+  font-family: var(--sl-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--sl-fg);
+}
+
+.entry-meta {
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.entry-status .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.entry-status.succeeded { color: var(--sl-success); }
+.entry-status.failed { color: var(--sl-danger); }
+.entry-status.running { color: var(--sl-fg-muted); }
+
+.entry-summary {
+  margin: 0;
+  color: var(--sl-fg);
+  overflow-wrap: anywhere;
+}
+
+.entry-summary.muted {
+  color: var(--sl-fg-muted);
+}
+
+.entry-turn .entry-head h3 {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sl-fg-muted);
+}
+
+.entry-turn .marker {
+  background: var(--sl-bg);
+  color: var(--sl-fg-muted);
+}
+
+.new-badge {
+  display: none;
+}
+
+.prose {
+  max-width: 76ch;
+  overflow-wrap: anywhere;
+}
+
+.prose > :first-child { margin-top: 0; }
+.prose > :last-child { margin-bottom: 0; }
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose .md-table,
+.prose pre {
+  margin: 0 0 8px;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 22px;
+}
+
+.prose li + li {
+  margin-top: 2px;
+}
+
+.prose blockquote {
+  padding-left: 12px;
+  border-left: 1px solid var(--sl-border);
+  color: var(--sl-fg-muted);
+}
+
+.prose .md-heading {
+  margin: 12px 0 6px;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.prose .md-h1 {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--sl-border-muted);
+  margin: 12px 0;
+}
+
+.prose code,
+.kv code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--sl-bg-inset);
+  font-family: var(--sl-mono);
+  font-size: 12.5px;
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+}
+
+.md-table {
+  overflow: auto;
+  max-width: 100%;
+}
+
+.md-table table,
+.data-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-table th,
+.md-table td,
+.data-table th,
+.data-table td {
+  padding: 4px 8px;
+  border: 1px solid var(--sl-border-muted);
+  text-align: left;
+  vertical-align: top;
+}
+
+.md-table th,
+.data-table th {
+  background: var(--sl-bg-subtle);
+  font-weight: 600;
+}
+
+.code-well {
+  margin: 0;
+  padding: 8px 10px;
+  max-height: 480px;
+  overflow: auto;
+  border: 1px solid var(--sl-border-muted);
+  border-radius: 8px;
+  background: var(--sl-bg-inset);
+  color: var(--sl-fg);
+  font-family: var(--sl-mono);
+  font-size: 12.5px;
+  line-height: 19px;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.code-well.wrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Disclosures */
+
+.disclosure {
+  min-width: 0;
+}
+
+.disclosure > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 6px 0 2px;
+  border-radius: 6px;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure > summary:hover {
+  color: var(--sl-fg);
+  background: var(--sl-bg-hover);
+}
+
+.disclosure > summary .icon {
+  width: 12px;
+  height: 12px;
+  transition: transform 150ms var(--sl-ease);
+}
+
+.disclosure[open] > summary .icon {
+  transform: rotate(90deg);
+}
+
+.disclosure-body {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 4px 2px;
+}
+
+.detail-block {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.detail-block-title {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--sl-fg-muted);
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.kv dt {
+  color: var(--sl-fg-muted);
+}
+
+.kv dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subagent card */
+
+.subagent-card {
+  display: grid;
+  gap: 6px;
+  max-width: 76ch;
+  padding: 10px 12px;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+  background: var(--sl-bg-subtle);
+}
+
+.subagent-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.subagent-card-head .icon {
+  color: var(--sl-agent);
+}
+
+.subagent-card-name {
+  font-weight: 600;
+}
+
+/* Details panel */
+
+.source-note {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--sl-fg-muted);
+}
+
+/* Sort chips: the pressed chip is the active order; pressing it again reverses the order. */
+.sort-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-chip {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  background: var(--sl-bg);
+  color: var(--sl-fg-muted);
+  font: inherit;
+  font-size: 12px;
+  line-height: 22px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sort-chip:hover {
+  color: var(--sl-fg);
+  background: var(--sl-bg-hover);
+}
+
+.sort-chip[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--sl-accent) 55%, var(--sl-border));
+  background: color-mix(in srgb, var(--sl-accent) 12%, var(--sl-bg));
+  color: var(--sl-fg);
+  font-weight: 600;
+}
+
+.def-note {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sl-fg-muted);
+}
+
+.def-note .icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+.def-note.tone-warning .icon {
+  color: var(--sl-warning);
+}
+
+/* Definition boxes sit in the narrow inspector: let the header wrap rather than squeeze the title. */
+.def-body .io-head {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+.def-subhead {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--sl-fg);
+}
+
+.run-head .item-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.param-list,
+.run-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.param-list > li,
+.run-list > li {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--sl-border-muted);
+}
+
+.param-head,
+.run-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.param-name {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.param-type {
+  font-family: var(--sl-mono);
+  font-size: 11.5px;
+  line-height: 17px;
+  color: var(--sl-tok-num);
+  overflow-wrap: anywhere;
+}
+
+.param-desc {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sl-fg-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.run-list .detail-actions {
+  margin-top: 2px;
+}
+
+/*
+ * Context view: a filter, a status line, and ten collapsible sections. Expanded sections share
+ * the panel height, each list scrolling in its own well. Sections never shrink below their
+ * heading, note, sort bar, and a short list; past that the panel scrolls instead of overlapping.
+ */
+.context-home {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.context-filter {
+  flex: none;
+  margin: 0;
+}
+
+.context-status {
+  flex: none;
+  margin: -6px 0 0;
+}
+
+.context-status:empty {
+  display: none;
+}
+
+.context-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/*
+ * Lists of up to four items take their content height. Longer lists start from a floor set on the
+ * section (heading, one-line note, and about two and a half rows) and share the free height, each
+ * growing no taller than its content; the panel scrolls only when the floors do not fit. A note or
+ * heading that wraps takes height from the list, which keeps only a small backstop.
+ */
+.context-section {
+  flex: none;
+}
+
+.context-section:not(.is-collapsed):has(> .context-list > li:nth-child(5)) {
+  flex: 1 1 172px;
+  min-height: 172px;
+  max-height: max-content;
+}
+
+.context-section.is-collapsed {
+  flex: none;
+  min-height: 0;
+}
+
+.context-section.is-empty .section-toggle {
+  color: var(--sl-fg-muted);
+}
+
+.context-section > .source-note {
+  flex: none;
+  margin: -2px 0 6px;
+}
+
+.context-section > .panel-heading-row .sort-bar {
+  flex-wrap: nowrap;
+}
+
+.context-list {
+  flex: none;
+  margin: 0;
+  list-style: none;
+}
+
+/* Long lists shrink with their section; the small backstop only matters in a narrow panel. */
+.context-list:has(> li:nth-child(5)) {
+  flex: 0 1 auto;
+  min-height: 40px;
+}
+
+.context-item {
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sl-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.context-item:hover {
+  background: var(--sl-bg-hover);
+}
+
+.context-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.context-item-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-item-name.mono {
+  font-family: var(--sl-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.context-item-count {
+  flex: none;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--sl-fg-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.context-item-count:not(.is-zero) {
+  color: var(--sl-fg);
+}
+
+.context-item-failed {
+  color: var(--sl-danger);
+}
+
+.context-item-sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.context-item-sub .badge {
+  flex: none;
+}
+
+.context-item-desc {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sl-fg-muted);
+  text-overflow: ellipsis;
+}
+
+/* Definition page: Back, the item's name and use, then what the model receives. */
+.context-detail {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.def-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -2px 0 4px;
+}
+
+.def-back {
+  gap: 4px;
+  max-width: 70%;
+}
+
+.def-back > :last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.def-kind {
+  flex: none;
+  color: var(--sl-fg-muted);
+  font-size: 12px;
+}
+
+.def-title {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.def-title.mono {
+  font-family: var(--sl-mono);
+  font-size: 14px;
+}
+
+.def-title:focus-visible {
+  outline-offset: 2px;
+}
+
+.def-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.def-meta .is-zero {
+  color: var(--sl-fg-muted);
+}
+
+.def-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.def-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.def-action {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--sl-border-muted);
+  border-radius: 6px;
+  background: var(--sl-bg);
+}
+
+.def-action-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 8px;
+  margin: 0;
+}
+
+.def-action-head code {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.def-action-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sl-fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.related-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.related-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sl-fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.related-item:hover {
+  background: var(--sl-bg-hover);
+}
+
+.related-item.is-static {
+  cursor: default;
+}
+
+.related-item.is-static:hover {
+  background: transparent;
+}
+
+.related-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.related-name.mono {
+  font-family: var(--sl-mono);
+  font-size: 12px;
+}
+
+.related-item .meta {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* States */
+
+.skeleton {
+  display: grid;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.skeleton-row {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--sl-bg-subtle);
+}
+
+.skeleton-row.short { width: 40%; }
+.skeleton-row.mid { width: 70%; }
+
+.empty-state {
+  display: grid;
+  gap: 8px;
+  max-width: 60ch;
+  padding: 24px;
+  border: 1px dashed var(--sl-border);
+  border-radius: 8px;
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+/* Dialog */
+
+.dialog {
+  max-width: min(520px, 92vw);
+  padding: 16px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--sl-bg-subtle);
+  color: var(--sl-fg);
+  box-shadow: var(--sl-shadow);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+
+.dialog h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.shortcut-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shortcut-switch input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--sl-accent);
+}
+
+.shortcut-table {
+  width: 100%;
+  margin: 12px 0;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.shortcut-table th,
+.shortcut-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--sl-border-muted);
+  text-align: left;
+  font-weight: 400;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--sl-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--sl-bg-subtle);
+  font-family: var(--sl-mono);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Responsive */
+
+/*
+ * Drawers: below 1180px the inspector, and below 900px the sidebar, swing over the log from their
+ * edge instead of docking. The scrim closes them.
+ */
+@media (max-width: 1179px) {
+  .splitter-right {
+    display: none;
+  }
+
+  .layout {
+    --sl-right: 0px;
+  }
+
+  .inspector {
+    position: fixed;
+    z-index: 20;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(var(--sl-inspector-w), 92vw);
+    grid-template-columns: minmax(0, 1fr);
+    border: 0;
+    box-shadow: var(--sl-shadow);
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform 200ms var(--sl-ease), visibility 0s linear 200ms;
+  }
+
+  body.inspector-open .inspector {
+    transform: none;
+    visibility: visible;
+    transition: transform 200ms var(--sl-ease);
+  }
+
+  .scrim {
+    position: fixed;
+    z-index: 15;
+    inset: 0;
+    display: block;
+    background: rgb(0 0 0 / 0.24);
+  }
+
+  .scrim[hidden] {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .splitter-left {
+    display: none;
+  }
+
+  .refresh-text {
+    display: none;
+  }
+
+  .pinned-prompt:not([hidden]) {
+    padding: 6px 16px;
+  }
+
+  .layout {
+    --sl-left: 0px;
+  }
+
+  .sidebar {
+    position: fixed;
+    z-index: 20;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(var(--sl-sidebar-w), 92vw);
+    grid-template-columns: minmax(0, 1fr);
+    border: 0;
+    box-shadow: var(--sl-shadow);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 200ms var(--sl-ease), visibility 0s linear 200ms;
+  }
+
+  body.sidebar-open .sidebar {
+    transform: none;
+    visibility: visible;
+    transition: transform 200ms var(--sl-ease);
+  }
+
+  .main-inner {
+    padding: 12px 16px 40px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar-title .meta {
+    display: none;
+  }
+
+  .main-inner {
+    padding: 8px 10px 72px;
+  }
+
+  .entry {
+    grid-template-columns: 22px minmax(0, 1fr);
+    column-gap: 6px;
+  }
+
+  .marker {
+    margin-left: 1px;
+  }
+
+  .entry::before {
+    left: 10px;
+  }
+
+  .pinned-prompt:not([hidden]) {
+    padding: 6px 10px;
+  }
+
+  .scroll-nav {
+    right: 12px;
+    bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .entry.is-new .new-badge {
+    display: inline-flex;
+  }
+}

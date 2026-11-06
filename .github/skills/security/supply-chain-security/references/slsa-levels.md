@@ -1,10 +1,10 @@
 ---
-description: SLSA v1.0 Build track levels L0 through L3 with requirements and assessment criteria
+description: SLSA v1.2 Build track levels L0 through L3 with requirements and assessment criteria
 ---
 
-# SLSA v1.0 Build Track Levels
+# SLSA v1.2 Build Track Levels
 
-Assess the repository against SLSA v1.0 Build track requirements:
+Assess the repository against SLSA v1.2 Build track requirements. The Build track is unchanged since v1.0; v1.2 adds the separate Source track, which this reference does not cover.
 
 | Level    | Requirements                                      | Assessment Criteria                                         |
 |----------|---------------------------------------------------|-------------------------------------------------------------|

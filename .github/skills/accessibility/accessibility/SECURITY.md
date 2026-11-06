@@ -2,7 +2,7 @@
 title: Accessibility Skill Security Model
 description: STRIDE threat model for the accessibility skill scanners, runtime browser harness, generated evidence, and design-intent verification boundary
 author: microsoft/hve-core
-ms.date: 2026-10-06
+ms.date: 2026-10-07
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -213,7 +213,7 @@ flowchart TD
 
 ### Tampering
 
-* `npx --yes --registry=https://registry.npmjs.org/ @axe-core/cli@4.12.1 -- <target>` runs from the scanner-local npm project and uses an argument list and parser boundary without a shell.
+* `npx --yes --registry=https://registry.npmjs.org/ @axe-core/cli@4.12.1 --stdout -- <target>` runs from the scanner-local npm project and uses an argument list and parser boundary without a shell.
 * npx may resolve the pinned package at runtime without a committed integrity lock for this path.
 
 ### Repudiation
@@ -248,7 +248,7 @@ flowchart TD
 
 ### Tampering
 
-* Path A requires valid JSON and emits a fixed normalized shape. Path B validates and contains generated artifacts according to each evidence writer's contract.
+* Path A requires valid JSON holding a single result object, unwrapping the one-element array that `--stdout` prints, and emits a fixed normalized shape: each violation's `id`, `impact`, and `description` are strings capped at 1,024 characters, non-string values become empty strings, and `nodes` is counted only when it is a list. Path B validates and contains generated artifacts according to each evidence writer's contract.
 
 ### Repudiation
 

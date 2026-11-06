@@ -14,7 +14,7 @@
     Root path to scan for source files. Defaults to repository root.
 
 .PARAMETER FileExtensions
-    Array of file extensions to check. Defaults to @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py').
+    Array of file extensions to check. Defaults to @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py', '*.mjs', '*.mts', '*.cjs', '*.ts', '*.tsx', '*.jsx').
 
 .PARAMETER OutputPath
     Path where results should be saved. Defaults to 'logs/copyright-header-results.json'.
@@ -65,7 +65,7 @@ param(
     [string]$Path = (git rev-parse --show-toplevel 2>$null),
 
     [Parameter(Mandatory = $false)]
-    [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py', '*.mjs', '*.cjs', '*.ts', '*.tsx', '*.jsx'),
+    [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py', '*.mjs', '*.mts', '*.cjs', '*.ts', '*.tsx', '*.jsx'),
 
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/copyright-header-results.json",
@@ -122,6 +122,7 @@ function Get-CommentPrefixForFile {
         '.js' { return '//' }
         '.jsx' { return '//' }
         '.mjs' { return '//' }
+        '.mts' { return '//' }
         '.cjs' { return '//' }
         default { return '#' }
     }

@@ -1,9 +1,8 @@
 ---
 name: Agent Name
 description: 'One-line capability and routing description'
-argument-hint: 'How users should interact with this agent'
-agents:
-  - Subagent Name
+skills:
+  - skill-name
 ---
 
 # Agent Name

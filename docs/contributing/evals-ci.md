@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - evals
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-This guide describes how the vally eval pipeline authenticates in CI, how forked pull requests are handled, and how to add a new eval spec for an AI artifact (agent, prompt, instructions file, or skill).
+This guide describes how the vally eval pipeline authenticates in CI, how forked pull requests are handled, and how to add a new eval spec for an AI artifact (agent, instructions file, or skill).
 
 ## Required Secret
 
@@ -83,7 +83,11 @@ The execution matrix therefore contains one prompt row plus the planned agent,
 instruction, and skill rows. `max-parallel: 6` bounds that matrix. Baseline equivalence
 runs only when the canonical plan marks `baseline.required: true`; its fixed GPT and
 Claude producers use separate runner filesystems and a configurable maximum
-parallelism of two.
+parallelism of two. The plan requires it when the changed-artifact manifest lists
+`rpi-agent` in `affectedAgents`. A change reaches that list through the agent
+dependency map, or by touching any file inside a skill directory that the
+equivalence harness materializes for `rpi-agent`, including the skills it names in
+backticks such as `rpi-research`.
 
 At default shard counts the matrix holds more rows than the cap allows to start at
 once, so some rows wait for a free slot. To keep the longest producers from waiting
@@ -127,10 +131,14 @@ rather than one. A dash means no trial reported usable token counts, or the summ
 predates token reporting.
 
 The token columns never fail a pull request. Cold-start growth is enforced statically
-instead: `npm run lint:cold-start` and its Pester suite sum each planning-chain agent's
-file, recursive `#file:` imports, and always-on instructions against the budgets in
-`scripts/linting/agent-cold-start-budgets.json`, and fail when a set exceeds its ceiling.
-This replaces the retired activation harness, which gated only the ADR Creator.
+instead. For each planning-chain agent listed in
+`scripts/linting/agent-cold-start-budgets.json`, `npm run lint:cold-start` and its Pester
+suite sum the bytes Copilot loads when the agent starts: the agent file, the `SKILL.md` of
+every skill in its `skills:` list, and every instruction file that loads into all main
+sessions (no `applyTo`, or an `applyTo` of `**` or `**/*`). An agent above its ceiling
+fails, and an agent above its target passes with a warning. Skills the agent activates by
+name load later and are not counted, and `#file:` directives load nothing. This replaces
+the retired activation harness, which gated only the ADR Creator.
 
 ## Advisory Model Lanes
 
@@ -204,7 +212,7 @@ Run the deterministic and policy checks before changing the scheduling defaults:
 ```pwsh
 npm run test:ps -- -TestPath scripts/tests/evals/
 npm run lint:ps
-npm run lint:yaml
+npm run lint:workflows
 npm run lint:permissions
 npm run lint:workflow-runner
 npm run lint:dangerous-workflow
@@ -301,16 +309,18 @@ Eval artifacts therefore publish aggregate results only. These paths are deliber
 
 What is still published covers the summaries that drive the gate and the per-artifact debugging payloads: `logs/eval-summary.json`, `logs/eval-results-*.json`, `logs/baseline-equivalence-*.json`, and the changed-artifact and stimulus-presence manifests. None of these embed model output.
 
+To narrow a failed program grader without a transcript, read its bounded `failureCodes` under `perSpec[].diagnostics.attempts[].trials[].graders[]` in `eval-summary.json`. Only codes from a fixed per-grader vocabulary are published; the [agent-behavior suite guide](https://github.com/microsoft/hve-core/blob/main/evals/agent-behavior/README.md#program-grader-failure-codes) lists the outcome grader's field codes.
+
 The cost is that inspecting what an agent actually said during a failed run means re-running it rather than downloading the artifact. Do not re-add the withheld paths to make debugging easier.
 
 ## Adding a New Eval Spec
 
-When you add or modify an AI artifact under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/`, the `eval-presence` job fails the PR until a matching eval spec exists.
+When you add or modify an AI artifact under `.github/agents/`, `.github/instructions/`, or `.github/skills/`, the `eval-presence` job fails the PR until a matching eval spec exists. The eval tooling still recognizes a `prompt` kind for files under `.github/prompts/`, but HVE Core no longer accepts prompt files; see [Contributing Slash Commands](prompts.md).
 
 Steps to add coverage:
 
 1. Create an eval spec under `evals/` that follows the structure documented in `evals/README.md`.
-2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: code-review-functional}` for `.github/agents/coding-standards/subagents/code-review-functional.agent.md`).
+2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is `agent`, `instruction`, or `skill`. The slug is the file name minus its `.agent.md` or `.instructions.md` suffix, or the skill's folder name (for example, `tags: {agent: code-review-functional}` for `.github/agents/coding-standards/subagents/code-review-functional.agent.md`).
 3. Ensure the spec declares an executor compatible with the `vally` CLI (typically the `CopilotSdkExecutor` with a `model:` hint).
 4. Run the presence check locally to confirm the artifact is covered:
 
@@ -375,7 +385,7 @@ pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set
 pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json -FailOnSpecError
 ```
 
-To add coverage for a missing artifact, create or extend an eval spec under `evals/` and set `stimuli[].tags.<kind>` to the artifact slug (the basename minus the `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix); the next run reports it covered.
+To add coverage for a missing artifact, create or extend an eval spec under `evals/` and set `stimuli[].tags.<kind>` to the artifact slug (the file name minus its `.agent.md` or `.instructions.md` suffix, or the skill's folder name); the next run reports it covered.
 
 ## Per-Spec Moderation Threshold
 
@@ -394,22 +404,24 @@ The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeri
 
 Content moderation runs in two complementary CI lanes, each scoped to a different surface.
 
-| Lane              | Job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                  | Surface                                                                   |
-|-------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
-| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)             | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
-| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](../../scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`)   | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
+| Lane                   | Job in [`eval-validation.yml`](../../.github/workflows/eval-validation.yml) | Script                                                                                           | Toolchain                                  | Surface                                                                   |
+|------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
+| Markdown corpus        | `eval-validation`                                                           | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)                 | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
+| Eval specs + artifacts | `content-moderation`                                                        | [scripts/evals/Invoke-ArtifactModeration.ps1](../../scripts/evals/Invoke-ArtifactModeration.ps1) | Python + Detoxify (`unbiased` by default)  | Every eval spec under `evals/` plus the AI artifacts changed in the PR    |
 
-The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
+The two lanes use different checkers: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the moderation lane scores every eval spec, plus the AI artifacts changed in the PR, against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
-The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
+The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), generates the changed-artifact manifest, then runs `npm run ci:eval:moderate:artifacts`.
 
-`Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
+`Invoke-ArtifactModeration.ps1` enumerates every eval spec under `evals/`, adds the changed AI artifacts from the changed-artifact manifest, and passes the de-duplicated file list to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for whole-file moderation.
+
+This lane applies one Detoxify threshold to every file (default `0.5`, set with `-Threshold`); the per-spec `moderation.threshold` field documented above is read by `Invoke-VallyEvals.ps1` for its pre-eval input moderation.
 
 Local opt-in for the Detoxify lane:
 
 ```pwsh
 uv sync --locked --project scripts/evals/moderation
-pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
+npm run ci:eval:moderate:artifacts
 ```
 
 Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs as the CI-owned `ci:eval:lint:text` lane without any moderation-environment opt-in.
@@ -448,7 +460,7 @@ Pass `-FailOnAlex` to promote only emitted equality findings to errors. It does 
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
 ```
 
-Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mjs` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
+Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mts` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
 
 `Test-EvalSpecText.ps1` exit codes:
 
@@ -521,7 +533,7 @@ Beyond the lint lanes, `scripts/evals/` holds the scripts that scope runs, moder
 | `Get-AgentDependencyMap.ps1`              | Run directly                                      | Builds a JSON map of agent dependencies for the baseline-equivalence dispatcher             |
 | `Update-AgentMatrixSummariesFromLogs.ps1` | Run directly                                      | Rebuilds per-agent matrix summaries from existing vally logs without re-running `npx vally` |
 
-`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest. Corpus moderation scores stimulus text inside eval specs; artifact moderation covers the specs plus the changed AI artifacts themselves, writing to a separate output file.
+`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest, each writing to its own output file. Artifact moderation covers every eval spec plus the changed AI artifacts and is the lane the `content-moderation` job runs; corpus moderation (`ci:eval:moderate:corpus`) strips frontmatter from the changed `.github/{agents,prompts,instructions,skills}/**/*.md` files and scores only their bodies.
 
 `ci:eval:agent:report` is the end-to-end convenience command: it runs `ci:eval:agent:matrix` and then `ci:eval:agent:dashboard`.
 

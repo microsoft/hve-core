@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -51,6 +51,9 @@ For the deeper explanation of how LLM context affects agent behavior, see [Conte
 ## Walkthrough: Adding Azure Blob Storage
 
 Let's walk through adding Azure Blob Storage to a Python data pipeline.
+
+> [!NOTE]
+> The examples use the short command names. With the plugin installed in VS Code, the same skills carry the plugin name as a prefix, such as `/hve-core:rpi-research`.
 
 ### Research Readiness
 
@@ -124,21 +127,44 @@ Key findings:
    .copilot-tracking/reviews/plans/2025-01-28/blob-storage-plan-critique.md
    ```
 
-5. Verify the plan structure. The plan opens with an executive summary and a diagrammed `## Phase Checklist`; supporting sections such as decisions, readiness, requirements, and sources follow it:
+5. Verify the plan structure. The plan opens with an executive summary and a `## Phase Checklist` that starts with the change map: an After diagram of the result, grouped by where changes land, with each change tagged by its phases, and a Before only when the plan changes how parts connect. Supporting sections such as decisions, readiness, requirements, and sources follow it:
 
 ````markdown
 ## Phase Checklist
 
+### After
+
 ```mermaid
 flowchart LR
-    client["src/storage/blob_client.py"]
-    writer["src/pipeline/writers/blob_writer.py"]
-    factory["src/pipeline/factory.py"]
-    writer -->|uploads through| client
+    accTitle: After: pipeline output streams to Azure Blob Storage
+    accDescr: The factory builds a blob writer that uploads through a new storage client, beside the file writer it already builds.
+    subgraph pipeline["`<code>src/pipeline/</code>`"]
+        factory["`**<code>factory.py</code>**
+        builds the configured writer
+        changed · P03`"]
+        files["`<code>writers/file_writer.py</code>`"]
+        writer["`**<code>writers/blob_writer.py</code>**
+        streams output to blobs
+        new · P02`"]
+    end
+    subgraph storage["`<code>src/storage/blob_client.py</code>
+    new file · P01`"]
+        client["`**<code>BlobStorageClient</code>**
+        uploads to a container
+        new · P01`"]
+    end
+    factory -->|constructs| files
     factory -->|constructs| writer
-    classDef new stroke-dasharray: 5 5
-    class client,writer new
+    writer -->|uploads through| client
+    classDef new stroke-dasharray: 6 4,stroke-width:2px
+    classDef changed stroke-width:3px
+    class storage,client,writer new
+    class factory changed
 ```
+
+Key: arrows point from a part to what it uses; dashed border, new; thick border, changed; each tag names the phases that make the change.
+
+The factory now builds the writer the configuration names (P03): the existing file writer or a new blob writer (P02), which uploads through the new `BlobStorageClient` (P01). The plan removes nothing, so the map has no Before.
 
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: Storage Client Setup
@@ -149,16 +175,7 @@ Goals:
 Dependencies:
 * None
 
-```mermaid
-flowchart LR
-    client["src/storage/blob_client.py"]
-    writer["src/pipeline/writers/blob_writer.py"]
-    factory["src/pipeline/factory.py"]
-    writer -->|uploads through| client
-    factory -->|constructs| writer
-    classDef phase fill:#fff3bf,stroke:#f08c00,stroke-width:2px
-    class client phase
-```
+Changes in the map: the new `src/storage/blob_client.py` file and its `BlobStorageClient`.
 
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: Create BlobStorageClient class
@@ -196,7 +213,8 @@ Dependencies:
 
 Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes. Code, commands, and symbols use backticks, and existing files are Markdown links relative to the plan so you can open them from the editor.
 
-`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required. `rpi-plan-critique` independently assesses the complete plan by default; skip it with `critique=skip` or by asking.
+`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required.
+Every RPI phase uses subagents only when a dispatch tool is available and your direction allows them, and runs independent subagent work in parallel; pass `subagents=none` to any phase to work without them. `rpi-plan-critique` independently assesses the complete plan by default; skip it with `critique=skip` or by asking.
 
 ### Implement
 
@@ -221,7 +239,7 @@ P01-T01 and P01-T02 have completion evidence; P01 is checked.
 
 Check the code and validation evidence, then continue to the next approved `Pxx` or `Pxx-Txx` item.
 
-If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; a follow-up critique is optional. Ordinary local judgment and non-material updates remain in Implement.
+If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; a follow-up critique runs only when you ask for one. Ordinary local judgment and non-material updates remain in Implement.
 
 When a completed task creates something a later task needs, such as a new class or contract path the plan did not name, implementation adds a `Guidance:` block to that later task so the next agent does not have to rediscover it.
 
@@ -256,10 +274,11 @@ Ready for review.
 3. `/rpi-review` creates or updates one review record:
 
    * Locates research, the task-centered plan, plan critique, changes, and validation evidence
-   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; a helper such as `RPI Reviewer` may take one context-heavy comparison and return candidate findings that the review verifies before recording
+   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; helpers such as `RPI Reviewer` may take context-heavy comparisons in parallel lanes and return candidate findings that the review verifies before recording
    * Assesses implementation-time plan updates, critique dispositions, and plan follow-up items
    * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and proposed routing
    * Keeps final outcome and route decisions in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route
+   * Checks delivered work against any cited BRD, PRD, or ADR, routes needed source updates to their owners, and, when you accept, drafts a copy-ready note to the source owner
 
 4. Review the findings:
 
@@ -398,18 +417,37 @@ For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings
 
 Choose the entry surface that best fits the task.
 
-| Entry surface       | Use it when                                  | Contract                                                                     |
-|---------------------|----------------------------------------------|------------------------------------------------------------------------------|
-| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness; manual by default |
-| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work                            |
+| Entry surface       | Use it when                                  | Contract                                                                             |
+|---------------------|----------------------------------------------|--------------------------------------------------------------------------------------|
+| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness; asks how you want to work |
+| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work                                    |
 
 ### Manual and Automatic Mode in RPI Agent
 
-`RPI Agent` starts in manual mode: it stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. Choose **Full Auto** to request an automatic session. The agent asks whether it should resolve ordinary Research and Plan decisions itself or pause for you to retain decisions in either phase, then continues through Review without routine approval prompts. It still stops for blockers, required human review, and any destructive or externally visible action.
+When neither your request nor a resumed session sets how to proceed, `RPI Agent` asks "How would you like us to work on this?" and offers four choices:
 
-After Review, an automatic session presents ranked follow-up choices alongside **Stop automatic session** and **Switch to manual mode**. Selecting a follow-up starts a child task from Research with the completed task recorded as its parent. Review-item decisions are agent-owned in automatic mode unless you explicitly retain them.
+| Choice                          | How the agent proceeds                                                                                                 |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Handle it end to end            | Makes the decisions and works through every phase and needed follow-up until your request is complete                  |
+| Keep going, but check with me   | Works through every phase and needed follow-up automatically, and asks you when a decision or the direction is unclear |
+| Research and plan with me       | Researches and plans with your input, walks you through both, and stops before Implementation                          |
+| Work through each phase with me | Manual mode: asks about unclear decisions, walks you through each phase's artifacts, and waits for you to move on      |
+
+You can also type your own answer, for example to keep only the Plan decisions or to choose follow-up work yourself. A clear request such as "use automatic mode" or "full auto" selects automatic mode without the question.
+
+In manual mode, the agent stays in the active phase until you ask for the next phase or run its command, such as `/rpi-plan`. When a phase finishes, the agent walks you through its artifacts and asks whether to refine the work or move on, and an answer that names the next phase is enough to advance.
+
+In automatic mode, the agent moves through the phases without routine approval prompts, up to the boundary you chose. It still stops for blockers and required human review, and it asks before destructive, hard-to-reverse, shared-system, or externally visible actions.
+
+Whatever the mode, the plan critique and Review each run once per session, in the first task. Ask to skip either one or to run more.
+
+After Review, or after Implement when you skip Review, an automatic session assesses follow-up work. When the agent owns follow-up selection, it starts the highest-ranked required item in a child task and keeps going until your acceptance criteria are met. When you keep that choice, it shows the ranked follow-ups with **Stop automatic session** and **Switch to manual mode**.
+
+A child task starts from Research with the completed task recorded as its parent. It skips the critique and Review unless you ask for them on follow-up work.
 
 Both modes persist one JSON state record with the task identity, mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups, so a later conversation can resume from the recorded phase.
+
+When your host shows canvases, the agent also opens the [RPI Workflow canvas](rpi-workflow-canvas) on the session. In either mode, you can read each phase there as it is written, answer the decisions the agent leaves to you, and queue input for its next checkpoint.
 
 ## Resuming a Long Lifecycle
 
@@ -423,13 +461,14 @@ A long lifecycle can accumulate context. Resume from the durable RPI artifact se
 > [!TIP]
 > For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering).
 
-See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the agent's state contract and handoffs.
+See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the agent's state contract and modes.
 
 ## Related Guides
 
 * [RPI Overview](./) - Understand the workflow
 * [Why the RPI Workflow Works](why-rpi) - Understand the rationale for phase separation
 * [Context Engineering](context-engineering) - Why context management matters
+* [RPI Workflow Canvas](rpi-workflow-canvas) - Follow and steer a session phase by phase beside the chat
 
 ---
 

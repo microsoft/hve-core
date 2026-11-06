@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import React from 'react';
 import MDXComponents from '@theme-original/MDXComponents';
+import DemoMaterialCatalog from '../components/DemoMaterialCatalog';
 
 // Docusaurus renders wide markdown tables as horizontally scrollable. A
 // scrollable region must be operable by keyboard so it can be scrolled without
@@ -53,5 +54,6 @@ function Table(props: React.ComponentProps<'table'>): React.ReactElement {
 
 export default {
   ...MDXComponents,
+  DemoMaterialCatalog,
   table: Table,
 };

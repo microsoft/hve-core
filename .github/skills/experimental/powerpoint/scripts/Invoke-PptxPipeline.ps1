@@ -151,7 +151,7 @@ function Test-UvAvailability {
     if ($resolved) {
         return $resolved.Source
     }
-    throw 'uv is required but was not found on PATH. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh'
+    throw 'uv is required but was not found on PATH. Install a checksum-verified release: winget install --id astral-sh.uv -e, brew install uv, or an archive from https://github.com/astral-sh/uv/releases checked against its .sha256 file.'
 }
 
 function Initialize-PythonEnvironment {

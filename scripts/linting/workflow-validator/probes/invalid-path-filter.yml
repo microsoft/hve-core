@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe invalid-path-filter
+permissions: {}
+on:
+  push:
+    paths:
+      - 'src/[abc'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo hi

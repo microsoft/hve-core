@@ -2,7 +2,7 @@
 title: Mural Skill Security Model
 description: STRIDE threat model for the Mural skill covering browser callback, Mural API egress, on-disk cache, caller input, and Azure SAS uploads
 author: microsoft/hve-core
-ms.date: 2026-09-17
+ms.date: 2026-10-09
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -230,7 +230,7 @@ All REST and OAuth token-endpoint calls target `https://app.mural.co/...` over T
 
 ### Elevation of Privilege
 
-* The default scopes are read-only. Write scopes are granted only when `auth login --write` is invoked, and the granted scope set is recorded in the token store and re-checked at dispatch time before any destructive call.
+* The default scopes are read-only. Write scopes are granted only when `auth login --write` is invoked, and the granted scope set is recorded in the token store and re-checked at dispatch time before any destructive call. The dispatch check evaluates the same profile the request uses: `--profile`, then `MURAL_PROFILE`, then the token store's `active_profile`, then `default` (see [`scripts/mural/`](scripts/mural/) `_require_scope`).
 * `MURAL_SCOPES` allows callers to drop scopes per session for least-privilege automation.
 
 ### TLS posture
@@ -282,6 +282,10 @@ Devcontainer, Codespaces, and WSL2 contexts inherit the host operator's trust; t
 
 * All writes go through `os.open(O_WRONLY | O_CREAT | O_EXCL, 0o600)` followed by `os.replace` so partial writes are never observed.
 * Concurrent CLI writers serialize through an advisory lock on the sibling `<path>.lock` file (`fcntl.flock` on POSIX, `msvcrt.locking` on Windows), preventing interleaved writes from corrupting the v2 envelope (see [`scripts/mural/`](scripts/mural/) `_acquire_cache_lock`).
+* `mural auth login` refuses to overwrite stored credentials when the token-store profile has an access or refresh token, or when a `MURAL_REFRESH_TOKEN` is stored in the keyring or credential file. Client ID and client secret are app configuration and never count, so `mural auth setup` followed by `mural auth login` proceeds without `--force` (see [`scripts/mural/`](scripts/mural/) `_profile_has_session`).
+* `mural auth status` and `mural doctor` report a login only when the active profile has a validated token-store record with an access or refresh token, because authenticated requests refresh only from that record. A backend `MURAL_REFRESH_TOKEN` still blocks an unforced login but is reported separately as `backend_refresh_token` instead of as a usable session (see [`scripts/mural/`](scripts/mural/) `_profile_has_usable_session`).
+* Without `--force`, login refuses to overwrite an existing session and fails closed before starting OAuth when the token store or credential file cannot be read or validated. After OAuth returns, login re-checks the profile under the same lock as the write, so a session created by a concurrent login is kept rather than overwritten. Replacing an unreadable or incompatible store, which discards every profile in it, requires `--force`; a valid store keeps unrelated profiles (see [`scripts/mural/`](scripts/mural/) `_cmd_auth_login`).
+* Residual: keyring and credential-file reads are not atomic with the token-store lock, so a refresh token written to a backend after the final check is not detected. Tokens minted by a login whose write is skipped are discarded locally but remain valid server-side until they expire or are revoked (see G-EOP-1 and G-EOP-2).
 * The credential-file parser performs no shell expansion and no `$VAR` interpolation; values are stored verbatim and matching surrounding quotes are stripped without further processing (see [`scripts/mural/`](scripts/mural/) `FileBackend._read_all`). A tampered file therefore cannot escalate to subprocess execution via parsed values.
 
 ### Repudiation
@@ -317,6 +321,7 @@ Devcontainer, Codespaces, and WSL2 contexts inherit the host operator's trust; t
 | At-rest token/secret theft (file backend)  | Med        | High   | Med           | Partially Mitigated (keyring backend) |
 | Backup/sync exfiltration of home directory | Med        | High   | Med           | Partially Mitigated (keyring backend) |
 | Cache tampering / partial write            | Low        | Med    | Low           | Mitigated (atomic write + lock)       |
+| Stale or concurrent session overwrite      | Low        | Med    | Low           | Mitigated (session check + re-check)  |
 | Refresh-token non-rotation reuse           | Med        | High   | Med           | Accepted upstream (G-EOP-2)           |
 
 ## Bucket B4: CLI Caller Process

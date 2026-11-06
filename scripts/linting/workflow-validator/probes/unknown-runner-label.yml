@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe unknown-runner-label
+permissions: {}
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-99.99
+    steps:
+      - run: echo hi

@@ -40,8 +40,8 @@ workflow when you need written reference rather than presentation material.
 
 1. Select `HVE Demo Material Builder` and name the levels, the topic (default
    `hve-core-general`), and the autonomy mode (`manual`, `partial`, or `full`).
-2. Choose the narration engine. Azure AI Speech is the default and needs Speech
-   credentials; pass `narration: piper` for the offline Piper voice.
+2. Make Azure AI Speech credentials and `SPEECH_REGION` available. Narration
+   always uses Azure AI Speech neural voices.
 3. Review the storyboard and speaker notes when the autonomy mode asks for it.
    The notes are also the captions and the transcript, so they voice every
    on-screen claim.
@@ -51,8 +51,8 @@ workflow when you need written reference rather than presentation material.
 
 ## Example usage
 
-Ask: "Create the L100 demo deck and narrated video for HVE Core with Piper
-narration, and show me the storyboard before rendering."
+Ask: "Create the L100 demo deck and narrated video for HVE Core, and show me the
+storyboard before rendering."
 
 Expect `hve-demo-L100.pptx`, a captioned `hve-demo-L100.mp4`, a `.vtt` captions
 file, a transcript page, and `manifest.yml` under

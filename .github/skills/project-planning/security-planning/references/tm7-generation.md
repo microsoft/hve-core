@@ -1,7 +1,7 @@
 ---
 title: TM7 Generation Format Contract
 description: OTM-aligned input schema, mapping reference, template profile contract, and current native feedback workflow for TM7 generation.
-ms.date: 2026-10-06
+ms.date: 2026-11-06
 ms.topic: reference
 ---
 
@@ -45,7 +45,7 @@ The remaining flags group as follows:
 
 The native harness requires the pinned Microsoft Threat Modeling Tool version and treats the workflow as a local UI Automation workflow that must run on Windows with an interactive desktop session. On a non-Windows host, or when TMT cannot be discovered, the run stops as `tmt-unavailable` under `--require-tmt` and as `skipped` without it, and it reports `version-mismatch`, `automation-timeout`, or `unexpected-modal` when the runtime environment diverges from the expected harness contract.
 
-The feedback loop requires operator-safety confirmation from the agent before launch; `tm7-generation-workflow.instructions.md` owns that contract. The harness itself does not block on the operator: it announces the start of automation, surfaces baseline/refinement candidate progress, and emits a release notice once the loop completes or aborts so the operator knows the computer can be used again. The workflow may open, close, and reopen TMT more than once to complete save/reopen validation.
+The feedback loop requires operator-safety confirmation from the agent before launch; [tm7-generation-workflow.md](tm7-generation-workflow.md) owns that contract. The harness itself does not block on the operator: it announces the start of automation, surfaces baseline/refinement candidate progress, and emits a release notice once the loop completes or aborts so the operator knows the computer can be used again. The workflow may open, close, and reopen TMT more than once to complete save/reopen validation.
 
 The default is a baseline plus one refinement. A single run holds the mouse and keyboard continuously from the start notice through the baseline and every refinement iteration, and returns control only at the release notice; the operator does not regain control between iterations. Replaying a corrected overlay with `--overlay-input` is a new run and a new takeover, so a review cycle that produces corrections costs more than one takeover. The agent asks the operator how many rounds to run before launching.
 
@@ -121,7 +121,7 @@ uv run --project "<security-planning-skill-root>" --group windows \
 
 Resolve `<security-planning-skill-root>` from the loaded skill location before running the command.
 
-The automation writes pending overlays only and keeps the canonical baseline unchanged. Promotion is an external action; the agent-facing rule is owned by `tm7-generation-workflow.instructions.md`.
+The automation writes pending overlays only and keeps the canonical baseline unchanged. Promotion is an external action; the agent-facing rule is owned by [tm7-generation-workflow.md](tm7-generation-workflow.md).
 
 ### Agent-assisted visual review
 

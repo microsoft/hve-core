@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-11-02
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -117,20 +117,26 @@ The Security Planner supports two entry modes. Select the Security Planner agent
 
 ## Quick Start
 
-1. Open the prompt picker and select **Security Capture** or **Security Plan from PRD**.
+1. Select **Security Planner** in the agent picker and name the entry mode, Capture or From-PRD (which also takes a BRD), or let the agent pick it from your request and the files you supply.
 2. Provide a project slug when prompted (or let the agent generate one).
 3. Answer the scoping questions. The agent asks 3-5 questions per turn until each phase is complete.
 4. Review the generated backlog items and adjust autonomy tiers as needed.
-5. If AI/ML components were detected, follow the RAI Planner handoff in Phase 6.
+5. If AI/ML components were detected, select the **RAI Planner** agent when the Security Planner recommends it in Phase 6.
 
 > [!IMPORTANT]
 > Start each new security plan in a fresh chat session. Use `/clear` to reset context if you need to restart.
 
 ## Prerequisites
 
-* The Security Planner agent installed and enabled in your VS Code workspace.
-* The `rpi-research` skill available for standards lookups in Phase 3.
+* HVE Core installed in one of these hosts:
+  * VS Code with the `hve-core` plugin ([Install the Plugin](../../getting-started/install.md#install-the-plugin)) or the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
+
+Either install delivers the Security Planner with the skills it uses, including `rpi-research` for Phase 3 standards lookups, and the RAI Planner and SSSC Planner it hands off to.
+There is no separate security extension.
+The planner reads its security `identity` instructions by name at session start, so it does not depend on `applyTo` matching.
+To copy HVE Core into your repository instead, see [Copy HVE Core Into Your Repository](../../getting-started/install.md#copy-hve-core-into-your-repository). The installer copies every component, including Security Planner and the skills and instructions it loads.
 
 ## Next Steps
 

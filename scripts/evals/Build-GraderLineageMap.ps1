@@ -230,7 +230,9 @@ function Get-GraderResultKind {
         'prompt' { return 'llm' }
         'human' { return 'human' }
         { $_ -in @(
+                'diff-contains',
                 'diff-empty',
+                'diff-not-contains',
                 'file-exists',
                 'file-matches',
                 'file-not-exists',
@@ -537,9 +539,10 @@ function Test-CommittedGraderLineageMap {
             throw "Mapped current grader '$($alias.newName)' was not found."
         }
         $target = $targetIndex[$targetKey]
-        $binaryProgramReplacement = $alias.graderType -eq 'output-matches' -and
-            $target.GraderType -eq 'program' -and $target.ResultKind -eq 'code'
-        if ($target.GraderType -ne $alias.graderType -and -not $binaryProgramReplacement) {
+        # A reply check may be replaced by a code check that observes the run directly.
+        $binaryCodeReplacement = $alias.graderType -eq 'output-matches' -and $target.ResultKind -eq 'code' -and
+            $target.GraderType -in @('program', 'diff-not-contains')
+        if ($target.GraderType -ne $alias.graderType -and -not $binaryCodeReplacement) {
             throw "Mapped current grader '$($alias.newName)' has incompatible type drift."
         }
     }

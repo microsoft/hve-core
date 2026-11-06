@@ -491,7 +491,7 @@ fuzz = [
 
 [package.metadata]
 requires-dist = [
-    { name = "playwright", specifier = ">=1.47" },
+    { name = "playwright", specifier = ">=1.48" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 

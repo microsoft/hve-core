@@ -1,0 +1,93 @@
+name: Resolve merged pull request
+description: Resolves the pull request associated with a protected release-branch push
+
+inputs:
+  token:
+    description: GitHub token with contents and pull request read permissions
+    required: true
+  repository:
+    description: Repository in owner/name form
+    required: true
+  event-sha:
+    description: Commit SHA delivered by the push event
+    required: true
+  base-branch:
+    description: Protected release branch that received the push
+    required: true
+
+outputs:
+  merged:
+    description: Whether exactly one merged pull request was resolved
+    value: ${{ steps.resolve.outputs.merged }}
+  base-ref:
+    description: Base branch of the merged pull request
+    value: ${{ steps.resolve.outputs.base-ref }}
+  head-ref:
+    description: Head branch of the merged pull request
+    value: ${{ steps.resolve.outputs.head-ref }}
+  head-repository:
+    description: Source repository of the merged pull request
+    value: ${{ steps.resolve.outputs.head-repository }}
+  head-sha:
+    description: Head commit of the merged pull request
+    value: ${{ steps.resolve.outputs.head-sha }}
+  merge-sha:
+    description: Merge commit of the merged pull request
+    value: ${{ steps.resolve.outputs.merge-sha }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve the merged pull request
+      id: resolve
+      shell: bash
+      env:
+        BASE_BRANCH: ${{ inputs.base-branch }}
+        EVENT_SHA: ${{ inputs.event-sha }}
+        GH_TOKEN: ${{ inputs.token }}
+        REPOSITORY: ${{ inputs.repository }}
+      run: |
+        set -euo pipefail
+
+        readonly MAX_ATTEMPTS=4
+        attempt=1
+        merged='[]'
+        count=0
+
+        while (( attempt <= MAX_ATTEMPTS )); do
+          if pulls=$(gh api "/repos/${REPOSITORY}/commits/${EVENT_SHA}/pulls" 2>/dev/null); then
+            merged=$(jq -c --arg sha "${EVENT_SHA}" --arg base "${BASE_BRANCH}" \
+              '[.[] | select(.merged_at != null and .merge_commit_sha == $sha and .base.ref == $base)]' \
+              <<< "${pulls}")
+            count=$(jq 'length' <<< "${merged}")
+            if (( count > 0 )); then
+              break
+            fi
+          else
+            echo "::warning::Associated pull request lookup failed; retrying."
+          fi
+
+          if (( attempt == MAX_ATTEMPTS )); then
+            break
+          fi
+          delay=$((1 << (attempt - 1)))
+          echo "::notice::Merged pull request is not available yet; retrying in ${delay} second(s)."
+          sleep "${delay}"
+          attempt=$((attempt + 1))
+        done
+
+        if (( count == 0 )); then
+          echo "::error::No merged pull request resolved for the release-branch push after ${MAX_ATTEMPTS} attempts."
+          exit 1
+        fi
+        if (( count != 1 )); then
+          echo "::error::The release-branch push resolves to ${count} merged pull requests."
+          exit 1
+        fi
+
+        jq -r '.[0] | "merged=true",
+          "base-ref=\(.base.ref)",
+          "head-ref=\(.head.ref)",
+          "head-repository=\(.head.repo.full_name // "")",
+          "head-sha=\(.head.sha)",
+          "merge-sha=\(.merge_commit_sha)"' <<< "${merged}" >> "${GITHUB_OUTPUT}"

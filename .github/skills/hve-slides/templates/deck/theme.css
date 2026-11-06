@@ -4,62 +4,104 @@
   --canvas: #101114;
   --ink: #f1f2f5;
   --muted: #b5b9c5;
-  --line: #46505e;
-  --cyan: #a9ceff;
-  --lime: #b8dda9;
+  --ink-soft: #d3d9e2;
+  --faint: #959da9;
+  /* Semantic accents: blue marks current or interactive, green new or passing, red removed */
+  --accent: #a9ceff;
+  --accent-ink: #142236;
+  --positive: #b8dda9;
+  --negative: #ffb4b6;
+  --surface-recessed: #141519;
+  --surface: #171b22;
+  --surface-raised: #1d232c;
+  --surface-accent: #1a2535;
+  --line: #333a46;
+  --border: #404958;
+  --border-accent: #54709a;
+  --connector: #7290b5;
+  /* Ambient light, drawn on the viewport so it reaches the window edges */
+  --glow: #2c3b5650;
+  --glow-chapter: #29467370;
   --editor: #1f1f1f;
   --chrome: #181818;
   --editor-text: #ccc;
   --focus: #a7d8ff;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: "SF Mono", Menlo, Monaco, Consolas, monospace;
+  /* Type roles in 1600 x 900 design pixels */
+  --text-display: 104px;
+  --text-chapter: 88px;
+  --text-title: 60px;
+  --text-heading: 34px;
+  --text-lead: 34px;
+  --text-body: 27px;
+  --text-small: 24px;
+  --text-caption: 21px;
+  --text-label: 18px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  /* Slide frame: the meta band holds fidelity tags and agent cues above every content title */
+  --pad-top: 44px;
+  --pad-x: 64px;
+  --pad-bottom: 40px;
+  --meta-height: 40px;
   /* Clearance from viewer overlays, such as the Copilot button SharePoint places at the bottom right. */
   --presenter-inset: clamp(96px, 8vw, 128px);
   /* Sizes both the presenter bar and the slide area above it, so the two cannot drift apart. */
   --presenter-height: 64px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--canvas); color: var(--ink); }
-body.reveal-viewport { background: var(--canvas); color: var(--ink); }
+body.reveal-viewport { background: radial-gradient(ellipse 72% 78% at 100% 0%, var(--glow), transparent 72%) var(--canvas); color: var(--ink); }
+/* data-state="chapter" on a divider puts the chapter class on the viewport while that slide shows. */
+body.reveal-viewport.chapter { background: radial-gradient(ellipse 62% 88% at 80% 56%, var(--glow-chapter), transparent 72%) var(--canvas); }
 button { font: inherit; color: var(--ink); background: #242b35; border: 1px solid var(--line); border-radius: 6px; padding: 9px 14px; cursor: pointer; }
-button:hover:not(:disabled) { background: #354354; border-color: var(--cyan); }
+button:hover:not(:disabled) { background: #354354; border-color: var(--accent); }
 button:disabled { opacity: .5; cursor: default; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-a { color: var(--cyan); text-underline-offset: 4px; }
+a { color: var(--accent); text-underline-offset: 4px; }
 code, pre, kbd { font-family: var(--font-mono); }
 .reveal { position: absolute; inset: 0 0 var(--presenter-height); height: calc(100% - var(--presenter-height)); color: var(--ink); font-family: inherit; font-size: 30px; }
 .reveal .slides { text-align: left; }
-.reveal .slides > section { height: 900px; padding: 52px 65px 40px; background: var(--canvas); }
+.reveal .slides > section { height: 900px; padding: var(--pad-top) var(--pad-x) var(--pad-bottom); background: transparent; }
+/* Skeleton: meta band, title, body centered in the remaining space, footnote at the bottom. */
+.reveal .slides > section.present { display: flex !important; flex-direction: column; }
+.slide-meta { position: absolute; top: var(--pad-top); left: var(--pad-x); right: var(--pad-x); height: var(--meta-height); display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+.slide-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 32px; padding-top: 32px; }
+.slide-body > :first-child { margin-top: auto; }
+.slide-body > :last-child { margin-bottom: auto; }
 .reveal h1, .reveal h2, .reveal h3, .reveal p { margin: 0; color: inherit; text-transform: none; }
-.reveal h1 { margin: 36px 0; font-size: 96px; line-height: 1.12; letter-spacing: -3px; font-weight: 580; }
-.reveal h2 { margin: 22px 0 36px; font-size: 64px; line-height: 1.15; letter-spacing: -1.5px; font-weight: 560; }
+.reveal h1 { margin: auto 0 24px; font-size: var(--text-display); line-height: 1.04; letter-spacing: -.035em; font-weight: 560; }
+.reveal h2 { margin: calc(var(--meta-height) + 12px) 0 0; font-size: var(--text-title); line-height: 1.1; letter-spacing: -.025em; font-weight: 560; text-wrap: balance; }
 .reveal h3 { font-size: 34px; line-height: 1.25; font-weight: 580; margin-bottom: 20px; }
 .reveal p { font-size: 30px; line-height: 1.45; }
-.reveal .lead { color: var(--muted); font-size: 36px; margin: 22px 0 42px; }
-.eyebrow { font: 21px/1.4 var(--font-mono); letter-spacing: 1px; color: var(--cyan); }
-.reveal .footnote { font-size: 24px; color: var(--muted); margin-top: 32px; }
+.reveal .lead { color: var(--muted); font-size: var(--text-lead); line-height: 1.4; margin: 0 0 42px; }
+.label, .demo-label { display: block; font-size: var(--text-label); font-weight: 650; line-height: 1.3; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tag { display: inline-flex; align-items: center; padding: 4px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink-soft); font: 600 var(--text-label)/1.3 var(--font-sans); white-space: nowrap; }
+.reveal .footnote { flex: 0 0 auto; font-size: var(--text-caption); line-height: 1.5; color: var(--muted); margin-top: 24px; }
 /* Repository and fidelity labels sit above a divider at the foot of opening and closing slides. */
 .slide-bottom { position: absolute; left: 65px; right: 65px; bottom: 38px; display: flex; justify-content: space-between; gap: 24px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 21px; color: var(--muted); }
 .two-up { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; margin-top: 42px; }
-.panel { padding: 30px; border: 1px solid var(--line); border-radius: 8px; background: #1b2028; }
+.cover-slide .two-up { margin-bottom: auto; }
+.panel { padding: 30px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .story-split { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); align-items: start; gap: 36px; }
 .story-split > * { min-width: 0; }
-.reveal .story-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; list-style: none; margin: 38px 0 0; padding: 0; }
-.story-flow li { position: relative; min-width: 0; padding: 24px; background: var(--editor); border: 1px solid var(--line); border-radius: 8px; }
-.story-flow li:not(:last-child)::after { content: ""; position: absolute; left: 100%; top: 50%; width: 24px; height: 2px; background: var(--line); }
+.reveal .story-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; list-style: none; padding: 0; }
+.story-flow li { position: relative; min-width: 0; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.story-flow li:not(:last-child)::after { content: ""; position: absolute; left: 100%; top: 50%; width: 24px; border-top: 2px solid var(--connector); }
 .story-flow strong { display: block; font-size: 30px; }
 .story-flow span { display: block; margin-top: 12px; font-size: 25px; }
 /* Walkthroughs: phases and state beside one framed example whose footer holds the step controls. */
-.reveal .demo-slide h2 { margin: 18px 0 26px; font-size: 52px; }
 .demo { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 26px; height: 668px; }
 .demo-sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 18px 18px 18px 0; border-right: 1px solid #424a58; }
-.demo-label { font: 18px var(--font-mono); letter-spacing: 1.1px; color: var(--cyan); text-transform: uppercase; }
 .reveal .demo-phases { list-style: none; padding: 0; margin: 22px 0 20px; }
-.demo-phases li { padding: 8px 10px; border-left: 3px solid transparent; font-size: 25px; color: #b4bdca; }
-.demo-phases li[aria-current="step"] { background: #26354a; color: #fff; border-left-color: #89b9ff; font-weight: 600; }
-.demo-phases li[aria-current="step"]::before { content: "\2192  "; content: "\2192  " / ""; color: var(--cyan); }
+.demo-phases li { padding: 8px 12px; border: 1px solid transparent; border-radius: var(--radius-sm); font-size: 25px; color: var(--muted); }
+.demo-phases li[aria-current="step"] { background: var(--surface-accent); color: #fff; border-color: var(--border-accent); font-weight: 600; }
+.demo-phases li[aria-current="step"]::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 10px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 .demo-state { margin-top: auto; padding-top: 16px; border-top: 1px solid #424a58; }
-.demo-state strong { display: block; font-size: 25px; line-height: 1.3; color: var(--lime); }
+.demo-state strong { display: block; font-size: 25px; line-height: 1.3; color: var(--positive); }
 .reveal .demo-insight { margin-top: 10px; font-size: 25px; line-height: 1.35; color: #c3cfdf; }
 .demo-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: var(--editor); border: 1px solid #505863; border-radius: 11px; box-shadow: 0 20px 65px #0006; }
 .demo-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 58px; padding: 10px 22px; background: var(--chrome); border-bottom: 1px solid #42484d; }
@@ -75,7 +117,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* Above reveal.js's current-slide z-index, which reaches the root stacking context in reading view. */
 #presenter-controls { position: fixed; inset: auto 0 0; height: var(--presenter-height); z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 0 var(--presenter-inset); background: #0d0f13; border-top: 1px solid #303744; font-size: 14px; }
 .brand { display: flex; align-items: center; gap: 12px; font-weight: 650; letter-spacing: .5px; white-space: nowrap; }
-.brand-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--cyan); }
+.brand-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
 #chapter-label { padding-left: 15px; border-left: 1px solid #4e6076; font-weight: 400; color: #b6c4d4; }
 .utility-controls, .slide-controls { display: flex; align-items: center; gap: 9px; }
 .utility-controls { flex-wrap: wrap; }
@@ -83,7 +125,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 .utility-controls button { background: #191d24; border-color: #353e4b; }
 #presenter-controls :is(#previous-slide, #next-slide) { min-width: 42px; padding: 2px; font-size: 23px; }
 #slide-count { min-width: 64px; text-align: center; font: 14px var(--font-mono); color: #d1dbea; }
-#startup { position: fixed; z-index: 30; inset: 20% 15% auto; background: #203149; border: 1px solid var(--cyan); padding: 24px; font-size: 20px; }
+#startup { position: fixed; z-index: 30; inset: 20% 15% auto; background: #203149; border: 1px solid var(--accent); padding: 24px; font-size: 20px; }
 .skip-link { position: fixed; top: -100px; left: 16px; z-index: 50; background: var(--chrome); padding: 14px; }
 .skip-link:focus { top: 8px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
@@ -98,7 +140,7 @@ dialog::backdrop { background: #000b; }
 .source-list small { display: block; color: var(--muted); margin-top: 6px; font-size: 16px; }
 .slide-index { display: grid; gap: 12px; }
 .slide-index button { text-align: left; }
-.slide-index button[aria-current="page"] { border-color: var(--cyan); }
+.slide-index button[aria-current="page"] { border-color: var(--accent); }
 .key-grid { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 14px 24px; }
 .source-note { color: var(--muted); }
 /* Presentation view keeps one inset row, compacts it up to 1366 pixels, then stacks centered rows. */
@@ -141,6 +183,10 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .reveal .slides section :is(.demo-main, .demo-body, .demo-sidebar) { height: auto; min-height: 0; overflow: visible; }
 [data-reading-view="true"] .reveal .slides section .demo-sidebar { padding: 0; border-right: 0; }
 [data-reading-view="true"] .reveal .slides section .slide-bottom { position: static; margin-top: 20px; flex-wrap: wrap; gap: 8px; }
+[data-reading-view="true"] .reveal .slides section .slide-meta { position: static; height: auto; flex-wrap: wrap; justify-content: flex-start; }
+[data-reading-view="true"] .reveal .slides section .slide-body { padding-top: 0; }
+[data-reading-view="true"] .reveal .slides section .slide-body > * { margin-top: 0; margin-bottom: 0; }
+[data-reading-view="true"] body.reveal-viewport { background-attachment: fixed; }
 [data-reading-view="true"] .story-flow li::after { display: none; }
 [data-reading-view="true"] #presenter-controls { top: 0; bottom: auto; height: auto; min-height: var(--presenter-height); flex-wrap: wrap; padding: 10px; }
 /* On short viewports, such as 400% zoom, a fixed bar would cover most of the content. It follows the slide instead; the skip link reaches it. */
@@ -156,9 +202,9 @@ dialog { overflow-wrap: anywhere; }
 .dialog-header { flex-wrap: wrap; }
 .panel h2 { font-size: 34px; margin: 0 0 20px; }
 @media (forced-colors: active) {
-  :root { color-scheme: light dark; --canvas: Canvas; --ink: CanvasText; --muted: CanvasText; --line: CanvasText; --cyan: LinkText; --lime: CanvasText; --focus: Highlight; }
+  :root { color-scheme: light dark; --canvas: Canvas; --ink: CanvasText; --ink-soft: CanvasText; --muted: CanvasText; --faint: CanvasText; --line: CanvasText; --border: CanvasText; --connector: CanvasText; --accent: LinkText; --positive: CanvasText; --negative: CanvasText; --focus: Highlight; }
   body, body.reveal-viewport, .reveal .slides > section, #presenter-controls, dialog, .dialog-header, #dialog-content { background: Canvas !important; color: CanvasText !important; }
-  .reveal *, #presenter-controls *, dialog * { color: CanvasText !important; border-color: CanvasText !important; box-shadow: none !important; }
+  .reveal *, .reveal *::before, .reveal *::after, #presenter-controls *, dialog * { color: CanvasText !important; border-color: CanvasText !important; box-shadow: none !important; }
   a, .reveal a, dialog a { color: LinkText !important; }
   button, #presenter-controls button, dialog button { background: ButtonFace !important; color: ButtonText !important; border-color: ButtonText !important; }
   button:disabled { color: GrayText !important; border-color: GrayText !important; opacity: 1; }

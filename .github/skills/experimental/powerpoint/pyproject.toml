@@ -9,7 +9,8 @@ dependencies = [
     "lxml>=5.0",
     "pyyaml",
     "ruamel.yaml",  # required by generate_themes.py for round-trip YAML fidelity
-    "cairosvg",
+    # GHSA-c3jg-qh8m-j3h2 fixed in 2.9.1.
+    "cairosvg>=2.9.1",
     # CVE-2026-54058/54059/54060/55379/55798/59199/59205 fixed in 12.3.0.
     # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
     "pillow>=12.3.0,<13.0",

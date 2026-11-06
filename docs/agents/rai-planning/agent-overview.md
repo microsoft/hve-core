@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -54,11 +54,10 @@ flowchart TD
   RP -->|"uses"| S2
 ```
 
-The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
+The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. At session start the agent activates the `planner-identity` and `rai-planner` skills and reads the `rai-planner` skill's `references/rai-identity.md`. One instruction file under `.github/instructions/rai-planning/` adds licensing rules for files under `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
 
 | Instruction file                      | Domain                                                                    |
 |---------------------------------------|---------------------------------------------------------------------------|
-| `rai-identity.instructions.md`        | Agent identity, orchestration, state management, session recovery         |
 | `rai-license-posture.instructions.md` | RAI standards licensing posture, source-class mapping, attribution gating |
 
 | Skill           | Domain                                                                                                         |

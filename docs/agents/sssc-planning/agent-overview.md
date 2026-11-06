@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -45,7 +45,7 @@ flowchart TD
   SP -->|"follows"| I1 & I2
 ```
 
-The agent is driven by a single consolidated SSSC instruction file (`sssc-planner.instructions.md`) plus the shared planner base (`planner-identity-base.instructions.md`), with phase-specific guidance carried in the agent definition itself rather than in separate per-phase instruction files.
+The agent is driven by a single consolidated SSSC instruction file (`sssc-planner.instructions.md`) plus the shared `planner-identity` skill, with phase-specific guidance carried in the agent definition itself rather than in separate per-phase instruction files.
 
 ## State Management
 

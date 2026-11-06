@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import math
 import os
 import shutil
 import subprocess
@@ -86,9 +87,11 @@ def configure_logging(verbose: bool = False) -> None:
 
 def _require_command(command: str) -> str:
     """Return an available executable path or raise a clear error."""
-    resolved = shutil.which(command)
+    override = os.environ.get(f"{command.upper()}_COMMAND")
+    resolved = shutil.which(override or command)
     if resolved is None:
-        raise ManifestError(f"Required executable '{command}' was not found on PATH")
+        requested = override or command
+        raise ManifestError(f"Required executable '{requested}' was not found on PATH")
     return resolved
 
 
@@ -112,7 +115,13 @@ def _validate_manifest(
     data: dict[str, Any],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Validate manifest structure and return normalized values."""
-    allowed_top_level_keys = {"output", "resolution", "fps", "segments"}
+    allowed_top_level_keys = {
+        "output",
+        "resolution",
+        "fps",
+        "transition",
+        "segments",
+    }
     unexpected_top_level = set(data) - allowed_top_level_keys
     if unexpected_top_level:
         unexpected = ", ".join(sorted(str(key) for key in unexpected_top_level))
@@ -223,12 +232,47 @@ def _validate_manifest(
     else:
         fps = None
 
+    transition = _validate_transition(data.get("transition"))
+
     return {
         "output": output_value,
         "resolution": resolution_value,
         "fps": fps,
+        "transition": transition,
         "segments": normalized_segments,
     }, normalized_segments
+
+
+def _validate_transition(value: Any) -> dict[str, Any] | None:
+    """Validate and normalize the optional scene-transition configuration."""
+    if value is None or value == "none":
+        return None
+    if not isinstance(value, dict):
+        raise ManifestError("Manifest 'transition' must be a mapping or 'none'")
+    allowed_keys = {"type", "duration", "fade_in", "fade_out"}
+    unexpected = set(value) - allowed_keys
+    if unexpected:
+        keys = ", ".join(sorted(str(key) for key in unexpected))
+        raise ManifestError(f"Transition contains unsupported keys: {keys}")
+    transition_type = str(value.get("type", "crossfade")).strip().lower()
+    if transition_type not in {"crossfade", "fade"}:
+        raise ManifestError(f"Unsupported transition type: {transition_type}")
+    try:
+        duration = float(value.get("duration", 0.5))
+    except (TypeError, ValueError) as exc:
+        raise ManifestError("Transition duration must be a number") from exc
+    if not math.isfinite(duration) or duration <= 0:
+        raise ManifestError("Transition duration must be a positive finite number")
+    fade_in = value.get("fade_in", True)
+    fade_out = value.get("fade_out", True)
+    if not isinstance(fade_in, bool) or not isinstance(fade_out, bool):
+        raise ManifestError("Transition fade_in and fade_out must be booleans")
+    return {
+        "type": "crossfade",
+        "duration": duration,
+        "fade_in": fade_in,
+        "fade_out": fade_out,
+    }
 
 
 def _validate_resolution(resolution: str) -> None:
@@ -323,6 +367,16 @@ def _render_segment(
     clip_source = segment.get("clip")
     narration_path = Path(segment["narration"])
     duration = segment["duration"]
+    lead = segment.get("lead", 0.0)
+    tail = segment.get("tail", 0.0)
+    rendered_duration = duration + lead + tail
+    video_filter = _build_filter_string(resolution, fps)
+    if lead or tail:
+        video_filter += (
+            f",trim=duration={duration},setpts=PTS-STARTPTS,"
+            f"tpad=start_duration={lead}:stop_duration={tail}:"
+            "start_mode=clone:stop_mode=clone"
+        )
 
     if visual_source is not None:
         command = [
@@ -341,14 +395,14 @@ def _render_segment(
             "-pix_fmt",
             "yuv420p",
             "-vf",
-            _build_filter_string(resolution, fps),
+            video_filter,
             "-c:a",
             "aac",
             "-b:a",
             "192k",
             "-shortest",
             "-t",
-            f"{duration}",
+            f"{rendered_duration}",
             str(output_path),
         ]
     else:
@@ -370,16 +424,23 @@ def _render_segment(
             "-pix_fmt",
             "yuv420p",
             "-vf",
-            _build_filter_string(resolution, fps),
+            video_filter,
             "-c:a",
             "aac",
             "-b:a",
             "192k",
             "-t",
-            f"{duration}",
+            f"{rendered_duration}",
             str(output_path),
         ]
 
+    if lead or tail:
+        command[-1:-1] = [
+            "-af",
+            f"atrim=duration={duration},asetpts=PTS-STARTPTS,"
+            + f"adelay={round(lead * 1000)}:all=1,apad,"
+            + f"atrim=duration={rendered_duration}",
+        ]
     _run_ffmpeg(command, timeout=timeout, step=f"FFmpeg render of {output_path.name}")
 
 
@@ -404,6 +465,58 @@ def _concat_entry(path: Path) -> str:
     """Return a concat demuxer ``file`` line with FFmpeg single-quote escaping."""
     escaped = path.as_posix().replace("'", "'\\''")
     return f"file '{escaped}'"
+
+
+def _transition_filter(
+    durations: list[float], transition: dict[str, Any]
+) -> tuple[str, str, str]:
+    """Return filter graph and final video/audio labels for smooth transitions."""
+    if len(durations) == 1 and not transition["fade_in"] and not transition["fade_out"]:
+        return "", "0:v:0", "0:a:0"
+    duration = float(transition["duration"])
+    if any(segment_duration <= duration * 2 for segment_duration in durations):
+        raise ManifestError(
+            "Each segment must be longer than twice the transition duration"
+        )
+    filters: list[str] = []
+    video_label = "0:v:0"
+    audio_label = "0:a:0"
+    if transition["fade_in"]:
+        filters.extend(
+            [
+                f"[{video_label}]fade=t=in:st=0:d={duration:g}[vin]",
+                f"[{audio_label}]afade=t=in:st=0:d={duration:g}[ain]",
+            ]
+        )
+        video_label = "vin"
+        audio_label = "ain"
+
+    for index in range(1, len(durations)):
+        offset = sum(durations[:index]) - duration * index
+        filters.extend(
+            [
+                f"[{video_label}][{index}:v:0]xfade=transition=fade:"
+                f"duration={duration:g}:offset={offset:g}[vx{index}]",
+                f"[{audio_label}][{index}:a:0]acrossfade=d={duration:g}:"
+                f"c1=tri:c2=tri[ax{index}]",
+            ]
+        )
+        video_label = f"vx{index}"
+        audio_label = f"ax{index}"
+
+    final_duration = sum(durations) - duration * (len(durations) - 1)
+    if transition["fade_out"]:
+        fade_start = final_duration - duration
+        filters.extend(
+            [
+                f"[{video_label}]fade=t=out:st={fade_start:g}:d={duration:g}[vout]",
+                f"[{audio_label}]afade=t=out:st={fade_start:g}:d={duration:g}[aout]",
+            ]
+        )
+        video_label = "vout"
+        audio_label = "aout"
+
+    return ";".join(filters), video_label, audio_label
 
 
 def assemble_video(
@@ -451,6 +564,8 @@ def assemble_video(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     normalized_paths: list[Path] = []
+    segment_durations: list[float] = []
+    transition = config.get("transition")
     with tempfile.TemporaryDirectory(
         prefix="demo-video-", dir=str(output_path.parent)
     ) as temp_dir_name:
@@ -484,6 +599,15 @@ def assemble_video(
             segment_data = dict(segment)
             segment_data["narration"] = str(narration_path)
             segment_data["duration"] = duration
+            lead = tail = 0.0
+            if transition:
+                handle = float(transition["duration"])
+                lead = handle if index > 1 or transition["fade_in"] else 0.0
+                tail = (
+                    handle if index < len(segments) or transition["fade_out"] else 0.0
+                )
+            segment_data["lead"] = lead
+            segment_data["tail"] = tail
             if visual_source is not None:
                 segment_data["visual"] = str(visual_path)
             else:
@@ -498,27 +622,65 @@ def assemble_video(
                 timeout=timeout,
             )
             normalized_paths.append(normalized_path)
-
-        concat_list_path = temp_dir / "concat.txt"
-        with concat_list_path.open("w", encoding="utf-8") as handle:
-            for normalized_path in normalized_paths:
-                handle.write(_concat_entry(normalized_path) + "\n")
+            segment_durations.append(float(duration) + lead + tail)
 
         staged_output = temp_dir / f"assembled{output_path.suffix or '.mp4'}"
-        concat_command = [
-            ffmpeg_path,
-            "-y",
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            str(concat_list_path),
-            "-c",
-            "copy",
-            str(staged_output),
-        ]
-        _run_ffmpeg(concat_command, timeout=timeout, step="FFmpeg concat")
+        transition = config.get("transition")
+        if transition:
+            filter_graph, video_label, audio_label = _transition_filter(
+                segment_durations, transition
+            )
+            transition_command = [ffmpeg_path, "-y"]
+            for normalized_path in normalized_paths:
+                transition_command.extend(["-i", str(normalized_path)])
+            if filter_graph:
+                transition_command.extend(
+                    [
+                        "-filter_complex",
+                        filter_graph,
+                        "-map",
+                        f"[{video_label}]",
+                        "-map",
+                        f"[{audio_label}]",
+                    ]
+                )
+            else:
+                transition_command.extend(["-map", video_label, "-map", audio_label])
+            transition_command.extend(
+                [
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "192k",
+                    "-movflags",
+                    "+faststart",
+                    str(staged_output),
+                ]
+            )
+            _run_ffmpeg(transition_command, timeout=timeout, step="FFmpeg transitions")
+        else:
+            concat_list_path = temp_dir / "concat.txt"
+            with concat_list_path.open("w", encoding="utf-8") as handle:
+                for normalized_path in normalized_paths:
+                    handle.write(_concat_entry(normalized_path) + "\n")
+            concat_command = [
+                ffmpeg_path,
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(concat_list_path),
+                "-c",
+                "copy",
+                str(staged_output),
+            ]
+            _run_ffmpeg(concat_command, timeout=timeout, step="FFmpeg concat")
         if not staged_output.is_file():
             raise ManifestError("FFmpeg concat reported success but wrote no output")
         os.replace(staged_output, output_path)

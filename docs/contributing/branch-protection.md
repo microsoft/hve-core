@@ -3,7 +3,7 @@ title: Branch Protection Configuration
 description: Branch protection configuration for the hve-core repository
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-23
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - branch protection
@@ -24,7 +24,7 @@ Classic branch protection is inert on this repository. The API still reports `ma
 
 The ruleset requires:
 
-* Six status checks to pass, against a branch that is up to date with `main`
+* One aggregate status check, `PR Validation Success`, to pass, both on the pull request and again in the merge queue against the latest `main`
 * Two approving reviews, one of which satisfies Code Owner review
 * Approval of the most recent reviewable push, which is the control that protects against commits pushed after an approval
 * Every review conversation resolved before merging
@@ -32,20 +32,17 @@ The ruleset requires:
 
 ## Required Status Checks
 
-Six check contexts must pass before a pull request can merge. The names below are the exact context strings the ruleset matches, so they can be compared directly against the checks listed on a pull request.
+One check context must pass before a pull request can merge. The name below is the exact context string the ruleset matches, reported by the GitHub Actions app (integration id `15368`).
 
-| Context                                                  | Purpose                         |
-|----------------------------------------------------------|---------------------------------|
-| `Spell Check / Spell Check`                              | Validates spelling in markdown  |
-| `Frontmatter Validation / Validate Markdown Frontmatter` | Validates YAML frontmatter      |
-| `Markdown Lint / Markdown Lint`                          | Enforces markdown formatting    |
-| `PowerShell Lint / PowerShell Lint`                      | PSScriptAnalyzer validation     |
-| `Table Format Check / Table Format Check`                | Validates table formatting      |
-| `CodeQL Security Analysis / CodeQL Analysis (actions)`   | Security vulnerability scanning |
+| Context                 | Purpose                                                                                                      |
+|-------------------------|--------------------------------------------------------------------------------------------------------------|
+| `PR Validation Success` | Aggregate job in `pr-validation.yml`; passes only when every PR Validation job either succeeds or is skipped |
 
-The ruleset applies a strict policy (`strict_required_status_checks_policy`), so a branch must be up to date with `main` before merging and the required checks are evaluated against the final commit.
+`PR Validation Success` depends on the full PR Validation job set, including spell check, markdown and table linting, frontmatter, PowerShell and Python linting and tests, link checks, dependency pinning, workflow security checks, secret scanning, npm audit, and CodeQL. A failure in any of those jobs fails the aggregate check and blocks the merge. Workflows outside PR Validation, such as Dependency Review, are not required.
 
-Other CI jobs run on pull requests but are not required, including `Markdown Link Check`, `Validate Dependency Pinning`, and `npm Security Audit`. A failure in one of those does not block a merge on its own.
+Merges go through a merge queue. When a pull request enters the queue, GitHub builds a temporary `gh-readonly-queue` branch from the latest `main` plus that pull request, and `pr-validation.yml` runs again on the `merge_group` event. The queue merges with squash, builds and merges one entry at a time, requires every check in a group to pass, and fails an entry whose checks do not report within 60 minutes.
+
+The ruleset does not set the strict up-to-date policy (`strict_required_status_checks_policy` is `false`). The merge queue provides the same guarantee, because every merge is validated against the latest `main`, without requiring authors to update their branch before queueing.
 
 ## Review Requirements
 
@@ -56,7 +53,7 @@ Other CI jobs run on pull requests but are not required, including `Markdown Lin
 | `require_last_push_approval`                      | true     | The most recent reviewable push needs approval from someone else           |
 | `required_review_thread_resolution`               | true     | Every review conversation must be resolved                                 |
 | `require_extra_approval_for_unattributed_changes` | true     | Adds one approval when Copilot opens a pull request under its own identity |
-| `dismiss_stale_reviews_on_push`                   | false    | Not enforced; see the note below                                           |
+| `dismiss_stale_reviews_on_push`                   | false    | Not enforced; accepted risk, see the note below                            |
 | `dismissal_restriction`                           | disabled | No actor list restricts who may dismiss a review                           |
 
 Stale-review dismissal is not enforced, so an approval is not automatically cleared when new commits are pushed. `require_last_push_approval` compensates: the final push must itself be approved by someone other than the person who pushed it. That gap was assessed and accepted in [issue #2461](https://github.com/microsoft/hve-core/issues/2461), and the reasoning is summarized in [Branch Protection](../security/branch-protection.md).
@@ -70,13 +67,14 @@ subject to change, so re-check this description when the ruleset is next revised
 
 ## Merge, History, and Quality Controls
 
-| Rule                    | Value or state              | Effect                                                      |
-|-------------------------|-----------------------------|-------------------------------------------------------------|
-| `allowed_merge_methods` | `["squash"]`                | Squash is the only permitted merge method                   |
-| `non_fast_forward`      | enforced                    | Force-pushes and other non-fast-forward updates are blocked |
-| `deletion`              | enforced                    | The branch cannot be deleted                                |
-| `code_quality`          | enforced, severity `errors` | Applied by the ruleset at `errors` severity                 |
-| `bypass_actors`         | none                        | No actor is exempt from the ruleset                         |
+| Rule                    | Value or state              | Effect                                                           |
+|-------------------------|-----------------------------|------------------------------------------------------------------|
+| `allowed_merge_methods` | `["squash"]`                | Squash is the only permitted merge method                        |
+| `non_fast_forward`      | enforced                    | Force-pushes and other non-fast-forward updates are blocked      |
+| `deletion`              | enforced                    | The branch cannot be deleted                                     |
+| `code_quality`          | enforced, severity `errors` | Applied by the ruleset at `errors` severity                      |
+| `merge_queue`           | enforced                    | Squash, all checks green, one entry at a time, 60-minute timeout |
+| `bypass_actors`         | none                        | No actor is exempt from the ruleset                              |
 
 ## CODEOWNERS
 
@@ -88,11 +86,17 @@ The `.github/CODEOWNERS` file defines code ownership:
 
 ## OpenSSF Scorecard
 
-The OpenSSF Scorecard Branch-Protection check scores this repository **9/10**.
+The OpenSSF Scorecard Branch-Protection check scores this repository **5/10**. It reports two warnings:
 
-The single remaining deduction is `'stale review dismissal' is disabled on branch 'main'`. Nothing else in the current configuration costs points, and the deduction cannot be closed by a pull request, because the setting lives in the ruleset rather than in the source tree.
+* `'stale review dismissal' is disabled on branch 'main'`
+* `'up-to-date branches' is disabled on branch 'main'`
 
-Scorecard does not model `require_last_push_approval` as a substitute for stale-review dismissal, so the compensating control described above earns no credit. The delta is a scoring gap with a compensating control in place rather than an open exposure. See [issue #2461](https://github.com/microsoft/hve-core/issues/2461) for the full assessment and the dismissal rationale.
+The score dropped from 9 to 5 when the merge queue replaced the strict up-to-date policy on 2026-10-04.
+Scorecard's Branch-Protection check counts up-to-date branches only through the strict policy and does not yet credit a ruleset merge queue;
+support is proposed in [ossf/scorecard#5281](https://github.com/ossf/scorecard/pull/5281).
+Because Scorecard scores in tiers, the missing up-to-date credit also withholds points for controls that are in place, such as the required status check and Code Owner review.
+
+Scorecard also does not model `require_last_push_approval` as a substitute for stale-review dismissal, so that compensating control earns no credit. Both warnings are scoring gaps with equivalent or compensating controls in place rather than open exposures. The corresponding code scanning alert, [#1](https://github.com/microsoft/hve-core/security/code-scanning/1), remains open. See [issue #2461](https://github.com/microsoft/hve-core/issues/2461) for the stale-review assessment.
 
 ## Configuration Reference
 
@@ -124,11 +128,12 @@ gh api repos/microsoft/hve-core/branches/main --jq '{protected, protection}'
 
 ## Change Management
 
-| Item                         | Details                                                                                                           |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| Stale-review dismissal       | Enable it the next time the ruleset is revised; that closes the remaining Scorecard deduction                     |
-| `require_last_push_approval` | Must not be relaxed while stale-review dismissal is off; it is the basis for accepting that gap                   |
-| Documentation                | Update this page, [Branch Protection](../security/branch-protection.md), and issue #2461 when the ruleset changes |
+| Item                         | Details                                                                                                                    |
+|------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Stale-review dismissal       | Off by decision; an accepted risk compensated by `require_last_push_approval`, not a pending change                        |
+| Strict up-to-date policy     | Off by design; the merge queue validates against the latest `main`. Revisit if Scorecard credits merge queues              |
+| `require_last_push_approval` | Must not be relaxed while stale-review dismissal is off; it is the basis for accepting that gap                            |
+| Documentation                | Update this page and [Branch Protection](../security/branch-protection.md) when the ruleset or its Scorecard score changes |
 
 ---
 

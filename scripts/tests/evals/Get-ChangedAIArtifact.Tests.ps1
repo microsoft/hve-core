@@ -184,6 +184,8 @@ Describe 'Get-ChangedAIArtifact.ps1 entry script' -Tag 'Unit' {
 
             New-Item -ItemType Directory -Path '.github/agents/hve-core' -Force | Out-Null
             'seed' | Set-Content -LiteralPath 'README.md'
+            # The default equivalence subject must resolve to exactly one agent file.
+            'rpi agent' | Set-Content -LiteralPath '.github/agents/hve-core/rpi-agent.agent.md'
             & git add . 2>&1 | Out-Null
             & git commit --quiet -m 'baseline' 2>&1 | Out-Null
             $baseSha = (& git rev-parse HEAD).Trim()
@@ -253,7 +255,7 @@ Describe 'AI artifact canonical input' -Tag 'Unit' {
         $agentDir = Join-Path $TestDrive '.github/agents/core'
         $null = New-Item -ItemType Directory -Path $agentDir -Force
         Set-Content (Join-Path $agentDir 'upstream.agent.md') 'upstream'
-        $result = Invoke-ChangedArtifactScan -ChangeSetPath $script:ChangeSetPath -RepoRoot $TestDrive
+        $result = Invoke-ChangedArtifactScan -ChangeSetPath $script:ChangeSetPath -RepoRoot $TestDrive -EquivalenceSubject @()
         $result.artifacts | Should -HaveCount 0
         $result.affectedAgents | Should -HaveCount 0
     }
@@ -262,6 +264,175 @@ Describe 'AI artifact canonical input' -Tag 'Unit' {
         '{"schemaVersion":"1.0"}' | Set-Content $script:ChangeSetPath
         { Invoke-ChangedArtifactScan -ChangeSetPath $script:ChangeSetPath -RepoRoot $TestDrive } | Should -Throw
         { Invoke-ChangedArtifactScan -ChangeSetPath (Join-Path $TestDrive 'missing.json') -RepoRoot $TestDrive } | Should -Throw
+    }
+}
+
+Describe 'Equivalence surface gate' -Tag 'Unit' {
+    BeforeAll {
+        # The subject names its skill in backticks, as the real RPI agent does, so the
+        # path-only dependency map records no skill for it.
+        $script:SurfaceRepo = Join-Path $TestDrive ('surface-' + [Guid]::NewGuid().ToString('N'))
+        $agentDir = Join-Path $script:SurfaceRepo '.github/agents/hve-core'
+        $null = New-Item -ItemType Directory -Path $agentDir -Force
+        Set-Content -LiteralPath (Join-Path $agentDir 'rpi-agent.agent.md') -Value "---`nname: RPI Agent`n---`n`nActivate ``rpi-research`` first.`n"
+        foreach ($skill in @('rpi/rpi-research', 'shared/unrelated')) {
+            $skillDir = Join-Path $script:SurfaceRepo ".github/skills/$skill"
+            $null = New-Item -ItemType Directory -Path (Join-Path $skillDir 'references') -Force
+            Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value 'skill'
+            Set-Content -LiteralPath (Join-Path $skillDir 'references/notes.md') -Value 'notes'
+        }
+
+        $script:ScanChange = {
+            param([string]$Path, [string[]]$Subject = @('rpi-agent'))
+
+            $changeSetPath = Join-Path $TestDrive ('surface-change-' + [Guid]::NewGuid().ToString('N') + '.json')
+            @{
+                schemaVersion = '1.0'; baseRef = 'a' * 40; headRef = 'b' * 40; comparisonBase = 'c' * 40
+                changes = @(@{ status = 'M'; path = $Path; previousPath = $null })
+            } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $changeSetPath
+            return Invoke-ChangedArtifactScan -ChangeSetPath $changeSetPath -RepoRoot $script:SurfaceRepo -EquivalenceSubject $Subject
+        }
+    }
+
+    It 'marks the subject affected when a backtick-named skill changes' {
+        $result = & $script:ScanChange '.github/skills/rpi/rpi-research/SKILL.md'
+        @($result.affectedAgents) | Should -BeExactly @('rpi-agent')
+    }
+
+    It 'marks the subject affected when a file inside that skill directory changes' {
+        $result = & $script:ScanChange '.github/skills/rpi/rpi-research/references/notes.md'
+        @($result.affectedAgents) | Should -BeExactly @('rpi-agent')
+    }
+
+    It 'leaves the subject unaffected by a skill outside its surface' {
+        $result = & $script:ScanChange '.github/skills/shared/unrelated/SKILL.md'
+        $result.affectedAgents | Should -HaveCount 0
+    }
+
+    It 'checks only the configured equivalence subjects' {
+        $result = & $script:ScanChange '.github/skills/rpi/rpi-research/SKILL.md' @()
+        $result.affectedAgents | Should -HaveCount 0
+    }
+
+    It 'fails closed when a subject matches no agent file' {
+        { & $script:ScanChange '.github/skills/rpi/rpi-research/SKILL.md' @('rpi-agnet') } |
+            Should -Throw -ExpectedMessage "*'rpi-agnet' matches no agent file*"
+    }
+
+    It 'fails closed when a subject matches more than one agent file' {
+        $duplicateDir = Join-Path $script:SurfaceRepo '.github/agents/other'
+        $null = New-Item -ItemType Directory -Path $duplicateDir -Force
+        Set-Content -LiteralPath (Join-Path $duplicateDir 'rpi-agent.agent.md') -Value 'duplicate'
+        try {
+            { & $script:ScanChange '.github/skills/rpi/rpi-research/SKILL.md' } |
+                Should -Throw -ExpectedMessage "*'rpi-agent' matches 2 agent files*"
+        }
+        finally {
+            Remove-Item -LiteralPath $duplicateDir -Recurse -Force
+        }
+    }
+
+    It 'writes no manifest when the entry script meets a <Case> subject' -ForEach @(
+        @{ Case = 'missing'; Subject = 'rpi-agnet' }
+        @{ Case = 'duplicate'; Subject = 'rpi-agent' }
+    ) {
+        $duplicateDir = Join-Path $script:SurfaceRepo '.github/agents/other'
+        if ($Case -eq 'duplicate') {
+            $null = New-Item -ItemType Directory -Path $duplicateDir -Force
+            Set-Content -LiteralPath (Join-Path $duplicateDir 'rpi-agent.agent.md') -Value 'duplicate'
+        }
+        try {
+            $changeSetPath = Join-Path $TestDrive ('entry-change-' + [Guid]::NewGuid().ToString('N') + '.json')
+            @{
+                schemaVersion = '1.0'; baseRef = 'a' * 40; headRef = 'b' * 40; comparisonBase = 'c' * 40
+                changes = @(@{ status = 'M'; path = '.github/skills/rpi/rpi-research/SKILL.md'; previousPath = $null })
+            } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $changeSetPath
+            $outFile = Join-Path $TestDrive ('entry-manifest-' + [Guid]::NewGuid().ToString('N') + '.json')
+
+            & pwsh -NoProfile -File $script:ScriptPath -ChangeSetPath $changeSetPath -OutFile $outFile `
+                -RepoRoot $script:SurfaceRepo -EquivalenceSubject $Subject *> $null
+
+            $LASTEXITCODE | Should -Be 2
+            Test-Path -LiteralPath $outFile | Should -BeFalse
+        }
+        finally {
+            Remove-Item -LiteralPath $duplicateDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+Describe 'Equivalence surface gate at the comparison base' -Tag 'Unit' {
+    BeforeAll {
+        # Commits a base where the subject names `rpi-research` in backticks, applies
+        # one change in a second commit, and scans the resulting canonical change set.
+        $script:ScanCommittedChange = {
+            param([scriptblock]$Mutation)
+
+            $repo = Join-Path $TestDrive ('base-' + [Guid]::NewGuid().ToString('N'))
+            $agentDir = Join-Path $repo '.github/agents/hve-core'
+            $null = New-Item -ItemType Directory -Path $agentDir -Force
+            Set-Content -LiteralPath (Join-Path $agentDir 'rpi-agent.agent.md') -Value "---`nname: RPI Agent`n---`n`nActivate ``rpi-research`` first.`n"
+            foreach ($skill in @('rpi/rpi-research', 'shared/unrelated')) {
+                $skillDir = Join-Path $repo ".github/skills/$skill"
+                $null = New-Item -ItemType Directory -Path (Join-Path $skillDir 'references') -Force
+                Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "skill $skill"
+                Set-Content -LiteralPath (Join-Path $skillDir 'references/notes.md') -Value "notes $skill"
+            }
+
+            $git = @{ RepoRoot = $repo }
+            $null = Invoke-EvalGit @git -Arguments @('init', '--quiet', '--initial-branch=main')
+            $null = Invoke-EvalGit @git -Arguments @('config', 'user.email', 'test@example.com')
+            $null = Invoke-EvalGit @git -Arguments @('config', 'user.name', 'Test User')
+            $null = Invoke-EvalGit @git -Arguments @('config', 'commit.gpgsign', 'false')
+            $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+            $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'base')
+            $baseSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+
+            & $Mutation $repo
+            $null = Invoke-EvalGit @git -Arguments @('add', '-A')
+            $null = Invoke-EvalGit @git -Arguments @('commit', '--quiet', '-m', 'change')
+            $headSha = (Invoke-EvalGit @git -Arguments @('rev-parse', 'HEAD')).Trim()
+
+            $changeSet = New-EvalChangeSet -BaseRef $baseSha -HeadRef $headSha -RepoRoot $repo
+            $changeSetPath = Join-Path $TestDrive ('base-change-' + [Guid]::NewGuid().ToString('N') + '.json')
+            $changeSet | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $changeSetPath
+            return @{
+                ChangeSet = $changeSet
+                Result    = Invoke-ChangedArtifactScan -ChangeSetPath $changeSetPath -RepoRoot $repo
+            }
+        }
+    }
+
+    It 'marks the subject affected when its backtick-named skill is deleted' {
+        $scan = & $script:ScanCommittedChange {
+            param($Repo)
+            Remove-Item -LiteralPath (Join-Path $Repo '.github/skills/rpi/rpi-research') -Recurse -Force
+        }
+
+        @($scan.ChangeSet.changes.status | Sort-Object -Unique) | Should -BeExactly @('D')
+        @($scan.Result.affectedAgents) | Should -BeExactly @('rpi-agent')
+    }
+
+    It 'marks the subject affected when its backtick-named skill is renamed away' {
+        $scan = & $script:ScanCommittedChange {
+            param($Repo)
+            $null = New-Item -ItemType Directory -Path (Join-Path $Repo '.github/skills/archive') -Force
+            $null = Invoke-EvalGit -RepoRoot $Repo -Arguments @('mv', '.github/skills/rpi/rpi-research', '.github/skills/archive/old-research')
+        }
+
+        @($scan.ChangeSet.changes.status | Sort-Object -Unique) | Should -BeExactly @('R')
+        @($scan.ChangeSet.changes.previousPath) | Should -Contain '.github/skills/rpi/rpi-research/SKILL.md'
+        @($scan.Result.affectedAgents) | Should -BeExactly @('rpi-agent')
+    }
+
+    It 'leaves the subject unaffected when a skill outside its surface is deleted' {
+        $scan = & $script:ScanCommittedChange {
+            param($Repo)
+            Remove-Item -LiteralPath (Join-Path $Repo '.github/skills/shared/unrelated') -Recurse -Force
+        }
+
+        @($scan.ChangeSet.changes.status | Sort-Object -Unique) | Should -BeExactly @('D')
+        $scan.Result.affectedAgents | Should -HaveCount 0
     }
 }
 
@@ -284,7 +455,7 @@ Describe 'AI artifact full-scope input' -Tag 'Unit' {
     }
 
     It 'classifies every tracked artifact as added without a change set' {
-        $result = Invoke-ChangedArtifactScan -AllTracked -RepoRoot $script:FullScopeRepo
+        $result = Invoke-ChangedArtifactScan -AllTracked -RepoRoot $script:FullScopeRepo -EquivalenceSubject @()
 
         $result.baseRef | Should -BeNullOrEmpty
         $result.headRef | Should -BeExactly $script:FullScopeHead

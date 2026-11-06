@@ -3,7 +3,7 @@ title: Branch Protection
 description: Main branch protection requirements for the hve-core repository
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - branch protection
@@ -31,7 +31,7 @@ The `main-branch-protection` ruleset enforces the following on the default branc
 * Require approval of the most recent reviewable push, so a final commit cannot merge on an earlier reviewer's approval alone
 * Require an extra approval on pull requests that Copilot opens under its own identity rather than on behalf of a person
 * Require every review conversation to be resolved before merging
-* Require six status checks to pass, with the branch up to date with `main` first
+* Require the aggregate `PR Validation Success` status check to pass, and merge through a merge queue that re-runs it against the latest `main`
 * Restrict merges to squash only
 * Block force-pushes and any other non-fast-forward update
 * Block deletion of the branch
@@ -50,14 +50,16 @@ For the exact status-check contexts and per-parameter values, see [Branch Protec
 
 Stale-review dismissal is not currently enforced. The ruleset sets `dismiss_stale_reviews_on_push` to `false`, so an existing approval is not automatically cleared when a contributor pushes new commits.
 
-The compensating control is `require_last_push_approval`, which is enabled. The most recent reviewable push must itself be approved by someone other than the person who pushed it, so an approval cannot silently carry forward onto commits nobody reviewed. Two other controls narrow the window further: the strict status-check policy re-runs every required check against the final commit, and unresolved review conversations block merging.
+The compensating control is `require_last_push_approval`, which is enabled. The most recent reviewable push must itself be approved by someone other than the person who pushed it, so an approval cannot silently carry forward onto commits nobody reviewed. Two other controls narrow the window further: the merge queue re-runs the required check against the final merged result on the latest `main`, and unresolved review conversations block merging.
 
-This gap was assessed and accepted in [issue #2461](https://github.com/microsoft/hve-core/issues/2461), where the corresponding OpenSSF Scorecard alert was dismissed as *Won't fix* with a documented rationale.
+This gap was assessed and accepted in [issue #2461](https://github.com/microsoft/hve-core/issues/2461). The corresponding OpenSSF Scorecard code scanning alert, [#1](https://github.com/microsoft/hve-core/security/code-scanning/1), was not dismissed and remains open. Scorecard currently scores Branch-Protection at 5/10; see [Branch Protection Configuration](../contributing/branch-protection.md) for the breakdown.
 
-Two conditions should reopen that decision:
+The gap remains accepted after the move to a merge queue. The merge queue never pushes to a pull request branch, so it neither creates nor clears stale approvals, and `require_last_push_approval` still covers commits pushed after an approval.
+
+These conditions should reopen that decision:
 
 * `require_last_push_approval` is relaxed or disabled. It is the entire basis for accepting the gap, so the two settings must never both be off.
-* The `main-branch-protection` ruleset is revised for any other reason, which is the natural moment to enable stale-review dismissal and close the gap outright.
+* A change in review practice or tooling makes stale approvals reachable in a way the last-push approval does not cover.
 
 Verify the current value at any time:
 

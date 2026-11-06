@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-15
 ms.topic: reference
 ---
 
@@ -57,16 +57,16 @@ Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                               | Trigger                            | Purpose                                                 |
-|--------------------------------------------------------|------------------------------------|---------------------------------------------------------|
-| `.github/workflows/release-prerelease-prepare.yml`     | Merged PR to `main`; dispatch      | Opens the reviewed `main` to PreRelease promotion       |
-| `.github/workflows/release-prerelease.yml`             | Merged PR to `release/prerelease`  | Prepares metadata or creates the exact tag and draft    |
-| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch     | Opens the reviewed PreRelease to Stable promotion       |
-| `.github/workflows/release-stable-publish.yml`         | Merged PR to `release/stable`      | Prepares metadata or creates the exact tag and draft    |
-| `.github/workflows/release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`    | Produces and publishes the release assets from the tag  |
-| `.github/workflows/extension-provenance-signer.yml`    | Reusable workflow                  | Packages, transfers, and attests the VSIX in split jobs |
-| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch | Publishes the release VSIX to VS Code Marketplace       |
-| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch     | Publishes the release VSIX to VS Code Marketplace       |
+| Workflow                                               | Trigger                                  | Purpose                                                 |
+|--------------------------------------------------------|------------------------------------------|---------------------------------------------------------|
+| `.github/workflows/release-prerelease-prepare.yml`     | Push to `main` (merged PR); dispatch     | Opens the reviewed `main` to PreRelease promotion       |
+| `.github/workflows/release-prerelease.yml`             | Push to `release/prerelease` (merged PR) | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch           | Opens the reviewed PreRelease to Stable promotion       |
+| `.github/workflows/release-stable-publish.yml`         | Push to `release/stable` (merged PR)     | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`          | Produces and publishes the release assets from the tag  |
+| `.github/workflows/extension-provenance-signer.yml`    | Reusable workflow                        | Packages, transfers, and attests the VSIX in split jobs |
+| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch       | Publishes the release VSIX to VS Code Marketplace       |
+| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch           | Publishes the release VSIX to VS Code Marketplace       |
 
 `release-prerelease-prepare.yml` opens the reviewed, target-based `main` to
 `release/prerelease` promotion. Its merge creates no tag and runs
@@ -184,16 +184,13 @@ flowchart TB
 First, prepare the extension manifest from the plugin manifest:
 
 ```bash
-# Discover components and update package.json (Stable channel)
+# Discover components and update package.json
 pwsh ./scripts/extension/Prepare-Extension.ps1
 
 # Or use npm script
 npm run extension:prepare
 
-# For PreRelease channel
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
-
-# Or use npm script
+# Channel-neutral alias of extension:prepare
 npm run extension:prepare:prerelease
 ```
 
@@ -283,7 +280,7 @@ publish.
 
 The generic publisher receives the exact channel tag, downloads the one matching
 VSIX release asset, verifies its provenance against `extension-provenance-signer.yml`
-at signer revision `3a09401536cef0c4559db1aa64b7d1010638fd67`, and publishes it
+at signer revision `3b36a825662603c0d564eb0f3b98ce5ba53857da`, and publishes it
 with `--azure-credential`.
 
 Release verification first authenticates the attestation cryptographically,
@@ -391,8 +388,8 @@ observations, not results of local packaging or documentation validation.
 Package for the pre-release channel with the `-PreRelease` switch:
 
 ```bash
-# Prepare the PreRelease channel
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
+# Prepare (channel-neutral)
+pwsh ./scripts/extension/Prepare-Extension.ps1
 # Or use npm script
 npm run extension:prepare:prerelease
 
@@ -448,7 +445,7 @@ Root `plugin.json` defines the complete extension membership. `.github/plugin/ma
 Prepare and package directly:
 
 ```powershell
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel Stable
+pwsh ./scripts/extension/Prepare-Extension.ps1
 pwsh ./scripts/extension/Package-Extension.ps1
 ```
 

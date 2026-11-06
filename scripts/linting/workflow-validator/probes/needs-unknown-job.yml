@@ -1,0 +1,15 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe needs-unknown-job
+permissions: {}
+on: push
+jobs:
+  a:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo a
+  b:
+    needs: missing
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo b

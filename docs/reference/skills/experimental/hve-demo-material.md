@@ -35,8 +35,8 @@ level is scored against. The HVE Demo Material Builder agent applies it
 interactively; `scripts/render-level.sh` applies it without an agent, which is
 how the repository's weekly workflows rebuild the published material.
 
-Rendering needs `uv`, Python 3.11+, LibreOffice, and FFmpeg, plus either Azure
-Speech credentials or the Piper executable and voice. L300 and L400 live
+Rendering needs `uv`, Python 3.11+, LibreOffice, FFmpeg, and Azure AI Speech
+credentials with `SPEECH_REGION`. L300 and L400 live
 captures also need the VS Code CLI and Chromium. In the hve-core repository the
 script also builds a single-file HTML slide deck, which needs Node.js 24.
 
@@ -48,8 +48,7 @@ Render an authored level from the repository root:
 bash .github/skills/experimental/hve-demo-material/scripts/render-level.sh \
   --level L100 \
   --level-dir .copilot-tracking/demo-material/2026-09-24/L100 \
-  --workspace "$PWD" \
-  --narration piper
+  --workspace "$PWD"
 ```
 
 Expect the deck, a captioned MP4, a WebVTT file, a transcript page, and, in

@@ -154,6 +154,7 @@ cscf
 cse
 cse's
 cspell
+cairosvg
 cspm
 csps
 cte's
@@ -195,6 +196,7 @@ explainability
 Fairlearn
 Falco
 filesystem
+fsspec
 Flink
 frontmatter
 fullstack
@@ -546,6 +548,7 @@ iscsi
 isfile
 isilon
 iskg
+isnot
 isnotempty
 ispf
 isql
@@ -1259,8 +1262,14 @@ seaborn
 timescaledb
 trendline
 underrepresent
+misdescribe
 
 # Security & Compliance
+Cavoukian
+centricity
+organisational
+rollups
+rulemaking
 antimalware
 auditable
 auditability
@@ -1301,6 +1310,7 @@ ipykernel
 ipywidgets
 iterdir
 langword
+nargs
 nums
 returncode
 rglob
@@ -1374,6 +1384,7 @@ windows
 gruntwork
 
 # File Formats & Extensions
+asar
 csv
 docx
 json
@@ -1410,6 +1421,7 @@ frontend
 haspopup
 hoverable
 hrefs
+inuse
 labelledby
 middleware
 microservice
@@ -1420,10 +1432,14 @@ webhooks
 
 # Proper Nouns & Company Names
 Berryiii
+Cascadia
 Chronograf
+Consolas
 Kapacitor
 Katello
+Menlo
 Metaverse
+Neue
 Newtonsoft
 rhysd
 Segoe
@@ -1451,6 +1467,7 @@ deprioritizes
 experim
 kata
 katas
+katex
 lofi
 miscategorized
 myactivity
@@ -1537,6 +1554,11 @@ untriaged
 unvalidated
 vscodeignore
 Pipfile
+manylinux
+pipx
+pypa
+zizmor
+zizmorcore
 
 # Video & Image Processing
 drawtext

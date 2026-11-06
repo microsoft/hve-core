@@ -2,19 +2,20 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - devcontainer
   - vs code settings
   - mcp servers
+  - mcp.json
   - environment
 estimated_reading_time: 6
 ---
 
 ## DevContainer Configuration
 
-HVE Core uses an Ubuntu 22.04 (Jammy) base image with Node.js 24, Python 3.11,
+HVE Core uses an Ubuntu 22.04 (Jammy) base image with Node.js 24.21.0, Python 3.12.15,
 and PowerShell 7.4 pre-installed. The configuration lives in
 `.devcontainer/devcontainer.json` and includes extensions for Markdown editing,
 spell checking, and GitHub integration.
@@ -23,14 +24,14 @@ spell checking, and GitHub integration.
 
 The DevContainer ships with these tools:
 
-* Node.js 24 with npm
-* Python 3.11
-* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
+* Node.js 24.21.0 with npm (from `.node-version`)
+* Python 3.12.15 (from `.python-version`)
+* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 6.2.0
 * Git and GitHub CLI
 * GitHub Copilot CLI (`copilot`)
 * Azure CLI
-* shellcheck for bash validation
-* actionlint for GitHub Actions workflow validation
+* shellcheck 0.11.0 for bash and workflow `run:` script validation
+* zizmor 1.30.1 for GitHub Actions security auditing
 * cosign for artifact signing and verification
 * gitleaks for secret scanning
 
@@ -43,11 +44,11 @@ To add tools or adjust versions, modify `.devcontainer/devcontainer.json`. The
 {
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "24",
+      "version": "24.21.0",
       "pnpmVersion": "none"
     },
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11",
+      "version": "3.12.15",
       "installTools": false
     },
     "ghcr.io/devcontainers/features/powershell:1": {}
@@ -104,9 +105,15 @@ array. Each entry uses the `publisher.extensionId` format:
 
 Three lifecycle hooks execute during container setup:
 
-* `onCreateCommand` runs `.devcontainer/scripts/on-create.sh` to install system
-  dependencies (shellcheck, actionlint, PowerShell modules, gitleaks)
-* `updateContentCommand` runs `npm ci` to install JavaScript dependencies
+* `onCreateCommand` runs `.devcontainer/scripts/on-create.sh` to install
+  shellcheck, zizmor, gitleaks, cosign, osv-scanner, and uv, each pinned and
+  SHA-256 verified against digests that
+  `npm run lint:tool-version-consistency` keeps equal to
+  `scripts/security/tool-checksums.json`, plus the version-pinned PowerShell
+  modules from `scripts/security/ps-module-versions.json`
+* `updateContentCommand` runs `npm ci` at the repository root and
+  `npm ci --prefix scripts/linting/workflow-validator --ignore-scripts` for the
+  workflow validator
 * `postCreateCommand` runs `.devcontainer/scripts/post-create.sh` for final
   configuration
 
@@ -116,12 +123,12 @@ Add custom setup steps to these scripts or create new scripts referenced from
 ## VS Code Settings
 
 Workspace-level settings in `.vscode/settings.json` configure editor behavior,
-Copilot customization discovery, and validation tools. These settings apply to
-everyone who opens the workspace.
+schema validation, and commit message generation. These settings apply to
+everyone who opens the workspace in VS Code.
 
 ### Key Settings
 
-The workspace configures several critical behaviors:
+The workspace sets these editor behaviors:
 
 ```json
 {
@@ -133,40 +140,46 @@ The workspace configures several critical behaviors:
 }
 ```
 
-### Copilot Discovery Paths
+### Copilot Discovery
 
-VS Code discovers customization files through `chat.*FilesLocations` settings.
-Each entry maps a directory path to `true` to enable scanning:
+Copilot finds agents under `.github/agents/`, skills under `.github/skills/`, and
+instructions under `.github/instructions/` at any folder depth. A new package
+folder needs no settings for Copilot sessions:
 
-```json
-{
-  "chat.instructionsFilesLocations": {
-    ".github/instructions/hve-core": true,
-    ".github/instructions/coding-standards": true
-  },
-  "chat.agentFilesLocations": {
-    ".github/agents/hve-core": true,
-    ".github/agents/hve-core/subagents": true
-  },
-  "chat.agentSkillsLocations": {
-    ".github/skills": true,
-    ".github/skills/accessibility": true,
-    ".github/skills/coding-standards": true,
-    ".github/skills/data-science": true,
-    ".github/skills/design-thinking": true,
-    ".github/skills/hve-core": true,
-    ".github/skills/installer": true,
-    ".github/skills/project-planning": true,
-    ".github/skills/rai": true,
-    ".github/skills/rpi": true,
-    ".github/skills/security": true,
-    ".github/skills/shared": true
-  }
-}
+```text
+.github/
+  agents/{package-id}/{name}.agent.md
+  instructions/{package-id}/{name}.instructions.md
+  skills/{package-id}/{skill-name}/SKILL.md
 ```
 
-When you add a new collection directory, register it in these settings so Copilot
-discovers your customizations.
+VS Code keeps its list of path-specific instructions for the life of the window.
+After you add or edit instruction files, run **Developer: Reload Window** so new
+chat sessions pick up the change.
+
+This workspace also lists its own `.github` package folders in the
+`chat.agentFilesLocations`, `chat.instructionsFilesLocations`, and
+`chat.agentSkillsLocations` settings for contributors who still use VS Code's
+Local harness, which may not find nested agents and skills without them. HVE
+Core supports only the Copilot harness, as
+[Use the Copilot Harness](../getting-started/install#use-the-copilot-harness)
+explains, so these settings serve as a bridge while contributors switch. They
+are editor-only: VS Code forwards files from those folders to Copilot sessions,
+which already find the folders on their own, and Copilot CLI and the GitHub
+Copilot app do not read them. When you add or rename a package folder, add it to
+the matching setting so Local sessions keep finding it, and list an agent
+package's `subagents` folder as its own entry.
+
+In a project that uses HVE Core, settings entries that point at an HVE Core
+clone, such as `../hve-core` or `lib/hve-core`, load HVE Core a second time next
+to any install route. Remove those entries after you switch to the Copilot
+harness and confirm HVE Core loads there, as
+[Use One Route at a Time](../getting-started/install#use-one-route-at-a-time)
+describes. That advice does not apply to this repository's own folders.
+
+To load customizations from a folder elsewhere in the checkout, such as an HVE
+Core submodule, declare its folders in `.github/copilot/settings.json` as
+described in [Work From a Clone](../getting-started/install#work-from-a-clone).
 
 ### YAML Schema Validation
 
@@ -187,54 +200,54 @@ YAML extension (`redhat.vscode-yaml`) is installed.
 
 ### Commit Message Instructions
 
-Copilot uses a dedicated instructions file for generating commit messages:
+VS Code's commit message generation follows the same conventions file that the
+`/git-commit` skill uses:
 
 ```json
 {
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "file": ".github/instructions/hve-core/commit-message.instructions.md"
+      "file": ".github/skills/hve-core/git-commit/references/commit-message.md"
     }
   ]
 }
 ```
 
-You can add your own commit message instructions file or replace this reference
-to match your team's commit conventions.
+Point this setting at your own file to match your team's commit conventions.
 
 ## MCP Server Integration
 
-Model Context Protocol (MCP) servers extend Copilot's capabilities by connecting
-it to external tools and data sources. MCP servers run alongside VS Code and
-provide additional context, actions, or integrations that Copilot can invoke
-during conversations.
+Model Context Protocol (MCP) servers connect Copilot to external tools and data
+sources. Agents use them for extra context and to take actions in those systems
+during a session.
 
 ### Configuration
 
-MCP servers are configured in `.vscode/mcp.json` at the workspace level:
+Copilot reads MCP servers from `.mcp.json` at the workspace root. The file holds
+one top-level `mcpServers` object. Stdio servers have `command` and `args`, and
+HTTP servers have `"type": "http"` and a `url`. Copilot also reads each person's
+`~/.copilot/mcp-config.json` (or `$COPILOT_HOME/mcp-config.json`), which uses the
+same format, for servers that belong outside the workspace.
 
-```json
-{
-  "servers": {
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
-    }
-  }
-}
-```
+HVE Core ships `.mcp.json.sample` at the repository root with the WorkIQ and
+Figma servers that some of its agents use. To turn them on, copy the sample to
+`.mcp.json` and delete the servers you don't need. `.gitignore` excludes
+`.mcp.json`, so your copy stays out of commits.
+
+Copilot includes a GitHub MCP server, so leave `github` out of `.mcp.json`.
+Agents whose tools lists name `github/<tool>` use the built-in server.
 
 ### Adding Team-Specific MCP Servers
 
-To integrate your team's tools, add server entries to the `servers` object.
-Each server needs a unique key, a type, and connection details:
+Add an entry to the `mcpServers` object for each of your team's servers. Each
+entry needs a unique key and its connection details:
 
 ```json
 {
-  "servers": {
-    "github": {
+  "mcpServers": {
+    "figma": {
       "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
+      "url": "https://mcp.figma.com/mcp"
     },
     "contoso-api": {
       "type": "http",
@@ -244,8 +257,19 @@ Each server needs a unique key, a type, and connection details:
 }
 ```
 
-MCP servers enable agents to interact with issue trackers, CI/CD pipelines,
-databases, and other systems your team relies on.
+The key is the server name that agents use in their `tools` lists, as
+`contoso-api/<tool>` or `contoso-api/*`.
+
+Keep tokens out of the file. When a server needs a secret, reference an
+environment variable written as `${NAME}` in the server's `env` values or HTTP
+headers, and set the variable outside the repository. The format has no
+`${input:...}` prompts. If your team still keeps servers in `.vscode/mcp.json`,
+VS Code forwards them to Copilot sessions except those that use `${input:...}`
+or `${command:...}`, so move those servers to `.mcp.json`.
+
+MCP servers let agents work with issue trackers, CI/CD pipelines, databases, and
+other systems your team relies on. [MCP Server Configuration](../getting-started/mcp-configuration)
+covers the servers HVE Core agents use.
 
 ## Coding Agent Environment
 
@@ -258,18 +282,21 @@ the agent begins work.
 
 The coding agent environment includes:
 
-* Node.js 24 with npm dependencies from `package.json`
-* Python 3.11
-* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
-* shellcheck (pre-installed on ubuntu-latest)
-* actionlint for GitHub Actions workflow validation
+* Node.js 24.21.0 (from `.node-version`) with npm dependencies from `package.json`
+* Python 3.12.15 (from `.python-version`)
+* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 6.2.0
+* shellcheck 0.11.0 and zizmor 1.30.1, each pinned with per-architecture
+  SHA-256 digests in `copilot-setup-steps.yml`. `npm run
+  lint:tool-version-consistency` requires those versions and digests to match
+  `scripts/security/tool-checksums.json` for the same architecture.
 * cosign for artifact signing and verification
 * osv-scanner for dependency vulnerability scanning
 
 ### Adding Tools for the Coding Agent
 
 Add installation steps to `copilot-setup-steps.yml`. Each tool should include
-SHA-verified downloads for security:
+SHA-verified downloads for security, and the tool must be registered in
+`scripts/security/tool-checksums.json` with the same version and digests:
 
 ```yaml
 - name: Install custom tool
@@ -297,13 +324,13 @@ share most tools but differ intentionally in a few areas.
 
 | Tool                    | DevContainer | Coding Agent |
 |-------------------------|--------------|--------------|
-| Node.js 24              | Yes          | Yes          |
-| Python 3.11             | Yes          | Yes          |
+| Node.js 24.21.0         | Yes          | Yes          |
+| Python 3.12.15          | Yes          | Yes          |
 | PowerShell 7.4          | Yes          | Yes          |
 | PSScriptAnalyzer 1.25.0 | Yes          | Yes          |
-| Pester 5.7.1            | Yes          | Yes          |
+| Pester 6.2.0            | Yes          | Yes          |
 | shellcheck              | Yes          | Yes          |
-| actionlint              | Yes          | Yes          |
+| zizmor                  | Yes          | Yes          |
 | cosign                  | Yes          | Yes          |
 | osv-scanner             | Yes          | Yes          |
 
@@ -339,7 +366,8 @@ Steps to customize:
 2. Add a kubectl installation step to `on-create.sh`
 3. Mirror both installations in `copilot-setup-steps.yml`
 4. Add the Terraform VS Code extension to the DevContainer extensions list
-5. Register any IaC-specific instruction paths in `.vscode/settings.json`
+5. Add IaC instruction files under `.github/instructions/`, where Copilot finds
+   them without any settings
 
 ### Engineer
 
@@ -349,7 +377,8 @@ Copilot to reference their internal MCP server during code reviews.
 Steps to customize:
 
 1. Add the API testing tool to `on-create.sh` and `copilot-setup-steps.yml`
-2. Configure the internal MCP server in `.vscode/mcp.json`
+2. Add the internal MCP server to `.mcp.json` at the workspace root, with any
+   token read from an environment variable
 3. Add workspace settings for any new extensions the team requires
 4. Create an instructions file that teaches Copilot about the team's API
    conventions

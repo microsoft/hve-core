@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en" data-theme="__THEME__" data-contrast="__CONTRAST__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>RPI Workflow</title>
+<link rel="stylesheet" href="/ui/styles.css">
+<script type="module" src="/ui/app.mjs"></script>
+</head>
+<body>
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25l3.5 3.5"/></symbol>
+  <symbol id="i-list" viewBox="0 0 16 16"><path d="M6.5 4h7.25M6.5 8h7.25M6.5 12h7.25"/><path d="M2.25 4l.9.9L4.75 3.3M2.25 8l.9.9 1.6-1.6M2.5 12h1.75"/></symbol>
+  <symbol id="i-code" viewBox="0 0 16 16"><path d="M5.25 4.25L1.75 8l3.5 3.75M10.75 4.25L14.25 8l-3.5 3.75M9.25 2.75l-2.5 10.5"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 16 16"><path d="M12.75 6.25A5 5 0 0 0 3.4 5.1M3.25 9.75a5 5 0 0 0 9.35 1.15"/><path d="M13 2.75v3.5H9.5M3 13.25v-3.5h3.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M5.25 8.25l1.9 1.9 3.6-3.9"/></symbol>
+  <symbol id="i-dot" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.5" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-active" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><circle cx="8" cy="8" r="3" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/></symbol>
+  <symbol id="i-dash-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25" stroke-dasharray="2.5 2.4"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M6.5 5.75v4.5M9.5 5.75v4.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.25L1.75 13.25h12.5z"/><path d="M8 6.5v3M8 11.25v.01"/></symbol>
+  <symbol id="i-x-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M5.75 5.75l4.5 4.5M10.25 5.75l-4.5 4.5"/></symbol>
+  <symbol id="i-slash-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M3.6 12.4l8.8-8.8"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 16 16"><path d="M4 8h8"/></symbol>
+  <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4M8 4.75v.01"/></symbol>
+  <symbol id="i-question" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M6.25 6.25a1.75 1.75 0 1 1 2.5 1.6c-.5.25-.75.6-.75 1.15M8 11.25v.01"/></symbol>
+  <symbol id="i-person" viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.75"/><path d="M2.75 14c.6-2.8 2.8-4.25 5.25-4.25S12.65 11.2 13.25 14"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 16 16"><path d="M8 1.75l1.5 4.25 4.25 1.5-4.25 1.5L8 13.25 6.5 9 2.25 7.5 6.5 6z"/></symbol>
+  <symbol id="i-signpost" viewBox="0 0 16 16"><path d="M8 1.75v12.5M5.5 14.25h5"/><path d="M8 3.25h4.75l1.5 1.75-1.5 1.75H8M8 8.25H3.25L1.75 10l1.5 1.75H8"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 16 16"><path d="M5.25 8.5V3.75a1 1 0 0 1 2 0V7.5M7.25 7V2.75a1 1 0 0 1 2 0V7M9.25 7V3.75a1 1 0 0 1 2 0v5.5M5.25 8.5l-.9-1.1a1 1 0 0 0-1.6 1.2l2.2 3.3a4.25 4.25 0 0 0 3.55 1.85h.75a3 3 0 0 0 3-3V7.75a1 1 0 0 0-2 0"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 16 16"><path d="M1.75 9.25l1.9-6a1 1 0 0 1 .95-.75h6.8a1 1 0 0 1 .95.75l1.9 6v3a1 1 0 0 1-1 1H2.75a1 1 0 0 1-1-1z"/><path d="M1.75 9.25H5.5l.75 1.5h3.5l.75-1.5h3.75"/></symbol>
+  <symbol id="i-send" viewBox="0 0 16 16"><path d="M2 2.5l12 5.5-12 5.5 1.75-5.5z"/><path d="M3.75 8h5"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5.5 3.25L2.25 6.5 5.5 9.75"/><path d="M2.5 6.5h7a4 4 0 0 1 0 8H7"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 16 16"><path d="M10.75 2.5l2.75 2.75-8 8H2.75v-2.75z"/><path d="M9.25 4l2.75 2.75"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.75 4.25h10.5M6.25 4.25V2.75h3.5v1.5M4.25 4.25l.55 8.6a1 1 0 0 0 1 .9h4.4a1 1 0 0 0 1-.9l.55-8.6M6.75 7v4.25M9.25 7v4.25"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.05 1.05M11.55 11.55l1.05 1.05M3.4 12.6l1.05-1.05M11.55 4.45l1.05-1.05"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.5 9.75A5.75 5.75 0 0 1 6.25 2.5a5.75 5.75 0 1 0 7.25 7.25z"/></symbol>
+  <symbol id="i-contrast" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 16 16"><path d="M2 4.25h7M12.5 4.25H14M2 11.75h1.5M7 11.75h7"/><circle cx="10.75" cy="4.25" r="1.75"/><circle cx="5.25" cy="11.75" r="1.75"/></symbol>
+  <symbol id="i-nodes" viewBox="0 0 16 16"><circle cx="3" cy="8" r="1.75"/><circle cx="13" cy="3.5" r="1.75"/><circle cx="13" cy="12.5" r="1.75"/><path d="M4.6 7.2l6.8-3M4.6 8.8l6.8 3"/></symbol>
+  <symbol id="i-file" viewBox="0 0 16 16"><path d="M3.25 1.75h6l3.5 3.5v9H3.25z"/><path d="M9.25 1.75v3.5h3.5"/></symbol>
+  <symbol id="i-diff" viewBox="0 0 16 16"><path d="M3.25 1.75h6l3.5 3.5v9H3.25z"/><path d="M6 6.75h4M8 4.75v4M6 11.25h4"/></symbol>
+  <symbol id="i-go-to" viewBox="0 0 16 16"><path d="M9.25 2.75h4v4M13.25 2.75L7.5 8.5M11.75 9.5v3.25a1 1 0 0 1-1 1h-7.5a1 1 0 0 1-1-1v-7.5a1 1 0 0 1 1-1H6.5"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M1.75 8h12.5M8 1.75c1.7 1.75 2.5 3.8 2.5 6.25S9.7 12.5 8 14.25M8 1.75C6.3 3.5 5.5 5.55 5.5 8s.8 4.5 2.5 6.25"/></symbol>
+  <symbol id="i-file-code" viewBox="0 0 16 16"><path d="M3.25 1.75h6l3.5 3.5v9H3.25z"/><path d="M9.25 1.75v3.5h3.5M6.75 8.25L5.25 9.75l1.5 1.5M9.25 8.25l1.5 1.5-1.5 1.5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 16 16"><path d="M10 2.25l3.75 3.75M11.5 3.25l-3 3-3.25.25 4.25 4.25.25-3.25 3-3M7.25 8.75l-4.5 4.5"/></symbol>
+  <symbol id="i-legend" viewBox="0 0 16 16"><rect x="2.25" y="2.75" width="3.5" height="3.5" rx=".75"/><rect x="2.25" y="9.75" width="3.5" height="3.5" rx=".75"/><path d="M8.25 4.5h5.5M8.25 11.5h5.5"/></symbol>
+  <symbol id="i-anchor" viewBox="0 0 16 16"><circle cx="8" cy="3.5" r="1.75"/><path d="M8 5.25v9M5.25 8h5.5M2.75 9.5a5.25 5.25 0 0 0 10.5 0"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 16 16"><path d="M5.75 11.25c0-1.75-2.25-2.75-2.25-5.25a4.5 4.5 0 0 1 9 0c0 2.5-2.25 3.5-2.25 5.25z"/><path d="M6.25 13.5h3.5"/></symbol>
+  <symbol id="i-shield-check" viewBox="0 0 16 16"><path d="M8 1.75l5.25 2v4c0 3.25-2.25 5.5-5.25 6.5-3-1-5.25-3.25-5.25-6.5v-4z"/><path d="M5.75 8l1.6 1.6 2.9-3.1"/></symbol>
+  <symbol id="i-half" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 1.75v12.5"/><path d="M8 1.75a6.25 6.25 0 0 0 0 12.5z" fill="currentColor"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 16 16"><path d="M1.75 4.25l4.5 4.5 2.5-2.5 5.5 5.5"/><path d="M14.25 7.5v4.25H10"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 16 16"><path d="M3.25 2.75H6v10.5H3.25a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5z" fill="currentColor" stroke="none"/><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5"/><path d="M6 2.75v10.5"/></symbol>
+  <symbol id="i-panel-right" viewBox="0 0 16 16"><path d="M10 2.75h2.75a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5H10z" fill="currentColor" stroke="none"/><rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5"/><path d="M10 2.75v10.5"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 16 16"><rect x="1.25" y="3.75" width="13.5" height="8.5" rx="1.5"/><path d="M4 6.5h.01M6.5 6.5h.01M9 6.5h.01M11.5 6.5h.01M4.5 9.5h7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 16 16"><path d="M8 13.25V2.75M3.75 7L8 2.75 12.25 7"/></symbol>
+  <symbol id="i-arrow-down" viewBox="0 0 16 16"><path d="M8 2.75v10.5M3.75 9L8 13.25 12.25 9"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 16 16"><path d="M13.25 8H2.75M7 3.75L2.75 8 7 12.25"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 16 16"><path d="M2.75 8h10.5M9 3.75L13.25 8 9 12.25"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.25" y="5.25" width="8.5" height="8.5" rx="1.25"/><path d="M10.75 5.25v-2a1 1 0 0 0-1-1h-6.5a1 1 0 0 0-1 1v6.5a1 1 0 0 0 1 1h2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 4.75V8l2.25 1.5"/></symbol>
+  <symbol id="i-message" viewBox="0 0 16 16"><path d="M2.25 3.25h11.5v8H7l-3 2.5v-2.5H2.25z"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 16 16"><circle cx="4.5" cy="3.5" r="1.75"/><circle cx="4.5" cy="12.5" r="1.75"/><circle cx="11.5" cy="5.5" r="1.75"/><path d="M4.5 5.25v5.5M11.5 7.25c0 2.75-3.5 2.75-6.4 4.4"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 16 16"><path d="M3.25 14.25V2M3.25 2.5h8l-1.75 3 1.75 3h-8"/></symbol>
+<symbol id="i-signal-0" viewBox="0 0 16 16"><rect x="2.25" y="9.5" width="2.75" height="3.75" rx=".6" fill="currentColor" stroke="none" opacity=".28"/><rect x="6.625" y="6.25" width="2.75" height="7" rx=".6" fill="currentColor" stroke="none" opacity=".28"/><rect x="11" y="3" width="2.75" height="10.25" rx=".6" fill="currentColor" stroke="none" opacity=".28"/></symbol><symbol id="i-signal-1" viewBox="0 0 16 16"><rect x="2.25" y="9.5" width="2.75" height="3.75" rx=".6" fill="currentColor" stroke="none"/><rect x="6.625" y="6.25" width="2.75" height="7" rx=".6" fill="currentColor" stroke="none" opacity=".28"/><rect x="11" y="3" width="2.75" height="10.25" rx=".6" fill="currentColor" stroke="none" opacity=".28"/></symbol><symbol id="i-signal-2" viewBox="0 0 16 16"><rect x="2.25" y="9.5" width="2.75" height="3.75" rx=".6" fill="currentColor" stroke="none"/><rect x="6.625" y="6.25" width="2.75" height="7" rx=".6" fill="currentColor" stroke="none"/><rect x="11" y="3" width="2.75" height="10.25" rx=".6" fill="currentColor" stroke="none" opacity=".28"/></symbol><symbol id="i-signal-3" viewBox="0 0 16 16"><rect x="2.25" y="9.5" width="2.75" height="3.75" rx=".6" fill="currentColor" stroke="none"/><rect x="6.625" y="6.25" width="2.75" height="7" rx=".6" fill="currentColor" stroke="none"/><rect x="11" y="3" width="2.75" height="10.25" rx=".6" fill="currentColor" stroke="none"/></symbol><symbol id="i-priority-high" viewBox="0 0 16 16"><path d="M4 8.25l4-4 4 4M4 12.5l4-4 4 4"/></symbol><symbol id="i-priority-medium" viewBox="0 0 16 16"><path d="M3.75 6.25h8.5M3.75 9.75h8.5"/></symbol><symbol id="i-priority-low" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></symbol><symbol id="i-plug" viewBox="0 0 16 16"><path d="M5.75 1.75v3M10.25 1.75v3M3.75 4.75h8.5v2a4.25 4.25 0 0 1-8.5 0v-2ZM8 11v3.25"/></symbol>
+<symbol id="i-live" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.25" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="6.25" opacity=".45"/></symbol><symbol id="i-live-off" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.25"/></symbol></svg>
+<a class="skip-link" href="#document">Skip to the document</a>
+<header class="topbar">
+  <button type="button" class="icon-btn" id="navToggle" aria-controls="navigator" aria-expanded="true"><svg class="icon" aria-hidden="true"><use href="#i-panel"/></svg><span class="visually-hidden">Hide navigator</span></button>
+  <div class="identity">
+    <h1 id="taskTitle" class="task-title">RPI Workflow</h1>
+    <div class="task-meta-line">
+      <button type="button" class="session-btn" id="sessionBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="sessionMenu" hidden><svg class="icon" aria-hidden="true"><use href="#i-nodes"/></svg><span class="session-btn-label" id="sessionLabel">Session</span><svg class="icon session-btn-chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      <span class="canvas-badge" id="canvasBadge" hidden></span>
+      <p id="taskMeta" class="task-meta"></p>
+    </div>
+  </div>
+  <nav class="rail" aria-label="RPI phases"><div role="tablist" id="phaseRail" class="rail-list" aria-label="View phase"></div></nav>
+  <div class="top-actions">
+    <button type="button" class="needs-btn" id="needsBtn"><svg class="icon" aria-hidden="true"><use href="#i-hand"/></svg><span id="needsLabel">Needs you</span><span class="count" id="needsCount">0</span></button>
+    <button type="button" class="send-btn" id="sendBtn" aria-haspopup="dialog" aria-label="Review and send, nothing waiting"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg><span id="sendLabel">Review and send</span><span class="count" id="sendCount" aria-hidden="true">0</span></button>
+    <button type="button" class="live-btn" id="liveBtn" data-state="connecting" data-follow="on"><svg class="icon" aria-hidden="true"><use href="#i-live"/></svg><span id="liveLabel">Connecting</span><span class="visually-hidden" id="liveHint"></span></button>
+    <button type="button" class="icon-btn" id="appearanceBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="appearanceMenu"><svg class="icon" aria-hidden="true"><use href="#i-contrast"/></svg><span class="visually-hidden">Appearance</span></button>
+    <button type="button" class="icon-btn" id="legendBtn" aria-haspopup="dialog" aria-keyshortcuts="l"><svg class="icon" aria-hidden="true"><use href="#i-legend"/></svg><span class="visually-hidden">What the IDs and icons mean</span></button>
+    <button type="button" class="icon-btn" id="shortcutsBtn" aria-keyshortcuts="?"><svg class="icon" aria-hidden="true"><use href="#i-keyboard"/></svg><span class="visually-hidden">Keyboard shortcuts</span></button>
+    <button type="button" class="icon-btn" id="steerToggle" aria-controls="steer" aria-expanded="true"><svg class="icon" aria-hidden="true"><use href="#i-panel-right"/></svg><span class="visually-hidden">Hide steering panel</span></button>
+  </div>
+  <div class="menu appearance-menu" id="appearanceMenu" role="dialog" aria-labelledby="appearanceTitle" hidden>
+    <h2 class="menu-title" id="appearanceTitle">Appearance</h2>
+    <fieldset class="segmented" id="themeGroup">
+      <legend>Theme</legend>
+      <label><input type="radio" name="theme" value="system"><svg class="icon" aria-hidden="true"><use href="#i-contrast"/></svg><span>System</span></label>
+      <label><input type="radio" name="theme" value="light"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg><span>Light</span></label>
+      <label><input type="radio" name="theme" value="dark"><svg class="icon" aria-hidden="true"><use href="#i-moon"/></svg><span>Dark</span></label>
+    </fieldset>
+    <label class="switch-row"><input type="checkbox" role="switch" id="contrastSwitch"><span>More contrast</span></label>
+    <p class="menu-note" id="appearanceNote">System follows your editor or operating system.</p>
+  </div>
+  <div class="menu session-menu" id="sessionMenu" role="dialog" aria-labelledby="sessionMenuTitle" hidden></div>
+</header>
+<div class="workspace" id="workspace">
+  <nav class="navigator" id="navigator" aria-label="Navigator">
+    <div class="nav-filter"><label class="visually-hidden" for="navFilter">Filter this phase</label><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input type="search" id="navFilter" placeholder="Filter this phase" aria-keyshortcuts="/"><button type="button" class="icon-btn drawer-close" id="navClose" hidden><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span class="visually-hidden">Close navigator</span></button></div>
+    <div class="nav-body" id="navBody"></div>
+  </nav>
+  <main class="document" id="document" tabindex="-1">
+    <div class="context-bar" id="contextBar"></div>
+    <div class="doc-body" id="docBody"><div class="skeleton" aria-hidden="true"></div><div class="skeleton" aria-hidden="true"></div></div>
+    <div class="status-area" id="statusArea" hidden></div>
+  </main>
+  <aside class="steer" id="steer" aria-labelledby="steerTitle">
+    <div class="steer-head"><h2 id="steerTitle">Steer</h2><button type="button" class="icon-btn drawer-close" id="steerClose"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span class="visually-hidden">Close steering panel</span></button></div>
+    <div class="steer-body" id="steerBody"></div>
+  </aside>
+</div>
+<main class="connect-view" id="connectView" tabindex="-1" hidden></main>
+<div class="scrim" id="scrim" hidden></div>
+<dialog class="dialog" id="shortcutsDialog" aria-labelledby="shortcutsTitle">
+  <div class="dialog-head"><h2 id="shortcutsTitle">Keyboard shortcuts</h2><button type="button" class="icon-btn" data-close><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span class="visually-hidden">Close</span></button></div>
+  <dl class="shortcut-list" id="shortcutList"></dl>
+  <label class="switch-row"><input type="checkbox" role="switch" id="shortcutSwitch" checked><span>Single-key shortcuts</span></label>
+</dialog>
+<dialog class="dialog legend-sheet" id="legendDialog" aria-labelledby="legendTitle"></dialog>
+<dialog class="dialog sheet" id="fileSheet" aria-labelledby="fileSheetTitle"></dialog>
+<dialog class="dialog send-sheet" id="sendSheet" aria-labelledby="sendSheetTitle"></dialog>
+<div class="visually-hidden" id="announcer" role="status" aria-live="polite"></div>
+</body>
+</html>

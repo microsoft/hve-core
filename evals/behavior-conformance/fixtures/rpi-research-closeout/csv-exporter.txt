@@ -1,0 +1,6 @@
+# Synthetic fixture for the rpi-research closeout eval. Not production code.
+
+
+def export_rows(rows):
+    """Return synthetic rows as comma-separated lines."""
+    return [",".join(str(value) for value in row) for row in rows]

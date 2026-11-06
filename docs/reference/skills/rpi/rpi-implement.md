@@ -3,7 +3,7 @@ title: rpi-implement
 description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-10-14
 ms.topic: reference
 keywords:
   - skill
@@ -38,9 +38,23 @@ significant or divergent choice needs your decision before affected work resumes
 clarification does not. A change that needs replanning beyond the affected tasks returns to
 [rpi-plan](rpi-plan).
 
+Implementation does not require subagents. When a dispatch tool is available and you have not said otherwise, it may run
+dependency-ready tasks that change different files in parallel subagents, and it verifies each result before checking the
+task. Pass `subagents=none` to implement every task in the conversation.
+
 Implementation does not require a plan critique. If you skipped the critique, implementation proceeds
 normally. When the plan is marked not ready or has unresolved blocking critique findings, the
 implementer names them and confirms with you before implementing affected tasks.
+
+When a plan update changes, or completed behavior differs from, a requirement that cites a BRD,
+PRD, or ADR, the implementer adds a `## Business Alignment` entry to the changes log. The entry
+names the source, the cited IDs, the owner from the source's frontmatter, what changed and why, your
+decision, and whether the change is a `clarification`, a `divergence-confirmed`, a `source-gap`, or
+a `pending-decision` awaiting your answer. Before handing off to review, the implementer compares
+the finished work with every cited requirement so a quiet divergence still gets an entry, and a
+`pending-decision` entry holds review until you decide. The closeout lists the entries. Review uses
+them to check alignment and to offer a note to the source owner. Implementation never edits the
+source document or contacts anyone.
 
 Reach for a different asset when:
 

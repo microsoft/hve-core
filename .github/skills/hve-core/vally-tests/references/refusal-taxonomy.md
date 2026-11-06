@@ -228,7 +228,7 @@ This reference defines the seven refusal categories the Vally test-authoring ski
 ## Lint script contract
 
 * Every fenced block tagged with ```` ```regex ```` in this file is part of the source of truth. The lint script extracts the block bodies verbatim; no other file overrides or supplements them.
-* Every pattern is case-insensitive PCRE-compatible. The `(?i)` inline modifier is required at the start of each pattern so that PowerShell, Python, and shell regex engines apply identical matching semantics.
+* Every pattern is case-insensitive PCRE-compatible. The `(?i)` inline modifier is required at the start of each pattern so that PowerShell and Python regex engines apply identical matching semantics.
 * The lint script joins all regex blocks under a single category using alternation (`|`) and evaluates the combined pattern against the candidate stimulus. Patterns within a category are designed to coexist when alternated.
 * Any match against any category's combined pattern flags the stimulus for refusal. The script emits the matching category, the matching pattern index within that category, and the stimulus location.
 * This file is the only normative source for the regex set. Changes to category names, pattern semantics, or refusal wording propagate through the lint script and the Vally Test Author prompt on the next regeneration; do not duplicate the patterns elsewhere.

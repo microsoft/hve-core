@@ -17,7 +17,7 @@ permissions:
 jobs:
   check-lockfile:
     name: Validate Devcontainer Lockfile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -32,8 +32,10 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
           $params = @{}
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnViolation'] = $true
           }
           & scripts/devcontainer/Test-DevcontainerLockfile.ps1 @params
           exit $LASTEXITCODE
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}

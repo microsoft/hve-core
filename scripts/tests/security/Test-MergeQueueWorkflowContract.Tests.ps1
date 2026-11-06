@@ -22,8 +22,7 @@ BeforeDiscovery {
         @{ Workflow = 'pytest-tests.yml'; Job = 'pytest' }
         @{ Workflow = 'python-lint.yml'; Job = 'python-lint' }
         @{ Workflow = 'skill-validation.yml'; Job = 'validate' }
-        @{ Workflow = 'yaml-lint.yml'; Job = 'yaml-lint' }
-    )
+        )
 
     # Trusted events may receive the custom eval token; every other event must not.
     $script:CredentialEventScenarios = @(
@@ -638,10 +637,13 @@ jobs:
         $CheckoutStep = $Steps[$CheckoutIndex]
         $VerifyStep = $Steps[$CheckoutIndex + 1]
 
-        $CheckoutStep['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+        # With no ref or repository, actions/checkout resolves the event's trusted commit (github.sha).
+        $CheckoutStep['with'].Contains('ref') | Should -BeFalse
+        $CheckoutStep['with'].Contains('repository') | Should -BeFalse
         $CheckoutStep['with']['persist-credentials'] | Should -BeFalse
-        $VerifyStep['if'] | Should -BeExactly "inputs.change-mode == 'range'"
-        $VerifyStep['env']['EXPECTED_HEAD_SHA'] | Should -BeExactly '${{ inputs.head-sha }}'
+        $VerifyStep.Contains('if') | Should -BeFalse
+        $VerifyStep['env']['EXPECTED_HEAD_SHA'] |
+            Should -BeExactly "`${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}"
         $VerifyStep.Contains('uses') | Should -BeFalse
         [string]$VerifyStep['run'] | Should -Match 'git rev-parse HEAD'
         [string]$VerifyStep['run'] | Should -Match 'exit 1'
@@ -770,7 +772,7 @@ jobs:
         $CheckStep = @($Workflow['jobs']['msdate-freshness']['steps']) | Where-Object { $_['name'] -eq 'Run ms.date freshness check' }
         $WeeklyWorkflow = Get-Content -Raw -Path (Join-Path $WorkflowRoot 'weekly-validation.yml') | ConvertFrom-Yaml
         $AggregateCaller = $script:AggregateWorkflow['jobs']['msdate-freshness']['with']
-        $WeeklyCaller = @($WeeklyWorkflow['jobs'].Values | Where-Object { $_['uses'] -eq './.github/workflows/msdate-freshness-check.yml' })
+        $WeeklyCaller = @($WeeklyWorkflow['jobs'].Values | Where-Object { $_['uses'] -eq '$/.github/workflows/msdate-freshness-check.yml' })
 
         $CheckStep['run'] | Should -Match "(?s)CHANGED_FILES_ONLY -eq 'true' -and \`$env:INPUT_CHANGE_MODE -eq 'full'\) \{\s+Write-Output '::warning::[^']+'\s+& scripts/linting/Invoke-MsDateFreshnessCheck\.ps1 @params\s+exit 0\s+\}"
         $AggregateCaller['changed-files-only'] | Should -BeTrue
@@ -1003,6 +1005,7 @@ Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
     It 'Bounds the write scopes and secrets reachable from merge_group' {
         # merge_group runs fork-originated code in the base-repository context, so every write grant is deliberate.
         $ExpectedWriteGrants = @(
+            'action-pin-provenance-scan=security-events'
             'action-version-consistency-scan=security-events'
             'adr-consistency-validation=security-events'
             'codeql=security-events'
@@ -1015,8 +1018,11 @@ Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
             'node-tests=id-token'
             'pester-tests=id-token'
             'pytest=id-token'
+            'tool-version-consistency-scan=security-events'
             'workflow-permissions-check=security-events'
             'workflow-runner-check=security-events'
+            'workflow-validation-scan=security-events'
+            'zizmor-scan=security-events'
         )
         $TopLevelPermissions = $script:AggregateWorkflow['permissions']
         $NonMapPermissionJobs = [System.Collections.Generic.List[string]]::new()

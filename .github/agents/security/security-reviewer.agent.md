@@ -1,20 +1,17 @@
 ---
 name: Security Reviewer
 description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting"
-argument-hint: "[mode={audit|diff|plan}] [scope=path/to/dir] [skills=owasp-llm,owasp-agentic] [targetSkill=owasp-top-10] [plan=path/to/plan.md]"
-agents:
-  - Codebase Profiler
-  - Skill Assessor
-  - Finding Deep Verifier
-  - Report Generator
 tools:
   - agent
-  - execute/runInTerminal
-  - search/codebase
-  - search/fileSearch
-  - read/readFile
+  - execute
+  - search
+  - read
+  - skill
+  - ask_user
 user-invocable: true
 disable-model-invocation: true
+skills:
+  - disclaimer-language
 ---
 
 # Security Reviewer
@@ -30,13 +27,13 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 
 ## TM7 Generation Workflow
 
-Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
+Follow the human-in-the-loop contract in the `security-planning` skill's `references/tm7-generation-workflow.md` for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
 
 ## Threat Dragon Generation Workflow
 
-Follow the human-in-the-loop contract in #file:../../instructions/security/threat-dragon-generation-workflow.instructions.md for authorship confirmation. It applies whenever a review requires generating or refreshing an OWASP Threat Dragon threat model.
+On a Threat Dragon request, read `threat-dragon-generation-workflow.instructions.md` by name and follow its human-in-the-loop contract for authorship confirmation. It applies whenever a review requires generating or refreshing an OWASP Threat Dragon threat model. If the load fails, halt and report the missing artifact rather than proceeding without confirmation.
 
-On a Threat Dragon request, `read_file` the `security-planning` skill's `references/threat-dragon-generation.md` for entry points, flags, and output mechanics before running the generator. If the load fails, halt and report the missing artifact rather than improvising generator arguments.
+On a Threat Dragon request, read the `security-planning` skill's `references/threat-dragon-generation.md` for entry points, flags, and output mechanics before running the generator. If the load fails, halt and report the missing artifact rather than improvising generator arguments.
 
 ## Inputs
 
@@ -213,7 +210,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
   6. Display a scan status update: phase "Profiling", message "Profiling skipped. Using target skill: {targetSkill}".
   7. Proceed directly to Step 2.
 * When `targetSkill` is NOT provided, execute the following profiling logic.
-* Run `Codebase Profiler` as a subagent with `runSubagent`, using the mode-specific Codebase Profiler prompt template from `Subagent Prompt Templates` above.
+* Run `Codebase Profiler` as a subagent, using the mode-specific Codebase Profiler prompt template from `Subagent Prompt Templates` above.
 * If the Codebase Profiler returns a response missing required fields from the Codebase Profiler response contract, apply the retry-once protocol from Required Protocol rule 5. If the retry also fails, display a scan status update: phase "Profiling", message "Codebase profiling failed: {error}. Cannot proceed without a technology profile." Stop the scan.
 * Capture the codebase profile from the profiler response.
 * Extract the repository name from the profile output (the Codebase Profile format includes a `**Repository:**` field).
@@ -226,7 +223,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 ### Step 2: Assess Applicable Skills
 
 * Display a scan status update: phase "Assessing", message "Beginning skill assessments for {count} applicable skills."
-* For each skill in the applicable skills list, run `Skill Assessor` as a subagent with `runSubagent`, using the mode-specific Skill Assessor prompt template from `Subagent Prompt Templates` above.
+* For each skill in the applicable skills list, run `Skill Assessor` as a subagent, using the mode-specific Skill Assessor prompt template from `Subagent Prompt Templates` above.
 * Skill assessments can run in parallel when the runtime supports it.
 * Collect structured findings from each `Skill Assessor` response. Apply the retry-once protocol from Required Protocol rule 5 when a response is incomplete or missing required fields.
 * If a `Skill Assessor` still fails after the retry, log the failure, exclude that skill from subsequent steps (verification and reporting), and add it to an excluded skills list with the failure reason. Display a scan status update: phase "Assessing", message "Skill assessment failed for {skill_name} after retry. Excluding from results."
@@ -244,7 +241,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
   2. Separate findings into two groups: unverified (FAIL and PARTIAL status) and pass-through (PASS and NOT_ASSESSED status).
   3. Pass through PASS and NOT_ASSESSED findings unchanged with verdict UNCHANGED into the verified findings collection.
   4. Serialize each unverified finding into the Finding Serialization Format defined in the `security-reviewer-formats` skill (`references/finding-formats.md`) before passing to the verifier.
-  5. If unverified findings exist, run `Finding Deep Verifier` as a subagent with `runSubagent` for all FAIL and PARTIAL findings for that skill in a single call, using the mode-specific Finding Deep Verifier prompt template from `Subagent Prompt Templates` above.
+  5. If unverified findings exist, run `Finding Deep Verifier` as a subagent for all FAIL and PARTIAL findings for that skill in a single call, using the mode-specific Finding Deep Verifier prompt template from `Subagent Prompt Templates` above.
   6. Capture the deep verdicts and add them to the verified findings collection. Apply the retry-once protocol from Required Protocol rule 5 when a response is incomplete or missing required fields.
   7. When the verifier fails after the retry for a skill, exclude only the unverified findings (FAIL and PARTIAL status). Retain pass-through findings (PASS and NOT_ASSESSED with verdict UNCHANGED) in the verified findings collection. Add the skill to the excluded skills list with the failure reason, noting only unverified findings were excluded. Display a scan status update: phase "Verifying", message "Finding verification failed for {skill_name} after retry. Excluding unverified findings for this skill."
 * Skill verifications can run in parallel when the runtime supports it. Each skill's verifier call is independent.
@@ -255,7 +252,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 ### Step 4: Generate Report
 
 * Display a scan status update: phase "Reporting", message "Generating vulnerability report."
-* Run `Report Generator` as a subagent with `runSubagent`, using the mode-specific Report Generator prompt template from `Subagent Prompt Templates` above.
+* Run `Report Generator` as a subagent, using the mode-specific Report Generator prompt template from `Subagent Prompt Templates` above.
 * `Report Generator` writes the report file to disk and returns the resolved file path, summary counts, and severity breakdown. The orchestrator does not write the report file.
 * Capture the report result and extract the fields defined in the Report Generator response contract. Apply the retry-once protocol from Required Protocol rule 5 when a response is incomplete or missing required fields.
 * If the Report Generator fails after the retry, display a scan status update: phase "Reporting", message "Report generation failed after retry: {error}. No report file was produced." Stop the scan.
@@ -268,7 +265,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 * When mode is `audit` or `diff`, display the audit/diff scan completion format with verification counts, finding counts, assessed skills, and the report file path.
 * When mode is `plan`, display the plan scan completion format with risk counts, assessed skills, and the report file path.
 * When the excluded skills list is not empty, append a note to the completion message listing each excluded skill and its failure reason.
-* After the completion summary, display the Security-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
+* After the completion summary, display the Security-Review CAUTION block from the `disclaimer-language` skill verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
 
 ### Step 6: Correlate a Supplied Security Plan Baseline
 

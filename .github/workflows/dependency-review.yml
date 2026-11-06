@@ -19,11 +19,16 @@ on:
 permissions:
   contents: read
 
+# Pull request runs supersede each other; main SBOM publication always completes.
+concurrency:
+  group: dependency-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   main-sbom:
     name: Publish Main SBOM
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
 
@@ -38,7 +43,7 @@ jobs:
         run: mkdir -p continuous-sbom
 
       - name: Generate main dependency SBOM
-        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: .
           format: spdx-json
@@ -49,7 +54,7 @@ jobs:
 
       - name: Upload main dependency SBOM
         id: upload-main-sbom
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: main-dependencies-${{ github.sha }}
           path: continuous-sbom/main-dependencies-${{ github.sha }}.spdx.json
@@ -82,7 +87,7 @@ jobs:
         github.event_name == 'pull_request'
         && github.event.pull_request.head.repo.full_name == github.repository
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # Elevated for Dependency Submission API (uv.lock)
 
@@ -93,7 +98,7 @@ jobs:
           persist-credentials: false
 
       - name: Submit uv.lock dependencies
-        uses: advanced-security/component-detection-dependency-submission-action@b282c67b1008fde9b60da4bdfcd8849613e293b2 # v0.1.6
+        uses: advanced-security/component-detection-dependency-submission-action@a02aeda7a175ad4dd38a13c4d3ff2df9da8f2cf0 # v0.2.0
         with:
           detectorArgs: "UvLock=EnableIfDefaultOff"
 
@@ -107,10 +112,10 @@ jobs:
         needs.dependency-submission.result == 'success'
         || needs.dependency-submission.result == 'skipped'
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: write # post the dependency review summary comment
 
     steps:
       - name: Checkout code
@@ -262,12 +267,18 @@ jobs:
           # does not relicense separately authored repository code. This
           # package-scoped exception requires organizational approval before
           # merge and does not allow EPL-2.0 repository-wide.
+          # pkg:pypi/cairosvg is LGPL-3.0-or-later. The PowerPoint skill
+          # installs the unmodified wheel into its uv environment at use time;
+          # plugin and extension artifacts do not redistribute it. This
+          # package-scoped exception requires organizational approval before
+          # merge and does not allow LGPL-3.0-or-later repository-wide.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:pypi/certifi,
             pkg:pypi/charset-normalizer,
             pkg:pypi/shapely,
+            pkg:pypi/cairosvg,
             pkg:pypi/backports-tarfile,
             pkg:pypi/cryptography,
             pkg:pypi/jaraco-classes,

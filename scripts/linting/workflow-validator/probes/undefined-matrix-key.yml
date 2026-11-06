@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: probe undefined-matrix-key
+permissions: {}
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [a, b]
+    steps:
+      - run: echo "${{ matrix.missing }}"

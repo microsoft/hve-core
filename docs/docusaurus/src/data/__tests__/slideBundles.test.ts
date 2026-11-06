@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { loadSlideBundles, syncSlideBundles } from '../../../scripts/slide-bundles.cjs';
@@ -58,7 +58,10 @@ test.each(['index.html', 'Invalid Name.html'])('rejects reserved or invalid bund
 });
 
 test('rejects symbolic-link bundles and missing sources explicitly', () => {
-  symlinkSync(path.join(source, 'missing.html'), path.join(source, 'linked.html'));
+  const link = path.join(source, 'linked.html');
+  // Junctions do not require Windows file-symlink privileges.
+  symlinkSync(path.join(source, 'missing.html'), link, process.platform === 'win32' ? 'junction' : 'file');
+  expect(lstatSync(link).isSymbolicLink()).toBe(true);
   expect(() => loadSlideBundles(source)).toThrow('regular, lower-kebab-case deck');
   expect(() => loadSlideBundles(path.join(root, 'missing'))).toThrow();
 });

@@ -24,12 +24,16 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
     }
 
     It 'Rejects replacing mapped code checks with a different result kind' {
+        $realResultKind = Get-Command -Name Get-GraderResultKind -CommandType Function
+        Mock Get-GraderResultKind { & $realResultKind @PesterBoundParameters }
         Mock Get-GraderResultKind { 'llm' } -ParameterFilter { $GraderType -eq 'program' }
         { Invoke-GraderLineageMap -RepoRoot $script:RepoRoot -Check } | Should -Throw '*Mapped current grader*was not found*'
     }
 
     It 'Maps authored grader type <GraderType> to result kind <ExpectedKind>' -ForEach @(
+        @{ GraderType = 'diff-contains'; ExpectedKind = 'code' }
         @{ GraderType = 'diff-empty'; ExpectedKind = 'code' }
+        @{ GraderType = 'diff-not-contains'; ExpectedKind = 'code' }
         @{ GraderType = 'file-exists'; ExpectedKind = 'code' }
         @{ GraderType = 'file-matches'; ExpectedKind = 'code' }
         @{ GraderType = 'file-not-exists'; ExpectedKind = 'code' }
@@ -44,6 +48,30 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
         @{ GraderType = 'human'; ExpectedKind = 'human' }
     ) {
         Get-GraderResultKind -GraderType $GraderType | Should -BeExactly $ExpectedKind
+    }
+
+    It 'Applies the reply-to-code replacement rule for target type <TargetType>' -ForEach @(
+        @{ TargetType = 'output-matches'; Allowed = $true }
+        @{ TargetType = 'program'; Allowed = $true }
+        @{ TargetType = 'diff-not-contains'; Allowed = $true }
+        @{ TargetType = 'diff-empty'; Allowed = $false }
+    ) {
+        $map = Get-Content -Raw -LiteralPath (Join-Path $script:RepoRoot 'evals/migrations/vally-0.16-grader-name-aliases.json') | ConvertFrom-Json
+        $paths = @($map.aliases.source | Sort-Object -Unique)
+        $records = @(Get-CurrentGraderLineageRecords -RepoRoot $script:RepoRoot -Paths $paths | ForEach-Object { $_.PSObject.Copy() })
+        $alias = @($map.aliases | Where-Object { $_.graderType -eq 'output-matches' })[0]
+        $target = @($records | Where-Object { $_.Source -eq $alias.source -and $_.Stimulus -eq $alias.stimulus -and $_.Name -eq $alias.newName })
+        $target | Should -HaveCount 1
+        $target[0].GraderType = $TargetType
+        $script:LineageRecords = $records
+        Mock Get-CurrentGraderLineageRecords { $script:LineageRecords }
+
+        if ($Allowed) {
+            (Test-CommittedGraderLineageMap -RepoRoot $script:RepoRoot -Map $map).authoredAliases | Should -Be 414
+        }
+        else {
+            { Test-CommittedGraderLineageMap -RepoRoot $script:RepoRoot -Map $map } | Should -Throw '*incompatible type drift*'
+        }
     }
 
     It 'Rejects ambiguous and semantic source-to-target pairs' {

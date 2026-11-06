@@ -208,9 +208,9 @@ When the active runtime is a bash terminal (Git Bash, WSL, or similar):
 **Never attempt to run the PowerShell script (`Invoke-PptxPipeline.ps1`) in a bash terminal. Use the bash script (`invoke-pptx-pipeline.sh`) instead.**
 
 1. Verify you are in a bash terminal by observing a prompt containing `MINGW64`, `bash`, `/bin/bash`, or a Unix-style path like `~/git/`.
-2. Before sending the build command, send `invoke-pptx-pipeline.sh --help` to the bash terminal via `send_to_terminal` and read the output with `get_terminal_output` to confirm the exact flag names. Do not infer bash flags from PowerShell parameter names — they differ.
-3. Send the build command to the bash terminal using `send_to_terminal` with the confirmed flags.
-4. Poll for completion by calling `get_terminal_output` on the same `terminalId` until the bash prompt reappears or output is stable.
+2. Before running the build command, run `invoke-pptx-pipeline.sh --help` in the bash terminal and read its output to confirm the exact flag names. Do not infer bash flags from PowerShell parameter names — they differ.
+3. Run the build command in the bash terminal with the confirmed flags.
+4. Wait for the command to finish, reading its output until the bash prompt reappears or the output is stable.
 5. If no bash terminal is found, stop and inform the user: "I can't generate the PowerPoint in bash because no bash terminal is available. Please open a Git Bash or WSL terminal in VS Code and try again."
 
 ### General Requirements

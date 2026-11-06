@@ -62,6 +62,9 @@ Apply the budget this way:
 * Record the produced word count and measured duration in the manifest as
   `narration.total_word_count` and `narration.measured_duration_minutes`, so a
   later run recomputes the rate from evidence instead of re-deriving it.
+* For unattended L400 authoring, target about 10.5 minutes and 1,850 words.
+  This stays near the middle of the allowed word range and avoids publishing at
+  the 10-minute boundary when a voice's natural rate varies.
 
 The measured rate assumes narration was synthesized with newline collapsing in
 effect. Speaker notes written as YAML block scalars are synthesized with the
@@ -69,15 +72,27 @@ effect. Speaker notes written as YAML block scalars are synthesized with the
 wrap in a block scalar is otherwise spoken as a pause and inflates the duration
 without adding a single word.
 
-The same budget applies under `narration: piper`. The same L100 notes ran 284
-seconds with the Azure voice and 285 seconds with Piper's default
-`en_US-joe-medium` voice at its natural rate.
-
 The narration is also the video's audio description. Write speaker notes that
 voice every claim a slide shows and describe every live capture in words, so a
 viewer who cannot see the screen loses nothing. Captions and the transcript are
 generated from the same notes, so notes that skip on-screen content leave a gap
 in all three.
+
+## Silent CI Delivery
+
+CI explicitly selects `narration: none`. Azure Speech remains the default for
+local narration and synthesizes no speech in CI. Keep the notes budget above,
+but use it as a deterministic reading
+timeline: each slide gets `max(2 seconds, note words / 2.8)` plus the assembler's
+transition handles. The two-second floor keeps short scenes longer than the
+half-second transitions. Internal zero-only WAVs are timing inputs, not narration.
+
+Under this mode, T-04 pairs each visual with a silent timing WAV, and T-09 checks
+the same notes in visible text and the transcript without claiming spoken audio
+description. T-07 still checks actual MP4 duration. Add T-11 to every silent
+level: FFprobe must find zero audio streams. Record `narration.engine: none` and
+`narration.timing_basis: notes-word-count`. Character-dialogue rendering is not
+part of this CI path.
 
 ## Capture Profile
 
@@ -91,6 +106,8 @@ The `capture` input selects how a level produces its visual evidence. It takes
 
 Apply these rules to the profile:
 
+* L100 and L200 require `capture: deck-export`. Reject a caller's `live`
+  selection during intake rather than silently changing the requested profile.
 * Only the caller may set `capture: deck-export` for L300 or L400. A run never
   downgrades a level on its own, because a downgraded run and a live capture run
   produce different evidence and have to stay distinguishable after the fact.
@@ -144,12 +161,12 @@ Read the listed local documents as primary evidence. The pipeline-explanation
 lesson for any level that explains narration also uses
 `docs/getting-started/tts-voiceover.md`.
 
-| Level | Purpose                                     | Required local sources                                                                                                                                                        |
-|-------|---------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| L100  | Orientation and first use                   | `docs/README.md`; `docs/getting-started/README.md`; `docs/getting-started/first-interaction.md`; `docs/hve-guide/roles/new-contributor.md`                                    |
-| L200  | Guided workflow practice                    | `docs/getting-started/first-research.md`; `docs/getting-started/first-workflow.md`; `docs/rpi/README.md`; `docs/hve-guide/roles/new-contributor.md`                           |
-| L300  | Applied workflow selection and architecture | `docs/hve-guide/README.md`; `docs/hve-guide/lifecycle/README.md`; `docs/hve-guide/roles/engineer.md`; `docs/architecture/ai-artifacts.md`                                     |
-| L400  | Customization, contribution, and governance | `docs/contributing/README.md`; `docs/contributing/ai-artifacts-common.md`; `docs/contributing/skills.md`; `docs/customization/collections.md`; `docs/contributing/ROADMAP.md` |
+| Level | Purpose                                     | Required local sources                                                                                                                                                     |
+|-------|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| L100  | Orientation and first use                   | `docs/README.md`; `docs/getting-started/README.md`; `docs/getting-started/first-interaction.md`; `docs/hve-guide/roles/new-contributor.md`                                 |
+| L200  | Guided workflow practice                    | `docs/getting-started/first-research.md`; `docs/getting-started/first-workflow.md`; `docs/rpi/README.md`; `docs/hve-guide/roles/new-contributor.md`                        |
+| L300  | Applied workflow selection and architecture | `docs/hve-guide/README.md`; `docs/hve-guide/lifecycle/README.md`; `docs/hve-guide/roles/engineer.md`; `docs/architecture/ai-artifacts.md`                                  |
+| L400  | Customization, contribution, and governance | `docs/contributing/README.md`; `docs/contributing/ai-artifacts-common.md`; `docs/contributing/skills.md`; `docs/customization/packages.md`; `docs/contributing/ROADMAP.md` |
 
 ## Atomic Acceptance Criterion Templates
 
@@ -240,7 +257,7 @@ video segment used to assess that result.
 | L300  | L300-09 | T-08     | Match the pinned house style                      | `content/global/style.yaml` compared against `templates/style.yaml`: every fixed field unchanged, and no colour outside the pinned palette in it or in any slide's `content.yaml`                                                   |
 | L300  | L300-10 | T-09     | Meet the accessibility baseline                   | `output/render-result.json` records `T-09: pass`: captions embedded and published, transcript page present, every slide titled, every image described or decorative, and the document language set                                  |
 | L400  | L400-01 | T-02     | Cover contribution guidance                       | Slides 2 through 4 name at least two contribution actions and map them to `docs/contributing/README.md` or `docs/contributing/ai-artifacts-common.md`                                                                               |
-| L400  | L400-02 | T-02     | Present a customization route                     | A slide names one skill or collection customization route and maps it to `docs/contributing/skills.md` or `docs/customization/collections.md`                                                                                       |
+| L400  | L400-02 | T-02     | Present a customization route                     | A slide names one skill or package customization route and maps it to `docs/contributing/skills.md` or `docs/customization/packages.md`                                                                                             |
 | L400  | L400-03 | T-02     | Provide governance or roadmap context             | A claim maps governance or roadmap context to `docs/contributing/ROADMAP.md`                                                                                                                                                        |
 | L400  | L400-04 | T-05     | Provide live editor captures                      | The manifest records at least two distinct live-capture IDs with existing paths generated by `vscode-playwright`, each targeting a file that opens in the Monaco text editor                                                        |
 | L400  | L400-05 | T-03     | Cite all mapped sources                           | The source register contains all five L400 required paths, plus `docs/getting-started/tts-voiceover.md` when the level explains narration, each with one or more slide numbers and one supported claim                              |

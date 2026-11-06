@@ -23,6 +23,7 @@ Usage::
         --artifact-prefix demo-material-site [--branch main] \
         [--exclude-run-id ID] [--github-output "$GITHUB_OUTPUT"]
     python artifact_lookup.py recover --target DIR [--site-url URL] [--index-only]
+    python artifact_lookup.py retry-levels --index FILE [--github-output FILE]
 
 Both read ``GITHUB_REPOSITORY``; ``find`` also reads ``GITHUB_TOKEN`` and
 ``GITHUB_API_URL``. The branch defaults to the repository default branch and
@@ -60,6 +61,8 @@ SITE_FILE = re.compile(
     r"|render-result\.json|source-register\.md)$"
 )
 OPTIONAL_LEVEL_FILES = ("render-result.json", "source-register.md")
+LEVELS = ("L100", "L200", "L300", "L400")
+PUBLISHED_FILE_KEYS = ("pptx", "mp4", "vtt", "html", "page")
 
 
 class ArtifactLookupError(RuntimeError):
@@ -253,6 +256,24 @@ def default_site_url(repository: str) -> str:
     return f"https://{owner.lower()}.github.io/{name}/"
 
 
+def retry_levels(index: dict) -> list[str]:
+    """Return failed or unpublished levels that need fresh authored content."""
+    recorded = index.get("levels") if isinstance(index, dict) else None
+    recorded = recorded if isinstance(recorded, dict) else {}
+    selected = []
+    for level in LEVELS:
+        entry = recorded.get(level)
+        entry = entry if isinstance(entry, dict) else {}
+        files = entry.get("files")
+        complete = isinstance(files, dict) and all(
+            isinstance(files.get(key), str) and files[key]
+            for key in PUBLISHED_FILE_KEYS
+        )
+        if not complete or isinstance(entry.get("last_failed_attempt"), dict):
+            selected.append(level)
+    return selected
+
+
 def _write_outputs(path: str | None, values: dict) -> None:
     if not path:
         return
@@ -278,6 +299,11 @@ def build_parser() -> argparse.ArgumentParser:
     recover.add_argument("--target", type=Path, required=True)
     recover.add_argument("--index-only", action="store_true")
     recover.add_argument("--github-output")
+    retry = sub.add_parser(
+        "retry-levels", help="Print failed or unpublished levels from an index"
+    )
+    retry.add_argument("--index", type=Path, required=True)
+    retry.add_argument("--github-output")
     return parser
 
 
@@ -301,12 +327,23 @@ def main(argv: list[str] | None = None, api=None) -> int:
                 args.exclude_run_id,
                 max_age_days=args.max_age_days,
             )
-        else:
+        elif args.command == "recover":
             site_url = args.site_url or default_site_url(
                 os.environ.get("GITHUB_REPOSITORY", "")
             )
             result = recover_site(site_url, args.target, index_only=args.index_only)
             result = {**result, "levels": " ".join(result["levels"])}
+        else:
+            if args.index.is_file():
+                index = json.loads(args.index.read_text(encoding="utf-8"))
+                if (
+                    not isinstance(index, dict)
+                    or index.get("schema_version") != SITE_SCHEMA
+                ):
+                    raise ArtifactLookupError("render index has an unknown schema")
+            else:
+                index = {}
+            result = {"levels": " ".join(retry_levels(index))}
     except ArtifactLookupError as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return EXIT_FAILURE

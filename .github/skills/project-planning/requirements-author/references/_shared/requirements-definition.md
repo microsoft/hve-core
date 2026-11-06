@@ -193,7 +193,7 @@ External (cite-only, no embedded text):
 
 * IIBA BABOK v3 - [https://www.iiba.org/standards-and-resources/babok/](https://www.iiba.org/standards-and-resources/babok/)
 * ISO/IEC/IEEE 29148:2018 - [https://www.iso.org/standard/72089.html](https://www.iso.org/standard/72089.html)
-* ISO/IEC 25010 - [https://www.iso.org/standard/35733.html](https://www.iso.org/standard/35733.html)
+* ISO/IEC 25010:2023 - [https://www.iso.org/standard/78176.html](https://www.iso.org/standard/78176.html)
 * Volere Requirements Specification Template - [https://www.volere.org/](https://www.volere.org/)
 * ISTQB Glossary - [https://glossary.istqb.org/](https://glossary.istqb.org/)
 * Cucumber project - [https://github.com/cucumber/gherkin](https://github.com/cucumber/gherkin)

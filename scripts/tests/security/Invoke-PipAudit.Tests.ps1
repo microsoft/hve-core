@@ -5,7 +5,6 @@
 BeforeAll {
     # Stub external tools when not installed so Pester can mock them
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { function global:uv { } }
-    if (-not (Get-Command uvx -ErrorAction SilentlyContinue)) { function global:uvx { } }
 
     . $PSScriptRoot/../../security/Invoke-PipAudit.ps1
     Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
@@ -20,9 +19,8 @@ BeforeAll {
 }
 
 AfterAll {
-    # Remove the uv/uvx stubs so they do not leak into later test suites
+    # Remove the uv stub so it does not leak into later test suites
     Remove-Item -Path 'Function:\uv' -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path 'Function:\uvx' -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Find-PythonProjects' -Tag 'Unit' {
@@ -95,14 +93,16 @@ Describe 'Invoke-PipAuditForProject' -Tag 'Unit' {
             New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
             Mock uv {}
-            Mock uvx {}
             $global:LASTEXITCODE = 0
 
             $result = Invoke-PipAuditForProject -ProjectPath $testDir -OutputPath $outputDir
 
             $result | Should -Be $false
-            Should -Invoke uv -Times 1
-            Should -Invoke uvx -Times 1
+            Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'export' }
+            Should -Invoke uv -Times 1 -ParameterFilter {
+                $args[0] -eq 'run' -and $args[1] -eq '--locked' -and $args[2] -eq '--project' -and
+                ($args[3] -replace '\\', '/') -like '*/scripts/tools/pip-audit' -and $args[4] -eq 'pip-audit'
+            }
         }
 
         It 'Returns true when vulnerabilities are found' {
@@ -111,8 +111,7 @@ Describe 'Invoke-PipAuditForProject' -Tag 'Unit' {
             New-Item -ItemType Directory -Path $testDir -Force | Out-Null
             New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
-            Mock uv {}
-            Mock uvx { $global:LASTEXITCODE = 1 }
+            Mock uv { $global:LASTEXITCODE = $(if ($args[0] -eq 'run') { 1 } else { 0 }) }
 
             $result = Invoke-PipAuditForProject -ProjectPath $testDir -OutputPath $outputDir
 

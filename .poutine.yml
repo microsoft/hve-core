@@ -16,9 +16,6 @@ skip:
       - .github/workflows/extension-provenance-signer.yml
     job:
       - package
-  - rule: untrusted_checkout_exec
-    path:
-      - .github/workflows/backlog-groom.lock.yml
   # Publisher dependencies execute at an API-resolved main digest with only
   # contents: read, outside the protected marketplace publication job.
   - rule: untrusted_checkout_exec
@@ -26,6 +23,16 @@ skip:
       - .github/workflows/extension-marketplace-publish.yml
     job:
       - prepare-publisher
+  # gh-aw's activation job executes only compiler-installed scripts from
+  # RUNNER_TEMP; its sparse .github checkout cannot supply those scripts.
+  # Upstream: https://github.com/boostsecurityio/poutine/issues/457
+  # Tracking: https://github.com/microsoft/hve-core/issues/3137
+  # Expires: 2026-12-31
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/backlog-groom.lock.yml
+    job:
+      - activation
   # The generated workflow explicitly defaults to no token scopes. Poutine
   # treats the empty map as absent; explicit job grants are checked separately.
   - rule: default_permissions_on_risky_events

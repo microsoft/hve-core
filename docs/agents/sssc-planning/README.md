@@ -16,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-11-02
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -99,7 +99,7 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 ## Entry Modes
 
-The SSSC Planner supports four entry modes. Select the SSSC Planner agent and describe your starting point, or use the SSSC Planner handoff from a Security Planner session; the agent resolves the mode from your request, supplied artifacts, or the handoff.
+The SSSC Planner supports four entry modes. Select the SSSC Planner agent and describe your starting point, including when a Security Planner session recommends it; the agent resolves the mode from your request and supplied artifacts.
 
 | Mode               | How to start                                         | Starting point                                             |
 |--------------------|------------------------------------------------------|------------------------------------------------------------|
@@ -119,21 +119,27 @@ The SSSC Planner supports four entry modes. Select the SSSC Planner agent and de
 
 ## Quick Start
 
-1. Open the prompt picker and select one of the four SSSC prompt files (Capture, From-PRD, From-BRD, or From-Security-Plan).
+1. Select **SSSC Planner** in the agent picker and name the entry mode, Capture, From-PRD, From-BRD, or From-Security-Plan, or let the agent pick it from your request and the files you supply.
 2. Provide a project slug when prompted (or let the agent generate one).
 3. Answer the scoping questions. The agent asks 3-5 questions per turn until each phase is complete.
 4. Review the generated backlog items and adjust autonomy tiers as needed.
-5. Follow the backlog manager handoff in Phase 6 to create work items in ADO or GitHub.
+5. After Phase 6, select the **Backlog Manager** agent to create work items in ADO or GitHub from the planner's backlog handoff.
 
 > [!IMPORTANT]
 > Start each new SSSC plan in a fresh chat session. Use `/clear` to reset context if you need to restart.
 
 ## Prerequisites
 
-* The SSSC Planner agent installed and enabled in your VS Code workspace.
-* The `rpi-research` skill available for WAF and CAF runtime lookups.
+* HVE Core installed in one of these hosts:
+  * VS Code with the `hve-core` plugin ([Install the Plugin](../../getting-started/install.md#install-the-plugin)) or the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (`ise-hve-essentials.hve-core`).
+  * GitHub Copilot CLI with the `hve-core` plugin (`copilot plugin install hve-core@hve-core`).
 * For From-PRD/From-BRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 * For From-Security-Plan mode: A completed Security Planner state file.
+
+Either install delivers the SSSC Planner with the skills it uses, including `supply-chain-security` for assessment references and `rpi-research` for WAF and CAF runtime lookups.
+There is no separate security extension.
+The planner reads its `sssc-planner` instructions by name at session start, so it does not depend on `applyTo` matching.
+To copy HVE Core into your repository instead, see [Copy HVE Core Into Your Repository](../../getting-started/install.md#copy-hve-core-into-your-repository). The installer copies every component, including SSSC Planner and the skills and instructions it loads.
 
 ## Next Steps
 

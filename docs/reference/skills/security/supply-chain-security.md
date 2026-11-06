@@ -3,7 +3,7 @@ title: supply-chain-security
 description: "Software supply chain security reference for OpenSSF Scorecard, SLSA, Sigstore, SBOM, and posture/backlog taxonomies."
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - skill
@@ -29,7 +29,7 @@ Software supply chain security reference for OpenSSF Scorecard, SLSA, Sigstore, 
 ## When to use it
 
 Use this reference to organize repository supply-chain posture across OpenSSF
-Scorecard, SLSA v1.0, Sigstore, SBOMs, and the Best Practices Badge. It also supplies
+Scorecard, SLSA v1.2 Build track, Sigstore, SBOMs, and the Best Practices Badge. It also supplies
 adoption categories, effort sizing, and risk-based work ordering. Choose it when a
 team needs to turn supplied evidence into a prioritized improvement plan, not when
 it needs a vulnerability scanner or automatic workflow deployment.

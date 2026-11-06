@@ -475,12 +475,13 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $trials = @(0, 1 | ForEach-Object {
                 [ordered]@{ stimulusName = 'synthetic'; trialIndex = $_; itemIdDigest = $null; identitySource = 'stimulus-trial-index'
                     executionStatus = 'success'; score = 1.0; thresholdPassed = $true; allGradersPassed = $true; gradeStatus = 'success'
-                    graders = @([ordered]@{ name = 'check'; graderType = 'program'; score = 1.0; passed = $true; status = 'success' }) }
+                    errorCategory = 'none'; elapsedMs = 10; observedShellTools = @()
+                    graders = @([ordered]@{ name = 'check'; graderType = 'program'; score = 1.0; passed = $true; status = 'success'; failureCodes = $null }) }
             })
             $attempt = [ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'success'
                 assertionsPassed = 2; assertionsFailed = 0; erroredTrials = 0; observedTrials = 2; recordIssues = @(); trials = $trials
                 perStimulus = @([ordered]@{ stimulusName = 'synthetic'; expectedTrials = 2; observedTrials = 2; aggregateScore = 1.0; aggregatePassed = $true }) }
-            $diagnostics = [ordered]@{ schemaVersion = '1.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+            $diagnostics = [ordered]@{ schemaVersion = '2.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
                 inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
                 versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1; attempts = @($attempt) }
             switch ($Case) {
@@ -507,7 +508,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
                     $earlier.selected = $false; $earlier.selectionReason = 'more-errors'
                     $earlier.assertionsPassed = 0; $earlier.erroredTrials = 2
                     foreach ($trial in $earlier.trials) {
-                        $trial.executionStatus = 'error'; $trial.gradeStatus = 'missing'; $trial.score = $null
+                        $trial.executionStatus = 'error'; $trial.errorCategory = 'timeout'; $trial.gradeStatus = 'missing'; $trial.score = $null
                         $trial.thresholdPassed = $null; $trial.allGradersPassed = $false
                         $trial.graders[0].status = 'missing'; $trial.graders[0].score = $null; $trial.graders[0].passed = $null
                     }
@@ -519,6 +520,158 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.integrityPassed | Should -Be $Expected
             $result.allChecksPassed | Should -Be $Expected
             if (-not $Expected) { $result.issues | Should -Not -BeNullOrEmpty }
+        }
+
+        It 'Projects bounded execution facts for <Case>' -Tag 'Diagnostic' -ForEach @(
+            @{ Case = 'hard timeout'; Status = 'error'; ErrorText = 'Timeout after 120000ms waiting for session.idle synthetic-private-marker'; Duration = 122000; Events = $null; Category = 'timeout'; Elapsed = 122000; Shells = '<null>' }
+            @{ Case = 'graceful agent timeout'; Status = 'success'; ErrorText = $null; Duration = 300000; Category = 'none'; Elapsed = 300000; Shells = 'bash,powershell'; Events = @(
+                    @{ type = 'tool_call'; turn = 0; data = @{ toolCallId = 'a'; toolName = 'powershell'; arguments = @{ command = 'synthetic-private-marker' } } }
+                    @{ type = 'tool_call'; turn = 0; data = @{ toolCallId = 'b'; toolName = 'bash' } }
+                    @{ type = 'tool_call'; turn = 0; data = @{ toolCallId = 'c'; toolName = 'bash' } }
+                    @{ type = 'tool_call'; turn = 0; data = @{ toolCallId = 'd'; toolName = 'write_bash' } }
+                    @{ type = 'tool_result'; turn = 0; data = @{ toolCallId = 'e'; toolName = 'shell'; result = 'synthetic-private-marker' } }
+                ) }
+            @{ Case = 'authentication'; Status = 'error'; ErrorText = 'HTTP 401 Unauthorized synthetic-private-marker'; Duration = 5; Events = $null; Category = 'authentication'; Elapsed = 5; Shells = '<null>' }
+            @{ Case = 'rate limit'; Status = 'error'; ErrorText = '429 Too Many Requests'; Duration = 5; Events = $null; Category = 'rate-limited'; Elapsed = 5; Shells = '<null>' }
+            @{ Case = 'cancelled status'; Status = 'cancelled'; ErrorText = $null; Duration = 5; Events = $null; Category = 'cancelled'; Elapsed = 5; Shells = '<null>' }
+            @{ Case = 'unrecognized error'; Status = 'error'; ErrorText = 'synthetic-private-marker failure'; Duration = 0; Events = $null; Category = 'unknown'; Elapsed = 0; Shells = '<null>' }
+            @{ Case = 'string duration'; Status = 'error'; ErrorText = 'Request timed out'; Duration = '5'; Events = $null; Category = 'timeout'; Elapsed = $null; Shells = '<null>' }
+            @{ Case = 'fractional duration without shells'; Status = 'success'; ErrorText = $null; Duration = 1.5; Events = @(); Category = 'none'; Elapsed = $null; Shells = '' }
+        ) {
+            $runDir = Join-Path $script:WorkRoot ('facts-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $record = [ordered]@{ type = 'trial-result'; stimulus = 'synthetic'; trialIndex = 0; status = $Status; durationMs = $Duration; trajectory = $null }
+            if ($null -ne $ErrorText) { $record.error = $ErrorText }
+            if ($null -ne $Events) { $record.trajectory = [ordered]@{ stimulus = @{ name = 'synthetic' }; endReason = 'agent_timeout'; events = @($Events) } }
+            if ($Status -eq 'success') {
+                $record.gradeResult = @{ score = 1; passed = $true; details = @(@{ configuredName = 'check'; graderType = 'program'; score = 1; passed = $true }) }
+            }
+            $record | ConvertTo-Json -Depth 10 -Compress | Set-Content (Join-Path $runDir 'results.jsonl')
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli @{
+                synthetic = @{ runs = 1; graders = @(@{ name = 'check'; type = 'program' }) }
+            }
+            $trial = $result.trialDiagnostics[0]
+            $trial.errorCategory | Should -BeExactly $Category
+            $trial.elapsedMs | Should -Be $Elapsed
+            if ($Shells -eq '<null>') { ($null -eq $trial.observedShellTools) | Should -BeTrue }
+            else {
+                ($trial.observedShellTools -is [array]) | Should -BeTrue
+                ($trial.observedShellTools -join ',') | Should -BeExactly $Shells
+            }
+            ($trial | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+        }
+
+        It 'Normalizes program failure codes for <Case>' -Tag 'Diagnostic' -ForEach @(
+            @{ Case = 'sorted unique codes'; Grader = 'data-science-rpi-blocked-state-preserves-job'; Passed = $false; Codes = @('state-mismatch', 'extension-mismatch', 'state-mismatch'); Expected = 'extension-mismatch,state-mismatch' }
+            @{ Case = 'unknown code'; Grader = 'data-science-rpi-blocked-state-preserves-job'; Passed = $false; Codes = @('state-mismatch', 'synthetic-private-code'); Expected = '<null>' }
+            @{ Case = 'unlisted grader'; Grader = 'check'; Passed = $false; Codes = @('state-mismatch'); Expected = '<null>' }
+            @{ Case = 'passing with codes'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $true; Codes = @('sample-size-mismatch'); Expected = '<null>' }
+            @{ Case = 'passing without codes'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $true; Codes = @(); Expected = '' }
+            @{ Case = 'non-array payload'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = 'sample-size-mismatch'; Expected = '<null>' }
+            @{ Case = 'independent outcome fields'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = @('missing-review-outcome', 'missing-review-execution'); Expected = 'missing-review-execution,missing-review-outcome' }
+            @{ Case = 'concurrent outcome fields'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = @('wrong-decision', 'missing-sample-size', 'review-outcome-mismatch'); Expected = 'missing-sample-size,review-outcome-mismatch,wrong-decision' }
+            @{ Case = 'retired generic outcome code'; Grader = 'experiment-outcome-separates-status-and-verdict'; Passed = $false; Codes = @('missing-field'); Expected = '<null>' }
+            @{ Case = 'outcome code on another grader'; Grader = 'data-science-rpi-blocked-state-preserves-job'; Passed = $false; Codes = @('missing-sample-size'); Expected = '<null>' }
+        ) {
+            $runDir = Join-Path $script:WorkRoot ('codes-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $score = [int]$Passed
+            @{
+                type = 'trial-result'; stimulus = 'synthetic'; trialIndex = 0; status = 'success'; trajectory = $null
+                gradeResult = @{ score = $score; passed = $Passed; details = @(
+                    @{ configuredName = $Grader; graderType = 'program'; passed = $Passed; score = $score
+                        metadata = @{ failureCodes = $Codes; raw = 'synthetic-private-marker' } }
+                ) }
+            } | ConvertTo-Json -Depth 10 -Compress | Set-Content (Join-Path $runDir 'results.jsonl')
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli @{
+                synthetic = @{ runs = 1; graders = @(@{ name = $Grader; type = 'program' }) }
+            }
+            $grader = $result.trialDiagnostics[0].graders[0]
+            if ($Expected -eq '<null>') { ($null -eq $grader.failureCodes) | Should -BeTrue }
+            else {
+                ($grader.failureCodes -is [array]) | Should -BeTrue
+                ($grader.failureCodes -join ',') | Should -BeExactly $Expected
+            }
+            ($result.trialDiagnostics | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+        }
+
+        It 'Exports every field-specific outcome code through the producer projection' -Tag 'Diagnostic' {
+            $grader = 'experiment-outcome-separates-status-and-verdict'
+            $fieldCodes = foreach ($field in @('h1-verdict', 'downstream-decision', 'review-execution', 'review-outcome', 'latency-reduction', 'sample-size', 'error-rate')) {
+                "missing-$field"; "conflicting-$field"
+            }
+            $mismatchCodes = @('wrong-verdict', 'wrong-decision', 'review-execution-mismatch', 'review-outcome-mismatch',
+                'latency-reduction-mismatch', 'sample-size-mismatch', 'error-rate-mismatch', 'invalid-review-record')
+            $codes = @($fieldCodes) + $mismatchCodes
+            $runDir = Join-Path $script:WorkRoot ('all-codes-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            @{
+                type = 'trial-result'; stimulus = 'synthetic'; trialIndex = 0; status = 'success'; trajectory = $null
+                gradeResult = @{ score = 0; passed = $false; details = @(
+                    @{ configuredName = $grader; graderType = 'program'; passed = $false; score = 0
+                        metadata = @{ failureCodes = $codes; raw = 'synthetic-private-marker' } }
+                ) }
+            } | ConvertTo-Json -Depth 10 -Compress | Set-Content (Join-Path $runDir 'results.jsonl')
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli @{
+                synthetic = @{ runs = 1; graders = @(@{ name = $grader; type = 'program' }) }
+            }
+
+            $expected = [string[]]@($codes)
+            [System.Array]::Sort($expected, [System.StringComparer]::Ordinal)
+            ($result.trialDiagnostics[0].graders[0].failureCodes -join ',') | Should -BeExactly ($expected -join ',')
+            ($result.trialDiagnostics | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+        }
+
+        It 'Rejects a diagnostic record with <Case>' -Tag 'Diagnostic' -ForEach @(
+            @{ Case = 'clean bounded fields'; Expected = $true }
+            @{ Case = 'unknown error category'; Expected = $false }
+            @{ Case = 'none category on errored execution'; Expected = $false }
+            @{ Case = 'negative elapsed time'; Expected = $false }
+            @{ Case = 'string elapsed time'; Expected = $false }
+            @{ Case = 'unknown shell'; Expected = $false }
+            @{ Case = 'unsorted shells'; Expected = $false }
+            @{ Case = 'forged failure code'; Expected = $false }
+            @{ Case = 'codes on a passing grader'; Expected = $false }
+            @{ Case = 'field codes on a failing grader'; Expected = $true }
+            @{ Case = 'retired generic code'; Expected = $false }
+            @{ Case = 'unsorted field codes'; Expected = $false }
+        ) {
+            $graderName = 'experiment-outcome-separates-status-and-verdict'
+            $inventory = [ordered]@{ synthetic = [ordered]@{ runs = 1; graders = @([ordered]@{ name = $graderName; type = 'program' }) } }
+            $trial = [ordered]@{ stimulusName = 'synthetic'; trialIndex = 0; itemIdDigest = $null; identitySource = 'stimulus-trial-index'
+                executionStatus = 'success'; score = 1.0; thresholdPassed = $true; allGradersPassed = $true; gradeStatus = 'success'
+                errorCategory = 'none'; elapsedMs = 10; observedShellTools = @('bash', 'powershell')
+                graders = @([ordered]@{ name = $graderName; graderType = 'program'; score = 1.0; passed = $true; status = 'success'; failureCodes = @() }) }
+            switch ($Case) {
+                'unknown error category' { $trial.errorCategory = 'synthetic-private' }
+                'none category on errored execution' { $trial.executionStatus = 'error' }
+                'negative elapsed time' { $trial.elapsedMs = -1 }
+                'string elapsed time' { $trial.elapsedMs = '10' }
+                'unknown shell' { $trial.observedShellTools = @('pwsh') }
+                'unsorted shells' { $trial.observedShellTools = @('shell', 'bash') }
+                'forged failure code' { $trial.graders[0].failureCodes = @('synthetic-private') }
+                'codes on a passing grader' { $trial.graders[0].failureCodes = @('sample-size-mismatch') }
+                { $_ -in @('field codes on a failing grader', 'retired generic code', 'unsorted field codes') } {
+                    $trial.allGradersPassed = $false
+                    $trial.graders[0].passed = $false
+                    $trial.graders[0].score = 0.0
+                    $trial.graders[0].failureCodes = @(switch ($Case) {
+                        'field codes on a failing grader' { 'missing-review-execution', 'missing-review-outcome' }
+                        'retired generic code' { 'missing-field' }
+                        'unsorted field codes' { 'missing-review-outcome', 'missing-review-execution' }
+                    })
+                }
+            }
+            $diagnostics = [ordered]@{ schemaVersion = '2.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+                inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
+                versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1
+                attempts = @([ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'success'
+                    assertionsPassed = 1; assertionsFailed = 0; erroredTrials = 0; observedTrials = 1; recordIssues = @(); trials = @($trial)
+                    perStimulus = @([ordered]@{ stimulusName = 'synthetic'; expectedTrials = 1; observedTrials = 1; aggregateScore = 1.0; aggregatePassed = $true }) }) }
+            $result = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics -RunKey 'synthetic.yaml'
+            $result.contractValid | Should -Be $Expected
+            if (-not $Expected) { $result.issues | Should -Contain 'invalid-diagnostic-contract' }
         }
 
         It 'Uses configured identities and effective case-sensitive tag selection' -Tag 'Diagnostic' {
@@ -562,7 +715,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $aggregate.perStimulus.synthetic.aggregateScore | Should -Be 1
             $aggregate.perStimulus.synthetic.aggregatePassed | Should -BeTrue
             $aggregate.errored | Should -Be 4
-            $diagnostics = [ordered]@{ schemaVersion = '1.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+            $diagnostics = [ordered]@{ schemaVersion = '2.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
                 inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
                 versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1
                 attempts = @([ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'unknown'
@@ -572,6 +725,76 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $evidence.contractValid | Should -BeTrue
             $evidence.integrityPassed | Should -BeFalse
             $evidence.issues | Should -Contain 'execution-error'
+        }
+    }
+
+    Context 'Advisory integrity tolerance' {
+        BeforeAll {
+            function New-ToleranceDiagnostic {
+                param([string[]]$Stimuli = @('first'), [int]$Runs = 5, [hashtable]$Errored = @{})
+                $runDir = Join-Path $script:WorkRoot ('tolerance-' + [Guid]::NewGuid())
+                New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+                $inventory = [ordered]@{}
+                foreach ($name in $Stimuli) { $inventory[$name] = [ordered]@{ runs = $Runs; graders = @([ordered]@{ name = 'check'; type = 'program' }) } }
+                $records = @(foreach ($name in $Stimuli) {
+                    foreach ($trialIndex in 0..($Runs - 1)) {
+                        $isErrored = $trialIndex -lt [int]$Errored[$name]
+                        @{ type = 'trial-result'; stimulus = $name; trialIndex = $trialIndex; status = $(if ($isErrored) { 'error' } else { 'success' })
+                            trajectory = $null; gradeResult = $(if ($isErrored) { $null } else {
+                                @{ score = 1; passed = $true; details = @(@{ configuredName = 'check'; graderType = 'program'; score = 1; passed = $true }) }
+                            }) } | ConvertTo-Json -Depth 10 -Compress
+                    }
+                })
+                Set-Content (Join-Path $runDir 'results.jsonl') $records
+                $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli $inventory
+                $total = $Stimuli.Count * $Runs
+                return [ordered]@{ schemaVersion = '2.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+                    inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
+                    versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1
+                    attempts = @([ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'unknown'
+                        assertionsPassed = $total - [int]$aggregate.errored; assertionsFailed = 0; erroredTrials = [int]$aggregate.errored; observedTrials = $total
+                        recordIssues = @(); trials = $aggregate.trialDiagnostics
+                        perStimulus = @(foreach ($name in $Stimuli) {
+                            $graded = [int]$Errored[$name] -lt $Runs
+                            [ordered]@{ stimulusName = $name; expectedTrials = $Runs; observedTrials = $Runs
+                                aggregateScore = $(if ($graded) { 1.0 } else { $null }); aggregatePassed = $(if ($graded) { $true } else { $null }) }
+                        }) }) }
+            }
+        }
+
+        It 'Returns <Reason> for <Case>' -ForEach @(
+            @{ Case = 'one errored trial of five'; Runs = 5; Stimuli = @('first'); Errored = @{ first = 1 }; Advisory = $true; Tolerated = $true; Reason = 'errored-trials-within-allowance' }
+            @{ Case = 'one errored trial of three'; Runs = 3; Stimuli = @('first'); Errored = @{ first = 1 }; Advisory = $true; Tolerated = $true; Reason = 'errored-trials-within-allowance' }
+            @{ Case = 'two errored trials of five'; Runs = 5; Stimuli = @('first'); Errored = @{ first = 2 }; Advisory = $true; Tolerated = $false; Reason = 'too-many-errored-trials' }
+            @{ Case = 'a stimulus without a graded trial'; Runs = 1; Stimuli = @('a', 'b', 'c', 'd', 'e'); Errored = @{ a = 1 }; Advisory = $true; Tolerated = $false; Reason = 'stimulus-errored-every-trial' }
+            @{ Case = 'an authoritative stimulus'; Runs = 5; Stimuli = @('first'); Errored = @{ first = 1 }; Advisory = $false; Tolerated = $false; Reason = 'not-wholly-advisory' }
+        ) {
+            $diagnostics = New-ToleranceDiagnostic -Stimuli $Stimuli -Runs $Runs -Errored $Errored
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics
+            $evidence.contractValid | Should -BeTrue
+            $evidence.integrityPassed | Should -BeFalse
+            $advisoryMap = @{}
+            foreach ($name in $Stimuli) { $advisoryMap[$name] = $Advisory }
+
+            $verdict = Test-VallyAdvisoryIntegrityTolerance -Diagnostics $diagnostics -Integrity $evidence -AdvisoryMap $advisoryMap
+
+            $verdict.tolerated | Should -Be $Tolerated
+            $verdict.reason | Should -Be $Reason
+        }
+
+        It 'Keeps blocking a grading problem on a graded trial beside an errored one' {
+            $diagnostics = New-ToleranceDiagnostic -Runs 5 -Errored @{ first = 1 }
+            $graded = $diagnostics.attempts[0].trials[4]
+            $graded.gradeStatus = 'error'
+            $graded.allGradersPassed = $false
+            $graded.graders[0].status = 'error'
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics
+            $evidence.contractValid | Should -BeTrue
+
+            $verdict = Test-VallyAdvisoryIntegrityTolerance -Diagnostics $diagnostics -Integrity $evidence -AdvisoryMap @{ first = $true }
+
+            $verdict.tolerated | Should -BeFalse
+            $verdict.reason | Should -Be 'graded-trial-issue'
         }
     }
 
@@ -600,6 +823,32 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $trial.observedTurns | Should -Be 1
             $trial.responseTurns | Should -Be 1
             $trial.wallTimeMs | Should -Be 12
+        }
+
+        It 'Recovers a transient errored trial inside its attempt and keeps the evidence complete' -Tag 'DiagnosticIntegration' {
+            $specPath = Join-Path $script:WorkRoot 'recoverable.yaml'
+            @{
+                name = 'recoverable'; defaults = @{ runs = 2 }; scoring = @{ threshold = 0.7 }
+                stimuli = @(foreach ($name in @('first', 'second', 'third')) {
+                        @{ name = $name; prompt = $name; graders = @(@{ name = 'check'; type = 'program' }) }
+                    })
+            } | ConvertTo-Yaml | Set-Content $specPath
+            $env:STUB_VALLY_MODE = 'diagnostic'
+            $env:STUB_VALLY_DIAGNOSTIC_CASE = 'transient-error'
+            try {
+                $result = Invoke-VallySpec -SpecPath $specPath -OutputDir (Join-Path $script:WorkRoot 'recoverable-output') `
+                    -Model 'configured-model' -RunKey 'recoverable.yaml' -VallyCommand $script:StubPath -MaxErroredRetries 0
+            }
+            finally { Remove-Item Env:\STUB_VALLY_MODE, Env:\STUB_VALLY_DIAGNOSTIC_CASE -ErrorAction SilentlyContinue }
+
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $result.diagnostics -RunKey 'recoverable.yaml'
+            $evidence.integrityPassed | Should -BeTrue
+            $result.exitCode | Should -Be 0
+            $result.erroredTrials | Should -Be 0
+            $result.trials | Should -Be 6
+            @($result.diagnostics.attempts) | Should -HaveCount 1
+            @($result.phaseTimings | ForEach-Object worker) | Should -Be @('recoverable.yaml', 'recoverable.yaml:recovery')
+            @(Get-ChildItem -LiteralPath $script:WorkRoot -Force -Filter '.recovery-*') | Should -HaveCount 0
         }
 
         It 'Retains both attempts and selects <Selected> by errors rather than score' -Tag 'Diagnostic' -ForEach @(
@@ -655,7 +904,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             @($result.phaseTimings) | Should -HaveCount 1
             $result.phaseTimings[0].phase | Should -Be 'ordinary-eval'
             $result.phaseTimings[0].exitCategory | Should -Be 'success'
-            $result.diagnostics.schemaVersion | Should -Be '1.0.0'
+            $result.diagnostics.schemaVersion | Should -Be '2.0.0'
             $result.diagnostics.selectedAttempt | Should -Be 1
             @($result.diagnostics.attempts) | Should -HaveCount 1
             $result.diagnostics.attempts[0].selected | Should -BeTrue
@@ -1201,13 +1450,14 @@ Describe 'Invoke-VallyEvals.ps1 entry script' -Tag 'Integration' {
         function New-EvalFixture {
             param(
                 [Parameter(Mandatory)][AllowEmptyCollection()][hashtable[]]$Artifacts,
-                [Parameter(Mandatory)][AllowEmptyCollection()][hashtable[]]$Specs
+                [Parameter(Mandatory)][AllowEmptyCollection()][hashtable[]]$Specs,
+                [string]$EvalDirectory = 'evals'
             )
 
             $root = Join-Path $TestDrive ('case-' + [Guid]::NewGuid())
             New-Item -ItemType Directory -Path $root -Force | Out-Null
 
-            $evalRoot = Join-Path $root 'evals'
+            $evalRoot = Join-Path $root $EvalDirectory
             $logsDir  = Join-Path $root 'logs'
             New-Item -ItemType Directory -Path $evalRoot -Force | Out-Null
             New-Item -ItemType Directory -Path $logsDir  -Force | Out-Null
@@ -1333,6 +1583,74 @@ Describe 'Invoke-VallyEvals.ps1 entry script' -Tag 'Integration' {
         $summary.totals.assertionsFailed | Should -Be 0
     }
 
+    It 'Gates one persistent errored trial of three by advisory posture: advisory=<Advisory>' -Tag 'DiagnosticIntegration' -ForEach @(
+        @{ Advisory = 'true'; ExitCode = 0; Status = 'advisory-fail'; ArtifactStatus = 'advisory-fail'; FailedSpecs = 0 }
+        @{ Advisory = 'false'; ExitCode = 1; Status = 'integrity-failure'; ArtifactStatus = 'fail'; FailedSpecs = 1 }
+    ) {
+        # One errored trial of three exceeds the recovery limit, so the gap reaches the integrity gate.
+        $spec = @{
+            name = 'integrity'; defaults = @{ runs = 3 }; scoring = @{ threshold = 0.7 }
+            stimuli = @(@{ name = 'synthetic'; prompt = 'synthetic'; tags = @{ skill = 'pr-reference'; advisory = $Advisory }
+                graders = @(@{ name = 'check'; type = 'program' }) })
+        } | ConvertTo-Yaml
+        $fx = New-EvalFixture -Artifacts @(@{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }) `
+            -Specs @(@{ Name = 'integrity.yaml'; Yaml = $spec })
+        $env:STUB_VALLY_MODE = 'diagnostic'
+        $env:STUB_VALLY_DIAGNOSTIC_CASE = 'transient-error'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir -RepoRoot $fx.Root -VallyCommand $script:StubPath -SkipInputModeration -SkipOutputModeration *> $null
+            $LASTEXITCODE | Should -Be $ExitCode
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE, Env:\STUB_VALLY_DIAGNOSTIC_CASE -ErrorAction SilentlyContinue
+        }
+        $summary = Get-Content -Raw $fx.SummaryPath | ConvertFrom-Json -Depth 50
+        $summary.perSpec[0].integrity.integrityPassed | Should -BeFalse
+        $summary.perSpec[0].status | Should -Be $Status
+        $summary.perSpec[0].isAdvisory | Should -Be ($Advisory -eq 'true')
+        [bool]$summary.perSpec[0].PSObject.Properties['integrityTolerance'] | Should -Be ($Advisory -eq 'true')
+        $summary.perArtifact[0].status | Should -Be $ArtifactStatus
+        $summary.totals.failedSpecs | Should -Be $FailedSpecs
+    }
+
+    It 'Warns accurately and still blocks errored trials at the final integrity gate' -Tag 'DiagnosticIntegration' {
+        $spec = @'
+name: errored-spec
+stimuli:
+  - name: stim-1
+    prompt: hi
+    tags:
+      skill: pr-reference
+      advisory: "false"
+  - name: stim-2
+    prompt: hi
+    tags:
+      skill: pr-reference
+'@
+        $fx = New-EvalFixture -Artifacts @(@{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }) `
+            -Specs @(@{ Name = 'errored-spec.yaml'; Yaml = $spec })
+        $env:STUB_VALLY_MODE = 'errored'
+        try {
+            $output = & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir -RepoRoot $fx.Root -VallyCommand $script:StubPath -SkipInputModeration -SkipOutputModeration *>&1 | Out-String
+            $LASTEXITCODE | Should -Be 1
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+        $output | Should -Match 'errored after retries with no grader failures; final evidence-integrity validation decides whether this spec blocks CI'
+        $output | Should -Not -Match 'transient executor failure'
+        $summary = Get-Content -Raw $fx.SummaryPath | ConvertFrom-Json -Depth 50
+        $summary.perSpec[0].status | Should -Be 'integrity-failure'
+        $summary.perSpec[0].integrity.issues | Should -Contain 'execution-error'
+        $summary.totals.failedSpecs | Should -Be 1
+        $trial = $summary.perSpec[0].diagnostics.attempts[0].trials[0]
+        $trial.errorCategory | Should -Be 'unknown'
+        $trial.elapsedMs | Should -BeNullOrEmpty
+        $trial.observedShellTools | Should -BeNullOrEmpty
+    }
+
     It 'Exits 0 and aggregates passing trials per artifact' -Tag 'DiagnosticIntegration' {
         $spec = @'
 name: skill-cover
@@ -1378,9 +1696,148 @@ stimuli:
         $detail = Get-Content -LiteralPath $perArtifactFile -Raw | ConvertFrom-Json
         $detail.specs.Count | Should -Be 1
         $detail.specs[0].trials | Should -Be 2
-        $detail.specs[0].diagnostics.schemaVersion | Should -Be '1.0.0'
+        $detail.specs[0].diagnostics.schemaVersion | Should -Be '2.0.0'
         $summary.perSpec[0].diagnostics.runKey | Should -Be 'skill-pr-reference.yaml'
         @($summary.perSpec[0].diagnostics.attempts[0].trials) | Should -HaveCount 2
+    }
+
+    It 'Refuses a linked environment source before invoking Vally' {
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent-sample-agent.yaml'; Yaml = 'name: placeholder' })
+        $outside = Join-Path $fx.Root 'outside'
+        New-Item -ItemType Directory -Path $outside -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $outside 'input.md') -Value 'not staged'
+        $link = Join-Path $fx.EvalRoot 'linked'
+        $linkType = if ($IsWindows) { 'Junction' } else { 'SymbolicLink' }
+        New-Item -ItemType $linkType -Path $link -Target $outside -ErrorAction Stop | Out-Null
+        $spec = @'
+name: agent-cover
+agent_environment:
+  files:
+    - src: linked/input.md
+      dest: input.md
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      agent: sample-agent
+      advisory: "true"
+'@
+        Set-Content -LiteralPath (Join-Path $fx.EvalRoot 'agent-sample-agent.yaml') -Value $spec
+        $callLog = Join-Path $fx.LogsDir 'stub-calls.jsonl'
+        $env:STUB_VALLY_CALL_LOG = $callLog
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root -VallyCommand $script:StubPath `
+                -SkipInputModeration -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
+        }
+
+        $LASTEXITCODE | Should -Be 1
+        Test-Path -LiteralPath $callLog | Should -BeFalse
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 1
+        $summary.perArtifact[0].status | Should -Be 'fail'
+        $summary.perSpec[0].status | Should -Be 'invalid-spec-source'
+    }
+
+    It 'Invokes Vally for an ordinary local absolute environment file' {
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent-sample-agent.yaml'; Yaml = 'name: placeholder' })
+        $source = Join-Path $fx.Root 'input.md'
+        Set-Content -LiteralPath $source -Value 'local'
+        $sourceForYaml = $source.Replace('\', '/')
+        $spec = @"
+name: agent-cover
+stimuli:
+  - name: s1
+    prompt: hi
+    agent_environment:
+      files:
+        - $sourceForYaml
+    tags:
+      agent: sample-agent
+"@
+        Set-Content -LiteralPath (Join-Path $fx.EvalRoot 'agent-sample-agent.yaml') -Value $spec
+        $callLog = Join-Path $fx.LogsDir 'stub-calls.jsonl'
+        $env:STUB_VALLY_CALL_LOG = $callLog
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root -VallyCommand $script:StubPath `
+                -SkipInputModeration -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
+        }
+
+        $LASTEXITCODE | Should -Be 0
+        Test-Path -LiteralPath $callLog | Should -BeTrue
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 0
+    }
+
+    It 'Resolves nested spec sources under <EvalDirectory> with existing sources <SourcesExist>' -Tag 'SourceResolution' -ForEach @(
+        @{ EvalDirectory = 'evals'; SourcesExist = $true }
+        @{ EvalDirectory = 'custom/evals'; SourcesExist = $true }
+        @{ EvalDirectory = 'evals'; SourcesExist = $false }
+        @{ EvalDirectory = 'custom/evals'; SourcesExist = $false }
+    ) {
+        $spec = @'
+name: agent-cover
+agent_environment:
+  skills:
+    - fixtures/skill
+  files:
+    - fixtures/input.md
+stimuli:
+  - name: s1
+    prompt: hi
+    agent_environment:
+      files:
+        - src: fixtures/input.md
+          dest: input.md
+    tags:
+      agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts `
+            -Specs @(@{ Name = 'agent-behavior/eval.yaml'; Yaml = $spec }) `
+            -EvalDirectory $EvalDirectory
+        # Repository-relative decoys must not satisfy missing spec-relative sources.
+        $sourceRoot = if ($SourcesExist) { $fx.EvalRoot } else { $fx.Root }
+        $fixtures = Join-Path $sourceRoot 'agent-behavior/fixtures'
+        New-Item -ItemType Directory -Path (Join-Path $fixtures 'skill') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $fixtures 'skill/SKILL.md') -Value 'local skill'
+        Set-Content -LiteralPath (Join-Path $fixtures 'input.md') -Value 'local input'
+
+        $callLog = Join-Path $fx.LogsDir 'stub-calls.jsonl'
+        $env:STUB_VALLY_CALL_LOG = $callLog
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root -VallyCommand $script:StubPath `
+                -SkipInputModeration -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
+        }
+
+        $LASTEXITCODE | Should -Be $(if ($SourcesExist) { 0 } else { 1 })
+        (Test-Path -LiteralPath $callLog) | Should -Be $SourcesExist
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be $(if ($SourcesExist) { 0 } else { 1 })
+        $summary.perSpec[0].status | Should -Be $(if ($SourcesExist) { 'pass' } else { 'invalid-spec-source' })
+        $summary.perSpec[0].specPath | Should -Be 'agent-behavior/eval.yaml'
     }
 
     It 'Records per-artifact token totals and per-trial means from native usage' {
@@ -1523,13 +1980,22 @@ stimuli:
         )
         $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'unrelated.yaml'; Yaml = $spec })
 
-        $output = & pwsh -NoProfile -File $script:ScriptPath `
-            -ManifestPath $fx.ManifestPath `
-            -EvalRoot $fx.EvalRoot `
-            -LogsDir $fx.LogsDir `
-            -RepoRoot $fx.Root `
-            -VallyCommand $script:StubPath 2>&1
-        $LASTEXITCODE | Should -Be 2
+        # Annotations are platform-aware; pin GitHub Actions so the child emits workflow commands.
+        $savedGitHubActions = $env:GITHUB_ACTIONS
+        try {
+            $env:GITHUB_ACTIONS = 'true'
+            $output = & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath 2>&1
+            $exitCode = $LASTEXITCODE
+        }
+        finally {
+            $env:GITHUB_ACTIONS = $savedGitHubActions
+        }
+        $exitCode | Should -Be 2
 
         $joined = $output -join "`n"
         $joined | Should -Match '::error file=.+orphan\.prompt\.md::No eval spec resolves prompt:orphan'
@@ -2531,6 +2997,7 @@ Describe 'Invoke-VallyEvals.ps1 moderation.threshold override' -Tag 'Integration
         $script:RealRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
         $script:RealModerationScript = Join-Path $script:RealRepoRoot 'scripts/evals/Invoke-ContentModeration.ps1'
         $script:RealModerationRunner = Join-Path $script:RealRepoRoot 'scripts/evals/Modules/ModerationRunner.psm1'
+        $script:RealCIHelpers = Join-Path $script:RealRepoRoot 'scripts/lib/Modules/CIHelpers.psm1'
 
         function New-ModerationFixture {
             param([Parameter(Mandatory)][string]$SpecThreshold)
@@ -2541,12 +3008,14 @@ Describe 'Invoke-VallyEvals.ps1 moderation.threshold override' -Tag 'Integration
             $fakeScripts = Join-Path $root 'scripts/evals'
             $fakeModules = Join-Path $fakeScripts 'Modules'
             $fakeMod     = Join-Path $fakeScripts 'moderation'
-            foreach ($d in @($evalRoot, $logsDir, $fakeScripts, $fakeModules, $fakeMod)) {
+            $fakeLibModules = Join-Path $root 'scripts/lib/Modules'
+            foreach ($d in @($evalRoot, $logsDir, $fakeScripts, $fakeModules, $fakeMod, $fakeLibModules)) {
                 New-Item -ItemType Directory -Path $d -Force | Out-Null
             }
 
             Copy-Item -LiteralPath $script:RealModerationScript -Destination $fakeScripts -Force
             Copy-Item -LiteralPath $script:RealModerationRunner -Destination $fakeModules -Force
+            Copy-Item -LiteralPath $script:RealCIHelpers -Destination $fakeLibModules -Force
             Set-Content -LiteralPath (Join-Path $fakeMod 'moderate.py') -Value '# placeholder' -Encoding utf8
 
             $specYaml = @"
@@ -3301,5 +3770,148 @@ Describe 'Stage 1 equivalence subject selection' -Tag 'Unit' {
 
     It 'Preserves every backlink record for stage 2 indexing' {
         $script:Backlinked.Count | Should -Be 7
+    }
+}
+
+Describe 'Errored trial recovery' -Tag 'Unit' {
+    BeforeAll {
+        Mock Write-Host {} -ModuleName VallyRunner
+
+        function New-RunDirectory {
+            param([string[]]$Lines)
+            $path = Join-Path $TestDrive "run-$([guid]::NewGuid())"
+            New-Item -ItemType Directory -Path $path -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $path 'results.jsonl') -Value $Lines -Encoding utf8NoBOM
+            return $path
+        }
+    }
+
+    Context 'Merge-RecoveredTrial' {
+        BeforeEach {
+            $script:RunLines = @(
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::a::trial-0","evalFilePath":"/spec.yaml","stimulus":"a","trialIndex":0,"totalTrials":2,"status":"success","trajectory":{"id":"t-a0"}}'
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::a::trial-1","evalFilePath":"/spec.yaml","stimulus":"a","trialIndex":1,"totalTrials":2,"status":"error","error":"boom","trajectory":null}'
+                '{"type":"trial-result","runId":"run-1","itemId":"spec::b::trial-1","evalFilePath":"/spec.yaml","stimulus":"b","trialIndex":1,"totalTrials":2,"status":"error","error":"boom","trajectory":null}'
+                '{"type":"run-summary","runId":"run-1","hadExecutionErrors":true,"evals":[{"name":"spec","hadExecutionErrors":true}]}'
+            )
+            $script:RunDir = New-RunDirectory -Lines $script:RunLines
+            New-Item -ItemType Directory -Path (Join-Path $script:RunDir 'sessions') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $script:RunDir 'sessions/events.jsonl') -Value '{}' -Encoding utf8NoBOM
+        }
+
+        It 'Replaces an errored trial under its original identity and keeps the recovered trajectory' {
+            $recovery = New-RunDirectory -Lines @(
+                '{"type":"trial-result","runId":"rec-1","itemId":"copy::a::trial-0","evalFilePath":"/copy.yaml","stimulus":"a","trialIndex":0,"totalTrials":1,"status":"success","trajectory":{"id":"t-rec","Content":1,"content":2}}'
+            )
+
+            $merge = Merge-RecoveredTrial -RunDir $script:RunDir -RecoveryRunDir $recovery -DestinationDir (Join-Path $TestDrive "merged-$([guid]::NewGuid())")
+
+            $merge.Replaced | Should -Be 1
+            $merge.Remaining | Should -Be 1
+            $lines = @(Get-Content -LiteralPath (Join-Path $merge.RunDir 'results.jsonl'))
+            $lines | Should -HaveCount 4
+            $lines[0] | Should -BeExactly $script:RunLines[0]
+            $replacement = $lines[1] | ConvertFrom-Json -AsHashtable
+            $replacement.runId | Should -BeExactly 'run-1'
+            $replacement.itemId | Should -BeExactly 'spec::a::trial-1'
+            $replacement.evalFilePath | Should -BeExactly '/spec.yaml'
+            $replacement.trialIndex | Should -Be 1
+            $replacement.totalTrials | Should -Be 2
+            $replacement.status | Should -BeExactly 'success'
+            $lines[1] | Should -Match '"trajectory":\{"id":"t-rec","Content":1,"content":2\}'
+            $lines[2] | Should -BeExactly $script:RunLines[2]
+            ($lines[3] | ConvertFrom-Json).hadExecutionErrors | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $merge.RunDir 'sessions/events.jsonl') | Should -BeTrue
+            Get-Content -LiteralPath (Join-Path $script:RunDir 'results.jsonl') | Should -Be $script:RunLines
+        }
+
+        It 'Clears the run-summary execution-error flags once every errored trial is recovered' {
+            $recovery = New-RunDirectory -Lines @(
+                '{"type":"trial-result","stimulus":"a","trialIndex":0,"status":"success","trajectory":{"id":"t-a"}}'
+                '{"type":"trial-result","stimulus":"b","trialIndex":0,"status":"error","trajectory":null}'
+                '{"type":"trial-result","stimulus":"b","trialIndex":1,"status":"success","trajectory":{"id":"t-b"}}'
+            )
+
+            $merge = Merge-RecoveredTrial -RunDir $script:RunDir -RecoveryRunDir $recovery -DestinationDir (Join-Path $TestDrive "merged-$([guid]::NewGuid())")
+
+            $merge.Replaced | Should -Be 2
+            $merge.Remaining | Should -Be 0
+            $summary = Get-Content -LiteralPath (Join-Path $merge.RunDir 'results.jsonl') | Select-Object -Last 1 | ConvertFrom-Json
+            $summary.hadExecutionErrors | Should -BeFalse
+            $summary.evals[0].hadExecutionErrors | Should -BeFalse
+            @(Get-ErroredTrialRecord -RunDir $merge.RunDir) | Should -HaveCount 0
+        }
+    }
+
+    Context 'New-RecoveryEvalSpec' {
+        It 'Writes the named stimuli beside the source with anchors resolved and rejects unknown names' {
+            $directory = Join-Path $TestDrive "spec-$([guid]::NewGuid())"
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            $source = Join-Path $directory 'eval.yaml'
+            Set-Content -LiteralPath $source -Encoding utf8NoBOM -Value @'
+name: stub-spec
+defaults:
+  runs: 3
+stimuli:
+  - name: first
+    constraints: &limit {max_agent_duration: 285s}
+    prompt: "First?"
+  - name: second
+    constraints: *limit
+    prompt: "Second?"
+    tags: {advisory: "true"}
+  - name: third
+    prompt: "Third?"
+'@
+
+            $path = New-RecoveryEvalSpec -SpecPath $source -StimulusName @('second', 'third') -Label 'unit'
+
+            $path | Should -BeExactly (Join-Path $directory '.recovery-unit.eval.yaml')
+            $copy = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable
+            $copy.name | Should -BeExactly 'stub-spec'
+            $copy.defaults.runs | Should -Be 3
+            @($copy.stimuli | ForEach-Object { $_.name }) | Should -Be @('second', 'third')
+            $copy.stimuli[0].constraints.max_agent_duration | Should -BeExactly '285s'
+            $copy.stimuli[0].tags.advisory | Should -BeExactly 'true'
+            { New-RecoveryEvalSpec -SpecPath $source -StimulusName @('missing') -Label 'unit-missing' } | Should -Throw
+        }
+    }
+
+    Context 'Invoke-ErroredTrialRecovery' {
+        It 'Leaves a run above the errored-share limit to the gates without re-running it' {
+            Mock Invoke-VallyProcess { throw 'Recovery must not run.' } -ModuleName VallyRunner
+            $errored = foreach ($index in 0..2) {
+                '{{"type":"trial-result","stimulus":"s{0}","trialIndex":0,"status":"error","trajectory":null}}' -f $index
+            }
+            $run = New-RunDirectory -Lines @($errored)
+
+            $result = Invoke-ErroredTrialRecovery -RunDir $run -Arguments @('eval', '--eval-spec', 'spec.yaml', '--output-dir', 'out') `
+                -SpecPath (Join-Path $TestDrive 'spec.yaml') -WorkRoot $TestDrive -Phase 'baseline-eval' -Worker 'gpt-6-luna' -ExpectedTrials 10
+
+            $result.RunDir | Should -BeExactly $run
+            $result.Errored | Should -Be 3
+            $result.Remaining | Should -Be 3
+            Should -Invoke Invoke-VallyProcess -ModuleName VallyRunner -Times 0 -Exactly
+        }
+    }
+
+    Context 'Get-VallyRecoveredExitCode' {
+        It 'Returns <Expected> for <Case>' -ForEach @(
+            @{ Case = 'a complete recovery with a clean summary'; Remaining = 0; Summary = '{"type":"run-summary","hadExecutionErrors":false,"hadGradingErrors":false,"evals":[{"hadExecutionErrors":false}]}'; Expected = 0 }
+            @{ Case = 'an errored trial left after recovery'; Remaining = 1; Summary = '{"type":"run-summary","hadExecutionErrors":true,"evals":[]}'; Expected = 1 }
+            @{ Case = 'a summary that still reports grading errors'; Remaining = 0; Summary = '{"type":"run-summary","hadExecutionErrors":false,"hadGradingErrors":true,"evals":[]}'; Expected = 1 }
+            @{ Case = 'an eval-level error'; Remaining = 0; Summary = '{"type":"run-summary","hadExecutionErrors":false,"evals":[{"error":"spec failed to load"}]}'; Expected = 1 }
+            @{ Case = 'a run without a run-summary'; Remaining = 0; Summary = '{"type":"trial-result","stimulus":"a","trialIndex":0,"status":"success"}'; Expected = 1 }
+        ) {
+            $run = New-RunDirectory -Lines @($Summary)
+
+            Get-VallyRecoveredExitCode -ExitCode 1 -Recovery @{ Recovered = 1; Remaining = $Remaining } -RunDir $run | Should -Be $Expected
+        }
+
+        It 'Keeps a nonzero exit when recovery replaced nothing' {
+            $run = New-RunDirectory -Lines @('{"type":"run-summary","hadExecutionErrors":false,"evals":[]}')
+
+            Get-VallyRecoveredExitCode -ExitCode 1 -Recovery @{ Recovered = 0; Remaining = 0 } -RunDir $run | Should -Be 1
+        }
     }
 }
