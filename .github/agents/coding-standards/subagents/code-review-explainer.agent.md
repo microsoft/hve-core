@@ -2,13 +2,10 @@
 name: Code Review Explainer
 description: "Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact"
 tools:
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
+  - search
+  - read
+  - edit
+  - skill
 user-invocable: false
 ---
 
@@ -18,7 +15,7 @@ Thin explainer subagent for the Code Review orchestrator. It answers factual "wh
 
 ## Skill Reference Contract
 
-At the start of the run, locate the skill named `code-review` and read these files from it once in a single parallel `read_file` block (paths are relative to that skill), then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these files from it once, in a single batch of parallel reads (paths are relative to that skill), then apply them verbatim:
 
 * `SKILL.md` (skill entrypoint)
 * `references/walkthrough-protocol.md`

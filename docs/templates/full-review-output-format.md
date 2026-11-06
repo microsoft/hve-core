@@ -3,7 +3,7 @@ title: Code Review Output Format
 description: Shared data contracts, report structure, and persistence rules for the Code Review orchestrator and its perspective subagents
 sidebar_position: 10
 author: microsoft/hve-core
-ms.date: 2026-08-01
+ms.date: 2026-11-03
 ms.topic: reference
 keywords:
   - code review

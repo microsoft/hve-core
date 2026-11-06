@@ -1,6 +1,5 @@
 ---
 description: 'ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and canonical state.json schema for Architecture Decision Record authoring sessions'
-applyTo: '**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/docs/planning/adrs/**/.adr-config.yml'
 ---
 
 # ADR Creator Identity
@@ -94,7 +93,7 @@ Phase names (`Frame`, `Decide`, `Govern`) remain user-facing and may appear in r
 1. **READ**: Load `state.json` from the active project slug directory.
 2. **VALIDATE**: Confirm state integrity. Check required fields exist and contain valid values. Confirm the current phase's `adr-author` section has been read in this live context before executing phase work. A recorded `phaseSkillsLoaded` anchor is load history and does not satisfy this check.
 3. **DETERMINE**: Identify current phase, entry mode, output template, `userPreferences.autonomyTier`, and next actions from state fields.
-4. **EXECUTE**: Perform phase work. Ask coaching questions, evaluate user responses, and update the ADR draft. If the current phase section has not been read in this live context, load it via `read_file` against `../../skills/project-planning/adr-author/SKILL.md` and append its anchor to `phaseSkillsLoaded` when absent before continuing.
+4. **EXECUTE**: Perform phase work. Ask coaching questions, evaluate user responses, and update the ADR draft. If the current phase section has not been read in this live context, read it from `../SKILL.md` and append its anchor to `phaseSkillsLoaded` when absent before continuing.
 5. **UPDATE**: Update in-memory state with results from execution. Refresh `lastUpdatedAt` to the current ISO 8601 timestamp.
 6. **WRITE**: Persist updated `state.json` to disk.
 
@@ -225,9 +224,9 @@ On first invocation, after the bootstrap prompt confirms `entryMode`, `projectSl
 
 Each phase requires the corresponding section of the `adr-author` skill to be loaded in the current live context before EXECUTE runs. The VALIDATE step enforces this contract against the live context, not the persisted marker.
 
-* **Frame**: MUST `read_file` `../../skills/project-planning/adr-author/SKILL.md` and target the `#frame` section before executing Frame phase work. Append `adr-author/SKILL.md#frame` to `phaseSkillsLoaded`.
-* **Decide**: MUST `read_file` `../../skills/project-planning/adr-author/SKILL.md` and target the `#decide` section before executing Decide phase work. Append `adr-author/SKILL.md#decide` to `phaseSkillsLoaded`.
-* **Govern**: MUST `read_file` `../../skills/project-planning/adr-author/SKILL.md` and target the `#govern` section before executing Govern phase work. Append `adr-author/SKILL.md#govern` to `phaseSkillsLoaded`.
+* **Frame**: MUST read `../SKILL.md` and target the `#frame` section before executing Frame phase work. Append `adr-author/SKILL.md#frame` to `phaseSkillsLoaded`.
+* **Decide**: MUST read `../SKILL.md` and target the `#decide` section before executing Decide phase work. Append `adr-author/SKILL.md#decide` to `phaseSkillsLoaded`.
+* **Govern**: MUST read `../SKILL.md` and target the `#govern` section before executing Govern phase work. Append `adr-author/SKILL.md#govern` to `phaseSkillsLoaded`.
 
 `phaseSkillsLoaded` is durable load history. Within one live context, a section already read is not re-read. After a cold start, resume, or context summarization, load the current phase section before continuing even when its anchor is recorded.
 

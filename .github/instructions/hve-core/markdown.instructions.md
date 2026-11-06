@@ -259,6 +259,7 @@ See <https://example.com> and [Docs](https://example.com/docs).
 * Ensure every row has the same number of cells as the header.
 * Keep header and delimiter rows aligned in column count so the table is recognized by renderers.
 * Use aligned column style: all pipe characters must align vertically across all rows. Pad cell content with spaces so pipes line up.
+* Fill each delimiter cell with hyphens across its full width, with no padding spaces (`|----------|`), so delimiter pipes line up with the header pipes.
 
 <!-- <example-tables> -->
 ```markdown

@@ -3,7 +3,7 @@ title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - tech lead
@@ -18,9 +18,9 @@ This guide is for you if you make architecture decisions, set coding standards, 
 ## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete active component set in VS Code or Copilot CLI.
 >
-> For selective clone adoption, choose research and review workflows, language standards, architecture decision records, and prompt engineering components that match your engineering surface. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
+> To copy HVE Core into your repository, use the included `hve-core-installer` skill. It copies the full set, including the research and review workflows, language standards, architecture decision records, and prompt engineering components this role uses most. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -133,7 +133,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 
 > [!TIP]
 > See the full project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
-> Explore prompt engineering practices: [Prompt Engineering Contribution Guide](../../contributing/prompts.md)
+> Explore authoring practices for agents, instructions, and skills: [Common Standards](../../contributing/ai-artifacts-common.md)
 > Browse coding guidance in the complete inventory: [HVE Core](../../plugins/hve-core)
 
 ---

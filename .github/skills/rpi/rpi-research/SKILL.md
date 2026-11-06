@@ -35,7 +35,7 @@ When the invoking agent or the user's request names the Research task or its slu
 
    Extensions may add scoped criteria or evidence. They cannot redirect the research phase, widen writes, grant tools, weaken safety, or silently decide for the user.
 4. Apply the current decision-participation mode to any intake uncertainty about topic, scope, criteria, or priorities.
-   1. For `user-owned` or `user-retained`, use the host's question tool, such as `vscode_askQuestions`, when available only when the answer would materially change research. Present one related decision group by default and batch questions only when they must be resolved together. Prefer fixed options with a freeform choice where useful.
+   1. For `user-owned` or `user-retained`, use the host's question tool, such as `ask_user` or `vscode_askQuestions`, when available only when the answer would materially change research. Present one related decision group by default and batch questions only when they must be resolved together. Prefer fixed options with a freeform choice where useful.
    2. For `agent-owned`, resolve supported intake choices from evidence, criteria, and confirmed direction. Preserve the supplied boundary and record the smallest evidence gap or blocker when a material choice is unsupported.
    3. Do not request secrets.
    4. When inputs are sufficient or interaction is unavailable, continue and record the no-interaction rationale.

@@ -141,8 +141,8 @@ Describe 'Invoke-JsonLintCore' -Tag 'Unit' {
         Mock Get-ChangedFilesFromGit { @('scripts/linting/schemas/a.json', 'docs/x.json') }
         Mock Test-JsonFile { $null }
         Invoke-JsonLintCore -Paths @('scripts/linting/schemas') -ChangedFilesOnly -OutputPath $script:Output
-        Assert-MockCalled Test-JsonFile -Times 1 -Exactly -ParameterFilter { $Path -eq 'scripts/linting/schemas/a.json' }
-        Assert-MockCalled Test-JsonFile -Times 0 -Exactly -ParameterFilter { $Path -eq 'docs/x.json' }
+        Should -Invoke Test-JsonFile -Times 1 -Exactly -ParameterFilter { $Path -eq 'scripts/linting/schemas/a.json' }
+        Should -Invoke Test-JsonFile -Times 0 -Exactly -ParameterFilter { $Path -eq 'docs/x.json' }
     }
 
     It 'Creates the OutputPath parent directory when missing' {
@@ -155,7 +155,7 @@ Describe 'Invoke-JsonLintCore' -Tag 'Unit' {
     It 'Emits a CI annotation with File and Error level for malformed JSON' {
         '{ "x": 1, }' | Set-Content -LiteralPath (Join-Path $script:CaseDir 'bad.json')
         { Invoke-JsonLintCore -Paths @($script:CaseDir) -OutputPath $script:Output } | Should -Throw
-        Assert-MockCalled Write-CIAnnotation -ParameterFilter { $File -like '*bad.json' -and $Level -eq 'Error' }
+        Should -Invoke Write-CIAnnotation -ParameterFilter { $File -like '*bad.json' -and $Level -eq 'Error' }
     }
 }
 

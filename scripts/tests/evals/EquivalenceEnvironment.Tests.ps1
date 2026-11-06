@@ -92,6 +92,18 @@ Describe 'Get-AgentSkillReference' -Tag 'Unit' {
     It 'Returns an empty set for a missing agent file' {
         @(Get-AgentSkillReference -RepoRoot $script:FixtureRoot -AgentFilePath '.github/agents/sample/absent.agent.md').Count | Should -Be 0
     }
+
+    It 'Resolves preloaded skills from a block list with comments' {
+        $agentPath = Join-Path $script:FixtureRoot '.github/agents/sample/agent-commented.agent.md'
+        Set-Content -LiteralPath $agentPath -Value "---`nname: Commented`nskills:`n  # preloaded`n  - skill-one`n`n  - skill-three # last`n---`n`nBody." -Encoding UTF8
+        try {
+            $skills = @(Get-AgentSkillReference -RepoRoot $script:FixtureRoot -AgentFilePath '.github/agents/sample/agent-commented.agent.md')
+            $skills | Should -Be @('.github/skills/alpha/skill-one', '.github/skills/beta/skill-three')
+        }
+        finally {
+            Remove-Item -LiteralPath $agentPath -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 Describe 'Get-AgentDeclaredDependency' -Tag 'Unit' {
@@ -113,16 +125,14 @@ name: helper
 Uses `skill-three` for its work.
 '@
 
-        # Declares an instruction by relative path and a subagent by frontmatter name,
-        # which are the two forms real agents use.
+        # Declares an instruction by relative path and a subagent by display name in the
+        # body, which are the forms real agents use.
         Set-Content -LiteralPath (Join-Path $agentsDir 'agent-parent.agent.md') -Encoding UTF8 -Value @'
 ---
 name: Agent Parent
-agents:
-  - helper
 ---
 
-Follow #file:../../instructions/sample/house.instructions.md and use `skill-one`.
+Follow [house rules](../../instructions/sample/house.instructions.md), use `skill-one`, and delegate checks to the helper agent.
 '@
     }
 
@@ -135,7 +145,7 @@ Follow #file:../../instructions/sample/house.instructions.md and use `skill-one`
         $d.Instructions | Should -Contain '.github/instructions/sample/house.instructions.md'
     }
 
-    It 'Resolves a subagent declared by frontmatter name' {
+    It 'Resolves a subagent named in the body' {
         $d = Get-AgentDeclaredDependency -RepoRoot $script:DepRoot -AgentRelativePath '.github/agents/sample/agent-parent.agent.md'
         $d.Subagents | Should -Contain '.github/agents/sample/subagents/helper.agent.md'
     }
@@ -165,11 +175,9 @@ Uses `skill-three` for its work.
         Set-Content -LiteralPath (Join-Path $agentsDir 'agent-parent.agent.md') -Encoding UTF8 -Value @'
 ---
 name: Agent Parent
-agents:
-  - helper
 ---
 
-Use `skill-one`.
+Use `skill-one` and delegate checks to the helper agent.
 '@
     }
 

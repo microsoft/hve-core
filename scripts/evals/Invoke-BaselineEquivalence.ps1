@@ -709,6 +709,54 @@ function Resolve-LatestRunDir {
     return $latest.FullName
 }
 
+function Test-JudgeErrorOnlyCompareFailure {
+    <#
+    .SYNOPSIS
+        Detects a compare shard that failed only because some pairs were not judged.
+    .DESCRIPTION
+        `vally compare` exits nonzero for a partial comparison, where some pairs failed
+        judging after its own retries. The equivalence gate deliberately counts judge
+        errors without enforcing a budget, so such a shard is not a run-health failure.
+        This holds only when the shard wrote comparison records with at least one judged
+        trial and at least one judge-errored trial; a shard that judged nothing, or that
+        failed without a judge error, still counts.
+    .PARAMETER OutputPath
+        Comparison JSONL the shard wrote.
+    .OUTPUTS
+        [bool] True when judge errors alone explain the nonzero exit.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$OutputPath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($OutputPath) -or -not (Test-Path -LiteralPath $OutputPath -PathType Leaf)) { return $false }
+    $judged = 0
+    $errored = 0
+    foreach ($line in [System.IO.File]::ReadLines($OutputPath)) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            return $false
+        }
+        if ($record -isnot [System.Collections.IDictionary] -or $record['type'] -cne 'comparison') { continue }
+        foreach ($stimulus in @($record['stimuli'])) {
+            if ($stimulus -isnot [System.Collections.IDictionary]) { continue }
+            foreach ($trial in @($stimulus['trials'])) {
+                if ($trial -isnot [System.Collections.IDictionary]) { continue }
+                if ($trial['errored'] -eq $true) { $errored++ } else { $judged++ }
+            }
+        }
+    }
+    return ($judged -gt 0 -and $errored -gt 0)
+}
+
 function Test-CustomizedInvocationRetryEligibility {
     <#
     .SYNOPSIS
@@ -1396,6 +1444,19 @@ if ($MyInvocation.InvocationName -ne '.') {
                     })
                 $baselineRunDir = Resolve-LatestRunDir -OutputDir $aDir
                 $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $baselineRunDir -Model $model -Variant baseline -Attempt 1 -ExitCode $codeA))
+                $baselineRecovery = Invoke-ErroredTrialRecovery `
+                    -RunDir $baselineRunDir `
+                    -Arguments $evalBaseline `
+                    -SpecPath (Join-Path $resolvedRoot 'evals/baseline-equivalence/baseline/eval.yaml') `
+                    -WorkRoot (Join-Path $outputRoot "$model/$runId") `
+                    -Phase 'baseline-eval' `
+                    -Worker $model `
+                    -ExpectedTrials ($canonicalPolicy.Count * $baselineTrials) `
+                    -LogPath $baselineLog `
+                    -HeartbeatIntervalSeconds $ComparisonHeartbeatSeconds
+                foreach ($recoveryAttempt in @($baselineRecovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
+                $baselineRunDir = $baselineRecovery.RunDir
+                $codeA = Get-VallyRecoveredExitCode -ExitCode $codeA -Recovery $baselineRecovery -RunDir $baselineRunDir
                 $baselineTally = Measure-DeclaredInvariantFailures -RunDir $baselineRunDir -InvariantNames $canonicalInvariants -ExpectedManifest $invariantManifest -ExpectedTrials $baselineTrials
                 if ($baselineTally.HasSignal) {
                     $invariantFailures += $baselineTally.Failed
@@ -1454,6 +1515,20 @@ if ($MyInvocation.InvocationName -ne '.') {
             $bRunDir = Resolve-LatestRunDir -OutputDir $bDir
             $customizedDiagnostic = Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB
             $executionDiagnostics.Add($customizedDiagnostic)
+            $customizedRecoveryParameters = @{
+                Arguments                = $evalCustomized
+                SpecPath                 = (Join-Path $resolvedRoot 'evals/baseline-equivalence/customized/eval.yaml')
+                WorkRoot                 = (Join-Path $outputRoot "$model/$runId")
+                Phase                    = 'customized-eval'
+                Worker                   = $model
+                ExpectedTrials           = ($canonicalPolicy.Count * $customizedTrials)
+                LogPath                  = $customizedLog
+                HeartbeatIntervalSeconds = $ComparisonHeartbeatSeconds
+            }
+            $customizedRecovery = Invoke-ErroredTrialRecovery -RunDir $bRunDir @customizedRecoveryParameters
+            foreach ($recoveryAttempt in @($customizedRecovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
+            $bRunDir = $customizedRecovery.RunDir
+            $codeB = Get-VallyRecoveredExitCode -ExitCode $codeB -Recovery $customizedRecovery -RunDir $bRunDir
             $invocationTally = Measure-AgentInvocationEvidence `
                 -RunDir $bRunDir `
                 -StimulusNames @($canonicalPolicy.Keys) `
@@ -1508,6 +1583,11 @@ if ($MyInvocation.InvocationName -ne '.') {
                     $null
                 }
                 $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB))
+                $customizedRecoveryParameters['WorkRoot'] = Join-Path $outputRoot "$model/$runId/customized-attempt-$customizedAttempt"
+                $customizedRecovery = Invoke-ErroredTrialRecovery -RunDir $bRunDir @customizedRecoveryParameters
+                foreach ($recoveryAttempt in @($customizedRecovery.Attempts)) { $phaseTimings.Add($recoveryAttempt) }
+                $bRunDir = $customizedRecovery.RunDir
+                $codeB = Get-VallyRecoveredExitCode -ExitCode $codeB -Recovery $customizedRecovery -RunDir $bRunDir
                 $invocationTally = Measure-AgentInvocationEvidence `
                     -RunDir $bRunDir `
                     -StimulusNames @($canonicalPolicy.Keys) `
@@ -1672,6 +1752,10 @@ if ($MyInvocation.InvocationName -ne '.') {
                         $compareLogs.Add([string]$compareJob.LogPath)
                         $finalAttempt = $shardAttempts | Where-Object { [int]$_.Shard -eq [int]$compareJob.Shard } | Select-Object -Last 1
                         if (-not $finalAttempt -or [int]$finalAttempt.ExitCode -ne 0) {
+                            if ($finalAttempt -and (Test-JudgeErrorOnlyCompareFailure -OutputPath ([string]$compareJob.OutputPath))) {
+                                Write-Host "   Compare shard $($compareJob.Shard): partial judging; judge errors are reported, not gated" -ForegroundColor Yellow
+                                continue
+                            }
                             $compareFailed = $true
                             $runHealthFailures++
                         }

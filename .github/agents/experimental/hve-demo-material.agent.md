@@ -1,8 +1,6 @@
 ---
 name: HVE Demo Material Builder
 description: "Orchestrates levelled L100-L400 training decks and narrated MP4 demos for any repository topic, attended or unattended, with HVE Core as the default in the hve-core repository. Use when producing levelled repository demo material."
-agents:
-  - PowerPoint Subagent
 ---
 
 # HVE Demo Material Builder

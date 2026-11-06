@@ -468,6 +468,38 @@ Describe 'Get-ArtifactFrontmatter' -Tag 'Unit' {
     }
 }
 
+Describe 'Get-YamlFrontmatterList' -Tag 'Unit' {
+    It 'Reads <Name>' -ForEach @(
+        @{ Name = 'a flow list'; Yaml = "name: x`nskills: [one, two]" }
+        @{ Name = 'a flow list with a trailing comment'; Yaml = "skills: [one, 'two'] # preloads`ndescription: d" }
+        @{ Name = 'a block list with comments and blank lines'; Yaml = "skills:`n  # first`n  - one`n`n  # second`n  - `"two`"`nname: x" }
+        @{ Name = 'a block list with CRLF line endings'; Yaml = "skills:`r`n  - one`r`n  - two`r`n" }
+        @{ Name = 'a multi-line flow list with comments'; Yaml = "skills: [`n  one, # first`n  two`n]" }
+    ) {
+        @(Get-YamlFrontmatterList -Yaml $Yaml -Field 'skills') | Should -Be @('one', 'two')
+    }
+
+    It 'Treats a scalar value as a one-item list' {
+        @(Get-YamlFrontmatterList -Yaml 'skills: one' -Field 'skills') | Should -Be @('one')
+    }
+
+    It 'Returns nothing for <Name>' -ForEach @(
+        @{ Name = 'a missing field'; Yaml = 'name: x' }
+        @{ Name = 'an empty field'; Yaml = 'skills:' }
+        @{ Name = 'an empty list'; Yaml = 'skills: []' }
+        @{ Name = 'empty frontmatter'; Yaml = '' }
+    ) {
+        @(Get-YamlFrontmatterList -Yaml $Yaml -Field 'skills') | Should -HaveCount 0
+    }
+
+    It 'Throws for <Name>' -ForEach @(
+        @{ Name = 'a mapping value'; Yaml = 'skills: {one: 1}' }
+        @{ Name = 'malformed YAML'; Yaml = "description: value`n  bad: indentation" }
+    ) {
+        { Get-YamlFrontmatterList -Yaml $Yaml -Field 'skills' } | Should -Throw
+    }
+}
+
 Describe 'Get-ArtifactDescription' -Tag 'Unit' {
     BeforeAll {
         $script:DescriptionRoot = Join-Path $TestDrive 'descriptions'

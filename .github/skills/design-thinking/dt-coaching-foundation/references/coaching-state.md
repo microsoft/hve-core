@@ -86,7 +86,7 @@ customer_card_render:
 * `method`: integer 1-9 indicating the active method.
 * `space`: derived from method number. Methods 1-3 map to `problem`, 4-6 to `solution`, 7-9 to `implementation`.
 * `phase`: free-text label describing the current step within the method (e.g., "stakeholder mapping", "interview planning", "theme clustering", "prototype testing").
-* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See `shared/disclaimer-language.instructions.md` (Design Thinking Coaching section).
+* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See the `disclaimer-language` skill (Design Thinking Coaching section).
 
 #### Hint Calibration
 
@@ -203,4 +203,4 @@ The `.copilot-tracking/dt/{project-slug}/` directory holds all project-specific 
 
 ## Integration with Method Sequencing
 
-The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which dt-methods reference the agent loads on demand via `read_file` when a method becomes active. The `transition_log` provides the history that the method sequencing transition protocol references.
+The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which dt-methods reference the agent reads on demand when a method becomes active. The `transition_log` provides the history that the method sequencing transition protocol references.

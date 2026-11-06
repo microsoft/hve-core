@@ -24,7 +24,7 @@ Persist one repository-original Architecture Review Record that preserves confir
 5. For every confirmed focus area, record a finding, an examined area with no finding, or an explicit unassessed disposition and limit.
 6. Record each material Research recommendation as `accepted`, `revised`, `rejected`, or `deferred`, with rationale and evidence IDs.
 7. Link significant accepted decisions to their ADRs. Keep review analysis and sub-threshold trade-offs in the record; keep decision authority in the ADR and with the user.
-8. Persist the completed record before invoking an ADR or RPI Plan handoff, and pass its workspace-relative path as the handoff evidence source.
+8. Persist the completed record before suggesting ADR Creator or the `rpi-plan` skill as a next step, and give its workspace-relative path as their evidence source.
 
 ## Success Criteria
 
@@ -33,7 +33,7 @@ Persist one repository-original Architecture Review Record that preserves confir
 * Assumptions are distinct from verified context.
 * Research recommendations retain evidence IDs and reviewer dispositions.
 * Significant decisions link to ADRs without duplicating ADR authority.
-* Both existing handoffs name the completed record path instead of relying on chat context.
+* Next-step suggestions for ADR Creator and the `rpi-plan` skill name the completed record path instead of relying on chat context.
 
 ## Constraints
 

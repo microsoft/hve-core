@@ -1,6 +1,5 @@
 ---
 description: 'Community interaction voice, tone, and response templates for GitHub-facing agents and prompts'
-applyTo: '**/.github/agents/project-planning/backlog-manager.agent.md, **/.github/agents/project-planning/subagents/github-backlog-executor.agent.md, **/.github/skills/project-planning/backlog-management/references/github.md'
 ---
 
 # Community Interaction Guidelines
@@ -200,7 +199,7 @@ Triggered when a PR does not meet the project's contribution guidelines and cann
 
 > Thank you for taking the time to submit this PR, @{{contributor}}. We appreciate the effort.
 >
-> This PR doesn't currently meet our contribution guidelines: {{criteria}}. Please review our [CONTRIBUTING.md](../../../CONTRIBUTING.md) for the full requirements.
+> This PR doesn't currently meet our contribution guidelines: {{criteria}}. Please review our [CONTRIBUTING.md](https://github.com/{{owner}}/{{repo}}/blob/main/CONTRIBUTING.md) for the full requirements.
 >
 > You're welcome to revise and resubmit. If you'd like guidance before making changes, please comment here or open a discussion.
 
@@ -327,23 +326,19 @@ Agents should involve human maintainers when:
 * Contributor disputes involve technical direction decisions that need maintainer consensus.
 * The agent cannot determine the appropriate response or scenario template.
 
-Escalation follows the role hierarchy defined in [GOVERNANCE.md](../../../GOVERNANCE.md): Triage Contributor escalates to Maintainer, Maintainer escalates to Admin. Reference [CODE_OF_CONDUCT.md](../../../CODE_OF_CONDUCT.md) for behavioral standards.
+Escalation follows the role hierarchy defined in the repository's `GOVERNANCE.md`: Triage Contributor escalates to Maintainer, Maintainer escalates to Admin. Reference the repository's `CODE_OF_CONDUCT.md` for behavioral standards.
 
 ## Integration Instructions
 
-Community-facing agents, prompts, and skills bind to these guidelines two ways, and both are required because they cover different moments.
-
-* Authoring time: the `applyTo` glob attaches this file when a live consumer surface is in context — the GitHub backlog prompts, the `Backlog Manager` agent, the `GitHub Backlog Executor` subagent, and the shared `backlog-management` GitHub reference.
-* Runtime: each consumer names this file on a resolvable relative path at the point where it composes contributor-visible text. A bare file name is not a binding; it does not resolve.
+This file is a reference in the `backlog-management` skill. Each consumer loads it through that skill at the point where it composes text that contributors will see.
 
 Ownership is split across two components, and both need this file. `Backlog Manager` selects the scenario and prepares the sanitized comment text; it holds no GitHub write tools. `GitHub Backlog Executor` holds the comment and close tools, so it performs the post and the state change and owns the comment-before-closure ordering at execution time. Neither can satisfy the contract alone.
 
 Current live consumers:
 
-* [.github/agents/project-planning/backlog-manager.agent.md](../../agents/project-planning/backlog-manager.agent.md) — selects the scenario and prepares sanitized community-facing text.
-* [.github/agents/project-planning/subagents/github-backlog-executor.agent.md](../../agents/project-planning/subagents/github-backlog-executor.agent.md) — posts the comment and performs the state change, in that order.
-* [.github/skills/project-planning/backlog-management/references/github.md](../../skills/project-planning/backlog-management/references/github.md) — Community Communication section, which owns the comment-before-closure contract.
-* [.github/agents/issue-triage.agent.md](../../agents/issue-triage.agent.md) — single-issue triage comments.
-* [.github/agents/issue-triage.agent.md](../../agents/issue-triage.agent.md) — single-issue triage comments.
+* The Backlog Manager agent selects the scenario and prepares sanitized community-facing text.
+* The GitHub Backlog Executor subagent posts the comment and performs the state change, in that order.
+* [github.md](github.md) in this skill: its Community Communication section owns the comment-before-closure contract.
+* The repository's Issue Triage agent writes single-issue triage comments.
 
 Templates are self-contained. Select the scenario that matches the trigger condition and fill the placeholders from the issue or PR context. Always post the explanatory comment via `mcp_github_add_issue_comment` before the state-changing call, so the contributor sees the reason before the change lands.

@@ -93,7 +93,7 @@ Method 2 artifacts enforce raw-data fidelity. The coach actively prevents premat
 
 ## Mid-Session Subagent Dispatch
 
-The coach can dispatch subagents via `runSubagent` for parallel research analysis (cross-interview patterns, constraint catalogs, assumption validation) while continuing the conversation. See method-02-deep.md for dispatch protocol and task examples.
+The coach can delegate parallel research analysis to subagents (cross-interview patterns, constraint catalogs, assumption validation) while continuing the conversation. See method-02-deep.md for dispatch protocol and task examples.
 
 ## Quality Rules
 

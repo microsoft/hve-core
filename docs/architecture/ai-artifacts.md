@@ -1,52 +1,36 @@
 ---
 title: AI Artifacts Architecture
-description: Prompt, agent, and instruction delegation model for Copilot customizations
+description: Agent, skill, and instruction model for Copilot customizations in the Copilot harness
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-31
 ms.topic: concept
 keywords:
   - ai artifacts
   - agents
-  - prompts
+  - skills
   - instructions
+  - slash commands
 ---
 
-HVE Core provides a four-tier artifact system for customizing GitHub Copilot behavior. Each tier serves a distinct purpose in the delegation chain, enabling structured, reusable AI guidance that flows from user intent to technology-specific standards and executable utilities.
+HVE Core customizes GitHub Copilot with three artifact types. Agents orchestrate workflows, skills carry entry points and reusable procedures, and instructions encode standards for matching files. Each type reaches a Copilot session in its own way, and together they take a request from user intent to technology-specific standards and executable utilities.
+
+> [!NOTE]
+> HVE Core targets the Copilot harness, the Copilot SDK runtime that is VS Code's default agent harness and also runs Copilot CLI. The Copilot harness does not load prompt files (`.prompt.md`) or `#file:` directives, and it has no handoff buttons. Prompt files were the entry points under VS Code's older Local harness. Skills fill that role now, and HVE Core ships no prompt files.
 
 ## Artifact Type Hierarchy
 
-The artifact system organizes customizations by scope and responsibility. Prompts handle user interaction, agents orchestrate workflows, instructions encode standards, and skills provide executable utilities.
-
-### Prompts
-
-Prompts (`.prompt.md`) serve as workflow entry points. They capture user intent and translate requests into structured guidance for Copilot execution.
-
-#### Core Characteristics
-
-* Define single-session workflows with clear inputs and outputs
-* Accept user inputs through `${input:varName}` template syntax
-* Delegate to agents via `agent:` frontmatter references
-
-#### Frontmatter Structure
-
-```yaml
----
-description: 'Protocol for creating ADO pull requests'
-agent: RPI Agent
----
-```
-
-Prompts answer the question "what does the user want to accomplish?" and route execution to appropriate agents.
+The artifact system organizes customizations by scope and responsibility. Agents orchestrate workflows, skills hold entry points and the procedures that several agents share, and instructions encode standards.
 
 ### Agents
 
-Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools. They orchestrate multi-step workflows and make decisions based on context.
+Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools. They orchestrate multi-step workflows and make decisions based on context. A user selects an agent in the agent picker, or a parent agent starts one as a subagent.
 
 #### Core Characteristics
 
-* Specify available tools through `tools:` frontmatter arrays
-* Enable workflow handoffs via `handoffs:` references to other agents
+* Specify available tools through a `tools:` list of aliases such as `read`, `edit`, `search`, `execute`, `agent`, and `skill`
+* Preload the skills they need at start through `skills:`, and activate other skills by name
+* Dispatch subagents by `name` through the `task` tool
 * Maintain conversation context across multiple interactions
 * Apply domain expertise through detailed behavioral instructions
 
@@ -54,15 +38,24 @@ Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools
 
 ```yaml
 ---
-description: 'Orchestrates task planning with research integration'
-tools: ['codebase', 'search', 'editFiles', 'changes']
-handoffs:
-  - label: "Coordinate RPI Work"
-    agent: RPI Agent
-    prompt: "Coordinate this task through the applicable RPI phases"
-    send: true
+name: RAI Planner
+description: 'Responsible AI assessment planner evaluating against NIST AI RMF 1.0'
+tools:
+  - read
+  - edit
+  - execute
+  - search
+  - web
+  - agent
+  - skill
+  - ask_user
+skills:
+  - disclaimer-language
+  - untrusted-content-boundary
 ---
 ```
+
+The Copilot harness does not support `handoffs`, `agents`, or `argument-hint` on agents. An agent's body names the subagents it uses and the skill or agent the user should turn to next.
 
 Agents answer the question "how should this task be executed?" and coordinate the necessary tools and resources.
 
@@ -72,10 +65,12 @@ Instructions (`.instructions.md`) encode technology-specific standards and conve
 
 #### Core Characteristics
 
-* Match files through `applyTo:` glob patterns for automatic application
+* Match files through `applyTo:` glob patterns and apply once a session reads or edits a matching file
+* Load into every session when they have no `applyTo`, so reserve that form for the rare rule every session needs
 * Define coding standards, naming conventions, and quality requirements
 * Apply to specific languages, frameworks, or file types
 * Stack with other instructions when multiple patterns match
+* Never reach subagents, which get their rules from their own body, a preloaded skill, or the dispatch prompt
 
 #### Frontmatter Structure
 
@@ -97,13 +92,15 @@ Instructions placed at the root of `.github/instructions/` (without a subdirecto
 
 ### Skills
 
-Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agents invoke for specialized tasks. Unlike instructions (passive reference), skills contain actual scripts that perform operations.
+Skills (`.github/skills/<name>/SKILL.md`) package reusable workflows, domain knowledge, and executable utilities. HVE Core also uses them for two jobs: a user-invocable skill is an entry point that runs as a slash command, such as `/rpi-research`, and a shared protocol, such as `disclaimer-language`, lives in a skill that several agents preload.
 
 #### Core Characteristics
 
-* Provide self-contained utility packages with documentation and scripts
-* Include parallel implementations for cross-platform support (`.sh` and `.ps1`)
-* Execute actual operations rather than providing guidance
+* Run as slash commands that take their inputs from the user's message
+* Load by semantic match on `description`, unless `disable-model-invocation: true` limits them to their slash command
+* Carry shared protocols that agents preload with `skills:` or activate by name
+* Bundle references, templates, and scripts, linked with paths relative to the skill root
+* Include parallel implementations for cross-platform support (`.sh` and `.ps1`) when they ship scripts
 
 #### Directory Structure (by Convention)
 
@@ -119,10 +116,25 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 
 #### Frontmatter Structure
 
+An entry-point skill that only users start:
+
 ```yaml
 ---
-name: video-to-gif
-description: 'Video-to-GIF conversion with FFmpeg optimization'
+name: git-merge
+description: 'Integrate branches with merge or rebase, resolve conflicts, and push when explicitly authorized'
+argument-hint: 'operation={merge|rebase|rebase-onto} branch=<ref> [onto=<ref>]'
+user-invocable: true
+disable-model-invocation: true
+---
+```
+
+A shared protocol that agents preload:
+
+```yaml
+---
+name: disclaimer-language
+description: 'Verbatim CAUTION disclaimers for HVE planning, coaching, and review agents'
+user-invocable: false
 ---
 ```
 
@@ -133,58 +145,82 @@ description: 'Video-to-GIF conversion with FFmpeg optimization'
 | `name`        | Lowercase kebab-case identifier matching directory name |
 | `description` | Brief capability description                            |
 
-Distribution is determined by tracked path and license classification, not skill maturity metadata. See [Plugin Identity](#plugin-identity).
+#### Invocation Fields
 
-Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
+| Field                      | Effect                                                                    |
+|----------------------------|---------------------------------------------------------------------------|
+| `argument-hint`            | Shows the arguments a slash command expects                               |
+| `user-invocable`           | `false` hides the slash command for a skill that only agents load         |
+| `disable-model-invocation` | `true` hides the skill from the model, so only its slash command loads it |
+
+Skill frontmatter does not declare `tools`, `model`, `skills`, or `applyTo`. Distribution is determined by tracked path and license classification, not skill maturity metadata. See [Plugin Identity](#plugin-identity).
+
+Skills answer the question "what reusable procedure or utility does this task need?" and give users and agents the same entry point.
 
 #### Key Distinction from Instructions
 
-| Aspect     | Instructions                | Skills                |
-|------------|-----------------------------|-----------------------|
-| Nature     | Passive reference           | Active execution      |
-| Content    | Standards and conventions   | Scripts and utilities |
-| Activation | Automatic via glob patterns | Explicit invocation   |
-| Output     | Guidance for Copilot        | Executed operations   |
+| Aspect     | Instructions                    | Skills                                          |
+|------------|---------------------------------|-------------------------------------------------|
+| Nature     | Passive guidance                | On-demand capability                            |
+| Content    | Standards and conventions       | Workflows, protocols, references, and scripts   |
+| Activation | `applyTo` match on read or edit | Slash command, semantic match, preload, or name |
+| Output     | Guidance for Copilot            | Guided workflows and executed operations        |
 
 ## Delegation Flow
 
-The artifact system follows a hierarchical delegation model. User requests flow through prompts to agents, which apply relevant instructions during execution.
+A request enters through an agent that the user selects or through a skill's slash command. Agents then load skills, dispatch subagents, and pick up instructions for the files they work on.
 
 ```mermaid
 graph LR
     accTitle: AI Artifact Delegation Flow
-    accDescr: User requests flow through prompts to agents, which apply instructions and invoke skills for specialized execution.
-    USER[User Request] --> PROMPT[Prompt]
-    PROMPT --> AGENT[Agent]
-    AGENT --> INSTR[Instructions]
-    AGENT --> SKILLS[Skills]
+    accDescr: A user selects an agent or types a slash command for a skill. Agents preload or activate skills, dispatch subagents through the task tool, and receive instructions for the files they read or edit. Subagents get their rules from preloaded skills and the dispatch prompt.
+    USER[User Request] -->|agent picker| AGENT[Agent]
+    USER -->|slash command| SKILLS[Skills]
+    AGENT -->|preload or activate| SKILLS
+    AGENT -->|task tool| SUB[Subagents]
+    SUB -->|preload| SKILLS
+    AGENT -->|matching files| INSTR[Instructions]
 ```
 
 ### Flow Mechanics
 
-1. User invokes a prompt through `/prompt` commands or workflow triggers.
-2. Prompt references an agent via `agent:` frontmatter, delegating execution.
-3. Agent executes with instructions auto-applied based on file context.
-4. Agent invokes skills for specialized utilities with executable scripts.
+1. The user selects an agent in the agent picker or types a skill's slash command, such as `/rpi-research`.
+2. The agent starts with the bodies of the skills in its `skills:` list and activates other skills by name as its workflow reaches them.
+3. When the agent reads or edits a file that matches an instruction's `applyTo` glob, Copilot applies that instruction.
+4. The agent dispatches subagents through the `task` tool. Subagents receive no repository instructions, so each one gets its rules from its own body, a preloaded skill, or the dispatch prompt.
 
-This delegation model separates concerns. Prompts handle user interaction, agents manage orchestration, and instructions provide standards.
+This delegation model separates concerns. Skills hold reusable procedures, agents manage orchestration, and instructions provide standards. Copilot has no handoff buttons, so a user moves to the next phase of a workflow by invoking its skill, such as `/rpi-plan`, or by working with the RPI Agent, which coordinates the phases.
 
 ## Interface Contracts
 
 Each artifact type defines clear interfaces for interoperability.
 
-### Prompt-to-Agent References
+### Agent-to-Skill References
 
-Prompts reference agents through the `agent:` frontmatter field:
+Agents reach skills by name. A skill listed under `skills:` loads when the agent starts, and the agent activates any other skill by name, which requires `skill` in its `tools` list:
 
 ```yaml
 ---
-description: 'Create a pull request with work item linking'
-agent: 'pr-creator'
+name: Code Review
+description: 'Human-gated code review orchestrator'
+tools:
+  - agent
+  - execute
+  - search
+  - read
+  - edit
+  - skill
+  - ask_user
+skills:
+  - disclaimer-language
 ---
 ```
 
-The referenced agent file (`pr-creator.agent.md`) is typically organized under `.github/agents/{package-id}/` by convention. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
+Copilot injects each preloaded skill's `SKILL.md` body at session start. Files that the skill links load only when the agent reads them. A skill's name matches its folder name, and Copilot finds the folder at any depth under `.github/skills`.
+
+### Subagent Dispatch
+
+A parent names each subagent in its body by the subagent's `name` value, such as Code Review Functional. The `task` tool dispatches by that name, so nesting depth under `.github/agents` does not matter. A parent with a `tools` list needs `agent` in it. A subagent sets `user-invocable: false` to stay out of the agent picker and leaves `agent` out of its own `tools` list when it must not dispatch further. Subagents never receive `ask_user`.
 
 ### Instruction Glob Patterns
 
@@ -198,9 +234,11 @@ Instructions use `applyTo:` patterns for automatic activation:
 
 Multiple instructions can apply to the same file. When patterns overlap, all matching instructions contribute guidance. Pattern specificity determines precedence for conflicting directives.
 
+An agent that depends on a path-specific instruction before it touches a matching file reads that instruction file by name. HVE Core's ADR Creator, for example, reads `adr-standards.instructions.md` when it enters a phase that needs those rules.
+
 ### Skill Entry Points
 
-Skills provide self-contained utilities through the `SKILL.md` file:
+Skills provide self-contained capabilities through the `SKILL.md` file:
 
 ```text
 .github/skills/{package-id}/<skill-name>/
@@ -213,20 +251,20 @@ Skills provide self-contained utilities through the `SKILL.md` file:
 
 The `{package-id}` path segment reflects the conventional organization; artifacts can reside in any subfolder.
 
-Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
+Copilot loads a skill when the user types its slash command, when its description matches the current task, when an agent preloads it, or when an agent activates it by name. A skill takes its input from the user's message. Its `argument-hint` shows the expected arguments, and its body names each input and its default.
+In VS Code, skills installed with the HVE Core plugin carry the plugin name as a prefix, such as `/hve-core:rpi-research`, while skills copied into a project's own `.github/skills` folder appear as `/rpi-research`. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
 ## Plugin Identity
 
 Root `plugin.json` is the sole component-membership authority for the `hve-core` plugin and VSIX. `.github/plugin/marketplace.json` contains one relative locator to the repository root and does not repeat membership. The plugin details surface resolves root `README.md` and `LICENSE`; the VSIX keeps `extension/README.md` and `extension/LICENSE` as its separate metadata surface.
 
-The one product identity includes every distributable agent, prompt, instruction, and skill. Stable and PreRelease use the same manifest membership.
+The one product identity includes every distributable agent, instruction, and skill. Stable and PreRelease use the same manifest membership.
 
 ### Deterministic Membership
 
 `npm run plugin:sync` derives manifest membership from tracked canonical paths:
 
 * `agents/<package>/**/*.agent.md`
-* `prompts/<package>/**/*.prompt.md`
 * `instructions/<package>/**/*.instructions.md`
 * `skills/<package>/<skill>/SKILL.md`, unless its top-level license has a noncommercial qualifier
 
@@ -236,22 +274,23 @@ Repository-root artifacts without a package segment are excluded. Paths are uniq
 
 ### Direct Outputs
 
-The Copilot CLI installs directly from the `.github` plugin root. Extension preparation consumes the same manifest and produces one `hve-core` VSIX. The architecture has no package dependencies, package matrix, copied plugin tree, or plugin ZIP.
+Copilot CLI and VS Code install the plugin directly from the repository root, where `plugin.json` lives. Extension preparation consumes the same manifest and produces one `hve-core` VSIX. The architecture has no package dependencies, package matrix, copied plugin tree, or plugin ZIP.
 
 ## Extension Integration
 
-The VS Code extension discovers and activates AI artifacts through contribution points.
+The VS Code extension contributes HVE Core's agents, instructions, and skills to VS Code through contribution points.
 
 ### Discovery Mechanism
 
-The extension scans these directories at startup:
+Copilot discovers these folders in a workspace at any depth, with no settings required:
 
-* `.github/prompts/{package-id}/` for workflow entry points
 * `.github/agents/{package-id}/` for specialized behaviors
 * `.github/instructions/{package-id}/` for technology standards
-* `.github/skills/{package-id}/` for utility packages
+* `.github/skills/{package-id}/` for skills and slash commands
 
-These paths reflect the conventional directory structure. Artifact inclusion is controlled by root `plugin.json`, whose declarations are repository-relative `.github/...` paths. Artifacts directly under `.github/{type}/` with no package subdirectory are repo-specific, excluded from discovery, and never packaged into extension builds.
+These paths reflect the conventional directory structure. Plugin and extension membership is controlled by root `plugin.json`, whose declarations are repository-relative `.github/...` paths. Artifacts directly under `.github/{type}/` with no package subdirectory are repo-specific, excluded from plugin membership, and never packaged into extension builds.
+
+Extension preparation writes the manifest's agents, instructions, and skills into the extension's contribution points. VS Code forwards the extension's agents and skills to Copilot sessions, but the extension's instructions may not reach those sessions, so install the plugin when you need HVE Core's instructions.
 
 Stable and PreRelease differ in source ownership, cadence, and version, not component membership.
 
@@ -263,17 +302,17 @@ The VS Code extension is prepared with `Prepare-Extension.ps1` and packaged with
 
 The plugin ships no hooks. Telemetry is opt-in through the `copilot-otel-metrics` skill, which the user installs and configures deliberately.
 
-For a repository-owned selection, the installer validates chosen component paths against root `plugin.json`. It converts repository-relative manifest declarations to installer form, then copies agents, prompts, instructions, and complete distributable skill directories while preserving canonical `.github` target paths; hooks are not copied.
+For a repository-owned selection, the installer validates chosen component paths against root `plugin.json`. It converts repository-relative manifest declarations to installer form, then copies agents, instructions, and complete distributable skill directories while preserving canonical `.github` target paths; hooks are not copied.
 
 ### Activation Context
 
-Instructions activate based on the current file's path matching `applyTo:` patterns. Prompts and agents activate through explicit user invocation. Skills activate when agents or users request their utilities.
+The three artifact types activate differently:
 
-The extension provides these contribution points:
+* Instructions with `applyTo` apply after the session reads or edits a matching file. Instructions without `applyTo` are inlined in every session.
+* Agents activate when a user selects them in the agent picker, or when a parent dispatches them as subagents through the `task` tool.
+* Skills load when a user types their slash command, when their description matches the task, when an agent preloads them with `skills:`, or when an agent activates them by name.
 
-* `/prompt <name>` invokes prompts by filename.
-* Agents activate through prompt references or direct invocation.
-* Matching instructions inject into Copilot context automatically.
+VS Code keeps its list of path-specific instructions for the life of the window. After you install, update, or edit instruction files, run **Developer: Reload Window** so that new chat sessions pick up the change.
 
 ## Deprecated Artifacts
 
@@ -285,7 +324,6 @@ Artifacts that have been superseded or are scheduled for removal live under `.gi
 .github/deprecated/
 ├── agents/         # Superseded agent files
 ├── instructions/   # Retired instruction files
-├── prompts/        # Retired prompt files
 └── skills/         # Retired skill packages
 ```
 
@@ -321,7 +359,7 @@ Remove a retired artifact from its active package-scoped path and run `npm run p
 
 * [Agent Systems Catalog](../agents/) - Overview of all agent systems with workflow documentation
 * [AI Artifacts Common Standards](../contributing/ai-artifacts-common.md) - Quality requirements for all artifacts
-* [Contributing Prompts](../contributing/prompts.md) - Prompt file specifications
+* [Reusable Slash Commands](../customization/prompts.md) - Building a slash command as a skill
 * [Contributing Agents](../contributing/custom-agents.md) - Agent file specifications
 * [Contributing Instructions](../contributing/instructions.md) - Instruction file specifications
 * [Contributing Skills](../contributing/skills.md) - Skill package specifications
