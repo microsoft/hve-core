@@ -17,7 +17,7 @@ method="$1"
 base_path="$2"
 
 valid=true
-for path in "$base_path/.github/agents" "$base_path/.github/prompts" "$base_path/.github/instructions" "$base_path/.github/skills"; do
+for path in "$base_path/.github/agents" "$base_path/.github/instructions" "$base_path/.github/skills"; do
     if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi
 done
 

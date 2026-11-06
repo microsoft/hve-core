@@ -1,6 +1,7 @@
 ---
 description: "Evidence-based reviewer for repository supply-chain security posture with audit, diff, and plan review modes"
 name: SSSC Reviewer
+argument-hint: "[mode={audit|diff|plan}] [scope=path/to/dir] [report=path/to/scan-report.json] [product=pkg:npm/@org/name]"
 agents:
   - Codebase Profiler
   - Supply Chain Skill Assessor
@@ -165,7 +166,14 @@ For VEX review tasks:
 4. When the request includes a CVE or exploitability analysis, consult the `cve-analyzer` subagent for per-CVE exploitability evidence and use that analysis as one input to the review.
 5. Preserve the existing human-review and disclaimer posture; never present this reviewer as the author of record for the VEX document or the attestation artifact.
 
-This capability is intended for VEX triage and review prompts and for the vex-draft workflow import path.
+VEX pipeline requests take one of two shapes:
+
+* Full scan: scan dependencies, enrich CVEs, analyze exploitability, and draft an OpenVEX document for human review. An optional scope limits the dependency scan to the named directories or paths, and an optional PURL product identifier (for example, `pkg:npm/@microsoft/hve-core`) names the product in the generated statements; infer the product from the manifest when it is not supplied.
+* Triage from an existing report: skip the scan phase and begin at enrichment using the supplied Trivy JSON, OSV-Scanner JSON, or SPDX-JSON report or SBOM, applying the SBOM input precedence in `vex-generation.instructions.md`. Infer the report from attached files or the conversation when it is not passed explicitly, and apply the optional PURL product identifier the same way.
+
+Every drafted `not_affected` determination requires qualified human review before the OpenVEX document is merged or published; the merge commit author is the accountable author of record.
+
+This capability serves VEX scan, triage, and review requests and the vex-draft workflow import path.
 
 ## SSSC Review Artifact Safeguards
 

@@ -13,7 +13,7 @@ tags:
   - rai-planning
   - how-to
 author: Microsoft
-ms.date: 2026-09-10
+ms.date: 2026-10-02
 ms.topic: how-to
 estimated_reading_time: 5
 ---
@@ -31,7 +31,7 @@ Use capture mode when starting a Responsible AI assessment from scratch with no 
 5. Answer questions conversationally; use "skip" or "n/a" for items that do not apply
 6. The agent summarizes findings and asks for confirmation before advancing to Phase 2
 
-Prompt file: `.github/prompts/rai-planning/rai-capture.prompt.md`
+To start capture mode, select the **RAI Planner** agent and describe the AI system you want to assess.
 
 ### When to Choose Capture Mode
 
@@ -48,12 +48,12 @@ Use from-prd mode when product requirements documents or business requirements d
 
 ### How It Works
 
-1. The agent resolves the PRD pointer and output preferences
+1. The agent resolves the PRD pointer and output preferences; when you do not name a PRD, it lists candidates from `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` for you to confirm
 2. The agent creates `.copilot-tracking/rai-plans/{project-slug}/` and initializes `state.json` with `entryMode: "from-prd"` and `currentPhase: 1`, then enters the Phase 1 preflight
 3. During project-material discovery in the preflight, the agent reads the PRD and extracts AI system scope, technology stack, model types, deployment model, and stakeholders
 4. Phase 1 begins with pre-populated fields; the agent asks clarifying questions targeting gaps in the extracted information
 
-Prompt file: `.github/prompts/rai-planning/rai-plan-from-prd.prompt.md`
+To start from-prd mode, select the **RAI Planner** agent and ask it to start from your product or business requirements, optionally naming the PRD. When no requirements artifact is found, the agent offers to switch to capture mode.
 
 ### When to Choose From-PRD Mode
 
@@ -69,13 +69,13 @@ Use from-security-plan mode after completing a security plan with the Security P
 
 ### How It Works
 
-1. The agent validates the security-plan pointer and resolves output preferences
+1. The agent validates the security-plan pointer and resolves output preferences; when you do not name a plan, it lists the Security Planner projects it finds under `.copilot-tracking/security-plans/` and asks you to choose
 2. The agent creates `.copilot-tracking/rai-plans/{project-slug}/` and initializes `state.json` with `entryMode: "from-security-plan"` and `currentPhase: 1`, then enters the Phase 1 preflight
 3. During project-material discovery in the preflight, the agent reads the security plan `state.json` and extracts AI components from its `aiComponents` array
 4. Threat IDs start at the next sequence after the security plan's threat count, maintaining continuity across both assessments
 5. Phase 1 begins with pre-populated AI element inventory; the agent asks targeted questions about RAI-specific aspects not covered in the security plan
 
-Prompt file: `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md`
+To start from-security-plan mode, select the **RAI Planner** agent and ask it to start from your completed security plan, or choose the **RAI Planner** handoff at the end of a Security Planner session. When no security plan exists, the agent offers to switch to capture mode.
 
 ### When to Choose From-Security-Plan Mode
 

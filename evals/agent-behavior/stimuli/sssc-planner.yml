@@ -43,3 +43,35 @@ stimuli:
         name: sssc-planner-disclaimer-startup-disclaimer-state
         config:
           pattern: '(?i)disclaimerShownAt|ISO\s*8601'
+  - name: sssc-planner-from-security-plan-selection
+    prompt: |
+      Extend our completed security plans with supply chain coverage. Two Security Planner projects exist, at `.copilot-tracking/security-plans/payments-api/state.json` and `.copilot-tracking/security-plans/ledger-service/state.json`. Follow the startup contract, then explain which entry mode you are using and how you will choose the source security plan before scoping. Reply in chat only.
+    environment:
+      files:
+        - src: ../../.github/agents/security/sssc-planner.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/instructions/security/sssc-planner.instructions.md
+          dest: .github/instructions/security/sssc-planner.instructions.md
+        - src: fixtures/security-planner-disclaimer-shown-state.json
+          dest: .copilot-tracking/security-plans/payments-api/state.json
+        - src: fixtures/security-planner-disclaimer-shown-state.json
+          dest: .copilot-tracking/security-plans/ledger-service/state.json
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: from-security-plan-selection
+    graders:
+      - type: output-matches
+        name: sssc-planner-from-security-plan-attribution
+        config:
+          pattern: '(?is)OpenSSF Scorecard[\s\S]{0,12}SLSA Build Levels[\s\S]{0,12}OpenSSF Best Practices Badge[\s\S]{0,12}Sigstore[\s\S]{0,12}SBOM'
+      - type: output-matches
+        name: sssc-planner-from-security-plan-entry-mode
+        config:
+          pattern: '(?i)from-security-plan'
+      - type: output-matches
+        name: sssc-planner-from-security-plan-selection-requested
+        config:
+          pattern: '(?is)(select|choose|which)[\s\S]{0,240}(payments-api|ledger-service)|(payments-api|ledger-service)[\s\S]{0,240}(select|choose|which)'

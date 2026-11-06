@@ -379,7 +379,7 @@ dialog { overflow-wrap: anywhere; }
         <aside class="notes">What I'd look for is a useful review conversation and a record of the reasoning. Which controls do we have evidence for? Which risks still need work? The planner uses rai-planner for phase guidance and rai-standards for the framework material. NIST AI RMF 1.0 is the default. It covers seven trustworthiness characteristics and uses seven AI threat categories, but we don't need to memorize either list to start. RAI Reviewer is a different agent for reviewing code, diffs and plans. Neither agent replaces qualified legal, compliance or Responsible AI reviewers.</aside>
       </section>
 
-      <section id="entry-modes" data-title="Start with what you already have" data-chapter="Use RAI Planner" data-sources="prompts,rai-identity,planner-agent,vscode-prompts,vscode-agents">
+      <section id="entry-modes" data-title="Start with what you already have" data-chapter="Use RAI Planner" data-sources="rai-identity,planner-agent,vscode-agents">
         <div class="eyebrow">GET STARTED</div>
         <h2>Start with what you already have</h2>
         <div class="banner"><p>Select <strong>RAI Planner</strong> in the Agent dropdown, then name your starting point.</p></div>
@@ -401,7 +401,7 @@ dialog { overflow-wrap: anywhere; }
           </article>
         </div>
         <p class="footnote">The security-plan mode reads that plan without changing it.</p>
-        <aside class="notes">I'd reuse the context we already have. Capture starts a conversation. From-prd reads the requirements and asks about the gaps. From-security-plan is recommended when a Security Planner session is complete: it imports the AI components and continues the threat numbering. All three reach the same Phase 2 workflow. The Local agent also supports /rai-capture, /rai-plan-from-prd and /rai-plan-from-security-plan. The cited VS Code documentation marks prompt files as deprecated for Agent Host sessions, so this talk uses the Agent dropdown. The planner shows its disclaimer and framework attribution before the first question.</aside>
+        <aside class="notes">I'd reuse the context we already have. Capture starts a conversation. From-prd reads the requirements and asks about the gaps. From-security-plan is recommended when a Security Planner session is complete: it imports the AI components and continues the threat numbering. All three reach the same Phase 2 workflow. Pick RAI Planner from the Agent dropdown and describe where you're starting; the planner chooses the entry mode from that request and any artifacts you point it at. The planner shows its disclaimer and framework attribution before the first question.</aside>
       </section>
 
       <section id="phases" data-title="Six phases, with three approval points" data-chapter="Use RAI Planner" data-sources="planner-agent,rai-identity,risk-reference,nist">
@@ -648,11 +648,6 @@ globalThis.DeckConfig = {"title":"RAI Planner with HVE Core","description":"Use 
       url: `${blob}.github/agents/rai-planning/rai-reviewer.agent.md`,
       note: 'Evidence review of a codebase, diff or plan, separate from the Planner conversation.'
     },
-    prompts: {
-      title: 'RAI prompt files',
-      url: `${tree}.github/prompts/rai-planning`,
-      note: 'rai-capture, rai-plan-from-prd and rai-plan-from-security-plan select RAI Planner.'
-    },
     disclaimer: {
       title: 'Disclaimer language instructions',
       url: `${blob}.github/instructions/shared/disclaimer-language.instructions.md`,
@@ -702,11 +697,6 @@ globalThis.DeckConfig = {"title":"RAI Planner with HVE Core","description":"Use 
       title: 'NIST AI 100-1: AI Risk Management Framework 1.0',
       url: 'https://doi.org/10.6028/NIST.AI.100-1',
       note: 'January 2023. U.S. Government work and the planner\'s default framework.'
-    },
-    'vscode-prompts': {
-      title: 'VS Code: Use prompt files',
-      url: `${vscode}agent-customization/prompt-files`,
-      note: `Prompt files are deprecated for Agent Host sessions and still work with the Local agent. ${read}`
     },
     'vscode-skills': {
       title: 'VS Code: Use Agent Skills',

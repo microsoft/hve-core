@@ -1,6 +1,6 @@
 ---
 description: "Protects sensitive engagement sources, working files, reports, transcripts, and configuration."
-applyTo: "**/.github/agents/engagement-reporting/**, **/.github/prompts/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml"
+applyTo: "**/.github/agents/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml"
 ---
 
 # Engagement Reporting Data Handling

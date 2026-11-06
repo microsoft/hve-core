@@ -1,9 +1,9 @@
 ---
 title: hve-demo-material
 description: "Create levelled demo decks and narrated MP4s for any repository topic, with HVE Core as the default in the hve-core repository. Use when training or demo material is needed for L100 through L400 audiences."
-sidebar_position: 5
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

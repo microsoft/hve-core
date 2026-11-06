@@ -95,3 +95,9 @@ The planner finalizes the plan without running `rpi-plan-critique` and records t
 ### Resume an interrupted critique
 
 Critique Disposition records the critique status. If a session ends while the status is `started` and no critique result was saved, resume the task through `rpi-plan` and the critique runs again. A saved result is reused as is. A critique that returned no result never counts as a pass: the planner reruns it once the cause is resolved, or continues without it when you say so.
+
+The planner records the kind of interruption, such as a session timeout or a missing dependency. If the same kind of interruption happens again to the same critique, it reruns the critique only after something changes, such as a narrower scope or a repaired dependency. Otherwise it stops and names the evidence needed to continue. A follow-up critique writes to the next numbered output, so it starts with its own once-per-kind rerun allowance.
+
+### Stop when corrections make no progress
+
+Before another revision or follow-up critique, the planner compares earlier plan versions, corrections, and unresolved findings. If a correction is reverted, findings oscillate, or the same required findings return without material progress, planning stops as Revise with the exact clearing action. A new session or task does not reset this check.

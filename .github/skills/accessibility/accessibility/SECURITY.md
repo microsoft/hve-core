@@ -2,7 +2,7 @@
 title: Accessibility Skill Security Model
 description: STRIDE threat model for the accessibility skill scanners, runtime browser harness, generated evidence, and design-intent verification boundary
 author: microsoft/hve-core
-ms.date: 2026-09-21
+ms.date: 2026-10-06
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -195,7 +195,7 @@ flowchart TD
 
 ### Elevation of Privilege
 
-* Network shares, non-local file authorities, leading-dash targets, and shell interpretation are rejected. Network-shaped paths are rejected at the filesystem boundary on the resolved path, so a `file:` URI cannot decode into a UNC path and elicit an outbound request before the scan starts. Reads still occur with the invoking user's filesystem permissions.
+* Network shares, non-local file authorities, leading-dash targets, and shell interpretation are rejected. Network-shaped targets are rejected before any filesystem probe: the raw target is checked with separators normalized, so mixed forms such as `/\server\share` and Windows NT-namespace paths such as `\??\UNC\server\share` are caught, and the parsed, home-expanded path is checked as well. Network-shaped paths are also rejected at the filesystem boundary on the resolved path, so a `file:` URI cannot decode into a UNC path and elicit an outbound request before the scan starts. Reads still occur with the invoking user's filesystem permissions.
 
 ### Risk Rating
 

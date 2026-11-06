@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -42,8 +42,8 @@ my-project/
 ├── .hve-core/               # Git-ignored, contains HVE Core
 │   └── .github/
 │       ├── agents/
-│       ├── prompts/
-│       └── instructions/
+│       ├── instructions/
+│       └── skills/
 ├── .gitignore               # Includes .hve-core/
 ├── .vscode/
 │   └── settings.json        # Points to .hve-core paths
@@ -104,13 +104,6 @@ Create or update `.vscode/settings.json`:
     ".hve-core/.github/agents/hve-core": true,
     ".hve-core/.github/agents/hve-core/subagents": true,
     ".hve-core/.github/agents/security": true
-  },
-  "chat.promptFilesLocations": {
-    ".hve-core/.github/prompts/ado": true,
-    ".hve-core/.github/prompts/design-thinking": true,
-    ".hve-core/.github/prompts/github": true,
-    ".hve-core/.github/prompts/hve-core": true,
-    ".hve-core/.github/prompts/security": true
   },
   "chat.instructionsFilesLocations": {
     ".hve-core/.github/instructions/ado": true,
@@ -176,13 +169,6 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
           ".hve-core/.github/agents/hve-core": true,
           ".hve-core/.github/agents/hve-core/subagents": true,
           ".hve-core/.github/agents/security": true
-        },
-        "chat.promptFilesLocations": {
-          ".hve-core/.github/prompts/ado": true,
-          ".hve-core/.github/prompts/design-thinking": true,
-          ".hve-core/.github/prompts/github": true,
-          ".hve-core/.github/prompts/hve-core": true,
-          ".hve-core/.github/prompts/security": true
         },
         "chat.instructionsFilesLocations": {
           ".hve-core/.github/instructions/ado": true,

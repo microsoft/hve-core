@@ -13,7 +13,7 @@ body:
     attributes:
       label: Custom Agent Name
       description: What should this be called?
-      placeholder: e.g., "/security-review"
+      placeholder: e.g., "Security Reviewer"
     validations:
       required: true
   

@@ -25,6 +25,9 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USAGE = 2
 NPM_REGISTRY = "https://registry.npmjs.org/"
+# Separator-normalized prefixes that reach the network: UNC and protocol-relative
+# ("//"), and the Windows NT object namespace ("/??/"), which includes \??\UNC\.
+NETWORK_PATH_PREFIXES = ("//", "/??/")
 SCANNER_NPM_ROOT = Path(__file__).resolve().parent / "scanner_npm"
 
 
@@ -131,7 +134,7 @@ def normalize_results(raw_results: dict[str, Any], target: str) -> dict[str, Any
 
 def _is_network_path(path: Path) -> bool:
     """Return True for UNC or protocol-relative paths that would reach the network."""
-    return str(path).replace("\\", "/").startswith("//")
+    return str(path).replace("\\", "/").startswith(NETWORK_PATH_PREFIXES)
 
 
 def _canonical_local_file(path: Path) -> str:
@@ -159,13 +162,18 @@ def resolve_scan_target(
         raise ScriptError("Scan target must not be empty", EXIT_USAGE)
     if target.startswith("-"):
         raise ScriptError("Scan target must not begin with '-'", EXIT_USAGE)
-    if target.startswith(("\\\\", "//")):
+    local_path = Path(target).expanduser()
+    # Checked before any filesystem probe. Windows treats mixed separators such as
+    # "/\" as a UNC prefix, passes "\??\" paths to the NT namespace unchanged, and
+    # a home directory can expand onto a network share.
+    if target.replace("\\", "/").startswith(NETWORK_PATH_PREFIXES) or (
+        _is_network_path(local_path)
+    ):
         raise ScriptError(
             "Network-share and protocol-relative scan targets are not supported",
             EXIT_USAGE,
         )
 
-    local_path = Path(target).expanduser()
     if local_path.exists() or (
         len(target) >= 3 and target[0].isalpha() and target[1:3] in {":\\", ":/"}
     ):

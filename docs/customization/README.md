@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: overview
 sidebar_position: 1
 sidebar_label: Overview
@@ -21,19 +21,19 @@ estimated_reading_time: 5
 
 Your installation method determines which customization options are available.
 
-| Customization Level       | Extension Only  | Installer Skill (Clone) | Direct Clone |
-|---------------------------|:---------------:|:-----------------------:|:------------:|
-| VS Code Settings          |       Yes       |           Yes           |     Yes      |
-| copilot-instructions.md   |       Yes       |           Yes           |     Yes      |
-| .instructions.md files    | Yes (your repo) |           Yes           |     Yes      |
-| Multi-kind selection      |       No        |           Yes           |     Yes      |
-| Modify agents             |       No        |           No            |     Yes      |
-| Modify prompts and skills |       No        |           No            |     Yes      |
-| Build system changes      |       No        |           No            |     Yes      |
-| Fork and extend           |       No        |           No            |     Yes      |
+| Customization Level     | Extension Only  | Installer Skill (Clone) | Direct Clone |
+|-------------------------|:---------------:|:-----------------------:|:------------:|
+| VS Code Settings        |       Yes       |           Yes           |     Yes      |
+| copilot-instructions.md |       Yes       |           Yes           |     Yes      |
+| .instructions.md files  | Yes (your repo) |           Yes           |     Yes      |
+| Multi-kind selection    |       No        |           Yes           |     Yes      |
+| Modify agents           |       No        |           No            |     Yes      |
+| Modify skills           |       No        |           No            |     Yes      |
+| Build system changes    |       No        |           No            |     Yes      |
+| Fork and extend         |       No        |           No            |     Yes      |
 
 The [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) installs the complete active component set.
-For MCP guidance, installation-method selection, or selective cloning, ask an agent to use the included `hve-core-installer` skill. Its complete and custom flows select agents, prompts, instructions, and distributable skill directories while preserving repository-relative paths. Hooks are not copied.
+For MCP guidance, installation-method selection, or selective cloning, ask an agent to use the included `hve-core-installer` skill. Its complete and custom flows select agents, instructions, and distributable skill directories while preserving repository-relative paths. Hooks are not copied.
 For full artifact modification, use a [clone-based installation method](../getting-started/methods/).
 
 ## Customization Spectrum

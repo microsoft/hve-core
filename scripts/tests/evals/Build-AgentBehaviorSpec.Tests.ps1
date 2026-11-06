@@ -647,9 +647,9 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
     $stimulus.tags.advisory | Should -Be 'true'
   }
 
-  It 'Stages both license postures for the standards-handling prompt contract' {
-    $suite = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot '../behavior-conformance/prompts.eval.yaml'))
-    $stimulus = $suite.stimuli | Where-Object { $_.name -eq 'prompt-accessibility-coverage-matrix-standards-paraphrase' }
+  It 'Stages both license postures for the standards-handling skill contract' {
+    $suite = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot '../behavior-conformance/skill-behavior.eval.yaml'))
+    $stimulus = $suite.stimuli | Where-Object { $_.name -eq 'skill-accessibility-coverage-matrix-standards-paraphrase' }
     $files = @($stimulus.agent_environment.files)
     $files | Should -HaveCount 3
     $files.dest | Should -Contain '.github/instructions/hve-core/licensing-posture.instructions.md'
@@ -1522,7 +1522,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
 '@
     function Invoke-ObservationGrader {
       param([string]$Partial, [string]$Name, [string]$Reply, [string]$Workspace)
-      $specPath = if ($Partial -eq 'prompts') { '../behavior-conformance/prompts.eval.yaml' } else { "stimuli/$Partial.yml" }
+      $specPath = if ($Partial -eq 'skills') { '../behavior-conformance/skill-behavior.eval.yaml' } else { "stimuli/$Partial.yml" }
       $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot $specPath))
       $grader = $specification.stimuli.graders | Where-Object { $_.name -eq $Name }
       $grader.type | Should -Be 'program'
@@ -1718,7 +1718,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'missing-attribution'; Reply = 'WCAG: paraphrase. EN 301 549: never reproduce normative text; use the ETSI portal.'; Expected = $false }
     @{ Variant = 'keyword-only'; Reply = 'Verbatim normative text summary.'; Expected = $false }
   ) {
-    $result = Invoke-ObservationGrader -Partial 'prompts' -Name 'prompt-accessibility-coverage-matrix-standards-para-dac2b27b' -Reply $Reply -Workspace $TestDrive
+    $result = Invoke-ObservationGrader -Partial 'skills' -Name 'skill-accessibility-coverage-matrix-standards-para-dac2b27b' -Reply $Reply -Workspace $TestDrive
     $result.passed | Should -Be $Expected
     $result.score | Should -Be ([int]$Expected)
   }

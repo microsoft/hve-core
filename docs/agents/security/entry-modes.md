@@ -1,6 +1,6 @@
 ---
 title: Entry Modes
-description: Detailed guide to the Security Planner's From-PRD and capture entry modes, including prompt usage and workflow differences
+description: Detailed guide to the Security Planner's From-PRD and capture entry modes, including how to start each mode and how the workflows differ
 sidebar_position: 4
 sidebar_label: Entry Modes
 keywords:
@@ -12,12 +12,12 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-02
 ms.topic: how-to
 estimated_reading_time: 5
 ---
 
-The Security Planner supports two entry modes that control how Phase 1 scoping begins. Each mode is activated through a dedicated prompt file that sets the initial state and determines how much context the agent gathers before starting the analysis.
+The Security Planner supports two entry modes that control how Phase 1 scoping begins. The agent selects the mode from your opening request and any artifacts you supply, which sets the initial state and determines how much context it gathers before starting the analysis.
 
 ## From-PRD Mode
 
@@ -26,18 +26,17 @@ From-PRD mode seeds Phase 1 from PRD or BRD artifacts already present in the wor
 ### How It Works
 
 1. The agent scans `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` for planning artifacts, with a secondary scan for files matching `prd-*.md`, `*-prd.md`, `brd-*.md`, `*-brd.md`, and `product-definition*.md`.
-2. Discovered candidates are presented for confirmation with ✅/❌ markers: ✅ for an artifact to use, ❌ for a false positive to discard.
+2. Discovered candidates are presented for confirmation with ✅/❌ markers: ✅ for an artifact to use, ❌ for a false positive to discard. When neither scan finds an artifact, the agent offers capture mode or asks you for a file path instead of proceeding without a confirmed source.
 3. The agent extracts project scope, technology stack, deployment targets, data classification levels, compliance requirements, and stakeholder roles. AI/ML component detection happens later in Phase 1.
 4. State is initialized with `entryMode: "from-prd"` and the extracted references stored in `referencesProcessed`.
 5. Phase 1 begins with a checklist of pre-filled items and 3-5 clarifying questions for gaps.
 
-### Prompt File
+### Starting From-PRD Mode
 
-Activate From-PRD mode with the **Security Plan from PRD** prompt (`security-plan-from-prd.prompt.md`). This prompt accepts an optional `project-slug` input parameter.
+Select the **Security Planner** agent and ask it to start from your product or business requirements, or attach the PRD or BRD you want to use. The agent derives the project slug from the confirmed artifacts and asks for one when they do not name the project.
 
 ```text
-Inputs:
-  project-slug (optional) - Kebab-case project identifier
+Start security planning from our PRD for the contoso-api project.
 ```
 
 ### When to Choose From-PRD Mode
@@ -60,13 +59,12 @@ Capture mode starts with a blank Phase 1 interview. Use this mode when no formal
 3. Phase 1 begins with a structured interview, asking 3-5 questions per turn.
 4. The agent accumulates scope information across multiple turns until the user confirms Phase 1 is complete.
 
-### Prompt File
+### Starting Capture Mode
 
-Activate capture mode with the **Security Capture** prompt (`security-capture.prompt.md`). This prompt also accepts an optional `project-slug` input parameter.
+Select the **Security Planner** agent and describe the project you want to assess. Paste any existing security notes or threat assessments into the first message so the agent can pre-populate Phase 1, and give the project a name when asked.
 
 ```text
-Inputs:
-  project-slug (optional) - Kebab-case project identifier
+Start a security plan for our payments service. Here are our current threat notes: ...
 ```
 
 If the user provides existing security notes or context in the initial message, the agent incorporates them into the interview rather than asking redundant questions.
@@ -94,7 +92,7 @@ Both modes converge at the same Phase 1 output. The difference is how much conte
 
 ## Switching Between Modes
 
-Entry mode is set once during Phase 1 initialization and cannot be changed mid-plan. To switch modes, start a new chat session with the other prompt file and a different project slug (or the same slug after removing the existing state directory).
+Entry mode is set once during Phase 1 initialization and cannot be changed mid-plan. To switch modes, start a new chat session with the Security Planner, request the other mode, and use a different project slug (or the same slug after removing the existing state directory).
 
 > [!NOTE]
 > Both modes produce identical Phase 2-6 workflows. The choice only affects how Phase 1 scope is gathered.

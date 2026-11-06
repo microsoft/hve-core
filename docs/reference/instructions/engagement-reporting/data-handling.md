@@ -3,7 +3,7 @@ title: Engagement Reporting/Data Handling
 description: "Protects sensitive engagement sources, working files, reports, transcripts, and configuration."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                                                                                                           |
-|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                                                                                                                     |
-| Source      | `.github/instructions/engagement-reporting/data-handling.instructions.md`                                                                                                       |
-| Invocation  | Applied automatically to `**/.github/agents/engagement-reporting/**, **/.github/prompts/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml` |
-| Interactive | No                                                                                                                                                                              |
+| Field       | Value                                                                                                                               |
+|-------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                         |
+| Source      | `.github/instructions/engagement-reporting/data-handling.instructions.md`                                                           |
+| Invocation  | Applied automatically to `**/.github/agents/engagement-reporting/**, **/.github/skills/engagement-reporting/**, **/engagement.yaml` |
+| Interactive | No                                                                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

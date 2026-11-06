@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - design thinking
@@ -179,15 +179,15 @@ The DT-to-RPI handoff is not one-way. When `rpi-research` encounters issues that
 > [!TIP]
 > Returning to DT from RPI is a sign of thoroughness, not failure. The integration is designed for non-linear iteration across both frameworks.
 
-## Shared Prompts
+## Space Exit Procedures
 
-Three prompts compile DT artifacts for the single RPI entry point at `rpi-research`:
+The `dt-rpi-integration` skill defines one exit procedure per space. DT Coach follows the matching procedure when you choose a lateral handoff, and each one compiles DT artifacts for the single RPI entry point at `rpi-research`:
 
-* `dt-handoff-problem-space.prompt.md`: Packages Problem Space artifacts (Methods 1-3) for `rpi-research`
-* `dt-handoff-solution-space.prompt.md`: Packages Solution Space artifacts (Methods 4-6) for `rpi-research`
-* `dt-handoff-implementation-space.prompt.md`: Packages Implementation Space artifacts (Methods 7-9) for `rpi-research`
+* Problem Space exit: packages Problem Space artifacts (Methods 1-3) for `rpi-research`
+* Solution Space exit: packages Solution Space artifacts (Methods 4-6) for `rpi-research`
+* Implementation Space exit: packages Implementation Space artifacts (Methods 7-9) for `rpi-research`
 
-Each prompt collects the relevant method outputs, confidence markers, and open questions into a structured handoff that `rpi-research` consumes directly. Later exit prompts produce richer artifacts that narrow the Research phase scope.
+Each procedure collects the relevant method outputs, confidence markers, and open questions into a structured handoff that `rpi-research` consumes directly. Later exits produce richer artifacts that narrow the Research phase scope. To start one, ask DT Coach to prepare the handoff for the space you just completed.
 
 ## Related Resources
 

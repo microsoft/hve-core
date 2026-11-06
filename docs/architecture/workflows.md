@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: overview
 keywords:
   - github actions
@@ -482,7 +482,6 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `ci:eval:moderate:artifacts`    | `Invoke-ArtifactModeration.ps1`                                                                            | CI-owned moderation lane                    |
 | `ci:eval:moderate:test`         | Runs `Invoke-ContentModeration.Tests.ps1`                                                                  | CI-owned test lane                          |
 | `ci:eval:dashboard`             | `New-EquivalenceDashboard.ps1`                                                                             | CI-owned noninteractive report lane         |
-| `ci:eval:behavior-prompts`      | `vally eval --eval-spec evals/behavior-conformance/prompts.eval.yaml`                                      | CI-owned model-backed lane                  |
 | `ci:eval:behavior-instructions` | `vally eval --eval-spec evals/behavior-conformance/instructions.eval.yaml`                                 | CI-owned model-backed lane                  |
 | `ci:eval:behavior-skills`       | `vally eval --eval-spec evals/behavior-conformance/skill-behavior.eval.yaml`                               | CI-owned model-backed lane                  |
 | `ci:eval:agent`                 | `Invoke-AgentMatrix.ps1` (agent behavior matrix)                                                           | CI-owned model-backed lane                  |

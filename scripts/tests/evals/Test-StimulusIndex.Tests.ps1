@@ -13,6 +13,30 @@ BeforeAll {
         throw "Pester suite requires 'powershell-yaml' module. Install via Install-Module powershell-yaml -Scope CurrentUser."
     }
     Import-Module powershell-yaml -ErrorAction Stop
+
+    # The repository ships no prompt files, so prompt-kind indexing runs against a synthetic eval root.
+    function New-SyntheticPromptEvalRoot {
+        param([Parameter(Mandatory)][string]$Path)
+
+        $specDir = Join-Path $Path 'behavior-conformance'
+        New-Item -ItemType Directory -Path $specDir -Force | Out-Null
+        $spec = @'
+name: synthetic-prompts
+stimuli:
+  - name: prompt-sample-a-conformance
+    prompt: Exercise the sample-a prompt.
+    tags:
+      prompt: sample-a
+      advisory: "true"
+  - name: prompt-sample-b-conformance
+    prompt: Exercise the sample-b prompt.
+    tags:
+      prompt: sample-b
+      advisory: "true"
+'@
+        Set-Content -LiteralPath (Join-Path $specDir 'prompts.eval.yaml') -Value $spec -Encoding utf8
+        return $Path
+    }
 }
 
 Describe 'Get-StimulusBacklink' -Tag 'Unit' {
@@ -90,14 +114,15 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $index.coverage.Keys.Count | Should -Be 0
     }
 
-    It 'Indexes prompt backlinks from the behavior-conformance suite' {
-        $index = New-StimulusIndex -EvalRoot $script:EvalsRoot
-        $index.specsScanned | Should -BeGreaterThan 0
+    It 'Indexes prompt backlinks from a prompt conformance spec' {
+        $evalRoot = New-SyntheticPromptEvalRoot -Path (Join-Path $TestDrive 'prompt-index')
+        $index = New-StimulusIndex -EvalRoot $evalRoot
+        $index.specsScanned | Should -Be 1
 
-        $promptKeys = $index.coverage.Keys | Where-Object { $_ -like 'prompt:*' }
-        $promptKeys.Count | Should -BeGreaterOrEqual 10
+        $promptKeys = @($index.coverage.Keys | Where-Object { $_ -like 'prompt:*' })
+        $promptKeys.Count | Should -Be 2
 
-        $key = 'prompt:rpi'
+        $key = 'prompt:sample-a'
         $index.coverage.ContainsKey($key) | Should -BeTrue
         $index.coverage[$key] -join ';' | Should -Match 'behavior-conformance/prompts\.eval\.yaml'
     }
@@ -174,7 +199,9 @@ Describe 'Test-StimulusCoverage' -Tag 'Unit' {
     }
 
     It 'Returns covering spec paths for a known prompt backlink' {
-        $paths = Test-StimulusCoverage -Index $script:Index -Kind 'prompt' -ArtifactId 'rpi'
+        $evalRoot = New-SyntheticPromptEvalRoot -Path (Join-Path $TestDrive 'prompt-coverage')
+        $promptIndex = New-StimulusIndex -EvalRoot $evalRoot
+        $paths = Test-StimulusCoverage -Index $promptIndex -Kind 'prompt' -ArtifactId 'sample-a'
         $paths.Count | Should -BeGreaterOrEqual 1
         ($paths -join ';') | Should -Match 'behavior-conformance/prompts\.eval\.yaml'
     }
@@ -194,7 +221,7 @@ Describe 'Test-StimulusCoverage' -Tag 'Unit' {
 Describe 'Advisory spec detection (Invoke-VallyEvals integration)' -Tag 'Unit' {
     BeforeAll {
         $script:DispatcherPath = Join-Path $script:RepoRoot 'scripts/evals/Invoke-VallyEvals.ps1'
-        $script:AdvisorySpec = Join-Path $script:RepoRoot 'evals/behavior-conformance/prompts.eval.yaml'
+        $script:AdvisorySpec = Join-Path $script:RepoRoot 'evals/behavior-conformance/skill-behavior.eval.yaml'
 
         # Load the dispatcher with parameter binding suppressed so its functions
         # become available without running the dispatch logic.
@@ -212,7 +239,7 @@ Describe 'Advisory spec detection (Invoke-VallyEvals integration)' -Tag 'Unit' {
         . $script:AdvisoryScriptBlock
     }
 
-    It 'Identifies the prompt-conformance spec as advisory' {
+    It 'Identifies the skill behavior conformance spec as advisory' {
         Test-SpecIsAdvisory -SpecPath $script:AdvisorySpec | Should -BeTrue
     }
 

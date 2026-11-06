@@ -3,7 +3,7 @@ title: Role Guides
 description: Find your role-specific guide for AI-assisted engineering with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-10-02
 ms.topic: concept
 keywords:
   - roles
@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-HVE Core provides role-specific capabilities through agents, prompts, instructions, and skills in the complete distribution identity. Each role guide covers recommended capabilities, stage walkthroughs, starter prompts, and collaboration patterns tailored to how you work.
+HVE Core provides role-specific capabilities through agents, instructions, and skills in the complete distribution identity. Each role guide covers recommended capabilities, stage walkthroughs, starter prompts, and collaboration patterns tailored to how you work.
 
 ## Role Overview
 
@@ -30,7 +30,7 @@ HVE Core provides role-specific capabilities through agents, prompts, instructio
 | New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](new-contributor.md)                   |
 | Utility                  | N/A              | 13                | All                                         | [Utility](utility.md)                                   |
 
-> **Dedicated Assets** count agents, prompts, instructions, and skills built specifically for a role's primary workflow. **Total Addressable** adds cross-cutting tools (Git prompts, auto-activated instructions, and shared skills). The **+** suffix indicates additional auto-activated assets not individually enumerated.
+> **Dedicated Assets** count agents, instructions, and skills built specifically for a role's primary workflow. **Total Addressable** adds cross-cutting tools (Git skills, auto-activated instructions, and shared skills). The **+** suffix indicates additional auto-activated assets not individually enumerated. Counts are approximate.
 
 ## Find Your Role
 

@@ -4,7 +4,7 @@ description: Design Thinking handoff knowledge for research-ready rpi-research i
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
-  last_updated: "2026-07-15"
+  last_updated: "2026-10-02"
 ---
 
 # Design Thinking → RPI Integration — Skill Entry
@@ -15,21 +15,23 @@ The DT coach loads these references when Design Thinking coaching graduates into
 
 ## Integration references
 
-| Reference                                                        | When to load                                                                                          |
-|------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| [Handoff contract](references/rpi-handoff-contract.md)           | Exit points, artifact schemas, RPI input contracts, and quality markers for lateral DT-to-RPI handoff |
-| [Research context](references/rpi-research-context.md)           | DT-aware `rpi-research` framing for handoffs from the DT coach                                        |
-| [Planning context](references/rpi-planning-context.md)           | DT-aware `rpi-plan` context for plans originating from DT artifacts                                   |
-| [Implement context](references/rpi-implement-context.md)         | DT-aware `rpi-implement` context applying fidelity and stakeholder constraints                        |
-| [Review context](references/rpi-review-context.md)               | DT-aware `rpi-review` criteria for evaluating Design Thinking artifacts                               |
-| [Subagent handoff](references/subagent-handoff.md)               | Readiness assessment, artifact compilation, and validation via subagent dispatch                      |
-| [Image prompt generation](references/image-prompt-generation.md) | Method 5 concept visualization with lo-fi prompt enforcement                                          |
+| Reference                                                        | When to load                                                                                                                         |
+|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| [Handoff contract](references/rpi-handoff-contract.md)           | Exit points, artifact schemas, RPI input contracts, and quality markers for lateral DT-to-RPI handoff                                |
+| [Space-exit handoffs](references/space-exit-handoffs.md)         | Step-by-step Problem, Solution, and Implementation Space exit procedures that compile the handoff summary and the RPI entry document |
+| [Research context](references/rpi-research-context.md)           | DT-aware `rpi-research` framing for handoffs from the DT coach                                                                       |
+| [Planning context](references/rpi-planning-context.md)           | DT-aware `rpi-plan` context for plans originating from DT artifacts                                                                  |
+| [Implement context](references/rpi-implement-context.md)         | DT-aware `rpi-implement` context applying fidelity and stakeholder constraints                                                       |
+| [Review context](references/rpi-review-context.md)               | DT-aware `rpi-review` criteria for evaluating Design Thinking artifacts                                                              |
+| [Subagent handoff](references/subagent-handoff.md)               | Readiness assessment, artifact compilation, and validation via subagent dispatch                                                     |
+| [Image prompt generation](references/image-prompt-generation.md) | Method 5 concept visualization with lo-fi prompt enforcement                                                                         |
 
 ## Skill layout
 
 * `SKILL.md` — this file (skill entrypoint).
 * `references/` — the DT-to-RPI integration reference documents.
   * `rpi-handoff-contract.md` — DT-to-RPI handoff contract: exit points, artifact schemas, RPI input contracts, and confidence markers.
+  * `space-exit-handoffs.md` provides the per-space exit procedures, handoff summaries, transition entries, and RPI entry documents.
   * `rpi-research-context.md` provides DT-aware `rpi-research` context.
   * `rpi-planning-context.md` provides DT-aware `rpi-plan` context.
   * `rpi-implement-context.md` provides DT-aware `rpi-implement` context.

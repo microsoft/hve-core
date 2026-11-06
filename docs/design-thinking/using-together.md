@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-02
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -83,10 +83,11 @@ The coach facilitates affinity clustering, theme extraction, and "How Might We" 
 
 ### Transition: Problem Space → Solution Space
 
-When Method 3 outputs are validated across sources and the team has alignment, the coach surfaces the space transition:
+When Method 3 outputs are validated across sources and the team has alignment, ask the coach to assess the space transition, or select the **🎯 Method Next** handoff:
 
 ```text
-/dt-method-next
+Our themes hold up across every source and the team agrees on them.
+Assess where we are and recommend the next method.
 ```
 
 The coach summarizes Problem Space findings, confirms readiness signals, and presents options: move forward to brainstorming, drop back for more research, or hand off to RPI for implementation of the problem statement. Choose to proceed into the Solution Space.
@@ -130,10 +131,11 @@ Low-fidelity prototyping reveals constraints invisible from a desk: touchscreen 
 
 ### Transition: Solution Space → Implementation Space
 
-When low-fidelity prototypes have been tested with real users and core assumptions are validated, the coach surfaces the next transition:
+When low-fidelity prototypes have been tested with real users and core assumptions are validated, ask the coach to assess the next transition:
 
 ```text
-/dt-method-next
+Floor testing validated our core assumptions for the voice-guided concept.
+Assess where we are and recommend the next method.
 ```
 
 The coach reviews prototype findings, confirms that concepts have been narrowed to one or two directions, and presents options: proceed to high-fidelity prototyping, return to brainstorming with new constraints, or hand off to RPI. Choose to continue into the Implementation Space.

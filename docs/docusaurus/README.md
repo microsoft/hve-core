@@ -2,7 +2,7 @@
 title: HVE Core Documentation Site
 description: Docusaurus 3 documentation site for HVE Core
 author: Microsoft
-ms.date: 2026-09-12
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - docusaurus
@@ -83,7 +83,7 @@ The site deploys automatically via GitHub Actions on push to `main`. See `.githu
 
 Accessibility is validated by three tools across four layers that run in `.github/workflows/docusaurus-tests.yml`:
 
-1. Static lint (`eslint-plugin-jsx-a11y`): flags accessibility issues in source, end-to-end, and configuration files.
+1. Static lint (`eslint-plugin-jsx-a11y-x`): flags accessibility issues in component source under `src/`.
 2. Component assertions (`jest-axe`): Jest checks rendered components against axe rules.
 3. Behavioral end-to-end (Playwright): drives a real browser to exercise keyboard navigation, focus management, and reflow.
 4. Full-site crawl (Playwright `@axe-core/playwright`): the `site-crawl` spec scans one representative URL per rendered page template against WCAG 2.x A/AA (plus `wcag22aa` and `best-practice`) at threshold 0.
@@ -122,7 +122,7 @@ npm run ci:docs:setup:e2e
 Run each layer from `docs/docusaurus`:
 
 ```bash
-npm run lint:a11y            # static jsx-a11y lint
+npm run lint:a11y            # static jsx-a11y-x lint
 npm run lint:label-registry # WCAG 3.2.4 consistent-label registry gate
 npm run typecheck           # TypeScript project typecheck
 npm test                    # Jest + jest-axe component assertions

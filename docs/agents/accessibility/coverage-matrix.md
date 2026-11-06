@@ -12,7 +12,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-10-02
 ms.topic: concept
 estimated_reading_time: 5
 ---
@@ -74,7 +74,7 @@ The workflow persists two runtime artifacts under `.copilot-tracking/accessibili
 
 | File type     | Location                                                                          |
 |---------------|-----------------------------------------------------------------------------------|
-| Prompt        | `.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md`           |
+| Skill         | `.github/skills/accessibility/accessibility-coverage-matrix/SKILL.md`             |
 | Subagent      | `.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md` |
 | Skill         | `.github/skills/accessibility/accessibility/SKILL.md`                             |
 | Reviewer page | [Accessibility Reviewer](accessibility-reviewer)                                  |

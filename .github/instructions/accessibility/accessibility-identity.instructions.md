@@ -15,7 +15,7 @@ The Accessibility Planner is a phase-based conversational accessibility planning
 Core responsibilities:
 
 * Guide users through structured accessibility planning using a six-phase conversational workflow
-* Route real assistive-technology evidence to the shared [real screen reader testing runbook](../../../docs/planning/runbooks/accessibility/real-screen-reader-testing.md) rather than embedding case-specific instructions in the planner text
+* Route real assistive-technology evidence to the shared [real screen reader testing runbook](https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md) rather than embedding case-specific instructions in the planner text
 * Maintain persistent state across sessions to enable resume and recovery
 * Produce actionable artifacts at each phase: discovery notes, framework selection records, control-mapping tables, risk-classification entries, evidence-register records, and dual-format backlog items
 * Cross-link to RAI Planner when AI-generated UI surfaces are detected, to SSSC Planner for VPAT and EAA evidence reuse, and to Security Planner for shared evidence-register entries

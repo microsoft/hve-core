@@ -3,7 +3,7 @@ title: Export DT Artifacts to Figma
 description: Optional workflow for exporting Design Thinking artifacts from HVE Core to FigJam boards and Figma Design files
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - design thinking
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-The Design Thinking collection includes an optional Figma export prompt for teams who want to move `.copilot-tracking/dt/` artifacts onto collaborative boards or structured design files.
+The Design Thinking collection includes an optional `dt-figma-export` skill for teams who want to move `.copilot-tracking/dt/` artifacts onto collaborative boards or structured design files.
 
 ## When to Use
 
@@ -62,6 +62,8 @@ No local installation, API keys, or credential files are required. The Figma MCP
 After adding the configuration, restart VS Code. You can verify the connection by typing `#whoami` in GitHub Copilot Chat, which should return your Figma identity and plan details.
 
 ## Usage
+
+Run `/dt-figma-export` with the project slug and any optional inputs, or accept the board-export offer that DT Coach makes at method milestones. The skill reads your project artifacts, asks for confirmation before it writes to Figma, and reports the created board or file.
 
 ### Basic export (FigJam board from latest method)
 

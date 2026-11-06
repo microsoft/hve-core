@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore couldn
 stimuli:
   - name: security-planner-class-recipe
     prompt: |
@@ -259,3 +260,32 @@ stimuli:
                 const summary = /(?:phase\s*6|review[^.!?\n]*handoff)/i.test(reply) && /(?:confirm|approval|hard gate|human review)/i.test(reply);
                 process.exit(unchanged && state.currentPhase === 6 && state.handoffGenerated?.ado === false && state.handoffGenerated?.github === false && summary ? 0 : 1);
               } catch { process.exit(1); }
+
+  - name: security-planner-from-prd-no-artifacts
+    prompt: |
+      Start security planning from our existing product requirements. No PRD or BRD path was supplied, and this workspace has no `.copilot-tracking/prd-sessions/` or `.copilot-tracking/brd-sessions/` directories. Follow the startup contract, then explain how you looked for requirements artifacts and what happens next. Reply in chat only.
+    environment:
+      files:
+        - src: ../../.github/agents/security/security-planner.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/instructions/security/identity.instructions.md
+          dest: .github/instructions/security/identity.instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: from-prd-no-artifacts
+    graders:
+      - type: output-matches
+        name: security-planner-from-prd-attribution
+        config:
+          pattern: '(?is)OWASP ASVS[\s\S]{0,12}OWASP Top 10[\s\S]{0,12}NIST SSDF'
+      - type: output-matches
+        name: security-planner-from-prd-discovery-paths
+        config:
+          pattern: '(?is)prd-sessions[\s\S]{0,400}brd-sessions|brd-sessions[\s\S]{0,400}prd-sessions'
+      - type: output-matches
+        name: security-planner-from-prd-no-artifact-fallback
+        config:
+          pattern: '(?is)(no|none|not found|zero|did not find|couldn\W?t find)[^.]{0,160}(PRD|BRD|artifact|requirement)[\s\S]{0,500}(capture|file path|path)'

@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-02
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -127,7 +127,6 @@ When conversation context was compacted by the chat system, the agent also reads
 | File type    | Location                                                 |
 |--------------|----------------------------------------------------------|
 | Agent        | `.github/agents/security/sssc-planner.agent.md`          |
-| Prompts      | `.github/prompts/security/sssc-*.prompt.md`              |
 | Instructions | `.github/instructions/security/`                         |
 | Skill        | `.github/skills/security/supply-chain-security/`         |
 | State        | `.copilot-tracking/sssc-plans/{project-slug}/state.json` |

@@ -37,7 +37,7 @@ Read [references/planning.md](references/planning.md) for section order, task bl
 11. Unless the user or parent session skips it, run one critique once the plan is implementation-ready. Follow [Independent critique](references/planning.md#independent-critique).
    * Resolve the critique setting first: `standard` by default, `deep` only when the user explicitly requests a deep critique, or `skip` when the user or parent session excludes the critique. Do not infer deep mode from complexity or risk, and do not skip without direction. Record the setting and provenance in Critique Disposition and parent state when present.
    * Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence in the plan whether or not the critique runs.
-   * Before activation, record the critique status as `started`. On resume, reuse a saved critique result; rerun a critique that is still `started` without one, without asking for recovery consent. Planning Readiness stays Not ready until the critique result exists and its blocking findings are resolved, or the critique is skipped.
+   * Before activation, record the critique status as `started`. On resume, reuse a saved critique result; rerun a critique that is still `started` without one, without asking for recovery consent. Record the interruption kind; a repeat of the same kind for the same critique output reruns only after a changed prerequisite, otherwise stop with the smallest clearing evidence. A follow-up critique with the next numbered output path starts a new allowance. Planning Readiness stays Not ready until the critique result exists and its blocking findings are resolved, or the critique is skipped.
    * Activate `rpi-plan-critique` with the depth, task context, requirements, evidence, plan and state paths, decisions, dependencies, one output path, and the latest earlier critique when one exists. The critique reads the plan and supplied evidence and writes only the critique artifact. Do not critique an initial draft merely because it exists.
    * In `standard`, require a complete actionable finding set for the supplied boundary while minimizing elapsed work. Prioritize implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risk. Omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions. Read all directly relevant supplied evidence needed to assess the material boundary.
    * In `deep`, assess the same supplied boundary with broader evidence tracing, alternative stress testing, and substantive lower-severity concerns. Deep mode does not permit open-ended research.
@@ -69,6 +69,7 @@ Read [references/planning.md](references/planning.md) for section order, task bl
 * Research is activated only for a demonstrated readiness gap.
 * The critique begins only after the plan is implementation-ready and runs unless the user or parent session skips it. Standard is the default; deep requires explicit direction. The critique setting, status, and every finding disposition are recorded in Critique Disposition.
 * A skipped critique is recorded as skipped, and a critique that returned no result is never treated as a Pass.
+* Plan self-checks are agent-owned. [Human review](references/planning.md#approval-and-human-review) applies only when a named source requires it for the affected action.
 
 ## Constraints
 
@@ -94,7 +95,7 @@ Read [references/planning.md](references/planning.md) for section order, task bl
 ## Stop rules
 
 * Stop as Blocked when the task, its requirements, or a decision-critical evidence gap cannot be resolved responsibly. For user-owned or user-retained decisions, preserve an unanswered required item after `vscode_askQuestions`; for agent-owned decisions, record the smallest evidence gap. Do not guess.
-* Stop as Revise when critique findings require plan changes that remain open.
+* Stop as Revise when critique findings require plan changes that remain open, or when a reverted correction, oscillating findings, or recurring required findings show no material progress under [Finding disposition](references/planning.md#finding-disposition).
 * Finalize when the plan is credible for implementation and either the critique was skipped by user or parent direction or its blocking findings are resolved and residual risks are explicitly disposed.
 
 ## Handoff

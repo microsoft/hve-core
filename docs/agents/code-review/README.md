@@ -19,14 +19,14 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-07
 ms.topic: concept
 estimated_reading_time: 10
 ---
 
 The code review system is a single human-gated agent for pull requests, branch diffs, and local changes. It resolves the review target, applies a recommended profile, bootstraps change context once, confirms scope with you, lets you adjust which findings perspectives run and how deeply, and merges their results into one report.
 
-Use the **PR Review** prompt when a pull request is open, or select the **Code Review** agent directly for branch and working-tree reviews. Both entry points use the same target-aware workflow and human-gated emission controls.
+Select the **Code Review** agent for an open pull request, a branch diff, or working-tree changes. It resolves the target itself and applies the same human-gated emission controls to every target.
 
 ## Why Pre-PR Code Review?
 
@@ -207,7 +207,7 @@ Depth controls how deeply each selected perspective verifies the confirmed scope
 
 ## Usage
 
-For an open pull request or merge request, invoke the **PR Review** prompt and optionally provide its number or URL. The prompt resolves the PR target and routes to Code Review with the target-independent `standard` profile. For branch diffs or local changes, select **Code Review** from the agent picker. Then confirm the target and scope, adjust the recommended perspectives, and choose a depth tier.
+Select **Code Review** from the agent picker. For an open pull request or merge request, optionally provide its number or URL; the agent resolves the target and applies the target-independent `standard` profile unless you choose another. Then confirm the target and scope, adjust the recommended perspectives, and choose a depth tier.
 
 ### Story Reference
 
@@ -215,7 +215,7 @@ Pass a work item reference (for example, `AB#456` or `AIAA-123`) when you start 
 
 ### Pull Request and Base Branch
 
-The PR Review prompt accepts an explicit PR or MR number or URL. Without one, the agent first looks for an open PR or MR mapped from the current branch. If none exists, it compares the current branch against the resolved default base. Supply a different base branch (for example, `baseBranch=origin/develop`) when your branch targets another base.
+The agent accepts an explicit PR or MR number or URL. Without one, it first looks for an open PR or MR mapped from the current branch. If none exists, it compares the current branch against the resolved default base. Supply a different base branch (for example, `baseBranch=origin/develop`) when your branch targets another base.
 
 Check out the PR or branch head before starting the review. The agent compares checked-out `HEAD` with the resolved target head SHA and stops on mismatch instead of reviewing another checkout under the requested target's metadata. Before native emission, it verifies again that the target is open and its base, head, and head SHA are unchanged.
 

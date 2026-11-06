@@ -35,8 +35,8 @@
     prompt, output-contains, output-matches. Defaults to output-matches.
 
 .EXAMPLE
-    ./New-Stimulus.ps1 -ArtifactPath .github/prompts/hve-core/rpi.prompt.md `
-        -Kind prompt -PromptText 'Invoke /rpi with task=X.'
+    ./New-Stimulus.ps1 -ArtifactPath .github/skills/hve-core/pull-request/SKILL.md `
+        -Kind skill -PromptText 'Use the pull-request skill to draft a PR description.'
 #>
 
 [CmdletBinding()]

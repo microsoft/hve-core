@@ -1,10 +1,10 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-03-v7",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-06-v8",
   "author": "Microsoft HVE Core Maintainers",
-  "timestamp": "2026-10-03T01:26:58.000Z",
-  "last_updated": "2026-10-03T01:26:58.000Z",
-  "version": 7,
+  "timestamp": "2026-10-06T04:21:27.000Z",
+  "last_updated": "2026-10-06T04:21:27.000Z",
+  "version": 8,
   "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
   "statements": [
     {
@@ -810,6 +810,236 @@
       "impact_statement": "http-cache-semantics 4.2.0 is installed only in the documentation toolchain, where its sole consumer is cacheable-request, which got 12.6.1 creates only when a request sets the cache option. The only got caller in the tree is package-json 8.1.1, reached through the Docusaurus update notifier, and it builds its request options from headers and agents alone, so got's default of no cache applies and the cache-policy code is never executed. Nothing in the repository or the published static site uses this package to cache HTTP responses for multiple users. No patched release exists, so the finding is tracked rather than upgraded away.",
       "status_notes": "OSV entry: https://osv.dev/GHSA-ch52-4w7c-c8xp. Dependency path: docs/docusaurus/package-lock.json resolves http-cache-semantics 4.2.0 through @docusaurus/core 3.10.2, update-notifier 6.0.2, latest-version 7.0.0, package-json 8.1.1, got 12.6.1, and cacheable-request 10.2.14; no other package depends on cacheable-request or http-cache-semantics. Execute-path evidence: got/dist/source/core/options.js defaults cache to undefined; got/dist/source/core/index.js selects _createCacheableRequest only when options.cache is set; package-json/index.js passes gotOptions containing only headers and agent. Every parent package is at its latest release. Upstream bump tracked in https://github.com/microsoft/hve-core/issues/3109; Scorecard alert #16 stays open until it is fixed.",
       "timestamp": "2026-10-03T01:26:58.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-r4xh-jqrq-34v2",
+        "@id": "https://osv.dev/GHSA-r4xh-jqrq-34v2"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/smol-toml@1.9.0",
+              "identifiers": {
+                "purl": "pkg:npm/smol-toml@1.9.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves smol-toml 1.9.0, the release where this issue was fixed. smol-toml is a development dependency of markdownlint-cli2, which parses repository-authored TOML configuration during local and CI linting. markdownlint-cli2 0.23.3 pins smol-toml 1.8.0 exactly, so the root package manifest overrides smol-toml to exactly 1.9.0, and the committed package-lock.json resolves that version for clean installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-r4xh-jqrq-34v2. Pin evidence: package.json overrides smol-toml to 1.9.0; package-lock.json resolves smol-toml 1.9.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-5gmw-xhrv-c9v3",
+        "@id": "https://osv.dev/GHSA-5gmw-xhrv-c9v3",
+        "aliases": [
+          "CVE-2026-104848"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/tinypool@2.2.0",
+              "identifiers": {
+                "purl": "pkg:npm/tinypool@2.2.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves tinypool 2.2.0, which is later than the 2.1.1 release where this issue was fixed. tinypool is a transitive dependency of @docusaurus/core 3.10.2, which uses it at build time to render pages on worker threads, a setting this site enables through future.v4; the published site is static output. @docusaurus/core requires tinypool ^1.0.2 and no 1.x release is patched, so the documentation site's package manifest overrides tinypool to exactly 2.2.0, and the committed package-lock.json resolves that version for clean installs. A clean build that rendered every page through tinypool 2.2.0 produced output identical to the pre-override build apart from content-hash names.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-5gmw-xhrv-c9v3. Pin evidence: docs/docusaurus/package.json overrides tinypool to 2.2.0; docs/docusaurus/package-lock.json resolves tinypool 2.2.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-85c8-ppgw-ccpr",
+        "@id": "https://osv.dev/GHSA-85c8-ppgw-ccpr",
+        "aliases": [
+          "CVE-2026-104849"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/tinypool@2.2.0",
+              "identifiers": {
+                "purl": "pkg:npm/tinypool@2.2.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves tinypool 2.2.0, which is later than the 2.1.2 release where this issue was fixed. tinypool is a transitive dependency of @docusaurus/core 3.10.2, which uses it at build time to render pages on worker threads, a setting this site enables through future.v4; the published site is static output. @docusaurus/core requires tinypool ^1.0.2 and no 1.x release is patched, so the documentation site's package manifest overrides tinypool to exactly 2.2.0, and the committed package-lock.json resolves that version for clean installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-85c8-ppgw-ccpr. Pin evidence: docs/docusaurus/package.json overrides tinypool to 2.2.0; docs/docusaurus/package-lock.json resolves tinypool 2.2.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-jqcg-44mw-7w3h",
+        "@id": "https://osv.dev/GHSA-jqcg-44mw-7w3h",
+        "aliases": [
+          "CVE-2026-90711"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/proxy-addr@2.0.8",
+              "identifiers": {
+                "purl": "pkg:npm/proxy-addr@2.0.8"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves proxy-addr 2.0.8, the release where this issue was fixed. proxy-addr is a transitive dependency of express through @docusaurus/core and runs only in the local documentation development and preview servers; the published site is static output. The documentation site's package manifest overrides proxy-addr to exactly 2.0.8, and the committed package-lock.json resolves that version for clean installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-jqcg-44mw-7w3h. Pin evidence: docs/docusaurus/package.json overrides proxy-addr to 2.0.8; docs/docusaurus/package-lock.json resolves proxy-addr 2.0.8. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-68fv-2mgg-jv7q",
+        "@id": "https://osv.dev/GHSA-68fv-2mgg-jv7q",
+        "aliases": [
+          "CVE-2026-93749"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/source-map-js@1.2.2",
+              "identifiers": {
+                "purl": "pkg:npm/source-map-js@1.2.2"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves source-map-js 1.2.2, the release where this issue was fixed. source-map-js is a build-time dependency of postcss and css-tree in the documentation site toolchain; the published site is static output. The documentation site's package manifest overrides source-map-js to exactly 1.2.2, and the committed package-lock.json resolves that version for clean installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-68fv-2mgg-jv7q. Pin evidence: docs/docusaurus/package.json overrides source-map-js to 1.2.2; docs/docusaurus/package-lock.json resolves source-map-js 1.2.2. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-rj75-hqrm-r3gf",
+        "@id": "https://osv.dev/GHSA-rj75-hqrm-r3gf",
+        "aliases": [
+          "CVE-2026-104844"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/postcss-selector-parser@7.1.6",
+              "identifiers": {
+                "purl": "pkg:npm/postcss-selector-parser@7.1.6"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves a single postcss-selector-parser 7.1.6, the release where this issue was fixed. postcss-selector-parser is a build-time dependency of the documentation site's CSS toolchain (cssnano and postcss-preset-env plugins); the published site is static output. No 6.x release is patched and the cssnano 6 plugins require ^6, so the documentation site's package manifest overrides every copy to exactly 7.1.6, and the committed package-lock.json resolves that version for clean installs. A clean build produced byte-identical CSS to the pre-override build.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-rj75-hqrm-r3gf. Pin evidence: docs/docusaurus/package.json overrides postcss-selector-parser to 7.1.6; docs/docusaurus/package-lock.json resolves postcss-selector-parser 7.1.6. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-wr44-6hxh-3jwq",
+        "@id": "https://osv.dev/GHSA-wr44-6hxh-3jwq",
+        "aliases": [
+          "CVE-2026-90771"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/joi@17.13.8",
+              "identifiers": {
+                "purl": "pkg:npm/joi@17.13.8"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves joi 17.13.8, the release where this issue was fixed on the 17.x line. joi validates the documentation site's own configuration at build time through @docusaurus/utils-validation; the published site is static output. The documentation site's package manifest overrides joi to exactly 17.13.8, and the committed package-lock.json resolves that version for clean installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-wr44-6hxh-3jwq. Pin evidence: docs/docusaurus/package.json overrides joi to 17.13.8; docs/docusaurus/package-lock.json resolves joi 17.13.8. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-hp3w-g68c-fv3c",
+        "@id": "https://osv.dev/GHSA-hp3w-g68c-fv3c",
+        "aliases": [
+          "CVE-2026-97058"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/sprintf-js",
+              "identifiers": {
+                "purl": "pkg:npm/sprintf-js"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "sprintf-js is no longer present in any committed dependency tree. It previously arrived only through argparse 1.x, a dependency of the js-yaml 3 command-line binary, which @istanbuljs/load-nyc-config pulls in for Jest coverage. load-nyc-config calls only js-yaml's load function, so the documentation site's package manifest overrides its js-yaml to 4.3.2, which provides the same load function without argparse 1.x. No patched sprintf-js release exists.",
+      "status_notes": "OSV entry: https://osv.dev/GHSA-hp3w-g68c-fv3c. Dependency tree evidence: docs/docusaurus/package-lock.json contains no sprintf-js or argparse 1.x entry, and @istanbuljs/load-nyc-config resolves the hoisted js-yaml 4.3.2; no other committed package-lock.json in the repository contains a sprintf-js entry. Override evidence: docs/docusaurus/package.json sets @istanbuljs/load-nyc-config js-yaml to 4.3.2. Remediation tracked in https://github.com/microsoft/hve-core/issues/3143.",
+      "timestamp": "2026-10-06T04:21:27.000Z"
     }
   ]
 }

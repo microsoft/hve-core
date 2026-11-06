@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - contributing
@@ -46,9 +46,9 @@ Prompt files are typically organized in a package subdirectory by convention:
 ### Naming Convention
 
 * Use lowercase kebab-case: `pull-request.prompt.md`
-* Be specific about workflow/task: `ado-create-pull-request.prompt.md`
+* Be specific about workflow/task: `release-notes-from-tags.prompt.md`
 * Include domain prefix when relevant: `ado-`, `git-`, `github-`
-* Avoid generic names: `workflow.prompt.md` ❌ → `security-plan-from-prd.prompt.md` ✅
+* Avoid generic names: `workflow.prompt.md` ❌ → `sprint-summary-from-board.prompt.md` ✅
 
 ### File Format
 
@@ -360,9 +360,9 @@ What triggers this prompt:
 
 This prompt is invoked when:
 
-* User requests "create ADO pull request"
-* User runs command: `/prompt ado-create-pull-request`
-* Workflow automation reaches PR creation step
+* User requests "draft release notes from the latest tags"
+* User runs command: `/release-notes-from-tags`
+* Workflow automation reaches the release step
 ```
 
 ### Decision Points
@@ -655,7 +655,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{package-id}/` (the conventional location for prompt files).
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. HVE Core does not ship any prompt files today, so use the examples on this page as your structural reference. The [hve-builder](../reference/skills/hve-core/hve-builder) skill can draft and validate a new prompt for you.
 
 ---
 

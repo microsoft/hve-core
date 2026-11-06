@@ -4,7 +4,7 @@ description: "Design Thinking coaching foundation knowledge: coach identity and 
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
-  last_updated: "2026-02-14"
+  last_updated: "2026-10-02"
 ---
 
 # DT Coaching Foundation — Skill Entry
@@ -21,13 +21,13 @@ Design Thinking methods.
 
 Load the reference that matches the current coaching moment.
 
-| Reference                                                   | When to load                                                                                                                               |
-|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| [coaching-identity.md](references/coaching-identity.md)     | At session start and throughout — establishes coach identity, Think/Speak/Empower philosophy, boundaries, and the Progressive Hint Engine. |
-| [quality-constraints.md](references/quality-constraints.md) | Before any artifact generation — enforces fidelity rules, anti-polish stance, and quality-by-space expectations.                           |
-| [method-sequencing.md](references/method-sequencing.md)     | At method transitions and space boundaries — guides the nine-method sequence, transition protocol, and non-linear iteration.               |
-| [coaching-state.md](references/coaching-state.md)           | For persistence and session recovery — defines the coaching state schema, update rules, and recovery protocol.                             |
-| [canonical-deck.md](references/canonical-deck.md)           | For opt-in canonical deck and customer-card generation — governs activation, offer points, and the PowerPoint build branch.                |
+| Reference                                                   | When to load                                                                                                                                                                              |
+|-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [coaching-identity.md](references/coaching-identity.md)     | At session start and throughout — establishes coach identity, Think/Speak/Empower philosophy, boundaries, and the Progressive Hint Engine.                                                |
+| [quality-constraints.md](references/quality-constraints.md) | Before any artifact generation — enforces fidelity rules, anti-polish stance, and quality-by-space expectations.                                                                          |
+| [method-sequencing.md](references/method-sequencing.md)     | At method transitions, space boundaries, and when the team asks what to do next — guides the nine-method sequence, transition protocol, next-method assessment, and non-linear iteration. |
+| [coaching-state.md](references/coaching-state.md)           | For persistence and session recovery — defines the coaching state schema, update rules, and recovery protocol.                                                                            |
+| [canonical-deck.md](references/canonical-deck.md)           | For opt-in canonical deck and customer-card generation — governs activation, offer points, and the PowerPoint build branch.                                                               |
 
 ## Skill layout
 
@@ -35,6 +35,6 @@ Load the reference that matches the current coaching moment.
 * `references/` — the DT coaching foundation knowledge documents.
   * `coaching-identity.md` — coach identity, philosophy, and interaction conventions.
   * `quality-constraints.md` — fidelity rules and quality standards across all methods.
-  * `method-sequencing.md` — method transitions, space boundaries, and iteration patterns.
+  * `method-sequencing.md` — method transitions, space boundaries, next-method assessment, and iteration patterns.
   * `coaching-state.md` — coaching state schema, file conventions, and recovery protocol.
   * `canonical-deck.md` — opt-in canonical deck and customer-card workflow.

@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - git submodule
@@ -41,8 +41,8 @@ your-project/
 │   └── hve-core/        ← Submodule (points to specific commit)
 │       └── .github/
 │           ├── agents/
-│           ├── prompts/
-│           └── instructions/
+│           ├── instructions/
+│           └── skills/
 └── .vscode/
     └── settings.json    ← Points to lib/hve-core paths
 ```
@@ -86,14 +86,6 @@ Create or update `.vscode/settings.json`:
     "lib/hve-core/.github/agents/hve-core/subagents": true,
     "lib/hve-core/.github/agents/security": true,
     ".github/agents": true
-  },
-  "chat.promptFilesLocations": {
-    "lib/hve-core/.github/prompts/ado": true,
-    "lib/hve-core/.github/prompts/design-thinking": true,
-    "lib/hve-core/.github/prompts/github": true,
-    "lib/hve-core/.github/prompts/hve-core": true,
-    "lib/hve-core/.github/prompts/security": true,
-    ".github/prompts": true
   },
   "chat.instructionsFilesLocations": {
     "lib/hve-core/.github/instructions/ado": true,

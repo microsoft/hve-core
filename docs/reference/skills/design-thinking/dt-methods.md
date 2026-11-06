@@ -1,9 +1,9 @@
 ---
 title: dt-methods
 description: "Design Thinking method coaching knowledge across all nine methods including per-method techniques, deep expertise, and industry context (energy, financial services, healthcare, manufacturing, nonprofit and social impact, pharmaceuticals and life sciences, professional services, public sector, retail and CPG)"
-sidebar_position: 4
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

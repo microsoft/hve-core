@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Git Merge
-description: "Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls"
+description: "Git merge, rebase, and rebase --onto conventions for workspace preparation, conflict resolution, and no-push guardrails. Use when merging or rebasing a branch or resolving Git conflicts."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-29
+ms.date: 2026-10-07
 ms.topic: reference
 keywords:
   - instruction
@@ -23,17 +23,26 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls
+Git merge, rebase, and rebase --onto conventions for workspace preparation, conflict resolution, and no-push guardrails. Use when merging or rebasing a branch or resolving Git conflicts.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use this protocol when coordinating a merge, rebase, or `rebase --onto`
-operation, especially when conflicts or a review pause are possible. Start
-from a clean, identified workspace, preserve unrelated work through stashing,
-and never use this workflow as authorization to push or rewrite remote history.
+The agent loads these conventions on demand whenever a request involves merging, rebasing, or
+resolving Git conflicts, because the file has a `description` and no `applyTo`. They cover preparing
+a clean workspace, the operation commands, resolving each conflict with a documented rationale,
+finishing or aborting, and never pushing on your behalf. Run the `/git-merge` skill when you want the
+same conventions as a guided workflow with explicit inputs, optional review pauses, and a completion
+summary.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask in chat:
+
+```text
+Merge origin/main into this branch and resolve the conflicts.
+```
+
+The agent loads these conventions, confirms a clean working tree, runs `git merge --no-edit origin/main`,
+resolves each conflicted file with a recorded rationale, and finishes with `git status --short` and a
+summary. Pushing the branch stays with you.

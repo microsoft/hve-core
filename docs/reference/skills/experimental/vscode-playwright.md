@@ -1,9 +1,9 @@
 ---
 title: vscode-playwright
 description: "VS Code screenshot capture with serve-web for slide decks and documentation, either scripted headless for CI or interactive through Playwright MCP"
-sidebar_position: 10
+sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

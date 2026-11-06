@@ -42,11 +42,11 @@ The subagent reads and compiles method artifacts into the exit schema:
 2. Apply quality markers based on artifact content and coaching history.
 3. Generate the structured exit-point artifact with confidence annotations.
 
-The subagent returns the compiled artifact. The coach reviews and adjusts before passing it to the handoff prompt.
+The subagent returns the compiled artifact. The coach reviews and adjusts it, then follows the space-exit handoff procedure in [space-exit-handoffs.md](space-exit-handoffs.md) for the space the team is leaving.
 
 ## Handoff Validation
 
-After the handoff prompt generates the RPI entry artifact, dispatch a validation subagent with:
+After the space-exit handoff procedure generates the RPI entry artifact, dispatch a validation subagent with:
 
 * Generated RPI entry artifact
 * RPI input contract for the target agent

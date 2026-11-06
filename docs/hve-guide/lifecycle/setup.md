@@ -3,7 +3,7 @@ title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-07
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -30,7 +30,7 @@ You enter Setup when starting a new project or joining an existing engagement th
 | Tool          | Type        | How to Invoke                                            | Purpose                                         |
 |---------------|-------------|----------------------------------------------------------|-------------------------------------------------|
 | installer     | Skill       | Ask any agent: "help me customize hve-core installation" | Install and configure HVE Core for your project |
-| git-setup     | Prompt      | `/git-setup`                                             | Configure Git settings for the project          |
+| git-setup     | Skill       | `/git-setup`                                             | Configure Git settings for the project          |
 | writing-style | Instruction | Auto-activated on `**/*.md`                              | Enforces voice and tone conventions             |
 | markdown      | Instruction | Auto-activated on `**/*.md`                              | Enforces Markdown formatting rules              |
 | hve-builder   | Instruction | Auto-activated on AI artifacts                           | Enforces authoring standards                    |

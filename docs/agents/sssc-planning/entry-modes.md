@@ -14,12 +14,12 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-02
 ms.topic: how-to
 estimated_reading_time: 5
 ---
 
-The SSSC Planner supports four entry modes that control how Phase 1 scoping begins. Each mode is activated through a dedicated prompt file that sets the initial state and determines how much context the agent gathers before starting the supply chain assessment.
+The SSSC Planner supports four entry modes that control how Phase 1 scoping begins. The agent selects the mode from your opening request, the artifacts you supply, or an incoming Security Planner handoff, which sets the initial state and determines how much context it gathers before starting the supply chain assessment.
 
 ## Capture Mode
 
@@ -32,9 +32,9 @@ Capture mode starts with a blank Phase 1 interview. Use this mode when no formal
 3. Phase 1 begins with a structured interview, asking 3-5 questions per turn covering technology stack, package managers, CI platform, release strategy, and compliance targets.
 4. The agent accumulates scope information across multiple turns until the user confirms Phase 1 is complete.
 
-### Prompt File
+### Starting Capture Mode
 
-Activate capture mode with the **SSSC Capture** prompt (`sssc-capture.prompt.md`). This prompt accepts an optional `project-slug` input parameter.
+Select the **SSSC Planner** agent and describe the repository you want to assess. Include any existing supply chain notes, workflow inventories, or compliance documentation so the agent can pre-populate Phase 1, and give the project a name when asked.
 
 ### When to Choose Capture Mode
 
@@ -57,9 +57,9 @@ From-PRD mode seeds Phase 1 from PRD artifacts already present in the workspace.
 4. State is initialized with `entryMode: "from-prd"` and the extracted references stored in `referencesProcessed`.
 5. Phase 1 begins with a checklist of pre-filled items and 3-5 clarifying questions for gaps.
 
-### Prompt File
+### Starting From-PRD Mode
 
-Activate From-PRD mode with the **SSSC From PRD** prompt (`sssc-from-prd.prompt.md`). This prompt accepts an optional `project-slug` input parameter.
+Select the **SSSC Planner** agent and ask it to start from your product requirements, or attach the PRD. When no PRD artifact is found, the agent falls back to capture mode and explains the switch.
 
 ### When to Choose From-PRD Mode
 
@@ -82,9 +82,9 @@ From-BRD mode seeds Phase 1 from BRD artifacts already present in the workspace.
 4. State is initialized with `entryMode: "from-brd"` and the extracted references stored in `referencesProcessed`.
 5. Phase 1 begins with a checklist of pre-filled items and 3-5 clarifying questions for gaps.
 
-### Prompt File
+### Starting From-BRD Mode
 
-Activate From-BRD mode with the **SSSC From BRD** prompt (`sssc-from-brd.prompt.md`). This prompt accepts an optional `project-slug` input parameter.
+Select the **SSSC Planner** agent and ask it to start from your business requirements, or attach the BRD. When no BRD artifact is found, the agent falls back to capture mode and explains the switch.
 
 ### When to Choose From-BRD Mode
 
@@ -106,9 +106,9 @@ From-Security-Plan mode seeds Phase 1 from an existing Security Planner state fi
 3. State is initialized with `entryMode: "from-security-plan"` and `securityPlannerLink` set to the source state file path.
 4. Phase 1 begins with inherited scope pre-filled and 3-5 clarifying questions for supply-chain-specific gaps (package managers, CI platform, release strategy).
 
-### Prompt File
+### Starting From-Security-Plan Mode
 
-Activate From-Security-Plan mode with the **SSSC From Security Plan** prompt (`sssc-from-security-plan.prompt.md`). This prompt accepts an optional `project-slug` input parameter.
+Select the **SSSC Planner** agent and ask it to extend your completed security plan, or choose the **SSSC Planner** handoff at the end of a Security Planner session. When several security plans exist, the agent asks which one to extend; when none exist, it falls back to capture mode.
 
 ### When to Choose From-Security-Plan Mode
 
@@ -133,7 +133,7 @@ All four modes converge at the same Phase 1 output. The difference is how much c
 
 ## Switching Between Modes
 
-Entry mode is set once during Phase 1 initialization and cannot be changed mid-plan. To switch modes, start a new chat session with the other prompt file and a different project slug (or the same slug after removing the existing state directory).
+Entry mode is set once during Phase 1 initialization and cannot be changed mid-plan. To switch modes, start a new chat session with the SSSC Planner, request the other mode, and use a different project slug (or the same slug after removing the existing state directory).
 
 > [!NOTE]
 > All four modes produce identical Phase 2-6 workflows. The choice only affects how Phase 1 scope is gathered.

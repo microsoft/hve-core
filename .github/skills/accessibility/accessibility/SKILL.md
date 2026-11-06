@@ -7,7 +7,7 @@ user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-09-14"
+  last_updated: "2026-10-02"
 ---
 
 # Accessibility — Skill Entry
@@ -181,7 +181,7 @@ WCAG success criteria are normative; the axe techniques that surface them are in
 
 ### Runtime probe harness
 
-The runtime probe harness ([scripts/runtime_a11y](scripts/runtime_a11y)) runs Playwright-based accessibility probes against a project-specific surface inventory and aggregates the results into a coverage matrix. Use the `accessibility-coverage-matrix.prompt.md` prompt for workflow orchestration and the `Accessibility Surface Inventory` subagent as the canonical producer of the runtime config. Activate each by name; when one does not resolve, warn the user that the capability is unavailable and stop the dependent step.
+The runtime probe harness ([scripts/runtime_a11y](scripts/runtime_a11y)) runs Playwright-based accessibility probes against a project-specific surface inventory and aggregates the results into a coverage matrix. For workflow orchestration, ask the user to run the manual-only `accessibility-coverage-matrix` skill (`/accessibility-coverage-matrix`); it is not model-invocable. Use the `Accessibility Surface Inventory` subagent as the canonical producer of the runtime config. Activate it by name; when it does not resolve, warn the user that the capability is unavailable and stop the dependent step.
 
 #### Harness prerequisites
 
@@ -367,7 +367,7 @@ The catalog in [scripts/runtime_a11y/aria-at-catalog.json](scripts/runtime_a11y/
 
 The current public posture is intentionally conservative. The five starter defaults (modal dialog, checkbox, select-only combobox, menu button, and tabs) are citation-bearing manual-only mappings because the richer AT-mode and quick-navigation semantics that these patterns can require are not faithfully modeled by the current structured command boundary. Runtime overrides may create explicit synthetic contract tests, but those are always non-pass candidate evidence and never accessibility conformance evidence. The resolver uses the documented fallback order of state -> surface -> catalog; commands and assertions are stored as atomic arrays, and an explicit empty array intentionally disables execution for a given case.
 
-Unknown patterns remain generic manual drafts or project-refinement markers rather than a fake automation pass. Equally specific ambiguity is treated as a configuration error before rendering or driver startup. The public CLI exposes `render-artifacts` as an optional mapping configuration step and `run-at-plan` as the supported path for listing, selecting, executing, and reporting generated AT cases. The real-driver boundary currently supports Guidepup-backed Windows NVDA automation plus manual-only JAWS and other operator-led flows; synthetic execution is a separate evidence channel and never claims a pass. The generated manual plans stay linked to the shared [real screen reader testing runbook](../../../../docs/planning/runbooks/accessibility/real-screen-reader-testing.md), while case-specific commands remain inside the generated plan output rather than being written back into the matrix or coverage artifacts.
+Unknown patterns remain generic manual drafts or project-refinement markers rather than a fake automation pass. Equally specific ambiguity is treated as a configuration error before rendering or driver startup. The public CLI exposes `render-artifacts` as an optional mapping configuration step and `run-at-plan` as the supported path for listing, selecting, executing, and reporting generated AT cases. The real-driver boundary currently supports Guidepup-backed Windows NVDA automation plus manual-only JAWS and other operator-led flows; synthetic execution is a separate evidence channel and never claims a pass. The generated manual plans stay linked to the shared [real screen reader testing runbook](https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md), while case-specific commands remain inside the generated plan output rather than being written back into the matrix or coverage artifacts.
 
 The generated manual cases, synthetic or real execution evidence, ACT-style result reasoning, EARL outcomes, and later qualified-human review are distinct layers. The public workflow renders representative fixtures through the documented CLI and inspects the six generated artifacts, but it does not commit golden outputs for the inspection bundle.
 

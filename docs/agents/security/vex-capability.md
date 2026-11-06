@@ -3,7 +3,7 @@ title: VEX Capability
 description: HVE Core's VEX capability - triage dependency vulnerabilities and draft OpenVEX documents via the SSSC Reviewer, SSSC Planner, and the vex skill
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-07
 ms.topic: concept
 keywords:
   - VEX
@@ -62,15 +62,15 @@ flowchart LR
 
 ## Usage
 
-The agent is invoked through two prompts.
+Select the **SSSC Reviewer** agent and describe one of two request shapes. The SSSC Reviewer runs only when you select it, so another agent can prepare a handoff for either request, which you then run with the SSSC Reviewer.
 
-### `/vex-scan` (Mode 1, full pipeline)
+### Full pipeline scan (Mode 1)
 
 Runs the complete pipeline against the repository or a scoped subdirectory.
 
 ```text
-/vex-scan
-/vex-scan scope=scripts/ product=pkg:npm/@microsoft/hve-core
+Run the full VEX pipeline for this repository.
+Run the full VEX pipeline for scripts/ with product pkg:npm/@microsoft/hve-core.
 ```
 
 | Input     | Required | Description                                                                 |
@@ -78,12 +78,12 @@ Runs the complete pipeline against the repository or a scoped subdirectory.
 | `scope`   | No       | Directory or path focus to limit the scan. Defaults to the repository root. |
 | `product` | No       | Product identifier in PURL format. Inferred from the manifest when omitted. |
 
-### `/vex-triage` (Mode 2, triage from a report)
+### Triage from a report (Mode 2)
 
 Triages an existing Trivy or OSV-Scanner JSON report without re-scanning. Use this when a scanner has already run, for example from the VEX Detection workflow.
 
 ```text
-/vex-triage report=osv-results.json
+Triage the CVEs in osv-results.json and draft an OpenVEX document.
 ```
 
 | Input    | Required | Description                                                |

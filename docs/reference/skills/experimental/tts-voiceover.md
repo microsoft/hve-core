@@ -1,9 +1,9 @@
 ---
 title: tts-voiceover
 description: "Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control, or an offline Piper engine that needs no credentials"
-sidebar_position: 8
+sidebar_position: 9
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill
