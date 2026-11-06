@@ -1,50 +1,50 @@
 {
-  "description": "Cold-start byte budgets for the DT, BRD, PRD, ADR, and planner chain. Bytes cover the agent file, its recursive #file: imports, and always-on instructions, with CRLF normalized to LF. Above ceiling fails; above target warns. Targets are the measured cold-start bytes when the check was introduced, rounded up to the next 1,000; ceilings add about 10 percent, rounded up to the next 1,000, to absorb growth in shared files such as disclaimer-language.instructions.md, unless an entry's rationale preserves an earlier limit. Raise a ceiling only for growth in a shared file the agent does not own.",
+  "description": "Cold-start byte budgets for the DT, BRD, PRD, ADR, and planner chain. Bytes cover what the Copilot agent harness loads when the agent starts: the agent file, the SKILL.md of every skill in its skills list, and instructions that load into every main session, with CRLF normalized to LF. Above ceiling fails; above target warns. Targets are the measured cold-start bytes rounded up to the next 1,000; ceilings add about 10 percent, rounded up to the next 1,000, to absorb growth in shared skills such as disclaimer-language. Raise a ceiling only for growth in a shared file the agent does not own.",
   "agents": {
     ".github/agents/accessibility/accessibility-planner.agent.md": {
-      "target": 23000,
-      "ceiling": 26000,
-      "rationale": "Measured 22,492 bytes; the agent has no #file: imports, so growth is the agent's own."
+      "target": 24000,
+      "ceiling": 27000,
+      "rationale": "Measured 23,564 bytes: the agent plus the preloaded untrusted-content-boundary skill. planner-identity loads by name and is not counted."
     },
     ".github/agents/design-thinking/dt-coach.agent.md": {
       "target": 39000,
       "ceiling": 43000,
-      "rationale": "Measured 38,380 bytes including the shared disclaimer-language import."
+      "rationale": "Measured 38,921 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills."
     },
     ".github/agents/privacy/privacy-planner.agent.md": {
-      "target": 35000,
-      "ceiling": 39000,
-      "rationale": "Measured 34,819 bytes including privacy-identity and the shared disclaimer-language import."
+      "target": 19000,
+      "ceiling": 21000,
+      "rationale": "Measured 18,826 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. planner-identity and privacy-standards, which holds privacy-identity, load by name and are not counted."
     },
     ".github/agents/project-planning/adr-creation.agent.md": {
-      "target": 46000,
-      "ceiling": 48000,
-      "rationale": "Measured 45,424 bytes including adr-identity and the shared disclaimer-language import; keeps the retired harness's 48,000-byte ceiling rather than the uniform 10 percent rule, preserving that earlier limit."
+      "target": 26000,
+      "ceiling": 29000,
+      "rationale": "Measured 25,025 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. adr-author, which holds adr-identity, loads by name and is not counted."
     },
     ".github/agents/project-planning/brd-builder.agent.md": {
-      "target": 36000,
-      "ceiling": 40000,
-      "rationale": "Measured 35,676 bytes including the shared disclaimer-language import."
+      "target": 37000,
+      "ceiling": 41000,
+      "rationale": "Measured 36,772 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills."
     },
     ".github/agents/project-planning/prd-builder.agent.md": {
-      "target": 51000,
-      "ceiling": 57000,
-      "rationale": "Measured 50,309 bytes including the shared disclaimer-language import."
+      "target": 52000,
+      "ceiling": 58000,
+      "rationale": "Measured 51,357 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills."
     },
     ".github/agents/rai-planning/rai-planner.agent.md": {
-      "target": 80000,
-      "ceiling": 88000,
-      "rationale": "Measured 79,445 bytes including rai-identity, planner-identity-base, and the shared disclaimer-language import; rai-identity is the largest share and the main reduction candidate."
+      "target": 30000,
+      "ceiling": 33000,
+      "rationale": "Measured 29,107 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. planner-identity and rai-planner, which holds rai-identity, load by name and are not counted."
     },
     ".github/agents/security/security-planner.agent.md": {
-      "target": 34000,
-      "ceiling": 38000,
-      "rationale": "Measured 33,836 bytes including tm7-generation-workflow."
+      "target": 48000,
+      "ceiling": 53000,
+      "rationale": "Measured 47,142 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills, about 15,500 bytes of them. planner-identity and security-planning load by name and are not counted."
     },
     ".github/agents/security/sssc-planner.agent.md": {
-      "target": 42000,
-      "ceiling": 47000,
-      "rationale": "Measured 41,059 bytes including the shared disclaimer-language import."
+      "target": 44000,
+      "ceiling": 49000,
+      "rationale": "Measured 43,198 bytes: the agent plus the preloaded disclaimer-language and untrusted-content-boundary skills. planner-identity loads by name and is not counted."
     }
   }
 }

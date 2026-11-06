@@ -51,7 +51,7 @@ Produce a customer-readable Markdown catalog whose YAML frontmatter is a valid `
 * Keep DCAT alignment non-binding. The catalog is native YAML, not RDF, and makes no DCAT conformance claim.
 * Keep tier recording separate from tier behavior. `data-catalog` records the tier; `dataops` owns what that tier means.
 * Keep rendering separate from semantic authority. Diagram tools consume declared relationships and do not infer new ones.
-* End every customer-facing catalog with the canonical Data Science and Engineering Coaching disclaimer from `disclaimer-language.instructions.md`.
+* End every customer-facing catalog with the canonical Data Science and Engineering Coaching disclaimer from the `disclaimer-language` skill.
 
 ## Stop rules
 

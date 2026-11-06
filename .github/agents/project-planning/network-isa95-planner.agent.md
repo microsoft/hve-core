@@ -4,8 +4,10 @@ description: 'ISA-95-aligned network planning for secure edge Kubernetes to Azur
 disable-model-invocation: true
 tools:
   - agent
-  - edit/editFiles
-  - microsoft-docs/*
+  - edit
+  - 'microsoft-docs/*'
+  - skill
+  - ask_user
 ---
 
 # Network ISA-95 Planner

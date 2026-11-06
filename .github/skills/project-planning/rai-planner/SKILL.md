@@ -1,12 +1,12 @@
 ---
 name: rai-planner
-description: "On-demand RAI planner reference pack covering Phase 1 capture, Phase 2 risk classification and the optional Mural board bootstrap, Phase 5 impact assessment, and Phase 6 review and backlog handoff."
+description: "RAI Planner identity protocol and on-demand reference pack covering Phase 1 capture, Phase 2 risk classification and the optional Mural board bootstrap, Phase 5 impact assessment, and Phase 6 review and backlog handoff."
 license: MIT
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-10-04"
+  last_updated: "2026-10-30"
 ---
 
 # RAI Planner
@@ -17,6 +17,7 @@ Use this skill as an on-demand reference pack for the RAI Planner. The main skil
 
 ## Phase Reference Index
 
+* Session start — Planner identity: [rai-identity.md](references/rai-identity.md) — read this at the start of every session. It holds the RAI identity, the disclaimer and attribution protocol, the six-phase definitions, entry modes, state management, question cadence, resume protocol, error handling, the user-supplied reference content protocol, and the research activation contract.
 * Phase 1 — Capture and scoping: [capture-coaching.md](references/capture-coaching.md) — read this when entering Phase 1 and again during capture turns when you need the exploration-first questioning techniques.
 * Phase 2 — Risk classification: [risk-classification.md](references/risk-classification.md) — read this when entering Phase 2 to apply the prohibited-use gate, indicator assessment, and depth-tier logic.
 * Phase 2 (optional) — Mural team board: [mural-board-bootstrap.md](references/mural-board-bootstrap.md) — read this only when the user accepts the Phase 2 board offer or asks for a Mural board, and before any `mural` command.
@@ -25,6 +26,6 @@ Use this skill as an on-demand reference pack for the RAI Planner. The main skil
 
 ## Usage Notes
 
-* Load these references on demand at phase boundaries rather than as fixed startup context.
+* Read `rai-identity.md` at session start. Load the phase references on demand at phase boundaries rather than as fixed startup context.
 * Use the referenced file that matches the phase you are about to enter or the section you need to re-open during execution.
 * Keep the detailed rubric, templates, and evidence guidance in the reference files rather than in the main skill body.

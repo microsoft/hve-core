@@ -18,15 +18,17 @@ This guide defines the requirements, standards, and best practices for contribut
 
 ## What is a Skill?
 
-A **skill** is a self-contained package that provides guidance and utilities for specific tasks. Unlike agents or prompts that guide conversation flows, skills bundle documentation, and optionally executable scripts, to perform concrete operations. A skill can be purely documentation-driven (providing structured knowledge and instructions) or can include cross-platform scripts for automated task execution.
+A **skill** is a self-contained package that provides guidance and utilities for specific tasks. Unlike agents, which guide conversation flows, skills bundle documentation, and optionally executable scripts, to perform concrete operations. A skill can be purely documentation-driven (providing structured knowledge and instructions) or can include cross-platform scripts for automated task execution. A user-invocable skill is also how HVE Core ships a reusable slash command.
 
-## Skill vs Agent vs Prompt
+## Skill vs Agent vs Instruction
 
-| Artifact | Purpose                       | Includes Scripts | User Interaction         |
-|----------|-------------------------------|------------------|--------------------------|
-| Skill    | Task execution with utilities | Optional         | Minimal after invocation |
-| Agent    | Conversational guidance       | No               | Multi-turn conversation  |
-| Prompt   | Single-session workflow       | No               | One-shot execution       |
+| Artifact    | Purpose                                  | Includes Scripts | User Interaction                                     |
+|-------------|------------------------------------------|------------------|------------------------------------------------------|
+| Skill       | Task execution with utilities            | Optional         | Minimal after invocation                             |
+| Agent       | Conversational guidance                  | No               | Multi-turn conversation                              |
+| Instruction | Conventions for files matching `applyTo` | No               | None; applies when a matching file is read or edited |
+
+HVE Core no longer accepts prompt files. A user-invocable skill replaces a prompt as a reusable slash command; see [Contributing Slash Commands](prompts.md).
 
 ## Use Cases for Skills
 
@@ -37,6 +39,7 @@ Create a skill when you need to:
 * Provide cross-platform utilities (PowerShell required, bash recommended)
 * Standardize common development tasks
 * Share reusable tooling across projects
+* Provide a reusable slash command for a repeatable workflow
 
 ## Skills Not Accepted
 
@@ -132,13 +135,13 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization'
 
 **`user-invocable`** (boolean, optional)
 
-| Property   | Value                                                                                                  |
-|------------|--------------------------------------------------------------------------------------------------------|
-| Purpose    | Controls visibility in the VS Code slash command menu                                                  |
-| Default    | `true`                                                                                                 |
-| When true  | Skill appears in the `/` menu for manual invocation via `/skill-name`                                  |
-| When false | Skill does not appear in the `/` menu; loaded only by semantic matching or explicit `#file:` reference |
-| Use case   | Set `false` for background skills that support other workflows without direct user invocation          |
+| Property   | Value                                                                                                                                                                                     |
+|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Purpose    | Controls whether the skill appears as a slash command in the `/` menu                                                                                                                     |
+| Default    | `true`                                                                                                                                                                                    |
+| When true  | Skill appears in the `/` menu for manual invocation via `/skill-name`                                                                                                                     |
+| When false | Skill does not appear in the `/` menu; Copilot can still load it by semantic matching, an agent can preload it with `skills:`, and an agent with the `skill` tool can activate it by name |
+| Use case   | Set `false` for background skills that support other workflows without direct user invocation                                                                                             |
 
 **`disable-model-invocation`** (boolean, optional)
 
@@ -147,14 +150,14 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization'
 | Purpose    | Controls whether Copilot automatically loads the skill via semantic matching                                 |
 | Default    | `false`                                                                                                      |
 | When false | Copilot loads the skill automatically when the task description semantically matches the `description` field |
-| When true  | Skill is only loaded via manual `/skill-name` slash command invocation                                       |
+| When true  | Skill loads only when a user types its `/skill-name` slash command                                           |
 | Use case   | Set `true` for skills with high token cost or niche applicability that should not load automatically         |
 
 **`argument-hint`** (string, optional)
 
 | Property    | Value                                                                                                                                |
 |-------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| Purpose     | Displays expected inputs in the VS Code prompt picker                                                                                |
+| Purpose     | Shows the expected arguments when a user invokes the skill as a slash command                                                        |
 | Format      | Brief text with required arguments first, then optional arguments                                                                    |
 | Conventions | Use `[]` for positional arguments, `key=value` for named parameters, `{option1\|option2}` for enumerations, `...` for free-form text |
 | Example     | `"input=video.mp4 [--fps={5\|10\|15\|24}] [--width=1280]"`                                                                           |
@@ -196,12 +199,14 @@ Recognized metadata fields:
 
 ### Invocation Control Matrix
 
-| `user-invocable` | `disable-model-invocation` | `/` Menu | Semantic Loading | Invocation Method           |
-|------------------|----------------------------|----------|------------------|-----------------------------|
-| `true` (default) | `false` (default)          | Yes      | Yes              | Automatic + manual          |
-| `true`           | `true`                     | Yes      | No               | Manual `/skill-name` only   |
-| `false`          | `false`                    | No       | Yes              | Automatic only              |
-| `false`          | `true`                     | No       | No               | Only via `#file:` reference |
+| `user-invocable` | `disable-model-invocation` | `/` Menu | Semantic Loading | Invocation Method                                                   |
+|------------------|----------------------------|----------|------------------|---------------------------------------------------------------------|
+| `true` (default) | `false` (default)          | Yes      | Yes              | Automatic + manual                                                  |
+| `true`           | `true`                     | Yes      | No               | Manual `/skill-name` only                                           |
+| `false`          | `false`                    | No       | Yes              | Semantic match, `skills:` preload, or activation by name            |
+| `false`          | `true`                     | No       | No               | Neither the `/` menu nor the model loads it; avoid this combination |
+
+In VS Code, plugin installs prefix the plugin name to the slash command, so HVE Core's Research skill appears as `/hve-core:rpi-research`. Skills copied into a project's own `.github/skills` folder appear without the prefix, as `/rpi-research`.
 
 ### Frontmatter Example with Optional Fields
 
@@ -215,7 +220,7 @@ argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
 ---
 ```
 
-This example demonstrates a skill configured for both automatic semantic loading and manual `/pr-reference` invocation, with argument hints displayed in the prompt picker.
+This example demonstrates a skill configured for both automatic semantic loading and manual `/pr-reference` invocation, with an argument hint for its slash command.
 
 ### Frontmatter Example with License and Metadata
 
@@ -519,14 +524,13 @@ The `examples/` subdirectory **SHOULD** include:
 
 Skill packages are self-contained and relocatable. The skill root directory varies by distribution context:
 
-| Context            | Skill Root Example                                                 |
-|--------------------|--------------------------------------------------------------------|
-| In-repo            | `.github/skills/<package>/<skill>/`                                |
-| Copilot CLI plugin | `~/.copilot/installed-plugins/_direct/<plugin>/skills/<skill>/`    |
-| VS Code extension  | `~/.vscode/extensions/<publisher>.<ext>-<version>/skills/<skill>/` |
-| Plugin output      | `plugins/<package>/skills/<skill>/`                                |
+| Context                         | Skill Root Example                                   |
+|---------------------------------|------------------------------------------------------|
+| In-repo                         | `.github/skills/<package>/<skill>/`                  |
+| Plugin (VS Code or Copilot CLI) | `<plugin-root>/.github/skills/<package>/<skill>/`    |
+| VS Code extension               | `<extension-root>/.github/skills/<package>/<skill>/` |
 
-The `.github/` directory does not exist in any distributed context. All file references and script paths within a skill must be relative to the skill root, never repo-root-relative.
+A workspace-root path such as `.github/skills/...` resolves against the consumer's workspace, not against the installed plugin or extension. All file references and script paths within a skill must be relative to the skill root, never repo-root-relative.
 
 * Use `./scripts/<script-name>.sh` instead of `./.github/skills/<package>/<skill>/scripts/<script-name>.sh`
 * Use `references/<reference-name>.md` instead of `.github/skills/<package>/<skill>/references/<reference-name>.md`
@@ -560,7 +564,14 @@ The `description` field is the semantic key for automatic loading. Craft descrip
 
 ### How Callers Invoke Skills
 
-Prompts, agents, and instructions should describe the task intent rather than referencing script paths. Copilot matches task descriptions against skill `description` fields and loads the skill on-demand.
+Agents and instructions should describe the task intent rather than referencing script paths. Copilot matches task descriptions against skill `description` fields and loads the skill on demand.
+
+An agent can also load a skill by name:
+
+* An agent that needs a skill's rules from its first turn lists the skill in its `skills:` frontmatter. Copilot injects the `SKILL.md` body at session start, but not the files it links to.
+* An agent that needs a skill later lists `skill` in its `tools` and names the skill in its body, so the agent activates it by name.
+
+The Copilot harness does not load `#file:` directives, and `npm run lint:artifact-portability` flags any `#file:` directive outside inline code. See [Contributing Agents](custom-agents.md) for the agent side of these mechanisms.
 
 Avoid hardcoded script paths, platform detection logic, or extension fallback code in caller files.
 
@@ -623,6 +634,7 @@ npm run lint:frontmatter      # Validate SKILL.md frontmatter
 npm run lint:ps               # Validate PowerShell scripts (when present)
 npm run lint:md               # Validate markdown formatting
 npm run validate:skills       # Validate skill directory structure
+npm run lint:artifact-portability  # Flag workspace-root .github paths and #file: directives
 npm run test:ps               # Run PowerShell unit tests
 npm run docs:test             # Validate Docusaurus artifact counts
 npm run docs:generate         # Scaffold reference page under docs/reference/skills/ (new skills)
@@ -639,10 +651,10 @@ All checks **MUST** pass before merge.
 
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Agents](custom-agents.md) - Agent file guidelines
-* [Contributing Prompts](prompts.md) - Prompt file guidelines
+* [Contributing Slash Commands](prompts.md) - Why reusable slash commands are contributed as skills
 * [Contributing Instructions](instructions.md) - Instructions file guidelines
 * [Agent Skills Specification](https://agentskills.io/specification) - Core specification for skill structure and metadata
-* [VS Code Copilot Agent Skills](https://code.visualstudio.com/docs/copilot/customization/agent-skills) - VS Code integration, progressive disclosure, and frontmatter controls
+* [Agent Skills in VS Code](https://code.visualstudio.com/docs/agent-customization/agent-skills) - VS Code integration, progressive disclosure, and frontmatter controls
 
 ---
 

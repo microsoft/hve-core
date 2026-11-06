@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Copilot Tracking
 description: "Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence"
-sidebar_position: 3
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-26
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - instruction

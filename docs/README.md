@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-11-02
 ms.topic: overview
 keywords:
   - hve core
@@ -18,11 +18,11 @@ HVE Core gives your team production-ready agents, coding instructions, and execu
 
 ## Choose Your Installation
 
-| Option       | HVE Core Extension                                                                                  | Selective Clone                                                            |
-|--------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| What you get | Every distributable agent, instruction, and skill                                                   | Complete or custom agents, instructions, and distributable skills          |
-| Best for     | Teams that want managed updates and the complete content set                                        | Teams that want repository-owned, reviewable component selection           |
-| Start        | [Install HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) | Use the included `hve-core-installer` skill with a pinned or cloned source |
+| Option       | HVE Core Extension                                                                                  | Repository Copy                                                             |
+|--------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| What you get | Every distributable agent, instruction, and skill                                                   | Every agent, instruction, and distributable skill, owned by your repository |
+| Best for     | Teams that want managed updates and the complete content set                                        | Teams that want repository-owned, reviewable copies                         |
+| Start        | [Install HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) | Use the included `hve-core-installer` skill with a pinned or cloned source  |
 
 > Not sure which to choose? See the [installation methods comparison](getting-started/methods/comparison.md) for a detailed breakdown.
 
@@ -40,7 +40,7 @@ Get up and running with installation, configuration, and your first AI-assisted 
 
 ### Leading a Team?
 
-Set up HVE Core for your team with governance, selective adoption, and customization options.
+Set up HVE Core for your team with governance, repository adoption, and customization options.
 
 * [Team adoption guide](customization/team-adoption.md) covers governance, naming conventions, and onboarding
 * [HVE Core identity and channels](getting-started/packages.md) explains how artifacts are bundled and distributed

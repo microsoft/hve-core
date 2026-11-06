@@ -3,7 +3,7 @@ title: Export DT Artifacts to Figma
 description: Optional workflow for exporting Design Thinking artifacts from HVE Core to FigJam boards and Figma Design files
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - design thinking
@@ -40,15 +40,15 @@ The export is additive to Design Thinking coaching. It does not replace `.copilo
 
 * A completed or in-progress DT project under `.copilot-tracking/dt/{project-slug}/`
 * A Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan (recommended for sustained usage)
-* The `figma` MCP server configured in your workspace
+* The `figma` MCP server configured as described in [Setup](#setup)
 
 ## Setup
 
-Add the Figma MCP server to `.vscode/mcp.json`:
+Add the Figma MCP server to the `mcpServers` object in `.mcp.json` at your workspace root:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "figma": {
       "type": "http",
       "url": "https://mcp.figma.com/mcp"
@@ -57,13 +57,20 @@ Add the Figma MCP server to `.vscode/mcp.json`:
 }
 ```
 
+Copilot reads `.mcp.json` in VS Code and in Copilot CLI. To make the server available in every workspace, add the entry to your user configuration at `~/.copilot/mcp-config.json`, which also uses a top-level `mcpServers` object. HVE Core's repository root includes `.mcp.json.sample` with this entry and a WorkIQ server.
+
 No local installation, API keys, or credential files are required. The Figma MCP server is hosted by Figma and handles authentication via browser OAuth on first use.
 
-After adding the configuration, restart VS Code. You can verify the connection by typing `#whoami` in GitHub Copilot Chat, which should return your Figma identity and plan details.
+After adding the configuration, restart VS Code. Before it exports anything, the skill calls the Figma `whoami` tool to confirm that the server is connected and you are signed in. If the server is missing, the skill stops and shows these setup steps.
+
+> [!NOTE]
+> If you already configured Figma in `.vscode/mcp.json`, VS Code still forwards that server to Copilot sessions. Add the entry to `.mcp.json` as well to use it in Copilot CLI.
 
 ## Usage
 
 Run `/dt-figma-export` with the project slug and any optional inputs, or accept the board-export offer that DT Coach makes at method milestones. The skill reads your project artifacts, asks for confirmation before it writes to Figma, and reports the created board or file.
+
+With the plugin installed in VS Code, the command appears as `/hve-core:dt-figma-export`.
 
 ### Basic export (FigJam board from latest method)
 
@@ -121,13 +128,13 @@ A typical DT export session uses 5-15 tool calls depending on the number of arti
 
 ## Beta Notice
 
-The `use_figma` write capability is currently in beta and free during the beta period. Figma has indicated this will eventually become a usage-based paid feature. Read-only tools (`get_figjam`, `get_screenshot`, `generate_diagram`) are unaffected.
+The `use_figma` write capability is currently in beta and free during the beta period. Figma has indicated this will eventually become a usage-based paid feature. Read-only tools such as `get_figjam` and `get_screenshot` are unaffected. The `dt-figma-export` skill treats `generate_diagram` as a write tool, so check Figma's [tool catalog](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/) for its current billing.
 
 ## Troubleshooting
 
 | Issue                       | Solution                                                                             |
 |-----------------------------|--------------------------------------------------------------------------------------|
-| `figma` tools not available | Add the Figma server to `.vscode/mcp.json` and restart VS Code                       |
+| `figma` tools not available | Add the Figma server to `.mcp.json` at the workspace root and restart VS Code        |
 | Authentication fails        | Ensure your browser can reach `mcp.figma.com` and complete the OAuth flow            |
 | Rate limit exceeded         | Check your Figma plan; upgrade to a Dev or Full seat for higher limits               |
 | `use_figma` rejects writes  | Verify you have edit access to the target Figma file or create a new one             |
