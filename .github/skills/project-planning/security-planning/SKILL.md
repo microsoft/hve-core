@@ -1,7 +1,7 @@
 ---
 name: security-planning
 description: Security planning and plan-drift analysis for STRIDE, standards, controls, backlog handoff, current findings, TM7 generation, and OWASP Threat Dragon export.
-license: MIT
+license: MIT AND CC-BY-4.0 AND Apache-2.0
 compatibility: 'Generation requires Python 3.11+ and uv. The native TM7 feedback loop additionally requires Windows with an interactive desktop session and the pinned Microsoft Threat Modeling Tool 7.3.51110.1.'
 user-invocable: true
 ---
@@ -52,6 +52,8 @@ The `.tm7` output mirrors the Microsoft Threat Modeling Tool's real `Serializabl
 
 ### Threat Dragon generation workflow
 
+For every Threat Dragon request, including direct `/security-planning` invocation, read `threat-dragon-generation-workflow.instructions.md` by name and follow its authorship-confirmation contract. If it cannot be loaded, halt and report the missing artifact before generation or finalization. Generated output remains unconfirmed until the user explicitly confirms it.
+
 When the user asks for an OWASP Threat Dragon threat model, the runtime can generate a Threat Dragon v2.6.2 JSON model from the same spec that drives TM7 generation. `generate_threat_dragon.py` reuses the TM7 model builder and deterministic layout, so each representation becomes one Threat Dragon diagram drawn like its TM7 surface.
 
 The model is validated by `validate_threat_dragon.py` against the vendored v2.6.2 schema and semantic rules before it replaces the output file. The export is one-way and targets Threat Dragon v2.6.2 only.
@@ -62,7 +64,9 @@ uv run --project "<security-planning-skill-root>" \
   -o ./artifacts/model.threat-dragon.json
 ```
 
-Optional, vendor-neutral spec fields such as `owner`, `out_of_scope`, `bidirectional`, and `severity`, plus a namespaced `export_options.threat_dragon` block, enrich the model; TM7 ignores them. See [references/threat-dragon-generation.md](references/threat-dragon-generation.md) for the CLI contract, mapping, threat placement, canvas attributes, and the opt-in native loader check. The confirmation contract is owned by `threat-dragon-generation-workflow.instructions.md`.
+Optional, vendor-neutral spec fields such as `owner`, `out_of_scope`, `bidirectional`, and `severity`, plus a namespaced `export_options.threat_dragon` block, enrich the model; TM7 ignores them.
+
+See [references/threat-dragon-generation.md](references/threat-dragon-generation.md) for the CLI contract, mapping, threat placement, canvas attributes, and the opt-in native loader check.
 
 The skill also supports an opt-in, Windows-local feedback loop for the native Microsoft Threat Modeling Tool UI. The feature is off by default. The generator and standard validator keep their existing portable behavior when the feedback flags are absent. Native feedback is enabled only when `validate_tm7_with_tmt.py` is run with `--feedback-loop`, `--spec`, and `--overlay-output`; optional `--overlay-input`, `--max-iterations`, and `--require-feedback-evidence` refine the execution contract.
 
@@ -154,3 +158,15 @@ The skill ships public defaults for the taxonomy and the completeness checklist.
 The durable reference content in this skill is organized by reference file and summarized in [references/00-index.md](references/00-index.md). See that index for the consolidated attribution and delegation notes.
 
 `assets/threat-dragon/threat-dragon-v2.6.2.schema.json` is an unmodified copy of the OWASP Threat Dragon v2.6.2 JSON schema, licensed under the Apache License, Version 2.0. Its licence, third-party notice, and provenance record ship beside it.
+
+The package combines the following material classes; the compound SPDX expression applies to redistribution of the whole package, not to every individual file.
+
+| Files                                                                                                                | License    | Allocation                                                                        |
+|----------------------------------------------------------------------------------------------------------------------|------------|-----------------------------------------------------------------------------------|
+| `SKILL.md`, `README.md`, `SECURITY.md`, `references/`                                                                | CC-BY-4.0  | Repository-original prose; source citations do not relicense third-party material |
+| `scripts/`, `tests/`, `templates/`, `assets/schemas/`, `assets/template-profiles/`                                   | MIT        | Repository-original code, tests, and machine-readable data                        |
+| `pyproject.toml`, `uv.lock`                                                                                          | MIT        | Repository-original dependency configuration                                      |
+| `assets/templates/`                                                                                                  | MIT        | Microsoft threat-modeling templates; bundled upstream licence retained            |
+| `assets/threat-dragon/threat-dragon-v2.6.2.schema.json`, `assets/threat-dragon/LICENSE.threat-dragon-apache-2.0.txt` | Apache-2.0 | Unmodified OWASP Threat Dragon schema and its upstream licence                    |
+| `assets/threat-dragon/THIRD-PARTY-NOTICE.txt`                                                                        | CC-BY-4.0  | Repository-original source attribution                                            |
+| `assets/threat-dragon/threat-dragon-v2.6.2.provenance.json`                                                          | MIT        | Repository-original machine-readable provenance                                   |

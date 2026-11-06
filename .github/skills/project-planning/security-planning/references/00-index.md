@@ -48,4 +48,4 @@ Upstream sources summarized by this reference set, each cited in the file that s
 | NIST SP 800-53 control families                                         | Public domain (17 U.S.C. § 105)     | `nist-control-families.md`     |
 | OWASP, NIST, and MITRE cross-references                                 | See each entry                      | `standards-cross-reference.md` |
 
-Original content in this skill is licensed under the repository's license.
+Repository-original prose in this skill is licensed under CC-BY-4.0; original code and machine-readable data use MIT. The vendored Threat Dragon schema retains Apache-2.0. See the skill entrypoint's per-file allocation for the package's compound licence declaration.
