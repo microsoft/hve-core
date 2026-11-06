@@ -6,7 +6,10 @@ import { test } from "node:test";
 import { PassThrough } from "node:stream";
 import { boundedCliJsonOutput, boundedCliOutput, parseCliEvents, parseCliResponse, parseCliTurn } from "../../../evals/rca-real-world/cli-orchestrator.mts";
 import { parseApprovalRequest } from "../../../evals/rca-real-world/approval.mts";
-import { EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS, sha256 } from "../../../evals/rca-real-world/contracts.mts";
+import { approvalPolicy, EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS, sha256 } from "../../../evals/rca-real-world/contracts.mts";
+import { buildAdHocPrompt } from "../../../evals/rca-real-world/orchestrator.mts";
+import { createEvidenceTools } from "../../../evals/rca-real-world/evidence-tools.mts";
+import { createRawEvidenceTools } from "../../../evals/rca-real-world/raw-evidence-tools.mts";
 import {
   COMMUNICATION_LIMITS, messageInstruction, parseModelMessages, validateDiagnosticReport,
   type DiagnosticReport,
@@ -367,6 +370,32 @@ test("transport instructions distinguish a request handoff from final and blocke
   for (const heading of SKILLED_REPORT_HEADINGS) assert.ok(!baseline.includes(heading));
   assert.doesNotMatch(baseline, /Set A|Set B|eight numbered narrative headings/);
 });
+
+for (const evidenceTrack of ["prepared", "raw"] as const) {
+  for (const condition of ["with-skill", "without-skill"] as const) {
+    for (const reportOutput of ["prompt", "schema"] as const) {
+      test(`assembled prompt has one consistent approval policy: ${evidenceTrack}/${condition}/${reportOutput}`, () => {
+        const policy = approvalPolicy(evidenceTrack);
+        const other = approvalPolicy(evidenceTrack === "raw" ? "prepared" : "raw");
+        const tools = (evidenceTrack === "raw" ? createRawEvidenceTools : createEvidenceTools)({
+          caseRoot: ".", ledger: { consume: () => { throw new Error("Prompt contract only"); } },
+        }).tools;
+        const initial = buildAdHocPrompt(context.caseId, {}, tools, new Date("2026-11-05T00:00:00Z"), evidenceTrack);
+        for (const turn of [1, 2, 3]) {
+          const guidance = messageInstruction({
+            ...context, condition, evidenceTrack, reportOutput, messageId: `policy-check/turn-${turn}`,
+          });
+          const prompt = `${initial}\n\n${guidance}`;
+          assert.ok(!prompt.includes(other.expectedRisk));
+          assert.ok(prompt.includes(`expectedRisk ${JSON.stringify(policy.expectedRisk)} exactly`));
+          const examples = [...guidance.matchAll(/```json\n([\s\S]*?)\n```/g)].map((match) => JSON.parse(match[1]!));
+          const request = examples.find((example) => example.messageType === "evidence_request").approvalRequests[0];
+          for (const [key, value] of Object.entries(policy)) assert.equal(request[key], value);
+        }
+      });
+    }
+  }
+}
 
 for (const condition of ["with-skill", "without-skill"] as const) {
   for (const messageId of [context.messageId, 'invocation "quoted"\\path\nnext-line']) {

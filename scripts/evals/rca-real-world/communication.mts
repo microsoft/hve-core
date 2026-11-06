@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 import {
-  AD_HOC_APPROVAL_POLICY, COMMUNICATION_LIMITS, EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS, sha256, stableJson,
+  AD_HOC_APPROVAL_POLICY, approvalPolicy, COMMUNICATION_LIMITS, EVALUATION_PROTOCOL, SKILLED_REPORT_HEADINGS, sha256, stableJson,
+  type EvidenceTrack,
 } from "./contracts.mts";
 import { parseApprovalRequest, type ApprovalRequestItem } from "./approval.mts";
 import type { EvaluationCondition } from "./conditions.mts";
@@ -31,6 +32,7 @@ export interface MessageContext {
   readonly messageId: string;
   readonly caseId: string;
   readonly condition: EvaluationCondition;
+  readonly evidenceTrack?: EvidenceTrack;
   readonly reportOutput?: import("./contracts.mts").ReportOutput;
   readonly finalizing?: "final" | "blocked";
 }
@@ -234,6 +236,7 @@ export function validateDiagnosticReport(value: unknown, condition: EvaluationCo
 
 /** Builds transport and condition-specific output instructions without prescribing diagnostic sequencing. */
 export function messageInstruction(context: MessageContext): string {
+  const policy = approvalPolicy(context.evidenceTrack ?? "prepared");
   const identity = { protocol: EVALUATION_PROTOCOL, messageId: context.messageId, caseId: context.caseId };
   const exampleReport: DiagnosticReport = {
     candidate: { target: null, mechanism: null, confidence: "<confidence and evidence-based reason>" },
@@ -256,7 +259,7 @@ export function messageInstruction(context: MessageContext): string {
     parameters: {},
     evidenceSought: "<specific evidence sought>",
     target: context.caseId,
-    ...AD_HOC_APPROVAL_POLICY,
+    ...policy,
     expiresAt: "<exact host-supplied expiresAt>",
   };
   const examples = [
@@ -285,7 +288,7 @@ export function messageInstruction(context: MessageContext): string {
       "Both final and blocked reports MUST omit report.finding; it is a skilled-only field.",
     ]),
     "The following are complete JSON envelope examples, not evidence, diagnostic conclusions, or a required retrieval sequence. Choose exactly one message type; never return all examples. Replace angle-bracket placeholders and parameters with actual values matching the advertised tool schema; copy expiresAt from the current host timing instruction. The empty parameters object illustrates JSON shape only, not a valid call for every tool. Keep maximumCallCount exactly 1 for each separately enumerated call.",
-    `Copy scope ${JSON.stringify(AD_HOC_APPROVAL_POLICY.scope)} and expectedRisk ${JSON.stringify(AD_HOC_APPROVAL_POLICY.expectedRisk)} exactly, without appending or paraphrasing. These are fixed evaluation-policy values, not free-form descriptions. Put time windows, service filters, row limits, and other query bounds only in parameters according to the chosen tool schema; use evidenceSought to explain the evidence needed.`,
+    `Copy scope ${JSON.stringify(policy.scope)} and expectedRisk ${JSON.stringify(policy.expectedRisk)} exactly, without appending or paraphrasing. These are fixed evaluation-policy values, not free-form descriptions. Put time windows, service filters, row limits, and other query bounds only in parameters according to the chosen tool schema; use evidenceSought to explain the evidence needed.`,
     "The report examples illustrate abstention, not a required outcome. Fill candidate fields from your investigation and, for skilled reports, finding fields according to their status. Use actual limitations (or an empty array) and your complete narrative. Encode narrative newlines, quotes, and backslashes as JSON string escapes. Return one complete JSON value with no trailing text, extra closing brace, or trailing comma.",
     ...examples.filter((example) => !context.finalizing || example.messageType === context.finalizing)
       .map((example) => `Complete ${example.messageType} envelope example:\n\`\`\`json\n${JSON.stringify(example, null, 2)}\n\`\`\``),

@@ -5,11 +5,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import {
-  AD_HOC_APPROVAL_POLICY,
+  approvalPolicy, evidenceOperations, type EvidenceTrack,
   SKILLED_REPORT_HEADINGS,
   EXPECTED_CONTEXT_TIER,
   EVALUATION_CASE_IDS,
-  EVALUATION_PROTOCOL,
+  EVALUATION_PROTOCOL, RAW_EVIDENCE_FORMAT,
   evaluationModel, evaluationAiCreditLimit,
   type EvaluationProfile,
   EXPECTED_REASONING_EFFORT,
@@ -29,6 +29,7 @@ import { finalEnvelopeFormat } from "./schema-finalization.mts";
 import { redactApprovalParameters, type ApprovalRequestItem } from "./approval.mts";
 import { parseCliEvents, parseCliTurn } from "./cli-orchestrator.mts";
 import { evidenceRequestError } from "./evidence-tools.mts";
+import { rawEvidenceRequestError } from "./raw-evidence-tools.mts";
 import type { RedactionNotice } from "./redaction.mts";
 
 export type GateResult = true | false | "unassessable" | "not-applicable";
@@ -43,6 +44,16 @@ export interface HeldOutTruth {
 
 /** Preserves workflow conformance, structured diagnostic correctness, and unusable technical outcomes separately. */
 export interface TrialResult {
+  readonly evidenceTrack?: EvidenceTrack;
+  readonly rawEvidenceFormat?: string;
+  /** Execution counts do not by themselves prove successful decoding or causal evidence coverage. */
+  readonly evidenceAccess?: {
+    readonly fileReads: number;
+    readonly jsonlQueries: number;
+    readonly reportedBlocked: boolean;
+    readonly blocker?: string;
+    readonly evidenceCoverageReview: "pending-human-review";
+  };
   readonly reportOutput?: import("./contracts.mts").ReportOutput;
   readonly schemaVersion: string;
   readonly protocol?: string;
@@ -153,6 +164,12 @@ export function scoreTrial(
     artifact.firstResponse ?? "", ...(artifact.responses ?? []), final,
   ].join("\n");
   const integrityFailures: string[] = [];
+  if (artifact.evidenceTrack !== undefined && artifact.evidenceTrack !== "prepared" && artifact.evidenceTrack !== "raw") {
+    integrityFailures.push("unknown evidence track");
+  }
+  if (artifact.evidenceTrack === "raw" && artifact.rawEvidenceFormat !== RAW_EVIDENCE_FORMAT) {
+    integrityFailures.push("raw JSONL format identity was not established");
+  }
   const profile = artifact.requestedProfile.evaluationProfile;
   if (artifact.reportOutput !== undefined && artifact.reportOutput !== "prompt" && artifact.reportOutput !== "schema") {
     integrityFailures.push("unknown report output mode");
@@ -268,6 +285,17 @@ export function scoreTrial(
     schemaVersion: RESULT_SCHEMA_VERSION,
     protocol: artifact.protocol,
     reportOutput: artifact.reportOutput ?? "prompt",
+    evidenceTrack: artifact.evidenceTrack ?? "prepared",
+    rawEvidenceFormat: artifact.rawEvidenceFormat,
+    ...(artifact.evidenceTrack === "raw" ? {
+      evidenceAccess: {
+        fileReads: artifact.evidenceToolTraces.filter((trace) => asRecord(trace)?.tool === "read_file" && asRecord(trace)?.status === "executed").length,
+        jsonlQueries: artifact.evidenceToolTraces.filter((trace) => asRecord(trace)?.tool === "query_jsonl" && asRecord(trace)?.status === "executed").length,
+        reportedBlocked: outcome === "blocked",
+        blocker: outcome === "blocked" ? artifact.communication?.reason : undefined,
+        evidenceCoverageReview: "pending-human-review" as const,
+      },
+    } : {}),
     profile,
     runId: artifact.runId,
     sourceRevision: SOURCE_REVISION,
@@ -636,6 +664,8 @@ function auditCommunication(artifact: TrialArtifact): {
     errorCode ??= error instanceof CommunicationError ? error.code : "audit-mismatch";
   }
   const ledger = asRecord(artifact.approvalLedger);
+  const policy = approvalPolicy(artifact.evidenceTrack ?? "prepared");
+  const operations = evidenceOperations(artifact.evidenceTrack ?? "prepared");
   const records = Array.isArray(ledger?.records) ? ledger.records.map(asRecord) : [];
   const traces = Array.isArray(artifact.evidenceToolTraces) ? artifact.evidenceToolTraces.map(asRecord) : [];
   const approvalContract = Boolean(
@@ -649,19 +679,21 @@ function auditCommunication(artifact: TrialArtifact): {
       const matchingTraces = traces.filter((trace) => trace?.requestId === request.requestId);
       const record = matchingRecords[0];
       const trace = matchingTraces[0];
-      const expectedQueryError = evidenceRequestError(request.tool, request.parameters);
+      const expectedQueryError = artifact.evidenceTrack === "raw"
+        ? rawEvidenceRequestError(request.tool, request.parameters)
+        : evidenceRequestError(request.tool, request.parameters);
       return matchingRecords.length === 1 && matchingTraces.length === 1 && record && trace &&
         typeof record.approvalId === "string" && record.approvalId.trim().length > 0 &&
         record.simulated === true && record.provenance === "evaluation-fixture" &&
         record.principal === "simulated-requester" && record.accountableRole === "simulated-incident-requester" &&
         record.status === "Consumed" && record.consumedCallCount === 1 &&
-        record.maximumCallCount === AD_HOC_APPROVAL_POLICY.maximumCallCount &&
-        request.maximumCallCount === AD_HOC_APPROVAL_POLICY.maximumCallCount &&
-        EVIDENCE_OPERATIONS[request.tool] === request.operation &&
+        record.maximumCallCount === policy.maximumCallCount &&
+        request.maximumCallCount === policy.maximumCallCount &&
+        operations[request.tool] === request.operation &&
         record.tool === request.tool && record.operation === request.operation &&
         record.target === artifact.caseId && record.target === request.target &&
-        record.scope === AD_HOC_APPROVAL_POLICY.scope && record.scope === request.scope &&
-        record.expectedRisk === AD_HOC_APPROVAL_POLICY.expectedRisk && record.expectedRisk === request.expectedRisk &&
+        record.scope === policy.scope && record.scope === request.scope &&
+        record.expectedRisk === policy.expectedRisk && record.expectedRisk === request.expectedRisk &&
         record.evidenceSought === request.evidenceSought &&
         stableJson(record.parameters) === stableJson(redactApprovalParameters(request.parameters)) &&
         record.expiresAt === request.expiresAt && Array.isArray(record.verificationTimes) &&

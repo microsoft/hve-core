@@ -32,6 +32,41 @@ test("report CLI defaults to the current UTC day and preserves explicit date ove
   assert.throws(() => parseReportArguments([], now), /Usage:/);
 });
 
+test("raw reports label every output, separate access counts, and reject missing or mixed provenance", async (context) => {
+  const fixture = await reportFixture();
+  context.after(() => rm(fixture.repositoryRoot, { recursive: true, force: true }));
+  const identity = { evidenceTrack: "raw" as const, rawEvidenceFormat: "jsonl-unmapped-v1" };
+  const summaryPath = join(fixture.runRoot, "evaluation-summary.json");
+  const summary = await readJson<EvaluationSummary>(summaryPath);
+  const rawSummary: EvaluationSummary = {
+    ...summary, ...identity,
+    trials: summary.trials.map((trial) => ({
+      ...trial, ...identity, evidenceAccess: {
+        fileReads: 2, jsonlQueries: 1, reportedBlocked: false, evidenceCoverageReview: "pending-human-review",
+      },
+    })),
+  };
+  await writeJson(summaryPath, rawSummary);
+  const manifestPath = join(fixture.runRoot, "run-manifest.json");
+  await writeJson(manifestPath, { ...await readJson<Record<string, unknown>>(manifestPath), ...identity });
+  const sessionPath = join(trialDirectory(fixture.runRoot, "case-01", 1, "with-skill"), "session-artifact.json");
+  const original = await readJson<TrialArtifact>(sessionPath);
+  await writeJson(sessionPath, { ...original, ...identity });
+  const output = await generateEvidenceReport({ ...fixture, reviewDate: "2026-11-05" });
+  for (const path of [output.committedReportPath, output.reviewPath, output.prUpdatePath]) {
+    assert.match(await readFile(path, "utf8"), /Evidence track[^\n]*`raw`/);
+  }
+  const report = await readFile(output.committedReportPath, "utf8");
+  assert.match(report, /Raw evidence access/);
+  assert.match(report, /\| with-skill \| 2 \| 1 \| 0 \|/);
+  assert.match(report, /not proof of causal evidence coverage/);
+  await writeJson(sessionPath, original);
+  await assert.rejects(generateEvidenceReport({ ...fixture, reviewDate: "2026-11-05" }), /mixed session/);
+  await writeJson(sessionPath, { ...original, ...identity });
+  await writeJson(summaryPath, { ...rawSummary, trials: rawSummary.trials.map((trial) => ({ ...trial, evidenceAccess: undefined })) });
+  await assert.rejects(generateEvidenceReport({ ...fixture, reviewDate: "2026-11-05" }), /Raw evidence access/);
+});
+
 for (const incomplete of [false, true]) {
   test(`all reports disclose artifact redactions with incomplete=${incomplete} without inventing causality`, async (context) => {
     const fixture = await reportFixture();

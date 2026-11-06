@@ -14,6 +14,8 @@ import { gateSatisfied } from "./scoring.mts";
 import { writeLocalReports } from "./report-privacy.mts";
 
 interface RunManifest {
+  readonly evidenceTrack?: import("./contracts.mts").EvidenceTrack;
+  readonly rawEvidenceFormat?: string;
   readonly protocol: string;
   readonly profile: EvaluationProfile;
   readonly reportOutput?: import("./contracts.mts").ReportOutput;
@@ -112,11 +114,15 @@ export async function generateEvidenceReport(options: {
   if (
     summary.protocol !== EVALUATION_PROTOCOL || manifest.protocol !== summary.protocol ||
     manifest.profile !== profile || summary.model !== evaluationModel(profile) ||
+    (manifest.evidenceTrack ?? "prepared") !== (summary.evidenceTrack ?? "prepared") ||
+    manifest.rawEvidenceFormat !== summary.rawEvidenceFormat ||
     (manifest.reportOutput ?? "prompt") !== (summary.reportOutput ?? "prompt") ||
     manifest.model !== summary.model || manifest.reasoningEffort !== summary.reasoningEffort ||
     manifest.contextTier !== summary.contextTier ||
     summary.trials.some((trial) =>
       trial.protocol !== summary.protocol || trial.profile !== profile ||
+      (trial.evidenceTrack ?? "prepared") !== (summary.evidenceTrack ?? "prepared") ||
+      trial.rawEvidenceFormat !== summary.rawEvidenceFormat ||
       (trial.reportOutput ?? "prompt") !== (summary.reportOutput ?? "prompt") ||
       trial.model !== summary.model || trial.reasoningEffort !== summary.reasoningEffort ||
       trial.contextTier !== summary.contextTier
@@ -124,6 +130,14 @@ export async function generateEvidenceReport(options: {
   ) {
     throw new Error(`Cannot report mixed or historical profiles, models, protocols, or report output modes; ${EVALUATION_PROTOCOL} provenance must match`);
   }
+  if (summary.evidenceTrack === "raw" && (
+    summary.rawEvidenceFormat !== "jsonl-unmapped-v1" ||
+    summary.trials.some((trial) => !trial.evidenceAccess ||
+      !Number.isSafeInteger(trial.evidenceAccess.fileReads) || trial.evidenceAccess.fileReads < 0 ||
+      !Number.isSafeInteger(trial.evidenceAccess.jsonlQueries) || trial.evidenceAccess.jsonlQueries < 0 ||
+      trial.evidenceAccess.reportedBlocked !== (trial.outcome === "blocked") ||
+      trial.evidenceAccess.evidenceCoverageReview !== "pending-human-review")
+  )) throw new Error("Raw evidence access or JSONL format provenance is missing or invalid");
   if (summary.trials.some((trial) =>
     !["candidate", "abstained", "blocked", "protocol-error", "execution-error"].includes(trial.outcome) ||
     (trial.integrity === "pass"
@@ -223,6 +237,8 @@ Aborted sessions are failures, not completed RCA analyses.
 | Protocol | \`${summary.protocol}\` |
 | Evaluation profile | \`${summary.profile}\` |
 | Report output | \`${summary.reportOutput ?? "prompt"}\` |
+| Evidence track | \`${summary.evidenceTrack ?? "prepared"}\` |
+| Raw evidence format | \`${summary.rawEvidenceFormat ?? "Not applicable"}\` |
 | Model | \`${manifest.model}\` |
 | Reasoning effort | \`${manifest.reasoningEffort}\` |
 | Context tier | \`${manifest.contextTier}\` |
@@ -235,7 +251,20 @@ Aborted sessions are failures, not completed RCA analyses.
 | Latest round execution status | ${summary.roundExecution?.status ?? "Unavailable - not recorded"} |
 | Remaining sessions in latest round | ${summary.roundExecution?.remainingSessions ?? "Unavailable - not recorded"} |
 
-## Commands
+${summary.evidenceTrack === "raw" ? `## Raw evidence access
+
+These are execution counts, not proof of causal evidence coverage. Review evidence access
+separately from diagnosis and human causal adjudication. This cohort differs from the prepared
+cohort, so comparisons do not isolate preparation's causal effect.
+
+| Condition | File reads | JSONL queries | Reported blockers |
+|-----------|-----------:|--------------------:|------------------:|
+${selectedConditions(summary.mode).map((condition) => {
+    const trials = summary.trials.filter((trial) => trial.condition === condition);
+    return `| ${condition} | ${trials.reduce((sum, trial) => sum + (trial.evidenceAccess?.fileReads ?? 0), 0)} | ${trials.reduce((sum, trial) => sum + (trial.evidenceAccess?.jsonlQueries ?? 0), 0)} | ${trials.filter((trial) => trial.evidenceAccess?.reportedBlocked).length} |`;
+  }).join("\n")}
+
+` : ""}## Commands
 
 | Command | Exit code | Purpose |
 |---------|----------:|---------|
@@ -317,6 +346,8 @@ ${profileNotice(summary)}
 * Protocol: \`${summary.protocol}\`
 * Evaluation profile: \`${summary.profile}\`
 * Report output: \`${summary.reportOutput ?? "prompt"}\`
+* Evidence track: \`${summary.evidenceTrack ?? "prepared"}\`
+* Raw evidence format: \`${summary.rawEvidenceFormat ?? "Not applicable"}\`
 * Model: \`${summary.model}\`
 * Repository commit: \`${manifest.repositoryCommit}\`
 * Input fingerprint: \`${manifest.inputFingerprint}\`
@@ -367,6 +398,8 @@ Executed ${summary.trials.length} blinded sessions across ${caseCount} selected 
 cases using \`${summary.model}\`, medium reasoning effort, and the default context tier.
 Profile: \`${summary.profile}\`. Protocol: \`${summary.protocol}\`.
 Report output: \`${summary.reportOutput ?? "prompt"}\`.
+Evidence track: \`${summary.evidenceTrack ?? "prepared"}\`.
+Raw evidence format: \`${summary.rawEvidenceFormat ?? "Not applicable"}\`.
 Condition selection: \`${summary.mode}\`. See the evidence report for condition-separated
 outcomes and matched-pair differences; no general skill-effectiveness claim is implied.
 Outcomes: ${summary.trials.filter((trial) => trial.outcome === "candidate").length} candidates,
@@ -483,6 +516,8 @@ async function readPremiumRequestCosts(
     const artifact = await readJson<{
       protocol?: string;
       reportOutput?: import("./contracts.mts").ReportOutput;
+      evidenceTrack?: import("./contracts.mts").EvidenceTrack;
+      rawEvidenceFormat?: string;
       requestedProfile?: { evaluationProfile?: EvaluationProfile; model?: string };
       cliCapture?: Readonly<Record<string, unknown>>;
     }>(
@@ -491,6 +526,8 @@ async function readPremiumRequestCosts(
     if (
       artifact.protocol !== summary.protocol ||
       (artifact.reportOutput ?? "prompt") !== (summary.reportOutput ?? "prompt") ||
+      (artifact.evidenceTrack ?? "prepared") !== (summary.evidenceTrack ?? "prepared") ||
+      artifact.rawEvidenceFormat !== summary.rawEvidenceFormat ||
       artifact.requestedProfile?.evaluationProfile !== summary.profile ||
       artifact.requestedProfile?.model !== summary.model
     ) {

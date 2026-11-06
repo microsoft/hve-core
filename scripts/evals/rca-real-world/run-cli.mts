@@ -9,6 +9,7 @@ import { runRound } from "./runner.mts";
 import {
   EVALUATION_RUN_DIRECTORY, parseEvaluationProfile, readJson, writeJson, type EvaluationProfile,
   parseReportOutput, type ReportOutput,
+  parseEvidenceTrack, type EvidenceTrack,
 } from "./contracts.mts";
 import { parseEvaluationMode, type EvaluationMode } from "./conditions.mts";
 
@@ -19,6 +20,7 @@ export function parseRunArguments(args: readonly string[]): {
   readonly mode?: EvaluationMode;
   readonly profile?: EvaluationProfile;
   readonly reportOutput?: ReportOutput;
+  readonly evidenceTrack?: EvidenceTrack;
   readonly interactive: boolean;
   readonly continueAfterTechnicalStop: boolean;
 } {
@@ -30,6 +32,7 @@ export function parseRunArguments(args: readonly string[]): {
       conditions: { type: "string" },
       profile: { type: "string" },
       "report-output": { type: "string" },
+      track: { type: "string" },
       interactive: { type: "boolean", default: false },
       "continue-after-technical-stop": { type: "boolean", default: false },
     },
@@ -47,6 +50,7 @@ export function parseRunArguments(args: readonly string[]): {
     mode: values.conditions === undefined ? undefined : parseEvaluationMode(values.conditions),
     profile: values.profile === undefined ? undefined : parseEvaluationProfile(values.profile),
     reportOutput: values["report-output"] === undefined ? undefined : parseReportOutput(values["report-output"]),
+    evidenceTrack: values.track === undefined ? undefined : parseEvidenceTrack(values.track),
     interactive: values.interactive,
     continueAfterTechnicalStop: values["continue-after-technical-stop"],
   };
@@ -121,23 +125,21 @@ if (import.meta.main) {
       }
     },
   });
+  const repositoryRoot = resolve(import.meta.dirname, "..", "..", "..");
+  const runRoot = join(repositoryRoot, ".copilot-tracking", "evaluations", EVALUATION_RUN_DIRECTORY, options.runId);
+  const preparation = await readJson<{ evidenceTrack?: EvidenceTrack }>(join(runRoot, "inputs", "scorer-only", "preparation-manifest.json"));
   const summary = await runRound({
-    repositoryRoot: resolve(import.meta.dirname, "..", "..", ".."),
+    repositoryRoot,
+    runRoot,
     runId: options.runId,
     round: options.round,
     mode,
     profile,
     reportOutput: options.reportOutput,
+    evidenceTrack: options.evidenceTrack,
     continueAfterTechnicalStop: options.continueAfterTechnicalStop,
   });
 
-  const runRoot = join(
-    resolve(import.meta.dirname, "..", "..", ".."),
-    ".copilot-tracking",
-    "evaluations",
-    EVALUATION_RUN_DIRECTORY,
-    options.runId,
-  );
   const commandPath = join(runRoot, "commands.json");
   const existing = await readJson<{
     schemaVersion: string;
@@ -149,7 +151,7 @@ if (import.meta.main) {
     commands: [
       ...existing.commands,
       {
-        command: `node scripts/evals/rca-real-world/run-cli.mts --run-id ${options.runId} --round ${options.round} --conditions ${summary.mode} --profile ${summary.profile} --report-output ${summary.reportOutput}${options.continueAfterTechnicalStop ? " --continue-after-technical-stop" : ""}`,
+        command: `node scripts/evals/rca-real-world/run-cli.mts --run-id ${options.runId} --round ${options.round} --conditions ${summary.mode} --profile ${summary.profile} --report-output ${summary.reportOutput} --track ${summary.evidenceTrack ?? "prepared"}${options.continueAfterTechnicalStop ? " --continue-after-technical-stop" : ""}`,
         exitCode: paused ? 2 : 0,
         purpose: `Execute and score trial round ${options.round} (${summary.mode})`,
       },
@@ -161,6 +163,7 @@ if (import.meta.main) {
       runId: summary.runId,
       conditions: summary.mode,
       profile: summary.profile,
+      evidenceTrack: summary.evidenceTrack,
       model: summary.model,
       protocol: summary.protocol,
       completedTrials: summary.trials.length,

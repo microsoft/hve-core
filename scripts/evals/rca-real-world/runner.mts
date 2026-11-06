@@ -14,6 +14,7 @@ import {
   evaluationModel, evaluationAiCreditLimit, PRODUCTION_RUN_AI_CREDITS,
   parseEvaluationProfile,
   parseReportOutput, type ReportOutput,
+  parseEvidenceTrack, RAW_EVIDENCE_FORMAT, type EvidenceTrack,
   type EvaluationProfile,
   EXPECTED_REASONING_EFFORT,
   TRANSFORMATION_VERSION,
@@ -37,6 +38,7 @@ import {
   trialDirectory,
   type EvaluationMode,
 } from "./conditions.mts";
+import { verifyRawRun } from "./raw-prepare.mts";
 
 const execFileAsync = promisify(execFile);
 const SOURCE_REVISION = "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e";
@@ -51,6 +53,7 @@ export interface RunRoundOptions {
   /** Defaults to debug for a new run; continuation inherits the immutable manifest profile. */
   readonly profile?: EvaluationProfile;
   readonly reportOutput?: ReportOutput;
+  readonly evidenceTrack?: EvidenceTrack;
   readonly runtimeFactory?: Parameters<typeof runCliTrial>[0]["runtimeFactory"];
   /** Requires an explicit coordinator-approved continuation of a technical-failure stop. */
   readonly continueAfterTechnicalStop?: boolean;
@@ -71,6 +74,8 @@ export interface RoundExecutionCheckpoint {
 }
 
 export interface EvaluationSummary {
+  readonly evidenceTrack?: EvidenceTrack;
+  readonly rawEvidenceFormat?: string;
   readonly schemaVersion: "2.0.0";
   readonly protocol: typeof EVALUATION_PROTOCOL;
   readonly profile: EvaluationProfile;
@@ -110,8 +115,14 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       EVALUATION_RUN_DIRECTORY,
       options.runId,
     );
-  const prepared = await assertPrepared(runRoot);
-  const currentFingerprint = await createInputFingerprint(options.repositoryRoot, runRoot);
+  const preparation = await readJson<{ evidenceTrack?: string; parquetReader?: string }>(join(runRoot, "inputs", "scorer-only", "preparation-manifest.json"));
+  const evidenceTrack = parseEvidenceTrack(preparation.evidenceTrack ?? "prepared");
+  if (options.evidenceTrack !== undefined && options.evidenceTrack !== evidenceTrack) {
+    throw new Error("Requested evidence track does not match prepared input identity");
+  }
+  const rawEvidenceFormat = evidenceTrack === "raw" ? RAW_EVIDENCE_FORMAT : undefined;
+  const prepared: { readonly parquetReader?: string } = evidenceTrack === "raw" ? (await verifyRawRun(runRoot), { parquetReader: preparation.parquetReader }) : await assertPrepared(runRoot);
+  const currentFingerprint = await createInputFingerprint(options.repositoryRoot, runRoot, evidenceTrack);
   const manifestPath = join(runRoot, "run-manifest.json");
   const resuming = options.continueAfterTechnicalStop === true;
   const priorManifest = options.round === 1 && !resuming ? undefined : await readJson<{
@@ -127,6 +138,8 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     reportOutput?: string;
     sessionAiCreditLimit?: number;
     aiCreditBudget?: number;
+    evidenceTrack?: EvidenceTrack;
+    rawEvidenceFormat?: string;
   }>(manifestPath);
   if (priorManifest && (priorManifest.schemaVersion !== "2.0.0" || priorManifest.runId !== options.runId)) {
     throw new Error("A new paired-evaluation run is required for this manifest");
@@ -134,6 +147,10 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
   if (priorManifest && priorManifest.protocol !== EVALUATION_PROTOCOL) {
     throw new Error(`Cannot continue a historical protocol; start a new ${EVALUATION_PROTOCOL} run`);
   }
+  if (priorManifest && (
+    (priorManifest.evidenceTrack ?? "prepared") !== evidenceTrack ||
+    priorManifest.rawEvidenceFormat !== rawEvidenceFormat
+  )) throw new Error("Evidence track and raw format identity cannot change after round one");
   if (priorManifest && priorManifest.profile === undefined) {
     throw new Error("Cannot continue a run without an immutable evaluation profile");
   }
@@ -160,7 +177,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
   if (priorManifest && priorManifest.mode !== mode) {
     throw new Error("Evaluation conditions cannot change after round one");
   }
-  const expectedResultIdentity = { runId: options.runId, profile, model, reportOutput };
+  const expectedResultIdentity = { runId: options.runId, profile, model, reportOutput, evidenceTrack, rawEvidenceFormat };
   const existingResults = await readAllResults(runRoot, mode, expectedResultIdentity);
   if (options.round === 1 && !resuming) {
     try {
@@ -176,6 +193,8 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       protocol: EVALUATION_PROTOCOL,
       profile,
       reportOutput,
+      evidenceTrack,
+      rawEvidenceFormat,
       mode,
       runId: options.runId,
       sourceRevision: SOURCE_REVISION,
@@ -277,6 +296,7 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
       condition: item.condition,
       profile,
       reportOutput,
+      evidenceTrack,
       aiCreditLimit,
       runtimeFactory: options.runtimeFactory,
       cliInvoker: options.cliInvoker,
@@ -345,6 +365,8 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     protocol: EVALUATION_PROTOCOL,
     profile,
     reportOutput,
+    evidenceTrack,
+    rawEvidenceFormat,
     mode,
     runId: options.runId,
     sourceRevision: SOURCE_REVISION,
@@ -358,6 +380,11 @@ export async function runRound(options: RunRoundOptions): Promise<EvaluationSumm
     roundOneCheckpoint,
     limitations: [
       "The cases are controlled fault injections, not organic production incidents.",
+      ...(evidenceTrack === "raw" ? [
+        "Raw cohort: row-preserving Parquet-to-JSONL conversion only, without metric mapping or specialized evidence queries; this does not evaluate original-format access.",
+        "The raw and prepared cohorts contain different cases; differences do not isolate the causal effect of preparation.",
+        "Raw access counts distinguish file reads, generic JSONL queries and reported blockers; causal evidence coverage still requires human review.",
+      ] : []),
       `${EVALUATION_CASE_IDS.length} selected cases and the scheduled sessions do not establish a general RCA accuracy rate.`,
       "Approvals are simulated evaluation fixtures and do not establish production authority.",
       `Both conditions use the ${EVALUATION_PROTOCOL} autonomous host-mediated evidence protocol with bounded, simulated per-call approvals.`,
@@ -455,7 +482,7 @@ async function requireResults(runRoot: string, trial: number, mode: EvaluationMo
 
 async function readAllResults(
   runRoot: string, mode: EvaluationMode,
-  expected: Pick<EvaluationSummary, "runId" | "profile" | "model" | "reportOutput">,
+  expected: Pick<EvaluationSummary, "runId" | "profile" | "model" | "reportOutput" | "evidenceTrack" | "rawEvidenceFormat">,
 ): Promise<readonly TrialResult[]> {
   const results: TrialResult[] = [];
   for (const item of createConditionSchedule(3, mode)) {
@@ -468,6 +495,8 @@ async function readAllResults(
       if (!result || result.schemaVersion !== "2.0.0" || result.protocol !== EVALUATION_PROTOCOL ||
           result.runId !== expected.runId || result.profile !== expected.profile || result.model !== expected.model ||
           (result.reportOutput ?? "prompt") !== (expected.reportOutput ?? "prompt") ||
+          (result.evidenceTrack ?? "prepared") !== (expected.evidenceTrack ?? "prepared") ||
+          result.rawEvidenceFormat !== expected.rawEvidenceFormat ||
           result.reasoningEffort !== EXPECTED_REASONING_EFFORT || result.contextTier !== EXPECTED_CONTEXT_TIER ||
           result.condition !== item.condition || result.caseId !== item.caseId || result.trial !== item.trial ||
           !["candidate", "abstained", "blocked", "protocol-error", "execution-error"].includes(result.outcome) ||
@@ -490,6 +519,7 @@ async function readAllResults(
 export async function createInputFingerprint(
   repositoryRoot: string,
   runRoot: string,
+  evidenceTrack: EvidenceTrack = "prepared",
 ): Promise<string> {
   const roots = [
     join(repositoryRoot, "evals", "rca-real-world"),
@@ -515,8 +545,14 @@ export async function createInputFingerprint(
     });
   }
   for (const caseId of EVALUATION_CASE_IDS) {
-    for (const name of ["metric-columns.json", "incident.json", "source-coverage.json"]) {
+    for (const name of (await readdir(join(runRoot, "inputs", "model-visible", caseId))).sort(compareStrings)) {
       const path = `inputs/model-visible/${caseId}/${name}`;
+      files.push({ path, sha256: sha256(await readFile(join(runRoot, ...path.split("/")))) });
+    }
+  }
+  if (evidenceTrack === "raw") {
+    for (const name of ["raw-cases.json", "cases.parquet", ...EVALUATION_CASE_IDS.map((caseId) => `truth/${caseId}.json`)]) {
+      const path = `inputs/scorer-only/${name}`;
       files.push({ path, sha256: sha256(await readFile(join(runRoot, ...path.split("/")))) });
     }
   }

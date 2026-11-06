@@ -6,6 +6,14 @@ import { test } from "node:test";
 
 import { parseRunArguments, selectEvaluationProfile } from "../../../evals/rca-real-world/run-cli.mts";
 
+test("parses raw track selection without changing continuation inheritance", () => {
+  const args = ["--run-id", "fixture", "--round", "1"];
+  assert.equal(parseRunArguments(args).evidenceTrack, undefined);
+  assert.equal(parseRunArguments([...args, "--track", "raw"]).evidenceTrack, "raw");
+  assert.equal(parseRunArguments([...args, "--track", "prepared"]).evidenceTrack, "prepared");
+  assert.throws(() => parseRunArguments([...args, "--track", "other"]), /prepared or raw/);
+});
+
 test("parses report output without replacing the continuation inheritance sentinel", () => {
   const args = ["--run-id", "fixture", "--round", "1"];
   assert.equal(parseRunArguments(args).reportOutput, undefined);

@@ -30,6 +30,66 @@ import { sanitizeRun } from "../../../evals/rca-real-world/sanitize-run.mts";
 import type { TrialArtifact } from "../../../evals/rca-real-world/orchestrator.mts";
 import type { SchemaRuntime } from "../../../evals/rca-real-world/schema-runtime.mts";
 
+for (const condition of ["with-skill", "without-skill"] as const) {
+  test(`raw oversized-row feedback permits a new exactly approved projection: ${condition}`, async (context) => {
+    const root = await preparedRun();
+    context.after(() => rm(root, { recursive: true, force: true }));
+    const caseRoot = join(root, "inputs", "model-visible", "case-02");
+    for (const name of await readdir(caseRoot)) {
+      if (!["incident.json", "metrics.jsonl"].includes(name)) await rm(join(caseRoot, name));
+    }
+    await writeFile(join(caseRoot, "metrics.jsonl"), [
+      { id: 1, payload: "x".repeat(65536) }, { id: 2, payload: "small" },
+    ].map(row => JSON.stringify(row)).join("\n") + "\n");
+    const fake = fakeCliInvoker();
+    let turns = 0;
+    const artifact = await runCliTrial({
+      repositoryRoot: resolve("."), runRoot: root, runId: "raw-size-recovery",
+      caseId: "case-02", trial: 1, condition, evidenceTrack: "raw", clock: () => NOW,
+      cliInvoker: async (args, options) => {
+        if (!args.includes("-p")) return fake(args, options);
+        const prompt = args[args.indexOf("-p") + 1]!;
+        turns++;
+        if (turns === 3) {
+          assert.match(prompt, /"id": 1/);
+          assert.match(prompt, /"id": 2/);
+          return fake(args, options);
+        }
+        assert.ok(turns <= 2);
+        if (turns === 2) {
+          assert.match(prompt, /"nonProgress": true/);
+          assert.match(prompt, /"rowCount": 0/);
+          assert.match(prompt, /"oversizedRow":/);
+          assert.match(prompt, /new exact approval/);
+        }
+        const envelope = JSON.parse(approvalResponse("case-02").split("```json\n")[1]!.split("\n```")[0]!);
+        Object.assign(envelope.approvalRequests[0], {
+          tool: "query_jsonl", operation: "query", expectedRisk: "read-only bounded JSONL evidence",
+          parameters: { path: "metrics.jsonl", ...(turns === 2 ? { columns: '["id"]' } : {}) },
+        });
+        return result(JSON.stringify({
+          type: "assistant.message", data: {
+            phase: "final_answer", content: "```json\n" + JSON.stringify(envelope) + "\n```",
+          },
+        }), prompt, condition === "with-skill");
+      },
+    });
+    assert.equal(turns, 3);
+    assert.equal(artifact.endReason, "complete", artifact.error);
+    const records = (artifact.approvalLedger as {
+      records: { approvalId: string; status: string; consumedCallCount: number }[];
+    }).records;
+    assert.equal(records.length, 2);
+    assert.notEqual(records[0]!.approvalId, records[1]!.approvalId);
+    assert.ok(records.every(record => record.status === "Consumed" && record.consumedCallCount === 1));
+    const truth = JSON.parse(await readFile(join(root, "inputs", "scorer-only", "truth", "case-02.json"), "utf8"));
+    const scored = scoreTrial(artifact, truth, "fixture");
+    assert.equal(scored.integrity, "pass", scored.integrityFailures.join("; "));
+    assert.equal(scored.strictGates.approvalContract, true);
+    assert.equal(scored.strictGates.noUnauthorizedToolCall, true);
+  });
+}
+
 test("fingerprints input paths in code-unit order", async (context) => {
   const root = await mkdtemp(join(tmpdir(), "rca-fingerprint-"));
   context.after(() => rm(root, { recursive: true, force: true }));

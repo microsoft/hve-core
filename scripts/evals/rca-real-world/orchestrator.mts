@@ -13,6 +13,7 @@ import {
 } from "./approval.mts";
 import {
   AD_HOC_APPROVAL_POLICY,
+  approvalPolicy, type EvidenceTrack,
   COMMUNICATION_LIMITS,
   EXPECTED_CONTEXT_TIER,
   EVALUATION_CASE_IDS,
@@ -75,6 +76,8 @@ export interface TrialArtifact {
   readonly trial: number;
   readonly protocol?: string;
   readonly reportOutput?: import("./contracts.mts").ReportOutput;
+  readonly evidenceTrack?: EvidenceTrack;
+  readonly rawEvidenceFormat?: string;
   readonly responses?: readonly string[];
   readonly cliCapture?: Readonly<Record<string, unknown>>;
   readonly report?: DiagnosticReport;
@@ -321,10 +324,14 @@ export function buildAdHocPrompt(
   incident: unknown,
   tools: readonly ToolDefinition[],
   now: Date,
+  evidenceTrack: EvidenceTrack = "prepared",
 ): string {
+  const policy = approvalPolicy(evidenceTrack);
   return [
     `Investigate neutral incident ${caseId} and identify its most likely root cause.`,
-    "The read-only tools below provide access to additional incident evidence. You are encouraged, but not required, to use them. You choose the calls, parameters, order, and when to finish.",
+    evidenceTrack === "raw"
+      ? "The tools below expose conversion-only unmapped JSONL. Rows retain original fields and JSON-compatible values; there are no metric identities, renamed columns, or precomputed aggregates. Inspect original fields yourself; both conditions have exactly the same host capabilities: bounded file reads and generic JSONL filters, projections and on-demand numeric summaries. No shell, generated code, network or package installation is available. This evaluates analysis of unmapped JSONL, not original-format access. Report any precise evidence-access blocker rather than guessing."
+      : "The read-only tools below provide access to additional incident evidence. You are encouraged, but not required, to use them. You choose the calls, parameters, order, and when to finish.",
     "Explain your conclusion, supporting evidence, uncertainty, alternatives, and important limitations. Do not fabricate evidence or present an unverified guess as a verified root cause.",
     "Use the host's structured message contract for your best overall candidate, mechanism and confidence. Keep your complete explanation in its narrative field.",
     "This is an isolated evaluation fixture. Tool approvals are simulated and are not production authorization; preserve that distinction in your report.",
@@ -335,7 +342,7 @@ export function buildAdHocPrompt(
     `Evidence results have a ${COMMUNICATION_LIMITS.resultBytes}-byte UTF-8 limit, complete batches ${COMMUNICATION_LIMITS.batchBytes} bytes, and complete prompts ${COMMUNICATION_LIMITS.promptBytes} bytes. Keep request batches within these shared delivery budgets.`,
     "An unavailable modality returns availability=unavailable with an availabilityReason, not a failed investigation. Paginated tools return pageComplete and optional nextCursor. To continue, request the same tool and exact query parameters plus that cursor under a new approval. Each page counts as an evidence call; you choose whether further pages are needed. sourceComplete describes source coverage, not page completion. nonProgress and oversizedRow explicitly identify a row that cannot fit; do not treat it as an empty result or retry the same query unchanged. Trace summaries with summaryScope=page describe only that page's representative rows.",
     "An approved request that violates the advertised parameter schema or time-window rules returns error.code invalid-tool-parameters, invalid-time-window, or time-window-too-large, not evidence. It consumes its exact approval and one evidence call. You may correct the request under a new exact approval within the remaining budgets, or report the gap. Cursor case/query binding failures remain fatal. A sole final-answer envelope with malformed JSON or invalid field placement may receive one explicit format-correction turn within the same budgets, including an evidence_request. Preserve its message type and intended content, use the new invocation identity, and obtain fresh exact approvals before any corrected evidence call executes. All original messages remain audited. Other protocol and execution failures remain fatal.",
-    `Use target "${caseId}", scope ${JSON.stringify(AD_HOC_APPROVAL_POLICY.scope)}, maximumCallCount ${AD_HOC_APPROVAL_POLICY.maximumCallCount}, and expectedRisk ${JSON.stringify(AD_HOC_APPROVAL_POLICY.expectedRisk)}. Copy scope and expectedRisk exactly; do not append query details. Put query bounds in parameters. Requests are validated before the host simulates approval and executes the exact calls. No writes, shells, network clients, other cases, or wildcards are permitted.`,
+    `Use target "${caseId}", scope ${JSON.stringify(policy.scope)}, maximumCallCount ${policy.maximumCallCount}, and expectedRisk ${JSON.stringify(policy.expectedRisk)}. Copy scope and expectedRisk exactly; do not append query details. Put query bounds in parameters. Requests are validated before the host simulates approval and executes the exact calls. No evidence writes, host shells, network access, other cases, or wildcards are permitted.`,
     "You may finish without requesting any tools. Follow the communication contract, not prose markers, to identify completion.",
     approvalTimingInstruction(now),
     `Available tools:\n${stableJson(tools.map(({ name, description, parameters }) => ({

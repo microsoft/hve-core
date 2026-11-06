@@ -12,7 +12,8 @@ export const EVALUATION_RUN_DIRECTORY = "rcaeval-three-case";
 export const EXPECTED_MODEL = "gpt-5.6-sol";
 export const EXPECTED_REASONING_EFFORT = "medium";
 export const EXPECTED_CONTEXT_TIER = "default";
-export const EVALUATION_PROTOCOL = "ad-hoc-v10";
+export const EVALUATION_PROTOCOL = "ad-hoc-v12";
+export const RAW_EVIDENCE_FORMAT = "jsonl-unmapped-v1";
 export const PRODUCTION_RUN_AI_CREDITS = 6000;
 export const COMMUNICATION_LIMITS = {
   modelTurns: 8, evidenceCalls: 24, approvalsPerBatch: 12, resultRows: 100,
@@ -23,12 +24,37 @@ export const COMMUNICATION_LIMITS = {
 export const EVIDENCE_OPERATIONS: Readonly<Record<string, string>> = {
   read_incident_scope: "read", aggregate_metrics: "aggregate", compare_metrics: "compare",
   search_logs: "search", summarize_traces: "summarize",
+  list_files: "list", read_file: "read", query_jsonl: "query",
 };
 export const AD_HOC_APPROVAL_POLICY = {
   scope: "current neutral case only",
   maximumCallCount: 1,
   expectedRisk: "read-only bounded fixture evidence",
 } as const;
+
+/** Distinguishes prepared query stores from unchanged source files; immutable within a run. */
+export type EvidenceTrack = "prepared" | "raw";
+
+/** Keeps each track's tool allowlist independent even though approval records share a protocol. */
+export function evidenceOperations(track: EvidenceTrack): Readonly<Record<string, string>> {
+  return Object.fromEntries(Object.entries(EVIDENCE_OPERATIONS).filter(([name]) =>
+    ["list_files", "read_file", "query_jsonl"].includes(name) === (track === "raw")));
+}
+
+/** Rejects unsupported evidence tracks rather than silently preparing raw inputs. */
+export function parseEvidenceTrack(value: string): EvidenceTrack {
+  if (value !== "prepared" && value !== "raw") throw new Error("Expected evidence track prepared or raw");
+  return value;
+}
+
+/** Conversion-only queries are read-only and do not execute model-generated code. */
+export function approvalPolicy(track: EvidenceTrack = "prepared"): {
+  readonly scope: string; readonly maximumCallCount: number; readonly expectedRisk: string;
+} {
+  return track === "raw"
+    ? { ...AD_HOC_APPROVAL_POLICY, expectedRisk: "read-only bounded JSONL evidence" }
+    : AD_HOC_APPROVAL_POLICY;
+}
 export const SKILLED_REPORT_HEADINGS = [
   "1. Status and Finding",
   "2. Source Coverage",

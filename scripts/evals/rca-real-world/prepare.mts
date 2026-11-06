@@ -3,7 +3,7 @@
 
 import { createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -78,7 +78,7 @@ const HUGGING_FACE_API = `https://huggingface.co/api/datasets/${DATASET_ID}`;
 const RUN_ID_PATTERN = /^[a-z0-9][a-z0-9-]{2,63}$/;
 const PARQUET_BUNDLE_URL = "https://esm.sh/hyparquet@1.31.5/node/hyparquet.bundle.mjs";
 const PARQUET_BUNDLE_SHA256 = "fdd28364b0dde800dea00979cbd3ddee26a053bb0d15b17820e0f865b9ab8178";
-const PARQUET_READER_IDENTITY = `hyparquet@1.31.5:${PARQUET_BUNDLE_SHA256}`;
+export const PARQUET_READER_IDENTITY = `hyparquet@1.31.5:${PARQUET_BUNDLE_SHA256}`;
 
 /**
  * Prepares the configured neutral RCAEval workspaces and held-out scoring manifests.
@@ -310,13 +310,12 @@ async function prepareCase(options: {
     }
     const storeName = `${modality}.jsonl`;
     const storePath = resolveInside(visibleCaseRoot, storeName);
-    const content = rows.map((row) => JSON.stringify(normalizeRow(row))).join("\n") + "\n";
-    await writeFile(storePath, content, "utf8");
+    const converted = await writeJsonlRows(storePath, rows);
     modalities.push({
       modality,
       rowCount: rows.length,
       storePath: storeName,
-      sha256: sha256(content),
+      sha256: converted.sha256,
     });
   }
 
@@ -420,7 +419,8 @@ async function downloadAndVerify(
   return outputPath;
 }
 
-async function createPinnedParquetReader(fetchImpl: typeof fetch): Promise<{
+/** Loads the hash-pinned coordinator reader; callers must dispose it, and raw trials never receive it. */
+export async function createPinnedParquetReader(fetchImpl: typeof fetch): Promise<{
   readonly read: (path: string) => Promise<readonly Record<string, unknown>[]>;
   readonly dispose: () => Promise<void>;
 }> {
@@ -450,7 +450,8 @@ async function createPinnedParquetReader(fetchImpl: typeof fetch): Promise<{
   };
 }
 
-function extractTruth(
+/** Extracts scorer-only labels from the pinned index without transforming telemetry. */
+export function extractTruth(
   indexRows: readonly Record<string, unknown>[],
   caseContract: CaseContract,
 ): {
@@ -506,7 +507,8 @@ function mechanismFor(fault: string): string {
   return `A code-level condition compatible with the held-out ${fault} fault.`;
 }
 
-async function hashAndCountLines(path: string): Promise<{ sha256: string; rowCount: number }> {
+/** Hashes exact JSONL bytes and counts nonempty rows without loading the complete store. */
+export async function hashAndCountLines(path: string): Promise<{ sha256: string; rowCount: number }> {
   const hash = createHash("sha256");
   let rowCount = 0;
   let trailing = "";
@@ -525,6 +527,28 @@ async function hashAndCountLines(path: string): Promise<{ sha256: string; rowCou
 
 function normalizeRow(row: Record<string, unknown>): Record<string, unknown> {
   return JSON.parse(stableJson(row)) as Record<string, unknown>;
+}
+
+/** Preserves row order and original fields using the existing deterministic JSON-compatible value encoding. */
+export async function writeJsonlRows(path: string, rows: readonly Record<string, unknown>[]): Promise<{
+  readonly sha256: string; readonly size: number; readonly rowCount: number;
+}> {
+  if (!rows.length) throw new Error("Cannot convert empty Parquet evidence");
+  const file = await open(path, "w");
+  const hash = createHash("sha256");
+  let batch = "";
+  let size = 0;
+  try {
+    for (const row of rows) {
+      const line = `${JSON.stringify(normalizeRow(row))}\n`;
+      hash.update(line);
+      size += Buffer.byteLength(line, "utf8");
+      batch += line;
+      if (batch.length >= 1024 * 1024) { await file.writeFile(batch, "utf8"); batch = ""; }
+    }
+    if (batch) await file.writeFile(batch, "utf8");
+  } finally { await file.close(); }
+  return { sha256: hash.digest("hex"), size, rowCount: rows.length };
 }
 
 function requireDownloaded(downloaded: ReadonlyMap<string, string>, name: string): string {

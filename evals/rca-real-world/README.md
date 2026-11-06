@@ -1,8 +1,8 @@
 ---
 title: RCAEval real-world RCA evaluation
-description: Compare skilled and skill-free RCA on five blinded RCAEval cases with bounded evidence tools
+description: Compare skilled and skill-free RCA on separate prepared and raw blinded RCAEval cohorts
 author: HVE Core Team
-ms.date: 2026-11-04
+ms.date: 2026-11-05
 ms.topic: reference
 keywords:
   - root cause analysis
@@ -14,8 +14,9 @@ keywords:
 
 <!-- cspell:ignore diskio -->
 
-This evaluation compares the root-cause-analysis skill with a skill-free baseline on five
-controlled RCAEval fault-injection cases. Both conditions run by default, using the same selected
+This evaluation compares the root-cause-analysis skill with a skill-free baseline on separate
+five-case prepared and raw RCAEval fault-injection cohorts. Both conditions run by default,
+using the same selected
 model profile, cases, evidence-tool contracts, turn limits, timeouts, and credit limits. Workflow
 conformance is measured separately from held-out diagnostic results. The selected cases do not
 represent organic production incidents or a statistically representative benchmark.
@@ -41,6 +42,95 @@ represent organic production incidents or a statistically representative benchma
   Its [machine-readable results](PR-3136-DEBUG-2026-11-02.json) contain all 30 trial records.
 * [Earlier evidence](PR-3136-EVIDENCE.md) describes a different, skilled-only evaluation.
   Preserve it as historical evidence; do not combine its results with the paired debug snapshot.
+
+## Run ID naming
+
+For each new evaluation, choose an unused `--run-id` without calendar dates or timestamps,
+for example `rcaeval-raw-debug-example-id`. Replace `example-id` with a fresh alphabetic
+suffix. The complete ID must contain 3-64 lower-case letters, digits, or hyphens and start
+with a letter or digit.
+
+The run ID becomes the prefix of model-visible message and evidence-request identities.
+Non-date names mitigate observed date-suffix copying failures; they do not guarantee exact
+model output. This is a naming convention, not a new CLI restriction. Exact identity
+validation, approval binding, and final-envelope schema checks remain unchanged.
+
+Use the same ID for preparation, every round, technical-stop continuation, and report
+generation. Keep existing run IDs unchanged, including date-bearing IDs; do not rename
+their directories or rewrite historical artifacts. Apply the convention only to new runs.
+Use the run manifest's `startedAt` timestamp for chronology instead of embedding a date
+in the ID.
+
+## Prepared and raw evidence tracks
+
+The default `prepared` track retains the existing five cases, JSONL conversion, metric mapping,
+and specialized evidence queries. Historical evaluation snapshots remain unchanged.
+
+The `raw` track downloads five additional cases from the same pinned revision, excludes the
+existing five, and separates scorer-only truth from model-visible evidence. Every telemetry
+Parquet is converted to JSONL using the pinned reader. Original fields and row order are
+preserved; BigInts, dates, bytes and nonfinite numbers use the existing deterministic
+JSON-compatible encoding. Original Parquet bytes remain unchanged in scorer-only downloads.
+No metric mappings, renamed fields, added telemetry fields, resampling, or preparation-time
+aggregates are produced. This track is conversion-only `jsonl-unmapped-v1`, not an assessment
+of access to original or unfamiliar binary formats. The case-index Parquet remains scorer-only.
+
+[Raw cohort provenance](raw-cases.json) records the seed `rcaeval-raw-2026-11-05`, all five source
+identities and file hashes, the excluded cases, and the 730-case eligible population digest.
+Selection ranks eligible source paths by SHA-256 of `seed + NUL + sourcePath`, with a code-unit
+tie-break, then takes the first five without replacement. Source availability, sensitive content,
+and diagnostic success do not influence selection. A missing, oversized, or invalid source file
+stops preparation rather than substituting another case.
+
+Prepare a fresh raw run using the [run ID naming convention](#run-id-naming), without
+invoking a model:
+
+```powershell
+node scripts\evals\rca-real-world\prepare-cli.mts --run-id <new-run-id> --track raw --seed rcaeval-raw-2026-11-05
+node scripts\evals\rca-real-world\prepare-cli.mts --run-id <new-run-id> --track raw --check
+```
+
+Both conditions receive the same trusted general-purpose tools: `list_files`, bounded UTF-8
+`read_file`, and `query_jsonl`. Queries support AND predicates over exact original field names,
+projection, pagination, and optional on-demand numeric min/max/mean/count summaries and groups.
+They do not infer service or metric identities. Numeric strings are summarized only within
+safe integer precision; other values are counted as nonnumeric. Summary field counts distinguish
+numeric and nonnumeric values. A query scans the full selected file, has a 30-second deadline,
+and returns at most 100 rows and 64 KiB with explicit continuation or oversized-row information.
+Results separately identify scanned rows, matching source rows, and returned rows or summaries.
+Summaries allow at most 1,000 groups, 1,000 original fields per group and 32,000 field/group cells; select columns or
+narrow filters when needed. Individual file reads return at most 8 KiB.
+
+No Docker, Python environment, shell, generated-code execution, or additional reader is needed
+for an investigation. Existing cumulative session/run limits and exact approvals still apply.
+The approval risk is `read-only bounded JSONL evidence`. Parameter mistakes are recoverable
+query errors; corrupt evidence, cursor binding violations and scan deadlines are technical failures.
+
+To convert a previously downloaded raw cohort that has never started an evaluation, without
+downloading its source again:
+
+```powershell
+node scripts\evals\rca-real-world\prepare-cli.mts --run-id <unused-raw-run-id> --track raw --convert-only
+```
+
+Conversion verifies original source hashes and records JSONL hashes, sizes and row counts.
+An existing evaluation manifest prevents conversion from changing previously evaluated inputs.
+
+Only after separate approval of the model, cost allowance, and round cadence, execute:
+
+```powershell
+node scripts\evals\rca-real-world\run-cli.mts --run-id <new-run-id> --round 1 --track raw --conditions both --profile debug --report-output schema
+```
+
+Track and conversion-format identities are immutable across conditions and rounds. New runs use
+`ad-hoc-v12`; historical protocols cannot resume or pool with it. Reports label the track and
+format, and distinguish executed file reads, JSONL queries, and reported access blockers from
+diagnostic outcomes, technical failures, and costs. Query counts are not proof of causal
+evidence coverage; that judgment remains pending human review.
+
+Raw and prepared cases differ. Their results describe two cohorts, not a controlled estimate of
+the causal effect of preparation. Source identities belong only in preparation/scoring records
+and published provenance, never in the model's incident metadata.
 
 ## Field investigations versus evaluation trials
 
@@ -113,10 +203,11 @@ with the new filtering semantics. Unknown, missing, or malformed mappings fail e
 
 The preparation command creates two separate roots:
 
-* `model-visible/` contains neutrally named incident metadata and deterministic evidence stores.
+* `model-visible/` contains neutral incident metadata and either prepared evidence stores or
+  unchanged raw files, according to the selected track.
 * `scorer-only/` contains source provenance, hashes, and held-out service and fault labels.
 
-The `ad-hoc-v10` protocol compares two ad hoc investigations using one selected Copilot host mode.
+The `ad-hoc-v12` protocol compares two ad hoc investigations using one selected Copilot host mode.
 Each condition runs in a fresh temporary workspace and independent model session. Only the
 `with-skill` condition receives the three packaged RCA skills. The `without-skill` condition
 receives no skill bundle, no custom agent, and no RCA reasoning procedure. Both receive the
@@ -143,7 +234,7 @@ arguments, avoiding platform command-line length limits without changing prompt 
 Neither condition is told to discover scope first, compare pre/post observations, use particular
 windows, collect particular modalities, or perform a focused-query stage. The scope tool returns
 timestamp units, source coverage, incident metadata, and metric identities, not recommended
-five-minute windows. Tools such as `compare_metrics` advertise capabilities equally to both
+five-minute windows. In the prepared track, tools such as `compare_metrics` advertise capabilities equally to both
 conditions; they do not have to be used. Actual retrieved evidence can differ because choosing
 what to retrieve is part of the measured behavior.
 
@@ -195,7 +286,8 @@ Each approved call then validates its parameters against the same schema adverti
 plus shared cross-field rules, before accessing any evidence source. Direct tool execution and
 MCP calls enforce that same request contract.
 Each request must copy `scope: "current neutral case only"`, `maximumCallCount: 1`, and
-`expectedRisk: "read-only bounded fixture evidence"` exactly. Scope and risk are fixed policy
+`expectedRisk: "read-only bounded fixture evidence"` for prepared queries, or
+`expectedRisk: "bounded isolated raw-file analysis"` for raw tools, exactly. Scope and risk are fixed policy
 values, not free-form descriptions; time windows, service filters, row limits, and other query
 bounds belong in `parameters` according to the chosen tool schema. The prompt, examples,
 execution validator, and scorer share these policy values. Scope and risk mismatches identify
@@ -239,6 +331,12 @@ The model chooses whether to request additional pages; the host never retrieves 
 Trace `groups` have `summaryScope: "page"` and summarize only that page's representative rows.
 An individual row that cannot fit returns explicit `nonProgress` and `oversizedRow` metadata
 rather than a clipped row, a silently skipped match, or a cursor that repeats without progress.
+Raw JSONL pages are bounded against the complete serialized UTF-8 result, including nested
+indentation and continuation metadata. Page boundaries may fall below the requested row limit.
+If even one complete row cannot fit, `oversizedRow.requiredResultBytes` measures its complete
+result envelope. The host delivers this bounded non-progress result without aborting the
+investigation; fewer columns or a narrower query require a new exact approval and consume
+the existing budgets. Authorization failures, corrupt data, and unexpected tool errors remain fatal.
 
 A final or blocked envelope contains structured candidate fields, explicit simulated-authority
 flags, limitations, and the complete human-readable narrative. A null candidate target explicitly
@@ -270,7 +368,7 @@ cross a cutoff before the host detects it. A depleted run stops before another s
 At the [published Copilot rate](https://github.com/features/copilot/plans) of $0.01 per AI credit,
 6,000 credits represent $60 of consumption, not necessarily $60 of additional billing.
 Production budget changes require a fresh run; historical results remain frozen.
-The `ad-hoc-v10` protocol records the selected session cutoff and replays its enforcement.
+The `ad-hoc-v12` protocol retains the selected session cutoff and replays its enforcement.
 Each tool result is bounded to 64 KiB, a complete delivered evidence batch to 256 KiB, and each
 public assistant message to 256 KiB of UTF-8. Complete prompts are bounded to 512 KiB, CLI stdout
 to 10 MiB, and CLI stderr to 64 KiB. The larger stdout allowance covers JSONL event wrappers,
@@ -305,6 +403,9 @@ The harness fails closed before model execution if the exact model profile is un
 source provenance changes, an input is malformed, or a blindness check fails.
 
 ## Commands
+
+Use a new ID following the [run ID naming convention](#run-id-naming) for preparation,
+then reuse that exact ID for execution:
 
 ```powershell
 npm run rca-eval:prepare -- --run-id <run-id>
@@ -411,7 +512,7 @@ remain in each trial result; compatibility and unsupported claims require human 
 
 Earlier runs used prescribed scope, pre/post-comparison, and focused-query stages; some also
 requested a two-category baseline. Those saved outputs do not establish ad hoc performance.
-Start a new run ID for `ad-hoc-v10`; continuation of older protocols, including `ad-hoc-v9`, is rejected. The immutable
+Start a new run ID for `ad-hoc-v12`; continuation of older protocols, including `ad-hoc-v10`, is rejected. The immutable
 input fingerprint also rejects changed prompts or scoring. Preserve prior evidence and do not
 pool old and new protocols, or debug and production results, as one experiment.
 
@@ -591,7 +692,8 @@ pool or rewrite earlier protocol runs.
 ## Interpretation limits
 
 * Five selected cases and their model sessions do not establish a general RCA accuracy rate.
-* These five cases have informed harness development. Use fresh held-out cases for a stronger
+* The prepared cases have informed harness development. Keep the newly sampled raw cohort's
+  results separate and use fresh held-out cases for a stronger
   efficacy claim; debug runs on these cases establish harness behavior, not generalization.
 * Fixed condition ordering can introduce temporal or order effects; conditions are not counterbalanced.
 * RCAEval uses controlled fault injection on microservice testbeds.
