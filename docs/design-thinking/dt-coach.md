@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-11-06
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -31,7 +31,7 @@ Use the DT Coach when your project involves:
 2. Manages session state so you can pause and resume across conversations
 3. Enforces quality appropriate to each space (rough in Problem, scrappy in Solution, functional in the Implementation Space)
 4. Guides transitions between methods based on exit signals rather than arbitrary timelines
-5. Prepares handoffs to the RPI workflow when your DT session reaches a natural exit point
+5. Prepares a handoff to the RPI workflow when your DT session reaches a natural exit point
 
 > [!NOTE]
 > The DT Coach never prescribes solutions. It shares observations, asks questions, and offers choices. You drive the thinking; the coach helps you think more clearly.
@@ -65,20 +65,22 @@ This directory also contains:
 ### Option 1: Select the Custom Agent (Recommended)
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the agent picker dropdown at the top
+2. Open the agent picker
 3. Select **DT Coach**
 4. Describe your project or problem area
 
-### Option 2: Use a Handoff or Ask Directly
+### Option 2: Ask the Coach or Run a Skill
 
-During a session, DT Coach offers handoff buttons for common next steps. You can also ask for any of them in plain language:
+During a session, ask the coach for the next step in plain language, or run the matching skill:
 
-* Select **🎯 Method Next**, or ask which method comes next, to have the coach assess where you are and guide you to the next appropriate method.
-* Select **📋 Canonical Deck** to create or refresh the canonical deck snapshot, then **🖼️ Generate Customer Cards** when you want customer-card slide content (`content.yaml`) derived from the snapshot.
-* Select **🔬 Hand off to RPI**, or run `/rpi-research`, when a DT session has reached a natural exit point and you want to begin the RPI Research phase.
-* Select **📋 Export to Figma**, run `/dt-figma-export`, or ask for a Mural board export when you want to turn existing DT artifacts into a collaborative board for review.
+* Ask which method comes next. The coach checks your coaching state, quotes the sequencing rule that supports a move, and recommends the next method.
+* Request a new or refreshed canonical deck snapshot at any time. The coach also offers one at the Method 3 and Method 5 exits once the work is ready, and after each snapshot it asks whether to generate customer-card slide content (`content.yaml`) from the snapshot.
+* At a natural exit point, ask the coach to prepare the RPI handoff. It writes an RPI entry document. Run `/rpi-research` with that document to begin the Research phase, or select **RPI Agent** in the agent picker and give it the document when you want one agent to coordinate every RPI phase.
+* Run `/dt-figma-export`, accept the coach's board-export offer, or ask for a Mural board export to put existing DT artifacts on a collaborative board for review.
 
-To resume earlier work, select DT Coach and ask it to resume your project. The coach lists existing projects, confirms which one to continue, and restores context from `coaching-state.md`.
+With the plugin installed in VS Code, these commands carry the plugin name as a prefix, such as `/hve-core:rpi-research` and `/hve-core:dt-figma-export`.
+
+To resume earlier work, select DT Coach and name the project. When a project with that name exists, the coach confirms before resuming it and restores context from `coaching-state.md`.
 
 ### Starting a Session
 
@@ -110,9 +112,9 @@ The coach tracks your progress through each method and signals when exit conditi
 
 Session state persists in `.copilot-tracking/dt/{project-slug}/coaching-state.md`. When you return to a project after clearing context or starting a new chat:
 
-1. Open the coaching state file in your editor
-2. Select DT Coach
-3. The coach reads the state file and picks up where you left off
+1. Select DT Coach
+2. Name the project you want to continue
+3. The coach reads the state file, recaps the active method, current phase, and earlier work, and picks up where you left off
 
 ## Example Interaction
 

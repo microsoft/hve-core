@@ -1,49 +1,47 @@
 ---
 title: VS Code Extension Installation
-description: Install HVE Core as a VS Code extension from the marketplace
-sidebar_position: 1
+description: Install HVE Core as a VS Code extension from the Marketplace and learn which components reach Copilot sessions
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-27
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - extension
   - installation
   - marketplace
   - github copilot
-estimated_reading_time: 4
+estimated_reading_time: 5
 ---
 
-VS Code Extension installation provides HVE Core directly through the VS Code Marketplace. This is the simplest zero-configuration method that works across all environments.
+The HVE Core extension, `ise-hve-essentials.hve-core`, installs HVE Core from the VS Code Marketplace with Stable and PreRelease channels. VS Code forwards the extension's agents and skills to Copilot chat sessions. The extension's instructions may not reach those sessions, and the extension has no canvases, so the [Copilot Plugin](cli-plugins) is the better fit when you need either.
 
 ## When to Use This Method
 
 ✅ **Use this when:**
 
-* You want the simplest possible setup
+* You manage editor tools through the VS Code Marketplace
+* You want Stable or PreRelease release channels with published-release assurance
+* You mostly use HVE Core agents and skills
 * You don't need to customize HVE Core components
-* You work across different machines and environments
-* You want automatic updates through VS Code
-* You prefer marketplace-managed extensions
-* You want a clean, zero-configuration setup
 
 ❌ **Consider alternatives when:**
 
-* You need to customize custom agents, skills, or instructions → [Peer Clone](peer-clone.md) or [Git-Ignored](git-ignored.md)
-* Your team needs to version control HVE Core → [Submodule](submodule.md)
-* You're contributing to HVE Core development → [Peer Clone](peer-clone.md)
-* You need to test an unpublished source branch → [Multi-Root Workspace](multi-root)
+* You need path-specific instructions in Copilot sessions, or canvases → [Copilot Plugin](cli-plugins)
+* You need to customize agents, skills, or instructions → [Copy HVE Core Into Your Repository](../install#copy-hve-core-into-your-repository) or [Git-Ignored Folder](git-ignored)
+* Your team needs to version control HVE Core → [Git Submodule](submodule)
+* You're contributing to HVE Core or testing an unpublished branch → [Peer Directory Clone](peer-clone)
 
 ## How It Works
 
-The marketplace extension ships the complete active HVE Core component set. Stable and PreRelease use the same extension identity and component content; they differ in version, cadence, and source commit.
+The extension ships the complete HVE Core component set. Stable and PreRelease use the same extension identity and component content and differ in version, cadence, and source commit.
 
 ```text
-VS Code Extension System
-├── Extension installed via marketplace
-│   ├── .github/agents/         # All chat agents
-│   ├── .github/instructions/   # All coding guidelines
-│   └── .github/skills/         # All skill packages
-└── Only optional workspace configuration needed!
+VS Code
+├── HVE Core extension (from the Marketplace)
+│   ├── .github/agents/         # Forwarded to Copilot sessions
+│   ├── .github/skills/         # Forwarded to Copilot sessions
+│   └── .github/instructions/   # May not reach Copilot sessions
+└── Copilot chat sessions use the forwarded agents and skills
 ```
 
 ## Quick Start
@@ -71,43 +69,42 @@ code-insiders --install-extension ise-hve-essentials.hve-core
 
 ## Verification
 
-After installation, verify everything works:
+1. Open GitHub Copilot Chat (`Ctrl+Alt+I`). New chat sessions use the Copilot harness by default.
+2. Open the agent picker and confirm HVE Core agents such as `RPI Agent`, `Documentation`, and `ADR Creator` appear.
+3. Type `/` and confirm HVE Core skills such as `rpi-research` appear.
 
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the agent picker dropdown
-3. Verify HVE Core agents such as `RPI Agent`, `Documentation`, `code-review`,
-   and `adr-creation` appear
+If you install another route later, such as the plugin, uninstall the extension first so agents do not appear twice.
 
 ## Post-Installation (Optional)
 
-These optional configurations enhance your HVE Core experience but are not required for basic functionality.
+These optional configurations improve your HVE Core experience but are not required for basic functionality.
 
 ### Update Your .gitignore
 
-HVE Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. Add this line to your project's `.gitignore`:
+HVE Core agents write working files to a `.copilot-tracking/` folder in your project. Add this line to your project's `.gitignore`:
 
 ```text
 .copilot-tracking/
 ```
 
-This applies even when using the extension. The folder is created in your project directory when you use workflows such as `rpi-research` or `code-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+This applies to the extension too. Agents create the folder in your project directory when you use workflows such as `rpi-research` or `code-review`. The [installation guide](../install.md#post-installation-update-your-gitignore) describes what the folder stores.
 
 ## What's Included
 
 The extension provides all HVE Core components:
 
-| Component           | Examples                                                                |
-|---------------------|-------------------------------------------------------------------------|
-| Chat Agents         | RPI Agent, code-review, adr-creation                                    |
-| User-invoked skills | `/git-commit`, `/pull-request` for GitHub or Azure DevOps, `/git-merge` |
-| Instructions        | markdown, python-script, commit-message                                 |
-| Skills              | rpi-research, pr-reference, demo-video                                  |
+| Component           | Examples                                                                | Reaches Copilot sessions |
+|---------------------|-------------------------------------------------------------------------|--------------------------|
+| Chat agents         | RPI Agent, Code Review, ADR Creator                                     | Yes                      |
+| User-invoked skills | `/git-commit`, `/pull-request` for GitHub or Azure DevOps, `/git-merge` | Yes                      |
+| Skills              | rpi-research, pr-reference, demo-video                                  | Yes                      |
+| Instructions        | markdown, python-script, writing-style                                  | May not                  |
 
 HVE Core no longer ships prompt files. [Retired Prompt Commands](../package-migration.md#retired-prompt-commands) maps each former prompt command to its replacement.
 
 ## Updating
 
-The extension updates automatically through VS Code's extension system:
+VS Code updates the extension through its extension system:
 
 * Extensions update automatically when new versions are released (default)
 * Open Extensions view → find "HVE Core" → click **Update** for manual updates
@@ -119,86 +116,81 @@ is packaged from `release/stable` and may lag newer `main` content. Both
 channels include active components labeled `stable`, `preview`, and
 `experimental`.
 
-The Copilot CLI plugin has one registration, `microsoft/hve-core`, which
-tracks `main`; there are no PreRelease or Stable plugin channels.
-
-Behavior when switching VS Code Marketplace channels has not been observed in
-this documentation work. This guidance does not assert installed-client
-channel-switch behavior.
+The plugin has one registration, `microsoft/hve-core`, which tracks `main`;
+there are no PreRelease or Stable plugin channels.
 
 ## Comparison with Other Methods
 
 ### Pros ✅
 
-| Advantage               | Detail                                            |
-|-------------------------|---------------------------------------------------|
-| Zero configuration      | No workspace settings or file cloning required    |
-| Works everywhere        | Local, devcontainers, Codespaces, any environment |
-| Automatic updates       | VS Code manages updates automatically             |
-| No repository pollution | Nothing added to your project                     |
-| Instant availability    | Works immediately after installation              |
-| No manual setup         | No scripts to run or paths to configure           |
-| Marketplace managed     | Centralized distribution and versioning           |
+| Advantage             | Detail                                                 |
+|-----------------------|--------------------------------------------------------|
+| Marketplace managed   | Install, update, and pick a channel in Extensions view |
+| Release channels      | Stable and PreRelease builds with release assurance    |
+| Automatic updates     | VS Code updates the extension for you                  |
+| No repository changes | Nothing is added to your project                       |
+| Works everywhere      | Local, devcontainers, Codespaces, any environment      |
 
 ### Cons ❌
 
-| Limitation             | Detail                                              |
-|------------------------|-----------------------------------------------------|
-| No customization       | Can't modify custom agents, skills, or instructions |
-| Extension updates only | Testing development versions requires extra setup   |
-| No version pinning     | Uses latest version (or opt into pre-release)       |
-| No team control        | Can't enforce specific versions across team         |
-| Limited flexibility    | Can't combine with custom local modifications       |
+| Limitation                 | Detail                                                        |
+|----------------------------|---------------------------------------------------------------|
+| Instructions may not apply | Copilot sessions may not receive the extension's instructions |
+| No canvases                | Canvases such as the RPI Workflow canvas come with the plugin |
+| No customization           | Can't modify custom agents, skills, or instructions           |
+| No version pinning         | Uses the latest version of the selected channel               |
+| No team control            | Can't enforce specific versions across a team                 |
 
 ## Common Scenarios
 
 ### Scenario 1: Quick Personal Use
 
-**Goal:** Start using HVE Core immediately without setup
+**Goal:** Start using HVE Core agents right away
 
-**Solution:** Install the extension from marketplace
+**Solution:** Install the extension from the Marketplace
 
 #### Steps
 
-1. Install extension from marketplace
-2. Start using `RPI Agent` and the direct RPI phase skills
-3. That's it!
+1. Install the extension from the Marketplace
+2. Select `RPI Agent` or run a direct RPI phase skill such as `/rpi-research`
 
 ### Scenario 2: Multi-Machine Developer
 
 **Goal:** Use HVE Core consistently across laptop, desktop, and Codespaces
 
-**Solution:** Install extension on all machines via Settings Sync
+**Solution:** Install the extension on all machines through Settings Sync
 
 #### Steps
 
 1. Enable Settings Sync in VS Code
-2. Install extension on one machine
-3. Extensions automatically sync to other devices
+2. Install the extension on one machine
+3. Settings Sync installs it on your other devices
 
 ### Scenario 3: Team Adoption
 
-**Goal:** Get entire team using HVE Core quickly
+**Goal:** Get a whole team using HVE Core quickly
 
-**Solution:** Share extension link and install instructions
+**Solution:** Share the extension link and install instructions
 
 #### Steps
 
-1. Share marketplace link with team
-2. Team members install extension
-3. Everyone has consistent experience immediately
+1. Share the Marketplace link with the team
+2. Team members install the extension
+
+To offer HVE Core to everyone who opens a particular repository instead, commit the plugin defaults described in [Offer the Plugin to Your Team](../install#offer-the-plugin-to-your-team).
 
 ### Scenario 4: Want to Customize Later
 
-**Goal:** Start with extension, add customization as needs grow
+**Goal:** Start with the extension and add customization as needs grow
 
-**Solution:** Use the included installer skill for MCP guidance or selective clone adoption; migrate to a direct clone only for full artifact control
+**Solution:** Use the included installer skill to copy HVE Core into your repository
 
 #### Steps
 
 1. Start with the HVE Core extension for the complete managed component set
-2. When you need MCP configuration or selected repository-owned components, ask an agent to use the included `hve-core-installer` skill
-3. Choose the complete manifest or a custom selection, review component paths and collisions, then copy to a [clone-based method](./)
+2. When you need MCP configuration or repository-owned components, ask an agent to use the included `hve-core-installer` skill
+3. Review component paths and collisions before the installer copies the full set
+4. Uninstall the extension once your repository has its copies, so agents do not appear twice
 
 ## Troubleshooting
 
@@ -228,16 +220,16 @@ channel-switch behavior.
 2. Verify no errors shown
 3. Click "Show Extension Output" if issues
 
+### Instructions Not Applied in Copilot Sessions
+
+The extension's instructions may not reach Copilot sessions. If you rely on path-specific instructions, uninstall the extension, install the [Copilot Plugin](cli-plugins), and reload the window.
+
 ### Conflicting Installation Methods
 
-If you have both extension and manual installation (like Peer Clone):
+If you have the extension and another route, such as the plugin or a clone, each agent appears more than once. Copilot does not remove copies that arrive by different routes, so keep one:
 
-**Problem:** Duplicate agents appearing
-
-**Solution:** Choose one method:
-
-* Keep extension: Remove manual installation (delete cloned folder, remove workspace settings)
-* Keep manual: Uninstall extension
+* To keep the extension, uninstall the plugin, remove the clone, and delete any HVE Core entries from `chat.*Locations` settings or `.github/copilot/settings.json`
+* To keep the other route, uninstall the extension
 
 ### Update Not Appearing
 
@@ -251,20 +243,20 @@ If you have both extension and manual installation (like Peer Clone):
 1. Extensions view → Find "HVE Core"
 2. Click "Update" button
 
-## Need MCP Configuration or Selective Adoption?
+## Need MCP Configuration or a Repository Copy?
 
-The extension includes `hve-core-installer`. Ask an agent to invoke it when you need MCP guidance, installation-method selection, or a smaller clone-based component set.
+The extension includes the `hve-core-installer` skill. Ask an agent to use it when you need MCP guidance, help choosing an install route, or a copy of HVE Core owned by your repository.
 
 1. Ask an agent to use `hve-core-installer`.
-2. Choose the complete manifest or a custom selection for clone adoption.
-3. Review agents, instructions, distributable skill directories, and collisions before writes.
+2. Confirm that the installer copies every component into your repository.
+3. Review agents, instructions, distributable skill directories, and collisions before anything is written.
 
-| Capability                   | HVE Core Extension | Installer Skill                   |
-|------------------------------|-------------------:|-----------------------------------|
-| Complete managed content     |                Yes | Available for selective cloning   |
-| MCP configuration guidance   |                 No | Four curated servers              |
-| Multi-kind custom selection  |                 No | Agents, instructions, skills      |
-| Installation method guidance |                 No | Peer clone, submodule, and others |
+| Capability                  | HVE Core Extension | Installer Skill                    |
+|-----------------------------|-------------------:|------------------------------------|
+| Complete managed content    |                Yes | Copied into your repository        |
+| MCP configuration guidance  |                 No | Curated server templates           |
+| Repository-owned copies     |                 No | Agents, instructions, skills       |
+| Installation route guidance |                 No | Plugin, clone, and settings routes |
 
 > [!NOTE]
 > The installer is a skill that works within any agent conversation. There is no separate installer agent or extension identity.
@@ -273,40 +265,41 @@ The extension includes `hve-core-installer`. Ask an agent to invoke it when you 
 
 For retired plugin or extension identities, start with [Migrate to the HVE Core Identity](../package-migration). VS Code does not provide a universal automatic migration between different extension IDs.
 
-### From Manual Installation to Extension
+### From a Clone to the Extension
 
-If you're currently using manual methods like Peer Clone:
+1. Remove HVE Core entries you added for the clone, such as `chat.*Locations` settings or folder entries in `.github/copilot/settings.json`
+2. Uninstall the plugin if you installed the clone as a plugin from source
+3. Optionally delete the clone
+4. Install the extension following the Quick Start above
+5. Reload the window and verify that agents appear in Copilot Chat
 
-1. Delete HVE Core paths from `.vscode/settings.json`
-2. Optionally remove the hve-core clone if no longer needed
-3. Install the extension following the Quick Start above
-4. Verify agents appear in Copilot Chat
-
-### From Extension to Manual Installation
-
-If you need customization:
+### From the Extension to the Plugin
 
 1. Uninstall the extension from Extensions view
-2. Follow a manual method such as [Peer Clone](peer-clone.md) for local customization
-3. Customize agents, skills, or instructions as needed
+2. Install the [Copilot Plugin](cli-plugins)
+3. Reload the window and verify that agents appear in Copilot Chat
+
+To customize HVE Core instead, follow [Copy HVE Core Into Your Repository](../install#copy-hve-core-into-your-repository) or a clone method such as [Peer Directory Clone](peer-clone).
 
 ## Limitations
 
-| Aspect           | Status                                           |
-|------------------|--------------------------------------------------|
-| Customization    | ❌ Cannot modify components                       |
-| Version control  | ⚠️ Extension updates only, no git control        |
-| Team enforcement | ⚠️ Each member installs independently            |
-| Dev/testing      | ⚠️ Pre-release channel only, not custom branches |
-| Portable paths   | ✅ Works everywhere                               |
-| Setup complexity | ✅ Simplest possible                              |
-| Disk usage       | ✅ Single installation across all projects        |
+| Aspect                           | Status                                           |
+|----------------------------------|--------------------------------------------------|
+| Instructions in Copilot sessions | ⚠️ May not reach them                            |
+| Canvases                         | ❌ Not included                                   |
+| Customization                    | ❌ Cannot modify components                       |
+| Version control                  | ⚠️ Extension updates only, no git control        |
+| Team enforcement                 | ⚠️ Each member installs independently            |
+| Dev/testing                      | ⚠️ Pre-release channel only, not custom branches |
+| Portable paths                   | ✅ Works everywhere                               |
+| Setup complexity                 | ✅ Simplest possible                              |
+| Disk usage                       | ✅ Single installation across all projects        |
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
-* [Multi-Root Workspace](multi-root.md) - Combine extension with custom components
-* [Peer Clone](peer-clone.md) - Switch to customizable installation
+* [Your First Workflow](../first-workflow.md) to try HVE Core with a real task
+* [Copilot Plugin](cli-plugins) for instructions and canvases in Copilot sessions
+* [Peer Directory Clone](peer-clone.md) for a customizable installation
 
 ---
 

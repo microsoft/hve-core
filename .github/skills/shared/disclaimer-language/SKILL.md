@@ -1,6 +1,12 @@
 ---
-description: "Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment"
-applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/performance-plans/**, **/.copilot-tracking/adr-plans/**, **/.copilot-tracking/dt/**, **/.copilot-tracking/ds/**, **/docs/planning/adrs/**, **/docs/planning/outcome-hypotheses/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/security/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/brd-sessions/**, **/.copilot-tracking/documentation/**'
+name: disclaimer-language
+description: "Verbatim CAUTION disclaimers for HVE planning, coaching, and review agents, one section per planner or review family, plus the session-state fields that track display. Preloaded by the agents that show them."
+license: MIT
+user-invocable: false
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-10-30"
 ---
 
 # Disclaimer Language

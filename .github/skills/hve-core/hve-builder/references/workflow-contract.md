@@ -58,7 +58,7 @@ For a mutating route, the candidate exists only after all known source changes a
 
 ## Existing Capability Surface
 
-Treat existing `agents`, `hooks`, `handoffs`, `model`, and other non-tool capability-bearing frontmatter as baseline behavior. Preserve it in improve and refactor modes unless the caller requests a change or verified evidence establishes a host incompatibility, native failure, security defect, or required capability gap. Route an approved change through scope before editing.
+Treat existing `skills`, `hooks`, `model`, and other non-tool capability-bearing frontmatter as baseline behavior. The Copilot harness does not support `handoffs`, `agents`, or `argument-hint` on agents, so their presence is a host incompatibility; carry their intent into the body when you remove them. Preserve it in improve and refactor modes unless the caller requests a change or verified evidence establishes a host incompatibility, native failure, security defect, or required capability gap. Route an approved change through scope before editing.
 
 Agent and subagent `tools` configuration remains outside HVE Builder assessment. Apply the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 

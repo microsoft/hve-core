@@ -1175,6 +1175,14 @@ stimuli:
     Without editing files, briefly outline the business goals, scope, and
     success metrics for a self-service password reset BRD. State the paths
     where the BRD and its session state would be written.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
+    - ../../.github/skills/project-planning/requirements-author
   tags:
     category: agent-behavior
     agent: brd-builder
@@ -2383,7 +2391,7 @@ stimuli:
   - type: output-matches
     name: fallback-allows-one-bounded-unchanged-read
     config:
-      pattern: (?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))
+      pattern: (?is)^(?=[\s\S]*(?:(?:one|once|single)[^.\r\n]{0,240}(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read|PRD|document|file|version)|(?:current|head|working[- ]tree)[- ]?(?:source|revision|copy|read|PRD|document|file|version)[^.\r\n]{0,240}(?:one|once|single)))(?=[\s\S]*(?:bounded|limited))(?=[\s\S]*(?:unchanged|outside (?:every |the )?(?:changed )?hunk|outside (?:the )?diff))(?=[\s\S]*(?:owner|FR-008|metadata))
   - type: output-matches
     name: fallback-uses-removed-lines-for-modified-passage
     config:
@@ -5737,26 +5745,42 @@ stimuli:
       pattern: (?i)^\s*['"`]?(?:the\s+)?(?:calling\s+|hve\s+builder\s+)?parent['"`]?[.!]?\s*$
 - name: hve-demo-material-class-recipe
   prompt: |
-    Plan the L100 demo deck and narrated video for HVE Core. List the phases
-    from sourcing to the finished MP4, and state the narration engine and the
-    duration contract you will use. Write the plan under
-    `.copilot-tracking/demo-material/` and report the path.
+    Plan the L100 demo deck and narrated video for HVE Core. This is a plan
+    only, so don't run setup or prerequisite checks and don't build
+    anything yet. List the phases from sourcing to the finished MP4, and
+    state the narration engine and the duration contract you will use.
+    Write the plan under `.copilot-tracking/demo-material/`, report the
+    path, and show the phases and the duration contract in your reply as
+    well.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/experimental/hve-demo-material.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/experimental/hve-demo-material
   tags:
     category: agent-behavior
     agent: hve-demo-material
+  constraints:
+    max_agent_duration: 240s
+    max_duration: 300s
   graders:
-  - type: output-matches
+  - type: transcript-matches
     name: hve-demo-material-class-recipe-phase-marker-present
     config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
-  - type: output-matches
+      pattern: (?im)(?:^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*[^\s|:-])[^\n]*?\b(?:sources?|sourcing|storyboard|storyboards|deck|decks|slides?|narrate|narration|narrated|capture|captures|captured|render|rendering|rendered|captions?|subtitles?|assemble|assembly|assembled|mp4|video|finalize|finalized|finalization|verify|verification|export|exported|frames?)\b(?:[\s\S]*?^[ \t]*(?:#{2,4}[ \t]|(?:step|phase)[ \t]+\d+|\d+[.)][ \t]|[-*+][ \t]|\|[ \t]*[^\s|:-])[^\n]*?\b(?:sources?|sourcing|storyboard|storyboards|deck|decks|slides?|narrate|narration|narrated|capture|captures|captured|render|rendering|rendered|captions?|subtitles?|assemble|assembly|assembled|mp4|video|finalize|finalized|finalization|verify|verification|export|exported|frames?)\b){2}|^(?=[^\n]*\b(?:sources?|sourcing|storyboard|storyboards|deck|decks|slides?|narrate|narration|narrated|capture|captures|captured|render|rendering|rendered|captions?|subtitles?|assemble|assembly|assembled|mp4|video|finalize|finalized|finalization|verify|verification|export|exported|frames?)\b)[^\n]*?(?:→|->)[^\n]*?(?:→|->)[^\n]*?(?:→|->))
+  - type: transcript-matches
     name: hve-demo-material-class-recipe-tracking-file-write
     config:
-      pattern: (?i)\.copilot-tracking[-/\\](demo-material|plans)
-  - type: output-matches
+      pattern: (?i)\.copilot-tracking[-/\\](?:demo-material|plans)[/\\][^\s`'")\]]+\.(?:md|json|ya?ml)
+  - type: file-exists
+    name: hve-demo-material-class-recipe-plan-file-exists
+    config:
+      path: .copilot-tracking/{demo-material,plans}/**/*.{md,json,yml,yaml}
+  - type: transcript-matches
     name: hve-demo-material-class-recipe-duration-contract
     config:
-      pattern: (?i)\b(4\s*(to|-|–)\s*6\s*min|duration contract)
+      pattern: (?i)\b(?:4|four)\s*(?:to|-|–|—|and)\s*(?:6|six)[\s-]*min|\b(?:min|minimum)\s*[:=]\s*4\b[\s\S]{0,40}?\b(?:max|maximum)\s*[:=]\s*6\b
   - type: output-matches
     name: hve-demo-material-class-recipe-no-source-edit
     config:
@@ -6111,6 +6135,14 @@ stimuli:
     for a notification preferences PRD covering in-app, email, and SMS
     toggles. State the paths where the PRD and its session state would be
     written.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
+    - ../../.github/skills/project-planning/requirements-author
   tags:
     category: agent-behavior
     agent: prd-builder
@@ -6498,12 +6530,12 @@ stimuli:
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-      dest: .github/instructions/rai-planning/rai-identity.instructions.md
-    - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-      dest: .github/instructions/shared/planner-identity-base.instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+      dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/skills/shared/planner-identity/SKILL.md
+      dest: .github/skills/shared/planner-identity/SKILL.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -6562,12 +6594,12 @@ stimuli:
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-      dest: .github/instructions/rai-planning/rai-identity.instructions.md
-    - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-      dest: .github/instructions/shared/planner-identity-base.instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+      dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/skills/shared/planner-identity/SKILL.md
+      dest: .github/skills/shared/planner-identity/SKILL.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -6597,10 +6629,10 @@ stimuli:
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
-    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-      dest: .github/instructions/rai-planning/rai-identity.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
+    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+      dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -6628,12 +6660,12 @@ stimuli:
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-      dest: .github/instructions/rai-planning/rai-identity.instructions.md
-    - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-      dest: .github/instructions/shared/planner-identity-base.instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+      dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/skills/shared/planner-identity/SKILL.md
+      dest: .github/skills/shared/planner-identity/SKILL.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -6686,12 +6718,12 @@ stimuli:
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-      dest: .github/instructions/rai-planning/rai-identity.instructions.md
-    - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-      dest: .github/instructions/shared/planner-identity-base.instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+      dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/skills/shared/planner-identity/SKILL.md
+      dest: .github/skills/shared/planner-identity/SKILL.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -6783,12 +6815,12 @@ stimuli:
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-      dest: .github/instructions/rai-planning/rai-identity.instructions.md
-    - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-      dest: .github/instructions/shared/planner-identity-base.instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+      dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/skills/shared/planner-identity/SKILL.md
+      dest: .github/skills/shared/planner-identity/SKILL.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -6854,12 +6886,12 @@ stimuli:
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-      dest: .github/instructions/rai-planning/rai-identity.instructions.md
-    - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-      dest: .github/instructions/shared/planner-identity-base.instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+      dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+    - src: ../../.github/skills/shared/planner-identity/SKILL.md
+      dest: .github/skills/shared/planner-identity/SKILL.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
       dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
     - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -7555,8 +7587,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: fixtures/security-planner-disclaimer-null-state.json
       dest: .copilot-tracking/security-plans/cadence-null/state.json
   tags:
@@ -7579,8 +7611,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/cadence-shown/state.json
   tags:
@@ -7612,8 +7644,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
       dest: .copilot-tracking/security-plans/cadence-shown/state.json
   tags:
@@ -7650,9 +7682,9 @@ stimuli:
         } catch { process.exit(1); }
 - name: security-planner-disclaimer-source-missing
   prompt: |
-    Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language.instructions.md` file is unavailable. Follow the declared missing-source behavior and report what is blocked.
+    Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language` skill is unavailable. Follow the declared missing-source behavior and report what is blocked.
 
-    Name the specific file you could not load, then say what this does to the session before any Phase 1 work.
+    Name the specific skill you could not load, then say what this does to the session before any Phase 1 work.
   agent_environment:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
@@ -7665,7 +7697,7 @@ stimuli:
   - type: output-matches
     name: missing-source-halts
     config:
-      pattern: (?is)(?=[\s\S]*disclaimer-language\.instructions\.md)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))
+      pattern: (?is)(?=[\s\S]*disclaimer-language)(?=[\s\S]*(?:cannot|unable|unavailable|missing|could not|not found))(?=[\s\S]*(?:halt|stop|blocked))
   - type: output-matches
     name: no-phase-work
     config:
@@ -7684,8 +7716,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: fixtures/security-phase6/sample-service-state.json
       dest: .copilot-tracking/security-plans/sample-service/state.json
     - src: fixtures/security-phase6/sample-service-security-plan.md
@@ -7727,8 +7759,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: fixtures/security-phase6/sample-service-state.json
       dest: .copilot-tracking/security-plans/sample-service/state.json
     - src: fixtures/security-phase6/sample-service-security-plan.md
@@ -7793,8 +7825,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/security/identity.instructions.md
       dest: .github/instructions/security/identity.instructions.md
   tags:
@@ -7856,8 +7888,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     skills:
     - ../../.github/skills/project-planning/security-planning
   tags:
@@ -8039,8 +8071,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/sssc-planner.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: ../../.github/instructions/security/sssc-planner.instructions.md
       dest: .github/instructions/security/sssc-planner.instructions.md
     - src: fixtures/security-planner-disclaimer-shown-state.json
@@ -8078,8 +8110,8 @@ stimuli:
     inline as your instructions describe and record the reduced rigor. No
     SBOM, provenance, signing, release, registry, or remote repository
     settings evidence is supplied. Do not run network, install, build,
-    publish, or scanner commands. The shared disclaimer file is staged at
-    `.github/instructions/shared/disclaimer-language.instructions.md`.
+    publish, or scanner commands. The shared disclaimer skill is staged at
+    `.github/skills/shared/disclaimer-language/SKILL.md`.
 
     Write the report under `.copilot-tracking/sssc-reviews/`, do not modify
     any other file, and report the report path.
@@ -8087,8 +8119,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+      dest: .github/skills/shared/disclaimer-language/SKILL.md
     - src: fixtures/sssc-smoke/package.fixture.json
       dest: subject/package.json
     - src: fixtures/sssc-smoke/release-workflow.fixture
@@ -8316,8 +8348,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/security/vex-generation.instructions.md
-      dest: .github/instructions/security/vex-generation.instructions.md
+    - src: ../../.github/skills/security/vex/references/vex-generation.md
+      dest: .github/skills/security/vex/references/vex-generation.md
     skills:
     - ../../.github/skills/security/vex
   tags:
@@ -8345,8 +8377,8 @@ stimuli:
     files:
     - src: ../../.github/agents/security/sssc-reviewer.agent.md
       dest: .github/copilot-instructions.md
-    - src: ../../.github/instructions/security/vex-generation.instructions.md
-      dest: .github/instructions/security/vex-generation.instructions.md
+    - src: ../../.github/skills/security/vex/references/vex-generation.md
+      dest: .github/skills/security/vex/references/vex-generation.md
     skills:
     - ../../.github/skills/security/vex
   tags:
@@ -8458,11 +8490,11 @@ stimuli:
   - type: output-matches
     name: arch-research-unavailable-stops
     config:
-      pattern: (?is)(unavailable|blocked|unresolved).*(stop|pause|cannot|do not).*(recommend|conclusion|dependent)
+      pattern: (?is)(?:\b(?:cannot|can not|will not|do not|unable to|not able to|should not|can't|can’t|won't|won’t|don't|don’t|should(?:n['’]t))\b[^.?!\n]{0,60}\b(?:recommend|recommends|recommended|recommending|recommendation|recommendations|choose|pick|select|conclude|concludes|concluded|conclusion|conclusions)\b|\b(?:recommend|recommends|recommended|recommending|recommendation|recommendations|conclude|concludes|concluded|conclusion|conclusions|decision|choice)\b[^.?!\n]{0,80}\b(?:stop|stops|stopped|pause|pauses|paused|blocked|halt|halts|halted|on hold|wait|waits|deferred)\b|\b(?:stop|stops|pause|pauses|block|blocks|halt|halts|hold|holds)\b[^.?!\n]{0,60}\b(?:recommend|recommends|recommended|recommending|recommendation|recommendations|conclude|concludes|concluded|conclusion|conclusions|decision|choice)\b)
   - type: output-matches
     name: arch-research-unavailable-no-memory
     config:
-      pattern: (?is)(training data|model memory).*(not|cannot|do not|instead of|substitute|substituting)
+      pattern: (?is)(?:\b(?:training data|model memory|memory)\b[^.?!\n]{0,80}\b(?:not|cannot|will not|do not|is not|instead of|substitute|substitutes|substituting|substitution|unreliable|insufficient|can't|can’t|won't|won’t|don't|don’t|isn't|isn’t)\b|\b(?:not|cannot|will not|do not|should not|refuse|decline|can't|can’t|won't|won’t|don't|don’t|should(?:n['’]t))\b[^.?!\n]{0,80}\b(?:training data|model memory|memory)\b)
   - type: output-matches
     name: arch-research-unavailable-no-current-fact-claim
     config:
@@ -8541,8 +8573,9 @@ stimuli:
     recommendation `C1`. Preserve evidence `E1` and the staged Research
     artifact path. Perform the review now, write the canonical
     Architecture Review Record for synthetic date `2026-09-21` with a
-    disposition for both focus areas, then prepare the existing ADR Creation
-    and RPI Plan handoffs from that record.
+    disposition for both focus areas, then suggest the next steps for
+    recording the decision in an ADR and for planning the work, each
+    starting from that record.
   agent_environment:
     files:
     - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
@@ -8572,7 +8605,7 @@ stimuli:
   - type: transcript-matches
     name: architecture-handoffs-use-record-path
     config:
-      pattern: (?is)(ADR Creation|Create ADR).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md.*(RPI Plan|Create Plan).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md
+      pattern: (?is)^(?=[\s\S]*?(?:ADR[- ]Creator|ADR[- ]Creation|Create ADR|adr[- ]author))(?=[\s\S]*?(?:rpi[- ]plan|Create Plan|RPI Agent))(?=[\s\S]*?\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md)
 - name: ux-ui-designer-problem-framing-route
   prompt: |
     Project `operations-dashboard`: help me work out what the actual problem is

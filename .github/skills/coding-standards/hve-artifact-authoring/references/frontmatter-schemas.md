@@ -1,5 +1,5 @@
 ---
-description: 'Current frontmatter field reference for HVE Core agents, prompts, instructions, and skills'
+description: 'Current frontmatter field reference for HVE Core agents, instructions, and skills'
 ---
 
 # Frontmatter Schema Reference
@@ -16,37 +16,34 @@ field boundaries that most often affect artifact design.
 
 ## Agent Frontmatter
 
-| Field                      | Required | Purpose                                              |
-|----------------------------|----------|------------------------------------------------------|
-| `name`                     | Yes      | Human-readable picker and dispatch identity          |
-| `description`              | Yes      | Capability and parent-routing metadata               |
-| `argument-hint`            | No       | User invocation guidance                             |
-| `agents`                   | No       | Fixed subagent allowlist; omit for unrestricted use  |
-| `tools`                    | No       | User-managed opaque tool configuration               |
-| `model`                    | No       | One scalar model selection                           |
-| `handoffs`                 | No       | User-mediated transitions                            |
-| `user-invocable`           | No       | Picker visibility; false for background-only workers |
-| `disable-model-invocation` | No       | Prevents model-driven invocation of an orchestrator  |
-| `target`                   | No       | Host execution target                                |
-| `mcp-servers`              | No       | MCP server declarations                              |
-| `hooks`                    | No       | Preview lifecycle hooks                              |
+| Field                      | Required | Purpose                                                                    |
+|----------------------------|----------|----------------------------------------------------------------------------|
+| `name`                     | Yes      | Human-readable picker and dispatch identity                                |
+| `description`              | Yes      | Capability and parent-routing metadata                                     |
+| `tools`                    | No       | User-managed opaque tool configuration                                     |
+| `skills`                   | No       | Skills preloaded into the agent's context at start                         |
+| `model`                    | No       | One scalar model selection                                                 |
+| `reasoning-effort`         | No       | Reasoning effort for the selected model                                    |
+| `user-invocable`           | No       | Picker visibility; false for background-only workers                       |
+| `disable-model-invocation` | No       | Prevents model-driven invocation of an orchestrator                        |
+| `target`                   | No       | Host execution target                                                      |
+| `mcp-servers`              | No       | MCP server declarations; VS Code does not forward them to Copilot sessions |
+| `hooks`                    | No       | Preview lifecycle hooks                                                    |
 
-Use `agents: []` when nested dispatch is prohibited. Do not use an array for an agent or subagent
-`model` value.
+The Copilot harness does not support `handoffs`, `agents`, or `argument-hint` on agents, and
+`npm run lint:frontmatter` rejects them. Describe the next agent to switch to, or the subagents to
+delegate to, in the body. Do not use an array for an agent or subagent `model` value.
 
-## Prompt Frontmatter
+For `tools`, Copilot recognizes the aliases `read`, `edit`, `search`, `execute`, `web`, `agent`, and `todo`,
+MCP names in `server/tool` or `server/*` form, `skill`, and `ask_user`, and it ignores names it does
+not recognize. An agent cannot activate a skill by name without `skill` in its list, subagents never
+receive `ask_user`, and an empty list grants every tool.
 
-| Field           | Required | Purpose                                         |
-|-----------------|----------|-------------------------------------------------|
-| `description`   | Yes      | Capability and slash-command routing metadata   |
-| `name`          | No       | Explicit slash-command name                     |
-| `agent`         | No       | Named custom agent that receives the prompt     |
-| `argument-hint` | No       | Parameter guidance                              |
-| `model`         | No       | Scalar model or supported ordered fallback list |
-| `tools`         | No       | Prompt-specific tool configuration              |
+## Prompt Files
 
-A prompt's tool list overrides the referenced agent's list. Add it only when that narrowing is
-intentional.
+The Copilot harness does not load prompt files (`.prompt.md`). Write a user-invocable skill instead:
+set `user-invocable: true`, put the expected arguments in `argument-hint`, and describe each input
+in the body.
 
 ## Instruction Frontmatter
 
@@ -61,17 +58,18 @@ instruction files.
 
 ## Skill Frontmatter
 
-| Field            | Required | Purpose                                           |
-|------------------|----------|---------------------------------------------------|
-| `name`           | Yes      | Lowercase kebab-case name matching the directory  |
-| `description`    | Yes      | Capability and semantic activation metadata       |
-| `argument-hint`  | No       | User invocation guidance                          |
-| `license`        | No       | SPDX license expression                           |
-| `user-invocable` | No       | Slash-command visibility                          |
-| `compatibility`  | No       | Runtime or environment requirements               |
-| `metadata`       | No       | Authors, specification version, and related facts |
+| Field                      | Required | Purpose                                                            |
+|----------------------------|----------|--------------------------------------------------------------------|
+| `name`                     | Yes      | Lowercase kebab-case name matching the directory                   |
+| `description`              | Yes      | Capability and semantic activation metadata                        |
+| `argument-hint`            | No       | User invocation guidance                                           |
+| `license`                  | No       | SPDX license expression                                            |
+| `user-invocable`           | No       | Slash-command visibility                                           |
+| `disable-model-invocation` | No       | Hides the skill from the model, so only its slash command loads it |
+| `compatibility`            | No       | Runtime or environment requirements                                |
+| `metadata`                 | No       | Authors, specification version, and related facts                  |
 
-Skill frontmatter does not declare `tools`, `model`, `agent`, `handoffs`, or `applyTo`. Put reusable
+Skill frontmatter does not declare `tools`, `model`, `skills`, or `applyTo`. Put reusable
 scripts, references, templates, and assets beneath the skill root and reference them with relative
 paths.
 

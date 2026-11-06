@@ -55,7 +55,7 @@ The project is organized into these main areas:
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
 * Skills (`.github/skills/{package-id}/`) - Self-contained skill packages, by convention organized by package.
 * Extension (`extension/`) - VS Code extension source and packaging.
-* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
+* GitHub Configuration (`.github/`) - Workflows, instructions, agents, skills, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
 * Plugin manifest (`plugin.json`) - Deterministic membership and metadata for the sole `hve-core` plugin.
 * Plugin locator (`.github/plugin/marketplace.json`) - One relative marketplace entry that points to `.github`.
 * Logs (`logs/`) - Output from validation and analysis scripts.
@@ -80,12 +80,13 @@ By convention, skills are self-contained packages organized under `.github/skill
 
 Generic authoring guidance uses portable paths such as `.github/skills/<skill>/SKILL.md` and does not assume a package directory. HVE-Core packaging may add a `{package-id}` layer as an optional host packaging convention.
 
-When a prompt, agent, or instruction uses `#file:`:
+The Copilot agent harness does not load `#file:` directives, so artifacts reach each other by name:
 
-* Resolve the path relative to the containing file, not the workspace root.
-* Preserve the original artifact suffix, such as `.instructions.md`, `.agent.md`, or `.prompt.md`.
-* Use relative paths; do not use absolute paths or a `.github/` prefix. Plugin and extension packaging strip `.github/` while preserving relative depth between artifact-kind directories.
-* For example, from `.github/agents/{package-id}/`, a same-package instruction target uses `#file:../../instructions/{package-id}/name.instructions.md`.
+* An agent that needs a skill's rules when it starts lists the skill in its `skills:` frontmatter, which preloads the skill body.
+* An agent that needs a skill later activates it by name and lists `skill` in its `tools`.
+* An agent that depends on a path-specific instruction reads that instruction file by name first. Copilot applies path-specific instructions only after a matching file is read or edited.
+* Subagents receive no custom instructions. A subagent gets its rules from its own body, a preloaded skill, or its parent's dispatch prompt.
+* Inside a skill, link bundled files with paths relative to the skill root.
 * Ensure every distributable cross-kind target is included by the plugin manifest's tracked path-and-license classification.
 
 ### Documentation Structure
@@ -95,12 +96,12 @@ When a prompt, agent, or instruction uses `#file:`:
   * Roles (`docs/hve-guide/roles/`) - Role-specific guides for engineers, leads, architects, and other contributors.
 * Getting Started (`docs/getting-started/`) - Installation and first workflow guides with multiple setup methods.
 * RPI (`docs/rpi/`) - Research, Plan, Implement, Review, and Follow-up workflow documentation.
-* Contributing (`docs/contributing/`) - Guidelines for instructions, prompts, agents, and AI artifacts.
-* Templates (`docs/templates/`) - Templates for custom agents, instructions, and prompts.
+* Contributing (`docs/contributing/`) - Guidelines for instructions, skills, agents, and AI artifacts.
+* Templates (`docs/templates/`) - Output, plan, and record templates that agents and skills use.
 
 ### Documentation Templates
 
-Templates for agent and prompt outputs are stored in `docs/templates/`:
+Templates for agent and skill outputs are stored in `docs/templates/`:
 
 * `docs/templates/full-review-output-format.md` - Code review full output format.
 * `docs/templates/standards-review-output-format.md` - Standards review output format.
@@ -135,15 +136,15 @@ RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copil
 ### Agents and Subagents
 
 By convention, custom agents are organized under `.github/agents/{package-id}/`. Each package typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{package-id}/subagents/`.
-Parent agents reference subagents using glob paths like `.github/agents/**/code-review-functional.agent.md` so resolution works regardless of nesting depth.
+Parent agents name subagents by their `name` value, such as Code Review Functional. The Copilot subagent tool dispatches by name, so nesting depth does not matter.
 
 The plugin manifest owns plugin and VSIX composition:
 
-* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, prompts, instructions, and distributable skills discovered from tracked `.github` paths. The manifest declares no hooks. Hooks support was removed with the telemetry hook, so a committed `hooks` field is reported as drift rather than preserved. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
+* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, instructions, and distributable skills discovered from tracked `.github` paths. The manifest declares no hooks. Hooks support was removed with the telemetry hook, so a committed `hooks` field is reported as drift rather than preserved. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
 * After adding, changing, moving, or removing a distributable artifact, run `npm run plugin:sync` to update the manifest. Run `npm run plugin:validate` to check manifest drift, marketplace parity and containment, and component coverage.
 * The installable plugin root is the repository root. Artifact discovery remains limited to package-scoped `.github` paths; do not materialize a copied plugin tree or create a repository-root `plugins/` directory.
 * Run `npm run extension:prepare` or `npm run extension:prepare:prerelease` to refresh the single `extension/package.json` and `extension/README.md`. Stable and PreRelease contain the same component set.
-* After adding, changing, moving, or removing a documentable agent, prompt, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
+* After adding, changing, moving, or removing a documentable agent, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
 * Run `npm run plugin:validate` to confirm the manifest, one-entry locator, and component coverage are correct.
 <!-- </project-structure> -->
 
@@ -154,16 +155,17 @@ The plugin manifest owns plugin and VSIX composition:
 * Scripts used by the codebase have an `npm run` script for ease of use.
 * A root `plugins/` directory is forbidden as validation or package output. Do not create, edit, or stage one.
 * The plugin uses the repository root directly. Synchronize root `plugin.json`; do not generate plugin output or ZIP packages.
-* Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a package subdirectory) are repo-specific and excluded from plugin membership and extension packaging. Validation enforces this rule.
+* Artifacts at the root of `.github/agents/`, `.github/instructions/`, or `.github/skills/` (without a package subdirectory) are repo-specific and excluded from plugin membership and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 
 ### Commit Message Scopes
 
+Commit messages follow `.github/skills/hve-core/git-commit/references/commit-message.md`. The `/git-commit` skill and VS Code commit message generation in this repository use the same file.
+
 Commit message scopes map to repository directories:
 
 * `(agents)` = `.github/agents/`
-* `(prompts)` = `.github/prompts/`
 * `(instructions)` = `.github/instructions/`
 * `(skills)` = `.github/skills/`
 * `(templates)` = `.github/ISSUE_TEMPLATE/`
@@ -194,7 +196,7 @@ The Documentation agent scans these directories for documentation coverage analy
 * `docs/` - Primary documentation tree.
 * `scripts/` - Script-level markdown files and inline documentation.
 * `extension/` - Extension packaging documentation.
-* `.github/` - Agent, prompt, instruction, and skill documentation.
+* `.github/` - Agent, instruction, and skill documentation.
 
 Validation commands for documentation quality:
 

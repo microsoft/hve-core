@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-10-01
+ms.date: 2026-11-05
 ---
 
 ## Purpose
@@ -81,6 +81,9 @@ Each `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --ju
 Stimuli are assigned round-robin in the declared order of `stimuli.yml`. Each shard reads directories under `evals/results/baseline-equivalence/<model>/<runId>/compare-shards/` that mirror the run directories' top-level `*.jsonl` and `*.trajectory.json` files for its stimuli, and writes `logs/vally-compare-<model>-<runId>-sNN.jsonl` beside a withheld `-sNN.log` console capture.
 The driver concatenates the shard outputs in shard order into `logs/vally-compare-<model>-<runId>.jsonl`, so every consumer still reads one file per model. A shard count of 1, or a corpus with one stimulus, runs one serial compare over the run directories and writes that file directly.
 A shard that exits nonzero without writing any comparison record is retried once; a shard that fails again counts as a run-health failure, and its missing trials surface as data-quality violations.
+A shard that exits nonzero only because some pairs failed judging, so its records hold at least one judged trial and at least one judge-errored trial, is not a run-health failure; those pairs count in `judgeErrors`, which is reported without gating.
+Before comparing, the driver recovers transient executor errors. When at most 20% of a variant's expected trials errored without a trajectory, it re-runs only the affected stimuli through a filtered copy of the variant spec, written beside it as `.recovery-*.eval.yaml` and removed afterward, for up to two rounds.
+Each errored trial is then replaced, in a copy of the run directory, by a recovered trial that takes the errored trial's identity. `executionDiagnostics` still records the original errors, and a larger share or an error that survives both rounds stays with the population gates.
 `Measure-CompareTrials` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1) reads that JSONL, tallies each non-errored trial's `winner` (`baseline` / `treatment` / `tie`), and reports the comparison's summary statistics (signed mean score, 95% confidence interval, win rate).
 A single comparison record carries those statistics in its `summary`, which vally computes over every non-errored trial.
 When the file holds one record per shard, each shard's `summary` covers only its own trials, so `Measure-CompareTrials` recomputes the statistics from the per-trial scores across all records with vally's formula: the arithmetic mean, a two-sided 95% Student-t interval, and the share of trials with a positive score.

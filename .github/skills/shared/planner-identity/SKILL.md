@@ -1,15 +1,21 @@
 ---
-description: "Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility, Privacy) covering state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence mechanics, optional disclaimer cadence, and error handling"
-applyTo: '**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**'
+name: planner-identity
+description: "Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility, Privacy): state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence, disclaimer cadence, and error handling. Activate at session start, before the planner applies its own identity rules."
+license: MIT
+user-invocable: false
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-10-30"
 ---
 
-# Planner Identity Base
+# Planner Identity
 
-This file is the shared scaffold for phase-based conversational planning agents that maintain persistent state under `.copilot-tracking/<planner>/` and orchestrate work across six sequential phases. Per-planner identity files (`sssc-planner.instructions.md`, `rai-identity.instructions.md`, security `identity.instructions.md`, `accessibility-identity.instructions.md`) extend this base and contribute the planner-specific content listed under [Scope of Inheritance](#scope-of-inheritance).
+This skill is the shared scaffold for phase-based conversational planning agents that maintain persistent state under `.copilot-tracking/<planner>/` and orchestrate work across six sequential phases. Per-planner identity protocols (`sssc-planner.instructions.md`, security `identity.instructions.md`, `accessibility-identity.instructions.md`, and the `references/rai-identity.md` and `references/privacy-identity.md` files in the `rai-planner` and `privacy-standards` skills) extend this base and contribute the planner-specific content listed under [Scope of Inheritance](#scope-of-inheritance).
 
 Exploration-first questioning style, laddering, projective techniques, scope assessment, and raw-capture rules are defined in `shared/coaching-patterns.instructions.md` and apply on top of this base.
 
-Disclaimer copy lives in `shared/disclaimer-language.instructions.md`; this base defines the cadence pattern, not the text.
+Disclaimer copy lives in the `disclaimer-language` skill; this base defines the cadence pattern, not the text.
 
 ## Scope of Inheritance
 
@@ -126,11 +132,11 @@ When the planner emits a user-facing disclaimer (RAI, SSSC, Security, Accessibil
 
 ### Session Start Display
 
-When creating a project state record, or when a recovered record has `disclaimerShownAt` set to `null`, display the planner's canonical disclaimer block from `shared/disclaimer-language.instructions.md` verbatim before any phase work begins. Record the display by setting `state.disclaimerShownAt` to the current ISO-8601 timestamp and appending a `noticeLog` entry with `noticeType: "session-start-disclaimer"` before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `disclaimerShownAt` to the redisplay timestamp, and append a `session-start-disclaimer` entry with `details.reason: "user-requested-redisplay"`.
+When creating a project state record, or when a recovered record has `disclaimerShownAt` set to `null`, display the planner's canonical disclaimer block from the `disclaimer-language` skill verbatim before any phase work begins. Record the display by setting `state.disclaimerShownAt` to the current ISO-8601 timestamp and appending a `noticeLog` entry with `noticeType: "session-start-disclaimer"` before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `disclaimerShownAt` to the redisplay timestamp, and append a `session-start-disclaimer` entry with `details.reason: "user-requested-redisplay"`.
 
 ### Exit Point Reminder
 
-At each of the following exit points, surface a brief one-line professional-review reminder using the canonical wording in `shared/disclaimer-language.instructions.md`:
+At each of the following exit points, surface a brief one-line professional-review reminder using the canonical wording in the `disclaimer-language` skill:
 
 1. **Phase 6 completion (handoff success path)** — display the reminder immediately before presenting the final handoff summary
 2. **Compact handoff** — display the reminder when the orchestrator hands off to ADO, GitHub, or another backlog workflow

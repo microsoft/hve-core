@@ -61,8 +61,8 @@ Reserved-tag protection rules in [writeback-hygiene.md](writeback-hygiene.md) ap
 ## Adding a new destination
 
 1. Add an entry to `assets/destinations/registry.yml` in the Mural skill with `id`, `intent`, `target`, and `loop_closure`.
-2. Implement the adapter as a handoff target on the relevant Slot 2 agent (work item creation prompt, ADR creation prompt, instructions writer, etc.).
-3. Update the workshop family's Slot 2 agent `handoffs` frontmatter to include the new adapter.
+2. Implement the adapter as a handoff target on the relevant Slot 2 agent, such as a work item creation skill, the ADR Creator, or an instructions writer.
+3. Name the new adapter in the body of the workshop family's Slot 2 agent so it can route work there. Copilot agents do not support `handoffs` frontmatter.
 4. Do not modify extractor core logic.
 
 ## v1 retro coverage

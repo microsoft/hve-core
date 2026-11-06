@@ -2,12 +2,10 @@
 name: Accessibility Surface Inventory
 description: "Discovers runtime surfaces and interaction states from a codebase profile, then emits an accessibility runtime config for the harness"
 tools:
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
-  - edit/createFile
-  - edit/editFiles
+  - search
+  - read
+  - edit
+  - skill
 user-invocable: false
 ---
 

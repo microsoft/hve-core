@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand plugin manifest synchronization, schema validation, npm scripts, and CI checks for customizing HVE Core
 author: Microsoft
-ms.date: 2026-10-05
+ms.date: 2026-10-31
 ms.topic: how-to
 keywords:
   - build system
@@ -17,9 +17,9 @@ estimated_reading_time: 8
 
 Root `plugin.json` is the deterministic distribution manifest for the one `hve-core` plugin and VSIX. Its component paths are repository-relative, while discovery remains scoped to eligible package directories under `.github`.
 
-`npm run plugin:sync` runs `Sync-PluginManifest.ps1`, which derives agents, prompts, instructions, and distributable skills from git-tracked package-scoped paths. It preserves plugin metadata, synchronizes the repository version, and declares no hooks.
+`npm run plugin:sync` runs `Sync-PluginManifest.ps1`, which derives the manifest's `agents`, `rules` (instruction files), `skills` (distributable skills), and `extensions` (canvas packages) arrays from git-tracked package-scoped paths. It maps prompt files to `commands`, which stays empty because HVE Core ships no prompt files. It preserves plugin metadata, takes the version from root `package.json`, and declares no hooks.
 
-`npm run plugin:validate` runs manifest check mode followed by hook validation. Check mode writes nothing and verifies deterministic membership, the one-entry `.github` locator, metadata parity, source containment, and declared component coverage.
+`npm run plugin:validate` runs manifest check mode followed by hook validation. Check mode writes nothing and verifies deterministic membership, the one-entry locator in `.github/plugin/marketplace.json`, metadata parity, source containment, and declared component coverage.
 
 Synchronize after a distributable artifact changes:
 
@@ -53,6 +53,12 @@ determine which schema applies to each file.
 | `base-frontmatter.schema.json`           | Default fallback                  |
 
 :::
+
+The Copilot harness does not load prompt files, and the repository has no prompt
+or chat mode files, so the `prompt-frontmatter` and `chatmode-frontmatter`
+mappings match nothing. `agent-frontmatter.schema.json` rejects `handoffs`,
+`agents`, and `argument-hint`, which the Copilot harness does not support on
+agents.
 
 ### Pattern Mapping
 

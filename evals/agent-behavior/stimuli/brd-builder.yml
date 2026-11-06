@@ -6,6 +6,14 @@ stimuli:
       Without editing files, briefly outline the business goals, scope, and
       success metrics for a self-service password reset BRD. State the paths
       where the BRD and its session state would be written.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
+        - ../../.github/skills/project-planning/requirements-author
     tags:
       category: agent-behavior
     graders:

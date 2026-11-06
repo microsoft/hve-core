@@ -130,7 +130,7 @@ console.log(`PASS: ${input.controls.length} cancellation narrative controls`);
         $files = @($stimulus.agent_environment.files)
         $files | Should -HaveCount 2
         $files.dest | Should -Contain '.github/skills/hve-core/git-commit'
-        $files.dest | Should -Contain '.github/instructions/hve-core/commit-message.instructions.md'
+        $files.dest | Should -Contain '.github/skills/hve-core/git-commit/references/commit-message.md'
         foreach ($file in $files) {
             Test-Path -LiteralPath (Join-Path (Split-Path $script:EvalSpecPath -Parent) $file.src) | Should -BeTrue
         }

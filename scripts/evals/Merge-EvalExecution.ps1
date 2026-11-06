@@ -124,9 +124,16 @@ function Merge-EvalSummaryValue {
                 if (-not $evidence.contractValid) { throw "Producer '$producer' has an invalid diagnostic contract." }
                 $spec | Add-Member -NotePropertyName integrity -NotePropertyValue $evidence -Force
                 if (-not $evidence.integrityPassed) {
-                    $integrityFailures++
-                    $spec | Add-Member -NotePropertyName status -NotePropertyValue 'integrity-failure' -Force
-                    $spec | Add-Member -NotePropertyName isAdvisory -NotePropertyValue $false -Force
+                    $advisoryMap = if ($spec.PSObject.Properties['perStimulusAdvisory']) { $spec.perStimulusAdvisory } else { $null }
+                    $tolerance = Test-VallyAdvisoryIntegrityTolerance -Diagnostics $diagnostics -Integrity $evidence -AdvisoryMap $advisoryMap
+                    if ($tolerance.tolerated) {
+                        $spec | Add-Member -NotePropertyName integrityTolerance -NotePropertyValue $tolerance -Force
+                    }
+                    else {
+                        $integrityFailures++
+                        $spec | Add-Member -NotePropertyName status -NotePropertyValue 'integrity-failure' -Force
+                        $spec | Add-Member -NotePropertyName isAdvisory -NotePropertyValue $false -Force
+                    }
                 }
             }
         }

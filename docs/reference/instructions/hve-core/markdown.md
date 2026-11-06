@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Markdown
 description: Markdown authoring conventions for all .md files
-sidebar_position: 7
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-10-07
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - instruction

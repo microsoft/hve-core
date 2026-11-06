@@ -253,5 +253,5 @@ Use the available host tool in each category and record a gap or fallback in the
 | External research      | Current facts and specific pages                                                     | Web search and fetch                                                         |
 | Repository research    | Patterns from authoritative repositories                                             | Repository and repository text search                                        |
 | Documentation research | Version-aware official documentation                                                 | Documentation MCP or approved documentation tools                            |
-| Optional participation | Decision-relevant caller checkpoints                                                 | The host's question tool, such as `vscode_askQuestions`                      |
+| Optional participation | Decision-relevant caller checkpoints                                                 | The host's question tool, such as `ask_user` or `vscode_askQuestions`        |
 | Optional helper        | Bounded source gathering that returns locations, excerpts, and brief notes to verify | A subagent such as `RPI Researcher`, at the researcher's discretion          |
