@@ -167,6 +167,16 @@ describe('pinning only on purpose', () => {
         assert.deepEqual(ids(), []);
     });
 
+    it('never opens a nested preview whose show delay was still running when its parent was unpinned', () => {
+        const { clock, previews, ids } = setup();
+        previews.lock('c22', { id: 'C22', parent: -1 });
+        previews.enter('in-c22-q1', { id: 'Q1', parent: 0, via: 'pointer' });
+        clock.advance(TIMING.showHover - 1);
+        previews.unlock(0);
+        clock.advance(TIMING.showHover + TIMING.lock);
+        assert.deepEqual(ids(), ['C22'], 'the pending child neither opens nor pins');
+    });
+
     it('keeps an unpinned ID preview unpinned while hovered, until it closes and opens again', () => {
         const { clock, previews, ids } = setup();
         previews.enter('c22', { id: 'C22', parent: -1, via: 'pointer' });

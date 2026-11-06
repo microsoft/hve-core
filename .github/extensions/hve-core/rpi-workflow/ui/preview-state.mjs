@@ -197,6 +197,7 @@ export function createPreviewState(options) {
         unlock(index) {
             const entry = stack[index];
             if (!entry?.locked) return;
+            cancelPending();
             entry.locked = false;
             entry.unpinned = true;
             truncate(index);
