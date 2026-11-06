@@ -1674,3 +1674,9 @@ urlsafe
 wberry
 writeback
 Brussee
+
+# OWASP Threat Dragon and threat-model vocabulary
+antv
+dasharray
+interactor
+threatmodel

@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-06
 ms.topic: overview
 keywords:
   - reference
@@ -48,6 +48,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Security/Identity](security/identity.md)                                                                     | Security Planner identity, six-phase orchestration, state management, and session recovery protocols                                                                                                          |
 | [Security/Sssc Planner](security/sssc-planner.md)                                                             | SSSC Planner identity, six-phase orchestration, state schema, session recovery, and Phase 2-6 assessment protocols                                                                                            |
 | [Security/Standards Mapping](security/standards-mapping.md)                                                   | OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups                                                                                        |
+| [Security/Threat Dragon Generation Workflow](security/threat-dragon-generation-workflow.md)                   | Human-in-the-loop contract for OWASP Threat Dragon threat-model generation                                                                                                                                    |
 | [Security/Vex Standards](security/vex-standards.md)                                                           | VEX document standards: canonical rule reference, licensing posture, author-of-record contract, and document mutation contract for OpenVEX management - Brought to you by microsoft/hve-core                  |
 | [Shared/Coaching Patterns](shared/coaching-patterns.md)                                                       | Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods                                                                   |
 | [Shared/Content Policy Citation](shared/content-policy-citation.md)                                           | Content-policy and terms-of-service guardrails for public output and eval stimuli                                                                                                                             |

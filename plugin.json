@@ -115,6 +115,7 @@
     ".github/instructions/security/identity.instructions.md",
     ".github/instructions/security/sssc-planner.instructions.md",
     ".github/instructions/security/standards-mapping.instructions.md",
+    ".github/instructions/security/threat-dragon-generation-workflow.instructions.md",
     ".github/instructions/security/vex-standards.instructions.md",
     ".github/instructions/shared/coaching-patterns.instructions.md",
     ".github/instructions/shared/content-policy-citation.instructions.md",

@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Reference"
 pagination_label: Reference
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-06
 ms.topic: overview
 keywords:
   - reference
@@ -20,6 +20,6 @@ This page lists the generated reference documentation, grouped by asset kind.
 | Category                               | Assets |
 |----------------------------------------|--------|
 | [Agents](agents/README.md)             | 61     |
-| [Instructions](instructions/README.md) | 37     |
+| [Instructions](instructions/README.md) | 38     |
 | [Skills](skills/README.md)             | 91     |
 <!-- END AUTO-GENERATED: index -->

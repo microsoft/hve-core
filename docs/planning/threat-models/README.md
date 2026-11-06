@@ -3,12 +3,13 @@ title: Threat Models
 description: Machine-readable threat-model specs for HVE Core and the generators that consume them
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-08
+ms.date: 2026-10-06
 ms.topic: reference
 keywords:
   - threat model
   - security planning
   - tm7
+  - threat dragon
 ---
 
 ## Overview
@@ -16,7 +17,7 @@ keywords:
 > [!WARNING]
 > `hve-core-comprehensive.yaml` carries a `DRAFT` marker and has **not** been through human security review. Treat that spec, and every `.tm7` or markdown artifact generated from it, as unreviewed until a qualified human reviewer removes the marker from the spec itself. Do not cite it as an authored threat model.
 
-Machine-readable threat-model specs consumed by the `security-planning` skill generators. Each spec is the versioned source; the `.tm7` and markdown outputs are build artifacts and are not committed.
+Machine-readable threat-model specs consumed by the `security-planning` skill generators. Each spec is the versioned source; the `.tm7`, markdown, and OWASP Threat Dragon outputs are build artifacts and are not committed.
 
 ## Specs
 
@@ -48,7 +49,20 @@ uv run --project .github/skills/project-planning/security-planning \
   -o <output>.md
 ```
 
-Both commands read the same spec and use the same deterministic threat derivation, so regenerate them together to keep the pair consistent. Generating a large spec takes a while because layout packing runs per surface.
+Generate an editable [OWASP Threat Dragon](https://github.com/OWASP/threat-dragon) v2.6.2 model from the same spec:
+
+```bash
+uv run --project .github/skills/project-planning/security-planning \
+  python .github/skills/project-planning/security-planning/scripts/generate_threat_dragon.py \
+  docs/planning/threat-models/hve-core-comprehensive.yaml \
+  -o <output>.threat-dragon.json
+```
+
+Open the result in Threat Dragon v2.6.2 with **Open an existing threat model**. Each representation in the spec becomes one diagram, laid out like the matching `.tm7` surface. The export is one-way, so make changes in the spec and regenerate rather than editing the Threat Dragon file.
+
+See the [Threat Dragon generation reference](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/security-planning/references/threat-dragon-generation.md) for the mapping and the optional spec fields it reads.
+
+All three commands read the same spec and use the same deterministic threat derivation, so regenerate them together to keep the outputs consistent. Generating a large spec takes a while because layout packing runs per surface.
 
 Outputs are deterministic for a given spec and generator version, so they are regenerated on demand rather than stored. Validating a generated model against the native Threat Modeling Tool requires Windows and a pinned TMT version; see the skill's [README](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/security-planning/README.md) and the [operator runbook](https://github.com/microsoft/hve-core/blob/main/.github/skills/project-planning/security-planning/references/tm7-generation.md).
 

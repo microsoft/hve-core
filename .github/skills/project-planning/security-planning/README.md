@@ -1,13 +1,13 @@
 ---
 title: Security Planning TM7 generation and feedback tools
-description: Current generator, validator, feedback, schemas, and references shipped with the Security Planning skill
-ms.date: 2026-08-05
+description: Current TM7 and Threat Dragon generators, validators, feedback, schemas, and references shipped with the Security Planning skill
+ms.date: 2026-10-06
 ms.topic: reference
 ---
 
 # Security Planning TM7 Generation
 
-This package contains the current TM7 generation, validation, and native feedback assets for the Security Planning skill.
+This package contains the current TM7 generation, validation, and native feedback assets for the Security Planning skill, plus OWASP Threat Dragon v2.6.2 export from the same spec.
 
 ## Contents
 
@@ -20,6 +20,8 @@ This package contains the current TM7 generation, validation, and native feedbac
 * `scripts/generate_tb7.py`: deterministic `.tb7` template generation
 * `scripts/populate_tm7_threats.py`: post-generation threat population with an expected-count guard
 * `scripts/generate_markdown.py`: synchronized markdown twin of a generated model
+* `scripts/generate_threat_dragon.py`: deterministic OWASP Threat Dragon v2.6.2 export that reuses the TM7 model builder and layout
+* `scripts/validate_threat_dragon.py`: Threat Dragon v2.6.2 schema and semantic validator with exit codes 0 valid, 1 invalid, and 2 usage or read error
 
 ### Assets
 
@@ -28,19 +30,21 @@ This package contains the current TM7 generation, validation, and native feedbac
 * `assets/templates/default.tb7`: bundled XmlSerializer template, not spliced into `.tm7` directly
 * `assets/schemas/tm7-layout-overlay.schema.json`: versioned overlay schema for deterministic replay
 * `assets/schemas/tm7-visual-feedback-manifest.schema.json`: evidence-manifest schema for native feedback runs
+* `assets/threat-dragon/`: vendored, unmodified OWASP Threat Dragon v2.6.2 JSON schema with its provenance record, Apache-2.0 licence, and third-party notice
 
 ### References
 
 * `references/00-index.md`: navigation catalog and consolidated attribution
 * `references/tm7-generation.md`: public TM7 contract, CLI surface, mode-flag behavior, feedback-loop documentation, and operator runbook
+* `references/threat-dragon-generation.md`: Threat Dragon CLI contract, spec-to-native mapping, threat placement, canvas attributes, and validation rules
 * `references/operational-buckets.md`, `references/stride-model.md`, `references/standards-cross-reference.md`, `references/nist-control-families.md`, `references/data-classification.md`, `references/threat-model-review.md`, `references/backlog-formats.md`: planning references loaded on demand
 
 ### Other
 
 * `SKILL.md`: skill entry point and workflow contract
-* `SECURITY.md`: skill-level STRIDE model for local generation, TMT automation, UI Automation, screenshots, and evidence handling
+* `SECURITY.md`: skill-level STRIDE model for local TM7 and Threat Dragon generation, TMT automation, UI Automation, screenshots, and evidence handling
 * `templates/threat-model-spec-example.yaml`: worked input-spec example
-* `tests/`: focused regression coverage for generation, validation, and feedback-loop behavior, plus `tests/fuzz_harness.py` for the fuzz entry point
+* `tests/`: focused regression coverage for generation, validation, and feedback-loop behavior, plus `tests/fuzz_harness.py` for the fuzz entry point and the opt-in `tests/test_threat_dragon_loader.py` check against pinned Threat Dragon v2.6.2
 * `pyproject.toml` and `uv.lock`: pinned Python dependency contract, including the optional `windows` group required by the native harness
 
 ## Notes
