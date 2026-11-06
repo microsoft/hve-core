@@ -17,7 +17,6 @@ import {
   type EvaluationContract,
   type Modality,
   type PreparedCaseManifest,
-  type SourceFileContract,
   gitBlobObjectId,
   readJson,
   resolveInside,
@@ -123,13 +122,13 @@ export async function prepareCases(options: PreparationOptions): Promise<Prepara
     const fetchImpl = options.fetchImpl ?? fetch;
     const retrievedAt = options.retrievedAt ?? new Date().toISOString();
     await verifyLicense(contract, fetchImpl);
-    const indexPath = await downloadAndVerify(
+    const indexPath = resolveInside(scorerOnlyRoot, contract.source.caseIndex.path);
+    await downloadAndVerify(
       fetchImpl,
       contract.source.revision,
       "",
       {
         name: contract.source.caseIndex.path,
-        objectId: "0".repeat(40),
         sha256: contract.source.caseIndex.sha256,
         size: contract.source.caseIndex.size,
       },
@@ -273,7 +272,8 @@ async function prepareCase(options: {
     ) {
       throw new Error(`Source identity drift for ${caseContract.neutralId}/${expected.name}`);
     }
-    const path = await downloadAndVerify(
+    const path = resolveInside(rawCaseRoot, expected.name);
+    await downloadAndVerify(
       options.fetchImpl,
       options.contract.source.revision,
       caseContract.sourcePath,
@@ -356,15 +356,9 @@ async function prepareCase(options: {
 }
 
 async function verifyLicense(contract: EvaluationContract, fetchImpl: typeof fetch): Promise<void> {
-  const url = `${HUGGING_FACE_BASE}/resolve/${contract.source.revision}/${contract.source.licenseCard.path}`;
-  const response = await fetchImpl(url);
-  if (!response.ok) {
-    throw new Error(`Unable to retrieve source license card: HTTP ${response.status}`);
-  }
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  if (gitBlobObjectId(bytes) !== contract.source.licenseCard.objectId) {
-    throw new Error("Pinned dataset card object identity changed");
-  }
+  const bytes = await downloadAndVerify(fetchImpl, contract.source.revision, "", {
+    name: contract.source.licenseCard.path, objectId: contract.source.licenseCard.objectId,
+  }, undefined, false);
   const text = Buffer.from(bytes).toString("utf8");
   if (!/^license:\s*mit\s*$/im.test(text)) {
     throw new Error("Pinned dataset card does not declare the MIT license");
@@ -397,26 +391,43 @@ async function fetchTree(
   return value as HuggingFaceTreeItem[];
 }
 
-async function downloadAndVerify(
+/**
+ * Downloads allowlisted RCAEval files at an immutable revision and verifies their expected identity.
+ *
+ * Returns verified bytes; when outputRoot is supplied, writes them below that root only after
+ * verification. SHA-256 identities come from the contract or pinned LFS metadata; other source
+ * objects use Git blob identities. Missing files or identity mismatches reject without writing.
+ */
+export async function downloadAndVerify(
   fetchImpl: typeof fetch,
   revision: string,
   sourcePath: string,
-  expected: SourceFileContract,
-  outputRoot: string,
+  expected: { readonly name: string; readonly size?: number } &
+    ({ readonly sha256: string } | { readonly objectId: string }),
+  outputRoot?: string,
   includeSourcePath = true,
-): Promise<string> {
+): Promise<Uint8Array> {
   const remotePath = includeSourcePath ? `${sourcePath}/${expected.name}` : expected.name;
+  if (!/^[0-9a-f]{40}$/.test(revision) ||
+      !/^(README\.md|cases\.parquet|[A-Za-z0-9_-]+\/(inject_time\.txt|metrics\.parquet|logs\.parquet|traces\.parquet))$/.test(remotePath)) {
+    throw new Error("Invalid RCAEval source download path or revision");
+  }
+  if ((expected.size !== undefined && (!Number.isSafeInteger(expected.size) || expected.size < 0)) ||
+      ("sha256" in expected ? !/^[0-9a-f]{64}$/.test(expected.sha256) : !/^[0-9a-f]{40}$/.test(expected.objectId))) {
+    throw new Error(`Invalid expected source identity for ${remotePath}`);
+  }
+  const outputPath = outputRoot === undefined ? undefined : resolveInside(outputRoot, expected.name);
   const response = await fetchImpl(`${HUGGING_FACE_BASE}/resolve/${revision}/${remotePath}?download=true`);
   if (!response.ok) {
     throw new Error(`Unable to download ${remotePath}: HTTP ${response.status}`);
   }
   const bytes = new Uint8Array(await response.arrayBuffer());
-  if (bytes.byteLength !== expected.size || sha256(bytes) !== expected.sha256) {
+  if ((expected.size !== undefined && bytes.byteLength !== expected.size) ||
+      ("sha256" in expected ? sha256(bytes) !== expected.sha256 : gitBlobObjectId(bytes) !== expected.objectId)) {
     throw new Error(`Downloaded content mismatch for ${remotePath}`);
   }
-  const outputPath = resolveInside(outputRoot, expected.name);
-  await writeFile(outputPath, bytes);
-  return outputPath;
+  if (outputPath !== undefined) await writeFile(outputPath, bytes);
+  return bytes;
 }
 
 /** Loads the hash-pinned coordinator reader; callers must dispose it, and raw trials never receive it. */

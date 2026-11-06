@@ -15,6 +15,7 @@ import {
 } from "../../../evals/rca-real-world/contracts.mts";
 import {
   assertBlindness,
+  downloadAndVerify,
   prepareCases,
   verifyPreparedRun,
   type PreparationOptions,
@@ -160,6 +161,82 @@ async function createFixture(): Promise<Fixture> {
     },
   };
 }
+
+test("shared downloader preserves bytes with SHA-256 and Git blob verification", async (context) => {
+  const root = await mkdtemp(join(tmpdir(), "rca-download-"));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const bytes = new TextEncoder().encode("unchanged-source-bytes");
+  const revision = "a".repeat(40);
+  const requests: string[] = [];
+  const fetchImpl: typeof fetch = async (input) => {
+    requests.push(String(input));
+    return new Response(bytes);
+  };
+  const shaIdentity = { name: "metrics.parquet", size: bytes.length, sha256: sha256(bytes) };
+  assert.deepEqual(await downloadAndVerify(fetchImpl, revision, "source-case", shaIdentity, root), bytes);
+  assert.deepEqual(await readFile(join(root, shaIdentity.name)), Buffer.from(bytes));
+  const blobIdentity = { name: "inject_time.txt", size: bytes.length, objectId: gitBlobObjectId(bytes) };
+  assert.deepEqual(await downloadAndVerify(fetchImpl, revision, "source-case", blobIdentity, root), bytes);
+  assert.deepEqual(await readFile(join(root, blobIdentity.name)), Buffer.from(bytes));
+  const licenseIdentity = { name: "README.md", objectId: gitBlobObjectId(bytes) };
+  assert.deepEqual(await downloadAndVerify(fetchImpl, revision, "", licenseIdentity, undefined, false), bytes);
+  await assert.rejects(readFile(join(root, licenseIdentity.name)), /ENOENT/);
+  assert.equal(requests.length, 3);
+  assert.ok(requests.every((url) => url.startsWith(`https://huggingface.co/datasets/phamquiluan/RCAEval/resolve/${revision}/`)));
+});
+
+test("shared downloader rejects hash and size drift before writing", async (context) => {
+  const root = await mkdtemp(join(tmpdir(), "rca-download-drift-"));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const bytes = new TextEncoder().encode("source-bytes");
+  const fetchImpl: typeof fetch = async () => new Response(bytes);
+  for (const identity of [
+    { sha256: "0".repeat(64), size: bytes.length },
+    { objectId: "0".repeat(40), size: bytes.length },
+    { sha256: sha256(bytes), size: bytes.length + 1 },
+    { objectId: gitBlobObjectId(bytes), size: bytes.length + 1 },
+  ]) {
+    await assert.rejects(downloadAndVerify(fetchImpl, "a".repeat(40), "source-case", {
+      name: "metrics.parquet", ...identity,
+    }, root), /Downloaded content mismatch/);
+    await assert.rejects(readFile(join(root, "metrics.parquet")), /ENOENT/);
+  }
+});
+
+test("shared downloader rejects invalid paths, revisions and identities before fetching", async () => {
+  let requests = 0;
+  const fetchImpl: typeof fetch = async () => {
+    requests++;
+    throw new Error("Unexpected download");
+  };
+  for (const [revision, sourcePath, name] of [
+    ["a".repeat(40), "../escape", "metrics.parquet"],
+    ["a".repeat(40), "source-case", "script.mjs"],
+    ["main", "source-case", "metrics.parquet"],
+  ]) {
+    await assert.rejects(downloadAndVerify(fetchImpl, revision!, sourcePath!, {
+      name: name!, sha256: "a".repeat(64),
+    }), /Invalid RCAEval source download/);
+  }
+  for (const identity of [
+    { sha256: "invalid" }, { objectId: "invalid" }, { sha256: "a".repeat(64), size: -1 },
+  ]) {
+    await assert.rejects(downloadAndVerify(fetchImpl, "a".repeat(40), "source-case", {
+      name: "metrics.parquet", ...identity,
+    }), /Invalid expected source identity/);
+  }
+  assert.equal(requests, 0);
+});
+
+test("shared downloader surfaces HTTP failures without writing", async (context) => {
+  const root = await mkdtemp(join(tmpdir(), "rca-download-http-"));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const fetchImpl: typeof fetch = async () => new Response("missing", { status: 404 });
+  await assert.rejects(downloadAndVerify(fetchImpl, "a".repeat(40), "source-case", {
+    name: "metrics.parquet", sha256: "a".repeat(64),
+  }, root), /Unable to download source-case\/metrics.parquet: HTTP 404/);
+  await assert.rejects(readFile(join(root, "metrics.parquet")), /ENOENT/);
+});
 
 test("prepares deterministic separated workspaces while preserving telemetry services", async () => {
   const fixture = await createFixture();

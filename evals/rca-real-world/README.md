@@ -66,6 +66,13 @@ in the ID.
 The default `prepared` track retains the existing five cases, JSONL conversion, metric mapping,
 and specialized evidence queries. Historical evaluation snapshots remain unchanged.
 
+Both tracks use the same dataset downloader during explicit input preparation, not during
+skill invocation or evaluation rounds. It restricts source paths, verifies sizes when supplied,
+and checks SHA-256 identities from the contract or pinned LFS metadata, or Git blob identities
+for other source objects, before writing local files. These checks establish source identity,
+not parser safety. Subsequent rounds verify and reuse the local inputs without downloading
+the dataset again.
+
 The `raw` track downloads five additional cases from the same pinned revision, excludes the
 existing five, and separates scorer-only truth from model-visible evidence. Every telemetry
 Parquet is converted to JSONL using the pinned reader. Original fields and row order are

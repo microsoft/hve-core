@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { EVALUATION_CASE_IDS, RAW_EVIDENCE_FORMAT, SKILLED_REPORT_HEADINGS, approvalPolicy, gitBlobObjectId, readJson, sha256, stableJson, writeJson } from "../../../evals/rca-real-world/contracts.mts";
+import { EVALUATION_CASE_IDS, EVALUATION_RUN_DIRECTORY, RAW_EVIDENCE_FORMAT, SKILLED_REPORT_HEADINGS, approvalPolicy, gitBlobObjectId, readJson, sha256, stableJson, writeJson } from "../../../evals/rca-real-world/contracts.mts";
 import { convertRawRun, prepareRawCases, selectRawCases, verifyRawRun } from "../../../evals/rca-real-world/raw-prepare.mts";
 import { createInputFingerprint, runRound } from "../../../evals/rca-real-world/runner.mts";
 import { buildAdHocPrompt } from "../../../evals/rca-real-world/orchestrator.mts";
@@ -31,6 +31,7 @@ async function fixture() {
       ["logs.parquet", Buffer.from(`PAR1-logs-${sourcePath}`)], ["traces.parquet", Buffer.from(`PAR1-traces-${sourcePath}`)]] as const;
     trees.set(sourcePath, files.map(([name, bytes]) => ({
       type: "file", path: `${sourcePath}/${name}`, size: bytes.length, oid: gitBlobObjectId(bytes),
+      ...(name === "metrics.parquet" ? { lfs: { oid: sha256(bytes), size: bytes.length } } : {}),
     })));
     for (const [name, bytes] of files) payloads.set(`${sourcePath}/${name}`, bytes);
   }
@@ -93,6 +94,34 @@ test("raw preparation rejects unapproved pinned metadata paths before downloadin
     }), /pinned MIT RCAEval source/);
     assert.equal(downloads, 0);
   }
+});
+
+test("raw preparation downloads the verified index through the shared downloader", async (context) => {
+  const source = await fixture();
+  context.after(() => rm(source.repositoryRoot, { recursive: true, force: true }));
+  const { indexBytes, ...options } = source;
+  const result = await prepareRawCases({ ...options, runId: "raw-downloaded-index", indexRows: source.rows });
+  assert.deepEqual(await readFile(join(result.scorerOnlyRoot, "cases.parquet")), indexBytes);
+  await verifyRawRun(result.runRoot);
+});
+
+test("raw preparation rejects incorrect LFS metadata before preserving evidence", async (context) => {
+  const source = await fixture();
+  context.after(() => rm(source.repositoryRoot, { recursive: true, force: true }));
+  const selected = selectRawCases(source.rows, source.excluded, "seed").selectedSourcePaths[0]!;
+  const bytes = source.payloads.get(`${selected}/metrics.parquet`)!;
+  source.trees.set(selected, [
+    { type: "file", path: `${selected}/inject_time.txt`, size: 10, oid: gitBlobObjectId(Buffer.from("1700000000")) },
+    { type: "file", path: `${selected}/metrics.parquet`, size: bytes.length, oid: gitBlobObjectId(bytes),
+      lfs: { oid: "0".repeat(64) } },
+  ]);
+  await assert.rejects(prepareRawCases({
+    ...source, runId: "raw-lfs-drift", seed: "seed", indexRows: source.rows,
+  }), /Downloaded content mismatch/);
+  const root = join(source.repositoryRoot, ".copilot-tracking", "evaluations", EVALUATION_RUN_DIRECTORY, "raw-lfs-drift", "inputs");
+  assert.equal(await readFile(join(root, "scorer-only", "downloads", "case-01", "inject_time.txt"), "utf8"), "1700000000");
+  await assert.rejects(readFile(join(root, "scorer-only", "downloads", "case-01", "metrics.parquet")), /ENOENT/);
+  await assert.rejects(readFile(join(root, "model-visible", "case-01", "metrics.parquet")), /ENOENT/);
 });
 
 test("raw verification rejects linked incident metadata", async (context) => {
@@ -160,7 +189,7 @@ test("raw preparation rejects source identity mismatches rather than selecting a
   try {
     const selected = selectRawCases(source.rows, source.excluded, "seed").selectedSourcePaths[0]!;
     source.payloads.set(`${selected}/metrics.parquet`, Buffer.from("tampered-source"));
-    await assert.rejects(prepareRawCases({ ...source, runId: "raw-tampered", seed: "seed", indexRows: source.rows }), /identity mismatch/);
+    await assert.rejects(prepareRawCases({ ...source, runId: "raw-tampered", seed: "seed", indexRows: source.rows }), /Downloaded content mismatch/);
   } finally { await rm(source.repositoryRoot, { recursive: true, force: true }); }
 });
 

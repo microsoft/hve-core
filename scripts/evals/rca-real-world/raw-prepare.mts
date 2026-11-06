@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 import { constants } from "node:fs";
-import { mkdir, open, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, open, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import {
   EVALUATION_CASE_IDS, EVALUATION_RUN_DIRECTORY, TRANSFORMATION_VERSION, RAW_EVIDENCE_FORMAT,
-  compareStrings, gitBlobObjectId, readJson, resolveInside, sha256, stableJson, writeJson,
+  compareStrings, readJson, resolveInside, sha256, stableJson, writeJson,
   type CaseContract, type EvaluationContract, type Modality,
 } from "./contracts.mts";
-import { createPinnedParquetReader, extractTruth, hashAndCountLines, writeJsonlRows, PARQUET_READER_IDENTITY, type PreparationResult } from "./prepare.mts";
+import { createPinnedParquetReader, downloadAndVerify, extractTruth, hashAndCountLines, writeJsonlRows, PARQUET_READER_IDENTITY, type PreparationResult } from "./prepare.mts";
 
 export const DEFAULT_RAW_SELECTION_SEED = "rcaeval-raw-2026-11-05";
 const BASE = "https://huggingface.co";
@@ -71,24 +71,20 @@ export async function prepareRawCases(options: {
   await mkdir(modelVisibleRoot, { recursive: true });
   await mkdir(scorerOnlyRoot, { recursive: true });
   const fetchImpl = options.fetchImpl ?? fetch;
-  const get = async (path: string): Promise<Uint8Array> => {
-    if (!/^(README\.md|cases\.parquet|[A-Za-z0-9_-]+\/(inject_time\.txt|metrics\.parquet|logs\.parquet|traces\.parquet))$/.test(path)) {
-      throw new Error("Invalid raw source download path");
-    }
-    const response = await fetchImpl(`${BASE}/datasets/${DATASET}/resolve/${REVISION}/${path}?download=true`);
-    if (!response.ok) throw new Error(`Raw source download failed: ${path}, HTTP ${response.status}`);
-    return new Uint8Array(await response.arrayBuffer());
-  };
-  const license = await get("README.md");
-  if (gitBlobObjectId(license) !== contract.source.licenseCard.objectId || !/^license:\s*mit\s*$/im.test(Buffer.from(license).toString("utf8"))) {
+  const license = await downloadAndVerify(fetchImpl, REVISION, "", {
+    name: "README.md", objectId: contract.source.licenseCard.objectId,
+  }, undefined, false);
+  if (!/^license:\s*mit\s*$/im.test(Buffer.from(license).toString("utf8"))) {
     throw new Error("Pinned raw dataset license identity mismatch");
   }
-  const index = options.indexBytes ?? await get("cases.parquet");
+  const indexPath = join(scorerOnlyRoot, "cases.parquet");
+  const index = options.indexBytes ?? await downloadAndVerify(fetchImpl, REVISION, "", {
+    name: "cases.parquet", size: contract.source.caseIndex.size, sha256: contract.source.caseIndex.sha256,
+  }, scorerOnlyRoot, false);
   if (index.byteLength !== contract.source.caseIndex.size || sha256(index) !== contract.source.caseIndex.sha256) {
     throw new Error("Pinned raw case index integrity mismatch");
   }
-  const indexPath = join(scorerOnlyRoot, "cases.parquet");
-  await writeFile(indexPath, index);
+  if (options.indexBytes !== undefined) await writeFile(indexPath, index);
   let owned: Awaited<ReturnType<typeof createPinnedParquetReader>> | undefined;
   let rows = options.indexRows;
   if (!rows) {
@@ -127,22 +123,22 @@ export async function prepareRawCases(options: {
           typeof entry.size !== "number" || !Number.isSafeInteger(entry.size) || entry.size < 0 || entry.size > 512 * 1024 * 1024) {
         throw new Error(`Invalid or oversized raw source object: ${neutralId}/${name}; cohort is not resampled`);
       }
-      const bytes = await get(`${sourcePath}/${name}`);
-      const digest = sha256(bytes);
       const lfs = entry.lfs;
-      if (bytes.byteLength !== entry.size ||
-          (lfs !== undefined
-            ? lfs === null || typeof lfs !== "object" || !("oid" in lfs) || lfs.oid !== digest
-            : gitBlobObjectId(bytes) !== entry.oid)) {
+      if (lfs !== undefined && (lfs === null || typeof lfs !== "object" || !("oid" in lfs) ||
+          typeof lfs.oid !== "string" || !/^[0-9a-f]{64}$/.test(lfs.oid))) {
         throw new Error(`Raw source identity mismatch: ${neutralId}/${name}`);
       }
+      const identity = lfs !== undefined ? { sha256: lfs.oid } : { objectId: entry.oid };
+      const bytes = await downloadAndVerify(fetchImpl, REVISION, sourcePath, {
+        name, size: entry.size, ...identity,
+      }, originals);
+      const digest = sha256(bytes);
       files.push({ name, objectId: entry.oid, size: bytes.byteLength, sha256: digest });
-      await writeFile(join(originals, name), bytes);
       if (name === "inject_time.txt") {
         injectionTime = Buffer.from(bytes).toString("utf8").trim();
         if (!/^\d{10,16}$/.test(injectionTime)) throw new Error(`Invalid raw incident onset: ${neutralId}`);
       } else {
-        await writeFile(join(visible, name), bytes);
+        await copyFile(join(originals, name), join(visible, name));
         modalities.push(name.slice(0, -8) as Modality);
       }
     }
