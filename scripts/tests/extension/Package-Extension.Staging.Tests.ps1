@@ -141,6 +141,22 @@ Describe 'Get-TrackedFilesForSource failures' -Tag 'Unit' {
     }
 }
 
+Describe 'Windows repository-local vsce selection' -Tag 'Unit' -Skip:(-not $IsWindows) {
+    It 'Uses the npm command shim instead of the non-executable POSIX launcher' {
+        $fixture = New-PackagingFixtureRepo -Path (Join-Path $TestDrive 'windows-vsce')
+        $bin = Join-Path $fixture.RepoRoot 'node_modules/.bin'
+        New-Item -ItemType Directory -Path $bin -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $bin 'vsce') -Value '#!/bin/sh'
+        Set-Content -LiteralPath (Join-Path $bin 'vsce.cmd') -Value "@echo off`r`necho 3.9.2`r`nexit /b 0"
+
+        $result = Get-PinnedVsceCommand -RepoRoot $fixture.RepoRoot
+
+        $result.IsAvailable | Should -BeTrue
+        $result.Command | Should -BeExactly (Join-Path $bin 'vsce.cmd')
+        $result.ActualVersion | Should -BeExactly '3.9.2'
+    }
+}
+
 # Skipped on Windows: these cases execute a POSIX shell fake vsce, which Windows cannot run.
 Describe 'Get-PinnedVsceCommand' -Tag 'Unit' -Skip:$IsWindows {
     BeforeEach {

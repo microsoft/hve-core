@@ -1557,6 +1557,9 @@ Pipfile
 manylinux
 pipx
 pypa
+certifi
+filelock
+setuptools
 zizmor
 zizmorcore
 
