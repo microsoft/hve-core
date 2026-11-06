@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { mkdir, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { mkdir, open, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import {
   EVALUATION_CASE_IDS, EVALUATION_RUN_DIRECTORY, TRANSFORMATION_VERSION, RAW_EVIDENCE_FORMAT,
@@ -13,6 +14,7 @@ import { createPinnedParquetReader, extractTruth, hashAndCountLines, writeJsonlR
 export const DEFAULT_RAW_SELECTION_SEED = "rcaeval-raw-2026-11-05";
 const BASE = "https://huggingface.co";
 const DATASET = "phamquiluan/RCAEval";
+const REVISION = "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e";
 
 /** A reproducible raw cohort; identities and answer-bearing selection records are scorer-only. */
 export interface RawSelection {
@@ -57,7 +59,8 @@ export async function prepareRawCases(options: {
 }): Promise<PreparationResult> {
   if (!/^[a-z0-9][a-z0-9-]{2,63}$/.test(options.runId)) throw new Error("Invalid raw run ID");
   const contract = await readJson<EvaluationContract>(join(options.repositoryRoot, "evals", "rca-real-world", "cases.json"));
-  if (contract.source.dataset !== DATASET || contract.source.revision !== "afeacb11bcc94dadfd1c8f483ee4377b2b8b614e" || contract.source.license !== "MIT") {
+  if (contract.source.dataset !== DATASET || contract.source.revision !== REVISION || contract.source.license !== "MIT" ||
+      contract.source.licenseCard.path !== "README.md" || contract.source.caseIndex.path !== "cases.parquet") {
     throw new Error("Raw preparation requires the pinned MIT RCAEval source");
   }
   const runRoot = resolveInside(join(options.repositoryRoot, ".copilot-tracking", "evaluations", EVALUATION_RUN_DIRECTORY), options.runId);
@@ -69,15 +72,18 @@ export async function prepareRawCases(options: {
   await mkdir(scorerOnlyRoot, { recursive: true });
   const fetchImpl = options.fetchImpl ?? fetch;
   const get = async (path: string): Promise<Uint8Array> => {
-    const response = await fetchImpl(`${BASE}/datasets/${DATASET}/resolve/${contract.source.revision}/${path}?download=true`);
+    if (!/^(README\.md|cases\.parquet|[A-Za-z0-9_-]+\/(inject_time\.txt|metrics\.parquet|logs\.parquet|traces\.parquet))$/.test(path)) {
+      throw new Error("Invalid raw source download path");
+    }
+    const response = await fetchImpl(`${BASE}/datasets/${DATASET}/resolve/${REVISION}/${path}?download=true`);
     if (!response.ok) throw new Error(`Raw source download failed: ${path}, HTTP ${response.status}`);
     return new Uint8Array(await response.arrayBuffer());
   };
-  const license = await get(contract.source.licenseCard.path);
+  const license = await get("README.md");
   if (gitBlobObjectId(license) !== contract.source.licenseCard.objectId || !/^license:\s*mit\s*$/im.test(Buffer.from(license).toString("utf8"))) {
     throw new Error("Pinned raw dataset license identity mismatch");
   }
-  const index = options.indexBytes ?? await get(contract.source.caseIndex.path);
+  const index = options.indexBytes ?? await get("cases.parquet");
   if (index.byteLength !== contract.source.caseIndex.size || sha256(index) !== contract.source.caseIndex.sha256) {
     throw new Error("Pinned raw case index integrity mismatch");
   }
@@ -92,9 +98,10 @@ export async function prepareRawCases(options: {
   const selection = selectRawCases(rows, contract.cases.map((item) => item.sourcePath), options.seed ?? DEFAULT_RAW_SELECTION_SEED);
   const cases: { neutralId: string; injectionTime: string; files: { name: string; sha256: string; size: number }[] }[] = [];
   const sourceCases: CaseContract[] = [];
-  for (const [position, sourcePath] of selection.selectedSourcePaths.entries()) {
-    const neutralId = EVALUATION_CASE_IDS[position]!;
-    const response = await fetchImpl(`${BASE}/api/datasets/${DATASET}/tree/${contract.source.revision}/${sourcePath}?recursive=true&expand=true`);
+  for (const [position, neutralId] of EVALUATION_CASE_IDS.entries()) {
+    const sourcePath = selection.selectedSourcePaths[position]!;
+    if (!/^[A-Za-z0-9_-]+$/.test(sourcePath)) throw new Error("Invalid raw source case path");
+    const response = await fetchImpl(`${BASE}/api/datasets/${DATASET}/tree/${REVISION}/${sourcePath}?recursive=true&expand=true`);
     if (!response.ok) throw new Error(`Raw source metadata unavailable: ${neutralId}, HTTP ${response.status}`);
     const treeResponse: unknown = await response.json();
     if (!Array.isArray(treeResponse)) throw new Error(`Invalid raw source metadata: ${neutralId}`);
@@ -106,7 +113,7 @@ export async function prepareRawCases(options: {
     const files: CaseContract["files"][number][] = [];
     const modalities: Modality[] = [];
     let injectionTime: string | undefined;
-    for (const name of ["inject_time.txt", "metrics.parquet", "logs.parquet", "traces.parquet"]) {
+    for (const name of ["inject_time.txt", "metrics.parquet", "logs.parquet", "traces.parquet"] as const) {
       const entries = tree.filter((entry): entry is Record<string, unknown> =>
         entry !== null && typeof entry === "object" && "type" in entry && entry.type === "file" &&
         "path" in entry && entry.path === `${sourcePath}/${name}`);
@@ -271,10 +278,16 @@ export async function verifyRawRun(runRoot: string): Promise<void> {
           measured.rowCount !== file.rowCount || file.rowCount < 1) throw new Error(`Raw evidence integrity mismatch: ${caseId}/${file.name}`);
     }
     const incidentPath = join(directory, "incident.json");
-    if (relative(directory, await realpath(incidentPath)) !== "incident.json" || !(await stat(incidentPath)).isFile()) {
-      throw new Error("Raw incident metadata must be a contained regular file");
+    const incidentHandle = await open(incidentPath, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+    let incident: string;
+    try {
+      if (relative(directory, await realpath(incidentPath)) !== "incident.json" || !(await incidentHandle.stat()).isFile()) {
+        throw new Error("Raw incident metadata must be a contained regular file");
+      }
+      incident = await incidentHandle.readFile("utf8");
+    } finally {
+      await incidentHandle.close();
     }
-    const incident = await readFile(incidentPath, "utf8");
     const expectedIncident = {
       schemaVersion: "1.0.0", evidenceTrack: "raw", evidenceFormat: RAW_EVIDENCE_FORMAT, caseId, incidentOnset: item.injectionTime,
       files: item.files, dataPreparation: CONVERSION_DESCRIPTION,

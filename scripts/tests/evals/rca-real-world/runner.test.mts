@@ -75,7 +75,7 @@ for (const condition of ["with-skill", "without-skill"] as const) {
       },
     });
     assert.equal(turns, 3);
-    assert.equal(artifact.endReason, "complete", artifact.error);
+    assert.equal(artifact.endReason, "complete", artifact.error ?? "Raw investigation did not complete");
     const records = (artifact.approvalLedger as {
       records: { approvalId: string; status: string; consumedCallCount: number }[];
     }).records;

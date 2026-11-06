@@ -17,7 +17,8 @@ dev = [
     # platform check, so they are designed to run on Linux CI; only the PNG
     # fixture helper needs a real imaging library. Gating it to Windows made
     # the whole module fail to import on Linux and silently skipped its tests.
-    "pillow>=11.3.0",
+    # 13.0.0 fixes the 41 Pillow advisories open against earlier releases.
+    "pillow>=13.0.0,<14.0",
 ]
 fuzz = [
     "atheris>=3.0",

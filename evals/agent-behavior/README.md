@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-10-17
+ms.date: 2026-10-27
 ---
 
 ## Purpose
@@ -289,7 +289,7 @@ stimuli:
 
 Agents that sequence work, plan tasks, coach the user through a process, or orchestrate multi-phase workflows.
 
-**Members (14):** accessibility-planner, agentic-workflows, data-science-engineering-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, hve-demo-material, pptx, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
+**Members (13):** accessibility-planner, agentic-workflows, data-science-engineering-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, hve-demo-material, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
 
 **Required Graders:**
 
@@ -336,7 +336,6 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | issue-triage                   | workitem-manager | light     | [.github/agents/issue-triage.agent.md](../../.github/agents/issue-triage.agent.md)                                                                                       |
 | meeting-analyst                | research-writer  | light     | [.github/agents/project-planning/meeting-analyst.agent.md](../../.github/agents/project-planning/meeting-analyst.agent.md)                                               |
 | network-isa95-planner          | research-writer  | light     | [.github/agents/project-planning/network-isa95-planner.agent.md](../../.github/agents/project-planning/network-isa95-planner.agent.md)                                   |
-| pptx                           | planner-coach    | light     | [.github/agents/experimental/pptx.agent.md](../../.github/agents/experimental/pptx.agent.md)                                                                             |
 | prd-builder                    | research-writer  | light     | [.github/agents/project-planning/prd-builder.agent.md](../../.github/agents/project-planning/prd-builder.agent.md)                                                       |
 | privacy-planner                | planner-coach    | light     | [.github/agents/privacy/privacy-planner.agent.md](../../.github/agents/privacy/privacy-planner.agent.md)                                                                 |
 | privacy-reviewer               | code-reviewer    | light     | [.github/agents/privacy/privacy-reviewer.agent.md](../../.github/agents/privacy/privacy-reviewer.agent.md)                                                               |

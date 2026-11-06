@@ -9,6 +9,12 @@ dependencies = [
     "fsspec>=2026.6.0",
     "torch==2.14.0",
     "transformers>=5.15.0,<6",
+    # Transitive security floors: certifi GHSA-6q48-6c7w-9gw2 (2026.10.19 restores
+    # roots removed by 2026.10.18), three filelock advisories fixed in 4.2.1, and
+    # setuptools GHSA-xmj3-9gf7-h52w fixed in 84.1.0.
+    "certifi>=2026.10.19",
+    "filelock>=4.2.1,<5.0",
+    "setuptools>=84.1.0,<85.0",
 ]
 
 # Resolve torch from the CPU-only wheel index. This eval is a CPU-bound
@@ -21,6 +27,11 @@ explicit = true
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
+
+# Atheris 3.1 publishes no Python 3.11 wheels; scope only fuzzing to 3.12+ so
+# the application keeps supporting Python 3.11.
+[tool.uv.dependency-groups]
+fuzz = { requires-python = ">=3.12" }
 
 [tool.ruff]
 line-length = 120

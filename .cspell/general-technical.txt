@@ -1691,3 +1691,6 @@ shippingservice
 strippable
 unassessable
 unrecovered
+currencyservice
+productcatalogservice
+nonfinite

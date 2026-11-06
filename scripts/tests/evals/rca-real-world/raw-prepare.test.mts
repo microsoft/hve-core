@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
@@ -75,6 +75,44 @@ test("seeded raw selection is repeatable, order independent, and excludes all pr
   assert.throws(() => selectRawCases([...rows, rows[0]!], [], "seed"), /duplicate/);
   assert.throws(() => selectRawCases([{ case: "../escape" }], [], "seed"), /invalid/);
   assert.throws(() => selectRawCases(rows.slice(0, 4), [], "seed"), /Fewer/);
+});
+
+test("raw preparation rejects unapproved pinned metadata paths before downloading", async (context) => {
+  const source = await fixture();
+  context.after(() => rm(source.repositoryRoot, { recursive: true, force: true }));
+  const path = join(source.repositoryRoot, "evals", "rca-real-world", "cases.json");
+  const contract = JSON.parse(await readFile(path, "utf8"));
+  for (const field of ["licenseCard", "caseIndex"]) {
+    const changed = structuredClone(contract);
+    changed.source[field].path = "../unapproved";
+    await writeJson(path, changed);
+    let downloads = 0;
+    await assert.rejects(prepareRawCases({
+      ...source, runId: "invalid-source-path", indexRows: source.rows,
+      fetchImpl: async () => { downloads++; throw new Error("Unexpected download"); },
+    }), /pinned MIT RCAEval source/);
+    assert.equal(downloads, 0);
+  }
+});
+
+test("raw verification rejects linked incident metadata", async (context) => {
+  const source = await fixture();
+  context.after(() => rm(source.repositoryRoot, { recursive: true, force: true }));
+  const result = await prepareRawCases({ ...source, runId: "linked-incident", indexRows: source.rows });
+  const incident = join(result.modelVisibleRoot, "case-01", "incident.json");
+  const external = join(source.repositoryRoot, "external-incident.json");
+  await writeFile(external, await readFile(incident));
+  await rm(incident);
+  try {
+    await symlink(external, incident, "file");
+  } catch (error) {
+    if (error instanceof Error && "code" in error && ["EPERM", "EACCES", "ENOTSUP"].includes(String(error.code))) {
+      context.skip("Creating symlinks is unavailable on this host");
+      return;
+    }
+    throw error;
+  }
+  await assert.rejects(verifyRawRun(result.runRoot), /contained regular file|ELOOP/);
 });
 
 test("raw preparation converts rows without metric mappings and preserves originals and truth separation", async () => {

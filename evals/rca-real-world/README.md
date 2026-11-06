@@ -2,7 +2,7 @@
 title: RCAEval real-world RCA evaluation
 description: Compare skilled and skill-free RCA on separate prepared and raw blinded RCAEval cohorts
 author: HVE Core Team
-ms.date: 2026-11-05
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - root cause analysis
@@ -69,7 +69,7 @@ and specialized evidence queries. Historical evaluation snapshots remain unchang
 The `raw` track downloads five additional cases from the same pinned revision, excludes the
 existing five, and separates scorer-only truth from model-visible evidence. Every telemetry
 Parquet is converted to JSONL using the pinned reader. Original fields and row order are
-preserved; BigInts, dates, bytes and nonfinite numbers use the existing deterministic
+preserved; BigInt values, dates, bytes and nonfinite numbers use the existing deterministic
 JSON-compatible encoding. Original Parquet bytes remain unchanged in scorer-only downloads.
 No metric mappings, renamed fields, added telemetry fields, resampling, or preparation-time
 aggregates are produced. This track is conversion-only `jsonl-unmapped-v1`, not an assessment

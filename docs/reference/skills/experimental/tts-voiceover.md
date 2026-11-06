@@ -3,7 +3,7 @@ title: tts-voiceover
 description: Text-to-speech voice-over generation from YAML speaker notes using Azure AI Speech neural voices with SSML pronunciation control
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-10-09
+ms.date: 2026-10-27
 ms.topic: reference
 keywords:
   - skill
@@ -28,7 +28,7 @@ Text-to-speech voice-over generation from YAML speaker notes using Azure AI Spee
 
 ## When to use it
 
-Use this skill to produce per-slide WAV narration from PowerPoint content YAML's
+Use this skill to produce per-slide WAV narration from slide content YAML's
 `speaker_notes`, with SSML aliases for technical terms. Choose dry-run to inspect
 SSML without Azure credentials or audio generation. Live synthesis requires
 Python 3.11+, `uv`, an Azure Speech resource, authentication, and an approved region.
@@ -49,6 +49,6 @@ a generated WAV or verified pronunciation.
 After region and authentication are configured separately, an authorized synthesis
 request can produce matching `slide-NNN.wav` files. Listen for pronunciation and
 pauses; `--collapse-newlines` is useful when block-scalar wrapping should not become
-spoken pauses. Embedding into a separate narrated PPTX is another step: the script
-replaces existing timing and disables click advancement, so review animations and
-playback rather than overwriting an authored deck without checking.
+spoken pauses. Use `demo-video` for synchronized visuals and audio, or
+`hve-demo-material` for the HTML/frame/MP4/caption workflow. Presentation-file
+embedding is retired; existing user presentations are not modified or converted.
