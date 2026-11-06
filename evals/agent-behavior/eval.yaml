@@ -7258,7 +7258,8 @@ stimuli:
 - name: rpi-agent-first-task-assessment-defaults
   prompt: |
     This is a contained, response-only lifecycle-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. Consider the first task in
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    Consider the first task in
     a new automatic session. The user has not skipped either assessment.
     Select the default settings. Return exactly two lines: `Critique: run|skip`
     and `Review: run|skip`. Do not execute phases or write files.
@@ -7266,11 +7267,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-assessment-policy
-    prompt_sha256: 530d7a5de4a0d3daea4823e4e614a235787022c2fcc075a9077bc9aaf6413e04
+    prompt_sha256: b39ca8f00147ebf635eab4502d834d08678f702d811ee183725cb0d7fb54d1f1
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7280,7 +7283,8 @@ stimuli:
 - name: rpi-agent-child-assessment-defaults
   prompt: |
     This is a contained, response-only lifecycle-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. The first task already
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    The first task already
     completed its critique and Review. A required child task is ready, and the
     user has not requested more assessments. Select the child defaults.
     Return exactly two lines: `Critique: run|skip` and `Review: run|skip`.
@@ -7289,11 +7293,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-assessment-policy
-    prompt_sha256: 66d9ceef6327910cfd5ac7d0e4679186e4a47a395048a5480eb4d96f9fa1c50d
+    prompt_sha256: 6d27effc7cea9ce75878cb53a9864da5bca6604b1d3b7c4874ee7bc217441644
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7303,7 +7309,8 @@ stimuli:
 - name: rpi-agent-child-explicit-assessment-override
   prompt: |
     This is a contained, response-only lifecycle-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. The first task already
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    The first task already
     completed both assessments. For a required child task the user explicitly
     requests another plan critique and another Review. Select the child
     settings. Return exactly two lines: `Critique: run|skip` and
@@ -7312,11 +7319,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-assessment-policy
-    prompt_sha256: ee12bd79d01672080be94606943de3172f0c7e51fb9fcb088179f1262e703bae
+    prompt_sha256: a02188200291c4e632d58f1fa80a2307bb8b1cf80c11e5a18f535737ef606cd9
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7326,7 +7335,8 @@ stimuli:
 - name: rpi-agent-child-review-only-override
   prompt: |
     This is a contained, response-only lifecycle-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. The first task already
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    The first task already
     completed both assessments. For a required child task the user requests
     another Review but does not request another critique. Select the child
     settings. Return exactly two lines: `Critique: run|skip` and
@@ -7335,11 +7345,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-assessment-policy
-    prompt_sha256: 9ba8a9c38a75a7cba0810614248b34a3ba61b5910deeec6a1ccad77f1a9c0b87
+    prompt_sha256: 399cd161ccf41484e8c83a22d1203f33031b76c17f2422b8d452a22561e32242
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7349,7 +7361,7 @@ stimuli:
 - name: rpi-agent-interrupted-critique-continuation
   prompt: |
     This is a contained, response-only lifecycle-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md` and
+    RPI execution. Read `policy/rpi-agent.agent.md`, `policy/rpi.SKILL.md`, and
     `policy/rpi-plan.SKILL.md`. In the first task, Critique Disposition is
     started but no result exists after its first interruption. The prerequisite
     is unchanged and the user has not skipped the critique. Classify recovery
@@ -7360,13 +7372,15 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
     - src: ../../.github/skills/rpi/rpi-plan/SKILL.md
       dest: policy/rpi-plan.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-assessment-policy
-    prompt_sha256: 5f517b2ea2bc0c7cc060e9a32b64094c300ce663f2f4dcb870693d33967b9a1c
+    prompt_sha256: 3e8e9a5b20b63279e5fdebf81a0e3e59258b501e0a3d5106059d6179f63fa9d4
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7376,7 +7390,7 @@ stimuli:
 - name: rpi-agent-interrupted-review-continuation
   prompt: |
     This is a contained, response-only lifecycle-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md` and
+    RPI execution. Read `policy/rpi-agent.agent.md`, `policy/rpi.SKILL.md`, and
     `policy/rpi-review.SKILL.md`. The first task's canonical Review record is
     started after an interruption. A stale session projection says completed,
     but no finished Review exists. Classify recovery and which evidence
@@ -7387,13 +7401,15 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
     - src: ../../.github/skills/rpi/rpi-review/SKILL.md
       dest: policy/rpi-review.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-assessment-policy
-    prompt_sha256: 327726be39b55e046a4bfe5e61b86d544bc14a6b0d6e84c29222b2a3ac5916df
+    prompt_sha256: 9e3f8784f565fd266be3b059ad9f52a52d56bfc0f80c8c10bff63e9b611669a6
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7403,7 +7419,8 @@ stimuli:
 - name: rpi-agent-canvas-provider-ambiguity
   prompt: |
     This is a contained, response-only canvas-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. A capability lookup for
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    A capability lookup for
     hve-core-rpi-workflow reports multiple providers:
     plugin:hve-core:rpi-workflow and project:rpi-workflow. No Canvas decision
     exists. Choose the next action and provider arguments for lookup and
@@ -7415,11 +7432,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-canvas-policy
-    prompt_sha256: 4e9662db8c78af95e830da97e750cc317d2fe07a5eaf394d79134ec5fd9382d6
+    prompt_sha256: 97e6afe14eebba6957bbe1bc87bb720ef856f28e4c5fec4f981327ad6572ba32
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7429,7 +7448,8 @@ stimuli:
 - name: rpi-agent-canvas-provider-retention
   prompt: |
     This is a contained, response-only canvas-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. The saved Canvas decision
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    The saved Canvas decision
     records instance rpi-map and extensionId plugin:hve-core:rpi-workflow.
     The user asks to bring that panel back. The host still offers both
     plugin:hve-core:rpi-workflow and project:rpi-workflow. Select the instance
@@ -7441,11 +7461,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-canvas-policy
-    prompt_sha256: ea2824bb2e721263be27c3d3fb3db6d4765c9fa8ea2b436c0c42eb2f33c332a8
+    prompt_sha256: dba2bf93db33deefa674ee4b01146d2f3d3dbea7bdf5bb988bde60326864b928
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7455,7 +7477,8 @@ stimuli:
 - name: rpi-agent-canvas-provider-failure
   prompt: |
     This is a contained, response-only canvas-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. No Canvas decision exists.
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    No Canvas decision exists.
     After resolving provider ambiguity, the provider-qualified open fails
     because the extension is disconnected; the host recommends reloading the
     extension. There is no new evidence for another attempt. Decide whether
@@ -7469,11 +7492,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-canvas-policy
-    prompt_sha256: b3193abbfdedfdeba7d6274247d6b988a13eb0e49b6335a6532d5dd4db25a5ae
+    prompt_sha256: 988beb8ae0ddab66577858a7d5211e3ee5f72918b35ca65aabef887b0bb16d4d
     agent: rpi-agent
   graders:
   - type: output-matches
@@ -7483,7 +7508,8 @@ stimuli:
 - name: rpi-agent-canvas-plugin-only
   prompt: |
     This is a contained, response-only canvas-policy regression, not native
-    RPI execution. Read `policy/rpi-agent.agent.md`. In a downstream workspace
+    RPI execution. Read `policy/rpi-agent.agent.md` and `policy/rpi.SKILL.md`.
+    In a downstream workspace
     the only host-reported provider for hve-core-rpi-workflow is
     plugin:hve-core:rpi-workflow. A saved Canvas decision from another host
     names project:rpi-workflow, which is not offered here. Choose the provider
@@ -7495,11 +7521,13 @@ stimuli:
     files:
     - src: ../../.github/agents/hve-core/rpi-agent.agent.md
       dest: policy/rpi-agent.agent.md
+    - src: ../../.github/skills/rpi/rpi/SKILL.md
+      dest: policy/rpi.SKILL.md
   tags:
     category: agent-behavior
     advisory: "true"
     shape: rpi-canvas-policy
-    prompt_sha256: e9f059c3abbe570fc7c077c04a7605c246affb8277e25c3f44c5b5eddf82dbc5
+    prompt_sha256: 21095802bb71b16f2e61667fb1290372cf850e8b5697c284eec79585ded158e9
     agent: rpi-agent
   graders:
   - type: output-matches

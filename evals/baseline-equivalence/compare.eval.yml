@@ -101,7 +101,7 @@ stimuli:
       - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
 
   - name: code-reverse-string-rust
-    prompt: "Write a Rust function that reverses a string and returns the reversed value."
+    prompt: "Write a Rust function that reverses a string and returns the reversed value. Show the code in your reply."
     tags: {category: baseline-equivalence, subcategory: code-qa, policy: equivalent}
     rubric:
       - >
