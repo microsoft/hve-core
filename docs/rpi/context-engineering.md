@@ -3,7 +3,7 @@ title: "Context Engineering: Why AI Context Management Matters"
 description: Understand how long RPI lifecycles accumulate context and how durable artifacts support deliberate resumption
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-11-02
 ms.topic: concept
 keywords:
   - context engineering
@@ -63,12 +63,10 @@ Starting a new chat achieves the same result through a different mechanism. Both
 
 ## Restoring Context After /clear
 
-`/clear` removes chat history, but a task can resume from its durable artifacts. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear. Bring the relevant task evidence back into the agent's view.
+`/clear` removes chat history, but a task can resume from its durable artifacts. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear. Bring the relevant task evidence back into the agent's view by naming it in your message:
 
-Two mechanisms work reliably:
-
-* Open the file in the editor before invoking the next agent. Copilot Chat reads files visible in the active editor tab.
-* Reference the file path explicitly in your prompt message so the agent knows where to look.
+* Reference the artifact's file path so the agent knows where to look.
+* With `/rpi` or `RPI Agent`, you can name the task slug instead. The session matches it against the session state under `.copilot-tracking/rpi-sessions/` and continues from the recorded phase and artifact pointers.
 
 ### What to Open at Each Transition
 
@@ -81,7 +79,7 @@ Two mechanisms work reliably:
 
 When resuming a plan, navigate by the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers such as `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->`.
 
-When multiple artifact sets exist, open the relevant file or reference its path explicitly so the resumed work uses the intended task identity.
+When multiple artifact sets exist, reference the relevant file's path explicitly so the resumed work uses the intended task identity.
 
 > [!TIP]
 > For longer workflows spanning multiple sessions, resume from the dated RPI artifacts and stable task identifiers. These files preserve evidence and progress without relying on chat history.
@@ -90,7 +88,7 @@ When multiple artifact sets exist, open the relevant file or reference its path 
 
 `/compact` takes a different approach. Instead of removing conversation history entirely, it summarizes the history into a condensed form that preserves key context while reducing the token count.
 
-`/compact` remains available as a typed command but is no longer offered as an agent handoff button. It was removed from agent handoffs because Autopilot mode could trigger compaction loops that degraded context unpredictably.
+You run `/compact` yourself by typing it in chat. The RPI phase skills tell you when it would help: if stale tool output or finished-phase detail outweighs the useful context, a phase's closing Next Steps section asks you to run `/compact` before the next RPI command and names the state and artifact pointers to keep.
 
 When to use `/compact`:
 
@@ -103,16 +101,16 @@ When to use `/clear` instead:
 * When switching to a different task entirely
 * When agent behavior has visibly degraded
 
-For session persistence, resume from the dated RPI artifacts rather than relying on `/compact`. Open or reference only the files needed for the next action so the fresh context remains focused.
+For session persistence, resume from the dated RPI artifacts rather than relying on `/compact`. Reference only the files needed for the next action so the fresh context stays focused.
 
 The tradeoff is precision. `/compact` summaries lose detail because the model decides what to keep and what to discard. Critical nuances from earlier in the conversation may not survive the summarization.
 
-| Command or action | Effect                             | Use when                             |
-|-------------------|------------------------------------|--------------------------------------|
-| `/clear`          | Removes all conversation history   | Changing concepts, switching tasks   |
-| `/compact`        | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
-| New chat          | Starts with a fresh context        | Starting unrelated work              |
-| Open artifacts    | Restores selected durable evidence | Resuming an existing RPI task        |
+| Command or action   | Effect                             | Use when                             |
+|---------------------|------------------------------------|--------------------------------------|
+| `/clear`            | Removes all conversation history   | Changing concepts, switching tasks   |
+| `/compact`          | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
+| New chat            | Starts with a fresh context        | Starting unrelated work              |
+| Reference artifacts | Restores selected durable evidence | Resuming an existing RPI task        |
 
 ## Long-Lifecycle Context
 
@@ -144,7 +142,7 @@ Context degradation produces observable symptoms. Catching them early prevents w
 
 * [Why RPI?](why-rpi): the psychology behind phase separation
 * [RPI Overview](./): complete workflow guide
-* [Using RPI Together](using-together): phase transitions and handoffs
+* [Using RPI Together](using-together): the full lifecycle walkthrough and RPI Agent modes
 
 ---
 

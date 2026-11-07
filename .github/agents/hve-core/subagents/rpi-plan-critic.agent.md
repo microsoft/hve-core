@@ -2,7 +2,6 @@
 name: RPI Plan Critic
 description: "Assesses one lens of an RPI implementation plan, such as requirement coverage, evidence support, executability, or risk, and returns candidate findings with locations, suggested severity, and the smallest useful change for the critique parent to verify. Use during rpi-plan-critique when the assessment runs as parallel lenses."
 user-invocable: false
-agents: []
 model: Claude Haiku 5.5 (copilot)
 ---
 

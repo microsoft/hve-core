@@ -152,7 +152,7 @@ For each user-owned or user-retained `RV-xxx`, first persist the pending item. T
 * The proposed destination and the suggested answer
 * Material uncertainty and whether more evidence could change the decision
 
-Use the host's question tool, such as `vscode_askQuestions`, when available, with one finding per turn. Configure freeform input and offer:
+Use the host's question tool, such as `ask_user` or `vscode_askQuestions`, when available, with one finding per turn. Configure freeform input and offer:
 
 * `Use suggested action: [plain-language action]`, marked recommended
 * `Gather more information`

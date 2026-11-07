@@ -32,7 +32,7 @@ Use HVE Demo Material Builder to produce a levelled training deck and narrated
 video for HVE Core or another named repository topic, from an L100 introduction
 for first-time users to an L400 deep dive for maintainers. It sources every
 claim from repository documentation, keeps the house style, and scores each
-level against its duration and accessibility criteria. Use PowerPoint Builder
+level against its duration and accessibility criteria. Use HVE Slides
 for a single deck without narration or level contracts, and a documentation
 workflow when you need written reference rather than presentation material.
 
@@ -40,8 +40,9 @@ workflow when you need written reference rather than presentation material.
 
 1. Select `HVE Demo Material Builder` and name the levels, the topic (default
    `hve-core-general`), and the autonomy mode (`manual`, `partial`, or `full`).
-2. Make Azure AI Speech credentials and `SPEECH_REGION` available. Narration
-   always uses Azure AI Speech neural voices.
+2. Resolve HVE Slides and the required Node/Chromium/media prerequisites.
+   For narrated output, make approved Azure AI Speech credentials and region
+   available; `narration: none` produces silent output without speech services.
 3. Review the storyboard and speaker notes when the autonomy mode asks for it.
    The notes are also the captions and the transcript, so they voice every
    on-screen claim.
@@ -54,7 +55,7 @@ workflow when you need written reference rather than presentation material.
 Ask: "Create the L100 demo deck and narrated video for HVE Core, and show me the
 storyboard before rendering."
 
-Expect `hve-demo-L100.pptx`, a captioned `hve-demo-L100.mp4`, a `.vtt` captions
+Expect `hve-demo-L100.html`, a captioned `hve-demo-L100.mp4`, a `.vtt` captions
 file, a transcript page, and `manifest.yml` under
 `.copilot-tracking/demo-material/<date>/L100/output/`. Success means every
 criterion in the manifest records `pass` and the measured video length falls

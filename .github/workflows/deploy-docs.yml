@@ -210,7 +210,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/skills/experimental/hve-demo-material/scripts/artifact_lookup.py find \
-            --workflow demo-material-render.yml --artifact-prefix demo-material-site \
+            --workflow demo-material-render.yml --artifact-prefix demo-material-site-v2 \
             --github-output "${GITHUB_OUTPUT}"
 
       - name: Download the demo material bundle
@@ -236,24 +236,24 @@ jobs:
       - name: Stage demo material
         if: ${{ steps.demo.outputs.artifact-id != '' || steps.recovered.outputs.status == 'recovered' }}
         run: |
+          set -euo pipefail
+          python3 .github/skills/experimental/hve-demo-material/scripts/artifact_lookup.py validate-site \
+            --target demo-material-bundle
           python3 - <<'PY'
-          import json, re, shutil
+          import shutil
           from pathlib import Path
 
           bundle = Path("demo-material-bundle")
           target = Path("docs/docusaurus/build/demo-material")
-          allowed = re.compile(
-              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt|html)|index\.html|render-result\.json|source-register\.md))$"
-          )
-          for path in bundle.rglob("*"):
-              if path.is_symlink() or (path.is_file() and not allowed.match(path.relative_to(bundle).as_posix())):
-                  raise SystemExit(f"unexpected file in demo material bundle: {path}")
-          index = json.loads((bundle / "index.json").read_text(encoding="utf-8"))
-          if index.get("schema_version") != "demo-material-site/v1":
-              raise SystemExit("demo material bundle has an unknown schema")
           shutil.copytree(bundle, target, dirs_exist_ok=True)
-          print(f"Staged demo material levels: {sorted(index.get('levels', {}))}")
+          print("Staged validated HTML demo material bundle")
           PY
+
+      - name: Require preserved demo material before publication
+        if: ${{ steps.demo.outputs.artifact-id == '' && steps.recovered.outputs.status != 'recovered' }}
+        run: |
+          echo "::error::No validated demo bundle is available. Preserve existing published media and complete the approved v2 migration before deploying."
+          exit 1
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

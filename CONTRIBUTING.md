@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-10-06
+ms.date: 2026-11-02
 ms.topic: guide
 keywords:
   - contributing
@@ -121,7 +121,7 @@ version, and the gated variant then fails.
 Generic validation does not select browser, model, moderation, service, or
 credential-dependent lanes automatically.
 
-For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
+For additional validation commands specific to AI artifacts (agents, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
 
 ### Development Environment
 
@@ -237,11 +237,11 @@ This project also includes a Dev Container for development work, and using that 
 
 If you see issues with the documentation, please follow the [your first code contribution](#your-first-code-contribution) guidance.
 
-For AI artifact documentation (agents, prompts, instructions, skills), see the [AI Artifact Contributions](#ai-artifact-contributions) section below and refer to the specialized guides in [docs/contributing/](./docs/contributing/README.md).
+For AI artifact documentation (agents, instructions, skills), see the [AI Artifact Contributions](#ai-artifact-contributions) section below and refer to the specialized guides in [docs/contributing/](./docs/contributing/README.md).
 
 ## AI Artifact Contributions
 
-HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, reusable prompts, coding guidelines (instructions), and executable skills.
+HVE Core has contribution guides for the AI artifacts that extend GitHub Copilot. These artifacts define custom agents, coding guidelines (instructions), and skills, including the slash commands people run.
 
 > [!IMPORTANT]
 > HVE Core Maintainers review [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md)
@@ -262,12 +262,12 @@ Start with the [AI Artifacts Contributing Hub](./docs/contributing/README.md) fo
 
 ### Artifact Types
 
-| Artifact Type    | Purpose                                                                                           | Guide                                                       |
-|------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
-| **Agents**       | Define specialized AI assistants with domain expertise and specific workflows                     | [Custom Agents Guide](./docs/contributing/custom-agents.md) |
-| **Instructions** | Establish repository-specific coding standards and conventions that Copilot follows automatically | [Instructions Guide](./docs/contributing/instructions.md)   |
-| **Prompts**      | Create reusable prompt templates for common tasks and workflows                                   | [Prompts Guide](./docs/contributing/prompts.md)             |
-| **Skills**       | Build self-contained packages with documentation and executable scripts for specific tasks        | [Skills Guide](./docs/contributing/skills.md)               |
+| Artifact Type      | Purpose                                                                                           | Guide                                                       |
+|--------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| **Agents**         | Define specialized AI assistants with domain expertise and specific workflows                     | [Custom Agents Guide](./docs/contributing/custom-agents.md) |
+| **Instructions**   | Establish repository-specific coding standards and conventions that Copilot follows automatically | [Instructions Guide](./docs/contributing/instructions.md)   |
+| **Slash commands** | Contribute reusable slash commands as skills; HVE Core no longer accepts prompt files             | [Slash Commands Guide](./docs/contributing/prompts.md)      |
+| **Skills**         | Build self-contained packages with documentation and executable scripts for specific tasks        | [Skills Guide](./docs/contributing/skills.md)               |
 
 ### Essential Resources
 
@@ -377,7 +377,7 @@ CI reports coverage at an 18% informational baseline; focus on meaningful covera
 |-----------|-------------------------------------------------------|
 | Location  | `scripts/tests/` (mirrors source directory structure) |
 | Naming    | `*.Tests.ps1` suffix matching source script name      |
-| Framework | Pester 5.x                                            |
+| Framework | Pester 6.x                                            |
 
 Skill scripts use a different test location. Skill tests are co-located inside each skill directory at `.github/skills/<skill-name>/tests/` rather than mirrored under `scripts/tests/`. See [Skills Guide](./docs/contributing/skills.md#unit-testing-requirements) for details.
 
@@ -405,7 +405,7 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 ### How Releases Work
 
-1. Commit to `main` with Conventional Commits (see [commit message instructions](./.github/instructions/hve-core/commit-message.instructions.md)).
+1. Commit to `main` with Conventional Commits (see the [commit message conventions](./.github/skills/hve-core/git-commit/references/commit-message.md)).
 2. Review and merge the `main` to `release/prerelease` promotion PR. This creates no tag.
 3. Review and merge release-please's managed PreRelease PR. Its merge creates `prerelease-v<version>`, packages and attests one VSIX, and publishes the prerelease.
 4. Review and merge the `release/prerelease` to `release/stable` promotion PR, then the managed Stable PR. The managed merge creates `v<version>`, packages and attests one VSIX, publishes Stable OpenVEX, and publishes the release.
@@ -429,12 +429,12 @@ git commit -m "fix(workflows): correct frontmatter validation path"
 git commit -m "docs(readme): update installation steps"
 
 # Breaking change (major bump)
-git commit -m "feat!: redesign prompt file structure
+git commit -m "feat!: redesign skill folder structure
 
-BREAKING CHANGE: prompt files now require category frontmatter field"
+BREAKING CHANGE: skills now require a category frontmatter field"
 ```
 
-For complete commit message format requirements, see [commit-message.instructions.md](./.github/instructions/hve-core/commit-message.instructions.md).
+For complete commit message format requirements, see the [commit message conventions](./.github/skills/hve-core/git-commit/references/commit-message.md) in the `git-commit` skill.
 
 For complete release process documentation including extension publishing, maturity lifecycle, and detailed version calculation workflows, see the [Release Process Guide](./docs/contributing/release-process.md).
 

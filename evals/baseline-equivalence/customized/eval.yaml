@@ -95,10 +95,10 @@ stimuli:
     constraints: *agent-time-limit
     turns:
       - *agent-launch
-      - "Write a Rust function that reverses a string and returns the reversed value."
+      - "Write a Rust function that reverses a string and returns the reversed value. Show the code in your reply."
     tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
-      - {type: output-matches, name: rust-fn-syntax, config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}}
+      - {type: output-matches, name: rust-fn-syntax, config: {pattern: "(?i)\\bfn\\s+\\w+\\s*(?=[^{;]*\\b(?:str|String)\\b)(?:<[^{;()]*>)?\\s*\\("}}
       - {type: prompt, name: code-reverse-string-rust-response-quality, config: {prompt: "Does the response define a Rust function that reverses a string?"}}
 
   - name: code-walkthrough-fizzbuzz

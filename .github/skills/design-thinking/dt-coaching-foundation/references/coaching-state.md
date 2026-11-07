@@ -64,11 +64,11 @@ canonical_deck:
   last_generated_at: null  # ISO 8601 timestamp; last time a snapshot was generated
 
 customer_card_render:
-  last_offered_at: null   # ISO 8601 timestamp; last time customer-card build was offered
+  last_offered_at: null   # ISO 8601 timestamp; last time customer-card generation was offered
   last_offered_response: null  # "accepted" | "declined" | null
-  last_generated_at: null  # ISO 8601 timestamp; last time customer-card PPTX was generated
+  last_generated_at: null  # ISO 8601 timestamp; last time customer-card content was generated
   decline_final: false    # boolean; true if user declined at Method 5 (no further offers)
-  output_path: null       # relative path to last generated PPTX
+  output_path: null       # relative path to last generated content directory
 ```
 
 ### Field Definitions
@@ -86,7 +86,7 @@ customer_card_render:
 * `method`: integer 1-9 indicating the active method.
 * `space`: derived from method number. Methods 1-3 map to `problem`, 4-6 to `solution`, 7-9 to `implementation`.
 * `phase`: free-text label describing the current step within the method (e.g., "stakeholder mapping", "interview planning", "theme clustering", "prototype testing").
-* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See `shared/disclaimer-language.instructions.md` (Design Thinking Coaching section).
+* `disclaimerShownAt`: ISO 8601 timestamp recording when the Design Thinking Coaching disclaimer was shown. `null` until shown; once set, never overwritten. See the `disclaimer-language` skill (Design Thinking Coaching section).
 
 #### Hint Calibration
 
@@ -129,7 +129,7 @@ List of artifacts produced during coaching. Each entry captures:
 Specialized DT workflows may extend the base state schema with additional top-level blocks. Preserve these blocks when updating coaching state files.
 
 * `canonical_deck`: snapshot history and cooldown state for canonical deck generation.
-* `customer_card_render`: cooldown state and output metadata for PowerPoint renders derived from the canonical deck.
+* `customer_card_render`: cooldown state and output metadata for customer-card slide content derived from the canonical deck.
 
 #### Canonical Deck Block
 
@@ -140,11 +140,11 @@ Specialized DT workflows may extend the base state schema with additional top-le
 
 #### Customer Card Render Block
 
-* `last_offered_at`: ISO 8601 timestamp of the most recent customer-card PowerPoint offer.
+* `last_offered_at`: ISO 8601 timestamp of the most recent customer-card offer.
 * `last_offered_response`: user's response to the most recent offer: `"accepted"`, `"declined"`, or `null` if never offered.
-* `last_generated_at`: ISO 8601 timestamp of the most recent customer-card PowerPoint generation.
+* `last_generated_at`: ISO 8601 timestamp of the most recent customer-card content generation.
 * `decline_final`: boolean indicating the user declined at the Method 5 checkpoint. When `true`, no further customer-card offers are made.
-* `output_path`: relative path to the last generated customer-card PowerPoint file.
+* `output_path`: relative path to the last generated customer-card `content.yaml` directory.
 
 ## State Management Rules
 
@@ -203,4 +203,4 @@ The `.copilot-tracking/dt/{project-slug}/` directory holds all project-specific 
 
 ## Integration with Method Sequencing
 
-The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which dt-methods reference the agent loads on demand via `read_file` when a method becomes active. The `transition_log` provides the history that the method sequencing transition protocol references.
+The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which dt-methods reference the agent reads on demand when a method becomes active. The `transition_log` provides the history that the method sequencing transition protocol references.

@@ -350,7 +350,7 @@ function Test-ValueAgainstSchema {
     .SYNOPSIS
         Validates a value against a (subset of) JSON schema.
     .DESCRIPTION
-        Supports: type (string/array/boolean/object), required, properties, items, enum, pattern, minLength, oneOf.
+        Supports: type (string/array/boolean/object), required, properties, items, enum, pattern, minLength, oneOf, not.
         Designed for "soft" schema validation; does not implement full JSON Schema.
     #>
     [CmdletBinding()]
@@ -368,6 +368,16 @@ function Test-ValueAgainstSchema {
     )
 
     $localErrors = [List[string]]::new()
+
+    # 'not' rejects any value that matches its subschema, so '{ "not": {} }' rejects every value.
+    if ($null -ne $Schema.not) {
+        $notErrors = @(Test-ValueAgainstSchema -Value $Value -Schema $Schema.not -Path $Path)
+        if ($notErrors.Count -eq 0) {
+            $reason = if ($Schema.description) { ": $($Schema.description)" } else { '' }
+            $localErrors.Add("Field '$Path' is not allowed$reason")
+            return $localErrors.ToArray()
+        }
+    }
 
     # Null handling: a null value is valid when the schema permits the 'null' type
     # (e.g. nullable fields declared as type ['string', 'null']). With no type
@@ -533,6 +543,7 @@ function Test-JsonSchemaValidation {
     - properties: Nested object property validation
     - items: Array item validation
     - oneOf: Composition keyword support (exactly one subschema must match)
+    - not: Rejects values that match the subschema; '{ "not": {} }' marks a retired field
     - pattern: Regex pattern matching for strings
     - enum: Allowed value constraints
     - minLength: Minimum string length validation

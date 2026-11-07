@@ -7,7 +7,7 @@ user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-10-02"
+  last_updated: "2026-10-31"
 ---
 
 # DT Figma Export
@@ -26,7 +26,7 @@ Export Design Thinking artifacts from `.copilot-tracking/dt/{project-slug}/` to 
 ## Prerequisites
 
 * The DT project artifacts exist under `.copilot-tracking/dt/{project-slug}/`.
-* The `figma` MCP server is configured in the workspace, for example in `.vscode/mcp.json`.
+* The `figma` MCP server is configured for the session, for example in `.mcp.json` at the workspace root.
 * The remote Figma MCP server is available across Figma plans and seats; the desktop MCP server requires a Dev or Full seat on a paid plan. See Figma's [access guide](https://help.figma.com/hc/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server) before choosing a server.
 * Authentication happens through browser OAuth on first use; no credential files or API keys are required.
 * Usage limits vary by plan, seat, and tool and can change. Check Figma's current [rate limits and access](https://developers.figma.com/docs/figma-mcp-server/rate-limits-access/) before sustained use. `figma/whoami` and `figma/create_new_file` are currently exempt from read-tool limits.
@@ -38,7 +38,7 @@ This workflow needs only file reads plus the Figma MCP tools `figma/whoami`, `fi
 
 1. Resolve project state. Read `.copilot-tracking/dt/{project-slug}/coaching-state.md` and confirm the project exists. When it does not, stop and explain how to start or resume a Design Thinking project first.
 2. Select the export scope from `method`. For `latest`, infer the latest completed or active method from the coaching state and recent artifacts. Prefer artifact files referenced in the coaching state over directory guessing.
-3. Validate Figma availability. Call `figma/whoami` to confirm the server is connected and the user is authenticated. When the `figma` server or its tools are unavailable, stop and give the setup path: add `{"figma": {"type": "http", "url": "https://mcp.figma.com/mcp"}}` to `.vscode/mcp.json` under `servers`, then restart VS Code.
+3. Validate Figma availability. Call `figma/whoami` to confirm the server is connected and the user is authenticated. When the `figma` server or its tools are unavailable, stop and give the setup path: add `"figma": {"type": "http", "url": "https://mcp.figma.com/mcp"}` to the `mcpServers` object in `.mcp.json` at the workspace root, then restart VS Code.
 4. Confirm destination and write authority. Present the exact destination title or existing file, the output type, and the intended create or modify operation, and ask the user to confirm that specific write before calling any write tool. For `both`, name and confirm the FigJam and Figma Design writes independently; confirming one does not authorize the other. When the user declines, does not answer, or changes the target, do not write; restate the current scope and ask for confirmation of any revised target.
 5. Create the destination. Use `figma/create_new_file` to create a FigJam file, a Figma Design file, or both, titled from `board-title` or the derived title. When the user names an existing Figma URL instead, read it with `figma/get_figjam` or `figma/get_metadata` before modifying it.
 6. Build the FigJam layout (for `figjam` or `both`) with `figma/use_figma`, translating artifact content into a left-to-right section layout with grouping areas and labeled sticky notes.

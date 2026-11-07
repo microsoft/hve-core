@@ -7,6 +7,14 @@ stimuli:
       for a notification preferences PRD covering in-app, email, and SMS
       toggles. State the paths where the PRD and its session state would be
       written.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
+        - ../../.github/skills/project-planning/requirements-author
     tags:
       category: agent-behavior
     graders:

@@ -12,7 +12,7 @@
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $script:files = @(
-    (Join-Path $script:repoRoot '.github/instructions/shared/planner-identity-base.instructions.md')
+    (Join-Path $script:repoRoot '.github/skills/shared/planner-identity/SKILL.md')
 )
 
 Describe 'Cadence Rule 5 enforces discovery-first ordering' -Tag 'Unit' {

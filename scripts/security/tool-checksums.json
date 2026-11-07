@@ -56,13 +56,13 @@
     {
       "name": "uv",
       "repo": "astral-sh/uv",
-      "version": "0.10.9",
+      "version": "0.13.6",
       "verification": "published-checksums",
       "envPrefix": "UV",
-      "sha256": "20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594",
+      "sha256": "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645",
       "sha256ByArch": {
-        "linux_amd64": "20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594",
-        "linux_arm64": "cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a"
+        "linux_amd64": "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645",
+        "linux_arm64": "229e194255c7958d86d56e8790d969a6f74736592133f0dfd0076f754c642c1d"
       },
       "assetTemplateByArch": {
         "linux_amd64": "https://github.com/astral-sh/uv/releases/download/{version}/uv-x86_64-unknown-linux-gnu.tar.gz",
@@ -208,8 +208,8 @@
     },
     {
       "name": "Pester",
-      "version": "5.7.1",
-      "notes": "PowerShell test framework; required by all *.Tests.ps1 files via #Requires -Modules @{ ModuleName='Pester'; RequiredVersion='5.7.1' }"
+      "version": "6.2.0",
+      "notes": "PowerShell test framework; scripts/tests/Invoke-PesterTests.ps1 imports this exact version from scripts/security/ps-module-versions.json"
     },
     {
       "name": "PSScriptAnalyzer",
