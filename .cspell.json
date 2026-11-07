@@ -213,6 +213,7 @@
     "thiserror",
     "treeviews",
     "uids",
+    "unassessed",
     "uncaptioned",
     "uncited",
     "unclustered",
@@ -237,6 +238,21 @@
     "ystatement",
     "ˈpræksɪs",
     "πρᾶξις"
+  ],
+  "overrides": [
+    {
+      "filename": "evals/rca-real-world/PR-3136-RAW-PRODUCTION-2026-11-06.{md,json}",
+      "words": [
+        "wshzcfvbkbjc"
+      ]
+    },
+    {
+      "filename": "evals/rca-real-world/PR-3136-RAW-DEBUG-2026-11-06.{md,json}",
+      "words": [
+        "oxwuvutu",
+        "zhbaszullqqy"
+      ]
+    }
   ],
   "reporters": [
     "default",

@@ -11,8 +11,8 @@ This directory hosts the behavior conformance suite. It is the only suite under 
 
 Behavior conformance answers a focused question per stimulus: *does the asset under test behave according to its documented contract?* Most stimuli assess model output. A smaller set also stages synthetic files and uses deterministic workspace graders to assess contained file effects.
 
-* Instruction conformance: verifies that instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
-* Skill behavior: verifies that skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
+* Instruction conformance: exercises whether instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
+* Skill behavior: exercises whether skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
 Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected skill stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses seven `prompt` model-judge graders for semantic contracts that deterministic checks cannot credibly assess.
 
@@ -21,7 +21,7 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `instructions.eval.yaml`   | 3i   | Advisory | 76      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 339     | `behavior-conformance` | Active (Phase 13) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 381     | `behavior-conformance` | Active (Phase 13) |
 
 Prompt conformance coverage moved to `skill-behavior.eval.yaml` and the agent-behavior partials when the repository's prompts became skills or agent entry modes. The `vally-tests` skill still routes `prompt`-kind stimuli to `prompts.eval.yaml`, which it creates on first use.
 
@@ -35,7 +35,11 @@ Stimuli that only checked how a moved instruction attached by `applyTo` were rem
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, and `skill-security-model`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation; Bicep sensitive-parameter and required-default conventions.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 339 stimuli across 87 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
+The maintained `skill-behavior.eval.yaml` inventory contains 381 stimuli across 90 skill subjects.
+It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge,
+unavailable-bridge, read-only-review, and review-pass ownership decisions plus direct
+`rpi-challenger`, `rpi-plan-critique`, pull-request preflight, and RCA evidence-routing,
+disposition-authority, completion, approval, resume, and synthetic regression contracts.
 
 ### Git publishing evidence boundary
 
