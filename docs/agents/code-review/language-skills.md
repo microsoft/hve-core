@@ -1,13 +1,15 @@
 ---
 title: Language Skills
-description: Built-in language skills for the Code Review Standards perspective and how to author enterprise-specific standards overlays
+description: How the Code Review standards perspective selects repository instructions and skills as review criteria, and how to author your own standards skill
 sidebar_position: 2
 sidebar_label: Language Skills
 keywords:
   - skills
   - language skills
-  - python
   - coding standards
+  - instructions
+  - criteria provenance
+  - python
   - enterprise
   - custom skills
 tags:
@@ -16,165 +18,146 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-11-06
 ms.topic: how-to
 estimated_reading_time: 8
 ---
 
-The Code Review Standards perspective enforces coding conventions through skills, not hardcoded rules. Each skill is a self-contained `SKILL.md` file with a checklist that the perspective loads at review time based on the languages present in the diff. This design means you can add, replace, or overlay standards for any language without modifying the agent.
+The standards perspective of [Code Review](README.md) checks a change against your project's own conventions. Its criteria come from the repository instructions that apply to the changed files and from the skills that match the changed languages, frameworks, or file types. Each finding cites the instruction or skill behind it, so you can trace a finding back to the rule that produced it. To extend coverage, add an instruction file or a skill; the review workflow stays the same.
 
-## How Skill Loading Works
-
-The orchestrator dispatches the Standards perspective with a `diff-state.json` containing the file extensions from the diff. The Standards perspective uses those extensions to select and load skills itself.
+## How the standards perspective selects criteria
 
 ```mermaid
 flowchart LR
-  accTitle: Standards Perspective Skill Loading Pipeline
-  accDescr: The orchestrator writes diff state, the Standards perspective matches changed extensions to skills, loads and applies their checklists, and writes findings.
-  A["Orchestrator:<br/>write diff-state.json"] --> B["Standards perspective:<br/>read extensions"]
-  B --> C["Classify candidates<br/>by origin"]
-  C --> G["De-duplicate by name<br/>with origin precedence"]
-  G --> H["Match name + description<br/>to diff languages"]
-  H --> D["Load matched skills"]
-  D --> E["Apply checklists"]
-  E --> F["Write JSON findings"]
+  accTitle: Standards criteria selection
+  accDescr: The standards perspective reads its assigned changes, gathers applicable repository instructions and matching skills with their origins, resolves duplicate skill names and conflicts, applies the criteria, and writes a result that records each criterion's source.
+  A["Assigned files<br/>and hunks"] --> B["Applicable repository<br/>instructions"]
+  A --> C["Skills matching language,<br/>framework, or file type"]
+  C --> D["Resolve duplicate<br/>names by origin"]
+  B --> E["Apply criteria with<br/>instruction precedence"]
+  D --> E
+  E --> F["Result with findings<br/>and provenance"]
 ```
 
-1. The orchestrator extracts file extensions from the diff during the context bootstrap step and writes them to the `extensions` array in `diff-state.json`.
-2. The Standards perspective reads `diff-state.json`, extracts the extensions, and gathers candidate skills, keeping each candidate's origin (Workspace, User, or Bundled) from its source label.
-3. It de-duplicates same-named skills by origin precedence, then evaluates each remaining skill by matching its name and description against the detected languages or file types.
-4. It stacks the matched skills needed to cover every changed language or file type and applies each skill's checklist to the diff.
-5. It writes structured JSON findings for the orchestrator to merge.
+1. Code Review assigns the standards perspective a set of areas, files, and hunks from the captured snapshot.
+2. The perspective reads the repository instructions whose scope covers the changed files.
+3. It selects available skills by changed language, framework, or literal file type, using each skill's `name` and `description`.
+4. It keeps each source's name, location or origin label, applicable scope, and criterion together. It doesn't infer provenance from prose.
+5. It resolves same-named skills by origin, applies instruction precedence, and records any unresolved conflict with both sources.
+6. It reviews the assigned changes against the selected criteria and established local patterns, then writes its result. Each finding cites the instruction or exact skill name and the criterion, and the observations list every criteria source used.
 
-Skill discovery is owned entirely by the Standards perspective. The orchestrator supplies the extensions; the Standards perspective decides which skills to load.
+There's no fixed cap on the number of skills. The perspective loads each distinct match the changed surface needs, so a change that spans several languages can load a skill for each one.
 
-### Skill Selection Steps
+### Skill origins
 
-The Standards perspective selects skills as follows:
+The perspective keeps each skill's origin with it through selection:
 
-1. It reads the unique file extensions from `diff-state.json` (or extracts them from the diff's changed-file list when not provided).
+| Origin    | What it represents                                                            |
+|-----------|-------------------------------------------------------------------------------|
+| Workspace | Skills authored in the repository or workspace under review                   |
+| User      | Skills from the user's profile, when the platform exposes them                |
+| Bundled   | Skills packaged with an installed extension, plugin, or the hve-core baseline |
+| Unknown   | A skill with no identifiable source label                                     |
 
-2. It normalizes each extension to language tokens (for example, `.py` to `python`, `.cs` to `csharp`, `.sh` to `bash`).
+Origin comes from each skill's source label or location. The perspective doesn't guess it from the skill's text. Author repository skills so they present as Workspace origin, which takes precedence over User and Bundled copies with the same name.
 
-3. It gathers candidate `coding-standards` skills, classifying each by origin (Workspace, User, or Bundled) from its source label or path.
+### Duplicates and conflicts
 
-4. It de-duplicates candidates that share the same frontmatter `name`, preferring Workspace over User over Bundled origin.
+| Case                 | Behavior                                                                                                                                                                  |
+|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Distinct skill names | Every matching skill loads. Findings cite the exact skill name                                                                                                            |
+| Same skill name      | Workspace shadows User, which shadows Bundled. When origin is unknown, one copy loads and the result discloses the ambiguity. Same-named bodies are never combined        |
+| Conflicting criteria | Instruction precedence decides. An unresolved conflict is recorded with both sources, and a material conflict stops the perspective as blocked for Code Review to resolve |
 
-5. It semantically matches each remaining candidate's `name` and `description` against the detected languages, frameworks, or file types.
+### Boundaries
 
-6. It stacks the matched skills needed to cover every changed language, framework, or file type, prioritizing those most closely aligned with the changed files.
+| Situation                                 | How the standards perspective handles it                                                   |
+|-------------------------------------------|--------------------------------------------------------------------------------------------|
+| A functional defect                       | Left to the functional perspective                                                         |
+| Acceptance-criteria coverage              | Left to the perspective Code Review assigns as its owner                                   |
+| A departure that only reflects preference | Not reported. A finding explains the consequence of the departure                          |
+| No applicable instructions or skills      | Recorded as unavailable standards evidence. It doesn't count as a standards pass           |
+| Production telemetry emitters             | Reviewed with `telemetry-foundations` and its semantic conventions, without invented names |
 
-7. It loads the full `SKILL.md` body for each selected skill and applies its checklist to the diff.
+## Built-in skills
 
-8. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
-
-> [!NOTE]
->
-> Candidates are gathered and classified by origin, then selected through semantic matching of their name and description against detected languages, frameworks, or file types. Semantic matching is the selection step, applied after origin-based de-duplication.
-
-### Skill Origins
-
-The Standards perspective keeps each candidate skill's origin with it through selection:
-
-| Origin    | What it represents                                                                    |
-|-----------|---------------------------------------------------------------------------------------|
-| Workspace | Skills authored in the repository or workspace under review                           |
-| User      | Skills from the user's profile, when the platform exposes them as candidates          |
-| Bundled   | Skills packaged with an installed extension, plugin, or the hve-core baseline         |
-| Unknown   | A candidate with no identifiable source label, used only when origin cannot be ranked |
-
-Origin is inferred from each candidate's source label, never from its content. Author repository skills so they present as Workspace origin; that origin takes precedence over User and Bundled copies of the same skill.
-
-### Skill Merge Behavior
-
-The Standards perspective merges discovered candidates before selection:
-
-| Case                                        | Behavior                                                                                                                                                                            |
-|---------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Distinct skill names                        | Skills stack additively when they match the diff. Findings keep the exact originating skill `name`.                                                                                 |
-| Same skill name                             | The higher-origin skill shadows the lower one; precedence is Workspace, then User, then Bundled. When origin cannot be ranked, one copy loads and the ambiguous duplicate is noted. |
-| Contradictory checks across distinct skills | The perspective surfaces findings from each skill and cites both names. It does not silently choose one standard or combine skill bodies.                                           |
-
-Same-named skill bodies are never concatenated. A shadowed skill does not load.
-
-## Built-in Skills
-
-The `coding-standards` collection ships with one language skill. Additional language skills follow the same pattern and can be contributed to the repository or authored independently.
+The `coding-standards` collection ships one language skill. Additional language skills follow the same pattern and can be contributed to the repository or authored independently.
 
 ### python-foundational
 
-| Field        | Value                                                                                                         |
-|--------------|---------------------------------------------------------------------------------------------------------------|
-| Origin       | Bundled hve-core baseline; a repository copy named `python-foundational` takes precedence as Workspace origin |
-| Activates on | `.py` files in the diff                                                                                       |
-| Sections     | 9 checklist sections, 30+ individual checks                                                                   |
-| Maturity     | Experimental                                                                                                  |
+| Field      | Value                                                                                                         |
+|------------|---------------------------------------------------------------------------------------------------------------|
+| Origin     | Bundled hve-core baseline; a repository copy named `python-foundational` takes precedence as Workspace origin |
+| Applies to | `.py` files in the change                                                                                     |
+| Sections   | 9 checklist sections with about 30 checks                                                                     |
+| Maturity   | Experimental                                                                                                  |
 
 The python-foundational skill covers:
 
-| Section                   | What It Checks                                                    |
-|---------------------------|-------------------------------------------------------------------|
-| Readability and Style     | Naming conventions, import grouping, whitespace                   |
-| Pythonic Idioms           | Comprehensions, context managers, dataclasses, pathlib usage      |
-| Function and Class Design | Single responsibility, docstrings, side-effect documentation      |
-| Type Safety Foundations   | Public API type hints, generics, `Any` avoidance                  |
-| Error Handling            | Exception specificity, resource cleanup, error context            |
-| Testing Foundations       | Arrange/Act/Assert structure, fixture usage, parametrize patterns |
-| Security Baseline         | Input validation, secret exposure, safe deserialization           |
-| Performance Awareness     | Collection choice, generator usage, I/O batching                  |
-| Dependency and Packaging  | Pinned versions, minimal dependencies, PEP 723 inline metadata    |
+| Section                 | What it checks                                                                                          |
+|-------------------------|---------------------------------------------------------------------------------------------------------|
+| Readability & Style     | Naming conventions and import grouping                                                                  |
+| Pythonic Idioms         | Comprehensions, context managers, data holders, `pathlib`, keyword-only arguments, and mutable defaults |
+| Function & Class Design | Single responsibility, public API docstrings, side-effect documentation, and member ordering            |
+| Type Safety Foundations | Type hints on public APIs, generics, and `Any` avoidance                                                |
+| Error Handling          | Specific exceptions, no silent failures, and actionable error context                                   |
+| Anti-Patterns to Avoid  | `eval`, `exec`, or `pickle` on untrusted data, and hard-coded secrets                                   |
+| Maintainability         | Self-documenting code, structured logging, and functions too complex to test                            |
+| Architectural Fit       | Alignment with existing patterns, reuse of shared functionality, and module placement                   |
+| Design Principles       | Duplication, the simplest sufficient design, change breadth, and checks before flagging unused code     |
 
-Each section contains concrete checks that the agent applies line by line against the diff. Findings reference the section name as their Category in the review output.
+Findings from this skill cite `python-foundational` and the checklist criterion they apply.
 
-## Built-in Instructions (Complementary)
+## Built-in instructions
 
-The coding-standards collection also includes language-specific instruction files that auto-apply when Copilot generates or edits code. These instruct Copilot how to write code; skills instruct the review agent how to evaluate it.
+The coding-standards collection also includes language instruction files. Copilot applies them when it generates or edits matching files, and the standards perspective reads the ones that apply to the changed files as review criteria.
 
-| Language   | Instruction files                                               | Activation pattern     |
-|------------|-----------------------------------------------------------------|------------------------|
-| Bash       | `bash.instructions.md`                                          | `**/*.sh`              |
-| Bicep      | `bicep.instructions.md`                                         | `**/bicep/**`          |
-| C#         | `csharp.instructions.md`, `csharp-tests.instructions.md`        | `**/*.cs`              |
-| PowerShell | `powershell.instructions.md`, `pester.instructions.md`          | `**/*.ps1, **/*.psm1`  |
-| Python     | `python-script.instructions.md`, `python-tests.instructions.md` | `**/*.py`              |
-| Rust       | `rust.instructions.md`, `rust-tests.instructions.md`            | `**/*.rs`              |
-| Terraform  | `terraform.instructions.md`                                     | `**/*.tf, **/*.tfvars` |
+| Language   | Instruction files                                                                              | Applies to                                                                   |
+|------------|------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| Bash       | `bash.instructions.md`                                                                         | `**/*.sh`                                                                    |
+| Bicep      | `bicep.instructions.md`                                                                        | `**/*.bicep`, `**/*.bicepparam`, `**/bicep/**`                               |
+| C#         | `csharp.instructions.md`, `csharp-tests.instructions.md`                                       | `**/*.cs`                                                                    |
+| PowerShell | `powershell.instructions.md`, `pester.instructions.md`                                         | `**/*.ps1`, `**/*.psm1`, `**/*.psd1`; Pester rules apply to `**/*.Tests.ps1` |
+| Python     | `python-script.instructions.md`, `python-tests.instructions.md`, `uv-projects.instructions.md` | `**/*.py`; uv project rules also apply to `**/*.ipynb`                       |
+| Rust       | `rust.instructions.md`, `rust-tests.instructions.md`                                           | `**/*.rs`                                                                    |
+| Terraform  | `terraform.instructions.md`                                                                    | `**/*.tf`, `**/*.tfvars`, `**/terraform/**`                                  |
+| TypeScript | `typescript-doc-comments.instructions.md`                                                      | `**/*.ts`, `**/*.tsx`, `**/*.mts`, `**/*.cts`                                |
 
-Instructions and skills serve different activation contexts. Instructions guide code generation passively (always on for matching files). Skills guide code review actively (loaded on demand by the Standards perspective). Keeping both aligned ensures that code Copilot generates passes the review skill's checks.
+Instructions apply passively to every matching file. Skills load on demand when the standards perspective selects them. When both cover the same language, keep them consistent.
 
 > [!TIP]
-> When you author a new language skill, review the corresponding instruction files to ensure they do not contradict each other. A mismatch creates a generate-then-flag loop where Copilot writes code that the review perspective immediately flags.
+> When you author a new language skill, check the matching instruction files for contradictions. A mismatch creates a generate-then-flag loop, where Copilot writes code that the standards perspective then flags.
 
-## Authoring a Custom Skill
+## Authoring a custom skill
 
-You extend the Standards perspective by creating a `SKILL.md` file under `.github/skills/coding-standards/` in your repository. The perspective activates it as a Workspace-origin candidate and matches the skill's name or description against the languages, frameworks, or file types present in the diff.
+You extend the standards perspective by creating a `SKILL.md` file under `.github/skills/coding-standards/` in your repository. The perspective treats it as a Workspace-origin skill and selects it when its name or description matches the languages, frameworks, or file types in the change.
 
-### Skill Stacking
+### Skill stacking
 
-Skills stack additively. When a Python diff is reviewed, the perspective might load both `python-foundational` (from hve-core) and `python-enterprise` (from your repository). Findings from all loaded skills appear in the same report, each tagged with the skill that surfaced them.
+Skills stack. When a Python change is reviewed, the perspective might load both `python-foundational` from hve-core and `python-enterprise` from your repository. Findings from every loaded skill appear in the same report, and each cites the skill and criterion that produced it.
 
 ```mermaid
 flowchart TD
-  accTitle: Skill Stacking Architecture
-  accDescr: The Standards perspective combines installed HVE Core skills with repository-specific skills, tags each source, and merges their findings into one review report.
+  accTitle: Skill stacking
+  accDescr: The standards perspective combines installed HVE Core skills with repository-specific skills and reports findings that cite the skill that produced each one.
   subgraph "hve-core (installed)"
     A["python-foundational<br/>SKILL.md"]
   end
 
-  subgraph "Your Repository"
+  subgraph "Your repository"
     B["python-enterprise<br/>SKILL.md"]
     C["react-standards<br/>SKILL.md"]
   end
 
-  D["Standards Perspective"]
+  D["Standards perspective"]
   D -->|".py files"| A & B
   D -->|".tsx files"| C
-  D -->|"merged findings"| E["Review Report"]
+  D -->|"findings with skill provenance"| E["Review report"]
 ```
 
-### Directory Structure
+### Directory structure
 
-Place custom skills under `.github/skills/coding-standards/{your-package}/{skill-name}/`
+Place custom skills under `.github/skills/coding-standards/{your-package}/{skill-name}/`:
 
 ```text
 .github/skills/coding-standards/
@@ -185,7 +168,7 @@ Place custom skills under `.github/skills/coding-standards/{your-package}/{skill
             └── api-conventions.md
 ```
 
-### SKILL.md Template
+### SKILL.md template
 
 ```yaml
 ---
@@ -196,11 +179,11 @@ description: >-
 ---
 ```
 
-The `name` and `description` are required. The description drives the agent's activation decision during consumer skill discovery, so include the language names, framework names, or file extensions your skill targets.
+The `name` and `description` are required. The description drives selection, so include the language names, framework names, or file extensions your skill targets.
 
-### Checklist Structure
+### Checklist structure
 
-Organize checks into numbered sections with bullet points. Each bullet should be a concrete, verifiable check:
+Organize checks into numbered sections with bullet points. Each bullet should be a concrete, verifiable check.
 
 In the resulting `SKILL.md`, `## Core Checklist` renders as a level-two
 heading and each `###` section heading renders as level three. The following
@@ -223,49 +206,52 @@ displayed inside this example.
 * Pin all production dependencies with exact versions in `pyproject.toml`.
 ```
 
-### What Makes a Good Skill
+### What makes a good skill
 
-| Quality         | Guidance                                                                              |
-|-----------------|---------------------------------------------------------------------------------------|
-| Specificity     | Each check should be verifiable from a diff without running the code                  |
-| Traceability    | Group checks into named sections so findings carry a meaningful Category              |
-| Scope alignment | Write the description to match only the languages and frameworks you intend to cover  |
-| Reasonable size | Aim for 5-15 sections with 2-5 checks each; larger skills dilute focus                |
-| No duplication  | Do not repeat checks already covered by the foundational skill your skill stacks with |
+| Quality         | Guidance                                                                                 |
+|-----------------|------------------------------------------------------------------------------------------|
+| Specificity     | Each check should be verifiable from the changed code without running it                 |
+| Traceability    | Group checks into named, numbered sections so each finding can cite a specific criterion |
+| Scope alignment | Write the description to match only the languages and frameworks you intend to cover     |
+| Consequence     | State why a check matters, because findings must explain the consequence of a departure  |
+| Reasonable size | Aim for 5-15 sections with 2-5 checks each; larger skills dilute focus                   |
+| No duplication  | Do not repeat checks already covered by the foundational skill your skill stacks with    |
 
-### Testing Your Skill
+### Testing your skill
 
 1. Place the `SKILL.md` file in your repository.
-2. Make a change to a file that matches the skill's target language.
-3. Invoke the **code-review** agent and select the `standards` perspective (or `full`).
-4. Verify that findings cite your skill's `name` in their Skill field.
-5. If the skill does not activate, verify that it is authored under `.github/skills/coding-standards/` (Workspace origin) and that the `description` clearly mentions the language, framework, or file extension present in the diff.
+2. Change a file that matches the skill's target language.
+3. Run `/code-review` on that change. The default `standard` profile includes the standards perspective.
+4. Open `review.md` and check Context and limitations, where the standards observations list the criteria sources used. Findings from your skill cite it in their `criterion` field in `review-state.json`.
+5. If the skill isn't selected, confirm that it's authored under `.github/skills/coding-standards/` (Workspace origin) and that its `description` names the language, framework, or file extension in the change.
 
-## Enterprise Scenarios
+## Enterprise scenarios
 
-### Overlay Company Standards on Built-in Skills
+### Overlay company standards on built-in skills
 
-A financial services team installs the `coding-standards` collection and adds `.github/skills/coding-standards/woodgrove/python-finserv/SKILL.md` with checks for audit logging, PII handling, and approved cryptographic libraries. The Standards perspective loads both `python-foundational` and `python-finserv` for every Python diff, producing a unified report.
+A financial services team installs the `coding-standards` collection and adds `.github/skills/coding-standards/woodgrove/python-finserv/SKILL.md` with checks for audit logging, PII handling, and approved cryptographic libraries. The standards perspective loads both `python-foundational` and `python-finserv` for every Python change, and each finding cites the skill it came from.
 
-### Add Coverage for an Unsupported Language
+### Add coverage for an unsupported language
 
-A team working in Go creates `.github/skills/coding-standards/tailspin/go-standards/SKILL.md` with checks for error wrapping conventions, context propagation, and struct tag formatting. The Standards perspective selects and loads it for any `.go` files in the diff based on semantic matching.
+A team working in Go creates `.github/skills/coding-standards/tailspin/go-standards/SKILL.md` with checks for error wrapping conventions, context propagation, and struct tag formatting. The standards perspective selects it for any `.go` files in the change because its description names Go.
 
-### Scope a Skill to a Specific Framework
+### Scope a skill to a specific framework
 
-A frontend team authors `.github/skills/coding-standards/northwind/react-standards/SKILL.md` with its description mentioning "React components, hooks, and JSX patterns." The agent loads it only when `.tsx` or `.jsx` files appear in the diff, leaving unrelated reviews unaffected.
+A frontend team authors `.github/skills/coding-standards/northwind/react-standards/SKILL.md` with a description that mentions "React components, hooks, and JSX patterns." The standards perspective selects it only when React files such as `.tsx` or `.jsx` appear in the change, so unrelated reviews aren't affected.
 
 ## Reference
 
-| Resource                  | Path                                                           |
-|---------------------------|----------------------------------------------------------------|
-| python-foundational skill | `.github/skills/coding-standards/python-foundational/SKILL.md` |
-| Standards output format   | `docs/templates/standards-review-output-format.md`             |
-| Full review output format | `docs/templates/full-review-output-format.md`                  |
-| Engineering fundamentals  | `docs/templates/engineering-fundamentals.md`                   |
-| Skill authoring guide     | [Authoring Custom Skills](../../customization/skills.md)       |
-| Contributing skills       | [Contributing: Skills](../../contributing/skills.md)           |
-| HVE Core plugin manifest  | `plugin.json`                                                  |
+| Resource                    | Path                                                                                     |
+|-----------------------------|------------------------------------------------------------------------------------------|
+| python-foundational skill   | `.github/skills/coding-standards/python-foundational/SKILL.md`                           |
+| Standards perspective skill | `.github/skills/coding-standards/code-review-standards/SKILL.md`                         |
+| Review contract             | `.github/skills/coding-standards/code-review-core/references/review-contract.md`         |
+| Standards output guidance   | [Code Review Standards Output Format](../../templates/standards-review-output-format.md) |
+| Code Review output guidance | [Code Review Output Format](../../templates/full-review-output-format.md)                |
+| Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`                                             |
+| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md)                                 |
+| Contributing skills         | [Contributing: Skills](../../contributing/skills.md)                                     |
+| HVE Core plugin manifest    | `plugin.json`                                                                            |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

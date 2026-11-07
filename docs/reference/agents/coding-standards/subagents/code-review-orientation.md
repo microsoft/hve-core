@@ -1,9 +1,9 @@
 ---
 title: Code Review Orientation
-description: Builds the factual Register 1 walkthrough and dispatch-board appendices for a serialized Code Review target
+description: "Build a factual, evidence-linked area overview for a captured Code Review surface."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - agent
@@ -23,13 +23,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Builds the factual Register 1 walkthrough and dispatch-board appendices for a serialized Code Review target
+Build a factual, evidence-linked area overview for a captured Code Review surface.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Code Review dispatches Orientation before the user chooses deeper review work. It explains the serialized change and prepares a dispatch board in factual language. It is an orientation stage, not a findings perspective or a directly selected agent.
+Code Review dispatches Orientation to build a factual overview of assigned areas. It can run alongside the review perspectives and never holds them back. It preloads `code-review-core` and `code-review-context` and follows the skill's overview path. It assigns no severity, and its work doesn't count as review coverage.
 
 ## Example usage
 
-The parent supplies `task.kind=orientation`, an exact `task.outputPath`, a verified review target, and the precomputed diff. For an importer change, the worker maps entry points, data flow, affected areas, and questions worth inspecting. It writes the walkthrough only to that output and returns its path and area count, without assigning severity or declaring the change correct.
+For an importer change, the parent supplies the review root, snapshot ID, work item, assigned areas, and the result path. The worker groups the surface by responsibility and explains intent, before and after behavior, entry points, data flow, and affected consumers, linking each relationship to source evidence.
+It writes a shared result with `findings: []`, and Code Review uses the observations to update area descriptions and impact relationships.

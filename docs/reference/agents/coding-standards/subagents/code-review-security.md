@@ -1,9 +1,9 @@
 ---
 title: Code Review Security
-description: Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings
+description: Review assigned changes for concrete security consequences and return the shared worker result.
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - agent
@@ -23,13 +23,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings
+Review assigned changes for concrete security consequences and return the shared worker result.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Code Review dispatches this perspective for security-relevant changes such as authorization, parsing, input validation, or sensitive-data handling. It traces concrete exploit paths within the supplied scope and does not invoke the standalone Security Reviewer. Users steer it through the parent review workflow.
+Code Review dispatches this worker for the security perspective when a change touches a trust boundary, such as authentication, authorization, parsing, input validation, secrets, or sensitive-data handling. It preloads `code-review-core` and `code-review-security` and reviews only the assigned change. For a standalone audit, use the Security Reviewer; this worker doesn't start one.
 
 ## Example usage
 
-For an upload-validation change, the parent supplies the serialized diff, hotspots, review depth, exclusions, and `task.outputs.security`. The worker traces input to its use and returns JSON findings with evidence, impact, and a concrete fix. It does not alter source or report theoretical issues without a realistic security consequence.
+For an upload-validation change, the parent supplies the work item, assigned hunks, depth, applicable criteria, and the result path. The worker traces input from the request to its use and writes findings that name the actor, reachable path, failed control, and consequence, anchored to the changed lines.
+It returns the path, execution status, and unresolved evidence. It doesn't alter source or report theoretical issues without a realistic consequence.

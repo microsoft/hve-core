@@ -1,9 +1,9 @@
 ---
 title: Code Review Functional
-description: Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings
+description: Review assigned snapshot evidence for behavioral defects and return the shared worker result.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - agent
@@ -23,13 +23,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings
+Review assigned snapshot evidence for behavioral defects and return the shared worker result.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Code Review dispatches this perspective for logic, edge cases, error handling, concurrency, and behavioral contracts in a precomputed diff. It leaves naming and formatting rules to the Standards perspective. Users invoke the parent review workflow, not this delegated worker.
+Code Review dispatches this worker for the functional perspective when that work runs independently in parallel. It preloads `code-review-core` and `code-review-functional` to find behavioral defects and regressions in the assigned hunks and to record acceptance-criteria coverage when Code Review assigns it. Naming and formatting stay with the standards perspective.
 
 ## Example usage
 
-For a retry-loop change, the parent supplies a `perspective_batch` task, diff and untracked-file evidence, depth, hotspots, exclusions, and `task.outputs.functional`. The worker returns JSON findings with exact code evidence and suggested fixes, plus severity counts and the output path. It does not modify the implementation or turn cosmetic preferences into functional defects.
+For a retry-loop change, the parent supplies the work item, assigned files and hunks, depth and rationale, applicable acceptance criteria, available validation, and the result path. The worker writes a shared result with anchored findings, each with its consequence and a remediation, plus the covered files and hunks, observations, and limitations.
+It returns the path, execution status, and remaining gaps without editing the implementation or reporting cosmetic preferences as defects.

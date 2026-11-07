@@ -1,9 +1,9 @@
 ---
 title: python-foundational
 description: "Foundational Python best practices, idioms, and code quality fundamentals"
-sidebar_position: 3
+sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - skill

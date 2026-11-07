@@ -1,9 +1,9 @@
 ---
 title: Code Review Accessibility
-description: Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings
+description: Review assigned accessibility evidence and distinguish static findings from runtime method limits.
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-11-06
 ms.topic: reference
 keywords:
   - agent
@@ -23,13 +23,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings
+Review assigned accessibility evidence and distinguish static findings from runtime method limits.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Code Review dispatches this perspective after the user selects accessibility review. It assesses the supplied diff against loaded accessibility guidance and applicable criteria, not a standalone whole-system audit. Users select Code Review rather than this delegated worker.
+Code Review dispatches this worker for the accessibility perspective when that work runs independently in parallel; small or tightly coupled reviews apply the same skill inline. It preloads `code-review-core` and `code-review-accessibility` and reviews only the assigned change. A broader accessibility audit is a separate follow-up.
 
 ## Example usage
 
-The parent supplies a `perspective_batch` task, the serialized diff, changed files, depth, exclusions, and `task.outputs.accessibility` for a dialog change. The worker returns structured accessibility findings traceable to the loaded skill and criterion, or clarification when evidence is insufficient. It does not publish a review, alter source, or replace missing runtime evidence with a conformance claim.
+For a dialog change, the parent supplies the review root, review and snapshot IDs, the work item, assigned files and hunks, depth, applicable criteria, and the exact result path. The worker writes a shared result with findings that cite the WCAG criterion or ARIA pattern, the files and hunks it covered, and the methods it used.
+It returns the result path, its execution status, and method limitations, such as screen reader behavior that source inspection can't prove. It doesn't publish, edit source, or turn a missing runtime check into a conformance claim.
