@@ -88,9 +88,11 @@ BeforeAll {
 
             Push-Location -LiteralPath $Fixture
             try {
-                & $script:BashCommand -c 'chmod +x ./bin/*'
-                if ($LASTEXITCODE -ne 0) {
-                    throw 'Unable to make fixture commands executable'
+                if (Test-Path -LiteralPath (Join-Path $Fixture 'bin')) {
+                    & $script:BashCommand -c 'chmod +x ./bin/*'
+                    if ($LASTEXITCODE -ne 0) {
+                        throw 'Unable to make fixture commands executable'
+                    }
                 }
                 $Output = & $script:BashCommand -c 'source ./environment.sh; export PATH="$PWD/bin:$PATH"; bash ./step.sh' 2>&1
                 return [pscustomobject]@{
@@ -250,6 +252,8 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
     }
 
     It 'Isolates the governance credential to checkout-free authorization' {
+        $script:Signer['on']['workflow_call']['secrets'].Keys | Should -Be @('RELEASE_APP_PRIVATE_KEY')
+        [bool]$script:Signer['on']['workflow_call']['secrets']['RELEASE_APP_PRIVATE_KEY']['required'] | Should -BeTrue
         [string]$script:Signer['jobs']['authorize']['environment'] | Should -BeExactly 'release-governance'
         [string]$script:Signer['jobs']['authorize']['permissions']['contents'] | Should -BeExactly 'read'
         $Token = @($script:Signer['jobs']['authorize']['steps'] |
@@ -257,6 +261,9 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
         $Token['with'].Contains('permission-administration') | Should -BeFalse
         [string]$Token['with']['permission-contents'] | Should -BeExactly 'read'
         [string]$Token['with']['private-key'] | Should -BeExactly '${{ secrets.RELEASE_APP_PRIVATE_KEY }}'
+        $StepNames = @($script:Signer['jobs']['authorize']['steps'] | ForEach-Object { [string]$_['name'] })
+        [array]::IndexOf($StepNames, 'Validate governance key delivery') |
+            Should -BeLessThan ([array]::IndexOf($StepNames, 'Generate governance-read Release App token'))
         $AuthorizeText = Get-SignerStepText -JobName 'authorize'
         $AuthorizeText | Should -Not -Match 'actions/checkout@|npm ci|Package-Extension\.ps1|gh release (upload|edit)'
 
@@ -264,6 +271,18 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
             (Get-SignerStepText -JobName $Job) |
                 Should -Not -Match 'RELEASE_APP_PRIVATE_KEY|app-token\.outputs\.token'
         }
+    }
+
+    It 'Validates governance key presence without printing it: <Name>' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ Name = 'missing'; Key = ''; ExpectedExit = 1 }
+        @{ Name = 'present'; Key = 'fixture-key-never-a-real-secret'; ExpectedExit = 0 }
+    ) {
+        $Step = @($script:Signer['jobs']['authorize']['steps'] |
+            Where-Object { [string]$_['name'] -eq 'Validate governance key delivery' })[0]
+        $Result = Invoke-BashFixtureStep -Body ([string]$Step['run']) -Environment @{ RELEASE_APP_KEY = $Key }
+        $Result.ExitCode | Should -Be $ExpectedExit
+        if ($ExpectedExit -eq 1) { $Result.Output | Should -Match 'Release governance key is unavailable' }
+        else { $Result.Output | Should -BeNullOrEmpty }
     }
 
     It 'Validates actor, draft, channel containment, and exact governance before checkout' {
