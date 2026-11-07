@@ -3,7 +3,7 @@ id: "0012"
 title: "Close the business-alignment loop between requirements and RPI implementations"
 description: "Extend the existing RPI plan, implement, and review skills so planning finds and cites BRD, PRD, and ADR sources and checks their status, implementation records alignment-affecting changes and compares completed work against them, and review rates drift by business stake and owner awareness, routes source updates and architecture review follow-ups, and offers a copy-ready note to the source owner; Code Review applies the same shared procedure to pull requests, with no automatic outbound action."
 author: "HVE Core Maintainers"
-ms.date: "2026-10-13"
+ms.date: "2026-11-06"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-10-09"
@@ -33,7 +33,9 @@ affected_components:
   - ".github/skills/rpi/rpi-review/references/business-alignment.md"
   - ".github/skills/rpi/rpi-review/templates/review-log.md"
   - ".github/agents/coding-standards/code-review.agent.md"
-  - ".github/skills/coding-standards/code-review/references/output-formats.md"
+  - ".github/skills/coding-standards/code-review/references/integrations.md"
+  - ".github/skills/coding-standards/code-review-core/references/review-contract.md"
+  - ".github/skills/coding-standards/code-review-core/templates/review.md"
 supersedes: null
 superseded-by: null
 related:
@@ -63,7 +65,7 @@ success_criteria:
   - metric: "code-review-alignment"
     target: "response-contract scenarios explain when confirmed BRD, PRD, or ADR context activates comparison, how assessed findings affect a future verdict, and when no alignment output applies"
     measurement_window: "every agent-behavior eval run after merge"
-    source: "evals/agent-behavior/stimuli/code-review.yml"
+    source: "deferred until replacement Code Review response-contract stimuli exist; the earlier stimuli were retired with the Code Review redesign"
   - metric: "code-review-native-alignment"
     target: "a completed native review with confirmed business context persists the alignment report and demonstrates that rated findings affect verdict calculation"
     measurement_window: "first completed native Code Review after merge with confirmed business context"
@@ -190,7 +192,7 @@ This decision remains `proposed` until a qualified human reviewer approves it an
 
 The capture contract, review routing, rubric, and copy-ready note are exercised by advisory knowledge stimuli in `evals/behavior-conformance/skill-behavior.eval.yaml`, and natively by the first RPI review of a plan that cites a business source.
 
-Code Review's response contract, including context recognition, baseline selection, unassessed results, and silence without context, is exercised by response-only stimuli in `evals/agent-behavior/stimuli/code-review.yml`. Native report persistence and verdict calculation remain unconfirmed until a completed Code Review with confirmed business context produces that evidence.
+Code Review's response contract, including context recognition, baseline selection, unassessed results, and silence without context, was exercised by response-only stimuli that the Code Review redesign retired. That confirmation is deferred until replacement stimuli exist. Native report persistence and verdict calculation remain unconfirmed until a completed Code Review with confirmed business context produces that evidence.
 
 ## Pros and Cons of the Options
 
@@ -243,7 +245,7 @@ Code Review's response contract, including context recognition, baseline selecti
 
 If this decision is reversed, the rollback path is:
 
-1. Remove the business-alignment extension from the Code Review agent and the `business_alignment` field and sections from its output formats.
+1. Remove the business-alignment extension from the Code Review skill's integrations reference and the `context.businessAlignment` record from the review contract.
 2. Remove the conditional alignment step from the `rpi-review` skill and delete its business-alignment reference and the optional note section from the review template.
 3. Remove the Business Alignment section from the changes-record template and the capture rule from `rpi-implement`.
 4. Remove the citation, search, and status rule from `rpi-plan`.
@@ -263,14 +265,16 @@ No data migration is required. Existing plans, changes records, and review recor
 * .github/skills/rpi/rpi-review/references/business-alignment.md
 * .github/skills/rpi/rpi-review/templates/review-log.md
 * .github/agents/coding-standards/code-review.agent.md
-* .github/skills/coding-standards/code-review/references/output-formats.md
+* .github/skills/coding-standards/code-review/references/integrations.md
+* .github/skills/coding-standards/code-review-core/references/review-contract.md
+* .github/skills/coding-standards/code-review-core/templates/review.md
 
 ## More Information
 
 * Planning: `.github/skills/rpi/rpi-plan/SKILL.md` points to the citation and status rule in `.github/skills/rpi/rpi-plan/references/planning.md`.
 * Implementation: `.github/skills/rpi/rpi-implement/SKILL.md` points to the capture rule in `.github/skills/rpi/rpi-implement/references/implementation.md`, and `.github/skills/rpi/rpi-implement/templates/changes-log.md` defines the Business Alignment section.
 * Review: `.github/skills/rpi/rpi-review/SKILL.md` and `.github/skills/rpi/rpi-review/references/review.md` point to `.github/skills/rpi/rpi-review/references/business-alignment.md`, and `.github/skills/rpi/rpi-review/templates/review-log.md` defines the optional note section.
-* Code Review: `.github/agents/coding-standards/code-review.agent.md` loads the shared core and sub-sections of `.github/skills/rpi/rpi-review/references/business-alignment.md`, and `.github/skills/coding-standards/code-review/references/output-formats.md` defines the `business_alignment` field and report sections.
+* Code Review: `.github/agents/coding-standards/code-review.agent.md` preloads the `code-review` skill, whose `.github/skills/coding-standards/code-review/references/integrations.md` loads the shared core and sub-sections of `.github/skills/rpi/rpi-review/references/business-alignment.md` and defines the comparison and its `context.businessAlignment` record. Finding fields and report sections are in `.github/skills/coding-standards/code-review-core/references/review-contract.md` and `.github/skills/coding-standards/code-review-core/templates/review.md`.
 * Source fields come from the requirements-author BRD and PRD templates (`owners`, `status`, `lineage`) and the ADR frontmatter (`deciders`, `status`, `superseded-by`).
 * The second increment is expected to touch the backlog-management per-platform references, the functional-planner skill, and the ADR handoff instructions. A later decision may refine its design when it is planned.
 
