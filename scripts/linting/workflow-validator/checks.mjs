@@ -21,6 +21,7 @@ export const CHECK_RULES = {
   'workflow-check/invalid-env-name': 'Environment variable name is not a valid shell identifier',
   'workflow-check/unknown-action-input': 'with: passes an input the action or reusable workflow does not declare',
   'workflow-check/missing-required-input': 'A required reusable workflow input or secret is not passed',
+  'workflow-check/reusable-workflow-permissions': 'A called workflow requests a permission the calling job does not grant, so the run fails at startup',
   'workflow-check/action-metadata-unavailable': 'Action or reusable workflow metadata could not be read, so its inputs were not verified',
   'workflow-check/sourced-helper-unavailable': 'A gh-aw helper script that a run: step sources could not be read at its pinned commit, so shellcheck could not follow it',
 };
@@ -45,6 +46,8 @@ const FILTER_KEYS = new Set(['branches', 'branches-ignore', 'tags', 'tags-ignore
 const DEPRECATED_COMMANDS = /::(set-output|save-state|set-env|add-path)\b/;
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REMOTE_USES = /^(?<owner>[A-Za-z0-9_.-]+)\/(?<repo>[A-Za-z0-9_.-]+)(?<path>\/[^@]*)?@(?<ref>[^\s]+)$/;
+const PERMISSION_LEVELS = { none: 0, read: 1, write: 2 };
+const PERMISSION_NAMES = ['none', 'read', 'write'];
 
 // One lookup per URL per fetch function, so a missing file is fetched once per
 // run however many workflows reference it.
@@ -126,7 +129,7 @@ export async function getCheckFindings(path, content, kind, options) {
       for (const step of steps.items) await checkStep(ctx, step, scope);
     }
     const uses = scalarString(job.get('uses', true));
-    if (uses) await checkReusableWorkflowCall(ctx, job, uses);
+    if (uses) await checkReusableWorkflowCall(ctx, job, uses, root.get('permissions', true));
   }
   return ctx.findings;
 }
@@ -291,11 +294,12 @@ async function checkActionInputs(ctx, step, uses, usesNode) {
   }
 }
 
-async function checkReusableWorkflowCall(ctx, job, uses) {
+async function checkReusableWorkflowCall(ctx, job, uses, workflowPermissions) {
   const usesNode = job.get('uses', true);
   const content = await readUsedFile(ctx, uses, usesNode, null);
   if (content === undefined) return;
   const callee = parseDocument(content);
+  checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions);
   const call = isMap(callee.contents) ? callee.contents.getIn(['on', 'workflow_call'], true) : null;
   for (const [section, label] of [['inputs', 'input'], ['secrets', 'secret']]) {
     const declared = isMap(call) ? call.get(section, true) : null;
@@ -324,6 +328,53 @@ async function checkReusableWorkflowCall(ctx, job, uses) {
       }
     }
   }
+}
+
+// GitHub caps a called workflow's permissions, at its workflow level and in
+// each of its jobs, at what the calling job grants, and refuses to start the
+// run when a request exceeds that grant.
+function checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions) {
+  const grant = job.has('permissions') ? permissionGrant(job.get('permissions', true)) : permissionGrant(workflowPermissions);
+  if (!grant || !isMap(callee.contents)) return;
+  const requests = [['workflow level', callee.contents.get('permissions', true)]];
+  const calleeJobs = callee.contents.get('jobs', true);
+  if (isMap(calleeJobs)) {
+    for (const pair of calleeJobs.items) {
+      if (isMap(pair.value) && pair.value.has('permissions')) requests.push([`job ${scalarString(pair.key)}`, pair.value.get('permissions', true)]);
+    }
+  }
+  const target = uses.split('@')[0];
+  for (const [where, node] of requests) {
+    const request = permissionGrant(node);
+    if (!request) continue;
+    if (request.all > grant.all) {
+      report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${target} requests ${PERMISSION_NAMES[request.all]}-all at its ${where}, but this job grants less`);
+    }
+    for (const [scope, level] of request.scopes) {
+      const granted = grant.scopes.get(scope) ?? grant.all;
+      if (level > granted) {
+        report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${target} requests ${scope}: ${PERMISSION_NAMES[level]} at its ${where}, but this job grants ${scope}: ${PERMISSION_NAMES[granted]}`);
+      }
+    }
+  }
+}
+
+// Returns the level every unlisted scope gets and the listed scope levels, or
+// null when the block is absent or not statically known.
+function permissionGrant(node) {
+  if (node === undefined || node === null) return null;
+  const scalar = scalarString(node);
+  if (scalar === 'read-all') return { all: 1, scopes: new Map() };
+  if (scalar === 'write-all') return { all: 2, scopes: new Map() };
+  if (!isMap(node)) return null;
+  const scopes = new Map();
+  for (const pair of node.items) {
+    const scope = scalarString(pair.key);
+    const level = PERMISSION_LEVELS[scalarString(pair.value)];
+    if (scope === null || level === undefined) return null;
+    scopes.set(scope.toLowerCase(), level);
+  }
+  return { all: 0, scopes };
 }
 
 async function readActionMetadata(ctx, uses, usesNode) {
