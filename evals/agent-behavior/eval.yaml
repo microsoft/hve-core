@@ -1233,6 +1233,8 @@ stimuli:
       dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
     skills:
     - ../../.github/skills/project-planning/proposal-response
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-proposal-rejected
@@ -1277,6 +1279,8 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-research-receipt
@@ -1306,6 +1310,8 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-research-blocked
@@ -1348,6 +1354,8 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-rpi-research-execution
@@ -1388,6 +1396,8 @@ stimuli:
       dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-rpi-research-reconciliation
@@ -1490,6 +1500,8 @@ stimuli:
       dest: docs/project-planning/atlas-brd.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-rpi-research-blocked-state
@@ -1529,6 +1541,8 @@ stimuli:
       dest: evidence/requirements-evidence.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-rpi-research-skipped-state
@@ -1559,6 +1573,8 @@ stimuli:
       dest: evidence/requirements-evidence.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: brd-rpi-lazy-state-initialization
@@ -1802,6 +1818,7 @@ stimuli:
       dest: .github/copilot-instructions.md
     skills:
     - ../../.github/skills/coding-standards/code-review
+    - ../../.github/skills/shared/disclaimer-language
   tags:
     category: agent-behavior
     agent: code-review
@@ -2199,6 +2216,7 @@ stimuli:
     skills:
     - ../../.github/skills/coding-standards/code-review
     - ../../.github/skills/rpi/rpi-review
+    - ../../.github/skills/shared/disclaimer-language
   tags:
     category: agent-behavior
     agent: code-review
@@ -3234,6 +3252,8 @@ stimuli:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/evaluation-design
     - ../../.github/skills/rpi/rpi-research
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: evaluation-current-fact-research
@@ -3264,6 +3284,8 @@ stimuli:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/evaluation-design
     - ../../.github/skills/rpi/rpi-research
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: evaluation-current-fact-blocked
@@ -3394,6 +3416,8 @@ stimuli:
     - ../../.github/skills/rpi/rpi-plan-critique
     - ../../.github/skills/rpi/rpi-implement
     - ../../.github/skills/rpi/rpi-review
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   simulation:
     tool_overrides:
       powershell:
@@ -3494,6 +3518,8 @@ stimuli:
       dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-pipeline-review.md
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: data-science-rpi-execution-return
@@ -3537,6 +3563,8 @@ stimuli:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/dataops
     - ../../.github/skills/project-planning/adr-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     commands:
     - node -e "const fs=require('fs');fs.copyFileSync('.eval-scanner-stub.txt','adr-author/scripts/scan_sensitive_content.py');fs.rmSync('.eval-scanner-stub.txt');"
   tags:
@@ -3617,6 +3645,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3641,6 +3671,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3666,6 +3698,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3691,6 +3725,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3716,6 +3752,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3744,6 +3782,8 @@ stimuli:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/data-catalog
     - ../../.github/skills/project-planning/adr-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3773,6 +3813,8 @@ stimuli:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/data-catalog
     - ../../.github/skills/project-planning/adr-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3802,6 +3844,8 @@ stimuli:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/data-catalog
     - ../../.github/skills/project-planning/adr-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3829,6 +3873,8 @@ stimuli:
     skills:
     - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     - ../../.github/skills/data-science-engineering/data-catalog
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3983,6 +4029,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4009,6 +4057,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4096,6 +4146,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4122,6 +4174,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4177,6 +4231,8 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
     - ../../.github/skills/design-thinking/dt-methods
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4214,6 +4270,8 @@ stimuli:
   agent_environment:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4258,6 +4316,8 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
     - ../../.github/skills/design-thinking/dt-methods
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4302,6 +4362,8 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -4350,6 +4412,8 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/dt-coaching-foundation
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/design-thinking/dt-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -6194,6 +6258,8 @@ stimuli:
       dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
     skills:
     - ../../.github/skills/project-planning/proposal-response
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: prd-proposal-rejected
@@ -6238,6 +6304,8 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: prd-research-receipt
@@ -6267,6 +6335,8 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-research
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: prd-research-blocked
@@ -6311,6 +6381,8 @@ stimuli:
     - ../../.github/skills/project-planning/requirements-author
     - ../../.github/skills/rpi/rpi-plan
     - ../../.github/skills/rpi/rpi-implement
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: prd-rpi-authoring-execution
@@ -6364,6 +6436,8 @@ stimuli:
       dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
     skills:
     - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     scenario: prd-rpi-authoring-reconciliation
@@ -6527,6 +6601,7 @@ stimuli:
     skills:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/project-planning/rai-planner
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -6591,6 +6666,7 @@ stimuli:
     skills:
     - ../../.github/skills/experimental/mural
     - ../../.github/skills/project-planning/rai-planner
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -6626,6 +6702,8 @@ stimuli:
   prompt: |
     Start a Responsible AI assessment from our completed security plan. No security plan path was supplied, and this workspace has no `.copilot-tracking/security-plans/` directory. Follow the startup contract, then explain how you looked for a security plan and what happens next. Reply in chat only.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -6657,6 +6735,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -6715,6 +6794,7 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -6812,6 +6892,7 @@ stimuli:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -6883,6 +6964,7 @@ stimuli:
     - ../../.github/skills/project-planning/rai-planner
     - ../../.github/skills/rai/rai-standards
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/rai-planning/rai-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -7612,6 +7694,8 @@ stimuli:
   prompt: |
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-null/state.json`. Follow the startup contract and persist the required state change. In the final reply, print the complete canonical Security Planning CAUTION block, then explicitly report the persisted `disclaimerShownAt` ISO timestamp and the appended `session-start-disclaimer` notice before asking any Phase 1 question.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -7636,6 +7720,8 @@ stimuli:
   prompt: |
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. The full disclaimer was already shown. Continue normal Phase 1 work and report whether the timestamp or session-start notice count changed.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -7669,6 +7755,8 @@ stimuli:
   prompt: |
     Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. I explicitly ask to see the full Security Planning disclaimer again. In the final reply, print the complete canonical Security Planning CAUTION block before reporting state effects. Then persist the required state and notice history and report the replay discriminator. A state-only summary does not satisfy this request.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -7752,6 +7840,7 @@ stimuli:
       dest: .copilot-tracking/security-plans/sample-service/security-plan.md
     skills:
     - ../../.github/skills/project-planning/security-planning
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     agent: security-planner
@@ -7797,6 +7886,7 @@ stimuli:
       dest: .copilot-tracking/security/2026-08-31/security-report-001.md
     skills:
     - ../../.github/skills/project-planning/security-planning
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     agent: security-planner
@@ -7850,6 +7940,8 @@ stimuli:
   prompt: |
     Start security planning from our existing product requirements. No PRD or BRD path was supplied, and this workspace has no `.copilot-tracking/prd-sessions/` or `.copilot-tracking/brd-sessions/` directories. Follow the startup contract, then explain how you looked for requirements artifacts and what happens next. Reply in chat only.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/security-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -7949,6 +8041,8 @@ stimuli:
   prompt: |
     A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/disclaimer-language
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
@@ -7974,6 +8068,8 @@ stimuli:
   prompt: |
     A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/disclaimer-language
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
@@ -8096,6 +8192,8 @@ stimuli:
   prompt: |
     Extend our completed security plans with supply chain coverage. Two Security Planner projects exist, at `.copilot-tracking/security-plans/payments-api/state.json` and `.copilot-tracking/security-plans/ledger-service/state.json`. Follow the startup contract, then explain which entry mode you are using and how you will choose the source security plan before scoping. Reply in chat only.
   agent_environment:
+    skills:
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/security/sssc-planner.agent.md
       dest: .github/copilot-instructions.md
@@ -8158,6 +8256,7 @@ stimuli:
     skills:
     - ../../.github/skills/security/supply-chain-security
     - ../../.github/skills/security/security-reviewer-formats
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     agent: sssc-reviewer
@@ -8344,6 +8443,8 @@ stimuli:
     skills:
     - ../../.github/skills/security/supply-chain-security
     - ../../.github/skills/security/security-reviewer-formats
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     agent: sssc-reviewer
@@ -8380,6 +8481,8 @@ stimuli:
       dest: .github/skills/security/vex/references/vex-generation.md
     skills:
     - ../../.github/skills/security/vex
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     advisory: "true"
@@ -8409,6 +8512,8 @@ stimuli:
       dest: .github/skills/security/vex/references/vex-generation.md
     skills:
     - ../../.github/skills/security/vex
+    - ../../.github/skills/shared/disclaimer-language
+    - ../../.github/skills/shared/untrusted-content-boundary
   tags:
     category: agent-behavior
     advisory: "true"
@@ -8646,6 +8751,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -8694,6 +8800,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -8722,6 +8829,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -8773,6 +8881,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -8815,6 +8924,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -8852,6 +8962,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -8890,6 +9001,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -8974,6 +9086,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -9010,6 +9123,7 @@ stimuli:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -9039,6 +9153,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/design-thinking/ux-coaching
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -9067,6 +9182,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -9162,6 +9278,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -9198,6 +9315,7 @@ stimuli:
     skills:
     - ../../.github/skills/design-thinking/ux-artifacts
     - ../../.github/skills/experimental/mural
+    - ../../.github/skills/shared/untrusted-content-boundary
     files:
     - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
       dest: .github/copilot-instructions.md

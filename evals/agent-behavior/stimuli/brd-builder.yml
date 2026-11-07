@@ -63,6 +63,8 @@ stimuli:
           dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
       skills:
         - ../../.github/skills/project-planning/proposal-response
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-proposal-rejected
@@ -107,6 +109,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-research-receipt
@@ -136,6 +140,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-research-blocked
@@ -178,6 +184,8 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/requirements-author
         - ../../.github/skills/rpi/rpi-research
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-rpi-research-execution
@@ -218,6 +226,8 @@ stimuli:
           dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-rpi-research-reconciliation
@@ -320,6 +330,8 @@ stimuli:
           dest: docs/project-planning/atlas-brd.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-rpi-research-blocked-state
@@ -359,6 +371,8 @@ stimuli:
           dest: evidence/requirements-evidence.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-rpi-research-skipped-state
@@ -389,6 +403,8 @@ stimuli:
           dest: evidence/requirements-evidence.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/shared/disclaimer-language
+        - ../../.github/skills/shared/untrusted-content-boundary
     tags:
       category: agent-behavior
       scenario: brd-rpi-lazy-state-initialization

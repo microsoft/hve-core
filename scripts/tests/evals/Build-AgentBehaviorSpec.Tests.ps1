@@ -1986,7 +1986,8 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
       'subject/package.json', 'subject/.github/workflows/release.yml', 'subject/Dockerfile')
     @($mounts.dest | Where-Object { $_ -like '.copilot-tracking/*' }) | Should -HaveCount 0
     foreach ($mount in $mounts) { Test-Path -LiteralPath (Join-Path $script:ObservationRoot $mount.src) -PathType Leaf | Should -BeTrue -Because $mount.src }
-    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats')
+    @($stimulus.agent_environment.skills) | Should -Be @('../../.github/skills/security/supply-chain-security', '../../.github/skills/security/security-reviewer-formats',
+      '../../.github/skills/shared/untrusted-content-boundary')
     $workflow = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/sssc-smoke/release-workflow.fixture')
     $workflow | Should -Match 'uses: actions/checkout@v4'
     $workflow | Should -Not -Match '@[0-9a-f]{40}'
