@@ -1908,6 +1908,95 @@ stimuli:
         name: skill-rpi-plan-critique-contract-read-only-boundary
         config:
           pattern: '(?i)^\s*read-only[.!]?\s*$'
+  - name: skill-rpi-knowledge
+    prompt: |
+      Summarize the `rpi` skill. Include what phases it coordinates, where it
+      persists session state, and how it uses the RPI Workflow canvas when
+      available.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-knowledge-skill-attribution
+        config:
+          pattern: '(?i)(rpi|research|plan|implement|review|follow-up)'
+      - type: output-matches
+        name: skill-rpi-knowledge-scope-language
+        config:
+          pattern: '(?i)(\.copilot-tracking/rpi-sessions|hve-core-rpi-workflow|canvas|state\.json)'
+  - name: skill-rpi-tool-trigger
+    prompt: |
+      I need to coordinate a resumable multi-phase RPI session through
+      Research, Plan, Implement, Review, and Follow-up with durable session
+      state and the RPI Workflow canvas. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-tool-trigger-skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi|rpi-sessions|hve-core-rpi-workflow|session)'
+      - type: output-matches
+        name: skill-rpi-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(research|plan|implement|review|follow-up|canvas)'
+  - name: skill-rpi-bleed-detection
+    prompt: |
+      I only want a read-only independent critique of an existing RPI plan
+      without starting or managing a multi-phase RPI session. Does the `rpi`
+      session skill or `rpi-plan-critique` apply directly? Justify briefly.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(rpi-plan-critique|critique|read-only)'
+      - type: output-matches
+        name: skill-rpi-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(plan|critique|session|lifecycle)'
+  - name: skill-rpi-canvas-provider-ambiguity
+    prompt: |
+      Using the `rpi` skill in a contained, response-only canvas-policy check:
+      a capability lookup for hve-core-rpi-workflow reports multiple providers:
+      plugin:hve-core:rpi-workflow and project:rpi-workflow. No Canvas decision
+      exists. Choose the next action and provider arguments for lookup and
+      opening. Return exactly three lines: `Action: retry|abandon`,
+      `Lookup provider: <id>`, and `Open provider: <id>`. Do not call canvas
+      tools or write files.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi
+    tags:
+      category: behavior-conformance
+      skill: rpi
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-rpi-canvas-provider-ambiguity-project-provider
+        config:
+          pattern: '(?i)^\s*Action:[ \t]*retry[ \t]*\r?\nLookup provider:[ \t]*project:rpi-workflow[ \t]*\r?\nOpen provider:[ \t]*project:rpi-workflow\s*$'
   - name: skill-rpi-research-knowledge
     prompt: |
       Summarize the `rpi-research` skill. Include what evidence it records,

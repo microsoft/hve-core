@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install HVE Core for the Copilot agent harness as a plugin, a repository default, a repository copy, the VS Code extension, or a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-11-04
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords: [installation, setup, github copilot, copilot plugin, agent plugins, marketplace, repository copy]
 estimated_reading_time: 7
@@ -175,28 +175,13 @@ Contributors who change HVE Core itself work in a fork:
 
 3. Open the folder in VS Code. A devcontainer configuration is included for containerized development.
 
-Copilot discovers the repository's own agents, skills, and instructions when you open the clone, so you need no other route while you work in it. Work in Copilot harness sessions here too.
-The workspace settings also list the repository's package folders so a Local session still finds its agents while you switch, as [Copilot Discovery](../customization/environment#copilot-discovery) explains. If the plugin or extension is also installed, disable it while you develop so agents do not appear twice. The [Contributing Guide](../contributing/) covers pull request and development conventions.
+Copilot discovers the repository's own agents, skills, and instructions when you open the clone, so you need no other route while you work in it. Work in Copilot harness sessions here too. If the plugin or extension is also installed, disable it while you develop so agents do not appear twice.
+
+The workspace settings also list the repository's package folders, so a Local session still finds its agents while you switch. [Copilot Discovery](../customization/environment#copilot-discovery) explains this, and the [Contributing Guide](../contributing/) covers pull request and development conventions.
 
 ## Distribution Identity and Channels
 
-HVE Core uses one identity across the plugin and the extension. Root `plugin.json` owns membership, and `.github/plugin/marketplace.json` contains one relative locator to the repository root. Plugin clients read the root README and LICENSE, and the VSIX keeps its extension-owned metadata.
-
-```mermaid
-graph LR
-   accTitle: HVE Core distribution relationships
-   accDescr: The repository contains the marketplace locator and plugin manifest. The locator resolves the plugin root, while the manifest supplies membership to both the Copilot plugin and VS Code extension.
-   REPO["microsoft/hve-core<br/>(plugin root)"] --> MANIFEST["plugin.json<br/>(complete membership)"]
-   REPO --> CATALOG[".github/plugin/marketplace.json<br/>(one relative locator)"]
-   CATALOG --> ROOT["repository root<br/>(README and LICENSE)"]
-   MANIFEST --> PLUGIN["hve-core plugin"]
-   MANIFEST --> EXT["hve-core VSIX"]
-   ROOT --> PLUGIN
-```
-
-The plugin has one registration, `microsoft/hve-core`, which tracks `main` and has no PreRelease or Stable channels. The VS Code extension is published as PreRelease and Stable from reviewed release branches that advance from `main` to `release/prerelease` to `release/stable`.
-
-A published extension release is the assurance boundary for its immutable tag. The release workflow applies review and release gates, produces one VSIX with its SBOM and provenance sidecars, verifies provenance, and publishes through the configured release path. The plugin registration resolves `main` and does not carry that assurance. [HVE Core Identity and Channels](packages) describes the lifecycle and source contract.
+HVE Core uses one identity: the `hve-core` plugin and the `ise-hve-essentials.hve-core` extension carry the same components, which root `plugin.json` lists. The plugin follows `main` and has no release channels. The extension has Stable and PreRelease channels on the Marketplace. [HVE Core Identity and Channels](packages) explains both, including the current state of the extension's release branches.
 
 ## Post-Installation: Update Your .gitignore
 

@@ -146,6 +146,42 @@ jobs:
             Write-Output "Found Python projects: $dirs"
           }
 
+  discover-python-audit-projects:
+    name: Discover Python Audit Projects
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Find Python audit projects
+        id: find
+        shell: pwsh
+        run: |
+          $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
+            Where-Object { $_.FullName.Replace([IO.Path]::DirectorySeparatorChar, [char]'/') -notmatch '/(node_modules|\.venv|\.copilot-tracking)/' } |
+            ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
+            ForEach-Object { ($_ -replace '^\.[\\/]', '').Replace([IO.Path]::DirectorySeparatorChar, [char]'/') } |
+            Sort-Object)
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $projectList = @(Assert-WorkflowProjectDirectory -Path $projectList)
+          $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($projectList.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Python audit projects found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Python audit projects: $dirs"
+          }
+
   discover-node-projects:
     name: Discover Node Projects
     runs-on: ubuntu-24.04
@@ -403,12 +439,12 @@ jobs:
 
   pip-audit:
     name: "pip-audit (${{ matrix.directory }})"
-    needs: [change-range, discover-python-projects]
-    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    needs: [change-range, discover-python-audit-projects]
+    if: needs.discover-python-audit-projects.outputs.has-projects == 'true'
     strategy:
       fail-fast: false
       matrix:
-        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+        directory: ${{ fromJson(needs.discover-python-audit-projects.outputs.directories) }}
     uses: $/.github/workflows/pip-audit.yml
     permissions:
       contents: read
@@ -923,6 +959,7 @@ jobs:
       - typescript-check
       - psscriptanalyzer
       - discover-python-projects
+      - discover-python-audit-projects
       - python-lint
       - copyright-headers
       - workflow-validation-scan

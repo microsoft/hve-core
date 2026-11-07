@@ -3,7 +3,7 @@ title: Copilot Plugin
 description: Install the complete hve-core plugin in VS Code's Copilot harness or in Copilot CLI
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - copilot plugin
@@ -59,7 +59,7 @@ Register the repository as a plugin marketplace:
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-The registration tracks the `main` branch, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../contributing/release-process.md#continuous-main-sbom). PreRelease and Stable are VS Code extension channels, so the plugin has no channel to select.
+The registration tracks the `main` branch, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../contributing/release-process.md#continuous-main-sbom).
 
 List the plugins in the registered marketplace, or type `/plugin` in a Copilot CLI chat session to browse them:
 

@@ -36,10 +36,12 @@ Describe 'Find-PythonProjects' -Tag 'Unit' {
             $projects[0] | Should -BeLike "*skill-a*"
         }
 
-        It 'Excludes node_modules directories' {
+        It 'Excludes installed dependencies and task-local metadata' {
             $testDir = Join-Path $TestDrive 'nm-test'
-            New-Item -ItemType Directory -Path "$testDir/node_modules/pkg" -Force | Out-Null
-            New-Item -ItemType File -Path "$testDir/node_modules/pkg/pyproject.toml" -Force | Out-Null
+            foreach ($directory in @('node_modules/pkg', '.venv/pkg', '.copilot-tracking/pkg')) {
+                New-Item -ItemType Directory -Path "$testDir/$directory" -Force | Out-Null
+                New-Item -ItemType File -Path "$testDir/$directory/pyproject.toml" -Force | Out-Null
+            }
 
             $projects = Find-PythonProjects -SearchPath $testDir
 
@@ -92,16 +94,24 @@ Describe 'Invoke-PipAuditForProject' -Tag 'Unit' {
             New-Item -ItemType Directory -Path $testDir -Force | Out-Null
             New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
-            Mock uv {}
+            Mock uv {
+                if ($args[0] -eq 'export') { 'pillow==13.0.0' }
+                $global:LASTEXITCODE = 0
+            }
             $global:LASTEXITCODE = 0
 
             $result = Invoke-PipAuditForProject -ProjectPath $testDir -OutputPath $outputDir
 
             $result | Should -Be $false
-            Should -Invoke uv -Times 1 -ParameterFilter { $args[0] -eq 'export' }
+            Should -Invoke uv -Times 1 -ParameterFilter {
+                $args[0] -eq 'export' -and $args -contains '--locked' -and
+                $args -notcontains '--no-dev' -and $args -notcontains '--no-default-groups'
+            }
             Should -Invoke uv -Times 1 -ParameterFilter {
                 $args[0] -eq 'run' -and $args[1] -eq '--locked' -and $args[2] -eq '--project' -and
-                ($args[3] -replace '\\', '/') -like '*/scripts/tools/pip-audit' -and $args[4] -eq 'pip-audit'
+                ($args[3] -replace '\\', '/') -like '*/scripts/tools/pip-audit' -and $args[4] -eq 'pip-audit' -and
+                $args -contains '--disable-pip' -and $args -contains '--strict' -and
+                $args -contains '--vulnerability-service' -and $args -contains 'osv'
             }
         }
 
@@ -111,11 +121,38 @@ Describe 'Invoke-PipAuditForProject' -Tag 'Unit' {
             New-Item -ItemType Directory -Path $testDir -Force | Out-Null
             New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
-            Mock uv { $global:LASTEXITCODE = $(if ($args[0] -eq 'run') { 1 } else { 0 }) }
+            Mock uv {
+                if ($args[0] -eq 'export') { 'pillow==13.0.0' }
+                $global:LASTEXITCODE = $(if ($args[0] -eq 'run') { 1 } else { 0 })
+            }
 
             $result = Invoke-PipAuditForProject -ProjectPath $testDir -OutputPath $outputDir
 
             $result | Should -Be $true
+        }
+
+        It 'Stops before auditing and cleans the export when <Scenario>' -ForEach @(
+            @{ Scenario = 'the lock export fails'; ExportExit = 1; ExportText = 'pillow==13.0.0'; Terminate = $false }
+            @{ Scenario = 'the export contains only comments'; ExportExit = 0; ExportText = '# no dependencies'; Terminate = $false }
+            @{ Scenario = 'the exporter throws'; ExportExit = 0; ExportText = ''; Terminate = $true }
+        ) {
+            $testDir = Join-Path $TestDrive ([guid]::NewGuid().ToString())
+            $outputDir = Join-Path $testDir 'results'
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+            $name = (Resolve-Path -Relative $testDir) -replace '[\\/]', '-' -replace '^\.', '' -replace '^-', ''
+            $requirementsFile = Join-Path ([IO.Path]::GetTempPath()) "requirements-$name.txt"
+            Mock uv {
+                if ($Terminate) { throw 'Exporter failed.' }
+                $global:LASTEXITCODE = $ExportExit
+                $ExportText
+            }
+
+            { Invoke-PipAuditForProject -ProjectPath $testDir -OutputPath $outputDir } |
+                Should -Throw
+
+            Should -Invoke uv -Times 0 -Exactly -ParameterFilter { $args[0] -eq 'run' }
+            Test-Path -LiteralPath $requirementsFile | Should -BeFalse
+            (Get-Location).Path | Should -Not -Be $testDir
         }
     }
 }

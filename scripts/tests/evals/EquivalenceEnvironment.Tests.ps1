@@ -197,6 +197,72 @@ Use `skill-one` and delegate checks to the helper agent.
     }
 }
 
+Describe 'Preloaded skill dependencies' -Tag 'Unit' {
+    BeforeAll {
+        $script:PreloadRoot = Join-Path $TestDrive 'preload-repo'
+        New-AgentFixture -Root $script:PreloadRoot
+
+        $instructionsDir = Join-Path $script:PreloadRoot '.github/instructions/sample'
+        New-Item -ItemType Directory -Path $instructionsDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $instructionsDir 'house.instructions.md') -Value 'House rules.' -Encoding UTF8
+
+        $agentsDir = Join-Path $script:PreloadRoot '.github/agents/sample'
+        New-Item -ItemType Directory -Path (Join-Path $agentsDir 'subagents') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $agentsDir 'subagents/checker.agent.md') -Encoding UTF8 -Value @'
+---
+name: Checker
+user-invocable: false
+---
+
+Uses `skill-three` for its work.
+'@
+
+        # The skill names a subagent, a user-facing agent, an instruction by a path
+        # relative to the skill, and another skill.
+        $protocolDir = Join-Path $script:PreloadRoot '.github/skills/gamma/protocol'
+        New-Item -ItemType Directory -Path $protocolDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $protocolDir 'SKILL.md') -Encoding UTF8 -Value @'
+---
+name: protocol
+description: Coordinator protocol fixture.
+---
+
+Dispatch the Checker subagent, follow [house rules](../../../instructions/sample/house.instructions.md), and activate `skill-two` when needed. Agent Two adopts this protocol too.
+'@
+
+        Set-Content -LiteralPath (Join-Path $agentsDir 'agent-preloader.agent.md') -Encoding UTF8 -Value @'
+---
+name: Agent Preloader
+skills:
+  - protocol
+---
+
+Follow the preloaded protocol.
+'@
+        $script:PreloaderPath = '.github/agents/sample/agent-preloader.agent.md'
+    }
+
+    It 'Declares a subagent that a preloaded skill names' {
+        (Get-AgentDeclaredDependency -RepoRoot $script:PreloadRoot -AgentRelativePath $script:PreloaderPath).Subagents |
+            Should -Contain '.github/agents/sample/subagents/checker.agent.md'
+    }
+
+    It 'Does not declare a user-invocable agent that a preloaded skill names' {
+        (Get-AgentDeclaredDependency -RepoRoot $script:PreloadRoot -AgentRelativePath $script:PreloaderPath).Subagents |
+            Should -Not -Contain '.github/agents/sample/agent-two.agent.md'
+    }
+
+    It 'Resolves an instruction a preloaded skill links relative to its own directory' {
+        (Get-AgentDeclaredDependency -RepoRoot $script:PreloadRoot -AgentRelativePath $script:PreloaderPath).Instructions |
+            Should -Contain '.github/instructions/sample/house.instructions.md'
+    }
+
+    It 'Adds the skills a preloaded skill and its subagents name to the surface' {
+        $surface = @(Get-AgentSurfaceSkill -RepoRoot $script:PreloadRoot -AgentRelativePath $script:PreloaderPath)
+        $surface | Should -BeExactly @('.github/skills/alpha/skill-two', '.github/skills/beta/skill-three', '.github/skills/gamma/protocol')
+    }
+}
+
 Describe 'Assert-ContainedRepositoryPath' -Tag 'Unit' {
     BeforeAll {
         $script:GuardRoot = Join-Path $TestDrive ('guard-' + [Guid]::NewGuid().ToString('N'))
@@ -616,6 +682,19 @@ Describe 'Repository agents' -Tag 'Unit' {
         $surface = @(Get-AgentSurfaceSkill -RepoRoot $script:RepoRoot -AgentRelativePath '.github/agents/hve-core/rpi-agent.agent.md')
         foreach ($skill in @('rpi-research', 'rpi-plan', 'rpi-implement', 'rpi-review')) {
             $surface | Should -Contain ".github/skills/rpi/$skill"
+        }
+    }
+
+    It 'Materializes the subagents and skills the preloaded rpi skill names for rpi-agent' {
+        $workspace = Join-Path $TestDrive 'rpi-surface-workspace'
+        $skillDir = Join-Path $TestDrive 'rpi-surface-skills'
+        $null = New-CustomizedEnvironment -RepoRoot $script:RepoRoot -Agent 'rpi-agent' -WorkspacePath $workspace -SkillDirPath $skillDir
+
+        foreach ($subagent in @('rpi-researcher', 'rpi-plan-critic', 'rpi-reviewer')) {
+            Join-Path $workspace ".github/agents/hve-core/subagents/$subagent.agent.md" | Should -Exist
+        }
+        foreach ($skill in @('rpi', 'rpi-plan-critique')) {
+            Join-Path $skillDir "$skill/SKILL.md" | Should -Exist
         }
     }
 }
