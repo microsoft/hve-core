@@ -6,10 +6,10 @@
   "targetRevision": "0b8762fe0003396557820bd6093d88a932047033",
   "sourceSpecSha256": "4de094694d106aac4e5c1fe52adaf0b8a994b965a5927d421fe154ca9f41c93b",
   "targetSpecSha256": "aa96de88a9f31d9bd964f3915061d273421fd3117217618a7d635348123d88f3",
-  "mapSha256": "0731bbba6ff23f15737058f02294670a61d35bf6d44b8cb0287c88d123920217",
+  "mapSha256": "702082cc5e10b2500b8afba8adb6722483fccabaf62ee01db3a146431596535e",
   "counts": {
     "sourceToTargetPairs": 1240,
-    "authoredAliases": 411,
+    "authoredAliases": 397,
     "generatedCopies": 171,
     "semanticChanges": 0
   },
@@ -2266,56 +2266,6 @@
     },
     {
       "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review.yml",
-      "stimulus": "code-review-standards-unknown-origin-dedup",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-standards-unknown-origin-dedup-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review.yml",
-      "stimulus": "code-review-standards-merge-happy-no-conflict",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-standards-merge-happy-no-conflict-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review.yml",
-      "stimulus": "code-review-pull-request-standard-profile",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "human-confirmation",
-      "newName": "code-review-pull-request-standard-profile-human-confirmation",
-      "behaviorSha256": "66159b0c0697300318b7b01ba1a0d806bcc74138f48b48486da32770e01756e1"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review.yml",
-      "stimulus": "code-review-class-recipe",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-class-recipe-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review.yml",
-      "stimulus": "code-review-class-recipe",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "human-confirmation",
-      "newName": "code-review-class-recipe-human-confirmation",
-      "behaviorSha256": "5613e5276b9471b835577dd5f77af2a34707e538376369edb320d7cde4760ada"
-    },
-    {
-      "evalName": "agent-behavior",
       "source": "evals/agent-behavior/stimuli/data-science-engineering-coach.yml",
       "stimulus": "data-science-engineering-coach-problem-framing-missing-outcome",
       "graderType": "output-matches",
@@ -2323,16 +2273,6 @@
       "oldName": "user-confirmed-next-job",
       "newName": "data-science-engineering-coach-problem-framing-miss-dd64f6da",
       "behaviorSha256": "eb69437c460168c269418a506f734513a45ffdb13eead530ea1de390143d511a"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review.yml",
-      "stimulus": "code-review-class-recipe",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-unsolicited-plan-drift",
-      "newName": "code-review-class-recipe-no-unsolicited-plan-drift",
-      "behaviorSha256": "0e61fe05d3c53e9abbcc197ed0e9c0de5735f7ef05bd27c69809e2926a94d7a8"
     },
     {
       "evalName": "agent-behavior",
@@ -2596,26 +2536,6 @@
     },
     {
       "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-walkback.yml",
-      "stimulus": "code-review-walkback-investigation",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-walkback-investigation-no-source-edit",
-      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-security.yml",
-      "stimulus": "code-review-security-lens",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-security-lens-no-source-edit",
-      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
-    },
-    {
-      "evalName": "agent-behavior",
       "source": "evals/agent-behavior/stimuli/agentic-workflows.yml",
       "stimulus": "agentic-workflows-class-recipe",
       "graderType": "output-matches",
@@ -2846,16 +2766,6 @@
     },
     {
       "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-standards.yml",
-      "stimulus": "code-review-standards-lens",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-standards-lens-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
-    },
-    {
-      "evalName": "agent-behavior",
       "source": "evals/agent-behavior/stimuli/agentic-workflows.yml",
       "stimulus": "agentic-workflows-class-recipe",
       "graderType": "output-matches",
@@ -2873,56 +2783,6 @@
       "oldName": "compact-issue-index",
       "newName": "backlog-grooming-assesses-large-inventory-advisory-33fcc738",
       "behaviorSha256": "9d304277d14b80c2161768e9ca094313f087ec048375ee412058b6d238c68c3f"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-readiness.yml",
-      "stimulus": "code-review-readiness-lens",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-readiness-lens-no-source-edit",
-      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-orientation.yml",
-      "stimulus": "code-review-orientation-stage",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-orientation-stage-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-functional.yml",
-      "stimulus": "code-review-functional-lens",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-functional-lens-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-explainer.yml",
-      "stimulus": "code-review-explainer-factual",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-explainer-factual-no-source-edit",
-      "behaviorSha256": "2df533b3ce96447f9a8d1e715af741f8819899c7911cdbc43f1bdb9d8b4ffc21"
-    },
-    {
-      "evalName": "agent-behavior",
-      "source": "evals/agent-behavior/stimuli/code-review-accessibility.yml",
-      "stimulus": "code-review-accessibility-lens",
-      "graderType": "output-matches",
-      "resultKind": "code",
-      "oldName": "no-source-edit",
-      "newName": "code-review-accessibility-lens-no-source-edit",
-      "behaviorSha256": "cb68e9c665e4647f0a2f56c35b0c27f023f603c040139ed56cc404f1f4197e49"
     },
     {
       "evalName": "agent-behavior",
