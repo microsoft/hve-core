@@ -1167,6 +1167,7 @@ vwan
 vxlan
 wafs
 walkback
+walkbacks
 walkthrough
 wans
 webgui
@@ -1657,6 +1658,7 @@ DSSE
 intoto
 SSML
 auditd
+callees
 callsite
 callsites
 DPAPI
