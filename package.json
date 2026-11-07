@@ -97,6 +97,7 @@
     "validate:docs": "npm run docs:lint && npm run docs:lint:labels && npm run docs:typecheck && npm run docs:test",
     "docs:serve": "npm --prefix docs/docusaurus run serve",
     "lint:eval-grader-lineage": "pwsh -NoProfile -File scripts/evals/Build-GraderLineageMap.ps1 -Check",
+    "eval-grader-lineage:retire": "pwsh -NoProfile -File scripts/evals/Build-GraderLineageMap.ps1 -Retire",
     "ci:eval:lint:vally": "pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf && npm run lint:eval-grader-lineage && vally lint --eval-spec evals/",
     "ci:eval:lint:schema": "pwsh -NoProfile -File scripts/evals/Test-EvalSpec.ps1",
     "ci:eval:lint:skills": "vally lint .github/skills/",

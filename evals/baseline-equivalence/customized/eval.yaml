@@ -106,7 +106,7 @@ stimuli:
     turns:
       - *agent-launch
       - "Explain step by step how a fizzbuzz implementation works for the first 15 numbers."
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - {type: output-matches, name: mentions-fizz-buzz, config: {pattern: '(?i)fizz.*buzz|buzz.*fizz'}}
       - {type: prompt, name: code-walkthrough-fizzbuzz-response-quality, config: {prompt: "Does the response correctly walk through fizzbuzz for 1 through 15?"}}
@@ -116,7 +116,7 @@ stimuli:
     turns:
       - *agent-launch
       - "Explain what this Python error means: IndexError: list index out of range."
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - {type: output-matches, name: mentions-index-or-range, config: {pattern: '(?i)(index|range|bounds)'}}
       - {type: prompt, name: code-error-explain-indexerror-response-quality, config: {prompt: "Does the response correctly explain the cause of an IndexError?"}}
@@ -281,7 +281,7 @@ stimuli:
     turns:
       - *agent-launch
       - "You assumed Python 2 syntax, but the project uses Python 3. Restate your earlier print example correctly."
-    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:
       - {type: output-matches, name: mentions-print-paren, config: {pattern: "print\\("}}
       - {type: prompt, name: multi-turn-correct-misunderstanding-response-quality, config: {prompt: "Does the response restate the print example using Python 3 syntax?"}}

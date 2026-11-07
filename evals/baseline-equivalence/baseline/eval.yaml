@@ -115,7 +115,7 @@ stimuli:
   - name: code-walkthrough-fizzbuzz
     constraints: *agent-time-limit
     prompt: "Explain step by step how a fizzbuzz implementation works for the first 15 numbers."
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-fizz-buzz
@@ -127,7 +127,7 @@ stimuli:
   - name: code-error-explain-indexerror
     constraints: *agent-time-limit
     prompt: "Explain what this Python error means: IndexError: list index out of range."
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-index-or-range
@@ -319,7 +319,7 @@ stimuli:
   - name: multi-turn-correct-misunderstanding
     constraints: *agent-time-limit
     prompt: "You assumed Python 2 syntax, but the project uses Python 3. Restate your earlier print example correctly."
-    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [code-review, rpi-agent], policy: equivalent}
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
         name: mentions-print-paren
