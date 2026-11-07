@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-11-06
+ms.date: 2026-11-07
 ms.topic: reference
 keywords:
   - powershell
@@ -131,7 +131,7 @@ current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
   | `workflow-check/deprecated-workflow-command`   | A `run:` script that uses the disabled `set-output`, `save-state`, `set-env`, or `add-path` workflow commands         |
   | `workflow-check/unknown-action-input`          | A `with:` input or `secrets:` entry the referenced action or reusable workflow does not declare                       |
   | `workflow-check/missing-required-input`        | A required reusable-workflow input or secret that is not passed; `secrets: inherit` satisfies secrets                 |
-  | `workflow-check/reusable-workflow-permissions` | A reusable-workflow call whose callee requests, at its workflow or job level, more than the calling job grants        |
+  | `workflow-check/reusable-workflow-permissions` | A reusable-workflow call whose callee, or a workflow it calls, requests more than the calling job grants              |
   | `workflow-check/action-metadata-unavailable`   | An action or reusable workflow whose metadata cannot be read, so its inputs were not verified; the check fails closed |
   | `workflow-check/sourced-helper-unavailable`    | A gh-aw helper a `run:` script sources that cannot be read at the pinned `github/gh-aw-actions/setup` commit          |
 

@@ -299,7 +299,7 @@ async function checkReusableWorkflowCall(ctx, job, uses, workflowPermissions) {
   const content = await readUsedFile(ctx, uses, usesNode, null);
   if (content === undefined) return;
   const callee = parseDocument(content);
-  checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions);
+  await checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions);
   const call = isMap(callee.contents) ? callee.contents.getIn(['on', 'workflow_call'], true) : null;
   for (const [section, label] of [['inputs', 'input'], ['secrets', 'secret']]) {
     const declared = isMap(call) ? call.get(section, true) : null;
@@ -332,31 +332,78 @@ async function checkReusableWorkflowCall(ctx, job, uses, workflowPermissions) {
 
 // GitHub caps a called workflow's permissions, at its workflow level and in
 // each of its jobs, at what the calling job grants, and refuses to start the
-// run when a request exceeds that grant.
-function checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions) {
-  const grant = job.has('permissions') ? permissionGrant(job.get('permissions', true)) : permissionGrant(workflowPermissions);
-  if (!grant || !isMap(callee.contents)) return;
-  const requests = [['workflow level', callee.contents.get('permissions', true)]];
-  const calleeJobs = callee.contents.get('jobs', true);
-  if (isMap(calleeJobs)) {
-    for (const pair of calleeJobs.items) {
-      if (isMap(pair.value) && pair.value.has('permissions')) requests.push([`job ${scalarString(pair.key)}`, pair.value.get('permissions', true)]);
-    }
-  }
+// run when a request exceeds that grant. The cap carries through nested calls:
+// a called job without a permissions block inherits its workflow's block, or
+// else the ceiling it was called with.
+async function checkReusableWorkflowPermissions(ctx, job, uses, usesNode, callee, workflowPermissions) {
+  const ceiling = permissionGrant(job.has('permissions') ? job.get('permissions', true) : workflowPermissions);
+  if (!ceiling) return;
+  await checkCalleePermissions(ctx, usesNode, ceiling, uses, callee, []);
+}
+
+async function checkCalleePermissions(ctx, usesNode, ceiling, uses, callee, via) {
+  const root = callee.contents;
+  if (!isMap(root)) return;
   const target = uses.split('@')[0];
-  for (const [where, node] of requests) {
-    const request = permissionGrant(node);
-    if (!request) continue;
-    if (request.all > grant.all) {
-      report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${target} requests ${PERMISSION_NAMES[request.all]}-all at its ${where}, but this job grants less`);
+  const subject = via.length ? `${target}, called through ${via.join(' -> ')},` : target;
+  const grantor = via.length ? 'the calling chain grants' : 'this job grants';
+  const exceeds = (where, request) => {
+    if (request.all > ceiling.all) {
+      report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${subject} requests ${PERMISSION_NAMES[request.all]}-all at its ${where}, but ${grantor} less`);
     }
     for (const [scope, level] of request.scopes) {
-      const granted = grant.scopes.get(scope) ?? grant.all;
+      const granted = ceiling.scopes.get(scope) ?? ceiling.all;
       if (level > granted) {
-        report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${target} requests ${scope}: ${PERMISSION_NAMES[level]} at its ${where}, but this job grants ${scope}: ${PERMISSION_NAMES[granted]}`);
+        report(ctx, 'workflow-check/reusable-workflow-permissions', usesNode, 0, `${subject} requests ${scope}: ${PERMISSION_NAMES[level]} at its ${where}, but ${grantor} ${scope}: ${PERMISSION_NAMES[granted]}`);
       }
     }
+  };
+  // Returns the effective grant for a permissions block, or null when the
+  // block is present but not statically known.
+  const effective = (where, node, inherited) => {
+    if (node === undefined || node === null) return inherited;
+    const request = permissionGrant(node);
+    if (!request) return null;
+    exceeds(where, request);
+    return intersectGrants(request, ceiling);
+  };
+
+  const workflowGrant = effective('workflow level', root.get('permissions', true), ceiling);
+  const jobs = root.get('jobs', true);
+  if (!isMap(jobs)) return;
+  for (const pair of jobs.items) {
+    const calleeJob = pair.value;
+    if (!isMap(calleeJob)) continue;
+    const jobGrant = effective(`job ${scalarString(pair.key)}`, calleeJob.get('permissions', true), workflowGrant);
+    const nestedUses = scalarString(calleeJob.get('uses', true));
+    if (!jobGrant || !nestedUses) continue;
+    const nestedTarget = nestedUses.split('@')[0];
+    const chain = [...via, target];
+    if (chain.some((item) => usesIdentity(item) === usesIdentity(nestedTarget))) continue;
+    // A local reference inside a remote workflow resolves against that remote
+    // repository, which this check does not read.
+    if (isLocalUses(nestedUses) && !isLocalUses(uses)) continue;
+    // The nested workflow's own validation reports a file it cannot read.
+    const content = await readUsedFile({ ...ctx, findings: [] }, nestedUses, usesNode, null);
+    if (content === undefined) continue;
+    await checkCalleePermissions(ctx, usesNode, jobGrant, nestedUses, parseDocument(content), chain);
   }
+}
+
+function isLocalUses(uses) {
+  return uses.startsWith('./') || uses.startsWith('$/');
+}
+
+function usesIdentity(target) {
+  return isLocalUses(target) ? target.slice(2) : target;
+}
+
+function intersectGrants(left, right) {
+  const scopes = new Map();
+  for (const scope of new Set([...left.scopes.keys(), ...right.scopes.keys()])) {
+    scopes.set(scope, Math.min(left.scopes.get(scope) ?? left.all, right.scopes.get(scope) ?? right.all));
+  }
+  return { all: Math.min(left.all, right.all), scopes };
 }
 
 // Returns the level every unlisted scope gets and the listed scope levels, or

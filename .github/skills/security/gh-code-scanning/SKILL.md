@@ -220,7 +220,7 @@ if [[ -z "$existing" ]]; then
   gh issue create --repo "{owner}/{repo}" \
     --title "[Security] {rule_description}" \
     --label "security" \
-    --body "<!-- automation:security-scan:{rule_id} -->
+    --body "<!-- automation:security-scan:{tool}:{rule_id} -->
 ## Code Scanning Alert: {rule_description}
 
 **Rule:** \`{rule_id}\`
@@ -234,7 +234,7 @@ $([ -n "{severity}" ] && echo "**Severity:** {severity}")
 fi
 ```
 
-The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded in the issue body and serves as the deduplication anchor. Replace all `{placeholders}` with actual values from the alert-grouping JSON output.
+The automation marker `<!-- automation:security-scan:{tool}:{rule_id} -->` is embedded in the issue body and serves as the deduplication anchor; it carries the tool because different tools can share a rule ID. Replace all `{placeholders}` with actual values from the alert-grouping JSON output.
 
 ## Troubleshooting
 

@@ -5,12 +5,13 @@
 
 <#
 .SYNOPSIS
-    Retrieves open code scanning alerts from a GitHub repository, grouped by rule.
+    Retrieves open code scanning alerts from a GitHub repository, grouped by tool and rule.
 
 .DESCRIPTION
     Uses the gh CLI to fetch open code scanning alerts for a repository and branch,
-    suppressing the pager for non-interactive output. Results are grouped by rule
-    description and sorted by occurrence count descending.
+    suppressing the pager for non-interactive output. Results are grouped by tool
+    name and rule ID and sorted by occurrence count descending. Group titles use
+    the rule description, then the rule name, then the rule ID.
 
     Requires gh CLI authenticated with security_events scope (or public_repo for public repos).
 

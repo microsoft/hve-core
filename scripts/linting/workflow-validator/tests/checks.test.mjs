@@ -392,4 +392,50 @@ describe('reusable workflow permissions', () => {
     const expression = caller({ jobLevel: ['contents: ${{ github.event_name }}'] });
     assert.deepEqual(rules(await check(expression, { files: files('\n  contents: write') })), []);
   });
+
+  describe('nested calls', () => {
+    const middle = (lines = []) => [
+      'on:',
+      '  workflow_call:',
+      ...lines,
+      'jobs:',
+      '  relay:',
+      '    uses: ./.github/workflows/leaf.yml',
+    ].join('\n');
+    const leaf = (permissions) => `on:\n  workflow_call:\npermissions:${permissions}\njobs:\n  work:\n    runs-on: ubuntu-24.04\n    steps: []\n`;
+    const nested = (middleLines, leafPermissions) => ({
+      '.github/workflows/callee.yml': middle(middleLines),
+      '.github/workflows/leaf.yml': leaf(leafPermissions),
+    });
+
+    it('carries the caller ceiling through a middle workflow that omits permissions', async () => {
+      const findings = await check(caller(), { files: nested([], '\n  contents: read') });
+      assert.deepEqual(rules(findings), [RULE]);
+      assert.match(findings[0].message, /\.\/\.github\/workflows\/leaf\.yml, called through \$\/\.github\/workflows\/callee\.yml, requests contents: read at its workflow level, but the calling chain grants contents: none/);
+      assert.equal(findings[0].line, 5);
+    });
+
+    it('matches the direct call finding for the same request', async () => {
+      assert.deepEqual(rules(await check(caller(), { files: files('\n  contents: read') })), [RULE]);
+    });
+
+    it('accepts a nested request within the inherited ceiling', async () => {
+      assert.deepEqual(rules(await check(caller(), { files: nested([], '\n  issues: read') })), []);
+    });
+
+    it('narrows the ceiling to an explicit middle workflow block', async () => {
+      const narrowed = nested(['permissions:', '  issues: read'], '\n  issues: write');
+      const findings = await check(caller(), { files: narrowed });
+      assert.deepEqual(rules(findings), [RULE]);
+      assert.match(findings[0].message, /issues: write at its workflow level, but the calling chain grants issues: read/);
+    });
+
+    it('stops at a call cycle', async () => {
+      const cycle = {
+        '.github/workflows/callee.yml': 'on:\n  workflow_call:\njobs:\n  loop:\n    uses: ./.github/workflows/other.yml\n',
+        '.github/workflows/other.yml': 'on:\n  workflow_call:\njobs:\n  loop:\n    uses: $/.github/workflows/callee.yml\n',
+      };
+      assert.deepEqual(rules(await check(caller(), { files: cycle })), []);
+    });
+  });
 });
