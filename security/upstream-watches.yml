@@ -201,8 +201,14 @@ watches:
   # generated findings recorded as generated-code exceptions.
   - id: gh-aw-release-newer
     kind: release-newer
-    issue: 3112
+    issue: 3137
     action: >-
       Upgrade gh-aw following "Upgrading gh-aw" in docs/architecture/agentic-workflows.md, then retire generated-code exceptions the new compiler output no longer needs
     repo: github/gh-aw
-    pinned: 0.89.21
+    pinned: 1.0.1
+  - id: gh-aw-permission-comments
+    kind: issue-closed
+    issue: 3137
+    action: >-
+      Upgrade gh-aw to a release with the fix, recompile, and remove the zizmor undocumented-permissions generated-code exceptions the new output no longer needs
+    url: https://github.com/github/gh-aw/issues/75581

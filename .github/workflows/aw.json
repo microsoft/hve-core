@@ -9,13 +9,13 @@
     "actions/github-script@v9": "actions/github-script@v9.0.0"
   },
   "container_pins": {
-    "ghcr.io/github/gh-aw-mcpg:v0.4.25": {
-      "image": "ghcr.io/github/gh-aw-mcpg:v0.4.25",
-      "digest": "sha256:9be0a86220e807a0ecc89e53d7453468f7a53fbc6b3d1efd2299025ffe01d086"
+    "ghcr.io/github/gh-aw-mcpg:v0.5.0": {
+      "image": "ghcr.io/github/gh-aw-mcpg:v0.5.0",
+      "digest": "sha256:d3544a4222e7efeeeb38669d8a1af0c72691c55b8f6506b15aa5920f7f31b7bc"
     },
-    "ghcr.io/github/github-mcp-server:v1.12.2": {
-      "image": "ghcr.io/github/github-mcp-server:v1.12.2",
-      "digest": "sha256:508a0857ec762b1ab1cece29193345b501fab1dd9d1228a7b617062954cecac6"
+    "ghcr.io/github/github-mcp-server:v2.0.3": {
+      "image": "ghcr.io/github/github-mcp-server:v2.0.3",
+      "digest": "sha256:250bc6ce70788207608ef74cef4397230ff2e8481218da74d6093e4bd9101132"
     },
     "ghcr.io/github/gh-aw-node": {
       "image": "ghcr.io/github/gh-aw-node",

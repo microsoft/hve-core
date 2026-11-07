@@ -144,8 +144,11 @@ safe-outputs:
   report-failed-jobs: false
   report-failure-as-issue: false
   report-incomplete: false
-  missing-tool: false
-  missing-data: false
+  report-missing-tool: false
+  report-missing-data: false
+  noop:
+    max: 1
+    report-as-issue: false
   jobs:
     publish-backlog-grooming-result:
       name: Publish the shard result
