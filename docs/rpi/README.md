@@ -7,7 +7,7 @@ sidebar_custom_props:
   accessibleName: "Overview: Understanding the RPI Workflow"
 pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-10-31
+ms.date: 2026-11-02
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -104,15 +104,16 @@ Follow-up does not rename or repeat another lifecycle concept. It routes defects
 
 Choose the smallest entry surface that owns the next action:
 
-| Entry surface      | Use it when                                                   | Contract                                                                                            |
-|--------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| `RPI Agent`        | You want a user-selected lifecycle wrapper                    | Activates the applicable RPI skills with one task identity; manual by default, Full Auto on request |
-| `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                                       |
-| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                                            |
-| `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                                            |
-| `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                                     |
-| `/rpi-challenger`  | You want to expose assumptions before acting                  | Asks adaptive skeptical questions and records unresolved items                                      |
-| `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed                           |
+| Entry surface      | Use it when                                                   | Contract                                                                                                        |
+|--------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `/rpi`             | You want multi-phase RPI session coordination                 | User-invocable and model-discoverable skill that coordinates the RPI phases, session state, and workflow canvas |
+| `RPI Agent`        | You want a user-selected lifecycle wrapper in the picker      | Preloads the `rpi` skill to coordinate the applicable RPI phases with one task identity and the workflow canvas |
+| `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                                                   |
+| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                                                        |
+| `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                                                        |
+| `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                                                 |
+| `/rpi-challenger`  | You want to expose assumptions before acting                  | Asks adaptive skeptical questions and records unresolved items                                                  |
+| `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed                                       |
 
 Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. Unless your request already says how to proceed, it asks how you want to work: end to end, automatically with check-ins, research and planning with you before it stops, or one phase at a time. `RPI Agent` is an entry surface, not an autonomous dispatcher of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
 

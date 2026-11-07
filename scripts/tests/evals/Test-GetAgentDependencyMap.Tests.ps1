@@ -109,6 +109,27 @@ Describe 'Get-AgentDependencyMap.ps1' -Tag 'Unit' {
         }
     }
 
+    Context 'Preloaded skill references' {
+        It 'Adds the subagents and instructions a preloaded skill names, skipping user-invocable agents' {
+            $collDir = Join-Path $script:TestRoot '.github/agents/minimal-coll'
+            Set-Content -LiteralPath (Join-Path $collDir 'subagents/checker.agent.md') -Value "---`nname: Checker`nuser-invocable: false`n---`n`nChecks work." -Encoding UTF8
+            Set-Content -LiteralPath (Join-Path $collDir 'coach.agent.md') -Value "---`nname: Coach`n---`n`nCoaches teams." -Encoding UTF8
+            $skillDir = Join-Path $script:TestRoot '.github/skills/pkg/protocol-skill'
+            New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "---`nname: protocol-skill`n---`n`nDispatch the Checker subagent and follow [rules](../../../instructions/minimal.instructions.md). The Coach adopts this protocol too." -Encoding UTF8
+            Set-Content -LiteralPath (Join-Path $collDir 'preloader.agent.md') -Value "---`ndescription: Preloads the protocol.`nskills:`n  - protocol-skill`n---`n`nFollow the preloaded protocol." -Encoding UTF8
+
+            & $script:ScriptPath -RepoRoot $script:TestRoot -OutputPath $script:OutputPath 3>$null 6>$null
+
+            $record = (Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json).'preloader'
+            $record.subagents | Should -Contain '.github/agents/minimal-coll/subagents/checker.agent.md'
+            $record.subagents | Should -Not -Contain '.github/agents/minimal-coll/coach.agent.md'
+            $record.instructions | Should -Contain '.github/instructions/minimal.instructions.md'
+            $record.skills | Should -Contain '.github/skills/pkg/protocol-skill/SKILL.md'
+            $record.warnings | Should -HaveCount 0
+        }
+    }
+
     Context 'Warnings on missing references' {
         It 'Records a warning for an unresolved reference but still exits successfully' {
             $warnings = $null

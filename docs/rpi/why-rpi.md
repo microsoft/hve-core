@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-28
+ms.date: 2026-11-02
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -49,7 +49,7 @@ RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task us
 
 When a long lifecycle needs a fresh context, durable artifacts preserve the task identity, evidence, decisions, and next action. A reset can reduce accumulated context, but it does not require a new research stage or a fresh run of every lifecycle concept.
 
-Use `RPI Agent` as a user-selected wrapper that activates the applicable RPI skills. It is an entry surface for the phase skills, not an autonomous dispatcher of specialized task workers.
+Use `/rpi` (the `rpi` skill) or select `RPI Agent` (which preloads `rpi`) as a lifecycle wrapper that activates the applicable RPI skills. It is an entry surface for the phase skills, not an autonomous dispatcher of specialized task workers.
 
 ### The Difference in Practice
 

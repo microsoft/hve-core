@@ -9,12 +9,15 @@ type LevelName = 'L100' | 'L200' | 'L300' | 'L400';
 type PublishedFiles = {
   page: string;
   html: string;
-  pptx: string;
   mp4: string;
   vtt: string;
 };
 
 type LevelEntry = {
+  renderer?: string;
+  format?: string;
+  render_schema_version?: number;
+  manifest_schema_version?: number;
   files?: Record<string, unknown>;
   last_failed_attempt?: {
     checks?: Record<string, { result?: string }>;
@@ -58,7 +61,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isSiteIndex(value: unknown): value is SiteIndex {
-  if (!isRecord(value) || value.schema_version !== 'demo-material-site/v1' ||
+  if (!isRecord(value) || value.schema_version !== 'demo-material-site/v2' ||
       !isRecord(value.levels)) {
     return false;
   }
@@ -80,15 +83,16 @@ function isSiteIndex(value: unknown): value is SiteIndex {
   });
 }
 
+/** Return fixed local links only for the current HTML delivery contract. */
 function publishedFiles(level: LevelName, entry?: LevelEntry): PublishedFiles | null {
   const expected: PublishedFiles = {
     page: `${level}/index.html`,
     html: `${level}/hve-demo-${level}.html`,
-    pptx: `${level}/hve-demo-${level}.pptx`,
     mp4: `${level}/hve-demo-${level}.mp4`,
     vtt: `${level}/hve-demo-${level}.vtt`,
   };
-  if (!entry?.files) {
+  if (!entry?.files || entry.renderer !== 'hve-slides' || entry.format !== 'html' ||
+      entry.render_schema_version !== 2 || entry.manifest_schema_version !== 6) {
     return null;
   }
   return Object.entries(expected).every(([key, path]) => entry.files?.[key] === path)
@@ -103,6 +107,7 @@ function unavailableReason(entry?: LevelEntry): string {
   return failed ? `Not published (${failed[0]} did not pass)` : 'Not published yet';
 }
 
+/** Fetch the current site index; hide links on malformed or obsolete evidence. */
 export default function DemoMaterialCatalog(): React.ReactElement {
   const indexUrl = useBaseUrl('/demo-material/index.json');
   const materialRoot = useBaseUrl('/demo-material/');
@@ -172,7 +177,7 @@ export default function DemoMaterialCatalog(): React.ReactElement {
                       <span className={styles.links}>
                         <a href={`${materialRoot}${files.page}`}>Watch and read transcript</a>
                         <a href={`${materialRoot}${files.html}`}>Present slides</a>
-                        <a href={`${materialRoot}${files.pptx}`}>Download deck</a>
+                        <a href={`${materialRoot}${files.vtt}`}>Download captions</a>
                         <a href={`${materialRoot}${files.mp4}`}>Download MP4</a>
                       </span>
                     ) : (

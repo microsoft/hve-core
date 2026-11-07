@@ -3,7 +3,7 @@
 
 import { badge, button, chip, DISCOVERY_KIND, h, icon, idChip, idTag, known, plural, sr, TASK_STATUS, timeEl, VALIDATION } from './dom.mjs';
 import { decisionCard, marginNote, md, mdInline, recordRow, row, rowActions, sectionBody, table } from './components.mjs';
-import { markLegend, progressOf, renderDiagram } from './diagram.mjs';
+import { markLegend, progressMark, progressOf, renderDiagram } from './diagram.mjs';
 import { boardLanes, laneOf, taskMarkers } from './board.mjs';
 import { anchoredDecisions, notesFor } from './view-research.mjs';
 import { taskBlock } from './view-plan.mjs';
@@ -254,9 +254,9 @@ function mapRow(ctx) {
                 onTextToggle: (open) => ctx.act.setDetailsOpen('impl-map-text', open),
             }),
             h('p', { class: 'meta legend' },
-                h('span', { class: 'legend-swatch is-done' }), ' Done. ',
-                h('span', { class: 'legend-swatch is-active' }), ' In progress. ',
-                h('span', { class: 'legend-swatch is-needed' }), ' Still needed. ',
+                h('span', { class: 'legend-swatch is-done has-mark' }, progressMark('done')), ' Done. ',
+                h('span', { class: 'legend-swatch is-active has-mark' }, progressMark('active')), ' In progress. ',
+                h('span', { class: 'legend-swatch is-needed has-mark' }, progressMark('needed')), ' Still needed. ',
                 ...markLegend(plan.diagram.after),
                 h('span', { class: 'legend-swatch is-chosen' }), ' Bold outline: the chosen phase.',
                 progress.size ? ' Select a changed part to list its tasks.' : null),

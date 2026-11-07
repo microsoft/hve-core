@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -15,7 +15,7 @@ estimated_reading_time: 6
 
 ## DevContainer Configuration
 
-HVE Core uses an Ubuntu 22.04 (Jammy) base image with Node.js 24.21.0, Python 3.12.15,
+HVE Core uses an Ubuntu 22.04 (Jammy) base image with Node.js 24.21.0, Python 3.12.16,
 and PowerShell 7.4 pre-installed. The configuration lives in
 `.devcontainer/devcontainer.json` and includes extensions for Markdown editing,
 spell checking, and GitHub integration.
@@ -25,7 +25,8 @@ spell checking, and GitHub integration.
 The DevContainer ships with these tools:
 
 * Node.js 24.21.0 with npm (from `.node-version`)
-* Python 3.12.15 (from `.python-version`)
+* Python 3.12.16 (from `.python-version`)
+* uv 0.13.6, pinned and SHA-256 verified for each supported Linux architecture
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 6.2.0
 * Git and GitHub CLI
 * GitHub Copilot CLI (`copilot`)
@@ -48,7 +49,7 @@ To add tools or adjust versions, modify `.devcontainer/devcontainer.json`. The
       "pnpmVersion": "none"
     },
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12.15",
+      "version": "3.12.16",
       "installTools": false
     },
     "ghcr.io/devcontainers/features/powershell:1": {}
@@ -283,7 +284,8 @@ the agent begins work.
 The coding agent environment includes:
 
 * Node.js 24.21.0 (from `.node-version`) with npm dependencies from `package.json`
-* Python 3.12.15 (from `.python-version`)
+* Python 3.12.16 (from `.python-version`)
+* uv 0.13.6, using the same verified release as the DevContainer
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 6.2.0
 * shellcheck 0.11.0 and zizmor 1.30.1, each pinned with per-architecture
   SHA-256 digests in `copilot-setup-steps.yml`. `npm run
@@ -325,7 +327,8 @@ share most tools but differ intentionally in a few areas.
 | Tool                    | DevContainer | Coding Agent |
 |-------------------------|--------------|--------------|
 | Node.js 24.21.0         | Yes          | Yes          |
-| Python 3.12.15          | Yes          | Yes          |
+| Python 3.12.16          | Yes          | Yes          |
+| uv 0.13.6               | Yes          | Yes          |
 | PowerShell 7.4          | Yes          | Yes          |
 | PSScriptAnalyzer 1.25.0 | Yes          | Yes          |
 | Pester 6.2.0            | Yes          | Yes          |
@@ -341,6 +344,13 @@ share most tools but differ intentionally in a few areas.
 | gitleaks | Yes          | No           | Secret scanning is relevant for local dev only |
 
 ### Keeping Environments Aligned
+
+Pin updates apply to newly created environments. Rebuild an existing
+DevContainer and recreate affected project virtual environments from their
+committed locks to pick up runtime and certificate updates. Updating standalone
+`certifi` does not update pip's vendored certificate store or existing
+workstations and containers. These configuration changes do not perform those
+refreshes for you.
 
 When adding or removing tools in either environment, evaluate whether both need
 the change and update accordingly. Follow this checklist:

@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Solutions for common HVE Core plugin, extension, and repository copy installation problems
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-11-02
+ms.date: 2026-11-06
 ms.topic: troubleshooting
 keywords: [troubleshooting, FAQ, installation, hve-core, copilot plugin, repository copy, registry, proxy]
 estimated_reading_time: 7
@@ -41,8 +41,8 @@ The extension appears in the Extensions sidebar but HVE Core agents and skills a
 
 1. Run the `Developer: Reload Window` command from the Command Palette.
 2. Verify that GitHub Copilot Chat is installed and active in the Extensions sidebar. HVE Core requires it.
-3. Open the Output panel (`Ctrl+Shift+U`) and select the HVE Core channel. Look for error messages during extension activation.
-4. Confirm your VS Code version is 1.99 or later under Help > About.
+3. Confirm your VS Code version is 1.106.1 or later under Help > About. That is the minimum the extension declares, not a guarantee that every newer Copilot feature HVE Core uses is available, so keep VS Code current.
+4. The extension only declares agents, skills, and instructions. It runs no code and has no output channel of its own. If it is enabled and components are still missing, work through [Agent or Skill Not Appearing in Copilot](#agent-or-skill-not-appearing-in-copilot).
 
 ### Agent or Skill Not Appearing in Copilot
 
@@ -134,22 +134,11 @@ Installing HVE Core more than one way in the same workspace lists agents, instru
 
 ### How Do I Update to the Latest Version?
 
-The plugin follows `main`. In VS Code, select **Check for and Apply Updates** on the **Plugins** page of the Agent Customizations editor, or run **Chat: Update Plugins**. In Copilot CLI, refresh the marketplace and then update the plugin:
+* Plugin: follow [Update the Plugin](install#update-the-plugin). The plugin follows `main`.
+* Extension: VS Code updates Marketplace extensions automatically. You can also check for updates in the Extensions sidebar.
+* Clone: pull the latest changes with `git pull upstream main`, then rerun `npm ci` if `package.json` changed.
 
-```bash
-copilot plugin marketplace update hve-core
-copilot plugin update hve-core@hve-core
-```
-
-Marketplace extensions update automatically. When a new version is published, VS Code downloads and installs it. You can also check for updates manually in the Extensions sidebar.
-
-For clone-based setups, pull the latest changes from the upstream repository:
-
-```bash
-git pull upstream main
-```
-
-Then reinstall dependencies with `npm ci` if `package.json` changed. After any update, reload the window so new chat sessions pick up the change.
+After any update, reload the window so new chat sessions pick up the change.
 
 ---
 
