@@ -121,16 +121,6 @@ exceptions:
     reason: gh-aw emits permission blocks without comments and drops comments written in the source
     expires: 2026-12-31
   - tool: CodeQL
-    rule: actions/code-injection/medium
-    path: .github/workflows/backlog-groom.lock.yml
-    count: 3
-    kind: false-positive
-    upstream: https://github.com/github/codeql/issues/22755
-    issue: 3137
-    owner: WilliamBerryiii
-    reason: CodeQL cannot resolve the $/ caller (schedule and dispatch only), so it analyzes this reusable workflow as externally callable. Any external workflow_call caller runs with its own token, variables, and repository, so it cannot act on hve-core.
-    expires: 2026-12-31
-  - tool: CodeQL
     rule: actions/envvar-injection/medium
     path: .github/workflows/backlog-groom.lock.yml
     count: 1
