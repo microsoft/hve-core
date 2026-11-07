@@ -153,7 +153,7 @@ Use `-Branch {branch}` to scope to a branch other than `main`.
 ]
 ```
 
-`SecuritySeverity` is `null` for code quality rules that have no security classification; `Severity` (the non-security rule severity: `error`, `warning`, `note`, `none`) provides a fallback. `AffectedPaths` is always a JSON array of unique, sorted file paths with sentinel strings filtered out. `HasFilePaths` is `false` and `AffectedPaths` is `[]` when an alert has no associated source file (for example, `BranchProtectionID`). `AlertUrl` links directly to the alert in the GitHub Security tab. `FindingDescription` is the most recent alert message text.
+Each group holds one tool and rule ID. `RuleDescription` is the rule's description, or its name and then its ID when the tool publishes no description, as zizmor does. `SecuritySeverity` is `null` for code quality rules that have no security classification; `Severity` (the non-security rule severity: `error`, `warning`, `note`, `none`) provides a fallback. `AffectedPaths` is always a JSON array of unique, sorted file paths with sentinel strings filtered out. `HasFilePaths` is `false` and `AffectedPaths` is `[]` when an alert has no associated source file (for example, `BranchProtectionID`). `AlertUrl` links directly to the alert in the GitHub Security tab. `FindingDescription` is the most recent alert message text.
 
 With `-IncludeDismissedStillDetected` (or `-d` in bash), dismissed alerts whose most recent instance on the branch is not `fixed` are appended as separate groups after the open-alert groups. Those groups add `Kind` (`dismissed-still-detected`) and `DismissedReason`; open-alert groups are unchanged. A dismissal does not resolve an alert, so present these as alerts to reopen and fix.
 
