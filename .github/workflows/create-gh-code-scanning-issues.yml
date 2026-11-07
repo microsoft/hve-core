@@ -11,8 +11,9 @@ on:
         type: string
         default: gh-code-scanning-alerts
 
-permissions:
-  contents: read
+# A called workflow cannot request more than its caller job grants, and the
+# caller grants only issues: write.
+permissions: {}
 
 jobs:
   create-gh-code-scanning-issues:
