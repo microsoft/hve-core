@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-10-31
+ms.date: 2026-11-06
 ms.topic: guide
 keywords:
   - copilot
@@ -63,10 +63,10 @@ Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject
 
 ### Code and Review Agents
 
-| Agent                 | Purpose                                                                | Key Constraint                                                |
-|-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
-| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
-| **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
+| Agent                 | Purpose                                                                                | Key Constraint                                                                         |
+|-----------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification                       | Delegates all reference reading to subagents                                           |
+| **code-review**       | Runs the `code-review` skill across five focused perspectives on one captured snapshot | Review-only; sweep by default, guided on request; posting needs explicit human consent |
 
 ### Related Workflow Skills
 
@@ -268,15 +268,21 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### code-review
 
-**Creates:** Merged review artifacts in a normalized branch folder:
+**Creates:** One folder per review at `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/`, as defined by the `code-review-core` skill's `references/review-contract.md`:
 
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in the `code-review` skill's `references/review-artifacts.md`)
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/metadata.json` (review metadata record)
+* `snapshots/<snapshot-id>/snapshot.json` (immutable capture of the reviewed change)
+* `review-state.json` (scope, work items, verified findings, limitations, and outcome)
+* `results/<snapshot-id>/<work-id>.json` (one result per perspective or context task)
+* `review.md` (human-editable report, with a PR comment draft for PR and MR targets)
 
-**Workflow:** Context Bootstrap → Human Scope Confirmation → Perspective + Depth Selection → Prepare Dispatch State → Dispatch Selected Perspectives → Merge and Persist
+**Skills:** The agent preloads `code-review` and `disclaimer-language` and follows the same workflow as `/code-review`. Each subagent under `.github/agents/coding-standards/subagents/` preloads `code-review-core` plus its responsibility skill: `code-review-functional`, `code-review-standards`, `code-review-accessibility`, `code-review-security`, `code-review-readiness`, `code-review-context` (Orientation and Explainer), or `code-review-investigation` (Walkback).
 
-**Critical:** Human-gated orchestrator invoked from the agent picker. After computing the diff via the `pr-reference` skill, it confirms scope with the operator, then lets the operator choose any combination of five perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`) or `full` to run all five, plus a depth tier (`basic`, `standard`, or `comprehensive`) applied independently of perspective.
-It dispatches thin perspective subagents under `.github/agents/coding-standards/subagents/`, shares the computed diff to avoid duplicate git operations, and merges every report into a single output. Review-only; never modifies code. Maturity: experimental.
+**Workflow:** Resolve target → Capture snapshot → Set scope → Review inline or in parallel → Verify findings → Render report → Publish only with consent
+
+**Critical:** Reviews a PR or MR, branch comparison, commit, local changes, or selected code. Sweep mode proceeds after a compact scope summary; guided mode waits for your choices.
+Profiles (`standard`, `full`, or `custom`) select among five perspectives (`functional`, `standards`, `accessibility`, `security`, `readiness`), and depth (`basic`, `standard`, or `comprehensive`) is set independently.
+Small reviews run inline; substantial independent work goes to parallel subagents. An optional Code Review canvas shows the review and collects feedback.
+Review-only: source and Git state stay read-only, and staging or posting to a PR needs explicit human consent. Maturity: experimental.
 
 ### backlog-manager
 
@@ -313,10 +319,10 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ### Code Review
 
-1. Select **code-review** from agent picker
-2. Confirm the change scope when prompted
-3. Choose perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`, or `full`) and a depth tier
-4. Receive a merged `review.md` under `.copilot-tracking/reviews/code-reviews/<branch>/`
+1. Run `/code-review` with a target, or select **Code Review** from the agent picker and name the target
+2. Accept the scope summary, or add `mode=guided` to choose areas, perspectives, and depth yourself
+3. Optionally set `profile=standard|full|custom` and `depth=basic|standard|comprehensive`
+4. Review `review.md` under `.copilot-tracking/reviews/code-reviews/<date>/<review-id>/` before acting on findings or approving any PR posting
 
 ### Creating Instructions
 
