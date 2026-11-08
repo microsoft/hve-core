@@ -20,12 +20,12 @@ Grader recommendations below name the literal Vally `type:` keywords, `output-ma
 |-------|---------------------------------------|---------------------------------------------------------------------------------|
 | 1     | Frontmatter and metadata              | hve-builder.instructions.md, Frontmatter and Portability                        |
 | 2     | Conversational vs autonomous protocol | Observed convention; hve-builder.instructions.md, Outcome and Structure         |
-| 3     | Subagent delegation named in the body | hve-builder.instructions.md, Delegate Deliberately; Frontmatter and Portability |
+| 3     | Next agent named in the body          | hve-builder.instructions.md, Frontmatter and Portability                        |
 | 4     | Subagent user-invocable flag          | hve-builder.instructions.md, Frontmatter and Portability                        |
 | 5     | Subagent structural template          | Observed convention; hve-builder.instructions.md, Delegate Deliberately         |
 | 6     | Skill preloads and named activation   | hve-builder.instructions.md, Frontmatter and Portability                        |
 | 7     | Tool restrictions                     | hve-builder.instructions.md, Frontmatter and Portability                        |
-| 8     | Subagent invocation                   | hve-builder.instructions.md, Frontmatter and Portability                        |
+| 8     | Subagent delegation by name           | hve-builder.instructions.md, Delegate Deliberately; Frontmatter and Portability |
 | 9     | Phase and step heading conventions    | Observed convention; hve-builder.instructions.md, Outcome and Structure         |
 
 The Copilot harness does not support the `agents`, `handoffs`, or `argument-hint` agent frontmatter fields, and the agent frontmatter schema rejects them. Do not author checks that ask about them; test the body text that names subagents and next agents instead.
@@ -70,13 +70,13 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 * Grader recommendation: `prompt` with rubric "Does the agent's protocol type (Phases vs Steps) match the conversational vs autonomous purpose stated in its description?".
 * Evidence: `.github/agents/project-planning/backlog-manager.agent.md` uses Required Phases consistent with its conversational purpose.
 
-### Check 3: Subagent Delegation Named in the Body
+### Check 3: Next Agent Named in the Body
 
-* Contract source: `hve-builder.instructions.md`, Delegate Deliberately and Frontmatter and Portability. The harness does not support an `agents:` frontmatter field, so a parent describes the subagents it delegates to in its body, and the subagent tool selects them by name.
-* Testable behavior: a parent that delegates names each subagent in its body by the subagent's human-readable `name:` rather than a filename or path.
-* Suggested stimulus: stage the parent artifact and ask which subagents it delegates to, identifying each the way the artifact does.
-* Grader recommendation: `output-matches` asserting a subagent the body names, for example `(?i)\bBRD Quality Reviewer\b`. Add a separate negated `output-matches` rejecting a subagent identified by file path or filename, guarded against truthful denial, for example `(?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})\b(?:delegates?\s+to|dispatch(?:es)?)\s+\S*\.agent\.md\b`.
-* Evidence: `.github/agents/project-planning/brd-builder.agent.md` dispatches `BRD Quality Reviewer` by name in its body.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability. The harness does not support a `handoffs:` frontmatter field, so an agent that passes its result on describes the next agent to switch to in its body.
+* Testable behavior: an agent that hands its result to another agent names that next agent in its body by the agent's human-readable `name:` rather than a filename, a path, or a `handoffs:` entry. The check does not apply to an agent that hands off to no one.
+* Suggested stimulus: stage the artifact and ask which agent it says takes over when its workflow ends, identifying that agent the way the artifact does.
+* Grader recommendation: `output-matches` asserting the next agent's human-readable name, for example `(?i)\bBacklog Manager\b`. Add a separate negated `output-matches` rejecting a next agent identified by its file path, for example `(?i)agent\s*:\s*.{0,3}[\w/-]*\.agent\.md`.
+* Evidence: `.github/agents/project-planning/functional-planner.agent.md` hands its finalized plan to the `Backlog Manager` in its Handoff section, and the `functional-planner-handoff-target-and-label` stimulus applies this check.
 
 ### Check 4: Subagent user-invocable Flag
 
@@ -116,11 +116,11 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 * Grader recommendation: `prompt` with a rubric that rewards reasoning from the artifact's own declared tools and description, rejects invented tools, and rejects claims that a tool grant enforces a boundary only the artifact's own policy provides. Keep the rubric's expected tool families out of the stimulus text so the reply is not taught the answer.
 * Evidence: a subagent under `.github/agents/**/subagents/` such as `.github/agents/hve-core/subagents/rpi-researcher.agent.md` shows the `tools:` field shape.
 
-### Check 8: Subagent Invocation by Human-Readable Name
+### Check 8: Subagent Delegation by Human-Readable Name
 
-* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: parent-agent invocation text MUST reference a subagent by the human-readable `name:` from the subagent's frontmatter (for example "Dispatch the `BRD Quality Reviewer` subagent"). Invocation by filename or by file path is non-conforming.
-* Suggested stimulus: stage the parent artifact and ask how it invokes one of its declared subagents.
+* Contract source: `hve-builder.instructions.md`, Delegate Deliberately and Frontmatter and Portability. The harness does not support an `agents:` frontmatter field, so a parent describes the subagents it delegates to in its body, and the subagent tool selects them by name.
+* Testable behavior: a parent that delegates names each subagent in its body, and in its invocation text, by the human-readable `name:` from the subagent's frontmatter (for example "Dispatch the `BRD Quality Reviewer` subagent"). Naming or invoking a subagent by filename or by file path is non-conforming.
+* Suggested stimulus: stage the parent artifact and ask which subagents it delegates to and how it invokes one of them, identifying each the way the artifact does.
 * Grader recommendation: `output-matches` asserting the subagent's human-readable name, for example `(?i)\bBRD Quality Reviewer\b`. Add a separate negated `output-matches` rejecting invocation by filename, guarded against truthful denial including contractions, for example `(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:\w+\s+){0,3})\b(?:runs?|invokes?|invoked|calls?)\s+\S*\.agent\.md\b`.
 * Evidence: `.github/agents/project-planning/brd-builder.agent.md` dispatches `BRD Quality Reviewer` by its human-readable name.
 

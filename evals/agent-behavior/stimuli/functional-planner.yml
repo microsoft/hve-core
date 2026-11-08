@@ -4,11 +4,11 @@
 #
 # Conformance checks emitted per the vally-tests agent reference.
 # Applicable to this top-level agent: Check 1 (required frontmatter),
-# Check 7 (tool restrictions), and Check 8's human-readable-name rule applied
-# to the next agent its body hands the plan to. Checks 4 and 5 are
-# subagent-only. Check 9 does not apply: this agent presents its workflow as a
-# numbered overview list rather than the phase or step heading form, and the
-# artifact is not edited to make an inapplicable check pass.
+# Check 3 (next agent named in the body), and Check 7 (tool restrictions).
+# Checks 4 and 5 are subagent-only. Check 9 does not apply: this agent
+# presents its workflow as a numbered overview list rather than the phase or
+# step heading form, and the artifact is not edited to make an inapplicable
+# check pass.
 stimuli:
   - name: functional-planner-frontmatter-name-and-description
     prompt: |
