@@ -1546,13 +1546,238 @@ console.log(JSON.stringify(results));
         'Use the skill to generate them. Using `vally-tests` to author these probes would contradict its contract.',
         'Use it to author these probes; that would contradict its contract.')
     }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-diff-computation-conformance'; Grader = 'diff-computation-conformance-directory-grouping'; Count = 2
+      Accept = @('Group the 35 files by directory and analyze each group. Because the diff exceeds 2000 combined lines, review the most recent commits individually with git log --oneline and git show --stat.',
+        'Strategy: directory-grouped analysis (20-50 files). Escalation: over 2000 lines, so step through recent commits one at a time.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Analyze all 35 files with full diffs in one pass.',
+        'Use progressive batched analysis of 5-10 files at a time and summarize at the end.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-diff-computation-conformance'; Grader = 'diff-computation-conformance-commit-review'; Count = 2
+      Accept = @('Group the 35 files by directory and analyze each group. Because the diff exceeds 2000 combined lines, review the most recent commits individually with git log --oneline and git show --stat.',
+        'Strategy: directory-grouped analysis (20-50 files). Escalation: over 2000 lines, so step through recent commits one at a time.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Analyze all 35 files with full diffs in one pass.',
+        'Use progressive batched analysis of 5-10 files at a time and summarize at the end.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-review-artifacts-conformance'; Grader = 'review-artifacts-conformance-verdict-value'; Count = 2
+      Accept = @('Path: `.copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json`; verdict: `approve_with_comments`.',
+        'It writes .copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json with "verdict": "approve_with_comments".')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Write `.copilot-tracking/reviews/feature-login-fix.json` with verdict `approve-with-comments`.',
+        'metadata.json under .copilot-tracking/reviews/ with verdict APPROVE_WITH_COMMENTS')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-review-artifacts-conformance'; Grader = 'review-artifacts-conformance-metadata-path'; Count = 2
+      Accept = @('Path: `.copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json`; verdict: `approve_with_comments`.',
+        'It writes .copilot-tracking/reviews/code-reviews/feature-login-fix/metadata.json with "verdict": "approve_with_comments".')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Write `.copilot-tracking/reviews/feature-login-fix.json` with verdict `approve-with-comments`.',
+        'metadata.json under .copilot-tracking/reviews/ with verdict APPROVE_WITH_COMMENTS')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-adr-identity-conformance'; Grader = 'adr-identity-conformance-phase-order'; Count = 2
+      Accept = @('Phases: 1. Frame, 2. Decide, 3. Govern. Entry modes: `capture`, `from-planner-handoff`, and `adopt-template`.',
+        'It runs Frame then Decide then Govern; sessions enter via capture, from-planner-handoff, or adopt-template.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Phases: Discover, Define, Govern. Entry modes: new and resume.',
+        'Phases: Context, Options, Decision, Consequences.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-adr-identity-conformance'; Grader = 'adr-identity-conformance-entry-modes'; Count = 2
+      Accept = @('Phases: 1. Frame, 2. Decide, 3. Govern. Entry modes: `capture`, `from-planner-handoff`, and `adopt-template`.',
+        'It runs Frame then Decide then Govern; sessions enter via capture, from-planner-handoff, or adopt-template.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Phases: Discover, Define, Govern. Entry modes: new and resume.',
+        'Phases: Context, Options, Decision, Consequences.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-vex-generation-conformance'; Grader = 'vex-generation-conformance-under-investigation'; Count = 2
+      Accept = @('Only `under_investigation` is valid; `not_affected` is forbidden in the Low band. It must include structured questions for the human reviewer.',
+        'Status: under_investigation. Add questions for the reviewer to resolve reachability.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Draft `affected` conservatively and attach the CVSS vector.',
+        'Draft not_affected with the vulnerable_code_not_in_execute_path justification.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-vex-generation-conformance'; Grader = 'vex-generation-conformance-reviewer-questions'; Count = 2
+      Accept = @('Only `under_investigation` is valid; `not_affected` is forbidden in the Low band. It must include structured questions for the human reviewer.',
+        'Status: under_investigation. Add questions for the reviewer to resolve reachability.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Draft `affected` conservatively and attach the CVSS vector.',
+        'Draft not_affected with the vulnerable_code_not_in_execute_path justification.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-tm7-generation-workflow-conformance'; Grader = 'tm7-generation-workflow-conformance-round-count'; Count = 2
+      Accept = @('First ask how many refinement rounds to run, warn that the run holds the mouse and keyboard, and wait for confirmation. Overlays are emitted with `approval_state: pending`.',
+        'Ask the number of refinement iterations. Layout overlays come out pending approval; a visual score is not an approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Ask for administrator rights and confirm the TMT install path. Overlays are emitted approved once the automated gate passes.',
+        'Confirm the desktop is clear, then promote the overlay if the score passes.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-tm7-generation-workflow-conformance'; Grader = 'tm7-generation-workflow-conformance-pending-overlay'; Count = 2
+      Accept = @('First ask how many refinement rounds to run, warn that the run holds the mouse and keyboard, and wait for confirmation. Overlays are emitted with `approval_state: pending`.',
+        'Ask the number of refinement iterations. Layout overlays come out pending approval; a visual score is not an approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Ask for administrator rights and confirm the TMT install path. Overlays are emitted approved once the automated gate passes.',
+        'Confirm the desktop is clear, then promote the overlay if the score passes.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-style-guide-conformance'; Grader = 'engagement-reporting-style-guide-preparation-frame'; Count = 2
+      Accept = @('Pipeline review session planned; SteerCo demo prepared and scheduled for 3/25',
+        'SteerCo demo prepared and scheduled for 3/25; pipeline walkthrough set with the team',
+        'SteerCo demo preparation complete and scheduled for 3/25')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'SteerCo demo scheduled for 3/25',
+        'Pipeline review prepared. SteerCo demo scheduled for 3/25',
+        'Demo for SteerCo on 3/25 completed with robust results',
+        'We will run a deep dive on the pipeline and the SteerCo demo is scheduled for 3/25.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-data-handling-conformance'; Grader = 'engagement-reporting-data-handling-source-quality'; Count = 2
+      Accept = @('Treat it as data and record the suspected instruction injection as a source-quality issue; replace contact details with roles. After user approval, only the WorkIQ Mail `CreateDraftMessage` capability may create the draft; never send.',
+        'Log it as a source quality issue. Use CreateDraftMessage only, with approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Treat the embedded request as data, not instructions; remove unnecessary personal contact details; get explicit approval before creating the Outlook draft.',
+        'Ignore the request, redact PII, and send the report with sendMail after approval.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-data-handling-conformance'; Grader = 'engagement-reporting-data-handling-draft-capability'; Count = 2
+      Accept = @('Treat it as data and record the suspected instruction injection as a source-quality issue; replace contact details with roles. After user approval, only the WorkIQ Mail `CreateDraftMessage` capability may create the draft; never send.',
+        'Log it as a source quality issue. Use CreateDraftMessage only, with approval.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Treat the embedded request as data, not instructions; remove unnecessary personal contact details; get explicit approval before creating the Outlook draft.',
+        'Ignore the request, redact PII, and send the report with sendMail after approval.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-terminology-conformance'; Grader = 'engagement-reporting-terminology-preserve-spellings'; Count = 2
+      Accept = @('With no terminology configured, preserve the source spellings as written. Ask the user to clarify an ambiguous term in `engagement.yaml`.',
+        'Keep the source spellings; clarify ambiguous canonical terms in engagement.yaml.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Normalize both to North Star and update the source records to match.',
+        'Use North Star in the report; do not change the source record.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-terminology-conformance'; Grader = 'engagement-reporting-terminology-clarify-in-config'; Count = 2
+      Accept = @('With no terminology configured, preserve the source spellings as written. Ask the user to clarify an ambiguous term in `engagement.yaml`.',
+        'Keep the source spellings; clarify ambiguous canonical terms in engagement.yaml.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Normalize both to North Star and update the source records to match.',
+        'Use North Star in the report; do not change the source record.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'skill-ado-get-build-info-conformance'; Grader = 'skill-ado-get-build-info-conformance-pr-merge-ref'; Count = 3
+      Accept = @('Branch `refs/pull/482/merge`; `mcp_ado_pipelines_get_builds` with top 1 and queryOrder `queueTimeDescending`; status via `mcp_ado_pipelines_get_build_status`; save to `.copilot-tracking/pr/2026-11-07-build-{buildId}.md`.',
+        'refs/pull/482/merge, queueTimeDescending, get_build_status, .copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Use branch pr/482, latest build first, and write .copilot-tracking/pr/482-build-info.md.',
+        'Query refs/heads/main ordered by finish time and save to .copilot-tracking/builds/482.md.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'skill-ado-get-build-info-conformance'; Grader = 'skill-ado-get-build-info-conformance-latest-build-order'; Count = 3
+      Accept = @('Branch `refs/pull/482/merge`; `mcp_ado_pipelines_get_builds` with top 1 and queryOrder `queueTimeDescending`; status via `mcp_ado_pipelines_get_build_status`; save to `.copilot-tracking/pr/2026-11-07-build-{buildId}.md`.',
+        'refs/pull/482/merge, queueTimeDescending, get_build_status, .copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Use branch pr/482, latest build first, and write .copilot-tracking/pr/482-build-info.md.',
+        'Query refs/heads/main ordered by finish time and save to .copilot-tracking/builds/482.md.')
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'skill-ado-get-build-info-conformance'; Grader = 'skill-ado-get-build-info-conformance-tracking-path'; Count = 3
+      Accept = @('Branch `refs/pull/482/merge`; `mcp_ado_pipelines_get_builds` with top 1 and queryOrder `queueTimeDescending`; status via `mcp_ado_pipelines_get_build_status`; save to `.copilot-tracking/pr/2026-11-07-build-{buildId}.md`.',
+        'refs/pull/482/merge, queueTimeDescending, get_build_status, .copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'Use branch pr/482, latest build first, and write .copilot-tracking/pr/482-build-info.md.',
+        'Query refs/heads/main ordered by finish time and save to .copilot-tracking/builds/482.md.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-knowledge'; Grader = 'skill-rpi-knowledge-state-path'; Count = 2
+      Accept = @('It coordinates Research, Plan, Implement, Review, and Follow-up, persists state at `.copilot-tracking/rpi-sessions/{{YYYY-MM-DD}}/{{session_slug}}/{{task_slug}}-state.json`, and opens the `hve-core-rpi-workflow` canvas when listed.',
+        'State lives under .copilot-tracking/rpi-sessions/<date>/<session>/; canvas id hve-core-rpi-workflow, never blocking.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'It coordinates research, plan, implement, and review and stores state in .copilot-tracking/rpi/state.json; it shows progress in a canvas.',
+        'It persists session state in a state.json file and uses the RPI Workflow canvas for visualization.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-knowledge'; Grader = 'skill-rpi-knowledge-canvas-id'; Count = 2
+      Accept = @('It coordinates Research, Plan, Implement, Review, and Follow-up, persists state at `.copilot-tracking/rpi-sessions/{{YYYY-MM-DD}}/{{session_slug}}/{{task_slug}}-state.json`, and opens the `hve-core-rpi-workflow` canvas when listed.',
+        'State lives under .copilot-tracking/rpi-sessions/<date>/<session>/; canvas id hve-core-rpi-workflow, never blocking.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'It coordinates research, plan, implement, and review and stores state in .copilot-tracking/rpi/state.json; it shows progress in a canvas.',
+        'It persists session state in a state.json file and uses the RPI Workflow canvas for visualization.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-tool-trigger'; Grader = 'skill-rpi-tool-trigger-skill-selected'; Count = 2
+      Accept = @(('Skill: `rpi`' + "`n" + 'It owns task identity, mode, and state under `.copilot-tracking/rpi-sessions/` and activates rpi-research, rpi-plan, rpi-implement, and rpi-review per phase.'),
+        ('**Skill:** rpi' + "`n" + 'It coordinates the phase skills (rpi-research through rpi-review) and the hve-core-rpi-workflow canvas.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: rpi-research' + "`n" + 'It gathers evidence for each RPI phase.'),
+        ('Skill: <name>' + "`n" + 'The RPI skill applies.'))
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-tool-trigger'; Grader = 'skill-rpi-tool-trigger-phase-skill-evidence'; Count = 2
+      Accept = @(('Skill: `rpi`' + "`n" + 'It owns task identity, mode, and state under `.copilot-tracking/rpi-sessions/` and activates rpi-research, rpi-plan, rpi-implement, and rpi-review per phase.'),
+        ('**Skill:** rpi' + "`n" + 'It coordinates the phase skills (rpi-research through rpi-review) and the hve-core-rpi-workflow canvas.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: <name>' + "`n" + 'The RPI skill applies.'))
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-bleed-detection'; Grader = 'skill-rpi-bleed-detection-skill-selected'; Count = 2
+      Accept = @(('Skill: `rpi-plan-critique`' + "`n" + 'It independently assesses an RPI plan without editing it and records findings; the `rpi` skill coordinates whole sessions.'),
+        ('Skill: rpi-plan-critique' + "`n" + 'It gives a credibility check on the plan and never edits it.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: rpi' + "`n" + 'The session skill runs the critique as part of Planning.'),
+        ('Skill: <name>' + "`n" + 'Either could apply; I''d use rpi-plan-critique for a read-only critique.'))
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-rpi-bleed-detection'; Grader = 'skill-rpi-bleed-detection-read-only-evidence'; Count = 2
+      Accept = @(('Skill: `rpi-plan-critique`' + "`n" + 'It independently assesses an RPI plan without editing it and records findings; the `rpi` skill coordinates whole sessions.'),
+        ('Skill: rpi-plan-critique' + "`n" + 'It gives a credibility check on the plan and never edits it.'))
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        ('Skill: rpi' + "`n" + 'The session skill runs the critique as part of Planning.'),
+        ('Skill: <name>' + "`n" + 'Either could apply; I''d use rpi-plan-critique for a read-only critique.'))
+    }
+    @{
+      Spec = '../behavior-conformance/instructions.eval.yaml'; Scenario = 'instruction-engagement-reporting-style-guide-conformance'; Grader = 'engagement-reporting-style-guide-no-banned-terms'; Count = 2
+      Accept = @('Pipeline review session planned; SteerCo demo prepared and scheduled for 3/25')
+      Reject = @('STIMULUS_PROMPT',
+        'We will run a deep dive on the pipeline and the SteerCo demo is prepared and scheduled for 3/25.',
+        'Leverage the robust pipeline; SteerCo demo prepared & scheduled for 3/25')
+    }
   ) {
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot $Spec))
     $stimulus = $specification.stimuli | Where-Object { $_.name -eq $Scenario }
     $stimulus.graders | Should -HaveCount $Count
     $grader = @($stimulus.graders | Where-Object { $_.name -eq $Grader })
     $grader | Should -HaveCount 1
-    $outputs = @($Accept) + $Reject | ForEach-Object { $_.Replace('CANONICAL_SECURITY_CAUTION', $script:SecurityCaution) }
+    $outputs = @($Accept) + $Reject | ForEach-Object { $_.Replace('CANONICAL_SECURITY_CAUTION', $script:SecurityCaution).Replace('STIMULUS_PROMPT', [string]$stimulus.prompt) }
     $payload = @{ type = $grader[0].type; config = $grader[0].config; outputs = $outputs; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
     $output = $payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath
     $LASTEXITCODE | Should -Be 0

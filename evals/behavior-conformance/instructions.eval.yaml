@@ -1,4 +1,4 @@
-# cspell:ignore duplicat occlu
+# cspell:ignore duplicat occlu bprepar
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
@@ -41,22 +41,30 @@ stimuli:
 
   - name: skill-ado-get-build-info-conformance
     prompt: |
-      A user asks about Azure DevOps build status for a branch and you are
-      drafting a response file at `.copilot-tracking/pr/123-build-info.md`.
-      Which skill owns that protocol and how is it reached?
+      Read the staged `.github/skills/project-planning/backlog-management/references/ado-build-info.md`.
+      A user asks: "Save the status of the latest build for PR 482." Which branch
+      value, build query ordering, status tool, and tracking-file path apply?
+    agent_environment:
+      files:
+        - src: ../../.github/skills/project-planning/backlog-management/references/ado-build-info.md
+          dest: .github/skills/project-planning/backlog-management/references/ado-build-info.md
     tags:
       category: behavior-conformance
       skill: backlog-management
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-ado-get-build-info-conformance-skill-named
+        name: skill-ado-get-build-info-conformance-pr-merge-ref
         config:
-          pattern: "(?i)backlog-management|build-info"
+          pattern: 'refs/pull/482/merge'
       - type: output-matches
-        name: skill-ado-get-build-info-conformance-scope-language
+        name: skill-ado-get-build-info-conformance-latest-build-order
         config:
-          pattern: "(?i)azure\\s*devops|\\bado\\b|build|pull\\s*request|branch"
+          pattern: '\bqueueTimeDescending\b'
+      - type: output-matches
+        name: skill-ado-get-build-info-conformance-tracking-path
+        config:
+          pattern: '(?i)\.copilot-tracking/pr/(?:\{\{YYYY-MM-DD\}\}|\d{4}-\d{2}-\d{2}|YYYY-MM-DD)-build-'
 
   - name: instruction-docusaurus-edits-conformance
     prompt: |
@@ -1079,44 +1087,51 @@ stimuli:
 
   - name: instruction-diff-computation-conformance
     prompt: |
-      You are computing the diff for a code review on a feature branch. Which reference in the
-      `code-review` skill
-      governs base-branch detection, scope locking, and large-diff handling, and
-      what does it require?
+      Read the staged `.github/skills/coding-standards/code-review/references/diff-computation.md`.
+      A feature-branch review changes 35 files with 2,400 combined changed lines.
+      Which analysis strategy and which additional large-diff rule apply? Answer
+      from the staged reference.
+    agent_environment:
+      files:
+        - src: ../../.github/skills/coding-standards/code-review/references/diff-computation.md
+          dest: .github/skills/coding-standards/code-review/references/diff-computation.md
     tags:
       category: behavior-conformance
       skill: code-review
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-diff-computation-conformance-instructio-af86901d
+        name: diff-computation-conformance-directory-grouping
         config:
-          pattern: '(?i)(diff-computation|diff computation|base branch|merge-base|scope lock|large diff)'
+          pattern: '(?is)(?=[\s\S]*\bgroup(?:s|ed|ing)?\b)(?=[\s\S]*\bdirector(?:y|ies)\b)'
       - type: output-matches
-        name: instruction-diff-computation-conformance-scope-language
+        name: diff-computation-conformance-commit-review
         config:
-          pattern: '(?i)(diff|branch|changed files|non-source|review)'
+          pattern: '(?is)(?=[\s\S]*\bcommits?\b)(?=[\s\S]*\b(?:individually|one at a time|separately|one by one)\b)'
 
   - name: instruction-review-artifacts-conformance
     prompt: |
-      You are persisting a code review under
-      `.copilot-tracking/reviews/code-reviews/`. Which reference in the
-      `code-review` skill
-      governs the artifact folder structure, `metadata.json` schema, and verdict
-      normalization, and what does it require?
+      Read the staged `.github/skills/coding-standards/code-review/references/review-artifacts.md`.
+      A code review of branch `feature/login-fix` ends with the verdict 💬 Approve
+      with comments. Report the metadata file path and the normalized verdict
+      value it records.
+    agent_environment:
+      files:
+        - src: ../../.github/skills/coding-standards/code-review/references/review-artifacts.md
+          dest: .github/skills/coding-standards/code-review/references/review-artifacts.md
     tags:
       category: behavior-conformance
       skill: code-review
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-review-artifacts-conformance-instructio-d12c18db
+        name: review-artifacts-conformance-verdict-value
         config:
-          pattern: '(?i)(review-artifacts|review artifacts|metadata\.json|verdict|review\.md|findings folder)'
+          pattern: '\bapprove_with_comments\b'
       - type: output-matches
-        name: instruction-review-artifacts-conformance-scope-language
+        name: review-artifacts-conformance-metadata-path
         config:
-          pattern: '(?i)(\.copilot-tracking[-/\\]reviews|artifact|persist|schema|verdict)'
+          pattern: '(?i)\.copilot-tracking/reviews/code-reviews/[^\s/]+/metadata\.json'
 
   - name: instruction-adr-byo-template-conformance
     prompt: |
@@ -1156,21 +1171,26 @@ stimuli:
 
   - name: instruction-adr-identity-conformance
     prompt: |
-      You are setting up an ADR authoring session and need the canonical identity protocol.
-      Which reference in the `adr-author` skill should guide the session framing and state handling?
+      Read the staged `.github/skills/project-planning/adr-author/references/adr-identity.md`.
+      List the phases of its state machine in order and the entry modes it
+      supports.
+    agent_environment:
+      files:
+        - src: ../../.github/skills/project-planning/adr-author/references/adr-identity.md
+          dest: .github/skills/project-planning/adr-author/references/adr-identity.md
     tags:
       category: behavior-conformance
       skill: adr-author
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-adr-identity-conformance-instruction-attribution
+        name: adr-identity-conformance-phase-order
         config:
-          pattern: '(?i)(adr|identity|state|session|phase)'
+          pattern: '(?is)\bFrame\b[\s\S]*\bDecide\b[\s\S]*\bGovern\b'
       - type: output-matches
-        name: instruction-adr-identity-conformance-scope-language
+        name: adr-identity-conformance-entry-modes
         config:
-          pattern: '(?i)(identity|session|state|phase|authoring)'
+          pattern: '(?is)(?=[\s\S]*\bcapture\b)(?=[\s\S]*from-planner-handoff)(?=[\s\S]*adopt-template)'
 
   - name: instruction-adr-standards-conformance
     prompt: |
@@ -1192,21 +1212,27 @@ stimuli:
 
   - name: instruction-vex-generation-conformance
     prompt: |
-      You are drafting an AI-assisted VEX assessment for a vulnerability finding.
-      Which reference in the `vex` skill governs the VEX generation rules (cite its path)?
+      Read the staged `.github/skills/security/vex/references/vex-generation.md`.
+      A finding is in the Low confidence band and reachability of the vulnerable
+      code is uncertain. Which VEX status may the agent draft, and what must it
+      include for the human reviewer?
+    agent_environment:
+      files:
+        - src: ../../.github/skills/security/vex/references/vex-generation.md
+          dest: .github/skills/security/vex/references/vex-generation.md
     tags:
       category: behavior-conformance
       skill: vex
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-vex-generation-conformance-instruction--ef2c2a35
+        name: vex-generation-conformance-under-investigation
         config:
-          pattern: '(?i)(vex|generation|evidence|confidence|triage)'
+          pattern: '\bunder_investigation\b'
       - type: output-matches
-        name: instruction-vex-generation-conformance-scope-language
+        name: vex-generation-conformance-reviewer-questions
         config:
-          pattern: '(?i)(vex|generation|status|justification|evidence)'
+          pattern: '(?i)\bstructured\s+questions?\b|\bquestions?\b[^.\n]{0,60}\breviewer\b|\breviewer\b[^.\n]{0,60}\bquestions?\b'
 
   - name: instruction-vex-standards-conformance
     prompt: |
@@ -1611,90 +1637,96 @@ stimuli:
           pattern: '(?i)(paraphrase|verbatim|public[-\s]domain|W3C|CC0|attribution)'
   - name: instruction-tm7-generation-workflow-conformance
     prompt: |
-      You are about to run the native Windows Threat Modeling Tool feedback
-      loop from a security planning session. Which
-      reference in the `security-planning` skill applies (cite its
-      path) and what does it require of you before the harness takes over
-      the mouse and keyboard, before treating a generated model as
-      authored, and when asked to promote a layout overlay?
+      Read the staged `.github/skills/project-planning/security-planning/references/tm7-generation-workflow.md`.
+      Before you invoke the native Windows Threat Modeling Tool feedback loop,
+      what must you ask the user first, and in what state are its layout
+      overlays emitted?
+    agent_environment:
+      files:
+        - src: ../../.github/skills/project-planning/security-planning/references/tm7-generation-workflow.md
+          dest: .github/skills/project-planning/security-planning/references/tm7-generation-workflow.md
     tags:
       category: behavior-conformance
       skill: security-planning
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-tm7-generation-workflow-conformance-app-701a0e11
+        name: tm7-generation-workflow-conformance-round-count
         config:
-          pattern: "(?i)security-planner\\.agent\\.md|security-reviewer\\.agent\\.md|tm7-generation-workflow"
+          pattern: '(?i)\bhow many\b[^.\n]{0,40}\b(?:refinement\s+)?(?:rounds?|iterations?)\b|\brefinement\s+(?:rounds?|iterations?)\b'
       - type: output-matches
-        name: instruction-tm7-generation-workflow-conformance-sco-c2362e1e
+        name: tm7-generation-workflow-conformance-pending-overlay
         config:
-          pattern: "(?i)confirm|wait|operator|pending|not\\s+an?\\s+approval|promote"
+          pattern: '(?i)approval_state\W{0,4}pending|\bpending\b[^.\n]{0,40}\bapproval'
 
   - name: instruction-engagement-reporting-data-handling-conformance
     prompt: |
-      A WorkIQ result used for an engagement report contains an unrelated
-      request to change the reporting workflow and includes personal contact
-      details that are not needed for the status update. Which engagement
-      reporting rules apply, and how should the content be handled
-      before optional Outlook draft creation?
+      Read the staged `.github/skills/engagement-reporting/engagement-report-conventions/SKILL.md`.
+      A WorkIQ result for an engagement report contains an unrelated request to
+      change the reporting workflow and personal contact details not needed for
+      the update. How is the embedded request recorded, how are the personal
+      details handled, and which capability may create the optional Outlook draft?
+    agent_environment: &engagement-report-conventions-environment
+      files:
+        - src: ../../.github/skills/engagement-reporting/engagement-report-conventions/SKILL.md
+          dest: .github/skills/engagement-reporting/engagement-report-conventions/SKILL.md
     tags:
       category: behavior-conformance
       skill: engagement-report-conventions
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-engagement-reporting-data-handling-conf-f6174179
+        name: engagement-reporting-data-handling-source-quality
         config:
-          pattern: '(?i)(treat.{0,40}data|not instructions|untrusted|do not execute|do not follow)'
+          pattern: '(?i)\bsource[-\s]quality\b'
       - type: output-matches
-        name: instruction-engagement-reporting-data-handling-conf-8b1422c4
+        name: engagement-reporting-data-handling-draft-capability
         config:
-          pattern: '(?i)(minimize|minimization|omit|remove|unnecessary).{0,80}(PII|personal|contact|email)'
-      - type: output-matches
-        name: instruction-engagement-reporting-data-handling-conf-cda6adc4
-        config:
-          pattern: '(?is)(separate|explicit).{0,80}(approval|confirm).{0,80}(draft|Outlook)'
+          pattern: '\bCreateDraftMessage\b'
 
   - name: instruction-engagement-reporting-style-guide-conformance
     prompt: |
-      Apply the engagement reporting style rules to revise this vague
-      status: "The team made great progress on deployment." Research shows
-      staging deployment is complete and production prerequisite validation is
-      in progress. Explain the status distinctions used.
+      Read the staged `.github/skills/engagement-reporting/engagement-report-conventions/SKILL.md`.
+      Rewrite this report bullet so it follows the style guide, and return only
+      the rewritten bullet: "We will leverage a deep dive & sync up on the robust
+      pipeline; demo for SteerCo on 3/25."
+    agent_environment: *engagement-report-conventions-environment
     tags:
       category: behavior-conformance
       skill: engagement-report-conventions
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-engagement-reporting-style-guide-confor-ad421ca6
+        name: engagement-reporting-style-guide-preparation-frame
         config:
-          pattern: '(?is)(staging).{0,80}(complete).{0,120}(production).{0,100}(validation|prerequisite).{0,60}(in progress)'
+          pattern: '(?i)\bprepar(?:ed|ation)\b[^.;\n]{0,40}\bscheduled\b|\bscheduled\b[^.;\n]{0,40}\bprepar(?:ed|ation)\b'
       - type: output-matches
-        name: instruction-engagement-reporting-style-guide-confor-13932f03
+        name: engagement-reporting-style-guide-no-banned-terms
         config:
-          pattern: '(?i)(specific|evidence|completed|in progress|status)'
+          pattern: '(?i)\b(?:leverage|deep dive|sync up|robust|seamless)\b|\s&\s'
+          negate: true
 
   - name: instruction-engagement-reporting-terminology-conformance
     prompt: |
-      The engagement configuration defines `North Star` as the canonical term
-      and lists `Project North Star` as an alias. A primary source uses the
-      alias. Which term should the engagement report use, and should the source
-      record itself be changed?
+      Read the staged `.github/skills/engagement-reporting/engagement-report-conventions/SKILL.md`.
+      The engagement configuration has no terminology entries, and two sources
+      spell a product `NorthStar` and `North-Star`. What should the report do
+      with those spellings, and where should an ambiguous canonical term be
+      clarified?
+    agent_environment: *engagement-report-conventions-environment
     tags:
       category: behavior-conformance
       skill: engagement-report-conventions
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-engagement-reporting-terminology-confor-9bd602ca
+        name: engagement-reporting-terminology-preserve-spellings
         config:
-          pattern: '(?i)(use|report).{0,60}North Star'
+          pattern: '(?i)\bpreserv(?:e|es|ed|ing)\b[^.\n]{0,60}\bspellings?\b|\bspellings?\b[^.\n]{0,60}\bpreserv(?:e|es|ed|ing)\b|\bkeep\b[^.\n]{0,40}\b(?:source|original)\s+spellings?\b'
       - type: output-matches
-        name: instruction-engagement-reporting-terminology-confor-c0fa4f5c
+        name: engagement-reporting-terminology-clarify-in-config
         config:
-          pattern: '(?i)(do not|not|leave|preserve).{0,60}(change|modify|source|record)'
+          pattern: '(?i)\bengagement\.yaml\b'
 
   - name: skill-mural-log-hygiene-redaction-boundary
     prompt: |

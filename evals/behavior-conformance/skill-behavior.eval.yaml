@@ -1,4 +1,4 @@
-# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat pathspecs reinitializ ETSI summarise brai
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat pathspecs reinitializ ETSI summarise brai brpi bhve
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
@@ -1913,7 +1913,7 @@ stimuli:
       Summarize the `rpi` skill. Include what phases it coordinates, where it
       persists session state, and how it uses the RPI Workflow canvas when
       available.
-    environment:
+    agent_environment:
       skills:
         - ../../.github/skills/rpi/rpi
     tags:
@@ -1923,22 +1923,24 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-rpi-knowledge-skill-attribution
+        name: skill-rpi-knowledge-state-path
         config:
-          pattern: '(?i)(rpi|research|plan|implement|review|follow-up)'
+          pattern: '(?i)\.copilot-tracking/rpi-sessions/'
       - type: output-matches
-        name: skill-rpi-knowledge-scope-language
+        name: skill-rpi-knowledge-canvas-id
         config:
-          pattern: '(?i)(\.copilot-tracking/rpi-sessions|hve-core-rpi-workflow|canvas|state\.json)'
+          pattern: '\bhve-core-rpi-workflow\b'
   - name: skill-rpi-tool-trigger
     prompt: |
       I need to coordinate a resumable multi-phase RPI session through
       Research, Plan, Implement, Review, and Follow-up with durable session
       state and the RPI Workflow canvas. Which skill under
-      `.github/skills/**/SKILL.md` applies?
-    environment:
+      `.github/skills/**/SKILL.md` applies? Return `Skill: <name>` on the first
+      line, then one sentence on why.
+    agent_environment:
       skills:
         - ../../.github/skills/rpi/rpi
+        - ../../.github/skills/rpi/rpi-research
     tags:
       category: behavior-conformance
       skill: rpi
@@ -1946,21 +1948,23 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-rpi-tool-trigger-skill-domain-attribution
+        name: skill-rpi-tool-trigger-skill-selected
         config:
-          pattern: '(?i)(rpi|rpi-sessions|hve-core-rpi-workflow|session)'
+          pattern: '(?m)^\W*Skill:\W*rpi\W*$'
       - type: output-matches
-        name: skill-rpi-tool-trigger-scope-language
+        name: skill-rpi-tool-trigger-phase-skill-evidence
         config:
-          pattern: '(?i)(research|plan|implement|review|follow-up|canvas)'
+          pattern: '(?i)rpi-sessions|hve-core-rpi-workflow|\brpi-(?:research|plan|implement|review)\b'
   - name: skill-rpi-bleed-detection
     prompt: |
       I only want a read-only independent critique of an existing RPI plan
       without starting or managing a multi-phase RPI session. Does the `rpi`
-      session skill or `rpi-plan-critique` apply directly? Justify briefly.
-    environment:
+      session skill or `rpi-plan-critique` apply directly? Return
+      `Skill: <name>` on the first line, then justify briefly.
+    agent_environment:
       skills:
         - ../../.github/skills/rpi/rpi
+        - ../../.github/skills/rpi/rpi-plan-critique
     tags:
       category: behavior-conformance
       skill: rpi
@@ -1968,13 +1972,13 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-rpi-bleed-detection-skill-attribution
+        name: skill-rpi-bleed-detection-skill-selected
         config:
-          pattern: '(?i)(rpi-plan-critique|critique|read-only)'
+          pattern: '(?m)^\W*Skill:\W*rpi-plan-critique\W*$'
       - type: output-matches
-        name: skill-rpi-bleed-detection-scope-language
+        name: skill-rpi-bleed-detection-read-only-evidence
         config:
-          pattern: '(?i)(plan|critique|session|lifecycle)'
+          pattern: '(?i)\bwithout\s+editing\b|\bdoes\s+not\s+edit\b|\bnot\s+edit\b|\bnever\s+edits?\b|\bcredibility\b|\bfindings?\b'
   - name: skill-rpi-canvas-provider-ambiguity
     prompt: |
       Using the `rpi` skill in a contained, response-only canvas-policy check:
