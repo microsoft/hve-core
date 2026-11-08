@@ -201,8 +201,18 @@ validate_args() {
   [[ -d "${LEVEL_DIR}/content" ]] || err "No content/ under ${LEVEL_DIR}."
   [[ -d "${LEVEL_DIR}/output" ]] || err "No output/ under ${LEVEL_DIR}."
   LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
+  case "${LEVEL_DIR}/" in
+    "${SKILL_ROOT}/"*) err "Level outputs must not be inside the skill installation." ;;
+  esac
+  local current="${LEVEL_DIR}/.venv/hve-demo-material"
+  while [[ "${current}" != "/" && "${current}" != "." ]]; do
+    [[ ! -L "${current}" ]] || err "Refusing a symlink in the caller environment path."
+    current="$(dirname "${current}")"
+  done
   [[ -f "${LEVEL_DIR}/output/hve-demo-${LEVEL}.raw.mp4" ]] \
     || err "Clean raw assembly missing; reassemble hve-demo-${LEVEL}.raw.mp4 before finalizing."
+  export UV_PROJECT_ENVIRONMENT="${LEVEL_DIR}/.venv/hve-demo-material"
+  export UV_FROZEN=true
 }
 
 finalize_video() {

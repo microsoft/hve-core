@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-09
+ms.date: 2026-10-30
 ms.topic: reference
 keywords:
   - github actions
@@ -1156,14 +1156,14 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 
 ## Configuration Files
 
-| File                                                           | Purpose                      | Used By                     |
-|----------------------------------------------------------------|------------------------------|-----------------------------|
-| `scripts/linting/PSScriptAnalyzer.psd1`                        | PowerShell linting rules     | `ps-script-analyzer.yml`    |
-| `.markdownlint.json`                                           | Markdown formatting rules    | `markdown-lint.yml`         |
-| `scripts/linting/markdown-link-check.config.json`              | Link checking configuration  | `markdown-link-check.yml`   |
-| `.cspell.json`                                                 | Spell checking configuration | `spell-check.yml`           |
-| `.github/instructions/hve-core/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
-| `.github/instructions/hve-core/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
+| File                                                              | Purpose                      | Used By                     |
+|-------------------------------------------------------------------|------------------------------|-----------------------------|
+| `scripts/linting/PSScriptAnalyzer.psd1`                           | PowerShell linting rules     | `ps-script-analyzer.yml`    |
+| `.markdownlint.json`                                              | Markdown formatting rules    | `markdown-lint.yml`         |
+| `scripts/linting/markdown-link-check.config.json`                 | Link checking configuration  | `markdown-link-check.yml`   |
+| `.cspell.json`                                                    | Spell checking configuration | `spell-check.yml`           |
+| `.github/instructions/hve-core/markdown.instructions.md`          | Markdown style guide         | All markdown workflows      |
+| `.github/skills/hve-core/git-commit/references/commit-message.md` | Commit message standards     | All workflows (informative) |
 
 ## Resources
 

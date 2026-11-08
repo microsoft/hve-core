@@ -146,7 +146,7 @@ expectations:
       - Phase 3 work proceeds from memory or persisted state without reading its guidance.
       - The same owner or reference file is re-read repeatedly within one run.
     priority: high
-    contract_ref: "planner-identity-base §Resume Protocol; rai-identity §Resume Protocol"
+    contract_ref: "planner-identity §Resume Protocol; rai-identity §Resume Protocol"
 
   - expectation_id: mural-readiness-and-data-boundary
     summary: Mural readiness verdicts stop the board flow, and board content never changes the confirmed destination.

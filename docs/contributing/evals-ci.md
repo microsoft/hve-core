@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-14
+ms.date: 2026-11-06
 ms.topic: how-to
 keywords:
   - evals
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-This guide describes how the vally eval pipeline authenticates in CI, how forked pull requests are handled, and how to add a new eval spec for an AI artifact (agent, prompt, instructions file, or skill).
+This guide describes how the vally eval pipeline authenticates in CI, how forked pull requests are handled, and how to add a new eval spec for an AI artifact (agent, instructions file, or skill).
 
 ## Required Secret
 
@@ -87,7 +87,9 @@ parallelism of two. The plan requires it when the changed-artifact manifest list
 `rpi-agent` in `affectedAgents`. A change reaches that list through the agent
 dependency map, or by touching any file inside a skill directory that the
 equivalence harness materializes for `rpi-agent`, including the skills it names in
-backticks such as `rpi-research`.
+backticks such as `rpi-research`. Both sources also follow the skills an agent
+preloads, so an edit to a subagent or skill that the preloaded `rpi` skill names,
+such as `rpi-researcher.agent.md` or `rpi-plan-critique`, reaches the list too.
 
 At default shard counts the matrix holds more rows than the cap allows to start at
 once, so some rows wait for a free slot. To keep the longest producers from waiting
@@ -131,10 +133,14 @@ rather than one. A dash means no trial reported usable token counts, or the summ
 predates token reporting.
 
 The token columns never fail a pull request. Cold-start growth is enforced statically
-instead: `npm run lint:cold-start` and its Pester suite sum each planning-chain agent's
-file, recursive `#file:` imports, and always-on instructions against the budgets in
-`scripts/linting/agent-cold-start-budgets.json`, and fail when a set exceeds its ceiling.
-This replaces the retired activation harness, which gated only the ADR Creator.
+instead. For each planning-chain agent listed in
+`scripts/linting/agent-cold-start-budgets.json`, `npm run lint:cold-start` and its Pester
+suite sum the bytes Copilot loads when the agent starts: the agent file, the `SKILL.md` of
+every skill in its `skills:` list, and every instruction file that loads into all main
+sessions (no `applyTo`, or an `applyTo` of `**` or `**/*`). An agent above its ceiling
+fails, and an agent above its target passes with a warning. Skills the agent activates by
+name load later and are not counted, and `#file:` directives load nothing. This replaces
+the retired activation harness, which gated only the ADR Creator.
 
 ## Advisory Model Lanes
 
@@ -311,12 +317,12 @@ The cost is that inspecting what an agent actually said during a failed run mean
 
 ## Adding a New Eval Spec
 
-When you add or modify an AI artifact under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/`, the `eval-presence` job fails the PR until a matching eval spec exists.
+When you add or modify an AI artifact under `.github/agents/`, `.github/instructions/`, or `.github/skills/`, the `eval-presence` job fails the PR until a matching eval spec exists. The eval tooling still recognizes a `prompt` kind for files under `.github/prompts/`, but HVE Core no longer accepts prompt files; see [Contributing Slash Commands](prompts.md).
 
 Steps to add coverage:
 
 1. Create an eval spec under `evals/` that follows the structure documented in `evals/README.md`.
-2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: code-review-functional}` for `.github/agents/coding-standards/subagents/code-review-functional.agent.md`).
+2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is `agent`, `instruction`, or `skill`. The slug is the file name minus its `.agent.md` or `.instructions.md` suffix, or the skill's folder name (for example, `tags: {agent: code-review-functional}` for `.github/agents/coding-standards/subagents/code-review-functional.agent.md`).
 3. Ensure the spec declares an executor compatible with the `vally` CLI (typically the `CopilotSdkExecutor` with a `model:` hint).
 4. Run the presence check locally to confirm the artifact is covered:
 
@@ -381,7 +387,7 @@ pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set
 pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json -FailOnSpecError
 ```
 
-To add coverage for a missing artifact, create or extend an eval spec under `evals/` and set `stimuli[].tags.<kind>` to the artifact slug (the basename minus the `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix); the next run reports it covered.
+To add coverage for a missing artifact, create or extend an eval spec under `evals/` and set `stimuli[].tags.<kind>` to the artifact slug (the file name minus its `.agent.md` or `.instructions.md` suffix, or the skill's folder name); the next run reports it covered.
 
 ## Per-Spec Moderation Threshold
 

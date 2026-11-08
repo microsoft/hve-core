@@ -62,12 +62,12 @@ stimuli:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-          dest: .github/instructions/rai-planning/rai-identity.instructions.md
-        - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-          dest: .github/instructions/shared/planner-identity-base.instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+          dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+        - src: ../../.github/skills/shared/planner-identity/SKILL.md
+          dest: .github/skills/shared/planner-identity/SKILL.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
           dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
         - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -127,12 +127,12 @@ stimuli:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-          dest: .github/instructions/rai-planning/rai-identity.instructions.md
-        - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-          dest: .github/instructions/shared/planner-identity-base.instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+          dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+        - src: ../../.github/skills/shared/planner-identity/SKILL.md
+          dest: .github/skills/shared/planner-identity/SKILL.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
           dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
         - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -164,10 +164,10 @@ stimuli:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
-        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-          dest: .github/instructions/rai-planning/rai-identity.instructions.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
+        - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+          dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -195,12 +195,12 @@ stimuli:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-          dest: .github/instructions/rai-planning/rai-identity.instructions.md
-        - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-          dest: .github/instructions/shared/planner-identity-base.instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+          dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+        - src: ../../.github/skills/shared/planner-identity/SKILL.md
+          dest: .github/skills/shared/planner-identity/SKILL.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
           dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
         - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -253,12 +253,12 @@ stimuli:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-          dest: .github/instructions/rai-planning/rai-identity.instructions.md
-        - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-          dest: .github/instructions/shared/planner-identity-base.instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+          dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+        - src: ../../.github/skills/shared/planner-identity/SKILL.md
+          dest: .github/skills/shared/planner-identity/SKILL.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
           dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
         - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -350,12 +350,12 @@ stimuli:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-          dest: .github/instructions/rai-planning/rai-identity.instructions.md
-        - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-          dest: .github/instructions/shared/planner-identity-base.instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+          dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+        - src: ../../.github/skills/shared/planner-identity/SKILL.md
+          dest: .github/skills/shared/planner-identity/SKILL.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
           dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
         - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
@@ -421,12 +421,12 @@ stimuli:
       files:
         - src: ../../.github/agents/rai-planning/rai-planner.agent.md
           dest: .github/copilot-instructions.md
-        - src: ../../.github/instructions/rai-planning/rai-identity.instructions.md
-          dest: .github/instructions/rai-planning/rai-identity.instructions.md
-        - src: ../../.github/instructions/shared/planner-identity-base.instructions.md
-          dest: .github/instructions/shared/planner-identity-base.instructions.md
-        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
-          dest: .github/instructions/shared/disclaimer-language.instructions.md
+        - src: ../../.github/skills/project-planning/rai-planner/references/rai-identity.md
+          dest: .github/skills/project-planning/rai-planner/references/rai-identity.md
+        - src: ../../.github/skills/shared/planner-identity/SKILL.md
+          dest: .github/skills/shared/planner-identity/SKILL.md
+        - src: ../../.github/skills/shared/disclaimer-language/SKILL.md
+          dest: .github/skills/shared/disclaimer-language/SKILL.md
         - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
           dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
         - src: ../../.github/instructions/shared/coaching-patterns.instructions.md

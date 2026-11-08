@@ -1,9 +1,9 @@
 ---
 title: Project Planning/Github Backlog Grooming
 description: "Reusable GitHub backlog grooming policy for evidence-backed assessment, advisory dispositions, and approved writeback"
-sidebar_position: 7
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-10-31
 ms.topic: reference
 keywords:
   - instruction

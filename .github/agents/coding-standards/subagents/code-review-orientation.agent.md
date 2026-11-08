@@ -2,13 +2,10 @@
 name: Code Review Orientation
 description: "Builds the factual Register 1 walkthrough and dispatch-board appendices for a serialized Code Review target"
 tools:
-  - search/codebase
-  - search/fileSearch
-  - search/textSearch
-  - read/readFile
-  - edit/createFile
-  - edit/createDirectory
-  - edit/editFiles
+  - search
+  - read
+  - edit
+  - skill
 user-invocable: false
 ---
 
@@ -18,7 +15,7 @@ Build the factual Register 1 orientation for one serialized Code Review target. 
 
 ## Skill Reference Contract
 
-At the start of the run, locate the skill named `code-review` and read these files from it once in a single parallel `read_file` block (paths are relative to that skill), then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these files from it once, in a single batch of parallel reads (paths are relative to that skill), then apply them verbatim:
 
 * `SKILL.md` (skill entrypoint)
 * `references/review-targets.md`

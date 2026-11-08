@@ -70,7 +70,7 @@
     {
       "noticeType": "professional-review-reminder",
       "shownAt": "2026-05-09T14:32:00Z",
-      "source": ".github/instructions/rai-planning/rai-identity.instructions.md",
+      "source": ".github/skills/project-planning/rai-planner/references/rai-identity.md",
       "details": { "phase": "phase1" }
     }
   ],

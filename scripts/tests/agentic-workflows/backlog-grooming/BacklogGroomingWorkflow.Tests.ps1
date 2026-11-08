@@ -1522,7 +1522,7 @@ Describe 'Interactive grooming route and fresh-state execution' -Tag 'Unit' {
 
     It 'applies reusable grooming policy directly without a child-agent dispatch' {
         $script:Manager | Should -Not -Match '(?m)^  - Backlog Grooming$'
-        $script:Manager | Should -Match '#file:\.\./\.\./instructions/project-planning/github-backlog-grooming\.instructions\.md'
+        $script:Manager | Should -Match 'read `github-backlog-grooming\.instructions\.md` in full and apply it directly'
         $script:Manager | Should -Match '\| Grooming\s+\| Apply `github-backlog-grooming\.instructions\.md` directly with ordinary GitHub issue inventory and repository evidence'
         $script:Manager | Should -Match 'Do not dispatch the repository-only AW worker'
     }

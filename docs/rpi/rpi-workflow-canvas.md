@@ -3,7 +3,7 @@ title: RPI Workflow Canvas
 description: Follow an RPI session phase by phase in a canvas beside the chat, answer the agent's decisions, and send it your input
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-10-30
+ms.date: 2026-11-02
 ms.topic: how-to
 keywords:
   - rpi workflow canvas
@@ -40,7 +40,7 @@ The hve-core VS Code extension does not carry canvases. Install the hve-core plu
 
 ## Open the Canvas
 
-Select **RPI Agent** and describe your task. When the host offers the canvas, the agent opens it on its session by itself, once per conversation, and the same panel follows each new loop of the session.
+Run `/rpi` (or let the model discover the `rpi` skill) or select **RPI Agent** and describe your task. When the host offers the canvas, the `rpi` session opens it by itself, once per conversation, and the same panel follows each new loop of the session.
 
 You can also ask the agent to open the RPI Workflow canvas, or open it from the host's canvas list. In VS Code, that is **Add Context (+) > Canvas...** in the chat input or **New Chat (+) > Canvas** in the Chat view; in the Agents window, it is **Add Tab (+) > Canvas**.
 

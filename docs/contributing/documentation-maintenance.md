@@ -3,7 +3,7 @@ title: Documentation Maintenance
 description: How the automated ms.date freshness system detects and flags stale documentation for review
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-11-03
 ms.topic: reference
 keywords:
   - documentation
@@ -36,6 +36,13 @@ The `Invoke-MsDateFreshnessCheck.ps1` script reads each file's frontmatter, extr
 
 The PR check uses `changed-files-only: true` so contributors only see annotations for the files they actually touched. The weekly scan runs without this filter to find all outdated content across the repository.
 
+The full scan skips these paths:
+
+* Directories named `node_modules`, `.git`, `logs`, `.copilot-tracking`, and `plugins`
+* Files named `CHANGELOG.md`
+
+Passing a single explicit file path to the script bypasses these exclusions.
+
 ## Fixing Stale Documentation
 
 When the freshness check flags a file, take these steps:
@@ -49,16 +56,24 @@ If a file is flagged but the content is still accurate, update `ms.date` to the 
 
 ## Configuration
 
-The freshness check exposes these parameters:
+The check is the reusable workflow `.github/workflows/msdate-freshness-check.yml`, which exposes these parameters:
 
-| Parameter                  | Default | Description                                                      |
-|----------------------------|---------|------------------------------------------------------------------|
-| `staleness-threshold-days` | 90      | Days since `ms.date` before a file is considered stale           |
-| `changed-files-only`       | false   | When true, only checks files changed relative to the base branch |
+| Parameter                  | Default | Description                                                                    |
+|----------------------------|---------|--------------------------------------------------------------------------------|
+| `staleness-threshold-days` | 90      | Days since `ms.date` before a file is considered stale                         |
+| `changed-files-only`       | false   | When true, only checks files changed relative to the base branch               |
+| `soft-fail`                | false   | When true, stale files are reported without failing the job                    |
+| `change-mode`              | `full`  | Either `full` to scan the repository or `range` to use an explicit commit pair |
+| `base-sha`                 | empty   | Base commit, used in `range` mode                                              |
+| `head-sha`                 | empty   | Head commit, used in `range` mode                                              |
 
-The PR validation workflow configures the check with `changed-files-only: true`. The weekly scan uses `changed-files-only: false` with default threshold to catch all stale files.
+The PR validation workflow configures the check with `changed-files-only: true` and supplies the pull request's commit range. The weekly scan uses `changed-files-only: false` to catch all stale files. Both pass `staleness-threshold-days: 90` and `soft-fail: false` explicitly rather than relying on the defaults.
 
-To adjust the threshold repository-wide, update the `staleness-threshold-days` value in both `.github/workflows/pr-validation.yml` and `.github/workflows/weekly-validation.yml`.
+`soft-fail` is worth leaving at `false` on the weekly run: issue creation is gated on the freshness job failing, so a soft failure there would silently stop stale-docs issues from being filed.
+
+Requesting `changed-files-only: true` without a verified range (that is, with `change-mode: full`) does not fail. The check emits a warning and reports repository-wide freshness as advisory instead.
+
+To adjust the threshold repository-wide, update `staleness-threshold-days` in both `.github/workflows/pr-validation.yml` and `.github/workflows/weekly-validation.yml`. Note that the weekly file carries the number twice, once for the freshness check and again as `threshold-days` for `create-stale-docs-issues.yml`, and the two should be kept in step.
 
 ## Issue Automation
 
@@ -76,11 +91,11 @@ Issues are not automatically closed. After updating the documentation and mergin
 
 ### Frontmatter missing or malformed
 
-The script skips files with no frontmatter block. Stale detection requires a valid `---` delimited YAML block with a parseable `ms.date` field. Files without `ms.date` are logged but not counted as stale.
+The script skips files with no frontmatter block. Stale detection requires a valid `---` delimited YAML block with a parseable `ms.date` field. Files without `ms.date` are not counted as stale, and the skip is only reported in verbose output. Run the script with `-Verbose` to see which files were skipped.
 
 ### Date format errors
 
-Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse and the file will be skipped with a warning.
+Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse, and the file is skipped without a warning, so a malformed date can hide a stale file. Run the script with `-Verbose` to see `Invalid ms.date format` messages, and run `npm run lint:frontmatter` to catch malformed dates under `docs/`.
 
 ### PR check annotations not appearing
 

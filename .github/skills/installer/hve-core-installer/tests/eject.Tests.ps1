@@ -183,6 +183,8 @@ Describe 'eject schema gate' -Tag 'Unit' {
         Remove-Item -LiteralPath $manifestLink -Force
         $danglingTarget = Join-Path $outside 'dangling-manifest.json'
         New-Item -ItemType SymbolicLink -Path $manifestLink -Target $danglingTarget -ErrorAction Stop | Out-Null
+        $realTestPath = Get-Command -Name Test-Path -CommandType Cmdlet
+        Mock Test-Path { & $realTestPath @PesterBoundParameters }
         Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -like '*.hve-tracking.json' }
 
         { & $script:PowerShellScript -Component 'agents/hve-core/rpi-agent.md' -TargetRoot $target } |

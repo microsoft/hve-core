@@ -3,7 +3,7 @@ title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - onboarding
@@ -18,7 +18,7 @@ This guide helps you get started with HVE Core from your first install through i
 ## Recommended Installation
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete component set with zero configuration.
+> Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md) for the complete component set in VS Code or Copilot CLI.
 >
 > For selected repository-owned components, ask an agent to use the included `hve-core-installer` skill:
 >
@@ -45,9 +45,9 @@ Progress through four milestones at your own pace. Each milestone builds on the 
 Install HVE Core and run your first agent interaction.
 
 1. Follow the [installation guide](../../getting-started/install.md) to set up your development environment.
-2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments.
+2. Install the [HVE Core plugin](../../getting-started/methods/cli-plugins.md), the recommended method. It carries every agent, skill, and instruction and works in VS Code and Copilot CLI.
 3. Open a chat and select **RPI Agent** to verify agent responsiveness.
-4. Run `/rpi-research` against a file or concept in the codebase to see evidence-focused research output.
+4. Run `/rpi-research` against a file or concept in the codebase to see evidence-focused research output. With the plugin in VS Code, the command appears as `/hve-core:rpi-research`.
 
 Start with `RPI Agent` and ask it to explain each lifecycle transition. Use the direct `/rpi-*` phase skills as you gain confidence.
 

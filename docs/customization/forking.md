@@ -2,14 +2,15 @@
 title: Forking and Extending HVE Core
 description: Fork HVE Core to create a fully customized prompt engineering framework with upstream sync and Copilot-assisted adaptation
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - forking
   - extending
   - upstream sync
   - customization
-estimated_reading_time: 10
+  - plugin marketplace
+estimated_reading_time: 11
 ---
 
 ## When to Fork
@@ -28,7 +29,7 @@ validation) is insufficient for your needs.
 
 ### Stay with in-place customization when you
 
-* Add new agents, prompts, or instructions without modifying existing ones
+* Add new agents, skills, or instructions without modifying existing ones
 * Add organization-specific artifacts under your own package-scoped namespaces
 * Extend validation with custom linting scripts
 * Configure existing tools through their settings files
@@ -73,6 +74,9 @@ fork stays restorable for everyone who clones it.
 Update these files to reflect your organization:
 
 * `package.json`: Change the `name`, `description`, and `repository` fields
+* `plugin.json` and `.github/plugin/marketplace.json`: Point `homepage` and
+  `repository` at your fork in both files, since `npm run plugin:validate`
+  checks that the marketplace entry matches `plugin.json`
 * `README.md`: Update branding, installation instructions, and support links
 * `CONTRIBUTING.md`: Adjust contribution guidelines for your team
 * `SECURITY.md`: Point to your organization's security reporting process
@@ -94,18 +98,31 @@ After forking, these areas provide the highest-value customization opportunities
 The `extension/` directory contains packaging configuration for distributing the HVE Core component set as one VS Code extension. Modify `extension/templates/` to customize the extension manifest,
 README, and marketplace presentation. See the
 [VS Code Extension API](https://code.visualstudio.com/api) for extension packaging details.
+VS Code forwards the extension's agents and skills to Copilot sessions, but its
+instructions may not reach them and the VSIX carries no canvases. When your teams
+need the full set, distribute the fork as a plugin, as described in
+[Distribute Your Fork](#distribute-your-fork).
 
 ### 2. Copilot Paths
 
-Agent and prompt files live under `.github/agents/` and `.github/prompts/`. Restructure
-these directories to match your organization's team topology or domain boundaries. Run
-`npm run plugin:sync` to reflect eligible `.github` paths in root `plugin.json`.
+Agents, skills, and instructions live in package folders under `.github/agents/`,
+`.github/skills/`, and `.github/instructions/`. Copilot discovers them at any
+folder depth, so you can reorganize the package folders to match your
+organization's team topology or domain boundaries without changing any settings.
+Keep each artifact inside a package folder, because files placed directly in
+`.github/agents/`, `.github/instructions/`, or `.github/skills/` stay out of the
+plugin. Run `npm run plugin:sync` to reflect the new paths in root `plugin.json`.
 
 ### 3. MCP Servers
 
-If your workflows depend on MCP (Model Context Protocol) servers, configure server
-definitions in `.vscode/mcp.json` or workspace settings. Fork-level changes let you
-add organization-specific MCP servers that all relevant agents and skills can reference.
+If your workflows depend on MCP (Model Context Protocol) servers, add them to
+`.mcp.json.sample` at the repository root. Copilot reads servers from `.mcp.json`
+at the workspace root, under a top-level `mcpServers` object, so teams copy the
+sample into their workspace as `.mcp.json`. Agents name a server's tools in their
+`tools` lists as `server/tool` or `server/*`, so keep the keys in the sample the
+same as the names your agents use. Leave out a `github` server, because Copilot
+includes one, and reference secrets as `${NAME}` environment variables instead of
+writing them into the file.
 
 ### 4. npm Scripts
 
@@ -128,6 +145,47 @@ format. Adjust version bumping strategy and changelog sections for your workflow
 GitHub Actions workflows in `.github/workflows/` define CI/CD behavior. Adjust workflow
 permissions, add organization-specific validation jobs, or integrate with internal CI
 systems.
+
+## Distribute Your Fork
+
+Your fork keeps root `plugin.json` and `.github/plugin/marketplace.json`, so
+Copilot installs it the same way it installs HVE Core. Give each person or
+repository one route, because Copilot lists each agent more than once when the
+same content arrives by two routes.
+
+| Route              | How teams use it                                                                                                                                                                         |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Plugin marketplace | Run `/plugin marketplace add <org>/hve-core` in a Copilot chat session, or `copilot plugin marketplace add <org>/hve-core` in Copilot CLI, then install the plugin from that marketplace |
+| Plugin from source | In the Agent Customizations editor, select **Plugins**, select the add (`+`) button next to **User** or **Workspace**, and enter the fork's Git URL or the root folder of a clone        |
+| Repository default | Commit `.github/copilot/settings.json` with your fork's `owner/repo` as the marketplace source, so the Copilot harness offers the plugin to everyone who opens that repository           |
+
+A repository default for a fork at `contoso/hve-core` looks like this:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "hve-core": {
+      "source": {
+        "source": "github",
+        "repo": "contoso/hve-core"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "hve-core@hve-core": true
+  }
+}
+```
+
+The example assumes your fork keeps the marketplace name `hve-core`, the top-level
+`name` in `.github/plugin/marketplace.json`. The key under `extraKnownMarketplaces`
+must match the marketplace name, so if you rename the marketplace, use the new
+name as the key. Plugin references take the form `plugin@marketplace`, so a
+renamed marketplace also changes the `enabledPlugins` entry and install commands
+such as `/plugin install hve-core@hve-core`.
+
+[Installing HVE Core](../getting-started/install) covers each route in more
+detail, including updates and how to check that the plugin loaded.
 
 ## Upstream Sync Workflow
 
@@ -156,6 +214,7 @@ Conflicts typically occur in files you have customized. Common conflict points:
 * `package.json` (script modifications)
 * `.markdownlint.json` (rule adjustments)
 * Root `plugin.json` membership after artifacts are added or removed
+* `.github/plugin/marketplace.json` metadata, if you pointed it at your fork
 * Workflow files (permission or job changes)
 
 For each conflict, evaluate whether to keep your change, accept the upstream change, or
@@ -173,7 +232,7 @@ npm run plugin:validate
 |--------------------------------------------|---------------------------------------|
 | Core scripts in `scripts/`                 | `package.json` (your custom fields)   |
 | Schema files in `scripts/linting/schemas/` | `README.md` (your branding)           |
-| Agent and prompt templates                 | `.github/workflows/` (your CI config) |
+| Agent, instruction, and skill templates    | `.github/workflows/` (your CI config) |
 | Shared instructions                        | `CONTRIBUTING.md` (your guidelines)   |
 | Documentation in `docs/`                   | Custom plugin membership and branding |
 
@@ -245,18 +304,21 @@ npm run plugin:validate
 
 **Fabrikam's platform team** forks HVE Core to establish org-wide Copilot governance.
 They replace the default RPI workflow agents with versions that enforce Fabrikam's code
-review policies, add custom MCP server configurations for internal APIs, and distribute
-the fork as a private VS Code extension to all engineering teams. A biweekly upstream sync
-ensures they receive new skills and security patches without disrupting their customizations.
+review policies, add their internal API servers to the fork's `.mcp.json.sample`, and
+register the fork as a plugin marketplace that every engineering repository offers
+through `.github/copilot/settings.json`. A biweekly upstream sync brings in new skills
+and security patches without disrupting their customizations.
 
 **Woodgrove Bank's compliance team** forks HVE Core to add financial regulation
 instructions and audit trail requirements. They customize the build system to include
-compliance validation scripts that check every agent and prompt for required disclaimer
+compliance validation scripts that check every agent and skill for required disclaimer
 sections. The compliance team maintains a strict monthly sync cadence, reviewing each
 upstream change against regulatory requirements before merging.
 
 ## Further Reading
 
+* [Installing HVE Core](../getting-started/install) for the plugin, repository
+  default, and clone routes your fork can use
 * [VS Code Extension API](https://code.visualstudio.com/api) for extension packaging and
   distribution
 * [docs/contributing/](../contributing/) for artifact syntax and contribution guidelines

@@ -1,23 +1,28 @@
 ---
 title: Installation Methods
-description: Phase 4 installation methods for the hve-core installer, covering each supported install path end to end.
+description: Phase 4 installation methods for the hve-core installer, covering where to keep an HVE-Core clone and how Copilot uses it.
 ---
 <!-- markdownlint-disable-file -->
 
 ## Phase 4: Installation Methods
 
-Execute the installation workflow based on the method selected via the decision matrix. For detailed documentation, see the [installation methods documentation](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/).
+A clone is a way to store and pin a copy of HVE-Core. Clone HVE-Core with the method selected through the decision matrix, then continue by route:
+
+* Clone route: connect the clone to Copilot as described in [Connect the Clone to Copilot](#connect-the-clone-to-copilot).
+* Native adoption: stop after cloning. The clone is only the source that Phase 7 copies from. Leave it unconnected, because connecting it as well would deliver the same content through two routes.
+
+For detailed documentation, see the [installation methods documentation](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/).
 
 ### Method Configuration
 
-| Method         | Documentation                                                                                                 | Target Location        | Settings Path Prefix   | Best For                            |
-|----------------|---------------------------------------------------------------------------------------------------------------|------------------------|------------------------|-------------------------------------|
-| 1. Peer Clone  | [peer-clone.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/peer-clone.md)   | `../hve-core`          | `../hve-core`          | Local VS Code, solo developers      |
-| 2. Git-Ignored | [git-ignored.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/git-ignored.md) | `.hve-core/`           | `.hve-core`            | Devcontainer, isolation             |
-| 3. Mounted*    | [mounted.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/mounted.md)         | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone           |
-| 4. Codespaces  | [codespaces.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/codespaces.md)   | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces                          |
-| 5. Multi-Root  | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md)   | Per workspace file     | Actual clone path      | Local VS Code, best IDE integration |
-| 6. Submodule   | [submodule.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/submodule.md)     | `lib/hve-core`         | `lib/hve-core`         | Team version control                |
+| Method         | Documentation                                                                                                 | Target Location                   | Inside the Checkout | Copilot Uses It Through                                        | Best For                                        |
+|----------------|---------------------------------------------------------------------------------------------------------------|-----------------------------------|---------------------|----------------------------------------------------------------|-------------------------------------------------|
+| 1. Peer Clone  | [peer-clone.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/peer-clone.md)   | `../hve-core`                     | No                  | Plugin from source                                             | Local VS Code, solo developers                  |
+| 2. Git-Ignored | [git-ignored.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/git-ignored.md) | `.hve-core/`                      | Yes                 | Plugin from source or settings file                            | Devcontainer, isolation                         |
+| 3. Mounted*    | [mounted.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/mounted.md)         | `.hve-core/` (host clone mounted) | Yes                 | Settings file, or plugin from source with a Plugins page check | Devcontainers sharing one host clone            |
+| 4. Codespaces  | [codespaces.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/codespaces.md)   | `.hve-core/`                      | Yes                 | Settings file                                                  | Codespaces with a pinned or customized copy     |
+| 5. Multi-Root  | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md)   | Per workspace file                | No                  | Plugin from source                                             | Local VS Code, HVE-Core open beside the project |
+| 6. Submodule   | [submodule.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/submodule.md)     | `lib/hve-core`                    | Yes                 | Settings file or plugin from source                            | Team version control                            |
 
 *Method 3 (Mounted) is for advanced scenarios where host already has hve-core cloned. Most devcontainer users should use Method 2.
 
@@ -47,63 +52,65 @@ if (-not (Test-Path $hveCoreDir)) {
 
 For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` for output.
 
-### Settings Configuration
+### Connect the Clone to Copilot
 
-After cloning, update `.vscode/settings.json` with entries for each package subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
+Use one connection per clone. Any clone that the VS Code host can read can be installed as a plugin from source. A clone inside the project's checkout (Methods 2, 3, 4, and 6) can instead have its folders declared in `.github/copilot/settings.json`. Never use both for the same clone, and do not combine either one with the HVE-Core plugin or the extension.
 
-Enumerate each package subdirectory under `.github/agents/`, `.github/instructions/`, and `.github/hooks/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each package folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the package-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). Include the `installer` package so clone-based users can invoke the guided installer skill. For `.github/hooks/`, list only the package-level folders directly under `.github/hooks/` (e.g., `shared`); the default `chat.hookFilesLocations` value only covers the workspace `.github/hooks`, so clone-based installs must add each package's hook folder explicitly.
+#### Install the Clone as a Plugin from Source
 
-Any folder named `experimental` under any artifact type (agents, instructions, or skills) must not be included without first asking the user whether they want experimental features. If the user opts in, add the `experimental` entries (and `experimental/subagents` for agents when that subfolder exists).
+Installing from source works wherever the VS Code host can read the folder and gives the full set: agents, skills, and path-specific instructions. HVE-Core keeps `plugin.json` at its repository root, so the root folder of the clone is the plugin folder. How this route behaves inside a dev container or codespace is not confirmed, so there the user must check that `hve-core` appears on the **Plugins** page before relying on it.
 
-<!-- <settings-template> -->
+Editor controls and Command Palette commands need the user, so present these steps with the resolved clone path and wait for confirmation:
+
+<!-- <plugin-from-source-steps> -->
+```text
+🔌 Install Your HVE-Core Clone as a Plugin
+
+1. Open the Agent Customizations editor and select Plugins.
+2. Select the add (+) button next to User or Workspace.
+3. Enter the clone's root folder: [clone path]
+
+Or run "Chat: Install Plugin from Source" from the Command Palette
+and enter the same folder.
+
+In a dev container or codespace, check that hve-core appears on the
+Plugins page before you rely on it.
+
+Reply "done" when the plugin is installed.
+```
+<!-- </plugin-from-source-steps> -->
+
+#### Declare the Clone in `.github/copilot/settings.json`
+
+Use this only for a clone inside the project's checkout: Methods 2, 3, and 4 (`.hve-core`) or Method 6 (`lib/hve-core`). Get approval under Checkpoint 3, then create `.github/copilot/settings.json` with the content below, or merge the three keys into the existing file. Replace `<PREFIX>` with the clone's path relative to the checkout root.
+
+<!-- <settings-directories> -->
 ```json
 {
-  "chat.agentFilesLocations": {
-    "<PREFIX>/.github/agents/accessibility": true,
-    "<PREFIX>/.github/agents/ado": true,
-    "<PREFIX>/.github/agents/coding-standards": true,
-    "<PREFIX>/.github/agents/data-science": true,
-    "<PREFIX>/.github/agents/design-thinking": true,
-    "<PREFIX>/.github/agents/github": true,
-    "<PREFIX>/.github/agents/hve-core": true,
-    "<PREFIX>/.github/agents/hve-core/subagents": true,
-    "<PREFIX>/.github/agents/project-planning": true,
-    "<PREFIX>/.github/agents/security": true
-  },
-  "chat.instructionsFilesLocations": {
-    "<PREFIX>/.github/instructions/ado": true,
-    "<PREFIX>/.github/instructions/coding-standards": true,
-    "<PREFIX>/.github/instructions/github": true,
-    "<PREFIX>/.github/instructions/hve-core": true,
-    "<PREFIX>/.github/instructions/project-planning": true,
-    "<PREFIX>/.github/instructions/shared": true
-  },
-  "chat.agentSkillsLocations": {
-    "<PREFIX>/.github/skills": true,
-    "<PREFIX>/.github/skills/accessibility": true,
-    "<PREFIX>/.github/skills/coding-standards": true,
-    "<PREFIX>/.github/skills/data-science": true,
-    "<PREFIX>/.github/skills/design-thinking": true,
-    "<PREFIX>/.github/skills/hve-core": true,
-    "<PREFIX>/.github/skills/installer": true,
-    "<PREFIX>/.github/skills/project-planning": true,
-    "<PREFIX>/.github/skills/rai": true,
-    "<PREFIX>/.github/skills/rpi": true,
-    "<PREFIX>/.github/skills/security": true,
-    "<PREFIX>/.github/skills/shared": true
-  },
-  "chat.hookFilesLocations": {
-    "<PREFIX>/.github/hooks/shared": true
-  }
+  "agentDirectories": ["<PREFIX>/.github/agents"],
+  "skillDirectories": ["<PREFIX>/.github/skills"],
+  "instructionDirectories": ["<PREFIX>/.github/instructions"]
 }
 ```
-<!-- </settings-template> -->
+<!-- </settings-directories> -->
+
+Before writing, tell the user what this declaration does and does not cover:
+
+* Paths must be literal folders inside the checkout. Absolute paths, `~`, environment variables, globs, and paths that leave the checkout are rejected.
+* The folders load only when the workspace folder is trusted.
+* Copilot finds agents and skills nested by package under each folder, so the declaration includes every package, `experimental` among them. Copilot also inlines instructions that have no `applyTo`.
+* Whether path-specific instructions (those with `applyTo`) load from these folders is not confirmed yet. Every HVE-Core instruction declares `applyTo`, so when the user needs the instructions, recommend a plugin route instead: the clone installed as a plugin from source on a local machine, or the HVE-Core plugin or team default in a dev container or codespace, where installing from source is not confirmed.
+* A sibling folder such as `../hve-core` or a folder in the home directory is outside the checkout and cannot be declared. Install it as a plugin from source instead.
+* The same file can also hold the plugin keys from the team default route. Do not enable the HVE-Core plugin there while the clone's folders are declared, because the agents would then arrive through two routes.
+* Commit the file only when everyone who opens the repository gets the same folder. A submodule qualifies, and so does a `.hve-core` folder that committed devcontainer configuration mounts or clones (Methods 3 and 4). A git-ignored clone made by hand (Method 2) does not.
 
 ### Method-Specific Instructions
 
 #### Method 1: Peer Clone
 
 Clone to parent directory: `Split-Path $workspaceRoot -Parent | Join-Path -ChildPath "hve-core"`
+
+The peer clone is outside the project's checkout. For the clone route, install it as a plugin from source.
 
 #### Method 2: Git-Ignored
 
@@ -113,9 +120,11 @@ Additional steps before cloning:
 2. Add `.hve-core/` to `.gitignore` (create if missing)
 3. Clone into `.hve-core/`
 
+For the clone route, install the `.hve-core` folder as a plugin from source. When the user prefers the settings file, declare its folders with the prefix `.hve-core` and keep that declaration out of commits, because other checkouts do not have the git-ignored folder.
+
 #### Method 3: Mounted Directory
 
-Requires host-side setup and container rebuild:
+Method 3 shares one HVE-Core clone on the host across several devcontainer projects. Each project mounts the clone into a git-ignored `.hve-core/` folder inside its workspace folder. It needs host-side setup and a container rebuild, and it does not work in Codespaces, which has no access to the host file system.
 
 **Step 1:** Display pre-rebuild instructions:
 
@@ -127,88 +136,84 @@ Clone hve-core on your HOST machine (not in container):
   git clone https://github.com/microsoft/hve-core.git
 ```
 
-**Step 2:** Add mount to devcontainer.json:
+**Step 2:** After approval under Checkpoint 3, add the mount to devcontainer.json. It mounts the host clone at `.hve-core` inside the container's workspace folder:
 
 <!-- <method-3-devcontainer-mount> -->
 ```jsonc
 {
   "mounts": [
-    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
+    "source=${localWorkspaceFolder}/../hve-core,target=${containerWorkspaceFolder}/.hve-core,type=bind,readonly=true,consistency=cached"
   ]
 }
 ```
 <!-- </method-3-devcontainer-mount> -->
 
-**Step 3:** After rebuild, validate mount exists at `/workspaces/hve-core`
+The object form is an alternative:
 
-**Step 4:** Treat `/workspaces/hve-core` as a pre-existing source. Before Phase 7 collision detection or component copy, apply the upstream-source verification in [component-installation.md](component-installation.md). A missing or unexpected `origin` warns and requires confirmation; it does not automatically reject an intentional fork or local clone.
+<!-- <method-3-devcontainer-mount-object> -->
+```jsonc
+{
+  "mounts": [
+    {
+      "type": "bind",
+      "source": "${localWorkspaceFolder}/../hve-core",
+      "target": "${containerWorkspaceFolder}/.hve-core"
+    }
+  ]
+}
+```
+<!-- </method-3-devcontainer-mount-object> -->
+
+**Step 3:** Add `.hve-core/` to `.gitignore` (create if missing) so Git does not pick up the mounted copy:
+
+```text
+# Shared HVE Core mount (local only)
+.hve-core/
+```
+
+**Step 4:** Have the user run **Dev Containers: Rebuild Container**, then validate that the mount exists at `.hve-core` in the project folder.
+
+**Step 5:** Treat `.hve-core` as a pre-existing source. Before Phase 7 collision detection or component copy, apply the upstream-source verification in [component-installation.md](component-installation.md) to `.hve-core`. A missing or unexpected `origin` warns and requires confirmation; it does not automatically reject an intentional fork or local clone.
+
+**Step 6:** For the clone route, declare `.hve-core/.github/agents`, `.hve-core/.github/skills`, and `.hve-core/.github/instructions` in `.github/copilot/settings.json`, following Declare the Clone in `.github/copilot/settings.json` above with `<PREFIX>` set to `.hve-core`, and tell the user its limits.
+
+Installing the mount as a plugin from source, with a path such as `/workspaces/my-project/.hve-core`, is an alternative only when the user confirms that `hve-core` appears on the **Plugins** page, because that route is not confirmed inside a container. When the user takes that alternative, skip the settings file.
 
 #### Method 4: postCreateCommand (Codespaces)
 
-Add to devcontainer.json:
+When the user needs no pinned or customized copy, recommend the Team Default Route from Phase 2 instead. That route puts the plugin keys in `.github/copilot/settings.json` and needs no clone. Copilot then offers HVE-Core to everyone who opens the repository in a codespace.
+
+For a pinned or customized copy, clone HVE-Core into `.hve-core/` inside the repository folder. There the copy persists under `/workspaces` and sits inside the checkout, where the settings file can declare it.
+
+**Step 1:** Add `.hve-core/` to `.gitignore` (create if missing):
+
+```text
+# HVE Core clone (created by postCreateCommand)
+.hve-core/
+```
+
+**Step 2:** After approval under Checkpoint 3, add the clone command to devcontainer.json:
 
 <!-- <method-4-devcontainer> -->
 ```jsonc
 {
-  "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "chat.agentFilesLocations": {
-          "/workspaces/hve-core/.github/agents/accessibility": true,
-          "/workspaces/hve-core/.github/agents/ado": true,
-          "/workspaces/hve-core/.github/agents/coding-standards": true,
-          "/workspaces/hve-core/.github/agents/data-science": true,
-          "/workspaces/hve-core/.github/agents/design-thinking": true,
-          "/workspaces/hve-core/.github/agents/github": true,
-          "/workspaces/hve-core/.github/agents/hve-core": true,
-          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
-          "/workspaces/hve-core/.github/agents/project-planning": true,
-          "/workspaces/hve-core/.github/agents/security": true
-        },
-        "chat.instructionsFilesLocations": {
-          "/workspaces/hve-core/.github/instructions/ado": true,
-          "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/github": true,
-          "/workspaces/hve-core/.github/instructions/hve-core": true,
-          "/workspaces/hve-core/.github/instructions/project-planning": true,
-          "/workspaces/hve-core/.github/instructions/shared": true
-        },
-        "chat.agentSkillsLocations": {
-          "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/accessibility": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true,
-          "/workspaces/hve-core/.github/skills/data-science": true,
-          "/workspaces/hve-core/.github/skills/design-thinking": true,
-          "/workspaces/hve-core/.github/skills/hve-core": true,
-          "/workspaces/hve-core/.github/skills/installer": true,
-          "/workspaces/hve-core/.github/skills/project-planning": true,
-          "/workspaces/hve-core/.github/skills/rai": true,
-          "/workspaces/hve-core/.github/skills/rpi": true,
-          "/workspaces/hve-core/.github/skills/security": true,
-          "/workspaces/hve-core/.github/skills/shared": true
-        },
-        "chat.hookFilesLocations": {
-          "/workspaces/hve-core/.github/hooks/shared": true
-        }
-      }
-    }
-  }
+  "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core"
 }
 ```
 <!-- </method-4-devcontainer> -->
 
-Optional: Add `updateContentCommand` for auto-updates on rebuild.
+To pin a version, add `--branch <release-tag>` to the clone command. To refresh the clone each time the codespace starts, also add a `postStartCommand` of `cd .hve-core && git pull --ff-only 2>/dev/null || true`.
+
+**Step 3:** For the clone route, declare `.hve-core/.github/agents`, `.hve-core/.github/skills`, and `.hve-core/.github/instructions` in `.github/copilot/settings.json`, following Declare the Clone in `.github/copilot/settings.json` above with `<PREFIX>` set to `.hve-core`, and tell the user its limits. When the file holds the HVE-Core plugin keys from the team default, remove them so HVE-Core arrives through one route.
+
+**Step 4:** Remind the user to commit `.gitignore`, `devcontainer.json`, and the settings file, then create a new codespace or run **Codespaces: Rebuild Container** in an existing one.
 
 #### Method 5: Multi-Root Workspace
 
-Create `hve-core.code-workspace` file with folders array pointing to both project and HVE-Core.
-
-Use the actual clone path (not the folder display name) as the settings prefix.
-Folder display names in `chat.*Locations` settings do not resolve reliably.
+After approval under Checkpoint 3, create `hve-core.code-workspace` file with folders array pointing to both project and HVE-Core.
 
 > [!IMPORTANT]
-> The dev container spec has no `workspaceFile` property. Codespaces and devcontainers always open in single-folder mode. The user must manually open the `.code-workspace` file after the container starts (`File > Open Workspace from File...` or `code <path>.code-workspace`). For Codespaces, Method 4 is usually more convenient because it configures settings automatically without requiring a workspace switch.
+> The dev container spec has no `workspaceFile` property. Codespaces and devcontainers always open in single-folder mode. The user must manually open the `.code-workspace` file after the container starts (`File > Open Workspace from File...` or `code <path>.code-workspace`). For Codespaces, Method 4 is usually more convenient because it does not require a workspace switch.
 
 Local VS Code: use a relative clone path from the workspace file's directory.
 
@@ -218,13 +223,12 @@ Local VS Code: use a relative clone path from the workspace file's directory.
   "folders": [
     { "name": "My Project", "path": "." },
     { "path": "../hve-core" }
-  ],
-  "settings": { /* Same as settings template with ../hve-core prefix */ }
+  ]
 }
 ```
 <!-- </method-5-workspace-local> -->
 
-User opens the `.code-workspace` file instead of the folder.
+User opens the `.code-workspace` file instead of the folder. The HVE-Core folder is outside the project's checkout, so for the clone route, install it as a plugin from source.
 
 Resolve the HVE-Core folder's actual clone path from the workspace file and treat it as a pre-existing source. Before Phase 7 collision detection or component copy, apply the upstream-source verification in [component-installation.md](component-installation.md). A missing or unexpected `origin` warns and requires confirmation; it does not automatically reject an intentional fork or local clone.
 
@@ -251,3 +255,8 @@ Optional devcontainer.json for auto-initialization:
 }
 ```
 <!-- </method-6-devcontainer> -->
+
+For the clone route, pick one connection for the whole team:
+
+* Declare the submodule's folders in `.github/copilot/settings.json` with the prefix `lib/hve-core` and commit the file. Everyone who initializes the submodule and opens the repository in a trusted folder then gets the agents and skills; path-specific instructions from declared folders are not confirmed.
+* Or leave the settings file out and have each person install `lib/hve-core` as a plugin from source for the full set.

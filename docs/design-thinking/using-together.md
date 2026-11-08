@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -83,7 +83,7 @@ The coach facilitates affinity clustering, theme extraction, and "How Might We" 
 
 ### Transition: Problem Space → Solution Space
 
-When Method 3 outputs are validated across sources and the team has alignment, ask the coach to assess the space transition, or select the **🎯 Method Next** handoff:
+When Method 3 outputs are validated across sources and the team has alignment, ask the coach to assess the space transition:
 
 ```text
 Our themes hold up across every source and the team agrees on them.

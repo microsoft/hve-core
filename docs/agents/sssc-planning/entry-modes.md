@@ -14,12 +14,12 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-31
 ms.topic: how-to
 estimated_reading_time: 5
 ---
 
-The SSSC Planner supports four entry modes that control how Phase 1 scoping begins. The agent selects the mode from your opening request, the artifacts you supply, or an incoming Security Planner handoff, which sets the initial state and determines how much context it gathers before starting the supply chain assessment.
+The SSSC Planner supports four entry modes that control how Phase 1 scoping begins. The agent selects the mode from your opening request and the artifacts you supply. The mode sets the initial state and determines how much context the agent gathers before starting the supply chain assessment.
 
 ## Capture Mode
 
@@ -108,7 +108,7 @@ From-Security-Plan mode seeds Phase 1 from an existing Security Planner state fi
 
 ### Starting From-Security-Plan Mode
 
-Select the **SSSC Planner** agent and ask it to extend your completed security plan, or choose the **SSSC Planner** handoff at the end of a Security Planner session. When several security plans exist, the agent asks which one to extend; when none exist, it falls back to capture mode.
+Select the **SSSC Planner** agent and ask it to extend your completed security plan, including when a Security Planner session recommends it at the end. When several security plans exist, the agent asks which one to extend; when none exist, it falls back to capture mode.
 
 ### When to Choose From-Security-Plan Mode
 

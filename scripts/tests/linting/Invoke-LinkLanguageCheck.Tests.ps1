@@ -21,6 +21,9 @@ BeforeAll {
     Import-Module $script:ModulePath -Force
     Import-Module $script:CIHelpersPath -Force
 
+    # Captured before mocking so default mocks can call the real cmdlet
+    $script:RealJoinPath = Get-Command -Name Join-Path -CommandType Cmdlet
+
     . $script:ScriptPath
 }
 
@@ -90,6 +93,8 @@ Write-Output $json
                 return $script:RepoRoot
             } -ParameterFilter { $args -contains 'rev-parse' }
 
+            # Unfiltered Join-Path calls use the real cmdlet
+            Mock Join-Path { & $script:RealJoinPath @PesterBoundParameters }
             Mock Join-Path {
                 return $script:MockLinkLang
             } -ParameterFilter { $ChildPath -eq 'Link-Lang-Check.ps1' }
@@ -153,6 +158,8 @@ Write-Output $json
                 return $script:RepoRoot
             } -ParameterFilter { $args -contains 'rev-parse' }
 
+            # Unfiltered Join-Path calls use the real cmdlet
+            Mock Join-Path { & $script:RealJoinPath @PesterBoundParameters }
             Mock Join-Path {
                 return $script:MockLinkLang
             } -ParameterFilter { $ChildPath -eq 'Link-Lang-Check.ps1' }
@@ -446,6 +453,8 @@ Write-Output "[]"
                 return $script:RepoRoot
             } -ParameterFilter { $args -contains 'rev-parse' }
 
+            # Unfiltered Join-Path calls use the real cmdlet
+            Mock Join-Path { & $script:RealJoinPath @PesterBoundParameters }
             Mock Join-Path {
                 return $script:MockLinkLang
             } -ParameterFilter { $ChildPath -eq 'Link-Lang-Check.ps1' }
@@ -487,6 +496,8 @@ Write-Output "[]"
                 return $script:RepoRoot
             } -ParameterFilter { $args -contains 'rev-parse' }
 
+            # Unfiltered Join-Path calls use the real cmdlet
+            Mock Join-Path { & $script:RealJoinPath @PesterBoundParameters }
             Mock Join-Path {
                 return $script:MockLinkLang
             } -ParameterFilter { $ChildPath -eq 'Link-Lang-Check.ps1' }
@@ -544,6 +555,8 @@ Write-Output $json
                 return $script:RepoRoot
             } -ParameterFilter { $args -contains 'rev-parse' }
 
+            # Unfiltered Join-Path calls use the real cmdlet
+            Mock Join-Path { & $script:RealJoinPath @PesterBoundParameters }
             Mock Join-Path {
                 return $script:MockLinkLang
             } -ParameterFilter { $ChildPath -eq 'Link-Lang-Check.ps1' }

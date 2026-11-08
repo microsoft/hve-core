@@ -34,18 +34,8 @@
       "url": "./scripts/linting/schemas/accessibility-state.schema.json"
     }
   ],
-  "chat.instructionsFilesLocations": {
-    ".github/instructions/accessibility": true,
-    ".github/instructions/coding-standards": true,
-    ".github/instructions/engagement-reporting": true,
-    ".github/instructions/experimental": true,
-    ".github/instructions/hve-core": true,
-    ".github/instructions/privacy": true,
-    ".github/instructions/project-planning": true,
-    ".github/instructions/rai-planning": true,
-    ".github/instructions/security": true,
-    ".github/instructions/shared": true
-  },
+  // Lists HVE Core's nested package folders for VS Code's Local harness.
+  // Copilot sessions find these folders without these settings.
   "chat.agentFilesLocations": {
     ".github/agents/accessibility": true,
     ".github/agents/accessibility/subagents": true,
@@ -67,11 +57,22 @@
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
   },
+  "chat.instructionsFilesLocations": {
+    ".github/instructions/accessibility": true,
+    ".github/instructions/coding-standards": true,
+    ".github/instructions/design-thinking": true,
+    ".github/instructions/experimental": true,
+    ".github/instructions/hve-core": true,
+    ".github/instructions/project-planning": true,
+    ".github/instructions/rai-planning": true,
+    ".github/instructions/security": true,
+    ".github/instructions/shared": true
+  },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
     ".github/skills/accessibility": true,
     ".github/skills/coding-standards": true,
-    ".github/skills/data-science": true,
+    ".github/skills/data-science-engineering": true,
     ".github/skills/design-thinking": true,
     ".github/skills/engagement-reporting": true,
     ".github/skills/experimental": true,
@@ -83,13 +84,9 @@
     ".github/skills/security": true,
     ".github/skills/shared": true
   },
-  "chat.hookFilesLocations": {
-    ".github/hooks": true,
-    ".github/hooks/shared": true
-  },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "file": ".github/instructions/hve-core/commit-message.instructions.md"
+      "file": ".github/skills/hve-core/git-commit/references/commit-message.md"
     }
   ],
 }
