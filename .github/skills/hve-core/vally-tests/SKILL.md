@@ -127,7 +127,7 @@ Authored stimuli always land in one of the routed Vally eval files. The router i
 |--------------|-------------------------------------------------------|----------------------|
 | prompt       | `evals/behavior-conformance/prompts.eval.yaml`        | behavior-conformance |
 | instructions | `evals/behavior-conformance/instructions.eval.yaml`   | behavior-conformance |
-| agent        | `evals/agent-behavior/eval.yaml`                      | agent-behavior       |
+| agent        | `evals/agent-behavior/stimuli/<slug>.yml`             | agent-behavior       |
 | skill        | `evals/behavior-conformance/skill-behavior.eval.yaml` | behavior-conformance |
 
 The `prompt` target is created on first use when a repository has no prompt stimuli yet.

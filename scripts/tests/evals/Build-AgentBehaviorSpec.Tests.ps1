@@ -607,7 +607,6 @@ Describe 'Artifact inspection input contracts' -Tag 'Unit' {
 
   It 'Stages the exact source artifact for <Scenario>' -ForEach @(
     @{ Scenario = 'backlog-manager-frontmatter-name-and-description' }
-    @{ Scenario = 'backlog-manager-handoff-targets-and-labels' }
     @{ Scenario = 'backlog-manager-tool-restriction-fit' }
     @{ Scenario = 'backlog-manager-protocol-heading-consistency' }
   ) {
@@ -1184,9 +1183,12 @@ console.log(JSON.stringify(results));
       Reject = @('Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira.', 'Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. It performs all mutations itself.')
     }
     @{
-      Spec = 'stimuli/backlog-manager.yml'; Scenario = 'backlog-manager-handoff-targets-and-labels'; Grader = 'reports-declared-labels'; Count = 3
-      Accept = 'Backlog Manager: Discover, Triage, Sprint, My Work, Task Plan, Resume, Add Item, Execute. Functional Planner: PRD to Hierarchy.'
-      Reject = @('Backlog Manager: Task Plan, Add Item. Functional Planner: PRD to Hierarchy.', 'Backlog Manager: Discover, Triage, Sprint, My Work, Task Plan, Resume, Add Item, Execute.')
+      Spec = 'stimuli/functional-planner.yml'; Scenario = 'functional-planner-handoff-target-and-label'; Grader = 'names-declared-handoff-target'; Count = 2
+      Accept = @('After user review, the `Backlog Manager` executes the finalized plan.',
+        'It hands the reviewed handoff.md to Backlog Manager for execution; this agent only plans.')
+      Reject = @('STIMULUS_PROMPT',
+        'I can''t find that skill or reference in this workspace, so I can''t answer from it.',
+        'After user review, the PRD Builder executes the finalized plan.')
     }
     @{
       Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-advisory-and-routing'; Grader = 'routing-source-referenced'; Count = 3

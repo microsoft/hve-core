@@ -4,7 +4,8 @@
 #
 # Conformance checks emitted per the vally-tests agent reference.
 # Applicable to this top-level agent: Check 1 (required frontmatter),
-# Check 6 (handoff pattern), Check 7 (tool restrictions). Checks 4 and 5 are
+# Check 7 (tool restrictions), and Check 8's human-readable-name rule applied
+# to the next agent its body hands the plan to. Checks 4 and 5 are
 # subagent-only. Check 9 does not apply: this agent presents its workflow as a
 # numbered overview list rather than the phase or step heading form, and the
 # artifact is not edited to make an inapplicable check pass.
@@ -41,7 +42,7 @@ stimuli:
     prompt: |
       Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
 
-      List every agent it can hand off to and the label each handoff entry carries. Identify each target agent the way the artifact identifies it.
+      After the user reviews the finalized plan, which agent does the artifact say executes it? Identify that agent the way the artifact identifies it.
       If the file cannot be read, report the task as blocked without inventing its declarations.
     agent_environment:
       files:
@@ -55,10 +56,6 @@ stimuli:
         name: names-declared-handoff-target
         config:
           pattern: '(?i)\bBacklog Manager\b'
-      - type: output-matches
-        name: reports-declared-label
-        config:
-          pattern: '(?i)Execute Hierarchy'
       - type: output-matches
         name: identifies-target-by-name-not-path
         config:

@@ -1009,34 +1009,6 @@ stimuli:
     config:
       pattern: (?i)name\s*(is|:)\s*.{0,3}backlog-manager
       negate: true
-- name: backlog-manager-handoff-targets-and-labels
-  prompt: |
-    Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
-
-    List every agent it can hand off to and the label each handoff entry carries. Identify each target agent the way the artifact identifies it.
-    If the file cannot be read, report the task as blocked without inventing its declarations.
-  agent_environment:
-    files:
-    - src: ../../.github/agents/project-planning/backlog-manager.agent.md
-      dest: .github/agents/project-planning/backlog-manager.agent.md
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: backlog-manager
-  graders:
-  - type: output-matches
-    name: names-cross-agent-handoff-target
-    config:
-      pattern: (?i)\bFunctional Planner\b
-  - type: output-matches
-    name: reports-declared-labels
-    config:
-      pattern: (?is)^(?=[\s\S]*\bDiscover\b)(?=[\s\S]*\bTriage\b)(?=[\s\S]*\bSprint\b)(?=[\s\S]*\bMy Work\b)(?=[\s\S]*\bTask Plan\b)(?=[\s\S]*\bResume\b)(?=[\s\S]*\bAdd Item\b)(?=[\s\S]*\bExecute\b)(?=[\s\S]*\bPRD to Hierarchy\b)(?=[\s\S]*\bBacklog Manager\b)(?=[\s\S]*\bFunctional Planner\b)
-  - type: output-matches
-    name: identifies-targets-by-name-not-path
-    config:
-      pattern: (?i)agent\s*:\s*.{0,3}[\w/-]*\.agent\.md
-      negate: true
 - name: backlog-manager-tool-restriction-fit
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
@@ -5568,7 +5540,7 @@ stimuli:
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
 
-    List every agent it can hand off to and the label each handoff entry carries. Identify each target agent the way the artifact identifies it.
+    After the user reviews the finalized plan, which agent does the artifact say executes it? Identify that agent the way the artifact identifies it.
     If the file cannot be read, report the task as blocked without inventing its declarations.
   agent_environment:
     files:
@@ -5583,10 +5555,6 @@ stimuli:
     name: names-declared-handoff-target
     config:
       pattern: (?i)\bBacklog Manager\b
-  - type: output-matches
-    name: reports-declared-label
-    config:
-      pattern: (?i)Execute Hierarchy
   - type: output-matches
     name: identifies-target-by-name-not-path
     config:

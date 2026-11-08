@@ -16,16 +16,19 @@ Grader recommendations below name the literal Vally `type:` keywords, `output-ma
 
 ## Contract Summary
 
-| Topic                                 | Section in hve-builder.instructions.md       |
-|---------------------------------------|----------------------------------------------|
-| Frontmatter and metadata              | Frontmatter and Portability                  |
-| Tool restrictions                     | Frontmatter and Portability                  |
-| Handoff pattern                       | Frontmatter and Portability                  |
-| Conversational vs autonomous protocol | Outcome and Structure                        |
-| Subagent pattern                      | Delegate Deliberately                        |
-| Subagent structural template          | Delegate Deliberately; Outcome and Structure |
-| Subagent invocation                   | Frontmatter and Portability                  |
-| Phase and step heading conventions    | Outcome and Structure; Writing               |
+| Check | Topic                                 | Contract source                                                                 |
+|-------|---------------------------------------|---------------------------------------------------------------------------------|
+| 1     | Frontmatter and metadata              | hve-builder.instructions.md, Frontmatter and Portability                        |
+| 2     | Conversational vs autonomous protocol | Observed convention; hve-builder.instructions.md, Outcome and Structure         |
+| 3     | Subagent delegation named in the body | hve-builder.instructions.md, Delegate Deliberately; Frontmatter and Portability |
+| 4     | Subagent user-invocable flag          | hve-builder.instructions.md, Frontmatter and Portability                        |
+| 5     | Subagent structural template          | Observed convention; hve-builder.instructions.md, Delegate Deliberately         |
+| 6     | Skill preloads and named activation   | hve-builder.instructions.md, Frontmatter and Portability                        |
+| 7     | Tool restrictions                     | hve-builder.instructions.md, Frontmatter and Portability                        |
+| 8     | Subagent invocation                   | hve-builder.instructions.md, Frontmatter and Portability                        |
+| 9     | Phase and step heading conventions    | Observed convention; hve-builder.instructions.md, Outcome and Structure         |
+
+The Copilot harness does not support the `agents`, `handoffs`, or `argument-hint` agent frontmatter fields, and the agent frontmatter schema rejects them. Do not author checks that ask about them; test the body text that names subagents and next agents instead.
 
 ## Stimulus Staging and Grading
 
@@ -42,7 +45,7 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 
   Stage any other file the question depends on, such as an instruction file or skill the target says it requires, so the agent does not halt on a missing dependency.
 * End the stimulus with: "If the file cannot be read, report the task as blocked without inventing its declarations." A blocked reply is then distinguishable from an invented one.
-* Grade the reply, not the file. Output graders read the agent's answer, so assert the reported value (a name, a flag value, heading words) rather than frontmatter syntax such as `^description:`. Validate file-only properties, such as the description length limit, with frontmatter linting instead of a reply grader.
+* Grade the reply, not the file. Output graders read the agent's answer, so assert the reported value (a name, a flag value, heading words) rather than frontmatter syntax such as `^description:`. Validate file-only properties, such as required frontmatter fields, with frontmatter linting instead of a reply grader.
 * Accept the formats a correct answer uses: backticked values, sentences, and bulleted, numbered, or inline lists. Constrain order only when order is the behavior under test.
 * Guard every negated grader against truthful denial, and keep positive and negated checks in separate graders.
 * Before appending, probe each pattern offline against answers that must pass and answers that must fail.
@@ -54,26 +57,26 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 ### Check 1: Required Frontmatter Fields
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: agent frontmatter MUST include a non-empty `description:` field under 120 characters AND a `name:` field carrying the human-readable agent name (for example `RPI Agent`).
+* Testable behavior: agent frontmatter MUST include a non-empty `description:` field written as concise trigger metadata AND a `name:` field carrying the human-readable agent name (for example `RPI Agent`).
 * Suggested stimulus: stage the artifact and ask the agent to report the human-readable name declared in its frontmatter and to restate its declared description verbatim.
 * Grader recommendation: `output-matches` asserting the reported name, for example `(?i)\bRPI Agent\b`, plus a second `output-matches` asserting a distinctive clause of the declared description. Add a separate negated `output-matches` rejecting the filename slug reported as the name, guarded so a file-name mention does not fire, for example `(?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}rpi-agent\b(?!\.agent\.md)`.
 * Evidence: `.github/agents/hve-core/rpi-agent.agent.md` and `.github/agents/hve-core/documentation.agent.md` follow this pair.
 
 ### Check 2: Conversational vs Autonomous Protocol Distinction
 
-* Contract source: `hve-builder.instructions.md`, Outcome and Structure.
-* Testable behavior: conversational agents MUST present their workflow as `## Required Phases` (multi-turn, user-guided); autonomous agents MUST present their workflow as `## Required Steps` (task execution, minimal user interaction). The protocol type chosen MUST match the agent's purpose as stated in its description.
+* Contract source: observed repository convention. `hve-builder.instructions.md`, Outcome and Structure, asks for one consistent structural convention but does not name these headings.
+* Testable behavior: conversational agents in this repository present their workflow as `## Required Phases` (multi-turn, user-guided); autonomous agents present it as `## Required Steps` (task execution, minimal user interaction). The protocol type chosen matches the agent's purpose as stated in its description.
 * Suggested stimulus: stage the artifact and ask whether it runs conversationally or autonomously and which section heading carries its protocol.
 * Grader recommendation: `prompt` with rubric "Does the agent's protocol type (Phases vs Steps) match the conversational vs autonomous purpose stated in its description?".
 * Evidence: `.github/agents/project-planning/backlog-manager.agent.md` uses Required Phases consistent with its conversational purpose.
 
-### Check 3: Subagent Dependencies Declared in Frontmatter
+### Check 3: Subagent Delegation Named in the Body
 
-* Contract source: `hve-builder.instructions.md`, Delegate Deliberately and Frontmatter and Portability.
-* Testable behavior: omit `agents:` when a parent may invoke any available subagent. Use an explicit array when the parent has a fixed allowlist, including `agents: []` when it may invoke none. Fixed entries MUST use each subagent's human-readable `name:` rather than a filename or path. A wildcard string is non-conforming.
-* Suggested stimulus: stage the parent artifact and ask whether it has unrestricted, fixed, or empty subagent access and, for a fixed set, which human-readable names it declares.
-* Grader recommendation: `prompt` with rubric "Does the response distinguish omitted `agents:` as unrestricted access from explicit fixed arrays, accept `[]` as an empty fixed set, reject wildcard strings, and use human-readable names for fixed entries?" A single mandatory-list pattern cannot represent all valid modes.
-* Evidence: `.github/agents/hve-core/documentation.agent.md` omits `agents:`; `.github/agents/project-planning/brd-builder.agent.md` declares a fixed `BRD Quality Reviewer` array; `.github/agents/security/subagents/cve-analyzer.agent.md` declares `agents: []`.
+* Contract source: `hve-builder.instructions.md`, Delegate Deliberately and Frontmatter and Portability. The harness does not support an `agents:` frontmatter field, so a parent describes the subagents it delegates to in its body, and the subagent tool selects them by name.
+* Testable behavior: a parent that delegates names each subagent in its body by the subagent's human-readable `name:` rather than a filename or path.
+* Suggested stimulus: stage the parent artifact and ask which subagents it delegates to, identifying each the way the artifact does.
+* Grader recommendation: `output-matches` asserting a subagent the body names, for example `(?i)\bBRD Quality Reviewer\b`. Add a separate negated `output-matches` rejecting a subagent identified by file path or filename, guarded against truthful denial, for example `(?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})\b(?:delegates?\s+to|dispatch(?:es)?)\s+\S*\.agent\.md\b`.
+* Evidence: `.github/agents/project-planning/brd-builder.agent.md` dispatches `BRD Quality Reviewer` by name in its body.
 
 ### Check 4: Subagent user-invocable Flag
 
@@ -85,31 +88,30 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 
 ### Check 5: Subagent Structural Template
 
-* Contract source: `hve-builder.instructions.md`, Delegate Deliberately and Outcome and Structure (the canonical subagent section pattern: H1 matching the name, Purpose, Inputs, a named output artifact, Required Steps, an optional Required Protocol, and a Response Format).
-* Testable behavior: subagent files MUST present the following structure:
+* Contract source: observed repository convention. `hve-builder.instructions.md`, Delegate Deliberately, requires a delegated task to define its inputs, write boundary, and return shape, but does not prescribe section headings.
+* Testable behavior: subagent files in this repository present the following structure:
   * An H1 heading whose text matches the frontmatter `name:` field exactly.
   * A Purpose section that states the subagent's objectives.
   * An Inputs section that distinguishes required from optional inputs.
-  * An Output artifact section that names the file or tracking artifact the subagent updates progressively.
-  * A Required Steps section that opens with a Pre-requisite step and continues with numbered steps.
-  * OPTIONAL Required Protocol section for meta-rules and execution constraints.
+  * A Required Steps section with numbered steps.
+  * An optional Required Protocol section for meta-rules and execution constraints.
   * A Response Format section that defines the structured return to the parent.
 * Suggested stimulus: stage the artifact and ask for every level-one and level-two section heading in order, exactly as written, and whether its first heading matches the frontmatter name. "Top-level headings" alone is ambiguous: hosted replies sometimes list only the H1.
 * Grader recommendation: one `output-matches` per required section asserting the heading words in the reply, case-sensitive for single words so ordinary prose does not satisfy them: `\bPurpose\b`, `\bInputs\b`, `(?i)Required\s+Steps`, `(?i)Response\s+Format`. These accept numbered, bulleted, and inline lists. Add an `output-matches` asserting that the reply confirms the H1 matches the name.
-* Evidence: the delegated-task contract in `hve-builder.instructions.md`, Delegate Deliberately; `.github/agents/coding-standards/subagents/code-review-functional.agent.md` follows the subagent structure.
+* Evidence: `.github/agents/security/subagents/cve-analyzer.agent.md` follows this structure: `# CVE Analyzer`, Purpose, Inputs, Required Steps, Required Protocol, and Response Format.
 
-### Check 6: Handoff Pattern Structure
+### Check 6: Skill Preloads and Named Activation
 
-* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: when an agent declares `handoffs:`, each entry MUST include `label:` (display text, MAY contain emoji) and `agent:` (human-readable agent name from the target agent's `name:` field). Each entry MAY also carry a slash command and an auto-send flag, listed under Evidence.
-* Suggested stimulus: stage the artifact and ask which other agents it can hand off to and what label each handoff carries, identifying each target the way the artifact does.
-* Grader recommendation: `output-matches` asserting that each declared target and its label appear on the same line in either order, one grader per handoff entry, for example `(?im)^.*\bBacklog Manager\b.*\bExecute Hierarchy\b|^.*\bExecute Hierarchy\b.*\bBacklog Manager\b`. This accepts bulleted, tabular, and backticked lists and fails a reply that attaches a label to the wrong target on separate lines. Add a separate negated `output-matches` rejecting a target identified by file path, with a truthful-denial guard, for example `(?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})\bagent\s*:\s*\W{0,3}[\w/-]*\.agent\.md`.
-* Evidence: `.github/agents/project-planning/ux-ui-designer.agent.md` demonstrates label, agent, prompt (slash command), and send (auto-send) fields together.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability. The harness does not support a `handoffs:` frontmatter field and does not load `#file:` directives, so an agent preloads the skills it needs at start with `skills:` and activates other skills by name in its body.
+* Testable behavior: skills the agent needs when it starts appear in its `skills:` frontmatter, and the body activates every other skill it depends on by its stable name.
+* Suggested stimulus: stage the artifact and the skills it names, then ask which skills it preloads at start and which it activates by name during its workflow, identifying each by name.
+* Grader recommendation: one `output-matches` per declared preload and per named activation, for example `(?i)\bdisclaimer-language\b`, `(?i)\buntrusted-content-boundary\b`, and `(?i)\bplanner-identity\b`. These accept backticked, bulleted, and inline lists. Do not constrain order.
+* Evidence: `.github/agents/privacy/privacy-planner.agent.md` preloads `disclaimer-language` and `untrusted-content-boundary`, and its body activates `planner-identity` and `privacy-standards` at session start.
 
 ### Check 7: Tool Restrictions Format
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: when an agent declares `tools:`, the value MUST be a list of valid tool identifiers available in this VS Code context. When the `tools:` field is omitted, the agent inherits the default tool set.
+* Testable behavior: tool configuration is user-managed. When an agent declares `tools:`, Copilot recognizes its tool aliases and MCP names and ignores names it does not recognize; an empty list grants every tool. An agent cannot load a skill by name without `skill` in its list, and subagents never receive `ask_user`.
 * Suggested stimulus: stage the artifact and ask whether its declared tools fit the role its description states, distinguishing the declared grants from what the host actually enforces.
 * Grader recommendation: `prompt` with a rubric that rewards reasoning from the artifact's own declared tools and description, rejects invented tools, and rejects claims that a tool grant enforces a boundary only the artifact's own policy provides. Keep the rubric's expected tool families out of the stimulus text so the reply is not taught the answer.
 * Evidence: a subagent under `.github/agents/**/subagents/` such as `.github/agents/hve-core/subagents/rpi-researcher.agent.md` shows the `tools:` field shape.
@@ -124,8 +126,8 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 
 ### Check 9: Phase and Step Heading Consistency
 
-* Contract source: `hve-builder.instructions.md`, Outcome and Structure and Writing.
-* Testable behavior: phases MUST take the form `### Phase N: Short Summary` and steps MUST take the form `### Step N: Short Summary`, each with a descriptive summary after the colon.
+* Contract source: observed repository convention. `hve-builder.instructions.md`, Outcome and Structure and Writing, asks for one consistent structural convention and clear headings but does not prescribe these forms.
+* Testable behavior: phases in this repository take the form `### Phase N: Short Summary` and steps take the form `### Step N: Short Summary`, each with a descriptive summary after the colon.
 * Suggested stimulus: stage the artifact and ask for its phase or step headings in order, exactly as written.
 * Grader recommendation: `output-matches` asserting every expected heading summary in order with any intervening text, for example `(?is)Phase\s+1:\s+Platform and Intent Classification[\s\S]*Phase\s+2:\s+Workflow Dispatch[\s\S]*Phase\s+3:\s+Summary and Handoff` for the Evidence artifact below. Sequence is the behavior under test, so this is the one check where an ordered pattern is correct; it still accepts numbered, bulleted, and backticked lists.
 * Evidence: `.github/agents/project-planning/backlog-manager.agent.md` demonstrates the heading shape across phases.
