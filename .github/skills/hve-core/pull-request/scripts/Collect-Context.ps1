@@ -8,18 +8,29 @@
     Collects local branch context for a pull request.
 .DESCRIPTION
     Reports branch, divergence, commits, changed files, diff statistics, worktree state, and pull
-    request templates without fetching or changing git state.
+    request templates without fetching or changing git state. Describes the checked-out branch
+    unless -Head names another local branch. The worktree section always reports the current
+    checkout.
 .PARAMETER Base
-    Base branch or ref. Use auto to resolve the local remote default branch.
+    Base branch or ref (default: the remote default branch). A plain name resolves to origin/NAME
+    before NAME. Use refs/heads/NAME for a local branch.
+.PARAMETER Head
+    Local branch to describe (default: the checked-out branch).
 .EXAMPLE
     ./Collect-Context.ps1 -Base origin/main
+.EXAMPLE
+    ./Collect-Context.ps1 -Head feature-b -Base refs/heads/feature-a
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Base = 'auto'
+    [string]$Base = 'auto',
+
+    [Parameter(Mandatory = $false)]
+    [AllowEmptyString()]
+    [string]$Head = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -133,10 +144,43 @@ function Resolve-BaseRef {
     throw "Base ref '$RequestedRef' is unavailable locally. Fetch it or pass another ref."
 }
 
+function Resolve-HeadBranch {
+    <#
+    .SYNOPSIS
+        Resolves the local branch to describe.
+    .PARAMETER Head
+        Requested branch name. An empty value selects the checked-out branch.
+    .OUTPUTS
+        System.String
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$Head = ''
+    )
+
+    $Branch = if ($Head) {
+        $Head -creplace '^refs/heads/', ''
+    }
+    else {
+        Invoke-GitText -ArgumentList @('branch', '--show-current')
+    }
+    if (-not $Branch) {
+        throw 'A named branch must be checked out, or pass -Head BRANCH.'
+    }
+    & git show-ref --verify --quiet "refs/heads/$Branch" *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw "'$Branch' is not a local branch."
+    }
+    return $Branch
+}
+
 function Get-PullRequestBaseName {
     <#
     .SYNOPSIS
-        Converts a local remote-tracking ref to a pull request base branch name.
+        Converts a resolved base ref to a pull request base branch name.
     .PARAMETER BaseRef
         Resolved local base ref.
     .OUTPUTS
@@ -150,13 +194,21 @@ function Get-PullRequestBaseName {
         [string]$BaseRef
     )
 
-    return $BaseRef -replace '^refs/remotes/', '' -replace '^origin/', ''
+    if ($BaseRef.StartsWith('refs/heads/', [System.StringComparison]::Ordinal)) {
+        return $BaseRef.Substring('refs/heads/'.Length)
+    }
+    return $BaseRef -creplace '^refs/remotes/', '' -creplace '^origin/', ''
 }
 
 function Get-PullRequestTemplate {
     <#
     .SYNOPSIS
-        Finds pull request templates in supported repository locations.
+        Finds pull request templates in the locations GitHub reads.
+    .DESCRIPTION
+        Checks .github/, the repository root, and docs/, in that order. Each location reports its
+        pull_request_template.md file before the Markdown files in its PULL_REQUEST_TEMPLATE/
+        folder. Names match without regard to case, so a case-insensitive file system still lists
+        each template once.
     .PARAMETER RepoRoot
         Absolute repository root.
     .OUTPUTS
@@ -170,31 +222,27 @@ function Get-PullRequestTemplate {
         [string]$RepoRoot
     )
 
-    $Candidates = @(
-        '.github/PULL_REQUEST_TEMPLATE.md',
-        '.github/pull_request_template.md',
-        'docs/PULL_REQUEST_TEMPLATE.md',
-        'docs/pull_request_template.md'
-    )
     $Results = [System.Collections.Generic.List[string]]::new()
-    foreach ($Candidate in $Candidates) {
-        if (Test-Path (Join-Path $RepoRoot $Candidate) -PathType Leaf) {
-            $null = $Results.Add($Candidate)
+    foreach ($Location in @('.github', '', 'docs')) {
+        $Directory = if ($Location) { Join-Path $RepoRoot $Location } else { $RepoRoot }
+        if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
+            continue
         }
-    }
-    foreach ($Directory in @(
-        '.github/PULL_REQUEST_TEMPLATE',
-        '.github/pull_request_template'
-    )) {
-        $FullDirectory = Join-Path $RepoRoot $Directory
-        if (Test-Path $FullDirectory -PathType Container) {
-            Get-ChildItem -Path $FullDirectory -Filter '*.md' -File |
-                Sort-Object FullName |
-                ForEach-Object {
-                    $null = $Results.Add(
-                        [System.IO.Path]::GetRelativePath($RepoRoot, $_.FullName) -replace '\\', '/'
-                    )
-                }
+        $Entries = @(Get-ChildItem -LiteralPath $Directory | Sort-Object Name)
+        $Files = @($Entries | Where-Object {
+                -not $_.PSIsContainer -and $_.Name -eq 'pull_request_template.md'
+            })
+        $Folders = @($Entries | Where-Object {
+                $_.PSIsContainer -and $_.Name -eq 'pull_request_template'
+            })
+        $Templates = @($Files) + @($Folders | ForEach-Object {
+                Get-ChildItem -LiteralPath $_.FullName -File |
+                    Where-Object { $_.Extension -eq '.md' } |
+                    Sort-Object Name
+            })
+        foreach ($Template in $Templates) {
+            $RelativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $Template.FullName)
+            $null = $Results.Add($RelativePath.Replace('\', '/'))
         }
     }
     return $Results.ToArray()
@@ -206,6 +254,8 @@ function Get-PullRequestContext {
         Collects and prints local pull request context.
     .PARAMETER Base
         Requested base branch or ref.
+    .PARAMETER Head
+        Local branch to describe. An empty value selects the checked-out branch.
     .OUTPUTS
         System.String
     #>
@@ -214,7 +264,11 @@ function Get-PullRequestContext {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$Base
+        [string]$Base,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$Head = ''
     )
 
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
@@ -222,29 +276,27 @@ function Get-PullRequestContext {
     }
 
     $RepoRoot = Invoke-GitText -ArgumentList @('rev-parse', '--show-toplevel')
-    $HeadBranch = Invoke-GitText -ArgumentList @('branch', '--show-current')
-    if (-not $HeadBranch) {
-        throw 'A named branch must be checked out.'
-    }
+    $HeadBranch = Resolve-HeadBranch -Head $Head
+    $HeadRef = "refs/heads/$HeadBranch"
     $RequestedBase = if ($Base -eq 'auto') { Resolve-DefaultBase } else { $Base }
     $BaseRef = Resolve-BaseRef -RequestedRef $RequestedBase
-    $MergeBase = Invoke-GitText -ArgumentList @('merge-base', 'HEAD', $BaseRef)
+    $MergeBase = Invoke-GitText -ArgumentList @('merge-base', $HeadRef, $BaseRef) -AllowFailure
     if (-not $MergeBase) {
-        throw "No merge base exists between HEAD and '$BaseRef'."
+        throw "No merge base exists between '$HeadBranch' and '$BaseRef'."
     }
 
     $Divergence = (Invoke-GitText -ArgumentList @(
-        'rev-list', '--left-right', '--count', "$BaseRef...HEAD"
+        'rev-list', '--left-right', '--count', "$BaseRef...$HeadRef"
     )) -split '\s+'
     $UpstreamRef = Invoke-GitText -ArgumentList @(
-        'rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}'
+        'rev-parse', '--abbrev-ref', '--symbolic-full-name', "$HeadBranch@{upstream}"
     ) -AllowFailure
     $UpstreamAheadCount = 'unknown'
     $UpstreamBehindCount = 'unknown'
     $PushState = 'missing'
     if ($UpstreamRef) {
         $UpstreamDivergence = (Invoke-GitText -ArgumentList @(
-            'rev-list', '--left-right', '--count', "$UpstreamRef...HEAD"
+            'rev-list', '--left-right', '--count', "$UpstreamRef...$HeadRef"
         )) -split '\s+'
         $UpstreamBehindCount = [int]$UpstreamDivergence[0]
         $UpstreamAheadCount = [int]$UpstreamDivergence[1]
@@ -279,13 +331,13 @@ function Get-PullRequestContext {
         "branch_needs_push: $BranchNeedsPush"
         ''
         '[commits]'
-        Invoke-GitText -ArgumentList @('log', '--format=%h%x09%s', "$MergeBase..HEAD")
+        Invoke-GitText -ArgumentList @('log', '--format=%h%x09%s', "$MergeBase..$HeadRef")
         ''
         '[changed_files]'
-        Invoke-GitText -ArgumentList @('diff', '--name-status', '-M', "$MergeBase..HEAD")
+        Invoke-GitText -ArgumentList @('diff', '--name-status', '-M', "$MergeBase..$HeadRef")
         ''
         '[diff_stat]'
-        Invoke-GitText -ArgumentList @('diff', '--stat', "$MergeBase..HEAD")
+        Invoke-GitText -ArgumentList @('diff', '--stat', "$MergeBase..$HeadRef")
         ''
         '[worktree]'
         Invoke-GitText -ArgumentList @('status', '--short')
@@ -301,7 +353,7 @@ function Get-PullRequestContext {
 
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Get-PullRequestContext -Base $Base
+        Get-PullRequestContext -Base $Base -Head $Head
         exit 0
     }
     catch {
