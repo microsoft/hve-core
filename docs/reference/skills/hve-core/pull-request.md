@@ -1,9 +1,9 @@
 ---
 title: pull-request
-description: "Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management."
+description: "Prepare, create, update, or sync a GitHub pull request with targeted local checks and repair commits. Supports optional stacked pull requests through the gh stack extension. Routes Azure DevOps to backlog-management."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-20
+ms.date: 2026-11-07
 ms.topic: reference
 keywords:
   - skill
@@ -23,22 +23,24 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management.
+Prepare, create, update, or sync a GitHub pull request with targeted local checks and repair commits. Supports optional stacked pull requests through the gh stack extension. Routes Azure DevOps to backlog-management.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use this skill when a branch is ready for a concise pull request description, targeted preflight
-checks, or GitHub pull request creation. Use the code review workflow when an existing pull request
-needs correctness, security, or standards assessment instead of authoring. When you ask the skill to
-repair a local preflight failure, it reruns the affected checks and commits only that repair under the
-repository's commit-message rules. Existing working-tree changes remain unstaged.
+Use this skill when a branch is ready for a pull request. It writes a short description from the repository template, runs focused local checks for the changed areas, and can create, update, or sync the pull request on GitHub. Use the code review workflow instead when an existing pull request needs a correctness, security, or standards review.
 
-When the push remote is on Azure DevOps, the skill follows the `backlog-management` pull request
-protocol and maps `base` and `draft` to that protocol's `baseBranch` and `isDraft` inputs.
-`action=prepare` writes only the local description, `action=create` runs the full protocol with its
-destination and approval gates, and `action=update` stops because updating an existing Azure DevOps
-pull request is not supported.
+The skill publishes only when you ask. A clear request such as `action=create`, `action=update`, `action=sync`, or "push this and open a pull request" runs without a confirmation prompt. When the request is unclear, the skill writes the description and asks one question that lists each branch it would push, the title, the target branch, and the draft state.
+
+`action=prepare` never publishes. A failed local check, sensitive text in the description, or a branch that is behind its copy on GitHub stops the run before anything is published.
+
+When you ask it to fix a failed check, the skill reruns the affected checks and commits only that fix under the repository's commit conventions. Your other working-tree changes stay unstaged.
+
+If you use the `gh stack` extension, the skill detects when the checked-out branch belongs to a stack. In a stack, it writes one description per branch that covers only that branch's changes, opens the pull requests with `gh stack submit --auto`, pushes updates with `gh stack push`, and syncs with `gh stack sync`. It asks first when a run would push stack branches you didn't mention, and it checks that no collaborator's commits on GitHub would be overwritten.
+
+Stacks stay optional. Without the extension, or with `stack=off`, the skill uses the ordinary flow.
+
+When the push remote is on Azure DevOps, the skill follows the `backlog-management` pull request steps and maps `base` and `draft` to `baseBranch` and `isDraft`. `action=prepare` writes only the local description, `action=create` runs the full Azure DevOps steps with their own approvals, and `action=update` and `action=sync` stop because Azure DevOps doesn't support them here.
 
 ## Example usage
 
@@ -46,15 +48,16 @@ pull request is not supported.
 /pull-request base=origin/main action=prepare
 ```
 
-The skill compares the current branch with the local base ref, applies the repository template,
-writes `.copilot-tracking/pr/pr.md`, and runs focused checks for the changed areas. Set
-`action=create` to prepare for final PR-write approval. A needed ordinary push requires its own
-consent; an explicit request or approval for that same push is reused, not requested again.
-Push consent does not approve opening or updating the PR. If a required push fails or cannot run,
-the dependent PR write stops with the actual result or restriction.
+The skill compares the current branch with the local base ref, applies the repository template, writes `.copilot-tracking/pr/pr.md`, and runs focused checks for the changed areas. Nothing is pushed or published.
 
-If you ask it to fix a reported failure, the skill validates and commits the isolated repair,
-refreshes the pull request context, and includes the new commit in the final approval summary.
+```text
+/pull-request action=create draft=true
+```
 
-For example, after approving an identified ordinary push, you can still leave the prepared PR
-unpublished. The remaining approval is for the PR write alone, not another approval of that push.
+The skill writes the description, runs the checks, pushes the branch when it needs a push, and opens a draft pull request.
+
+```text
+/pull-request action=sync
+```
+
+On an ordinary branch with an open pull request, the skill runs `gh pr update-branch` to bring the pull request up to date with its base, then fast-forwards your local branch. On a stacked branch, it runs `gh stack sync`, which rebases each branch onto its updated parent and pushes the stack.

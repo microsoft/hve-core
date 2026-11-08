@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-11-07
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -77,12 +77,17 @@ validation on the new endpoints.
 ### Pull Request Workflow
 
 ```text
-/pull-request branch=origin/main excludeMarkdown=true
+/pull-request base=origin/main action=prepare
 ```
 
 ```text
 /pull-request action=create draft=true base=origin/main Create the pull request in the
 hve-core Azure DevOps project and link work items 54321 and 54322.
+```
+
+```text
+/pull-request action=sync Bring my stacked branches and their pull requests up to
+date with main.
 ```
 
 Select **code-review** agent:

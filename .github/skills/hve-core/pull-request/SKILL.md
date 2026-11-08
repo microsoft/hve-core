@@ -1,199 +1,127 @@
 ---
 name: pull-request
-description: 'Prepare, create, or update a GitHub pull request with targeted preflight, repair commits, scoped push consent, and separate PR-write approval. Route Azure DevOps to backlog-management.'
-argument-hint: '[base=auto] [draft=false] [action=prepare|create|update]'
+description: 'Prepare, create, update, or sync a GitHub pull request with targeted local checks and repair commits. Supports optional stacked pull requests through the gh stack extension. Routes Azure DevOps to backlog-management.'
+argument-hint: '[base=auto] [draft=false] [action=prepare|create|update|sync] [stack=auto|off]'
 license: MIT
 user-invocable: true
-compatibility: 'Requires git on PATH, plus a GitHub integration for create or update actions, or the Azure DevOps MCP server for Azure DevOps create actions'
+compatibility: 'Requires git. GitHub create and update use the available GitHub integration, and sync uses the gh CLI. Azure DevOps create needs the Azure DevOps MCP server. Stacked pull requests need the optional gh stack extension.'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-10-20"
+  last_updated: "2026-11-07"
 ---
 
 # Pull Request
 
 ## Goal
 
-Turn the current branch into a review-ready GitHub pull request with a short, accurate description
-and enough targeted local evidence to catch likely CI failures without running broad validation by
-default.
-
-Success means the title and body reflect the committed branch diff, the repository template is
-preserved when present, changed-area preflight checks pass, any authorized preflight repairs are
-committed under repository conventions, and an external pull request is created or updated only
-after final PR-write approval. Push consent is separate and is reused for the same action.
+Turn a branch into a review-ready GitHub pull request. Its title and body match the committed diff and keep the repository template, the targeted local checks that ran have passed, any repair the user asked for is committed, and nothing is published unless the request asks for it or the user says yes.
 
 ## Inputs
 
-* `base`: Base branch or ref. Default to the remote default branch without fetching.
-* `draft`: Whether a newly created pull request is a draft. Default to `false`.
-* `action`: `prepare`, `create`, or `update`. Infer from the request and default to `prepare` when
-  external write intent is unclear.
+* `base`: base branch or ref. Default: the remote default branch, read from local refs without fetching.
+* `draft`: whether a new pull request starts as a draft. Default: `false`.
+* `action`: `prepare`, `create`, `update`, or `sync`, inferred from the request. Without a clear request to publish, use `prepare`.
+* `stack`: `auto` (default) uses stack mode for a branch in a `gh stack` stack; `off` always uses the ordinary flow.
 
-Use the current checked-out branch as the head. Ask only for an input that cannot be inferred and
-changes the resulting pull request.
+The head is the checked-out branch. Ask only for an input you can't infer that changes the result.
 
 ## Platform Routing
 
-When the push remote is hosted on Azure DevOps (`dev.azure.com` or `*.visualstudio.com`), or the user
-explicitly asks for an Azure DevOps pull request, load the `backlog-management` skill and follow its
-Azure DevOps pull request reference instead of the Flow below. When `backlog-management` does not
-resolve, report that the Azure DevOps protocol is unavailable and stop before any Azure DevOps call.
-Every other remote uses the GitHub flow below unchanged.
+When the push remote is on Azure DevOps (`dev.azure.com` or `*.visualstudio.com`), or the user asks for an Azure DevOps pull request, follow the `backlog-management` skill's Azure DevOps pull request reference instead of this Flow. If that skill doesn't resolve, say so and stop before any Azure DevOps call.
 
-Resolve `action` before delegating, then carry this skill's inputs into that reference:
+Resolve `action` first. Map `base`, with this skill's default, to `baseBranch` and `draft` to `isDraft`. Azure DevOps inputs the user gives directly win over these aliases, and other inputs such as project, repository, or work item IDs pass through.
 
-* Map `base` to `baseBranch`, resolving its default as this skill does, and map `draft` to `isDraft`.
-  An Azure DevOps input the user supplies explicitly, such as `baseBranch` or `isDraft`, takes
-  precedence over its alias. Pass through other Azure DevOps inputs the user supplies, such as
-  project, repository, work item IDs, area path, or iteration path.
-* `prepare`: produce the local pull request description through the reference's Phase 1 and Phase 2,
-  applying its Content Sanitization Guards and Untrusted Content Boundary, then stop and return the
-  description path. Defer destination confirmation, the autonomy tier, platform readiness, work item
-  discovery, creation, and linking, and every Azure DevOps call to a later `create`.
-* `create`: run the reference's Mandatory Preflight, then its Required Phases with every destination,
-  sanitization, and approval gate.
-* `update`: the reference creates pull requests only. Report that updating an existing Azure DevOps
-  pull request is not supported, stop before any Azure DevOps call, and offer `prepare` to refresh the
-  description for a manual update.
+* `prepare`: run only the reference's Phase 1 and Phase 2, with its sanitization and untrusted content rules, then return the description path before any Azure DevOps call.
+* `create`: run the reference's Mandatory Preflight and Required Phases with all of their destination, sanitization, and approval steps.
+* `update` and `sync`: the reference only creates pull requests. Say these aren't supported, stop before any Azure DevOps call, and offer `prepare` for a manual update.
 
 ## Flow
 
-1. Run the platform-matching script in `scripts/` to collect branch, commit, changed-file, diff-stat,
-   working tree, base-divergence, and template context. Preserve the initial working-tree state as the
-   exclusion boundary for later repairs. The script uses the local remote-tracking ref and does not
-   fetch, merge, rebase, push, or edit the branch.
-2. Stop if the repository, head branch, base ref, or merge base cannot be resolved. If the branch has
-   no committed changes from the merge base, report that there is nothing to submit. Treat
-   uncommitted files as excluded from the pull request and ask whether to continue only when the
-   user's intent appears to include them. Before an external write, stop with sync guidance when the
-   reported upstream push state is `behind` or `diverged`.
-3. Inspect the committed diff from the reported merge base. Start with changed files and diff stats,
-   then read the diffs that determine reviewer-visible behavior. Group related files and use
-   delegation only when a large, separable diff would materially benefit from isolated review.
-4. Derive the title from the branch and commits. Follow the repository's title convention when one
-   exists; otherwise use a concise imperative title. Extract closing issue references only when they
-   appear in branch or commit evidence.
-5. Build `.copilot-tracking/pr/pr.md`. Use the discovered repository template and preserve its
-   heading order, comments, and manual-review checkboxes. If no template exists, copy
-   `templates/pull-request.md`. Replace instructional placeholders with verified content while
-   keeping unsupported human attestations unchecked. Apply any repository instructions that match
-   the pull request artifact.
-6. Write for a human reviewer. Open with one plain-language summary, group the material changes by
-   reviewer concern, and include only evidence-backed impact, compatibility, security, migration,
-   testing, and follow-up details. Omit empty optional sections in the fallback template. Avoid a
-   commit transcript, exhaustive file inventory, implementation chronology, and claims not supported
-   by the diff or commits.
-7. Apply the public-output guard from the applicable content-policy instructions. Do not copy private
-   classifications, sensitive values, or raw suspect content into the pull request body.
-8. Run the CI-confidence gate. Always run `git diff --check` against the committed branch diff, then
-   match changed paths against workflow triggers and select the smallest non-mutating checks that own
-   those areas from package scripts, path-scoped instructions, and the matching workflow steps. Prefer
-   focused tests, syntax checks, check-mode generators, and artifact validators. Do not run full
-   validation aggregates or CI-prefixed wrappers unless the user explicitly requests them. When a
-   matching workflow calls a CI-prefixed wrapper, run its locally safe non-mutating component checks
-   if no equivalent local-safe package command exists; the prefix alone is not a reason to skip them.
-   Do not infer browser suites, service-dependent tests, security scans, or other lane-specific
-   prerequisites from this component-check rule. Follow repository dependency bootstrap rules before
-   dependency-backed commands.
-9. Record only checks that actually ran in the pull request. Leave hosted CI checks and human review
-   attestations unchecked. If a required targeted check fails, keep the prepared description and stop
-   before external creation or update. Do not change branch source unless the user asks for a fix.
-10. When the user asks to fix a local test or CI-confidence failure, treat that request as authority to
-   commit only the resulting validated repairs. Capture the tracked and untracked working-tree baseline
-   before editing, apply the smallest in-scope correction, and rerun every check affected by it. After
-   the checks pass, resolve the repository's applicable commit instructions, stage only the exact
-   repair delta created by this workflow, inspect the staged diff, and create one or more logical
-   commits. Use Conventional Commits when the repository requires them; otherwise use its stated
-   convention or a concise imperative subject. Never stage pre-existing edits, unrelated changes,
-   validation logs, or the pull request body. If the repair cannot be separated safely, commit
-   authority is unclear, or the commit fails, stop before push or pull request write. Do not amend,
-   squash, rebase, or create an empty commit unless the user explicitly requests it.
-11. After a repair commit, rerun the context collector and refresh the committed diff, title, body,
-   validation evidence, divergence, and push state. For `prepare`, return the proposed title, body
-   path, base and head branches, repair commits, divergence, and preflight result. For `create` or
-   `update`, also search for an open pull request with the same head and base, then present the final
-   title, body path, target, draft state, repair commits, validation result, and upstream push state.
-   Ask once for final PR-write approval and only any needed push not already explicitly authorized.
-   A push request alone does not approve the PR write; `prepare` does not authorize either action.
-12. Load the `git-merge` instructions by name, then execute any authorized needed push using their Push Authorization,
-   Account Changes, and Execution Evidence rules, not their integration preparation. If the push
-   fails or cannot run, report the actual result and stop before the dependent PR write.
-   With the push satisfied and final PR-write approval held, create or update through the available
-   GitHub integration. Update an existing PR only when the action permits; otherwise return its URL
-   rather than create a duplicate.
+1. Collect context with `scripts/collect-context.sh` or `scripts/Collect-Context.ps1` (`--base` or `-Base`). They only read local refs. Note the starting working-tree state so repairs leave it alone.
+2. Stop if the repository, branch, base, or merge base can't be resolved, and report nothing to submit when no commits follow the merge base. Leave uncommitted files out, and ask about them only when the request seems to include them.
+3. On the GitHub flow with `stack=auto`, run Stack Detection.
+4. Read the committed diff from the merge base, changed files and stats first, then the diffs that change what a reviewer sees. Delegate only a large diff that splits cleanly.
+5. Write the title and body to `.copilot-tracking/pr/pr.md` under Templates and Description Standard. Use the repository's title convention or a short imperative title, and add closing issue references only when the branch or commits name the issue.
+6. Run Local Checks, and follow Repair Commits when the user asks for a fix.
+7. Publish under Publishing, or stop with the description.
+8. Return the Final Response.
 
-## Template Rules
+## Stack Detection
 
-Resolve templates in this order:
+Stack mode starts only when `gh extension list` lists `github/gh-stack` and `gh stack view --json` exits 0 with a `branches[]` entry whose `isCurrent` is `true`. Then read `references/stacked-pull-requests.md` and follow it, with this skill's sections, for the rest of the run.
 
-1. A caller-specified template
-2. `<repository-root>/.github/PULL_REQUEST_TEMPLATE.md` or `<repository-root>/.github/pull_request_template.md`
-3. A single Markdown template under `<repository-root>/.github/PULL_REQUEST_TEMPLATE/`
-4. `docs/PULL_REQUEST_TEMPLATE.md` or `docs/pull_request_template.md`
-5. `templates/pull-request.md` in this skill
+The ordinary flow runs when `gh` or the extension is missing, or the command exits 2, or exits 0 without an `isCurrent` entry. Exit 6 means the branch is in more than one stack: stop and ask the user to check out a branch in one stack or pass `stack=off`. Any other exit stops the run, reports stderr, and offers `stack=off`. Never fall back to the ordinary flow after an error, because its diff against the stack's base would include every lower branch.
 
-When multiple repository templates remain equally applicable, ask the user to choose. Repository
-instructions may define section-specific mapping and manual-only checkboxes; apply those rules without
-reintroducing a separate end-to-end workflow.
+The command reads pull request state from GitHub and refreshes gh's local stack catalog, even for `prepare`. It changes nothing else.
 
-## CI Confidence
+## Templates
 
-The local gate predicts likely CI outcomes; it does not claim that hosted checks passed when they did
-not run. Use
-these priorities:
+Use the first template that applies:
 
-1. Locally safe non-mutating checks from workflows whose path triggers match the changed files
-2. Checks explicitly required by applicable repository instructions for the changed paths
-3. Focused tests for changed executable behavior
-4. Linters, type checks, parsers, or check-mode generators for changed artifacts
-5. `git diff --check` for patch hygiene
+1. A template the user names
+2. A repository template. Look in `<repository-root>/.github/`, then `<repository-root>/`, then `<repository-root>/docs/`, taking `pull_request_template.md` before the files in that folder's `PULL_REQUEST_TEMPLATE/`, in any letter case. The collectors list them in this order under `[templates]`.
+3. A copy of this skill's `templates/pull-request.md`
 
-Do not mark the pull request ready for external creation when a required selected check failed,
-dependencies needed for that check are unavailable, or generated projections known to be required are
-stale. If a matching workflow step cannot run locally because it needs a browser, service, credential,
-moderation environment, or other CI-only prerequisite, record it as pending or unavailable instead of
-silently omitting it. Report hosted status checks as pending after creation.
-
-## Preflight Repair Commits
-
-Preflight remains non-mutating until the user asks to fix a reported failure. That request authorizes
-source correction and a repair-only commit, not staging other working-tree content. Use the initial and
-pre-repair working-tree snapshots to distinguish existing changes from workflow-created repairs. If the
-same file contains inseparable pre-existing edits, leave it unstaged and stop with the exact manual
-separation needed.
-
-Commit only after the owning checks pass. Apply repository commit instructions by their normal scope
-and precedence, including required Conventional Commit type and scope, subject style, body, footer,
-signing, or verification rules. Inspect the staged name-status and patch before committing, then verify
-the resulting commit contains only the validated repair delta. Recollect branch context after every
-repair commit because commit evidence, divergence, and push state have changed.
+When several fit equally well, ask the user to choose. Keep the template's headings, comments, and checkboxes, fill placeholders with verified content, and drop empty optional sections from this skill's template. Apply repository instructions that match the description file, such as change-type mappings.
 
 ## Description Standard
 
-Describe the final branch state in direct, neutral language. Give reviewers the context needed to
-understand scope and risk, with the most important change first. Use short paragraphs and flat bullets
-unless the repository template requires another shape. Mention files only when they help a reviewer
-navigate or understand an important boundary.
+Write for a human reviewer in direct, neutral language: a short plain summary first, then material changes grouped by reviewer concern, most important first. Include only the impact, compatibility, security, migration, testing, and follow-up details the diff or commits support. Mention files only when they help a reviewer find their way, and leave out commit transcripts, full file lists, and the history of the work.
 
-Check a non-human template checkbox only when direct diff or command evidence proves its statement.
-Never check a qualified-human review, security attestation, manual test, or hosted CI checkbox on the
-user's behalf.
+Check a box only when the diff or a command result proves it. Never check qualified-human review, security attestation, manual test, or hosted CI boxes.
+
+Before publishing, remove secrets, credentials, private classifications, internal-only notes, and other sensitive text, following any content-policy rules the repository sets for public output. Don't quote removed text.
+
+## Local Checks
+
+Local checks predict CI and never stand in for a hosted check that didn't run.
+
+* Always run `git diff --check` on the committed diff.
+* Inspect the workflows whose path triggers match the changed files. From package scripts, path-scoped instructions, and those workflow steps, pick the smallest non-mutating checks that own the changed areas, such as focused tests, syntax checks, check-mode generators, and artifact validators.
+* Skip full validation suites and `ci:*` wrappers unless the user asks. When a matching workflow calls a `ci:*` wrapper and no equivalent local command exists, run the wrapper's locally safe, non-mutating child checks; the prefix alone is no reason to skip them. This doesn't cover browser suites, service-dependent tests, security scans, or other CI-only setups.
+* Follow the repository's dependency setup rules before commands that need installed packages.
+* Record only checks that ran, with their results. Record matching steps that need CI-only setup as pending or unavailable.
+* A failed required check, a missing dependency for one, or a generated file known to be stale stops publishing. Keep the description, and change source only when the user asks for a fix.
+
+## Repair Commits
+
+Local checks change no files. A request to fix a reported failure covers the fix and a commit that holds only the fix.
+
+1. Record the tracked and untracked working-tree state, make the smallest in-scope fix, and rerun every check it affects.
+2. After those checks pass, stage only the fix, review the staged names and patch, and commit under the repository's commit conventions, including any Conventional Commits and signing rules, or with a short imperative subject when it has none. Give separate logical parts separate commits.
+3. Confirm each commit holds only the fix, then collect context again.
+
+Never stage earlier edits, unrelated changes, logs, or the description file. When a file mixes earlier edits with the fix, leave it unstaged and stop with what the user must separate. Don't amend, squash, rebase, or make an empty commit unless the user asks.
+
+## Publishing
+
+Publishing means pushing commits, creating or editing a pull request, marking it ready for review, or syncing it with its base on GitHub.
+
+* A clear request publishes without asking: `action=create`, `action=update`, `action=sync`, or plain words such as "push this and open a pull request". `action=prepare`, or a request for only a description, publishes nothing.
+* When the intent is unclear, write the description, then ask one question that lists what would be published: each branch to push, the title, the target branch, and the draft state. One yes covers all of it. Ask the same question when a clear request would publish more than it named.
+* The Stop Rules always apply.
+
+Ordinary pushes follow the Push Authorization, Account Changes, and Execution Evidence rules in the `git-merge` skill's [merge conventions](../git-merge/references/merge-conventions.md), where a push the publishing rule allows counts as requested or approved. Those rules forbid force pushes and cover ordinary pushes only; stack pushes follow the stack reference. If a push fails or can't run, report the actual result and stop before any write that depends on it.
+
+Before creating or editing, look for an open pull request with the same head and base:
+
+* `create`: return the URL of one that exists. Otherwise push when the branch needs it and create the pull request through the available GitHub integration with the title, body, base, and draft state.
+* `update`: read the current title and body, keep boxes and sections a person filled in, update the rest, and report what changed. Without an open pull request, say so and offer `create`.
+* `sync` outside a stack:
+  * With every commit pushed, run `gh pr update-branch <number>`, which merges the base on GitHub (`--rebase` only when the user asks). Then run `git fetch <remote> <branch>` and, with a clean working tree, `git merge --ff-only` against the tracking branch.
+  * Local commits that aren't on GitHub yet must be pushed first. The sync request didn't name that push, so ask the one question, or stop.
+  * Without an open pull request, report how far the branch is behind its base and stop.
+  * If `gh pr update-branch` fails or is turned off, report it and suggest a local update with the `git-merge` skill.
+  * A stacked pull request never uses `gh pr update-branch`; the stack reference covers its sync.
 
 ## Stop Rules
 
-* Stop as `Blocked` when branch identity, base identity, merge base, template choice, commit authority,
-   repair-delta isolation, or write authority cannot be resolved.
-* Stop as `Revise` before an external write when a required targeted preflight check fails or the
-   description has an unsupported claim. A requested repair remains `Revise` until affected checks pass
-   and its repair-only commit succeeds.
-* Stop as `Prepared` after writing and validating the local description when no external action was
-  requested.
-* Stop as `Created` or `Updated` only after returning the pull request URL and hosted CI state.
+* `Blocked`: the branch, base, merge base, template choice, commit conventions, or what to publish can't be resolved; a fix can't be separated from earlier edits; a commit fails; or stack detection stopped. Outside stack mode, a branch `behind` or `diverged` from its GitHub copy also blocks publishing: suggest `git pull --ff-only` when it's only behind, or a local merge or rebase with the `git-merge` skill when it has diverged.
+* `Revise`: a required local check failed or can't run, a generated file is stale, or the description has an unsupported claim or sensitive text you can't remove. A requested repair stays `Revise` until the affected checks pass and its commit succeeds.
+* `Prepared`: the description is written and checked, and nothing was published.
+* `Created`, `Updated`, or `Synced`: only after returning each pull request URL with its hosted check state, or the sync result.
 
 ## Final Response
 
-Return the outcome, title, base and head, pull request body path, repair commits, targeted checks and
-results, skipped broad checks, material limitations, and pull request URL when one exists. Keep the
-response brief and do not repeat the full body.
+Return the outcome, title, base and head, description path (one per branch in a stack), repair commits, local checks and their results, broad checks skipped, limits, and each pull request URL or the sync result. Keep it brief and don't repeat the body.
