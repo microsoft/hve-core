@@ -2,7 +2,7 @@
 title: Triage Workflow
 description: Classify work items and detect duplicates across Azure DevOps, GitHub, and Jira
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-08
 ms.topic: tutorial
 keywords:
   - backlog management

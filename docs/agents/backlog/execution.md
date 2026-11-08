@@ -2,7 +2,7 @@
 title: Execution Workflow
 description: Apply reviewed backlog changes to Azure DevOps, GitHub, or Jira with autonomy gates, dry-run preview, and resumable state
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-08
 ms.topic: tutorial
 keywords:
   - backlog management
@@ -91,12 +91,13 @@ Operations run in dependency order rather than file order: parents before childr
 Execution does not create a new completion summary. It consumes the reviewed handoff in place, checking each operation off as the operation log records it, and writes its per-operation history beside that handoff.
 
 ```text
-<tracking-root>/execution/<YYYY-MM-DD>/
-├── planning-log.md      # Phase tracking and resolved platform
-├── handoff.md           # The reviewed execution contract, updated in place as operations complete
+<handoff-directory>/     # the discovery, PRD, or triage folder that holds the reviewed handoff
+├── handoff.md           # or triage-plan.md; the reviewed contract, updated in place as operations complete
 ├── handoff-logs.md      # Live per-operation record, the destination binding, and the resume authority
 └── handoff-dryrun.md    # Written only by a dry run; never read by a live run
 ```
+
+When the handoff has no folder of its own, execution uses `<tracking-root>/execution/<YYYY-MM-DD>/`.
 
 Each file owns one thing. `handoff.md` owns the approved operation set and its human review. `handoff-logs.md` owns operation history, the verified destination binding, the temporary-identifier mapping, and completion status: an operation counts as complete only when this file holds a successful live entry for it. `handoff-dryrun.md` holds simulated results and never influences a live run.
 
