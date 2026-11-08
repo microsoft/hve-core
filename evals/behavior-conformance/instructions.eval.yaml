@@ -344,27 +344,6 @@ stimuli:
         config:
           pattern: "(?i)include.{0,20}(ignored|excluded)|includeIgnoredFiles|no-ignore"
 
-  - name: instruction-pull-request-conformance
-    prompt: |
-      You are generating a pull request description from branch diffs and
-      writing tracking artifacts under `.copilot-tracking/pr/main-feature/`.
-      Which `.github/instructions/**/*.instructions.md` file applies (cite
-      its path) and what does it require for diff analysis and template
-      handling?
-    tags:
-      category: behavior-conformance
-      instruction: pull-request
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-pull-request-conformance-applyto-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/pr/|/pr/"
-      - type: output-matches
-        name: instruction-pull-request-conformance-scope-language
-        config:
-          pattern: "(?i)pull\\s+request|diff|template|checkbox|pr-reference"
-
   - name: instruction-writing-style-conformance
     prompt: |
       You are writing prose in a Markdown documentation file at
