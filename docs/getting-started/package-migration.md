@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension and find replacements for retired slash commands
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-11-06
+ms.date: 2026-11-07
 ms.topic: how-to
 keywords:
   - migration
@@ -204,22 +204,22 @@ These commands became skills with the same name, so the slash command still work
 
 ### Design Thinking
 
-| Retired command                    | Replacement                                                                                                                                                                |
-|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `/dt-start-project`                | The `DT Coach` agent; describe the project you want coaching on                                                                                                            |
-| `/dt-resume-coaching`              | The `DT Coach` agent; ask to resume, and it lists your existing projects                                                                                                   |
-| `/dt-method-next`                  | The `DT Coach` agent; ask which method comes next, or use its Method Next handoff                                                                                          |
-| `/dt-method-04-ideation`           | The `DT Coach` agent; ask for Method 4 (Brainstorming) ideation                                                                                                            |
-| `/dt-method-04-convergence`        | The `DT Coach` agent; ask to cluster Method 4 ideas into themes                                                                                                            |
-| `/dt-method-05-concepts`           | The `DT Coach` agent; ask to turn brainstorming themes into Method 5 (User Concepts) concepts                                                                              |
-| `/dt-method-05-evaluation`         | The `DT Coach` agent; ask to evaluate Method 5 concepts with stakeholders                                                                                                  |
-| `/dt-method-06-planning`           | The `DT Coach` agent; ask to plan a Method 6 (Low-Fidelity Prototypes) prototype                                                                                           |
-| `/dt-method-06-building`           | The `DT Coach` agent; ask to build the Method 6 prototype                                                                                                                  |
-| `/dt-method-06-testing`            | The `DT Coach` agent; ask to test the Method 6 prototype                                                                                                                   |
-| `/dt-canonical-deck`               | The `DT Coach` agent; ask to create or refresh the canonical deck or to generate customer-card slide content, or use its Canonical Deck or Generate Customer Cards handoff |
-| `/dt-handoff-problem-space`        | The `DT Coach` agent; ask to hand off the Problem Space to RPI                                                                                                             |
-| `/dt-handoff-solution-space`       | The `DT Coach` agent; ask to hand off the Solution Space to RPI                                                                                                            |
-| `/dt-handoff-implementation-space` | The `DT Coach` agent; ask to hand off the Implementation Space to RPI                                                                                                      |
+| Retired command                    | Replacement                                                                                                  |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| `/dt-start-project`                | The `DT Coach` agent; describe the project you want coaching on                                              |
+| `/dt-resume-coaching`              | The `DT Coach` agent; ask to resume, and it lists your existing projects                                     |
+| `/dt-method-next`                  | The `DT Coach` agent; ask which method comes next, and it recommends one from its method sequencing rules    |
+| `/dt-method-04-ideation`           | The `DT Coach` agent; ask for Method 4 (Brainstorming) ideation                                              |
+| `/dt-method-04-convergence`        | The `DT Coach` agent; ask to cluster Method 4 ideas into themes                                              |
+| `/dt-method-05-concepts`           | The `DT Coach` agent; ask to turn brainstorming themes into Method 5 (User Concepts) concepts                |
+| `/dt-method-05-evaluation`         | The `DT Coach` agent; ask to evaluate Method 5 concepts with stakeholders                                    |
+| `/dt-method-06-planning`           | The `DT Coach` agent; ask to plan a Method 6 (Low-Fidelity Prototypes) prototype                             |
+| `/dt-method-06-building`           | The `DT Coach` agent; ask to build the Method 6 prototype                                                    |
+| `/dt-method-06-testing`            | The `DT Coach` agent; ask to test the Method 6 prototype                                                     |
+| `/dt-canonical-deck`               | The `DT Coach` agent; ask to create or refresh the canonical deck or to generate customer-card slide content |
+| `/dt-handoff-problem-space`        | The `DT Coach` agent; ask to hand off the Problem Space to RPI                                               |
+| `/dt-handoff-solution-space`       | The `DT Coach` agent; ask to hand off the Solution Space to RPI                                              |
+| `/dt-handoff-implementation-space` | The `DT Coach` agent; ask to hand off the Implementation Space to RPI                                        |
 
 ### Development workflow
 

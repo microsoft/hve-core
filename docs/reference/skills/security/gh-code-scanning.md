@@ -1,9 +1,9 @@
 ---
 title: gh-code-scanning
-description: Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI
+description: Retrieves GitHub code scanning alerts and groups them by tool and rule ID using the gh CLI
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-11-07
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI
+Retrieves GitHub code scanning alerts and groups them by tool and rule ID using the gh CLI
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
