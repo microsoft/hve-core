@@ -10,7 +10,7 @@ import { exists, loadReview, readJson, readText, reviewRoot, withLock, writeJson
 export { ReviewError } from '../../../../skills/coding-standards/code-review-core/scripts/lib/model.mjs';
 export const CANVAS_ID = 'hve-core-code-review';
 export const FEEDBACK_KINDS = ['review-next', 'explain', 'investigate', 'dispute', 'comment', 'draft'];
-export const TARGET_KINDS = ['review', 'area', 'file', 'hunk', 'finding', 'comment'];
+export const TARGET_KINDS = ['review', 'area', 'reason', 'file', 'hunk', 'finding', 'comment'];
 export const MAX_FEEDBACK_TEXT = 16000;
 
 export async function openReview(workspace, input) {
@@ -35,6 +35,7 @@ export function validateTarget(target, source, allowStale = false) {
     const candidates = {
         review: [source.state.reviewId],
         area: source.state.areas.map((area) => area.id),
+        reason: (source.state.reasons ?? []).map((reason) => reason.id),
         file: source.snapshot.files.map((file) => file.id),
         hunk: source.snapshot.files.flatMap((file) => file.hunks.map((hunk) => hunk.id)),
         finding: source.state.findings.map((finding) => finding.id),
@@ -108,7 +109,7 @@ export function view(source) {
         areas: state.areas.map((area) => ({ ...area, status: areaStatus(state, area.id), work: state.workItems.filter((work) => work.areaIds.includes(area.id)) })),
         workItems: state.workItems, files: snapshot.files, findings: state.findings, discussion: snapshot.discussion, metadata: snapshot.metadata ?? null,
         limitations: [...state.limitations, ...snapshot.omissions.map((summary, index) => ({ id: `omission-${index}`, summary, blocking: false }))],
-        context: state.context ?? null, artifacts: state.artifacts,
+        context: state.context ?? null, artifacts: state.artifacts, reasons: state.reasons ?? null, changeMap: state.changeMap ?? null,
     };
 }
 

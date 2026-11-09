@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { captureReview } from '../../../../skills/coding-standards/code-review-core/scripts/lib/snapshot.mjs';
-import { schedule } from '../../../../skills/coding-standards/code-review-core/scripts/lib/operations.mjs';
+import { schedule, updateContext } from '../../../../skills/coding-standards/code-review-core/scripts/lib/operations.mjs';
 import { openReview } from '../lib/model.mjs';
 import { createCanvasServer } from '../lib/server.mjs';
 import { createRegistry } from '../lib/lifecycle.mjs';
@@ -40,6 +40,12 @@ describe('contained canvas transport', () => {
         assert.equal((await fetch(`${url}api/state`, { headers: { ...headers, Origin: 'https://example.invalid' } })).status, 403);
         assert.equal((await fetch(`${url}api/state`, { headers, method: 'DELETE' })).status, 405);
         assert.equal((await fetch(`${url}outside.json`, { headers })).status, 404);
+        for (const asset of ['map.mjs', 'diagram.mjs']) {
+            const served = await fetch(`${url}${asset}`);
+            assert.equal(served.status, 200);
+            assert.match(served.headers.get('content-type'), /text\/javascript/);
+            assert.match(served.headers.get('content-security-policy'), /style-src 'self'/);
+        }
         assert.equal((await fetch(`${url}api/evidence?file=missing&snapshot=${record.source.state.snapshotId}`, { headers })).status, 404);
         assert.equal(record.server.polling, false);
     });
@@ -110,5 +116,20 @@ describe('contained canvas transport', () => {
         assert.equal((await call('get_state', {})).reviewId, before.reviewId);
         await assert.rejects(call('get_state', { hidden: true }), /unsupported field/);
         assert.equal(Object.hasOwn(after.feedback, 'items'), false);
+    });
+    it('serves reasons and the change map and focuses a recorded reason', async (t) => {
+        const { record, headers, capture } = await fixture(t);
+        const reasons = [{ id: 'R1', title: 'Show literal text', why: 'The agent reads the selection as display text.', fileIds: ['file-1'], hunkIds: [] }];
+        await updateContext(capture, 0, { reasons });
+        const page = await (await fetch(`${record.server.url}api/state`, { headers })).json();
+        assert.deepEqual(page.reasons, reasons);
+        assert.equal(page.changeMap, null);
+        const registry = createRegistry();
+        await registry.open('reason-panel', async () => record);
+        t.after(() => registry.closeAll());
+        const focus = (id) => invokeAction(registry, { instanceId: 'reason-panel', actionName: 'focus_item', input: { kind: 'reason', id } });
+        await focus('R1');
+        assert.equal(record.focus.kind, 'reason');
+        await assert.rejects(focus('R7'), /not present/);
     });
 });

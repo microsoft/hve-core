@@ -14,6 +14,8 @@ const ASSETS = new Map([
     ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
     ['/dom.mjs', ['dom.mjs', 'text/javascript; charset=utf-8']],
     ['/views.mjs', ['views.mjs', 'text/javascript; charset=utf-8']],
+    ['/map.mjs', ['map.mjs', 'text/javascript; charset=utf-8']],
+    ['/diagram.mjs', ['diagram.mjs', 'text/javascript; charset=utf-8']],
     ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
 ]);
 const THEMES = new Set(['system', 'light', 'dark']);
